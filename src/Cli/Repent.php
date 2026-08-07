@@ -189,11 +189,13 @@ final class Repent implements Command
                 // `<SwitchCase`. Merely naming it is not use: a PHP file that mentions the construct
                 // (the scribe that writes it, a comment, a test) once minted a Vue stub into a project
                 // with no Vue in it at all (#407).
-                if (str_contains($output, '<' . pathinfo($scaffold->path, PATHINFO_FILENAME))) {
-                    new Scaffold()->run(Input::of('scaffold', ['--sin=' . $detector->sin()->name()]));
-
-                    break;
+                if (! str_contains($output, '<' . pathinfo($scaffold->path, PATHINFO_FILENAME))) {
+                    continue;
                 }
+
+                new Scaffold()->run(Input::of('scaffold', ['--sin=' . $detector->sin()->name()]));
+
+                break;
             }
         }
     }

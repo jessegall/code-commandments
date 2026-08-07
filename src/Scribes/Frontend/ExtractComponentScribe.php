@@ -898,11 +898,13 @@ final class ExtractComponentScribe extends RepentScribe
     private static function syntheticTypeImports(Script $script, array $types): string
     {
         foreach ($types as $type) {
-            if (str_contains($type, 'InertiaForm<')) {
-                $source = $script->importSpecifier('useForm') ?? '@inertiajs/vue3';
-
-                return "import type { InertiaForm } from '{$source}';";
+            if (! str_contains($type, 'InertiaForm<')) {
+                continue;
             }
+
+            $source = $script->importSpecifier('useForm') ?? '@inertiajs/vue3';
+
+            return "import type { InertiaForm } from '{$source}';";
         }
 
         return '';
@@ -1016,11 +1018,13 @@ final class ExtractComponentScribe extends RepentScribe
 
         foreach ($script->imports() as $import) {
             foreach ($import['names'] as $name) {
-                if (self::mentions($used, $name)) {
-                    $kept[] = $import['statement'];
-
-                    break;
+                if (! self::mentions($used, $name)) {
+                    continue;
                 }
+
+                $kept[] = $import['statement'];
+
+                break;
             }
         }
 
@@ -1164,10 +1168,12 @@ final class ExtractComponentScribe extends RepentScribe
         $rootReadElsewhere = false;
 
         foreach (self::chains($block) as $chain) {
-            if (($chain[0] ?? null) === $root && array_slice($chain, 0, count($prefix)) !== $prefix) {
-                $rootReadElsewhere = true;
-                break;
+            if (! (($chain[0] ?? null) === $root && array_slice($chain, 0, count($prefix)) !== $prefix)) {
+                continue;
             }
+
+            $rootReadElsewhere = true;
+            break;
         }
 
         $props = $rootReadElsewhere ? $free : array_values(array_diff($free, [$root]));

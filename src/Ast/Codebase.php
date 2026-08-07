@@ -876,9 +876,11 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         $visited[$class] = true;
 
         foreach ($declaration->fields() as $field) {
-            if (! $this->isValueType($field->type, $depth - 1, $visited)) {
-                return false; // holds a service (or something we can't vouch for) → this is a service, not a value
+            if ($this->isValueType($field->type, $depth - 1, $visited)) {
+                continue;
             }
+
+            return false; // holds a service (or something we can't vouch for) → this is a service, not a value
         }
 
         return true;
@@ -1112,15 +1114,16 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     {
         try {
             $ast = (new ParserFactory)->createForNewestSupportedVersion()->parse($code) ?? [];
+            $traverser = new NodeTraverser(new NameResolver, new ParentConnectingVisitor);
+
+            return new ParsedFile($path, $traverser->traverse($ast), $code);
         } catch (\PhpParser\Error) {
-            // A file that doesn't parse (a syntax error, a stub, a partial edit) is not
-            // worth crashing the whole run for — skip its contents and carry on.
+            // A file the parser rejects is not worth crashing the whole run for — skip its
+            // contents and carry on. RESOLVING names throws the same way as reading them: a
+            // duplicate `use` alias is refused by the name resolver, mid-traversal, long after
+            // the syntax parsed. One such file used to end a scan of thousands.
             return new ParsedFile($path, [], $code);
         }
-
-        $traverser = new NodeTraverser(new NameResolver, new ParentConnectingVisitor);
-
-        return new ParsedFile($path, $traverser->traverse($ast), $code);
     }
 
     /**

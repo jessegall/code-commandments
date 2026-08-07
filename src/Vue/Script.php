@@ -586,11 +586,13 @@ final class Script
         $count = count($this->tokens);
 
         for ($i = 0; $i < $count; $i++) {
-            if ($this->isId($i, $key) && $this->isPunct($i + 1, ':') && $this->isPunct($i + 2, '{')) {
-                $close = $this->matchingParen($i + 2);
-
-                return substr($this->source, $this->tokens[$i + 2]['start'], $this->tokens[$close]['end'] - $this->tokens[$i + 2]['start']);
+            if (! ($this->isId($i, $key) && $this->isPunct($i + 1, ':') && $this->isPunct($i + 2, '{'))) {
+                continue;
             }
+
+            $close = $this->matchingParen($i + 2);
+
+            return substr($this->source, $this->tokens[$i + 2]['start'], $this->tokens[$close]['end'] - $this->tokens[$i + 2]['start']);
         }
 
         return null;

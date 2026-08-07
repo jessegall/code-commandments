@@ -503,13 +503,14 @@ final class SpatieDataNode extends NodeMatch
         }
 
         foreach (new NodeFinder()->findInstanceOf($node, StaticCall::class) as $call) {
-            if ($call->name instanceof Identifier && $call->class instanceof Name) {
-                // Spatie `::from(...)` runs the constructor; a named static factory (`::for`) is a real method.
-                $method = $call->name->toString() === 'from' ? '__construct' : $call->name->toString();
+            if (! ($call->name instanceof Identifier && $call->class instanceof Name)) {
+                continue;
+            }
 
-                if ($this->crossInto($this->resolveSelfClass($call->class->toString(), $selfClass), $method, $depth, $visited)) {
-                    return true;
-                }
+            $method = $call->name->toString() === 'from' ? '__construct' : $call->name->toString();
+
+            if ($this->crossInto($this->resolveSelfClass($call->class->toString(), $selfClass), $method, $depth, $visited)) {
+                return true;
             }
         }
 
@@ -1328,12 +1329,14 @@ final class SpatieDataNode extends NodeMatch
         }
 
         foreach (new NodeFinder()->findInstanceOf($callee, StaticCall::class) as $from) {
-            if ($from->name instanceof Identifier && $from->name->toString() === 'from' && $this->soleArgumentIsVariable($from, $param->var->name)) {
-                $owner = $this->constructedFromInClass($from, $ownerClass);
+            if (! ($from->name instanceof Identifier && $from->name->toString() === 'from' && $this->soleArgumentIsVariable($from, $param->var->name))) {
+                continue;
+            }
 
-                if ($owner !== null && $this->codebase->extends($owner, self::DATA)) {
-                    return TypeResolver::forCodebase($this->codebase)->propertyTypeOf($owner, $key);
-                }
+            $owner = $this->constructedFromInClass($from, $ownerClass);
+
+            if ($owner !== null && $this->codebase->extends($owner, self::DATA)) {
+                return TypeResolver::forCodebase($this->codebase)->propertyTypeOf($owner, $key);
             }
         }
 

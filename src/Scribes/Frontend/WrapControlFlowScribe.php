@@ -52,11 +52,13 @@ final class WrapControlFlowScribe extends RepentScribe
         }
 
         foreach (isset($carried[Directive::For->value]) ? [':key', 'key'] : [] as $key) {
-            if ($element->hasAttribute($key)) {
-                $carried[$key] = $element->attribute($key);
-
-                break;
+            if (! $element->hasAttribute($key)) {
+                continue;
             }
+
+            $carried[$key] = $element->attribute($key);
+
+            break;
         }
 
         return $carried;

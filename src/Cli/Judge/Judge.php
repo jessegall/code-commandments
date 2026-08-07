@@ -137,10 +137,12 @@ final class Judge implements Command
         $commands = [];
 
         foreach (Sins::every() as $sin) {
-            if ($sin->scaffolds() !== []) {
-                $name = $sin->name();
-                $commands[$name] = "vendor/bin/commandments scaffold --sin={$name}";
+            if ($sin->scaffolds() === []) {
+                continue;
             }
+
+            $name = $sin->name();
+            $commands[$name] = "vendor/bin/commandments scaffold --sin={$name}";
         }
 
         return $commands;
@@ -160,10 +162,12 @@ final class Judge implements Command
 
         // Both engines: any Repentable detector advertises the one-liner that fixes its sin.
         foreach ([...Catalog::backend(), ...Catalog::frontend()] as $detector) {
-            if ($detector instanceof Repentable) {
-                $name = $detector->sin()->name();
-                $commands[$name] = "vendor/bin/commandments repent --repent=latest --sin={$name}";
+            if (! ($detector instanceof Repentable)) {
+                continue;
             }
+
+            $name = $detector->sin()->name();
+            $commands[$name] = "vendor/bin/commandments repent --repent=latest --sin={$name}";
         }
 
         return $commands;

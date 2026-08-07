@@ -582,11 +582,13 @@ final class Boundary
         }
 
         foreach (isset($carried[Directive::For->value]) ? [':key', 'key'] : [] as $key) {
-            if ($this->node->hasAttribute($key)) {
-                $carried[$key] = $this->node->attribute($key);
-
-                break;
+            if (! $this->node->hasAttribute($key)) {
+                continue;
             }
+
+            $carried[$key] = $this->node->attribute($key);
+
+            break;
         }
 
         return $carried;

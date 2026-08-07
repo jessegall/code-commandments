@@ -20,10 +20,12 @@ final class PreferOptionalCreateScribe extends RepentScribe
         $draft = $this->draft([]);
 
         foreach ($findings as $match) {
-            if ($match instanceof NodeMatch && ($class = $match->newClassNode()) !== null) {
-                $writer = Writer::for($draft, $match);
-                $writer->replace($match->node, $writer->textOf($class) . '::create()');
+            if (! ($match instanceof NodeMatch && ($class = $match->newClassNode()) !== null)) {
+                continue;
             }
+
+            $writer = Writer::for($draft, $match);
+            $writer->replace($match->node, $writer->textOf($class) . '::create()');
         }
 
         return $draft->rewrites();

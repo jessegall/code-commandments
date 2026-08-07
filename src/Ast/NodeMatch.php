@@ -333,10 +333,12 @@ class NodeMatch extends AstNode implements Located
         $interactions = [];
 
         foreach ((new NodeFinder)->findInstanceOf([$function], Variable::class) as $occurrence) {
-            if ($occurrence->name === $this->node->name) {
-                $match = new self($occurrence, $this->file, $this->codebase);
-                $interactions[] = new Interaction($match, $match->interactionKind());
+            if ($occurrence->name !== $this->node->name) {
+                continue;
             }
+
+            $match = new self($occurrence, $this->file, $this->codebase);
+            $interactions[] = new Interaction($match, $match->interactionKind());
         }
 
         return $interactions;
