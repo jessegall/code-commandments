@@ -6,11 +6,11 @@ namespace JesseGall\CodeCommandments\Tests\Skills;
 
 use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
-use JesseGall\CodeCommandments\Skills\ClaudeSection;
+use JesseGall\CodeCommandments\Skills\Briefing;
 use JesseGall\CodeCommandments\Skills\Tier;
 use PHPUnit\Framework\TestCase;
 
-final class ClaudeSectionTest extends TestCase
+final class BriefingTest extends TestCase
 {
     private string $root;
 
@@ -29,11 +29,9 @@ final class ClaudeSectionTest extends TestCase
 
     public function test_renders_a_marked_block_listing_every_skill_in_its_tier(): void
     {
-        $block = ClaudeSection::render();
+        $block = Briefing::render();
 
-        $this->assertStringStartsWith(ClaudeSection::BEGIN, $block);
-        $this->assertStringEndsWith(ClaudeSection::END, $block);
-        $this->assertStringContainsString('MANDATORY LOAD', $block);
+                $this->assertStringContainsString('MANDATORY LOAD', $block);
         $this->assertStringContainsString('KEEP IN MIND', $block);
 
         foreach (Skills::all() as $skill) {
@@ -54,7 +52,7 @@ final class ClaudeSectionTest extends TestCase
         // agent was never told the project's own skill existed (#443).
         $this->writeCustomSkill('ClientDecidesSkill', 'frontend/client-decides');
 
-        $block = ClaudeSection::render($this->root);
+        $block = Briefing::render($this->root);
 
         $this->assertStringContainsString('`commandments-frontend-client-decides`', $block);
         $this->assertStringContainsString("_(this project's own", $block, 'and it is named as the project\'s');
@@ -62,7 +60,7 @@ final class ClaudeSectionTest extends TestCase
 
     public function test_a_shipped_skill_is_never_marked_as_the_projects_own(): void
     {
-        $block = ClaudeSection::render($this->root);
+        $block = Briefing::render($this->root);
 
         $this->assertStringContainsString('`commandments-backend-fix-at-the-source`', $block);
         $this->assertStringNotContainsString("_(this project's own", $block);

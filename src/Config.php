@@ -41,6 +41,11 @@ final class Config
     private array $hooks = [];
 
     /**
+     * @var list<class-string<Agents\Agent>>
+     */
+    private array $agents = [];
+
+    /**
      * @var list<Closure> One per {@see configure} call — a typed closure that tunes a detector.
      */
     private array $configurators = [];
@@ -208,10 +213,50 @@ final class Config
      */
     public function enabledHooks(array $all): array
     {
+        return $this->enabled($all);
+    }
+
+    /**
+     * $all minus whatever the project named in {@see disable} — the one filter behind every open set
+     * that is silenced by class. Takes instances or class names, so a registry that discovers objects
+     * ({@see Agents\Catalog}) and one that carries class strings ({@see Hooks\HookRegistry}) ask the
+     * same question rather than each keeping its own answer.
+     *
+     * @template T of object|string
+     *
+     * @param  list<T>  $all
+     * @return list<T>
+     */
+    public function enabled(array $all): array
+    {
         return array_values(array_filter(
             $all,
-            fn (string $class): bool => ! in_array($class, $this->disabled, true),
+            fn (object|string $item): bool => ! in_array(is_object($item) ? $item::class : $item, $this->disabled, true),
         ));
+    }
+
+    /**
+     * Register a consumer's own {@see Agents\Agent} — an assistant this package should publish into
+     * beyond the ones it ships. The open-set pattern again, and the same `disable()` verb turns a
+     * shipped one off.
+     *
+     * @param  class-string<Agents\Agent>  ...$agents
+     */
+    public function agent(string ...$agents): self
+    {
+        $this->agents = [...$this->agents, ...$agents];
+
+        return $this;
+    }
+
+    /**
+     * The consumer's own agent classes added via {@see agent} (none by default).
+     *
+     * @return list<class-string<Agents\Agent>>
+     */
+    public function agents(): array
+    {
+        return $this->agents;
     }
 
     /**

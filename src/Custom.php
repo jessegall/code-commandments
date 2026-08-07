@@ -33,6 +33,17 @@ final class Custom
     }
 
     /**
+     * The project's own {@see Agents\Agent} classes — an assistant it wires itself into that we do
+     * not ship. Published into exactly like a shipped one.
+     *
+     * @return list<Agents\Agent>
+     */
+    public static function agents(?string $dir = null): array
+    {
+        return self::instancesOf(Agents\Agent::class, $dir);
+    }
+
+    /**
      * The project's own {@see Sin} classes — the rows a custom skill's generated "when it fires"
      * table projects from.
      *

@@ -32,6 +32,14 @@ final class Workspace
     public const string CUSTOM = 'custom';
 
     /**
+     * Where the published skills REALLY live, relative to the project root — the one library every
+     * agent reads, directly or through a link of its own. `.agents/skills` is the cross-agent
+     * location rather than any one assistant's folder, so the agent that reads it natively needs no
+     * link at all and the rest get one.
+     */
+    public const string LIBRARY = '.agents/skills';
+
+    /**
      * The session folder for a run with no session id at all (a human terminal, CI).
      */
     public const string DEFAULT_SESSION = 'default';
@@ -117,6 +125,16 @@ final class Workspace
     public function root(): string
     {
         return $this->root;
+    }
+
+    /**
+     * The skill library's absolute path — `<root>/.agents/skills`. It sits OUTSIDE `.commandments/`
+     * because it is not our workspace: it is a directory the agents themselves read, which a project
+     * may also keep hand-written skills in. We own only the entries we published there.
+     */
+    public function library(): string
+    {
+        return $this->root . '/' . self::LIBRARY;
     }
 
     /**
