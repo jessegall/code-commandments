@@ -281,7 +281,7 @@ class NodeMatch extends AstNode implements Located
     {
         return $this->controlStructureSample()->mapOr(
             ' {',
-            fn (Node $sample): string => Span::blockOpener($this->file->source, $sample->getStartFilePos(), $indent),
+            fn (Node $sample) => Span::blockOpener($this->file->source, $sample->getStartFilePos(), $indent),
         );
     }
 
@@ -294,7 +294,7 @@ class NodeMatch extends AstNode implements Located
     public function controlBracesOnOwnLine(): bool
     {
         return $this->controlStructureSample()->isSomeAnd(
-            fn (Node $sample): bool => Span::braceOnItsOwnLine($this->file->source, $sample->getStartFilePos()),
+            fn (Node $sample) => Span::braceOnItsOwnLine($this->file->source, $sample->getStartFilePos()),
         );
     }
 

@@ -39,7 +39,7 @@ final class AssembledTemplateDetector implements Detector
             ->where(static fn (AstNode $node): bool => $node->argument(0)->isNewlineSeparator())
             ->get();
 
-        return array_values(array_filter($joins, static fn (NodeMatch $join): bool => self::statesATemplate($join)));
+        return array_values(array_filter($joins, static fn (NodeMatch $join) => self::statesATemplate($join)));
     }
 
     /**
