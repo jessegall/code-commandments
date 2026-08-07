@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Laravel;
 
+use JesseGall\PhpTypes\Option;
+
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
@@ -312,20 +314,22 @@ final class LaravelNode extends NodeMatch
      */
     public function delegatesToRouteAction(): bool
     {
-        $call = $this->soleDelegationCall();
+        foreach ($this->soleDelegationCall() as $call) {
+            if (! $call->name instanceof Identifier || ! $this->node instanceof ClassMethod) {
+                return false;
+            }
 
-        if ($call === null || ! $call->name instanceof Identifier || ! $this->node instanceof ClassMethod) {
-            return false;
+            $self = $this->enclosingClassName();
+            $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $this->node, $self);
+
+            if ($receiver === null || ltrim($receiver, '\\') === ltrim((string) $self, '\\')) {
+                return false; // unresolved, or a self-call on the same controller
+            }
+
+            return RouteActions::forCodebase($this->codebase)->isRegisteredAction($receiver, $call->name->toString());
         }
 
-        $self = $this->enclosingClassName();
-        $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $this->node, $self);
-
-        if ($receiver === null || ltrim($receiver, '\\') === ltrim((string) $self, '\\')) {
-            return false; // unresolved, or a self-call on the same controller
-        }
-
-        return RouteActions::forCodebase($this->codebase)->isRegisteredAction($receiver, $call->name->toString());
+        return false; // the method does more than forward
     }
 
     /**
@@ -337,25 +341,29 @@ final class LaravelNode extends NodeMatch
      */
     public function thinDelegationTarget(): ?string
     {
-        $call = $this->soleDelegationCall();
+        foreach ($this->soleDelegationCall() as $call) {
+            if (! $call->name instanceof Identifier || ! $this->node instanceof ClassMethod) {
+                return null;
+            }
 
-        if ($call === null || ! $call->name instanceof Identifier || ! $this->node instanceof ClassMethod) {
-            return null;
+            $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $this->node, $this->enclosingClassName());
+
+            return $receiver === null ? null : RouteActions::key($receiver, $call->name->toString());
         }
 
-        $receiver = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $this->node, $this->enclosingClassName());
-
-        return $receiver === null ? null : RouteActions::key($receiver, $call->name->toString());
+        return null; // the method does more than forward
     }
 
     /**
      * The single method call a thin pass-through method delegates through — `return $this->x->m(...);` or
      * `$this->x->m(...);` as the method's ONLY statement — or null when the method does more than forward.
+     *
+     * @return Option<MethodCall>
      */
-    private function soleDelegationCall(): ?MethodCall
+    private function soleDelegationCall(): Option
     {
         if (! $this->node instanceof ClassMethod || count($this->node->stmts ?? []) !== 1) {
-            return null;
+            return Option::none();
         }
 
         $statement = $this->node->stmts[0];
@@ -365,7 +373,7 @@ final class LaravelNode extends NodeMatch
             default => null,
         };
 
-        return $expression instanceof MethodCall ? $expression : null;
+        return $expression instanceof MethodCall ? Option::some($expression) : Option::none();
     }
 
     /**

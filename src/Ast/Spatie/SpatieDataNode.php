@@ -302,9 +302,11 @@ final class SpatieDataNode extends NodeMatch
         $receiver = self::sharedFetchReceiver($array);
         $function = $this->enclosingFunction();
 
-        if ($receiver === null || $function === null) {
+        if ($receiver->isNone() || $function === null) {
             return false;
         }
+
+        $receiver = $receiver->unwrap();
 
         $type = TypeResolver::forCodebase($this->codebase)->typeOf($receiver, $function, $this->enclosingClassName());
 

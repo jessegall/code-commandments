@@ -526,7 +526,7 @@ class AstNode
         $function = $this->enclosingFunction();
         $ownBranchPoint = self::branchPointOf($this->node);
 
-        if ($function === null || $ownBranchPoint === null) {
+        if ($function === null || $ownBranchPoint->isNone()) {
             return false;
         }
 
@@ -535,15 +535,17 @@ class AstNode
         $classes = [];
 
         foreach (new NodeFinder()->findInstanceOf([$function], Instanceof_::class) as $test) {
-            $branchPoint = self::branchPointOf($test);
+            $found = self::branchPointOf($test);
 
-            if ($branchPoint === null) {
+            if ($found->isNone()) {
                 continue;
             }
 
+            $branchPoint = $found->unwrap();
+
             // `if ($a instanceof L && $b instanceof L)` switches on a PAIR: two subjects, one set of
             // branches, one sin. Whichever test comes first speaks for it.
-            if ($branchPoint === $ownBranchPoint && $test->getStartFilePos() < $this->node->getStartFilePos()) {
+            if ($branchPoint === $ownBranchPoint->unwrap() && $test->getStartFilePos() < $this->node->getStartFilePos()) {
                 return false;
             }
 
@@ -585,7 +587,7 @@ class AstNode
         $classes = [];
 
         foreach (new NodeFinder()->findInstanceOf([$function], Instanceof_::class) as $test) {
-            if (self::branchPointOf($test) === null || new self($test->expr)->exactHash() !== $subject) {
+            if (self::branchPointOf($test)->isNone() || new self($test->expr)->exactHash() !== $subject) {
                 continue;
             }
 
@@ -600,22 +602,24 @@ class AstNode
      * it forms part of, or the `match` arm it guards. Null when it decides nothing (a returned
      * boolean, an argument, a condition inside some branch's body rather than its head). Two tests
      * sharing one branch point are one question asked once.
+     *
+     * @return Option<Node>
      */
-    private static function branchPointOf(Node $test): ?Node
+    private static function branchPointOf(Node $test): Option
     {
         $child = $test;
         $parent = $child->getAttribute('parent');
 
         while ($parent instanceof Node && ! $parent instanceof FunctionLike) {
             if (self::isConditionOf($parent, $child)) {
-                return $parent;
+                return Option::some($parent);
             }
 
             $child = $parent;
             $parent = $parent->getAttribute('parent');
         }
 
-        return null;
+        return Option::none();
     }
 
     /**
@@ -1418,11 +1422,13 @@ class AstNode
      * The single RECEIVER every value in this array literal is fetched off — `['amount' => $o->cents,
      * 'currency' => $o->code]` shares `$o`. Returns that receiver when EVERY item (two or more) is a
      * property/method fetch off the identical receiver, else null.
+     *
+     * @return Option<Node>
      */
-    public static function sharedFetchReceiver(Array_ $array): ?Node
+    public static function sharedFetchReceiver(Array_ $array): Option
     {
         if (count($array->items) < 2) {
-            return null;
+            return Option::none();
         }
 
         $receiver = null;
@@ -1434,24 +1440,24 @@ class AstNode
                     || $item->value instanceof NullsafePropertyFetch
                     || $item->value instanceof MethodCall
                     || $item->value instanceof NullsafeMethodCall)) {
-                return null;
+                return Option::none();
             }
 
             $here = self::fetchPath($item->value->var);
 
             if ($here === null) {
-                return null;
+                return Option::none();
             }
 
             if ($path === null) {
                 $path = $here;
                 $receiver = $item->value->var;
             } elseif ($here !== $path) {
-                return null;
+                return Option::none();
             }
         }
 
-        return $receiver;
+        return Option::fromNullable($receiver);
     }
 
     /**

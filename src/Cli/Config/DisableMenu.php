@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Config;
 
+use JesseGall\PhpTypes\Option;
+
 use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
@@ -317,11 +319,14 @@ final class DisableMenu
      */
     private function reconcile(string $var, array $canonical, bool $grouped): void
     {
-        $call = $this->menuDisableCall($var);
+        $call = $this->menuDisableCall($var)
+            ->filter(static fn (MethodCall $c): bool => $c->name instanceof \PhpParser\Node\Identifier);
 
-        if ($call === null || ! $call->name instanceof \PhpParser\Node\Identifier) {
+        if ($call->isNone()) {
             return;
         }
+
+        $call = $call->unwrap();
 
         $source = $this->source();
         $open = strpos($source, '(', $call->name->getEndFilePos());
@@ -435,11 +440,13 @@ final class DisableMenu
     private function appendMissing(string $var, array $canonical): void
     {
         foreach ($canonical as $ref) {
-            $call = $this->menuDisableCall($var);
+            $found = $this->menuDisableCall($var);
 
-            if ($call === null) {
+            if ($found->isNone()) {
                 return;
             }
+
+            $call = $found->unwrap();
 
             $slice = substr($this->source(), $call->getStartFilePos(), $call->getEndFilePos() - $call->getStartFilePos());
 
@@ -553,13 +560,15 @@ final class DisableMenu
 
     /**
      * The `$config->disable(…)` call inside the menu's closure, or null.
+     *
+     * @return Option<MethodCall>
      */
-    private function menuDisableCall(string $var): ?MethodCall
+    private function menuDisableCall(string $var): Option
     {
         $definition = $this->definition($var);
 
         if ($definition === null) {
-            return null;
+            return Option::none();
         }
 
         [$from, $to] = [$definition->getStartFilePos(), $definition->getEndFilePos()];
@@ -568,7 +577,7 @@ final class DisableMenu
             ->where(static fn (AstNode $n): bool => $n->node->getStartFilePos() >= $from && $n->node->getEndFilePos() <= $to)
             ->first();
 
-        return $match?->node instanceof MethodCall ? $match->node : null;
+        return $match?->node instanceof MethodCall ? Option::some($match->node) : Option::none();
     }
 
     private function carries(Closure $closure, string $var): bool

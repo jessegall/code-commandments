@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Config;
 
+use JesseGall\PhpTypes\Option;
+
 use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
@@ -89,10 +91,10 @@ final class ConfigScribe
      */
     public function ensurePaths(array $roots): void
     {
-        $call = $this->pathsCall();
-
-        if ($call !== null && $call->args === []) {
-            $this->splice($call, $roots);
+        foreach ($this->pathsCall() as $call) {
+            if ($call->args === []) {
+                $this->splice($call, $roots);
+            }
         }
     }
 
@@ -110,9 +112,7 @@ final class ConfigScribe
             return;
         }
 
-        $call = $this->pathsCall();
-
-        if ($call !== null) {
+        foreach ($this->pathsCall() as $call) {
             $this->splice($call, $roots);
         }
     }
@@ -258,9 +258,12 @@ final class ConfigScribe
         file_put_contents($this->path, substr($source, 0, $from) . $this->renderRoots($roots) . substr($source, $to));
     }
 
-    private function pathsCall(): ?MethodCall
+    /**
+     * @return Option<MethodCall>
+     */
+    private function pathsCall(): Option
     {
-        return $this->call('paths');
+        return Option::fromNullable($this->call('paths'));
     }
 
     /**

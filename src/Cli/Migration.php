@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\PhpTypes\Option;
+
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
@@ -82,21 +84,24 @@ final class Migration
     {
         $live = $this->legacy("{$dir}/.until");
         $paused = $this->legacy("{$dir}/.until.pause");
+        $either = $live->or($paused);
 
-        if ($live === null && $paused === null) {
+        if ($either->isNone()) {
             return null;
         }
 
-        $source = $live ?? $paused;
+        $source = $either->unwrap();
         $conditions = $this->conditions($source);
         $lastId = max($this->headerOf($source) === 3 ? $source->int(2) : 0, ...[0, ...array_map(
             fn (Condition $c): int => $c->id,
             $conditions,
         )]);
 
-        if ($live !== null && $paused !== null) {
-            foreach ($this->conditions($paused) as $condition) {
-                $conditions[] = new Condition(++$lastId, $condition->text);
+        if ($live->isSome()) {
+            foreach ($paused as $setAside) {
+                foreach ($this->conditions($setAside) as $condition) {
+                    $conditions[] = new Condition(++$lastId, $condition->text);
+                }
             }
         }
 
@@ -104,13 +109,13 @@ final class Migration
             return $this->drop($dir, ['.until', '.until.pause', '.until.claim']);
         }
 
-        $claim = $this->legacy("{$dir}/.until.claim") ?? new LegacyLines();
+        $claim = $this->legacy("{$dir}/.until.claim")->unwrapOr(new LegacyLines());
 
         new StateFile("{$dir}/.until", UntilGate::legend())->write(new State(
             held_stops: $source->int(0),
             todo_drift: $this->count("{$dir}/.until-todo-drift-count"),
             last_id: $lastId,
-            paused: $live === null,
+            paused: $live->isNone(),
             stuck: $source->isFlagged(1),
             claim_round: $claim->int(0),
         )->withItems(array_map(fn (Condition $c): string => $c->line(), $conditions)));
@@ -125,20 +130,21 @@ final class Migration
      */
     private function plan(string $dir): ?string
     {
-        $marker = $this->legacy("{$dir}/.plan-active");
+        $found = $this->legacy("{$dir}/.plan-active");
 
-        if ($marker === null) {
+        if ($found->isNone()) {
             return null;
         }
 
+        $marker = $found->unwrap();
         $stuck = $this->legacy("{$dir}/.plan-stuck");
-        $signal = $stuck ?? new LegacyLines(); // no file at all reads as the empty signal
+        $signal = $stuck->unwrapOr(new LegacyLines()); // no file at all reads as the empty signal
 
         new StateFile("{$dir}/.plan-active", PlanMarker::legend())->write(new State(
             head: $marker->text(0),
             no_progress_nudges: $marker->int(1),
             total_nudges: $marker->int(2),
-            stuck: $stuck !== null,
+            stuck: $stuck->isSome(),
             stuck_at: $signal->text(0),
         ));
 
@@ -209,13 +215,13 @@ final class Migration
      * `.until.claim`, a plan in `.plan-active` with its stuck signal in `.plan-stuck`, constraints
      * split across `.plan-constraints`/`.constraints-verified`.
      *
-     * @return list<string>|null
+     * @return Option<LegacyLines>
      */
-    private function legacy(string $path): ?LegacyLines
+    private function legacy(string $path): Option
     {
         $lines = $this->lines($path);
 
-        return $lines === null || $this->isCurrent($lines) ? null : new LegacyLines($lines);
+        return $lines === null || $this->isCurrent($lines) ? Option::none() : Option::some(new LegacyLines($lines));
     }
 
     /**

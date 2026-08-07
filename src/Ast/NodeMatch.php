@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast;
 
+use JesseGall\PhpTypes\Option;
+
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use JesseGall\CodeCommandments\Ast\Support\ExpressionType;
 use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
@@ -276,11 +278,10 @@ class NodeMatch extends AstNode implements Located
      */
     public function controlBlockOpener(string $indent): string
     {
-        $sample = $this->controlStructureSample();
-
-        return $sample === null
-            ? ' {'
-            : Span::blockOpener($this->file->source, $sample->getStartFilePos(), $indent);
+        return $this->controlStructureSample()->mapOr(
+            ' {',
+            fn (Node $sample): string => Span::blockOpener($this->file->source, $sample->getStartFilePos(), $indent),
+        );
     }
 
     /**
@@ -291,24 +292,26 @@ class NodeMatch extends AstNode implements Located
      */
     public function controlBracesOnOwnLine(): bool
     {
-        $sample = $this->controlStructureSample();
-
-        return $sample !== null && Span::braceOnItsOwnLine($this->file->source, $sample->getStartFilePos());
+        return $this->controlStructureSample()->isSomeAnd(
+            fn (Node $sample): bool => Span::braceOnItsOwnLine($this->file->source, $sample->getStartFilePos()),
+        );
     }
 
     /**
      * The first control structure the file contains — whatever a scribe learns the file's block
      * style from. Null when it holds none.
+     *
+     * @return Option<Node>
      */
-    private function controlStructureSample(): ?Node
+    private function controlStructureSample(): Option
     {
-        return new NodeFinder()->findFirst(
+        return Option::fromNullable(new NodeFinder()->findFirst(
             $this->file->ast,
             static fn (Node $node): bool => $node instanceof If_
                 || $node instanceof Foreach_
                 || $node instanceof For_
                 || $node instanceof While_,
-        );
+        ));
     }
 
     /**

@@ -140,7 +140,7 @@ final class DataConstructions
             return $returned !== null && $this->producesType($returned, $type);
         }
 
-        return $expr instanceof Array_ && AstNode::sharedFetchReceiver($expr) !== null;
+        return $expr instanceof Array_ && AstNode::sharedFetchReceiver($expr)->isSome();
     }
 
     /**
