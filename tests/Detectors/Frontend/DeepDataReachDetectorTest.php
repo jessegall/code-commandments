@@ -29,7 +29,7 @@ final class DeepDataReachDetectorTest extends TestCase
 
         $this->assertCount(1, $found);
         $this->assertSame('section', $found[0]->tag);
-        $this->assertSame('boundary', $found[0]->attribute('class'));
+        $this->assertSame('boundary', $found[0]->attribute('class')->unwrap());
     }
 
     public function test_ignores_a_lone_deep_reach(): void

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\PhpTypes\Option;
+
 /**
  * A top-level block of a Vue single-file component — `<script>`, `<template>` or
  * `<style>` — with its raw attributes (`setup`, `lang="ts"`, `scoped`), its inner
@@ -29,8 +31,14 @@ final class Block
         return array_key_exists($name, $this->attributes);
     }
 
-    public function attribute(string $name): ?string
+    /**
+     * The VALUE of attribute $name — none when the block doesn't carry it, and none when
+     * it carries it without one (`setup`, `scoped`). Presence is {@see hasAttribute}.
+     *
+     * @return Option<string>
+     */
+    public function attribute(string $name): Option
     {
-        return $this->attributes[$name] ?? null;
+        return Option::fromNullable($this->attributes[$name] ?? null);
     }
 }

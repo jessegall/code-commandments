@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Scribes\Frontend;
 
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
-use JesseGall\CodeCommandments\Vue\Directive;
+use JesseGall\CodeCommandments\Vue\Attribute;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 
 /**
@@ -23,60 +23,21 @@ final class WrapControlFlowScribe extends RepentScribe
 
         foreach ($findings as $element) {
             $span = $element->span();
-            $carried = $this->carried($element);
+            $carried = $element->carriedDirectives();
+            $names = array_map(static fn (Attribute $attribute): string => $attribute->name, $carried);
             // The element's source with the carried directives spliced out by their KNOWN
             // spans (the AST write engine), then nested one level into the new <template>.
-            $inner = $this->indentInner($element->sourceOmitting($span->source, $span->start, $span->end, array_keys($carried)));
+            $inner = $this->indentInner($element->sourceOmitting($span->source, $span->start, $span->end, $names));
             $indent = $span->lineIndent();
 
-            $draft->edit($span, "<template {$this->attributes($carried)}>\n{$indent}  {$inner}\n{$indent}</template>");
+            $rendered = Attribute::renderAll($carried);
+
+            $draft->edit($span, "<template {$rendered}>\n{$indent}  {$inner}\n{$indent}</template>");
         }
 
         return $draft->rewrites();
     }
 
-    /**
-     * The directives to move onto the `<template>`: the structural ones present, and a
-     * `v-for`'s `:key`.
-     *
-     * @return array<string, string|null>
-     */
-    private function carried(ElementMatch $element): array
-    {
-        $carried = [];
-
-        foreach (Directive::structural() as $directive) {
-            if ($element->hasAttribute($directive)) {
-                $carried[$directive->value] = $element->attribute($directive);
-            }
-        }
-
-        foreach (isset($carried[Directive::For->value]) ? [':key', 'key'] : [] as $key) {
-            if (! $element->hasAttribute($key)) {
-                continue;
-            }
-
-            $carried[$key] = $element->attribute($key);
-
-            break;
-        }
-
-        return $carried;
-    }
-
-    /**
-     * @param  array<string, string|null>  $carried
-     */
-    private function attributes(array $carried): string
-    {
-        $attributes = [];
-
-        foreach ($carried as $name => $value) {
-            $attributes[] = $value === null ? $name : "{$name}=\"{$value}\"";
-        }
-
-        return implode(' ', $attributes);
-    }
 
     /**
      * Indent the continuation lines of the lifted element one level deeper, so it nests

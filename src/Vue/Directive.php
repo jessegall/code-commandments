@@ -38,6 +38,16 @@ enum Directive: string
     }
 
     /**
+     * The attribute name a `string|Directive` addresses. Unlike {@see name} any string
+     * passes through: an element is keyed by EVERY attribute it carries (`class`,
+     * `:key`), not only the directives this enum knows.
+     */
+    public static function attributeName(string|self $name): string
+    {
+        return $name instanceof self ? $name->value : $name;
+    }
+
+    /**
      * Normalise a `string|Directive` to a directive attribute name — throwing if a
      * string isn't a known directive, so a typo'd `'v-fi'` fails loud instead of
      * silently matching nothing.

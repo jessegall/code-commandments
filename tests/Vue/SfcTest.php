@@ -29,7 +29,7 @@ final class SfcTest extends TestCase
         $script = $sfc->block('script');
         $this->assertNotNull($script);
         $this->assertTrue($script->hasAttribute('setup'));
-        $this->assertSame('ts', $script->attribute('lang'));
+        $this->assertSame('ts', $script->attribute('lang')->unwrap());
         $this->assertStringContainsString('const x = 1', $script->content);
 
         $this->assertTrue($sfc->block('style')?->hasAttribute('scoped'));
@@ -56,14 +56,14 @@ final class SfcTest extends TestCase
 
         $div = $this->find($sfc->template, 'div');
         $this->assertNotNull($div);
-        $this->assertSame('a > b', $div->attribute(':title'));   // '>' inside the value did not end the tag
+        $this->assertSame('a > b', $div->attribute(':title')->unwrap());   // '>' inside the value did not end the tag
         $this->assertTrue($div->hasAttribute('@click'));
-        $this->assertSame('ok', $div->attribute('v-if'));
+        $this->assertSame('ok', $div->attribute('v-if')->unwrap());
 
         $switch = $this->find($sfc->template, 'MySwitch');
         $this->assertNotNull($switch);
         $this->assertSame([], $switch->children, 'self-closing component has no children');
-        $this->assertSame('on', $switch->attribute('v-model'));
+        $this->assertSame('on', $switch->attribute('v-model')->unwrap());
 
         $this->assertNotNull($this->find($sfc->template, 'br'), 'void element is parsed');
     }
@@ -83,7 +83,7 @@ final class SfcTest extends TestCase
 
         $this->assertSame(['template', 'script'], $sfc->order());
         $this->assertNotNull($this->find($sfc->template, 'li'));
-        $this->assertSame('i in items', $this->find($sfc->template, 'template')?->attribute('v-for'));
+        $this->assertSame('i in items', $this->find($sfc->template, 'template')?->attribute('v-for')->unwrap());
     }
 
     public function test_element_lines_map_back_to_the_vue_file(): void

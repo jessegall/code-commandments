@@ -95,7 +95,7 @@ final class ComponentLibraryTest extends TestCase
     private function cardOf(Sfc $sfc): Element
     {
         foreach ($sfc->template->descendants() as $element) {
-            if ($element->attribute('class') === 'card') {
+            if ($element->attribute('class')->isSomeAnd(static fn (string $class): bool => $class === 'card')) {
                 return $element;
             }
         }

@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Reads a `v-if`/`v-else-if` chain as a switch: one subject, equality-tested per branch.
@@ -88,15 +89,16 @@ final class SwitchCaseChain
      * `a === 'x' || a === 'y'` parses to a top-level `||`, not an equality, so it
      * structurally disqualifies the chain — no pattern matching.
      *
+     * @param  Option<string>  $expression
      * @return array{0: ?string, 1: ?string}
      */
-    private static function equality(?string $expression): array
+    private static function equality(Option $expression): array
     {
-        if ($expression === null) {
+        if ($expression->isNone()) {
             return [null, null];
         }
 
-        $node = Parser::parse($expression);
+        $node = Parser::parse($expression->unwrap());
 
         if (! $node->is(ExprKind::Binary) || ! in_array($node->get('op'), ['===', '=='], true)) {
             return [null, null];

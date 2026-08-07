@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Vue;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Expr\Interpolation;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Template node (element, text, or fragment root) with raw directive names. Thin data
@@ -47,13 +48,13 @@ class Element
 
     /**
      * The absolute `[start, end)` source span of attribute $name — where the write engine
-     * splices to remove a directive — or null when it isn't present / wasn't lexed with a span.
+     * splices to remove a directive. None when it isn't present / wasn't lexed with a span.
      *
-     * @return array{int, int}|null
+     * @return Option<array{int, int}>
      */
-    public function attributeSpan(string|Directive $name): ?array
+    public function attributeSpan(string|Directive $name): Option
     {
-        return $this->attributeSpans[$name instanceof Directive ? $name->value : $name] ?? null;
+        return Option::fromNullable($this->attributeSpans[Directive::attributeName($name)] ?? null);
     }
 
     /**
@@ -71,14 +72,13 @@ class Element
         $edits = [];
 
         foreach ($names as $name) {
-            $span = $this->attributeSpan($name);
+            $span = $this->attributeSpan($name)->filter(
+                static fn (array $span): bool => $span[0] >= $from && $span[1] <= $to,
+            );
 
-            if ($span === null || $span[0] < $from || $span[1] > $to) {
-                continue;
+            foreach ($span as [$start, $end]) {
+                $edits[] = [...self::removalSpan($source, $from, $to, $start, $end), ''];
             }
-
-            [$start, $end] = self::removalSpan($source, $from, $to, $span[0], $span[1]);
-            $edits[] = [$start, $end, ''];
         }
 
         return self::spliceSource($source, $from, $to, $edits);
@@ -169,12 +169,106 @@ class Element
 
     public function hasAttribute(string|Directive $name): bool
     {
-        return array_key_exists($name instanceof Directive ? $name->value : $name, $this->attributes);
+        return array_key_exists(Directive::attributeName($name), $this->attributes);
     }
 
-    public function attribute(string|Directive $name): ?string
+    /**
+     * The VALUE of attribute $name — none when the element doesn't carry it, and none
+     * when it carries it without one (`v-else`, `disabled`), because a valueless
+     * attribute has no value to read. Presence is the other question: {@see hasAttribute}.
+     *
+     * @return Option<string>
+     */
+    public function attribute(string|Directive $name): Option
     {
-        return $this->attributes[$name instanceof Directive ? $name->value : $name] ?? null;
+        return Option::fromNullable($this->attributes[Directive::attributeName($name)] ?? null);
+    }
+
+    /**
+     * This element's own attribute $name, as the name/value pair a writer renders — none
+     * when it doesn't carry it at all.
+     *
+     * @return Option<Attribute>
+     */
+    public function namedAttribute(string|Directive $name): Option
+    {
+        $key = Directive::attributeName($name);
+
+        return $this->hasAttribute($key)
+            ? Option::some(new Attribute($key, $this->attribute($key)))
+            : Option::none();
+    }
+
+    /**
+     * The directives that must travel with this element when its content is lifted
+     * somewhere else — the structural ones it carries (`v-if`/`v-else-if`/`v-else`/
+     * `v-for`) plus, for a loop, its `:key`. Whoever moves the content renders these at
+     * the new call site, so the branch or list keeps working.
+     *
+     * @return list<Attribute>
+     */
+    public function carriedDirectives(): array
+    {
+        $carried = [];
+
+        foreach (Directive::structural() as $directive) {
+            foreach ($this->namedAttribute($directive) as $attribute) {
+                $carried[] = $attribute;
+            }
+        }
+
+        foreach ($this->hasAttribute(Directive::For) ? [':key', 'key'] : [] as $key) {
+            foreach ($this->namedAttribute($key) as $attribute) {
+                $carried[] = $attribute;
+
+                break 2;
+            }
+        }
+
+        return $carried;
+    }
+
+    /**
+     * This element's own `v-for`, parsed — none when it isn't a loop. The one place the
+     * directive is read, so no caller threads its raw expression around.
+     *
+     * @return Option<Expr>
+     */
+    public function loop(): Option
+    {
+        return $this->attribute(Directive::For)->map(static fn (string $for) => Parser::parseFor($for));
+    }
+
+    /**
+     * The variables this element's own `v-for` binds — empty when it isn't a loop.
+     *
+     * @return list<string>
+     */
+    public function loopVars(): array
+    {
+        return $this->loop()->mapOr([], static fn (Expr $loop): array => $loop->get('aliases'));
+    }
+
+    /**
+     * The ELEMENT variable of this element's own `v-for` — its first alias. In
+     * `(item, index) in list` the later aliases are the index / object key, not members,
+     * so only the first ranges over the iterable's element type.
+     *
+     * @return Option<string>
+     */
+    public function loopVar(): Option
+    {
+        return Option::fromNullable($this->loopVars()[0] ?? null);
+    }
+
+    /**
+     * The expression this element's own `v-for` ranges over — none when it isn't a loop.
+     *
+     * @return Option<Expr>
+     */
+    public function loopIterable(): Option
+    {
+        return $this->loop()->map(static fn (Expr $loop): Expr => $loop->get('iterable'));
     }
 
     /**

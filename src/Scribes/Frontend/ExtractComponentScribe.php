@@ -8,6 +8,7 @@ use Closure;
 use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use JesseGall\CodeCommandments\Scribes\Span;
+use JesseGall\CodeCommandments\Vue\Attribute;
 use JesseGall\CodeCommandments\Vue\Boundary;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\ComponentLibrary;
@@ -478,7 +479,7 @@ final class ExtractComponentScribe extends RepentScribe
      * passing each prop.
      *
      * @param  array<string, string>  $bindings  prop name => the expression to pass
-     * @param  array<string, string|null>  $carried  the structural directives to keep here
+     * @param  list<Attribute>  $carried  the structural directives to keep here
      * @param  list<string>  $models  props the child WRITES — bound with `v-model`, not `:`
      * @param  bool  $forwardsSlots  the chunk renders `<slot>`s — forward the host's slots
      * @param  int  $column  the call site's indentation, for the slot-forwarding block
@@ -486,11 +487,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private static function usage(string $name, array $bindings, array $carried = [], array $models = [], bool $forwardsSlots = false, int $column = 0, array $emits = []): string
     {
-        $attributes = [];
-
-        foreach ($carried as $directive => $value) {
-            $attributes[] = $value === null ? $directive : "{$directive}=\"{$value}\"";
-        }
+        $attributes = array_map(static fn (Attribute $carry): string => $carry->render(), $carried);
 
         foreach ($bindings as $prop => $expression) {
             $attributes[] = in_array($prop, $models, true)
@@ -558,7 +555,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private static function withLoopVars(Boundary $boundary, array $props): array
     {
-        if (! isset($boundary->carried()['v-for'])) {
+        if (! $boundary->hasCarriedLoop()) {
             return $props;
         }
 

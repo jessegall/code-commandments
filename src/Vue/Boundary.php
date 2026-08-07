@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Scribes\Span;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Determines extraction boundaries for template chunks: whether extractable, natural root,
@@ -99,15 +100,15 @@ final class Boundary
      */
     public function name(): string
     {
-        if (($item = $this->ownLoopVar()) !== null) {
+        foreach ($this->node->loopVar() as $item) {
             return ucfirst($item) . 'ListItem'; // this element repeats — it's the item
         }
 
-        if (($item = $this->childLoopVar()) !== null) {
+        foreach ($this->childLoopVar() as $item) {
             return ucfirst($item) . 'List'; // it contains a v-for — it's the list
         }
 
-        if (($item = $this->ancestorLoopVar()) !== null) {
+        foreach ($this->ancestorLoopVar() as $item) {
             return ucfirst($item) . 'ListItem'; // it lives inside a list item's body
         }
 
@@ -154,7 +155,13 @@ final class Boundary
      */
     private function semanticName(): ?string
     {
-        $class = strtok((string) $this->node->attribute('class'), ' ');
+        $classes = $this->node->attribute('class');
+
+        if ($classes->isNone()) {
+            return null;
+        }
+
+        $class = strtok($classes->unwrap(), ' ');
 
         if ($class === false || ! (str_contains($class, '__') || str_contains($class, '-') || str_contains($class, '_'))) {
             return null;
@@ -254,14 +261,12 @@ final class Boundary
         $called = [];
 
         $this->each(static function (Element $element) use (&$reads, &$bound, &$called): void {
-            $for = $element->attribute(Directive::For);
-
-            foreach (self::loopVars($for) as $var) {
+            foreach ($element->loopVars() as $var) {
                 $bound[] = $var;
             }
 
-            foreach (self::loopIterable($for) as $root) {
-                $reads[] = $root;
+            foreach ($element->loopIterable() as $iterable) {
+                $reads = array_merge($reads, $iterable->roots());
             }
 
             foreach ($element->expressions() as $expression) {
@@ -449,14 +454,14 @@ final class Boundary
             static fn (array $edit): bool => $edit[0] >= $span->start && $edit[1] <= $span->end,
         ));
 
-        foreach (array_keys($this->carried()) as $name) {
-            $attribute = $this->node->attributeSpan($name);
+        foreach ($this->carried() as $carried) {
+            $attribute = $this->node->attributeSpan($carried->name)->filter(
+                static fn (array $at): bool => $at[0] >= $span->start && $at[1] <= $span->end,
+            );
 
-            if ($attribute === null || $attribute[0] < $span->start || $attribute[1] > $span->end) {
-                continue;
+            foreach ($attribute as [$start, $end]) {
+                $edits[] = [...Element::removalSpan($span->source, $span->start, $span->end, $start, $end), ''];
             }
-
-            $edits[] = [...Element::removalSpan($span->source, $span->start, $span->end, $attribute[0], $attribute[1]), ''];
         }
 
         $spliced = Element::spliceSource($span->source, $span->start, $span->end, $edits);
@@ -541,16 +546,12 @@ final class Boundary
                     continue;
                 }
 
-                $span = $element->attributeSpan($name);
-
-                if ($span === null) {
-                    continue;
+                foreach ($element->attributeSpan($name) as [$start, $end]) {
+                    $arguments = $call['arguments'] === [] ? '' : ', '.implode(', ', $call['arguments']);
+                    $edits[] = [$start, $end, "{$name}=\"\$emit('{$call['name']}'{$arguments})\""];
+                    $events[$call['name']] = max($events[$call['name']] ?? 0, count($call['arguments']));
+                    $rewrites++;
                 }
-
-                $arguments = $call['arguments'] === [] ? '' : ', '.implode(', ', $call['arguments']);
-                $edits[] = [$span[0], $span[1], "{$name}=\"\$emit('{$call['name']}'{$arguments})\""];
-                $events[$call['name']] = max($events[$call['name']] ?? 0, count($call['arguments']));
-                $rewrites++;
             }
         });
 
@@ -565,33 +566,20 @@ final class Boundary
      * chain or a list keeps working. Empty for a context-bound boundary (whose wrapper,
      * and its directive, stay in place around the lifted content).
      *
-     * @return array<string, string|null>
+     * @return list<Attribute>
      */
     public function carried(): array
     {
-        if ($this->node->isContextBound()) {
-            return [];
-        }
+        return $this->node->isContextBound() ? [] : $this->node->carriedDirectives();
+    }
 
-        $carried = [];
-
-        foreach (Directive::structural() as $directive) {
-            if ($this->node->hasAttribute($directive)) {
-                $carried[$directive->value] = $this->node->attribute($directive);
-            }
-        }
-
-        foreach (isset($carried[Directive::For->value]) ? [':key', 'key'] : [] as $key) {
-            if (! $this->node->hasAttribute($key)) {
-                continue;
-            }
-
-            $carried[$key] = $this->node->attribute($key);
-
-            break;
-        }
-
-        return $carried;
+    /**
+     * Does the boundary's own `v-for` travel to the call site? Then the loop variables it
+     * used to bind become props the extracted component receives.
+     */
+    public function hasCarriedLoop(): bool
+    {
+        return Attribute::anyNamed($this->carried(), Directive::For);
     }
 
     /**
@@ -602,7 +590,7 @@ final class Boundary
      */
     public function ownLoopVars(): array
     {
-        return self::loopVars($this->node->attribute(Directive::For));
+        return $this->node->loopVars();
     }
 
     /**
@@ -614,11 +602,11 @@ final class Boundary
     public function iterableOf(string $var): ?string
     {
         foreach ([$this->node, ...$this->node->descendants()] as $element) {
-            $for = $element->attribute(Directive::For);
-
-            if ($for !== null && (self::loopVars($for)[0] ?? null) === $var) {
-                return Parser::parseFor($for)->get('iterable')->source();
+            if (! $element->loopVar()->isSomeAnd(static fn (string $alias): bool => $alias === $var)) {
+                continue;
             }
+
+            return $element->loopIterable()->unwrap()->source();
         }
 
         return null;
@@ -631,70 +619,52 @@ final class Boundary
 
     // ---- loop / list detection ------------------------------------------------
 
-    private function ownLoopVar(): ?string
+    /**
+     * The element variable of the ONE loop somewhere below this boundary — none when it
+     * holds no loop, and none when it holds several: a section that HAPPENS to contain
+     * lists is not itself "a list", so naming it `{firstLoopVar}List` would be wrong (and
+     * could collide with a child it renders).
+     *
+     * @return Option<string>
+     */
+    private function childLoopVar(): Option
     {
-        return self::loopVars($this->node->attribute(Directive::For))[0] ?? null;
-    }
-
-    private function childLoopVar(): ?string
-    {
-        $found = null;
+        $found = Option::none();
 
         foreach ($this->node->descendants() as $element) {
-            $vars = self::loopVars($element->attribute(Directive::For));
+            $var = $element->loopVar();
 
-            if ($vars === []) {
+            if ($var->isNone()) {
                 continue;
             }
 
-            // More than one loop → this is a section/dialog that HAPPENS to contain lists,
-            // not itself "a list". Naming it `{firstLoopVar}List` is wrong (and can collide
-            // with a child it renders). Fall through to a structural name.
-            if ($found !== null) {
-                return null;
+            if ($found->isSome()) {
+                return Option::none();
             }
 
-            $found = $vars[0];
+            $found = $var;
         }
 
         return $found;
     }
 
-    private function ancestorLoopVar(): ?string
+    /**
+     * The element variable of the nearest loop this boundary sits INSIDE — so a chunk
+     * lifted out of a list item's body is still named for the item.
+     *
+     * @return Option<string>
+     */
+    private function ancestorLoopVar(): Option
     {
         for ($node = $this->node->parent; $node !== null; $node = $node->parent) {
-            $vars = self::loopVars($node->attribute(Directive::For));
+            $var = $node->loopVar();
 
-            if ($vars !== []) {
-                return $vars[0];
+            if ($var->isSome()) {
+                return $var;
             }
         }
 
-        return null;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function loopVars(?string $expression): array
-    {
-        if ($expression === null) {
-            return [];
-        }
-
-        return Parser::parseFor($expression)->get('aliases');
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function loopIterable(?string $expression): array
-    {
-        if ($expression === null) {
-            return [];
-        }
-
-        return Parser::parseFor($expression)->get('iterable')->roots();
+        return Option::none();
     }
 
     /**

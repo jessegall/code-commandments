@@ -11,7 +11,6 @@ use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
-use JesseGall\CodeCommandments\Vue\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Script;
 
 /**
@@ -37,14 +36,14 @@ final class IndexAsKeyDetector implements Detector
 
     private static function keyedByIndex(ElementMatch $element): bool
     {
-        $for = $element->attribute(Directive::For);
         $key = $element->propBindings()['key'] ?? null;
+        $loop = $element->loop();
 
-        if ($for === null || $key === null) {
+        if ($key === null || $loop->isNone()) {
             return false;
         }
 
-        $loop = Parser::parseFor($for);
+        $loop = $loop->unwrap();
         $aliases = $loop->get('aliases');
 
         if (count($aliases) < 2 || $key->asChain() !== [$aliases[count($aliases) - 1]]) {
