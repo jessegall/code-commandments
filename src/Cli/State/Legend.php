@@ -6,13 +6,9 @@ namespace JesseGall\CodeCommandments\Cli\State;
 
 /**
  * What a {@see StateFile} is, written for the HUMAN who finds it — the prose, the meaning of every
- * named value, and what the list beneath them holds. It is the reason the format is named at all: a
- * marker whose first lines were `0`, `0`, `5` could only be read with the writing class open beside
- * it, so the file now carries its own key and {@see render}s it below the state it explains.
- *
- * A legend is DECLARED once, next to the state it describes ({@see \JesseGall\CodeCommandments\Cli\Until\UntilGate},
- * {@see \JesseGall\CodeCommandments\Cli\Plan\PlanMarker}, {@see \JesseGall\CodeCommandments\Hooks\Counter}),
- * and every write projects from it — so a value added to a file can never arrive without its meaning.
+ * named value, and what the list beneath them holds. It is DECLARED once beside the state it
+ * describes and every write {@see render}s from it, so a file carries its own key and a value can
+ * never arrive in one without its meaning.
  */
 final class Legend
 {

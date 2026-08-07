@@ -7,15 +7,9 @@ namespace JesseGall\CodeCommandments\Cli\Until;
 use JesseGall\CodeCommandments\Cli\State\Line;
 
 /**
- * One thing the user said must hold before the agent may stop — its STABLE id, its text, and, once
- * the agent has said so, the reason it cannot move without the user.
- *
- * The reason lives HERE, on the condition, and not in a counter beside the gate. An agent works the
- * list in whatever order it likes, so "how much has happened since the last hold" could never answer
- * the question `stuck` actually asks — which of THESE is blocked, and why. Being blocked is a fact
- * about a condition, so it is recorded against that condition, one at a time
- * ({@see UntilGate::markBlocked}), and `stuck` is simply the moment every standing condition carries
- * one.
+ * One thing the user said must hold before the agent may stop — its STABLE id, its text, and the
+ * reason it cannot move without the user. Being blocked is a fact about a CONDITION, so the reason
+ * is recorded here ({@see UntilGate::markBlocked}) rather than as activity beside the gate.
  */
 final readonly class Condition
 {

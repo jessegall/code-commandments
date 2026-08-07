@@ -82,11 +82,6 @@ final class ProgressBar
     }
 
     /**
-     * Draw a determinate bar straight from a (done, total) pair — for a phase the
-     * caller counts itself, e.g. parsing files. Only re-renders when the filled bar
-     * actually moves, so a per-file callback over thousands of files stays cheap.
-     */
-    /**
      * This bar as a `($done, $total)` reporter for one named phase — what a long job takes so it
      * can report progress without knowing there is a bar, or whether anyone is watching.
      */
@@ -95,6 +90,11 @@ final class ProgressBar
         return new ProgressPhase($this, $phase);
     }
 
+    /**
+     * Draw a determinate bar straight from a (done, total) pair — for a phase the
+     * caller counts itself, e.g. parsing files. Only re-renders when the filled bar
+     * actually moves, so a per-file callback over thousands of files stays cheap.
+     */
     public function track(int $done, int $total, string $phase): void
     {
         if (! $this->enabled()) {

@@ -21,18 +21,10 @@ use JesseGall\CodeCommandments\Workspace;
  * wedged agent is released instead of looped forever — striking a condition off is progress and
  * resets it. The user can also set the whole gate aside without losing it: {@see pause} raises a flag
  * so nothing holds a stop while every condition is kept verbatim, and {@see resume} puts them back in
- * force.
- *
- * Being BLOCKED is recorded per condition ({@see markBlocked}), never as a count of activity. An agent
- * works the list in its own order, so no counter could answer the question `stuck` asks — which of
- * these is waiting on the user, and why. Each condition carries its own reason, and `stuck` is exactly
- * the moment {@see unblocked} is empty: every standing condition has been named, one at a time.
- *
- * ONE {@see StateFile} holds all of it — the conditions and their blocks, the held-stop count, the
- * to-do drift and any pending claim. That is not tidiness: these are one state, and while the counts
- * lived in files of their own they OUTLIVED the gate they belonged to, so a fresh gate inherited the
- * last one's counts and answered for a list that no longer existed. Lifting the gate now deletes the
- * whole state at once. Session-scoped, so one session's gate never holds another's stop.
+ * force. Being BLOCKED is recorded per condition ({@see markBlocked}), so `stuck` is exactly the
+ * moment {@see unblocked} is empty. ONE session-scoped {@see StateFile} holds all of it — conditions
+ * and their blocks, the held-stop count, the to-do drift, any pending claim — so lifting the gate
+ * deletes the whole state at once and no half survives to answer for the next one.
  */
 final class UntilGate
 {
