@@ -91,12 +91,9 @@ final class Config
      * Subtract explicit paths from the scan — declared ON TOP of the inclusive {@see paths}, so a
      * directory or file listed here (relative to the project) is NEVER a target: judge never reports
      * a sin in it and repent never rewrites it, however it was reached (a broad root, `--changes`,
-     * `--branch`). Like a {@see paths} root, an excluded path is a project-relative directory or file;
-     * unlike the per-file `#[Frozen]` marker, it excludes a whole subtree in one config line.
-     *
-     * The tree is still PARSED (so cross-file detectors that resolve a type or a caller defined under
-     * an excluded path stay correct) — only the OUTPUT is scoped out, exactly as `--changes`/`--branch`
-     * parse the whole path but scope what they report.
+     * `--branch`). An entry is a project-relative directory or file, or a glob over one — so a
+     * monorepo covers every sub-project's build output in a single starred line rather than one
+     * each. The tree is pruned from the WALK, so an excluded path costs the run nothing to skip.
      */
     public function exclude(string ...$paths): self
     {
@@ -351,6 +348,26 @@ final class Config
     }
 
     /**
+     * Say ONCE which configured detectors could not be loaded — a project that keeps its rules in a
+     * folder it forgot to commit names every one of them, and a paragraph repeated per class buries
+     * the run's actual output.
+     *
+     * @param  list<string>  $missing
+     */
+    private function reportMissing(array $missing): void
+    {
+        if ($missing === []) {
+            return;
+        }
+
+        fwrite(STDERR, '⚠ ' . count($missing) . " configured detector(s) could not be loaded, and were skipped:\n  "
+            . implode("\n  ", $missing)
+            . "\n  A project's own rules live in .commandments/" . Workspace::CUSTOM
+            . "/ (loaded by file, so they need no autoloader) — check they are present and committed,"
+            . " or that composer autoloads their namespace.\n\n");
+    }
+
+    /**
      * The effective detector sets for THIS project, split by engine: rules whose required
      * package isn't installed are dropped, then the disabled ones, the registered ones are
      * added, and the configurators run. `$installed` decides package availability — defaults to
@@ -368,13 +385,27 @@ final class Config
         $keep = fn (Detector $d): bool => $this->hasPackage($d, $installed) && ! $this->isDisabled($d);
         $detectors = array_filter([...$backend, ...$frontend], $keep);
 
+        $missing = [];
+
         foreach ($this->registered as $class) {
+            // A class the autoloader can't find reached `new` and took the WHOLE config down with an
+            // uncaught Error — so one custom detector that wasn't committed, or isn't autoloaded on
+            // this machine, cost the project its paths() and exclude() as well. It is reported and
+            // skipped instead: a rule we cannot load is one rule missing, not a run that won't start.
+            if (! class_exists($class)) {
+                $missing[] = $class;
+
+                continue;
+            }
+
             $detector = new $class;
 
             if ($keep($detector)) {
                 $detectors[] = $detector;
             }
         }
+
+        $this->reportMissing($missing);
 
         $detectors = array_values($detectors);
 
