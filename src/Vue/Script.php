@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Vue\Lexeme;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;
-use JesseGall\CodeCommandments\Vue\Ts\Lexeme;
 use JesseGall\CodeCommandments\Vue\Ts\Lexer;
 use JesseGall\CodeCommandments\Vue\Ts\Node\CallExpr;
 use JesseGall\CodeCommandments\Vue\Ts\Node\CompositeType;

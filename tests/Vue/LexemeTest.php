@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Vue\Ts;
+namespace JesseGall\CodeCommandments\Tests\Vue;
 
 use JesseGall\CodeCommandments\Vue\Token;
-use JesseGall\CodeCommandments\Vue\Ts\Lexeme;
+use JesseGall\CodeCommandments\Vue\Lexeme;
 use JesseGall\CodeCommandments\Vue\Ts\Parser;
 use PHPUnit\Framework\TestCase;
 

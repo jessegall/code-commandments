@@ -50,6 +50,40 @@ final class Token
     public const array TYPE_OPEN = [self::PAREN_OPEN, self::BRACKET_OPEN, self::BRACE_OPEN, self::ANGLE_OPEN];
     public const array TYPE_CLOSE = [self::PAREN_CLOSE, self::BRACKET_CLOSE, self::BRACE_CLOSE, self::ANGLE_CLOSE];
 
+    // ---- character classes (what a lexer leans on to cut a token) --------------
+
+    /**
+     * Does this character open a string literal? JS has three quotes and a template literal is one
+     * of them.
+     */
+    public static function quotes(string $char): bool
+    {
+        return $char === '"' || $char === "'" || $char === '`';
+    }
+
+    /**
+     * Can a NAME begin here? A JS identifier starts with a letter, `_` or `$`, and continues with
+     * digits too ({@see continuesName}).
+     */
+    public static function startsName(string $char): bool
+    {
+        return ctype_alpha($char) || $char === '_' || $char === '$';
+    }
+
+    public static function continuesName(string $char): bool
+    {
+        return ctype_alnum($char) || $char === '_' || $char === '$';
+    }
+
+    /**
+     * Does a numeric literal continue here? Digits, the decimal point, and the `_` separator — so
+     * `1_000` is ONE token in both lexers rather than a `1` followed by an identifier `_000`.
+     */
+    public static function continuesNumber(string $char): bool
+    {
+        return ctype_alnum($char) || $char === '.' || $char === '_';
+    }
+
     public static function opensGroup(string $value): bool
     {
         return in_array($value, self::GROUP_OPEN, true);

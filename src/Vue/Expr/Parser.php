@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Expr;
 
+use JesseGall\CodeCommandments\Vue\Lexeme;
 use JesseGall\CodeCommandments\Vue\Token;
 
 /**
@@ -28,21 +29,16 @@ final class Parser
         '*' => 7, '/' => 7, '%' => 7,
     ];
 
-    private const array PUNCTUATION = [
-        '?.', '===', '!==', '==', '!=', '<=', '>=', '&&', '||', '??', '=>',
-        '.', '(', ')', '[', ']', '{', '}', ',', '?', ':', '!', '<', '>', '+', '-', '*', '/', '%', '=',
-    ];
-
     /**
-     * @var list<array{type: string, value: string}>
+     * @var list<Lexeme>
      */
-    private array $tokens;
+    private readonly array $tokens;
 
     private int $pos = 0;
 
     private function __construct(string $source)
     {
-        $this->tokens = $this->lex($source);
+        $this->tokens = new Lexer()->tokenize($source);
     }
 
     public static function parse(string $source): Expr
@@ -86,24 +82,19 @@ final class Parser
         while (! $this->isEof()) {
             $token = $this->peek();
 
-            if ($bracket === 0 && $token['type'] === 'name' && ($token['value'] === 'in' || $token['value'] === 'of')) {
+            if ($bracket === 0 && self::isForKeyword($token)) {
                 break; // the keyword — LHS is done
             }
 
-            if ($token['type'] === 'punct') {
-                if ($token['value'] === '(' || $token['value'] === '{' || $token['value'] === '[') {
-                    $bracket++;
-                    if ($token['value'] !== '(') {
-                        $destructure++;
-                    }
-                } elseif ($token['value'] === ')' || $token['value'] === '}' || $token['value'] === ']') {
-                    $bracket--;
-                    if ($token['value'] !== ')') {
-                        $destructure--;
-                    }
-                }
-            } elseif ($token['type'] === 'name' && $destructure === 0) {
-                $aliases[] = $token['value'];
+            $step = $token->groupDepthChange();
+            $bracket += $step;
+
+            if (! $token->isPunct(Token::PAREN_OPEN) && ! $token->isPunct(Token::PAREN_CLOSE)) {
+                $destructure += $step; // a grouping `(item, index)` is not a pattern; `{…}`/`[…]` are
+            }
+
+            if ($step === 0 && $destructure === 0 && $token->isIdentifier()) {
+                $aliases[] = $token->value;
             }
 
             $this->next();
@@ -112,17 +103,26 @@ final class Parser
         return $aliases;
     }
 
+    /**
+     * Is this the keyword that separates a `v-for`'s aliases from the thing being iterated? `in` and
+     * `of` are the only two Vue accepts, and both read the same way.
+     */
+    private static function isForKeyword(Lexeme $token): bool
+    {
+        return $token->isIdentifier('in') || $token->isIdentifier('of');
+    }
+
     private function forKeyword(): string
     {
         $token = $this->peek();
 
-        if ($token['type'] === 'name' && ($token['value'] === 'in' || $token['value'] === 'of')) {
-            $this->next();
-
-            return $token['value'];
+        if (! self::isForKeyword($token)) {
+            return 'in';
         }
 
-        return 'in';
+        $this->next();
+
+        return $token->value;
     }
 
     // ---- parser ---------------------------------------------------------------
@@ -166,16 +166,16 @@ final class Parser
         // A TS `as` cast is compile-time-only — skip `as <Type>` and keep the runtime value expression, so
         // `($event.target as HTMLInputElement).value` parses (and reconstructs) as `$event.target.value`
         // rather than silently truncating to `$event.target`.
-        while ($this->peek()['type'] === 'name' && $this->peek()['value'] === 'as') {
+        while ($this->peek()->isIdentifier('as')) {
             $this->next();
             $this->skipTypeAnnotation();
         }
 
         while (true) {
             $token = $this->peek();
-            $operator = $token['value'];
+            $operator = $token->value;
 
-            if ($token['type'] !== 'punct' || ! isset(self::PRECEDENCE[$operator]) || self::PRECEDENCE[$operator] < $minPrecedence) {
+            if (! $token->isPunct() || ! isset(self::PRECEDENCE[$operator]) || self::PRECEDENCE[$operator] < $minPrecedence) {
                 break;
             }
 
@@ -191,13 +191,13 @@ final class Parser
     {
         $token = $this->peek();
 
-        if ($token['type'] === 'punct' && in_array($token['value'], ['!', '-', '+'], true)) {
+        if ($token->isPunct() && in_array($token->value, ['!', '-', '+'], true)) {
             $this->next();
 
-            return new Expr(ExprKind::Unary, ['op' => $token['value'], 'argument' => $this->unary()]);
+            return new Expr(ExprKind::Unary, ['op' => $token->value, 'argument' => $this->unary()]);
         }
 
-        if ($token['type'] === 'name' && $token['value'] === 'typeof') {
+        if ($token->isIdentifier('typeof')) {
             $this->next();
 
             return new Expr(ExprKind::Unary, ['op' => 'typeof', 'argument' => $this->unary()]);
@@ -216,41 +216,29 @@ final class Parser
     {
         $depth = 0;
 
-        while (true) {
+        while (! $this->isEof()) {
             $token = $this->peek();
 
-            if ($token['type'] === 'eof') {
-                return;
+            if ($token->isTypeCloser() && $depth === 0) {
+                return; // a closing bracket belonging to the enclosing expression
             }
 
-            if ($token['type'] === 'punct') {
-                $value = $token['value'];
-
-                if (in_array($value, ['<', '[', '('], true)) {
-                    $depth++;
-                    $this->next();
-
-                    continue;
-                }
-
-                if (in_array($value, ['>', ']', ')'], true)) {
-                    if ($depth === 0) {
-                        return; // a closing bracket belonging to the enclosing expression
-                    }
-
-                    $depth--;
-                    $this->next();
-
-                    continue;
-                }
-
-                if ($depth === 0 && ! in_array($value, ['.', '|', '&'], true)) {
-                    return; // a top-level token that isn't a type connector ends the type
-                }
+            if ($depth === 0 && $token->isPunct() && ! $token->isTypeOpener() && ! self::connectsType($token)) {
+                return; // a top-level token that isn't a type connector ends the type
             }
 
+            $depth += $token->typeDepthChange();
             $this->next();
         }
+    }
+
+    /**
+     * Does this token CONTINUE a type rather than end it — the `.` of a qualified name and the
+     * `|`/`&` of a union or intersection?
+     */
+    private static function connectsType(Lexeme $token): bool
+    {
+        return $token->isPunct('.') || $token->isPunct('|') || $token->isPunct('&');
     }
 
     private function postfix(): Expr
@@ -334,33 +322,33 @@ final class Parser
     {
         $token = $this->peek();
 
-        if ($token['type'] === 'name') {
+        if ($token->isIdentifier()) {
             $this->next();
 
-            if (in_array($token['value'], ['true', 'false', 'null', 'undefined'], true)) {
-                return new Expr(ExprKind::Literal, ['value' => $token['value'], 'raw' => $token['value']]);
+            if (in_array($token->value, ['true', 'false', 'null', 'undefined'], true)) {
+                return new Expr(ExprKind::Literal, ['value' => $token->value, 'raw' => $token->value]);
             }
 
             if ($this->isPunct('=>')) {
                 $this->next();
-                $param = new Expr(ExprKind::Identifier, ['name' => $token['value']]);
+                $param = new Expr(ExprKind::Identifier, ['name' => $token->value]);
 
                 return new Expr(ExprKind::Arrow, ['params' => [$param], 'body' => $this->expression()]);
             }
 
-            return new Expr(ExprKind::Identifier, ['name' => $token['value']]);
+            return new Expr(ExprKind::Identifier, ['name' => $token->value]);
         }
 
-        if ($token['type'] === 'num') {
+        if ($token->is(Token::NUMBER)) {
             $this->next();
 
-            return new Expr(ExprKind::Literal, ['value' => $token['value'], 'raw' => $token['value']]);
+            return new Expr(ExprKind::Literal, ['value' => $token->value, 'raw' => $token->value]);
         }
 
-        if ($token['type'] === 'str') {
+        if ($token->is(Token::STRING)) {
             $this->next();
 
-            return new Expr(ExprKind::Literal, ['value' => $this->unquote($token['value']), 'raw' => $token['value']]);
+            return new Expr(ExprKind::Literal, ['value' => $this->unquote($token->value), 'raw' => $token->value]);
         }
 
         if ($this->isPunct('(')) {
@@ -376,7 +364,7 @@ final class Parser
         }
 
         // Unknown token — consume one so we always make progress.
-        if ($token['type'] !== 'eof') {
+        if (! $token->isNone()) {
             $this->next();
         }
 
@@ -423,21 +411,11 @@ final class Parser
         for ($i = $this->pos, $n = count($this->tokens); $i < $n; $i++) {
             $token = $this->tokens[$i];
 
-            if ($token['type'] !== 'punct') {
-                continue;
+            if ($token->isGroupCloser() && $depth === 0) {
+                return ($this->tokens[$i + 1] ?? Lexeme::none($i))->isPunct('=>');
             }
 
-            if (in_array($token['value'], ['(', '[', '{'], true)) {
-                $depth++;
-            } elseif (in_array($token['value'], [')', ']', '}'], true)) {
-                if ($depth === 0) {
-                    $next = $this->tokens[$i + 1] ?? null;
-
-                    return $next !== null && $next['type'] === 'punct' && $next['value'] === '=>';
-                }
-
-                $depth--;
-            }
+            $depth += $token->groupDepthChange();
         }
 
         return false;
@@ -459,8 +437,8 @@ final class Parser
                 foreach ($this->patternNames() as $name) {
                     $params[] = new Expr(ExprKind::Identifier, ['name' => $name]);
                 }
-            } elseif ($this->peek()['type'] === 'name') {
-                $params[] = new Expr(ExprKind::Identifier, ['name' => $this->peek()['value']]);
+            } elseif ($this->peek()->isIdentifier()) {
+                $params[] = new Expr(ExprKind::Identifier, ['name' => $this->peek()->value]);
                 $this->next();
             }
 
@@ -489,8 +467,8 @@ final class Parser
             $change = $this->depthChange();
             $depth += $change;
 
-            if ($change === 0 && $this->peek()['type'] === 'name') {
-                $names[] = $this->peek()['value'];
+            if ($change === 0 && $this->peek()->isIdentifier()) {
+                $names[] = $this->peek()->value;
             }
 
             $this->next();
@@ -545,10 +523,7 @@ final class Parser
         $keys = [];
 
         while (! $this->isPunct('}') && ! $this->isEof()) {
-            $token = $this->peek();
-            $key = in_array($token['type'], ['name', 'str', 'num'], true)
-                ? ($token['type'] === 'str' ? $this->unquote($token['value']) : (string) $token['value'])
-                : null;
+            $key = $this->objectKey($this->peek());
             $this->next(); // consume the key (an identifier, string, number, or computed token)
 
             if ($this->isPunct(':')) {
@@ -567,6 +542,20 @@ final class Parser
         $this->expect('}');
 
         return new Expr(ExprKind::Object, ['values' => $values, 'keys' => $keys]);
+    }
+
+    /**
+     * The KEY an object-literal entry is written under — an identifier, a number, or a quoted string
+     * read back without its quotes. None of those, and the entry is computed (`[expr]:`), which has
+     * no name to record.
+     */
+    private function objectKey(Lexeme $token): ?string
+    {
+        return match (true) {
+            $token->is(Token::STRING) => $this->unquote($token->value),
+            $token->isIdentifier(), $token->is(Token::NUMBER) => $token->value,
+            default => null,
+        };
     }
 
     /**
@@ -596,13 +585,13 @@ final class Parser
     {
         $token = $this->peek();
 
-        if ($token['type'] === 'name') {
-            $this->next();
-
-            return $token['value'];
+        if (! $token->isIdentifier()) {
+            return '';
         }
 
-        return '';
+        $this->next();
+
+        return $token->value;
     }
 
     private function skipArrowMarker(): void
@@ -614,12 +603,9 @@ final class Parser
 
     // ---- token cursor ---------------------------------------------------------
 
-    /**
-     * @return array{type: string, value: string}
-     */
-    private function peek(): array
+    private function peek(): Lexeme
     {
-        return $this->tokens[$this->pos] ?? ['type' => 'eof', 'value' => ''];
+        return $this->tokens[$this->pos] ?? Lexeme::none($this->pos);
     }
 
     private function next(): void
@@ -634,24 +620,12 @@ final class Parser
      */
     private function depthChange(): int
     {
-        $token = $this->peek();
-
-        if ($token['type'] !== 'punct') {
-            return 0;
-        }
-
-        return match (true) {
-            Token::opensGroup($token['value']) => 1,
-            Token::closesGroup($token['value']) => -1,
-            default => 0,
-        };
+        return $this->peek()->groupDepthChange();
     }
 
     private function isPunct(string $value): bool
     {
-        $token = $this->peek();
-
-        return $token['type'] === 'punct' && $token['value'] === $value;
+        return $this->peek()->isPunct($value);
     }
 
     /**
@@ -665,7 +639,7 @@ final class Parser
 
     private function isEof(): bool
     {
-        return $this->peek()['type'] === 'eof';
+        return $this->peek()->isNone();
     }
 
     private function expect(string $punct): void
@@ -682,115 +656,5 @@ final class Parser
         }
 
         return $raw;
-    }
-
-    // ---- lexer (scanner, no regex) --------------------------------------------
-
-    /**
-     * @return list<array{type: string, value: string}>
-     */
-    private function lex(string $source): array
-    {
-        $tokens = [];
-        $length = strlen($source);
-        $i = 0;
-
-        while ($i < $length) {
-            $char = $source[$i];
-
-            if (ctype_space($char)) {
-                $i++;
-
-                continue;
-            }
-
-            if ($this->isNameStart($char)) {
-                $start = $i;
-                while ($i < $length && $this->isNamePart($source[$i])) {
-                    $i++;
-                }
-                $tokens[] = ['type' => 'name', 'value' => substr($source, $start, $i - $start)];
-
-                continue;
-            }
-
-            if (ctype_digit($char)) {
-                $start = $i;
-                while ($i < $length && (ctype_digit($source[$i]) || $source[$i] === '.')) {
-                    $i++;
-                }
-                $tokens[] = ['type' => 'num', 'value' => substr($source, $start, $i - $start)];
-
-                continue;
-            }
-
-            if ($char === '"' || $char === "'" || $char === '`') {
-                $tokens[] = ['type' => 'str', 'value' => $this->readString($source, $i, $length)];
-
-                continue;
-            }
-
-            $punct = $this->readPunct($source, $i, $length);
-
-            if ($punct !== null) {
-                $tokens[] = ['type' => 'punct', 'value' => $punct];
-
-                continue;
-            }
-
-            $i++; // unknown byte — skip
-        }
-
-        return $tokens;
-    }
-
-    private function readString(string $source, int &$i, int $length): string
-    {
-        $quote = $source[$i];
-        $start = $i;
-        $i++;
-
-        while ($i < $length) {
-            if ($source[$i] === '\\') {
-                $i += 2;
-
-                continue;
-            }
-
-            if ($source[$i] === $quote) {
-                $i++;
-
-                break;
-            }
-
-            $i++;
-        }
-
-        return substr($source, $start, $i - $start);
-    }
-
-    private function readPunct(string $source, int &$i, int $length): ?string
-    {
-        foreach (self::PUNCTUATION as $punct) {
-            $len = strlen($punct);
-
-            if (substr($source, $i, $len) === $punct) {
-                $i += $len;
-
-                return $punct;
-            }
-        }
-
-        return null;
-    }
-
-    private function isNameStart(string $char): bool
-    {
-        return ctype_alpha($char) || $char === '_' || $char === '$';
-    }
-
-    private function isNamePart(string $char): bool
-    {
-        return ctype_alnum($char) || $char === '_' || $char === '$';
     }
 }

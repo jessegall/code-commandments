@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Vue\Ts;
-
-use JesseGall\CodeCommandments\Vue\Token;
+namespace JesseGall\CodeCommandments\Vue;
 
 /**
- * One token from the {@see Lexer} — a kind ({@see Token} constant), its source text, and the byte
+ * One token from either of the Vue engine's lexers — the TS {@see Ts\Lexer} over a `<script setup>`
+ * and the {@see Expr\Lexer} over a binding expression. A kind ({@see Token} constant), its source text,
+ * and the byte
  * span it covers (so the parser can tell a newline-terminated member from a continued one, and a
  * node can point back at its source). A value object, not an array bag: the parser reads
  * `$lexeme->value` / `$lexeme->is(...)`, never a string-keyed lookup.
@@ -66,6 +66,20 @@ final readonly class Lexeme
     }
 
     /**
+     * What this lexeme does to a bracket DEPTH — +1 for an opener, -1 for a closer, 0 for anything
+     * else. Every scan that has to stay inside a group asks the token rather than spelling the
+     * six-bracket ladder again.
+     */
+    public function groupDepthChange(): int
+    {
+        return match (true) {
+            $this->isGroupOpener() => 1,
+            $this->isGroupCloser() => -1,
+            default => 0,
+        };
+    }
+
+    /**
      * Is this lexeme the OPENING bracket of a TYPE — the `<` of `Ref<T>` and its kin?
      */
     public function isTypeOpener(): bool
@@ -79,6 +93,19 @@ final readonly class Lexeme
     public function isTypeCloser(): bool
     {
         return $this->isPunct() && Token::closesType($this->value);
+    }
+
+    /**
+     * What this lexeme does to a TYPE's bracket depth — the group question over the type brackets,
+     * where a generic's `<…>` balances too.
+     */
+    public function typeDepthChange(): int
+    {
+        return match (true) {
+            $this->isTypeOpener() => 1,
+            $this->isTypeCloser() => -1,
+            default => 0,
+        };
     }
 
     /**

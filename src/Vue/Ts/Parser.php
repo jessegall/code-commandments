@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Ts;
 
+use JesseGall\CodeCommandments\Vue\Lexeme;
 use JesseGall\CodeCommandments\Vue\Token;
 use JesseGall\CodeCommandments\Vue\Ts\Node\ArrayPattern;
 use JesseGall\CodeCommandments\Vue\Ts\Node\ArrayType;
