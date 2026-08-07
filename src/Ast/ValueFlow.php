@@ -508,8 +508,8 @@ final class ValueFlow
             return $type === null ? null : [$type, $call->name->toString()];
         }
 
-        if ($call instanceof StaticCall && $call->class instanceof Name && $call->name instanceof Identifier) {
-            return [ltrim($call->class->toString(), '\\'), $call->name->toString()];
+        foreach (Callee::ofStaticCall($call) as $callee) {
+            return [$callee->class, $callee->method];
         }
 
         if ($call instanceof New_ && $call->class instanceof Name) {

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes;
 
+use JesseGall\CodeCommandments\Ast\NodeMatch;
+use PhpParser\Node\Stmt\Class_;
+
 use JesseGall\CodeCommandments\Span;
 
 /**
@@ -54,5 +57,22 @@ abstract class RepentScribe
 
             return true;
         }));
+    }
+
+    /**
+     * The findings that are CLASS declarations. A scribe that reshapes a class body says what it
+     * DOES to each one, rather than re-stating what a class-shaped finding looks like — three of
+     * them were carrying the same two-part guard.
+     *
+     * @param  list<mixed>  $findings
+     * @return iterable<NodeMatch>
+     */
+    protected function classDeclarations(array $findings): iterable
+    {
+        foreach ($findings as $match) {
+            if ($match instanceof NodeMatch && $match->node instanceof Class_) {
+                yield $match;
+            }
+        }
     }
 }

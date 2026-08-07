@@ -39,10 +39,8 @@ final class NullObjectDefaultScribe extends RepentScribe implements NeedsCodebas
     {
         $draft = $this->draft([]);
 
-        foreach ($findings as $match) {
-            if ($match instanceof NodeMatch && $match->node instanceof Class_) {
-                $this->reshape($draft, $match, $match->node);
-            }
+        foreach ($this->classDeclarations($findings) as $match) {
+            $this->reshape($draft, $match, $match->node);
         }
 
         return $draft->rewrites();

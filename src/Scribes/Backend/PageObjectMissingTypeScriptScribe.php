@@ -22,10 +22,8 @@ final class PageObjectMissingTypeScriptScribe extends RepentScribe
     {
         $draft = $this->draft([]);
 
-        foreach ($findings as $match) {
-            if ($match instanceof NodeMatch && $match->node instanceof Class_) {
-                Writer::for($draft, $match)->stampAttribute($match->node, '#[TypeScript]', self::TYPE_SCRIPT);
-            }
+        foreach ($this->classDeclarations($findings) as $match) {
+            Writer::for($draft, $match)->stampAttribute($match->node, '#[TypeScript]', self::TYPE_SCRIPT);
         }
 
         return $draft->rewrites();

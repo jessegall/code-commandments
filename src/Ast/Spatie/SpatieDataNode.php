@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Ast\ClassField;
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
+use JesseGall\CodeCommandments\Ast\Callee;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\DataClassShape;
 use JesseGall\CodeCommandments\Ast\Laravel\PageObject;
@@ -1389,9 +1390,8 @@ final class SpatieDataNode extends NodeMatch
 
         if ($call instanceof MethodCall && AstNode::memberNameOf($call) !== null) {
             $owner = TypeResolver::forCodebase($this->codebase)->typeOf($call->var, $function, $this->enclosingClassName());
-        } elseif ($call instanceof StaticCall && $call->name instanceof Identifier && $call->class instanceof Name) {
-            $class = $call->class->toString();
-            $owner = in_array($class, ['self', 'static'], true) ? $this->enclosingClassName() : ltrim($class, '\\');
+        } elseif (Callee::ofStaticCall($call)->isSome()) {
+            $owner = Callee::ofStaticCall($call)->unwrap()->resolvedAgainst($this->enclosingClassName())->class;
         } else {
             return [null, null];
         }

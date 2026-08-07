@@ -26,10 +26,8 @@ final class NonFinalDataScribe extends RepentScribe
     {
         $draft = $this->draft([]);
 
-        foreach ($findings as $match) {
-            if ($match instanceof NodeMatch && $match->node instanceof Class_) {
-                $this->seal($draft, $match, $match->node);
-            }
+        foreach ($this->classDeclarations($findings) as $match) {
+            $this->seal($draft, $match, $match->node);
         }
 
         return $draft->rewrites();
