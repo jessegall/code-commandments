@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins;
 
-use JesseGall\CodeCommandments\Skills\Skill;
-
 /**
- * One architectural sin found by a {@see Detector}, owning the teaching {@see Skill}
+ * One architectural sin found by a {@see Detector}, owning the teaching
+ * {@see \JesseGall\CodeCommandments\Skills\Skill}
  * (CLASS-referenced for refactor-safety) and a one-line {@see $description}. Registered
- * like {@see Skill}s; detectors *reference* them, never declare inline.
+ * like skills; detectors *reference* them, never declare inline.
  */
 abstract class Sin
 {
     /**
-     * @var class-string<Skill>
+     * @var class-string<\JesseGall\CodeCommandments\Skills\Skill>
      */
     private readonly string $skill;
 
     /**
-     * @param  class-string<Skill>  $skill  the teaching skill that fixes this sin
+     * @param  class-string<\JesseGall\CodeCommandments\Skills\Skill>  $skill  the teaching skill that fixes this sin
      */
     public function __construct(
         public readonly string $name,
@@ -40,11 +39,15 @@ abstract class Sin
     }
 
     /**
-     * The teaching skill that fixes this sin.
+     * The teaching skill that fixes this sin, by CLASS. A sin owns the REFERENCE, not the
+     * document — keeping the instance off `Sin` is what stops the sin registry and the skill
+     * library depending on each other, since the library already reads every sin to render.
+     *
+     * @return class-string<\JesseGall\CodeCommandments\Skills\Skill>
      */
-    public function skill(): Skill
+    public function skillClass(): string
     {
-        return new $this->skill;
+        return $this->skill;
     }
 
     /**
@@ -52,7 +55,9 @@ abstract class Sin
      */
     public function slug(): string
     {
-        return $this->skill()->slug;
+        $skill = new $this->skill;
+
+        return $skill->slug;
     }
 
     /**

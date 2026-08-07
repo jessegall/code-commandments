@@ -429,7 +429,7 @@ final class Config
 
         return in_array($detector::class, $this->disabled, true)
             || in_array($sin::class, $this->disabled, true)
-            || in_array($sin->skill()::class, $this->disabled, true);
+            || in_array($sin->skillClass(), $this->disabled, true);
     }
 
     /**

@@ -38,7 +38,8 @@ final class FixtureExamples
             $keys = [$detector->sin()::class, $detector::class, $detector->sin()->slug(), $detector->sin()->name()];
             $bad = ExampleText::forKeys($sinful, $keys);
             $good = ExampleText::forKeys($fixed, $keys) ?: ExampleText::forKeys($righteous, $keys);
-            $lift = ! $detector->sin()->skill()->examplesKeepDocblocks();
+            $skill = $detector->sin()->skillClass();
+            $lift = ! new $skill()->examplesKeepDocblocks();
 
             $example = ExampleText::pair($bad, $good, 'class')->lifted($lift);
 

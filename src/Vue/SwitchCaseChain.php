@@ -2,12 +2,9 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Detectors\Frontend;
+namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Span;
-use JesseGall\CodeCommandments\Vue\Directive;
-use JesseGall\CodeCommandments\Vue\Element;
-use JesseGall\CodeCommandments\Vue\ElementMatch;
 use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
 use JesseGall\CodeCommandments\Vue\Expr\Parser;

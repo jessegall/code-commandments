@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes\Frontend;
 
-use JesseGall\CodeCommandments\Detectors\Frontend\SwitchCaseChain;
+use JesseGall\CodeCommandments\Vue\SwitchCaseChain;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
 use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
