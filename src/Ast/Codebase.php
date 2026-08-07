@@ -574,10 +574,11 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /**
      * The SOURCE a file was parsed from — the overlay-aware content, so a scribe splices
      * against exactly the bytes its node offsets index, never a stale `file_get_contents`
-     * (which, mid-`repent`, would predate the same run's earlier edits). Null when the
-     * codebase doesn't hold that path.
+     * (which, mid-`repent`, would predate the same run's earlier edits). Resolve-or-throw: a path
+     * this codebase never parsed is a mistake in the caller, and a scribe handed an empty source
+     * would splice against nothing and write the result out.
      */
-    public function sourceOf(string $path): ?string
+    public function sourceOf(string $path): string
     {
         $this->sourceByPath ??= array_reduce(
             $this->files,
@@ -589,7 +590,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             [],
         );
 
-        return $this->sourceByPath[$path] ?? null;
+        return $this->sourceByPath[$path] ?? throw UnknownFile::at($path);
     }
 
     /**
