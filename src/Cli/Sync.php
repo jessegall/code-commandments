@@ -18,6 +18,7 @@ use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
 use JesseGall\CodeCommandments\Cli\State\Migration;
+use JesseGall\CodeCommandments\Support\Directory;
 /**
  * `commandments sync` — refresh the consumer's code-commandments integration so a
  * Publishes the current skills, CLAUDE.md briefing, config surface, and Claude Code hooks
@@ -232,7 +233,7 @@ final class Sync implements Command
             $to = "{$consumer}/.claude/skills/{$skill->id()}";
 
             if (is_dir($from)) {
-                $this->copyDir($from, $to);
+                Directory::copy($from, $to);
                 $count++;
             }
         }
@@ -290,7 +291,7 @@ final class Sync implements Command
             $to = "{$consumer}/.claude/skills/commandments-{$slug}";
 
             if (is_dir($from)) {
-                $this->copyDir($from, $to);
+                Directory::copy($from, $to);
                 $count++;
             }
         }
@@ -307,11 +308,11 @@ final class Sync implements Command
     private function removeLegacySkills(string $consumer): void
     {
         if (is_dir("{$consumer}/.claude/skills/commandments")) {
-            $this->deleteDir("{$consumer}/.claude/skills/commandments");
+            Directory::delete("{$consumer}/.claude/skills/commandments");
         }
 
         foreach (glob("{$consumer}/.claude/skills/commandments-*", GLOB_ONLYDIR) ?: [] as $stale) {
-            $this->deleteDir($stale);
+            Directory::delete($stale);
         }
     }
 
@@ -341,49 +342,4 @@ final class Sync implements Command
         }
     }
 
-    private function deleteDir(string $dir): void
-    {
-        if (! is_dir($dir)) {
-            return;
-        }
-
-        /**
-         * @var \SplFileInfo $item
-         */
-        foreach (new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST,
-        ) as $item) {
-            if ($item->isDir()) {
-                @rmdir($item->getPathname());
-            } else {
-                @unlink($item->getPathname());
-            }
-        }
-
-        @rmdir($dir);
-    }
-
-    private function copyDir(string $from, string $to): void
-    {
-        if (! is_dir($to) && ! mkdir($to, 0775, true) && ! is_dir($to)) {
-            return;
-        }
-
-        /**
-         * @var \SplFileInfo $item
-         */
-        foreach (new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($from, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::SELF_FIRST,
-        ) as $item) {
-            $target = $to . '/' . substr($item->getPathname(), strlen($from) + 1);
-
-            if ($item->isDir()) {
-                @mkdir($target, 0775, true);
-            } else {
-                copy($item->getPathname(), $target);
-            }
-        }
-    }
 }

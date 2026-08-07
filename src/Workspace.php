@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments;
 
+use JesseGall\CodeCommandments\Support\Directory;
 use JesseGall\CodeCommandments\Support\PhpFile;
 
 /**
@@ -184,22 +185,8 @@ final class Workspace
             }
 
             if ((filemtime($dir) ?: 0) < $cutoff) {
-                self::deleteDir($dir);
+                Directory::delete($dir);
             }
         }
-    }
-
-    private static function deleteDir(string $dir): void
-    {
-        foreach (scandir($dir) ?: [] as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-
-            $path = $dir . '/' . $entry;
-            is_dir($path) ? self::deleteDir($path) : @unlink($path);
-        }
-
-        @rmdir($dir);
     }
 }
