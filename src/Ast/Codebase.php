@@ -1117,11 +1117,14 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             $traverser = new NodeTraverser(new NameResolver, new ParentConnectingVisitor);
 
             return new ParsedFile($path, $traverser->traverse($ast), $code);
-        } catch (\PhpParser\Error) {
-            // A file the parser rejects is not worth crashing the whole run for — skip its
-            // contents and carry on. RESOLVING names throws the same way as reading them: a
-            // duplicate `use` alias is refused by the name resolver, mid-traversal, long after
-            // the syntax parsed. One such file used to end a scan of thousands.
+        } catch (\Throwable $failure) {
+            // Reading ONE file must never end a scan of thousands. A syntax error is the obvious
+            // case, but RESOLVING names throws too — a duplicate `use` alias is refused by the name
+            // resolver mid-traversal, long after the syntax parsed — and a deep enough tree can
+            // exhaust the stack. Any of them costs this file only, and says so rather than skipping
+            // in silence.
+            fwrite(STDERR, "⚠ skipped {$path} — it could not be read: {$failure->getMessage()}\n");
+
             return new ParsedFile($path, [], $code);
         }
     }

@@ -80,7 +80,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             $source = $overlay->read($file);
 
             if ($source !== null) {
-                $components[] = Sfc::parse($source, $file);
+                $components = [...$components, ...self::readable(static fn (): array => [Sfc::parse($source, $file)], $file)];
             }
         }
 
@@ -90,11 +90,35 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             $source = $overlay->read($file);
 
             if ($source !== null) {
-                $standaloneTypes = [...$standaloneTypes, ...TypeDeclaration::fromScript(new Script($source), $file, $source)];
+                $standaloneTypes = [...$standaloneTypes, ...self::readable(
+                    static fn (): array => TypeDeclaration::fromScript(new Script($source), $file, $source),
+                    $file,
+                )];
             }
         }
 
         return new self($components, $standaloneTypes);
+    }
+
+    /**
+     * What $read yields for one file, or nothing when reading it throws — and a line naming the file
+     * so a skip is visible rather than silent. Reading ONE file must never end a scan of thousands:
+     * a real tree carries the odd fixture written to be invalid, a half-finished edit, a generated
+     * bundle no hand-written grammar was meant to meet.
+     *
+     * @template T
+     * @param  callable(): list<T>  $read
+     * @return list<T>
+     */
+    private static function readable(callable $read, string $file): array
+    {
+        try {
+            return $read();
+        } catch (\Throwable $failure) {
+            fwrite(STDERR, "⚠ skipped {$file} — it could not be read: {$failure->getMessage()}\n");
+
+            return [];
+        }
     }
 
     /**
