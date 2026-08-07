@@ -835,18 +835,6 @@ final class Parser
     // ---- cursor + skipping ----------------------------------------------------
 
     /**
-     * Read $parse from where we stand, rewinding to it when the guess turns out to be wrong.
-     *
-     * The grammar is ambiguous in several places — `(a: T) => R` against a parenthesised type, a
-     * call against a bare name — so reading it means guessing and being able to take the guess
-     * back. This is the ONE place the cursor moves backwards, so a speculative read cannot forget
-     * to rewind; on {@see Unparsed} the caller is handed null, standing exactly where it started.
-     *
-     * @template T
-     * @param  callable(): T  $parse
-     * @return T|null
-     */
-    /**
      * Is there more to read inside a group that ends with $closer? The loop condition every
      * bracketed list shares — stop AT the closer, and stop at EOF too, so a group whose closer never
      * arrives cannot spin.
@@ -866,6 +854,18 @@ final class Parser
             && (($this->at(1)?->isPunct('(') ?? false) || ($this->at(1)?->isPunct('<') ?? false));
     }
 
+    /**
+     * Read $parse from where we stand, rewinding to it when the guess turns out to be wrong.
+     *
+     * The grammar is ambiguous in several places — `(a: T) => R` against a parenthesised type, a
+     * call against a bare name — so reading it means guessing and being able to take the guess
+     * back. This is the ONE place the cursor moves backwards, so a speculative read cannot forget
+     * to rewind; on {@see Unparsed} the caller is handed null, standing exactly where it started.
+     *
+     * @template T
+     * @param  callable(): T  $parse
+     * @return T|null
+     */
     private function speculate(callable $parse): mixed
     {
         $start = $this->pos;
