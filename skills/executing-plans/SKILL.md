@@ -1,6 +1,6 @@
 ---
 name: commandments-executing-plans
-description: How to EXECUTE an approved plan — branch, work phase by phase, commit and check as you go, run the full gate once at the end, and grind to completion without stopping. Read this the moment a plan is approved / you exit plan mode, BEFORE writing any code. The plan-reminder hook loads it for you and injects this project's concrete profile (branch prefix, base, push cadence, the `commandments checks` commands, keep-going policy).
+description: "How to EXECUTE an approved plan — branch, work phase by phase, commit and check as you go, run the full gate once at the end, and grind to completion without stopping. Read this the moment a plan is approved / you exit plan mode, BEFORE writing any code. The plan-reminder hook loads it for you and injects this project's concrete profile (branch prefix, base, push cadence, the `commandments checks` commands, keep-going policy)."
 ---
 
 # Executing plans

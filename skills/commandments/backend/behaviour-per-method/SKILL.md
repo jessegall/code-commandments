@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-behaviour-per-method
-description: A parameter that selects WHICH behaviour runs rather than feeding one. When a method's whole body is `if ($flag) { … } else { … }`, it is two methods sharing a name, and every call site reads `render($order, true)` — a truth value that says nothing about what it asked for. Split it into two named methods and let the caller say which it wants. Read this before adding a `bool` parameter, before writing a method whose body is one branch on a parameter, and when a call site passes a bare `true`/`false` literal.
+description: "A parameter that selects WHICH behaviour runs rather than feeding one. When a method's whole body is `if ($flag) { … } else { … }`, it is two methods sharing a name, and every call site reads `render($order, true)` — a truth value that says nothing about what it asked for. Split it into two named methods and let the caller say which it wants. Read this before adding a `bool` parameter, before writing a method whose body is one branch on a parameter, and when a call site passes a bare `true`/`false` literal."
 ---
 
 # One method, one behaviour — never a flag that picks

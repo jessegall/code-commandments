@@ -53,9 +53,19 @@ final class SkillRenderer
 
     private function frontmatter(Skill $skill): string
     {
-        // The `name` is display-only (the DIRECTORY name is the Skill-tool invocation),
-        // but we set it to the flat id so the `/skills` listing matches what you load.
-        return "---\nname: {$skill->id()}\ndescription: {$skill->trigger()}\n---";
+        // The `name` is display-only for some agents (the DIRECTORY name is the invocation) and
+        // REQUIRED by others, so it is always written, as the flat id — the same string the
+        // directory is named, which is what the spec asks for. It is `[a-z0-9-]` by construction,
+        // so it needs no quoting.
+        //
+        // The `description` is arbitrary prose and MUST be quoted: a plain YAML scalar may not
+        // contain `": "`, and a `#` after a space opens a comment. Unquoted, a trigger carrying
+        // either is not YAML at all — a lenient reader shrugs, a strict one skips the skill
+        // silently. A YAML double-quoted scalar is a superset of a JSON string, so encoding it as
+        // JSON is exactly the escape the format wants, for any prose a skill can carry.
+        $description = json_encode($skill->trigger(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+        return "---\nname: {$skill->id()}\ndescription: {$description}\n---";
     }
 
     private function blockquote(string $text): string

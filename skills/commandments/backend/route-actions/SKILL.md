@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-route-actions
-description: How a route action (controller method) earns its existence — it is a THIN seam that validates the request and delegates INTO the domain, and it is the ONLY way in to its operation. Never wrap another controller (a controller that forwards to another controller's action is a redundant entry point); never duplicate a sibling action's body; never wire two routes to the same action. Read this BEFORE you add a controller/route action, forward a request from one controller to another, copy an action body, or register a route.
+description: "How a route action (controller method) earns its existence — it is a THIN seam that validates the request and delegates INTO the domain, and it is the ONLY way in to its operation. Never wrap another controller (a controller that forwards to another controller's action is a redundant entry point); never duplicate a sibling action's body; never wire two routes to the same action. Read this BEFORE you add a controller/route action, forward a request from one controller to another, copy an action body, or register a route."
 ---
 
 # Route Actions — one operation, one entry point

@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-dependency-direction
-description: Which layer may know about which. When a project declares its layers (`$config->configure(fn (NamespaceDependencyDetector $d) => $d->layer('App\\Ui\\Elements')->layer('App\\Ui\\Shared', mayUse: ['App\\Ui\\Elements']))`), every reference OUT of a declared layer must point at a layer it is allowed to use — down the stack, never back up and never sideways. Read this before adding an import, a type hint, a `new`, or a static call that crosses a namespace boundary, before moving a class between namespaces, and when deciding where a new class belongs.
+description: "Which layer may know about which. When a project declares its layers (`$config->configure(fn (NamespaceDependencyDetector $d) => $d->layer('App\\\\Ui\\\\Elements')->layer('App\\\\Ui\\\\Shared', mayUse: ['App\\\\Ui\\\\Elements']))`), every reference OUT of a declared layer must point at a layer it is allowed to use — down the stack, never back up and never sideways. Read this before adding an import, a type hint, a `new`, or a static call that crosses a namespace boundary, before moving a class between namespaces, and when deciding where a new class belongs."
 ---
 
 # Dependency direction — a layer may only reach DOWN

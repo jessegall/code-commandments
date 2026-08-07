@@ -1,6 +1,6 @@
 ---
 name: commandments-writing-detectors
-description: How to write a commandment of your OWN — a project-local rule that judges every file from then on. Read this BEFORE writing or changing a detector in `.commandments/custom/`, when the user asks for a new rule/check/detector, when `commandments make` points you here, or when you are about to reach for a PhpParser node class or a regex to inspect code.
+description: "How to write a commandment of your OWN — a project-local rule that judges every file from then on. Read this BEFORE writing or changing a detector in `.commandments/custom/`, when the user asks for a new rule/check/detector, when `commandments make` points you here, or when you are about to reach for a PhpParser node class or a regex to inspect code."
 ---
 
 # Writing your own commandments

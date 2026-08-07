@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-method-mood
-description: What GRAMMAR a method name is written in: a command is an imperative (`hide()`, `openFor()`, `write()`), never a third-person narration (`hides()`, `opensFor()`, `writes()`); a method that answers `bool` about its own state wears a question (`isShown()`, `hasParent()`, `awaitsAnswer()`). Read this when you name or rename a method, and when a naming sin points here.
+description: "What GRAMMAR a method name is written in: a command is an imperative (`hide()`, `openFor()`, `write()`), never a third-person narration (`hides()`, `opensFor()`, `writes()`); a method that answers `bool` about its own state wears a question (`isShown()`, `hasParent()`, `awaitsAnswer()`). Read this when you name or rename a method, and when a naming sin points here."
 ---
 
 # Method mood — an order, or a question
