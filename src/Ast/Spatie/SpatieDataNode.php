@@ -1019,6 +1019,15 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
+     * Is $member the `DataCollection` name, however it was written? The package's own knowledge,
+     * stated here so a reader — a detector or its scribe — never restates the FQCN.
+     */
+    public static function isDataCollectionName(Node $member): bool
+    {
+        return $member instanceof Name && ltrim($member->toString(), '\\') === self::DATA_COLLECTION;
+    }
+
+    /**
      * Does this type declaration name `DataCollection` (bare or in a nullable union)?
      */
     private static function typeMentionsDataCollection(?Node $type): bool
@@ -1033,7 +1042,7 @@ final class SpatieDataNode extends NodeMatch
 
         if ($type instanceof UnionType) {
             foreach ($type->types as $member) {
-                if ($member instanceof Name && ltrim($member->toString(), '\\') === self::DATA_COLLECTION) {
+                if (self::isDataCollectionName($member)) {
                     return true;
                 }
             }

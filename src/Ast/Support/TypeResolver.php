@@ -442,7 +442,7 @@ final class TypeResolver
                 $constructor = $class instanceof Class_ ? $class->getMethod('__construct')?->getDocComment()?->getText() : null;
 
                 foreach (AstNode::constructorParamsOf($class) as $param) {
-                    if (! ($param->flags !== 0 && AstNode::variableNameOf($param->var) !== null)) {
+                    if (AstNode::promotedParamNameOf($param) === null) {
                         continue;
                     }
 

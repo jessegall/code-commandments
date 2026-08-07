@@ -300,7 +300,7 @@ class AstNode
      */
     public function isThisVariable(): bool
     {
-        return $this->node instanceof Variable && $this->node->name === 'this';
+        return self::variableNameOf($this->node) === 'this';
     }
 
     /**
@@ -978,7 +978,7 @@ class AstNode
             return false;
         }
 
-        if (! ($this->node->var instanceof Variable && $this->node->var->name === 'this')) {
+        if (! new self($this->node->var)->isThisVariable()) {
             return false;
         }
 
@@ -1671,7 +1671,7 @@ class AstNode
         }
 
         foreach ($constructor->params as $param) {
-            if ($param->default === null && ! $param->variadic) {
+            if (self::isRequiredParam($param)) {
                 return false;
             }
         }
@@ -1730,7 +1730,7 @@ class AstNode
         $fields = [];
 
         foreach (self::constructorParamsOf($class) as $param) {
-            if ($param->flags !== 0 && AstNode::variableNameOf($param->var) !== null) {
+            if (self::promotedParamNameOf($param) !== null) {
                 $fields[] = new ClassField(
                     name: $param->var->name,
                     type: $param->type,
@@ -4067,6 +4067,24 @@ class AstNode
     public static function variableNameOf(?Node $expr): ?string
     {
         return $expr instanceof Variable && is_string($expr->name) ? $expr->name : null;
+    }
+
+    /**
+     * Must $param be passed — no default, and not the variadic that swallows the rest? The question
+     * behind "can this be constructed with no arguments".
+     */
+    public static function isRequiredParam(Param $param): bool
+    {
+        return $param->default === null && ! $param->variadic;
+    }
+
+    /**
+     * The NAME of a promoted constructor parameter — the ones that are also fields — or null when
+     * $param promotes nothing, or names itself dynamically.
+     */
+    public static function promotedParamNameOf(Param $param): ?string
+    {
+        return $param->flags !== 0 ? self::variableNameOf($param->var) : null;
     }
 
     /**

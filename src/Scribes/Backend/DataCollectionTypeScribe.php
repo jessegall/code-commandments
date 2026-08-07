@@ -197,7 +197,7 @@ final class DataCollectionTypeScribe extends RepentScribe
 
         if ($type instanceof UnionType) {
             foreach ($type->types as $member) {
-                if ($member instanceof Name && ltrim($member->toString(), '\\') === self::DATA_COLLECTION) {
+                if (SpatieDataNode::isDataCollectionName($member)) {
                     return $member;
                 }
             }

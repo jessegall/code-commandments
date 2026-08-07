@@ -427,7 +427,7 @@ final class LaravelNode extends NodeMatch
             return false;
         }
 
-        if ($this->node->var instanceof Variable && $this->node->var->name === 'this') {
+        if (new AstNode($this->node->var)->isThisVariable()) {
             return false;
         }
 

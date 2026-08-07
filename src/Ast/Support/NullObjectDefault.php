@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
+
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Modifiers;
 use PhpParser\Node;
@@ -89,7 +91,7 @@ final class NullObjectDefault
     private function hasRequiredParam(ClassMethod $method): bool
     {
         foreach ($method->params as $param) {
-            if ($param->default === null && ! $param->variadic) {
+            if (AstNode::isRequiredParam($param)) {
                 return true;
             }
         }
