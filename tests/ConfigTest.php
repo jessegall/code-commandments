@@ -271,9 +271,14 @@ final class ConfigPackagedSin extends Sin implements RequiresComposerPackage
         parent::__construct('packaged-sin', ValueObjects::class, 'a packaged sin', 'do the thing');
     }
 
-    public function requiredComposerPackage(): string
+    public function requiredPackage(): string
     {
         return 'acme/widgets';
+    }
+
+    public function ecosystem(): string
+    {
+        return 'composer';
     }
 }
 

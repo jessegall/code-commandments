@@ -21,8 +21,13 @@ final class OptionAsNullable extends Sin implements RequiresComposerPackage
         );
     }
 
-    public function requiredComposerPackage(): string
+    public function requiredPackage(): string
     {
         return 'jessegall/php-types';
+    }
+
+    public function ecosystem(): string
+    {
+        return 'composer';
     }
 }

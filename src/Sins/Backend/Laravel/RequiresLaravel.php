@@ -13,8 +13,13 @@ namespace JesseGall\CodeCommandments\Sins\Backend\Laravel;
  */
 trait RequiresLaravel
 {
-    public function requiredComposerPackage(): string
+    public function requiredPackage(): string
     {
         return 'illuminate/support';
+    }
+
+    public function ecosystem(): string
+    {
+        return 'composer';
     }
 }

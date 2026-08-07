@@ -6,9 +6,7 @@ namespace JesseGall\CodeCommandments;
 
 use Closure;
 use Composer\InstalledVersions;
-use InvalidArgumentException;
-use JesseGall\CodeCommandments\Sins\RequiresComposerPackage;
-use JesseGall\CodeCommandments\Sins\RequiresNpmPackage;
+use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use ReflectionFunction;
 use ReflectionNamedType;
@@ -381,7 +379,7 @@ final class Config
         $detectors = array_values($detectors);
 
         foreach ($this->tune($detectors) as $class) {
-            throw new InvalidArgumentException("configure({$class}): that detector is not registered, or was disabled.");
+            throw InvalidConfiguration::unknownDetector($class);
         }
 
         return [
@@ -415,15 +413,9 @@ final class Config
     {
         $sin = $detector->sin();
 
-        if ($sin instanceof RequiresComposerPackage) {
-            return $installed($sin->requiredComposerPackage(), 'composer');
-        }
-
-        if ($sin instanceof RequiresNpmPackage) {
-            return $installed($sin->requiredNpmPackage(), 'npm');
-        }
-
-        return true;
+        // The sin says which package and which manifest answers for it; nothing here reads its type
+        // to find out. A new ecosystem is then a sin that says so, not another branch in this method.
+        return ! $sin instanceof RequiresPackage || $installed($sin->requiredPackage(), $sin->ecosystem());
     }
 
     /**
@@ -482,18 +474,10 @@ final class Config
             $class = $type?->getType() instanceof ReflectionNamedType ? $type->getType()->getName() : null;
 
             if ($class === null) {
-                throw new InvalidArgumentException('A configure() closure must type-hint the detector to configure, e.g. fn (MyDetector $d) => …');
+                throw InvalidConfiguration::untypedConfigurator();
             }
 
-            $target = null;
-
-            foreach ($detectors as $detector) {
-                if ($detector instanceof $class) {
-                    $target = $detector;
-
-                    break;
-                }
-            }
+            $target = array_find($detectors, static fn (Detector $detector): bool => $detector instanceof $class);
 
             if ($target === null) {
                 $unmatched[] = $class;

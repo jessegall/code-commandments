@@ -25,8 +25,13 @@ final class MirroredServerType extends Sin implements RequiresComposerPackage
         );
     }
 
-    public function requiredComposerPackage(): string
+    public function requiredPackage(): string
     {
         return 'spatie/laravel-typescript-transformer';
+    }
+
+    public function ecosystem(): string
+    {
+        return 'composer';
     }
 }

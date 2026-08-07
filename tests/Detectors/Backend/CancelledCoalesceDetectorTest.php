@@ -126,6 +126,26 @@ final class CancelledCoalesceDetectorTest extends TestCase
             PHP));
     }
 
+    public function test_an_empty_collection_fallback_asks_only_one_question(): void
+    {
+        // An empty array is the collection's own identity — "no items" — not a scalar impersonating
+        // data. Absent and empty genuinely mean the same thing here, so nothing is conflated. The
+        // sibling rule exempts it for the same reason (#398).
+        $this->assertSame([], $this->scopes(<<<'PHP'
+            <?php
+            final class Probe
+            {
+                /**
+                 * @param  array<string, list<string>>  $arrows
+                 */
+                public function isFloor(array $arrows, string $namespace): bool
+                {
+                    return ($arrows[$namespace] ?? []) === [];
+                }
+            }
+            PHP));
+    }
+
     public function test_a_fallback_that_is_passed_on_belongs_to_the_other_rule(): void
     {
         // Manufactured AND USED is `manufactured-fake-fill`; the two must never both fire on one line.

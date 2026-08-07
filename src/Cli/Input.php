@@ -34,7 +34,8 @@ final class Input
     public static function fromArgv(array $argv): self
     {
         $tokens = array_slice($argv, 1);
-        $command = ($tokens[0] ?? '') !== '' && ! str_starts_with($tokens[0], '-') ? array_shift($tokens) : '';
+        $first = $tokens[0] ?? null;
+        $command = $first !== null && $first !== '' && ! str_starts_with($first, '-') ? array_shift($tokens) : '';
 
         return self::of($command, array_values($tokens));
     }

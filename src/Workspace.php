@@ -66,7 +66,7 @@ final class Workspace
      */
     public static function at(string $root, ?string $sessionId = null): self
     {
-        if (($sessionId ?? '') !== '') {
+        if ($sessionId !== null && $sessionId !== '') {
             return new self($root, $sessionId);
         }
 

@@ -161,7 +161,7 @@ final class SkillRenderer
             // (e.g. `<template v-if>` vs `<SwitchCase>`) each still get shown.
             $key = ($example->bad ?? '') . "\0" . ($example->good ?? '');
 
-            if (($example->bad ?? '') === '') {
+            if ($example->bad === null || $example->bad === '') {
                 $key .= "\0" . $sin->name(); // nothing to dedupe on — keep them apart
             }
 

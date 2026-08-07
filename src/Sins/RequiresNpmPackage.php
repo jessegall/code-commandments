@@ -15,11 +15,4 @@ namespace JesseGall\CodeCommandments\Sins;
  * The check falls back to "present" when the manifest can't be read, so an unknown
  * environment never over-filters.
  */
-interface RequiresNpmPackage extends RequiresPackage
-{
-    /**
-     * The npm package name this sin needs. The sin is filtered out — it never runs and
-     * never shows up — when that package isn't a dependency of the project being judged.
-     */
-    public function requiredNpmPackage(): string;
-}
+interface RequiresNpmPackage extends RequiresPackage {}

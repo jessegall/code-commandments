@@ -722,6 +722,35 @@ class AstNode
     }
 
     /**
+     * Every node ABOVE this one, innermost first, until the tree runs out — the climb "what is this
+     * inside of?", which half a dozen predicates were each writing out by hand.
+     *
+     * @return iterable<self>
+     */
+    public function ancestors(): iterable
+    {
+        $node = $this->node?->getAttribute('parent');
+
+        while ($node instanceof Node) {
+            yield new self($node);
+
+            $node = $node->getAttribute('parent');
+        }
+    }
+
+    /**
+     * This node and then every node above it — for a question a node can answer about ITSELF as well
+     * as about what encloses it ("am I, or am I inside, an argument?").
+     *
+     * @return iterable<self>
+     */
+    public function selfAndAncestors(): iterable
+    {
+        yield $this;
+        yield from $this->ancestors();
+    }
+
+    /**
      * Is this `??` CANCELLED by the equality it sits in — `($x ?? '') !== ''`?
      *
      * The fallback and the thing it is compared against are the same expression, so the branch it
@@ -1123,7 +1152,9 @@ class AstNode
      */
     public function staticCallClassStartsWith(string $prefix): bool
     {
-        return str_starts_with($this->staticCallClass() ?? '', $prefix);
+        $class = $this->staticCallClass();
+
+        return $class !== null && str_starts_with($class, $prefix);
     }
 
     /**
@@ -1785,14 +1816,32 @@ class AstNode
      */
     public function isWithinBranch(): bool
     {
-        for ($node = $this->node?->getAttribute('parent'); $node instanceof Node && ! $node instanceof FunctionLike; $node = $node->getAttribute('parent')) {
-            if ($node instanceof If_ || $node instanceof Match_ || $node instanceof Ternary
-                || $node instanceof Foreach_ || $node instanceof For_ || $node instanceof While_ || $node instanceof Do_) {
+        foreach ($this->ancestors() as $ancestor) {
+            if ($ancestor->node instanceof FunctionLike) {
+                break;
+            }
+
+            if ($ancestor->isBranchingConstruct()) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Is this node itself a construct that CHOOSES — a conditional, a match, or a loop? The shapes
+     * that make whatever sits inside them conditional rather than certain.
+     */
+    public function isBranchingConstruct(): bool
+    {
+        return $this->node instanceof If_
+            || $this->node instanceof Match_
+            || $this->node instanceof Ternary
+            || $this->node instanceof Foreach_
+            || $this->node instanceof For_
+            || $this->node instanceof While_
+            || $this->node instanceof Do_;
     }
 
     /**
@@ -1885,7 +1934,9 @@ class AstNode
      */
     public function isMagicMethod(): bool
     {
-        return str_starts_with($this->methodName() ?? '', '__');
+        $name = $this->methodName();
+
+        return $name !== null && str_starts_with($name, '__');
     }
 
     /**
@@ -2203,7 +2254,11 @@ class AstNode
                 return null;
             }
 
-            new self($arg->value)->readsOwnProperty() ? $carried++ : $changed++;
+            if (new self($arg->value)->readsOwnProperty()) {
+                $carried++;
+            } else {
+                $changed++;
+            }
         }
 
         return $carried >= self::WITHER_CARRIED_FLOOR && $changed >= 1 && $this->constructorIsPromotionOnly() ? $new : null;
@@ -2716,9 +2771,11 @@ class AstNode
         }
 
         foreach ((new NodeFinder)->findInstanceOf($this->node->args, Variable::class) as $variable) {
-            if ($variable->name === $catch->var->name) {
-                return false; // the caught exception is passed on
+            if ($variable->name !== $catch->var->name) {
+                continue;
             }
+
+            return false; // the caught exception is passed on
         }
 
         return true;
@@ -3114,10 +3171,12 @@ class AstNode
         $rhs = [];
 
         foreach ((new NodeFinder)->findInstanceOf($function, Assign::class) as $assign) {
-            if ($assign->var instanceof Variable && is_string($assign->var->name)) {
-                $counts[$assign->var->name] = ($counts[$assign->var->name] ?? 0) + 1;
-                $rhs[$assign->var->name] = $assign->expr;
+            if (! ($assign->var instanceof Variable && is_string($assign->var->name))) {
+                continue;
             }
+
+            $counts[$assign->var->name] = ($counts[$assign->var->name] ?? 0) + 1;
+            $rhs[$assign->var->name] = $assign->expr;
         }
 
         return array_filter($rhs, static fn (Node $expr, string $name): bool => $counts[$name] === 1, ARRAY_FILTER_USE_BOTH);
@@ -3474,12 +3533,14 @@ class AstNode
         $literals = [];
 
         foreach ($args[$index]->value->items as $item) {
-            if ($item instanceof ArrayItem) {
-                $literal = self::scalarLiteral($item->value);
+            if (! ($item instanceof ArrayItem)) {
+                continue;
+            }
 
-                if ($literal !== null) {
-                    $literals[] = $literal;
-                }
+            $literal = self::scalarLiteral($item->value);
+
+            if ($literal !== null) {
+                $literals[] = $literal;
             }
         }
 
@@ -4258,7 +4319,7 @@ class AstNode
      */
     public function argumentOfCall(): ?string
     {
-        for ($node = $this; $node->node !== null; $node = $node->parent()) {
+        foreach ($this->selfAndAncestors() as $node) {
             if ($node->node instanceof Arg) {
                 return $node->parent()->callName();
             }
@@ -4279,7 +4340,7 @@ class AstNode
      */
     public function enclosingAttributeName(): ?string
     {
-        for ($node = $this; $node->node !== null; $node = $node->parent()) {
+        foreach ($this->selfAndAncestors() as $node) {
             if ($node->node instanceof Attribute) {
                 return $node->node->name->toString();
             }

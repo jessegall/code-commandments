@@ -10,8 +10,13 @@ namespace JesseGall\CodeCommandments\Sins\Backend\Spatie;
  */
 trait RequiresSpatieData
 {
-    public function requiredComposerPackage(): string
+    public function requiredPackage(): string
     {
         return 'spatie/laravel-data';
+    }
+
+    public function ecosystem(): string
+    {
+        return 'composer';
     }
 }
