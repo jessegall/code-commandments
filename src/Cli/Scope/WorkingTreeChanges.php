@@ -17,7 +17,7 @@ final class WorkingTreeChanges implements ChangeScope
         $root = $this->git->root($path);
 
         if ($root === null) {
-            throw new ScopeUnavailable("Not a git repository (or git unavailable): {$path}");
+            throw ScopeUnavailable::notAGitRepository($path);
         }
 
         return $this->git->changedVsHead($root);

@@ -26,7 +26,7 @@ final class ChecklistScope implements ChangeScope
             : $this->workspace->path("sins-{$this->id}.md");
 
         if (! is_file($checklist)) {
-            throw new ScopeUnavailable("No checklist for --repent={$this->id} (looked for {$checklist}).");
+            throw ScopeUnavailable::noChecklist($this->id, $checklist);
         }
 
         // Each finding line carries a `path:line` token — collect the distinct files,

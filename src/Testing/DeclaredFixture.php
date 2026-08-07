@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Testing;
 
-use InvalidArgumentException;
 use JesseGall\CodeCommandments\Backend\Detector as BackendDetector;
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 
@@ -64,7 +63,7 @@ final class DeclaredFixture implements Fixture
 
         foreach ($detectors as $detector) {
             if (! $detector instanceof HasFixture) {
-                throw new InvalidArgumentException($detector::class . ' must implement ' . HasFixture::class . ' to be verified against its own fixture.');
+                throw FixtureNotDeclared::for($detector::class);
             }
 
             match (true) {
