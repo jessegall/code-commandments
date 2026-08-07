@@ -8,6 +8,7 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
+use JesseGall\CodeCommandments\Support\Binary;
 /**
  * `commandments install` — wire a consumer up once. Adds a `commandments sync`
  * call to the consumer's composer `post-update-cmd` and `post-install-cmd` so the
@@ -17,8 +18,6 @@ use JesseGall\CodeCommandments\Hooks\HookRegistry;
  */
 final class Install implements Command
 {
-    private const string HOOK = '@php vendor/bin/commandments sync';
-
     public function names(): array
     {
         return ['install'];
@@ -38,13 +37,13 @@ final class Install implements Command
             return HelpScreen::usage($this, 'no composer.json at or above ' . getcwd() . ' — there is no project here to wire.');
         }
 
-        $wired = $this->wireComposerScripts("{$consumer}/composer.json");
+        $wired = $this->wireComposerScripts("{$consumer}/composer.json", $consumer);
 
         if ($wired === null) {
             return HelpScreen::usage($this, "{$consumer}/composer.json is not readable JSON — fix it first; rewriting it from here would throw away everything it declares.");
         }
 
-        $hooked = HookRegistry::wire("{$consumer}/.claude/settings.json", HookRegistry::forProject($consumer));
+        $hooked = HookRegistry::wire($consumer, HookRegistry::forProject($consumer));
 
         fwrite(STDOUT, $wired
             ? "✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.\n"
@@ -62,8 +61,12 @@ final class Install implements Command
      * JSON — a BOM, a stray comment, a half-written save. Decoding failure used to fall through to
      * an empty array, and the write below then replaced the whole manifest with nothing but our two
      * hooks: every dependency the project declared, gone.
+     *
+     * The call names wherever this project's executable actually is ({@see Binary}) — a checkout
+     * that carries its own `bin/` gets wired to the file it really has, not to the `vendor/` shim
+     * composer only ever writes for a package's dependents.
      */
-    private function wireComposerScripts(string $path): ?bool
+    private function wireComposerScripts(string $path, string $root): ?bool
     {
         $composer = json_decode((string) file_get_contents($path), true);
 
@@ -71,14 +74,15 @@ final class Install implements Command
             return null;
         }
 
+        $hook = '@php ' . Binary::in($root) . ' sync';
         $scripts = is_array($composer['scripts'] ?? null) ? $composer['scripts'] : [];
         $changed = false;
 
         foreach (['post-update-cmd', 'post-install-cmd'] as $event) {
             $hooks = $this->asList($scripts[$event] ?? []);
 
-            if (! in_array(self::HOOK, $hooks, true)) {
-                $hooks[] = self::HOOK;
+            if (! in_array($hook, $hooks, true)) {
+                $hooks[] = $hook;
                 $scripts[$event] = $hooks;
                 $changed = true;
             }

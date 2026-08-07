@@ -54,7 +54,7 @@ final class InstallTest extends TestCase
         $settings = "{\n  // a comment makes this unreadable to json_decode\n  \"permissions\": {}\n}\n";
         file_put_contents($this->dir . '/.claude/settings.json', $settings);
 
-        $this->assertFalse(HookRegistry::wire($this->dir . '/.claude/settings.json'));
+        $this->assertFalse(HookRegistry::wire($this->dir));
         $this->assertSame($settings, file_get_contents($this->dir . '/.claude/settings.json'), "the user's settings survive");
     }
 

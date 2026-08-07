@@ -47,9 +47,16 @@ CLAUDE.md
 phpstan.neon
 phpcs.xml
 
-# code-commandments self-judgment runtime artifacts
-.commandments/
-# …except a FIXTURE's own: a fixture directory IS a project, and the rules it declares there
-# are part of the spec the harness proves (see Testing\EngineFixture).
-!/tests/Fixtures/*/.commandments/
+# code-commandments self-judgment runtime artifacts — the folder carries its own .gitignore,
+# which keeps config.php and custom/ tracked and everything generated out. A fixture's own
+# folder has no such file, so it stays tracked whole: it IS the spec the harness proves.
 .ast-cache/
+
+# code-commandments skill library (regenerated on composer update)
+.agents/skills/commandments-*/
+
+# code-commandments published skills (regenerated on composer update)
+.claude/skills/commandments-*
+
+# code-commandments published slash commands (regenerated on composer update)
+.claude/commands/until.md
