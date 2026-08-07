@@ -49,6 +49,6 @@ abstract class Scribe
      */
     protected function replaceNode(Node|Comment $node, string $text): Edit
     {
-        return new Edit($node->getStartFilePos(), $node->getEndFilePos() + 1, $text);
+        return Edit::overNode($node, $text);
     }
 }

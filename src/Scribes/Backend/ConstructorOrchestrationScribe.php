@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes\Backend;
 
+use JesseGall\CodeCommandments\Scribes\Edit;
+
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;
@@ -65,7 +67,7 @@ final class ConstructorOrchestrationScribe extends RepentScribe
         $writer->dropModifier($property, 'readonly');
 
         // 2. Turn the trailing `;` into the get hook, 3. delete the constructor assignment line.
-        $writer->rewriteRange($property->getEndFilePos(), $property->getEndFilePos() + 1, " { get => {$rhs}; }");
+        $writer->rewrite(new Edit($property->getEndFilePos(), $property->getEndFilePos() + 1, " { get => {$rhs}; }"));
         $writer->deleteStatementLine($statement);
     }
 

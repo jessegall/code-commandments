@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Config;
 
+use JesseGall\CodeCommandments\Scribes\Edit;
+
 use JesseGall\PhpTypes\Option;
 
 use JesseGall\CodeCommandments\Workspace;
@@ -353,7 +355,7 @@ final class DisableMenu
             $entries[$ref] ??= true; // a canonical rule the menu lacks, added commented
         }
 
-        $this->replaceRange($open + 1, $close, "\n" . implode("\n", $this->groupedLines($entries, $grouped)) . "\n    ");
+        $this->apply(new Edit($open + 1, $close, "\n" . implode("\n", $this->groupedLines($entries, $grouped)) . "\n    "));
     }
 
     /**
@@ -483,13 +485,12 @@ final class DisableMenu
     }
 
     /**
-     * Replace the byte range [$start, $end) with $text.
+     * Apply one replacement to the config file. The range and its text are one {@see Edit}, which
+     * also knows how to splice itself — three loose parameters were a value taken apart.
      */
-    private function replaceRange(int $start, int $end, string $text): void
+    private function apply(Edit $edit): void
     {
-        $source = $this->source();
-
-        file_put_contents($this->path, substr($source, 0, $start) . $text . substr($source, $end));
+        file_put_contents($this->path, $edit->appliedTo($this->source()));
     }
 
     /**

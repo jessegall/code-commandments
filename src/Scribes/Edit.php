@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Scribes;
 
+use PhpParser\Comment;
+use PhpParser\Node;
+
 use JesseGall\CodeCommandments\Span;
 
 /**
@@ -20,6 +23,16 @@ final readonly class Edit
         public int $end,
         public string $text,
     ) {}
+
+    /**
+     * The replacement of the source a NODE — or a docblock, which carries the same span and is not
+     * a node — occupies. php-parser reports an INCLUSIVE end and an Edit's is half-open, so this is
+     * the ONE place that conversion is written.
+     */
+    public static function overNode(Node|Comment $node, string $text): self
+    {
+        return new self($node->getStartFilePos(), $node->getEndFilePos() + 1, $text);
+    }
 
     /**
      * A pure insertion at $at — nothing is consumed.

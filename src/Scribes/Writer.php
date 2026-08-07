@@ -213,7 +213,7 @@ final class Writer
         $start = $function->returnType->getStartFilePos();
         $colon = Span::before($this->source, $start, ':');
 
-        $this->rewriteRange($colon ?? $start, $function->returnType->getEndFilePos() + 1, '');
+        $this->rewrite(new Edit($colon ?? $start, $function->returnType->getEndFilePos() + 1, ''));
     }
 
     /**
@@ -228,7 +228,7 @@ final class Writer
             return;
         }
 
-        $this->rewriteRange($doc->getStartFilePos(), $doc->getEndFilePos() + 1, $text);
+        $this->rewrite(Edit::overNode($doc, $text));
     }
 
     /**
@@ -246,15 +246,17 @@ final class Writer
 
         $last = $comments[count($comments) - 1];
 
-        $this->rewriteRange($comments[0]->getStartFilePos(), $last->getEndFilePos() + 1, $text);
+        $this->rewrite(new Edit($comments[0]->getStartFilePos(), $last->getEndFilePos() + 1, $text));
     }
 
     /**
-     * A low-level replace of a byte range — for a scribe-specific edit with no node (e.g. a property's `;`).
+     * A low-level replace — for a scribe-specific edit with no node (e.g. a property's `;`). The
+     * range and its text travel together as one {@see Edit}, which is also what a {@see Draft}
+     * holds, so nothing re-states the trio.
      */
-    public function rewriteRange(int $start, int $end, string $text): void
+    public function rewrite(Edit $edit): void
     {
-        $this->draft->edit(new Span($this->path, $this->source, $start, $end), $text);
+        $this->draft->edit(new Span($this->path, $this->source, $edit->start, $edit->end), $edit->text);
     }
 
     /**
