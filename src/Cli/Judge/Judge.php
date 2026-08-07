@@ -189,9 +189,7 @@ final class Judge implements Command
         $progress = new ProgressBar;
 
         $parseStart = hrtime(true);
-        $codebase = Codebase::scan($roots, static function (int $done, int $total) use ($progress): void {
-            $progress->track($done, $total, 'parsing');
-        });
+        $codebase = Codebase::scan($roots, $progress->phase('parsing'));
         $parseSeconds = (hrtime(true) - $parseStart) / 1e9;
 
         if ($benchmark) {

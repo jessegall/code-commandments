@@ -622,7 +622,7 @@ final class SpatieDataNode extends NodeMatch
             return false;
         }
 
-        $count = $this->getConstructor(fn (ClassMethod $ctor): int => count(array_filter(
+        $count = $this->fromConstructor(fn (ClassMethod $ctor): int => count(array_filter(
             new NodeFinder()->findInstanceOf($ctor->stmts ?? [], Assign::class),
             static fn (Assign $assign) => self::assignsThisPropertyNamed($assign, $name),
         )));
@@ -796,7 +796,7 @@ final class SpatieDataNode extends NodeMatch
      */
     public function everyConstructorParamOptional(): bool
     {
-        $promoted = $this->getConstructor(
+        $promoted = $this->fromConstructor(
             static fn (ClassMethod $ctor): array => array_filter($ctor->params, static fn (Param $p): bool => $p->flags !== 0),
         );
 

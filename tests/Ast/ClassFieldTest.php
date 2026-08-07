@@ -61,7 +61,7 @@ final class ClassFieldTest extends TestCase
         }
         PHP);
 
-        $paramCount = $withCtor->getConstructor(static fn (ClassMethod $c): int => count($c->params));
+        $paramCount = $withCtor->fromConstructor(static fn (ClassMethod $c): int => count($c->params));
         $this->assertSame(2, $paramCount);
         $this->assertInstanceOf(ClassMethod::class, $withCtor->getConstructor());
 
@@ -71,7 +71,7 @@ final class ClassFieldTest extends TestCase
         class NoCtor { public int $x = 1; }
         PHP);
 
-        $this->assertNull($noCtor->getConstructor(static fn (ClassMethod $c): int => count($c->params)));
+        $this->assertNull($noCtor->fromConstructor(static fn (ClassMethod $c): int => count($c->params)));
         $this->assertNull($noCtor->getConstructor());
     }
 

@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Ast;
 
 use JesseGall\CodeCommandments\Files\FileQuery;
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Support\Invokable;
+use JesseGall\CodeCommandments\Support\NoOp;
 use JesseGall\CodeCommandments\Support\PhpFile;
 
 use JesseGall\CodeCommandments\WorkingCopy;
@@ -235,10 +237,10 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      * parsed once.
      *
      * @param  string|list<string>  $path  one source root, or several
-     * @param  \Closure(int, int): void|null  $onProgress
+     * @param  Invokable  $onProgress  called `($done, $total)` per file; silent by default
      * @param  WorkingCopy  $overlay  pending edits to read THROUGH (empty = straight off disk)
      */
-    public static function scan(string|array $path, ?\Closure $onProgress = null, WorkingCopy $overlay = new WorkingCopy()): self
+    public static function scan(string|array $path, Invokable $onProgress = new NoOp, WorkingCopy $overlay = new WorkingCopy()): self
     {
         $paths = [];
 
@@ -263,9 +265,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
                 $files[] = self::parse($code, $file);
             }
 
-            if ($onProgress !== null) {
-                $onProgress($index + 1, $total);
-            }
+            $onProgress($index + 1, $total);
         }
 
         return new self($files);

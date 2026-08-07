@@ -1523,26 +1523,30 @@ class AstNode
     }
 
     /**
-     * The `__construct` declaration of the class this node is in (or IS). Called bare, returns the
-     * `ClassMethod` or null when the class has no explicit constructor. Given a closure, it runs the
-     * closure ONLY when a constructor exists and returns its result (null otherwise) — so a caller
-     * acts on the constructor without a null check: `$node->getConstructor(fn (ClassMethod $c) => …)`.
-     * The one place `getMethod('__construct')` lives — read the constructor through this.
+     * The `__construct` declaration of the class this node is in (or IS), or null where the class
+     * declares none. The one place `getMethod('__construct')` lives — read the constructor through
+     * this, or through {@see fromConstructor} to act on one without the null check.
+     */
+    public function getConstructor(): ?ClassMethod
+    {
+        return self::constructorOf($this->enclosingClass());
+    }
+
+    /**
+     * $with applied to the constructor, or null when the class declares none — the reading form,
+     * for a caller that wants something OUT of the constructor and has nothing to say about a
+     * class without one.
      *
      * @template T
      *
-     * @param  (\Closure(ClassMethod): T)|null  $with
-     * @return ($with is null ? ClassMethod|null : T|null)
+     * @param  \Closure(ClassMethod): T  $with
+     * @return T|null
      */
-    public function getConstructor(?\Closure $with = null): mixed
+    public function fromConstructor(\Closure $with): mixed
     {
-        $constructor = self::constructorOf($this->enclosingClass());
+        $constructor = $this->getConstructor();
 
-        if ($constructor === null || $with === null) {
-            return $constructor;
-        }
-
-        return $with($constructor);
+        return $constructor === null ? null : $with($constructor);
     }
 
     /**
