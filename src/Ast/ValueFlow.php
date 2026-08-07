@@ -677,7 +677,7 @@ final class ValueFlow
 
     private function enclosingFunction(?Node $node): ?FunctionLike
     {
-        for ($current = $node?->getAttribute('parent'); $current !== null; $current = $current->getAttribute('parent')) {
+        foreach (AstNode::ancestorsOf($node) as $current) {
             if ($current instanceof FunctionLike) {
                 return $current;
             }
@@ -688,7 +688,7 @@ final class ValueFlow
 
     private function enclosingClass(FunctionLike $function): ?string
     {
-        for ($current = $function->getAttribute('parent'); $current !== null; $current = $current->getAttribute('parent')) {
+        foreach (AstNode::ancestorsOf($function) as $current) {
             if ($current instanceof Class_) {
                 return ltrim(($current->namespacedName ?? null)?->toString() ?? '', '\\') ?: null;
             }

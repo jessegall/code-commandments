@@ -458,9 +458,11 @@ class Element
     public function ancestry(): array
     {
         $spine = [];
+        $node = $this;
 
-        for ($node = $this; $node !== null; $node = $node->parent) {
+        while ($node !== null) {
             $spine[] = $node;
+            $node = $node->parent;
         }
 
         return $spine;
@@ -472,15 +474,7 @@ class Element
      */
     public function depth(): int
     {
-        $depth = 0;
-
-        for ($node = $this; $node !== null; $node = $node->parent) {
-            if ($node->isElement()) {
-                $depth++;
-            }
-        }
-
-        return $depth;
+        return count(array_filter($this->ancestry(), static fn (self $node): bool => $node->isElement()));
     }
 
     /**

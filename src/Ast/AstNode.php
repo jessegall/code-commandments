@@ -729,12 +729,26 @@ class AstNode
      */
     public function ancestors(): iterable
     {
-        $node = $this->node?->getAttribute('parent');
-
-        while ($node instanceof Node) {
+        foreach (self::ancestorsOf($this->node) as $node) {
             yield new self($node);
+        }
+    }
 
-            $node = $node->getAttribute('parent');
+    /**
+     * The same climb over a RAW php-parser node, for the analyses that hold one rather than a match
+     * ({@see Support\TypeResolver}, {@see ValueFlow}). The walk lives once; a caller says which
+     * ancestor it is looking for, never how to reach it.
+     *
+     * @return iterable<Node>
+     */
+    public static function ancestorsOf(?Node $node): iterable
+    {
+        $current = $node?->getAttribute('parent');
+
+        while ($current instanceof Node) {
+            yield $current;
+
+            $current = $current->getAttribute('parent');
         }
     }
 

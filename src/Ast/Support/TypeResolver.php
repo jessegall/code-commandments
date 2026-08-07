@@ -129,8 +129,11 @@ final class TypeResolver
     public function declaringClassOfMethod(?string $fqcn, string $method): ?string
     {
         $seen = [];
+        $class = ltrim((string) $fqcn, '\\');
 
-        for ($class = ltrim((string) $fqcn, '\\'); $class !== '' && ! isset($seen[$class]); $class = $this->parentOf[$class] ?? '') {
+        // The PARENT-CLASS chain, not the AST one: climb until a class declares the method, the
+        // chain runs out, or it loops back on itself.
+        while ($class !== '' && ! isset($seen[$class])) {
             $seen[$class] = true;
 
             $owner = $this->methodDeclaredBy($class, $method, []);
@@ -138,6 +141,8 @@ final class TypeResolver
             if ($owner !== null) {
                 return $owner;
             }
+
+            $class = $this->parentOf[$class] ?? '';
         }
 
         return null;
@@ -401,7 +406,7 @@ final class TypeResolver
 
     private function enclosingFunction(FunctionLike $function): ?FunctionLike
     {
-        for ($node = $function->getAttribute('parent'); $node !== null; $node = $node->getAttribute('parent')) {
+        foreach (AstNode::ancestorsOf($function) as $node) {
             if ($node instanceof FunctionLike) {
                 return $node;
             }
