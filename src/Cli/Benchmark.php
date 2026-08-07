@@ -24,7 +24,7 @@ use JesseGall\CodeCommandments\Cli\Judge\Finding;
 final class Benchmark
 {
     /**
-     * @var list<array{name: string, seconds: float, matches: int, shards: ?int, bytes: int}>
+     * @var list<DetectorProfile>
      */
     private array $records = [];
 
@@ -51,13 +51,7 @@ final class Benchmark
             $bytes = memory_get_usage() - $before;
             $shards = $detector instanceof Sharded ? count($detector->shards($codebase)) : null;
 
-            $this->records[] = [
-                'name' => $short,
-                'seconds' => $seconds,
-                'matches' => count($matches),
-                'shards' => $shards,
-                'bytes' => $bytes,
-            ];
+            $this->records[] = new DetectorProfile($short, $seconds, count($matches), $bytes, $shards);
 
             $sin = $detector->sin();
 
@@ -77,9 +71,9 @@ final class Benchmark
     public function render(float $parseSeconds): string
     {
         $rows = $this->records;
-        usort($rows, static fn (array $a, array $b): int => $b['seconds'] <=> $a['seconds']);
+        usort($rows, static fn (DetectorProfile $a, DetectorProfile $b): int => $b->seconds <=> $a->seconds);
 
-        $total = array_sum(array_column($rows, 'seconds'));
+        $total = array_sum(array_map(static fn (DetectorProfile $row): float => $row->seconds, $rows));
 
         $lines = [];
         $lines[] = '';
@@ -90,12 +84,12 @@ final class Benchmark
         foreach ($rows as $row) {
             $lines[] = sprintf(
                 '  %-42s %8.3fs %5.1f %7d %8s   %s',
-                $row['name'],
-                $row['seconds'],
-                $total > 0 ? $row['seconds'] / $total * 100 : 0,
-                $row['matches'],
-                $row['shards'] === null ? '·' : (string) $row['shards'],
-                $this->bytes($row['bytes']),
+                $row->name,
+                $row->seconds,
+                $row->shareOf($total),
+                $row->matches,
+                $row->shardsColumn(),
+                $this->bytes($row->bytes),
             );
         }
 
