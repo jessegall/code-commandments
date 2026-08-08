@@ -304,6 +304,15 @@ class AstNode
     }
 
     /**
+     * Is this a call ON `$this` — the one receiver whose type is certain without resolving
+     * anything, which is why so many analyses either single it out or exclude it.
+     */
+    public function isThisCall(): bool
+    {
+        return $this->node instanceof MethodCall && new self($this->node->var)->isThisVariable();
+    }
+
+    /**
      * Is this a write to a STATIC property — `self::$table = …`, `static::$seen++`, `Rates::$table = []`?
      * State that outlives every instance and belongs to no one: whoever writes last wins, order of
      * execution becomes load-bearing, and one test leaks into the next.

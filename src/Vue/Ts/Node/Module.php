@@ -22,6 +22,11 @@ final class Module extends Node
         public readonly array $body,
     ) {}
 
+    public function children(): array
+    {
+        return [...$this->imports, ...$this->body];
+    }
+
     public function variable(string $name): ?VariableDecl
     {
         foreach ($this->body as $node) {

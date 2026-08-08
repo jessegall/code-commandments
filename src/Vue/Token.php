@@ -25,6 +25,9 @@ final class Token
     public const string NONE = 'none';
 
     // ---- punctuation ----------------------------------------------------------
+    // Every character the grammars ask for BY NAME. A parser that writes `expect('{')` states the
+    // language's spelling at each of a hundred call sites; naming them once means the vocabulary is
+    // readable, greppable, and impossible to typo into a rule that then silently never matches.
     public const string PAREN_OPEN = '(';
     public const string PAREN_CLOSE = ')';
     public const string BRACE_OPEN = '{';
@@ -37,6 +40,42 @@ final class Token
     public const string COMMA = ',';
     public const string COLON = ':';
     public const string ASSIGN = '=';
+    public const string DOT = '.';
+    public const string QUESTION = '?';
+    public const string BANG = '!';
+    public const string PIPE = '|';
+    public const string AMPERSAND = '&';
+    public const string STAR = '*';
+    public const string PLUS = '+';
+    public const string MINUS = '-';
+    public const string SLASH = '/';
+    public const string HASH = '#';
+    public const string AT = '@';
+    public const string BACKTICK = '`';
+
+    // ---- multi-character operators (the lexer emits `{`-style puncts one char at a time; the
+    // parsers compose these themselves, so they are named here rather than spelled inline) -------
+    public const string ARROW = '=>';
+    public const string OPTIONAL_CHAIN = '?.';
+    public const string SPREAD = '...';
+    public const string STRICT_EQUAL = '===';
+    public const string STRICT_NOT_EQUAL = '!==';
+    public const string LOOSE_EQUAL = '==';
+    public const string LOOSE_NOT_EQUAL = '!=';
+    public const string COALESCE = '??';
+    public const string AND = '&&';
+    public const string OR = '||';
+
+    /**
+     * The comparison operators — what a rule asking "is this an equality test" reads, rather than
+     * four literals repeated at each call site.
+     */
+    public const array EQUALITY = [self::STRICT_EQUAL, self::STRICT_NOT_EQUAL, self::LOOSE_EQUAL, self::LOOSE_NOT_EQUAL];
+
+    /**
+     * The operators that SHORT-CIRCUIT — `&&`, `||`, and the absence-specific `??`.
+     */
+    public const array SHORT_CIRCUIT = [self::AND, self::OR, self::COALESCE];
 
     /**
      * Expression-level openers/closers — `()[]{}` (angles are operators, not delimiters).

@@ -74,6 +74,16 @@ final class Span
     }
 
     /**
+     * The 1-based LINE $pos sits on — the offset→line answer every located node needs to report a
+     * `file:line`. The one place the newline count is written, so a parse layer that stamps its
+     * nodes with byte offsets never carries its own `substr_count` beside the real one.
+     */
+    public static function lineAt(string $source, int $pos): int
+    {
+        return substr_count($source, "\n", 0, max(0, min($pos, strlen($source)))) + 1;
+    }
+
+    /**
      * The leading whitespace of the line $pos sits on, whatever else precedes $pos on it — the indent the
      * whole line, and so its continuation lines, are laid out against. The wider companion to
      * {@see ownLineIndent}, which answers only "is $pos itself the first thing on its line".

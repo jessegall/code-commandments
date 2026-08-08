@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Span;
+
 /**
  * TypeScript object type (interface/type) with field names and file:line—declaration-space
  * twin of Element. Reads off Script via fromScript.
@@ -33,7 +35,7 @@ final class TypeDeclaration
         $declarations = [];
 
         foreach ($script->declarations() as $declaration) {
-            $line = substr_count($source, "\n", 0, $baseOffset + $declaration['offset']) + 1;
+            $line = Span::lineAt($source, $baseOffset + $declaration['offset']);
 
             $declarations[] = new self($declaration['name'], $declaration['fields'], $file, $line);
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Expr;
 
+use JesseGall\CodeCommandments\Vue\Keyword;
 use JesseGall\CodeCommandments\Vue\Lexeme;
 use JesseGall\CodeCommandments\Vue\Token;
 
@@ -20,14 +21,19 @@ final class Parser
      * Binary operators, loosest-binding first; ternary `?:` sits below all of them.
      */
     private const array PRECEDENCE = [
-        '??' => 1,
-        '||' => 2,
-        '&&' => 3,
-        '===' => 4, '!==' => 4, '==' => 4, '!=' => 4,
-        '<' => 5, '>' => 5, '<=' => 5, '>=' => 5,
-        '+' => 6, '-' => 6,
-        '*' => 7, '/' => 7, '%' => 7,
+        Token::COALESCE => 1,
+        Token::OR => 2,
+        Token::AND => 3,
+        Token::STRICT_EQUAL => 4, Token::STRICT_NOT_EQUAL => 4, Token::LOOSE_EQUAL => 4, Token::LOOSE_NOT_EQUAL => 4,
+        Token::ANGLE_OPEN => 5, Token::ANGLE_CLOSE => 5, '<=' => 5, '>=' => 5,
+        Token::PLUS => 6, Token::MINUS => 6,
+        Token::STAR => 7, Token::SLASH => 7, '%' => 7,
     ];
+
+    /**
+     * The prefix operators the grammar reads — `!x`, `-x`, `+x`.
+     */
+    private const array PREFIX_OPERATORS = [Token::BANG, Token::MINUS, Token::PLUS];
 
     /**
      * @var list<Lexeme>
@@ -36,14 +42,20 @@ final class Parser
 
     private int $pos = 0;
 
-    private function __construct(string $source)
+    /**
+     * The offset IN THE FILE that $source begins at — 0 when the whole file was handed over, and
+     * the fragment's own start when a caller lexes a slice (a binding out of a template, a
+     * statement out of a `.ts` module). Every node's recorded position is absolute because of it,
+     * so an expression buried three calls deep still reports its own `file:line`.
+     */
+    private function __construct(string $source, private readonly int $base = 0)
     {
         $this->tokens = new Lexer()->tokenize($source);
     }
 
-    public static function parse(string $source): Expr
+    public static function parse(string $source, int $baseOffset = 0): Expr
     {
-        $parser = new self($source);
+        $parser = new self($source, $baseOffset);
 
         return $parser->expression();
     }
@@ -55,14 +67,15 @@ final class Parser
      * is the names before it, the iterable is a real expression) — the engine's answer to
      * "what does this loop bind and range over", replacing an explode on `in`/`,`.
      */
-    public static function parseFor(string $source): Expr
+    public static function parseFor(string $source, int $baseOffset = 0): Expr
     {
-        $parser = new self($source);
+        $parser = new self($source, $baseOffset);
+        $start = $parser->offset();
         $aliases = $parser->forAliases();
         $keyword = $parser->forKeyword();
         $iterable = $parser->expression();
 
-        return new Expr(ExprKind::For, ['aliases' => $aliases, 'keyword' => $keyword, 'iterable' => $iterable]);
+        return $parser->located(new Expr(ExprKind::For, ['aliases' => $aliases, 'keyword' => $keyword, 'iterable' => $iterable]), $start);
     }
 
     /**
@@ -109,7 +122,7 @@ final class Parser
      */
     private static function isForKeyword(Lexeme $token): bool
     {
-        return $token->isIdentifier('in') || $token->isIdentifier('of');
+        return $token->isIdentifier(Keyword::IN) || $token->isIdentifier(Keyword::OF);
     }
 
     private function forKeyword(): string
@@ -129,15 +142,16 @@ final class Parser
 
     private function expression(): Expr
     {
+        $start = $this->offset();
         $left = $this->ternary();
 
         // Assignment is the loosest binding and right-associative — `x = expr` (a `@click`
         // handler writing a value). `==`/`===`/`<=`/`>=` are their own tokens, so a lone `=`
         // here is only ever assignment.
-        if ($this->isPunct('=')) {
+        if ($this->isPunct(Token::ASSIGN)) {
             $this->next();
 
-            return new Expr(ExprKind::Assign, ['target' => $left, 'value' => $this->expression()]);
+            return $this->located(new Expr(ExprKind::Assign, ['target' => $left, 'value' => $this->expression()]), $start);
         }
 
         return $left;
@@ -145,15 +159,16 @@ final class Parser
 
     private function ternary(): Expr
     {
+        $start = $this->offset();
         $test = $this->binary(0);
 
-        if ($this->isPunct('?')) {
+        if ($this->isPunct(Token::QUESTION)) {
             $this->next();
             $then = $this->expression();
-            $this->expect(':');
+            $this->expect(Token::COLON);
             $else = $this->expression();
 
-            return new Expr(ExprKind::Conditional, ['test' => $test, 'then' => $then, 'else' => $else]);
+            return $this->located(new Expr(ExprKind::Conditional, ['test' => $test, 'then' => $then, 'else' => $else]), $start);
         }
 
         return $test;
@@ -161,12 +176,13 @@ final class Parser
 
     private function binary(int $minPrecedence): Expr
     {
+        $start = $this->offset();
         $left = $this->unary();
 
         // A TS `as` cast is compile-time-only — skip `as <Type>` and keep the runtime value expression, so
         // `($event.target as HTMLInputElement).value` parses (and reconstructs) as `$event.target.value`
         // rather than silently truncating to `$event.target`.
-        while ($this->peek()->isIdentifier('as')) {
+        while ($this->peek()->isIdentifier(Keyword::AS)) {
             $this->next();
             $this->skipTypeAnnotation();
         }
@@ -181,7 +197,7 @@ final class Parser
 
             $this->next();
             $right = $this->binary(self::PRECEDENCE[$operator] + 1);
-            $left = new Expr(ExprKind::Binary, ['op' => $operator, 'left' => $left, 'right' => $right]);
+            $left = $this->located(new Expr(ExprKind::Binary, ['op' => $operator, 'left' => $left, 'right' => $right]), $start);
         }
 
         return $left;
@@ -189,18 +205,19 @@ final class Parser
 
     private function unary(): Expr
     {
+        $start = $this->offset();
         $token = $this->peek();
 
         if ($token->isPunct() && in_array($token->value, ['!', '-', '+'], true)) {
             $this->next();
 
-            return new Expr(ExprKind::Unary, ['op' => $token->value, 'argument' => $this->unary()]);
+            return $this->located(new Expr(ExprKind::Unary, ['op' => $token->value, 'argument' => $this->unary()]), $start);
         }
 
-        if ($token->isIdentifier('typeof')) {
+        if ($token->isIdentifier(Keyword::TYPEOF)) {
             $this->next();
 
-            return new Expr(ExprKind::Unary, ['op' => 'typeof', 'argument' => $this->unary()]);
+            return $this->located(new Expr(ExprKind::Unary, ['op' => 'typeof', 'argument' => $this->unary()]), $start);
         }
 
         return $this->postfix();
@@ -238,7 +255,7 @@ final class Parser
      */
     private static function connectsType(Lexeme $token): bool
     {
-        return $token->isPunct('.') || $token->isPunct('|') || $token->isPunct('&');
+        return $token->isPunct(Token::DOT) || $token->isPunct(Token::PIPE) || $token->isPunct(Token::AMPERSAND);
     }
 
     private function postfix(): Expr
@@ -260,10 +277,10 @@ final class Parser
     private function extended(Expr $node): ?Expr
     {
         return match (true) {
-            $this->isPunct('.') => $this->member($node, optional: false),
-            $this->isPunct('?.') => $this->optionalMember($node),
-            $this->isPunct('[') => $this->index($node),
-            $this->isPunct('(') => new Expr(ExprKind::Call, ['callee' => $node, 'arguments' => $this->arguments()]),
+            $this->isPunct(Token::DOT) => $this->member($node, optional: false),
+            $this->isPunct(Token::OPTIONAL_CHAIN) => $this->optionalMember($node),
+            $this->isPunct(Token::BRACKET_OPEN) => $this->index($node),
+            $this->isPunct(Token::PAREN_OPEN) => $this->located(new Expr(ExprKind::Call, ['callee' => $node, 'arguments' => $this->arguments()]), $node->start),
             default => null,
         };
     }
@@ -275,7 +292,7 @@ final class Parser
     {
         $this->next();
 
-        return new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => $optional]);
+        return $this->located(new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => $optional]), $node->start);
     }
 
     /**
@@ -285,9 +302,9 @@ final class Parser
     {
         $this->next();
 
-        return $this->isPunct('[') || $this->isPunct('(')
+        return $this->isPunct(Token::BRACKET_OPEN) || $this->isPunct(Token::PAREN_OPEN)
             ? $this->tail($node, true)
-            : new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => true]);
+            : $this->located(new Expr(ExprKind::Member, ['object' => $node, 'property' => $this->name(), 'optional' => true]), $node->start);
     }
 
     /**
@@ -297,9 +314,9 @@ final class Parser
     {
         $this->next();
         $index = $this->expression();
-        $this->expect(']');
+        $this->expect(Token::BRACKET_CLOSE);
 
-        return new Expr(ExprKind::Index, ['object' => $node, 'index' => $index]);
+        return $this->located(new Expr(ExprKind::Index, ['object' => $node, 'index' => $index]), $node->start);
     }
 
     /**
@@ -307,59 +324,60 @@ final class Parser
      */
     private function tail(Expr $node, bool $optional): Expr
     {
-        if ($this->isPunct('[')) {
+        if ($this->isPunct(Token::BRACKET_OPEN)) {
             $this->next();
             $index = $this->expression();
-            $this->expect(']');
+            $this->expect(Token::BRACKET_CLOSE);
 
-            return new Expr(ExprKind::Index, ['object' => $node, 'index' => $index, 'optional' => $optional]);
+            return $this->located(new Expr(ExprKind::Index, ['object' => $node, 'index' => $index, 'optional' => $optional]), $node->start);
         }
 
-        return new Expr(ExprKind::Call, ['callee' => $node, 'arguments' => $this->arguments(), 'optional' => $optional]);
+        return $this->located(new Expr(ExprKind::Call, ['callee' => $node, 'arguments' => $this->arguments(), 'optional' => $optional]), $node->start);
     }
 
     private function primary(): Expr
     {
+        $start = $this->offset();
         $token = $this->peek();
 
         if ($token->isIdentifier()) {
             $this->next();
 
             if (in_array($token->value, ['true', 'false', 'null', 'undefined'], true)) {
-                return new Expr(ExprKind::Literal, ['value' => $token->value, 'raw' => $token->value]);
+                return $this->located(new Expr(ExprKind::Literal, ['value' => $token->value, 'raw' => $token->value]), $start);
             }
 
-            if ($this->isPunct('=>')) {
+            if ($this->isPunct(Token::ARROW)) {
                 $this->next();
-                $param = new Expr(ExprKind::Identifier, ['name' => $token->value]);
+                $param = new Expr(ExprKind::Identifier, ['name' => $token->value])->locatedAt($start, $start + strlen($token->value));
 
-                return new Expr(ExprKind::Arrow, ['params' => [$param], 'body' => $this->expression()]);
+                return $this->located(new Expr(ExprKind::Arrow, ['params' => [$param], 'body' => $this->expression()]), $start);
             }
 
-            return new Expr(ExprKind::Identifier, ['name' => $token->value]);
+            return $this->located(new Expr(ExprKind::Identifier, ['name' => $token->value]), $start);
         }
 
         if ($token->is(Token::NUMBER)) {
             $this->next();
 
-            return new Expr(ExprKind::Literal, ['value' => $token->value, 'raw' => $token->value]);
+            return $this->located(new Expr(ExprKind::Literal, ['value' => $token->value, 'raw' => $token->value]), $start);
         }
 
         if ($token->is(Token::STRING)) {
             $this->next();
 
-            return new Expr(ExprKind::Literal, ['value' => $this->unquote($token->value), 'raw' => $token->value]);
+            return $this->located(new Expr(ExprKind::Literal, ['value' => $this->unquote($token->value), 'raw' => $token->value]), $start);
         }
 
-        if ($this->isPunct('(')) {
+        if ($this->isPunct(Token::PAREN_OPEN)) {
             return $this->group();
         }
 
-        if ($this->isPunct('[')) {
+        if ($this->isPunct(Token::BRACKET_OPEN)) {
             return $this->arrayLiteral();
         }
 
-        if ($this->isPunct('{')) {
+        if ($this->isPunct(Token::BRACE_OPEN)) {
             return $this->objectLiteral();
         }
 
@@ -368,12 +386,13 @@ final class Parser
             $this->next();
         }
 
-        return new Expr(ExprKind::Unknown);
+        return $this->located(new Expr(ExprKind::Unknown), $start);
     }
 
     private function group(): Expr
     {
-        $this->expect('(');
+        $start = $this->offset();
+        $this->expect(Token::PAREN_OPEN);
 
         // A parenthesised group is an arrow's PARAMETER LIST when its matching `)` is followed by
         // `=>`; otherwise it's a grouped expression. Deciding up front (not retroactively) lets us
@@ -381,20 +400,20 @@ final class Parser
         // and whose annotation would otherwise leak the param name as a free read.
         if ($this->closingParenLeadsToArrow()) {
             $params = $this->arrowParameters();
-            $this->expect(')');
+            $this->expect(Token::PAREN_CLOSE);
             $this->skipArrowMarker();
 
-            return new Expr(ExprKind::Arrow, ['params' => $params, 'body' => $this->expression()]);
+            return $this->located(new Expr(ExprKind::Arrow, ['params' => $params, 'body' => $this->expression()]), $start);
         }
 
-        if ($this->isPunct(')')) {
+        if ($this->isPunct(Token::PAREN_CLOSE)) {
             $this->next();
 
-            return new Expr(ExprKind::Unknown);
+            return $this->located(new Expr(ExprKind::Unknown), $start);
         }
 
         $inner = $this->expression();
-        $this->expect(')');
+        $this->expect(Token::PAREN_CLOSE);
 
         return $inner;
     }
@@ -412,7 +431,7 @@ final class Parser
             $token = $this->tokens[$i];
 
             if ($token->isGroupCloser() && $depth === 0) {
-                return ($this->tokens[$i + 1] ?? Lexeme::none($i))->isPunct('=>');
+                return ($this->tokens[$i + 1] ?? Lexeme::none($i))->isPunct(Token::ARROW);
             }
 
             $depth += $token->groupDepthChange();
@@ -432,19 +451,23 @@ final class Parser
     {
         $params = [];
 
-        while ($this->insideGroupClosedBy(')')) {
-            if ($this->isPunct('{') || $this->isPunct('[')) {
+        while ($this->insideGroupClosedBy(Token::PAREN_CLOSE)) {
+            if ($this->isPunct(Token::BRACE_OPEN) || $this->isPunct(Token::BRACKET_OPEN)) {
+                $patternStart = $this->offset();
+
                 foreach ($this->patternNames() as $name) {
-                    $params[] = new Expr(ExprKind::Identifier, ['name' => $name]);
+                    $params[] = $this->located(new Expr(ExprKind::Identifier, ['name' => $name]), $patternStart);
                 }
             } elseif ($this->peek()->isIdentifier()) {
+                $nameStart = $this->offset();
                 $params[] = new Expr(ExprKind::Identifier, ['name' => $this->peek()->value]);
                 $this->next();
+                $params[count($params) - 1]->locatedAt($nameStart, $this->consumedEnd());
             }
 
             $this->skipToParamBoundary(); // a `: Type` annotation and/or `= default`
 
-            if ($this->isPunct(',')) {
+            if ($this->isPunct(Token::COMMA)) {
                 $this->next();
             }
         }
@@ -487,7 +510,7 @@ final class Parser
         $depth = 0;
 
         while (! $this->isEof()) {
-            if ($depth === 0 && ($this->isPunct(',') || $this->isPunct(')'))) {
+            if ($depth === 0 && ($this->isPunct(Token::COMMA) || $this->isPunct(Token::PAREN_CLOSE))) {
                 return;
             }
 
@@ -498,50 +521,52 @@ final class Parser
 
     private function arrayLiteral(): Expr
     {
-        $this->expect('[');
+        $start = $this->offset();
+        $this->expect(Token::BRACKET_OPEN);
         $elements = [];
 
-        while (! $this->isPunct(']') && ! $this->isEof()) {
+        while (! $this->isPunct(Token::BRACKET_CLOSE) && ! $this->isEof()) {
             $elements[] = $this->expression();
 
-            if (! $this->isPunct(',')) {
+            if (! $this->isPunct(Token::COMMA)) {
                 break;
             }
 
             $this->next();
         }
 
-        $this->expect(']');
+        $this->expect(Token::BRACKET_CLOSE);
 
-        return new Expr(ExprKind::Array, ['elements' => $elements]);
+        return $this->located(new Expr(ExprKind::Array, ['elements' => $elements]), $start);
     }
 
     private function objectLiteral(): Expr
     {
-        $this->expect('{');
+        $start = $this->offset();
+        $this->expect(Token::BRACE_OPEN);
         $values = [];
         $keys = [];
 
-        while (! $this->isPunct('}') && ! $this->isEof()) {
+        while (! $this->isPunct(Token::BRACE_CLOSE) && ! $this->isEof()) {
             $key = $this->objectKey($this->peek());
             $this->next(); // consume the key (an identifier, string, number, or computed token)
 
-            if ($this->isPunct(':')) {
+            if ($this->isPunct(Token::COLON)) {
                 $this->next();
                 $keys[] = $key;            // aligned with $values — only pushed for real `key: value` pairs
                 $values[] = $this->expression();
             }
 
-            if (! $this->isPunct(',')) {
+            if (! $this->isPunct(Token::COMMA)) {
                 break;
             }
 
             $this->next();
         }
 
-        $this->expect('}');
+        $this->expect(Token::BRACE_CLOSE);
 
-        return new Expr(ExprKind::Object, ['values' => $values, 'keys' => $keys]);
+        return $this->located(new Expr(ExprKind::Object, ['values' => $values, 'keys' => $keys]), $start);
     }
 
     /**
@@ -563,20 +588,20 @@ final class Parser
      */
     private function arguments(): array
     {
-        $this->expect('(');
+        $this->expect(Token::PAREN_OPEN);
         $arguments = [];
 
-        while ($this->insideGroupClosedBy(')')) {
+        while ($this->insideGroupClosedBy(Token::PAREN_CLOSE)) {
             $arguments[] = $this->expression();
 
-            if (! $this->isPunct(',')) {
+            if (! $this->isPunct(Token::COMMA)) {
                 break;
             }
 
             $this->next();
         }
 
-        $this->expect(')');
+        $this->expect(Token::PAREN_CLOSE);
 
         return $arguments;
     }
@@ -596,7 +621,7 @@ final class Parser
 
     private function skipArrowMarker(): void
     {
-        if ($this->isPunct('=>')) {
+        if ($this->isPunct(Token::ARROW)) {
             $this->next();
         }
     }
@@ -611,6 +636,36 @@ final class Parser
     private function next(): void
     {
         $this->pos++;
+    }
+
+    /**
+     * The absolute offset the token under the cursor BEGINS at — where a production about to be
+     * read starts. Past the last token it is the end of what was read, so a node built at EOF is
+     * empty rather than mis-placed.
+     */
+    private function offset(): int
+    {
+        $last = $this->tokens[count($this->tokens) - 1] ?? null;
+
+        return $this->base + ($this->pos < count($this->tokens) ? $this->tokens[$this->pos]->start : $last?->end ?? 0);
+    }
+
+    /**
+     * The absolute offset just past the last CONSUMED token — where a production that has finished
+     * reading ends.
+     */
+    private function consumedEnd(): int
+    {
+        return $this->base + ($this->tokens[$this->pos - 1]->end ?? 0);
+    }
+
+    /**
+     * Stamp a node that was read from $start up to the cursor — the ONE place a production records
+     * its span, so "where does this expression sit" is never re-derived per node kind.
+     */
+    private function located(Expr $node, int $start): Expr
+    {
+        return $node->locatedAt($start, $this->consumedEnd());
     }
 
     /**

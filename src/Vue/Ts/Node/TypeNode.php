@@ -34,6 +34,17 @@ abstract class TypeNode extends Node
     }
 
     /**
+     * Does this type ADMIT ABSENCE — is `null` or `undefined` one of the values it allows? The
+     * frontend reading of a nullable type, and the question every absence rule starts from, asked
+     * of the type itself rather than re-derived by each holder of one (a field, a parameter, a
+     * variable annotation, a return).
+     */
+    public function admitsAbsence(): bool
+    {
+        return false;
+    }
+
+    /**
      * The FIELDS this type resolves to — `{ a: A }` has them inline; a named reference has none of
      * its own, so it is handed $declared to look its name up with. A type that is neither declares
      * no fields. The caller passes HOW to resolve a name and the type decides whether it needs to.

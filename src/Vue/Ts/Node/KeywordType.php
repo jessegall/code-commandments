@@ -12,6 +12,11 @@ final class KeywordType extends TypeNode
 {
     public function __construct(public readonly string $name) {}
 
+    public function admitsAbsence(): bool
+    {
+        return $this->name === 'null' || $this->name === 'undefined';
+    }
+
     public function render(): string
     {
         return $this->name;

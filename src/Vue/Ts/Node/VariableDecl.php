@@ -36,6 +36,17 @@ final class VariableDecl extends Node
         return $this->pattern->names();
     }
 
+    /**
+     * The initializer's own nodes — a `const x = useThing()` call, or the parameters of a
+     * `const load = (page: number) => …` arrow, which are real parameters a rule judges like any
+     * other. The binding pattern is NOT among them: its names are this declaration's own
+     * ({@see declaredNames}), so walking into it would report the same name twice.
+     */
+    public function children(): array
+    {
+        return array_values(array_filter([$this->initCall, ...($this->initParams ?? [])]));
+    }
+
     public function render(): string
     {
         $type = $this->typeAnnotation !== null ? ': ' . $this->typeAnnotation->render() : '';

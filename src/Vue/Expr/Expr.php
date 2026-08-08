@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Expr;
 
+use JesseGall\CodeCommandments\Vue\Keyword;
+use JesseGall\CodeCommandments\Vue\Token;
+
 /**
  * A node of parsed Vue binding expressions (JS in `:x="…"`, `v-if="…"`, `{{ … }}`). Second AST for frontend
  * detectors to reason about member chains/calls structurally, matching backend's php-parser approach. Kind-tagged node with predicates.
@@ -11,12 +14,55 @@ namespace JesseGall\CodeCommandments\Vue\Expr;
 final class Expr
 {
     /**
+     * The `[start, end)` byte range this expression occupies in the file it was parsed from — a
+     * `.ts` module, or the SFC holding the binding. Absolute, because {@see Parser::parse} is told
+     * the offset the fragment it lexes begins at, so the call inside a method inside a class
+     * reports its own position rather than its statement's.
+     *
+     * 0/0 for an expression built by hand rather than parsed.
+     */
+    public private(set) int $start = 0;
+
+    public private(set) int $end = 0;
+
+    /**
      * @param  array<string, mixed>  $props
      */
     public function __construct(
         public readonly ExprKind $kind,
         public readonly array $props = [],
     ) {}
+
+    /**
+     * Stamp this expression with the source range it was parsed from, and return it — the parser's
+     * one way to record a position. Write access is this class's alone ({@see $start}), so a node
+     * cannot be moved once placed.
+     */
+    public function locatedAt(int $start, int $end): self
+    {
+        $this->start = $start;
+        $this->end = $end;
+
+        return $this;
+    }
+
+    /**
+     * Every expression in this tree, this one first — the flat walk a query selects over, so a
+     * selector reaches a call nested in an argument of another call without knowing the shape it
+     * is buried in.
+     *
+     * @return list<self>
+     */
+    public function flatten(): array
+    {
+        $all = [$this];
+
+        foreach ($this->subExpressions() as $child) {
+            $all = [...$all, ...$child->flatten()];
+        }
+
+        return $all;
+    }
 
     /**
      * The value of $key on this expression — resolve-or-THROW. Which properties a kind carries is
@@ -43,6 +89,110 @@ final class Expr
     public function is(ExprKind $kind): bool
     {
         return $this->kind === $kind;
+    }
+
+    // ---- the shared shape vocabulary ------------------------------------------
+    // These answer to the SAME names the backend's {@see \JesseGall\CodeCommandments\Ast\AstNode}
+    // uses. A rule about absence, a ternary, or a guard is about a shape both languages have, so it
+    // must be able to put its question to either engine — and it can only do that if the two answer
+    // to one set of words. A predicate added here should be added there, and under that name.
+
+    /**
+     * Is this the literal ABSENCE — `null` or `undefined`? Both spellings are one idea, so neither
+     * can be tested without the other.
+     */
+    public function isNullLiteral(): bool
+    {
+        return $this->kind === ExprKind::Literal && Keyword::isAbsence((string) $this->get('raw'));
+    }
+
+    /**
+     * `a ?? b` — the absence fallback. Named as the backend names it.
+     */
+    public function isCoalesce(): bool
+    {
+        return $this->isBinaryOperator(Token::COALESCE);
+    }
+
+    /**
+     * The value a `??` falls back TO, and the value it guards — the two halves an absence rule reads.
+     */
+    public function coalesceRight(): self
+    {
+        return $this->isCoalesce() ? $this->child('right') : new self(ExprKind::Unknown);
+    }
+
+    public function coalesceLeft(): self
+    {
+        return $this->isCoalesce() ? $this->child('left') : new self(ExprKind::Unknown);
+    }
+
+    /**
+     * Is this a comparison AGAINST absence — `x === null`, `x !== undefined`? The test a null-guard
+     * is written as, whichever side the literal sits on.
+     */
+    public function isNullComparison(): bool
+    {
+        if ($this->kind !== ExprKind::Binary || ! in_array((string) $this->get('op'), Token::EQUALITY, true)) {
+            return false;
+        }
+
+        return $this->child('left')->isNullLiteral() || $this->child('right')->isNullLiteral();
+    }
+
+    /**
+     * `a ? b : c`.
+     */
+    public function isTernary(): bool
+    {
+        return $this->kind === ExprKind::Conditional;
+    }
+
+    /**
+     * A ternary whose own branches hold ANOTHER ternary — the nested conditional that wants a lookup
+     * or polymorphism instead.
+     */
+    public function isNestedTernary(): bool
+    {
+        return $this->isTernary()
+            && ($this->child('then')->isTernary() || $this->child('else')->isTernary());
+    }
+
+    /**
+     * `a && b`, `a || b`, `a ?? b` — an operator that may not evaluate its right side.
+     */
+    public function isShortCircuit(): bool
+    {
+        return $this->kind === ExprKind::Binary
+            && in_array((string) $this->get('op'), Token::SHORT_CIRCUIT, true);
+    }
+
+    /**
+     * Does this expression DEFEND a value with optional chaining — `a?.b`, `a?.()`? The tell that a
+     * type is being treated as possibly-absent at the point of use.
+     */
+    public function isOptionalChain(): bool
+    {
+        return $this->has('optional') && $this->get('optional') === true;
+    }
+
+    public function isCall(): bool
+    {
+        return $this->kind === ExprKind::Call;
+    }
+
+    /**
+     * The full source of what this call CALLS — `node.closest` for `node.closest('[data-x]')`, where
+     * {@see callee} answers only for a bare function name. Empty when this isn't a call.
+     */
+    public function callName(): string
+    {
+        return $this->isCall() ? $this->child('callee')->source() : '';
+    }
+
+    private function isBinaryOperator(string $operator): bool
+    {
+        return $this->kind === ExprKind::Binary && (string) $this->get('op') === $operator;
     }
 
     /**

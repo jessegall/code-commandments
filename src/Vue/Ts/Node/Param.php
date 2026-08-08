@@ -17,6 +17,20 @@ final class Param extends Node
         public readonly bool $rest = false,
     ) {}
 
+    public function declaredNames(): array
+    {
+        return [$this->name];
+    }
+
+    /**
+     * Might this argument be MISSING — written `name?: T`, or typed to admit `null`/`undefined`?
+     * The same question {@see FieldDecl::isOptional} answers, asked of a parameter.
+     */
+    public function isOptional(): bool
+    {
+        return $this->optional || ($this->type?->admitsAbsence() ?? false);
+    }
+
     public function render(): string
     {
         $prefix = $this->rest ? '...' : '';

@@ -177,6 +177,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Backend\SwallowCatch::class,
         // Sins\Backend\TernaryStatement::class,
         // Sins\Backend\TypeSwitch::class,
+        // Sins\Backend\UnnamedVocabularyLiteral::class,
         // Sins\Backend\UselessPropertyHook::class,
         // Sins\Backend\WrappingWithoutCause::class,
 

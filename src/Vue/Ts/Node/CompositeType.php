@@ -21,6 +21,25 @@ final class CompositeType extends TypeNode
         public readonly array $members,
     ) {}
 
+    /**
+     * A UNION admits absence when any member does; an intersection cannot — `A & null` is never a
+     * value, so only `|` is asked.
+     */
+    public function admitsAbsence(): bool
+    {
+        if ($this->operator !== '|') {
+            return false;
+        }
+
+        foreach ($this->members as $member) {
+            if ($member->admitsAbsence()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function render(): string
     {
         return implode(" {$this->operator} ", array_map(static fn (TypeNode $m): string => $m->render(), $this->members));

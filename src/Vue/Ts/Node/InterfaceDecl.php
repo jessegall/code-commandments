@@ -23,6 +23,11 @@ final class InterfaceDecl extends Node
         public readonly string $header = '',
     ) {}
 
+    public function children(): array
+    {
+        return $this->members;
+    }
+
     public function render(): string
     {
         $body = implode("\n", array_map(static fn (Member $m): string => '    ' . $m->render() . ';', $this->members));

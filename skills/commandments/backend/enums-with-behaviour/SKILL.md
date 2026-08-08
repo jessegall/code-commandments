@@ -49,6 +49,8 @@ Reach for this the moment you write:
   _`default => throw Unhandled::for($x)`._
 - Dispatch over the enum's cases, not string/int literals that mirror its values.
   _Dispatch via a method on the backed enum's cases._
+- Where a parameter is spelled from a named vocabulary, spell it that way EVERYWHERE — never the raw value at one call site and the constant at the next.
+  _The constant that already holds this value, referenced by name._
 
 ## Bad → good
 
@@ -239,6 +241,32 @@ public function endpointClean(PaymentMethod $method): string
 }
 ```
 
+### unnamed-vocabulary-literal
+
+A raw string in an argument the codebase elsewhere fills from a named vocabulary — `expect('{')` beside `expect(Token::COLON)`, where `Token::BRACE_OPEN` already names it
+
+```php
+----------[ Bad ]----------
+
+public function heading(string $title): string
+{
+    $this->emit(ReceiptGlyph::RULE);
+
+    return $this->emit('•') . $title;
+}
+
+----------[ Good ]----------
+
+// The RESOLUTION — the glyph written under the name that already holds it.
+
+public function separator(): string
+{
+    $this->emit(ReceiptGlyph::RULE);
+
+    return $this->emit(ReceiptGlyph::BULLET);
+}
+```
+
 ## When it fires
 
 - A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum — `ConstClassEnumDetector`
@@ -247,6 +275,7 @@ public function endpointClean(PaymentMethod $method): string
 - `in_array($x, [literals])` whose literals mirror an existing enum's cases — `InArrayMirrorsEnumDetector`
 - `match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing — `MatchDefaultReturnsNullDetector`
 - `match`/`switch` over string/int literals that mirror an existing backed enum's case values — `StringMatchMirrorsEnumDetector`
+- A raw string in an argument the codebase elsewhere fills from a named vocabulary — `expect('{')` beside `expect(Token::COLON)`, where `Token::BRACE_OPEN` already names it — `UnnamedVocabularyLiteralDetector`
 
 ## Checklist
 
@@ -256,6 +285,7 @@ public function endpointClean(PaymentMethod $method): string
 - [ ] Test membership against the enum (its `cases()`/`tryFrom`), not an `in_array` of literals that mirror its values.
 - [ ] A `match`/`switch` `default` for an unhandled case must throw, not return `null`/`false`/`[]`.
 - [ ] Dispatch over the enum's cases, not string/int literals that mirror its values.
+- [ ] Where a parameter is spelled from a named vocabulary, spell it that way EVERYWHERE — never the raw value at one call site and the constant at the next.
 
 ## Related skills
 

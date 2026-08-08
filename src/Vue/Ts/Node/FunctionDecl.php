@@ -30,6 +30,11 @@ final class FunctionDecl extends Node
         return [$this->name];
     }
 
+    public function children(): array
+    {
+        return $this->params;
+    }
+
     public function signature(): FunctionType
     {
         return new FunctionType($this->params, $this->returnType ?? new KeywordType('void'));
