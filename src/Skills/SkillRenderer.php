@@ -150,23 +150,22 @@ final class SkillRenderer
 
         foreach ($sins as $sin) {
             $detector = $detectors[$sin::class] ?? null;
-            $example = $detector === null ? null : ($examples[$detector::class] ?? null);
 
-            if ($example === null) {
-                continue;
+            // A rule marked in several LANGUAGES has one example each — a reader working in `.ts`
+            // needs the `.ts` one, not a `.vue` one they have to translate.
+            foreach ($detector === null ? [] : ($examples[$detector::class] ?? []) as $example) {
+                // Group by the bad+good PAIR: a `#[Sinful]` method shared by several sins
+                // shows once when the fix is the same, but distinct fixes of the same bad
+                // (e.g. `<template v-if>` vs `<SwitchCase>`) each still get shown.
+                $key = ($example->bad() ?? '') . "\0" . ($example->good() ?? '');
+
+                if ($example->bad() === null || $example->bad() === '') {
+                    $key .= "\0" . $sin->name(); // nothing to dedupe on — keep them apart
+                }
+
+                $grouped[$key]['example'] = $example;
+                $grouped[$key]['sins'][] = $sin;
             }
-
-            // Group by the bad+good PAIR: a `#[Sinful]` method shared by several sins
-            // shows once when the fix is the same, but distinct fixes of the same bad
-            // (e.g. `<template v-if>` vs `<SwitchCase>`) each still get shown.
-            $key = ($example->bad() ?? '') . "\0" . ($example->good() ?? '');
-
-            if ($example->bad() === null || $example->bad() === '') {
-                $key .= "\0" . $sin->name(); // nothing to dedupe on — keep them apart
-            }
-
-            $grouped[$key]['example'] = $example;
-            $grouped[$key]['sins'][] = $sin;
         }
 
         $blocks = [];

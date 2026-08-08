@@ -42,7 +42,7 @@ final class DeclarationMarkers
      * @param  list<string>  $lines
      * @return list<string>
      */
-    private static function markersAbove(array $lines, int $at, string $tag): array
+    public static function markersAbove(array $lines, int $at, string $tag): array
     {
         $names = [];
 

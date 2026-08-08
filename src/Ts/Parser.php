@@ -353,7 +353,7 @@ final class Parser
         $header = $this->consumeUntilPunct(Token::ASSIGN); // type params, kept verbatim
         $this->advanceIfPunct(Token::ASSIGN);
         $type = $this->parseType();
-        $this->consumeToStatementEnd();
+        $this->advanceIfPunct(Token::SEMICOLON);
 
         return new TypeAliasDecl($name, $type, $header);
     }
@@ -390,7 +390,7 @@ final class Parser
             $initRaw = rtrim(trim(substr($this->source, $initStart, $initEnd - $initStart)), ';');
             $initializer = $this->expressionBetween($initStart, $initEnd);
         } else {
-            $this->consumeToStatementEnd();
+            $this->advanceIfPunct(Token::SEMICOLON);
         }
 
         return new VariableDecl($keyword, $pattern, $type, $initRaw, $initCall, $initParams, $initReturnType, $initializer ?? null);

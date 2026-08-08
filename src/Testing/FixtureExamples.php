@@ -24,7 +24,7 @@ final class FixtureExamples
 {
     /**
      * @param  list<Detector>  $detectors
-     * @return array<class-string<Detector>, Example>
+     * @return array<class-string<Detector>, list<Example>>
      */
     public static function extract(Codebase $fixture, array $detectors): array
     {
@@ -45,9 +45,9 @@ final class FixtureExamples
 
             // A RECURRENCE sin is a relationship, not a property: its example is the whole GROUP, or
             // it shows a duplicate with nothing to be a duplicate of.
-            $examples[$detector::class] = $detector instanceof RecurrenceDetector && count($bad) > 1
+            $examples[$detector::class] = [$detector instanceof RecurrenceDetector && count($bad) > 1
                 ? $example->withBad(ExampleText::group($bad, 'class', $lift))
-                : $example;
+                : $example];
         }
 
         return $examples;

@@ -33,6 +33,47 @@ specifically the COPY of a shape the server already owns.
 
 - Let the server own the shape: mark the `Data` class `#[TypeScript]`, generate the type, and import the generated one. Never hand-maintain a copy of a server contract.
 
+## Bad → good
+
+### mirrored-server-type — in TypeScript
+
+A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes
+
+```ts
+----------[ Bad ]----------
+
+export interface OrderData {
+  id: string
+  total: number
+  placedAt: string
+  status: string
+}
+```
+
+### mirrored-server-type — in Vue
+
+A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes
+
+```vue
+----------[ Bad ]----------
+
+interface CustomerData {
+  first_name: string
+  last_name: string
+  email_address: string
+  phone_number: string
+}
+
+----------[ Good ]----------
+
+interface TableColumn {
+  key: string
+  label: string
+  sortable: boolean
+  width: number
+}
+```
+
 ## When it fires
 
 - A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes — `MirroredServerTypeDetector`
