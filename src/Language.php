@@ -43,4 +43,19 @@ enum Language: string
             self::TypeScript => 'TypeScript',
         };
     }
+
+    /**
+     * The language $text names by its {@see label} — how a rendered example heading says which one
+     * it is in. Null when it names none, which is every other line of a document.
+     */
+    public static function namedIn(string $text): ?self
+    {
+        foreach (self::cases() as $language) {
+            if (str_ends_with(rtrim($text), '— in ' . $language->label())) {
+                return $language;
+            }
+        }
+
+        return null;
+    }
 }

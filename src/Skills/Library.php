@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Skills;
 
 use JesseGall\CodeCommandments\Custom;
+use JesseGall\CodeCommandments\LanguageSections;
+use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Support\Directory;
 use JesseGall\CodeCommandments\Support\File;
 use JesseGall\CodeCommandments\Workspace;
@@ -29,8 +31,10 @@ final class Library
      */
     private readonly array $previous;
 
-    public function __construct(private readonly Workspace $workspace)
-    {
+    public function __construct(
+        private readonly Workspace $workspace,
+        private readonly Languages $languages = new Languages(),
+    ) {
         $this->previous = $this->readManifest();
     }
 
@@ -42,6 +46,20 @@ final class Library
     public function path(string $id): string
     {
         return $this->dir() . '/' . $id;
+    }
+
+    /**
+     * Strip the examples of languages this project does not write from a skill just copied in. A
+     * SHIPPED skill is copied rather than re-rendered — its examples come from the package's own
+     * fixtures, which a consumer does not have — so the filtering happens on the rendered document.
+     */
+    private function keepWrittenLanguages(string $file): void
+    {
+        if ($this->languages->disabled() === [] || ! is_file($file)) {
+            return;
+        }
+
+        File::write($file, LanguageSections::keep((string) file_get_contents($file), $this->languages));
     }
 
     /**
@@ -58,6 +76,7 @@ final class Library
             $source = "{$packageRoot}/skills/commandments/{$skill->slug}";
 
             if (is_dir($source) && Directory::copy($source, $this->path($skill->id()))) {
+                $this->keepWrittenLanguages($this->path($skill->id()) . '/SKILL.md');
                 $ids[] = $skill->id();
             }
         }
@@ -73,7 +92,7 @@ final class Library
         foreach (Custom::skills($this->workspace->root()) as $skill) {
             @mkdir($this->path($skill->id()), 0775, true);
 
-            if (File::write($this->path($skill->id()) . '/SKILL.md', new SkillRenderer()->render($skill))) {
+            if (File::write($this->path($skill->id()) . '/SKILL.md', new SkillRenderer($this->languages)->render($skill))) {
                 $ids[] = $skill->id();
             }
         }

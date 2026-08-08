@@ -13,6 +13,8 @@ use JesseGall\CodeCommandments\Agents\Catalog as Agents;
 use JesseGall\CodeCommandments\Agents\Instructions;
 use JesseGall\CodeCommandments\Agents\SkillLink;
 use JesseGall\CodeCommandments\Skills\Briefing;
+use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Skills\Library;
 
 use JesseGall\CodeCommandments\Cli\Plan\ChecksInference;
@@ -59,7 +61,7 @@ final class Sync implements Command
         // showing up as untracked.
         $this->ensureGitignored("{$consumer}/.gitignore", $agents);
 
-        $library = new Library(Workspace::at($consumer));
+        $library = new Library(Workspace::at($consumer), Languages::from(Config::load()));
         $published = $library->publish($packageRoot);
 
         // And the canon is written BEFORE anything points at it: an agent's own file is rewritten to

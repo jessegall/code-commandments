@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Frontend\MirroredServerTypeDetector;
 use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\LanguageSections;
 use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use JesseGall\CodeCommandments\Skills\SkillRenderer;
@@ -87,6 +88,41 @@ final class DisabledLanguageTest extends TestCase
         }
 
         $this->fail("no skill {$slug}");
+    }
+
+    /**
+     * A SHIPPED skill is copied into a project rather than re-rendered, so the filtering has to
+     * reach the rendered document too — otherwise `sync` would hand a PHP-only project the
+     * TypeScript example that `judge` refuses to enforce.
+     */
+    public function test_a_published_skill_drops_the_sections_of_a_language_not_written(): void
+    {
+        $published = <<<'MD'
+            ## Bad → good
+
+            ### a-rule — in TypeScript
+
+            ```ts
+            MarkerOnlyInTheTypeScriptExample
+            ```
+
+            ### a-rule — in Vue
+
+            ```vue
+            MarkerOnlyInTheVueExample
+            ```
+
+            ## When it fires
+            MD;
+
+        $kept = LanguageSections::keep($published, new Languages(Language::TypeScript));
+
+        $this->assertStringNotContainsString('MarkerOnlyInTheTypeScriptExample', $kept);
+        $this->assertStringContainsString('MarkerOnlyInTheVueExample', $kept);
+        $this->assertStringContainsString('## When it fires', $kept, 'the sections after it survive');
+
+        // A project that writes everything gets the document untouched.
+        $this->assertSame($published, LanguageSections::keep($published, new Languages()));
     }
 
     /**
