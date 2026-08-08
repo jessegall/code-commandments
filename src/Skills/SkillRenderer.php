@@ -159,9 +159,9 @@ final class SkillRenderer
             // Group by the bad+good PAIR: a `#[Sinful]` method shared by several sins
             // shows once when the fix is the same, but distinct fixes of the same bad
             // (e.g. `<template v-if>` vs `<SwitchCase>`) each still get shown.
-            $key = ($example->bad ?? '') . "\0" . ($example->good ?? '');
+            $key = ($example->bad() ?? '') . "\0" . ($example->good() ?? '');
 
-            if ($example->bad === null || $example->bad === '') {
+            if ($example->bad() === null || $example->bad() === '') {
                 $key .= "\0" . $sin->name(); // nothing to dedupe on — keep them apart
             }
 
@@ -170,9 +170,12 @@ final class SkillRenderer
         }
 
         $blocks = [];
+        $languages = self::languagesOf($grouped);
 
         foreach ($grouped as $group) {
-            if (($block = $this->example($group['sins'], $group['example'])) !== '') {
+            // A discipline both engines have is taught in both: each example says which language it
+            // is in, so a reader looking for the frontend one is not left inferring it from a fence.
+            if (($block = $this->example($group['sins'], $group['example'], count($languages) > 1)) !== '') {
                 $blocks[] = $block;
             }
         }
@@ -181,31 +184,52 @@ final class SkillRenderer
     }
 
     /**
+     * The distinct languages a skill's examples are written in — one for a discipline that lives on
+     * a single engine, several for one both engines have.
+     *
+     * @param  array<string, array{example: Example, sins: list<Sin>}>  $grouped
+     * @return list<string>
+     */
+    private static function languagesOf(array $grouped): array
+    {
+        $languages = [];
+
+        foreach ($grouped as $group) {
+            $languages[$group['example']->language->value] = true;
+        }
+
+        return array_keys($languages);
+    }
+
+    /**
      * One before/after, headed by the sin it demonstrates and that sin's one-line symptom, so the
      * example stands on its own instead of relying on its position in the stack.
      *
      * @param  list<Sin>  $sins  every sin this one example demonstrates
+     * @param  bool  $nameLanguage  whether this skill teaches more than one language, so each
+     *         example has to say which of them it is
      */
-    private function example(array $sins, Example $example): string
+    private function example(array $sins, Example $example, bool $nameLanguage = false): string
     {
         $parts = [];
 
         // A banner rather than a `// Bad` comment: the halves are the two things a reader is here to
         // compare, and a comment line reads as part of the code beneath it.
-        if ($example->bad !== null) {
-            $parts[] = self::banner('Bad') . "\n\n{$example->bad}";
+        if ($example->bad() !== null) {
+            $parts[] = self::banner('Bad') . "\n\n{$example->bad()}";
         }
 
-        if ($example->good !== null) {
-            $parts[] = self::banner('Good') . "\n\n{$example->good}";
+        if ($example->good() !== null) {
+            $parts[] = self::banner('Good') . "\n\n{$example->good()}";
         }
 
         if ($parts === [] || $sins === []) {
             return '';
         }
 
-        $fence = str_starts_with($sins[0]->slug(), 'frontend/') ? 'vue' : 'php';
-        $heading = '### ' . implode(' · ', array_map(static fn (Sin $sin): string => $sin->name(), $sins));
+        $fence = $example->language->value;
+        $named = implode(' · ', array_map(static fn (Sin $sin): string => $sin->name(), $sins));
+        $heading = '### ' . ($nameLanguage ? "{$named} — in {$example->language->label()}" : $named);
 
         // One sin: the heading already names it, so the symptom stands alone. Several: each
         // line says which of them it belongs to.

@@ -33,7 +33,8 @@ final class VueFixtureExamples
         foreach ($detectors as $detector) {
             $keys = [(new \ReflectionClass($detector->sin()))->getShortName(), (new \ReflectionClass($detector))->getShortName()];
             $bad = ExampleText::forKeys($sinful, $keys);
-            $example = ExampleText::pair($bad, ExampleText::forKeys($righteous, $keys), 'file');
+            $good = ExampleText::forKeys($righteous, $keys);
+            $example = ExampleText::pair($bad, $good, 'file')->in(self::languageOf($bad, $good));
 
             // A repeated block shown once is not repeated — the same rule as the backend's
             // duplicates, asked of the same interface, and labelled with the component it is in.
@@ -43,6 +44,24 @@ final class VueFixtureExamples
         }
 
         return $examples;
+    }
+
+    /**
+     * The language of the first marked source there is — a `.ts` module marks a TypeScript example,
+     * a component marks a Vue one. A detector with nothing marked yet has no file to read, and this
+     * harvester reads the FRONTEND fixture, so Vue is what it is rather than an invented path.
+     *
+     * @param  list<array{file: string, source: string}>  ...$sources
+     */
+    private static function languageOf(array ...$sources): Language
+    {
+        foreach ($sources as $marked) {
+            foreach ($marked as $source) {
+                return Language::ofFile($source['file']);
+            }
+        }
+
+        return Language::Vue;
     }
 
     /**

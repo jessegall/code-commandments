@@ -41,12 +41,12 @@ final class ExampleText
         foreach ($bad as $b) {
             foreach ($good as $g) {
                 if ($b[$key] === $g[$key]) {
-                    return new Example($b['source'], $g['source']);
+                    return new Example(new Comparison($b['source'], $g['source']));
                 }
             }
         }
 
-        return new Example($bad[0]['source'] ?? null, $good[0]['source'] ?? null);
+        return new Example(new Comparison($bad[0]['source'] ?? null, $good[0]['source'] ?? null));
     }
 
     /**
