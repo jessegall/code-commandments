@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Ts\Node;
 
+use JesseGall\CodeCommandments\Vue\Expr\Expr;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -24,7 +25,17 @@ final class CallExpr extends Node
         public readonly string $callee,
         public readonly array $typeArguments = [],
         public readonly array $arguments = [],
+        public readonly ?Expr $expression = null,
     ) {}
+
+    /**
+     * The call as a parsed expression, when it stands as a statement — so a rule about calls reaches
+     * a bare `track(event)` the same way it reaches one nested in an argument.
+     */
+    public function expressions(): array
+    {
+        return $this->expression !== null ? [$this->expression] : [];
+    }
 
     public function callTo(string $callee): ?self
     {

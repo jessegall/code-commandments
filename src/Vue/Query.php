@@ -5,24 +5,14 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use Closure;
-use JesseGall\CodeCommandments\Query as BaseQuery;
+use JesseGall\CodeCommandments\LocatedQuery;
 
 /**
  * Frontend fluent query over the Vue template AST, mirroring backend BaseQuery with Vue Element
  * matches; frontend detectors read like backend ones.
  */
-final class Query extends BaseQuery
+final class Query extends LocatedQuery
 {
-    /**
-     * @param  Closure(): list<array{Element, Sfc}>  $nodes  the [element, owning component] pairs
-     *         this query draws from — the whole codebase, or one component's subtree
-     * @param  Closure(Element): bool  $selector
-     */
-    public function __construct(
-        private readonly Closure $nodes,
-        private readonly Closure $selector,
-    ) {}
-
     /**
      * Keep elements carrying the given Vue directive (`Directive::If`, or its name). A
      * non-directive string throws — use {@see where} with `hasAttribute()` for an arbitrary bound
@@ -117,15 +107,6 @@ final class Query extends BaseQuery
         $this->filter(static fn (ElementMatch $match): bool => $match->depth() > $depth);
 
         return $this->filter(static fn (ElementMatch $match): bool => $match->height() - 1 > $remaining);
-    }
-
-    protected function selected(): iterable
-    {
-        foreach (($this->nodes)() as [$element, $sfc]) {
-            if (($this->selector)($element)) {
-                yield [$element, $sfc];
-            }
-        }
     }
 
     protected function wrap(mixed $candidate, ?string $as): object

@@ -26,6 +26,11 @@ final class FieldDecl extends Node
         return [$this->name];
     }
 
+    public function expressions(): array
+    {
+        return $this->initializer !== null ? [$this->initializer] : [];
+    }
+
     /**
      * Might this field be MISSING — written `name?: T`, or typed to admit `null`/`undefined`? Both
      * spellings mean the same thing to an absence rule, so both are one question here.

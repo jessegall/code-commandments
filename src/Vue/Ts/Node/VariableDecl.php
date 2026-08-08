@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Ts\Node;
 
+use JesseGall\CodeCommandments\Vue\Expr\Expr;
+
 /**
  * A `const`/`let`/`var` declaration — its binding {@see Pattern}, an optional type annotation, and
  * an optional initializer. The initializer is kept as raw source ({@see initRaw}), and structurally
@@ -24,7 +26,17 @@ final class VariableDecl extends Node
         public readonly ?CallExpr $initCall = null,
         public readonly ?array $initParams = null,
         public readonly ?TypeNode $initReturnType = null,
+        public readonly ?Expr $initializer = null,
     ) {}
+
+    /**
+     * The initializer as a real expression tree — so the call in `const node = root.querySelector(…)`
+     * is reachable to a rule the same way a call standing alone as a statement is.
+     */
+    public function expressions(): array
+    {
+        return $this->initializer !== null ? [$this->initializer] : [];
+    }
 
     public function callTo(string $callee): ?CallExpr
     {

@@ -5,6 +5,18 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Files\FileQuery;
+use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
+use JesseGall\CodeCommandments\Vue\Ts\Node\ClassDecl;
+use JesseGall\CodeCommandments\Vue\Ts\Node\FieldDecl;
+use JesseGall\CodeCommandments\Vue\Ts\Node\FunctionDecl;
+use JesseGall\CodeCommandments\Vue\Ts\Node\IfStmt;
+use JesseGall\CodeCommandments\Vue\Ts\Node\MethodDecl;
+use JesseGall\CodeCommandments\Vue\Ts\Node\Node as TsNode;
+use JesseGall\CodeCommandments\Vue\Ts\Node\Param;
+use JesseGall\CodeCommandments\Vue\Ts\Node\Stmt;
+use JesseGall\CodeCommandments\Vue\Ts\Node\SwitchStmt;
+use JesseGall\CodeCommandments\Vue\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\WorkingCopy;
 use Closure;
@@ -32,17 +44,44 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     private ?array $typeDeclarations = null;
 
     /**
+     * @var list<TsModule>|null
+     */
+    private ?array $modules = null;
+
+    /**
+     * @var list<array{0: TsNode, 1: TsModule}>|null
+     */
+    private ?array $tsNodes = null;
+
+    /**
+     * @var list<array{0: Expr, 1: TsModule}>|null
+     */
+    private ?array $tsExpressions = null;
+
+    /**
      * @param  list<Sfc>  $components
      * @param  list<TypeDeclaration>  $standaloneTypes  types declared in `.ts` files (not in a component)
+     * @param  array<string, string>  $typeScript  `.ts` file path => its source, kept so a module rule
+     *         reads the same files a type rule already did
      */
     private function __construct(
         private readonly array $components,
         private readonly array $standaloneTypes = [],
+        private readonly array $typeScript = [],
     ) {}
 
     public static function fromString(string $vue, string $path = 'component.vue'): self
     {
         return new self([Sfc::parse($vue, $path)]);
+    }
+
+    /**
+     * Parse one TypeScript module — the `.ts` twin of {@see fromString}, for a unit test that has a
+     * module rather than a component in hand.
+     */
+    public static function fromTypeScript(string $typeScript, string $path = 'module.ts'): self
+    {
+        return new self([], [], [$path => $typeScript]);
     }
 
     /**
@@ -85,11 +124,13 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         }
 
         $standaloneTypes = [];
+        $sources = [];
 
         foreach (array_keys($typeScript) as $file) {
             $source = $overlay->read($file);
 
             if ($source !== null) {
+                $sources[$file] = $source;
                 $standaloneTypes = [...$standaloneTypes, ...self::readable(
                     static fn () => TypeDeclaration::fromScript(new Script($source), $file, $source),
                     $file,
@@ -97,7 +138,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             }
         }
 
-        return new self($components, $standaloneTypes);
+        return new self($components, $standaloneTypes, $sources);
     }
 
     /**
@@ -222,6 +263,221 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         }
 
         return $declarations;
+    }
+
+    // ---- TypeScript module space ----------------------------------------------
+    // The `.ts` twin of the template selectors above. A module rule composes exactly what a template
+    // rule does — a selector opens a query, `where`/`reject` narrow it, a terminal returns matches
+    // that know their `file:line` — and the names mirror the backend's ({@see \JesseGall\CodeCommandments\Ast\Codebase})
+    // so a rule about a function, a class or a call reads the same whichever language it judges.
+
+    /**
+     * Every FUNCTION — a `function` declaration and a class method alike, because a rule about what a
+     * function is named or how its body is shaped does not care which form declared it.
+     */
+    public function whereFunction(): TsQuery
+    {
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof FunctionDecl || $node instanceof MethodDecl);
+    }
+
+    /**
+     * Every method declared in a class body.
+     */
+    public function whereMethodDeclaration(): TsQuery
+    {
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof MethodDecl);
+    }
+
+    /**
+     * Every `class` declaration.
+     */
+    public function whereClass(): TsQuery
+    {
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof ClassDecl);
+    }
+
+    /**
+     * Every `const`/`let`/`var` declaration.
+     */
+    public function whereVariable(): TsQuery
+    {
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof VariableDecl);
+    }
+
+    /**
+     * Every FIELD declared in a class body.
+     */
+    public function whereField(): TsQuery
+    {
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof FieldDecl);
+    }
+
+    /**
+     * Every parameter of every function, method and arrow.
+     */
+    public function whereParameter(): TsQuery
+    {
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof Param);
+    }
+
+    /**
+     * Every statement — a branch, a loop, a return, a throw, a bare expression.
+     */
+    public function whereStatement(): TsQuery
+    {
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof Stmt);
+    }
+
+    /**
+     * Every `if` — the selector a guard-clause or branch-depth rule opens on.
+     */
+    public function whereIf(): TsQuery
+    {
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof IfStmt);
+    }
+
+    /**
+     * Every `switch`.
+     */
+    public function whereSwitch(): TsQuery
+    {
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof SwitchStmt);
+    }
+
+    /**
+     * Open a query over every module node, narrowed by your own predicate.
+     *
+     * @param  Closure(TsNode): bool  $select
+     */
+    public function whereTsNode(Closure $select): TsQuery
+    {
+        return new TsQuery(fn () => $this->tsNodes(), $select);
+    }
+
+    /**
+     * Every CALL in the codebase's TypeScript — `node.closest('[data-x]')`, `requestAnimationFrame(…)`.
+     */
+    public function whereCall(): ExprQuery
+    {
+        return $this->whereExpression(static fn (Expr $expr): bool => $expr->isCall());
+    }
+
+    /**
+     * Every member READ — `node.dataset.kind`, `a?.b`.
+     */
+    public function whereMember(): ExprQuery
+    {
+        return $this->whereExpression(static fn (Expr $expr): bool => $expr->is(ExprKind::Member));
+    }
+
+    /**
+     * Every `??` default — the absence fallback an absence rule opens on.
+     */
+    public function whereCoalesce(): ExprQuery
+    {
+        return $this->whereExpression(static fn (Expr $expr): bool => $expr->isCoalesce());
+    }
+
+    /**
+     * Every ternary.
+     */
+    public function whereTernary(): ExprQuery
+    {
+        return $this->whereExpression(static fn (Expr $expr): bool => $expr->isTernary());
+    }
+
+    /**
+     * Every string LITERAL in module space — the counterpart of {@see whereText}, for the words a
+     * program decides with rather than the ones a user reads.
+     */
+    public function whereLiteral(): ExprQuery
+    {
+        return $this->whereExpression(static fn (Expr $expr): bool => $expr->is(ExprKind::Literal));
+    }
+
+    /**
+     * Open a query over every expression, narrowed by your own predicate.
+     *
+     * @param  Closure(Expr): bool  $select
+     */
+    public function whereExpression(Closure $select): ExprQuery
+    {
+        return new ExprQuery(fn () => $this->tsExpressions(), $select);
+    }
+
+    /**
+     * Every parsed module — a standalone `.ts` file, and every component's `<script>` block.
+     *
+     * @return list<TsModule>
+     */
+    public function modules(): array
+    {
+        return $this->modules ??= $this->collectModules();
+    }
+
+    /**
+     * @return list<array{0: TsNode, 1: TsModule}>
+     */
+    private function tsNodes(): array
+    {
+        if ($this->tsNodes !== null) {
+            return $this->tsNodes;
+        }
+
+        $pairs = [];
+
+        foreach ($this->modules() as $module) {
+            foreach ($module->nodes() as $node) {
+                $pairs[] = [$node, $module];
+            }
+        }
+
+        return $this->tsNodes = $pairs;
+    }
+
+    /**
+     * @return list<array{0: Expr, 1: TsModule}>
+     */
+    private function tsExpressions(): array
+    {
+        if ($this->tsExpressions !== null) {
+            return $this->tsExpressions;
+        }
+
+        $pairs = [];
+
+        foreach ($this->modules() as $module) {
+            foreach ($module->expressions() as $expression) {
+                $pairs[] = [$expression, $module];
+            }
+        }
+
+        return $this->tsExpressions = $pairs;
+    }
+
+    /**
+     * @return list<TsModule>
+     */
+    private function collectModules(): array
+    {
+        $modules = [];
+
+        foreach ($this->typeScript as $file => $source) {
+            $modules = [...$modules, ...self::readable(static fn () => [TsModule::fromFile($source, $file)], $file)];
+        }
+
+        foreach ($this->components as $component) {
+            foreach ($component->blocks as $block) {
+                if ($block->tag === 'script') {
+                    $modules = [...$modules, ...self::readable(
+                        static fn () => [TsModule::fromBlock($block->content, $component->path, $component->source, $block->start)],
+                        $component->path,
+                    )];
+                }
+            }
+        }
+
+        return $modules;
     }
 
     /**

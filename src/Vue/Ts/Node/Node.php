@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Ts\Node;
 
+use JesseGall\CodeCommandments\Vue\Expr\Expr;
+
 /**
  * The root of the `<script setup>` syntax tree — every declaration, pattern, and type is a Node.
  * Each renders back to valid TypeScript ({@see render}), so a type the parser understood can be
@@ -48,6 +50,22 @@ abstract class Node
      * @return list<self>
      */
     public function children(): array
+    {
+        return [];
+    }
+
+    /**
+     * The expressions this node holds AT ITS OWN LEVEL — a branch's test, a return's value, a
+     * declaration's initializer. Not its children's ({@see children} reaches those), so each
+     * expression is reported by the one node that owns it.
+     *
+     * Declared here rather than on {@see Stmt} because a declaration holds expressions too: the call
+     * in `const node = root.querySelector(…)` is a call like any other, and a rule that could not
+     * see it would be blind to most of what a module actually does.
+     *
+     * @return list<Expr>
+     */
+    public function expressions(): array
     {
         return [];
     }

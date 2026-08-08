@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue\Ts\Node;
 
-use JesseGall\CodeCommandments\Vue\Expr\Expr;
-
 /**
  * A STATEMENT — the branches, loops, returns and throws a function body is made of. The predicate
  * names are the backend's on purpose ({@see \JesseGall\CodeCommandments\Ast\AstNode}): a
@@ -14,18 +12,6 @@ use JesseGall\CodeCommandments\Vue\Expr\Expr;
  */
 abstract class Stmt extends Node
 {
-    /**
-     * The expressions this statement holds AT ITS OWN LEVEL — a branch's test, a return's value.
-     * Not its sub-statements' ({@see children} reaches those), so each expression is reported by
-     * the one statement that owns it.
-     *
-     * @return list<Expr>
-     */
-    public function expressions(): array
-    {
-        return [];
-    }
-
     /**
      * Does this statement BRANCH — an `if`, a `switch`, a `try`? The question a nesting-depth or
      * guard-clause rule asks, named as the backend names it.

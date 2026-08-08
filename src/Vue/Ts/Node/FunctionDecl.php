@@ -23,6 +23,7 @@ final class FunctionDecl extends Node
         public readonly ?TypeNode $returnType = null,
         public readonly ?array $returnObject = null,
         public readonly string $bodySource = '',
+        public readonly ?BlockStmt $body = null,
     ) {}
 
     public function declaredNames(): array
@@ -32,7 +33,7 @@ final class FunctionDecl extends Node
 
     public function children(): array
     {
-        return $this->params;
+        return array_values(array_filter([...$this->params, $this->body]));
     }
 
     public function signature(): FunctionType
