@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Testing;
+namespace JesseGall\CodeCommandments;
 
 /**
  * The language a worked example is written in — what fences its code block, and what labels it when

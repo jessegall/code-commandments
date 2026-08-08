@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Skills;
 
 use JesseGall\CodeCommandments\Custom;
+use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Testing\Example;
 
@@ -27,6 +28,11 @@ final class SkillRenderer
     private const string REMINDER_SELF = '> 🔱 **The rule above all — apply it ALWAYS.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This is that rule.';
 
     private const string FIX_AT_THE_SOURCE = 'backend/fix-at-the-source';
+
+    /**
+     * The languages the project writes — a skill teaches only what its reader can actually write.
+     */
+    public function __construct(private readonly Languages $languages = new Languages()) {}
 
     /**
      * @param  array<class-string<Detector>, Example>  $examples
@@ -152,8 +158,13 @@ final class SkillRenderer
             $detector = $detectors[$sin::class] ?? null;
 
             // A rule marked in several LANGUAGES has one example each — a reader working in `.ts`
-            // needs the `.ts` one, not a `.vue` one they have to translate.
+            // needs the `.ts` one, not a `.vue` one they have to translate. A language the project
+            // does not write is not taught, so its example is not printed either.
             foreach ($detector === null ? [] : ($examples[$detector::class] ?? []) as $example) {
+                if (! $this->languages->writes($example->language)) {
+                    continue;
+                }
+
                 // Group by the bad+good PAIR: a `#[Sinful]` method shared by several sins
                 // shows once when the fix is the same, but distinct fixes of the same bad
                 // (e.g. `<template v-if>` vs `<SwitchCase>`) each still get shown.

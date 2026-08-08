@@ -23,6 +23,11 @@ final class Config
     private array $disabled = [];
 
     /**
+     * @var list<Language> Languages this project does not write.
+     */
+    private array $disabledLanguages = [];
+
+    /**
      * @var list<class-string<Detector>> Consumer detector classes to add.
      */
     private array $registered = [];
@@ -121,13 +126,45 @@ final class Config
      * from both the wiring and the dispatch ({@see enabledHooks}) — so a project turns off a nudge
      * (the judge reminder, say) without hand-editing `settings.json`.
      *
-     * @param  class-string  ...$classes
+     * And the same verb silences a whole LANGUAGE: `disable(Language::TypeScript)` drops every `.ts`
+     * file from the scan and every TypeScript example from the published skills, so a project that
+     * writes no TypeScript is never judged against rules it cannot break.
+     *
+     * @param  class-string|Language  ...$classes
      */
-    public function disable(string ...$classes): self
+    public function disable(string|Language ...$classes): self
     {
-        $this->disabled = [...$this->disabled, ...$classes];
+        foreach ($classes as $class) {
+            if ($class instanceof Language) {
+                $this->disabledLanguages[] = $class;
+
+                continue;
+            }
+
+            $this->disabled[] = $class;
+        }
 
         return $this;
+    }
+
+    /**
+     * The languages this project does not write — nothing in them is scanned, and nothing written in
+     * them is taught.
+     *
+     * @return list<Language>
+     */
+    public function disabledLanguages(): array
+    {
+        return $this->disabledLanguages;
+    }
+
+    /**
+     * Is $language one this project writes? The single question the scan and the skill library both
+     * ask, so neither has to know how the answer was configured.
+     */
+    public function writes(Language $language): bool
+    {
+        return ! in_array($language, $this->disabledLanguages, true);
     }
 
     /**

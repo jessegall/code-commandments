@@ -21,6 +21,8 @@ use JesseGall\CodeCommandments\Ts\Node\Stmt;
 use JesseGall\CodeCommandments\Ts\Node\SwitchStmt;
 use JesseGall\CodeCommandments\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\ExcludedPaths;
+use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\WorkingCopy;
 use Closure;
 use FilesystemIterator;
@@ -93,26 +95,32 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
      * @param  string|list<string>  $path
      * @param  WorkingCopy  $overlay  pending edits to read THROUGH (empty = straight off disk)
      */
-    public static function scan(string|array $path, WorkingCopy $overlay = new WorkingCopy(), ExcludedPaths $excluded = new ExcludedPaths()): self
+    public static function scan(string|array $path, WorkingCopy $overlay = new WorkingCopy(), ExcludedPaths $excluded = new ExcludedPaths(), Languages $languages = new Languages()): self
     {
         $vue = [];
         $typeScript = [];
 
         foreach ((array) $path as $root) {
-            foreach (self::filesIn($root, 'vue', $excluded) as $file) {
-                $vue[$file] = true;
+            // A language the project does not write is not read: nothing is parsed, so nothing in it
+            // can be found, and a PHP-only project is never judged against a rule it cannot break.
+            if ($languages->writes(Language::Vue)) {
+                foreach (self::filesIn($root, 'vue', $excluded) as $file) {
+                    $vue[$file] = true;
+                }
+
+                foreach ($overlay->createdUnder($root, '.vue') as $file) {
+                    $vue[$file] = true;
+                }
             }
 
-            foreach (self::filesIn($root, 'ts', $excluded) as $file) {
-                $typeScript[$file] = true;
-            }
+            if ($languages->writes(Language::TypeScript)) {
+                foreach (self::filesIn($root, 'ts', $excluded) as $file) {
+                    $typeScript[$file] = true;
+                }
 
-            foreach ($overlay->createdUnder($root, '.vue') as $file) {
-                $vue[$file] = true;
-            }
-
-            foreach ($overlay->createdUnder($root, '.ts') as $file) {
-                $typeScript[$file] = true;
+                foreach ($overlay->createdUnder($root, '.ts') as $file) {
+                    $typeScript[$file] = true;
+                }
             }
         }
 

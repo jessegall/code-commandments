@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Testing;
 
+use JesseGall\CodeCommandments\Language;
+
 /**
  * One worked example from the fixture — the before/after {@see Comparison} the skill will print, and
  * the {@see Language} it is written in.

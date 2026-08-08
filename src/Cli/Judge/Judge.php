@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\Sins\Sin;
@@ -221,7 +222,7 @@ final class Judge implements Command
 
         // The Vue detectors run over the SAME roots — `judge` is engine-agnostic, so a
         // path with `.vue` files reports its frontend sins alongside the backend ones.
-        $findings = array_merge($findings, $this->frontendFindings($roots, $frontend, $codebase, $excluded));
+        $findings = array_merge($findings, $this->frontendFindings($roots, $frontend, $codebase, $excluded, Languages::from($config)));
 
         $findings = $this->keep($findings, $exclude, $scope);
 
@@ -355,13 +356,13 @@ final class Judge implements Command
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend
      * @return list<Finding>
      */
-    private function frontendFindings(string|array $roots, array $frontend, Codebase $backend, ExcludedPaths $excluded): array
+    private function frontendFindings(string|array $roots, array $frontend, Codebase $backend, ExcludedPaths $excluded, Languages $languages): array
     {
         if ($frontend === []) {
             return [];
         }
 
-        $codebase = VueCodebase::scan($roots, excluded: $excluded);
+        $codebase = VueCodebase::scan($roots, excluded: $excluded, languages: $languages);
 
         // The Bridge is the only place both engines meet: the backend publishes its
         // Data shapes, the frontend detectors that ask for them receive them here.

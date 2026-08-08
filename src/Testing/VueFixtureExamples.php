@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Testing;
 
+use JesseGall\CodeCommandments\Language;
+
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 use JesseGall\CodeCommandments\Frontend\Detector;

@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Skills;
 
 use JesseGall\CodeCommandments\Testing\Comparison;
 use JesseGall\CodeCommandments\Testing\Example;
-use JesseGall\CodeCommandments\Testing\Language;
+use JesseGall\CodeCommandments\Language;
 use PHPUnit\Framework\TestCase;
 
 /**
