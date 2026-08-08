@@ -112,6 +112,7 @@ final class SinReport
         $skills = count($this->bySkill);
         $lines[] = "\n\033[1m{$this->total} sins\033[0m across {$skills} " . ($skills === 1 ? 'skill' : 'skills') . '.';
         $lines[] = "\033[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.\033[0m";
+        $lines[] = "\033[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.\033[0m";
 
         return implode("\n", $lines);
     }
@@ -134,6 +135,11 @@ final class SinReport
             . "it as NOT loaded (a context compaction may have silently dropped its instructions while "
             . "leaving you the impression they're still there) and load it again before touching the "
             . "section. Once per section is enough.\n"
+            . "   _Don't recognise the rule, or about to argue with it? Run "
+            . "`vendor/bin/commandments info <sin>` first — it prints what the rule flags, WHY it is a "
+            . "sin, how it is fixed, and a worked example. The detector name from the line works as the "
+            . "argument. Guessing at a rule you have not read is how a finding gets silenced instead of "
+            . "fixed._\n"
             . "2. Open the `file:line` and fix the sin at its source.\n"
             . "3. **Delete that line from this file.** Nothing else — no tick, no mark, no "
             . "strike-through. The deleted line IS the record that it's fixed.\n\n"
