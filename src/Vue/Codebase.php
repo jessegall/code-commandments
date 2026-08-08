@@ -5,18 +5,21 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Files\FileQuery;
-use JesseGall\CodeCommandments\Vue\Expr\Expr;
-use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
-use JesseGall\CodeCommandments\Vue\Ts\Node\ClassDecl;
-use JesseGall\CodeCommandments\Vue\Ts\Node\FieldDecl;
-use JesseGall\CodeCommandments\Vue\Ts\Node\FunctionDecl;
-use JesseGall\CodeCommandments\Vue\Ts\Node\IfStmt;
-use JesseGall\CodeCommandments\Vue\Ts\Node\MethodDecl;
-use JesseGall\CodeCommandments\Vue\Ts\Node\Node as TsNode;
-use JesseGall\CodeCommandments\Vue\Ts\Node\Param;
-use JesseGall\CodeCommandments\Vue\Ts\Node\Stmt;
-use JesseGall\CodeCommandments\Vue\Ts\Node\SwitchStmt;
-use JesseGall\CodeCommandments\Vue\Ts\Node\VariableDecl;
+use JesseGall\CodeCommandments\Ts\ExprQuery;
+use JesseGall\CodeCommandments\Ts\ModuleFile;
+use JesseGall\CodeCommandments\Ts\Query as TsQuery;
+use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\CodeCommandments\Ts\Expr\ExprKind;
+use JesseGall\CodeCommandments\Ts\Node\ClassDecl;
+use JesseGall\CodeCommandments\Ts\Node\FieldDecl;
+use JesseGall\CodeCommandments\Ts\Node\FunctionDecl;
+use JesseGall\CodeCommandments\Ts\Node\IfStmt;
+use JesseGall\CodeCommandments\Ts\Node\MethodDecl;
+use JesseGall\CodeCommandments\Ts\Node\Node as TsNode;
+use JesseGall\CodeCommandments\Ts\Node\Param;
+use JesseGall\CodeCommandments\Ts\Node\Stmt;
+use JesseGall\CodeCommandments\Ts\Node\SwitchStmt;
+use JesseGall\CodeCommandments\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\WorkingCopy;
 use Closure;
@@ -44,17 +47,17 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     private ?array $typeDeclarations = null;
 
     /**
-     * @var list<TsModule>|null
+     * @var list<ModuleFile>|null
      */
     private ?array $modules = null;
 
     /**
-     * @var list<array{0: TsNode, 1: TsModule}>|null
+     * @var list<array{0: TsNode, 1: ModuleFile}>|null
      */
     private ?array $tsNodes = null;
 
     /**
-     * @var list<array{0: Expr, 1: TsModule}>|null
+     * @var list<array{0: Expr, 1: ModuleFile}>|null
      */
     private ?array $tsExpressions = null;
 
@@ -408,7 +411,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     /**
      * Every parsed module — a standalone `.ts` file, and every component's `<script>` block.
      *
-     * @return list<TsModule>
+     * @return list<ModuleFile>
      */
     public function modules(): array
     {
@@ -416,7 +419,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
-     * @return list<array{0: TsNode, 1: TsModule}>
+     * @return list<array{0: TsNode, 1: ModuleFile}>
      */
     private function tsNodes(): array
     {
@@ -436,7 +439,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
-     * @return list<array{0: Expr, 1: TsModule}>
+     * @return list<array{0: Expr, 1: ModuleFile}>
      */
     private function tsExpressions(): array
     {
@@ -456,21 +459,21 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
-     * @return list<TsModule>
+     * @return list<ModuleFile>
      */
     private function collectModules(): array
     {
         $modules = [];
 
         foreach ($this->typeScript as $file => $source) {
-            $modules = [...$modules, ...self::readable(static fn () => [TsModule::fromFile($source, $file)], $file)];
+            $modules = [...$modules, ...self::readable(static fn () => [ModuleFile::fromFile($source, $file)], $file)];
         }
 
         foreach ($this->components as $component) {
             foreach ($component->blocks as $block) {
                 if ($block->tag === 'script') {
                     $modules = [...$modules, ...self::readable(
-                        static fn () => [TsModule::fromBlock($block->content, $component->path, $component->source, $block->start)],
+                        static fn () => [ModuleFile::fromBlock($block->content, $component->path, $component->source, $block->start)],
                         $component->path,
                     )];
                 }

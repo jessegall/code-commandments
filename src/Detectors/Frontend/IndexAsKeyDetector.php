@@ -10,7 +10,7 @@ use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
-use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Ts\Expr\Expr;
 use JesseGall\CodeCommandments\Vue\Script;
 
 /**

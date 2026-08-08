@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
-use JesseGall\CodeCommandments\Vue\Expr\Expr;
-use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectType;
-use JesseGall\CodeCommandments\Vue\Ts\Parser;
+use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\CodeCommandments\Ts\Node\ObjectType;
+use JesseGall\CodeCommandments\Ts\Parser;
 
 /**
  * Top-down prop typing over ComponentGraph. A component that can't type its own prop walks to parents,

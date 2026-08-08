@@ -10,9 +10,9 @@ use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\Element;
-use JesseGall\CodeCommandments\Vue\Expr\Expr;
-use JesseGall\CodeCommandments\Vue\Expr\ExprKind;
-use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\CodeCommandments\Ts\Expr\ExprKind;
+use JesseGall\CodeCommandments\Ts\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Script;
 
 /**

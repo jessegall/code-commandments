@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Vue;
 
-use JesseGall\CodeCommandments\Vue\Token;
+use JesseGall\CodeCommandments\Ts\Token;
 use PHPUnit\Framework\TestCase;
 
 final class TokenTest extends TestCase

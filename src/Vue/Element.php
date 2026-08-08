@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
-use JesseGall\CodeCommandments\Vue\Expr\Expr;
-use JesseGall\CodeCommandments\Vue\Expr\Interpolation;
-use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\CodeCommandments\Ts\Expr\Interpolation;
+use JesseGall\CodeCommandments\Ts\Expr\Parser;
 use JesseGall\PhpTypes\Option;
 
 /**

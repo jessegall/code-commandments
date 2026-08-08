@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Vue;
 
-use JesseGall\CodeCommandments\Vue\Token;
-use JesseGall\CodeCommandments\Vue\Lexeme;
-use JesseGall\CodeCommandments\Vue\Ts\Parser;
+use JesseGall\CodeCommandments\Ts\Token;
+use JesseGall\CodeCommandments\Ts\Lexeme;
+use JesseGall\CodeCommandments\Ts\Parser;
 use PHPUnit\Framework\TestCase;
 
 final class LexemeTest extends TestCase

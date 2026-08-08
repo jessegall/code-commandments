@@ -1,0 +1,50 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Ts;
+
+use JesseGall\CodeCommandments\Located;
+use JesseGall\CodeCommandments\Span;
+use JesseGall\CodeCommandments\Ts\Expr\Expr;
+
+/**
+ * A matched {@see Expr} that knows WHERE it is. Expressions are their own tree, so they get their
+ * own match — a rule about a `??` default or a `?.` chain points at the expression itself rather
+ * than at the statement it happens to sit in.
+ */
+class ExprMatch implements Located
+{
+    public function __construct(
+        public readonly Expr $expr,
+        public readonly ModuleFile $module,
+    ) {}
+
+    public function line(): int
+    {
+        return $this->module->lineAt($this->expr->start);
+    }
+
+    public function file(): string
+    {
+        return $this->module->file;
+    }
+
+    public function location(): string
+    {
+        return $this->file() . ':' . $this->line();
+    }
+
+    public function span(): Span
+    {
+        return $this->module->spanAt($this->expr->start, $this->expr->end);
+    }
+
+    /**
+     * A short context for the report — the expression as it was written.
+     */
+    public function scope(): string
+    {
+        return $this->span()->text();
+    }
+}

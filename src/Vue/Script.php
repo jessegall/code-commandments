@@ -4,22 +4,24 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
-use JesseGall\CodeCommandments\Vue\Lexeme;
-use JesseGall\CodeCommandments\Vue\Expr\Parser;
-use JesseGall\CodeCommandments\Vue\Ts\Lexer;
-use JesseGall\CodeCommandments\Vue\Ts\Node\CallExpr;
-use JesseGall\CodeCommandments\Vue\Ts\Node\CompositeType;
-use JesseGall\CodeCommandments\Vue\Ts\Node\FunctionType;
-use JesseGall\CodeCommandments\Vue\Ts\Node\ImportDecl;
-use JesseGall\CodeCommandments\Vue\Ts\Node\KeywordType;
-use JesseGall\CodeCommandments\Vue\Ts\Node\Module;
-use JesseGall\CodeCommandments\Vue\Ts\Node\NamedType;
-use JesseGall\CodeCommandments\Vue\Ts\Node\NamePattern;
-use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectPattern;
-use JesseGall\CodeCommandments\Vue\Ts\Node\ObjectType;
-use JesseGall\CodeCommandments\Vue\Ts\Node\TypeNode;
-use JesseGall\CodeCommandments\Vue\Ts\Node\VariableDecl;
-use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
+use JesseGall\CodeCommandments\Ts\Token;
+
+use JesseGall\CodeCommandments\Ts\Lexeme;
+use JesseGall\CodeCommandments\Ts\Expr\Parser;
+use JesseGall\CodeCommandments\Ts\Lexer;
+use JesseGall\CodeCommandments\Ts\Node\CallExpr;
+use JesseGall\CodeCommandments\Ts\Node\CompositeType;
+use JesseGall\CodeCommandments\Ts\Node\FunctionType;
+use JesseGall\CodeCommandments\Ts\Node\ImportDecl;
+use JesseGall\CodeCommandments\Ts\Node\KeywordType;
+use JesseGall\CodeCommandments\Ts\Node\Module;
+use JesseGall\CodeCommandments\Ts\Node\NamedType;
+use JesseGall\CodeCommandments\Ts\Node\NamePattern;
+use JesseGall\CodeCommandments\Ts\Node\ObjectPattern;
+use JesseGall\CodeCommandments\Ts\Node\ObjectType;
+use JesseGall\CodeCommandments\Ts\Node\TypeNode;
+use JesseGall\CodeCommandments\Ts\Node\VariableDecl;
+use JesseGall\CodeCommandments\Ts\Parser as TsParser;
 
 /**
  * Reads `<script setup>` structurally — the engine's third parser. Lexes the script into tokens

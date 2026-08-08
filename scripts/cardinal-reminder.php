@@ -40,7 +40,7 @@ missing, ADD it to the engine (reusably) rather than scrape/scribble the source 
 DETECT through the engine:
   • backend — `Codebase` selectors → `Query` (where/reject) → `AstNode`/`NodeMatch` over php-parser; plus
     `TypeResolver` (real types through the receiver chain), `ReceiverResolver`, `Script`, the call graph.
-  • frontend — the Vue tokenizer + `Vue\Expr\Parser` + `Vue\Query` → `ElementMatch`/`Expr`. Never regex a
+  • frontend — the Vue tokenizer + `Ts\Parser`/`Ts\Expr\Parser` → `Ts\Query`/`Vue\Query`. Never regex a
     template or an expression.
   A package concept (Spatie Data, Laravel, TypeScript attrs) lives on its decorator node (`SpatieDataNode`…).
 

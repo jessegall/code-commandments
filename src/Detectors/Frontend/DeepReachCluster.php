@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Frontend;
 
 use JesseGall\CodeCommandments\Vue\Directive;
 use JesseGall\CodeCommandments\Vue\Element;
-use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\CodeCommandments\Ts\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\Sfc;
 
 /**

@@ -15,12 +15,12 @@ use JesseGall\CodeCommandments\Vue\ComponentLibrary;
 use JesseGall\CodeCommandments\Vue\ComponentReuse;
 use JesseGall\CodeCommandments\Vue\Element;
 use JesseGall\CodeCommandments\Vue\ElementMatch;
-use JesseGall\CodeCommandments\Vue\Expr\Parser;
+use JesseGall\CodeCommandments\Ts\Expr\Parser;
 use JesseGall\CodeCommandments\Vue\ModuleResolver;
 use JesseGall\CodeCommandments\Vue\Oracle\TypeOracle;
 use JesseGall\CodeCommandments\Vue\PropTypes;
 use JesseGall\CodeCommandments\Vue\Sfc;
-use JesseGall\CodeCommandments\Vue\Ts\Parser as TsParser;
+use JesseGall\CodeCommandments\Ts\Parser as TsParser;
 use JesseGall\CodeCommandments\Vue\Script;
 
 /**

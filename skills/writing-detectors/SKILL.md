@@ -48,7 +48,7 @@ ls vendor/jessegall/code-commandments/src/Ast/Support/
 Grep for the CONCEPT, not the spelling — `nullable`, `return`, `throw`, `loop`, `mutat`, `assign`.
 
 And **never regex code structure.** A member chain, an equality, a nesting depth, a Vue binding —
-parse it and query the AST. The frontend has its own parsers for exactly this (`Vue\Expr\Parser`
+parse it and query the AST. The frontend has its own parsers for exactly this (`Ts\Expr\Parser`
 for the JS inside a binding). A regex over an expression means the engine is missing a tool.
 
 When the predicate genuinely is not there, write it inline for now — and **report it**

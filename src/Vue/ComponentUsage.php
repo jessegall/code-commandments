@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
-use JesseGall\CodeCommandments\Vue\Expr\Expr;
+use JesseGall\CodeCommandments\Ts\Expr\Expr;
 
 /**
  * One edge of the {@see ComponentGraph}: a place a parent renders a child, and the

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Ts\StringScan;
+
 /**
  * Parses Vue template HTML into Element tree. Hand-written, forgiving scanner (not HTML5-spec): tracks
  * line+byte spans, preserves Vue directives, handles quotes/voids/self-closing tags, tolerates mismatches.

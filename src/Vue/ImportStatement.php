@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
-use JesseGall\CodeCommandments\Vue\Ts\Node\ImportDecl;
+use JesseGall\CodeCommandments\Ts\Node\ImportDecl;
 
 /**
  * One `import` a component's script carries — the names it binds, and the statement as it is
