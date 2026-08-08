@@ -431,9 +431,14 @@ final class Parser
             return new BlockStmt();
         }
 
-        $body = new self($source, $offset)->parseStatementsToEnd();
+        // $offset is relative to THIS parser's source, so the child's base is OURS plus it. Passing
+        // the relative value straight down worked only while this parser was the outermost one: a
+        // function inside a function — or any function inside a `<script>` block — lost the outer
+        // base, and every node under it reported a position drifting further the deeper it sat.
+        $base = $this->base + $offset;
+        $body = new self($source, $base)->parseStatementsToEnd();
 
-        return new BlockStmt($body)->locatedAt($offset, $offset + strlen($source));
+        return new BlockStmt($body)->locatedAt($base, $base + strlen($source));
     }
 
     /**
@@ -1228,8 +1233,11 @@ final class Parser
         $this->advanceIfPunct(Token::BANG); // definite-assignment assertion
         $type = $this->advanceIfPunct(Token::COLON) ? $this->parseType() : null;
 
+        // A field with no initializer is COMPLETE once its type is read — only a terminating `;` can
+        // remain. Running to "the end of the statement" from here swallowed the member below it,
+        // which in a semicolon-less file meant whole methods never existed in the tree.
         if (! $this->advanceIfPunct(Token::ASSIGN)) {
-            $this->consumeToStatementEnd();
+            $this->advanceIfPunct(Token::SEMICOLON);
 
             return new FieldDecl($name, $type, $modifiers, null, $optional);
         }

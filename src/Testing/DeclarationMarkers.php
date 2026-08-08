@@ -31,6 +31,21 @@ final class DeclarationMarkers
             }
         }
 
+        // Every OTHER node of a module too — a class, a method, a field, a statement. A marker binds
+        // to whatever declaration follows it, and a rule about a field inside a class was unmarkable
+        // while only top-level `interface`/`type` could carry one.
+        foreach ($codebase->modules() as $module) {
+            $lines[$module->file] ??= self::lines($module->file);
+
+            foreach ($module->nodes() as $node) {
+                $line = $module->lineAt($node->start);
+
+                foreach (self::markersAbove($lines[$module->file], $line, $tag) as $name) {
+                    $marked[$name][] = $module->file . ':' . $line;
+                }
+            }
+        }
+
         return $marked;
     }
 

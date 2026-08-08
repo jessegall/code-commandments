@@ -39,14 +39,30 @@ final class Catalog
     }
 
     /**
-     * Every skill in force for $project — both engines and the project's own — in briefing order.
+     * The TypeScript skills — the disciplines of the LANGUAGE, as opposed to the Vue ones, which are
+     * about components and templates.
+     *
+     * Their own tier because the overlap with the backend is partial: TypeScript absence is the same
+     * INSTINCT as PHP absence and a different rule set (there is no `Option`, and `undefined` is a
+     * second way to be missing), so folding either into the other would make a reader wade through
+     * half a document that cannot apply to them.
+     *
+     * @return list<Skill>
+     */
+    public static function typescript(): array
+    {
+        return self::discover('TypeScript');
+    }
+
+    /**
+     * Every skill in force for $project — every engine and the project's own — in briefing order.
      * $project is the consumer root the custom folder is read from; null resolves the current one.
      *
      * @return list<Skill>
      */
     public static function all(?string $project = null): array
     {
-        $skills = [...self::backend(), ...self::frontend(), ...Custom::skills($project)];
+        $skills = [...self::backend(), ...self::frontend(), ...self::typescript(), ...Custom::skills($project)];
 
         usort($skills, static fn (Skill $a, Skill $b): int => $a->order <=> $b->order);
 

@@ -116,6 +116,31 @@ final class QuerySurfaceTest extends TestCase
         $this->assertSame(['client/protocol.ts:9'], array_map(static fn (ExprMatch $m): string => $m->location(), $hits));
     }
 
+    /**
+     * The offset bug calibration found: a body parser was handed its body's start RELATIVE to its
+     * own parent, so a function inside a function lost the outer base and every node under it
+     * reported a position drifting further the deeper it sat.
+     */
+    public function test_a_nested_functions_expressions_report_their_real_position(): void
+    {
+        $module = <<<'TS'
+            export function outer() {
+                function inner(value: unknown) {
+                    if (value === null) {
+                        return 0;
+                    }
+                }
+            }
+            TS;
+
+        $hits = Codebase::fromTypeScript($module, 'nested.ts')
+            ->whereExpression(static fn ($expr): bool => $expr->isNullComparison())
+            ->get();
+
+        $this->assertSame(['nested.ts:3'], array_map(static fn (ExprMatch $m): string => $m->location(), $hits));
+        $this->assertSame('value === null', $hits[0]->scope());
+    }
+
     public function test_a_codebase_with_no_vue_at_all_still_has_modules(): void
     {
         $codebase = $this->codebase();

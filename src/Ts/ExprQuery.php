@@ -39,10 +39,10 @@ final class ExprQuery extends LocatedQuery
 
     protected function wrap(mixed $candidate, ?string $as): object
     {
-        [$expr, $module] = $candidate;
+        [$expr, $module, $enclosing] = $candidate;
         $class = $as ?? ExprMatch::class;
 
-        return new $class($expr, $module);
+        return new $class($expr, $module, $enclosing);
     }
 
     protected function matchClass(): string

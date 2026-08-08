@@ -458,8 +458,8 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         $pairs = [];
 
         foreach ($this->modules() as $module) {
-            foreach ($module->expressions() as $expression) {
-                $pairs[] = [$expression, $module];
+            foreach ($module->expressions() as [$expression, $enclosing]) {
+                $pairs[] = [$expression, $module, $enclosing];
             }
         }
 

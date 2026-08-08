@@ -108,8 +108,8 @@ final class VueFixtureExamples
     }
 
     /**
-     * The marked DECLARATIONS of every `.ts` module and `<script>` block — a `// @sin Name` above a
-     * `class`, `interface`, `type` or `function`.
+     * The marked declarations of every `.ts` module and `<script>` block — a `// @sin Name` above any
+     * node of one: a class, a method, a field, a statement.
      *
      * A frontend rule is not always about markup, and a marker in a module was invisible here while
      * this only walked templates: the rule's own example came back empty, so a skill about
@@ -125,7 +125,7 @@ final class VueFixtureExamples
         foreach ($codebase->modules() as $module) {
             $lines = explode("\n", $module->source);
 
-            foreach ($module->module->children() as $node) {
+            foreach ($module->nodes() as $node) {
                 foreach (DeclarationMarkers::markersAbove($lines, $module->lineAt($node->start), $marker) as $name) {
                     $sources[$name][] = [
                         'file' => $module->file,

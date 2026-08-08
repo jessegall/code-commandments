@@ -147,6 +147,7 @@ Do not start work without all of them loaded.
 - **`commandments-backend-dependency-direction`** — a declared layer may only reference the layers it declared it may use — down the stack, never back up, never sideways; the direction is enforced from the project's own layer declaration.
 - **`commandments-backend-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two methods share one name — split them and let the call site say which it wants, instead of passing a bare `true`.
 - **`commandments-frontend-mirrored-server-type`** — a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one.
+- **`commandments-typescript-absence`** — model absence honestly — one spelling for missing, no `??` that invents a value, no `?.` on something always set.
 
 **Finding and fixing sins — the checklist workflow.** Run
 `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the

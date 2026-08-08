@@ -182,6 +182,32 @@ final class Expr
     }
 
     /**
+     * The name of the enclosing class's OWN field this optional chain reaches through — the `items`
+     * of `this.items?.length`. Empty when the chain is not rooted in `this`, which is every reach
+     * into another object.
+     */
+    public function ownFieldRead(): string
+    {
+        if (! $this->isOptionalChain() || $this->kind !== ExprKind::Member) {
+            return '';
+        }
+
+        $receiver = $this->child('object');
+
+        return $receiver->is(ExprKind::Member) && $receiver->child('object')->isThis()
+            ? (string) $receiver->get('property')
+            : '';
+    }
+
+    /**
+     * Is this the `this` of a method body?
+     */
+    public function isThis(): bool
+    {
+        return $this->kind === ExprKind::Identifier && (string) $this->get('name') === 'this';
+    }
+
+    /**
      * The full source of what this call CALLS — `node.closest` for `node.closest('[data-x]')`, where
      * {@see callee} answers only for a bare function name. Empty when this isn't a call.
      */

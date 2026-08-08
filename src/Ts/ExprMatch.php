@@ -7,6 +7,9 @@ namespace JesseGall\CodeCommandments\Ts;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\CodeCommandments\Ts\Node\ClassDecl;
+use JesseGall\CodeCommandments\Ts\Node\FieldDecl;
+use JesseGall\PhpTypes\Option;
 
 /**
  * A matched {@see Expr} that knows WHERE it is. Expressions are their own tree, so they get their
@@ -18,7 +21,21 @@ class ExprMatch implements Located
     public function __construct(
         public readonly Expr $expr,
         public readonly ModuleFile $module,
+        public readonly ?ClassDecl $enclosingClass = null,
     ) {}
+
+    /**
+     * The field $name as the enclosing class declares it — none when this expression is not inside a
+     * class, or the class declares no such field.
+     *
+     * @return Option<FieldDecl>
+     */
+    public function ownField(string $name): Option
+    {
+        $member = $this->enclosingClass?->member($name);
+
+        return Option::fromNullable($member instanceof FieldDecl ? $member : null);
+    }
 
     public function line(): int
     {

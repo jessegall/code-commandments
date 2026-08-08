@@ -53,6 +53,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\Backend\Templates::class,
         // Skills\Backend\TypeHonesty::class,
         // Skills\Backend\ValueObjects::class,
+        // Skills\TypeScript\Absence::class,
 
         // ----------[ Frontend ]----------
         // Skills\Frontend\MirroredServerType::class,
@@ -193,6 +194,8 @@ $disabledSins = function (Config $config): void {
         // Sins\Frontend\PropDrilling::class,
         // Sins\Frontend\PropMutation::class,
         // Sins\Frontend\SwitchCase::class,
+        // Sins\Frontend\TypeScript\DefendedCertainField::class,
+        // Sins\Frontend\TypeScript\FalselyOptionalField::class,
     );
 };
 

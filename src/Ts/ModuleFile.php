@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ts;
 
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\CodeCommandments\Ts\Node\ClassDecl;
 use JesseGall\CodeCommandments\Ts\Node\Module;
 use JesseGall\CodeCommandments\Ts\Node\Node;
 use JesseGall\CodeCommandments\Ts\Parser;
@@ -61,22 +62,41 @@ final class ModuleFile
     }
 
     /**
-     * Every EXPRESSION the module's statements hold, each sub-expression included — so a selector
-     * reaches a call nested in the argument of another call.
+     * Every EXPRESSION the module holds, each sub-expression included and each paired with the class
+     * it sits inside — so a selector reaches a call nested in the argument of another call, and a
+     * rule about `this.field` can ask what that field was declared as.
      *
-     * @return list<Expr>
+     * @return list<array{0: Expr, 1: ?ClassDecl}>
      */
     public function expressions(): array
     {
         $expressions = [];
-
-        foreach ($this->nodes() as $node) {
-            foreach ($node->expressions() as $expression) {
-                $expressions = [...$expressions, ...$expression->flatten()];
-            }
-        }
+        $this->gather($this->module->children(), null, $expressions);
 
         return $expressions;
+    }
+
+    /**
+     * Every expression under $nodes, paired with the CLASS it sits inside — carried down as the walk
+     * descends, because a node holds no pointer to its parent and a rule about `this.field` has to
+     * know whose field it is.
+     *
+     * @param  list<Node>  $nodes
+     * @param  list<array{0: Expr, 1: ?ClassDecl}>  $found
+     */
+    private function gather(array $nodes, ?ClassDecl $enclosing, array &$found): void
+    {
+        foreach ($nodes as $node) {
+            $within = $node instanceof ClassDecl ? $node : $enclosing;
+
+            foreach ($node->expressions() as $expression) {
+                foreach ($expression->flatten() as $part) {
+                    $found[] = [$part, $within];
+                }
+            }
+
+            $this->gather($node->children(), $within, $found);
+        }
     }
 
     public function lineAt(int $offset): int

@@ -54,6 +54,33 @@ $shortName = static fn (object|string $subject): string => (new ReflectionClass(
 
 // ---- Detectors table (split by engine) ------------------------------------
 
+/**
+ * The ENGINES that exist, read off the skill slugs rather than listed — a new tier appears in every
+ * table on its own, instead of being invisible until three hardcoded pairs of lines are edited.
+ *
+ * @return list<string>
+ */
+$engines = static function () use ($shortName): array {
+    $found = [];
+
+    foreach (SkillsCatalog::all() as $skill) {
+        $engine = explode('/', $skill->slug)[0];
+
+        if (! in_array($engine, $found, true)) {
+            $found[] = $engine;
+        }
+    }
+
+    sort($found);
+
+    return $found;
+};
+
+/**
+ * An engine's heading — `backend` reads as Backend, `typescript` as TypeScript.
+ */
+$engineHeading = static fn (string $engine): string => $engine === 'typescript' ? 'TypeScript' : ucfirst($engine);
+
 /** @var array<string, list<\JesseGall\CodeCommandments\Detector>> $bySkill */
 $bySkill = [];
 
@@ -92,8 +119,11 @@ $engineDetectors = static function (string $engine) use ($bySkill, $shortName, $
     return $lines;
 };
 
-$lines = ["_{$detectorTotal} sins across " . count($bySkill) . " skills._\n", "### Backend\n"];
-$lines = [...$lines, ...$engineDetectors('backend'), "### Frontend\n", ...$engineDetectors('frontend')];
+$lines = ["_{$detectorTotal} sins across " . count($bySkill) . " skills._\n"];
+
+foreach ($engines() as $engine) {
+    $lines = [...$lines, '### ' . $engineHeading($engine) . "\n", ...$engineDetectors($engine)];
+}
 
 $detectorsBlock = "\n" . implode("\n", $lines) . "\n";
 
@@ -142,17 +172,11 @@ foreach ($maintenance as $scribe) {
     $scribeLines[] = '| `' . $shortName($scribe) . '` | ' . $summary($scribe) . ' |';
 }
 
-$scribeLines = [
-    ...$scribeLines,
-    '',
-    '### Backend',
-    '',
-    ...$engineFixables('backend'),
-    '',
-    '### Frontend',
-    '',
-    ...$engineFixables('frontend'),
-];
+$scribeLines = [...$scribeLines, ''];
+
+foreach ($engines() as $engine) {
+    $scribeLines = [...$scribeLines, '### ' . $engineHeading($engine), '', ...$engineFixables($engine), ''];
+}
 
 $scribesBlock = "\n" . implode("\n", $scribeLines) . "\n";
 
@@ -178,17 +202,11 @@ $engineSkills = static function (string $engine) use ($skillList, $shortName, $c
     return $lines;
 };
 
-$skillLines = [
-    '_' . count($skillList) . ' skills._',
-    '',
-    '### Backend',
-    '',
-    ...$engineSkills('backend'),
-    '',
-    '### Frontend',
-    '',
-    ...$engineSkills('frontend'),
-];
+$skillLines = ['_' . count($skillList) . ' skills._', ''];
+
+foreach ($engines() as $engine) {
+    $skillLines = [...$skillLines, '### ' . $engineHeading($engine), '', ...$engineSkills($engine), ''];
+}
 
 $skillsBlock = "\n" . implode("\n", $skillLines) . "\n";
 
