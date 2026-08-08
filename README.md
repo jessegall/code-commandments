@@ -139,6 +139,7 @@ Exit code is non-zero when sins are found.
 | `commandments config` | Inspect and manage .commandments/config.php — what is configured, and what is actually running. |
 | `commandments layers [path]` | Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file. |
 | `commandments exemptions` | List the exemption tags — what a package registers to quiet a general rule on its own boundary types. |
+| `commandments info <sin\|detector>` | Explain one sin — what it flags, why it is a sin, how to fix it, and a worked example. |
 <!-- END: commands-table -->
 
 Run `commandments <command> --help` for a command's forms, options and notes — every help screen is

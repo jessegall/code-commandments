@@ -139,6 +139,7 @@ final class Kernel
             new ConfigCommand(),
             new LayersCommand(),
             new Exemptions(),
+            new Info(),
         ];
     }
 }

@@ -51,7 +51,7 @@ final class Exemptions implements Command
 
     private function listFor(string $query): int
     {
-        $detectors = $this->detectorsFor($query);
+        $detectors = SinLookup::detectors($query);
 
         if ($detectors === []) {
             fwrite(STDERR, "No sin or detector matches \"{$query}\". Run `commandments judge --list` to see them.\n");
@@ -81,22 +81,6 @@ final class Exemptions implements Command
     private function row(Exemption $exemption): void
     {
         $this->out("  \033[36m" . str_pad($exemption->slug(), 16) . "\033[0m {$exemption->description()}\n");
-    }
-
-    /**
-     * The detectors a query names — by its sin id (lenient) or its detector short name.
-     *
-     * @return list<\JesseGall\CodeCommandments\Detector>
-     */
-    private function detectorsFor(string $query): array
-    {
-        $needle = strtolower((string) preg_replace('/[^A-Za-z0-9]+/', '', $query));
-
-        return array_values(array_filter(Catalog::all(), static function ($detector) use ($query, $needle): bool {
-            $short = strtolower(new ReflectionClass($detector)->getShortName());
-
-            return $detector->sin()->matches($query) || str_contains($short, $needle);
-        }));
     }
 
     private function out(string $text): void

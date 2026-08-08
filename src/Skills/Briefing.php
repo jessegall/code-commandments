@@ -173,6 +173,16 @@ final class Briefing
            rippled into other files it writes a fresh worklist — a new wave; work it the same
            way. Repeat, judging ONLY between waves, until a run is clean and deletes the file.
 
+        **Don't know what a finding MEANS? Ask.** A checklist line names its detector and
+        nothing else, so when you do not recognise a rule — or are about to argue with one —
+        run `vendor/bin/commandments info <sin>` before you touch the code. It prints what
+        the rule flags, WHY it is a sin in the skill's own words, how it is fixed, a worked
+        example, and the exact commands that act on it (fix it, find it, turn it off, report
+        it). The name is matched leniently, so the detector name straight off the checklist
+        works: `info ArrayBagDetector`, `info array-bag`, `info ArrayBag`. Add `--full` for
+        the skill's whole principle. Guessing at a rule you have not read is how a finding
+        gets "fixed" by silencing it.
+
         **Auto-fixable sins.** Some sins have a scribe that fixes them. The report
         advertises the command — typically `vendor/bin/commandments repent --repent=latest`
         (optionally `--sin=NAME` to fix just one). `--repent=latest` scopes repent to the
