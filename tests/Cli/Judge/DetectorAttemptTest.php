@@ -15,18 +15,34 @@ final class DetectorAttemptTest extends TestCase
 {
     public function test_a_detector_that_works_hands_back_what_it_found(): void
     {
-        $this->assertSame(['a', 'b'], DetectorAttempt::of('Fine', false, static fn (): array => ['a', 'b']));
+        $attempt = DetectorAttempt::of('Fine', false, static fn (): array => ['a', 'b']);
+
+        $this->assertSame(['a', 'b'], $attempt->found);
+        $this->assertNull($attempt->skipped, 'a rule that ran is not a skipped one');
     }
 
     public function test_a_detector_that_throws_costs_only_itself(): void
     {
-        $found = DetectorAttempt::of(
+        $attempt = DetectorAttempt::of(
             'Broken',
             false,
             static fn (): array => throw new \RuntimeException('met a shape it could not read'),
         );
 
-        $this->assertSame([], $found, 'the run continues, with nothing from that rule');
+        $this->assertSame([], $attempt->found, 'the run continues, with nothing from that rule');
+    }
+
+    public function test_the_skip_travels_back_with_the_findings(): void
+    {
+        // Empty findings and a skipped rule are indistinguishable to a caller that only receives
+        // the findings — so the rule that could not run comes back NAMED, and the run can say so.
+        $attempt = DetectorAttempt::of(
+            'Broken',
+            false,
+            static fn (): array => throw new \RuntimeException('met a shape it could not read'),
+        );
+
+        $this->assertSame('Broken', $attempt->skipped);
     }
 
     public function test_the_failure_is_REPORTED_not_swallowed(): void

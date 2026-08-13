@@ -28,6 +28,7 @@ use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 
 use JesseGall\CodeCommandments\Cli\Report\SinReport;
+use JesseGall\CodeCommandments\Cli\Report\SkippedRules;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
@@ -48,6 +49,12 @@ final class Judge implements Command
      */
     private const int KEEP_ARCHIVES = 5;
 
+    /**
+     * The exit code for a run that found nothing but could not run every rule — distinct from
+     * both "clean" (0) and "sins found" (1), because a broken rule is neither.
+     */
+    private const int A_RULE_COULD_NOT_RUN = 3;
+
     public function __construct(private readonly HookIO $io = new HookIO) {}
 
     public function names(): array
@@ -57,7 +64,7 @@ final class Judge implements Command
 
     public function help(): Help
     {
-        return Help::of('Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found.')
+        return Help::of('Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.')
             ->form('judge [path]', 'scan a path — or, with none, the source roots declared in .commandments/config.php')
             ->form('judge --list', 'list every detector, grouped by skill')
             ->option('--skill=NAME', 'only run detectors for one skill (group), e.g. spatie-data')
@@ -75,6 +82,9 @@ final class Judge implements Command
                 . 'reindex` to re-detect them, or pass an explicit [path] to scan it directly. Add '
                 . "\$config->exclude('app/Generated') to subtract a path from ANY run — the tree is still parsed (so "
                 . 'cross-file rules stay correct) but nothing in it is ever reported or rewritten.')
+            ->note('A rule that BREAKS is skipped so the rest of the run survives — but the run is not green: it '
+                . 'names the rules that could not run and exits 3 (rather than 0) when nothing else was found, '
+                . 'because a run missing a rule has not judged what that rule judges.')
             ->note('Judge writes a Markdown checklist into your session folder (the run prints the exact path). '
                 . 'A full scan is slow, so judge ONCE and work that file line-by-line, deleting each line as you fix its sin; re-run judge at the end to confirm. Files marked @code-commandments-generated are skipped — they are regenerated, not hand-authored.');
     }
@@ -212,28 +222,37 @@ final class Judge implements Command
 
         if ($benchmark) {
             $bench = new Benchmark;
-            $findings = $bench->run($detectors, $codebase);
+            $judgement = $bench->run($detectors, $codebase);
             $progress->finish();
             fwrite(STDERR, $bench->render($parseSeconds));
         } else {
-            $findings = new DetectorRunner($parallel)->run($detectors, $codebase, $progress);
+            $judgement = new DetectorRunner($parallel)->run($detectors, $codebase, $progress);
             $progress->finish();
         }
 
         // The Vue detectors run over the SAME roots — `judge` is engine-agnostic, so a
         // path with `.vue` files reports its frontend sins alongside the backend ones.
-        $findings = array_merge($findings, $this->frontendFindings($roots, $frontend, $codebase, $excluded, Languages::from($config)));
+        $judgement = $judgement->merge($this->frontendJudgement($roots, $frontend, $codebase, $excluded, Languages::from($config)));
 
-        $findings = $this->keep($findings, $exclude, $scope);
+        $judgement = $judgement->withFindings($this->keep($judgement->findings, $exclude, $scope));
 
-        if ($findings === []) {
+        $skipped = new SkippedRules($judgement->skipped);
+
+        if ($judgement->findings === []) {
             $this->deleteChecklist($checklist);
             $this->line("\033[32m✓ No sins found.\033[0m");
 
-            return 0;
+            if ($skipped->isEmpty()) {
+                return 0;
+            }
+
+            // Nothing found is not the same verdict as nothing to find, when a rule never ran.
+            $this->line($skipped->console());
+
+            return self::A_RULE_COULD_NOT_RUN;
         }
 
-        $report = new SinReport($path, $findings, $fixable, $scaffoldable);
+        $report = new SinReport($path, $judgement->findings, $fixable, $scaffoldable, $skipped);
         $this->line($report->console());
 
         foreach ($checklist as $target) {
@@ -354,12 +373,11 @@ final class Judge implements Command
      *
      * @param  string|list<string>  $roots
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend
-     * @return list<Finding>
      */
-    private function frontendFindings(string|array $roots, array $frontend, Codebase $backend, ExcludedPaths $excluded, Languages $languages): array
+    private function frontendJudgement(string|array $roots, array $frontend, Codebase $backend, ExcludedPaths $excluded, Languages $languages): Judgement
     {
         if ($frontend === []) {
-            return [];
+            return new Judgement;
         }
 
         $codebase = VueCodebase::scan($roots, excluded: $excluded, languages: $languages);
@@ -374,7 +392,7 @@ final class Judge implements Command
             }
         }
 
-        $findings = [];
+        $judgement = new Judgement;
 
         foreach ($frontend as $detector) {
             $sin = $detector->sin();
@@ -383,12 +401,17 @@ final class Judge implements Command
 
             $custom = Custom::owns($detector);
 
-            foreach (DetectorAttempt::of($short, $custom, static fn (): array => $detector->find($codebase)) as $match) {
+            $attempt = DetectorAttempt::of($short, $custom, static fn (): array => $detector->find($codebase));
+            $findings = [];
+
+            foreach ($attempt->found as $match) {
                 $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope(), custom: $custom);
             }
+
+            $judgement = $judgement->merge(new Judgement($findings, $attempt->skipped === null ? [] : [$attempt->skipped]));
         }
 
-        return $findings;
+        return $judgement;
     }
 
     /**

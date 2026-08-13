@@ -52,7 +52,7 @@ final class LocatedFindingTest extends TestCase
             }
         };
 
-        $findings = new DetectorRunner(1)->run([$detector], Codebase::fromString('<?php class A {}'), new ProgressBar);
+        $findings = new DetectorRunner(1)->run([$detector], Codebase::fromString('<?php class A {}'), new ProgressBar)->findings;
 
         $this->assertCount(1, $findings);
         $this->assertSame('/app/Screen.php', $findings[0]->file);

@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Custom;
 
 use JesseGall\CodeCommandments\Cli\Judge\DetectorAttempt;
+use JesseGall\CodeCommandments\Cli\Judge\Judgement;
 
 use JesseGall\CodeCommandments\Support\ClassName;
 
@@ -33,11 +34,10 @@ final class Benchmark
      * runner). Side effect: records the per-detector profile for {@see render}.
      *
      * @param  list<Detector>  $detectors
-     * @return list<Finding>
      */
-    public function run(array $detectors, Codebase $codebase): array
+    public function run(array $detectors, Codebase $codebase): Judgement
     {
-        $findings = [];
+        $judgement = new Judgement;
 
         foreach ($detectors as $detector) {
             $short = ClassName::short($detector::class);
@@ -45,22 +45,25 @@ final class Benchmark
             $before = memory_get_usage();
             $start = hrtime(true);
 
-            $matches = DetectorAttempt::of($short, Custom::owns($detector), static fn (): array => $detector->find($codebase));
+            $attempt = DetectorAttempt::of($short, Custom::owns($detector), static fn (): array => $detector->find($codebase));
 
             $seconds = (hrtime(true) - $start) / 1e9;
             $bytes = memory_get_usage() - $before;
             $shards = $detector instanceof Sharded ? count($detector->shards($codebase)) : null;
 
-            $this->records[] = new DetectorProfile($short, $seconds, count($matches), $bytes, $shards);
+            $this->records[] = new DetectorProfile($short, $seconds, count($attempt->found), $bytes, $shards);
 
             $sin = $detector->sin();
+            $findings = [];
 
-            foreach ($matches as $match) {
+            foreach ($attempt->found as $match) {
                 $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope());
             }
+
+            $judgement = $judgement->merge(new Judgement($findings, $attempt->skipped === null ? [] : [$attempt->skipped]));
         }
 
-        return $findings;
+        return $judgement;
     }
 
     /**

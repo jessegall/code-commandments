@@ -22,7 +22,7 @@ final class RecurrenceFindingTwinsTest extends TestCase
     /** @return list<Finding> */
     private function judge(object $detector, string $code): array
     {
-        return new DetectorRunner(1)->run([$detector], Codebase::fromString($code), new ProgressBar);
+        return new DetectorRunner(1)->run([$detector], Codebase::fromString($code), new ProgressBar)->findings;
     }
 
     public function test_a_recurrence_finding_carries_its_bucket(): void

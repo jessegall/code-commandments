@@ -40,7 +40,7 @@ final class SinReport
      * @param  array<string, string>  $fixable  sin name => the `repent` command that fixes it (scope included)
      * @param  array<string, string>  $scaffoldable  sin name => the `scaffold` command that generates the helper its fix uses
      */
-    public function __construct(private readonly string $path, array $findings, private readonly array $fixable = [], private readonly array $scaffoldable = [])
+    public function __construct(private readonly string $path, array $findings, private readonly array $fixable = [], private readonly array $scaffoldable = [], private readonly SkippedRules $skipped = new SkippedRules([]))
     {
         $bySkill = [];
 
@@ -111,6 +111,11 @@ final class SinReport
 
         $skills = count($this->bySkill);
         $lines[] = "\n\033[1m{$this->total} sins\033[0m across {$skills} " . ($skills === 1 ? 'skill' : 'skills') . '.';
+
+        if (! $this->skipped->isEmpty()) {
+            $lines[] = $this->skipped->console();
+        }
+
         $lines[] = "\033[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.\033[0m";
         $lines[] = "\033[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.\033[0m";
 
@@ -124,6 +129,7 @@ final class SinReport
     public function checklist(): string
     {
         $out = "# Code Commandments — {$this->total} sins to fix\n\n"
+            . $this->skipped->markdown()
             . "> 🔱 **The rule above all — `fix-at-the-source`.** Every sin below is a SYMPTOM. "
             . "Before you change a line, trace the value to where it is BORN and fix it there; "
             . "the symptom (and often others) then disappears on its own. Never silence it with a "

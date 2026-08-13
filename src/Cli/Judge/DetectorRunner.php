@@ -27,9 +27,8 @@ final class DetectorRunner
 
     /**
      * @param  list<Detector>  $detectors
-     * @return list<Finding>
      */
-    public function run(array $detectors, Codebase $codebase, ProgressBar $progress): array
+    public function run(array $detectors, Codebase $codebase, ProgressBar $progress): Judgement
     {
         // Build the call graph AND the value-flow graph ONCE in the parent so forked workers
         // inherit them copy-on-write, instead of each rebuilding them (or each cross-file
@@ -43,7 +42,7 @@ final class DetectorRunner
 
         $byTask = $this->fork->map(
             $tasks,
-            static fn (Closure $task): array => $task(),
+            static fn (Closure $task): DetectorAttempt => $task(),
             $this->parallel >= 1 ? $this->parallel : null,
             static function (int $done) use ($progress): void {
                 for ($i = 0; $i < $done; $i++) {
@@ -52,24 +51,27 @@ final class DetectorRunner
             },
         );
 
-        $findings = [];
+        $judgement = new Judgement;
 
-        foreach ($byTask as $taskFindings) {
-            foreach ($taskFindings as $finding) {
-                $findings[] = $finding;
-            }
+        // A rule that broke in a WORKER is still a rule that did not run, so its skip crosses
+        // back with its (empty) findings rather than dying with the process that met it.
+        foreach ($byTask as $attempt) {
+            $judgement = $judgement->merge(new Judgement(
+                $attempt->found,
+                $attempt->skipped === null ? [] : [$attempt->skipped],
+            ));
         }
 
-        return $findings;
+        return $judgement;
     }
 
     /**
-     * One task per detector — the unit of parallel work. Every task returns
-     * serializable {@see Finding}s (the AST→Finding reduction happens INSIDE the
-     * task, so it runs in the worker and only strings come back).
+     * One task per detector — the unit of parallel work. Every task returns a
+     * serializable {@see DetectorAttempt} of {@see Finding}s (the AST→Finding reduction
+     * happens INSIDE the task, so it runs in the worker and only strings come back).
      *
      * @param  list<Detector>  $detectors
-     * @return list<Closure(): list<Finding>>
+     * @return list<Closure(): DetectorAttempt>
      */
     private function tasks(array $detectors, Codebase $codebase): array
     {

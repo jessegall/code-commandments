@@ -115,7 +115,7 @@ Exit code is non-zero when sins are found.
 <!-- BEGIN: commands-table (auto-generated, run `composer readme`) -->
 | Command | Purpose |
 |---|---|
-| `commandments judge [path]` | Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found. |
+| `commandments judge [path]` | Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run. |
 | `commandments make <Name>` | Scaffold a commandment of your own — a skill, a sin and a detector in `.commandments/custom/`, registered in your config, with the rest of the process printed for you. |
 | `commandments checks [start\|phase\|complete]` | Run the project's planExecution() checks for one moment of a plan. |
 | `commandments hints [path]` | Auto-fix the Spatie Data magic surface — rename non-`from…` object factories to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the `@method from(...)`/`collect(...)` docblock hints. |
