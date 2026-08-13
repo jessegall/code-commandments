@@ -4252,6 +4252,15 @@ class AstNode
     }
 
     /**
+     * Does this class declaration have a PARENT? A subclass can never become an enum — PHP enums
+     * extend nothing — so a rule whose fix is "make it an enum" has no fix to offer here.
+     */
+    public function extendsAClass(): bool
+    {
+        return self::parentClassNameOf($this->node) !== null;
+    }
+
+    /**
      * The name of the class $declaration extends, or null when it extends nothing (or is not a
      * class at all).
      */

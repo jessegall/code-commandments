@@ -40,4 +40,30 @@ final class ConstClassEnumDetectorTest extends TestCase
         // the one with a property, not the single-const class.
         $this->assertSame(['Statuses'], $names);
     }
+
+    public function test_a_subclass_has_no_enum_to_become(): void
+    {
+        // #464/#467: a metadata key bag whose base class a package declares. PHP enums extend
+        // nothing, so the fix this rule teaches does not exist for a subclass — the finding could
+        // only ever be reported, never obeyed. A class that extends nothing is judged as ever.
+        $code = <<<'PHP'
+        <?php
+        class MetaData extends \Spatie\EventSourcing\Enums\MetaData {
+            public const string CASHIER_ID = 'cashier-id';
+            public const string PACKED_BY = 'packed-by';
+            public const string SHOP_ID = 'shop-id';
+        }
+        class Standalone {
+            public const string A = 'a';
+            public const string B = 'b';
+        }
+        PHP;
+
+        $names = array_map(
+            static fn ($m): string => $m->enclosingClassName() ?? '?',
+            (new ConstClassEnumDetector)->find(Codebase::fromString($code)),
+        );
+
+        $this->assertSame(['Standalone'], $names);
+    }
 }
