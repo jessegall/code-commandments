@@ -182,6 +182,15 @@ final class LaravelNode extends NodeMatch
     public const array REQUEST_TYPES = [self::REQUEST, self::FORM_REQUEST, self::MCP_REQUEST];
 
     /**
+     * The auth contracts whose finders the framework DECLARES nullable — `Guard::user()` answers
+     * "is anyone authenticated?", and `Auth::check()` branches on that null, so an implementation
+     * cannot narrow the return without breaking the contract it exists to fulfil.
+     */
+    public const string AUTH_GUARD = 'Illuminate\\Contracts\\Auth\\Guard';
+
+    public const string AUTH_USER_PROVIDER = 'Illuminate\\Contracts\\Auth\\UserProvider';
+
+    /**
      * The Eloquent attribute-cast contracts — a cast has no container/DI, so it may use facades.
      */
     public const array CAST_CONTRACTS = [

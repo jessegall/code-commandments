@@ -12,7 +12,7 @@ _126 sins across 27 skills._
 |---|---|
 | `CancelledCoalesce` | A manufactured fake compared against itself — `($x ?? '') !== ''`. |
 | `ConditionalArraySpread` | Flags a conditional array-element spread — `...($x ? ['k' => $x] : [])` inside an array literal, or `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise. |
-| `DeNulledFinder` | Detects a nullable finder whose result is de-nulled at every call site (≥2 sites); absence should be decided at the source, not re-checked everywhere. / |
+| `DeNulledFinder` | Detects a nullable finder whose result is de-nulled at every call site (≥2 sites); absence should be decided at the source, not re-checked everywhere. |
 | `NullableCallback` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
 | `OptionAsNullable` | Detects `?Option`, `Option \| null`, and `unwrapOr(null)` collapsing absence; exempt in argument position, flagged only in return/assignment. / |
 

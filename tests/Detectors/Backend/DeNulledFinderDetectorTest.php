@@ -50,4 +50,40 @@ final class DeNulledFinderDetectorTest extends TestCase
         // total: not nullable.
         $this->assertSame(['Job::workflowFor'], array_map(static fn ($m): string => $m->scope(), $hits));
     }
+
+    public function test_a_framework_contract_dictates_its_own_nullable_return(): void
+    {
+        // #463/#465/#466: `Guard::user()` is declared `Authenticatable|null` BY the framework, which
+        // calls it precisely to ask whether anyone is authenticated. Narrowing it would stop the
+        // class fulfilling the contract it exists for — so the fix the rule asks for cannot be made.
+        // The typed accessor beside it is the class's OWN choice and is judged as ever.
+        $code = <<<'PHP'
+        <?php
+        namespace App {
+            use Illuminate\Contracts\Auth\Authenticatable;
+            use Illuminate\Contracts\Auth\Guard;
+
+            class PackerGuard implements Guard {
+                public function user(): Authenticatable|null { return null; }
+                public function packer(): User|null { return null; }
+
+                public function id(): string|null { return $this->user()?->getAuthIdentifier(); }
+                public function label(): string { return $this->user()?->getAuthIdentifier() ?? ''; }
+
+                public function named(): string { return $this->packer()?->getAuthIdentifier() ?? ''; }
+                public function slug(): string { return $this->packer()?->getAuthIdentifier() ?? '-'; }
+            }
+
+            class User { public function getAuthIdentifier(): string { return ''; } }
+        }
+        PHP;
+
+        $scopes = array_map(
+            static fn ($m): string => $m->scope(),
+            (new DeNulledFinderDetector)->find(Codebase::fromString($code)),
+        );
+
+        $this->assertNotContains('App\PackerGuard::user', $scopes, 'the framework declared that return, not the class');
+        $this->assertContains('App\PackerGuard::packer', $scopes, 'the accessor the class chose is judged as ever');
+    }
 }

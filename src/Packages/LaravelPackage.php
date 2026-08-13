@@ -26,11 +26,16 @@ final class LaravelPackage extends Package
         $exemptions->exempt(Boundary::class)->classes(...LaravelNode::REQUEST_TYPES);
 
         // Contract hooks: a per-subclass array the framework mandates, its shape not the author's.
+        // The auth finders are the same fact about a RETURN: `Guard::user()` is declared
+        // `Authenticatable|null` by the framework, which calls it precisely to ask whether anyone is
+        // authenticated — an implementation that narrowed it would no longer fulfil the contract.
         $exemptions->exempt(ContractMethod::class)
             ->on(LaravelNode::FORM_REQUEST, 'rules')
             ->on(LaravelNode::MCP_REQUEST, 'rules')
             ->on(LaravelNode::MCP_TOOL, 'rules', 'schema')
-            ->on(LaravelNode::MODEL, 'casts');
+            ->on(LaravelNode::MODEL, 'casts')
+            ->on(LaravelNode::AUTH_GUARD, 'user')
+            ->on(LaravelNode::AUTH_USER_PROVIDER, 'retrieveById', 'retrieveByToken', 'retrieveByCredentials');
 
         // Config classes whose whole job is returning arrays (rules/messages/attributes/schema/…) —
         // exempt wholesale, robust to hooks a rule can't enumerate. A Model earns only the narrower

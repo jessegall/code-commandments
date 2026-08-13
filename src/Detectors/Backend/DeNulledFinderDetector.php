@@ -9,14 +9,21 @@ use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Backend\AppliesExemptions;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Packages\Exemptable;
+use JesseGall\CodeCommandments\Packages\ExemptBy;
+use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
 
 /**
  * Detects a nullable finder whose result is de-nulled at every call site (≥2 sites);
- * absence should be decided at the source, not re-checked everywhere.
+ * absence should be decided at the source, not re-checked everywhere. A method whose nullable
+ * return a framework CONTRACT declares is exempt — that signature is not the class's to narrow.
  */
-final class DeNulledFinderDetector implements Detector
+final class DeNulledFinderDetector implements Detector, Exemptable
 {
+    use AppliesExemptions;
+
     private const int TRAVELS = 2;
 
     public function sin(): Sin
@@ -24,13 +31,18 @@ final class DeNulledFinderDetector implements Detector
         return new DeNulledFinder();
     }
 
+    public function exemptions(): array
+    {
+        return [ContractMethod::class => [ExemptBy::EnclosingMethod]];
+    }
+
     public function find(Codebase $codebase): array
     {
-        return $codebase
+        return $this->exempt($codebase
             ->whereMethodDeclaration()
             ->where(static fn (AstNode $node): bool => $node->returnsNullableObject())
             ->where(static fn (AstNode $node) => self::deNulledByEveryCallerAndTravels($codebase, $node))
-            ->get();
+            ->get(), $codebase);
     }
 
     /**
