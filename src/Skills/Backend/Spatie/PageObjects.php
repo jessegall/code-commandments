@@ -74,8 +74,11 @@ Inject hidden, or the service ships to the browser.
 `Spatie\TypeScriptTransformer\Attributes\Hidden` drops it from the **generated TypeScript type**. LaravelData's
 `#[Hidden]` alone keeps the service off the wire but the transformer *still generates it* into the `.d.ts`.
 Rather than stamp both attributes on every injected service, run `commandments scaffold
---sin=injected-service-not-hidden` — it publishes a `HiddenAwareAttributedClassTransformer` (a thin
-`AttributedClassTransformer` that also drops LaravelData-`#[Hidden]` properties). Register it in your
+--sin=injected-service-not-hidden` — it publishes a hidden-aware transformer that treats LaravelData's
+`#[Hidden]` as TS-hidden too. WHICH one it writes follows the `spatie/typescript-transformer` major you
+have installed: on 3 a `HiddenAwareAttributedClassTransformer` composing a class-property processor, on 2
+a `HiddenAwareDataTypeScriptTransformer` overriding `resolveProperties` — the two majors declare different
+classes, and the wrong one is a fatal rather than a fix. Register whichever it wrote in your
 typescript-transformer config's `transformers` list, and one `#[Hidden]` covers both surfaces.
 
 ### Computed slots, not a fat constructor

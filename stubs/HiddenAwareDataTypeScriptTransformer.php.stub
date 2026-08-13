@@ -1,0 +1,30 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {namespace};
+
+use ReflectionClass;
+use ReflectionProperty;
+use Spatie\LaravelData\Attributes\Hidden;
+use Spatie\LaravelData\Support\TypeScriptTransformer\DataTypeScriptTransformer;
+
+/**
+ * The Data transformer, narrowed to the properties that actually reach the frontend: one carrying
+ * LaravelData's #[Hidden] is dropped from the generated type as well as from the payload, so a page
+ * object's injected collaborators stay out of both with a single attribute. Register it in place of
+ * DataTypeScriptTransformer in config/typescript-transformer.php.
+ */
+final class HiddenAwareDataTypeScriptTransformer extends DataTypeScriptTransformer
+{
+    /**
+     * @return array<int, ReflectionProperty>
+     */
+    protected function resolveProperties(ReflectionClass $class): array
+    {
+        return array_values(array_filter(
+            parent::resolveProperties($class),
+            static fn (ReflectionProperty $property): bool => $property->getAttributes(Hidden::class) === [],
+        ));
+    }
+}
