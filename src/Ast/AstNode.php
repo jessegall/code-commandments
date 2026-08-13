@@ -1569,6 +1569,25 @@ class AstNode
     }
 
     /**
+     * Does this array literal SPREAD another array into itself (`[...$base, 'width' => '10px']`)?
+     *
+     * Then its key set is not statically known: the literal states what it ADDS to a map it was
+     * handed, so the fields a reader can see are only part of what comes back. That is a map being
+     * extended, never a record being declared — the same reason a spread cannot be a tuple.
+     */
+    public function spreadsAnotherArray(): bool
+    {
+        if (! $this->node instanceof Array_) {
+            return false;
+        }
+
+        return array_any(
+            $this->node->items,
+            static fn (?ArrayItem $item): bool => $item instanceof ArrayItem && $item->unpack,
+        );
+    }
+
+    /**
      * Is this array literal a LOOKUP TABLE rather than a record — a keyed map whose every value is a
      * constant of ONE class (`'dashboard.view' => Permission::SHOPFLOOR, 'orders.index' => …`)?
      *

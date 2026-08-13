@@ -120,4 +120,38 @@ final class ArrayReturnBagDetectorTest extends TestCase
 
         $this->assertSame(['S::charges', 'S::mixed'], $scopes);
     }
+
+    public function test_a_literal_that_spreads_another_array_is_a_map_being_extended(): void
+    {
+        // #475: a declaration map built by adding to one it was handed. Its key set is not
+        // statically known — the literal states what it ADDS, so the fields a reader can see are
+        // only part of what comes back. That is a map, never a record whose fields could be named.
+        $code = <<<'PHP'
+        <?php
+        class S
+        {
+            public function positioning(array $base, string $to): array
+            {
+                return [
+                    ...$base,
+                    'width' => 'calc(var(--span, 0) * 1px)',
+                    'max-width' => 'none',
+                    'margin-inline' => '0',
+                ];
+            }
+
+            public function fields(): array
+            {
+                return ['position' => 'fixed', 'left' => '0px'];
+            }
+        }
+        PHP;
+
+        $scopes = array_map(
+            static fn ($m): string => $m->scope(),
+            (new ArrayReturnBagDetector)->find(Codebase::fromString($code)),
+        );
+
+        $this->assertSame(['S::fields'], $scopes, 'a literal declaring its whole key set is judged as ever');
+    }
 }

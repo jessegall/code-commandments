@@ -22,7 +22,9 @@ use JesseGall\CodeCommandments\Backend\Detector;
  * there and the array is its wire shape), JSON schemas, LOOKUP TABLES (every value a constant of one
  * class — interchangeable values keyed by data, so there are no fields to name), method overrides,
  * and SHAPED-array returns (`@return array{…}` — a
- * typed, statically-checkable struct, not a loose bag). Also exempt is a SCRIPT-SCOPE return — a
+ * typed, statically-checkable struct, not a loose bag). A literal that SPREADS another array is
+ * exempt too: its key set is not statically known, so it states what it ADDS to a map rather than
+ * declaring a record. Also exempt is a SCRIPT-SCOPE return — a
  * `config/*.php` or manifest file whose whole purpose is to hand back a keyed map. There is no method
  * there whose contract could be a value object. Points at value-objects.
  */
@@ -50,6 +52,7 @@ final class ArrayReturnBagDetector implements Detector, Exemptable
             ->where(static fn (AstNode $node): bool => $node->isReturnedValue())
             ->reject(static fn (AstNode $node): bool => $node->enclosingFunction() === null)
             ->reject(static fn (AstNode $node): bool => $node->hasNestedArrayValue())
+            ->reject(static fn (AstNode $node): bool => $node->spreadsAnotherArray())
             ->reject(static fn (AstNode $node): bool => $node->looksLikeJsonSchema())
             ->reject(static fn (AstNode $node): bool => $node->isHomogeneousLookupTable())
             ->reject(static fn (AstNode $node): bool => $codebase->projection()->ofTypedObject($node))
