@@ -167,6 +167,52 @@ final class OrphanedBindingDetectorTest extends TestCase
         $this->assertSame([8], $this->lines($code));
     }
 
+    public function test_a_vendor_abstract_is_never_judged_orphaned(): void
+    {
+        // #460/#471/#472/#474: the reported shape. The abstract is a package's contract, its only
+        // consumer is that package's own code, and the bind exists to swap the package's default for
+        // this project's subclass. The scan cannot read the consumer, so it cannot call the wiring
+        // dead — and overriding a vendor binding is precisely what a framework invites.
+        $code = <<<'PHP'
+        <?php
+        namespace App {
+            use Inertia\DevTools\RequestRecorder;
+
+            class TypedSharedPropsRecorder extends RequestRecorder {}
+
+            class AppServiceProvider {
+                public function register(): void {
+                    $this->app->bind(RequestRecorder::class, TypedSharedPropsRecorder::class);
+                }
+            }
+        }
+        PHP;
+
+        $this->assertSame([], $this->lines($code));
+    }
+
+    public function test_an_abstract_the_codebase_declares_is_judged_as_before(): void
+    {
+        // The guard is about what the scan can SEE, not about vendor-ness as a licence: the same
+        // shape over an abstract this codebase declares is still dead wiring.
+        $code = <<<'PHP'
+        <?php
+        namespace App {
+            interface Recorder {}
+
+            class NullRecorder implements Recorder {}
+
+            class AppServiceProvider {
+                public function register(): void {
+                    $this->app->bind(Recorder::class, NullRecorder::class);
+                }
+            }
+        }
+        PHP;
+
+        $this->assertSame([9], $this->lines($code));
+    }
+
     public function test_a_string_key_consumer_keeps_a_binding_alive(): void
     {
         $code = <<<'PHP'

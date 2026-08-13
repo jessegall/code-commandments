@@ -33,8 +33,9 @@ final class ContainerBindings
 
     /**
      * @param  array<string, true>  $referenced  FQCN => true, counting only references outside registrations
+     * @param  array<string, true>  $declared  FQCN => true for every bound abstract this codebase declares
      */
-    private function __construct(private readonly array $referenced) {}
+    private function __construct(private readonly array $referenced, private readonly array $declared) {}
 
     /**
      * Does anything outside a binding registration reach for $abstract? False means the wiring is
@@ -44,6 +45,18 @@ final class ContainerBindings
     {
         // An abstract that could not be named is not one anything reaches for.
         return $abstract !== null && isset($this->referenced[$abstract]);
+    }
+
+    /**
+     * Can this scan JUDGE $abstract at all — is it a class-like the codebase itself declares? An
+     * abstract that lives in a dependency is resolved by code the scan never reads, so "nothing here
+     * names it" is not evidence that nothing names it anywhere. It is also the shape of every
+     * override a framework invites — binding a vendor contract to your own implementation is how
+     * you replace what the package ships, and the only consumer is the package (#460, #471, #472, #474).
+     */
+    public function isDeclaredHere(?string $abstract): bool
+    {
+        return $abstract !== null && isset($this->declared[$abstract]);
     }
 
     /**
@@ -59,6 +72,7 @@ final class ContainerBindings
     protected static function build(Codebase $codebase): static
     {
         $referenced = [];
+        $bound = [];
         $finder = new NodeFinder;
 
         foreach ($codebase->files() as $file) {
@@ -69,7 +83,9 @@ final class ContainerBindings
             $registrations = [];
 
             foreach ($finder->find($file->ast, static fn (Node $n): bool => self::boundAbstract($n) !== null) as $call) {
-                $registrations[(string) self::boundAbstract($call)][] = [$call->getStartFilePos(), $call->getEndFilePos()];
+                $abstract = (string) self::boundAbstract($call);
+                $registrations[$abstract][] = [$call->getStartFilePos(), $call->getEndFilePos()];
+                $bound[$abstract] = true;
             }
 
             foreach ($finder->find($file->ast, static fn (Node $n): bool => self::namedClass($n) !== null) as $reference) {
@@ -83,7 +99,17 @@ final class ContainerBindings
             }
         }
 
-        return new self($referenced);
+        $declared = [];
+
+        // Asked only of the abstracts something actually binds: the rest of the map is nothing this
+        // ever answers for, and a whole-codebase declaration sweep would be paid for on every scan.
+        foreach (array_keys($bound) as $abstract) {
+            if ($codebase->declarationMatch($abstract) !== null) {
+                $declared[$abstract] = true;
+            }
+        }
+
+        return new self($referenced, $declared);
     }
 
     /**
