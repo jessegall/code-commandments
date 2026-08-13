@@ -1401,6 +1401,31 @@ class AstNode
     }
 
     /**
+     * Does this call decode what it just ENCODED — `json_decode(json_encode($x), true)`? Nothing
+     * crosses a boundary in a round-trip: the value was ours a moment ago, and the array is its
+     * own serialized form, obtained deliberately as data to walk. A cast or parentheses in
+     * between change nothing, so they are seen through.
+     */
+    public function decodesItsOwnEncoding(): bool
+    {
+        $argument = $this->arguments()[0] ?? null;
+
+        return $argument !== null && new self(self::unwrapped($argument->value))->callName() === 'json_encode';
+    }
+
+    /**
+     * $expr with the casts and parentheses around it taken off — the expression as it really is.
+     */
+    private static function unwrapped(Node $expr): Node
+    {
+        while ($expr instanceof Cast) {
+            $expr = $expr->expr;
+        }
+
+        return $expr;
+    }
+
+    /**
      * Is this expression the return value of a function — a `return <here>;` or the
      * body of an arrow function (`fn () => <here>`), which returns implicitly?
      */
