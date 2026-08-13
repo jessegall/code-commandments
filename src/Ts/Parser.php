@@ -1585,7 +1585,7 @@ final class Parser
     {
         $depth = 0;
         $end = $this->peek()->start;
-        $previousEnd = null;
+        $previous = null;
 
         while (! $this->eof()) {
             $token = $this->peek();
@@ -1597,8 +1597,11 @@ final class Parser
                     break;
                 }
 
-                if ($previousEnd !== null && str_contains(substr($this->source, $previousEnd, $token->start - $previousEnd), "\n")) {
-                    break; // a newline ends the statement (ASI)
+                // A newline ends the statement (ASI) — but only where the expression could BE
+                // finished. After a `=>`, a `.` or any other operator the language is still
+                // mid-expression, and the rest of it lives on the next line.
+                if ($previous?->couldEndAnExpression() === true && str_contains(substr($this->source, $previous->end, $token->start - $previous->end), "\n")) {
+                    break;
                 }
             }
 
@@ -1609,7 +1612,7 @@ final class Parser
             }
 
             $end = $token->end;
-            $previousEnd = $token->end;
+            $previous = $token;
             $this->advance();
         }
 

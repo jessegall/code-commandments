@@ -80,6 +80,23 @@ final readonly class Lexeme
     }
 
     /**
+     * Could an expression END here? A name, a literal or a closing bracket completes one; every
+     * operator and separator (`=>`, `=`, `.`, `,`, `+`, `?`) demands a right-hand side, so what
+     * follows is still the same expression.
+     *
+     * This is what makes automatic semicolon insertion honest: a newline only ends a statement the
+     * language would accept as finished. Without it, `const f = (x) =>` followed by its body on the
+     * next line read as a complete initialiser and the body leaked out as separate statements (#470).
+     */
+    public function couldEndAnExpression(): bool
+    {
+        return $this->isIdentifier()
+            || $this->is(Token::STRING)
+            || $this->is(Token::NUMBER)
+            || $this->isGroupCloser();
+    }
+
+    /**
      * Is this lexeme the OPENING bracket of a TYPE — the `<` of `Ref<T>` and its kin?
      */
     public function isTypeOpener(): bool
