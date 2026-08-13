@@ -29,6 +29,7 @@ use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 
 use JesseGall\CodeCommandments\Cli\Report\SinReport;
 use JesseGall\CodeCommandments\Cli\Report\SkippedRules;
+use JesseGall\CodeCommandments\Cli\Attempt;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
@@ -401,10 +402,10 @@ final class Judge implements Command
 
             $custom = Custom::owns($detector);
 
-            $attempt = DetectorAttempt::of($short, $custom, static fn (): array => $detector->find($codebase));
+            $attempt = Attempt::of($short, $custom, static fn (): array => $detector->find($codebase));
             $findings = [];
 
-            foreach ($attempt->found as $match) {
+            foreach ($attempt->work as $match) {
                 $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope(), custom: $custom);
             }
 

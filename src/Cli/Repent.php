@@ -10,8 +10,13 @@ use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Cli\Report\SkippedRules;
+use JesseGall\CodeCommandments\Custom;
+use JesseGall\CodeCommandments\Scribes\Converged;
+use JesseGall\CodeCommandments\Scribes\Owned;
 use JesseGall\CodeCommandments\Scribes\RewriteApplier;
 use JesseGall\CodeCommandments\Scribes\ScribeChain;
+use JesseGall\CodeCommandments\Scribes\ScribeStep;
 use JesseGall\CodeCommandments\Scribes\UnifiedDiff;
 use JesseGall\CodeCommandments\WorkingCopy;
 use JesseGall\CodeCommandments\Workspace;
@@ -40,6 +45,12 @@ final class Repent implements Command
     private const int FEEDBACK_INTERVAL = 4;
 
     /**
+     * The exit code for a run where a rewriter broke — it fixed what it could, but not everything it
+     * advertises, which is neither success (0) nor a usage error (2). Judge answers 3 the same way.
+     */
+    private const int A_RULE_COULD_NOT_RUN = 3;
+
+    /**
      * Keep package-gated scribes even when this project lacks the package (cross-project calibration).
      */
     private bool $ignorePackages = false;
@@ -62,7 +73,10 @@ final class Repent implements Command
             ->option('--only=NAME', 'run one rewriter only (alias: --sin=NAME)')
             ->option('--ignore-package-requirements', 'keep package-gated scribes even if this project lacks the package')
             ->note('Rewrites only within the source roots `judge` reads (config.php\'s paths()), so it never touches '
-                . 'tests/ or anything judge would not flag. A broken or incorrect repent result is a BUG — report it with `commandments report`, referencing both the source and the broken output.');
+                . 'tests/ or anything judge would not flag. A broken or incorrect repent result is a BUG — report it with `commandments report`, referencing both the source and the broken output.')
+            ->note('A rewriter that BREAKS is dropped so every other fix still applies — one bad scribe used to take '
+                . 'the whole command down. The run then names it and exits 3, because it did not auto-fix everything '
+                . 'it advertises.');
     }
 
     public function run(Input $input): int
@@ -100,7 +114,7 @@ final class Repent implements Command
     private function apply(string $path, array $roots, Scope $scope, Option $only): int
     {
         $converged = $this->converge($roots, $scope, $only);
-        $written = new RewriteApplier()->apply($converged);
+        $written = new RewriteApplier()->apply($converged->files);
 
         if ($written === []) {
             $this->out(
@@ -109,7 +123,7 @@ final class Repent implements Command
                 . "  source per its skill. Run `judge` to see what remains.\033[0m\n",
             );
 
-            return 0;
+            return $this->reportSkipped($converged);
         }
 
         $count = count($written);
@@ -119,10 +133,27 @@ final class Repent implements Command
             $this->out('  ' . Path::relative($file, $path) . "\n");
         }
 
-        $this->scaffoldConstructs($converged, $written);
+        $this->scaffoldConstructs($converged->files, $written);
         $this->inviteFeedback();
 
-        return 0;
+        return $this->reportSkipped($converged);
+    }
+
+    /**
+     * Name the rewriters that could not run, and answer with the exit code the run has earned: a
+     * repent that skipped one has NOT auto-fixed everything it advertises, whatever it managed.
+     */
+    private function reportSkipped(Converged $converged): int
+    {
+        $skipped = new SkippedRules($converged->skipped);
+
+        if ($skipped->isEmpty()) {
+            return 0;
+        }
+
+        $this->out($skipped->console() . "\n");
+
+        return self::A_RULE_COULD_NOT_RUN;
     }
 
     /**
@@ -208,7 +239,8 @@ final class Repent implements Command
     {
         // The converged result is diffed against pristine disk (converge writes nothing), so the
         // dry-run is exactly what an apply would produce — a fixpoint, not a single sweep.
-        $diff = new UnifiedDiff()->of($this->converge($roots, $scope, $only), $path);
+        $converged = $this->converge($roots, $scope, $only);
+        $diff = new UnifiedDiff()->of($converged->files, $path);
 
         if ($diff === '') {
             $this->out(
@@ -217,7 +249,7 @@ final class Repent implements Command
                 . "  source per its skill. Run `judge` to see what remains.\033[0m\n",
             );
 
-            return 0;
+            return $this->reportSkipped($converged);
         }
 
         foreach ($file as $target) {
@@ -225,13 +257,13 @@ final class Repent implements Command
             $this->out("\033[2m↳ dry-run diff written to {$target}\033[0m\n");
             $this->reportHint();
 
-            return 0;
+            return $this->reportSkipped($converged);
         }
 
         $this->out($diff);
         $this->reportHint();
 
-        return 0;
+        return $this->reportSkipped($converged);
     }
 
     /**
@@ -262,13 +294,13 @@ final class Repent implements Command
      * step can't spin forever.
      *
      * @param  list<string>  $roots  the declared source roots to scan and rewrite
-     * @return array<string, string>  path => final content
      */
-    private function converge(array $roots, Scope $scope, Option $only): array
+    private function converge(array $roots, Scope $scope, Option $only): Converged
     {
         $steps = array_values($this->chain($only)->steps());
         $overlay = new WorkingCopy();
         $progress = new ProgressBar();
+        $skipped = [];
 
         for ($sweep = 0; $sweep < self::MAX_SWEEPS; $sweep++) {
             $before = $overlay->changes();
@@ -277,27 +309,47 @@ final class Repent implements Command
                 $sweepLabel = $sweep === 0 ? '' : ' (sweep ' . ($sweep + 1) . ')';
                 $progress->track($index, count($steps), 'repenting' . $sweepLabel . ' · ' . $step->name());
 
-                $rewrites = $step->run($roots, $scope, $overlay);
+                // A rewriter that BREAKS costs its own fixes and nothing else. It used to take the whole
+                // command with it, so one bad scribe meant no sin in the run could be auto-fixed (#456).
+                $attempt = Attempt::of($step->name(), $this->isCustom($step), static fn (): array => $step->run($roots, $scope, $overlay));
+
+                if ($attempt->skipped !== null) {
+                    // It will meet the same shape on the next sweep, so drop it rather than fail it ten
+                    // times over: the reader needs the failure once, not once per sweep.
+                    unset($steps[$index]);
+                    $skipped[] = $attempt->skipped;
+
+                    continue;
+                }
 
                 // The chain rule: a step's rewrite is applied only if EVERY existing file it would touch
                 // is a target. One frozen / out-of-scope member drops the whole connected rewrite, so a
                 // repent never half-applies or writes into a file this run must not touch.
-                if ($scope->permits(array_keys($rewrites))) {
-                    $overlay = $overlay->with($rewrites);
+                if ($scope->permits(array_keys($attempt->work))) {
+                    $overlay = $overlay->with($attempt->work);
                 }
             }
 
             if ($overlay->changes() === $before) {
                 $progress->finish();
 
-                return $overlay->changes();
+                return new Converged($overlay->changes(), $skipped);
             }
         }
 
         $progress->finish();
         fwrite(STDERR, "\033[33m⚠ repent did not settle within " . self::MAX_SWEEPS . " sweeps; applying what converged.\033[0m\n");
 
-        return $overlay->changes();
+        return new Converged($overlay->changes(), $skipped);
+    }
+
+    /**
+     * Is the rule this step runs one the PROJECT wrote? A step is ours; the scribe or detector inside
+     * it need not be, and a failure must be attributed to whoever can fix it.
+     */
+    private function isCustom(ScribeStep $step): bool
+    {
+        return $step instanceof Owned && Custom::owns($step->owner());
     }
 
     /**

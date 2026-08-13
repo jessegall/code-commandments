@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Concurrency\Fork;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 
+use JesseGall\CodeCommandments\Cli\Attempt;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 /**
  * Runs detectors in parallel over a shared AST, returning serializable findings (AST nodes
@@ -42,7 +43,7 @@ final class DetectorRunner
 
         $byTask = $this->fork->map(
             $tasks,
-            static fn (Closure $task): DetectorAttempt => $task(),
+            static fn (Closure $task): Attempt => $task(),
             $this->parallel >= 1 ? $this->parallel : null,
             static function (int $done) use ($progress): void {
                 for ($i = 0; $i < $done; $i++) {
@@ -57,7 +58,7 @@ final class DetectorRunner
         // back with its (empty) findings rather than dying with the process that met it.
         foreach ($byTask as $attempt) {
             $judgement = $judgement->merge(new Judgement(
-                $attempt->found,
+                $attempt->work,
                 $attempt->skipped === null ? [] : [$attempt->skipped],
             ));
         }
@@ -67,11 +68,11 @@ final class DetectorRunner
 
     /**
      * One task per detector — the unit of parallel work. Every task returns a
-     * serializable {@see DetectorAttempt} of {@see Finding}s (the AST→Finding reduction
+     * serializable {@see Attempt} of {@see Finding}s (the AST→Finding reduction
      * happens INSIDE the task, so it runs in the worker and only strings come back).
      *
      * @param  list<Detector>  $detectors
-     * @return list<Closure(): DetectorAttempt>
+     * @return list<Closure(): Attempt>
      */
     private function tasks(array $detectors, Codebase $codebase): array
     {
@@ -83,7 +84,7 @@ final class DetectorRunner
             $custom = Custom::owns($detector); // Resolved in the PARENT: a worker's finding must already
             // know whose rule it came from, and the answer never depends on where it ran.
 
-            $tasks[] = static fn () => DetectorAttempt::of($short, $custom, static fn () => self::findings(
+            $tasks[] = static fn () => Attempt::of($short, $custom, static fn () => self::findings(
                 $short,
                 $sin->slug(),
                 $sin->name(),

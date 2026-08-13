@@ -2,41 +2,41 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Cli\Judge;
+namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\Judge\DetectorAttempt;
+use JesseGall\CodeCommandments\Cli\Attempt;
 use PHPUnit\Framework\TestCase;
 
 /**
  * A rule that breaks costs its own findings and nothing else — and says so. A run of a hundred
  * detectors must not end because one of them met a shape it could not read.
  */
-final class DetectorAttemptTest extends TestCase
+final class AttemptTest extends TestCase
 {
     public function test_a_detector_that_works_hands_back_what_it_found(): void
     {
-        $attempt = DetectorAttempt::of('Fine', false, static fn (): array => ['a', 'b']);
+        $attempt = Attempt::of('Fine', false, static fn (): array => ['a', 'b']);
 
-        $this->assertSame(['a', 'b'], $attempt->found);
+        $this->assertSame(['a', 'b'], $attempt->work);
         $this->assertNull($attempt->skipped, 'a rule that ran is not a skipped one');
     }
 
     public function test_a_detector_that_throws_costs_only_itself(): void
     {
-        $attempt = DetectorAttempt::of(
+        $attempt = Attempt::of(
             'Broken',
             false,
             static fn (): array => throw new \RuntimeException('met a shape it could not read'),
         );
 
-        $this->assertSame([], $attempt->found, 'the run continues, with nothing from that rule');
+        $this->assertSame([], $attempt->work, 'the run continues, with nothing from that rule');
     }
 
     public function test_the_skip_travels_back_with_the_findings(): void
     {
         // Empty findings and a skipped rule are indistinguishable to a caller that only receives
         // the findings — so the rule that could not run comes back NAMED, and the run can say so.
-        $attempt = DetectorAttempt::of(
+        $attempt = Attempt::of(
             'Broken',
             false,
             static fn (): array => throw new \RuntimeException('met a shape it could not read'),
@@ -68,11 +68,11 @@ final class DetectorAttemptTest extends TestCase
      */
     private function stderrOf(string $detector, bool $custom): string
     {
-        $autoload = dirname(__DIR__, 3) . '/vendor/autoload.php';
+        $autoload = dirname(__DIR__, 2) . '/vendor/autoload.php';
         $script = sprintf(
             'require %s; %s::of(%s, %s, static fn (): array => throw new \RuntimeException(%s));',
             var_export($autoload, true),
-            '\\' . DetectorAttempt::class,
+            '\\' . Attempt::class,
             var_export($detector, true),
             $custom ? 'true' : 'false',
             var_export('met a shape it could not read', true),

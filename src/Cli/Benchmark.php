@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Custom;
 
-use JesseGall\CodeCommandments\Cli\Judge\DetectorAttempt;
+use JesseGall\CodeCommandments\Cli\Attempt;
 use JesseGall\CodeCommandments\Cli\Judge\Judgement;
 
 use JesseGall\CodeCommandments\Support\ClassName;
@@ -45,18 +45,18 @@ final class Benchmark
             $before = memory_get_usage();
             $start = hrtime(true);
 
-            $attempt = DetectorAttempt::of($short, Custom::owns($detector), static fn (): array => $detector->find($codebase));
+            $attempt = Attempt::of($short, Custom::owns($detector), static fn (): array => $detector->find($codebase));
 
             $seconds = (hrtime(true) - $start) / 1e9;
             $bytes = memory_get_usage() - $before;
             $shards = $detector instanceof Sharded ? count($detector->shards($codebase)) : null;
 
-            $this->records[] = new DetectorProfile($short, $seconds, count($attempt->found), $bytes, $shards);
+            $this->records[] = new DetectorProfile($short, $seconds, count($attempt->work), $bytes, $shards);
 
             $sin = $detector->sin();
             $findings = [];
 
-            foreach ($attempt->found as $match) {
+            foreach ($attempt->work as $match) {
                 $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope());
             }
 

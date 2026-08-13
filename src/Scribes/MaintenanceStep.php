@@ -12,13 +12,18 @@ use JesseGall\CodeCommandments\WorkingCopy;
  * A chain step that runs a self-querying maintenance {@see Scribe} over the PHP AST —
  * Spatie Data hints, redundant arrow-fn return types. In-place edits, no new files.
  */
-final class MaintenanceStep implements ScribeStep
+final class MaintenanceStep implements ScribeStep, Owned
 {
     public function __construct(private readonly Scribe $scribe) {}
 
     public function name(): string
     {
         return $this->scribe->name();
+    }
+
+    public function owner(): object
+    {
+        return $this->scribe;
     }
 
     public function run(string|array $path, Scope $scope, WorkingCopy $overlay = new WorkingCopy()): array

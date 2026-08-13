@@ -74,6 +74,18 @@ final class Span
     }
 
     /**
+     * The byte offset just PAST the line containing $pos — after its newline, or the end of the
+     * source when nothing follows. The forward counterpart of {@see lineStartAt}, so a scribe
+     * lifting a whole line OUT never hand-rolls the walk to the break.
+     */
+    public static function lineEndAt(string $source, int $pos): int
+    {
+        $newline = self::after($source, $pos, "\n");
+
+        return $newline === null ? strlen($source) : $newline + 1;
+    }
+
+    /**
      * The 1-based LINE $pos sits on — the offset→line answer every located node needs to report a
      * `file:line`. The one place the newline count is written, so a parse layer that stamps its
      * nodes with byte offsets never carries its own `substr_count` beside the real one.

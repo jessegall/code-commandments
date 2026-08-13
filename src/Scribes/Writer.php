@@ -232,6 +232,35 @@ final class Writer
     }
 
     /**
+     * Take a declaration's docblock out WHOLE — the block and the line it stood on — so the
+     * declaration moves up rather than sitting under a blank. The complement of
+     * {@see replaceDocblock}, which keeps the line and swaps its contents.
+     */
+    public function removeDocblock(Node $node): void
+    {
+        $doc = $node->getDocComment();
+
+        if ($doc === null) {
+            return;
+        }
+
+        $source = $this->file->source;
+        $after = $doc->getEndFilePos() + 1;
+        $lineEnd = Span::lineEndAt($source, $after);
+
+        // Only a block standing ALONE takes its line with it. Where the declaration shares the
+        // docblock's line, eating the line would take the declaration too.
+        $alone = Span::ownLineIndent($source, $doc->getStartFilePos()) !== null
+            && trim(Span::slice($source, $after, $lineEnd - 1)) === '';
+
+        $this->rewrite(new Edit(
+            $alone ? Span::lineStartAt($source, $doc->getStartFilePos()) : $doc->getStartFilePos(),
+            $alone ? $lineEnd : $after,
+            '',
+        ));
+    }
+
+    /**
      * Replace a run of comments — the first through the last — with $text. How a stack of docblocks
      * becomes one: the whole run goes, the merged block takes its place, and the declaration beneath
      * is untouched.

@@ -12,13 +12,18 @@ use JesseGall\CodeCommandments\Detectors\RunsLast;
  * A chain step running a repentable detector's scribe over findings; concrete steps implement
  * engine-specific scanning and repentable() resolution.
  */
-abstract class DetectorStep implements ScribeStep
+abstract class DetectorStep implements ScribeStep, Owned
 {
     /**
      * The detector behind this step, as the engine-neutral root {@see Detector} (carrying
      * the {@see Repentable} contract) — enough for the shared name/sin/scribe logic.
      */
     abstract protected function repentable(): Detector&Repentable;
+
+    public function owner(): object
+    {
+        return $this->repentable();
+    }
 
     public function name(): string
     {
