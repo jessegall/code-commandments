@@ -151,8 +151,10 @@ Do not start work without all of them loaded.
 
 **Finding and fixing sins — the checklist workflow.** Run
 `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the
-scan: `judge resources/js` judges the **Vue frontend** (judge runs both engines),
-`judge app/Http` a subtree. (Also `--skill=NAME` to scope to one group; `--branch`
+scan: judge runs BOTH engines over whatever you point it at, so a path holding
+frontend sources (`judge resources/js`) is judged as the frontend
+— **Vue components and plain TypeScript alike** — and any subdirectory of your
+own tree scopes to that subtree. (Also `--skill=NAME` to scope to one group; `--branch`
 for files new/changed vs `main`; `--changes` for uncommitted changes.) A full scan
 is slow, so it writes the findings to a checklist — your session's
 `.commandments/sessions/<id>/sins.md` (the run prints the exact path) — and
@@ -188,7 +190,8 @@ this project has a discipline of its own — a convention you keep restating in
 review, a mistake that keeps coming back, anything the shipped set doesn't
 catch — it can become a rule that judges every file from then on. Scaffold it:
 
-`vendor/bin/commandments make <Name>` (add `--engine=frontend` for a Vue rule)
+`vendor/bin/commandments make <Name>` (add `--engine=frontend` for a rule over
+your frontend sources — a Vue component or a TypeScript module)
 
 That writes the three classes a commandment is made of — the skill that teaches
 it, the sin that names it, the detector that finds it — into

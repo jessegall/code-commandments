@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills\TypeScript;
 
+use JesseGall\CodeCommandments\Language;
+
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Skills\Tier;
 
@@ -79,5 +81,13 @@ PRINCIPLE;
             \JesseGall\CodeCommandments\Skills\Backend\Absence::class => 'the same instinct on the server, with the tools PHP has and TypeScript does not.',
             \JesseGall\CodeCommandments\Skills\Backend\TypeHonesty::class => "the general rule this serves: a type must not claim an optionality the design doesn't have.",
         ];
+    }
+
+    /**
+     * The discipline is the LANGUAGE's — two spellings for missing, which PHP does not have.
+     */
+    public function languages(): array
+    {
+        return [Language::TypeScript];
     }
 }

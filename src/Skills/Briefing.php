@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills;
 
+use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Custom;
+use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -25,10 +27,14 @@ final class Briefing
     /**
      * @param  string|null  $project  the consumer root, so its OWN skills are briefed too
      */
-    public static function render(?string $project = null): string
+    public static function render(?string $project = null, ?Languages $languages = null): string
     {
-        $mandatory = self::bullets(Tier::Mandatory, $project);
-        $keepInMind = self::bullets(Tier::KeepInMind, $project);
+        // The project's OWN set, so a briefing never tells a reader to load a discipline for a
+        // language they have said they do not write (#478).
+        $languages ??= Languages::from(Config::load($project));
+
+        $mandatory = self::bullets(Tier::Mandatory, $project, $languages);
+        $keepInMind = self::bullets(Tier::KeepInMind, $project, $languages);
         $library = Workspace::LIBRARY;
 
         return <<<MD
@@ -157,8 +163,10 @@ final class Briefing
 
         **Finding and fixing sins — the checklist workflow.** Run
         `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the
-        scan: `judge resources/js` judges the **Vue frontend** (judge runs both engines),
-        `judge app/Http` a subtree. (Also `--skill=NAME` to scope to one group; `--branch`
+        scan: judge runs BOTH engines over whatever you point it at, so a path holding
+        frontend sources (`judge resources/js`) is judged as the frontend
+        — **Vue components and plain TypeScript alike** — and any subdirectory of your
+        own tree scopes to that subtree. (Also `--skill=NAME` to scope to one group; `--branch`
         for files new/changed vs `main`; `--changes` for uncommitted changes.) A full scan
         is slow, so it writes the findings to a checklist — your session's
         `.commandments/sessions/<id>/sins.md` (the run prints the exact path) — and
@@ -194,7 +202,8 @@ final class Briefing
         review, a mistake that keeps coming back, anything the shipped set doesn't
         catch — it can become a rule that judges every file from then on. Scaffold it:
 
-        `vendor/bin/commandments make <Name>` (add `--engine=frontend` for a Vue rule)
+        `vendor/bin/commandments make <Name>` (add `--engine=frontend` for a rule over
+        your frontend sources — a Vue component or a TypeScript module)
 
         That writes the three classes a commandment is made of — the skill that teaches
         it, the sin that names it, the detector that finds it — into
@@ -219,11 +228,11 @@ final class Briefing
      * One tier's bullets, the project's own skills named AS the project's — a rule it wrote is fixed
      * and edited in `.commandments/custom/`, never upstream, so the briefing says whose it is (#414).
      */
-    private static function bullets(Tier $tier, ?string $project): string
+    private static function bullets(Tier $tier, ?string $project, Languages $languages): string
     {
         $bullet = static fn (Skill $skill): string => $skill->bullet()
             . (Custom::owns($skill, $project) ? ' _(this project\'s own — `.commandments/custom/`)_' : '');
 
-        return implode("\n", array_map($bullet, Catalog::inTier($tier, $project)));
+        return implode("\n", array_map($bullet, Catalog::inTier($tier, $project, $languages)));
     }
 }

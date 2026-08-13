@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills\Frontend;
 
+use JesseGall\CodeCommandments\Language;
+
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Skills\Tier;
 
@@ -69,5 +71,13 @@ PRINCIPLE;
         return [
             VueComponents::class => "a `<SwitchCase>` IS a component — the same extract-don't-inline instinct.",
         ];
+    }
+
+    /**
+     * Template dispatch — there is nothing here for a project with no `.vue` files.
+     */
+    public function languages(): array
+    {
+        return [Language::Vue];
     }
 }

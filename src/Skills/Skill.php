@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills;
 
+use JesseGall\CodeCommandments\Language;
+
 /**
  * One teaching skill: source of truth for its generated `SKILL.md`. Hand-written concept + descriptor
  * only; enumerable sections (rules, examples, checklist) project from this skill's Sins via Catalog discovery.
@@ -55,6 +57,22 @@ abstract class Skill
     public function examplesKeepDocblocks(): bool
     {
         return false;
+    }
+
+    /**
+     * The languages this skill TEACHES — what a reader must write for any of it to apply. PHP for
+     * almost every discipline; a Vue skill teaches components and templates, and a TypeScript one
+     * the language itself.
+     *
+     * A project that writes none of them is never told to load it: a rule it cannot break, taught
+     * in a language it does not write, is a briefing making a claim about a codebase that is not
+     * this one (#478).
+     *
+     * @return list<Language>
+     */
+    public function languages(): array
+    {
+        return [Language::Php];
     }
 
     /**

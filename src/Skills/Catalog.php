@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Skills;
 
 use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Discovery;
+use JesseGall\CodeCommandments\Languages;
 
 /**
  * Every teaching skill in force for a project — the ones that ship, discovered from the `Backend/`
@@ -60,13 +61,13 @@ final class Catalog
      *
      * @return list<Skill>
      */
-    public static function all(?string $project = null): array
+    public static function all(?string $project = null, ?Languages $languages = null): array
     {
         $skills = [...self::backend(), ...self::frontend(), ...self::typescript(), ...Custom::skills($project)];
 
         usort($skills, static fn (Skill $a, Skill $b): int => $a->order <=> $b->order);
 
-        return $skills;
+        return self::written($skills, $languages ?? new Languages());
     }
 
     /**
@@ -74,9 +75,28 @@ final class Catalog
      *
      * @return list<Skill>
      */
-    public static function inTier(Tier $tier, ?string $project = null): array
+    public static function inTier(Tier $tier, ?string $project = null, ?Languages $languages = null): array
     {
-        return array_values(array_filter(self::all($project), static fn (Skill $skill): bool => $skill->tier === $tier));
+        return array_values(array_filter(
+            self::all($project, $languages),
+            static fn (Skill $skill): bool => $skill->tier === $tier,
+        ));
+    }
+
+    /**
+     * The skills a project can actually use — those teaching at least one language it writes. A
+     * discipline whose every language the project has disabled is one it cannot break, so briefing
+     * it would describe a codebase that is not this one (#478).
+     *
+     * @param  list<Skill>  $skills
+     * @return list<Skill>
+     */
+    private static function written(array $skills, Languages $languages): array
+    {
+        return array_values(array_filter(
+            $skills,
+            static fn (Skill $skill): bool => array_any($skill->languages(), $languages->writes(...)),
+        ));
     }
 
     /**

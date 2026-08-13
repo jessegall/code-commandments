@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills\Frontend;
 
+use JesseGall\CodeCommandments\Language;
+
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Skills\Tier;
 
@@ -67,5 +69,13 @@ PRINCIPLE;
         return [
             VueControlFlow::class => "the other half of an honest template — dispatch with `<SwitchCase>`, don't re-test a subject with `v-if` chains.",
         ];
+    }
+
+    /**
+     * Components and templates — there is nothing here for a project with no `.vue` files.
+     */
+    public function languages(): array
+    {
+        return [Language::Vue];
     }
 }

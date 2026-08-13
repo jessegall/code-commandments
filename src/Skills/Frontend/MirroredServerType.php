@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Skills\Frontend;
 
+use JesseGall\CodeCommandments\Language;
+
 use JesseGall\CodeCommandments\Skills\Skill;
 use JesseGall\CodeCommandments\Skills\Tier;
 
@@ -64,5 +66,13 @@ PRINCIPLE;
     public function related(): array
     {
         return [];
+    }
+
+    /**
+     * The duplicated contract is declared in TypeScript and consumed by a component, so either language brings the discipline into force.
+     */
+    public function languages(): array
+    {
+        return [Language::Vue, Language::TypeScript];
     }
 }
