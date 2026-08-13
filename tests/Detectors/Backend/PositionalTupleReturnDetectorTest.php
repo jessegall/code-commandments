@@ -69,4 +69,52 @@ final class PositionalTupleReturnDetectorTest extends TestCase
 
         $this->assertSame([], (new PositionalTupleReturnDetector)->find(Codebase::fromString($code)));
     }
+
+    public function test_a_declared_sequence_return_is_not_a_tuple(): void
+    {
+        // #455/#461/#476: a RUN of steps, spliced into a sequence by the caller and never
+        // destructured. `list<T>`/`array<int, T>`/`T[]` each say "N of one kind, order is the
+        // meaning" — the opposite of a tuple, and statically checked. Take the author at their word.
+        $code = <<<'PHP'
+        <?php
+        class S {
+            /** @return list<Command|Instruction> */
+            public function beginPull(Client $client): array {
+                return [
+                    $client->mount($this->plane),
+                    $this->startPulling($client),
+                    $client->listen($this->plane),
+                    $this->requestInvitation($client),
+                ];
+            }
+            /** @return array<int, Step> */
+            public function keyed(Client $client): array {
+                return [$client->a(), $this->b(), $client->c()];
+            }
+            /** @return Step[] */
+            public function bracketed(Client $client): array {
+                return [$client->a(), $this->b(), $client->c()];
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new PositionalTupleReturnDetector)->find(Codebase::fromString($code)));
+    }
+
+    public function test_a_numeric_shape_annotation_is_still_a_tuple(): void
+    {
+        // The guard is about a SEQUENCE, not about carrying any annotation: `array{0: …, 1: …}`
+        // documents the very positions the sin is about, so it must not buy an exemption.
+        $code = <<<'PHP'
+        <?php
+        class S {
+            /** @return array{0: list<string>, 1: list<string>, 2: int} */
+            public function partition(Rows $rows): array {
+                return [$rows->valid(), $this->invalid($rows), $rows->count()];
+            }
+        }
+        PHP;
+
+        $this->assertCount(1, (new PositionalTupleReturnDetector)->find(Codebase::fromString($code)));
+    }
 }

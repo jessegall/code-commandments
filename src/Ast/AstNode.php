@@ -3018,13 +3018,6 @@ class AstNode
     }
 
     /**
-     * The method names declared by `@method` tags in a docblock. The name is the
-     * identifier immediately before the parameter list, taken as the LAST `word(`
-     * on the line so a conditional return type's own parens
-     * (`@method ($x is A ? B : C) collect(...)`) don't fool it.
-     *
-     * @return list<string>
-     *
      * Does the function enclosing this node declare a SHAPED-array return — a
      * `@return array{field: T, …}` sealed struct with named keys? Such a return is a typed,
      * statically-checkable record contract (PHPStan/Psalm enforce the shape), not a loose
@@ -3056,6 +3049,51 @@ class AstNode
         return false;
     }
 
+    /**
+     * Does the function enclosing this node declare a SEQUENCE return — `@return list<T>`,
+     * `@return array<int, T>` or `@return T[]`? All three say the same thing: N of one kind, where
+     * order is the meaning and no position carries a name. That is the OPPOSITE of a tuple, whose
+     * every slot means something different, and it is statically checked (PHPStan/Psalm), so a
+     * tuple rule must take the author's declared type at its word.
+     */
+    public function enclosingFunctionReturnsSequence(): bool
+    {
+        $doc = $this->enclosingFunction()?->getDocComment()?->getText();
+
+        return $doc !== null && self::declaresSequenceReturn($doc);
+    }
+
+    /**
+     * Is there a `@return` naming a homogeneous sequence — `list<…>`, `array<int, …>` or `T[]` —
+     * in $docblock?
+     */
+    private static function declaresSequenceReturn(string $docblock): bool
+    {
+        foreach (preg_split('/\R/', $docblock) ?: [] as $line) {
+            if (preg_match('/@return\s+\??(non-empty-)?list\s*</', $line) === 1) {
+                return true;
+            }
+
+            if (preg_match('/@return\s+\??array\s*<\s*int\s*,/', $line) === 1) {
+                return true;
+            }
+
+            if (preg_match('/@return\s+\??[\\\\\w|]+\[\]/', $line) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The method names declared by `@method` tags in a docblock. The name is the
+     * identifier immediately before the parameter list, taken as the LAST `word(`
+     * on the line so a conditional return type's own parens
+     * (`@method ($x is A ? B : C) collect(...)`) don't fool it.
+     *
+     * @return list<string>
+     */
     protected static function methodTagNames(string $docblock): array
     {
         $names = [];

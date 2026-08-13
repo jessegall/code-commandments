@@ -77,4 +77,31 @@ final class RowPartitioner
     {
         return [...$header, ...$body, ...$footer];
     }
+
+    /**
+     * A RUN, not a tuple: the report's lines in the order they are printed. Every element is the
+     * same kind of thing and the caller iterates them — the declared `list<T>` says so in the type
+     * system's own words, so no position carries a name for a caller to destructure.
+     *
+     * @param  list<string>  $rows
+     *
+     * @return list<string>
+     */
+    #[Righteous(PositionalTupleReturn::class)]
+    public function rendered(ReportLines $lines, array $rows): array
+    {
+        return [
+            $lines->heading(),
+            $this->summarised($rows),
+            $lines->footer(),
+        ];
+    }
+
+    /**
+     * @param  list<string>  $rows
+     */
+    private function summarised(array $rows): string
+    {
+        return count($rows) . ' rows';
+    }
 }

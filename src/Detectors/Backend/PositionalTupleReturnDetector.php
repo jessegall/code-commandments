@@ -27,6 +27,7 @@ final class PositionalTupleReturnDetector implements Detector
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->isPositionalTuple())
             ->where(static fn (AstNode $node): bool => $node->isReturnExpression())
+            ->reject(static fn (AstNode $node): bool => $node->enclosingFunctionReturnsSequence())
             ->get();
     }
 }
