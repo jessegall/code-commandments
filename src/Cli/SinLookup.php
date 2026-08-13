@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
+use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use ReflectionClass;
@@ -23,7 +24,7 @@ final class SinLookup
         $needle = self::normalise($query);
 
         return array_values(array_filter(
-            Catalog::all(),
+            self::every(),
             static fn (Detector $detector): bool => $detector->sin()->matches($query)
                 || str_contains(self::normalise(new ReflectionClass($detector)->getShortName()), $needle),
         ));
@@ -36,10 +37,23 @@ final class SinLookup
      */
     public static function suggestions(int $limit = 8): array
     {
-        $names = array_map(static fn (Detector $detector): string => $detector->sin()->name(), Catalog::all());
+        $names = array_map(static fn (Detector $detector): string => $detector->sin()->name(), self::every());
         sort($names);
 
         return array_slice(array_values(array_unique($names)), 0, $limit);
+    }
+
+    /**
+     * Every rule a name could mean — the shipped catalogue AND the project's own (#469). A custom
+     * rule fires with a name the reader is told to look up, so a lookup that searched only what we
+     * ship answered "no rule matches" for the very rules most likely to be unfamiliar. Disabled
+     * rules stay findable: explaining one is how a reader decides whether to turn it back on.
+     *
+     * @return list<Detector>
+     */
+    private static function every(): array
+    {
+        return [...Catalog::all(), ...Custom::detectors(ConsumerRoot::from(getcwd() ?: '.'))];
     }
 
     private static function normalise(string $text): string

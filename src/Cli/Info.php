@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
+use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Repentable;
@@ -39,7 +40,9 @@ final class Info implements Command
             ->option('--full', 'print the skill\'s whole principle, not just the opening')
             ->note('The name is matched leniently, so `array-bag`, `ArrayBag` and `ArrayBagDetector` all '
                 . 'resolve to the same rule. The worked example is read from the published skill, so it is '
-                . 'the same code the skill teaches. Run `commandments judge --list` for every rule there is.');
+                . 'the same code the skill teaches. Run `commandments judge --list` for every rule there is.')
+            ->note("A rule this project wrote into .commandments/custom/ is explained beside the shipped ones "
+                . 'and named as the project\'s own — those are the rules a reader is least likely to recognise.');
     }
 
     public function run(Input $input): int
@@ -87,9 +90,14 @@ final class Info implements Command
         $sin = $detector->sin();
         $skill = new ($sin->skillClass())();
         $name = new ReflectionClass($detector)->getShortName();
+        $custom = Custom::owns($detector);
 
         $this->heading($sin->name(), $sin->slug());
         $this->paragraph($sin->description());
+
+        if ($custom) {
+            $this->paragraph("This is THIS project's own rule, from .commandments/custom/ — it is taught, fixed and corrected there.");
+        }
 
         $this->section('Why it is a sin');
         $this->paragraph($full ? $skill->intro() . "\n\n" . $skill->principle() : $skill->intro());
@@ -120,7 +128,12 @@ final class Info implements Command
 
         $this->row('Find it', "commandments judge --sin={$sin->name()}");
         $this->row('Turn off', "commandments disable {$sin->name()}");
-        $this->row('Wrong?', "commandments report --detector={$name} --reason=\"…\" --ref=PATH:LINE");
+
+        // A report files against the PACKAGE, which cannot answer for a rule it does not ship — so a
+        // project's own rule points at the folder where it can actually be corrected.
+        $this->row('Wrong?', $custom
+            ? "fix it in .commandments/custom/ — {$name} is yours, not ours"
+            : "commandments report --detector={$name} --reason=\"…\" --ref=PATH:LINE");
 
         echo "\n";
     }
