@@ -49,6 +49,18 @@ abstract class RecurringPattern implements Detector, RecurrenceDetector
         return 2;
     }
 
+    /**
+     * Is a bucket that MET the count actually the pattern? The second condition a fingerprint cannot
+     * carry, because it is about the occurrences as a set rather than about any one of them — "and they
+     * must differ somewhere", say. Accepts by default, so a detector whose key says it all ignores this.
+     *
+     * @param  list<NodeMatch>  $occurrences  every candidate sharing one fingerprint
+     */
+    protected function qualifies(array $occurrences, Codebase $codebase): bool
+    {
+        return true;
+    }
+
     final public function find(Codebase $codebase): array
     {
         $buckets = [];
@@ -64,7 +76,7 @@ abstract class RecurringPattern implements Detector, RecurrenceDetector
         $findings = [];
 
         foreach ($buckets as $occurrences) {
-            if (count($occurrences) >= $this->minimumOccurrences()) {
+            if (count($occurrences) >= $this->minimumOccurrences() && $this->qualifies($occurrences, $codebase)) {
                 array_push($findings, ...$occurrences);
             }
         }

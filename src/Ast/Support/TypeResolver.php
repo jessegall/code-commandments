@@ -57,6 +57,11 @@ final class TypeResolver
     private array $paramNullable = [];
 
     /**
+     * @var array<string, array<string, array<int, string|null>>>  class => method => position => declared type
+     */
+    private array $paramType = [];
+
+    /**
      * @var array<string, array<string, bool>>  fqcn => method => declares a variadic parameter
      */
     private array $methodVariadic = [];
@@ -101,6 +106,19 @@ final class TypeResolver
     public function paramIsNullable(?string $fqcn, string $method, int $pos): ?bool
     {
         return $this->paramNullable[ltrim((string) $fqcn, '\\')][$method][$pos] ?? null;
+    }
+
+    /**
+     * The declared type of the $pos-th parameter of $fqcn::$method — resolved to the class that DECLARES
+     * the method, so an inherited signature reads from its base. Null when the signature, or that
+     * parameter's type, isn't known. What a rule comparing "what the callee asks for" against "what the
+     * call site hands it" reads.
+     */
+    public function paramTypeOf(?string $fqcn, string $method, int $pos): ?string
+    {
+        $owner = $this->declaringClassOfMethod($fqcn, $method);
+
+        return $owner === null ? null : ($this->paramType[$owner][$method][$pos] ?? null);
     }
 
     /**
@@ -473,6 +491,9 @@ final class TypeResolver
 
                     foreach (array_values($method->params) as $pos => $param) {
                         $this->paramNullable[$fqcn][$method->name->toString()][$pos] = self::paramAcceptsNull($param);
+                        // As WRITTEN, builtins kept — a caller asking what the callee demands must be
+                        // able to see `string` as much as a class ({@see self::typeName} keeps only classes).
+                        $this->paramType[$fqcn][$method->name->toString()][$pos] = TypeName::simpleName($param->type);
                     }
                 }
             }

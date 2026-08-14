@@ -63,6 +63,8 @@ the parameter to the resolved type.
 
 - Take the SUBJECT and ask it — never a bool every caller derives from that same object.
   _swap the flags for the object the callers already hold: `CornerInset::for($editor)`_
+- Pass the subject, not projections of it — a callee reaching the same value twice should take it once and derive the rest.
+  _Give the parameter the subject's type and move the derivations inside the callee; the call site then says what it means instead of spelling out the pieces._
 - Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
   _Take the resolved object as the param; resolve once in the caller._
 
@@ -96,6 +98,32 @@ public static function for(KioskEditor $editor): string
 }
 ```
 
+### derived-argument
+
+Handing one subject to a call TWICE over — whole and again flattened (`persist($request, $request->shopId())`), or flattened several ways (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive every piece from the subject itself
+
+```php
+----------[ Bad ]----------
+
+public function dispatch(Waybill $waybill): string
+{
+    return $this->courier->book(
+        $waybill->trackingCode(),
+        $waybill->weightGrams(),
+        $waybill->isHeavy(),
+    );
+}
+
+----------[ Good ]----------
+
+// The FIX: hand over the waybill and let the courier read what it needs off it.
+
+public function dispatchWhole(Waybill $waybill): string
+{
+    return $this->courier->bookWaybill($waybill);
+}
+```
+
 ### param-resolved-from-param
 
 Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging
@@ -124,11 +152,13 @@ public function priceForVariant(Variant $variant): int
 ## When it fires
 
 - a bool-only chooser whose callers all compute the flag off the same object (take the object and ask it) — `ComputedBooleanArgumentDetector`
+- Handing one subject to a call TWICE over — whole and again flattened (`persist($request, $request->shopId())`), or flattened several ways (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive every piece from the subject itself — `DerivedArgumentDetector`
 - Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging — `ParamResolvedFromParamDetector`
 
 ## Checklist
 
 - [ ] Take the SUBJECT and ask it — never a bool every caller derives from that same object.
+- [ ] Pass the subject, not projections of it — a callee reaching the same value twice should take it once and derive the rest.
 - [ ] Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
 
 ## Related skills

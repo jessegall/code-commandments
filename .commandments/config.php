@@ -87,6 +87,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Backend\DataClump::class,
         // Sins\Backend\DeNulledFinder::class,
         // Sins\Backend\DeepNesting::class,
+        // Sins\Backend\DerivedArgument::class,
         // Sins\Backend\DuplicateFunction::class,
         // Sins\Backend\EnumCaseOrChain::class,
         // Sins\Backend\EnumValueMatch::class,
