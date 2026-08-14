@@ -82,6 +82,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Backend\ConditionalArraySpread::class,
         // Sins\Backend\ConstClassEnum::class,
         // Sins\Backend\ConstructorSideEffect::class,
+        // Sins\Backend\ConvertedArgument::class,
         // Sins\Backend\CoupledFields::class,
         // Sins\Backend\DanglingDocReference::class,
         // Sins\Backend\DataClump::class,

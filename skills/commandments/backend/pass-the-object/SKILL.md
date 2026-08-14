@@ -63,6 +63,8 @@ the parameter to the resolved type.
 
 - Take the SUBJECT and ask it — never a bool every caller derives from that same object.
   _swap the flags for the object the callers already hold: `CornerInset::for($editor)`_
+- Declare the parameter in the currency callers actually hold, and convert inside — one rule about the conversion, in one place.
+  _Move the wrapper into the callee and widen the parameter to the type being wrapped; every call site then passes the value it means, and a site that forgets the conversion stops compiling._
 - Pass the subject, not projections of it — a callee reaching the same value twice should take it once and derive the rest.
   _Give the parameter the subject's type and move the derivations inside the callee; the call site then says what it means instead of spelling out the pieces._
 - Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
@@ -95,6 +97,52 @@ public static function of(bool $tucked): string
 public static function for(KioskEditor $editor): string
 {
     return $editor->inZenMode() || $editor->hasPanelOpen() ? 'tight' : 'wide';
+}
+```
+
+### converted-argument
+
+A parameter declared in the wrong currency — call site after call site wraps the same argument in the same conversion (`Raises::of(ClassAlias::of($interaction), …)`) because the callee asks for the converted form instead of the value
+
+```php
+----------[ Bad ]----------
+
+// in Shop\Wire\HotkeyBinding
+public function bind(string $node): WireMessage
+{
+    return WireMessage::raise(SignalAlias::of(HotkeyPressed::class), $node);
+}
+
+// in Shop\Wire\PointerBinding
+public function bind(string $node): WireMessage
+{
+    $this->bound[] = $node;
+
+    return WireMessage::raise(SignalAlias::of(PointerReleased::class), $node);
+}
+
+// in Shop\Shelving\ShelfImporter
+public function import(string $heading, int $bay): void
+{
+    $this->index->reserve(SlugText::of($heading), $bay);
+}
+
+// in Shop\Shelving\ShelfPlanner
+public function plan(array $aisles): void
+{
+    foreach ($aisles as $bay => $name) {
+        $this->index->reserve(SlugText::of($name), $bay);
+    }
+}
+
+----------[ Good ]----------
+
+// The FIX: the parameter is declared in the currency the caller holds, and the conversion lives on
+// the far side of the call.
+
+public function bindDirect(string $node): WireMessage
+{
+    return WireMessage::raiseFor(HotkeyPressed::class, $node);
 }
 ```
 
@@ -152,12 +200,14 @@ public function priceForVariant(Variant $variant): int
 ## When it fires
 
 - a bool-only chooser whose callers all compute the flag off the same object (take the object and ask it) — `ComputedBooleanArgumentDetector`
+- A parameter declared in the wrong currency — call site after call site wraps the same argument in the same conversion (`Raises::of(ClassAlias::of($interaction), …)`) because the callee asks for the converted form instead of the value — `ConvertedArgumentDetector`
 - Handing one subject to a call TWICE over — whole and again flattened (`persist($request, $request->shopId())`), or flattened several ways (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive every piece from the subject itself — `DerivedArgumentDetector`
 - Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging — `ParamResolvedFromParamDetector`
 
 ## Checklist
 
 - [ ] Take the SUBJECT and ask it — never a bool every caller derives from that same object.
+- [ ] Declare the parameter in the currency callers actually hold, and convert inside — one rule about the conversion, in one place.
 - [ ] Pass the subject, not projections of it — a callee reaching the same value twice should take it once and derive the rest.
 - [ ] Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
 

@@ -6,7 +6,17 @@ namespace JesseGall\CodeCommandments\Ast\Support;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use PhpParser\Node;
+use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\ClassConstFetch;
+use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\NullsafeMethodCall;
+use PhpParser\Node\Expr\NullsafePropertyFetch;
+use PhpParser\Node\Expr\PropertyFetch;
+use PhpParser\Node\Expr\StaticCall;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\NodeFinder;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
@@ -49,6 +59,56 @@ final class Derivation
         }
 
         return $operands;
+    }
+
+    /**
+     * Does this expression READ something out of a value — a property, a method, a call over it — rather
+     * than COMPUTE a new one from it?
+     *
+     * A projection is a piece of the subject, which is why handing the subject over lets the callee take
+     * that piece itself. Arithmetic is not: `-$maxDelta` is a second, different number, and nothing was
+     * read out of `$maxDelta` (#494). A cast is transparent — `(string) $row->externalId` is still a read.
+     */
+    public static function isReadOfSomething(Node $expr): bool
+    {
+        while ($expr instanceof Cast) {
+            $expr = $expr->expr;
+        }
+
+        return $expr instanceof PropertyFetch
+            || $expr instanceof NullsafePropertyFetch
+            || $expr instanceof MethodCall
+            || $expr instanceof NullsafeMethodCall
+            || $expr instanceof StaticCall
+            || $expr instanceof FuncCall;
+    }
+
+    /**
+     * Does this expression pass through a `self::`/`static::` call — a step only the CALLER can take,
+     * since `self` names a different class on the other side of a call and the helper is usually private
+     * to this one (#492)?
+     */
+    public static function routesThroughSelf(Node $expr): bool
+    {
+        foreach (new NodeFinder()->findInstanceOf([$expr], StaticCall::class) as $call) {
+            if ($call->class instanceof Name && in_array(strtolower($call->class->toString()), ['self', 'static'], true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is this `X::class` — a class NAMED as a value, the one class constant a callee could be handed and
+     * work from? `Html::CONTAINER` is a constant like any literal: two parameters given the same one
+     * share a spelling, not a subject.
+     */
+    public static function namesAClass(Node $node): bool
+    {
+        return $node instanceof ClassConstFetch
+            && $node->name instanceof Identifier
+            && strtolower($node->name->toString()) === 'class';
     }
 
     /**

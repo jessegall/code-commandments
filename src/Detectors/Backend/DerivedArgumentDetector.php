@@ -6,8 +6,8 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Ast\Support\Callee;
 use JesseGall\CodeCommandments\Ast\Support\Derivation;
-use JesseGall\CodeCommandments\Ast\Support\ReceiverResolver;
 use JesseGall\CodeCommandments\Ast\Support\StructuralHash;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Ast\TypeName;
@@ -18,18 +18,8 @@ use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ClassConstFetch;
-use PhpParser\Node\Expr\MethodCall;
-use PhpParser\Node\Expr\NullsafeMethodCall;
-use PhpParser\Node\Expr\PropertyFetch;
-use PhpParser\Node\Expr\NullsafePropertyFetch;
-use PhpParser\Node\Expr\FuncCall;
-use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\New_;
-use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
-use PhpParser\Node\Identifier;
-use PhpParser\Node\Name;
-use PhpParser\NodeFinder;
 
 /**
  * Flags a call site that hands over a PROJECTION of a value rather than the value itself, where following
@@ -73,7 +63,7 @@ final class DerivedArgumentDetector implements Detector
         $resolver = TypeResolver::forCodebase($codebase);
         $findings = [];
 
-        foreach ($this->callSites($codebase) as $call) {
+        foreach ($codebase->whereCallSite()->get() as $call) {
             if ($this->reachesOneSubjectTwice($call, $resolver)) {
                 $findings[] = $call;
             }
@@ -94,7 +84,7 @@ final class DerivedArgumentDetector implements Detector
      */
     private function reachesOneSubjectTwice(NodeMatch $call, TypeResolver $resolver): bool
     {
-        $callee = $this->calleeOf($call, $resolver);
+        $callee = Callee::of($call, $resolver);
 
         if ($callee === null || $this->buildsItsOwnType($call)) {
             return false;
@@ -122,7 +112,7 @@ final class DerivedArgumentDetector implements Detector
                 continue;
             }
 
-            if ($this->fillsAScalar($callee, $position, $resolver)) {
+            if ($callee->takesAScalarAt($position, $resolver)) {
                 $flattened[$hash][$position] = true;
             }
         }
@@ -195,7 +185,7 @@ final class DerivedArgumentDetector implements Detector
         $value = $argument->value;
 
         if ($value instanceof ClassConstFetch) {
-            return self::namesAClass($value) ? $value : null;
+            return Derivation::namesAClass($value) ? $value : null;
         }
 
         if ($value instanceof Variable) {
@@ -213,11 +203,11 @@ final class DerivedArgumentDetector implements Detector
         // A derivation spelled with the CALLER's own helpers is the caller's to make. `self::fraction(
         // $draggable->corner->isTrailing())` cannot move into the callee: over there `self` is a
         // different class, and the helper is usually private to this one (#492).
-        if ($this->routedThroughSelf($value)) {
+        if (Derivation::routesThroughSelf($value)) {
             return null;
         }
 
-        if (! $this->readsOutOfSomething($value)) {
+        if (! Derivation::isReadOfSomething($value)) {
             return null;
         }
 
@@ -227,107 +217,10 @@ final class DerivedArgumentDetector implements Detector
         // `'upgrade'` beside `['upgrade']` shares a spelling, not a thing the callee could have derived
         // from. Nor is `$this`, which no callee can be handed.
         if ($sole instanceof ClassConstFetch) {
-            return self::namesAClass($sole) ? $sole : null;
+            return Derivation::namesAClass($sole) ? $sole : null;
         }
 
         return $sole instanceof Variable && $sole->name !== 'this' ? $sole : null;
-    }
-
-    /**
-     * Does this expression READ something out of a value — a property, a method, a call over it — rather
-     * than COMPUTE a new one from it?
-     *
-     * A projection is a piece of the subject, which is why handing the subject over lets the callee take
-     * that piece itself. Arithmetic is not: `randomInRange(-$maxDelta, $maxDelta)` mentions one number
-     * twice, but `-$maxDelta` is a second, different number, and a general min/max range has no way to
-     * know the caller meant symmetry (#494). A cast is transparent — `(string) $row->externalId` is
-     * still a read.
-     */
-    private function readsOutOfSomething(Node $expr): bool
-    {
-        while ($expr instanceof Cast) {
-            $expr = $expr->expr;
-        }
-
-        return $expr instanceof PropertyFetch
-            || $expr instanceof NullsafePropertyFetch
-            || $expr instanceof MethodCall
-            || $expr instanceof NullsafeMethodCall
-            || $expr instanceof StaticCall
-            || $expr instanceof FuncCall;
-    }
-
-    /**
-     * Is this `X::class` — a class NAMED as a value, the one class constant a callee could be handed and
-     * work from? `Html::CONTAINER` is a constant like any literal: two parameters given the same one
-     * share a spelling, not a subject.
-     */
-    private static function namesAClass(ClassConstFetch $fetch): bool
-    {
-        return $fetch->name instanceof Identifier && strtolower($fetch->name->toString()) === 'class';
-    }
-
-    /**
-     * Does this expression pass through a `self::`/`static::` call — a step only the CALLER can take?
-     */
-    private function routedThroughSelf(Node $expr): bool
-    {
-        foreach (new NodeFinder()->findInstanceOf([$expr], StaticCall::class) as $call) {
-            if ($call->class instanceof Name && in_array(strtolower($call->class->toString()), ['self', 'static'], true)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-
-    /**
-     * Does this position fill a plain SCALAR parameter? A parameter already typed as an object is asking
-     * for the object, and an unknown signature (a vendor method the scan cannot see) proves nothing.
-     *
-     * @param  array{0: string, 1: string}  $callee
-     */
-    private function fillsAScalar(array $callee, int $position, TypeResolver $resolver): bool
-    {
-        $declared = $resolver->paramTypeOf($callee[0], $callee[1], $position);
-
-        return $declared !== null && ! TypeName::isClassName($declared);
-    }
-
-    /**
-     * Every kind of call SITE — a method send, a `new`, a static call. A constructor is where this shape
-     * lives most often, so a rule watching only method sends would miss the case it was asked for.
-     *
-     * @return list<NodeMatch>
-     */
-    private function callSites(Codebase $codebase): array
-    {
-        return [
-            ...$codebase->whereMethod()->get(),
-            ...$codebase->whereNew()->get(),
-            ...$codebase->whereStaticCall()->get(),
-        ];
-    }
-
-    /**
-     * The signature this call site fills — the class that DECLARES it and the method name, so calls
-     * through subclasses of one base collapse into a single group. A `new` fills a constructor; a static
-     * call names its own class. Null when the callee isn't in the scanned tree.
-     *
-     * @return array{0: string, 1: string}|null
-     */
-    private function calleeOf(NodeMatch $call, TypeResolver $resolver): ?array
-    {
-        [$receiver, $method] = match (true) {
-            $call->node instanceof New_ => [$call->newClassName(), '__construct'],
-            $call->node instanceof StaticCall => [$call->staticCallClass(), $call->staticCallMethod()],
-            default => [ReceiverResolver::typeOf($call), $call->methodCallName()],
-        };
-
-        $owner = $method === null ? null : $resolver->declaringClassOfMethod($receiver, $method);
-
-        return $owner === null ? null : [$owner, $method];
     }
 
 }

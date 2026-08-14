@@ -323,6 +323,20 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
     }
 
     /**
+     * Every CALL SITE, whatever its spelling — a method send, a `new`, a static call.
+     *
+     * What a rule about ARGUMENTS selects: a constructor takes them exactly as a method does, and a rule
+     * that watched only method sends would miss half of what it is about.
+     */
+    public function whereCallSite(): Query
+    {
+        return new Query($this, static fn (Node $node): bool =>
+            ((AstNode::isMethodSend($node) || $node instanceof StaticCall) && $node->name instanceof Identifier)
+            || ($node instanceof New_ && $node->class instanceof Name),
+            [MethodCall::class, NullsafeMethodCall::class, StaticCall::class, New_::class]);
+    }
+
+    /**
      * `Class::method(...)` calls named one of $names.
      */
     public function whereStaticCall(string ...$names): Query
