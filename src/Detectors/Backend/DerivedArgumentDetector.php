@@ -22,6 +22,9 @@ use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\NodeFinder;
 
 /**
  * Flags a call site that hands over a PROJECTION of a value rather than the value itself, where following
@@ -187,7 +190,7 @@ final class DerivedArgumentDetector implements Detector
         $value = $argument->value;
 
         if ($value instanceof ClassConstFetch) {
-            return $value;
+            return self::namesAClass($value) ? $value : null;
         }
 
         if ($value instanceof Variable) {
@@ -202,16 +205,47 @@ final class DerivedArgumentDetector implements Detector
             return null;
         }
 
+        // A derivation spelled with the CALLER's own helpers is the caller's to make. `self::fraction(
+        // $draggable->corner->isTrailing())` cannot move into the callee: over there `self` is a
+        // different class, and the helper is usually private to this one (#492).
+        if ($this->routedThroughSelf($value)) {
+            return null;
+        }
+
         $sole = Derivation::soleOperandIn($value);
 
         // Only a value that could BE a parameter is a subject. A repeated literal is not one — passing
         // `'upgrade'` beside `['upgrade']` shares a spelling, not a thing the callee could have derived
         // from. Nor is `$this`, which no callee can be handed.
         if ($sole instanceof ClassConstFetch) {
-            return $sole;
+            return self::namesAClass($sole) ? $sole : null;
         }
 
         return $sole instanceof Variable && $sole->name !== 'this' ? $sole : null;
+    }
+
+    /**
+     * Is this `X::class` — a class NAMED as a value, the one class constant a callee could be handed and
+     * work from? `Html::CONTAINER` is a constant like any literal: two parameters given the same one
+     * share a spelling, not a subject.
+     */
+    private static function namesAClass(ClassConstFetch $fetch): bool
+    {
+        return $fetch->name instanceof Identifier && strtolower($fetch->name->toString()) === 'class';
+    }
+
+    /**
+     * Does this expression pass through a `self::`/`static::` call — a step only the CALLER can take?
+     */
+    private function routedThroughSelf(Node $expr): bool
+    {
+        foreach (new NodeFinder()->findInstanceOf([$expr], StaticCall::class) as $call) {
+            if ($call->class instanceof Name && in_array(strtolower($call->class->toString()), ['self', 'static'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
