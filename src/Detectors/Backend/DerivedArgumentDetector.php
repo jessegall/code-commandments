@@ -102,6 +102,10 @@ final class DerivedArgumentDetector implements Detector
                 continue;
             }
 
+            if ($this->describesItself($subject, $call, $resolver)) {
+                continue;
+            }
+
             $hash = StructuralHash::of($subject);
 
             if ($subject === $argument->value) {
@@ -122,6 +126,32 @@ final class DerivedArgumentDetector implements Detector
         }
 
         return false;
+    }
+
+    /**
+     * Is the subject the enclosing class DESCRIBING ITSELF — `static fn (self $s) => ListOption::of(
+     * $s->id, $s->name, …)`?
+     *
+     * Then the derivation has nowhere to go. The callee is generic over every type that describes
+     * itself to it and could only take this one by importing it; the only other move is renaming the
+     * reads to `$this->` in the same class, where the knowledge already lives and nothing is decoupled.
+     * A finding whose every available fix is a rename is a finding being silenced (#491) — the same
+     * reason `$this` was never a subject, met here under another name.
+     */
+    private function describesItself(Node $subject, NodeMatch $call, TypeResolver $resolver): bool
+    {
+        $function = $call->enclosingFunction();
+        $self = $call->enclosingClassName();
+
+        if ($function === null || $self === null) {
+            return false;
+        }
+
+        $type = $resolver->typeOf($subject, $function, $self);
+
+        // `self`/`static` are the enclosing class under another name — a `static fn (self $x)` param is
+        // typed exactly that way, and reads the same to the author.
+        return $type === 'self' || $type === 'static' || $type === ltrim($self, '\\');
     }
 
     /**
