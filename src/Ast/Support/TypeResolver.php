@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ast\Support;
 
 use JesseGall\CodeCommandments\Ast\TypeName;
+use PhpParser\Node\UnionType;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
@@ -549,6 +550,15 @@ final class TypeResolver
     {
         if ($type instanceof NullableType) {
             return self::typeName($type->type);
+        }
+
+        // The OTHER spelling of "a T that may be absent". Reading only the `?T` sugar meant a codebase
+        // written in `T | null` resolved to nothing, so every value arriving through such a signature
+        // was untyped and every rule that asks its type went quiet (#481).
+        if ($type instanceof UnionType) {
+            $sole = TypeName::soleNonNullMember($type);
+
+            return $sole === null ? null : self::typeName($sole);
         }
 
         return $type instanceof Name ? ltrim($type->toString(), '\\') : null;

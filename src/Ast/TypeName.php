@@ -84,7 +84,7 @@ final class TypeName
      * The single non-`null` member of a union, or null when it has zero or more than one — so `string|null`
      * yields the `string` node but `int|string` (a genuine multi-type) yields null.
      */
-    private static function soleNonNullMember(UnionType $type): ?Node
+    public static function soleNonNullMember(UnionType $type): ?Node
     {
         $members = array_values(array_filter(
             $type->types,
