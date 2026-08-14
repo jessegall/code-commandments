@@ -49,6 +49,14 @@ final class ValueFlow
     private ?array $fieldReads = null;
 
     /**
+     * Field names read through a receiver the engine could not type — `foreach ($order->payments as
+     * $payment)` where the element type is only known to an Eloquent `$casts` entry.
+     *
+     * @var array<string, true>
+     */
+    private array $unresolvedReads = [];
+
+    /**
      * @var array<string, \JesseGall\CodeCommandments\Ast\ParsedFile>|null  fqcn => the file it's declared in
      */
     private ?array $fileForClass = null;
@@ -85,11 +93,28 @@ final class ValueFlow
         $fqcn = ltrim($fqcn, '\\');
 
         if (! isset($this->verdicts["{$fqcn}::{$field}"])) {
-            $terminals = $this->terminals($this->fieldReads()[$fqcn][$field] ?? []);
-            $this->verdicts["{$fqcn}::{$field}"] = new FlowVerdict(count($terminals['assume']), count($terminals['guard']));
+            $this->verdicts["{$fqcn}::{$field}"] = $this->readVerdict($fqcn, $field);
         }
 
         return $this->verdicts["{$fqcn}::{$field}"];
+    }
+
+    /**
+     * The verdict from the reads themselves — UNTRACEABLE the moment any read of a field by this name
+     * went unattributed, because the missing one may be the guard that settles it. Silence on doubt is
+     * what "fires only on positive evidence with ZERO contradiction" actually costs.
+     */
+    private function readVerdict(string $fqcn, string $field): FlowVerdict
+    {
+        $this->fieldReads();
+
+        if (isset($this->unresolvedReads[$field])) {
+            return FlowVerdict::untraceable();
+        }
+
+        $terminals = $this->terminals($this->fieldReads()[$fqcn][$field] ?? []);
+
+        return new FlowVerdict(count($terminals['assume']), count($terminals['guard']));
     }
 
     /**
@@ -622,12 +647,21 @@ final class ValueFlow
                 $function = $this->enclosingFunction($fetch);
                 $type = $function === null ? null : $this->types->typeOf($fetch->var, $function, $this->enclosingClass($function));
 
-                if ($type !== null) {
-                    // Attribute the read to the class that DECLARES the field — so a read through a
-                    // subclass receiver reaches the base field's verdict, not a phantom bucket.
-                    $owner = $this->types->declaringClassOf($type, $fetch->name->toString()) ?? $type;
-                    $reads[$owner][$fetch->name->toString()][] = new NodeMatch($fetch, $file, $this->codebase);
+                if ($type === null) {
+                    // A read the engine cannot attribute is not NO read — it is one whose verdict is
+                    // unknown. Dropping it silently is what turned a guarded field into a phantom:
+                    // `$payment->transactionId === null` inside `foreach ($order->payments as $payment)`
+                    // guards the field, but the element type lives in an Eloquent `$casts` entry, so the
+                    // GUARD vanished while an assume elsewhere survived and decided the verdict (#486).
+                    $this->unresolvedReads[$fetch->name->toString()] = true;
+
+                    continue;
                 }
+
+                // Attribute the read to the class that DECLARES the field — so a read through a
+                // subclass receiver reaches the base field's verdict, not a phantom bucket.
+                $owner = $this->types->declaringClassOf($type, $fetch->name->toString()) ?? $type;
+                $reads[$owner][$fetch->name->toString()][] = new NodeMatch($fetch, $file, $this->codebase);
             }
         }
 

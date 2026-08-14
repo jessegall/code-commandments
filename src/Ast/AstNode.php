@@ -1024,7 +1024,7 @@ class AstNode
      */
     public function isNullGuardedUse(): bool
     {
-        if ($this->isDeNulled() || $this->isTypeInterrogated()) {
+        if ($this->isDeNulled() || $this->isTypeInterrogated() || $this->isGatedByOwnerPredicate()) {
             return true;
         }
 
@@ -1033,6 +1033,13 @@ class AstNode
         // `isset($x[$k])` / `empty($x[$k])` / `$x[$k] ?? …` — indexing a null base short-circuits
         // safely, so a guarded access GUARDS the base. The isset/coalesce wraps the access, not $x.
         if ($parent instanceof ArrayDimFetch && $parent->var === $this->node) {
+            return new self($parent)->isNullGuardedUse();
+        }
+
+        // `if (! $name = $criteria->name)` — the value is bound on the way INTO a test, so whatever
+        // guards the assignment guards it. A bare `$name = $x->y;` statement guards nothing and still
+        // answers false: the Assign's own parent is an Expression, not a condition (#485).
+        if ($parent instanceof Assign && $parent->expr === $this->node) {
             return new self($parent)->isNullGuardedUse();
         }
 
@@ -1045,6 +1052,46 @@ class AstNode
             || ($parent instanceof If_ && $parent->cond === $this->node)
             || ($parent instanceof While_ && $parent->cond === $this->node)
             || ($parent instanceof Ternary && $parent->cond === $this->node);
+    }
+
+    /**
+     * Is this read of `<owner>->field` taken inside an `if` that first ASKED the owner — `if
+     * ($image->isLocalFile()) { … $image->localPath … }`?
+     *
+     * A predicate on the very object the field belongs to is the domain's own way of saying the field
+     * may be absent; the branch is the guard, spelled in the vocabulary of the type instead of in
+     * `=== null`. Only a call on the SAME receiver counts, so an unrelated condition standing between
+     * the two is not mistaken for one (#487).
+     */
+    private function isGatedByOwnerPredicate(): bool
+    {
+        if (! $this->node instanceof PropertyFetch) {
+            return false;
+        }
+
+        $owner = StructuralHash::of($this->node->var);
+
+        foreach (self::ancestorsWithinFunction($this->node) as $ancestor) {
+            if ($ancestor instanceof If_ && self::asksOf($ancestor->cond, $owner)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does $condition CALL something on the receiver fingerprinted $owner?
+     */
+    private static function asksOf(Node $condition, string $owner): bool
+    {
+        foreach (new NodeFinder()->findInstanceOf([$condition], MethodCall::class) as $call) {
+            if (StructuralHash::of($call->var) === $owner) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
