@@ -13,6 +13,11 @@ final class CourierBooking
         return $trackingCode . ':' . $grams . ($heavy ? ':heavy' : '');
     }
 
+    public function quote(string $trackingCode, int $grams): string
+    {
+        return $trackingCode . '@' . $grams;
+    }
+
     public function bookWaybill(Waybill $waybill): string
     {
         $heavy = $waybill->isHeavy() ? ':heavy' : '';

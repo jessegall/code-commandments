@@ -41,6 +41,22 @@ final class Callee
     }
 
     /**
+     * The method NAME this call site invokes, resolvable callee or not.
+     *
+     * What a cross-call-site rule needs in order to notice that it CANNOT see every caller: a site whose
+     * receiver will not resolve is dropped by {@see of}, and a rule counting "did every caller do this"
+     * would then answer yes about a slot it only saw half of (#494).
+     */
+    public static function nameOf(NodeMatch $call): ?string
+    {
+        return match (true) {
+            $call->node instanceof New_ => '__construct',
+            $call->node instanceof StaticCall => $call->staticCallMethod(),
+            default => $call->methodCallName(),
+        };
+    }
+
+    /**
      * A stable key for one PARAMETER of this signature — what a cross-call-site rule buckets by.
      */
     public function slot(int $position): string

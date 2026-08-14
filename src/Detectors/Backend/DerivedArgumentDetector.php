@@ -19,6 +19,7 @@ use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\New_;
+use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 
 /**
@@ -61,33 +62,80 @@ final class DerivedArgumentDetector implements Detector
     public function find(Codebase $codebase): array
     {
         $resolver = TypeResolver::forCodebase($codebase);
-        $findings = [];
+        $redundant = [];
+        $supplied = [];
+        $named = [];
+
+        $unresolved = [];
 
         foreach ($codebase->whereCallSite()->get() as $call) {
-            if ($this->reachesOneSubjectTwice($call, $resolver)) {
-                $findings[] = $call;
+            $callee = Callee::of($call, $resolver);
+
+            if ($callee === null) {
+                // Only a METHOD send hides its callee: its receiver would not type, so the site could
+                // be filling any slot of that name and every one of them is now half-seen. A `new` or a
+                // static call names its class outright — if that did not resolve, the class is simply
+                // not in the tree and owns no slot to cast doubt on. Poisoning by the bare name there
+                // would let one unreadable `new` silence every constructor in the codebase at once.
+                if ($call->node instanceof New_ || $call->node instanceof StaticCall) {
+                    continue;
+                }
+
+                $unresolved[Callee::nameOf($call) ?? ''] = true;
+
+                continue;
+            }
+
+            // A type building ITSELF is not a rival caller: `ReturnSlip::of($request)` doing
+            // `new self($request->reference(), …)` is where this rule SENDS the derivation, so counting
+            // it as "the parameter is filled from elsewhere" would veto the very fix being asked for.
+            if ($this->buildsItsOwnType($call)) {
+                continue;
+            }
+
+            foreach (array_keys($call->arguments()) as $position) {
+                $supplied[$callee->slot($position)] ??= 0;
+                $supplied[$callee->slot($position)]++;
+            }
+
+            foreach ($this->redundantPositions($call, $resolver) as $position) {
+                $redundant[$callee->slot($position)][] = $call;
+                $named[$callee->slot($position)] = $callee->method;
             }
         }
 
-        return $findings;
+        $findings = [];
+
+        foreach ($redundant as $slot => $calls) {
+            if (count($calls) !== $supplied[$slot] || isset($unresolved[$named[$slot]])) {
+                continue; // filled from elsewhere too, or from a caller we could not read — see the docblock
+            }
+
+            foreach ($calls as $call) {
+                $findings[spl_object_id($call)] = $call;
+            }
+        }
+
+        return array_values($findings);
     }
 
     /**
-     * Does this call reach the SAME subject through two or more of its arguments, at least one of them a
-     * derivation over it — `persist($request, $request->shopId())`, `reportsLoggedIn($t->output(),
-     * $t->exitCode())`?
+     * The argument POSITIONS at which this call hands over a projection of a subject it reaches twice —
+     * `persist($request, $request->shopId())` answers `[1]`.
      *
-     * That is the whole rule, and it is provable at ONE site: the callee is handed a value twice over,
-     * once flattened. Whatever it needs, it could have derived from the subject, so the subject is what
-     * the parameter wanted. Reaching a subject ONCE proves nothing — every scalar utility in the world
-     * takes `$n->methodName()` and has no business learning what an AST node is.
+     * Positions rather than a verdict, because whether the callee could have derived it is a question
+     * about the PARAMETER: {@see find} then requires the same of every other caller filling that slot.
+     * Reaching a subject once is no projection at all — every scalar utility takes `$n->methodName()`
+     * and has no business learning what an AST node is.
+     *
+     * @return list<int>
      */
-    private function reachesOneSubjectTwice(NodeMatch $call, TypeResolver $resolver): bool
+    private function redundantPositions(NodeMatch $call, TypeResolver $resolver): array
     {
         $callee = Callee::of($call, $resolver);
 
         if ($callee === null || $this->buildsItsOwnType($call)) {
-            return false;
+            return [];
         }
 
         $whole = [];
@@ -117,13 +165,15 @@ final class DerivedArgumentDetector implements Detector
             }
         }
 
+        $redundant = [];
+
         foreach ($flattened as $hash => $positions) {
             if (isset($whole[$hash]) || count($positions) >= self::REASSEMBLED) {
-                return true;
+                $redundant = [...$redundant, ...array_keys($positions)];
             }
         }
 
-        return false;
+        return $redundant;
     }
 
     /**

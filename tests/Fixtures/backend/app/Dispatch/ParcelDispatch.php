@@ -42,6 +42,6 @@ final class ParcelDispatch
     #[Righteous(DerivedArgument::class)]
     public function compare(Waybill $mine, Waybill $theirs): string
     {
-        return $this->courier->book($mine->trackingCode(), $theirs->weightGrams(), false);
+        return $this->courier->quote($mine->trackingCode(), $theirs->weightGrams());
     }
 }
