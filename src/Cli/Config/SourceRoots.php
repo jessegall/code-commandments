@@ -33,6 +33,55 @@ final class SourceRoots
             return [rtrim($root, '/')];
         }
 
+        return $this->declared($root);
+    }
+
+    /**
+     * The roots to PARSE for a run targeting $path — every declared source root of the project $path
+     * lives in, plus $path itself.
+     *
+     * Wider than {@see resolve}, and deliberately: a cross-file question ("does anything extend this
+     * class?", "who calls this?") is only sound against the whole project. Answered against one root it
+     * says `no` merely because the other half of the tree was never read, and a rewrite that seals a
+     * class on that answer emits PHP that will not load (#483). What may be WRITTEN stays narrow —
+     * {@see \JesseGall\CodeCommandments\Cli\Scope\PathScope} keeps that promise.
+     *
+     * @return list<string>
+     */
+    public function toParse(string $project, string $path): array
+    {
+        // Both sides as realpaths, or a relative `resources/js` reads as outside an absolute root that
+        // already contains it — and the same files, reached by two spellings, would be PARSED TWICE.
+        $target = rtrim(realpath($path) ?: $path, '/');
+        $home = rtrim(realpath($project) ?: $project, '/');
+
+        // A path OUTSIDE the project is its own world. Widening to this project's roots would parse a
+        // tree that has nothing to do with the target — the cost of every file in it, for no answer.
+        if ($target !== $home && ! str_starts_with($target, $home . '/')) {
+            return [$target];
+        }
+
+        $roots = $this->declared($project);
+
+        foreach ($roots as $root) {
+            $real = rtrim(realpath($root) ?: $root, '/');
+
+            if ($target === $real || str_starts_with($target, $real . '/')) {
+                return $roots;
+            }
+        }
+
+        return [...$roots, $target];
+    }
+
+    /**
+     * The project's declared source roots, absolute — detected and scaffolded into `config.php` the
+     * first time.
+     *
+     * @return list<string>
+     */
+    private function declared(string $root): array
+    {
         $declared = Config::load($root)->sourceRoots();
 
         if ($declared === []) {

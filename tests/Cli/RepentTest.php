@@ -199,6 +199,70 @@ final class RepentTest extends TestCase
         $this->assertFalse(is_dir($dir . '/resources'), 'but no Vue construct was scaffolded into a PHP-only project');
     }
 
+    public function test_a_path_narrows_what_is_written_but_not_what_is_read(): void
+    {
+        // #483: `repent domain` used to make `domain/` the whole world, so "does anything extend this
+        // Data class?" answered NO merely because the subclass lived in a sibling root — and the base
+        // was sealed `final readonly`, which is a fatal at class load for the subclass that redeclares
+        // those properties. The parse must cover the project; only the WRITING follows the path.
+        $dir = sys_get_temp_dir() . '/cc-repent-roots-' . uniqid('', true);
+        $this->projects[] = $dir;
+        mkdir($dir . '/domain', 0777, true);
+        mkdir($dir . '/channel', 0777, true);
+
+        file_put_contents($dir . '/composer.json', json_encode([
+            'require' => ['spatie/laravel-data' => '^4.0'],
+            'autoload' => ['psr-4' => ['Domain\\' => 'domain/', 'Channel\\' => 'channel/']],
+        ]));
+        file_put_contents($dir . '/Spatie.php', self::DATA_STUB);
+        file_put_contents($dir . '/domain/NormalizedBrandData.php', <<<'PHP'
+            <?php
+
+            namespace Domain;
+
+            use Spatie\LaravelData\Data;
+
+            class NormalizedBrandData extends Data
+            {
+                public function __construct(
+                    public string $id,
+                    public string | null $name = null,
+                ) {}
+            }
+            PHP);
+        file_put_contents($dir . '/channel/NormalizedWooBrand.php', <<<'PHP'
+            <?php
+
+            namespace Channel;
+
+            use Domain\NormalizedBrandData;
+
+            class NormalizedWooBrand extends NormalizedBrandData
+            {
+                public string $id;
+            }
+            PHP);
+
+        $cwd = (string) getcwd();
+        chdir($dir);
+
+        try {
+            new Repent()->run(Input::of('repent', ['domain', '--ignore-package-requirements']));
+        } finally {
+            chdir($cwd);
+        }
+
+        $base = (string) file_get_contents($dir . '/domain/NormalizedBrandData.php');
+
+        $this->assertStringNotContainsString('readonly', $base, 'the base has a subclass in a sibling root — sealing it is a fatal');
+        $this->assertStringNotContainsString('final class', $base, 'and it cannot be final either');
+        $this->assertStringNotContainsString(
+            'final',
+            (string) file_get_contents($dir . '/channel/NormalizedWooBrand.php'),
+            'the sibling root was READ, but it is outside the path so it must not be written',
+        );
+    }
+
     private function project(array $files): string
     {
         $dir = sys_get_temp_dir() . '/cc-repent-' . uniqid('', true);

@@ -53,6 +53,15 @@ final class Scope implements FileScope
     }
 
     /**
+     * This scope AND one more condition — the compounding {@see FileScope} promises, as a value. Used to
+     * add an axis a strategy cannot express, such as "and only under the path the user pointed at".
+     */
+    public function and(FileScope $restriction): self
+    {
+        return new self($this->files, [...$this->restrictions, $restriction]);
+    }
+
+    /**
      * An unscoped scope — includes every file except the frozen ones.
      */
     public static function everything(): self

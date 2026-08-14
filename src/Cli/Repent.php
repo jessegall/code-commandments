@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Support\Path;
 
+use JesseGall\CodeCommandments\Cli\Scope\PathScope;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Detectors\Catalog;
@@ -101,7 +102,18 @@ final class Repent implements Command
 
         // The SAME roots `judge` reads (config.php's paths()) decide what `repent` rewrites — so it
         // never touches `tests/` (or anything outside the declared roots) that judge wouldn't flag.
-        $roots = new SourceRoots()->resolve($path, $input->firstArgument()->isSome());
+        //
+        // A given path narrows what may be WRITTEN, never what is READ: the scribes ask cross-file
+        // questions ("does anything extend this?"), and answered against one root of a multi-root
+        // project they come back wrong and the rewrite emits PHP that will not load (#483). So the
+        // parse covers the whole project and a PathScope holds the writing where the user pointed.
+        if ($input->firstArgument()->isSome()) {
+            $project = $this->io->projectRoot();
+            $roots = new SourceRoots()->toParse($project, $path);
+            $scope = $scope->and(new PathScope($path));
+        } else {
+            $roots = new SourceRoots()->resolve($path, false);
+        }
 
         return $input->hasFlag('dry-run')
             ? $this->preview($path, $roots, $scope, $only, $input->option('dry-run'))

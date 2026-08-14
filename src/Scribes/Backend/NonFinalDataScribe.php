@@ -18,13 +18,8 @@ use PhpParser\Node\Stmt\Class_;
 
 /**
  * Fixes {@see \JesseGall\CodeCommandments\Detectors\Backend\Spatie\NonFinalDataDetector}: a Spatie
- * `Data` class is a leaf, so seal it `final` and make every promoted property `readonly` —
- * the immutable-DTO shape the spatie-data skill teaches. Two insertions, no reflow: `final `
- * before `class`, and `readonly ` on each promoted ctor param still missing it.
- *
- * A property the BASE declares mutable keeps its word, because PHP will not let a subclass seal what
- * an ancestor left open and the base is exempt from the sin precisely for being extended (#482) — so
- * such a class is sealed `final` and no further.
+ * `Data` class is a leaf, so seal it `final` and each promoted property `readonly`. A property an
+ * ancestor declares mutable is left alone — PHP refuses that redeclaration (#482).
  */
 final class NonFinalDataScribe extends RepentScribe implements NeedsCodebase
 {
