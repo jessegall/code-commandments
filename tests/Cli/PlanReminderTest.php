@@ -180,7 +180,7 @@ final class PlanReminderTest extends TestCase
         $this->writeConfig('$config->planExecution(fn ($p) => $p->keepGoing());');
         $this->marker()->activate('sha0');
 
-        for ($i = 0; $i < 4; $i++) {
+        for ($i = 0; $i < 25; $i++) {
             $this->assertNotSame([], $this->fire(['hook_event_name' => 'Stop'], head: 'stuck'), "nudge {$i}");
         }
 
@@ -205,7 +205,7 @@ final class PlanReminderTest extends TestCase
 
         // Progress every stop (new head) would dodge the stuck-cap forever — the absolute total cap
         // still stops it, and clears the marker so an abandoned plan can't linger.
-        for ($i = 0; $i < 40; $i++) {
+        for ($i = 0; $i < 150; $i++) {
             $this->fire(['hook_event_name' => 'Stop'], head: "sha{$i}");
         }
 

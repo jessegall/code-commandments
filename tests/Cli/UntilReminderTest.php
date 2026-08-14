@@ -183,7 +183,7 @@ final class UntilReminderTest extends TestCase
     {
         $this->gate()->add('the impossible thing happens');
 
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 25; $i++) {
             $this->assertStringContainsString('Do not stop', $this->reason($this->stop()));
         }
 
@@ -202,7 +202,7 @@ final class UntilReminderTest extends TestCase
         $this->gate()->add('the impossible thing happens');
         $this->gate()->add('the other impossible thing happens');
 
-        for ($i = 0; $i <= 10; $i++) {
+        for ($i = 0; $i <= 25; $i++) {
             $this->stop();
         }
 
@@ -221,7 +221,7 @@ final class UntilReminderTest extends TestCase
     {
         $this->gate()->add('the impossible thing happens');
 
-        for ($i = 0; $i <= 10; $i++) {
+        for ($i = 0; $i <= 25; $i++) {
             $released = $this->reason($this->stop());
         }
 

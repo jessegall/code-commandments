@@ -159,7 +159,7 @@ paused ones rather than starting a live gate of its own. So parking a deferred t
 still right (it is kept, and `until resume` brings it back with the rest); just don't expect it to
 hold a stop before the user resumes.
 
-Loop-safe by design: after 10 consecutive held stops with no condition met, the gate releases itself
+Loop-safe by design: after 25 consecutive held stops with no condition met, the gate releases itself
 and tells you to report back. Meeting a condition resets that count — real progress is never punished.
 
 ## The commands

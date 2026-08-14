@@ -87,7 +87,7 @@ final class UntilCommand implements Command
                 . 'released only once every standing condition carries its own reason, and survives two '
                 . 'challenges (running low on context, a big or mechanical change and "this needs its own change" '
                 . 'are the WORK, not a blocker). A held stop DROPS every block, so the claim is always made afresh '
-                . 'about the list as it stands then. Loop-safe — 10 consecutive held stops with no progress release '
+                . 'about the list as it stands then. Loop-safe — 25 consecutive held stops with no progress release '
                 . 'the gate, and meeting a condition resets that count. An ACTIVE PLAN takes precedence: the gate '
                 . 'stays silent while the plan nudge owns the stop, then takes over at `plan done`.');
     }

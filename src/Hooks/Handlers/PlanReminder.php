@@ -26,15 +26,22 @@ final class PlanReminder extends Hook
 {
     /**
      * Consecutive no-progress nudges before the keep-going Stop hook gives up, to never loop a stuck agent.
+     *
+     * Generous on purpose. "No progress" means no new commit, and real work goes long stretches without
+     * one — reading a codebase, calibrating a rule, chasing a diagnosis. Four gave up mid-thought and
+     * handed the plan back while it was still going somewhere.
      */
-    private const int MAX_STUCK = 4;
+    private const int MAX_STUCK = 25;
 
     /**
      * Absolute nudge ceiling: past this the marker is CLEARED, so a plan that was abandoned without a
      * `plan done` (and keeps drawing unrelated commits, which would otherwise reset {@see MAX_STUCK})
      * can never leave the keep-going hook nudging forever. No plan realistically stops this many times.
+     *
+     * Kept well clear of {@see MAX_STUCK}: a ceiling the no-progress cap can reach first is not a
+     * backstop, it is the real limit wearing the wrong name.
      */
-    private const int MAX_TOTAL = 40;
+    private const int MAX_TOTAL = 150;
 
     public function summary(): string
     {

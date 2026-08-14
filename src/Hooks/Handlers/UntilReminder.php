@@ -30,8 +30,13 @@ final class UntilReminder extends Hook
 {
     /**
      * Consecutive held stops with no condition met before the gate releases itself, to never trap a session.
+     *
+     * Generous on purpose. This is a runaway backstop, not a work budget: a session draining a queue of
+     * inbound issues holds many stops between one condition and the next, and releasing the gate on it
+     * sets the user's conditions aside just as the work is going well. Ten was low enough to fire during
+     * ordinary progress.
      */
-    private const int MAX_BLOCKS = 10;
+    private const int MAX_BLOCKS = 25;
 
     /**
      * How many conditions a held stop spells out. A long gate (the user parking dozens of tasks) would
