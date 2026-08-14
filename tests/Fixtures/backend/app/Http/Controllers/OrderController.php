@@ -2,8 +2,6 @@
 
 namespace Shop\Http\Controllers;
 
-use JesseGall\CodeCommandments\Sins\Backend\DerivedArgument;
-
 use JesseGall\CodeCommandments\Sins\Backend\FeatureEnvy;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\ModelMutationAtCallSite;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\RawRequestInput;
@@ -19,7 +17,6 @@ class OrderController extends Controller
 {
     public function __construct(private readonly OrderService $orders) {}
 
-    #[Sinful(DerivedArgument::class)]
     public function store(CreateOrderRequest $request): Order
     {
         return $this->orders->place($request->customerId(), $request->lines());

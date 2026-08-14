@@ -43,27 +43,74 @@ final class DerivedArgumentDetectorTest extends TestCase
         $this->assertCount(1, $this->locations($code));
     }
 
-    public function test_flags_two_different_projections_of_one_subject(): void
+    public function test_flags_a_subject_reassembled_from_three_projections(): void
     {
-        // No subject passed whole, but the callee is handed the same value flattened two ways — it could
-        // have taken `$result` and read both off it.
+        // No subject passed whole, but the argument list rebuilds `$result` piece by piece.
         $code = <<<'PHP'
         <?php
         final class ProcessResult {
             public function output(): string { return ''; }
-            public function exitCode(): int { return 0; }
+            public function errorOutput(): string { return ''; }
+            public function failed(): bool { return false; }
         }
-        final class Agent {
-            public function reportsLoggedIn(string $output, int $code): bool { return $code === 0; }
+        final class AgentTurn {
+            public function __construct(string $out, bool $failed, string $err) {}
         }
-        final class SignIn {
-            public function check(Agent $agent, ProcessResult $result): bool {
-                return $agent->reportsLoggedIn($result->output(), $result->exitCode());
+        final class Runtime {
+            public function turn(ProcessResult $result): AgentTurn {
+                return new AgentTurn($result->output(), $result->failed(), $result->errorOutput());
             }
         }
         PHP;
 
         $this->assertCount(1, $this->locations($code));
+    }
+
+    public function test_does_not_flag_two_projections_filling_a_generic_primitive(): void
+    {
+        // #489: `Header::of(title, subtitle, icon)` is a presentation primitive. Two reads off one
+        // subject is it filling slots, not reassembling the subject — and a shared component taught to
+        // take `ActionManifest` would import a domain it exists to know nothing about.
+        $code = <<<'PHP'
+        <?php
+        final class ActionManifest {
+            public function __construct(public string $label, public string $description) {}
+        }
+        final class Header {
+            public static function of(string $title, string $subtitle, string $icon): self { return new self(); }
+        }
+        final class ActionDetail {
+            public function __construct(public ActionManifest $action) {}
+            public function header(): Header {
+                return Header::of($this->action->label, $this->action->description, 'zap');
+            }
+        }
+        PHP;
+
+        $this->assertSame([], $this->locations($code));
+    }
+
+    public function test_does_not_flag_a_projection_consumed_by_a_different_callee(): void
+    {
+        // #488: the second reach sits INSIDE a list, computed for whatever consumes that list. `Listen`
+        // is handed the array, not the subject a second time, and could not derive the command anyway.
+        $code = <<<'PHP'
+        <?php
+        final class Rendered { public string $id = 'n'; }
+        final class ScrollToOffset {
+            public static function start(string $node): self { return new self(); }
+        }
+        final class Listen {
+            public function __construct(string $node, string $event, array $run) {}
+        }
+        final class BindScrollBack {
+            public function bind(Rendered $rendered): Listen {
+                return new Listen($rendered->id, 'pointerleave', [ScrollToOffset::start($rendered->id)]);
+            }
+        }
+        PHP;
+
+        $this->assertSame([], $this->locations($code));
     }
 
     public function test_flags_a_constructor_the_same_way(): void

@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Sins\Backend\DerivedArgument;
 use JesseGall\CodeCommandments\Sins\Sin;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
+use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\New_;
@@ -39,6 +40,21 @@ use PhpParser\Node\Expr\Variable;
  */
 final class DerivedArgumentDetector implements Detector
 {
+    /**
+     * How many projections of one subject, with the subject itself NOWHERE in the call, say the callee is
+     * REASSEMBLING it. Three, not two.
+     *
+     * Two is the shape of a generic primitive doing its job: `Header::of($screen->action->label,
+     * $screen->action->description, 'zap')` fills a title and a subtitle slot, and a shared component
+     * that took `ActionManifest` to read them itself would import a domain it exists to know nothing
+     * about (#489). By three the argument list has stopped filling slots and started rebuilding an
+     * object — `new AgentTurn($r->output(), $r->failed(), $r->errorOutput())` is a `$r` in pieces.
+     *
+     * The other arm needs no threshold: where the subject travels WHOLE in the same call, one projection
+     * beside it is already proof the callee could have derived it.
+     */
+    private const int REASSEMBLED = 3;
+
     public function sin(): Sin
     {
         return new DerivedArgument();
@@ -100,7 +116,7 @@ final class DerivedArgumentDetector implements Detector
         }
 
         foreach ($flattened as $hash => $positions) {
-            if (isset($whole[$hash]) || count($positions) >= 2) {
+            if (isset($whole[$hash]) || count($positions) >= self::REASSEMBLED) {
                 return true;
             }
         }
@@ -146,6 +162,14 @@ final class DerivedArgumentDetector implements Detector
 
         if ($value instanceof Variable) {
             return $value->name === 'this' ? null : $value;
+        }
+
+        // A list is a bag of independent values, not a projection of one. What sits inside it was
+        // computed for whoever consumes IT — `new Listen($r->id, LEFT, [ScrollToOffset::start($r->id)])`
+        // hands the array to `Listen` and `$r->id` to `ScrollToOffset`, two callees, so `Listen` is not
+        // being handed the same subject twice and could not derive the command anyway (#488).
+        if ($value instanceof Array_) {
+            return null;
         }
 
         $sole = Derivation::soleOperandIn($value);
