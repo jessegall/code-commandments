@@ -19,6 +19,11 @@ use PhpParser\Node\Arg;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\MethodCall;
+use PhpParser\Node\Expr\NullsafeMethodCall;
+use PhpParser\Node\Expr\PropertyFetch;
+use PhpParser\Node\Expr\NullsafePropertyFetch;
+use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\Cast;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
@@ -212,6 +217,10 @@ final class DerivedArgumentDetector implements Detector
             return null;
         }
 
+        if (! $this->readsOutOfSomething($value)) {
+            return null;
+        }
+
         $sole = Derivation::soleOperandIn($value);
 
         // Only a value that could BE a parameter is a subject. A repeated literal is not one — passing
@@ -222,6 +231,30 @@ final class DerivedArgumentDetector implements Detector
         }
 
         return $sole instanceof Variable && $sole->name !== 'this' ? $sole : null;
+    }
+
+    /**
+     * Does this expression READ something out of a value — a property, a method, a call over it — rather
+     * than COMPUTE a new one from it?
+     *
+     * A projection is a piece of the subject, which is why handing the subject over lets the callee take
+     * that piece itself. Arithmetic is not: `randomInRange(-$maxDelta, $maxDelta)` mentions one number
+     * twice, but `-$maxDelta` is a second, different number, and a general min/max range has no way to
+     * know the caller meant symmetry (#494). A cast is transparent — `(string) $row->externalId` is
+     * still a read.
+     */
+    private function readsOutOfSomething(Node $expr): bool
+    {
+        while ($expr instanceof Cast) {
+            $expr = $expr->expr;
+        }
+
+        return $expr instanceof PropertyFetch
+            || $expr instanceof NullsafePropertyFetch
+            || $expr instanceof MethodCall
+            || $expr instanceof NullsafeMethodCall
+            || $expr instanceof StaticCall
+            || $expr instanceof FuncCall;
     }
 
     /**
