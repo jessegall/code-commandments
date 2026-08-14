@@ -226,6 +226,79 @@ final class SpatieDataNode extends NodeMatch
     }
 
     /**
+     * Is this `new` handed a value that is ALREADY the object its property declares — an argument whose
+     * resolved type IS the property's class type?
+     *
+     * `::from()` is a boundary DECODE: it earns its place turning raw input into the shape. Handed an
+     * object the caller already constructed, it re-decodes our own value, and whatever that object
+     * carries beyond its data shape is lost on the way round (#481). The property's type need not be a
+     * `Data` for that to bite — a value object, an attribute instance, any class hydration would try to
+     * rebuild. There the honest construction is `new`, so the sin does not stand.
+     */
+    public function isHandedConstructedData(): bool
+    {
+        if (! $this->node instanceof New_) {
+            return false;
+        }
+
+        $fqcn = $this->newClassName();
+        $class = DataClassShape::forCodebase($this->codebase)->classFor($fqcn);
+        $function = $this->enclosingFunction();
+
+        if ($class === null || $function === null) {
+            return false;
+        }
+
+        $params = AstNode::constructorParamsOf($class);
+
+        foreach ($this->node->args as $index => $arg) {
+            if ($arg instanceof Arg && $this->argumentIsAlready($arg, $index, $fqcn, $params, $function)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does this argument already hold an object of the class the property it fills is typed as? A scalar
+     * slot never counts — `string` matching `string` says nothing about whether the value was decoded.
+     *
+     * @param  list<Param>  $params  the target's constructor parameters, for the positional name
+     */
+    private function argumentIsAlready(Arg $arg, int $index, ?string $fqcn, array $params, FunctionLike $function): bool
+    {
+        $resolver = TypeResolver::forCodebase($this->codebase);
+        $name = $arg->name?->toString() ?? AstNode::promotedParamName($params, $index);
+        $declared = $name === null ? null : $resolver->propertyTypeOf($fqcn, $name);
+
+        if (! TypeName::isClassName($declared) || $this->constructsInPlace($arg->value, (string) $declared)) {
+            return false;
+        }
+
+        $actual = $resolver->typeOf($arg->value, $function, $this->enclosingClassName());
+
+        return $actual !== null && ltrim($actual, '\\') === ltrim((string) $declared, '\\');
+    }
+
+    /**
+     * Was the value built right HERE, in the argument itself — `new Money(…)`, `Category::from($row['x'])`?
+     * Then the caller did not already hold it: this IS the decode, written one level too low, and the
+     * `::from` the sin asks for is exactly what would absorb it. Only a value that arrived already made
+     * makes the rewrite a round-trip.
+     */
+    private function constructsInPlace(Node $value, string $declared): bool
+    {
+        if ($value instanceof New_) {
+            return true;
+        }
+
+        return $value instanceof StaticCall
+            && $value->class instanceof Name
+            && ltrim($value->class->toString(), '\\') === ltrim($declared, '\\');
+    }
+
+    /**
      * Is this a static call whose receiver class is a `Data` subclass — e.g. `SomeData::from(...)`?
      */
     public function onDataClass(): bool

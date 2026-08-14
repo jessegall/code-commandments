@@ -1865,6 +1865,40 @@ class AstNode
     }
 
     /**
+     * The names of this class's MUTABLE fields — the promoted params and declared properties it
+     * states without `readonly`. What a rewrite sealing a subclass reads off the base, since PHP
+     * refuses a readonly redeclaration of an inherited mutable property; a non-class node has none.
+     *
+     * @return list<string>
+     */
+    public function mutablePropertyNames(): array
+    {
+        if (! $this->node instanceof Class_) {
+            return [];
+        }
+
+        $names = [];
+
+        foreach ($this->constructorParams() as $param) {
+            if ($param->flags !== 0 && ($param->flags & Modifiers::READONLY) === 0 && self::variableNameOf($param->var) !== null) {
+                $names[] = $param->var->name;
+            }
+        }
+
+        foreach ($this->node->getProperties() as $property) {
+            if ($property->isReadonly()) {
+                continue;
+            }
+
+            foreach ($property->props as $declared) {
+                $names[] = $declared->name->toString();
+            }
+        }
+
+        return array_values(array_unique($names));
+    }
+
+    /**
      * Every field this class declares — its promoted constructor parameters and its declared
      * properties, each as a {@see ClassField} carrying name, type, attributes, visibility, and
      * whether it was promoted. The generic shape a framework decorator reads to apply policy

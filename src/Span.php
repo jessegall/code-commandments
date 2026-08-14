@@ -86,6 +86,19 @@ final class Span
     }
 
     /**
+     * The offset just past the LAST non-blank byte on the line containing $pos — the line's text with its
+     * padding and its break left off. What a scribe lifting a declaration measures to, so a `// note`
+     * trailing it comes along while the newline does not.
+     */
+    public static function lineContentEndAt(string $source, int $pos): int
+    {
+        $lineStart = self::lineStartAt($source, $pos);
+        $line = substr($source, $lineStart, self::lineEndAt($source, $pos) - $lineStart);
+
+        return $lineStart + strlen(rtrim($line));
+    }
+
+    /**
      * The 1-based LINE $pos sits on — the offset→line answer every located node needs to report a
      * `file:line`. The one place the newline count is written, so a parse layer that stamps its
      * nodes with byte offsets never carries its own `substr_count` beside the real one.
@@ -185,11 +198,18 @@ final class Span
      */
     public static function ownLineIndent(string $source, int $pos): ?string
     {
-        $lineStart = strrpos(substr($source, 0, $pos), "\n");
-        $lineStart = $lineStart === false ? 0 : $lineStart + 1;
-        $prefix = substr($source, $lineStart, $pos - $lineStart);
+        return self::startsItsLine($source, $pos) ? self::indentAt($source, $pos) : null;
+    }
 
-        return $prefix !== '' && trim($prefix) === '' ? $prefix : null;
+    /**
+     * Does $pos BEGIN its line — is everything between the break above and it whitespace? The verdict on
+     * its own, which {@see ownLineIndent} cannot give: that returns an indent, so a token at column 0
+     * reads the same as one with code in front of it. The question a scribe asks of an attached comment —
+     * a docblock standing over the declaration, or a `// note` trailing the line ABOVE it (#480).
+     */
+    public static function startsItsLine(string $source, int $pos): bool
+    {
+        return trim(self::indentAt($source, $pos)) === '';
     }
 
     /**

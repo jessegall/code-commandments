@@ -625,25 +625,45 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
      */
     public function extends(?string $class, string $parent): bool
     {
+        return in_array(ltrim($parent, '\\'), $this->ancestorsOf($class), true);
+    }
+
+    /**
+     * The parent chain above $class, nearest first — every class it inherits from within the codebase.
+     * The one walk up the `extends` graph, so a caller asking what an ancestor declares composes it
+     * instead of re-deriving the loop. Cycle-safe; a class with no parsed parent has none.
+     *
+     * @return list<string>
+     */
+    public function ancestorsOf(?string $class): array
+    {
         if ($class === null) {
-            return false;
+            return [];
         }
 
         $class = ltrim($class, '\\');
-        $parent = ltrim($parent, '\\');
         $parents = $this->parentMap();
-        $seen = [];
+        $chain = [];
 
-        while (isset($parents[$class]) && ! isset($seen[$class])) {
-            $seen[$class] = true;
-            $class = $parents[$class];
-
-            if ($class === $parent) {
-                return true;
-            }
+        while (isset($parents[$class]) && ! in_array($parents[$class], $chain, true)) {
+            $chain[] = $class = $parents[$class];
         }
 
-        return false;
+        return $chain;
+    }
+
+    /**
+     * Does an ANCESTOR of $class declare $property WITHOUT `readonly`? PHP forbids a subclass
+     * redeclaring an inherited mutable property as readonly ("Cannot redeclare non-readonly property
+     * … as readonly …"), so a rewrite that seals a class must leave such a property as it stands or
+     * the class stops loading (#482). A property no ancestor declares answers false.
+     */
+    public function inheritsMutableProperty(?string $class, string $property): bool
+    {
+        return array_any(
+            $this->ancestorsOf($class),
+            fn (string $ancestor): bool => in_array($property, $this->classNamed($ancestor)->mutablePropertyNames(), true),
+        );
     }
 
     /**
@@ -1083,9 +1103,17 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
                 /**
                  * @var Class_ $class
                  */
-                if ($class->extends instanceof Name && ($class->namespacedName ?? null) !== null) {
-                    $map[$class->namespacedName->toString()] = $class->extends->toString();
+                if (! $class->extends instanceof Name) {
+                    continue;
                 }
+
+                // An anonymous class has no name to key by, but it IS a subclass — and a base it
+                // extends is just as unsealable for it (#482). `@` cannot occur in a declared name,
+                // so the synthetic key can never collide with one the chain walk looks up.
+                $child = ($class->namespacedName ?? null)?->toString()
+                    ?? 'class@anonymous#' . $class->getStartFilePos() . '#' . spl_object_id($class);
+
+                $map[$child] = $class->extends->toString();
             }
         }
 

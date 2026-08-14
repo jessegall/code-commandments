@@ -21,7 +21,11 @@ final class NewDataObjectScribeTest extends ScribeTestCase
         return new NewDataObjectScribe();
     }
 
-    /** A rich (nested-Data prop) class, plus a plain one, with the Spatie stubs. */
+    /**
+     * A rich (nested-Data prop) class, plus a plain one, with the Spatie stubs. Every `Maker` below
+     * hands the nested slot RAW input — an array `::from()` hydrates into `MoneyData`. Handed a
+     * `MoneyData` the caller already built there is nothing to decode, and the sin does not stand (#481).
+     */
     private const DATA = <<<'PHP'
         namespace Spatie\LaravelData {
             class Data {}
@@ -54,7 +58,7 @@ final class NewDataObjectScribeTest extends ScribeTestCase
 
             final class Maker
             {
-                public function make(MoneyData $total): OrderData
+                public function make(array $total): OrderData
                 {
                     return new OrderData(id: 'abc', total: $total);
                 }
@@ -74,7 +78,7 @@ final class NewDataObjectScribeTest extends ScribeTestCase
 
             final class Maker
             {
-                public function make(MoneyData $total): OrderData
+                public function make(array $total): OrderData
                 {
                     return new OrderData('abc', $total);
                 }
@@ -122,7 +126,7 @@ final class NewDataObjectScribeTest extends ScribeTestCase
 
             final class Maker
             {
-                public function make(MoneyData $total): MappedOrderData
+                public function make(array $total): MappedOrderData
                 {
                     return new MappedOrderData(id: 'abc', total: $total);
                 }
@@ -163,7 +167,7 @@ final class NewDataObjectScribeTest extends ScribeTestCase
 
             final class Maker
             {
-                public function make(MoneyData $total): OrderData
+                public function make(array $total): OrderData
                 {
                     return new OrderData(
                         id: 'abc',

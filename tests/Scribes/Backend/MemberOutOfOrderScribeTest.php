@@ -134,6 +134,45 @@ final class MemberOutOfOrderScribeTest extends ScribeTestCase
         $this->assertSame($php, $this->fix($php));
     }
 
+    public function test_a_trailing_comment_stays_on_the_declaration_it_annotates(): void
+    {
+        $php = <<<'PHP'
+        <?php
+
+        class Order
+        {
+            public string $status; // on_hold|completed
+
+            public const string SOURCE = 'api';
+
+            public string | null $channel; // main|api
+
+            public function place(): void
+            {
+            }
+        }
+        PHP;
+
+        $expected = <<<'PHP'
+        <?php
+
+        class Order
+        {
+            public const string SOURCE = 'api';
+
+            public string $status; // on_hold|completed
+
+            public string | null $channel; // main|api
+
+            public function place(): void
+            {
+            }
+        }
+        PHP;
+
+        $this->assertSame($expected, $this->fixStable($php));
+    }
+
     public function test_moves_only_what_is_misplaced_and_is_idempotent(): void
     {
         $php = <<<'PHP'

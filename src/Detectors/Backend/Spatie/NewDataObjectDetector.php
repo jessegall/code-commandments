@@ -15,8 +15,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
  * Detects `new Data(...)` instead of `::from(...)` — skips casts, name maps, nested
- * hydration, and factories. Exempts plain Data (scalars/enums only) and parameter-default
- * positions. Points at spatie-data.
+ * hydration, and factories. Exempts plain Data (scalars/enums only), parameter-default
+ * positions, and a `new` already handed the constructed nested `Data` (`::from` would
+ * re-decode our own value, not a boundary). Points at spatie-data.
  */
 final class NewDataObjectDetector implements Detector, Repentable
 {
@@ -36,6 +37,7 @@ final class NewDataObjectDetector implements Detector, Repentable
             ->whereNew()
             ->where(static fn (SpatieDataNode $node): bool => $node->isNewData())
             ->reject(static fn (AstNode $node): bool => $node->isParameterDefault())
+            ->reject(static fn (SpatieDataNode $node): bool => $node->isHandedConstructedData())
             ->where(static fn (SpatieDataNode $node): bool => $node->isRichData())
             ->get();
     }

@@ -58,7 +58,8 @@ final class NewDataObjectDetectorTest extends TestCase
             }
 
             final class Builder {
-                public function build(LineData $line): OrderData { return new OrderData($line); }
+                // Raw input in the nested slot — `::from()` is the decode `new` skips.
+                public function build(array $line): OrderData { return new OrderData($line); }
             }
         }
         PHP;
@@ -66,5 +67,33 @@ final class NewDataObjectDetectorTest extends TestCase
         $hits = (new NewDataObjectDetector)->find(Codebase::fromString($code));
 
         $this->assertSame(['App\\Builder::build'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
+
+    public function test_does_not_flag_a_new_handed_the_constructed_nested_data(): void
+    {
+        // #481: `::from()` is a boundary DECODE. Handed a `LineData` the caller already built, it
+        // re-decodes our own value and loses whatever the shape cannot carry — `new` is the honest
+        // construction, so the sin does not stand. Positional or named, the answer is the same.
+        $code = <<<'PHP'
+        <?php
+        namespace Spatie\LaravelData { class Data {} }
+        namespace App {
+            use Spatie\LaravelData\Data;
+
+            final class LineData extends Data {
+                public function __construct(public readonly string $sku) {}
+            }
+            final class OrderData extends Data {
+                public function __construct(public readonly string $id, public readonly LineData $line) {}
+            }
+
+            final class Builder {
+                public function positional(LineData $line): OrderData { return new OrderData('a', $line); }
+                public function named(LineData $line): OrderData { return new OrderData(id: 'a', line: $line); }
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new NewDataObjectDetector)->find(Codebase::fromString($code)));
     }
 }

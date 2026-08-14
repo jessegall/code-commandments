@@ -300,7 +300,7 @@ final class Writer
         $blocks = [];
 
         foreach ($nodes as $node) {
-            [$start, $end] = $this->declarationBounds($node);
+            [$start, $end] = $this->declarationBounds($node, $nodes);
             $blocks[] = trim(Span::slice($this->file->source, $start, $end - 1), "\n");
             $this->draft->edit($this->file->span($start, $end), '');
         }
@@ -335,12 +335,12 @@ final class Writer
                 $opensGroup = $index === 0;
                 $blank = $pieces !== [] && ($opensGroup || $this->hasBlankLineAbove($start));
 
-                $pieces[] = ($blank ? "\n" : '') . Span::slice($this->file->source, $start, $node->getEndFilePos());
+                $pieces[] = ($blank ? "\n" : '') . Span::slice($this->file->source, $start, $this->declarationEndOf($node, $nodes) - 1);
             }
         }
 
         $first = $this->lineStartOf($nodes[0]);
-        $last = $nodes[count($nodes) - 1]->getEndFilePos() + 1;
+        $last = $this->declarationEndOf($nodes[count($nodes) - 1], $nodes);
 
         $this->draft->edit($this->file->span($first, $last), implode("\n", $pieces));
     }
@@ -356,9 +356,10 @@ final class Writer
      * it. The BLANK line above is taken too, so lifting the block out closes the gap behind it instead
      * of leaving one hanging before the next member (or the closing brace).
      *
+     * @param  list<Node>  $run  the declarations being rewritten together
      * @return array{0: int, 1: int}  [start, end-exclusive]
      */
-    private function declarationBounds(Node $node): array
+    private function declarationBounds(Node $node, array $run): array
     {
         $start = $this->lineStartOf($node);
 
@@ -366,20 +367,50 @@ final class Writer
             $start--;
         }
 
-        $end = $node->getEndFilePos() + 1;
+        $end = $this->declarationEndOf($node, $run);
 
         return [$start, ($this->file->source[$end] ?? '') === "\n" ? $end + 1 : $end];
     }
 
     /**
+     * Where the declaration's own text ENDS — through a `// note` trailing it on the same line. php-parser
+     * hands that comment to the NEXT declaration, so by their own bounds neither node claims it and a
+     * reorder would strand it on whichever member came to stand there (#480). Only extended when the
+     * declaration has the rest of its line to itself: two members sharing one line keep their own bytes.
+     *
+     * @param  list<Node>  $run  the declarations being rewritten together
+     */
+    private function declarationEndOf(Node $node, array $run): int
+    {
+        $end = $node->getEndFilePos() + 1;
+        $lineEnd = Span::lineContentEndAt($this->file->source, $end);
+
+        foreach ($run as $other) {
+            if ($other->getStartFilePos() >= $end && $other->getStartFilePos() < $lineEnd) {
+                return $end;
+            }
+        }
+
+        return $lineEnd;
+    }
+
+    /**
      * The offset the declaration's own line begins at — its docblock or attributes included, its
      * indentation kept, and nothing of the line before it.
+     *
+     * A comment counts only when it STANDS on its own line. php-parser hands a `// note` trailing the
+     * previous declaration to this one as a leading comment, and taking it would drag that whole
+     * declaration along — re-emitting it here while it still stands there (#480).
      */
     private function lineStartOf(Node $node): int
     {
         $start = $node->getStartFilePos();
 
         foreach ($node->getComments() as $comment) {
+            if (! Span::startsItsLine($this->file->source, $comment->getStartFilePos())) {
+                continue;
+            }
+
             $start = min($start, $comment->getStartFilePos());
         }
 

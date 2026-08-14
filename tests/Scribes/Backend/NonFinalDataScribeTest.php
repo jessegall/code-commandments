@@ -79,6 +79,45 @@ final class NonFinalDataScribeTest extends ScribeTestCase
         $this->assertSame($php, $this->fix($php));
     }
 
+    public function test_leaves_a_property_the_base_declares_mutable_alone(): void
+    {
+        // PHP forbids redeclaring an inherited non-readonly property as readonly, and the base is
+        // exempt from the sin precisely because it IS extended — so only `final` is available here.
+        $php = <<<'PHP'
+        <?php
+
+        namespace Spatie\LaravelData { class Data {} }
+
+        namespace App {
+            use Spatie\LaravelData\Data;
+
+            class NormalizedCategoryData extends Data
+            {
+                public function __construct(
+                    public string $id,
+                    public string | null $name = null,
+                ) {}
+            }
+
+            class NormalizedMedusaCategory extends NormalizedCategoryData
+            {
+                public function __construct(
+                    public string $id,
+                    public string | null $name = null,
+                    public int | null $position = 0,
+                ) {}
+            }
+        }
+        PHP;
+
+        $fixed = $this->fixStable($php);
+
+        $this->assertStringContainsString('final class NormalizedMedusaCategory', $fixed);
+        $this->assertStringContainsString('public string $id,', $fixed);
+        $this->assertStringContainsString('public string | null $name = null,', $fixed);
+        $this->assertStringContainsString('public readonly int | null $position = 0,', $fixed);
+    }
+
     public function test_adds_only_the_missing_readonly_when_some_props_already_have_it(): void
     {
         $php = <<<'PHP'

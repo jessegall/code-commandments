@@ -129,13 +129,11 @@ final class LookupEnvy
             return false;
         }
 
-        // The producing call goes through a $this COLLABORATOR and is keyed by the
-        // param's member (`$this->registry->get($node->key)`). A chain of the host's
-        // OWN methods (`$this->find($ref->nodeId)->…`) is NOT envy — the method already
-        // lives on the owner of the data it keys into, tell-dont-ask's prescribed
-        // home (#348); only a chain crossing a property hop reaches a collaborator.
-        return $this->rootsInThis($producer)
-            && $this->throughCollaborator($producer)
+        // The producing call is made ON a $this COLLABORATOR and is keyed by the param's member
+        // (`$this->registry->get($node->key)`). A chain of the host's OWN methods
+        // (`$this->find($ref->nodeId)->…`) is NOT envy — the method already lives on the owner of
+        // the data it keys into, tell-dont-ask's prescribed home (#348).
+        return $this->onCollaborator($producer)
             && $this->anyArgUsesParamMember($producer->args, $param)
             && $this->navigationDepth($node) <= self::MAX_DEPTH;
     }
@@ -223,31 +221,29 @@ final class LookupEnvy
     }
 
     /**
-     * Does this receiver chain cross a PROPERTY hop (`$this->registry->…`) on its way
-     * down — i.e. does the fetch go through a held collaborator rather than the host's
-     * own methods (`$this->find(...)->…`)? The host answering from its own state is the
-     * owner speaking, not envy.
+     * Is this call made ON a held collaborator — its receiver a property of `$this`
+     * (`$this->registry->get(…)`), or a property chain down to one (`$this->workflow->graph->
+     * nodeById(…)`)?
+     *
+     * The receiver must be PROPERTIES all the way to `$this`. A call on the RESULT of another call
+     * is a link in a fluent chain (`->table(…)->join(…)->where(…)`), where every hop returns the
+     * same builder and an argument is a binding, not a key into a store of facts about the object
+     * (#479). And a call on `$this` itself is the host answering from its own state, which is the
+     * owner speaking rather than envy (#348).
      */
-    private function throughCollaborator(Node $expr): bool
+    private function onCollaborator(Node $call): bool
     {
-        while ($this->isMemberAccess($expr)) {
-            if (AstNode::isPropertyRead($expr)) {
-                return true;
-            }
+        $receiver = $call->var;
 
-            $expr = $expr->var;
+        if (! AstNode::isPropertyRead($receiver)) {
+            return false;
         }
 
-        return false;
-    }
-
-    private function rootsInThis(Node $expr): bool
-    {
-        while ($this->isMemberAccess($expr)) {
-            $expr = $expr->var;
+        while (AstNode::isPropertyRead($receiver)) {
+            $receiver = $receiver->var;
         }
 
-        return $expr instanceof Variable && $expr->name === 'this';
+        return $receiver instanceof Variable && $receiver->name === 'this';
     }
 
     private function navigationDepth(Node $expr): int

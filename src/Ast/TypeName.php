@@ -37,7 +37,7 @@ final class TypeName
         if ($type instanceof Name) {
             $name = $type->toString();
 
-            return in_array(strtolower($name), self::BUILTINS, true) ? null : $name;
+            return self::isClassName($name) ? $name : null;
         }
 
         if ($type instanceof UnionType) {
@@ -45,6 +45,16 @@ final class TypeName
         }
 
         return null;
+    }
+
+    /**
+     * Does this written type name a CLASS rather than a builtin (`string`, `array`, `self`, …)? The
+     * string-level twin of {@see class}, for a caller holding a resolved type name instead of the type
+     * node — so "is this a scalar or an object" is answered in one place either way.
+     */
+    public static function isClassName(?string $name): bool
+    {
+        return $name !== null && ! in_array(strtolower(ltrim($name, '?\\')), self::BUILTINS, true);
     }
 
     /**

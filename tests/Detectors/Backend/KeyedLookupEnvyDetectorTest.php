@@ -58,6 +58,32 @@ final class KeyedLookupEnvyDetectorTest extends TestCase
         $this->assertSame([], (new KeyedLookupEnvyDetector)->find(Codebase::fromString($code)));
     }
 
+    public function test_does_not_flag_a_binding_passed_down_a_fluent_builder_chain(): void
+    {
+        // Reported (#479): every link of a query-builder chain is structurally "a call on the result
+        // of a call", so an enum unwrapped into a WHERE binding looked like a keyed fetch. It is not:
+        // the chain returns the SAME builder each hop and nothing is READ off the object — the fetch
+        // has to be made ON the collaborator (`$this->registry->get($x->key)`) to be envy.
+        $code = <<<'PHP'
+        <?php
+        enum ResourceType: string { case Product = 'product'; }
+        final class ExternalResourceRepository {
+            public function __construct(private readonly object $database) {}
+            public function isRegistered(ResourceType $type, string $channelId, string $localId): bool {
+                return $this->database->table('external_resources as er')
+                    ->join('shop_resources as sr', 'sr.id', '=', 'er.shop_resource_id')
+                    ->where('sr.resource_type', $type->value)
+                    ->where('sr.local_id', $localId)
+                    ->where('er.shop_channel_id', $channelId)
+                    ->whereNotNull('er.external_id')
+                    ->exists();
+            }
+        }
+        PHP;
+
+        $this->assertSame([], (new KeyedLookupEnvyDetector)->find(Codebase::fromString($code)));
+    }
+
     public function test_does_not_flag_the_map_owner_answering_from_its_own_lookup(): void
     {
         // Reported (#348): the lookup is the HOST's own method (`$this->find(...)`) — the
