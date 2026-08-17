@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\Support\BlankPredicate;
 use JesseGall\CodeCommandments\Ast\Support\ScalarRendering;
 use JesseGall\CodeCommandments\Ast\TypeName;
 use JesseGall\CodeCommandments\Backend\Detector;
@@ -32,7 +33,7 @@ final class BlankStringDefaultDetector implements Detector
             ->where(static fn (AstNode $node): bool => $node->isBlankString(ScalarRendering::forCodebase($codebase)))
             ->where(static fn (AstNode $node): bool => $node->isDeclarationDefault())
             ->where(static fn (AstNode $node): bool => TypeName::render($node->declaredType()) === 'string')
-            ->where(static fn (AstNode $node): bool => $node->defaultedNameTestedForBlankness())
+            ->where(static fn (AstNode $node): bool => $node->defaultedNameTestedForBlankness(BlankPredicate::forCodebase($codebase)))
             ->get();
     }
 }

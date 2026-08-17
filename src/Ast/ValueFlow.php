@@ -606,9 +606,7 @@ final class ValueFlow
 
     private function methodNode(string $fqcn, string $method): ?ClassMethod
     {
-        $class = $this->codebase->classNamed($fqcn)->node;
-
-        return $class instanceof Class_ ? $class->getMethod($method) : null;
+        return $this->codebase->classNamed($fqcn)->method($method);
     }
 
     /**

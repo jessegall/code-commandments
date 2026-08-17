@@ -14,4 +14,21 @@ final readonly class BlankText implements Stringable
     {
         return '';
     }
+
+    /**
+     * Is $value the blank — a string or a Stringable that renders to nothing?
+     */
+    public static function is(mixed $value): bool
+    {
+        return match (true) {
+            is_string($value) => $value === '',
+            $value instanceof Stringable => (string) $value === '',
+            default => false,
+        };
+    }
+
+    public static function isNot(mixed $value): bool
+    {
+        return ! self::is($value);
+    }
 }

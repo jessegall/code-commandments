@@ -71,6 +71,7 @@ use PhpParser\Node\PropertyHook;
 use PhpParser\NodeFinder;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\UnionType;
+use JesseGall\CodeCommandments\Ast\Support\BlankPredicate;
 use JesseGall\CodeCommandments\Ast\Support\ScalarRendering;
 use PhpParser\Node\UseItem;
 use PhpParser\Node\Param;
@@ -1285,13 +1286,13 @@ class AstNode
      * with the matching namespace — a property is questioned as `$this->x`, a local as `$x` — so a local
      * that merely shares a property's name is never mistaken for evidence about it.
      */
-    public function defaultedNameTestedForBlankness(): bool
+    public function defaultedNameTestedForBlankness(?BlankPredicate $via = null): bool
     {
         $scope = $this->declarationScope();
 
         $tested = $this->declarationBecomesProperty()
-            ? $scope->selfPropertiesTestedForBlankness()
-            : $scope->variablesTestedForBlankness();
+            ? $scope->selfPropertiesTestedForBlankness($via)
+            : $scope->variablesTestedForBlankness($via);
 
         return in_array($this->declaredName(), $tested, true);
     }
@@ -1517,6 +1518,34 @@ class AstNode
         $enclosing = $this->enclosingClassName();
 
         return $enclosing !== null && $this->firstArgClassLiteral() === $enclosing;
+    }
+
+    /**
+     * This class declaration's $name method, or null when it declares none — the one way an analysis asks
+     * a resolved class for a method, so `classNamed(...)->method(...)` reads the same everywhere.
+     */
+    public function method(?string $name): ?ClassMethod
+    {
+        return $name !== null && $this->node instanceof ClassLike ? $this->node->getMethod($name) : null;
+    }
+
+    /**
+     * Every node of $type under this one, each already wrapped so it can be questioned further. The one
+     * walk a Support reaches for, so no analysis re-instantiates a finder to answer "what is in here".
+     *
+     * @param  class-string<Node>  $type
+     * @return list<self>
+     */
+    public function descendantsOfType(string $type): array
+    {
+        if ($this->node === null) {
+            return [];
+        }
+
+        return array_map(
+            static fn (Node $found): self => new self($found),
+            (new NodeFinder)->findInstanceOf($this->node, $type),
+        );
     }
 
     /**
@@ -5146,9 +5175,9 @@ class AstNode
      *
      * @return list<string>
      */
-    public function selfPropertiesTestedForBlankness(): array
+    public function selfPropertiesTestedForBlankness(?BlankPredicate $via = null): array
     {
-        return $this->testedForBlankness(self::selfPropertyOf(...));
+        return $this->testedForBlankness(self::selfPropertyOf(...), $via);
     }
 
     /**
@@ -5158,20 +5187,23 @@ class AstNode
      *
      * @return list<string>
      */
-    public function variablesTestedForBlankness(): array
+    public function variablesTestedForBlankness(?BlankPredicate $via = null): array
     {
         return $this->testedForBlankness(
             static fn (Node $n): ?string => $n instanceof Variable && is_string($n->name) ? $n->name : null,
+            $via,
         );
     }
 
     /**
-     * Every name $subject reads out of a blankness question under this node.
+     * Every name $subject reads out of a blankness question under this node. A question counts however it
+     * is ASKED: written out as `=== ''` / `empty(...)`, or handed to a predicate that decides blankness on
+     * the caller's behalf, which $via recognises.
      *
      * @param  callable(Node): ?string  $subject
      * @return list<string>
      */
-    private function testedForBlankness(callable $subject): array
+    private function testedForBlankness(callable $subject, ?BlankPredicate $via = null): array
     {
         if ($this->node === null) {
             return [];
@@ -5192,6 +5224,16 @@ class AstNode
 
         foreach ((new NodeFinder)->findInstanceOf($this->node, Empty_::class) as $empty) {
             if (($name = $subject($empty->expr)) !== null) {
+                $tested[$name] = true;
+            }
+        }
+
+        foreach ($via === null ? [] : $this->descendantsOfType(StaticCall::class) as $call) {
+            $asked = $call->arguments()[0]->value ?? null;
+
+            if ($asked !== null
+                && $via->decidesBlankness($call->staticCallClass(), $call->staticCallMethod())
+                && ($name = $subject($asked)) !== null) {
                 $tested[$name] = true;
             }
         }

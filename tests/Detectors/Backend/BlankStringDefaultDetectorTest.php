@@ -175,6 +175,82 @@ final class BlankStringDefaultDetectorTest extends TestCase
         $this->assertSame([14], $this->lines($code));
     }
 
+    public function test_sees_the_question_asked_through_a_blankness_predicate(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        final readonly class EmptyString implements Stringable
+        {
+            public function __toString(): string
+            {
+                return '';
+            }
+
+            public static function is(mixed $value): bool
+            {
+                return match (true) {
+                    is_string($value) => $value === '',
+                    $value instanceof Stringable => (string) $value === '',
+                    default => false,
+                };
+            }
+
+            public static function isNot(mixed $value): bool
+            {
+                return ! self::is($value);
+            }
+        }
+
+        final class Binding
+        {
+            public function __construct(
+                private readonly string $slug = new EmptyString,
+                private readonly string $plane = '',
+            ) {}
+
+            public function isBound(): bool
+            {
+                return EmptyString::isNot($this->slug);
+            }
+
+            public function isPlaced(): bool
+            {
+                return EmptyString::is($this->plane);
+            }
+        }
+        PHP;
+
+        $this->assertSame([27, 28], $this->lines($code));
+    }
+
+    public function test_does_not_treat_an_ordinary_static_call_as_a_question(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        final class Slug
+        {
+            public static function of(string $value): string
+            {
+                return strtolower($value);
+            }
+        }
+
+        final class Page
+        {
+            public function __construct(
+                private readonly string $title = '',
+            ) {}
+
+            public function slug(): string
+            {
+                return Slug::of($this->title);
+            }
+        }
+        PHP;
+
+        $this->assertSame([], $this->lines($code));
+    }
+
     /**
      * @return list<int>
      */
