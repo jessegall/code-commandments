@@ -73,6 +73,7 @@ use PhpParser\Node\NullableType;
 use PhpParser\Node\UnionType;
 use PhpParser\Node\UseItem;
 use PhpParser\Node\Param;
+use PhpParser\Node\PropertyItem;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar;
 use PhpParser\Node\Scalar\Int_;
@@ -1214,6 +1215,84 @@ class AstNode
         $parent = $this->parent()->node;
 
         return $parent instanceof Param && $parent->default === $this->node;
+    }
+
+    /**
+     * Is this node the DEFAULT of a declaration — a parameter's (`f($x = <here>)`) or a property's
+     * (`private string $x = <here>;`)? The two spellings of "the value this name starts out holding".
+     */
+    public function isDeclarationDefault(): bool
+    {
+        return $this->isParameterDefault() || $this->parent()->node instanceof PropertyItem;
+    }
+
+    /**
+     * The TYPE declared for the declaration this node defaults, for {@see TypeName} to read — a
+     * parameter's own, or the `Property` statement's above a `PropertyItem`.
+     */
+    public function declaredType(): ?Node
+    {
+        $parent = $this->parent()->node;
+
+        if ($parent instanceof Param) {
+            return $parent->type;
+        }
+
+        $property = $this->parent()->parent()->node;
+
+        return $property instanceof Property ? $property->type : null;
+    }
+
+    /**
+     * The NAME the declaration this node defaults binds — `$hint` / `private string $hint` → `hint`.
+     */
+    public function declaredName(): ?string
+    {
+        $parent = $this->parent()->node;
+
+        if ($parent instanceof PropertyItem) {
+            return $parent->name->toString();
+        }
+
+        return $parent instanceof Param && $parent->var instanceof Variable && is_string($parent->var->name)
+            ? $parent->var->name
+            : null;
+    }
+
+    /**
+     * Does the declaration this node defaults become a PROPERTY — declared outright, or promoted out of a
+     * constructor parameter — rather than staying a local name?
+     */
+    public function declarationBecomesProperty(): bool
+    {
+        $parent = $this->parent()->node;
+
+        return $parent instanceof PropertyItem || ($parent instanceof Param && $parent->flags !== 0);
+    }
+
+    /**
+     * The scope in which the declaration this node defaults can be QUESTIONED — the whole class when the
+     * name becomes a property, the function body when it stays local.
+     */
+    public function declarationScope(): AstNode
+    {
+        return new AstNode($this->declarationBecomesProperty() ? $this->enclosingClass() : $this->enclosingFunction());
+    }
+
+    /**
+     * Is the name this node defaults asked, in its own scope, whether it is BLANK? Pairs the declaration
+     * with the matching namespace — a property is questioned as `$this->x`, a local as `$x` — so a local
+     * that merely shares a property's name is never mistaken for evidence about it.
+     */
+    public function defaultedNameTestedForBlankness(): bool
+    {
+        $scope = $this->declarationScope();
+
+        $tested = $this->declarationBecomesProperty()
+            ? $scope->selfPropertiesTestedForBlankness()
+            : $scope->variablesTestedForBlankness();
+
+        return in_array($this->declaredName(), $tested, true);
     }
 
     /**
@@ -5028,6 +5107,66 @@ class AstNode
                     && ($name = self::selfPropertyOf($instance->expr)) !== null) {
                     $tested[$name] = true;
                 }
+            }
+        }
+
+        return array_keys($tested);
+    }
+
+    /**
+     * The own PROPERTIES this node asks "are you BLANK?" — `$this->x === ''` / `!== ''` / `empty($this->x)`.
+     * The blankness twin of {@see selfPropertiesTestedForAbsence}: where that reads a `null` question, this
+     * reads the one asked of a value whose type says it is always there.
+     *
+     * @return list<string>
+     */
+    public function selfPropertiesTestedForBlankness(): array
+    {
+        return $this->testedForBlankness(self::selfPropertyOf(...));
+    }
+
+    /**
+     * The plain VARIABLES this node asks "are you BLANK?" — `$x === ''` / `!== ''` / `empty($x)`. Kept
+     * apart from {@see selfPropertiesTestedForBlankness} because they are different namespaces: a local
+     * `$text` says nothing about a property `$this->text` that happens to share the name.
+     *
+     * @return list<string>
+     */
+    public function variablesTestedForBlankness(): array
+    {
+        return $this->testedForBlankness(
+            static fn (Node $n): ?string => $n instanceof Variable && is_string($n->name) ? $n->name : null,
+        );
+    }
+
+    /**
+     * Every name $subject reads out of a blankness question under this node.
+     *
+     * @param  callable(Node): ?string  $subject
+     * @return list<string>
+     */
+    private function testedForBlankness(callable $subject): array
+    {
+        if ($this->node === null) {
+            return [];
+        }
+
+        $tested = [];
+
+        foreach ((new NodeFinder)->find($this->node, static fn (Node $n): bool => $n instanceof Identical || $n instanceof NotIdentical) as $comparison) {
+            /**
+             * @var Identical|NotIdentical $comparison
+             */
+            foreach ([[$comparison->left, $comparison->right], [$comparison->right, $comparison->left]] as [$side, $other]) {
+                if ($other instanceof String_ && $other->value === '' && ($name = $subject($side)) !== null) {
+                    $tested[$name] = true;
+                }
+            }
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($this->node, Empty_::class) as $empty) {
+            if (($name = $subject($empty->expr)) !== null) {
+                $tested[$name] = true;
             }
         }
 

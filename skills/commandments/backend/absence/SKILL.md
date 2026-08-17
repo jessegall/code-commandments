@@ -80,6 +80,8 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 
 ## Rules
 
+- Model a value that may not be there in the type; never default a total `string` to `''` and read that blank back as "missing".
+  _Say it in the type — `?string $x = null`, or an `Option<string>` — so the blank is not a value the reader has to decode._
 - Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
   _Say both halves out loud — `$x !== null && $x !== ''` — or make the value non-nullable at its source so only one question is left._
 - Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
@@ -92,6 +94,34 @@ If you can't point at one of those, you do **not** have an honest null — go ba
   _Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`._
 
 ## Bad → good
+
+### blank-string-default
+
+`string $x = ''` standing in for absence — then asked `$x === ''`
+
+```php
+----------[ Bad ]----------
+
+public static function of(string $heading, string $strapline = ''): string
+{
+    if ($strapline === '') {
+        return $heading;
+    }
+
+    return $heading . ' — ' . $strapline;
+}
+
+----------[ Good ]----------
+
+public static function lined(string $heading, ?string $strapline = null): string
+{
+    if ($strapline === null) {
+        return $heading;
+    }
+
+    return $heading . ' — ' . $strapline;
+}
+```
 
 ### cancelled-coalesce
 
@@ -228,6 +258,7 @@ public function locateHonestly(string $email): Option
 
 ## When it fires
 
+- `string $x = ''` standing in for absence — then asked `$x === ''` — `BlankStringDefaultDetector`
 - `??` cancelled by the comparison it sits in — `($x ?? '') !== ''` — `CancelledCoalesceDetector`
 - An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present' — `ConditionalArraySpreadDetector`
 - Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) — `DeNulledFinderDetector`
@@ -236,6 +267,7 @@ public function locateHonestly(string $email): Option
 
 ## Checklist
 
+- [ ] Model a value that may not be there in the type; never default a total `string` to `''` and read that blank back as "missing".
 - [ ] Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
 - [ ] Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
 - [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
