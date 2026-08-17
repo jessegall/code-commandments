@@ -146,6 +146,35 @@ final class BlankStringDefaultDetectorTest extends TestCase
         $this->assertSame([], $this->lines($code));
     }
 
+    public function test_wrapping_the_blank_in_a_null_object_does_not_dodge_the_rule(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        final readonly class EmptyString implements Stringable
+        {
+            public function __toString(): string
+            {
+                return '';
+            }
+        }
+
+        final class EmptyState
+        {
+            public function __construct(
+                private readonly string $title,
+                private readonly string $description = new EmptyString,
+            ) {}
+
+            public function render(): string
+            {
+                return $this->description === '' ? $this->title : $this->description;
+            }
+        }
+        PHP;
+
+        $this->assertSame([14], $this->lines($code));
+    }
+
     /**
      * @return list<int>
      */

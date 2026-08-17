@@ -88,6 +88,8 @@ If you can't point at one of those, you do **not** have an honest null — go ba
   _Replace `[...$base, ...($x !== null ? ['k' => $x] : [])]` with a `::of(k: $x, …)` factory that drops null-valued arguments._
 - Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
   _Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`._
+- A Null Object only models absence while the TYPE admits it; never hand one to a `string`-typed slot, which coerces it to `''` and erases it.
+  _Widen the type to carry the object (`Stringable`, or the class itself) where the Null Object is the point; otherwise drop the wrapper — and where the blank meant "missing", say that in the type with `?string` or an `Option<string>`._
 - Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
   _Create a reusable no-op invokable (`Invokable` + `NoOp`) and default the param to `new NoOp`._
 - Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
@@ -190,6 +192,26 @@ public function requireByBarcode(string $barcode): Product
 }
 ```
 
+### erased-null-object
+
+A blank-rendering Null Object written into a `string` slot — coerced back to `''`
+
+```php
+----------[ Bad ]----------
+
+public static function of(string $consignment, string $complaint = new BlankText): self
+{
+    return new self($consignment, $complaint);
+}
+
+----------[ Good ]----------
+
+public static function noted(string $consignment, ?string $complaint = null): self
+{
+    return new self($consignment, $complaint);
+}
+```
+
 ### nullable-callback
 
 Nullable callback normalised in the body instead of a Null Object default
@@ -262,6 +284,7 @@ public function locateHonestly(string $email): Option
 - `??` cancelled by the comparison it sits in — `($x ?? '') !== ''` — `CancelledCoalesceDetector`
 - An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present' — `ConditionalArraySpreadDetector`
 - Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) — `DeNulledFinderDetector`
+- A blank-rendering Null Object written into a `string` slot — coerced back to `''` — `ErasedNullObjectDetector`
 - Nullable callback normalised in the body instead of a Null Object default — `NullableCallbackDetector`
 - `Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)` — `OptionAsNullableDetector`
 
@@ -271,6 +294,7 @@ public function locateHonestly(string $email): Option
 - [ ] Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
 - [ ] Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
 - [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
+- [ ] A Null Object only models absence while the TYPE admits it; never hand one to a `string`-typed slot, which coerces it to `''` and erases it.
 - [ ] Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
 - [ ] Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
 

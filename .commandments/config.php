@@ -93,6 +93,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Backend\DuplicateFunction::class,
         // Sins\Backend\EnumCaseOrChain::class,
         // Sins\Backend\EnumValueMatch::class,
+        // Sins\Backend\ErasedNullObject::class,
         // Sins\Backend\FeatureEnvy::class,
         // Sins\Backend\FlagArgument::class,
         // Sins\Backend\GenericException::class,

@@ -71,6 +71,7 @@ use PhpParser\Node\PropertyHook;
 use PhpParser\NodeFinder;
 use PhpParser\Node\NullableType;
 use PhpParser\Node\UnionType;
+use JesseGall\CodeCommandments\Ast\Support\ScalarRendering;
 use PhpParser\Node\UseItem;
 use PhpParser\Node\Param;
 use PhpParser\Node\PropertyItem;
@@ -1527,6 +1528,21 @@ class AstNode
     }
 
     /**
+     * Does this expression land in a slot the code declares as $type — the default of a declaration typed
+     * that way, or the value returned from a function declaring it? The two places a written value meets a
+     * declared type, so a rule about what a type accepts asks once and covers both.
+     */
+    public function fillsSlotTyped(string $type): bool
+    {
+        if ($this->isDeclarationDefault()) {
+            return TypeName::render($this->declaredType()) === $type;
+        }
+
+        return $this->isReturnedValue()
+            && TypeName::render($this->enclosingFunction()?->getReturnType()) === $type;
+    }
+
+    /**
      * Does this call decode what it just ENCODED — `json_decode(json_encode($x), true)`? Nothing
      * crosses a boundary in a round-trip: the value was ours a moment ago, and the array is its
      * own serialized form, obtained deliberately as data to walk. A cast or parentheses in
@@ -2661,6 +2677,16 @@ class AstNode
     public function isEmptyString(): bool
     {
         return $this->node instanceof String_ && $this->node->value === '';
+    }
+
+    /**
+     * Is this expression the empty string, HOWEVER it is spelled — the `''` literal, or a `new X` whose
+     * `__toString` renders `''`, which a `string`-typed slot coerces to exactly that. The one place that
+     * knows a blank wears two spellings, so a rule about blanks cannot be dodged by wrapping one.
+     */
+    public function isBlankString(ScalarRendering $rendering): bool
+    {
+        return $this->isEmptyString() || $rendering->isBlank($this->newClassName());
     }
 
     /**
