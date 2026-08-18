@@ -1,6 +1,10 @@
-# AGENTS
+---
+name: commandments
+description: "The index of this project's architectural disciplines — every code-commandments skill, when each one fires, and the commands that find and fix sins (`judge`, `info`, `repent`, `report`, `make`, `until`). Load this when you start work in this codebase, when you need to know WHICH discipline covers a subject you are about to write, when a `judge` finding names a rule you do not recognise, or when a context compaction may have dropped the disciplines you loaded earlier."
+---
 
-<!-- BEGIN: code-commandments briefing (auto-generated, run `composer update`) -->
+# Code Commandments — the disciplines in force here
+
 ## Skills — load before you work
 
 Code style in this project lives in the code-commandments skills, published to
@@ -217,4 +221,3 @@ those the report advertises `vendor/bin/commandments scaffold --sin=NAME`, which
 generates the helper into your source root with its namespace set. Scaffold the
 construct, then write the fix that uses it (`scaffold` creates the helper; `repent`
 fixes call sites).
-<!-- END: code-commandments briefing -->

@@ -72,6 +72,14 @@ final class Library
     {
         $ids = [];
 
+        // The map itself, published like any other skill and named FIRST — an agent that needs to
+        // know WHICH discipline covers a subject loads it the same way it loads a discipline.
+        @mkdir($this->path(Router::ID), 0775, true);
+
+        if (File::write($this->path(Router::ID) . '/SKILL.md', Router::render($this->workspace->root(), $this->languages))) {
+            $ids[] = Router::ID;
+        }
+
         foreach (Catalog::all() as $skill) {
             $source = "{$packageRoot}/skills/commandments/{$skill->slug}";
 

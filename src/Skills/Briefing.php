@@ -150,14 +150,22 @@ final class Briefing
         shallowly than you do, so a delegated edit is how violations slip in. Read-only
         fan-out is welcome; the writing is yours alone.
 
-        **MANDATORY LOAD — load these at the start of every coding session, before you
-        explore-to-plan or edit a single line:**
+        **The disciplines.** Each one is a skill, and each says in its own description WHEN to
+        reach for it — the syntax you are about to write, the decision you are about to make. Load
+        one when its subject comes up, and load it again rather than working from memory: a
+        compaction drops instructions silently while leaving you the impression they are still
+        there. A `judge` finding names the skill that fixes it, so you are never guessing.
+
+        Load **`commandments-backend-fix-at-the-source`** before your first edit whatever else you
+        do — every other discipline defers to it. And **`commandments`** is this whole list as a
+        loadable skill, for when you want the map in front of you.
+
+        **CONSTANTLY IN PLAY — these fire on ordinary, everyday code, so you will reach for them
+        most:**
 
         {$mandatory}
 
-        Do not start work without all of them loaded.
-
-        **KEEP IN MIND — load the moment the work touches them:**
+        **ON CONTACT — load the moment the work touches the subject:**
 
         {$keepInMind}
 
