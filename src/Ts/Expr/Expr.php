@@ -13,17 +13,7 @@ use JesseGall\CodeCommandments\Ts\Token;
  */
 final class Expr
 {
-    /**
-     * The `[start, end)` byte range this expression occupies in the file it was parsed from — a
-     * `.ts` module, or the SFC holding the binding. Absolute, because {@see Parser::parse} is told
-     * the offset the fragment it lexes begins at, so the call inside a method inside a class
-     * reports its own position rather than its statement's.
-     *
-     * 0/0 for an expression built by hand rather than parsed.
-     */
-    public private(set) int $start = 0;
-
-    public private(set) int $end = 0;
+    use \JesseGall\CodeCommandments\Ts\Positioned;
 
     /**
      * @param  array<string, mixed>  $props
@@ -33,18 +23,6 @@ final class Expr
         public readonly array $props = [],
     ) {}
 
-    /**
-     * Stamp this expression with the source range it was parsed from, and return it — the parser's
-     * one way to record a position. Write access is this class's alone ({@see $start}), so a node
-     * cannot be moved once placed.
-     */
-    public function locatedAt(int $start, int $end): self
-    {
-        $this->start = $start;
-        $this->end = $end;
-
-        return $this;
-    }
 
     /**
      * Every expression in this tree, this one first — the flat walk a query selects over, so a

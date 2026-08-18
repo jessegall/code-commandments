@@ -14,32 +14,10 @@ use JesseGall\CodeCommandments\Ts\Expr\Expr;
  */
 abstract class Node
 {
-    /**
-     * The `[start, end)` byte range this node occupies IN THE MODULE SOURCE it was parsed from —
-     * 0/0 for a node built by hand rather than parsed. Module-relative on purpose: the parser is
-     * handed a string and knows nothing of the file it came from, so turning this into a
-     * `file:line` is {@see \JesseGall\CodeCommandments\Ts\ModuleFile}'s job, which owns both the
-     * path and the offset the script block begins at.
-     */
-    public private(set) int $start = 0;
-
-    public private(set) int $end = 0;
+    use \JesseGall\CodeCommandments\Ts\Positioned;
 
     abstract public function render(): string;
 
-    /**
-     * Stamp this node with the source range it was parsed from, and return it — the parser's one
-     * way to record a position, written here so no subclass has to thread two more constructor
-     * arguments through for it. Write access is the base class's alone ({@see $start}), so a node
-     * cannot be moved once the parser has placed it.
-     */
-    public function locatedAt(int $start, int $end): static
-    {
-        $this->start = $start;
-        $this->end = $end;
-
-        return $this;
-    }
 
     /**
      * The nodes this one CONTAINS — a module's statements, a function's parameters, a class's
