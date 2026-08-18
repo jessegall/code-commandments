@@ -29,8 +29,8 @@ final class BriefingTest extends TestCase
     {
         $block = Briefing::render();
 
-                $this->assertStringContainsString('MANDATORY LOAD', $block);
-        $this->assertStringContainsString('KEEP IN MIND', $block);
+        $this->assertStringContainsString('CONSTANTLY IN PLAY', $block);
+        $this->assertStringContainsString('ON CONTACT', $block);
 
         foreach (Skills::all() as $skill) {
             $this->assertStringContainsString("`{$skill->id()}`", $block, "{$skill->id()} missing from the briefing");

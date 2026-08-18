@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "in resources/js/composables/useCart.ts I've got `const total = cart.value?.summary?.total ?? 0` and I'm not sure whether summary can actually be undefined or if I'm just being defensive",
+        "our OrderRow.vue script has `props.customer?.name ?? '—'` in three places. customer is typed `Customer | undefined` but the parent always passes it",
+        "what's the right way to say 'this field might not be there' in a TS interface — `field?: string`, `field: string | null`, or both? we've got all three across resources/js/types"
+    ],
+    "not": [
+        "typescript is complaining `Object is possibly 'null'` on document.getElementById('app') in resources/js/app.ts — what's the idiomatic fix for a DOM lookup"
+    ]
+}

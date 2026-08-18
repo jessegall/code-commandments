@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 use JesseGall\CodeCommandments\Cli\Migration;
 use JesseGall\CodeCommandments\Cli\State\StateFile;
-use JesseGall\CodeCommandments\Cli\Until\UntilGate;
+use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
 use JesseGall\CodeCommandments\PlanExecution;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
@@ -51,9 +51,9 @@ final class StateMigrationTest extends TestCase
         return new Migration(Workspace::at($this->root, 'a-session'))->run();
     }
 
-    private function gate(): UntilGate
+    private function gate(): StopConditionGate
     {
-        return new UntilGate(new StateFile($this->session . '/.until', UntilGate::legend()));
+        return new StopConditionGate(new StateFile($this->session . '/.until', StopConditionGate::legend()));
     }
 
     public function test_a_gates_conditions_counts_and_claim_become_one_file(): void

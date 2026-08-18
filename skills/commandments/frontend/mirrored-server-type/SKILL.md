@@ -31,9 +31,9 @@ specifically the COPY of a shape the server already owns.
 
 ## Rules
 
-- Let the server own the shape: mark the `Data` class `#[TypeScript]`, generate the type, and import the generated one. Never hand-maintain a copy of a server contract.
+- [ ] Let the server own the shape: mark the `Data` class `#[TypeScript]`, generate the type, and import the generated one. Never hand-maintain a copy of a server contract.
 
-## Bad → good
+## Worked example
 
 ### mirrored-server-type — in TypeScript
 
@@ -50,34 +50,15 @@ export interface OrderData {
 }
 ```
 
-### mirrored-server-type — in Vue
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes
+## Commands
 
-```vue
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=frontend/mirrored-server-type` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `mirrored-server-type`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-interface CustomerData {
-  first_name: string
-  last_name: string
-  email_address: string
-  phone_number: string
-}
+## Reference
 
-----------[ Good ]----------
-
-interface TableColumn {
-  key: string
-  label: string
-  sortable: boolean
-  width: number
-}
-```
-
-## When it fires
-
-- A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes — `MirroredServerTypeDetector`
-
-## Checklist
-
-- [ ] Let the server own the shape: mark the `Data` class `#[TypeScript]`, generate the type, and import the generated one. Never hand-maintain a copy of a server contract.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "I'm adding a docblock to app/Support/Money.php — how much should it say? the class has about 12 methods and I don't want to write an essay",
+        "our codebase is full of comments like `// previously this returned an array, now it returns a Collection`. should I be writing those when I change something"
+    ],
+    "not": [
+        "we need API docs for our public endpoints — is there a Laravel package that generates OpenAPI from the routes"
+    ]
+}

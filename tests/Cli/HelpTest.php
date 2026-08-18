@@ -64,8 +64,8 @@ final class HelpTest extends TestCase
 
         // The regression that started this: `pause`/`resume` existed as subcommands but no help
         // mentioned them, because the screen was hand-maintained.
-        $this->assertStringContainsString('until pause', $page);
-        $this->assertStringContainsString('until resume', $page);
+        $this->assertStringContainsString('stop-condition pause', $page);
+        $this->assertStringContainsString('stop-condition resume', $page);
 
         $judge = new HelpScreen($this->commands())->page($this->command('judge'));
 
@@ -77,7 +77,7 @@ final class HelpTest extends TestCase
     public function test_asking_for_help_prints_the_overview_or_one_page(): void
     {
         $this->assertStringContainsString('Usage:', $this->render(['commandments', '--help']));
-        $this->assertStringContainsString('commandments until', $this->render(['commandments', 'help', 'until']));
+        $this->assertStringContainsString('commandments stop-condition', $this->render(['commandments', 'help', 'until']));
         $this->assertStringContainsString('commandments layers add', $this->render(['commandments', 'layers', '--help']));
     }
 
@@ -105,12 +105,12 @@ final class HelpTest extends TestCase
 
     public function test_a_document_block_is_filled_from_the_live_cli(): void
     {
-        $document = "# Doc\n\n<!-- BEGIN: commands:until (auto-generated, run `composer sins`) -->\nstale\n<!-- END: commands:until -->\n";
+        $document = "# Doc\n\n<!-- BEGIN: commands:stop-condition (auto-generated, run `composer sins`) -->\nstale\n<!-- END: commands:stop-condition -->\n";
 
         $refreshed = CommandBlocks::refresh($document);
 
         $this->assertStringNotContainsString('stale', $refreshed);
-        $this->assertStringContainsString('commandments until met <n>', $refreshed);
+        $this->assertStringContainsString('commandments stop-condition met <n>', $refreshed);
         $this->assertSame($refreshed, CommandBlocks::refresh($refreshed), 'refreshing twice must be a no-op');
     }
 

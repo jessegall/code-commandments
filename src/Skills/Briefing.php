@@ -113,12 +113,12 @@ final class Briefing
         by their nature cannot move.
 
         **Stop conditions — when the user says "keep going until X".** Record it at once:
-        `vendor/bin/commandments until "<condition>"`. While it stands you may not stop: every
+        `vendor/bin/commandments stop-condition "<condition>"`. While it stands you may not stop: every
         stop is held and sends you back to VERIFY the condition — actually run the command and
         read the output, never assume it holds because you did the work. Strike one off with
-        `vendor/bin/commandments until met <n>` once it genuinely holds; if you are truly
-        blocked, `vendor/bin/commandments until stuck` hands back to the user while keeping the
-        condition in force. Never `until clear` to escape a condition you simply haven't met.
+        `vendor/bin/commandments stop-condition met <n>` once it genuinely holds; if you are truly
+        blocked, `vendor/bin/commandments stop-condition stuck` hands back to the user while keeping the
+        condition in force. Never `stop-condition clear` to escape a condition you simply haven't met.
 
         **Keep the to-do list the user can SEE honest.** Mirror every condition into whatever
         visible list your agent keeps, mark an item done the moment you strike its condition
@@ -130,11 +130,11 @@ final class Briefing
         already working, decide what their message IS: **steering** the work in hand (a correction,
         a change of approach, "while you're in there…") is done **now** — parking it is a way of not
         doing it. A **separate task**, one they deferred ("later", "when you're done"), or anything
-        that would derail the phase you're on is **parked**: `vendor/bin/commandments until "<the
+        that would derail the phase you're on is **parked**: `vendor/bin/commandments stop-condition "<the
         task, as a statement you can verify>"`, then carry on with what you were doing. Unsure?
         Cheap and inside the current phase → do it; opens a new front → park it. A plan takes
         precedence over the gate, so parked work surfaces at `plan done` — exactly "later".
-        Load the `commandments-until` skill for the discipline.
+        Load the `commandments-stop-condition` skill for the discipline.
 
         When in doubt, load `commandments-backend-fix-at-the-source` and re-read it. It is the parent move
         behind every other skill.
@@ -150,14 +150,22 @@ final class Briefing
         shallowly than you do, so a delegated edit is how violations slip in. Read-only
         fan-out is welcome; the writing is yours alone.
 
-        **MANDATORY LOAD — load these at the start of every coding session, before you
-        explore-to-plan or edit a single line:**
+        **The disciplines.** Each one is a skill, and each says in its own description WHEN to
+        reach for it — the syntax you are about to write, the decision you are about to make. Load
+        one when its subject comes up, and load it again rather than working from memory: a
+        compaction drops instructions silently while leaving you the impression they are still
+        there. A `judge` finding names the skill that fixes it, so you are never guessing.
+
+        Load **`commandments-backend-fix-at-the-source`** before your first edit whatever else you
+        do — every other discipline defers to it. And **`commandments`** is this whole list as a
+        loadable skill, for when you want the map in front of you.
+
+        **CONSTANTLY IN PLAY — these fire on ordinary, everyday code, so you will reach for them
+        most:**
 
         {$mandatory}
 
-        Do not start work without all of them loaded.
-
-        **KEEP IN MIND — load the moment the work touches them:**
+        **ON CONTACT — load the moment the work touches the subject:**
 
         {$keepInMind}
 

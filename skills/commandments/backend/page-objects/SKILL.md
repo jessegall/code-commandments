@@ -124,20 +124,20 @@ page object — the composed thing on the wire — is exactly where they earn th
 
 ## Rules
 
-- Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
-  _Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`. Pin a deliberately-eager slot (one that must capture request-scoped state at build time) with `#[Eager]` — the scaffolded escape hatch._
-- Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
-  _Add `#[Hidden]` above the injection attribute — LaravelData's `#[Hidden]`, which keeps it off the wire. So one attribute ALSO keeps it out of the generated TypeScript, wire the scaffolded hidden-aware transformer into your typescript-transformer config; otherwise LaravelData's `#[Hidden]` alone still leaks the property into the TS type._
-- Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
-  _Keep the real value-object type and add `#[WithTransformer(SomeTransformer::class)]` — plus `#[TypeScriptType(...)]` so the generated TypeScript matches the transformed shape._
-- Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole.
-  _Add `#[TypeScript]` above the page-object class (`use Spatie\TypeScriptTransformer\Attributes\TypeScript;`)._
-- A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
-  _Inject it as a `#[Hidden] #[FromContainer(Service::class)]` constructor property._
-- Pair every custom `#[WithTransformer]` with a `#[TypeScriptType]` / `#[LiteralTypeScriptType]` that declares the transformed wire shape.
-  _Add `#[TypeScriptType('...')]` (or `#[LiteralTypeScriptType(...)]`) stating the type the transformer serializes to, so the generated frontend type matches the wire._
+- [ ] Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
+      _Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`. Pin a deliberately-eager slot (one that must capture request-scoped state at build time) with `#[Eager]` — the scaffolded escape hatch._
+- [ ] Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
+      _Add `#[Hidden]` above the injection attribute — LaravelData's `#[Hidden]`, which keeps it off the wire. So one attribute ALSO keeps it out of the generated TypeScript, wire the scaffolded hidden-aware transformer into your typescript-transformer config; otherwise LaravelData's `#[Hidden]` alone still leaks the property into the TS type._
+- [ ] Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
+      _Keep the real value-object type and add `#[WithTransformer(SomeTransformer::class)]` — plus `#[TypeScriptType(...)]` so the generated TypeScript matches the transformed shape._
+- [ ] Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole.
+      _Add `#[TypeScript]` above the page-object class (`use Spatie\TypeScriptTransformer\Attributes\TypeScript;`)._
+- [ ] A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
+      _Inject it as a `#[Hidden] #[FromContainer(Service::class)]` constructor property._
+- [ ] Pair every custom `#[WithTransformer]` with a `#[TypeScriptType]` / `#[LiteralTypeScriptType]` that declares the transformed wire shape.
+      _Add `#[TypeScriptType('...')]` (or `#[LiteralTypeScriptType(...)]`) stating the type the transformer serializes to, so the generated frontend type matches the wire._
 
-## Bad → good
+## Worked example
 
 ### constructor-orchestration
 
@@ -181,256 +181,20 @@ final class ComputedOverviewPage extends Data
 }
 ```
 
-### injected-service-not-hidden
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/page-objects` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `constructor-orchestration`, `injected-service-not-hidden`, `manual-output-transform`, `page-object-missing-typescript`, `service-location-in-page-object`, `transformer-without-ts-type`.
+- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `constructor-orchestration`, `page-object-missing-typescript`. Review it with `--dry-run` first.
+- `vendor/bin/commandments scaffold --sin=<sin>` — generate the helper the fix reaches for, for `constructor-orchestration`, `injected-service-not-hidden`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-// A page seeded through a `for()` factory, composing direct nested Data slots (no typed collection),
-// with TWO container-injected collaborators: `$reader` is correctly `#[Hidden]`, but `$facetBuilder`
-// is not — one un-hidden service is enough to leak into the frontend type.
+## Reference
 
-#[TypeScript]
-final class CatalogPage extends Data
-{
-    public readonly MenuLink $home;
-
-    public readonly MenuLink $active;
-
-    public readonly CartLine $featured;
-
-    public static function for(string $category): self
-    {
-        return self::from(['category' => $category]);
-    }
-
-    public function __construct(
-        #[Hidden]
-        #[FromContainer(CatalogReader::class)]
-        public readonly CatalogReader $reader,
-
-        #[FromContainer(FacetBuilder::class)]
-        public readonly FacetBuilder $facetBuilder,
-
-        public readonly string $category,
-    ) {}
-
-    public function breadcrumb(): string
-    {
-        return $this->home->label . ' / ' . $this->active->label;
-    }
-}
-
-----------[ Good ]----------
-
-// The FIX for the same catalog page: BOTH injected collaborators carry `#[Hidden]`, so neither the
-// reader nor the facet builder serializes into the payload or reaches the generated TypeScript type.
-
-#[TypeScript]
-final class HiddenCatalogPage extends Data
-{
-    public readonly MenuLink $home;
-
-    public readonly MenuLink $active;
-
-    public readonly CartLine $featured;
-
-    public static function for(string $category): self
-    {
-        return self::from(['category' => $category]);
-    }
-
-    public function __construct(
-        #[Hidden]
-        #[FromContainer(CatalogReader::class)]
-        public readonly CatalogReader $reader,
-
-        #[Hidden]
-        #[FromContainer(FacetBuilder::class)]
-        public readonly FacetBuilder $facetBuilder,
-
-        public readonly string $category,
-    ) {}
-
-    public function trail(): string
-    {
-        return $this->category . ': ' . $this->active->label;
-    }
-}
-```
-
-### manual-output-transform
-
-A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape
-
-```php
-----------[ Bad ]----------
-
-#[Computed]
-public function marker(): array
-{
-    return ['lat' => $this->origin->lat, 'lng' => $this->origin->lng, 'origin' => $this->origin->label()];
-}
-
-----------[ Good ]----------
-
-public function __construct(
-    #[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
-    public readonly Money $priceInEuro,
-    public readonly string $sku,
-    public readonly int $quantity,
-) {}
-```
-
-### page-object-missing-typescript
-
-A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked
-
-```php
-----------[ Bad ]----------
-
-// Slots including a typed collection, all filled straight from the injected builder in the
-// constructor — each a self-contained projection that a `#[Computed]` hook would carry.
-
-final class MetricsPage extends Data
-{
-    public readonly StatCard $headline;
-
-    /**
-     * @var list<StatCard>
-     */
-    #[DataCollectionOf(StatCard::class)]
-    public readonly array $cards;
-
-    public function __construct(
-        #[Hidden]
-        #[FromContainer(FacetBuilder::class)]
-        public readonly FacetBuilder $builder,
-    ) {
-        $this->headline = $this->builder->headline();
-        $this->cards = $this->builder->cards();
-    }
-
-    public function caption(): string
-    {
-        return sprintf('%s across %d metrics', $this->headline->label, count($this->cards));
-    }
-
-    public function labels(): string
-    {
-        $names = [];
-
-        foreach ($this->cards as $card) {
-            $names[] = strtoupper($card->label);
-        }
-
-        return implode(', ', $names);
-    }
-}
-
-----------[ Good ]----------
-
-// The FIX for the same dashboard: `#[TypeScript]` on the page object, so the transformer generates the
-// frontend type the `.vue` page binds its props against — the payload contract is checked, not `any`.
-// (The reporter is injected `#[Hidden]`, so only the page data reaches that type.)
-
-#[TypeScript]
-final class TypedDashboardPage extends Data
-{
-    public readonly StatCard $revenue;
-
-    public readonly StatCard $orders;
-
-    public function __construct(
-        #[Hidden]
-        #[FromContainer(SalesReporter::class)]
-        public readonly SalesReporter $sales,
-    ) {}
-
-    public function caption(): string
-    {
-        return $this->revenue->label . ' / ' . $this->orders->value;
-    }
-}
-```
-
-### service-location-in-page-object
-
-A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]`
-
-```php
-----------[ Bad ]----------
-
-public function aiEnabled(): bool
-{
-    return app(AiService::class)->isEnabled();
-}
-
-----------[ Good ]----------
-
-// The FIX for the same status page: the health service is pulled through the container declaratively —
-// `#[Hidden] #[FromContainer(ContainersService::class)]` on a promoted property — so the getter reads an
-// injected collaborator instead of reaching out with `app()`.
-
-#[TypeScript]
-final class InjectedStatusPage extends Data
-{
-    public function __construct(
-        public readonly StatCard $uptime,
-        public readonly StatCard $load,
-        public readonly MenuLink $refresh,
-
-        #[Hidden]
-        #[FromContainer(ContainersService::class)]
-        public readonly ContainersService $containers,
-    ) {}
-
-    public function isHealthy(): bool
-    {
-        return $this->containers->healthy();
-    }
-}
-```
-
-### transformer-without-ts-type
-
-A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type
-
-```php
-----------[ Bad ]----------
-
-public function __construct(
-    #[WithTransformer(MoneyTransformer::class)]
-    public readonly Money $price,
-) {}
-
-----------[ Good ]----------
-
-public function __construct(
-    #[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
-    public readonly Money $price,
-) {}
-```
-
-## When it fires
-
-- A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place — `ConstructorOrchestrationDetector`
-- A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type — `InjectedServiceNotHiddenDetector`
-- A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape — `ManualOutputTransformDetector`
-- A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked — `PageObjectMissingTypeScriptDetector`
-- A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]` — `ServiceLocationInPageObjectDetector`
-- A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type — `TransformerWithoutTsTypeDetector`
-
-## Checklist
-
-- [ ] Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
-- [ ] Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
-- [ ] Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
-- [ ] Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole.
-- [ ] A page object pulls every collaborator through `#[FromContainer]` (hidden), never `app()`/`resolve()` inside a getter.
-- [ ] Pair every custom `#[WithTransformer]` with a `#[TypeScriptType]` / `#[LiteralTypeScriptType]` that declares the transformed wire shape.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

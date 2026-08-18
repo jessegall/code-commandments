@@ -104,9 +104,9 @@ final class HelpScreen
      * gives, on STDERR, with the conventional exit code. One call replaces the hand-written
      * `Usage: …` one-liners that used to drift from the real grammar.
      */
-    public static function usage(Command $command, string $message = ''): int
+    public static function usage(Command $command, ?string $message = null): int
     {
-        fwrite(STDERR, ($message === '' ? '' : "✗ {$message}\n\n") . new self([$command])->page($command));
+        fwrite(STDERR, ($message === null ? '' : "✗ {$message}\n\n") . new self([$command])->page($command));
 
         return 2;
     }

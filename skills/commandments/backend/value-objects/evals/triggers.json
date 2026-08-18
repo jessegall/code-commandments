@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "half our service methods take ($street, $city, $postcode, $country) and pass them straight through to each other. six params in some places. what's the move",
+        "we return `array{total: int, currency: string, formatted: string}` from PricingService::quote() and every caller does $quote['total']. should that be a class"
+    ],
+    "not": [
+        "should app/Models/Order.php be an Eloquent model or a plain class? it's persisted but has a lot of behaviour"
+    ]
+}

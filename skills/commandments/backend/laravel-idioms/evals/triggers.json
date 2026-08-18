@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "in app/Http/Controllers/CheckoutController.php I'm reading $request->input('coupon_code') directly. is there a more typed way to do that",
+        "I need the CurrencyConverter inside a model method and reached for app(CurrencyConverter::class). a colleague says never do that — what's the alternative",
+        "we've got `->where('status', 'active')->where('deleted_at', null)` repeated in about a dozen query builders across app/Repositories"
+    ],
+    "not": [
+        "what's the difference between Laravel's queue:work and queue:listen, and which should we run in production"
+    ]
+}

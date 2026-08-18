@@ -69,14 +69,24 @@ final class DisabledLanguageTest extends TestCase
             new Example(new Comparison('interface MarkerOnlyInTheVueExample { id: string }'), Language::Vue),
         ]];
 
-        $everything = new SkillRenderer()->render($skill, $examples);
-        $noTypeScript = new SkillRenderer(new Languages(Language::TypeScript))->render($skill, $examples);
+        // Everything the skill PUBLISHES — the body and the reference documents it spills into,
+        // since a worked example lives in whichever of them the renderer put it.
+        $everything = self::published(new SkillRenderer(), $skill, $examples);
+        $noTypeScript = self::published(new SkillRenderer(new Languages(Language::TypeScript)), $skill, $examples);
 
         $this->assertStringContainsString('MarkerOnlyInTheTypeScriptExample', $everything, 'the TypeScript example publishes by default');
         $this->assertStringContainsString('MarkerOnlyInTheVueExample', $everything);
 
         $this->assertStringNotContainsString('MarkerOnlyInTheTypeScriptExample', $noTypeScript, 'a language the project does not write is not taught');
         $this->assertStringContainsString('MarkerOnlyInTheVueExample', $noTypeScript, 'the languages it DOES write are untouched');
+    }
+
+    /**
+     * @param  array<class-string, list<Example>>  $examples
+     */
+    private static function published(SkillRenderer $renderer, object $skill, array $examples): string
+    {
+        return implode("\n", $renderer->documents($skill, $examples));
     }
 
     private function skillNamed(string $slug): object

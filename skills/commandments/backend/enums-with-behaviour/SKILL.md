@@ -37,22 +37,22 @@ Reach for this the moment you write:
 
 ## Rules
 
-- Seal a closed set of values as a native backed enum, not a class of scalar `const`s or loose strings.
-  _A native `enum X: string` with the values as cases._
-- Put case-group membership on the enum (a method); don't hand-roll `$x === Enum::A || $x === Enum::B`.
-  _A membership method on the enum (`$x->isFinal()`)._
-- Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.
-  _A method on the backed enum (`$x->label()`, `$x->isPaid()`)._
-- Test membership against the enum (its `cases()`/`tryFrom`), not an `in_array` of literals that mirror its values.
-  _Use the enum (`Enum::tryFrom($x)` / a `cases()` check)._
-- A `match`/`switch` `default` for an unhandled case must throw, not return `null`/`false`/`[]`.
-  _`default => throw Unhandled::for($x)`._
-- Dispatch over the enum's cases, not string/int literals that mirror its values.
-  _Dispatch via a method on the backed enum's cases._
-- Where a parameter is spelled from a named vocabulary, spell it that way EVERYWHERE — never the raw value at one call site and the constant at the next.
-  _The constant that already holds this value, referenced by name._
+- [ ] Seal a closed set of values as a native backed enum, not a class of scalar `const`s or loose strings.
+      _A native `enum X: string` with the values as cases._
+- [ ] Put case-group membership on the enum (a method); don't hand-roll `$x === Enum::A || $x === Enum::B`.
+      _A membership method on the enum (`$x->isFinal()`)._
+- [ ] Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.
+      _A method on the backed enum (`$x->label()`, `$x->isPaid()`)._
+- [ ] Test membership against the enum (its `cases()`/`tryFrom`), not an `in_array` of literals that mirror its values.
+      _Use the enum (`Enum::tryFrom($x)` / a `cases()` check)._
+- [ ] A `match`/`switch` `default` for an unhandled case must throw, not return `null`/`false`/`[]`.
+      _`default => throw Unhandled::for($x)`._
+- [ ] Dispatch over the enum's cases, not string/int literals that mirror its values.
+      _Dispatch via a method on the backed enum's cases._
+- [ ] Where a parameter is spelled from a named vocabulary, spell it that way EVERYWHERE — never the raw value at one call site and the constant at the next.
+      _The constant that already holds this value, referenced by name._
 
-## Bad → good
+## Worked example
 
 ### const-class-enum
 
@@ -99,193 +99,18 @@ enum TaxBand: int
 }
 ```
 
-### enum-case-or-chain
+The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-`$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/enums-with-behaviour` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `const-class-enum`, `enum-case-or-chain`, `enum-value-match`, `in-array-mirrors-enum`, `match-default-returns-null`, `string-match-mirrors-enum`, `unnamed-vocabulary-literal`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-public function clearsImmediately(PaymentMethod $method): bool
-{
-    // not a coincidence — card and iDEAL both clear on the same rail
-    if ($this->retries > 3) {
-        return false;
-    }
+## Reference
 
-    return $method === PaymentMethod::Card || $method === PaymentMethod::Ideal;
-}
-
-----------[ Good ]----------
-
-public function clearsImmediatelyClean(PaymentMethod $method): bool
-{
-    if ($this->retries > 3) {
-        return false;
-    }
-
-    return $method->isInstant();
-}
-```
-
-### enum-value-match
-
-`match`/`switch` over an enum's `->value` at a call site (homeless method)
-
-```php
-----------[ Bad ]----------
-
-public function colour(Product $product): string
-{
-    switch ($product->category->value) {
-        case 'food':
-            return 'green';
-        case 'electronics':
-            return 'blue';
-        case 'clothing':
-            return 'purple';
-        default:
-            return 'grey';
-    }
-}
-
-----------[ Good ]----------
-
-// The mapping lives ON the enum; the call site just asks for the colour.
-
-public function colourViaEnum(Product $product): string
-{
-    return $product->category->badgeColour();
-}
-```
-
-### in-array-mirrors-enum
-
-`in_array($x, [literals])` whose literals mirror an existing enum's cases
-
-```php
-----------[ Bad ]----------
-
-public function allowed(string $method): bool
-{
-    return in_array($method, ['card', 'ideal', 'paypal'], true);
-}
-
-----------[ Good ]----------
-
-public function allowedClean(string $method): bool
-{
-    return PaymentMethod::tryFrom($method) !== null;
-}
-```
-
-### match-default-returns-null
-
-`match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing
-
-```php
-----------[ Bad ]----------
-
-public function for(Product $product): ?string
-{
-    return match ($product->priority) {
-        1 => 'urgent',
-        2 => 'normal',
-        3 => 'low',
-        default => null,
-    };
-}
-
-----------[ Good ]----------
-
-// The default arm throws a named exception, so an unhandled priority fails
-// loudly instead of being swallowed into null.
-
-public function strictFor(Product $product): string
-{
-    return match ($product->priority) {
-        1 => 'urgent',
-        2 => 'normal',
-        3 => 'low',
-        default => throw UnknownPriority::for($product->priority),
-    };
-}
-```
-
-### string-match-mirrors-enum
-
-`match`/`switch` over string/int literals that mirror an existing backed enum's case values
-
-```php
-----------[ Bad ]----------
-
-public function endpoint(string $method): string
-{
-    return match ($method) {
-        'card' => 'https://pay.test/card',
-        'ideal' => 'https://pay.test/ideal',
-        'paypal' => 'https://pay.test/paypal',
-        default => 'https://pay.test/fallback',
-    };
-}
-
-----------[ Good ]----------
-
-public function endpointClean(PaymentMethod $method): string
-{
-    return match ($method) {
-        PaymentMethod::Card => 'https://pay.test/card',
-        PaymentMethod::Ideal => 'https://pay.test/ideal',
-        PaymentMethod::PayPal => 'https://pay.test/paypal',
-    };
-}
-```
-
-### unnamed-vocabulary-literal
-
-A raw string in an argument the codebase elsewhere fills from a named vocabulary — `expect('{')` beside `expect(Token::COLON)`, where `Token::BRACE_OPEN` already names it
-
-```php
-----------[ Bad ]----------
-
-public function heading(string $title): string
-{
-    $this->emit(ReceiptGlyph::RULE);
-
-    return $this->emit('•') . $title;
-}
-
-----------[ Good ]----------
-
-// The RESOLUTION — the glyph written under the name that already holds it.
-
-public function separator(): string
-{
-    $this->emit(ReceiptGlyph::RULE);
-
-    return $this->emit(ReceiptGlyph::BULLET);
-}
-```
-
-## When it fires
-
-- A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum — `ConstClassEnumDetector`
-- `$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test — `EnumCaseOrChainDetector`
-- `match`/`switch` over an enum's `->value` at a call site (homeless method) — `EnumValueMatchDetector`
-- `in_array($x, [literals])` whose literals mirror an existing enum's cases — `InArrayMirrorsEnumDetector`
-- `match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing — `MatchDefaultReturnsNullDetector`
-- `match`/`switch` over string/int literals that mirror an existing backed enum's case values — `StringMatchMirrorsEnumDetector`
-- A raw string in an argument the codebase elsewhere fills from a named vocabulary — `expect('{')` beside `expect(Token::COLON)`, where `Token::BRACE_OPEN` already names it — `UnnamedVocabularyLiteralDetector`
-
-## Checklist
-
-- [ ] Seal a closed set of values as a native backed enum, not a class of scalar `const`s or loose strings.
-- [ ] Put case-group membership on the enum (a method); don't hand-roll `$x === Enum::A || $x === Enum::B`.
-- [ ] Put per-case behaviour on the enum; never `match`/`switch` over its `->value` at a call site.
-- [ ] Test membership against the enum (its `cases()`/`tryFrom`), not an `in_array` of literals that mirror its values.
-- [ ] A `match`/`switch` `default` for an unhandled case must throw, not return `null`/`false`/`[]`.
-- [ ] Dispatch over the enum's cases, not string/int literals that mirror its values.
-- [ ] Where a parameter is spelled from a named vocabulary, spell it that way EVERYWHERE — never the raw value at one call site and the constant at the next.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

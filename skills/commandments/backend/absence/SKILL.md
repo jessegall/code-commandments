@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-absence
-description: "Decide how a value that might not be there is modelled — throw vs Option vs empty vs Null Object vs a plain nullable. Read this FIRST whenever you are about to write a `?T` / `T | null` return or property, `return null`, an `Option`, a `?->` / `=== null` / `?? default`, or whenever you are unsure if something \"can be missing\". Answers when it is OK to return null and when it is a bug."
+description: "Decide how a value that might not be there is modelled — throw vs Option vs an empty collection vs a Null Object vs a plain nullable. Read this FIRST whenever you are about to write a `?T` / `T | null` return or property, `return null`, an `Option`, a `?->` / `=== null` / `?? default`; whenever you are choosing between returning null and returning something empty for \"nothing matched\"; whenever an optional collaborator or callback is normalised with `??` in a constructor or body; or whenever you are unsure if something \"can be missing\". Answers when it is OK to return null and when it is a bug."
 ---
 
 # Absence — model "might not be there" honestly
@@ -80,22 +80,22 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 
 ## Rules
 
-- Model a value that may not be there in the type; never default a total `string` to `''` and read that blank back as "missing".
-  _Say it in the type — `?string $x = null`, or an `Option<string>` — so the blank is not a value the reader has to decode._
-- Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
-  _Say both halves out loud — `$x !== null && $x !== ''` — or make the value non-nullable at its source so only one question is left._
-- Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
-  _Replace `[...$base, ...($x !== null ? ['k' => $x] : [])]` with a `::of(k: $x, …)` factory that drops null-valued arguments._
-- Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
-  _Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`._
-- A Null Object only models absence while the TYPE admits it; never hand one to a `string`-typed slot, which coerces it to `''` and erases it.
-  _Widen the type to carry the object (`Stringable`, or the class itself) where the Null Object is the point; otherwise drop the wrapper — and where the blank meant "missing", say that in the type with `?string` or an `Option<string>`._
-- Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
-  _Create a reusable no-op invokable (`Invokable` + `NoOp`) and default the param to `new NoOp`._
-- Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
-  _Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`._
+- [ ] Model a value that may not be there in the type; never default a total `string` to `''` and read that blank back as "missing".
+      _Say it in the type — `?string $x = null`, or an `Option<string>` — so the blank is not a value the reader has to decode._
+- [ ] Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
+      _Say both halves out loud — `$x !== null && $x !== ''` — or make the value non-nullable at its source so only one question is left._
+- [ ] Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
+      _Replace `[...$base, ...($x !== null ? ['k' => $x] : [])]` with a `::of(k: $x, …)` factory that drops null-valued arguments._
+- [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
+      _Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`._
+- [ ] A Null Object only models absence while the TYPE admits it; never hand one to a `string`-typed slot, which coerces it to `''` and erases it.
+      _Widen the type to carry the object (`Stringable`, or the class itself) where the Null Object is the point; otherwise drop the wrapper — and where the blank meant "missing", say that in the type with `?string` or an `Option<string>`._
+- [ ] Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
+      _Create a reusable no-op invokable (`Invokable` + `NoOp`) and default the param to `new NoOp`._
+- [ ] Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
+      _Wrap at the seam with `Option::fromNullable($x)`, then consume with `match`/`unwrapOr`._
 
-## Bad → good
+## Worked example
 
 ### blank-string-default
 
@@ -125,178 +125,19 @@ public static function lined(string $heading, ?string $strapline = null): string
 }
 ```
 
-### cancelled-coalesce
+The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-`??` cancelled by the comparison it sits in — `($x ?? '') !== ''`
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/absence` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `blank-string-default`, `cancelled-coalesce`, `conditional-array-spread`, `de-nulled-finder`, `erased-null-object`, `nullable-callback`, `option-as-nullable`.
+- `vendor/bin/commandments scaffold --sin=<sin>` — generate the helper the fix reaches for, for `nullable-callback`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-public function hasSession(?string $sessionId): bool
-{
-    return ($sessionId ?? '') !== '';
-}
+## Reference
 
-----------[ Good ]----------
-
-public function hasSessionStated(?string $sessionId): bool
-{
-    return $sessionId !== null && $sessionId !== '';
-}
-```
-
-### conditional-array-spread
-
-An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present'
-
-```php
-----------[ Bad ]----------
-
-public function lines(): array
-{
-    return [
-        'number' => $this->number,
-        ...($this->coupon === null ? [] : ['discount' => ['coupon' => $this->coupon, 'applied' => true]]),
-    ];
-}
-
-----------[ Good ]----------
-
-public function toArray(): array
-{
-    return Payload::of(key: $this->key, label: $this->label, icon: $this->icon);
-}
-```
-
-### de-nulled-finder
-
-Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it)
-
-```php
-----------[ Bad ]----------
-
-public function byBarcode(string $barcode): ?Product
-{
-    return Product::query()->where('barcode', $barcode)->first();
-}
-
-----------[ Good ]----------
-
-// Resolve-or-throw: a scanned barcode must exist, so the absence is decided
-// once at the source and the return type tells the truth.
-
-public function requireByBarcode(string $barcode): Product
-{
-    return Product::query()->where('barcode', $barcode)->first()
-        ?? throw ProductNotFound::forBarcode($barcode);
-}
-```
-
-### erased-null-object
-
-A blank-rendering Null Object written into a `string` slot — coerced back to `''`
-
-```php
-----------[ Bad ]----------
-
-public static function of(string $consignment, string $complaint = new BlankText): self
-{
-    return new self($consignment, $complaint);
-}
-
-----------[ Good ]----------
-
-public static function noted(string $consignment, ?string $complaint = null): self
-{
-    return new self($consignment, $complaint);
-}
-```
-
-### nullable-callback
-
-Nullable callback normalised in the body instead of a Null Object default
-
-```php
-----------[ Bad ]----------
-
-public function run(Closure $work, Closure | null $onRetry = null): mixed
-{
-    while (true) {
-        $this->attempts++;
-
-        try {
-            return $work();
-        } catch (\Throwable $e) {
-            if ($onRetry) {
-                $onRetry($this->attempts);
-            }
-
-            if ($this->attempts >= 3) {
-                throw $e;
-            }
-        }
-    }
-}
-
-----------[ Good ]----------
-
-public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
-{
-    while (true) {
-        $this->attempts++;
-
-        try {
-            return $work();
-        } catch (\Throwable $e) {
-            $onRetry($this->attempts);
-
-            if ($this->attempts >= 3) {
-                throw $e;
-            }
-        }
-    }
-}
-```
-
-### option-as-nullable
-
-`Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)`
-
-```php
-----------[ Bad ]----------
-
-public function locate(string $email): ?Option
-{
-    return Option::none();
-}
-
-----------[ Good ]----------
-
-public function locateHonestly(string $email): Option
-{
-    return Option::fromTruthy($email);
-}
-```
-
-## When it fires
-
-- `string $x = ''` standing in for absence — then asked `$x === ''` — `BlankStringDefaultDetector`
-- `??` cancelled by the comparison it sits in — `($x ?? '') !== ''` — `CancelledCoalesceDetector`
-- An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present' — `ConditionalArraySpreadDetector`
-- Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it) — `DeNulledFinderDetector`
-- A blank-rendering Null Object written into a `string` slot — coerced back to `''` — `ErasedNullObjectDetector`
-- Nullable callback normalised in the body instead of a Null Object default — `NullableCallbackDetector`
-- `Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)` — `OptionAsNullableDetector`
-
-## Checklist
-
-- [ ] Model a value that may not be there in the type; never default a total `string` to `''` and read that blank back as "missing".
-- [ ] Ask about absence directly (`$x !== null`); never coalesce to a value only to compare against that same value.
-- [ ] Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
-- [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
-- [ ] A Null Object only models absence while the TYPE admits it; never hand one to a `string`-typed slot, which coerces it to `''` and erases it.
-- [ ] Default an optional callback to a Null Object in the signature; don't null-normalise a `?callable` in the body.
-- [ ] Use `Option` as a real option (`some`/`none`/`match`); never `?Option`/`Option | null`/`unwrapOr(null)`.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

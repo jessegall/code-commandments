@@ -41,17 +41,17 @@ field, or a value object, and delete the defence.
 
 ## Rules
 
-- Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
-- If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
-- Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here.
-  _drop the `: Type` — `repent` does this for you_
-- Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
-- A required slot means the caller has the value. Filling it to satisfy the signature makes the envelope lie in a way no type can catch.
-  _Fetch the real value, or split a narrower envelope that only promises what this answer knows._
-- A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
-  _Make it a stored property: a constant body becomes a property default (`public ?Transition $t = null;`); a constructed value (`get => Transition::make(...)`) is assigned ONCE in the constructor. Keep the hook only when the body genuinely derives from `$this` state._
+- [ ] Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
+- [ ] If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
+- [ ] Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here.
+      _drop the `: Type` — `repent` does this for you_
+- [ ] Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
+- [ ] A required slot means the caller has the value. Filling it to satisfy the signature makes the envelope lie in a way no type can catch.
+      _Fetch the real value, or split a narrower envelope that only promises what this answer knows._
+- [ ] A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
+      _Make it a stored property: a constant body becomes a property default (`public ?Transition $t = null;`); a constructed value (`get => Transition::make(...)`) is assigned ONCE in the constructor. Keep the hook only when the body genuinely derives from `$this` state._
 
-## Bad → good
+## Worked example
 
 ### masked-invariant
 
@@ -91,268 +91,19 @@ final class OpenGradeSelector
 }
 ```
 
-### phantom-nullable
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/type-honesty` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `masked-invariant`, `phantom-nullable`, `redundant-arrow-return-type`, `scratch-state-restore`, `placeholder-filled-data`, `useless-property-hook`.
+- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `redundant-arrow-return-type`. Review it with `--dry-run` first.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-// The packing slip — carries the delivery address on to the shipment label.
+## Reference
 
-final class PackingSlip
-{
-    public ?ShippingAddress $deliverTo = null;
-
-    public function attach(ShipmentLabel $label): void
-    {
-        $label->deliverTo = $this->deliverTo;
-    }
-}
-
-----------[ Good ]----------
-
-// The FIX for {@see Order}: `$shipTo` is typed `ShippingAddress` — NOT nullable. Every reader
-// already assumed it, so the type now says so and construction fails hard on a real miss instead
-// of carrying a null nobody ever guards.
-
-final class ConfirmedOrder
-{
-    public function __construct(
-        public readonly ShippingAddress $shipTo,
-        public readonly string $reference,
-    ) {}
-
-    public function routingLine(): string
-    {
-        return $this->reference . ' @ ' . $this->shipTo->postalCode();
-    }
-}
-```
-
-### redundant-arrow-return-type
-
-An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property
-
-```php
-----------[ Bad ]----------
-
-// Decides whether a named feature is on — the default arm answers "false" for an
-// unknown flag, masking a typo as a disabled feature.
-
-final class FeatureGate
-{
-    /** @var array<string, bool> */
-    private array $overrides = [];
-
-    public function __construct(private readonly string $environment) {}
-
-    /**
-     * No argument, so it can only be describing the gate — which is what a question is for.
-     */
-    public function tracks(): bool
-    {
-        return $this->environment !== 'testing';
-    }
-
-    /**
-     * A construction spells the class it builds; the annotation repeats it.
-     */
-    public function factory(): callable
-    {
-        return fn (): FeatureGate => new FeatureGate($this->environment);
-    }
-
-    /**
-     * The FIX: the arrow's one expression already proves the type, so the `: array` comes off —
-     * `fn () => $this->overrides` says everything the annotation did.
-     */
-    public function overridesReader(): callable
-    {
-        return fn () => $this->overrides;
-    }
-
-    public function override(string $flag, bool $on): void
-    {
-        $this->overrides[$flag] = $on;
-    }
-
-    public function isProduction(): bool
-    {
-        return $this->environment === 'production';
-    }
-
-    public function enabled(string $flag): bool
-    {
-        return match ($flag) {
-            'new-checkout' => true,
-            'legacy-import' => false,
-            default => false,
-        };
-    }
-}
-
-----------[ Good ]----------
-
-// The FIX: the arrow's one expression already proves the type, so the `: array` comes off —
-// `fn () => $this->overrides` says everything the annotation did.
-
-public function overridesReader(): callable
-{
-    return fn () => $this->overrides;
-}
-```
-
-### scratch-state-restore
-
-Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input
-
-```php
-----------[ Bad ]----------
-
-public function revalue(string $basis): void
-{
-    $previous = $this->basis;
-    $this->basis = $basis;
-
-    $this->trail[] = sprintf('priced on %s', $this->basis);
-
-    $this->basis = $previous;
-}
-
-----------[ Good ]----------
-
-// The FIX: the basis is this call's input, so it stays a PARAMETER and is read from there —
-// `$this->basis` is never written, and the save/restore pair disappears with it.
-
-public function revalueOn(string $basis, int $lots): void
-{
-    for ($lot = 0; $lot < $lots; $lot++) {
-        $this->trail[] = sprintf('lot %d priced on %s', $lot, $basis);
-    }
-}
-```
-
-### placeholder-filled-data
-
-A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none
-
-```php
-----------[ Bad ]----------
-
-public function refuse(string $reason, bool $retryable): AiReplyData
-{
-    $this->refusals[] = $reason;
-
-    if ($retryable) {
-        return new AiReplyData(message: '', success: false, error: 'retry_later');
-    }
-
-    return new AiReplyData(message: '', success: false, error: $reason);
-}
-
-----------[ Good ]----------
-
-// The FIX for {@see ActivateWorkflow}: the required `updatedAt` slot is handed the REAL value — the
-// command holds the clock that owns the timestamp and reads it, instead of filling the promise with
-// `''` to satisfy the signature.
-
-final class StampedActivateWorkflow
-{
-    public function __construct(private readonly WorkflowClock $clock) {}
-
-    public function activate(string $slug): WorkflowRowData
-    {
-        return new WorkflowRowData(
-            slug: $slug,
-            name: $slug,
-            trigger: null,
-            active: true,
-            updatedAt: $this->clock->stamp(),
-        );
-    }
-}
-```
-
-### useless-property-hook
-
-A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax
-
-```php
-----------[ Bad ]----------
-
-// Rebuilds the SAME value object on every read — nothing comes from `$this`, so the
-// construction belongs in the constructor (a `new`/static call can't be a property
-// default), not in a per-read hook.
-
-final class LabelPrintDefaults
-{
-    public Weight $maxParcelWeight {
-        get => new Weight(23000);
-    }
-
-    public function __construct(
-        private readonly string $printerId,
-        private readonly bool $duplex = false,
-    ) {}
-
-    public function printerId(): string
-    {
-        return $this->printerId;
-    }
-
-    public function copiesFor(int $parcels): int
-    {
-        return $this->duplex ? (int) ceil($parcels / 2) : $parcels;
-    }
-
-    public function describe(): string
-    {
-        return sprintf('%s (%s)', $this->printerId, $this->duplex ? 'duplex' : 'simplex');
-    }
-}
-
-----------[ Good ]----------
-
-// The FIX for {@see TileAnimation}: the same tile with both hooks made STORED properties — the
-// constant body became a property default, the constructed one is assigned ONCE in the constructor.
-// A plain property satisfies the interface's `{ get; }` just as well as a hook did.
-
-final class StoredTileAnimation implements AnimatedTile
-{
-    public ?string $enterEffect = null;
-
-    public ?string $leaveEffect;
-
-    public function __construct(private readonly string $tileId)
-    {
-        $this->leaveEffect = implode('+', ['fade', 'morph']);
-    }
-
-    public function tileId(): string
-    {
-        return $this->tileId;
-    }
-}
-```
-
-## When it fires
-
-- Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet" — `MaskedInvariantDetector`
-- Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens — `PhantomNullableDetector`
-- An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property — `RedundantArrowReturnTypeDetector`
-- Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input — `ScratchStateRestoreDetector`
-- A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none — `PlaceholderFilledDataDetector`
-- A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax — `UselessPropertyHookDetector`
-
-## Checklist
-
-- [ ] Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
-- [ ] If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
-- [ ] Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here.
-- [ ] Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
-- [ ] A required slot means the caller has the value. Filling it to satisfy the signature makes the envelope lie in a way no type can catch.
-- [ ] A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

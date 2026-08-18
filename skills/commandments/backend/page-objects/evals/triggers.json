@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "our DashboardController returns a big array of nested arrays to Inertia. I want to make it a typed page object — how should it be shaped",
+        "I've got a *Page Data class and I need a CurrencyFormatter inside it to compute a display field. can I just resolve it, or is there an attribute for that"
+    ],
+    "not": [
+        "we're using Inertia and the page prop payload is 400kb — how do we cut down what we send to the browser"
+    ]
+}

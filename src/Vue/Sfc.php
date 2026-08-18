@@ -56,7 +56,7 @@ final class Sfc
             $line = substr_count($source, "\n", 0, $lt) + 1;
 
             if ($match[3] === '/') {
-                $blocks[] = new Block($tag, Attributes::parse($match[2]), '', $line, $openEnd);
+                $blocks[] = new Block($tag, $match[2], '', $line, $openEnd);
                 $i = $openEnd;
 
                 continue;
@@ -66,7 +66,7 @@ final class Sfc
                 ? self::readTemplate($source, $openEnd)
                 : self::readRaw($source, $openEnd, $tag);
 
-            $blocks[] = new Block($tag, Attributes::parse($match[2]), $content, $line, $openEnd);
+            $blocks[] = new Block($tag, $match[2], $content, $line, $openEnd);
 
             if ($tag === 'template' && $template === null) {
                 $template = new Tokenizer()->tokenize($content, substr_count($source, "\n", 0, $openEnd) + 1, $openEnd);

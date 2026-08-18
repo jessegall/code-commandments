@@ -31,15 +31,15 @@ unit out, props in.
 
 ## Rules
 
-- Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component.
-  _Extract to a `<{Object}{Action}Dialog>` component; pass `v-model` + props._
-- Pass the mid-object as a prop; don't reach deep into nested data from the template.
-- Extract a far-too-deeply-nested subtree into its own component.
-- Extract repeated identical markup into one component.
-- Don't thread a prop through a component that doesn't use it; provide/inject it, or give the child the data directly.
-- Never write a prop. For two-way state use `defineModel`; otherwise emit an `update:` event and let the parent own the value.
+- [ ] Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component.
+      _Extract to a `<{Object}{Action}Dialog>` component; pass `v-model` + props._
+- [ ] Pass the mid-object as a prop; don't reach deep into nested data from the template.
+- [ ] Extract a far-too-deeply-nested subtree into its own component.
+- [ ] Extract repeated identical markup into one component.
+- [ ] Don't thread a prop through a component that doesn't use it; provide/inject it, or give the child the data directly.
+- [ ] Never write a prop. For two-way state use `defineModel`; otherwise emit an `update:` event and let the parent own the value.
 
-## Bad → good
+## Worked example
 
 ### compound-inline-component
 
@@ -79,187 +79,19 @@ A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a
 <ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
 ```
 
-### deep-data-reach
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-A CLUSTER of elements in a sizeable template all reaching deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop
+## Commands
 
-```vue
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=frontend/vue-components` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`, `prop-drilling`, `prop-mutation`.
+- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`. Review it with `--dry-run` first.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-<section class="order-detail__customer">
-  <h2 class="section-title">Customer</h2>
-  <p class="customer-name">{{ order.customer.fullName }}</p>
-  <p class="customer-email">{{ order.customer.email }}</p>
-  <p class="customer-phone">{{ order.customer.phone }}</p>
-</section>
+## Reference
 
-----------[ Good ]----------
-
-<OrderCustomer :customer="order.customer" />
-```
-
-### deep-nested
-
-Template markup nested far too deep — extract a subtree as its own component
-
-```vue
-----------[ Bad ]----------
-
-<div class="settings-card__body">
-  <div class="accordion">
-    <div class="accordion__item">
-      <div class="accordion__panel">
-        <div class="field-group">
-          <div class="field-grid">
-            <div class="field-grid__row">
-              <div class="field">
-                <div class="field__control">
-                  <div class="field__input-wrap">
-                    <div class="field__inner">
-                      <label class="field__label">{{ settings.profile.displayName }}</label>
-                      <input class="field__input" :value="settings.profile.handle" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-----------[ Good ]----------
-
-<SettingsCardBody :settings="settings" />
-```
-
-### duplicate-element
-
-Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component
-
-```vue
-----------[ Bad ]----------
-
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/ProductReviewList.vue -->
-<article class="review-card">
-  <header class="review-head">
-    <Avatar class="size-8" />
-    <strong class="review-author">Verified buyer</strong>
-  </header>
-  <p class="review-body">Exactly as described, shipped fast.</p>
-</article>
-
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/ProductReviewList.vue -->
-<article class="review-card">
-  <header class="review-head">
-    <Avatar class="size-8" />
-    <strong class="review-author">Verified buyer</strong>
-  </header>
-  <p class="review-body">Exactly as described, shipped fast.</p>
-</article>
-
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/FilterSidebar.vue -->
-<fieldset class="filter-group">
-  <legend class="filter-legend">Brand</legend>
-  <label class="filter-option"><input type="checkbox" /> Any brand</label>
-</fieldset>
-
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/FilterSidebar.vue -->
-<fieldset class="filter-group">
-  <legend class="filter-legend">Brand</legend>
-  <label class="filter-option"><input type="checkbox" /> Any brand</label>
-</fieldset>
-
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/CheckoutPromoBanner.vue -->
-<div class="promo-strip">
-  <span class="promo-icon">%</span>
-  <strong class="promo-headline">Free shipping this week</strong>
-  <small class="promo-terms">On orders over 50.</small>
-</div>
-
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/BasketPromoBanner.vue -->
-<div class="promo-strip">
-  <span class="promo-icon">%</span>
-  <strong class="promo-headline">Free shipping this week</strong>
-  <small class="promo-terms">On orders over 50.</small>
-</div>
-
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/OrderLineItems.vue -->
-<tr class="line-item">
-  <td class="line-item__name">Sample product</td>
-  <td class="line-item__qty">1</td>
-</tr>
-
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/OrderLineItems.vue -->
-<tr class="line-item">
-  <td class="line-item__name">Sample product</td>
-  <td class="line-item__qty">1</td>
-</tr>
-
-----------[ Good ]----------
-
-<template v-for="review in reviews" :key="review.id">
-  <article class="review-card">
-    <header class="review-head">
-      <Avatar class="size-8" />
-      <strong class="review-author">{{ review.author }}</strong>
-    </header>
-    <p class="review-body">{{ review.body }}</p>
-  </article>
-</template>
-```
-
-### prop-drilling
-
-A prop forwarded through a chain of 2+ components, none of which read it — piped from parent to leaf through dead conduits
-
-```vue
-----------[ Bad ]----------
-
-<NotificationBell :items="notifications" />
-
-----------[ Good ]----------
-
-<UserAvatar :src="avatarUrl" />
-```
-
-### prop-mutation
-
-A prop is WRITTEN — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op)
-
-```vue
-----------[ Bad ]----------
-
-<Collapsible v-model:open="expanded">
-  <CollapsibleTrigger>Advanced</CollapsibleTrigger>
-</Collapsible>
-
-----------[ Good ]----------
-
-<Collapsible v-model:open="panelOpen">
-  <CollapsibleTrigger>Advanced</CollapsibleTrigger>
-</Collapsible>
-```
-
-## When it fires
-
-- A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component — `CompoundInlineComponentDetector`
-- A CLUSTER of elements in a sizeable template all reaching deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop — `DeepDataReachDetector`
-- Template markup nested far too deep — extract a subtree as its own component — `DeepNestedDetector`
-- Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component — `DuplicateElementDetector`
-- A prop forwarded through a chain of 2+ components, none of which read it — piped from parent to leaf through dead conduits — `PropDrillingDetector`
-- A prop is WRITTEN — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op) — `PropMutationDetector`
-
-## Checklist
-
-- [ ] Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component.
-- [ ] Pass the mid-object as a prop; don't reach deep into nested data from the template.
-- [ ] Extract a far-too-deeply-nested subtree into its own component.
-- [ ] Extract repeated identical markup into one component.
-- [ ] Don't thread a prop through a component that doesn't use it; provide/inject it, or give the child the data directly.
-- [ ] Never write a prop. For two-way state use `defineModel`; otherwise emit an `update:` event and let the parent own the value.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

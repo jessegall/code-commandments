@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "I'm adding a `private const int MAX_RETRIES = 3;` to app/Jobs/RetryablePush.php — does it go at the top or next to the method that uses it",
+        "our WorkflowNode class has a property declared between two methods about 200 lines down. is that a problem or just style"
+    ],
+    "not": [
+        "should I split app/Services/Billing.php up? it's 900 lines and does subscriptions, invoices and refunds"
+    ]
+}

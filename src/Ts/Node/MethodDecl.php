@@ -22,7 +22,7 @@ final class MethodDecl extends Node
         public readonly ?TypeNode $returnType = null,
         public readonly Modifiers $modifiers = new Modifiers(),
         public readonly ?BlockStmt $body = null,
-        public readonly string $accessor = '',
+        public readonly ?string $accessor = null,
     ) {}
 
     public function declaredNames(): array
@@ -46,7 +46,7 @@ final class MethodDecl extends Node
      */
     public function isAccessor(): bool
     {
-        return $this->accessor !== '';
+        return $this->accessor !== null;
     }
 
     public function signature(): FunctionType
@@ -58,7 +58,7 @@ final class MethodDecl extends Node
     {
         $params = implode(', ', array_map(static fn (Param $p): string => $p->render(), $this->params));
         $return = $this->returnType !== null ? ': ' . $this->returnType->render() : '';
-        $accessor = $this->accessor !== '' ? $this->accessor . ' ' : '';
+        $accessor = $this->accessor === null ? '' : $this->accessor . ' ';
 
         return $this->modifiers->render() . $accessor . "{$this->name}({$params}){$return} " . ($this->body?->render() ?? '{}');
     }

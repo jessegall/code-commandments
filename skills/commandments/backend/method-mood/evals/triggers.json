@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "naming question: our OrderStatus class has a method that returns bool for whether it's been shipped. currently `shipped()`. reads badly at the call site — what should it be",
+        "I've got `->hides()` and `->reveals()` on our UiElement class as commands that mutate. someone in review said the grammar is wrong"
+    ],
+    "not": [
+        "should our service classes be named OrderService or OrderManager? we have both conventions in app/Services"
+    ]
+}

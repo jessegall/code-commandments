@@ -243,7 +243,7 @@ final class LookupEnvy
             $receiver = $receiver->var;
         }
 
-        return $receiver instanceof Variable && $receiver->name === 'this';
+        return AstNode::isThis($receiver);
     }
 
     private function navigationDepth(Node $expr): int

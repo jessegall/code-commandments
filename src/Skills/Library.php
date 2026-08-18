@@ -22,7 +22,7 @@ final class Library
      * The hand-written process skills — not the teaching skills projected from sins, but documents
      * that ship as they are.
      */
-    private const array STANDALONE = ['executing-plans', 'until', 'writing-detectors'];
+    private const array STANDALONE = ['executing-plans', 'stop-condition', 'writing-detectors'];
 
     private const string MANIFEST = 'published-skills';
 
@@ -72,6 +72,14 @@ final class Library
     {
         $ids = [];
 
+        // The map itself, published like any other skill and named FIRST — an agent that needs to
+        // know WHICH discipline covers a subject loads it the same way it loads a discipline.
+        @mkdir($this->path(Router::ID), 0775, true);
+
+        if (File::write($this->path(Router::ID) . '/SKILL.md', Router::render($this->workspace->root(), $this->languages))) {
+            $ids[] = Router::ID;
+        }
+
         foreach (Catalog::all() as $skill) {
             $source = "{$packageRoot}/skills/commandments/{$skill->slug}";
 
@@ -90,9 +98,15 @@ final class Library
         }
 
         foreach (Custom::skills($this->workspace->root()) as $skill) {
-            @mkdir($this->path($skill->id()), 0775, true);
+            $renderer = new SkillRenderer($this->languages);
+            $written = false;
 
-            if (File::write($this->path($skill->id()) . '/SKILL.md', new SkillRenderer($this->languages)->render($skill))) {
+            foreach ($renderer->documents($skill) as $relative => $document) {
+                @mkdir(dirname($this->path($skill->id()) . '/' . $relative), 0775, true);
+                $written = File::write($this->path($skill->id()) . '/' . $relative, $document) || $written;
+            }
+
+            if ($written) {
                 $ids[] = $skill->id();
             }
         }

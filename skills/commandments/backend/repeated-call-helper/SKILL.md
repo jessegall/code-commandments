@@ -56,14 +56,14 @@ change; the operation you kept repeating becomes first-class.
 
 ## Rules
 
-- Promote a recurring compound guard to a named predicate. The same condition — however its conjuncts are ordered, and whether it reads `$obj->x` inline or a local aliased from it — belongs in ONE named method.
-  _Extract the repeated condition into a named boolean method and call THAT at each site._
-- Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
-  _`$element->withMetadata($payload)` — a `withMetadata()` on the type doing `copyWith(metadata: $payload->toArray())`._
-- Promote a recurring `instanceof` chain to a named predicate (`$x->isNewOfNamedClass()`), so the intent has a name and the narrowing has ONE home.
-  _Extract the repeated `instanceof` chain into a named boolean method and call THAT at each site._
+- [ ] Promote a recurring compound guard to a named predicate. The same condition — however its conjuncts are ordered, and whether it reads `$obj->x` inline or a local aliased from it — belongs in ONE named method.
+      _Extract the repeated condition into a named boolean method and call THAT at each site._
+- [ ] Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
+      _`$element->withMetadata($payload)` — a `withMetadata()` on the type doing `copyWith(metadata: $payload->toArray())`._
+- [ ] Promote a recurring `instanceof` chain to a named predicate (`$x->isNewOfNamedClass()`), so the intent has a name and the narrowing has ONE home.
+      _Extract the repeated `instanceof` chain into a named boolean method and call THAT at each site._
 
-## Bad → good
+## Worked example
 
 ### repeated-guard
 
@@ -150,135 +150,15 @@ public function review($user, $account): string
 }
 ```
 
-### repeated-named-call
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/repeated-call-helper` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `repeated-guard`, `repeated-named-call`, `repeated-type-guard`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-// in Shop\Http\Pages\RepeatedCall\PortHydrator
-public function hydrate(UiNode $node, string $name): UiNode
-{
-    $required = in_array($name, $this->requiredPorts, true);
+## Reference
 
-    return $node->copyWith(metadata: PortMeta::from(['name' => $name, 'required' => $required])->toArray());
-}
-
-// in Shop\Http\Pages\RepeatedCall\PanelHydrator
-public function hydrate(UiNode $node, ?string $heading): UiNode
-{
-    $heading = $this->normalise($heading);
-
-    return $node->copyWith(metadata: PanelMeta::from(['heading' => $heading])->toArray());
-}
-
-// in Shop\Http\Pages\RepeatedCall\CardHydrator
-public function hydrate(UiNode $node, string $title, string $state): UiNode
-{
-    return $node->copyWith(metadata: CardMeta::from(['title' => $title, 'tone' => $this->tone($state)])->toArray());
-}
-
-----------[ Good ]----------
-
-// The repeated call promoted to a method on the receiver's type: `UiNode::withMetadata()` does the
-// `copyWith(metadata: $meta->toArray())`, so the call site says WHAT it does and says it once.
-
-public function decorate(UiNode $node, CardMeta $meta): UiNode
-{
-    return $node->withMetadata($meta);
-}
-```
-
-### repeated-type-guard
-
-The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named
-
-```php
-----------[ Bad ]----------
-
-// in Shop\Domain\EdgeRouter
-public function routable($e): bool
-{
-    return $e instanceof Wire && $e->from instanceof Port && $e->to instanceof Port;
-}
-
-// in Shop\Domain\EdgeRouter
-public function tag($e): string
-{
-    $wired = $e instanceof Wire && $e->from instanceof Port && $e->to instanceof Port;
-
-    return $wired ? 'wired' : 'loose';
-}
-
-// in Shop\Domain\TreeGuard
-public function graftable($node): bool
-{
-    return $node instanceof Leaf && $node->parent instanceof Branch;
-}
-
-// in Shop\Domain\TreePruner
-public function keep($node): bool
-{
-    if ($node instanceof Leaf && $node->parent instanceof Branch) {
-        return false;
-    }
-
-    return true;
-}
-
-// in Shop\Domain\InvoiceRules
-public function taxable($line): bool
-{
-    return $line instanceof SaleLine && $line->product instanceof TaxedGood;
-}
-
-// in Shop\Domain\InvoiceRules
-public function band($line): string
-{
-    return match ($line instanceof SaleLine && $line->product instanceof TaxedGood) {
-        true => 'vat',
-        default => 'net',
-    };
-}
-
-// in Shop\Domain\TokenScanner
-public function opens($t): bool
-{
-    return $t instanceof Bracket && $t->pair instanceof Bracket;
-}
-
-// in Shop\Domain\TokenScanner
-public function pairs(array $tokens): int
-{
-    $count = 0;
-
-    foreach ($tokens as $t) {
-        $count += $t instanceof Bracket && $t->pair instanceof Bracket ? 1 : 0;
-    }
-
-    return $count;
-}
-
-----------[ Good ]----------
-
-// The narrowing promoted to a NAME: `isBalancedBrace()` holds `$t instanceof Brace &&
-// $t->close instanceof Brace` once, and every site asks the predicate instead of copying the chain.
-
-public function balanced(array $tokens): int
-{
-    return count(array_filter($tokens, $this->isBalancedBrace(...)));
-}
-```
-
-## When it fires
-
-- The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name — `RepeatedGuardDetector`
-- The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type — `RepeatedNamedCallDetector`
-- The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named — `RepeatedTypeGuardDetector`
-
-## Checklist
-
-- [ ] Promote a recurring compound guard to a named predicate. The same condition — however its conjuncts are ordered, and whether it reads `$obj->x` inline or a local aliased from it — belongs in ONE named method.
-- [ ] Promote a repeated `->with…(named: …)` call into a method on the receiver's type that hides the call and its construction boilerplate.
-- [ ] Promote a recurring `instanceof` chain to a named predicate (`$x->isNewOfNamedClass()`), so the intent has a name and the narrowing has ONE home.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.

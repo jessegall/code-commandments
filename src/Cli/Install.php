@@ -42,7 +42,7 @@ final class Install implements Command
             return HelpScreen::usage($this, "{$consumer}/composer.json is not readable JSON — fix it first; rewriting it from here would throw away everything it declares.");
         }
 
-        $hooked = HookRegistry::wire($consumer, HookRegistry::forProject($consumer));
+        $hooked = HookRegistry::wire($consumer);
 
         fwrite(STDOUT, $wired
             ? "✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.\n"

@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "I've got `private ?Invoice $current = null` on our PdfRenderer that gets set at the top of render() and every other method then does $this->current?->total(). it's never actually null by the time those run",
+        "our ExportJob stashes $this->previousLocale before switching, then restores it in a finally. the field is ?string and the restore is `?? 'en'`. is there a better shape for this"
+    ],
+    "not": [
+        "phpstan says `Parameter #1 $id of method find() expects int, string given` in app/Http/Controllers/OrderController.php:44 — how do I fix the type error"
+    ]
+}

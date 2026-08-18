@@ -1,0 +1,8 @@
+{
+    "triggers": [
+        "we write `$element->copyWith(metadata: ElementMeta::from([...])->toArray())` at about fifteen call sites, always the same shape. is there something better than a helper function"
+    ],
+    "not": [
+        "our UiElement::copyWith() is slow because it deep-clones the whole subtree — how do I make it cheaper"
+    ]
+}

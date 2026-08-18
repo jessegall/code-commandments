@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Ast\TypeName;
 use JesseGall\CodeCommandments\Detectors\ChainDetector;
 use JesseGall\CodeCommandments\Sins\Backend\PhantomNullable;
 use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\WholeTree;
 use PhpParser\Node;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Param;
@@ -22,7 +23,8 @@ use PhpParser\Node\Stmt\Class_;
  * {@see ValueFlow} provenance graph. Conservative: fires only on positive presence-evidence with
  * ZERO contradiction. Every nullable property of any class is a candidate.
  */
-final class PhantomNullableDetector implements ChainDetector
+
+final class PhantomNullableDetector implements ChainDetector, WholeTree
 {
     public function sin(): Sin
     {

@@ -382,19 +382,19 @@ that have a specific name in this harness:
 - **Load a skill with the Skill tool**, by the exact id in the briefing's bullets —
   e.g. `commandments-backend-absence`. The published skills are linked into
   `.claude/skills/`, so they also autocomplete as `/`-commands.
-- **The visible to-do list is `TodoWrite`.** Mirror every `until` condition into it,
+- **The visible to-do list is `TodoWrite`.** Mirror every `stop-condition` condition into it,
   mark an item completed the moment you strike its condition off, and keep the item
   you are working on FIRST — the list is checked, and you will be sent back to
   reorder it when its first line does not say what you are doing right now.
 - **Never delegate a write to a subagent.** Dispatch them for read-only work as much
   as you like; every edit is yours.
-- `/until "<condition>"` is available as a slash command, so the user can set a stop
+- `/stop-condition "<condition>"` is available as a slash command, so the user can set a stop
   condition themselves.
 
 **The disciplines here are ENFORCED, not just written down.** Hooks are wired into
 `.claude/settings.json`: the cardinal rule resurfaces as you work, `judge` is nudged
 before risky commands and on stop, an approved plan is ground to completion, and a
-standing `until` condition holds every stop until you have VERIFIED it. That is a
+standing `stop-condition` condition holds every stop until you have VERIFIED it. That is a
 property of this agent alone — under an agent with no hook protocol the same
 disciplines are documents you are asked to follow, and nothing checks that you did.
 <!-- END: code-commandments skills -->

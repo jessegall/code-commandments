@@ -15,14 +15,14 @@ final class Legend
     /**
      * @param  string  $about  what this file is, in prose — the first thing a human reads
      * @param  array<string, string>  $variables  each named value → what it means
-     * @param  string  $list  what the list section holds; '' for a file that keeps no list
+     * @param  string|null  $list  what the list section holds; none for a file that keeps no list
      * @param  string  $safe  what deleting the file costs, completing "Safe to delete — …"
      */
     public function __construct(
         private readonly string $about,
         private readonly array $variables,
         private readonly ?State $defaults = null,
-        private readonly string $list = '',
+        private readonly ?string $list = null,
         private readonly string $safe = 'it regenerates',
     ) {}
 
@@ -44,7 +44,7 @@ final class Legend
      */
     public function hasList(): bool
     {
-        return $this->list !== '';
+        return $this->list !== null;
     }
 
     /**

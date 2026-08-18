@@ -39,7 +39,7 @@ final class StateFileTest extends TestCase
                 'note' => 'something a human wrote',
             ],
             defaults: new State(held_stops: 0, paused: false, note: ''),
-            list: $list ? 'one thing per line.' : '',
+            list: $list ? 'one thing per line.' : null,
             safe: 'nothing is lost',
         ));
     }

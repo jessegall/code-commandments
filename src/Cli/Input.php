@@ -178,7 +178,7 @@ final class Input
     }
 
     /**
-     * A POSITIONAL given as a comma-list (`until blocked 2,5,7`) — the positional twin of
+     * A POSITIONAL given as a comma-list (`stop-condition blocked 2,5,7`) — the positional twin of
      * {@see list}, so a command reads either shape the same way.
      *
      * @return list<string>

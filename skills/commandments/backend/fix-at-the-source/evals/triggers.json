@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "the same `?? []` guard shows up in about nine places wherever we read $config['channels']. I could add a tenth but it feels like I'm papering over something",
+        "a test is failing because getTotal() returns null for orders with no lines. easiest fix is a null check in the assertion but that feels like cheating — what's the right call"
+    ],
+    "not": [
+        "our CI is red on main and I need to find which commit broke it — is there a quick way to bisect this"
+    ]
+}

@@ -105,16 +105,16 @@ is born, and every `Command` that exists is real.
 
 ## Rules
 
-- Let a constructor establish what the object IS; never let building one change anything outside it.
-  _Keep the collaborator as a field and act on it from the method that someone actually calls._
-- Extract copy-pasted code — two functions with an identical AST must become one.
-- Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
-  _Throw a named exception at the boundary, or bake a real default into the signature._
-- Hold changing state on an INSTANCE someone owns and passes; never write a static property.
-  _Constructor-inject the state as a collaborator, so who holds it (and who may change it) is written down._
-- Collapse type-2 clones — two functions with the same shape (differing only in names/literals) become one parameterised function.
+- [ ] Let a constructor establish what the object IS; never let building one change anything outside it.
+      _Keep the collaborator as a field and act on it from the method that someone actually calls._
+- [ ] Extract copy-pasted code — two functions with an identical AST must become one.
+- [ ] Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
+      _Throw a named exception at the boundary, or bake a real default into the signature._
+- [ ] Hold changing state on an INSTANCE someone owns and passes; never write a static property.
+      _Constructor-inject the state as a collaborator, so who holds it (and who may change it) is written down._
+- [ ] Collapse type-2 clones — two functions with the same shape (differing only in names/literals) become one parameterised function.
 
-## Bad → good
+## Worked example
 
 ### constructor-side-effect
 
@@ -155,198 +155,18 @@ final class LazyLedgerExport
 }
 ```
 
-### duplicate-function
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-Copy-pasted code — two+ functions with an identical AST (formatting/comments aside)
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/fix-at-the-source` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `constructor-side-effect`, `duplicate-function`, `manufactured-fake-fill`, `mutable-static-state`, `near-duplicate-function`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-// in Shop\Customers\LoyaltyDigest
-public function fingerprint(int $base, int $count): string
-{
-    $total = $base;
+## Reference
 
-    for ($i = 0; $i < $count; $i++) {
-        $total += $i * 2;
-    }
-
-    return md5((string) $total);
-}
-
-// in Shop\Reporting\SalesDigest
-public function fingerprint(int $base, int $count): string
-{
-    $total = $base;
-
-    for ($i = 0; $i < $count; $i++) {
-        $total += $i * 2;
-    }
-
-    return md5((string) $total);
-}
-
-// in Shop\Catalog\StockDigest
-public function fingerprint(int $base, int $count): string
-{
-    $total = $base;
-
-    for ($i = 0; $i < $count; $i++) {
-        $total += $i * 2;
-    }
-
-    return md5((string) $total);
-}
-
-----------[ Good ]----------
-
-public static function of(int $base, int $count): string
-{
-    $steps = array_map(static fn (int $i): int => $i * 2, range(0, max(0, $count - 1)));
-
-    return md5((string) ($base + array_sum($steps)));
-}
-```
-
-### manufactured-fake-fill
-
-`?? <empty literal>` filling a required slot (manufactured fake)
-
-```php
-----------[ Bad ]----------
-
-public function import(array $rows): void
-{
-    foreach ($rows as $row) {
-        $customer = $this->findCustomer($row['email'] ?? '');
-
-        // changed from update() to direct assignment in v2
-        if ($customer !== null) {
-            $customer->imported = true;
-            $customer->save();
-        }
-    }
-}
-
-----------[ Good ]----------
-
-// The FIX: a row with no email is an absence at the SOURCE, so the boundary names the failure and
-// throws. The `?? ''` version looked up "the customer whose email is the empty string" and carried
-// that fake all the way to the import — the throw stops the row here, where the truth is known.
-
-public function importStrictly(array $rows): void
-{
-    foreach ($rows as $row) {
-        $email = $row['email'] ?? throw new MissingImportEmail();
-
-        $this->findCustomer($email)?->markImported();
-    }
-}
-```
-
-### mutable-static-state
-
-a write to a static property — a global wearing a namespace, where whoever writes last wins and execution order becomes load-bearing
-
-```php
-----------[ Bad ]----------
-
-public static function record(string $at, string $message): void
-{
-    self::$entries[] = "[{$at}] {$message}";
-
-    if (count(self::$entries) > self::KEEP) {
-        self::$entries = array_slice(self::$entries, -self::KEEP);
-    }
-}
-
-----------[ Good ]----------
-
-public function for(string $region): float
-{
-    return $this->table[$region] ?? 1.0;
-}
-```
-
-### near-duplicate-function
-
-Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone)
-
-```php
-----------[ Bad ]----------
-
-// in Shop\Reporting\WeightAggregator
-public function accumulateFrom(int $start): int
-{
-    $total = $start;
-
-    foreach ($this->entries as $row) {
-        if ($row > 0) {
-            $total += $row * 5;
-        }
-    }
-
-    return $total;
-}
-
-// in Shop\Shipping\RouteCostEstimator
-public function estimateFrom(int $surcharge): int
-{
-    $cost = $surcharge;
-
-    foreach ($this->entries as $leg) {
-        if ($leg > 0) {
-            $cost += $leg * 3;
-        }
-    }
-
-    return $cost;
-}
-
-// in Shop\Pricing\TierScorer
-public function scoreFrom(int $seed): int
-{
-    $score = $seed;
-
-    foreach ($this->entries as $weight) {
-        if ($weight > 0) {
-            $score += $weight * 2;
-        }
-    }
-
-    return $score;
-}
-
-----------[ Good ]----------
-
-// The duplicated scorers collapsed into one parameterised pass — the per-entry
-// weight is an argument, so there is no rhyming twin to extract.
-
-public function scoreFrom(int $start, int $weight): int
-{
-    return array_reduce(
-        array_filter($this->entries, static fn (int $row): bool => $row > 0),
-        static fn (int $total, int $row): int => $total + $row * $weight,
-        $start,
-    );
-}
-```
-
-## When it fires
-
-- a constructor that performs a SIDE EFFECT on a collaborator — the result thrown away, so merely building the object changes the world — `ConstructorSideEffectDetector`
-- Copy-pasted code — two+ functions with an identical AST (formatting/comments aside) — `DuplicateFunctionDetector`
-- `?? <empty literal>` filling a required slot (manufactured fake) — `ManufacturedFakeFillDetector`
-- a write to a static property — a global wearing a namespace, where whoever writes last wins and execution order becomes load-bearing — `MutableStaticStateDetector`
-- Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone) — `NearDuplicateFunctionDetector`
-
-## Checklist
-
-- [ ] Let a constructor establish what the object IS; never let building one change anything outside it.
-- [ ] Extract copy-pasted code — two functions with an identical AST must become one.
-- [ ] Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
-- [ ] Hold changing state on an INSTANCE someone owns and passes; never write a static property.
-- [ ] Collapse type-2 clones — two functions with the same shape (differing only in names/literals) become one parameterised function.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 
