@@ -9,8 +9,8 @@ use JesseGall\PhpTypes\Option;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
-use JesseGall\CodeCommandments\Cli\Until\Condition;
-use JesseGall\CodeCommandments\Cli\Until\UntilGate;
+use JesseGall\CodeCommandments\Cli\StopCondition\Condition;
+use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
 use JesseGall\CodeCommandments\Cli\State\LegacyLines;
 use JesseGall\CodeCommandments\Cli\State\Legend;
 use JesseGall\CodeCommandments\Cli\State\StateFile;
@@ -111,7 +111,7 @@ final class Migration
 
         $claim = $this->legacy("{$dir}/.until.claim")->unwrapOr(new LegacyLines());
 
-        new StateFile("{$dir}/.until", UntilGate::legend())->write(new State(
+        new StateFile("{$dir}/.until", StopConditionGate::legend())->write(new State(
             held_stops: $source->int(0),
             todo_drift: $this->count("{$dir}/.until-todo-drift-count"),
             last_id: $lastId,

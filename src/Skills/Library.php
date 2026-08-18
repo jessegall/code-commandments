@@ -22,7 +22,7 @@ final class Library
      * The hand-written process skills — not the teaching skills projected from sins, but documents
      * that ship as they are.
      */
-    private const array STANDALONE = ['executing-plans', 'until', 'writing-detectors'];
+    private const array STANDALONE = ['executing-plans', 'stop-condition', 'writing-detectors'];
 
     private const string MANIFEST = 'published-skills';
 

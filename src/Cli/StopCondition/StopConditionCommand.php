@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Until;
+namespace JesseGall\CodeCommandments\Cli\StopCondition;
 
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
@@ -12,9 +12,9 @@ use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
- * `commandments until "<condition>"` — the agent's handle on the stop gate ({@see UntilGate}). The
+ * `commandments stop-condition "<condition>"` — the agent's handle on the stop gate ({@see StopConditionGate}). The
  * user says "keep going until the suite is green"; the agent records that here and the Stop hook
- * ({@see \JesseGall\CodeCommandments\Hooks\Handlers\UntilReminder}) then blocks every stop, telling
+ * ({@see \JesseGall\CodeCommandments\Hooks\Handlers\StopConditionReminder}) then blocks every stop, telling
  * the agent to verify the condition before it may finish. Unlike the plan nudge this needs no plan:
  * a condition can be set at any moment, in any session.
  * A bare condition (or `add`) sets one, `list` shows what stands, `met <n>` strikes
@@ -23,7 +23,7 @@ use JesseGall\CodeCommandments\Workspace;
  * gate aside (conditions intact, nothing holding, no nudges) while they do something else in between,
  * and put it back when they're ready.
  */
-final class UntilCommand implements Command
+final class StopConditionCommand implements Command
 {
     /**
      * How many times a `stuck` claim is put back to the agent before the gate acts on it. Two: the first
@@ -64,26 +64,29 @@ final class UntilCommand implements Command
 
     public function names(): array
     {
-        return ['until'];
+        // `until` stays because it is muscle memory and it is wired into hooks and skills that may
+        // still name it — a rename that breaks a user's stop gate is a rename that costs more than
+        // the clearer word is worth.
+        return ['stop-condition', 'until'];
     }
 
     public function help(): Help
     {
         return Help::of("The user's STOP GATE — record what must hold before you may stop, and every stop is held until you have VERIFIED it. Needs no plan and no config.")
-            ->form('until "<condition>"', 'set a condition (the form the user speaks; `add`/`set` do the same)')
-            ->form('until list', 'what stands right now (the default), and what is paused')
-            ->form('until met <n>', 'strike condition <n> off as VERIFIED — the gate lifts when none remain')
-            ->form('until blocked <id> --reason="<what only the user can give>"', 'record that ONE condition is waiting on the user, and why — the reason is kept against that condition')
-            ->form('until stuck', 'release ONE stop, once EVERY standing condition carries a reason. The claim is CHALLENGED twice before it is acted on')
+            ->form('stop-condition "<condition>"', 'set a condition (the form the user speaks; `add`/`set` do the same)')
+            ->form('stop-condition list', 'what stands right now (the default), and what is paused')
+            ->form('stop-condition met <n>', 'strike condition <n> off as VERIFIED — the gate lifts when none remain')
+            ->form('stop-condition blocked <id> --reason="<what only the user can give>"', 'record that ONE condition is waiting on the user, and why — the reason is kept against that condition')
+            ->form('stop-condition stuck', 'release ONE stop, once EVERY standing condition carries a reason. The claim is CHALLENGED twice before it is acted on')
             ->option('--reason=TEXT', 'what a blocked condition needs from the user — a reason that would fit any condition is not a reason for this one')
             ->option('--blocked=IDS', 'on `stuck`, a bulk `blocked` for these ids with the same --reason. Anything you leave out is work you still owe')
-            ->form('until pause', "THE USER's switch — set the whole gate aside, conditions kept verbatim")
-            ->form('until resume', 'put the paused gate back in force')
-            ->form('until clear', "drop the gate entirely — the user's call, never an escape hatch")
+            ->form('stop-condition pause', "THE USER's switch — set the whole gate aside, conditions kept verbatim")
+            ->form('stop-condition resume', 'put the paused gate back in force')
+            ->form('stop-condition clear', "drop the gate entirely — the user's call, never an escape hatch")
             ->note('`stuck` is a claim about the WHOLE list, never about the item in hand: being blocked on one '
                 . 'condition while others stand is not being stuck, it is having one blocked item and the rest '
                 . 'still to work. So it is not asserted, it is COUNTED — you mark each condition blocked as you '
-                . 'meet it, in whatever order you work them (`until blocked <id> --reason="…"`), and `stuck` is '
+                . 'meet it, in whatever order you work them (`stop-condition blocked <id> --reason="…"`), and `stuck` is '
                 . 'released only once every standing condition carries its own reason, and survives two '
                 . 'challenges (running low on context, a big or mechanical change and "this needs its own change" '
                 . 'are the WORK, not a blocker). A held stop DROPS every block, so the claim is always made afresh '
@@ -94,7 +97,7 @@ final class UntilCommand implements Command
 
     public function run(Input $input): int
     {
-        $gate = UntilGate::inSession(Workspace::at($this->io->projectRoot()));
+        $gate = StopConditionGate::inSession(Workspace::at($this->io->projectRoot()));
 
         return match ($input->firstArgument()->unwrapOr('list')) {
             'add', 'set' => $this->add($gate, $this->text($input, from: 1)),
@@ -113,12 +116,12 @@ final class UntilCommand implements Command
             'pause', 'hold' => $this->pause($gate),
             'resume', 'unpause', 'continue' => $this->resume($gate),
             'clear', 'cancel', 'drop' => $this->clear($gate),
-            default => $this->add($gate, $this->text($input, from: 0)), // `until "<condition>"` — the
+            default => $this->add($gate, $this->text($input, from: 0)), // `stop-condition "<condition>"` — the
             // form the user actually speaks; no subcommand needed to set one.
         };
     }
 
-    private function add(UntilGate $gate, string $condition): int
+    private function add(StopConditionGate $gate, string $condition): int
     {
         if ($condition === '') {
             return $this->usage();
@@ -139,7 +142,7 @@ final class UntilCommand implements Command
         fwrite(STDOUT,
             "❙❙ Condition {$number} recorded WITH THE PAUSED GATE: {$condition}\n"
             . "  The user paused the gate, so nothing is holding you — this waits, intact, until they run\n"
-            . "  `commandments until resume`. Keep it on your to-do list (TodoWrite) so it is not lost.\n");
+            . "  `commandments stop-condition resume`. Keep it on your to-do list (TodoWrite) so it is not lost.\n");
 
         return 0;
     }
@@ -154,13 +157,13 @@ final class UntilCommand implements Command
             . "  You may not stop until this holds. Add this condition to your to-do list (TodoWrite) as a\n"
             . "  pending item so the user can see what is holding you, and mark it done when you meet it.\n"
             . "  Every time you try to stop you will be sent back in to verify it — when it genuinely holds,\n"
-            . "  run `commandments until met {$number}`. If you are truly blocked and need the user, run\n"
-            . "  `commandments until stuck` (that keeps the condition in force).\n");
+            . "  run `commandments stop-condition met {$number}`. If you are truly blocked and need the user, run\n"
+            . "  `commandments stop-condition stuck` (that keeps the condition in force).\n");
 
         return 0;
     }
 
-    private function list(UntilGate $gate): int
+    private function list(StopConditionGate $gate): int
     {
         if ($gate->isOpen()) {
             fwrite(STDOUT, "● You may not stop until these hold:\n");
@@ -175,7 +178,7 @@ final class UntilCommand implements Command
         }
 
         if ($gate->isPaused()) {
-            fwrite(STDOUT, "❙❙ Paused (set aside, holding nothing — `commandments until resume` puts them back):\n");
+            fwrite(STDOUT, "❙❙ Paused (set aside, holding nothing — `commandments stop-condition resume` puts them back):\n");
             $this->conditions($gate->pausedConditions());
         }
 
@@ -194,15 +197,15 @@ final class UntilCommand implements Command
         }
     }
 
-    private function met(UntilGate $gate, int $number): int
+    private function met(StopConditionGate $gate, int $number): int
     {
         $condition = $gate->met($number);
 
         if ($condition === null) {
             fwrite(STDERR, $gate->isPaused() && ! $gate->isOpen()
                 ? "✗ The stop gate is PAUSED — nothing is holding you, and a paused condition is not struck off\n"
-                    . "  until the user runs `commandments until resume`.\n"
-                : "✗ No condition {$number} — run `commandments until list` to see what stands.\n");
+                    . "  until the user runs `commandments stop-condition resume`.\n"
+                : "✗ No condition {$number} — run `commandments stop-condition list` to see what stands.\n");
 
             return 2;
         }
@@ -211,7 +214,7 @@ final class UntilCommand implements Command
 
         fwrite(STDOUT, "✓ Condition met: {$condition}\n" . ($remaining === []
             ? "  The stop gate is lifted — nothing else is holding you.\n"
-            : '  ' . count($remaining) . " condition(s) still standing; run `commandments until list` to see them.\n")
+            : '  ' . count($remaining) . " condition(s) still standing; run `commandments stop-condition list` to see them.\n")
             . "  NOW update the to-do list the user can SEE (TodoWrite): mark this item completed. Striking a\n"
             . "  condition off here does not touch that list — it goes stale the moment you skip this, and a\n"
             . "  stale list is the user watching work they cannot check.\n");
@@ -227,7 +230,7 @@ final class UntilCommand implements Command
      *
      * @param  list<int>  $ids
      */
-    private function blocked(UntilGate $gate, array $ids, string $reason): int
+    private function blocked(StopConditionGate $gate, array $ids, string $reason): int
     {
         if (! $gate->isOpen()) {
             fwrite(STDOUT, "No stop conditions in force — nothing to mark blocked.\n");
@@ -237,7 +240,7 @@ final class UntilCommand implements Command
 
         if ($ids === [] || trim($reason) === '') {
             return HelpScreen::usage($this, 'name the condition and why it cannot move without the user: '
-                . '`until blocked <id> --reason="<what you need from them>"`. A reason that would fit any '
+                . '`stop-condition blocked <id> --reason="<what you need from them>"`. A reason that would fit any '
                 . 'condition is not a reason for THIS one.');
         }
 
@@ -250,7 +253,7 @@ final class UntilCommand implements Command
         }
 
         if ($marked === []) {
-            fwrite(STDERR, "✗ No standing condition with that id — run `commandments until list`.\n");
+            fwrite(STDERR, "✗ No standing condition with that id — run `commandments stop-condition list`.\n");
 
             return 2;
         }
@@ -264,7 +267,7 @@ final class UntilCommand implements Command
      *
      * @param  list<int>  $marked
      */
-    private function reportBlocked(UntilGate $gate, array $marked): int
+    private function reportBlocked(StopConditionGate $gate, array $marked): int
     {
         $left = $gate->unblocked();
 
@@ -275,7 +278,7 @@ final class UntilCommand implements Command
 
         if ($left === []) {
             fwrite(STDOUT,
-                "  Every standing condition is now named as blocked, so `commandments until stuck` will put that\n"
+                "  Every standing condition is now named as blocked, so `commandments stop-condition stuck` will put that\n"
                 . "  claim to you and then release ONE stop. The conditions stay in force.\n");
 
             return 0;
@@ -302,7 +305,7 @@ final class UntilCommand implements Command
      *
      * @param  list<int>  $ids  a bulk `blocked` for these conditions, when given
      */
-    private function stuck(UntilGate $gate, array $ids, string $reason): int
+    private function stuck(StopConditionGate $gate, array $ids, string $reason): int
     {
         if (! $gate->isOpen()) {
             fwrite(STDOUT, "No stop conditions in force — nothing to be stuck on.\n");
@@ -346,7 +349,7 @@ final class UntilCommand implements Command
      *
      * @param  array<int, string>  $unblocked  the standing conditions with no reason against them
      */
-    private function notEveryCondition(UntilGate $gate, array $unblocked): int
+    private function notEveryCondition(StopConditionGate $gate, array $unblocked): int
     {
         $standing = count($gate->all());
         $left = count($unblocked);
@@ -361,11 +364,11 @@ final class UntilCommand implements Command
 
         $this->conditions(array_slice($unblocked, 0, self::EXAMPLES, preserve_keys: true));
 
-        fwrite(STDERR, ($left > self::EXAMPLES ? '  …and ' . ($left - self::EXAMPLES) . " more (`until list`).\n" : '')
+        fwrite(STDERR, ($left > self::EXAMPLES ? '  …and ' . ($left - self::EXAMPLES) . " more (`stop-condition list`).\n" : '')
             . "  WORK them. For any that genuinely needs the user, say so against that condition — one at a\n"
             . "  time, with what you need from them:\n"
-            . "  `commandments until blocked <id> --reason=\"<what only the user can give>\"`\n"
-            . "  When every standing condition carries a reason, `until stuck` releases a stop.\n");
+            . "  `commandments stop-condition blocked <id> --reason=\"<what only the user can give>\"`\n"
+            . "  When every standing condition carries a reason, `stop-condition stuck` releases a stop.\n");
 
         return 2;
     }
@@ -377,7 +380,7 @@ final class UntilCommand implements Command
      * without the user, the second asks it to be certain. The claim is honoured on the round after, so a
      * genuinely blocked agent is delayed, never trapped.
      */
-    private function challenge(UntilGate $gate, int $round): int
+    private function challenge(StopConditionGate $gate, int $round): int
     {
         $standing = count($gate->all());
 
@@ -411,7 +414,7 @@ final class UntilCommand implements Command
      * The blocked conditions as the agent and the user read them: the id, the condition, and what that
      * one is waiting on.
      */
-    private function reasons(UntilGate $gate): void
+    private function reasons(StopConditionGate $gate): void
     {
         $conditions = $gate->all();
 
@@ -422,13 +425,13 @@ final class UntilCommand implements Command
 
     /**
      * The user's pause — the whole gate is set aside so nothing holds a stop while they do something
-     * else, and every condition waits, intact, for `until resume`.
+     * else, and every condition waits, intact, for `stop-condition resume`.
      */
-    private function pause(UntilGate $gate): int
+    private function pause(StopConditionGate $gate): int
     {
         if (! $gate->isOpen()) {
             fwrite(STDOUT, $gate->isPaused()
-                ? "○ The stop gate is already paused — run `commandments until resume` to bring it back.\n"
+                ? "○ The stop gate is already paused — run `commandments stop-condition resume` to bring it back.\n"
                 : "○ No stop conditions in force — nothing to pause.\n");
 
             return 0;
@@ -438,12 +441,12 @@ final class UntilCommand implements Command
         $gate->pause();
 
         fwrite(STDOUT, "❙❙ Stop gate paused — {$paused} condition(s) set aside, nothing is holding you now.\n"
-            . "  They are kept as-is; run `commandments until resume` to put them back in force.\n");
+            . "  They are kept as-is; run `commandments stop-condition resume` to put them back in force.\n");
 
         return 0;
     }
 
-    private function resume(UntilGate $gate): int
+    private function resume(StopConditionGate $gate): int
     {
         if (! $gate->isPaused()) {
             fwrite(STDOUT, "○ The stop gate is not paused.\n");
@@ -459,7 +462,7 @@ final class UntilCommand implements Command
         return 0;
     }
 
-    private function clear(UntilGate $gate): int
+    private function clear(StopConditionGate $gate): int
     {
         if (! $gate->isOpen() && ! $gate->isPaused()) {
             fwrite(STDOUT, "○ No stop conditions in force.\n");
@@ -474,8 +477,8 @@ final class UntilCommand implements Command
     }
 
     /**
-     * The condition text from the arguments at $from onward — so both `until "a b c"` and an unquoted
-     * `until a b c` read the same.
+     * The condition text from the arguments at $from onward — so both `stop-condition "a b c"` and an unquoted
+     * `stop-condition a b c` read the same.
      */
     private function text(Input $input, int $from): string
     {

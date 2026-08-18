@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\ConstraintReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\TestingReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\UntilReminder;
+use JesseGall\CodeCommandments\Hooks\Handlers\StopConditionReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
 use JesseGall\CodeCommandments\Hooks\Handlers\SourceReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
@@ -56,7 +56,7 @@ final class HookRegistry
         PlanReminder::class,
         ConstraintReminder::class,
         TestingReminder::class,
-        UntilReminder::class,
+        StopConditionReminder::class,
         SessionReset::class,
         SourceReminder::class,
         SkillReminder::class,
@@ -89,8 +89,12 @@ final class HookRegistry
      *
      * @param  list<class-string<Hook>>  $hookClasses
      */
-    public static function wire(string $root, array $hookClasses = self::BUILTINS): bool
+    public static function wire(string $root): bool
     {
+        // The set is DERIVED from the project, not asked for: every caller held the root and handed
+        // back what this could work out from it, which is one rule about which hooks a project gets,
+        // written in two places.
+        $hookClasses = self::forProject($root);
         $path = "{$root}/" . self::SETTINGS;
         $settings = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
 

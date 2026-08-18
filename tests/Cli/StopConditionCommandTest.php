@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Until\UntilGate;
-use JesseGall\CodeCommandments\Cli\Until\UntilCommand;
+use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
+use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionCommand;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `commandments until` — the agent's handle on the user's stop gate: set a condition, list what
+ * `commandments stop-condition` — the agent's handle on the user's stop gate: set a condition, list what
  * stands, strike one off as met, pause once when blocked, drop the gate.
  */
-final class UntilCommandTest extends TestCase
+final class StopConditionCommandTest extends TestCase
 {
     private string $root;
 
@@ -31,7 +31,7 @@ final class UntilCommandTest extends TestCase
 
     private function exec(string ...$args): int
     {
-        $command = new UntilCommand(new CapturingHookIO(new FakeGit($this->root)));
+        $command = new StopConditionCommand(new CapturingHookIO(new FakeGit($this->root)));
 
         ob_start();
         $code = $command->run(Input::of('until', $args));
@@ -63,9 +63,9 @@ final class UntilCommandTest extends TestCase
         return implode(',', array_keys($this->gate()->all()));
     }
 
-    private function gate(): UntilGate
+    private function gate(): StopConditionGate
     {
-        return UntilGate::inSession(Workspace::at($this->root));
+        return StopConditionGate::inSession(Workspace::at($this->root));
     }
 
     public function test_a_bare_condition_sets_the_gate(): void

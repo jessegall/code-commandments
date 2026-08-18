@@ -83,8 +83,13 @@ final class HooksTest extends TestCase
 
     public function test_a_consumer_registered_hook_adds_its_moment(): void
     {
-        // FakeHook binds a new event (Notification) — a moment no builtin uses, so it gets its own entry.
-        HookRegistry::wire($this->root, [...HookRegistry::BUILTINS, FakeHook::class]);
+        // FakeHook binds a new event (Notification) — a moment no builtin uses, so it gets its own
+        // entry. Registered the way a consumer really registers one: in its own config.
+        @mkdir("{$this->root}/.commandments", 0777, true);
+        $fake = FakeHook::class;
+        file_put_contents("{$this->root}/.commandments/config.php", "<?php return function (\$config) { \$config->hook('{$fake}'); };");
+
+        HookRegistry::wire($this->root);
 
         $this->assertSame(1, $this->dispatchers('Notification'), 'the consumer hook adds its moment');
         $this->assertSame(1, $this->dispatchers('PostToolUse'), 'the builtins are still wired');

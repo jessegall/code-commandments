@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
-use JesseGall\CodeCommandments\Cli\Until\UntilGate;
+use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -13,20 +13,20 @@ use JesseGall\CodeCommandments\Hooks\TodoList;
 
 /**
  * The user-set stop gate — a `Stop` hook that holds the agent while any condition set with
- * `commandments until "<condition>"` still stands ({@see UntilGate}). The plan-free sibling of
+ * `commandments stop-condition "<condition>"` still stands ({@see StopConditionGate}). The plan-free sibling of
  * {@see PlanReminder}'s keep-going nudge: it needs no plan and no config opt-in, because it exists
  * only when the user explicitly asked for it. Each held stop sends the agent back in to VERIFY the
- * conditions rather than to assume them, and says how to end the gate honestly: `until met <n>` when
- * one holds, `until stuck` when it is truly blocked. It leads with the COUNT and spells out only the
+ * conditions rather than to assume them, and says how to end the gate honestly: `stop-condition met <n>` when
+ * one holds, `stop-condition stuck` when it is truly blocked. It leads with the COUNT and spells out only the
  * {@see EXCERPT} oldest conditions — a gate holding dozens of parked tasks would otherwise re-print the
- * whole list on every single stop — and points at `until list` for the rest. It also keeps the one thing
+ * whole list on every single stop — and points at `stop-condition list` for the rest. It also keeps the one thing
  * the user can see honest: the visible to-do list must be current ({@see DRIFT}) and must LEAD with the
  * item in progress ({@see buried}), so "what is it doing right now?" is answered by the first line.
  * Loop-safe: {@see MAX_BLOCKS} consecutive holds
  * without progress release the gate, so a wedged session can always stop (striking a condition off
  * resets the count).
  */
-final class UntilReminder extends Hook
+final class StopConditionReminder extends Hook
 {
     /**
      * Consecutive held stops with no condition met before the gate releases itself, to never trap a session.
@@ -54,7 +54,7 @@ final class UntilReminder extends Hook
 
     public function summary(): string
     {
-        return 'Holds every stop while a `commandments until "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it.';
+        return 'Holds every stop while a `commandments stop-condition "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it.';
     }
 
     public function bindings(): array
@@ -70,7 +70,7 @@ final class UntilReminder extends Hook
      */
     protected function onPostToolUse(HookEvent $event): int
     {
-        $gate = UntilGate::inSession($event->workspace());
+        $gate = StopConditionGate::inSession($event->workspace());
 
         if (! $gate->isOpen()) {
             return $this->pass();
@@ -127,7 +127,7 @@ final class UntilReminder extends Hook
 
     /**
      * Is this tool use WORK — something that could move a condition — or only bookkeeping? Two moves let
-     * an agent look busy without touching the problem: talking to the GATE itself (`commandments until …`,
+     * an agent look busy without touching the problem: talking to the GATE itself (`commandments stop-condition …`,
      * which would otherwise let a `list` followed by a `stuck` count as progress) and reordering the
      * to-do list. Everything else counts, deliberately generously — reading a file, running a command and
      * editing code are all genuine attempts, and the bar this sets is only "you tried something". It
@@ -140,7 +140,7 @@ final class UntilReminder extends Hook
             return false;
         }
 
-        return ! $event->isTool('Bash') || ! str_contains($event->command(), 'commandments until');
+        return ! $event->isTool('Bash') || ! str_contains($event->command(), 'commandments stop-condition');
     }
 
     /**
@@ -160,7 +160,7 @@ final class UntilReminder extends Hook
 
     protected function onStop(HookEvent $event): int
     {
-        $gate = UntilGate::inSession($event->workspace());
+        $gate = StopConditionGate::inSession($event->workspace());
         $conditions = $gate->all();
 
         if ($conditions === []) {
@@ -198,12 +198,12 @@ final class UntilReminder extends Hook
      */
     private function inFlight(HookEvent $event): bool
     {
-        $gate = UntilGate::inSession($event->workspace());
+        $gate = StopConditionGate::inSession($event->workspace());
 
         if ($gate->isPaused()) {
             return false; // The user paused the gate to do something else in between: the whole `until`
             // machinery goes quiet — no held stop AND no "park this as a condition" nudge — until they
-            // run `until resume`.
+            // run `stop-condition resume`.
         }
 
         return PlanMarker::inSession($event->workspace())->isActive() || $gate->isOpen();
@@ -217,7 +217,7 @@ final class UntilReminder extends Hook
             . "— do it NOW. Do not park it; parking it is a way of not doing it.\n"
             . "  • A SEPARATE task, or one they deferred (\"later\", \"when you're done\", \"after this\", "
             . "\"add it to the to-do list\", \"don't forget to…\"), or anything that would derail the phase "
-            . "you're in — PARK it, which means BOTH halves: run `vendor/bin/commandments until \"<the task, as "
+            . "you're in — PARK it, which means BOTH halves: run `vendor/bin/commandments stop-condition \"<the task, as "
             . "a statement you can verify>\"` AND add the same statement to your to-do list (TodoWrite). Then "
             . "carry on with what you were doing.\n"
             . "  • Unsure? Cheap and inside the current phase → do it. Opens a new front → park it.\n"
@@ -238,7 +238,7 @@ final class UntilReminder extends Hook
             . "VERIFY each condition for real (run the command, read the file, check the output) — do not "
             . "assume it holds because you think you did the work.\n"
             . $this->excerpt($conditions)
-            . "\nFor each one that genuinely holds now, run `vendor/bin/commandments until met <n>` and mark its "
+            . "\nFor each one that genuinely holds now, run `vendor/bin/commandments stop-condition met <n>` and mark its "
             . "to-do item completed (add any condition still missing from your to-do list so the user can see it); "
             . "the gate lifts "
             . "when none are left. Otherwise keep working until it holds.\n"
@@ -249,16 +249,16 @@ final class UntilReminder extends Hook
             . "`stuck` IS NOT FOR A BLOCKED ITEM — it is for a blocked LIST. \"The thing in front of me needs the "
             . "user\" is not being stuck; that is ONE blocked item and the rest of the list still to work. Leave the "
             . "blocked one for last and carry on with the others. When a condition genuinely needs the user, say so "
-            . "AGAINST THAT CONDITION as you meet it — `vendor/bin/commandments until blocked <n> --reason=\"<what "
+            . "AGAINST THAT CONDITION as you meet it — `vendor/bin/commandments stop-condition blocked <n> --reason=\"<what "
             . "only the user can give>\"` — and carry on with the rest. Once EVERY standing condition carries a "
-            . "reason, `vendor/bin/commandments until stuck` (NOT `until clear`) releases one stop. Nothing you said "
+            . "reason, `vendor/bin/commandments stop-condition stuck` (NOT `stop-condition clear`) releases one stop. Nothing you said "
             . "before this message counts: being sent back in DROPS every block, so the claim is about the list as it "
             . "stands now.";
     }
 
     /**
      * The cap has fired: nothing holds the next stop, but what the user asked for is SET ASIDE rather than
-     * deleted, so the decision about it stays theirs ({@see UntilGate::pause}).
+     * deleted, so the decision about it stays theirs ({@see StopConditionGate::pause}).
      *
      * @param  array<int, string>  $conditions  keyed by their stable id
      */
@@ -269,7 +269,7 @@ final class UntilReminder extends Hook
             . count($conditions) . " condition(s) are SET ASIDE, kept verbatim:\n"
             . $this->excerpt($conditions, listable: false)
             . "\nTell the user plainly that you could not meet them and what stands in the way, and that "
-            . "`commandments until resume` puts them back in force, so they can decide what to do. Do not resume "
+            . "`commandments stop-condition resume` puts them back in force, so they can decide what to do. Do not resume "
             . "or re-set the gate on your own.";
     }
 
@@ -292,10 +292,10 @@ final class UntilReminder extends Hook
      * The conditions as the agent reads them: the {@see EXCERPT} oldest — the ones due next — and, when
      * more stand behind them, how many and where the whole list is. A held stop repeats on EVERY stop,
      * so spelling out a 50-condition gate each time costs more context than it buys; the id shown is
-     * the stable handle `until met <n>` takes, so an excerpted line is still actionable.
+     * the stable handle `stop-condition met <n>` takes, so an excerpted line is still actionable.
      *
      * @param  array<int, string>  $conditions  keyed by their stable id
-     * @param  bool  $listable  whether `until list` can still show the rest (false once the gate is gone)
+     * @param  bool  $listable  whether `stop-condition list` can still show the rest (false once the gate is gone)
      */
     private function excerpt(array $conditions, bool $listable = true): string
     {
@@ -312,7 +312,7 @@ final class UntilReminder extends Hook
         }
 
         return $lines . "\n  … and {$rest} more" . ($listable
-            ? " — run `vendor/bin/commandments until list` for the full list (only these first "
+            ? " — run `vendor/bin/commandments stop-condition list` for the full list (only these first "
                 . self::EXCERPT . " are shown so the gate doesn't flood every stop)."
             : ' that are gone with the gate and can no longer be listed.');
     }

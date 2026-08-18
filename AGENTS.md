@@ -76,12 +76,12 @@ with is a `report`; a rule you want off is `disable`; freezing is for files that
 by their nature cannot move.
 
 **Stop conditions — when the user says "keep going until X".** Record it at once:
-`vendor/bin/commandments until "<condition>"`. While it stands you may not stop: every
+`vendor/bin/commandments stop-condition "<condition>"`. While it stands you may not stop: every
 stop is held and sends you back to VERIFY the condition — actually run the command and
 read the output, never assume it holds because you did the work. Strike one off with
-`vendor/bin/commandments until met <n>` once it genuinely holds; if you are truly
-blocked, `vendor/bin/commandments until stuck` hands back to the user while keeping the
-condition in force. Never `until clear` to escape a condition you simply haven't met.
+`vendor/bin/commandments stop-condition met <n>` once it genuinely holds; if you are truly
+blocked, `vendor/bin/commandments stop-condition stuck` hands back to the user while keeping the
+condition in force. Never `stop-condition clear` to escape a condition you simply haven't met.
 
 **Keep the to-do list the user can SEE honest.** Mirror every condition into whatever
 visible list your agent keeps, mark an item done the moment you strike its condition
@@ -93,11 +93,11 @@ must say where you are right now.
 already working, decide what their message IS: **steering** the work in hand (a correction,
 a change of approach, "while you're in there…") is done **now** — parking it is a way of not
 doing it. A **separate task**, one they deferred ("later", "when you're done"), or anything
-that would derail the phase you're on is **parked**: `vendor/bin/commandments until "<the
+that would derail the phase you're on is **parked**: `vendor/bin/commandments stop-condition "<the
 task, as a statement you can verify>"`, then carry on with what you were doing. Unsure?
 Cheap and inside the current phase → do it; opens a new front → park it. A plan takes
 precedence over the gate, so parked work surfaces at `plan done` — exactly "later".
-Load the `commandments-until` skill for the discipline.
+Load the `commandments-stop-condition` skill for the discipline.
 
 When in doubt, load `commandments-backend-fix-at-the-source` and re-read it. It is the parent move
 behind every other skill.

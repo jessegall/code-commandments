@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Until;
+namespace JesseGall\CodeCommandments\Cli\StopCondition;
 
 use JesseGall\CodeCommandments\Cli\State\Line;
 use JesseGall\PhpTypes\Option;
@@ -10,7 +10,7 @@ use JesseGall\PhpTypes\Option;
 /**
  * One thing the user said must hold before the agent may stop — its STABLE id, its text, and the
  * reason it cannot move without the user. Being blocked is a fact about a CONDITION, so the reason
- * is recorded here ({@see UntilGate::markBlocked}) rather than as activity beside the gate.
+ * is recorded here ({@see StopConditionGate::markBlocked}) rather than as activity beside the gate.
  */
 final readonly class Condition
 {

@@ -132,7 +132,7 @@ Exit code is non-zero when sins are found.
 | `commandments plan status` | The handle on the ACTIVE PLAN marker the keep-going Stop hook reads — scoped to this worktree. |
 | `commandments constraints list` | The plan's architectural invariants — the rules the whole branch must still hold at the end. |
 | `commandments testing show` | The plan's testing methodology — the working style the user chose at approval, in force for this run. |
-| `commandments until "<condition>"` | The user's STOP GATE — record what must hold before you may stop, and every stop is held until you have VERIFIED it. Needs no plan and no config. |
+| `commandments stop-condition "<condition>"` | The user's STOP GATE — record what must hold before you may stop, and every stop is held until you have VERIFIED it. Needs no plan and no config. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
 | `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched. |
@@ -343,7 +343,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `PlanReminder` | `PostToolUse/ExitPlanMode, Stop` | On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Supervised/Autonomous/BestEffort/Relentless). |
 | `ConstraintReminder` | `PostToolUse` | Re-surfaces the active plan's constraints once every 25 tool uses. |
 | `TestingReminder` | `PostToolUse` | Re-surfaces the active plan's testing methodology once every 25 tool uses. |
-| `UntilReminder` | `Stop, UserPromptSubmit, PostToolUse` | Holds every stop while a `commandments until "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it. |
+| `StopConditionReminder` | `Stop, UserPromptSubmit, PostToolUse` | Holds every stop while a `commandments stop-condition "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
 | `SkillReminder` | `PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit` | After an edit, checks the file against the rules that can judge one file and names the skill that teaches the fix. |

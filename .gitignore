@@ -60,3 +60,6 @@ phpcs.xml
 
 # code-commandments published slash commands (regenerated on composer update)
 .claude/commands/until.md
+
+# code-commandments published slash commands (regenerated on composer update)
+.claude/commands/stop-condition.md

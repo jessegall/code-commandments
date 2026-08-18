@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
-use JesseGall\CodeCommandments\Cli\Until\UntilGate;
-use JesseGall\CodeCommandments\Hooks\Handlers\UntilReminder;
+use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
+use JesseGall\CodeCommandments\Hooks\Handlers\StopConditionReminder;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
  * The user-set stop gate: while a condition stands, every stop is held and the agent is sent back to
  * verify it. Silent without a gate, one-shot-releasable when stuck, and self-releasing at the cap.
  */
-final class UntilReminderTest extends TestCase
+final class StopConditionReminderTest extends TestCase
 {
     private string $root;
 
@@ -35,7 +35,7 @@ final class UntilReminderTest extends TestCase
     private function stop(): array
     {
         $io = new CapturingHookIO(new FakeGit($this->root), ['hook_event_name' => 'Stop']);
-        new UntilReminder($io)->run([]);
+        new StopConditionReminder($io)->run([]);
 
         return $io->emitted;
     }
@@ -46,7 +46,7 @@ final class UntilReminderTest extends TestCase
     private function prompt(): array
     {
         $io = new CapturingHookIO(new FakeGit($this->root), ['hook_event_name' => 'UserPromptSubmit']);
-        new UntilReminder($io)->run([]);
+        new StopConditionReminder($io)->run([]);
 
         return $io->emitted;
     }
@@ -64,7 +64,7 @@ final class UntilReminderTest extends TestCase
             'tool_input' => ['command' => $command],
         ]);
 
-        new UntilReminder($io)->run([]);
+        new StopConditionReminder($io)->run([]);
 
         return $io->emitted;
     }
@@ -83,7 +83,7 @@ final class UntilReminderTest extends TestCase
             'tool_input' => ['todos' => $todos],
         ]);
 
-        new UntilReminder($io)->run([]);
+        new StopConditionReminder($io)->run([]);
 
         return $io->emitted;
     }
@@ -98,9 +98,9 @@ final class UntilReminderTest extends TestCase
         return $emitted[0]->blockReason->unwrapOr('');
     }
 
-    private function gate(): UntilGate
+    private function gate(): StopConditionGate
     {
-        return UntilGate::inSession(Workspace::at($this->root));
+        return StopConditionGate::inSession(Workspace::at($this->root));
     }
 
     public function test_it_is_silent_when_no_condition_is_set(): void
@@ -120,14 +120,14 @@ final class UntilReminderTest extends TestCase
         $this->assertStringContainsString('1. the full test suite passes', $reason);
         $this->assertStringContainsString('2. the README is updated', $reason);
         $this->assertStringContainsString('VERIFY', $reason, 'the agent is told to verify, not assume');
-        $this->assertStringContainsString('until met', $reason);
-        $this->assertStringContainsString('until stuck', $reason);
+        $this->assertStringContainsString('stop-condition met', $reason);
+        $this->assertStringContainsString('stop-condition stuck', $reason);
     }
 
     public function test_a_long_gate_is_excerpted_instead_of_reprinted_in_full(): void
     {
         // A user parking dozens of tasks would otherwise get the whole list back on EVERY stop. The
-        // oldest few are due next, so those are spelled out and the rest are a count plus `until list`.
+        // oldest few are due next, so those are spelled out and the rest are a count plus `stop-condition list`.
         for ($i = 1; $i <= 8; $i++) {
             $this->gate()->add("thing {$i} is done");
         }
@@ -139,7 +139,7 @@ final class UntilReminderTest extends TestCase
         $this->assertStringContainsString('3. thing 3 is done', $reason);
         $this->assertStringNotContainsString('thing 4 is done', $reason, 'the tail is not spelled out');
         $this->assertStringContainsString('and 5 more', $reason);
-        $this->assertStringContainsString('until list', $reason, 'with where to read the rest');
+        $this->assertStringContainsString('stop-condition list', $reason, 'with where to read the rest');
     }
 
     public function test_the_excerpt_keeps_the_stable_ids_the_met_command_takes(): void
@@ -198,7 +198,7 @@ final class UntilReminderTest extends TestCase
     public function test_the_cap_sets_the_conditions_aside_instead_of_deleting_them(): void
     {
         // The cap exists so a spinning session can always stop. Destroying what the user ASKED FOR is no
-        // part of that: the conditions are paused, kept verbatim, and `until resume` puts them back.
+        // part of that: the conditions are paused, kept verbatim, and `stop-condition resume` puts them back.
         $this->gate()->add('the impossible thing happens');
         $this->gate()->add('the other impossible thing happens');
 
@@ -226,7 +226,7 @@ final class UntilReminderTest extends TestCase
         }
 
         $this->assertStringContainsString('SET ASIDE', $released);
-        $this->assertStringContainsString('until resume', $released);
+        $this->assertStringContainsString('stop-condition resume', $released);
     }
 
     public function test_it_calls_out_a_to_do_list_that_has_gone_stale_under_the_gate(): void
@@ -312,7 +312,7 @@ final class UntilReminderTest extends TestCase
         $this->gate()->add('the suite is green');
         $this->gate()->advanceClaim('I need a decision');
 
-        $this->postToolUse('Bash', 'vendor/bin/commandments until list');
+        $this->postToolUse('Bash', 'vendor/bin/commandments stop-condition list');
 
         $this->assertSame(1, $this->gate()->claimRound(), 'gate chatter leaves the claim standing');
 
@@ -364,7 +364,7 @@ final class UntilReminderTest extends TestCase
 
         $this->assertStringContainsString('STEERING', $context, 'work in hand is done now');
         $this->assertStringContainsString('PARK', $context, 'a separate/deferred task is parked');
-        $this->assertStringContainsString('until "', $context, 'with the command to park it');
+        $this->assertStringContainsString('stop-condition "', $context, 'with the command to park it');
     }
 
     public function test_the_triage_says_a_to_do_item_is_not_parking(): void
@@ -395,7 +395,7 @@ final class UntilReminderTest extends TestCase
     public function test_the_held_stop_tells_the_agent_to_drain_what_it_can_before_asking(): void
     {
         // A condition waiting on the user must not stall the ones that aren't: the blocked one goes
-        // last, and `until stuck` is only for a list where NOTHING can move.
+        // last, and `stop-condition stuck` is only for a list where NOTHING can move.
         $this->gate()->add('the migration runs');
         $this->gate()->add('the changelog has an entry');
 
@@ -403,7 +403,7 @@ final class UntilReminderTest extends TestCase
 
         $this->assertStringContainsString('DRAIN THE LIST FIRST', $reason);
         $this->assertStringContainsString('leave the blocked one for last', $reason);
-        $this->assertStringContainsString('until blocked <n>', $reason, 'and the per-condition claim is spelled out');
+        $this->assertStringContainsString('stop-condition blocked <n>', $reason, 'and the per-condition claim is spelled out');
         $this->assertStringContainsString('NOT FOR A BLOCKED ITEM', $reason, 'the LOCAL reading is named and refused (#422)');
     }
 
@@ -444,7 +444,7 @@ final class UntilReminderTest extends TestCase
             new FakeGit($this->root),
             ['hook_event_name' => 'Stop', 'background_tasks' => [['status' => 'running']]],
         );
-        new UntilReminder($io)->run([]);
+        new StopConditionReminder($io)->run([]);
 
         $this->assertSame([], $io->emitted);
         $this->assertSame(0, $this->gate()->heldStops(), 'and it does not burn a block');

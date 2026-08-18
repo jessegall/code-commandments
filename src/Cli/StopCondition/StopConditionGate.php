@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Until;
+namespace JesseGall\CodeCommandments\Cli\StopCondition;
 
 use JesseGall\CodeCommandments\Cli\State\Legend;
 use JesseGall\CodeCommandments\Cli\State\Line;
@@ -12,7 +12,7 @@ use JesseGall\CodeCommandments\Workspace;
 
 /**
  * The conditions the user asked the agent to satisfy before it may stop — the state behind the
- * `until` Stop gate ({@see \JesseGall\CodeCommandments\Hooks\Handlers\UntilReminder}). The plan-free
+ * `until` Stop gate ({@see \JesseGall\CodeCommandments\Hooks\Handlers\StopConditionReminder}). The plan-free
  * sibling of {@see \JesseGall\CodeCommandments\Cli\Plan\PlanMarker}: no plan has to be active, the
  * user simply says "keep going until X" and the agent records X here. Conditions are keyed by a
  * STABLE id (never renumbered or reused while the gate stands, so batched `met` calls can't strike
@@ -26,7 +26,7 @@ use JesseGall\CodeCommandments\Workspace;
  * and their blocks, the held-stop count, the to-do drift, any pending claim — so lifting the gate
  * deletes the whole state at once and no half survives to answer for the next one.
  */
-final class UntilGate
+final class StopConditionGate
 {
     public function __construct(private readonly StateFile $file) {}
 
@@ -38,16 +38,16 @@ final class UntilGate
     public static function legend(): Legend
     {
         return new Legend(
-            'Stop-gate conditions for code-commandments (`commandments until "<condition>"`). While any '
+            'Stop-gate conditions for code-commandments (`commandments stop-condition "<condition>"`). While any '
                 . 'condition stands, the Stop hook blocks and tells the agent to VERIFY it; the agent strikes one '
-                . 'off with `commandments until met <id>` and the gate lifts when none are left.',
+                . 'off with `commandments stop-condition met <id>` and the gate lifts when none are left.',
             [
                 'held_stops' => 'consecutive stops held with no condition met — 10 sets the gate aside',
                 'todo_drift' => 'work done since the visible to-do list was last updated (TodoWrite)',
                 'last_id' => 'the highest condition id ever handed out. Ids are STABLE: striking one off never '
                     . 'renumbers the rest, and an id is never reused',
                 'paused' => 'yes = THE USER set the gate aside. Every condition is kept verbatim and nothing '
-                    . 'holds a stop until `commandments until resume`',
+                    . 'holds a stop until `commandments stop-condition resume`',
                 'stuck' => 'yes = one stop is released, every standing condition having been named as blocked. '
                     . 'One-shot: the next held stop consumes it and drops the blocks, so a claim is always made '
                     . 'afresh about the list as it stands then',
@@ -63,7 +63,7 @@ final class UntilGate
             ),
             list: 'one `id<TAB>condition` per line — what you may not stop until it holds. A third '
                 . 'tab-separated column is the reason that ONE condition cannot move without the user '
-                . '(`commandments until blocked <id> --reason="…"`); `stuck` is released only when every line '
+                . '(`commandments stop-condition blocked <id> --reason="…"`); `stuck` is released only when every line '
                 . 'carries one.',
             safe: 'deleting it simply lifts the gate',
         );
@@ -126,7 +126,7 @@ final class UntilGate
     }
 
     /**
-     * Record one more condition and return its STABLE id — the handle `until met <n>` takes. Ids are
+     * Record one more condition and return its STABLE id — the handle `stop-condition met <n>` takes. Ids are
      * never renumbered or reused while the gate stands, so a batch of `met` calls read off one `list`
      * can never strike the wrong condition (#399). A condition is stored as a single line (any
      * newlines in it collapse to spaces). Setting a condition that is already there returns its
@@ -359,7 +359,7 @@ final class UntilGate
     }
 
     /**
-     * The conditions a paused gate is holding — what `until list` shows while it stands aside.
+     * The conditions a paused gate is holding — what `stop-condition list` shows while it stands aside.
      *
      * @return array<int, string>  keyed by the id each condition had when it was paused
      */
