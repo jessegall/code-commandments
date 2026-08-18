@@ -1056,6 +1056,38 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
     }
 
     /**
+     * The methods a class gets from the traits it `use`s — what php-parser's `getMethods()` leaves out,
+     * since that reports only what the class itself declares.
+     *
+     * Every rule about a class's BEHAVIOUR needs these, or the same method is judged when written in
+     * the class and invisible when moved into a trait, and the rule can be evaded by moving it (#506).
+     *
+     * @return list<\PhpParser\Node\Stmt\ClassMethod>
+     */
+    public function traitMethodsOf(?string $class): array
+    {
+        $declaration = $this->classNamed($class)->node;
+
+        if (! $declaration instanceof ClassLike) {
+            return [];
+        }
+
+        $methods = [];
+
+        foreach ($declaration->getTraitUses() as $use) {
+            foreach ($use->traits as $name) {
+                $trait = $this->declarationMatch($name->toString())?->node;
+
+                if ($trait instanceof ClassLike) {
+                    $methods = [...$methods, ...$trait->getMethods()];
+                }
+            }
+        }
+
+        return $methods;
+    }
+
+    /**
      * @return array<string, string>  child FQCN => parent FQCN
      *
      * The class-likes that `use` the given trait (directly) — "who consumes this trait",

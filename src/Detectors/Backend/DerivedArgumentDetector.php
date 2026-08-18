@@ -145,6 +145,13 @@ final class DerivedArgumentDetector implements Detector
                 continue;
             }
 
+            // A generic container's slot — `register(string $key, mixed $item)` — is the one callee that
+            // provably cannot derive: it has been told nothing about what it holds. The key beside the
+            // item is not a derivation it could have done, it is the only way the value gets there (#504).
+            if ($callee->takesAnythingAt($position, $resolver)) {
+                return [];
+            }
+
             $hash = StructuralHash::of($subject);
 
             if ($subject === $argument->value) {

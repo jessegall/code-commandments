@@ -296,7 +296,7 @@ final class ValueFlow
         }
 
         if ($parent instanceof Foreach_ && $parent->expr === $node && AstNode::variableNameOf($parent->valueVar) !== null) {
-            return $this->keyed($this->readsOf($parent->valueVar->name, $this->enclosingFunction($node), $occurrence->file), 'element', null);
+            return $this->keyed($this->readsOf($parent->valueVar->name, AstNode::enclosingFunctionOf($node), $occurrence->file), 'element', null);
         }
 
         // `[...$arr]` — the spread re-carries the element into the surrounding array, key intact.
@@ -377,7 +377,7 @@ final class ValueFlow
             return [];
         }
 
-        return $this->readsOf($parent->var->name, $this->enclosingFunction($occurrence->node), $occurrence->file);
+        return $this->readsOf($parent->var->name, AstNode::enclosingFunctionOf($occurrence->node), $occurrence->file);
     }
 
     /**
@@ -441,7 +441,7 @@ final class ValueFlow
     {
         $node = $occurrence->node;
         $parent = $node?->getAttribute('parent');
-        $function = $this->enclosingFunction($node);
+        $function = AstNode::enclosingFunctionOf($node);
 
         if (! $parent instanceof Return_ || $parent->expr !== $node || ! $function instanceof ClassMethod) {
             return [];
@@ -479,7 +479,7 @@ final class ValueFlow
             return [];
         }
 
-        $owner = $this->types->typeOf($target->var, $this->enclosingFunction($node), $this->enclosingClassOf($node));
+        $owner = $this->types->typeOf($target->var, AstNode::enclosingFunctionOf($node), $this->enclosingClassOf($node));
 
         return $owner === null ? [] : $this->fieldSlotReads($owner, $target->name->toString(), $seenSlots);
     }
@@ -535,7 +535,7 @@ final class ValueFlow
     private function callee(?Node $call): ?Callee
     {
         foreach (Callee::methodOfCall($call) as $method) {
-            $type = $this->types->typeOf($call->var, $this->enclosingFunction($call), $this->enclosingClassOf($call));
+            $type = $this->types->typeOf($call->var, AstNode::enclosingFunctionOf($call), $this->enclosingClassOf($call));
 
             return $type === null ? null : new Callee($type, $method);
         }
@@ -642,7 +642,7 @@ final class ValueFlow
                     continue;
                 }
 
-                $function = $this->enclosingFunction($fetch);
+                $function = AstNode::enclosingFunctionOf($fetch);
                 $type = $function === null ? null : $this->types->typeOf($fetch->var, $function, $this->enclosingClass($function));
 
                 if ($type === null) {
@@ -709,21 +709,12 @@ final class ValueFlow
 
     private function enclosingClassOf(Node $node): ?string
     {
-        $function = $this->enclosingFunction($node);
+        $function = AstNode::enclosingFunctionOf($node);
 
         return $function === null ? null : $this->enclosingClass($function);
     }
 
-    private function enclosingFunction(?Node $node): ?FunctionLike
-    {
-        foreach (AstNode::ancestorsOf($node) as $current) {
-            if ($current instanceof FunctionLike) {
-                return $current;
-            }
-        }
 
-        return null;
-    }
 
     private function enclosingClass(FunctionLike $function): ?string
     {

@@ -44,8 +44,15 @@ final class DuplicateFunctionDetector extends RecurringPattern
             ->get();
     }
 
+    /**
+     * The recurring shape of a declaration: the hash of its BODY, never of its name.
+     *
+     * A duplicate is two declarations that DO the same thing, and the case most worth catching is
+     * the one where they do it under different names — a caller reaching for one gets the other's
+     * behaviour. Hashing the whole declaration only ever found copies that kept their name (#501).
+     */
     protected function fingerprint(NodeMatch $finding, Codebase $codebase): ?string
     {
-        return $finding->structuralHash();
+        return $finding->bodyHash();
     }
 }

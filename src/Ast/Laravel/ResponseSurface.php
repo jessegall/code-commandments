@@ -155,7 +155,7 @@ final class ResponseSurface
             return self::constructedClass($expr);
         }
 
-        $function = self::enclosingFunction($expr);
+        $function = AstNode::enclosingFunctionOf($expr);
 
         if ($function === null) {
             return null;
@@ -166,16 +166,7 @@ final class ResponseSurface
         return $resolved === null ? null : ltrim($resolved, '\\');
     }
 
-    private static function enclosingFunction(Node $node): ?FunctionLike
-    {
-        foreach (AstNode::ancestorsOf($node) as $current) {
-            if ($current instanceof FunctionLike) {
-                return $current;
-            }
-        }
 
-        return null;
-    }
 
     private static function enclosingClassName(Node $node): ?string
     {

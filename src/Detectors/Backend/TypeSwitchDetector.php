@@ -30,6 +30,7 @@ final class TypeSwitchDetector implements Detector
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->isTypeSwitchHead())
             ->where(fn (AstNode $node) => $this->everyTypeIsOwned($node, $codebase))
+            ->reject(static fn (AstNode $node): bool => $node->isInFromSourceFactory())
             ->get();
     }
 

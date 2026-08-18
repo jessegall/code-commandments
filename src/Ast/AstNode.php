@@ -425,7 +425,7 @@ class AstNode
      * caller can observe. And a mutation inside a method that returns `$this` is a fluent BUILDER
      * accumulating — a recognised, deliberate shape, not a value corrupted.
      */
-    public function mutatesOwnFieldsAfterConstruction(): bool
+    public function mutatesOwnFieldsAfterConstruction(array $inherited = []): bool
     {
         if (! $this->node instanceof ClassLike) {
             return false;
@@ -446,7 +446,10 @@ class AstNode
             }
         }
 
-        foreach ($this->node->getMethods() as $method) {
+        // $inherited carries the methods that arrive through a `use` — php-parser's `getMethods()`
+        // sees only what the class declares, so without them the same mutation is a sin in the class
+        // and invisible from a trait, and the rule can be evaded by moving a method (#506).
+        foreach ([...$this->node->getMethods(), ...$inherited] as $method) {
             if ($method->name->toString() === '__construct' || self::returnsThis($method)) {
                 continue;
             }
@@ -526,6 +529,29 @@ class AstNode
         return ($node instanceof Assign || $node instanceof AssignOp)
             && ! $node instanceof CoalesceAssign
             && $node->var instanceof PropertyFetch;
+    }
+
+    /**
+     * Does this node sit inside a FROM-SOURCE FACTORY — a static method that maps something else into
+     * the very type it is declared on (`ValueKind::of(Type $t): self`)?
+     *
+     * A type switch there is not the sin. The `tell-dont-ask` skill grants it in as many words: moving
+     * the mapping onto the source type would make the domain name its presentation, inverting the
+     * dependency the classification exists to keep pointing one way (#509). The tell is structural —
+     * `static`, returning the enclosing type — not the method's name.
+     */
+    public function isInFromSourceFactory(): bool
+    {
+        $function = $this->enclosingFunction();
+
+        if (! $function instanceof ClassMethod || ! $function->isStatic()) {
+            return false;
+        }
+
+        $returns = TypeName::render($function->returnType);
+        $class = $this->enclosingClassName();
+
+        return $returns === 'self' || $returns === 'static' || ($class !== null && ltrim($returns, '\\') === ltrim($class, '\\'));
     }
 
     /**
@@ -2520,6 +2546,25 @@ class AstNode
     }
 
     /**
+     * A formatting-blind fingerprint of this declaration's BODY alone — what it DOES, with the name
+     * it does it under left out.
+     *
+     * The distinction is the whole of "duplicate function": two declarations that share a body are
+     * the same code whether or not they share a name, and the interesting case is precisely when
+     * they do NOT — two names for one operation, where a caller reaching for one gets the other's
+     * behaviour (#501). Hashing the declaration instead only ever finds copies that kept their name.
+     * Empty string when this isn't a function declaration, or has no body.
+     */
+    public function bodyHash(): string
+    {
+        if (! $this->isFunctionDeclaration() || $this->node->stmts === null) {
+            return '';
+        }
+
+        return sha1(implode("\0", array_map(StructuralHash::of(...), $this->node->stmts)));
+    }
+
+    /**
      * Like {@see structuralHash} but fuzzier — variable names and scalar literals
      * are blanked, so two functions with the same SHAPE that differ only in their
      * variable names or constants (a near-duplicate / type-2 clone) hash the same.
@@ -3469,7 +3514,12 @@ class AstNode
         foreach ($this->node->stmts as $stmt) {
             if ($stmt instanceof ClassConst) {
                 foreach ($stmt->consts as $const) {
-                    if (! new self($const->value)->isScalarLiteral()) {
+                    $value = new self($const->value);
+
+                    // A shelf of documents (GraphQL queries, SQL, templates) is not a closed set of
+                    // values: an enum case is something you dispatch on, and nothing dispatches on a
+                    // twenty-line query text (#505, #508).
+                    if (! $value->isScalarLiteral() || $value->isDocumentLiteral()) {
                         return false;
                     }
 
@@ -3493,6 +3543,28 @@ class AstNode
         return $this->node instanceof String_
             || $this->node instanceof Int_
             || $this->node instanceof Float_;
+    }
+
+    /**
+     * Is this literal a DOCUMENT rather than a value — a GraphQL query, an SQL statement, a template?
+     * A value in a closed set is an identity token you compare and dispatch on; a document is content
+     * that merely happens to be a string, and it is told apart by how it is written: it spans lines,
+     * or the author reached for a heredoc/nowdoc to write it.
+     *
+     * The distinction matters because a rule about closed SETS must not fire on a shelf of documents,
+     * which no enum could hold and nothing ever compares.
+     */
+    public function isDocumentLiteral(): bool
+    {
+        if (! $this->node instanceof String_) {
+            return false;
+        }
+
+        $kind = $this->node->getAttribute('kind');
+
+        return str_contains($this->node->value, "\n")
+            || $kind === String_::KIND_HEREDOC
+            || $kind === String_::KIND_NOWDOC;
     }
 
     /**
@@ -5065,6 +5137,22 @@ class AstNode
         }
 
         return $this->walkUp(static fn (Node $node): bool => $node instanceof FunctionLike);
+    }
+
+    /**
+     * The function/method/closure ENCLOSING $node — strictly above it, never $node itself. The static
+     * twin, for the analyses that hold a raw node; two of them had walked the ancestors for it
+     * themselves, which is one question with two answers waiting to disagree.
+     */
+    public static function enclosingFunctionOf(?Node $node): ?FunctionLike
+    {
+        foreach (self::ancestorsOf($node) as $current) {
+            if ($current instanceof FunctionLike) {
+                return $current;
+            }
+        }
+
+        return null;
     }
 
     /**
