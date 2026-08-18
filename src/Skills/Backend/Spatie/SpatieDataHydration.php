@@ -26,7 +26,7 @@ final class SpatieDataHydration extends Skill
 
     public function trigger(): string
     {
-        return "How to CONSTRUCT and CONSUME a Spatie `Data` object at a call site without re-doing work the class already declares: never wrap a nested value in `X::from([...])` when the parent auto-hydrates the array; never `Enum::from(\$x)`/`new DateTime(\$x)` at a hydration site when the property auto-casts the scalar; never `array_map(E::for(...), \$xs)` to fill a `#[DataCollectionOf]` when a `#[WithCast]`/`IterableItemCast` owns the derivation; never build a `Data` only to `->toArray()` it, hand-roll a `toArray()`, compute a `#[Computed]` field at the call site, or hand-remap keys `#[MapInputName]` would map. Read this whenever you write or review a `::from([...])` array, a hydrator, or a call that fills a `Data` object.";
+        return "How to CONSTRUCT and CONSUME a Spatie `Data` object at a call site without re-doing work the class already declares — the nested `X::from([...])` the parent would hydrate, the `Enum::from(\$x)`/`new DateTime(\$x)` a property already casts, the `array_map` filling a `#[DataCollectionOf]`, the hand-rolled `toArray()`, the `#[Computed]` field computed at the call site, the keys remapped by hand. Read this whenever you write or review a `::from([...])` array, a hydrator, or a call that fills a `Data` object.";
     }
 
     public function intro(): string

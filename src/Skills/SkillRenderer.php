@@ -6,20 +6,19 @@ namespace JesseGall\CodeCommandments\Skills;
 
 use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Languages;
-use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Testing\Example;
 
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
+use JesseGall\CodeCommandments\Sins\Commands;
 use JesseGall\CodeCommandments\Sins\Sin;
 
 /**
- * Renders a skill's `SKILL.md` from the catalog — a FIXED 10-section layout, identical
- * for every skill. Sections 1–5 + 10 come from the {@see Skill} (entry descriptor +
- * conceptual prose + related), and the enumerable sections (Rules, Bad → good, When it
- * fires, Checklist) are PROJECTED from the skill's {@see Sin}s. Nothing is authored in
- * the markdown and no count is written down, so the docs can't drift from the detectors.
+ * Renders a skill as a TREE of documents: the `SKILL.md` a reader loads to decide how to write the
+ * next line — principle, rules, one worked example, the commands that act on them — beside the
+ * `reference/` documents holding what they want only afterwards. All of it a PROJECTION of {@see Skill}
+ * and its {@see Sin}s, with no count written down, so the docs cannot drift from the detectors.
  */
 final class SkillRenderer
 {
@@ -30,17 +29,56 @@ final class SkillRenderer
     private const string FIX_AT_THE_SOURCE = 'backend/fix-at-the-source';
 
     /**
+     * The generated reference documents, by file stem — stated here so the body's index, the writer
+     * and the tests all name them from one place.
+     */
+    private const string EXAMPLES = 'examples';
+
+    private const string DETECTORS = 'detectors';
+
+    /**
      * The languages the project writes — a skill teaches only what its reader can actually write.
      */
     public function __construct(private readonly Languages $languages = new Languages()) {}
 
     /**
+     * Every file this skill publishes, keyed by its path RELATIVE to the skill directory. The caller
+     * decides where that directory is (the package's `skills/`, a consumer's library), so the renderer
+     * never has to know a root.
+     *
      * @param  array<class-string<Detector>, Example>  $examples
+     * @return array<string, string>
      */
-    public function render(Skill $skill, array $examples = []): string
+    public function documents(Skill $skill, array $examples = []): array
     {
         $sins = $this->sinsOf($skill);
+        $worked = $this->workedExamples($sins, $examples);
 
+        $documents = ['SKILL.md' => $this->body($skill, $sins, $worked)];
+
+        if (count($worked) > 1) {
+            $documents[self::path(self::EXAMPLES)] = $this->examplesDocument($skill, $worked);
+        }
+
+        if ($sins !== []) {
+            $documents[self::path(self::DETECTORS)] = $this->detectorsDocument($skill, $sins);
+        }
+
+        foreach ($skill->references() as $reference) {
+            $documents[self::path($reference->name)] = "# {$reference->title}\n\n" . trim($reference->body) . "\n";
+        }
+
+        return $documents;
+    }
+
+    /**
+     * The `SKILL.md` itself — what a reader has in front of them while writing the line.
+     *
+     * @param  list<Sin>  $sins
+     * @param  list<array{example: Example, sins: list<Sin>}>  $worked
+     */
+    private function body(Skill $skill, array $sins, array $worked): string
+    {
         $blocks = [
             $this->frontmatter($skill),
             "# {$skill->title()}",
@@ -48,14 +86,18 @@ final class SkillRenderer
             $this->blockquote($skill->intro()),
             "## The principle\n\n" . trim($skill->principle()),
             $this->rules($sins),
-            $this->badGood($sins, $examples),
-            $this->whenItFires($sins),
-            $this->checklist($sins),
-            $this->references($skill),
+            $this->workedExample($worked),
+            $this->commands($skill, $sins),
+            $this->referenceIndex($skill, $sins, $worked),
             $this->related($skill),
         ];
 
         return implode("\n\n", array_filter($blocks, static fn (string $block): bool => $block !== '')) . "\n";
+    }
+
+    private static function path(string $name): string
+    {
+        return "reference/{$name}.md";
     }
 
     /**
@@ -89,7 +131,8 @@ final class SkillRenderer
     }
 
     /**
-     * The `## Rules` section — one loud directive per sin.
+     * The `## Rules` section — one directive per sin, written as a checkbox so the ONE list serves
+     * both readings a rule gets: the instruction while writing, and the tick-list while reviewing.
      *
      * @param  list<Sin>  $sins
      */
@@ -98,10 +141,10 @@ final class SkillRenderer
         $rows = [];
 
         foreach ($sins as $sin) {
-            $row = "- {$sin->rule()}";
+            $row = "- [ ] {$sin->rule()}";
 
             if (($suggestion = $sin->suggestion()) !== null) {
-                $row .= "\n  _{$suggestion}_";
+                $row .= "\n      _{$suggestion}_";
             }
 
             $rows[] = $row;
@@ -111,41 +154,181 @@ final class SkillRenderer
     }
 
     /**
-     * The `## Checklist` section — the same rules as scannable checkboxes.
+     * The `## Commands` section — what a reader can RUN on this skill's rules. A skill that teaches a
+     * fix but not the verb that applies it makes every reader rediscover the CLI; the verbs come from
+     * {@see Commands}, the one place they are spelled, so this can never disagree with the report that
+     * sent the reader here.
      *
      * @param  list<Sin>  $sins
      */
-    private function checklist(array $sins): string
+    private function commands(Skill $skill, array $sins): string
     {
-        $rows = array_map(static fn (Sin $sin): string => "- [ ] {$sin->rule()}", $sins);
+        if ($sins === []) {
+            return '';
+        }
 
-        return $rows === [] ? '' : "## Checklist\n\n" . implode("\n", $rows);
+        $detectors = $this->detectorsBySin();
+        $names = array_map(static fn (Sin $sin): string => $sin->name(), $sins);
+        $repentable = Commands::repentable();
+        $scaffoldable = Commands::scaffoldable();
+
+        $rows = [
+            '- `' . Commands::judgeSkill($skill->slug) . '` — find every one of these in the codebase.',
+            '- `' . Commands::info('<sin>') . '` — what one rule flags, why it is a sin, and the fix. '
+                . 'The sins here: ' . self::code($names) . '.',
+        ];
+
+        if (($fixable = array_values(array_intersect($names, array_keys($repentable)))) !== []) {
+            $rows[] = '- `' . Commands::repent('<sin>') . '` — auto-fix, for ' . self::code($fixable)
+                . '. Review it with `--dry-run` first.';
+        }
+
+        if (($scaffolds = array_values(array_intersect($names, array_keys($scaffoldable)))) !== []) {
+            $rows[] = '- `' . Commands::scaffold('<sin>') . '` — generate the helper the fix reaches for, for '
+                . self::code($scaffolds) . '.';
+        }
+
+        $bestDesign = false;
+
+        foreach ($sins as $sin) {
+            $detector = $detectors[$sin::class] ?? null;
+            $bestDesign = $bestDesign || ($detector !== null && Commands::demandsBestDesign($detector));
+        }
+
+        $rows[] = '- `' . Commands::report('<Detector>', $bestDesign) . '` — the flagged code is CORRECT '
+            . 'under the architecture and the rule is wrong. That is the only thing a report claims: a '
+            . 'finding you agree with is yours to fix, however far the fix cascades.';
+
+        return "## Commands\n\n" . implode("\n", $rows);
     }
 
     /**
-     * The `## Reference` section — links to the dense mechanics docs the skill ships in `reference/`.
+     * @param  list<string>  $values
      */
-    private function references(Skill $skill): string
+    private static function code(array $values): string
     {
-        $rows = array_map(
-            static fn (Reference $reference): string => "- [{$reference->title}](reference/{$reference->name}.md)",
-            $skill->references(),
-        );
+        return implode(', ', array_map(static fn (string $value): string => "`{$value}`", $values));
+    }
+
+    /**
+     * The `## Reference` section — the documents this skill ships beside its teaching, generated and
+     * hand-written alike, each with the question it answers. A pointer a reader cannot tell the
+     * purpose of is a pointer they do not follow.
+     *
+     * @param  list<Sin>  $sins
+     * @param  list<array{example: Example, sins: list<Sin>}>  $worked
+     */
+    private function referenceIndex(Skill $skill, array $sins, array $worked): string
+    {
+        $rows = [];
+
+        if (count($worked) > 1) {
+            $rows[] = '- [Worked examples](' . self::path(self::EXAMPLES) . ') — every rule\'s bad → good, '
+                . count($worked) . ' of them.';
+        }
+
+        if ($sins !== []) {
+            $rows[] = '- [What fires, and why](' . self::path(self::DETECTORS) . ') — the symptom each '
+                . 'detector flags, for when you are holding a finding.';
+        }
+
+        foreach ($skill->references() as $reference) {
+            $rows[] = "- [{$reference->title}](" . self::path($reference->name) . ')';
+        }
 
         return $rows === [] ? '' : "## Reference\n\n" . implode("\n", $rows);
     }
 
     /**
-     * The `## Bad → good` section — one worked example per sin from the fixture, DEDUPED
-     * by bad source so a `#[Sinful]` method carrying several sins shows once, not once
-     * per sin. Each example is HEADED by the sin (or sins) it demonstrates: a reader
-     * scrolling a stack of before/afters has to be able to tell which rule each one is
-     * about, and a shared example names every sin it covers rather than the first alone.
+     * The ONE worked example the body carries — the first rule's, so a reader sees the shape of the
+     * sin without scrolling past every other. The rest live in `reference/examples.md`; a body that
+     * spends two thirds of itself on before/afters is a body that gets skimmed.
+     *
+     * @param  list<array{example: Example, sins: list<Sin>}>  $worked
+     */
+    private function workedExample(array $worked): string
+    {
+        if ($worked === []) {
+            return '';
+        }
+
+        $names = self::languagesOf($worked);
+        $rendered = $this->example($worked[0]['sins'], $worked[0]['example'], count($names) > 1);
+
+        if ($rendered === '') {
+            return '';
+        }
+
+        $block = "## Worked example\n\n{$rendered}";
+
+        if (count($worked) > 1) {
+            $rest = count($worked) - 1;
+            $block .= "\n\nThe other {$rest} — one per rule — are in "
+                . '[`' . self::path(self::EXAMPLES) . '`](' . self::path(self::EXAMPLES) . ').';
+        }
+
+        return $block;
+    }
+
+    /**
+     * `reference/examples.md` — every worked example, the body's one included, so the document stands
+     * on its own for a reader who opened it directly.
+     *
+     * @param  list<array{example: Example, sins: list<Sin>}>  $worked
+     */
+    private function examplesDocument(Skill $skill, array $worked): string
+    {
+        $names = self::languagesOf($worked);
+        $blocks = [];
+
+        foreach ($worked as $group) {
+            if (($block = $this->example($group['sins'], $group['example'], count($names) > 1)) !== '') {
+                $blocks[] = $block;
+            }
+        }
+
+        return "# {$skill->title()} — worked examples\n\n"
+            . "One bad → good per rule this skill teaches, taken from the fixture that proves the "
+            . "detector, so every pair is code that really fires and really passes.\n\n"
+            . implode("\n\n", $blocks) . "\n";
+    }
+
+    /**
+     * `reference/detectors.md` — the symptom-to-detector map. It answers a question a reader has only
+     * once they are holding a finding ("what does THIS rule think I did?"), which is why it is not in
+     * the body of a document read while writing code.
+     *
+     * @param  list<Sin>  $sins
+     */
+    private function detectorsDocument(Skill $skill, array $sins): string
+    {
+        $detectors = $this->detectorsBySin();
+        $rows = [];
+
+        foreach ($sins as $sin) {
+            $detector = $detectors[$sin::class] ?? null;
+            $rows[] = "- **`{$sin->name()}`** — {$sin->description()}"
+                . ($detector === null ? '' : ' — `' . Commands::detectorName($detector) . '`');
+        }
+
+        return "# {$skill->title()} — what fires, and why\n\n"
+            . "Each row is one rule: the sin's id, the symptom its detector flags, and the detector "
+            . "that flags it. The id is what `" . Commands::info('<sin>') . "` takes, and the detector "
+            . "name is what `--detector=` takes if the rule turns out to be wrong.\n\n"
+            . implode("\n", $rows) . "\n";
+    }
+
+    /**
+     * Every worked example this skill has, DEDUPED by the bad+good pair so a `#[Sinful]` method
+     * carrying several sins shows once, not once per sin — headed by the sin (or sins) it
+     * demonstrates, because a reader scrolling a stack of before/afters has to be able to tell which
+     * rule each one is about.
      *
      * @param  list<Sin>  $sins
      * @param  array<class-string, Example>  $examples
+     * @return list<array{example: Example, sins: list<Sin>}>
      */
-    private function badGood(array $sins, array $examples): string
+    private function workedExamples(array $sins, array $examples): array
     {
         $detectors = $this->detectorsBySin();
 
@@ -179,25 +362,14 @@ final class SkillRenderer
             }
         }
 
-        $blocks = [];
-        $languages = self::languagesOf($grouped);
-
-        foreach ($grouped as $group) {
-            // A discipline both engines have is taught in both: each example says which language it
-            // is in, so a reader looking for the frontend one is not left inferring it from a fence.
-            if (($block = $this->example($group['sins'], $group['example'], count($languages) > 1)) !== '') {
-                $blocks[] = $block;
-            }
-        }
-
-        return $blocks === [] ? '' : "## Bad → good\n\n" . implode("\n\n", $blocks);
+        return array_values($grouped);
     }
 
     /**
      * The distinct languages a skill's examples are written in — one for a discipline that lives on
      * a single engine, several for one both engines have.
      *
-     * @param  array<string, array{example: Example, sins: list<Sin>}>  $grouped
+     * @param  list<array{example: Example, sins: list<Sin>}>  $grouped
      * @return list<string>
      */
     private static function languagesOf(array $grouped): array
@@ -249,26 +421,6 @@ final class SkillRenderer
 
         return "{$heading}\n\n" . implode("\n\n", $symptoms) . "\n\n"
             . "```{$fence}\n" . implode("\n\n", $parts) . "\n```";
-    }
-
-    /**
-     * The `## When it fires` section — each sin's symptom and the detector that flags it.
-     *
-     * @param  list<Sin>  $sins
-     */
-    private function whenItFires(array $sins): string
-    {
-        $detectors = $this->detectorsBySin();
-        $rows = [];
-
-        foreach ($sins as $sin) {
-            $detector = $detectors[$sin::class] ?? null;
-            $rows[] = $detector === null
-                ? "- {$sin->description()}"
-                : "- {$sin->description()} — `" . ClassName::short($detector::class) . '`';
-        }
-
-        return $rows === [] ? '' : "## When it fires\n\n" . implode("\n", $rows);
     }
 
     /**
@@ -327,12 +479,5 @@ final class SkillRenderer
         }
 
         return $map;
-    }
-
-    private function tail(string $slug): string
-    {
-        $parts = explode('/', $slug);
-
-        return end($parts);
     }
 }

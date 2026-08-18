@@ -90,9 +90,15 @@ final class Library
         }
 
         foreach (Custom::skills($this->workspace->root()) as $skill) {
-            @mkdir($this->path($skill->id()), 0775, true);
+            $renderer = new SkillRenderer($this->languages);
+            $written = false;
 
-            if (File::write($this->path($skill->id()) . '/SKILL.md', new SkillRenderer($this->languages)->render($skill))) {
+            foreach ($renderer->documents($skill) as $relative => $document) {
+                @mkdir(dirname($this->path($skill->id()) . '/' . $relative), 0775, true);
+                $written = File::write($this->path($skill->id()) . '/' . $relative, $document) || $written;
+            }
+
+            if ($written) {
                 $ids[] = $skill->id();
             }
         }

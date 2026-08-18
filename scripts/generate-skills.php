@@ -32,23 +32,27 @@ $stale = [];
 $written = 0;
 
 /**
- * A skill's generated files — its SKILL.md plus one `reference/<name>.md` per {@see Reference}.
+ * A skill's generated files — its SKILL.md plus the `reference/` documents it spills into, keyed by
+ * absolute path. The renderer names them relative to the skill directory; where that directory is, is
+ * the caller's business.
  *
  * @return array<string, string>  absolute path => rendered content
  */
 $filesFor = static function ($skill) use ($root, $renderer, $examples): array {
     $dir = "{$root}/skills/commandments/{$skill->slug}";
-    $files = ["{$dir}/SKILL.md" => $renderer->render($skill, $examples)];
+    $files = [];
 
-    foreach ($skill->references() as $reference) {
-        $files["{$dir}/reference/{$reference->name}.md"] = "# {$reference->title}\n\n" . trim($reference->body) . "\n";
+    foreach ($renderer->documents($skill, $examples) as $relative => $rendered) {
+        $files["{$dir}/{$relative}"] = $rendered;
     }
 
     return $files;
 };
 
 foreach (Skills::all() as $skill) {
-    foreach ($filesFor($skill) as $path => $rendered) {
+    $files = $filesFor($skill);
+
+    foreach ($files as $path => $rendered) {
         $current = is_file($path) ? file_get_contents($path) : null;
 
         if ($current === $rendered) {
@@ -62,6 +66,23 @@ foreach (Skills::all() as $skill) {
 
         @mkdir(dirname($path), 0755, true);
         file_put_contents($path, $rendered);
+        $written++;
+    }
+
+    // A skill that loses a rule loses the reference document that rule filled. Nothing else writes
+    // into `reference/`, so anything there we did not just generate is a leftover — and a leftover
+    // gets published and read as if it were current.
+    foreach (glob("{$root}/skills/commandments/{$skill->slug}/reference/*.md") ?: [] as $path) {
+        if (isset($files[$path])) {
+            continue;
+        }
+
+        if ($check) {
+            $stale[] = substr($path, strlen("{$root}/skills/commandments/")) . ' (orphaned)';
+            continue;
+        }
+
+        unlink($path);
         $written++;
     }
 }

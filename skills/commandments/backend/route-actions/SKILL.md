@@ -58,18 +58,18 @@ invokable serving the paths a spec requires.
 
 ## Rules
 
-- One operation, one implementation. A boundary translates its own protocol and calls the shared application service; it does not re-spell the operation.
-  _Hoist the shared sequence into one application service and have both faces call it._
-- The route-name vocabulary is a CLOSED set: every name looked up must be a name some route registers. Renaming a route means renaming its references in the same breath.
-  _Point the lookup at the registered name, or register the route the name promises._
-- Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
-  _Keep one route; if a second URL is truly needed, make it a redirect, or an invokable controller._
-- One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
-  _Delete the duplicate action and point its route at the surviving one (or a redirect)._
-- A route action delegates INTO the domain (a service/action class), never sideways into another controller.
-  _Extract the shared work into a service both routes call, or point the route at the real action and delete the wrapper._
+- [ ] One operation, one implementation. A boundary translates its own protocol and calls the shared application service; it does not re-spell the operation.
+      _Hoist the shared sequence into one application service and have both faces call it._
+- [ ] The route-name vocabulary is a CLOSED set: every name looked up must be a name some route registers. Renaming a route means renaming its references in the same breath.
+      _Point the lookup at the registered name, or register the route the name promises._
+- [ ] Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
+      _Keep one route; if a second URL is truly needed, make it a redirect, or an invokable controller._
+- [ ] One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
+      _Delete the duplicate action and point its route at the surviving one (or a redirect)._
+- [ ] A route action delegates INTO the domain (a service/action class), never sideways into another controller.
+      _Extract the shared work into a service both routes call, or point the route at the real action and delete the wrapper._
 
-## Bad → good
+## Worked example
 
 ### boundary-duplicated-operation
 
@@ -99,124 +99,18 @@ public function handleDelegating(string $sku, LabelPrinting $printing): string
 }
 ```
 
-### dangling-route-name
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/route-actions` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `boundary-duplicated-operation`, `dangling-route-name`, `duplicate-route`, `duplicate-route-action`, `route-delegates-to-controller`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-// A misspelt name buried in a menu array: every other entry resolves, so the page renders until a
-// user clicks THIS one.
+## Reference
 
-public function menu(): array
-{
-    return [
-        ['label' => 'Home', 'href' => route('dashboard')],
-        ['label' => 'Overview', 'href' => route('dashbord')],
-    ];
-}
-
-----------[ Good ]----------
-
-// The FIX: the same menu, with every `route(...)` naming a route the table actually registers —
-// `dashbord` was pointed back at a name `routes/web.php` mints (`reports.daily`). The vocabulary is
-// closed, so the reference and the registration are renamed in the same breath.
-
-public function registeredMenu(): array
-{
-    return [
-        ['label' => 'Home', 'href' => route('dashboard')],
-        ['label' => 'Overview', 'href' => route('reports.daily')],
-    ];
-}
-```
-
-### duplicate-route
-
-Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt)
-
-```php
-----------[ Bad ]----------
-
-public function feed(): void
-{
-    Route::get('/feed', [FeedListController::class, 'list'])->name('feed');
-    Route::get('/rss', [FeedListController::class, 'list'])->name('feed.rss');
-}
-
-----------[ Good ]----------
-
-// The FIX: `[CatalogueListController, 'list']` is registered ONCE. The second URL survives as a
-// REDIRECT, so there is a single handler — and its name, middleware and constraints have no twin
-// to drift away from.
-
-public function catalogue(): void
-{
-    Route::get('/catalogue', [CatalogueListController::class, 'list'])->name('catalogue');
-    Route::redirect('/products.rss', '/catalogue');
-}
-```
-
-### duplicate-route-action
-
-Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice
-
-```php
-----------[ Bad ]----------
-
-public function build(ReportExportRequest $request): string
-{
-    return $this->builder->build($request);
-}
-
-----------[ Good ]----------
-
-public function trend(ReportExportRequest $request): string
-{
-    return $this->trends->plot($request);
-}
-```
-
-### route-delegates-to-controller
-
-A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one
-
-```php
-----------[ Bad ]----------
-
-public function run(string $id): string
-{
-    return $this->export->run($id);
-}
-
-----------[ Good ]----------
-
-// The FIX: the wrapper is gone. This action delegates INTO the domain — the same `WorkflowExporter`
-// the export controller calls — with the admin translation (`exportForAudit`) named on the service,
-// so there is no second HTTP door hanging off another controller.
-
-public function audit(string $id): string
-{
-    return $this->exporter->exportForAudit($id);
-}
-```
-
-## When it fires
-
-- The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift — `BoundaryDuplicatedOperationDetector`
-- A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500 — `DanglingRouteNameDetector`
-- Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt) — `DuplicateRouteDetector`
-- Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice — `DuplicateRouteActionDetector`
-- A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one — `RouteDelegatesToControllerDetector`
-
-## Checklist
-
-- [ ] One operation, one implementation. A boundary translates its own protocol and calls the shared application service; it does not re-spell the operation.
-- [ ] The route-name vocabulary is a CLOSED set: every name looked up must be a name some route registers. Renaming a route means renaming its references in the same breath.
-- [ ] Register a `[Controller, method]` action once; a second URL onto the same handler is a maintenance trap (names, middleware, constraints drift). An invokable controller mapped to several canonical URLs is fine.
-- [ ] One operation, one entry point — collapse duplicate thin actions to a single action (or two routes onto one), with the work in the shared service.
-- [ ] A route action delegates INTO the domain (a service/action class), never sideways into another controller.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

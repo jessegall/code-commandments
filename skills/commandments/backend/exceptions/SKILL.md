@@ -32,16 +32,16 @@ Inside the system, invariants throw. At the *one* untrusted edge, you catch-log-
 
 ## Rules
 
-- Throw a NAMED domain exception, never a bare SPL `Exception`/`RuntimeException`.
-  _A named exception class with a static `::for($values)` factory that writes the message._
-- Pass domain VALUES to a named factory; never assemble the message string at the throw site.
-  _A static `::for($values)` factory on the exception that builds the sentence._
-- Let a failure throw, or surface it named with the cause; never swallow a catch into `null`/`false`/`[]`/`none()` or an empty body.
-  _Rethrow wrapped (`previous: $e`), or catch-log-skip at one named boundary._
-- When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace.
-  _Pass the caught exception as `previous: $e`._
+- [ ] Throw a NAMED domain exception, never a bare SPL `Exception`/`RuntimeException`.
+      _A named exception class with a static `::for($values)` factory that writes the message._
+- [ ] Pass domain VALUES to a named factory; never assemble the message string at the throw site.
+      _A static `::for($values)` factory on the exception that builds the sentence._
+- [ ] Let a failure throw, or surface it named with the cause; never swallow a catch into `null`/`false`/`[]`/`none()` or an empty body.
+      _Rethrow wrapped (`previous: $e`), or catch-log-skip at one named boundary._
+- [ ] When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace.
+      _Pass the caught exception as `previous: $e`._
 
-## Bad → good
+## Worked example
 
 ### generic-exception
 
@@ -64,103 +64,19 @@ public function carrierNameNamed(Shipment $shipment): string
 }
 ```
 
-### message-at-throw
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-Message string built at the throw site (no domain values / named factory)
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/exceptions` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `generic-exception`, `message-at-throw`, `swallow-catch`, `wrapping-without-cause`.
+- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `wrapping-without-cause`. Review it with `--dry-run` first.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-public function carrierName(Shipment $shipment): string
-{
-    return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();
-}
+## Reference
 
-----------[ Good ]----------
-
-public function carrierNameOrFail(Shipment $shipment): string
-{
-    $carrier = $shipment->carrier ?? throw CarrierMissing::for($shipment->id);
-
-    return $carrier->displayName();
-}
-```
-
-### swallow-catch
-
-`catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)
-
-```php
-----------[ Bad ]----------
-
-public function forecast(string $city): array
-{
-    try {
-        $body = $this->http->get("https://weather.test/{$city}");
-
-        return (array) json_decode($body, true);
-    } catch (\Throwable $e) {
-        return [];
-    }
-}
-
-----------[ Good ]----------
-
-public function forecastOrThrow(string $city): array
-{
-    try {
-        $body = $this->http->get("https://weather.test/{$city}");
-
-        return (array) json_decode($body, true);
-    } catch (\Throwable $e) {
-        report($e);
-
-        throw $e;
-    }
-}
-```
-
-### wrapping-without-cause
-
-Wrapping a caught exception without passing it as `previous`/cause
-
-```php
-----------[ Bad ]----------
-
-public function upload(string $path): void
-{
-    try {
-        $this->pushToBucket($path);
-    } catch (\Throwable $storageError) {
-        throw new IntegrationException($path);
-    }
-}
-
-----------[ Good ]----------
-
-public function uploadChecked(string $path): void
-{
-    try {
-        $this->pushToBucket($path);
-    } catch (\Throwable $storageError) {
-        throw new IntegrationException($path, previous: $storageError);
-    }
-}
-```
-
-## When it fires
-
-- `throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type — `GenericExceptionDetector`
-- Message string built at the throw site (no domain values / named factory) — `MessageAtThrowDetector`
-- `catch` whose only effect is `return null/false/[]`; empty catch (silent swallow) — `SwallowCatchDetector`
-- Wrapping a caught exception without passing it as `previous`/cause — `WrappingWithoutCauseDetector`
-
-## Checklist
-
-- [ ] Throw a NAMED domain exception, never a bare SPL `Exception`/`RuntimeException`.
-- [ ] Pass domain VALUES to a named factory; never assemble the message string at the throw site.
-- [ ] Let a failure throw, or surface it named with the cause; never swallow a catch into `null`/`false`/`[]`/`none()` or an empty body.
-- [ ] When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

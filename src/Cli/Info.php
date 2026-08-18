@@ -144,7 +144,10 @@ final class Info implements Command
      */
     private function example(Skill $skill, string $sin): void
     {
-        $body = $this->publishedSkill($skill);
+        // A skill spills its worked examples into `reference/examples.md` the moment it teaches more
+        // than one rule, so that is where nearly every sin's example lives. A single-rule skill keeps
+        // its one example in the body and publishes no such document.
+        $body = $this->published($skill, 'reference/examples.md') ?? $this->published($skill, 'SKILL.md');
 
         if ($body === null) {
             return;
@@ -164,14 +167,15 @@ final class Info implements Command
     }
 
     /**
-     * The rendered `SKILL.md` — from the project's own library where a consumer has synced one, and
-     * from the package's sources otherwise (which is how it reads inside this repo).
+     * One of the skill's published documents, named by its path RELATIVE to the skill directory —
+     * from the project's own library where a consumer has synced one, and from the package's sources
+     * otherwise (which is how it reads inside this repo).
      */
-    private function publishedSkill(Skill $skill): ?string
+    private function published(Skill $skill, string $relative): ?string
     {
         $candidates = [
-            Workspace::at(ConsumerRoot::from(getcwd() ?: '.') ?? '.')->library() . "/{$skill->id()}/SKILL.md",
-            dirname(__DIR__, 2) . "/skills/commandments/{$skill->slug}/SKILL.md",
+            Workspace::at(ConsumerRoot::from(getcwd() ?: '.') ?? '.')->library() . "/{$skill->id()}/{$relative}",
+            dirname(__DIR__, 2) . "/skills/commandments/{$skill->slug}/{$relative}",
         ];
 
         foreach ($candidates as $path) {

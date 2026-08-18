@@ -31,10 +31,10 @@ final class GeneratedSkillsAreCurrentTest extends TestCase
 
         foreach (Skills::all() as $skill) {
             $dir = "{$root}/skills/commandments/{$skill->slug}";
-            $files = ["{$dir}/SKILL.md" => $renderer->render($skill, $examples)];
+            $files = [];
 
-            foreach ($skill->references() as $reference) {
-                $files["{$dir}/reference/{$reference->name}.md"] = "# {$reference->title}\n\n" . trim($reference->body) . "\n";
+            foreach ($renderer->documents($skill, $examples) as $relative => $rendered) {
+                $files["{$dir}/{$relative}"] = $rendered;
             }
 
             foreach ($files as $path => $rendered) {
@@ -43,6 +43,16 @@ final class GeneratedSkillsAreCurrentTest extends TestCase
                     $rendered,
                     file_get_contents($path),
                     substr($path, strlen("{$root}/skills/commandments/")) . " is stale — run `composer sins`.",
+                );
+            }
+
+            // A reference document the renderer no longer emits is a leftover the publisher would
+            // copy and a reader would trust. The generator deletes them; this is what proves it did.
+            foreach (glob("{$dir}/reference/*.md") ?: [] as $path) {
+                $this->assertArrayHasKey(
+                    $path,
+                    $files,
+                    substr($path, strlen("{$root}/skills/commandments/")) . " is orphaned — run `composer sins`.",
                 );
             }
         }

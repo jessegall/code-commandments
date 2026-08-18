@@ -52,10 +52,10 @@ The house pattern (and the one you want): the wrapped value is a **plain class**
 
 ## Rules
 
-- Compose `Concurrent<self>` via a `::for()` factory; never `extends Concurrent`.
-  _Compose `Concurrent<self>` behind a `::for($id)` factory._
+- [ ] Compose `Concurrent<self>` via a `::for()` factory; never `extends Concurrent`.
+      _Compose `Concurrent<self>` behind a `::for($id)` factory._
 
-## Bad → good
+## Worked example
 
 ### concurrent-subclass
 
@@ -98,13 +98,15 @@ final class LiveOrderStage
 }
 ```
 
-## When it fires
+## Commands
 
-- Class `extends Concurrent` instead of composing `Concurrent<self>` — `ConcurrentSubclassDetector`
+- `vendor/bin/commandments judge --skill=backend/concurrent-state` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `concurrent-subclass`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-## Checklist
+## Reference
 
-- [ ] Compose `Concurrent<self>` via a `::for()` factory; never `extends Concurrent`.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

@@ -107,14 +107,14 @@ If yes — and you're reaching past its surface into its structure — that's wh
 
 ## Rules
 
-- Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.
-  _Move the method onto the object (`$node->edges()`)._
-- Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
-  _Move the lookup onto the object that owns the identity._
-- Let each type answer for itself; never branch on what a value IS when a method on it could say what it DOES.
-  _A method on the shared interface, implemented per type — so a new type needs no edit here at all._
+- [ ] Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.
+      _Move the method onto the object (`$node->edges()`)._
+- [ ] Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
+      _Move the lookup onto the object that owns the identity._
+- [ ] Let each type answer for itself; never branch on what a value IS when a method on it could say what it DOES.
+      _A method on the shared interface, implemented per type — so a new type needs no edit here at all._
 
-## Bad → good
+## Worked example
 
 ### feature-envy
 
@@ -138,71 +138,18 @@ public function suspendByTelling(Customer $customer, string $reason): void
 }
 ```
 
-### keyed-lookup-envy
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/tell-dont-ask` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `feature-envy`, `keyed-lookup-envy`, `type-switch`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-public function forItem(CatalogItem $item): array
-{
-    return $this->registry->has($item->code)
-        ? $this->registry->get($item->code)->reservedSkus
-        : [];
-}
+## Reference
 
-----------[ Good ]----------
-
-// The item knows its own reserved SKUs — ask it directly instead of using its
-// code as a key back into a registry.
-
-public function forItemDirect(CatalogItem $item): array
-{
-    return $item->reservedSkus();
-}
-```
-
-### type-switch
-
-two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do
-
-```php
-----------[ Bad ]----------
-
-public function price(Freightable $freight): int
-{
-    if ($freight instanceof ExpressFreight) {
-        return $freight->weightGrams() * 12 + 500;
-    } elseif ($freight instanceof PalletFreight) {
-        return $freight->pallets() * 4_000;
-    }
-
-    return $freight->weightGrams() * 3;
-}
-
-----------[ Good ]----------
-
-// The FIX: one method on the shared interface, implemented per freight type. Each kind answers
-// for itself, so a new kind needs no edit here at all.
-
-public function priceTold(PricedFreight $freight): int
-{
-    return $freight->priceCents();
-}
-```
-
-## When it fires
-
-- Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object — `FeatureEnvyDetector`
-- Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator — `KeyedLookupEnvyDetector`
-- two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do — `TypeSwitchDetector`
-
-## Checklist
-
-- [ ] Behaviour belongs with its data — move a method that loops or queries one other owned object onto that object.
-- [ ] Ask the object directly; don't use its identity as a key to look its own fact up through a collaborator.
-- [ ] Let each type answer for itself; never branch on what a value IS when a method on it could say what it DOES.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

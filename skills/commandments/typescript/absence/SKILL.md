@@ -43,12 +43,12 @@ which is why this is its own skill rather than a translation of the PHP one.
 
 ## Rules
 
-- Reach for `?.` only where the type admits absence; on a field declared total it is noise that teaches the next reader to doubt it.
-  _A plain `.` — the declaration already guarantees it._
-- Do not declare a field optional when it always has a value: drop the `?` and the `| null`, and the defences downstream go with them.
-  _Declare it as its plain type — the initialiser already proves it is total._
+- [ ] Reach for `?.` only where the type admits absence; on a field declared total it is noise that teaches the next reader to doubt it.
+      _A plain `.` — the declaration already guarantees it._
+- [ ] Do not declare a field optional when it always has a value: drop the `?` and the `| null`, and the defences downstream go with them.
+      _Declare it as its plain type — the initialiser already proves it is total._
 
-## Bad → good
+## Worked example
 
 ### defended-certain-field
 
@@ -64,29 +64,18 @@ return this.customer?.name
 return this.shipment?.trackingCode ?? 'pending'
 ```
 
-### falsely-optional-field
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen
+## Commands
 
-```ts
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=typescript/absence` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `defended-certain-field`, `falsely-optional-field`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-private items?: Item[] = []
+## Reference
 
-----------[ Good ]----------
-
-private coupon?: Coupon
-```
-
-## When it fires
-
-- An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, which reads as doubt the design does not have — `DefendedCertainFieldDetector`
-- A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen — `FalselyOptionalFieldDetector`
-
-## Checklist
-
-- [ ] Reach for `?.` only where the type admits absence; on a field declared total it is noise that teaches the next reader to doubt it.
-- [ ] Do not declare a field optional when it always has a value: drop the `?` and the `| null`, and the defences downstream go with them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

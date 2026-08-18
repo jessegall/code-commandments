@@ -23,8 +23,7 @@ use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Backend\Detector;
-use JesseGall\CodeCommandments\Detectors\Repentable;
-use JesseGall\CodeCommandments\Sins\Catalog as Sins;
+use JesseGall\CodeCommandments\Sins\Commands;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 
 use JesseGall\CodeCommandments\Cli\Report\SinReport;
@@ -55,6 +54,12 @@ final class Judge implements Command
      * both "clean" (0) and "sins found" (1), because a broken rule is neither.
      */
     private const int A_RULE_COULD_NOT_RUN = 3;
+
+    /**
+     * The run a report's advertised `repent` targets: THIS one's checklist, so the fix lands on
+     * exactly what was just reported and there is no scope for the reader to recompute.
+     */
+    private const string REPENT_SCOPE = 'latest';
 
     public function __construct(private readonly HookIO $io = new HookIO) {}
 
@@ -134,68 +139,18 @@ final class Judge implements Command
             return 2;
         }
 
-        // Scoping to a checklist (`--repent=ID|latest`) must NOT write a new one — it
-        // would clobber the very file it's reading. Force `--no-checklist` there.
-        $checklist = Scope::repent($input->raw()) !== null ? Option::none() : $options->checklist;
-
-        return $this->judge($options->path, $options->pathGiven, $detectors, $frontend, $options->exclude, $checklist, $scope, $options->parallel, $options->benchmark, $this->fixCommands(), $this->scaffoldCommands());
-    }
-
-    /**
-     * The `scaffold` command for each sin whose fix uses a generic, package-providable
-     * helper ({@see Sin::scaffolds}), so the report can advertise the one-liner that
-     * generates it.
-     *
-     * @return array<string, string>  sin name => scaffold command
-     */
-    private function scaffoldCommands(): array
-    {
-        $commands = [];
-
-        foreach (Sins::every() as $sin) {
-            if ($sin->scaffolds() === []) {
-                continue;
-            }
-
-            $name = $sin->name();
-            $commands[$name] = "vendor/bin/commandments scaffold --sin={$name}";
-        }
-
-        return $commands;
-    }
-
-    /**
-     * The `repent` command for each auto-fixable sin — a {@see Repentable} detector's, so
-     * the report can advertise the one-liner that fixes it. It targets THIS run's
-     * checklist (`--repent=latest`), so the fix is scoped to exactly what was reported,
-     * with no scope to recompute.
-     *
-     * @return array<string, string>  sin name => repent command
-     */
-    private function fixCommands(): array
-    {
-        $commands = [];
-
-        // Both engines: any Repentable detector advertises the one-liner that fixes its sin.
-        foreach ([...Catalog::backend(), ...Catalog::frontend()] as $detector) {
-            if (! ($detector instanceof Repentable)) {
-                continue;
-            }
-
-            $name = $detector->sin()->name();
-            $commands[$name] = "vendor/bin/commandments repent --repent=latest --sin={$name}";
-        }
-
-        return $commands;
+        return $this->judge($options, $detectors, $frontend, $scope, Commands::repentable(self::REPENT_SCOPE), Commands::scaffoldable());
     }
 
     /**
      * @param  list<Detector>  $detectors  backend (PHP) detectors
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend  Vue detectors
-     * @param  list<string>  $exclude
+     * @param  array<string, string>  $fixable  sin name => the `repent` command that fixes it
+     * @param  array<string, string>  $scaffoldable  sin name => the `scaffold` command for its helper
      */
-    private function judge(string $path, bool $pathGiven, array $detectors, array $frontend, array $exclude, Option $checklist, Scope $scope, int $parallel, bool $benchmark, array $fixable, array $scaffoldable): int
+    private function judge(JudgeOptions $options, array $detectors, array $frontend, Scope $scope, array $fixable, array $scaffoldable): int
     {
+        $checklist = $options->checklist;
         if ($scope->isEmpty()) {
             $this->deleteChecklist($checklist);
             $this->line("\033[32m✓ No changed files to judge.\033[0m");
@@ -205,12 +160,12 @@ final class Judge implements Command
 
         // An explicit path is scanned as given; otherwise config.php's declared roots decide what
         // to judge (auto-detected + scaffolded into the config on first run).
-        $roots = new SourceRoots()->resolve($path, $pathGiven);
+        $roots = new SourceRoots()->resolve($options->path, $options->pathGiven);
 
         // Pruned during the WALK, not filtered out of the findings: a monorepo's build output is
         // megabytes this run would otherwise read and parse in full before discarding every sin.
-        $config = Config::load($path);
-        $excluded = ExcludedPaths::under($path, $config->excludedPaths());
+        $config = Config::load($options->path);
+        $excluded = ExcludedPaths::under($options->path, $config->excludedPaths());
 
         $progress = new ProgressBar;
 
@@ -221,13 +176,13 @@ final class Judge implements Command
             ->withExemptions(Exemptions::forPackages(...$config->packages()));
         $parseSeconds = (hrtime(true) - $parseStart) / 1e9;
 
-        if ($benchmark) {
+        if ($options->benchmark) {
             $bench = new Benchmark;
             $judgement = $bench->run($detectors, $codebase);
             $progress->finish();
             fwrite(STDERR, $bench->render($parseSeconds));
         } else {
-            $judgement = new DetectorRunner($parallel)->run($detectors, $codebase, $progress);
+            $judgement = new DetectorRunner($options->parallel)->run($detectors, $codebase, $progress);
             $progress->finish();
         }
 
@@ -235,7 +190,7 @@ final class Judge implements Command
         // path with `.vue` files reports its frontend sins alongside the backend ones.
         $judgement = $judgement->merge($this->frontendJudgement($roots, $frontend, $codebase, $excluded, Languages::from($config)));
 
-        $judgement = $judgement->withFindings($this->keep($judgement->findings, $exclude, $scope));
+        $judgement = $judgement->withFindings($this->keep($judgement->findings, $options->exclude, $scope));
 
         $skipped = new SkippedRules($judgement->skipped);
 
@@ -253,7 +208,7 @@ final class Judge implements Command
             return self::A_RULE_COULD_NOT_RUN;
         }
 
-        $report = new SinReport($path, $judgement->findings, $fixable, $scaffoldable, $skipped);
+        $report = new SinReport($options->path, $judgement->findings, $fixable, $scaffoldable, $skipped);
         $this->line($report->console());
 
         foreach ($checklist as $target) {

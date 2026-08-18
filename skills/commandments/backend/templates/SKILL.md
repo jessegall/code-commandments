@@ -70,10 +70,10 @@ sit in it.
 
 ## Rules
 
-- State a fixed multi-line string as a heredoc, at its real indentation, and interpolate what varies — never as a list of line fragments joined by a newline.
-  _A heredoc (`<<<PHP` / `<<<'PHP'`), with the computed part as one interpolation._
+- [ ] State a fixed multi-line string as a heredoc, at its real indentation, and interpolate what varies — never as a list of line fragments joined by a newline.
+      _A heredoc (`<<<PHP` / `<<<'PHP'`), with the computed part as one interpolation._
 
-## Bad → good
+## Worked example
 
 ### assembled-template
 
@@ -123,13 +123,15 @@ public function stated(string $class): string
 }
 ```
 
-## When it fires
+## Commands
 
-- A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it — `AssembledTemplateDetector`
+- `vendor/bin/commandments judge --skill=backend/templates` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `assembled-template`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-## Checklist
+## Reference
 
-- [ ] State a fixed multi-line string as a heredoc, at its real indentation, and interpolate what varies — never as a list of line fragments joined by a newline.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

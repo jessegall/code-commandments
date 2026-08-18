@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-spatie-data-hydration
-description: "How to CONSTRUCT and CONSUME a Spatie `Data` object at a call site without re-doing work the class already declares: never wrap a nested value in `X::from([...])` when the parent auto-hydrates the array; never `Enum::from($x)`/`new DateTime($x)` at a hydration site when the property auto-casts the scalar; never `array_map(E::for(...), $xs)` to fill a `#[DataCollectionOf]` when a `#[WithCast]`/`IterableItemCast` owns the derivation; never build a `Data` only to `->toArray()` it, hand-roll a `toArray()`, compute a `#[Computed]` field at the call site, or hand-remap keys `#[MapInputName]` would map. Read this whenever you write or review a `::from([...])` array, a hydrator, or a call that fills a `Data` object."
+description: "How to CONSTRUCT and CONSUME a Spatie `Data` object at a call site without re-doing work the class already declares — the nested `X::from([...])` the parent would hydrate, the `Enum::from($x)`/`new DateTime($x)` a property already casts, the `array_map` filling a `#[DataCollectionOf]`, the hand-rolled `toArray()`, the `#[Computed]` field computed at the call site, the keys remapped by hand. Read this whenever you write or review a `::from([...])` array, a hydrator, or a call that fills a `Data` object."
 ---
 
 # Spatie Data — feed the framework, don't hand-build
@@ -70,20 +70,20 @@ recomputed at every construction site. A boundary that renames keys (snake ↔ c
 
 ## Rules
 
-- Don't `->toArray()` a `Data` into a slot that re-hydrates it; pass the object (or the source array) directly.
-  _Drop the `->toArray()` — the nested-`Data` / `#[DataCollectionOf]` slot takes the object as-is._
-- Move an element derivation (`array_map(E::for(...), $xs)`) into a `#[WithCast]` / `IterableItemCast` on the collection property; pass the raw list.
-  _`#[WithCast(SomeCast::class)] public array $items` — the cast runs `E::for(...)` per item; the call site passes the raw values._
-- Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.
-  _`#[MapInputName(SnakeCaseMapper::class)]` on the class, then `SomeData::from($src)`._
-- Pass the enum itself to an enum slot — Spatie's enum cast keeps it; don't destructure it to `->value` at the hydration site only for it to be re-hydrated.
-  _`'status' => $order->status`, not `'status' => $order->status->value`._
-- Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site.
-  _`'status' => $raw`, not `'status' => Status::from($raw)`._
-- Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.
-  _`'slot' => ['a' => 1]` (or `[['a' => 1], ...]` for a collection), not `X::from(['a' => 1])`._
+- [ ] Don't `->toArray()` a `Data` into a slot that re-hydrates it; pass the object (or the source array) directly.
+      _Drop the `->toArray()` — the nested-`Data` / `#[DataCollectionOf]` slot takes the object as-is._
+- [ ] Move an element derivation (`array_map(E::for(...), $xs)`) into a `#[WithCast]` / `IterableItemCast` on the collection property; pass the raw list.
+      _`#[WithCast(SomeCast::class)] public array $items` — the cast runs `E::for(...)` per item; the call site passes the raw values._
+- [ ] Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.
+      _`#[MapInputName(SnakeCaseMapper::class)]` on the class, then `SomeData::from($src)`._
+- [ ] Pass the enum itself to an enum slot — Spatie's enum cast keeps it; don't destructure it to `->value` at the hydration site only for it to be re-hydrated.
+      _`'status' => $order->status`, not `'status' => $order->status->value`._
+- [ ] Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site.
+      _`'status' => $raw`, not `'status' => Status::from($raw)`._
+- [ ] Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.
+      _`'slot' => ['a' => 1]` (or `[['a' => 1], ...]` for a collection), not `X::from(['a' => 1])`._
 
-## Bad → good
+## Worked example
 
 ### data-to-array-roundtrip
 
@@ -112,146 +112,19 @@ public function holdReady(BadgeCopy $badge, string $status): BadgeHolder
 }
 ```
 
-### derived-collection-cast
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation
+## Commands
 
-```php
-----------[ Bad ]----------
-
-public function build(): ShipStatusLegend
-{
-    return ShipStatusLegend::from(['chips' => array_map(StateChip::for(...), ShipState::cases())]);
-}
-
-----------[ Good ]----------
-
-// The FIX: the raw enum cases are passed straight in — the `#[WithCast(StateChipCast::class)]` on the
-// `chips` property derives each `StateChip`, so there is no `array_map` at the call site.
-
-public function buildCast(): CastShipStatusLegend
-{
-    return CastShipStatusLegend::from(['chips' => ShipState::cases()]);
-}
-```
-
-### hand-key-remap
-
-A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]`
-
-```php
-----------[ Bad ]----------
-
-public function import(): ContractData
-{
-    $src = $this->rows->next();
-
-    return ContractData::from([
-        'recordCompany' => $src['record_company'],
-        'signedAt' => $src['signed_at'],
-    ]);
-}
-
-----------[ Good ]----------
-
-// The FIX: the source row is passed WHOLE — the class-level `#[MapInputName(SnakeCaseMapper::class)]`
-// does the snake→camel translation, so no caller writes it out again.
-
-public function importMapped(): MappedContractData
-{
-    return MappedContractData::from($this->rows->next());
-}
-```
-
-### redundant-enum-unwrap
-
-An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum
-
-```php
-----------[ Bad ]----------
-
-public function summarise(Basket $basket): CheckoutSummary
-{
-    return CheckoutSummary::from(['status' => $basket->status->value, 'lines' => count($basket->items)]);
-}
-
-----------[ Good ]----------
-
-// The FIX: the enum itself goes into its own enum slot — Spatie's enum cast keeps it, so there is
-// nothing to unwrap and re-hydrate.
-
-public function summariseWhole(Basket $basket): CheckoutSummary
-{
-    return CheckoutSummary::from(['status' => $basket->status, 'lines' => count($basket->items)]);
-}
-```
-
-### redundant-native-cast
-
-An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar
-
-```php
-----------[ Bad ]----------
-
-public function fromCode(string $code): OrderState
-{
-    return OrderState::from(['state' => FulfilmentState::from($code), 'caption' => $this->captionFor($code)]);
-}
-
-----------[ Good ]----------
-
-// The FIX: the raw code goes straight into the `state` slot — Spatie's native enum cast builds the
-// `FulfilmentState` from it.
-
-public function fromRawCode(string $code): OrderState
-{
-    return OrderState::from(['state' => $code, 'caption' => $this->captionFor($code)]);
-}
-```
-
-### redundant-nested-from
-
-A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array
-
-```php
-----------[ Bad ]----------
-
-public function build(int $count): BadgeStrip
-{
-    return BadgeStrip::from(['badge' => BadgeCopy::from(['label' => $this->pluralise($count), 'tone' => 'info'])]);
-}
-
-----------[ Good ]----------
-
-// The FIX: the plain array goes straight into the `badge` slot — the parent `::from` hydrates the
-// nested `BadgeCopy` itself.
-
-public function buildPlain(int $count): BadgeStrip
-{
-    return BadgeStrip::from(['badge' => ['label' => $this->pluralise($count), 'tone' => 'info']]);
-}
-```
-
-## When it fires
-
-- A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build — `DataToArrayRoundtripDetector`
-- A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation — `DerivedCollectionShouldCastDetector`
-- A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]` — `HandKeyRemapDetector`
-- An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum — `RedundantEnumUnwrapDetector`
-- An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar — `RedundantNativeCastDetector`
-- A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array — `RedundantNestedFromDetector`
-
-## Checklist
-
-- [ ] Don't `->toArray()` a `Data` into a slot that re-hydrates it; pass the object (or the source array) directly.
-- [ ] Move an element derivation (`array_map(E::for(...), $xs)`) into a `#[WithCast]` / `IterableItemCast` on the collection property; pass the raw list.
-- [ ] Map a snake_case boundary with one class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)`, not a hand-written key translation.
-- [ ] Pass the enum itself to an enum slot — Spatie's enum cast keeps it; don't destructure it to `->value` at the hydration site only for it to be re-hydrated.
-- [ ] Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site.
-- [ ] Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`.
+- `vendor/bin/commandments judge --skill=backend/spatie-data-hydration` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `data-to-array-roundtrip`, `derived-collection-cast`, `hand-key-remap`, `redundant-enum-unwrap`, `redundant-native-cast`, `redundant-nested-from`.
+- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `data-to-array-roundtrip`, `redundant-enum-unwrap`, `redundant-native-cast`, `redundant-nested-from`. Review it with `--dry-run` first.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 - [Spatie Data hydration mechanics](reference/mechanics.md)
 
 ## Related skills

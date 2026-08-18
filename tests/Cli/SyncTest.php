@@ -245,8 +245,14 @@ final class SyncTest extends TestCase
         $rendered = (string) file_get_contents($skill);
         $this->assertStringContainsString('# The house style', $rendered);
         $this->assertStringContainsString('Because repetition rots.', $rendered);
-        $this->assertStringContainsString('It was said twice.', $rendered, 'its own sin projects into "when it fires"');
-        $this->assertStringContainsString('- Say it once.', $rendered, 'and into the rules');
+        $this->assertStringContainsString('- [ ] Say it once.', $rendered, 'its own sin projects into the rules');
+
+        // A project's skill publishes the same TREE a shipped one does — the body plus the reference
+        // documents it spills into. Publishing only the body would leave the pointers in it dangling.
+        $detectors = "{$this->consumer}/.claude/skills/commandments-backend-house-style/reference/detectors.md";
+
+        $this->assertFileExists($detectors, 'and its reference documents beside it');
+        $this->assertStringContainsString('It was said twice.', (string) file_get_contents($detectors), 'its own sin projects into what fires');
     }
 
     public function test_the_commandments_gitignore_keeps_the_projects_own_rules_tracked(): void

@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Judge;
 
 
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
 
@@ -38,7 +39,10 @@ final class JudgeOptions
         // By default the findings are written to a checklist file the agent prunes
         // line-by-line, in the session's folder under the package's `.commandments/` artifact dir
         // (the whole folder is gitignored); `--no-checklist` prints only, `--checklist=FILE` retargets.
-        $checklist = $input->hasFlag('no-checklist')
+        //
+        // Scoping the run TO a checklist (`--repent=ID|latest`) writes none: it would clobber the
+        // very file it is reading.
+        $checklist = $input->hasFlag('no-checklist') || Scope::repent($input->raw()) !== null
             ? Option::none()
             : Option::some($input->option('checklist')->unwrapOr($workspace->path('sins.md')));
 

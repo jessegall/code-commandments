@@ -31,22 +31,22 @@ Reach for this the moment you are about to write:
 
 ## Rules
 
-- State an absent collection at the top as a guard (early return); don't bury `?? []` in a `foreach` header.
-  _An early `return` when the collection is absent, so the loop iterates something that is THERE._
-- Flatten with guard clauses — never nest `if`s three deep into a pyramid.
-- Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.
-  _A `match`, a method on the type, or polymorphic dispatch._
-- Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
-- Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
-- Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
-  _A `match`, or early-return guards._
-- Keep `for` for a counted loop, whose step advances a counter; walk with a `while`, or let the type hand out its own sequence.
-  _A `while` over an explicit cursor — or better, an iterator on the type being walked, so the caller never holds the cursor at all._
-- Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
-- Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
-- Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads.
+- [ ] State an absent collection at the top as a guard (early return); don't bury `?? []` in a `foreach` header.
+      _An early `return` when the collection is absent, so the loop iterates something that is THERE._
+- [ ] Flatten with guard clauses — never nest `if`s three deep into a pyramid.
+- [ ] Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.
+      _A `match`, a method on the type, or polymorphic dispatch._
+- [ ] Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
+- [ ] Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
+- [ ] Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
+      _A `match`, or early-return guards._
+- [ ] Keep `for` for a counted loop, whose step advances a counter; walk with a `while`, or let the type hand out its own sequence.
+      _A `while` over an explicit cursor — or better, an iterator on the type being walked, so the caller never holds the cursor at all._
+- [ ] Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
+- [ ] Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
+- [ ] Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads.
 
-## Bad → good
+## Worked example
 
 ### coalesced-loop-subject
 
@@ -76,327 +76,19 @@ public function fanOutGuarded(string $carrier, array $manifest): void
 }
 ```
 
-### deep-nesting
+The other 9 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-`if` nested 3-deep (a pyramid — hoist guards / extract)
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/guard-clauses-and-flow` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `redundant-else`, `short-circuit-statement`, `ternary-statement`.
+- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `loop-inverted-guard`, `nested-ternary`, `redundant-else`, `short-circuit-statement`, `ternary-statement`. Review it with `--dry-run` first.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-public function resolve(Product $product, array $overrides, string $region): int
-{
-    if (array_key_exists($region, $overrides)) {
-        if ($product->price_cents > 0) {
-            if ($overrides[$region] < $product->price_cents) {
-                return $overrides[$region];
-            }
-        }
-    }
+## Reference
 
-    return $product->price_cents;
-}
-
-----------[ Good ]----------
-
-// The same resolution flattened: preconditions become guard clauses, so the
-// happy path runs unindented at the top level.
-
-public function resolveFlat(Product $product, array $overrides, string $region): int
-{
-    if (! array_key_exists($region, $overrides)) {
-        return $product->price_cents;
-    }
-
-    if ($product->price_cents <= 0) {
-        return $product->price_cents;
-    }
-
-    return min($overrides[$region], $product->price_cents);
-}
-```
-
-### if-else-ladder
-
-if/elseif ladder of 4+ branches (should be match/dispatch)
-
-```php
-----------[ Bad ]----------
-
-public function band(int $grams): string
-{
-    if ($grams < 250) {
-        return 'letter';
-    } elseif ($grams < 2_000) {
-        return 'parcel-s';
-    } elseif ($grams < 10_000) {
-        return 'parcel-m';
-    } else {
-        return 'parcel-l';
-    }
-}
-
-----------[ Good ]----------
-
-public function bandByMatch(int $grams): string
-{
-    return match (true) {
-        $grams < 250 => 'letter',
-        $grams < 2_000 => 'parcel-s',
-        $grams < 10_000 => 'parcel-m',
-        default => 'parcel-l',
-    };
-}
-```
-
-### inline-throw
-
-`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)
-
-```php
-----------[ Bad ]----------
-
-public function carrierName(Shipment $shipment): string
-{
-    return ($shipment->carrier ?? throw new \RuntimeException('shipment has no carrier'))->displayName();
-}
-
-----------[ Good ]----------
-
-public function carrierNameGuarded(Shipment $shipment): string
-{
-    if ($shipment->carrier === null) {
-        throw CarrierMissing::for($shipment->id);
-    }
-
-    return $shipment->carrier->displayName();
-}
-```
-
-### loop-inverted-guard
-
-Loop body (multi-statement) wrapped in an `if` instead of `continue` guard
-
-```php
-----------[ Bad ]----------
-
-public function process(array $rows): void
-{
-    foreach ($rows as $row) {
-        if ($row->total > 0) {
-            $this->normalise($row);
-            $this->persist($row);
-        }
-    }
-}
-
-----------[ Good ]----------
-
-public function process(array $rows): void
-{
-    foreach ($rows as $row) {
-        if ($row->total <= 0) {
-            continue;
-        }
-
-        $this->normalise($row);
-        $this->persist($row);
-    }
-}
-```
-
-### nested-ternary
-
-Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow)
-
-```php
-----------[ Bad ]----------
-
-private function band(int $score): string
-{
-    return $score >= 90 ? 'A' : ($score >= 75 ? 'B' : 'C');
-}
-
-----------[ Good ]----------
-
-// The same decision as a `match (true)` — each band reads on its own line, no
-// precedence trap.
-
-private function bandMatched(int $score): string
-{
-    return match (true) {
-        $score >= 90 => 'A',
-        $score >= 75 => 'B',
-        default => 'C',
-    };
-}
-```
-
-### non-counting-for
-
-a `for` whose step assigns the next thing instead of advancing a counter — a walk wearing a counted loop's clothes
-
-```php
-----------[ Bad ]----------
-
-public function nearest(object $widget): string
-{
-    for ($one = $widget; $one !== null; $one = $one->stacked ? $one->above : null) {
-        if ($one->caption !== '') {
-            return $one->caption;
-        }
-    }
-
-    return 'untitled';
-}
-
-----------[ Good ]----------
-
-public function nearestWhile(object $widget): string
-{
-    $one = $widget;
-
-    while ($one !== null) {
-        if ($one->caption !== '') {
-            return $one->caption;
-        }
-
-        $one = $one->stacked ? $one->above : null;
-    }
-
-    return 'untitled';
-}
-```
-
-### redundant-else
-
-`else` after an `if` branch that already returns/throws (redundant)
-
-```php
-----------[ Bad ]----------
-
-public function inStock(array $products): array
-{
-    $available = [];
-
-    foreach ($products as $product) {
-        if ($product->stock <= 0) {
-            continue;
-        } else {
-            $available[] = $product;
-        }
-    }
-
-    return $available;
-}
-
-----------[ Good ]----------
-
-// The guard handles the absent case and `continue`s; the happy path runs
-// unindented with no redundant `else`.
-
-public function available(array $products): array
-{
-    $available = [];
-
-    foreach ($products as $product) {
-        if ($product->stock <= 0) {
-            continue;
-        }
-
-        $available[] = $product;
-    }
-
-    return $available;
-}
-```
-
-### short-circuit-statement
-
-a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise
-
-```php
-----------[ Bad ]----------
-
-public function send(string $address, bool $subscribed): void
-{
-    $subscribed && $this->mailer->send($address, 'Your weekly digest', $this->digest());
-}
-
-----------[ Good ]----------
-
-public function sendGuarded(string $address, bool $subscribed): void
-{
-    if (! $subscribed) {
-        return;
-    }
-
-    $this->mailer->send($address, 'Your weekly digest', $this->digest());
-}
-```
-
-### ternary-statement
-
-a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value
-
-```php
-----------[ Bad ]----------
-
-public function collapsed(string $id, array $below): array
-{
-    $gone = [];
-
-    foreach ($below[$id] as $child) {
-        $this->isOpen($child->id)
-            ? array_push($gone, ...$this->collapsed($child->id, $below))
-            : $gone[] = $child->id;
-    }
-
-    return $gone;
-}
-
-----------[ Good ]----------
-
-public function collapsedBranched(string $id, array $below): array
-{
-    $gone = [];
-
-    foreach ($below[$id] as $child) {
-        if ($this->isOpen($child->id)) {
-            array_push($gone, ...$this->collapsedBranched($child->id, $below));
-        } else {
-            $gone[] = $child->id;
-        }
-    }
-
-    return $gone;
-}
-```
-
-## When it fires
-
-- `foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard — `CoalescedLoopSubjectDetector`
-- `if` nested 3-deep (a pyramid — hoist guards / extract) — `DeepNestingDetector`
-- if/elseif ladder of 4+ branches (should be match/dispatch) — `IfElseLadderDetector`
-- `?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression) — `InlineThrowDetector`
-- Loop body (multi-statement) wrapped in an `if` instead of `continue` guard — `LoopInvertedGuardDetector`
-- Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) — `NestedTernaryDetector`
-- a `for` whose step assigns the next thing instead of advancing a counter — a walk wearing a counted loop's clothes — `NonCountingForDetector`
-- `else` after an `if` branch that already returns/throws (redundant) — `RedundantElseDetector`
-- a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise — `ShortCircuitStatementDetector`
-- a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value — `TernaryStatementDetector`
-
-## Checklist
-
-- [ ] State an absent collection at the top as a guard (early return); don't bury `?? []` in a `foreach` header.
-- [ ] Flatten with guard clauses — never nest `if`s three deep into a pyramid.
-- [ ] Replace a 4+ branch if/elseif ladder with a `match`, a method on the type, or polymorphic dispatch.
-- [ ] Guard at the top with an early `throw`; don't bury a `?? throw` mid-expression feeding further work.
-- [ ] Use a `continue` guard so the loop body stays flat; don't wrap the whole body in an `if`.
-- [ ] Unfold a nested/chained ternary into a `match` or guards; don't hide branching in `$a ? $b : ($c ? $d : $e)`.
-- [ ] Keep `for` for a counted loop, whose step advances a counter; walk with a `while`, or let the type hand out its own sequence.
-- [ ] Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
-- [ ] Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
-- [ ] Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 10 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

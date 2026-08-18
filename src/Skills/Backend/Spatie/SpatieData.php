@@ -28,7 +28,7 @@ final class SpatieData extends Skill
 
     public function trigger(): string
     {
-        return "How to write a Spatie Data class — final, public readonly promoted props; construct via `::from([...])` not `new` (except a `new` default value in the constructor); magic factories MUST be named `from<Type>` (the prefix is required to dispatch); document the magic `from`/`collect` overloads with `@method` naming `from`/`collect` — never the factory's own name (that re-declares a real method) nor the array shape; never hand-hydrate field-by-field; typed collections via `#[DataCollectionOf]` + `::collect()`; honest field types (no all-nullable DTO); `Optional` vs `?T` vs default; class-level `#[MapInputName]`; `#[WithCast]`; validation. Read this FIRST whenever you write or review a `Data` class, a `::from`, a `new SomeData`, a hydrator, or a `#[...]` data attribute.";
+        return "How to write and construct a Spatie Data class — final, public readonly promoted props, honest field types, `::from([...])` rather than `new`, `from<Type>` magic factories, `#[DataCollectionOf]` collections, `Optional` vs `?T` vs a default, mapping, casts and validation. Read this FIRST whenever you write or review a `Data` class, a `::from`, a `new SomeData`, a hydrator that fills fields one by one, an `@method from`/`collect` docblock hint, or a `#[...]` attribute on a Data property.";
     }
 
     public function intro(): string

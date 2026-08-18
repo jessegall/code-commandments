@@ -44,10 +44,10 @@ not solve a crowded inventory by scattering the inventory.
 
 ## Rules
 
-- Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor — never between two methods or appended at the bottom.
-- Order the head of a class the same way every time: trait uses, enum cases, constants, static properties, then instance properties public → protected → private, and hooked (derived) properties last, after the fields they read from.
+- [ ] Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor — never between two methods or appended at the bottom.
+- [ ] Order the head of a class the same way every time: trait uses, enum cases, constants, static properties, then instance properties public → protected → private, and hooked (derived) properties last, after the fields they read from.
 
-## Bad → good
+## Worked example
 
 ### member-after-method
 
@@ -97,75 +97,19 @@ enum CollectionMethod: string
 }
 ```
 
-### member-out-of-order
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/class-layout` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `member-after-method`, `member-out-of-order`.
+- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `member-after-method`, `member-out-of-order`. Review it with `--dry-run` first.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-/** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
-final class LogLine
-{
-    public string $level = 'info';
+## Reference
 
-    private int $depth = 0;
-
-    /**
-     * @var list<LogLine>
-     */
-    public array $children = [];
-
-    /**
-     * A bool about the line itself, named as a claim instead of a question.
-     */
-    public function reports(): bool
-    {
-        return $this->level === 'error';
-    }
-
-    /**
-     * The FIX is the NAME: same body, same class, asked as a question. `if ($line->isErrored())`
-     * reads as English at the call site, where `if ($line->reports())` reads as a claim.
-     */
-    public function isErrored(): bool
-    {
-        return $this->level === 'error';
-    }
-}
-
-----------[ Good ]----------
-
-// The FIX: the same three fields in the one fixed sequence — the static counter first, then the
-// instance state. `$planned` has MOVED UP past the two it arrived after; nothing else changed.
-
-final class PlannedItinerary
-{
-    public static int $planned = 0;
-
-    /**
-     * @var list<string>
-     */
-    public array $legModes = [];
-
-    public string $reference = '';
-
-    public function isEmpty(): bool
-    {
-        return $this->legModes === [];
-    }
-}
-```
-
-## When it fires
-
-- A trait use, constant, property, property hook or enum case declared BELOW a method — state a reader only meets after the behaviour that uses it — `MemberAfterMethodDetector`
-- A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads — `MemberOutOfOrderDetector`
-
-## Checklist
-
-- [ ] Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor — never between two methods or appended at the bottom.
-- [ ] Order the head of a class the same way every time: trait uses, enum cases, constants, static properties, then instance properties public → protected → private, and hooked (derived) properties last, after the fields they read from.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

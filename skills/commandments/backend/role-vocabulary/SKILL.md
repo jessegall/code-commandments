@@ -57,10 +57,10 @@ added; a marker interface is checked by the compiler.
 
 ## Rules
 
-- A keyed store's `get()` resolves-or-throws on a miss; don't return `null`.
-  _`get()` returns-or-throws a named `…NotFound::forKey($key)`._
+- [ ] A keyed store's `get()` resolves-or-throws on a miss; don't return `null`.
+      _`get()` returns-or-throws a named `…NotFound::forKey($key)`._
 
-## Bad → good
+## Worked example
 
 ### nullable-registry-lookup
 
@@ -85,13 +85,15 @@ public function resolve(string $key): object
 }
 ```
 
-## When it fires
+## Commands
 
-- A keyed-store `get()` that returns `null` on a miss (should resolve-or-throw) — `NullableRegistryLookupDetector`
+- `vendor/bin/commandments judge --skill=backend/role-vocabulary` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `nullable-registry-lookup`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-## Checklist
+## Reference
 
-- [ ] A keyed store's `get()` resolves-or-throws on a miss; don't return `null`.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

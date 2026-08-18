@@ -97,12 +97,12 @@ almost always something smaller than the class you were about to reach for.
 
 ## Rules
 
-- Break every namespace cycle — dependencies point ONE way, so a namespace can always be lifted out on its own.
-  _cut the weaker arrow: move the shared class down, or have the lower namespace own an interface the higher one implements_
-- Reference only DOWN the declared stack — a layer may use the layers it declared in `mayUse`, and nothing else that is declared.
-  _invert the arrow: take the value/contract the low layer needs, and let the high layer supply it_
+- [ ] Break every namespace cycle — dependencies point ONE way, so a namespace can always be lifted out on its own.
+      _cut the weaker arrow: move the shared class down, or have the lower namespace own an interface the higher one implements_
+- [ ] Reference only DOWN the declared stack — a layer may use the layers it declared in `mayUse`, and nothing else that is declared.
+      _invert the arrow: take the value/contract the low layer needs, and let the high layer supply it_
 
-## Bad → good
+## Worked example
 
 ### namespace-cycle
 
@@ -131,43 +131,18 @@ public function coveredMonthsOf(CoverageClaim $claim): int
 }
 ```
 
-### namespace-dependency
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-a declared layer references a layer it may not use (the arrow points back up)
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/dependency-direction` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `namespace-cycle`, `namespace-dependency`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-// The arrow pointing back up: Elements is the bottom of the stack, yet this one hands out a
-// Panel — the thing Shared assembles FROM badges. Elements can no longer be read, reused or
-// moved without Shared coming along.
+## Reference
 
-public function inPanel(): Panel
-{
-    return new Panel($this->label);
-}
-
-----------[ Good ]----------
-
-// The FIX: the arrow inverted. The badge hands out only what it owns — a token from the layer
-// BELOW it — and Shared assembles the panel from that. Elements names nothing above itself, so it
-// reads, tests and moves on its own again.
-
-public function accent(): Accent
-{
-    return new Accent($this->label);
-}
-```
-
-## When it fires
-
-- two namespaces that reference each other — neither can be read, tested or moved alone — `NamespaceCycleDetector`
-- a declared layer references a layer it may not use (the arrow points back up) — `NamespaceDependencyDetector`
-
-## Checklist
-
-- [ ] Break every namespace cycle — dependencies point ONE way, so a namespace can always be lifted out on its own.
-- [ ] Reference only DOWN the declared stack — a layer may use the layers it declared in `mayUse`, and nothing else that is declared.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

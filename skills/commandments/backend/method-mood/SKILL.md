@@ -53,12 +53,12 @@ nothing — a missed narration costs a reader a moment, a false one costs them t
 
 ## Rules
 
-- A `bool` answering about the object itself wears a question: `isBound()`, `isSpinning()`, `hasParent()`, `awaitsAnswer()`. (A predicate that takes what it compares against — `contains(\$item)`, `matches(\$name)` — is already a sentence and stays as it is.)
-  _make it a question: `is…`, `has…`, `can…`, `awaits…`_
-- Name a command in the imperative: `hide()`, `enterTestMode()`, `openFor(\$user)` — never the third-person `hides()`, and never a participle.
-  _drop the -s: the call site is giving the order, not narrating it_
+- [ ] A `bool` answering about the object itself wears a question: `isBound()`, `isSpinning()`, `hasParent()`, `awaitsAnswer()`. (A predicate that takes what it compares against — `contains(\$item)`, `matches(\$name)` — is already a sentence and stays as it is.)
+      _make it a question: `is…`, `has…`, `can…`, `awaits…`_
+- [ ] Name a command in the imperative: `hide()`, `enterTestMode()`, `openFor(\$user)` — never the third-person `hides()`, and never a participle.
+      _drop the -s: the call site is giving the order, not narrating it_
 
-## Bad → good
+## Worked example
 
 ### bare-state-predicate
 
@@ -85,44 +85,18 @@ public function isErrored(): bool
 }
 ```
 
-### narrated-command
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/method-mood` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `bare-state-predicate`, `narrated-command`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-// The fluent form of the same mistake: chainable, still an order.
+## Reference
 
-public function clears(): static
-{
-    $this->entries = [];
-
-    return $this;
-}
-
-----------[ Good ]----------
-
-// The FIX is the NAME: drop the -s. Still fluent, still the same body — but `$weights->clear()`
-// is the order the call site is actually giving, instead of a description of one.
-
-public function clear(): static
-{
-    $this->entries = [];
-
-    return $this;
-}
-```
-
-## When it fires
-
-- A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs — `BareStatePredicateDetector`
-- A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one — `NarratedCommandDetector`
-
-## Checklist
-
-- [ ] A `bool` answering about the object itself wears a question: `isBound()`, `isSpinning()`, `hasParent()`, `awaitsAnswer()`. (A predicate that takes what it compares against — `contains(\$item)`, `matches(\$name)` — is already a sentence and stays as it is.)
-- [ ] Name a command in the imperative: `hide()`, `enterTestMode()`, `openFor(\$user)` — never the third-person `hides()`, and never a participle.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

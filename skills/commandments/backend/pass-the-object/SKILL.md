@@ -61,16 +61,16 @@ the parameter to the resolved type.
 
 ## Rules
 
-- Take the SUBJECT and ask it — never a bool every caller derives from that same object.
-  _swap the flags for the object the callers already hold: `CornerInset::for($editor)`_
-- Declare the parameter in the currency callers actually hold, and convert inside — one rule about the conversion, in one place.
-  _Move the wrapper into the callee and widen the parameter to the type being wrapped; every call site then passes the value it means, and a site that forgets the conversion stops compiling._
-- Pass the subject, not projections of it — a callee reaching the same value twice should take it once and derive the rest.
-  _Give the parameter the subject's type and move the derivations inside the callee; the call site then says what it means instead of spelling out the pieces._
-- Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
-  _Take the resolved object as the param; resolve once in the caller._
+- [ ] Take the SUBJECT and ask it — never a bool every caller derives from that same object.
+      _swap the flags for the object the callers already hold: `CornerInset::for($editor)`_
+- [ ] Declare the parameter in the currency callers actually hold, and convert inside — one rule about the conversion, in one place.
+      _Move the wrapper into the callee and widen the parameter to the type being wrapped; every call site then passes the value it means, and a site that forgets the conversion stops compiling._
+- [ ] Pass the subject, not projections of it — a callee reaching the same value twice should take it once and derive the rest.
+      _Give the parameter the subject's type and move the derivations inside the callee; the call site then says what it means instead of spelling out the pieces._
+- [ ] Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
+      _Take the resolved object as the param; resolve once in the caller._
 
-## Bad → good
+## Worked example
 
 ### computed-boolean-argument
 
@@ -100,116 +100,18 @@ public static function for(KioskEditor $editor): string
 }
 ```
 
-### converted-argument
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
-A parameter declared in the wrong currency — call site after call site wraps the same argument in the same conversion (`Raises::of(ClassAlias::of($interaction), …)`) because the callee asks for the converted form instead of the value
+## Commands
 
-```php
-----------[ Bad ]----------
+- `vendor/bin/commandments judge --skill=backend/pass-the-object` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `computed-boolean-argument`, `converted-argument`, `derived-argument`, `param-resolved-from-param`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
-// in Shop\Wire\HotkeyBinding
-public function bind(string $node): WireMessage
-{
-    return WireMessage::raise(SignalAlias::of(HotkeyPressed::class), $node);
-}
+## Reference
 
-// in Shop\Wire\PointerBinding
-public function bind(string $node): WireMessage
-{
-    $this->bound[] = $node;
-
-    return WireMessage::raise(SignalAlias::of(PointerReleased::class), $node);
-}
-
-// in Shop\Shelving\ShelfImporter
-public function import(string $heading, int $bay): void
-{
-    $this->index->reserve(SlugText::of($heading), $bay);
-}
-
-// in Shop\Shelving\ShelfPlanner
-public function plan(array $aisles): void
-{
-    foreach ($aisles as $bay => $name) {
-        $this->index->reserve(SlugText::of($name), $bay);
-    }
-}
-
-----------[ Good ]----------
-
-// The FIX: the parameter is declared in the currency the caller holds, and the conversion lives on
-// the far side of the call.
-
-public function bindDirect(string $node): WireMessage
-{
-    return WireMessage::raiseFor(HotkeyPressed::class, $node);
-}
-```
-
-### derived-argument
-
-Handing one subject to a call TWICE over — whole and again flattened (`persist($request, $request->shopId())`), or flattened several ways (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive every piece from the subject itself
-
-```php
-----------[ Bad ]----------
-
-public function dispatch(Waybill $waybill): string
-{
-    return $this->courier->book(
-        $waybill->trackingCode(),
-        $waybill->weightGrams(),
-        $waybill->isHeavy(),
-    );
-}
-
-----------[ Good ]----------
-
-// The FIX: hand over the waybill and let the courier read what it needs off it.
-
-public function dispatchWhole(Waybill $waybill): string
-{
-    return $this->courier->bookWaybill($waybill);
-}
-```
-
-### param-resolved-from-param
-
-Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging
-
-```php
-----------[ Bad ]----------
-
-public function priceFor(ProductCatalogue $catalogue, string $sku): int
-{
-    $variant = $catalogue->variantBySku($sku);
-
-    return $variant->basePriceCents() + $this->markupCents;
-}
-
-----------[ Good ]----------
-
-// Demands the resolved variant — the caller resolves it once by sku and owns
-// the "not found" failure, so this only prices what it is handed.
-
-public function priceForVariant(Variant $variant): int
-{
-    return $variant->basePriceCents() + $this->markupCents;
-}
-```
-
-## When it fires
-
-- a bool-only chooser whose callers all compute the flag off the same object (take the object and ask it) — `ComputedBooleanArgumentDetector`
-- A parameter declared in the wrong currency — call site after call site wraps the same argument in the same conversion (`Raises::of(ClassAlias::of($interaction), …)`) because the callee asks for the converted form instead of the value — `ConvertedArgumentDetector`
-- Handing one subject to a call TWICE over — whole and again flattened (`persist($request, $request->shopId())`), or flattened several ways (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive every piece from the subject itself — `DerivedArgumentDetector`
-- Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging — `ParamResolvedFromParamDetector`
-
-## Checklist
-
-- [ ] Take the SUBJECT and ask it — never a bool every caller derives from that same object.
-- [ ] Declare the parameter in the currency callers actually hold, and convert inside — one rule about the conversion, in one place.
-- [ ] Pass the subject, not projections of it — a callee reaching the same value twice should take it once and derive the rest.
-- [ ] Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 
