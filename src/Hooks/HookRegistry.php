@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\TestingReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\UntilReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
 use JesseGall\CodeCommandments\Hooks\Handlers\SourceReminder;
+use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\CompactionReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\WorkingState;
 use JesseGall\CodeCommandments\Cli\Install;
@@ -58,6 +59,7 @@ final class HookRegistry
         UntilReminder::class,
         SessionReset::class,
         SourceReminder::class,
+        SkillReminder::class,
         CompactionReminder::class,
         WorkingState::class,
     ];

@@ -92,6 +92,31 @@ final class Config
     }
 
     /**
+     * Does `judge` scan $file — i.e. does it sit under a declared source root? $root is the project
+     * the roots are relative to; $file may be absolute or project-relative.
+     *
+     * The question belongs here rather than at each caller: a hook that only speaks about judged code
+     * and a hook that only speaks about UNjudged code are asking the same thing, and answering it
+     * twice is how the two drift apart. With no roots declared yet nothing is provably judged, and
+     * the answer is `false`.
+     */
+    public function isJudged(string $root, string $file): bool
+    {
+        $home = rtrim($root, '/');
+        $absolute = str_starts_with($file, '/') ? $file : $home . '/' . ltrim($file, '/');
+
+        foreach ($this->roots as $relative) {
+            $dir = $relative === '.' ? $home : $home . '/' . trim($relative, '/');
+
+            if ($absolute === $dir || str_starts_with($absolute, $dir . '/')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Subtract explicit paths from the scan — declared ON TOP of the inclusive {@see paths}, so a
      * directory or file listed here (relative to the project) is NEVER a target: judge never reports
      * a sin in it and repent never rewrites it, however it was reached (a broad root, `--changes`,

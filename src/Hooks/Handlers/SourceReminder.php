@@ -109,22 +109,12 @@ final class SourceReminder extends Hook
     }
 
     /**
-     * Does `judge` actually cover $file — i.e. does it sit under a declared source root? When it does (a
-     * project that scans its tests), there's no blind spot and the nudge stays silent. With no roots
-     * declared yet, nothing is provably judged, so the symptom surface alone decides.
+     * Does `judge` actually cover $file? When it does (a project that scans its tests), there's no
+     * blind spot and the nudge stays silent. With no roots declared yet, nothing is provably judged,
+     * so the symptom surface alone decides.
      */
     private function isJudged(string $root, string $file): bool
     {
-        $absolute = str_starts_with($file, '/') ? $file : rtrim($root, '/') . '/' . ltrim($file, '/');
-
-        foreach (Config::load($root)->sourceRoots() as $relative) {
-            $rootDir = $relative === '.' ? rtrim($root, '/') : rtrim($root, '/') . '/' . trim($relative, '/');
-
-            if ($absolute === $rootDir || str_starts_with($absolute, $rootDir . '/')) {
-                return true;
-            }
-        }
-
-        return false;
+        return Config::load($root)->isJudged($root, $file);
     }
 }

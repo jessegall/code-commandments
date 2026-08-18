@@ -345,6 +345,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `UntilReminder` | `Stop, UserPromptSubmit, PostToolUse` | Holds every stop while a `commandments until "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
+| `SkillReminder` | `PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit` | After an edit, checks the file against the rules that can judge one file and names the skill that teaches the fix. |
 | `CompactionReminder` | `SessionStart` | After a context compaction (which silently drops loaded skills), reminds you to reload any skill governing your current task. |
 | `WorkingState` | `PostToolUse, SessionStart` | Keeps the plan's working-state record alive across compaction — a refresh heartbeat and re-injection on compact/resume. |
 <!-- END: hooks-table -->

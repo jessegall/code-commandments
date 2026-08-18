@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\WholeTree;
 use JesseGall\CodeCommandments\Sins\Backend\ComputedBooleanArgument;
 use JesseGall\CodeCommandments\Sins\Sin;
 
@@ -18,7 +19,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * and ask it: `CornerInset::for($editor)`. The boolean-flavoured sibling of pass-the-object's
  * id + container — there the caller pre-resolves, here it pre-decides. Points at pass-the-object.
  */
-final class ComputedBooleanArgumentDetector implements Detector
+final class ComputedBooleanArgumentDetector implements Detector, WholeTree
 {
     /**
      * The decision must be re-derived at this many call sites before they can drift apart.

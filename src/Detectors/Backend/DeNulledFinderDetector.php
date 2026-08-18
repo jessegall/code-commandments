@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\AppliesExemptions;
 use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\WholeTree;
 use JesseGall\CodeCommandments\Packages\Exemptable;
 use JesseGall\CodeCommandments\Packages\ExemptBy;
 use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
@@ -20,7 +21,7 @@ use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
  * absence should be decided at the source, not re-checked everywhere. A method whose nullable
  * return a framework CONTRACT declares is exempt — that signature is not the class's to narrow.
  */
-final class DeNulledFinderDetector implements Detector, Exemptable
+final class DeNulledFinderDetector implements Detector, Exemptable, WholeTree
 {
     use AppliesExemptions;
 

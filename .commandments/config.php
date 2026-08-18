@@ -214,6 +214,7 @@ $disabledHooks = function (Config $config): void {
         // Hooks\Handlers\PlanReminder::class,
         // Hooks\Handlers\Remind::class,
         // Hooks\Handlers\SessionReset::class,
+        // Hooks\Handlers\SkillReminder::class,
         // Hooks\Handlers\SourceReminder::class,
         // Hooks\Handlers\TestingReminder::class,
         // Hooks\Handlers\UntilReminder::class,

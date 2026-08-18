@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Discovery;
 use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Unpublished;
+use JesseGall\CodeCommandments\WholeTree;
 
 /**
  * The single source of truth for every detector that ships. Discovered from the
@@ -80,6 +81,23 @@ final class Catalog
     public static function frontend(): array
     {
         return self::discover('Frontend');
+    }
+
+    /**
+     * The detectors that can judge ONE file honestly — everything except the {@see WholeTree} rules,
+     * whose verdict rests on the call graph or the value-flow graph and so cannot be asked about a
+     * file in isolation. Both engines: a `.vue` edit deserves the same check a `.php` one gets.
+     *
+     * This is for the fast per-edit check, never for `judge`, which parses everything and runs the lot.
+     *
+     * @return list<RootDetector>
+     */
+    public static function singleFile(): array
+    {
+        return array_values(array_filter(
+            [...self::backend(), ...self::frontend()],
+            static fn (RootDetector $detector): bool => ! $detector instanceof WholeTree,
+        ));
     }
 
     /**
