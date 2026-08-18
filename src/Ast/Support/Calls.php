@@ -24,8 +24,7 @@ final class Calls
      */
     public static function name(Node $node): ?string
     {
-        if ((AstNode::isMethodSend($node) || $node instanceof StaticCall)
-            && $node->name instanceof Identifier) {
+        if (AstNode::isNamedSend($node)) {
             return $node->name->toString();
         }
 

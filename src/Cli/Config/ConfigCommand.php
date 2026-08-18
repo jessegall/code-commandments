@@ -72,7 +72,7 @@ final class ConfigCommand implements Command
         $root = getcwd() ?: '.';
         $roots = new SourceRoots()->detect($root);
 
-        new ConfigScribe(Workspace::config($root))->rewritePaths($roots);
+        ConfigScribe::inProject($root)->rewritePaths($roots);
 
         echo "\033[32m✓ Reindexed " . count($roots) . " source root(s) into .commandments/config.php:\033[0m " . implode(', ', $roots) . "\n";
 

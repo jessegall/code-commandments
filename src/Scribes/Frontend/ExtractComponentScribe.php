@@ -129,7 +129,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private function placeReuse(Draft $draft, Boundary $boundary, ComponentReuse $reuse): void
     {
-        $draft->edit($boundary->contentSpan(), self::usage($reuse->name, $reuse->bindings, $boundary->carried()));
+        $draft->edit($boundary->contentSpan(), self::tag($reuse->name, $reuse->bindings, TagShape::carrying($boundary->carried())));
 
         if (! self::mentions($boundary->sfc->scriptContent(), $reuse->name)) {
             self::import($draft, $boundary->sfc, $reuse->path, $reuse->name);
@@ -449,7 +449,7 @@ final class ExtractComponentScribe extends RepentScribe
      */
     private function place(Draft $draft, Boundary $boundary, string $component, string $name, array $bindings): void
     {
-        $usage = self::usage($name, $bindings, $boundary->carried(), $boundary->models(), $boundary->hasSlots(), $boundary->contentSpan()->column(), array_keys($boundary->emitEvents()));
+        $usage = self::tag($name, $bindings, TagShape::extracting($boundary));
         $draft->edit($boundary->contentSpan(), $usage);
         self::import($draft, $boundary->sfc, $component, $name);
     }
@@ -460,38 +460,33 @@ final class ExtractComponentScribe extends RepentScribe
      * passing each prop.
      *
      * @param  array<string, string>  $bindings  prop name => the expression to pass
-     * @param  list<Attribute>  $carried  the structural directives to keep here
-     * @param  list<string>  $models  props the child WRITES — bound with `v-model`, not `:`
-     * @param  bool  $forwardsSlots  the chunk renders `<slot>`s — forward the host's slots
-     * @param  int  $column  the call site's indentation, for the slot-forwarding block
-     * @param  list<string>  $emits  events the child emits — the parent re-binds each to its own function
      */
-    private static function usage(string $name, array $bindings, array $carried = [], array $models = [], bool $forwardsSlots = false, int $column = 0, array $emits = []): string
+    private static function tag(string $name, array $bindings, TagShape $shape): string
     {
-        $attributes = array_map(static fn (Attribute $carry): string => $carry->render(), $carried);
+        $attributes = array_map(static fn (Attribute $carry): string => $carry->render(), $shape->carried);
 
         foreach ($bindings as $prop => $expression) {
-            $attributes[] = in_array($prop, $models, true)
+            $attributes[] = in_array($prop, $shape->models, true)
                 ? 'v-model:' . self::kebab($prop) . "=\"{$expression}\""
                 : ':' . self::kebab($prop) . "=\"{$expression}\"";
         }
 
         // A handler call that became an `$emit` in the child is re-bound to the original
         // parent function here (`@copy-json="copyJson"`), closing the loop.
-        foreach ($emits as $event) {
+        foreach ($shape->emits as $event) {
             $attributes[] = '@' . self::kebab($event) . "=\"{$event}\"";
         }
 
         $open = $attributes === [] ? "<{$name}" : "<{$name} " . implode(' ', $attributes);
 
-        if (! $forwardsSlots) {
+        if (! $shape->forwardsSlots) {
             return "{$open} />";
         }
 
         // The chunk consumes slots — pass the host's slots through transparently, so a named
         // slot the host fills still reaches the extracted component's `<slot>` (issue: slots
         // were dropped when the call site was self-closing).
-        $indent = str_repeat(' ', $column);
+        $indent = str_repeat(' ', $shape->column);
 
         return "{$open}>\n"
             . "{$indent}    <template v-for=\"(_, name) in \$slots\" :key=\"name\" #[name]=\"slotProps\">\n"

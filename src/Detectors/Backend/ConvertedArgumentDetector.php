@@ -17,16 +17,11 @@ use PhpParser\Node\Name;
 
 /**
  * Flags a parameter declared in the wrong currency: the caller holds a value, converts it into the form
- * the callee wants, and passes the conversion — `Raises::of(ClassAlias::of($interaction), …)`, where the
- * pipe holds a class and the wire wants an alias.
- *
- * Requested in #495. The sibling of {@see DerivedArgumentDetector} and NOT the same shape: nothing is read
- * off a subject twice here. ONE argument goes over, wrapped, and the evidence is that the SAME wrapper
- * appears at the same parameter of the same callee again and again — the callee is the thing that knows
- * the conversion, and it is being made to live at every call site instead of one.
- *
- * The fix widens the parameter to what callers actually hold, which also closes a hole nothing catches
- * today: where both sides are `string`, a site that FORGETS the wrapper compiles perfectly.
+ * the callee wants, and passes the conversion — `Raises::of(ClassAlias::of($interaction), …)`. The
+ * evidence is the SAME wrapper at the same parameter of the same callee again and again, which says the
+ * callee knows the conversion and is making every call site keep it. Widening the parameter to what
+ * callers hold also closes a hole nothing catches: where both sides are `string`, a site that FORGETS the
+ * wrapper compiles perfectly. The sibling of {@see DerivedArgumentDetector}, which reads a subject twice.
  */
 final class ConvertedArgumentDetector extends RecurringPattern
 {

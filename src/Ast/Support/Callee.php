@@ -11,8 +11,7 @@ use PhpParser\Node\Expr\StaticCall;
 
 /**
  * The declared signature a CALL SITE fills — the class that declares the method, and the method's name.
- *
- * Resolved to the DECLARING class, so calls made through different subclasses of one base name the same
+ * Resolved to the DECLARING class, so calls through different subclasses of one base name the same
  * signature; a `new` fills a constructor and a static call names its own class. The one place a rule
  * about arguments asks "what did this call actually reach", so no two of them answer it differently.
  */

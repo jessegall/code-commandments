@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\TypeName;
 use PhpParser\Node;
@@ -170,8 +171,6 @@ final class ExpressionType
      */
     private static function memberOnThis(Node $receiver, Node|string $name): ?string
     {
-        $isThis = $receiver instanceof Variable && $receiver->name === 'this';
-
-        return $isThis && $name instanceof Node\Identifier ? $name->toString() : null;
+        return AstNode::isThis($receiver) && $name instanceof Node\Identifier ? $name->toString() : null;
     }
 }

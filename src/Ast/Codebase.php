@@ -331,7 +331,7 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
     public function whereCallSite(): Query
     {
         return new Query($this, static fn (Node $node): bool =>
-            ((AstNode::isMethodSend($node) || $node instanceof StaticCall) && $node->name instanceof Identifier)
+            AstNode::isNamedSend($node)
             || ($node instanceof New_ && $node->class instanceof Name),
             [MethodCall::class, NullsafeMethodCall::class, StaticCall::class, New_::class]);
     }

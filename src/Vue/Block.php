@@ -16,15 +16,24 @@ use JesseGall\PhpTypes\Option;
 final class Block
 {
     /**
-     * @param  array<string, string|null>  $attributes
+     * @var array<string, string|null>
+     */
+    public readonly array $attributes;
+
+    /**
+     * @param  string  $attributes  the opening tag's attribute text, exactly as written
      */
     public function __construct(
         public readonly string $tag,
-        public readonly array $attributes,
+        string $attributes,
         public readonly string $content,
         public readonly int $line,
         public readonly int $start = 0,
-    ) {}
+    ) {
+        // Every caller held the raw text and parsed it on the way in, so the parse belongs here —
+        // one rule about what an attribute list means, rather than one per construction site.
+        $this->attributes = Attributes::parse($attributes);
+    }
 
     public function hasAttribute(string $name): bool
     {

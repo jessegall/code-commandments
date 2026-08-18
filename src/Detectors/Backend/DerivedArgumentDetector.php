@@ -23,19 +23,12 @@ use PhpParser\Node\Expr\StaticCall;
 use PhpParser\Node\Expr\Variable;
 
 /**
- * Flags a call site that hands over a PROJECTION of a value rather than the value itself, where following
- * the code shows the callee could have derived it — `persist($request, $request->getShopChannelId())`
- * wanted only `$request`.
- *
- * The mirror of {@see ParamResolvedFromParamDetector}: there a callee takes a container plus a key and
- * unpacks the target, so resolution moves UP to the caller; here the caller pre-computes a projection of
- * something it already holds, so the derivation moves DOWN into the callee.
- *
- * The evidence is the subject reached TWICE in one call — handed over whole and again flattened
- * (`persist($request, $request->shopId())`), or flattened two different ways (`reportsLoggedIn(
- * $t->output(), $t->exitCode())`). Either way the callee provably holds what the derivation needs, so one
- * site proves it and no counting of call sites is required. Reached once it is not evidence at all: every
- * scalar utility takes `$n->methodName()` and must not be taught what an AST node is.
+ * Flags a call site that hands over a PROJECTION of a value rather than the value itself, where the callee
+ * could have derived it — `persist($request, $request->getShopChannelId())` wanted only `$request`. The
+ * evidence is the subject reached TWICE in one call, whole and again flattened, or flattened two
+ * different ways; either way the callee provably holds what the derivation needs, so one site proves it.
+ * Reached once it is no evidence at all — every scalar utility takes `$n->methodName()`. The mirror of
+ * {@see ParamResolvedFromParamDetector}, where resolution moves UP to the caller instead of DOWN.
  */
 final class DerivedArgumentDetector implements Detector
 {

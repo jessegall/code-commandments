@@ -152,11 +152,10 @@ final class LayersCommand implements Command
         $roots = new SourceRoots()->resolve($given->unwrapOr($project), $given->isSome());
         $graph = NamespaceGraph::forCodebase(Codebase::scan($roots));
 
-        $order = $graph->dependencyOrder();
         $floorOnly = $input->hasFlag('floor');
         $proposed = $floorOnly ? $graph->floorShape() : $graph->currentShape();
 
-        $this->report($graph, $order, array_keys($graph->floorShape()), $proposed, $floorOnly);
+        $this->report($graph, $proposed, $floorOnly);
 
         if ($proposed === []) {
             return 0;
@@ -169,8 +168,12 @@ final class LayersCommand implements Command
      * @param  list<string>  $foundation
      * @param  array<string, list<string>>  $proposed
      */
-    private function report(NamespaceGraph $graph, DependencyOrder $order, array $foundation, array $proposed, bool $floorOnly): void
+    private function report(NamespaceGraph $graph, array $proposed, bool $floorOnly): void
     {
+        // The graph knows its own order and its own floor; asking the caller for them as well made
+        // three ways to be handed the same object.
+        $order = $graph->dependencyOrder();
+        $foundation = array_keys($graph->floorShape());
         $total = $order->total();
 
         $this->line("\033[1mNamespace layers\033[0m — {$total} namespaces");
@@ -240,7 +243,7 @@ final class LayersCommand implements Command
             return 0;
         }
 
-        $written = new ConfigScribe(\JesseGall\CodeCommandments\Workspace::config($path))->ensureLayers(self::render($layers));
+        $written = ConfigScribe::inProject($path)->ensureLayers(self::render($layers));
 
         $this->line('');
         $this->line($written

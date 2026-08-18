@@ -1265,15 +1265,15 @@ final class Parser
     }
 
     /**
-     * The `get`/`set` of an accessor — empty for an ordinary member, and for a member NAMED `get`.
+     * The `get`/`set` of an accessor — none for an ordinary member, and for a member NAMED `get`.
      */
-    private function memberAccessor(): string
+    private function memberAccessor(): ?string
     {
         if (($this->atId(Keyword::GET) || $this->atId(Keyword::SET)) && $this->at(1)->isIdentifier()) {
             return $this->advance()->value;
         }
 
-        return '';
+        return null;
     }
 
     // ---- expressions ----------------------------------------------------------

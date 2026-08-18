@@ -303,7 +303,16 @@ class AstNode
      */
     public function isThisVariable(): bool
     {
-        return self::variableNameOf($this->node) === 'this';
+        return self::isThis($this->node);
+    }
+
+    /**
+     * Is $expr the `$this` variable? The static twin, for the analyses that hold a raw node and would
+     * otherwise each spell the same two-part check.
+     */
+    public static function isThis(?Node $expr): bool
+    {
+        return self::variableNameOf($expr) === 'this';
     }
 
     /**
@@ -4554,6 +4563,16 @@ class AstNode
     public static function isMethodSend(?Node $expr): bool
     {
         return $expr instanceof MethodCall || $expr instanceof NullsafeMethodCall;
+    }
+
+    /**
+     * Is $expr a call that names its method LITERALLY — `$o->total()`, `$o?->total()`, `C::of()` — as
+     * opposed to one dispatched through a variable (`$o->$method()`), whose name is not knowable here?
+     * The guard every rule that reads a call's name has to pass first.
+     */
+    public static function isNamedSend(?Node $expr): bool
+    {
+        return (self::isMethodSend($expr) || $expr instanceof StaticCall) && $expr->name instanceof Identifier;
     }
 
     /**
