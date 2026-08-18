@@ -532,6 +532,29 @@ class AstNode
     }
 
     /**
+     * Does this node sit inside a FROM-SOURCE FACTORY — a static method that maps something else into
+     * the very type it is declared on (`ValueKind::of(Type $t): self`)?
+     *
+     * A type switch there is not the sin. The `tell-dont-ask` skill grants it in as many words: moving
+     * the mapping onto the source type would make the domain name its presentation, inverting the
+     * dependency the classification exists to keep pointing one way (#509). The tell is structural —
+     * `static`, returning the enclosing type — not the method's name.
+     */
+    public function isInFromSourceFactory(): bool
+    {
+        $function = $this->enclosingFunction();
+
+        if (! $function instanceof ClassMethod || ! $function->isStatic()) {
+            return false;
+        }
+
+        $returns = TypeName::render($function->returnType);
+        $class = $this->enclosingClassName();
+
+        return $returns === 'self' || $returns === 'static' || ($class !== null && ltrim($returns, '\\') === ltrim($class, '\\'));
+    }
+
+    /**
      * Is this `instanceof` the HEAD of a type switch — the first of two or more type tests on the
      * SAME subject, each deciding a different branch of the same function? The shape that asks a
      * value what it is instead of telling it what to do, whatever it is spelled as: an `if`/`elseif`
