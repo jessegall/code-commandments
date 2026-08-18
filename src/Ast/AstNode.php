@@ -425,7 +425,7 @@ class AstNode
      * caller can observe. And a mutation inside a method that returns `$this` is a fluent BUILDER
      * accumulating — a recognised, deliberate shape, not a value corrupted.
      */
-    public function mutatesOwnFieldsAfterConstruction(): bool
+    public function mutatesOwnFieldsAfterConstruction(array $inherited = []): bool
     {
         if (! $this->node instanceof ClassLike) {
             return false;
@@ -446,7 +446,10 @@ class AstNode
             }
         }
 
-        foreach ($this->node->getMethods() as $method) {
+        // $inherited carries the methods that arrive through a `use` — php-parser's `getMethods()`
+        // sees only what the class declares, so without them the same mutation is a sin in the class
+        // and invisible from a trait, and the rule can be evaded by moving a method (#506).
+        foreach ([...$this->node->getMethods(), ...$inherited] as $method) {
             if ($method->name->toString() === '__construct' || self::returnsThis($method)) {
                 continue;
             }

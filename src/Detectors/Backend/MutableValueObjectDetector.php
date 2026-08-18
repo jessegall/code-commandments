@@ -31,7 +31,7 @@ final class MutableValueObjectDetector implements Detector
         return $codebase
             ->whereClass()
             ->where(static fn (AstNode $node): bool => $codebase->classIsValueType($node->enclosingClassName()))
-            ->where(static fn (AstNode $node): bool => $node->mutatesOwnFieldsAfterConstruction())
+            ->where(static fn (AstNode $node): bool => $node->mutatesOwnFieldsAfterConstruction($codebase->traitMethodsOf($node->enclosingClassName())))
             ->get();
     }
 }
