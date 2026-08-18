@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "our AdminOrderController::store() just calls OrderController::store() with a tweaked request. is that a reasonable way to share the logic",
+        "I've registered both POST /orders and POST /api/orders pointing at the same OrderController@store — fine or a smell"
+    ],
+    "not": [
+        "how do I add rate limiting to just the checkout routes in routes/web.php"
+    ]
+}

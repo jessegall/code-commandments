@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "at the call site I'm doing OrderData::from(['customer' => CustomerData::from($row['customer']), 'placedAt' => new DateTime($row['placed_at'])]) — is all that wrapping necessary or does it hydrate on its own",
+        "I build a ShipmentData just to immediately call ->toArray() on it before passing to the queue job. that feels like a waste — is there a better pattern"
+    ],
+    "not": [
+        "our Data classes are slow to construct in a loop of 10k rows — is there a way to profile where the time goes"
+    ]
+}

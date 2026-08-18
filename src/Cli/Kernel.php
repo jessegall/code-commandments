@@ -140,6 +140,7 @@ final class Kernel
             new LayersCommand(),
             new Exemptions(),
             new Info(),
+            new TriggerEval(),
         ];
     }
 }

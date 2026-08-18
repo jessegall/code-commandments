@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "writing a CheckoutData class with spatie/laravel-data — should the properties be readonly, and do I mark the class final? also unsure whether to use `new` or ::from at the call sites",
+        "our OrderData has every property as `?string` because the form can post partials. reviewer says that's dishonest typing. what's the alternative — Optional?",
+        "how do I type a collection of LineItemData inside OrderData so it hydrates properly from the request array"
+    ],
+    "not": [
+        "spatie/laravel-permission — how do I check whether the current user has the `orders.refund` permission in a policy"
+    ]
+}

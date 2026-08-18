@@ -1,0 +1,11 @@
+{
+    "triggers": [
+        "getUserPreferences() in app/Services/PrefService.php returns ?UserPreferences and I've now got `=== null` checks for it in four controllers plus two blade templates. feels wrong but not sure what the right shape is",
+        "I'm writing a findByEmail on our UserRepository. should it return null when there's no match, or throw? the callers are a signup flow and an admin search so they want different things",
+        "our ReportBuilder has `private ?Formatter $formatter = null` and the constructor does $this->formatter = $formatter ?? new PlainFormatter(). is there a cleaner way to express an optional collaborator",
+        "quick one — is it ok for a method to return an empty array vs null when nothing matched? we do both in different places in app/Queries and it's inconsistent"
+    ],
+    "not": [
+        "the `email` column on users is nullable in the migration and I want to make it NOT NULL — what's the safe way to backfill the existing rows first"
+    ]
+}

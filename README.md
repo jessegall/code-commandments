@@ -140,6 +140,7 @@ Exit code is non-zero when sins are found.
 | `commandments layers [path]` | Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file. |
 | `commandments exemptions` | List the exemption tags — what a package registers to quiet a general rule on its own boundary types. |
 | `commandments info <sin\|detector>` | Explain one sin — what it flags, why it is a sin, how to fix it, and a worked example. |
+| `commandments trigger-eval` | Measure whether skill descriptions pull their own skill in — and stay out of their neighbours'. |
 <!-- END: commands-table -->
 
 Run `commandments <command> --help` for a command's forms, options and notes — every help screen is

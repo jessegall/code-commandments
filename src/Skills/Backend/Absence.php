@@ -25,7 +25,7 @@ final class Absence extends Skill
 
     public function trigger(): string
     {
-        return "Decide how a value that might not be there is modelled — throw vs Option vs empty vs Null Object vs a plain nullable. Read this FIRST whenever you are about to write a `?T` / `T | null` return or property, `return null`, an `Option`, a `?->` / `=== null` / `?? default`, or whenever you are unsure if something \"can be missing\". Answers when it is OK to return null and when it is a bug.";
+        return "Decide how a value that might not be there is modelled — throw vs Option vs an empty collection vs a Null Object vs a plain nullable. Read this FIRST whenever you are about to write a `?T` / `T | null` return or property, `return null`, an `Option`, a `?->` / `=== null` / `?? default`; whenever you are choosing between returning null and returning something empty for \"nothing matched\"; whenever an optional collaborator or callback is normalised with `??` in a constructor or body; or whenever you are unsure if something \"can be missing\". Answers when it is OK to return null and when it is a bug.";
     }
 
     public function intro(): string

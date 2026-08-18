@@ -27,7 +27,7 @@ final class Absence extends Skill
 
     public function trigger(): string
     {
-        return "Modelling a value that might not be there in TypeScript — a `?? default`, an `?.` chain, a `field?: T`, a `=== null` or `=== undefined` test. Read this BEFORE writing any of them in a .ts module or a component's script. TypeScript has TWO ways to be missing where PHP has one, and a type that admits absence the design never has is a lie the compiler will not catch.";
+        return "Modelling a value that might not be there in TypeScript — a `?? default`, an `?.` chain, a `field?: T`, a `=== null` or `=== undefined` test, or deciding between `field?: T`, `T | null` and `T | undefined` on an interface. Read this BEFORE writing any of them in a .ts module or a component's script. TypeScript has TWO ways to be missing where PHP has one, and a type that admits absence the design never has is a lie the compiler will not catch. It is about the absence YOUR types declare, not about silencing the compiler on a DOM or library call that genuinely returns null.";
     }
 
     public function intro(): string

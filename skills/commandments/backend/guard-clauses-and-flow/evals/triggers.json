@@ -1,0 +1,9 @@
+{
+    "triggers": [
+        "this handle() method in app/Jobs/SyncInventory.php is four levels of nested ifs by the time it gets to the actual sync. how should I restructure it",
+        "I keep writing `($order->customer ?? throw new MissingCustomer())->email()` inline. a colleague says put it at the top instead — which is right"
+    ],
+    "not": [
+        "our try/catch in app/Console/Commands/ImportOrders.php swallows the exception and just logs it. what should it do instead"
+    ]
+}
