@@ -73,4 +73,19 @@ final class Callee
 
         return $declared !== null && ! TypeName::isClassName($declared);
     }
+
+    /**
+     * Does parameter $position accept ANYTHING — declared `mixed`, or not declared at all?
+     *
+     * Such a parameter belongs to a generic container: a keyed store, a bag, a pipeline stage. It is the
+     * one callee that provably CANNOT derive anything from what it is given, because it has been told
+     * nothing about it — so a key handed over beside the item is not a derivation the callee could have
+     * done, it is the only way the value could get there (#504).
+     */
+    public function takesAnythingAt(int $position, TypeResolver $resolver): bool
+    {
+        $declared = $resolver->paramTypeOf($this->class, $this->method, $position);
+
+        return $declared === null || $declared === 'mixed';
+    }
 }
