@@ -173,6 +173,39 @@ final class SkillReminderTest extends TestCase
         $this->assertLessThan(count(Catalog::all()), count($single));
     }
 
+    public function test_a_docblock_reference_to_a_class_declared_elsewhere_is_not_dangling(): void
+    {
+        // Whether a `{@see}` dangles is a question about the WHOLE codebase — the class it names
+        // lives in another file. Asked about one file, the rule can only answer "no such class",
+        // and a correct reference is reported as rot the agent is told to go and fix.
+        $this->write('src/Registry.php', <<<'PHP'
+            <?php
+
+            namespace App;
+
+            final class Registry {}
+            PHP);
+
+        $this->write('src/Loader.php', <<<'PHP'
+            <?php
+
+            namespace App;
+
+            /**
+             * Reads what {@see \App\Registry} holds.
+             */
+            final class Loader
+            {
+                public function load(): string
+                {
+                    return 'loaded';
+                }
+            }
+            PHP);
+
+        $this->assertSame([], $this->editing('Edit', 'src/Loader.php'), 'the class it names is declared next door');
+    }
+
     private function write(string $relative, string $contents): void
     {
         file_put_contents($this->root . '/' . $relative, $contents . "\n");

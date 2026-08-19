@@ -10,14 +10,16 @@ use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Backend\DanglingDocReference;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\WholeTree;
 
 /**
  * A docblock cross-reference (`{@see …}` / `{@link …}`) that points at a FIRST-PARTY class the codebase does
  * not declare — a name that was renamed or removed, its documentation left dangling. Only references sharing
- * the enclosing class's vendor root are judged: a `{@see}` into another package can't be verified from here
- * and is left alone. Documentation must point at what the code actually IS.
+ * the enclosing class's vendor root are judged: a `{@see}` into another package can't be verified from here.
+ * The class named lives in ANOTHER file, so the verdict needs the whole tree ({@see WholeTree}) — shown one,
+ * every correct cross-file reference reads as rot. Documentation must point at what the code actually IS.
  */
-final class DanglingDocReferenceDetector implements Detector
+final class DanglingDocReferenceDetector implements Detector, WholeTree
 {
     public function sin(): Sin
     {
