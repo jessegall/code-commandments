@@ -93,11 +93,70 @@ final class SkillReminderTest extends TestCase
         $this->assertSame([], $this->editing('Edit', 'tests/ImporterTest.php'), 'outside the declared source roots');
     }
 
-    public function test_a_non_writer_tool_is_ignored(): void
+    public function test_a_file_written_by_the_shell_is_checked_too(): void
     {
-        $payload = ['hook_event_name' => 'PostToolUse', 'tool_name' => 'Bash', 'tool_input' => ['command' => 'ls']];
+        // A `Write` names its `file_path`; a heredoc, a `sed -i` or a script names nothing, and
+        // reading the command to guess a path would be a parser telling itself stories. So a shell
+        // command is answered with the judged files that CHANGED since the last one.
+        $this->shell('ls');
 
-        $this->assertSame([], $this->fire($payload));
+        $this->write('src/Shipper.php', <<<'PHP'
+            <?php
+
+            final class Shipper
+            {
+                public function run(): void
+                {
+                    // formerly lived inline in the controller; was extracted here
+                    $this->go();
+                }
+
+                private function go(): void {}
+            }
+            PHP);
+
+        $context = $this->context($this->shell("cat > src/Shipper.php <<'EOF'\n…\nEOF"));
+
+        $this->assertStringContainsString('archaeology-comment', $context);
+        $this->assertStringContainsString('Shipper.php', $context);
+        $this->assertStringContainsString('commandments-backend-documentation', $context);
+    }
+
+    public function test_a_shell_command_that_changed_nothing_is_silent(): void
+    {
+        $this->write('src/Clean.php', <<<'PHP'
+            <?php
+
+            final class Clean
+            {
+                public function greet(string $name): string
+                {
+                    return "hello {$name}";
+                }
+            }
+            PHP);
+
+        $this->shell('ls');
+
+        $this->assertSame([], $this->shell('git status'), 'nothing was written between the two');
+    }
+
+    public function test_the_first_shell_command_of_a_session_claims_nothing(): void
+    {
+        // There is no "since" yet, and a tree of files nobody touched is not news.
+        $this->write('src/Legacy.php', <<<'PHP'
+            <?php
+
+            final class Legacy
+            {
+                public function run(): void
+                {
+                    // formerly lived inline in the controller; was extracted here
+                }
+            }
+            PHP);
+
+        $this->assertSame([], $this->shell('ls'));
     }
 
     public function test_it_never_asks_a_rule_that_needs_the_whole_tree(): void
@@ -128,6 +187,18 @@ final class SkillReminderTest extends TestCase
             'hook_event_name' => 'PostToolUse',
             'tool_name' => $tool,
             'tool_input' => ['file_path' => $this->root . '/' . $relative],
+        ]);
+    }
+
+    /**
+     * @return list<object>
+     */
+    private function shell(string $command): array
+    {
+        return $this->fire([
+            'hook_event_name' => 'PostToolUse',
+            'tool_name' => 'Bash',
+            'tool_input' => ['command' => $command],
         ]);
     }
 
