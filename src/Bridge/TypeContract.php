@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Bridge;
 
+use JesseGall\CodeCommandments\Support\Name;
+
 /**
  * A type shape published across the Bridge (name + fields), matched spelling-insensitively
  * via canonical form; a candidate mirrors this when names canonicalise equal and field overlap
@@ -41,9 +43,18 @@ final class TypeContract implements Contract
             && $this->fieldOverlap($fields) >= self::MIN_OVERLAP;
     }
 
+    /**
+     * Does the type named $name — this one — publish $field on the wire? What a rule asks when it
+     * holds a declaration and needs to know whether the value it makes ever leaves the server.
+     */
+    public function publishes(string $name, string $field): bool
+    {
+        return $this->sameName($name) && isset(self::canonicalSet($this->fields)[Name::canonical($field)]);
+    }
+
     private function sameName(string $name): bool
     {
-        return self::canonical($name) === self::canonical($this->name);
+        return Name::canonical($name) === Name::canonical($this->name);
     }
 
     /**
@@ -78,16 +89,6 @@ final class TypeContract implements Contract
     }
 
     /**
-     * The canonical form of an identifier for spelling-insensitive comparison —
-     * lowercased with `_`/`-` separators dropped, so the snake, camel, Pascal and
-     * kebab spellings of one name collapse to a single key.
-     */
-    private static function canonical(string $identifier): string
-    {
-        return str_replace(['_', '-'], '', strtolower($identifier));
-    }
-
-    /**
      * A set of canonical field names — keyed by the canonical form so duplicates
      * (two spellings of one field) collapse and intersection is a key lookup.
      *
@@ -99,7 +100,7 @@ final class TypeContract implements Contract
         $set = [];
 
         foreach ($fields as $field) {
-            $set[self::canonical($field)] = true;
+            $set[Name::canonical($field)] = true;
         }
 
         return $set;

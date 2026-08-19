@@ -60,4 +60,31 @@ final class ExprTest extends TestCase
         $this->assertSame('{ name: string }', $call->argument(0)?->objectShape());
         $this->assertNull(Parser::parse('obj.method()')->callee(), 'a member call has no bare callee');
     }
+
+    public function test_a_blank_comparison_is_read_whichever_side_the_literal_sits(): void
+    {
+        // #510: the question that proves a blank string is standing in for a missing value. Both
+        // spellings of the empty literal, both equality operators, and either side.
+        $this->assertTrue(Parser::parse("isolation === ''")->isBlankComparison());
+        $this->assertTrue(Parser::parse('isolation !== ""')->isBlankComparison());
+        $this->assertTrue(Parser::parse("'' === props.isolation")->isBlankComparison());
+
+        $this->assertFalse(Parser::parse("isolation === 'none'")->isBlankComparison(), 'a value is not the blank');
+        $this->assertFalse(Parser::parse('isolation === null')->isBlankComparison(), 'null is the other absence');
+        $this->assertFalse(Parser::parse("isolation + ''")->isBlankComparison(), 'concatenation asks nothing');
+        $this->assertFalse(Parser::parse("count === 0")->isBlankComparison(), 'zero is not blank');
+    }
+
+    public function test_a_blank_comparison_names_the_field_it_asks_about(): void
+    {
+        // The name is what crosses the wire, so a bare read and a property read answer alike — the
+        // last hop of a data path IS the field.
+        $this->assertSame('isolation', Parser::parse("isolation === ''")->comparisonSubject()->readName());
+        $this->assertSame('isolation', Parser::parse("props.isolation !== ''")->comparisonSubject()->readName());
+        $this->assertSame('isolation', Parser::parse("'' === form.data.isolation")->comparisonSubject()->readName());
+
+        $this->assertSame('', Parser::parse("trim(isolation) === ''")->comparisonSubject()->readName(), 'a call is not a data path');
+        $this->assertSame('', Parser::parse("'' === ''")->comparisonSubject()->readName(), 'two literals ask about nothing');
+        $this->assertSame('', Parser::parse('isolation')->comparisonSubject()->readName(), 'not a comparison at all');
+    }
 }

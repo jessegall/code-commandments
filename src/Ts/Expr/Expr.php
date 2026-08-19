@@ -111,11 +111,64 @@ final class Expr
      */
     public function isNullComparison(): bool
     {
-        if ($this->kind !== ExprKind::Binary || ! in_array((string) $this->get('op'), Token::EQUALITY, true)) {
-            return false;
+        return $this->isEqualityTest()
+            && ($this->child('left')->isNullLiteral() || $this->child('right')->isNullLiteral());
+    }
+
+    /**
+     * Is this the literal BLANK — `''`? The other spelling a string has for "nothing here", and the
+     * one a type cannot rule out: where {@see isNullLiteral} names an absence the type declares,
+     * this names one smuggled inside a total `string`.
+     */
+    public function isBlankLiteral(): bool
+    {
+        return $this->kind === ExprKind::Literal
+            && $this->literalType() === 'string'
+            && $this->get('value') === '';
+    }
+
+    /**
+     * Is this a comparison AGAINST the blank — `x === ''`, `x !== ''`? The mirror of
+     * {@see isNullComparison} for the blank, whichever side the literal sits on: the question a
+     * reader asks when a blank string is standing in for a value that was never there.
+     */
+    public function isBlankComparison(): bool
+    {
+        return $this->isEqualityTest()
+            && ($this->child('left')->isBlankLiteral() || $this->child('right')->isBlankLiteral());
+    }
+
+    /**
+     * What an equality test is ABOUT — the side that is not the literal, for `x === ''` and
+     * `null !== x` alike. The null object when this is not an equality test, or when BOTH sides are
+     * literals (`'' === ''` asks about nothing).
+     */
+    public function comparisonSubject(): self
+    {
+        if (! $this->isEqualityTest()) {
+            return new self(ExprKind::Unknown);
         }
 
-        return $this->child('left')->isNullLiteral() || $this->child('right')->isNullLiteral();
+        $left = $this->child('left');
+        $right = $this->child('right');
+
+        return match (true) {
+            ! $left->is(ExprKind::Literal) && $right->is(ExprKind::Literal) => $left,
+            ! $right->is(ExprKind::Literal) && $left->is(ExprKind::Literal) => $right,
+            default => new self(ExprKind::Unknown),
+        };
+    }
+
+    /**
+     * The NAME this expression reads — the `isolation` of a bare `isolation` and of
+     * `props.isolation` alike, since the last hop of a data path is the field being read. Empty
+     * when the expression is not a plain data path (a call, an index, an operator anywhere).
+     */
+    public function readName(): string
+    {
+        $chain = $this->asChain();
+
+        return $chain === null ? '' : (string) end($chain);
     }
 
     /**
@@ -192,6 +245,15 @@ final class Expr
     public function callName(): string
     {
         return $this->isCall() ? $this->child('callee')->source() : '';
+    }
+
+    /**
+     * Is this an equality test at all — `===`, `!==`, `==`, `!=`? What every "compared against X"
+     * question opens on, so the operator set is read from {@see Token::EQUALITY} once.
+     */
+    private function isEqualityTest(): bool
+    {
+        return $this->kind === ExprKind::Binary && in_array((string) $this->get('op'), Token::EQUALITY, true);
     }
 
     private function isBinaryOperator(string $operator): bool

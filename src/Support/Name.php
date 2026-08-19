@@ -25,6 +25,16 @@ final class Name
     }
 
     /**
+     * The spelling-insensitive KEY of an identifier — lowercased with `_` and `-` dropped, so the
+     * snake, camel, Pascal and kebab spellings of one name collapse to a single key. What two sides
+     * of a boundary compare by when each names the same field in its own language's spelling.
+     */
+    public static function canonical(string $identifier): string
+    {
+        return str_replace(['_', '-'], '', strtolower($identifier));
+    }
+
+    /**
      * A name in kebab-case — `NullableElementReturn` → `nullable-element-return`. Every camelCase
      * hump becomes a boundary, and an acronym run splits before its final capital
      * (`ParseHTMLDocument` → `parse-html-document`), which is how a reader says it aloud.

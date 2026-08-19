@@ -30,6 +30,39 @@ public static function lined(string $heading, ?string $strapline = null): string
 }
 ```
 
+### blank-string-on-the-wire
+
+a total `string` field whose TypeScript reader — holding this very type — asks it `=== ''`: the blank means "missing", and only the far side says so
+
+```php
+----------[ Bad ]----------
+
+public function __construct(
+    public string $channel,
+    public string $socket,
+    public int $pollMs,
+) {}
+
+----------[ Good ]----------
+
+// Where the stock room's live counts come from. A shop with no socket has NO socket, and the type
+// says so — so the browser asks for absence instead of decoding a blank.
+
+final readonly class StockFeed
+{
+    public function __construct(
+        public string $channel,
+        public ?string $socket = null,
+        public int $pollMs = 2000,
+    ) {}
+
+    public function isSocketed(): bool
+    {
+        return $this->socket !== null;
+    }
+}
+```
+
 ### cancelled-coalesce
 
 `??` cancelled by the comparison it sits in — `($x ?? '') !== ''`

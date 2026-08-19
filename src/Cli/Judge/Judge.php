@@ -176,6 +176,17 @@ final class Judge implements Command
             ->withExemptions(Exemptions::forPackages(...$config->packages()));
         $parseSeconds = (hrtime(true) - $parseStart) / 1e9;
 
+        // The Vue detectors read the SAME roots — `judge` is engine-agnostic, so a path with `.vue`
+        // files is judged by both engines. It is scanned HERE, before either runs, because the
+        // Bridge is what both draw on.
+        $components = $this->frontendCodebase($roots, $frontend, $detectors, $excluded, Languages::from($config));
+
+        // The two engines meet ONCE, and before either judges: each publishes what it owns and every
+        // detector that asked receives the bag. So a BACKEND rule can put a question to the frontend
+        // — "is this field read back as blank over there?" — exactly as a frontend rule already puts
+        // one to the backend (#510).
+        Bridge::publish(Bridge::gather($codebase, $components), [...$detectors, ...$frontend]);
+
         if ($options->benchmark) {
             $bench = new Benchmark;
             $judgement = $bench->run($detectors, $codebase);
@@ -186,9 +197,7 @@ final class Judge implements Command
             $progress->finish();
         }
 
-        // The Vue detectors run over the SAME roots — `judge` is engine-agnostic, so a
-        // path with `.vue` files reports its frontend sins alongside the backend ones.
-        $judgement = $judgement->merge($this->frontendJudgement($roots, $frontend, $codebase, $excluded, Languages::from($config)));
+        $judgement = $judgement->merge($this->frontendJudgement($components, $frontend));
 
         $judgement = $judgement->withFindings($this->keep($judgement->findings, $options->exclude, $scope));
 
@@ -323,29 +332,35 @@ final class Judge implements Command
     }
 
     /**
-     * The Vue detectors' findings over the roots — scanned once, reduced to the same
-     * lightweight {@see Finding}s the backend produces (a Vue {@see ElementMatch} already
-     * knows its `file:line` and scope).
+     * The Vue codebase this run reads — scanned when a frontend rule will judge it, or when a
+     * BACKEND rule asked for what only the frontend can publish. Null when neither is true, so a
+     * PHP-only run never pays to scan a tree nothing will read.
      *
      * @param  string|list<string>  $roots
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend
+     * @param  list<Detector>  $backend
      */
-    private function frontendJudgement(string|array $roots, array $frontend, Codebase $backend, ExcludedPaths $excluded, Languages $languages): Judgement
+    private function frontendCodebase(string|array $roots, array $frontend, array $backend, ExcludedPaths $excluded, Languages $languages): ?VueCodebase
     {
-        if ($frontend === []) {
-            return new Judgement;
+        $asked = array_any($backend, static fn (RootDetector $detector): bool => $detector instanceof ConsumesContracts);
+
+        if ($frontend === [] && ! $asked) {
+            return null;
         }
 
-        $codebase = VueCodebase::scan($roots, excluded: $excluded, languages: $languages);
+        return VueCodebase::scan($roots, excluded: $excluded, languages: $languages);
+    }
 
-        // The Bridge is the only place both engines meet: the backend publishes its
-        // Data shapes, the frontend detectors that ask for them receive them here.
-        $contracts = Bridge::gather($backend, $codebase);
-
-        foreach ($frontend as $detector) {
-            if ($detector instanceof ConsumesContracts) {
-                $detector->withContracts($contracts);
-            }
+    /**
+     * The Vue detectors' findings, reduced to the same lightweight {@see Finding}s the backend
+     * produces (a Vue {@see ElementMatch} already knows its `file:line` and scope).
+     *
+     * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend
+     */
+    private function frontendJudgement(?VueCodebase $codebase, array $frontend): Judgement
+    {
+        if ($frontend === [] || $codebase === null) {
+            return new Judgement;
         }
 
         $judgement = new Judgement;

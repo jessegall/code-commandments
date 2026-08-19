@@ -18,6 +18,10 @@ use JesseGall\CodeCommandments\Vue\Codebase;
  */
 final class FrontendFixture extends EngineFixture
 {
+    private ?Codebase $scanned = null;
+
+    private ?BackendCodebase $server = null;
+
 
     public function markerResults(): array
     {
@@ -45,7 +49,7 @@ final class FrontendFixture extends EngineFixture
 
     private function codebase(): Codebase
     {
-        return Codebase::scan($this->path);
+        return $this->scanned ??= Codebase::scan($this->path);
     }
 
     /**
@@ -56,13 +60,9 @@ final class FrontendFixture extends EngineFixture
      */
     private function detectors(): array
     {
-        $contracts = Bridge::gather(BackendCodebase::scan($this->path), $this->codebase());
+        $this->server ??= BackendCodebase::scan($this->path);
 
-        foreach ($this->detectors as $detector) {
-            if ($detector instanceof ConsumesContracts) {
-                $detector->withContracts($contracts);
-            }
-        }
+        Bridge::publish(Bridge::gather($this->server, $this->codebase()), $this->detectors);
 
         return $this->detectors;
     }

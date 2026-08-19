@@ -9,6 +9,8 @@ use JesseGall\CodeCommandments\Ts\Expr\Expr;
 use JesseGall\CodeCommandments\Ts\Node\ClassDecl;
 use JesseGall\CodeCommandments\Ts\Node\Module;
 use JesseGall\CodeCommandments\Ts\Node\Node;
+use JesseGall\CodeCommandments\Ts\Node\Param;
+use JesseGall\CodeCommandments\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\Ts\Parser;
 
 /**
@@ -22,6 +24,11 @@ final class ModuleFile
      * @var list<Node>|null
      */
     private ?array $nodes = null;
+
+    /**
+     * @var array<string, ?string>|null
+     */
+    private ?array $bindingTypes = null;
 
     /**
      * @param  string  $source  the WHOLE file, so a `<script>` block's node still resolves to the
@@ -97,6 +104,63 @@ final class ModuleFile
 
             $this->gather($node->children(), $within, $found);
         }
+    }
+
+    /**
+     * The type $binding was DECLARED with here — a function parameter's annotation, a typed
+     * `const`/`let` — reduced to the single named type it refers to. Null when the module never
+     * says, when it says two different things, or when the annotation names no one type: a rule
+     * pairing this module with another language must not guess whose value it is holding.
+     */
+    public function typeOfBinding(string $binding): ?string
+    {
+        return $this->bindingTypes()[$binding] ?? null;
+    }
+
+    /**
+     * Every binding this module declares a type for. A name declared twice with DIFFERENT types is
+     * recorded as unknown rather than as the last one seen.
+     *
+     * @return array<string, ?string>
+     */
+    private function bindingTypes(): array
+    {
+        if ($this->bindingTypes !== null) {
+            return $this->bindingTypes;
+        }
+
+        $types = [];
+
+        foreach ($this->nodes() as $node) {
+            foreach (self::annotations($node) as $name => $type) {
+                $types[$name] = array_key_exists($name, $types) && $types[$name] !== $type ? null : $type;
+            }
+        }
+
+        return $this->bindingTypes = $types;
+    }
+
+    /**
+     * What $node declares, as `name => the one type it names` — nothing for a node that binds no
+     * name, or annotates it with a type naming none or several.
+     *
+     * @return array<string, string>
+     */
+    private static function annotations(Node $node): array
+    {
+        $annotation = match (true) {
+            $node instanceof Param => $node->type,
+            $node instanceof VariableDecl => $node->typeAnnotation,
+            default => null,
+        };
+
+        $named = $annotation?->references() ?? [];
+
+        if (count($named) !== 1) {
+            return [];
+        }
+
+        return array_fill_keys($node->declaredNames(), $named[0]);
     }
 
     public function lineAt(int $offset): int

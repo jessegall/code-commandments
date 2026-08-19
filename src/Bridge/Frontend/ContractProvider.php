@@ -10,10 +10,10 @@ use JesseGall\CodeCommandments\Vue\Codebase;
 
 /**
  * A FRONTEND contract provider: reads the Vue {@see Codebase} and publishes the
- * cross-cutting facts the frontend OWNS for the other engine to consume. The mirror
- * of {@see \JesseGall\CodeCommandments\Bridge\Backend\ContractProvider} — same base
- * contract, over Vue instead of PHP. None ship yet; the seam exists so the {@see \JesseGall\CodeCommandments\Bridge\Bridge}
- * stays symmetric the day the frontend needs to publish.
+ * cross-cutting facts the frontend OWNS — which fields its readers ask about, say — for
+ * the other engine to consume. The mirror of {@see \JesseGall\CodeCommandments\Bridge\Backend\ContractProvider}:
+ * same base contract, over Vue instead of PHP, so a backend rule can put a question to
+ * the frontend exactly as a frontend rule puts one to the backend.
  */
 interface ContractProvider extends BaseProvider
 {

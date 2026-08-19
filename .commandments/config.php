@@ -74,6 +74,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Backend\AssembledTemplate::class,
         // Sins\Backend\BareStatePredicate::class,
         // Sins\Backend\BlankStringDefault::class,
+        // Sins\Backend\BlankStringOnTheWire::class,
         // Sins\Backend\BloatedDocblock::class,
         // Sins\Backend\CancelledCoalesce::class,
         // Sins\Backend\CeremonyDocblock::class,

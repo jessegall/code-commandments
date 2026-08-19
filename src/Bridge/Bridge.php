@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Bridge;
 
 use JesseGall\CodeCommandments\Ast\Codebase as BackendCodebase;
+use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Vue\Codebase as FrontendCodebase;
 
 /**
@@ -37,5 +38,21 @@ final class Bridge
         }
 
         return $contracts;
+    }
+
+    /**
+     * Hand the gathered contracts to every detector that asked for them — the one moment a rule
+     * receives what the other engine published, and the reason it is safe for both engines' rules to
+     * be published at once: a detector that asks nothing is untouched.
+     *
+     * @param  list<Detector>  $detectors
+     */
+    public static function publish(Contracts $contracts, array $detectors): void
+    {
+        foreach ($detectors as $detector) {
+            if ($detector instanceof ConsumesContracts) {
+                $detector->withContracts($contracts);
+            }
+        }
     }
 }
