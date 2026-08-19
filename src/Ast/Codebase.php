@@ -832,6 +832,18 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
     }
 
     /**
+     * EVERY class-like this codebase declares, keyed by FQCN — the whole-tree view {@see declarationMatch}
+     * answers one name from. What a caller reads when it needs to know which FILE declares a name it has
+     * not got a node for yet.
+     *
+     * @return array<string, NodeMatch>  class-like FQCN => its match (node + file)
+     */
+    public function declarations(): array
+    {
+        return $this->declarationMap();
+    }
+
+    /**
      * @return array<string, NodeMatch>  class-like FQCN => its match (node + file)
      */
     private function declarationMap(): array

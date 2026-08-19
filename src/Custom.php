@@ -22,6 +22,11 @@ final class Custom
     private static array $loaded = [];
 
     /**
+     * @var array<string, true>  the snapshots an autoloader is already registered for
+     */
+    private static array $autoloaded = [];
+
+    /**
      * The project's own {@see Skill} classes — each published into the project's skill library on
      * sync, exactly like a shipped one.
      *
@@ -93,6 +98,25 @@ final class Custom
     }
 
     /**
+     * Load the project's OWN classes — the detectors, sins, skills and packages it wrote into
+     * `.commandments/custom/`. The folder is not PSR-4 mapped, so dropping a file in it is what
+     * makes its class loadable, and this is the ONE place that happens: the config requires them
+     * before it composes, the catalogs before they discover. `require_once` per file, so a second
+     * load in the same process (the hooks, the fixture harness) never redeclares a class.
+     */
+    public static function load(?string $dir = null): void
+    {
+        $root = Workspace::custom($dir);
+        $files = Workspace::customFiles($dir);
+
+        self::autoloadFrom($root, self::snapshot($root, $files));
+
+        foreach ($files as $file) {
+            require_once $file;
+        }
+    }
+
+    /**
      * Every instantiable class the project's custom folder declared that is a $type.
      *
      * @template T of object
@@ -125,24 +149,43 @@ final class Custom
     private static function classes(?string $dir): array
     {
         $root = Workspace::custom($dir);
-        $files = Workspace::customFiles($dir);
-        $key = self::snapshot($root, $files);
+        $key = self::snapshot($root, Workspace::customFiles($dir));
 
         if (isset(self::$loaded[$key])) {
             return self::$loaded[$key];
         }
 
-        $before = get_declared_classes();
-
-        foreach ($files as $file) {
-            require_once $file;
-        }
+        self::load($dir);
 
         // Ownership is BY FILE, always. Diffing `get_declared_classes()` sees only what THIS
         // require added, so a folder read a second time — after a rule was scaffolded, or in a test
         // that just wrote one — would report the new class and LOSE the ones an earlier read had
         // already loaded. The folder is the test of ownership either way.
         return self::$loaded[$key] = self::declaredUnder($root);
+    }
+
+    /**
+     * Teach PHP to find a symbol ANYWHERE in the folder, before the files are required. The folder is
+     * not PSR-4 mapped, so its classes are required in file order — and a rule whose trait or base
+     * class sits in a file sorted after it fataled the whole run, for a reason nothing in a flat bag
+     * of classes could tell the reader. The autoloader answers from the folder's own declarations,
+     * which makes the order nobody's business.
+     */
+    private static function autoloadFrom(string $root, string $key): void
+    {
+        if (isset(self::$autoloaded[$key])) {
+            return;
+        }
+
+        self::$autoloaded[$key] = true;
+
+        spl_autoload_register(static function (string $symbol) use ($root): void {
+            $declaration = Ast\Codebase::scan($root)->declarationMatch($symbol);
+
+            if ($declaration !== null) {
+                require_once $declaration->file();
+            }
+        });
     }
 
     /**
