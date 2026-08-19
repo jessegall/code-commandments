@@ -22,6 +22,39 @@ class GitFiles
     public function root(string $path): ?string
     {
         $dir = is_dir($path) ? $path : dirname($path);
+
+        // Walked, not asked. "Which directory holds this one's `.git`" is a filesystem question, and
+        // a subprocess to answer it is the single most expensive thing a hook does — paid on EVERY
+        // tool call, for a string that never changes. Git still answers for the setups a walk cannot
+        // know about (a bare repo, a `$GIT_DIR` override), which is what the fall-through is for.
+        return self::walkUp($dir) ?? self::askGit($dir);
+    }
+
+    /**
+     * The nearest ancestor of $dir holding a `.git` — a DIRECTORY in a normal clone, a FILE in a
+     * worktree or submodule, so both count. Null when the walk reaches the filesystem root.
+     */
+    private static function walkUp(string $dir): ?string
+    {
+        $dir = realpath($dir) ?: $dir;
+
+        while (true) {
+            if (file_exists($dir . '/.git')) {
+                return $dir;
+            }
+
+            $parent = dirname($dir);
+
+            if ($parent === $dir) {
+                return null;
+            }
+
+            $dir = $parent;
+        }
+    }
+
+    private static function askGit(string $dir): ?string
+    {
         $root = trim((string) @shell_exec('git -C ' . escapeshellarg($dir) . ' rev-parse --show-toplevel 2>/dev/null'));
 
         return $root === '' ? null : $root;
