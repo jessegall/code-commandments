@@ -32,12 +32,18 @@ use PhpParser\NodeFinder;
  */
 final class OwnStateMask
 {
+    use MemoisedPerCodebase;
+
     /**
      * @param  array<string, array<string, true>>  $transientNullables  class FQCN => set of transient nullable property names
      */
     private function __construct(private readonly array $transientNullables) {}
 
-    public static function forCodebase(Codebase $codebase): self
+    /**
+     * Index the transient state each class masks — a whole-tree walk, so it is built ONCE per codebase
+     * ({@see MemoisedPerCodebase}) and shared by every view of it.
+     */
+    protected static function build(Codebase $codebase): static
     {
         $finder = new NodeFinder;
         $transient = [];

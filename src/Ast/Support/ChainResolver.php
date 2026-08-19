@@ -26,6 +26,8 @@ use PhpParser\NodeFinder;
  */
 final class ChainResolver
 {
+    use MemoisedPerCodebase;
+
     /**
      * @param  array<string, array<string, string>>  $propertyTypes  class FQCN => [property => type FQCN]
      * @param  array<string, array<string, string>>  $returnTypes    class FQCN => [lowercase method => return type FQCN]
@@ -35,7 +37,11 @@ final class ChainResolver
         private readonly array $returnTypes,
     ) {}
 
-    public static function forCodebase(Codebase $codebase): self
+    /**
+     * Index every class's property and return types — a whole-tree walk, so it is built ONCE per
+     * codebase ({@see MemoisedPerCodebase}) and shared by every view of it.
+     */
+    protected static function build(Codebase $codebase): static
     {
         $finder = new NodeFinder;
         $properties = [];

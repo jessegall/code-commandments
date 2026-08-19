@@ -44,6 +44,8 @@ use PhpParser\NodeFinder;
  */
 final class FeatureEnvy
 {
+    use MemoisedPerCodebase;
+
     use DetectsConstruction;
 
     /**
@@ -71,7 +73,11 @@ final class FeatureEnvy
         private readonly Codebase $codebase,
     ) {}
 
-    public static function forCodebase(Codebase $codebase): self
+    /**
+     * Index every class-like's own methods and parent — a whole-tree walk, so it is built ONCE per
+     * codebase ({@see MemoisedPerCodebase}) and shared by every view of it.
+     */
+    protected static function build(Codebase $codebase): static
     {
         $finder = new NodeFinder;
         $owned = [];

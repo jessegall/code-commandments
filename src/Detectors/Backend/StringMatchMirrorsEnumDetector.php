@@ -25,12 +25,12 @@ final class StringMatchMirrorsEnumDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        $enums = Enums::casesByEnum($codebase);
+        $enums = Enums::forCodebase($codebase);
 
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->armConditionLiterals() !== [])
             ->reject(static fn (AstNode $node): bool => $node->isMatchOnEnumValue())
-            ->where(static fn (AstNode $node) => Enums::mirroredBy($node->armConditionLiterals(), $enums))
+            ->where(static fn (AstNode $node) => $enums->mirroredBy($node->armConditionLiterals()))
             ->get();
     }
 }
