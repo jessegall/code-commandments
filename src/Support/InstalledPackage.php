@@ -14,6 +14,20 @@ use Composer\InstalledVersions;
 final class InstalledPackage
 {
     /**
+     * WHICH build of $package is installed — its version and the exact commit under it, so a project
+     * on `dev-main` is told apart from the same branch a day later. Null when the package is absent.
+     */
+    public static function buildOf(string $package): ?string
+    {
+        if (! class_exists(InstalledVersions::class) || ! InstalledVersions::isInstalled($package)) {
+            return null;
+        }
+
+        return (string) InstalledVersions::getPrettyVersion($package)
+            . '@' . (string) InstalledVersions::getReference($package);
+    }
+
+    /**
      * The installed MAJOR of $package, or null when it is absent or its version cannot be read —
      * which is the honest answer for a project we cannot inspect, and never a default major.
      */

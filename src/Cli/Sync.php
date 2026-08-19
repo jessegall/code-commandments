@@ -177,7 +177,7 @@ final class Sync implements Command
      */
     private function readWhichRulesReadBeyondOneFile(string $consumer): void
     {
-        CrossFileSet::forProject(Workspace::at($consumer));
+        CrossFileSet::reread(Workspace::at($consumer));
     }
 
     /**

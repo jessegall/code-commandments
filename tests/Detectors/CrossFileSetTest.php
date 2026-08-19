@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Detectors\Backend\ArchaeologyCommentDetector;
 use JesseGall\CodeCommandments\Detectors\CrossFileSet;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detector;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -121,6 +122,31 @@ final class CrossFileSetTest extends TestCase
         foreach ($marked as $detector) {
             $this->assertTrue(self::$set->has($detector), $detector::class . ' is marked WholeTree but reads no further than the file');
         }
+    }
+
+    public function test_a_reread_works_the_answer_out_again_whatever_the_stamp_says(): void
+    {
+        // The stamp cannot see an edit to a file the package already had — a directory's mtime does
+        // not move for a write inside one of its subdirectories. So `sync` does not consult it.
+        $root = sys_get_temp_dir() . '/cc-reread-' . uniqid('', true);
+        @mkdir($root . '/.commandments', 0777, true);
+        $workspace = Workspace::at($root);
+
+        CrossFileSet::forProject($workspace);
+
+        $file = $workspace->shared('cross-file.json');
+        $stored = json_decode((string) file_get_contents($file), true);
+        $stamp = $stored['stamp'];
+        $stored['beyond'] = ['Stale\\Answer' => true];
+        file_put_contents($file, (string) json_encode($stored));
+
+        CrossFileSet::reread($workspace);
+        $written = json_decode((string) file_get_contents($file), true);
+
+        $this->assertSame($stamp, $written['stamp'], 'the stamp had not moved');
+        $this->assertArrayNotHasKey('Stale\\Answer', $written['beyond'], 'and it was worked out again regardless');
+
+        exec('rm -rf ' . escapeshellarg($root));
     }
 
     private function asDetector(string $class): Detector
