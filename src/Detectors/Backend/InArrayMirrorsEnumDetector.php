@@ -26,11 +26,11 @@ final class InArrayMirrorsEnumDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        $enums = Enums::casesByEnum($codebase);
+        $enums = Enums::forCodebase($codebase);
 
         return $codebase
             ->whereFunction('in_array')
-            ->where(static fn (AstNode $node) => Enums::mirroredBy($node->argumentArrayLiterals(1), $enums))
+            ->where(static fn (AstNode $node) => $enums->mirroredBy($node->argumentArrayLiterals(1)))
             ->get();
     }
 }

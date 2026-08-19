@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
+use JesseGall\CodeCommandments\Detectors\CrossFileSet;
 use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Agents\Agent;
@@ -75,6 +76,7 @@ final class Sync implements Command
         $this->ensurePlanExecution($consumer);
         $this->ensureDisableMenus($consumer);
         $this->ensureCommandmentsGitignore($consumer);
+        $this->readWhichRulesReadBeyondOneFile($consumer);
         $this->removeLegacyArtifacts($consumer);
         $this->migrateState($consumer);
 
@@ -166,6 +168,16 @@ final class Sync implements Command
     private function ensureDisableMenus(string $consumer): void
     {
         DisableMenu::inProject($consumer)->ensure();
+    }
+
+    /**
+     * Work out now which rules read past the file they judge ({@see CrossFileSet}) — a whole-package
+     * parse, so it is done HERE, at the one moment a project is already waiting, and never on the
+     * per-edit check that reads the answer back.
+     */
+    private function readWhichRulesReadBeyondOneFile(string $consumer): void
+    {
+        CrossFileSet::reread(Workspace::at($consumer));
     }
 
     /**

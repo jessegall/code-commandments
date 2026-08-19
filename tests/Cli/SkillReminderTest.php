@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
+use JesseGall\CodeCommandments\Detectors\CrossFileSet;
+use JesseGall\CodeCommandments\Workspace;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
 use JesseGall\CodeCommandments\WholeTree;
 use PHPUnit\Framework\TestCase;
@@ -159,18 +162,48 @@ final class SkillReminderTest extends TestCase
         $this->assertSame([], $this->shell('ls'));
     }
 
-    public function test_it_never_asks_a_rule_that_needs_the_whole_tree(): void
+    public function test_it_never_asks_a_rule_that_reads_beyond_the_file(): void
     {
-        $single = Catalog::singleFile();
+        $beyond = CrossFileSet::forProject(Workspace::at($this->root));
+        $single = Catalog::singleFile($beyond);
 
         $this->assertNotSame([], $single);
 
         foreach ($single as $detector) {
-            $this->assertNotInstanceOf(WholeTree::class, $detector, $detector::class . ' cannot answer about one file');
+            $this->assertFalse($beyond->has($detector), $detector::class . ' cannot answer about one file');
+            $this->assertNotInstanceOf(WholeTree::class, $detector);
         }
 
-        // And the marker is actually in use — otherwise the guard is a no-op nobody would notice.
+        // And the reading is actually narrowing — otherwise the guard is a no-op nobody would notice.
         $this->assertLessThan(count(Catalog::all()), count($single));
+    }
+
+    public function test_the_reading_is_worked_out_once_and_then_read_back(): void
+    {
+        // Reading the source is a whole-package parse. An edit must never pay for one, so the answer
+        // is written down and re-read — proven here by answering from a file we doctored by hand.
+        $workspace = Workspace::at($this->root);
+
+        CrossFileSet::forProject($workspace);
+
+        $file = $workspace->shared('cross-file.json');
+        $stored = json_decode((string) file_get_contents($file), true);
+
+        $this->assertArrayHasKey('stamp', $stored);
+
+        $stored['beyond'] = ['Doctored\\Rule' => true];
+        file_put_contents($file, (string) json_encode($stored));
+
+        $this->assertTrue(CrossFileSet::forProject($workspace)->has($this->ruleNamed('Doctored\\Rule')));
+    }
+
+    private function ruleNamed(string $class): Detector
+    {
+        if (! class_exists($class)) {
+            eval('namespace Doctored; class Rule implements \\JesseGall\\CodeCommandments\\Detector { public function sin(): \\JesseGall\\CodeCommandments\\Sins\\Sin { throw new \\LogicException("never asked"); } public function find(\\JesseGall\\CodeCommandments\\Ast\\Codebase $codebase): array { return []; } }');
+        }
+
+        return new $class();
     }
 
     public function test_a_docblock_reference_to_a_class_declared_elsewhere_is_not_dangling(): void

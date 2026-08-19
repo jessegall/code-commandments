@@ -26,13 +26,11 @@ final class EnumCaseOrChainDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        $enums = Enums::casesByEnum($codebase);
+        $enums = Enums::forCodebase($codebase);
 
         return $codebase
             ->where(static function (AstNode $node) use ($enums): bool {
-                $class = $node->orChainComparedClass();
-
-                return $class !== null && isset($enums[ltrim($class, '\\')]);
+                return $enums->isIndexed($node->orChainComparedClass());
             })
             ->get();
     }

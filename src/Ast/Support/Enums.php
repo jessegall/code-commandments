@@ -18,10 +18,20 @@ use PhpParser\NodeFinder;
  */
 final class Enums
 {
+    use MemoisedPerCodebase;
+
     /**
-     * @return array<string, list<string>>  enum FQCN => case backing values (as strings)
+     * @param  array<string, list<string>>  $casesByEnum  enum FQCN => case backing values (as strings)
      */
-    public static function casesByEnum(Codebase $codebase): array
+    private function __construct(
+        private readonly array $casesByEnum,
+    ) {}
+
+    /**
+     * Index every backed enum in the tree. A whole-tree walk, so it is built ONCE per codebase and
+     * shared — three detectors ask, and a focused view asks per file.
+     */
+    protected static function build(Codebase $codebase): static
     {
         $map = [];
         $finder = new NodeFinder;
@@ -57,7 +67,16 @@ final class Enums
             }
         }
 
-        return $map;
+        return new self($map);
+    }
+
+    /**
+     * Does this codebase declare a backed enum under $fqcn — one whose cases a loose literal could
+     * be bypassing?
+     */
+    public function isIndexed(?string $fqcn): bool
+    {
+        return $fqcn !== null && isset($this->casesByEnum[ltrim($fqcn, '\\')]);
     }
 
     /**
@@ -73,9 +92,8 @@ final class Enums
      * comparison, and a set with fewer than two names left over mirrors nothing.
      *
      * @param  list<string>  $literals
-     * @param  array<string, list<string>>  $casesByEnum
      */
-    public static function mirroredBy(array $literals, array $casesByEnum): bool
+    public function mirroredBy(array $literals): bool
     {
         $literals = array_unique(array_filter($literals, static fn (string $literal): bool => ! is_numeric($literal)));
 
@@ -83,7 +101,7 @@ final class Enums
             return false;
         }
 
-        foreach ($casesByEnum as $cases) {
+        foreach ($this->casesByEnum as $cases) {
             if (array_diff($literals, $cases) === []) {
                 return true;
             }

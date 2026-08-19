@@ -30,6 +30,8 @@ use PhpParser\NodeFinder;
  */
 final class LookupEnvy
 {
+    use MemoisedPerCodebase;
+
     use DetectsConstruction;
 
     private const int MAX_DEPTH = 10;
@@ -41,7 +43,11 @@ final class LookupEnvy
      */
     private function __construct(private readonly array $ownedClasses) {}
 
-    public static function forCodebase(Codebase $codebase): self
+    /**
+     * Index the keyed stores each class owns — a whole-tree walk, so it is built ONCE per codebase
+     * ({@see MemoisedPerCodebase}) and shared by every view of it.
+     */
+    protected static function build(Codebase $codebase): static
     {
         $finder = new NodeFinder;
         $owned = [];

@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
+use JesseGall\CodeCommandments\Detectors\CrossFileSet;
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
@@ -74,10 +75,11 @@ final class SkillReminder extends Hook
 
         $config = Config::load($event->root);
         $files = $this->edited($event, $config);
+        $beyond = CrossFileSet::forProject($event->workspace());
         $sins = [];
 
         foreach ($files as $file) {
-            $sins = array_merge_recursive($sins, $this->sinsIn($file, Languages::from($config)));
+            $sins = array_merge_recursive($sins, $this->sinsIn($file, Languages::from($config), $beyond));
         }
 
         return $sins === [] ? $this->pass() : $this->inject($event, $this->nudge($files, $sins));
@@ -154,13 +156,13 @@ final class SkillReminder extends Hook
      *
      * @return array<string, list<string>>  skill slug => the sins found
      */
-    private function sinsIn(string $file, Languages $languages): array
+    private function sinsIn(string $file, Languages $languages, CrossFileSet $beyond): array
     {
         $backend = str_ends_with($file, '.php') ? Codebase::scan($file) : null;
         $frontend = $backend === null ? VueCodebase::scan($file, languages: $languages) : null;
         $found = [];
 
-        foreach (Catalog::singleFile() as $detector) {
+        foreach (Catalog::singleFile($beyond) as $detector) {
             $codebase = $this->codebaseFor($detector, $backend, $frontend);
 
             if ($codebase === null) {
