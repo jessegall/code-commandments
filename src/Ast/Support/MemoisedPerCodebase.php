@@ -25,11 +25,7 @@ trait MemoisedPerCodebase
     {
         self::$memo ??= new \WeakMap();
 
-        // Keyed on the WORLD, never the view: these derive whole-tree facts, so a focused view
-        // ({@see Codebase::focusedOn}) must SHARE the memo rather than rebuild the lot per file.
-        $world = $codebase->world();
-
-        return self::$memo[$world] ??= static::build($world);
+        return self::$memo[$codebase] ??= static::build($codebase);
     }
 
     protected static function build(Codebase $codebase): static

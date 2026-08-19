@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Discovery;
 use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Unpublished;
+use JesseGall\CodeCommandments\WholeTree;
 
 /**
  * The single source of truth for every detector that ships. Discovered from the

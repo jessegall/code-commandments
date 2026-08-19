@@ -16,7 +16,6 @@ use JesseGall\CodeCommandments\ClassAncestry;
 use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\WorkingCopy;
-use Closure;
 use FilesystemIterator;
 use PhpParser\Comment\Doc;
 use PhpParser\Node;
@@ -104,11 +103,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
      */
     private ?array $enumNames = null;
 
-    /**
-     * The recorder collecting what the work in flight draws on, while {@see recordingInto} runs.
-     */
-    private ?Resolutions $recording = null;
-
     private ?CodebaseIndex $index = null;
 
     private ?ValueFlow $valueFlow = null;
@@ -116,23 +110,9 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
     private ?Support\Projection $projection = null;
 
     /**
-     * @var array<class-string<Node>, array<string, list<array{0: Node, 1: ParsedFile}>>>|null  node class => file path => its nodes
+     * @var array<class-string<Node>, list<array{0: Node, 1: ParsedFile}>>|null
      */
     private ?array $nodeBuckets = null;
-
-    /**
-     * The files a selector may return nodes from, or null for all of them — the codebase's FOCUS.
-     * Narrowing it never narrows what an answer is DRAWN from: the whole-tree maps stay whole.
-     *
-     * @var list<string>|null
-     */
-    private ?array $focus = null;
-
-    /**
-     * The unfocused codebase a focused view was cut from, or null in the world itself — so every
-     * whole-tree derivation is memoised ONCE against the world and shared by every view of it.
-     */
-    private ?self $world = null;
 
     /**
      * @var array<class-string<Node>, list<class-string<Node>>>  requested node class => the bucket keys it covers
@@ -189,78 +169,10 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
     }
 
     /**
-     * Run $work with every cross-file question it asks recorded into $resolutions — the declarations
-     * its answers were drawn from. Nests safely: an inner recording restores the outer one.
-     */
-    public function recordingInto(Resolutions $resolutions, Closure $work): mixed
-    {
-        $world = $this->world();
-        $outer = $world->recording;
-        $world->recording = $resolutions;
-
-        try {
-            return $work();
-        } finally {
-            $world->recording = $outer;
-        }
-    }
-
-    /**
-     * The recorder collecting what the work in flight draws on, if any. Kept on the WORLD, so a
-     * question answered through a shared analysis is recorded as surely as one asked of the view.
-     */
-    private function recorder(): ?Resolutions
-    {
-        return $this->world()->recording;
-    }
-
-    /**
-     * The same codebase seen through ONE file (or a few): selectors return nodes from $paths alone,
-     * while every cross-file answer is still drawn from the whole tree. What a per-file check needs —
-     * the cost of the FILE, the correctness of the TREE. Shares this codebase's parsed files and maps.
-     */
-    public function focusedOn(string ...$paths): self
-    {
-        $this->nodeBuckets ??= $this->bucketNodes();
-        $this->warmWholeTreeMaps();
-
-        $focused = clone $this;
-        $focused->focus = array_values($paths);
-        $focused->world = $this->world ?? $this;
-
-        return $focused;
-    }
-
-    /**
-     * The whole codebase behind this view — itself, unless this is a {@see focusedOn} view of one.
-     * What every whole-tree derivation is keyed on, so narrowing the focus never rebuilds the world.
-     */
-    public function world(): self
-    {
-        return $this->world ?? $this;
-    }
-
-    /**
-     * Build every whole-tree map before a focused view is cloned off, so the clones SHARE them
-     * instead of each rebuilding the lot.
-     */
-    private function warmWholeTreeMaps(): void
-    {
-        $this->declarationMap();
-        $this->classNodeMap();
-        $this->parentMap();
-        $this->interfaceMap();
-        $this->traitUserMap();
-        $this->enumNames();
-    }
-
-    /**
      * The call graph over these files (who calls what, receiver types). Built once.
      */
     public function index(): CodebaseIndex
     {
-        $this->recorder()?->recordWholeTree();
-
         return $this->index ??= new CodebaseIndex($this);
     }
 
@@ -270,8 +182,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
      */
     public function valueFlow(): ValueFlow
     {
-        $this->recorder()?->recordWholeTree();
-
         return $this->valueFlow ??= new ValueFlow($this);
     }
 
@@ -281,8 +191,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
      */
     public function projection(): Support\Projection
     {
-        $this->recorder()?->recordWholeTree();
-
         return $this->projection ??= new Support\Projection($this);
     }
 
@@ -310,9 +218,7 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
 
         foreach ($types ?? array_keys($buckets) as $type) {
             foreach ($this->bucketsOf($type) as $bucket) {
-                foreach ($this->focus ?? array_keys($buckets[$bucket] ?? []) as $path) {
-                    yield from $buckets[$bucket][$path] ?? [];
-                }
+                yield from $buckets[$bucket];
             }
         }
     }
@@ -326,10 +232,8 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
      */
     private function bucketsOf(string $type): array
     {
-        $world = $this->world();
-
-        return $world->bucketsByType[$type] ??= array_values(array_filter(
-            array_keys($world->nodeBuckets ?? []),
+        return $this->bucketsByType[$type] ??= array_values(array_filter(
+            array_keys($this->nodeBuckets ?? []),
             static fn (string $bucket): bool => $bucket === $type || is_subclass_of($bucket, $type),
         ));
     }
@@ -347,7 +251,7 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
 
         foreach ($this->files as $file) {
             foreach ($finder->find($file->ast, static fn () => true) as $node) {
-                $buckets[$node::class][$file->path][] = [$node, $file];
+                $buckets[$node::class][] = [$node, $file];
             }
         }
 
@@ -752,7 +656,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
         }
 
         $class = ltrim($class, '\\');
-        $this->recorder()?->record($class);
         $parents = $this->parentMap();
         $chain = [];
 
@@ -791,7 +694,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
         }
 
         $interface = ltrim($interface, '\\');
-        $this->recorder()?->record($class);
         $interfaces = $this->interfaceMap();
         $parents = $this->parentMap();
         $queue = [ltrim($class, '\\')];
@@ -871,7 +773,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
         }
 
         $seen[$class] = true;
-        $this->recorder()?->record($class);
 
         foreach ([...(array) ($this->parentMap()[$class] ?? []), ...($this->interfaceMap()[$class] ?? [])] as $ancestor) {
             if (($this->declarationMap()[$ancestor] ?? null)?->node?->getMethod($method) !== null) {
@@ -897,8 +798,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
         if ($fqcn === null) {
             return new AstNode();
         }
-
-        $this->recorder()?->record($fqcn);
 
         return new AstNode($this->classNodeMap()[ltrim($fqcn, '\\')] ?? null);
     }
@@ -929,8 +828,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
             return null;
         }
 
-        $this->recorder()?->record($fqcn);
-
         return $this->declarationMap()[ltrim($fqcn, '\\')] ?? null;
     }
 
@@ -943,8 +840,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
      */
     public function declarations(): array
     {
-        $this->recorder()?->recordWholeTree();
-
         return $this->declarationMap();
     }
 
@@ -1123,8 +1018,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
             return false;
         }
 
-        $this->recorder()?->record($class);
-
         return in_array(ltrim($class, '\\'), $this->enumNames(), true);
     }
 
@@ -1170,8 +1063,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
         if ($class === null) {
             return false;
         }
-
-        $this->recorder()?->recordWholeTree();
 
         return in_array(ltrim($class, '\\'), $this->parentMap(), true);
     }
@@ -1221,8 +1112,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
         if ($trait === null) {
             return [];
         }
-
-        $this->recorder()?->recordWholeTree();
 
         return $this->traitUserMap()[ltrim($trait, '\\')] ?? [];
     }
