@@ -89,13 +89,16 @@ final class Catalog
      * a `.vue` edit deserves the same check a `.php` one gets.
      *
      * This is for the fast per-edit check, never for `judge`, which parses everything and runs the lot.
+     * Pass the rules the project actually RUNS — its own registered beside the shipped ones, minus what
+     * it disabled — and the shipped catalogues answer only when a caller has no such list.
      *
+     * @param  list<RootDetector>|null  $detectors
      * @return list<RootDetector>
      */
-    public static function singleFile(CrossFileSet $beyond): array
+    public static function singleFile(CrossFileSet $beyond, ?array $detectors = null): array
     {
         return array_values(array_filter(
-            [...self::backend(), ...self::frontend()],
+            $detectors ?? [...self::backend(), ...self::frontend()],
             static fn (RootDetector $detector): bool => ! $beyond->has($detector),
         ));
     }

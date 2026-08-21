@@ -191,7 +191,7 @@ final class Judge implements Command
         // WHICH codebase each rule is judged against. A scoped run (`--changes`, `--branch`) reports
         // on a few files but parses the tree, so a rule that reads no further than the file it judges
         // is shown those files alone — its cost tracks the diff, not the tree it came from.
-        $beyond = CrossFileSet::forProject($workspace);
+        $beyond = CrossFileSet::forProject($workspace, [...$detectors, ...$frontend]);
         $views = Views::of($codebase, $scope, $beyond);
 
         if ($options->benchmark) {

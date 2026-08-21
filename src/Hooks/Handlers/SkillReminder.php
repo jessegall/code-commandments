@@ -75,11 +75,17 @@ final class SkillReminder extends Hook
 
         $config = Config::load($event->root);
         $files = $this->edited($event, $config);
-        $beyond = CrossFileSet::forProject($event->workspace());
+
+        // The rules this project RUNS: its own registered beside the shipped ones, minus what it
+        // disabled. A rule it silenced must not nudge, and a rule it wrote itself must.
+        $configured = $config->apply(Catalog::backend(), Catalog::frontend());
+        $rules = [...$configured['backend'], ...$configured['frontend']];
+
+        $single = Catalog::singleFile(CrossFileSet::forProject($event->workspace(), $rules), $rules);
         $sins = [];
 
         foreach ($files as $file) {
-            $sins = array_merge_recursive($sins, $this->sinsIn($file, Languages::from($config), $beyond));
+            $sins = array_merge_recursive($sins, $this->sinsIn($file, Languages::from($config), $single));
         }
 
         return $sins === [] ? $this->pass() : $this->inject($event, $this->nudge($files, $sins));
@@ -150,19 +156,20 @@ final class SkillReminder extends Hook
     }
 
     /**
-     * Every single-file rule that fires in $file, as "sin name at line" keyed by the skill that
-     * teaches the fix. A rule that throws on one file in isolation is a rule that could not answer,
-     * which is silence — this is a nudge, and a nudge is never worth a broken tool call.
+     * Every one of $rules that fires in $file, as "sin name at line" keyed by the skill that teaches
+     * the fix. A rule that throws on one file in isolation is a rule that could not answer, which is
+     * silence — this is a nudge, and a nudge is never worth a broken tool call.
      *
+     * @param  list<Detector>  $rules  the single-file rules this project runs
      * @return array<string, list<string>>  skill slug => the sins found
      */
-    private function sinsIn(string $file, Languages $languages, CrossFileSet $beyond): array
+    private function sinsIn(string $file, Languages $languages, array $rules): array
     {
         $backend = str_ends_with($file, '.php') ? Codebase::scan($file) : null;
         $frontend = $backend === null ? VueCodebase::scan($file, languages: $languages) : null;
         $found = [];
 
-        foreach (Catalog::singleFile($beyond) as $detector) {
+        foreach ($rules as $detector) {
             $codebase = $this->codebaseFor($detector, $backend, $frontend);
 
             if ($codebase === null) {

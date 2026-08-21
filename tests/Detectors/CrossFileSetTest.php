@@ -134,6 +134,67 @@ final class CrossFileSetTest extends TestCase
         }
     }
 
+    public function test_a_rule_the_project_registered_from_a_package_of_its_own_is_read_from_its_own_file(): void
+    {
+        // `.commandments/custom/` is the usual home, but a project may register a rule from a package
+        // it maintains. Unread, it would count as reading the world: never nudging on an edit, and
+        // judged against the whole tree on a scoped run — a rule slower and quieter for its address.
+        $root = sys_get_temp_dir() . '/cc-packaged-' . uniqid('', true);
+        @mkdir($root . '/.commandments', 0777, true);
+
+        $file = $root . '/PackagedRules.php';
+        file_put_contents($file, <<<'PHP'
+            <?php
+
+            namespace Consumer\Package;
+
+            use JesseGall\CodeCommandments\Ast\Codebase;
+            use JesseGall\CodeCommandments\Detector;
+            use JesseGall\CodeCommandments\Sins\Sin;
+
+            abstract class WorldReadingBase implements Detector
+            {
+                public function sin(): Sin
+                {
+                    throw new \LogicException('never asked');
+                }
+
+                public function find(Codebase $codebase): array
+                {
+                    return $codebase->declarationMatch('Consumer\\Thing') === null ? [] : ['x'];
+                }
+            }
+
+            final class PackagedLocalRule implements Detector
+            {
+                public function sin(): Sin
+                {
+                    throw new \LogicException('never asked');
+                }
+
+                public function find(Codebase $codebase): array
+                {
+                    return $codebase->whereClass()->get();
+                }
+            }
+
+            final class PackagedInheritingRule extends WorldReadingBase {}
+            PHP);
+
+        require_once $file;
+
+        $local = $this->asDetector('Consumer\Package\PackagedLocalRule');
+        $inheriting = $this->asDetector('Consumer\Package\PackagedInheritingRule');
+
+        $set = CrossFileSet::forProject(Workspace::at($root), [$local, $inheriting]);
+
+        $this->assertFalse($set->has($local), 'a rule read from its own file is classified like any other');
+        $this->assertTrue($set->has($inheriting), "a base's reading is its subclass's reading");
+
+        @unlink($file);
+        @unlink($root . '/.commandments/cross-file.json');
+    }
+
     public function test_a_reread_works_the_answer_out_again_whatever_the_stamp_says(): void
     {
         // The stamp cannot see an edit to a file the package already had — a directory's mtime does

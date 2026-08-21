@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
+use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\CrossFileSet;
 use JesseGall\CodeCommandments\Workspace;
 
@@ -177,7 +178,9 @@ final class Sync implements Command
      */
     private function readWhichRulesReadBeyondOneFile(string $consumer): void
     {
-        CrossFileSet::reread(Workspace::at($consumer));
+        $configured = Config::load($consumer)->apply(Catalog::backend(), Catalog::frontend());
+
+        CrossFileSet::reread(Workspace::at($consumer), [...$configured['backend'], ...$configured['frontend']]);
     }
 
     /**
