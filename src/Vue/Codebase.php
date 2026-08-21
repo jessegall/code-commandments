@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Vue;
 
 use JesseGall\CodeCommandments\Files\FileQuery;
+use JesseGall\CodeCommandments\Support\Path;
 use JesseGall\CodeCommandments\Ts\ExprQuery;
 use JesseGall\CodeCommandments\Ts\ModuleFile;
 use JesseGall\CodeCommandments\Ts\Query as TsQuery;
@@ -74,6 +75,24 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         private readonly array $standaloneTypes = [],
         private readonly array $typeScript = [],
     ) {}
+
+    /**
+     * The same scan seen through the files at $paths — the components, the standalone types and the
+     * modules already parsed, subsetted; nothing is re-read and nothing is re-parsed. The frontend
+     * twin of {@see \JesseGall\CodeCommandments\Ast\Codebase::focusedOn}, and sound under the same
+     * condition: only a rule that reads no further than the file it judges may be shown one.
+     */
+    public function focusedOn(string ...$paths): static
+    {
+        $wanted = Path::setOf($paths);
+        $held = static fn (string $file): bool => isset($wanted[Path::resolved($file)]);
+
+        return new self(
+            array_values(array_filter($this->components, static fn (Sfc $sfc): bool => $held($sfc->path))),
+            array_values(array_filter($this->standaloneTypes, static fn (TypeDeclaration $type): bool => $held($type->file))),
+            array_filter($this->typeScript, $held, ARRAY_FILTER_USE_KEY),
+        );
+    }
 
     public static function fromString(string $vue, string $path = 'component.vue'): self
     {

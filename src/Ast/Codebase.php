@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Files\FileQuery;
 use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Support\Invokable;
 use JesseGall\CodeCommandments\Support\NoOp;
+use JesseGall\CodeCommandments\Support\Path;
 use JesseGall\CodeCommandments\Support\PhpFile;
 
 use JesseGall\CodeCommandments\ClassAncestry;
@@ -149,6 +150,29 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
         $clone->exemptions = $exemptions;
 
         return $clone;
+    }
+
+    /**
+     * The same scan seen through the files at $paths — the ASTs already parsed, subsetted; nothing is
+     * re-read and nothing is re-parsed. Selectors then bucket those files' nodes alone, which is what
+     * makes a rule's cost track the files in hand instead of the tree they came from.
+     *
+     * The class graph, the call graph and the value-flow graph are all rebuilt FROM the view, so a
+     * view answers "who calls this" with the files it holds — sound only for a rule that reads no
+     * further than the file it judges ({@see \JesseGall\CodeCommandments\Detectors\CrossFileSet}).
+     */
+    public function focusedOn(string ...$paths): static
+    {
+        $wanted = Path::setOf($paths);
+
+        $view = new self(array_values(array_filter(
+            $this->files,
+            static fn (ParsedFile $file): bool => isset($wanted[Path::resolved($file->path)]),
+        )));
+
+        $view->exemptions = $this->exemptions;
+
+        return $view;
     }
 
     /**

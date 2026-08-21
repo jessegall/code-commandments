@@ -75,6 +75,15 @@ final class CrossFileSet
     }
 
     /**
+     * The reading nothing has been read for. Every rule then counts as reading the world — what an
+     * unseen rule counts as anyway — which is the right answer for a run with nothing to narrow.
+     */
+    public static function unread(): self
+    {
+        return new self([], []);
+    }
+
+    /**
      * Read the source again whatever the stamp says, and write down what it found. What `sync` calls:
      * a checkout being installed is the moment to pay for this, and a stamp cannot see an edit to a
      * file the package already had.
@@ -148,12 +157,16 @@ final class CrossFileSet
 
     /**
      * Does $detector read beyond the file it is judging? Evidence and declaration BOTH count: what
-     * the source shows it reaching, plus what it declares of itself ({@see WholeTree}). A detector
-     * the source never declared is not PROVEN local, only unseen, and counts as reading the world.
+     * the source shows it reaching, plus what it declares of itself ({@see WholeTree}, and
+     * {@see RecurrenceDetector} — a recurrence verdict rests on the SIBLING occurrences of a shape,
+     * which its own fixture contract requires to span two files, so no single file holds the answer
+     * even when the rule never asks the codebase a question). A detector the source never declared is
+     * not PROVEN local, only unseen, and counts as reading the world.
      */
     public function has(Detector $detector): bool
     {
         return $detector instanceof WholeTree
+            || $detector instanceof RecurrenceDetector
             || isset($this->reaching[$detector::class])
             || ! isset($this->known[$detector::class]);
     }

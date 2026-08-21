@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli\Judge;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Cli\Judge\DetectorRunner;
+use JesseGall\CodeCommandments\Cli\Judge\Views;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 use JesseGall\CodeCommandments\Cli\Report\SinReport;
 use JesseGall\CodeCommandments\Cli\Report\SkippedRules;
@@ -26,7 +27,7 @@ final class BrokenRuleIsNotGreenTest extends TestCase
     {
         $judgement = new DetectorRunner(1)->run(
             [self::broken(), self::broken()],
-            Codebase::fromString('<?php class A {}'),
+            Views::whole(Codebase::fromString('<?php class A {}')),
             new ProgressBar,
         );
 
@@ -37,7 +38,7 @@ final class BrokenRuleIsNotGreenTest extends TestCase
 
     public function test_a_run_where_everything_ran_is_clean(): void
     {
-        $judgement = new DetectorRunner(1)->run([], Codebase::fromString('<?php class A {}'), new ProgressBar);
+        $judgement = new DetectorRunner(1)->run([], Views::whole(Codebase::fromString('<?php class A {}')), new ProgressBar);
 
         $this->assertTrue($judgement->isClean());
     }

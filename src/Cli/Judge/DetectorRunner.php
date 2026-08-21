@@ -29,15 +29,20 @@ final class DetectorRunner
     /**
      * @param  list<Detector>  $detectors
      */
-    public function run(array $detectors, Codebase $codebase, ProgressBar $progress): Judgement
+    public function run(array $detectors, Views $views, ProgressBar $progress): Judgement
     {
-        // Build the call graph AND the value-flow graph ONCE in the parent so forked workers
-        // inherit them copy-on-write, instead of each rebuilding them (or each cross-file
-        // detector re-scanning the tree per query).
-        $codebase->index()->warm();
-        $codebase->valueFlow()->warm();
+        $tree = $views->wholeTreeFor($detectors);
 
-        $tasks = $this->tasks($detectors, $codebase);
+        if ($tree instanceof Codebase) {
+            // Build the call graph AND the value-flow graph ONCE in the parent so forked workers
+            // inherit them copy-on-write, instead of each rebuilding them (or each cross-file
+            // detector re-scanning the tree per query). A scoped run that shows no rule the tree
+            // never builds either.
+            $tree->index()->warm();
+            $tree->valueFlow()->warm();
+        }
+
+        $tasks = $this->tasks($detectors, $views);
 
         $progress->start(count($tasks));
 
@@ -67,18 +72,20 @@ final class DetectorRunner
     }
 
     /**
-     * One task per detector — the unit of parallel work. Every task returns a
-     * serializable {@see Attempt} of {@see Finding}s (the AST→Finding reduction
-     * happens INSIDE the task, so it runs in the worker and only strings come back).
+     * One task per detector — the unit of parallel work, each over the codebase {@see Views} says
+     * that rule is judged against. Every task returns a serializable {@see Attempt} of
+     * {@see Finding}s (the AST→Finding reduction happens INSIDE the task, so it runs in the worker
+     * and only strings come back).
      *
      * @param  list<Detector>  $detectors
      * @return list<Closure(): Attempt>
      */
-    private function tasks(array $detectors, Codebase $codebase): array
+    private function tasks(array $detectors, Views $views): array
     {
         $tasks = [];
 
         foreach ($detectors as $detector) {
+            $codebase = $views->for($detector);
             $short = ClassName::short($detector::class);
             $sin = $detector->sin();
             $custom = Custom::owns($detector); // Resolved in the PARENT: a worker's finding must already

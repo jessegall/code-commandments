@@ -22,6 +22,7 @@ use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
+use JesseGall\CodeCommandments\Detectors\CrossFileSet;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Sins\Commands;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
@@ -139,7 +140,7 @@ final class Judge implements Command
             return 2;
         }
 
-        return $this->judge($options, $detectors, $frontend, $scope, Commands::repentable(self::REPENT_SCOPE), Commands::scaffoldable());
+        return $this->judge($options, $detectors, $frontend, $scope, $workspace, Commands::repentable(self::REPENT_SCOPE), Commands::scaffoldable());
     }
 
     /**
@@ -148,7 +149,7 @@ final class Judge implements Command
      * @param  array<string, string>  $fixable  sin name => the `repent` command that fixes it
      * @param  array<string, string>  $scaffoldable  sin name => the `scaffold` command for its helper
      */
-    private function judge(JudgeOptions $options, array $detectors, array $frontend, Scope $scope, array $fixable, array $scaffoldable): int
+    private function judge(JudgeOptions $options, array $detectors, array $frontend, Scope $scope, Workspace $workspace, array $fixable, array $scaffoldable): int
     {
         $checklist = $options->checklist;
         if ($scope->isEmpty()) {
@@ -187,17 +188,23 @@ final class Judge implements Command
         // one to the backend (#510).
         Bridge::publish(Bridge::gather($codebase, $components), [...$detectors, ...$frontend]);
 
+        // WHICH codebase each rule is judged against. A scoped run (`--changes`, `--branch`) reports
+        // on a few files but parses the tree, so a rule that reads no further than the file it judges
+        // is shown those files alone — its cost tracks the diff, not the tree it came from.
+        $beyond = CrossFileSet::forProject($workspace);
+        $views = Views::of($codebase, $scope, $beyond);
+
         if ($options->benchmark) {
             $bench = new Benchmark;
-            $judgement = $bench->run($detectors, $codebase);
+            $judgement = $bench->run($detectors, $views);
             $progress->finish();
             fwrite(STDERR, $bench->render($parseSeconds));
         } else {
-            $judgement = new DetectorRunner($options->parallel)->run($detectors, $codebase, $progress);
+            $judgement = new DetectorRunner($options->parallel)->run($detectors, $views, $progress);
             $progress->finish();
         }
 
-        $judgement = $judgement->merge($this->frontendJudgement($components, $frontend));
+        $judgement = $judgement->merge($this->frontendJudgement($components, $frontend, $scope, $beyond));
 
         $judgement = $judgement->withFindings($this->keep($judgement->findings, $options->exclude, $scope));
 
@@ -353,26 +360,29 @@ final class Judge implements Command
 
     /**
      * The Vue detectors' findings, reduced to the same lightweight {@see Finding}s the backend
-     * produces (a Vue {@see ElementMatch} already knows its `file:line` and scope).
+     * produces (a Vue {@see ElementMatch} already knows its `file:line` and scope). Each rule reads
+     * the same narrowed view of a scoped run the backend's do ({@see Views}).
      *
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend
      */
-    private function frontendJudgement(?VueCodebase $codebase, array $frontend): Judgement
+    private function frontendJudgement(?VueCodebase $codebase, array $frontend, Scope $scope, CrossFileSet $beyond): Judgement
     {
         if ($frontend === [] || $codebase === null) {
             return new Judgement;
         }
 
+        $views = Views::of($codebase, $scope, $beyond);
         $judgement = new Judgement;
 
         foreach ($frontend as $detector) {
+            $components = $views->for($detector);
             $sin = $detector->sin();
             $parts = explode('\\', $detector::class);
             $short = end($parts);
 
             $custom = Custom::owns($detector);
 
-            $attempt = Attempt::of($short, $custom, static fn (): array => $detector->find($codebase));
+            $attempt = Attempt::of($short, $custom, static fn (): array => $detector->find($components));
             $findings = [];
 
             foreach ($attempt->work as $match) {

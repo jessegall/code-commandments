@@ -19,6 +19,36 @@ final class Path
     }
 
     /**
+     * $path's resolved spelling — the ONE form in which two spellings of the same file agree, so a
+     * set of paths can be asked `isset` rather than compared string by string. A path with nothing
+     * behind it yet (a file a {@see \JesseGall\CodeCommandments\WorkingCopy} has created but not
+     * written) keeps the spelling it came with: dropping it would answer for fewer files than the
+     * caller asked about.
+     */
+    public static function resolved(string $path): string
+    {
+        return realpath($path) ?: $path;
+    }
+
+    /**
+     * $paths as a set of {@see resolved} spellings — the membership test behind "is this file one of
+     * the ones in hand?".
+     *
+     * @param  list<string>  $paths
+     * @return array<string, true>
+     */
+    public static function setOf(array $paths): array
+    {
+        $set = [];
+
+        foreach ($paths as $path) {
+            $set[self::resolved($path)] = true;
+        }
+
+        return $set;
+    }
+
+    /**
      * $dir and then every directory above it, up to the filesystem root — the climb "which
      * ancestor holds this?" behind every search for a `composer.json`, a `node_modules`, or a
      * project root. Each of those wrote the walk out by hand, with its own idea of when to stop.

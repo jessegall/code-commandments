@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Cli\Judge\DetectorRunner;
+use JesseGall\CodeCommandments\Cli\Judge\Views;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
@@ -52,7 +53,7 @@ final class LocatedFindingTest extends TestCase
             }
         };
 
-        $findings = new DetectorRunner(1)->run([$detector], Codebase::fromString('<?php class A {}'), new ProgressBar)->findings;
+        $findings = new DetectorRunner(1)->run([$detector], Views::whole(Codebase::fromString('<?php class A {}')), new ProgressBar)->findings;
 
         $this->assertCount(1, $findings);
         $this->assertSame('/app/Screen.php', $findings[0]->file);

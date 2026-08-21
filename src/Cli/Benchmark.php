@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Custom;
 
 use JesseGall\CodeCommandments\Cli\Attempt;
 use JesseGall\CodeCommandments\Cli\Judge\Judgement;
+use JesseGall\CodeCommandments\Cli\Judge\Views;
 
 use JesseGall\CodeCommandments\Support\ClassName;
 
@@ -35,11 +36,12 @@ final class Benchmark
      *
      * @param  list<Detector>  $detectors
      */
-    public function run(array $detectors, Codebase $codebase): Judgement
+    public function run(array $detectors, Views $views): Judgement
     {
         $judgement = new Judgement;
 
         foreach ($detectors as $detector) {
+            $codebase = $views->for($detector);
             $short = ClassName::short($detector::class);
 
             $before = memory_get_usage();

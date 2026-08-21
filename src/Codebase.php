@@ -13,4 +13,14 @@ namespace JesseGall\CodeCommandments;
  */
 interface Codebase
 {
+    /**
+     * The same parse seen through a SUBSET of its files — nothing re-read and nothing re-parsed, so
+     * a selector visits those files alone and a rule costs what the files cost rather than what the
+     * tree costs. How a scoped run ({@see Cli\Judge\Views}) judges a diff without judging the tree.
+     *
+     * Every whole-program answer is drawn from the VIEW as well, so this is sound only for a rule
+     * that reads no further than the file it judges — {@see Detectors\CrossFileSet} is what knows
+     * which rules those are. A path the parse never held simply isn't there.
+     */
+    public function focusedOn(string ...$paths): static;
 }

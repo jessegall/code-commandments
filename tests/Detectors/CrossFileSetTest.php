@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Tests\Detectors;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Backend\DanglingDocReferenceDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\ArchaeologyCommentDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\DuplicateFunctionDetector;
+use JesseGall\CodeCommandments\Detectors\Backend\NearDuplicateFunctionDetector;
 use JesseGall\CodeCommandments\Detectors\CrossFileSet;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detector;
@@ -91,6 +93,14 @@ final class CrossFileSetTest extends TestCase
 
         $this->assertFalse(self::$set->has($this->asDetector('Consumer\Commandments\LocalOnlyDetector')));
         $this->assertTrue(self::$set->has($this->asDetector('Consumer\Commandments\WorldReadingDetector')));
+    }
+
+    public function test_a_recurrence_rule_reads_beyond_the_file_even_when_it_asks_the_codebase_nothing(): void
+    {
+        // Its verdict is a group, and its fixture contract requires one spanning two files — shown a
+        // diff alone it would report a copy-paste as unique, which is worse than not reporting it.
+        $this->assertTrue(self::$set->has(new NearDuplicateFunctionDetector()));
+        $this->assertTrue(self::$set->has(new DuplicateFunctionDetector()));
     }
 
     public function test_a_detector_the_source_does_not_account_for_is_treated_as_reading_the_world(): void

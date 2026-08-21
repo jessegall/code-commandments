@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Judge\DetectorRunner;
+use JesseGall\CodeCommandments\Cli\Judge\Views;
 use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 use JesseGall\CodeCommandments\Detectors\Backend\Laravel\FacadeCallDetector;
@@ -22,7 +23,7 @@ final class RecurrenceFindingTwinsTest extends TestCase
     /** @return list<Finding> */
     private function judge(object $detector, string $code): array
     {
-        return new DetectorRunner(1)->run([$detector], Codebase::fromString($code), new ProgressBar)->findings;
+        return new DetectorRunner(1)->run([$detector], Views::whole(Codebase::fromString($code)), new ProgressBar)->findings;
     }
 
     public function test_a_recurrence_finding_carries_its_bucket(): void
