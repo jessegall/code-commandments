@@ -91,3 +91,25 @@ final class GlowingTile implements AnimatedTile
         return $this->intensity > 0 ? 'shrink' : null;
     }
 }
+
+/**
+ * The driver a tile renders through — one per kind of tile.
+ */
+interface TileDriver {}
+
+/**
+ * The righteous twin the base classes make: a hook reading `static::`, the LATE-bound class. Each
+ * subclass names its own driver, so the value is not known where the property is declared and no
+ * stored property can express it — the hook is how the base asks "which one are you?".
+ */
+#[Righteous(UselessPropertyHook::class)]
+abstract class RenderedTile
+{
+    protected const string DRIVER = TileDriver::class;
+
+    protected const string KIND = 'tile';
+
+    public TileDriver $driver { get => new (static::DRIVER)(); }
+
+    public string $kind { get => static::KIND; }
+}

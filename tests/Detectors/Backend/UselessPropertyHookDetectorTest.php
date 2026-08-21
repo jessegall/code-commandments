@@ -125,6 +125,42 @@ final class UselessPropertyHookDetectorTest extends TestCase
         $this->assertSame('App\\Finding', $hits[0]->scope());
     }
 
+    public function test_does_not_flag_a_hook_reading_a_constant_through_the_late_bound_class(): void
+    {
+        // `static::DRIVER` resolves per SUBCLASS, so the value is not known where the property is
+        // declared and no stored property can express it — the hook is how a base asks which class
+        // it is in (#516). `self::` is a constant of the declaring class, so that stays flagged.
+        $code = <<<'PHP'
+        <?php
+        namespace App;
+
+        interface WizardDriver {}
+
+        abstract class Wizard
+        {
+            protected const string DRIVER = WizardDriver::class;
+
+            public WizardDriver $driver { get => new (static::DRIVER)(); }
+
+            public string $label { get => static::LABEL; }
+
+            protected const string LABEL = 'wizard';
+        }
+
+        class Fixed
+        {
+            private const string DRIVER = 'one';
+
+            public string $driver { get => self::DRIVER; }
+        }
+        PHP;
+
+        $hits = (new UselessPropertyHookDetector)->find(Codebase::fromString($code));
+
+        $this->assertCount(1, $hits);
+        $this->assertSame('App\\Fixed', $hits[0]->scope());
+    }
+
     public function test_does_not_flag_hooks_in_a_trait_consumed_by_a_data_class(): void
     {
         // Page-object concerns live in traits; the trait inherits its consumers' Data

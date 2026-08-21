@@ -2981,6 +2981,24 @@ class AstNode
     }
 
     /**
+     * Does this resolve something through `static::` — the LATE-bound class, which is the runtime class
+     * of the object in hand? `static::SOMETHING` answers differently for every subclass, so what it
+     * yields is a fact about the instance; `self::` is a constant of the class that declared it.
+     */
+    public function resolvesThroughLateStaticBinding(): bool
+    {
+        return new NodeFinder()->findFirst(
+            [$this->node],
+            static fn (Node $node): bool => ($node instanceof ClassConstFetch
+                    || $node instanceof StaticCall
+                    || $node instanceof StaticPropertyFetch
+                    || $node instanceof New_)
+                && $node->class instanceof Name
+                && $node->class->toLowerString() === 'static',
+        ) !== null;
+    }
+
+    /**
      * Is this a property hook DECLARATION without a body — an interface's / abstract
      * class's `{ get; }`, a requirement rather than an implementation?
      */
