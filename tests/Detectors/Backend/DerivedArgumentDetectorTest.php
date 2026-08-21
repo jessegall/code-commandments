@@ -195,6 +195,76 @@ final class DerivedArgumentDetectorTest extends TestCase
         $this->assertSame([], $this->locations($code));
     }
 
+    public function test_does_not_ask_for_a_dependency_that_would_close_a_cycle(): void
+    {
+        // #514: a persistence row mapped into a pure domain value. The row's namespace already
+        // references the domain, so the value type cannot learn the row — the fix this rule would
+        // ask for is the cycle NamespaceCycleDetector forbids, and the mapper is the one place
+        // allowed to see both.
+        $code = <<<'PHP'
+        <?php
+        namespace App\Models {
+            use App\Rewrite\RewriteRule;
+
+            class RuleRow {
+                public string $id = '';
+                public string $find = '';
+                public string $replace = '';
+
+                public function compiled(): RewriteRule { return RewriteRule::manual('', '', ''); }
+            }
+        }
+
+        namespace App\Rewrite {
+            use App\Models\RuleRow;
+
+            final class RewriteRule {
+                public static function manual(string $id, string $find, string $replace): self { return new self; }
+            }
+
+            final class RuleCompiler {
+                public function ruleFor(RuleRow $row): RewriteRule {
+                    return RewriteRule::manual($row->id, $row->find, $row->replace);
+                }
+            }
+        }
+        PHP;
+
+        $this->assertSame([], $this->locations($code));
+    }
+
+    public function test_still_asks_when_the_dependency_would_point_one_way(): void
+    {
+        // The same mapping where nothing points back: `App\Rewrite` may name `App\Records` freely,
+        // so the value type CAN take the row and the rule says so.
+        $code = <<<'PHP'
+        <?php
+        namespace App\Records {
+            class RuleRow {
+                public string $id = '';
+                public string $find = '';
+                public string $replace = '';
+            }
+        }
+
+        namespace App\Rewrite {
+            use App\Records\RuleRow;
+
+            final class RewriteRule {
+                public static function manual(string $id, string $find, string $replace): self { return new self; }
+            }
+
+            final class RuleCompiler {
+                public function ruleFor(RuleRow $row): RewriteRule {
+                    return RewriteRule::manual($row->id, $row->find, $row->replace);
+                }
+            }
+        }
+        PHP;
+
+        $this->assertCount(1, $this->locations($code));
+    }
+
     public function test_does_not_flag_two_projections_of_different_subjects(): void
     {
         $code = <<<'PHP'

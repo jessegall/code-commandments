@@ -100,6 +100,21 @@ final class NamespaceGraph
     }
 
     /**
+     * Would a reference from $referrer to $target close a mutual pair — is the arrow already drawn the
+     * other way? What a rule asks before demanding a dependency that {@see
+     * \JesseGall\CodeCommandments\Detectors\Backend\NamespaceCycleDetector} would then flag: a fix
+     * one rule forbids is not a fix. Two classes of the same namespace answer false — there is no
+     * arrow between a namespace and itself.
+     */
+    public function wouldCloseACycle(?string $referrer, ?string $target): bool
+    {
+        $from = ClassName::namespace(ltrim((string) $referrer, '\\'));
+        $to = ClassName::namespace(ltrim((string) $target, '\\'));
+
+        return $from !== '' && $to !== '' && $from !== $to && isset($this->references[$to][$from]);
+    }
+
+    /**
      * The graph as `namespace => the namespaces it references`.
      *
      * @return array<string, list<string>>

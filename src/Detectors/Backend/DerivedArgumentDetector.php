@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\Callee;
 use JesseGall\CodeCommandments\Ast\Support\Derivation;
+use JesseGall\CodeCommandments\Ast\Support\NamespaceGraph;
 use JesseGall\CodeCommandments\Ast\Support\StructuralHash;
 use JesseGall\CodeCommandments\Ast\Support\TypeResolver;
 use JesseGall\CodeCommandments\Ast\TypeName;
@@ -91,7 +92,7 @@ final class DerivedArgumentDetector implements Detector
                 $supplied[$callee->slot($position)]++;
             }
 
-            foreach ($this->redundantPositions($call, $resolver) as $position) {
+            foreach ($this->redundantPositions($call, $resolver, $codebase) as $position) {
                 $redundant[$callee->slot($position)][] = $call;
                 $named[$callee->slot($position)] = $callee->method;
             }
@@ -123,7 +124,7 @@ final class DerivedArgumentDetector implements Detector
      *
      * @return list<int>
      */
-    private function redundantPositions(NodeMatch $call, TypeResolver $resolver): array
+    private function redundantPositions(NodeMatch $call, TypeResolver $resolver, Codebase $codebase): array
     {
         $callee = Callee::of($call, $resolver);
 
@@ -142,6 +143,10 @@ final class DerivedArgumentDetector implements Detector
             }
 
             if ($this->describesItself($subject, $call, $resolver)) {
+                continue;
+            }
+
+            if ($this->wouldInvertADependency($callee, $subject, $call, $resolver, $codebase)) {
                 continue;
             }
 
@@ -200,6 +205,30 @@ final class DerivedArgumentDetector implements Detector
         // `self`/`static` are the enclosing class under another name — a `static fn (self $x)` param is
         // typed exactly that way, and reads the same to the author.
         return $type === 'self' || $type === 'static' || $type === ltrim($self, '\\');
+    }
+
+    /**
+     * Could the callee take this subject only by pointing a dependency BACK at a namespace that
+     * already references its own? Then the fix this rule asks for is the cycle another rule forbids,
+     * and a finding whose only fix is a fresh sin is a finding being silenced (#514).
+     *
+     * This is what a persistence-to-domain mapper looks like from here: the row's namespace already
+     * knows the domain, so the pure value type cannot learn the row. The mapper — the one place
+     * allowed to see both — holds the conversion, and holding it is its whole job.
+     */
+    private function wouldInvertADependency(Callee $callee, Node $subject, NodeMatch $call, TypeResolver $resolver, Codebase $codebase): bool
+    {
+        $function = $call->enclosingFunction();
+        $self = $call->enclosingClassName();
+
+        if ($function === null || $self === null) {
+            return false;
+        }
+
+        return NamespaceGraph::forCodebase($codebase)->wouldCloseACycle(
+            $callee->class,
+            $resolver->typeOf($subject, $function, $self),
+        );
     }
 
     /**
