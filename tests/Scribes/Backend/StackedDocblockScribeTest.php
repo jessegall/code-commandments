@@ -157,6 +157,39 @@ final class StackedDocblockScribeTest extends ScribeTestCase
         $this->assertSame($php, $this->fix($php));
     }
 
+    public function test_declines_a_stack_documenting_a_parameter_the_method_does_not_take(): void
+    {
+        // #515: a method was inserted between a docblock and the method it described, leaving the two
+        // blocks ADJACENT — so the apart-from-the-stack guard never saw it. Folding left the wrong
+        // method carrying `@param string $reason` for a parameter it has never had, and the method
+        // that owns those words with no docblock at all.
+        $php = <<<'PHP'
+        <?php
+
+        class MigrationRunStep
+        {
+            /**
+             * Record why the step stopped.
+             *
+             * @param  string  $reason
+             */
+            /**
+             * Stop the step because the run it belongs to was given up on.
+             */
+            public function markCancelled(): void
+            {
+            }
+
+            public function markFailed(string $reason): void
+            {
+            }
+        }
+        PHP;
+
+        $this->assertFalse($this->rewrote($php), 'a fold that documents a parameter the method lacks invents documentation');
+        $this->assertSame($php, $this->fix($php));
+    }
+
     public function test_still_folds_tags_that_speak_about_different_things(): void
     {
         $php = <<<'PHP'

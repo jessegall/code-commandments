@@ -105,6 +105,24 @@ final class Docblock
     }
 
     /**
+     * The parameter names this block's `@param` tags speak about, each without its `$`.
+     *
+     * @return list<string>
+     */
+    public static function documentedParams(string $text): array
+    {
+        $names = [];
+
+        foreach (self::tags($text) as $tag) {
+            if (str_starts_with($tag, '@param $')) {
+                $names[] = substr($tag, strlen('@param $'));
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * The block with ONE tag's type re-headed — `@param DataCollection<int, X> $content` becomes
      * `@param array<int, X> $content` for `retype($text, 'content', 'Spatie\…\DataCollection',
      * 'array')`. The tag documenting `$name` is found by the name it speaks about, so sibling

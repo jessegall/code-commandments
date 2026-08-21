@@ -2490,7 +2490,57 @@ class AstNode
             }
         }
 
-        return Docblock::foldable(array_map(static fn (Comment $c): string => $c->getText(), $blocks));
+        $texts = array_map(static fn (Comment $c): string => $c->getText(), $blocks);
+
+        if ($this->documentsAnotherDeclarationsParams($texts)) {
+            return false;
+        }
+
+        return Docblock::foldable($texts);
+    }
+
+    /**
+     * Does the stack document a parameter this declaration does not take? Then one of its blocks was
+     * written for something else — an insertion put a declaration between a docblock and the method
+     * it described — and folding it in would leave THIS one documented with a `@param` for a
+     * parameter it has never had (#515).
+     *
+     * @param  list<string>  $texts
+     */
+    private function documentsAnotherDeclarationsParams(array $texts): bool
+    {
+        $taken = $this->paramNames();
+
+        foreach ($texts as $text) {
+            if (array_diff(Docblock::documentedParams($text), $taken) !== []) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The names of the parameters this declaration takes, each without its `$`. Empty for anything
+     * that is not a function or a method.
+     *
+     * @return list<string>
+     */
+    public function paramNames(): array
+    {
+        if (! $this->isFunctionDeclaration()) {
+            return [];
+        }
+
+        $names = [];
+
+        foreach ($this->node->params as $param) {
+            if ($param->var instanceof Variable && is_string($param->var->name)) {
+                $names[] = $param->var->name;
+            }
+        }
+
+        return $names;
     }
 
     /**
