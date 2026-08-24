@@ -4006,7 +4006,7 @@ class AstNode
         }
 
         $types = array_map(
-            static fn (Param $param): string => TypeName::render($param->type),
+            static fn (Param $param) => TypeName::render($param->type),
             $this->node->getParams(),
         );
 
@@ -5382,10 +5382,14 @@ class AstNode
             return false;
         }
 
-        for ($node = $this->node; $node instanceof Node; $node = $node->getAttribute('parent')) {
+        $node = $this->node;
+
+        while ($node instanceof Node) {
             if ($node === $ancestor) {
                 return true;
             }
+
+            $node = $node->getAttribute('parent');
         }
 
         return false;
