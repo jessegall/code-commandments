@@ -2420,18 +2420,24 @@ class AstNode
     }
 
     /**
-     * The declared return type spelled as written, or null when the method declares none — an untyped
-     * method says nothing about its mood, so a rule reading this leaves it alone.
+     * The return type this function-like declares, rendered for COMPARISON — a union spelled whole, a
+     * class left in the case it was written in — or `''` when it declares none.
+     */
+    public function returnTypeName(): string
+    {
+        return $this->node instanceof FunctionLike ? TypeName::render($this->node->getReturnType()) : '';
+    }
+
+    /**
+     * The declared return type lowercased, or null when the method declares none — the view the MOOD
+     * rules read, where `Bool` and `bool` are one answer. Built on {@see returnTypeName} so what counts
+     * as the declared type is decided in one place.
      */
     public function declaredReturnType(): ?string
     {
-        if (! $this->node instanceof ClassMethod) {
-            return null;
-        }
+        $rendered = $this->returnTypeName();
 
-        $type = $this->node->getReturnType();
-
-        return $type instanceof Identifier || $type instanceof Name ? strtolower($type->toString()) : null;
+        return $rendered === '' ? null : strtolower($rendered);
     }
 
     /**

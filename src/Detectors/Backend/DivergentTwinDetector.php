@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\Support\ReachedUnit;
 use JesseGall\CodeCommandments\Ast\Support\ReachPairs;
 use JesseGall\CodeCommandments\Ast\Support\ResourceReach;
+use JesseGall\CodeCommandments\Ast\TypeName;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Codebase as BaseCodebase;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
@@ -281,8 +282,8 @@ final class DivergentTwinDetector implements Detector, RecurrenceDetector, Unpub
      */
     private function resultsAreIncomparable(ReachedUnit $poorer, ReachedUnit $richer, ResourceReach $reach): bool
     {
-        $one = $poorer->match->declaredReturnType();
-        $other = $richer->match->declaredReturnType();
+        $one = $poorer->match->returnTypeName();
+        $other = $richer->match->returnTypeName();
 
         if ($one === '' || $other === '' || $one === $other) {
             return false;
@@ -300,7 +301,9 @@ final class DivergentTwinDetector implements Detector, RecurrenceDetector, Unpub
             return ! $codebase->isA($one, $other) && ! $codebase->isA($other, $one);
         }
 
-        return $one === 'void' || $other === 'void'; // one produces a result, the other none
+        // Two builtins that cannot hold the same value are not one job: an array of derived names
+        // beside a resolved path-or-false compose alike and answer differently.
+        return ! TypeName::overlaps($one, $other);
     }
 
     /**
