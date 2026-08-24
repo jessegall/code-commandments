@@ -17,6 +17,11 @@ class GitFiles
     private const array JUDGED = ['.php', '.vue'];
 
     /**
+     * How a worktree's `.git` file names the git directory it belongs to.
+     */
+    private const string GITDIR = 'gitdir:';
+
+    /**
      * The git toplevel containing $path, or null when $path is not in a repository.
      */
     public function root(string $path): ?string
@@ -58,6 +63,45 @@ class GitFiles
         $root = trim((string) @shell_exec('git -C ' . escapeshellarg($dir) . ' rev-parse --show-toplevel 2>/dev/null'));
 
         return $root === '' ? null : $root;
+    }
+
+    /**
+     * Is $root part of the SAME repository as $project — the checkout itself, a directory inside it, or a
+     * worktree whose git directory lives in it? What tells a worktree of this project, whose own root is
+     * the right scope, from an unrelated repository a shell merely stepped into.
+     */
+    public function belongsTo(string $root, string $project): bool
+    {
+        $root = realpath($root) ?: $root;
+        $project = realpath($project) ?: $project;
+
+        if (self::within($root, $project)) {
+            return true;
+        }
+
+        // A worktree's `.git` is a FILE naming the git directory it belongs to; a checkout of another
+        // project names one somewhere else entirely, which is exactly the case being refused.
+        $contents = is_file($root . '/.git') ? trim((string) @file_get_contents($root . '/.git')) : '';
+
+        if (! str_starts_with($contents, self::GITDIR)) {
+            return false;
+        }
+
+        $gitdir = trim(substr($contents, strlen(self::GITDIR)));
+
+        if (! str_starts_with($gitdir, '/')) {
+            $gitdir = $root . '/' . $gitdir; // a worktree may name its git directory relatively
+        }
+
+        return self::within(realpath($gitdir) ?: $gitdir, $project);
+    }
+
+    /**
+     * Is $path $parent or somewhere beneath it?
+     */
+    private static function within(string $path, string $parent): bool
+    {
+        return $path === $parent || str_starts_with($path, rtrim($parent, '/') . '/');
     }
 
     /**

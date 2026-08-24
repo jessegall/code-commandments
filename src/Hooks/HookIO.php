@@ -47,14 +47,23 @@ class HookIO
     }
 
     /**
-     * The worktree the hook is running in — the git toplevel of the current directory, so each
-     * worktree is scoped to itself. Falls back to `CLAUDE_PROJECT_DIR` / cwd outside a repository.
+     * The worktree the hook is running in — the git toplevel of the current directory, so each worktree
+     * is scoped to itself, EXCEPT when that toplevel belongs to another repository. `CLAUDE_PROJECT_DIR`
+     * is the harness stating which project this session is; a shell that has stepped into an unrelated
+     * checkout must not re-point the session's state at it, or that project's own session files are
+     * written under this session's key and its own are left unread. Falls back to cwd outside a repository.
      */
     public function projectRoot(): string
     {
         $cwd = getcwd() ?: '.';
+        $root = $this->git->root($cwd);
+        $project = getenv('CLAUDE_PROJECT_DIR') ?: null;
 
-        return $this->git->root($cwd) ?? (getenv('CLAUDE_PROJECT_DIR') ?: $cwd);
+        if ($project === null) {
+            return $root ?? $cwd;
+        }
+
+        return $root !== null && $this->git->belongsTo($root, $project) ? $root : $project;
     }
 
     public function git(): GitFiles
