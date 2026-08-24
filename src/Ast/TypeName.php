@@ -9,6 +9,7 @@ use PhpParser\Node\Identifier;
 use PhpParser\Node\Param;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
+use PhpParser\Node\IntersectionType;
 use PhpParser\Node\UnionType;
 
 /**
@@ -140,6 +141,51 @@ final class TypeName
     }
 
     /**
+     * Could a value of type $one also be one of type $other — do the two rendered types OVERLAP at all?
+     * `array` and `iterable` do (every array is iterable); `array` and `false|string` cannot. What a rule
+     * asks before claiming two functions produce the same thing. An undeclared side (`''`) overlaps with
+     * anything, because it has said nothing.
+     */
+    public static function overlaps(string $one, string $other): bool
+    {
+        if ($one === '' || $other === '' || $one === $other) {
+            return true;
+        }
+
+        return array_intersect(self::widened($one), self::widened($other)) !== [];
+    }
+
+    /**
+     * The members of a rendered type, with what each one also SATISFIES folded in — an array is an
+     * iterable, and `static`/`self`/`$this` are all the object in hand.
+     *
+     * @return list<string>
+     */
+    private static function widened(string $type): array
+    {
+        $members = [];
+
+        foreach (explode('|', ltrim($type, '?')) as $member) {
+            $members[] = $member;
+
+            if ($member === 'array') {
+                $members[] = 'iterable';
+            }
+
+            if (in_array($member, ['static', 'self', '$this'], true)) {
+                $members[] = 'self';
+            }
+        }
+
+        // A nullable type can always be null, so two nullables overlap there whatever else they say.
+        if (str_starts_with($type, '?')) {
+            $members[] = 'null';
+        }
+
+        return $members;
+    }
+
+    /**
      * A normalized, comparable string for a type declaration — `?Foo`, `int`, `A|B` (union members sorted so
      * spelling order doesn't matter). The reusable "are these two types the same" primitive; null renders `''`.
      */
@@ -153,14 +199,16 @@ final class TypeName
             return ltrim($type->toString(), '\\');
         }
 
-        if ($type instanceof UnionType) {
+        if ($type instanceof UnionType || $type instanceof IntersectionType) {
             $parts = array_map(static fn (Node $member) => self::render($member), $type->types);
             sort($parts);
 
-            return implode('|', $parts);
+            return implode($type instanceof UnionType ? '|' : '&', $parts);
         }
 
-        return $type === null ? '' : $type::class;
+        // Anything else is not a type this can name, and a php-parser class name is not a type — a
+        // caller comparing what it gets back must be told nothing rather than told something false.
+        return '';
     }
 
     /**

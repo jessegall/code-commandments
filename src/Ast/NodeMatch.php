@@ -234,6 +234,19 @@ class NodeMatch extends AstNode implements Located
     }
 
     /**
+     * Where this match sits, with an ANONYMOUS class disambiguated by the file that declares it. An
+     * anonymous class has no name, so every one of them answers `(file)` and they key alike — and a
+     * framework whose migrations are each `new class extends Migration` would collapse hundreds of
+     * methods onto one key, merging what they reach into a reading belonging to none of them.
+     */
+    public function scope(): string
+    {
+        return $this->isInAnonymousClass()
+            ? $this->file->path . ':' . parent::scope()
+            : parent::scope();
+    }
+
+    /**
      * The path of the file this match sits in — the {@see Located} half that the frontend's
      * {@see \JesseGall\CodeCommandments\Vue\ElementMatch} always had, so anything engine-agnostic
      * (the fixture harness, the runner) can read a finding's file without knowing which engine

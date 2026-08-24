@@ -2420,18 +2420,24 @@ class AstNode
     }
 
     /**
-     * The declared return type spelled as written, or null when the method declares none — an untyped
-     * method says nothing about its mood, so a rule reading this leaves it alone.
+     * The return type this function-like declares, rendered for COMPARISON — a union spelled whole, a
+     * class left in the case it was written in — or `''` when it declares none.
+     */
+    public function returnTypeName(): string
+    {
+        return $this->node instanceof FunctionLike ? TypeName::render($this->node->getReturnType()) : '';
+    }
+
+    /**
+     * The declared return type lowercased, or null when the method declares none — the view the MOOD
+     * rules read, where `Bool` and `bool` are one answer. Built on {@see returnTypeName} so what counts
+     * as the declared type is decided in one place.
      */
     public function declaredReturnType(): ?string
     {
-        if (! $this->node instanceof ClassMethod) {
-            return null;
-        }
+        $rendered = $this->returnTypeName();
 
-        $type = $this->node->getReturnType();
-
-        return $type instanceof Identifier || $type instanceof Name ? strtolower($type->toString()) : null;
+        return $rendered === '' ? null : strtolower($rendered);
     }
 
     /**
@@ -4000,7 +4006,7 @@ class AstNode
         }
 
         $types = array_map(
-            static fn (Param $param): string => TypeName::render($param->type),
+            static fn (Param $param) => TypeName::render($param->type),
             $this->node->getParams(),
         );
 
@@ -4626,34 +4632,16 @@ class AstNode
     }
 
     /**
-     * Render a native type declaration to a normalised key (lowercased, leading
-     * `?` and `\` stripped, union members sorted) so it can be compared against a
-     * docblock type. Returns null when there is no native type.
+     * A native type declaration as a normalised key — lowercased, leading `?`/`\\` stripped, union
+     * members sorted — so it can be compared against a docblock type. Null when there is no native type.
+     * The rendering itself is {@see TypeName::render}'s: one of these knew about intersection types and
+     * the other did not, which is what two renderers of one thing always come to.
      */
     protected static function typeToString(?Node $type): ?string
     {
-        if ($type === null) {
-            return null;
-        }
+        $rendered = TypeName::render($type);
 
-        if ($type instanceof NullableType) {
-            $inner = self::typeToString($type->type);
-
-            return $inner === null ? null : self::typeKey('?' . $inner);
-        }
-
-        if ($type instanceof UnionType || $type instanceof IntersectionType) {
-            $glue = $type instanceof UnionType ? '|' : '&';
-            $parts = array_map(static fn (Node $part): string => (string) self::typeToString($part), $type->types);
-
-            return self::typeKey(implode($glue, $parts));
-        }
-
-        if ($type instanceof Name || $type instanceof Identifier) {
-            return self::typeKey($type->toString());
-        }
-
-        return null;
+        return $rendered === '' ? null : self::typeKey($rendered);
     }
 
     protected static function typeKey(string $type): string
@@ -5359,6 +5347,64 @@ class AstNode
             : $this->walkUp(static fn (Node $node): bool => $node instanceof ClassMethod || $node instanceof Function_);
 
         return $named instanceof ClassMethod || $named instanceof Function_ ? $named->name->toString() : null;
+    }
+
+    /**
+     * Is this class reference part of a declaration's SIGNATURE — a parameter's type, attribute or
+     * default, or the return type — rather than something the body DOES? A signature states what a
+     * function accepts and yields; two functions accepting the same things are not thereby doing the
+     * same thing, so a rule reading what code DOES must not count them.
+     */
+    public function isSignatureType(): bool
+    {
+        $function = $this->enclosingFunction();
+
+        if (! $function instanceof FunctionLike) {
+            return false;
+        }
+
+        // A parameter's type, and an ATTRIBUTE on the declaration: both describe the declaration rather
+        // than doing anything, and an attribute is read by whoever cares, not run by this body.
+        if ($this->walkUp(static fn (Node $node): bool => $node instanceof Param || $node instanceof Attribute) !== null) {
+            return true;
+        }
+
+        return $this->isWithin($function->getReturnType());
+    }
+
+    /**
+     * Is $ancestor this node, or somewhere above it? The identity walk a caller needs when it holds the
+     * exact node it is asking about rather than a type to match.
+     */
+    public function isWithin(?Node $ancestor): bool
+    {
+        if ($ancestor === null) {
+            return false;
+        }
+
+        $node = $this->node;
+
+        while ($node instanceof Node) {
+            if ($node === $ancestor) {
+                return true;
+            }
+
+            $node = $node->getAttribute('parent');
+        }
+
+        return false;
+    }
+
+    /**
+     * Is the class-like this node sits in ANONYMOUS — declared with no name of its own? Such a class
+     * offers nothing a whole-program key can be built from, so anything keying BY scope must add an
+     * identity of its own ({@see \JesseGall\CodeCommandments\Ast\NodeMatch::scope}).
+     */
+    public function isInAnonymousClass(): bool
+    {
+        $class = $this->enclosingClass();
+
+        return $class instanceof Class_ && $class->name === null;
     }
 
     /**
