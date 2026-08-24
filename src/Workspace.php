@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments;
 
 use JesseGall\CodeCommandments\Support\Directory;
-use JesseGall\CodeCommandments\Support\PhpFile;
+use JesseGall\CodeCommandments\Support\FileTree;
 
 /**
  * The ONE home of the `.commandments/` layout — every artifact path in the package is built here.
@@ -108,18 +108,7 @@ final class Workspace
             return [];
         }
 
-        $files = [];
-
-        /**
-         * @var \SplFileInfo $file
-         */
-        foreach (new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),
-        ) as $file) {
-            if (PhpFile::is($file)) {
-                $files[] = $file->getPathname();
-            }
-        }
+        $files = [...FileTree::filesIn($root, 'php')];
 
         sort($files);
 

@@ -34,7 +34,7 @@ final class UselessPropertyHookDetector implements Detector
             ->reject(static fn (AstNode $node): bool => $node->isAbstractHook())
             ->reject(static fn (AstNode $node): bool => $node->hookedPropertyHasSetter())
             ->reject(static fn (AstNode $node): bool => $node->referencesThis())
-            ->reject(static fn (AstNode $node): bool => $node->resolvesThroughLateStaticBinding())
+            ->reject(static fn (AstNode $node): bool => $node->isLateStaticBound())
             ->reject(static fn (SpatieDataNode $node): bool => $node->inDataScope())
             ->get();
     }

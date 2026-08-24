@@ -11,13 +11,12 @@ use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Support\Invokable;
 use JesseGall\CodeCommandments\Support\NoOp;
 use JesseGall\CodeCommandments\Support\Path;
-use JesseGall\CodeCommandments\Support\PhpFile;
+use JesseGall\CodeCommandments\Support\FileTree;
 
 use JesseGall\CodeCommandments\ClassAncestry;
 use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\WorkingCopy;
-use FilesystemIterator;
 use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Attribute;
@@ -52,9 +51,6 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitor\ParentConnectingVisitor;
 use PhpParser\ParserFactory;
-use RecursiveCallbackFilterIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 /**
  * The entry point to the query engine: parses a set of files (names resolved,
@@ -300,7 +296,7 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
         $paths = [];
 
         foreach ((array) $path as $root) {
-            foreach (self::phpFilesIn($root, $excluded) as $file) {
+            foreach (FileTree::filesIn($root, 'php', $excluded) as $file) {
                 $paths[$file] = true;
             }
 
@@ -531,6 +527,15 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
                 && ! $parent instanceof FuncCall
                 && ! $parent instanceof ConstFetch;
         }, [Name::class]);
+    }
+
+    /**
+     * Every GLOBAL constant fetch — `FILE_APPEND`, `LOCK_EX`, `SORT_STRING`. Read the name with
+     * {@see AstNode::constantName}, which passes over the literals `true`/`false`/`null`.
+     */
+    public function whereConstant(): Query
+    {
+        return new Query($this, static fn (Node $node): bool => $node instanceof ConstFetch, [ConstFetch::class]);
     }
 
     /**
@@ -1276,59 +1281,6 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
             fwrite(STDERR, "⚠ skipped {$path} — it could not be read: {$failure->getMessage()}\n");
 
             return new ParsedFile($path, [], $code);
-        }
-    }
-
-    /**
-     * @return iterable<string>
-     */
-    private static function phpFilesIn(string $path, ExcludedPaths $excluded = new ExcludedPaths()): iterable
-    {
-        if (is_file($path)) {
-            if (! $excluded->covers($path)) {
-                yield $path;
-            }
-
-            return;
-        }
-
-        if (! is_dir($path) || $excluded->covers($path)) {
-            return;
-        }
-
-        $directory = new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS);
-
-        // Never descend into dependency / VCS / test / tooling trees — they aren't
-        // app code under review, and parsing them all exhausts memory on a
-        // project-root scan. (`tests`, `.claude`, etc. are excluded by default.)
-        $pruned = new RecursiveCallbackFilterIterator($directory, static function (\SplFileInfo $file) use ($excluded): bool {
-            if (! $file->isDir()) {
-                return true;
-            }
-
-            // Never descend a symlinked directory — it can point back up the tree
-            // (or at itself) and recurse forever.
-            if ($file->isLink()) {
-                return false;
-            }
-
-            $name = $file->getFilename();
-
-            // Hidden dirs (.git, .idea, .claude, …) are tooling, not source.
-            if (str_starts_with($name, '.')) {
-                return false;
-            }
-
-            // An excluded subtree is pruned HERE, not filtered out of the findings later: a
-            // monorepo's build output is megabytes the run would otherwise read and parse in full
-            // before discarding every sin it found there.
-            return ! in_array($name, self::SKIP_DIRS, true) && ! $excluded->covers($file->getPathname());
-        });
-
-        foreach (new RecursiveIteratorIterator($pruned) as $file) {
-            if (PhpFile::is($file)) {
-                yield $file->getPathname();
-            }
         }
     }
 }

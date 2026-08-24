@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Detectors;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Support\EdgeMap;
 use JesseGall\CodeCommandments\Support\File;
 use JesseGall\CodeCommandments\Support\InstalledPackage;
 use JesseGall\CodeCommandments\Workspace;
@@ -247,37 +248,26 @@ final class CrossFileSet
         $edges = [];
 
         foreach ($source->whereNew()->get() as $new) {
-            self::link($edges, $new->enclosingClassName(), $new->newClassName());
+            EdgeMap::link($edges, $new->enclosingClassName(), $new->newClassName());
         }
 
         foreach ($source->whereStaticCall()->get() as $call) {
-            self::link($edges, $call->enclosingClassName(), $call->staticCallClass());
+            EdgeMap::link($edges, $call->enclosingClassName(), $call->staticCallClass());
         }
 
         // What a class INHERITS is code it reaches through too: a rule whose base does the reading
         // asks the world just as surely as one that asks it in its own body.
         foreach (array_keys($source->declarations()) as $fqcn) {
             foreach ($source->ancestorsOf($fqcn) as $ancestor) {
-                self::link($edges, $fqcn, $ancestor);
+                EdgeMap::link($edges, $fqcn, $ancestor);
             }
 
             foreach ($source->usersOfTrait($fqcn) as $user) {
-                self::link($edges, $user, $fqcn);
+                EdgeMap::link($edges, $user, $fqcn);
             }
         }
 
         return $edges;
     }
 
-    /**
-     * @param  array<string, array<string, true>>  $edges
-     */
-    private static function link(array &$edges, ?string $from, ?string $target): void
-    {
-        if ($from === null || $target === null || $from === $target) {
-            return;
-        }
-
-        $edges[$from][ltrim($target, '\\')] = true;
-    }
 }

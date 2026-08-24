@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments;
 
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
+use JesseGall\CodeCommandments\Support\FileTree;
+
 
 /**
  * Turns a directory tree into the fully-qualified class names it holds — the shared discovery
@@ -32,16 +31,12 @@ final class Discovery
 
         $classes = [];
 
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
-        );
-
-        foreach ($files as $file) {
-            if (! $file->isFile() || ! str_ends_with($file->getFilename(), "{$suffix}.php")) {
+        foreach (FileTree::filesIn($dir, 'php') as $file) {
+            if (! str_ends_with(basename($file), "{$suffix}.php")) {
                 continue;
             }
 
-            $relative = substr($file->getPathname(), strlen($dir) + 1, -4);
+            $relative = substr($file, strlen($dir) + 1, -4);
             $classes[] = $namespace . '\\' . str_replace('/', '\\', $relative);
         }
 

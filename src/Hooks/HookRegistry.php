@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks;
 
+use JesseGall\CodeCommandments\Support\JsonFile;
 use JesseGall\CodeCommandments\Config;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
@@ -96,9 +97,10 @@ final class HookRegistry
         // written in two places.
         $hookClasses = self::forProject($root);
         $path = "{$root}/" . self::SETTINGS;
-        $settings = is_file($path) ? json_decode((string) file_get_contents($path), true) : [];
+        $file = new JsonFile($path);
+        $settings = $file->exists() ? $file->read() : [];
 
-        if (! is_array($settings)) {
+        if ($settings === null) {
             fwrite(STDERR, "⚠ {$path} is not readable JSON — hooks left unwired rather than overwrite it.\n");
 
             return false;
@@ -124,8 +126,7 @@ final class HookRegistry
             return false;
         }
 
-        @mkdir(dirname($path), 0755, true);
-        file_put_contents($path, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+        $file->write($settings);
 
         return true;
     }

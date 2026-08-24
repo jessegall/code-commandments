@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Support\FileTree;
 use JesseGall\CodeCommandments\Files\FileQuery;
 use JesseGall\CodeCommandments\Support\Path;
 use JesseGall\CodeCommandments\Ts\ExprQuery;
@@ -26,10 +27,6 @@ use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\WorkingCopy;
 use Closure;
-use FilesystemIterator;
-use RecursiveCallbackFilterIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 /**
  * The frontend twin of the backend {@see \JesseGall\CodeCommandments\Ast\Codebase}:
@@ -123,7 +120,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             // A language the project does not write is not read: nothing is parsed, so nothing in it
             // can be found, and a PHP-only project is never judged against a rule it cannot break.
             if ($languages->writes(Language::Vue)) {
-                foreach (self::filesIn($root, 'vue', $excluded) as $file) {
+                foreach (FileTree::filesIn($root, 'vue', $excluded) as $file) {
                     $vue[$file] = true;
                 }
 
@@ -133,7 +130,7 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
             }
 
             if ($languages->writes(Language::TypeScript)) {
-                foreach (self::filesIn($root, 'ts', $excluded) as $file) {
+                foreach (FileTree::filesIn($root, 'ts', $excluded) as $file) {
                     $typeScript[$file] = true;
                 }
 
@@ -542,43 +539,6 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         foreach ($node->children as $child) {
             $nodes[] = [$child, $component];
             self::collect($child, $component, $nodes);
-        }
-    }
-
-    /**
-     * @return iterable<string>
-     */
-    private static function filesIn(string $path, string $extension, ExcludedPaths $excluded = new ExcludedPaths()): iterable
-    {
-        if (is_file($path)) {
-            if (pathinfo($path, PATHINFO_EXTENSION) === $extension) {
-                yield $path;
-            }
-
-            return;
-        }
-
-        if (! is_dir($path)) {
-            return;
-        }
-
-        $directory = new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS);
-
-        $pruned = new RecursiveCallbackFilterIterator($directory, static function (\SplFileInfo $file) use ($excluded): bool {
-            if (! $file->isDir()) {
-                return true;
-            }
-
-            return ! $file->isLink()
-                && ! str_starts_with($file->getFilename(), '.')
-                && ! in_array($file->getFilename(), ['vendor', 'node_modules'], true)
-                && ! $excluded->covers($file->getPathname());
-        });
-
-        foreach (new RecursiveIteratorIterator($pruned) as $file) {
-            if ($file->isFile() && $file->getExtension() === $extension) {
-                yield $file->getPathname();
-            }
         }
     }
 }

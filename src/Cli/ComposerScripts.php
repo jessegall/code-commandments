@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Support\Binary;
+use JesseGall\CodeCommandments\Support\JsonFile;
 
 /**
  * The `commandments sync` call in a project's composer `post-install-cmd` / `post-update-cmd`, which
@@ -26,10 +27,10 @@ final class ComposerScripts
      */
     public function ensure(): ?bool
     {
-        $path = "{$this->root}/composer.json";
-        $composer = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
+        $manifest = new JsonFile("{$this->root}/composer.json");
+        $composer = $manifest->read();
 
-        if (! is_array($composer)) {
+        if ($composer === null) {
             return null;
         }
 
@@ -49,7 +50,7 @@ final class ComposerScripts
 
         if ($changed) {
             $composer['scripts'] = $scripts;
-            file_put_contents($path, json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+            $manifest->write($composer);
         }
 
         return $changed;

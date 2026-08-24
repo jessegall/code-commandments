@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Vue;
 
+use JesseGall\CodeCommandments\Support\FileTree;
+
 /**
  * Discovers page components in Inertia apps by reading the glob pattern from `app.ts`
  * (never scraped). Every `.vue` beneath the pattern's fixed prefix directory is a page root.
@@ -52,16 +54,7 @@ final class PageRoots
             return [];
         }
 
-        $pages = [];
-        $walk = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
-        );
-
-        foreach ($walk as $file) {
-            if ($file->isFile() && $file->getExtension() === 'vue') {
-                $pages[] = $file->getPathname();
-            }
-        }
+        $pages = [...FileTree::filesIn($dir, 'vue')];
 
         sort($pages); // stable order, independent of the filesystem
 

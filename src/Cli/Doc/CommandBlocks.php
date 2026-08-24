@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Doc;
 
-use FilesystemIterator;
+use JesseGall\CodeCommandments\Support\FileTree;
 use JesseGall\CodeCommandments\Support\GeneratedBlock;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 
 /**
  * Fills every `commands:<verbs>` block in a document from the live CLI — a skill (or any doc) that
@@ -42,12 +40,9 @@ final class CommandBlocks
     public static function documentsIn(string $directory): array
     {
         $documents = [];
-        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS));
 
-        foreach ($files as $file) {
-            if ($file->isFile() && $file->getExtension() === 'md') {
-                $documents[$file->getPathname()] = (string) file_get_contents($file->getPathname());
-            }
+        foreach (FileTree::filesIn($directory, 'md') as $file) {
+            $documents[$file] = (string) file_get_contents($file);
         }
 
         ksort($documents);

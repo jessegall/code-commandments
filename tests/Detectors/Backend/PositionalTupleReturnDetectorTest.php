@@ -31,8 +31,9 @@ final class PositionalTupleReturnDetectorTest extends TestCase
         $scopes = array_map(static fn ($m): string => $m->scope(), $hits);
         sort($scopes);
 
-        // The arrow-fn tuple resolves to its enclosing class scope (anonymous fn).
-        $this->assertSame(['S', 'S::split'], $scopes);
+        // The arrow-fn tuple is reported against the METHOD that declares it: a closure has no name of
+        // its own, and the work it does is the declaring method's.
+        $this->assertSame(['S::deferred', 'S::split'], $scopes);
     }
 
     public function test_leaves_projections_lists_pairs_and_records_alone(): void

@@ -95,6 +95,8 @@ use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\For_;
 use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\Node\Stmt\Function_;
+use PhpParser\Node\Stmt\Case_;
+use PhpParser\Node\Stmt\Else_;
 use PhpParser\Node\Stmt\If_;
 use PhpParser\Node\Stmt\Interface_;
 use PhpParser\Node\Stmt\Namespace_;
@@ -3035,7 +3037,7 @@ class AstNode
      * of the object in hand? `static::SOMETHING` answers differently for every subclass, so what it
      * yields is a fact about the instance; `self::` is a constant of the class that declared it.
      */
-    public function resolvesThroughLateStaticBinding(): bool
+    public function isLateStaticBound(): bool
     {
         return new NodeFinder()->findFirst(
             [$this->node],
@@ -3956,6 +3958,101 @@ class AstNode
             || $node instanceof For_
             || $node instanceof While_
             || $node instanceof Do_) !== null;
+    }
+
+    /**
+     * Does this function-like declaration have a body that DOES anything? False for an interface or
+     * abstract method, which has none, and for one whose body is empty — a declaration that takes no
+     * steps can neither share a mechanism nor skip one, however much its signature names.
+     */
+    public function hasBody(): bool
+    {
+        return $this->node instanceof FunctionLike && ($this->node->getStmts() ?? []) !== [];
+    }
+
+    /**
+     * The global constant this node fetches (`FILE_APPEND`, `SORT_STRING`), or null when it is not one or
+     * is a literal wearing a constant's shape (`true`/`false`/`null`). A flag constant is part of what a
+     * call DOES — `file_put_contents` with `FILE_APPEND` appends where the same call without it replaces
+     * — so it belongs in what a scope is read to reach.
+     */
+    public function constantName(): ?string
+    {
+        if (! $this->node instanceof ConstFetch) {
+            return null;
+        }
+
+        $name = $this->node->name->toString();
+
+        return in_array(strtolower($name), ['true', 'false', 'null'], true) ? null : $name;
+    }
+
+    /**
+     * This function-like declaration's SIGNATURE — its name and the rendered types of its parameters, or
+     * null when the node is not one. Two declarations wearing the same signature answer the same
+     * contract whether or not an interface says so: a framework's convention (`handle(Request, Closure)`)
+     * binds as surely as a declared one.
+     */
+    public function signature(): ?string
+    {
+        if (! $this->node instanceof FunctionLike) {
+            return null;
+        }
+
+        $types = array_map(
+            static fn (Param $param): string => TypeName::render($param->type),
+            $this->node->getParams(),
+        );
+
+        return ($this->methodName() ?? '') . '(' . implode(',', $types) . ')';
+    }
+
+    /**
+     * Does this node run only when something HOLDS — is it inside the body a condition guards, rather
+     * than inside the condition itself? What separates a step a path always takes from a check it makes,
+     * so a twin lacking it is skipping the check rather than merely doing less. The tested expression is
+     * NOT guarded: `if (foo())` runs `foo()` every time. Bounded at the enclosing function, since a
+     * closure declared inside an `if` does not make its whole body conditional.
+     */
+    public function isWithinCondition(): bool
+    {
+        $node = $this->node;
+
+        while ($node instanceof Node) {
+            $parent = $node->getAttribute('parent');
+
+            if (! $parent instanceof Node || $parent instanceof FunctionLike) {
+                return false;
+            }
+
+            if (self::isGuardedBranchOf($node, $parent)) {
+                return true;
+            }
+
+            $node = $parent;
+        }
+
+        return false;
+    }
+
+    /**
+     * Is $child the part of $parent that runs conditionally — a branch body, a match arm's result, the
+     * right side of a short-circuit — as against the part that decides it?
+     */
+    private static function isGuardedBranchOf(Node $child, Node $parent): bool
+    {
+        return match (true) {
+            $parent instanceof If_ => in_array($child, $parent->stmts, true)
+                || $child === $parent->else
+                || in_array($child, $parent->elseifs, true),
+            $parent instanceof ElseIf_, $parent instanceof Else_,
+            $parent instanceof Case_ => in_array($child, $parent->stmts, true),
+            $parent instanceof MatchArm => $child === $parent->body,
+            $parent instanceof Ternary => $child === $parent->if || $child === $parent->else,
+            $parent instanceof BooleanAnd, $parent instanceof BooleanOr,
+            $parent instanceof Coalesce => $child === $parent->right,
+            default => false,
+        };
     }
 
     /**
@@ -5152,6 +5249,30 @@ class AstNode
     }
 
     /**
+     * The fully-qualified name of the class-like DECLARATION this node IS, or null when it is not one
+     * (or is anonymous). The instance twin of {@see declaredClassNameOf}, so a rule that selected
+     * declarations can name the one in hand without reaching for the raw node.
+     */
+    public function declaredClassName(): ?string
+    {
+        return self::declaredClassNameOf($this->node);
+    }
+
+    /**
+     * How many source lines this node spans — 1 for a one-liner, the whole body for a declaration. The
+     * coarse SIZE of a construct, for a rule whose verdict turns on substance rather than shape: a
+     * mechanism worth naming is not three lines long. Zero when there is no node.
+     */
+    public function lineCount(): int
+    {
+        if ($this->node === null) {
+            return 0;
+        }
+
+        return max(1, $this->node->getEndLine() - $this->node->getStartLine() + 1);
+    }
+
+    /**
      * The namespace this node is DECLARED in — `App\Ui\Shared` — or null at global scope. Read from
      * the enclosing `namespace` statement, so it answers for a node at file scope too (a `use`
      * import, a top-level function), where {@see enclosingClassName} has nothing to offer.
@@ -5228,11 +5349,16 @@ class AstNode
      */
     public function enclosingFunctionName(): ?string
     {
-        $function = $this->enclosingFunction();
+        // Walked PAST a closure to the function that DECLARES it, rather than stopping at the nearest
+        // function-like: work a method hands to a callback is still work that method does, and a closure
+        // has no name to report in its place — so stopping there named the CLASS, losing the method the
+        // code actually sits in. ({@see enclosingFunction} still answers with the nearest, which is what
+        // a variable's scope means.)
+        $named = $this->node instanceof ClassMethod || $this->node instanceof Function_
+            ? $this->node
+            : $this->walkUp(static fn (Node $node): bool => $node instanceof ClassMethod || $node instanceof Function_);
 
-        return ($function instanceof ClassMethod || $function instanceof Function_)
-            ? $function->name->toString()
-            : null;
+        return $named instanceof ClassMethod || $named instanceof Function_ ? $named->name->toString() : null;
     }
 
     /**
