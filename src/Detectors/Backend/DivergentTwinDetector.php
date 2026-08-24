@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Ast\Support\ReachedUnit;
 use JesseGall\CodeCommandments\Ast\Support\ReachPairs;
 use JesseGall\CodeCommandments\Ast\Support\ResourceReach;
@@ -27,6 +28,8 @@ use JesseGall\CodeCommandments\Unpublished;
  */
 final class DivergentTwinDetector implements Detector, RecurrenceDetector, Unpublished
 {
+    use GroupsByFingerprint;
+
     /**
      * How many resources two paths must share before they are worth comparing at all.
      */
@@ -50,10 +53,13 @@ final class DivergentTwinDetector implements Detector, RecurrenceDetector, Unpub
     private const int MAX_DIVERGE = 1;
 
     /**
-     * What share of the population may reach a resource before it stops telling us anything. A share,
-     * not a count, so a fixture and a monorepo answer alike.
+     * What share of the population may reach a resource before it stops telling us anything. Measured,
+     * not guessed: on a real tree the verbs that name a mechanism sit at or under half a percent of
+     * scopes (`rename` 0.01%, `realpath` 0.08%, `json_decode` 0.35%), while the transformation idioms
+     * every program repeats sit well above one (`array_map` 4%, `sprintf` 3.1%, `is_string` 1.4%). A
+     * share, not a count, so a fixture and a monorepo answer alike.
      */
-    private const float MAX_SHARE = 0.05;
+    private const float MAX_SHARE = 0.01;
 
     /**
      * How far a call is followed when asking whether one path already routes through another. One hop
@@ -76,11 +82,9 @@ final class DivergentTwinDetector implements Detector, RecurrenceDetector, Unpub
         return new DivergentTwin();
     }
 
-    public function groupKey(Located $finding, BaseCodebase $codebase): ?string
+    protected function fingerprint(NodeMatch $finding, Codebase $codebase): ?string
     {
-        return $finding instanceof \JesseGall\CodeCommandments\Ast\NodeMatch && $codebase instanceof Codebase
-            ? $this->twinOf($finding, $codebase)
-            : null;
+        return $this->twinOf($finding, $codebase);
     }
 
     public function find(Codebase $codebase): array
@@ -115,7 +119,7 @@ final class DivergentTwinDetector implements Detector, RecurrenceDetector, Unpub
      * The pair this finding belongs to, named the same way from either side so both members bucket
      * together — a fingerprint, not a sentence.
      */
-    private function twinOf(\JesseGall\CodeCommandments\Ast\NodeMatch $finding, Codebase $codebase): ?string
+    private function twinOf(NodeMatch $finding, Codebase $codebase): ?string
     {
         foreach ($this->readingOf($codebase) as $divergence) {
             if ($divergence->poorer === $finding->scope() || $divergence->richer === $finding->scope()) {

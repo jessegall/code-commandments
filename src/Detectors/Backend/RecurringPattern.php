@@ -15,11 +15,13 @@ use JesseGall\CodeCommandments\Located;
  * The shared machinery of every BACKEND {@see RecurrenceDetector}: gather candidates, bucket them by
  * their {@see fingerprint}, and flag every member of a bucket seen at least {@see minimumOccurrences}
  * times — a concrete detector supplies only which nodes are candidates and how one fingerprints, never
- * the loop. It is also the ONE seam where the engine-agnostic contract meets the PHP AST, narrowing
- * `groupKey` to a {@see NodeMatch} here rather than in every detector.
+ * the loop. The narrowing to a {@see NodeMatch} it shares with every other backend recurrence rule is
+ * {@see GroupsByFingerprint}'s.
  */
 abstract class RecurringPattern implements Detector, RecurrenceDetector
 {
+    use GroupsByFingerprint;
+
     /**
      * The nodes to bucket — the shapes this detector counts. {@see fingerprint} decides which of them are
      * countable (a null key drops one) and which collide.
@@ -27,18 +29,6 @@ abstract class RecurringPattern implements Detector, RecurrenceDetector
      * @return list<NodeMatch>
      */
     abstract protected function candidates(Codebase $codebase): array;
-
-    /**
-     * The canonical fingerprint of this node's recurring shape, or null when it is not countable.
-     */
-    abstract protected function fingerprint(NodeMatch $finding, Codebase $codebase): ?string;
-
-    final public function groupKey(Located $finding, BaseCodebase $codebase): ?string
-    {
-        return $finding instanceof NodeMatch && $codebase instanceof Codebase
-            ? $this->fingerprint($finding, $codebase)
-            : null;
-    }
 
     /**
      * How many occurrences of one fingerprint make it a sin. Two — a shape written twice is already a

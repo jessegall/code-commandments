@@ -33,10 +33,11 @@ final class DuplicatedMechanismDetector implements Detector, RecurrenceDetector,
 
     /**
      * What share of the classes may reach a verb before it stops telling us anything. Past this it is
-     * the program's background — `sprintf`, `count`, `is_string`. A share, not a count, so a fixture
-     * and a monorepo answer alike.
+     * the program's background — `array_map`, `sprintf`, `is_string`, which every program repeats and
+     * which say nothing about what a class DOES. A share, not a count, so a fixture and a monorepo
+     * answer alike.
      */
-    private const float MAX_SHARE = 0.05;
+    private const float MAX_SHARE = 0.01;
 
     /**
      * How many verbs two classes must share before they are doing one job rather than brushing past each
