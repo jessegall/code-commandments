@@ -54,7 +54,10 @@ final class ResourcePopulation
      */
     public function rareOf(?string $unit, float $maxShare): array
     {
-        $ceiling = max(1, (int) ceil($maxShare * count($this->reach)));
+        // Never below two: a mechanism only exists by RECURRING, so a resource held by two units is
+        // the least a shared one can be. A ceiling under that filters out the very thing being looked
+        // for, and a small program — a unit test's, a young project's — has no background to speak of.
+        $ceiling = max(2, (int) ceil($maxShare * count($this->reach)));
         $rare = [];
 
         foreach (array_keys($this->of($unit)) as $resource) {
