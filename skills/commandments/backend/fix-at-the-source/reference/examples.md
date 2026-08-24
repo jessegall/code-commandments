@@ -41,6 +41,107 @@ final class LazyLedgerExport
 }
 ```
 
+### divergent-twin
+
+Two methods do one job — the same rare verbs, in different words — and one of them does strictly less of it, which is what a change looks like when it landed in only one of the two places that should have been one
+
+```php
+----------[ Bad ]----------
+
+// in Shop\Catalog\SupplierFeed
+public function rows(string $path): array
+{
+    $handle = fopen($path, 'r');
+
+    if (! is_resource($handle)) {
+        return [];
+    }
+
+    $rows = [];
+
+    while (($row = fgetcsv($handle)) !== false) {
+        $rows[] = rtrim((string) $row[0]);
+    }
+
+    fclose($handle);
+
+    return $rows;
+}
+
+// in Shop\Labels\SpoolArchive
+public function store(string $path, string $spool): void
+{
+    if (! is_dir(dirname($path))) {
+        mkdir(dirname($path), 0o755, true);
+    }
+
+    $partial = $path . '.' . getmypid();
+
+    file_put_contents($partial, $spool);
+
+    rename($partial, $path);
+}
+
+// in Shop\Loyalty\MemberRoster
+public function rows(string $path): array
+{
+    $handle = fopen($path, 'r');
+
+    $rows = [];
+
+    while (($row = fgetcsv($handle)) !== false) {
+        $rows[] = rtrim((string) $row[0]);
+    }
+
+    fclose($handle);
+
+    return $rows;
+}
+
+// in Shop\Docs\GuideExport
+public function write(string $path, string $guide): void
+{
+    if (! is_dir(dirname($path))) {
+        mkdir(dirname($path), 0o755, true);
+    }
+
+    file_put_contents($path, $guide);
+}
+
+// in Shop\Docs\AssetPath
+public function relativeTo(string $file, string $root): string
+{
+    $prefix = rtrim(realpath($root) ?: $root, '/') . '/';
+
+    if (! str_starts_with($file, $prefix)) {
+        return basename($file);
+    }
+
+    return substr($file, strlen($prefix));
+}
+
+// in Shop\Audit\EvidencePath
+public function under(string $file, string $root): string
+{
+    $prefix = rtrim($root, '/') . '/';
+
+    if (! str_starts_with($file, $prefix)) {
+        return basename($file);
+    }
+
+    return substr($file, strlen($prefix));
+}
+
+----------[ Good ]----------
+
+// The same roster, read through the one place that knows how a drop is opened here.
+
+public function members(string $path): array
+{
+    return $this->feed->rows($path);
+}
+```
+
 ### duplicate-function
 
 Copy-pasted code — two+ functions with an identical AST (formatting/comments aside)

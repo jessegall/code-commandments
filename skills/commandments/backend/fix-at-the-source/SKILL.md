@@ -107,6 +107,8 @@ is born, and every `Command` that exists is real.
 
 - [ ] Let a constructor establish what the object IS; never let building one change anything outside it.
       _Keep the collaborator as a field and act on it from the method that someone actually calls._
+- [ ] Funnel a shared behaviour through ONE path. Where two places do the same job, the one that must happen everywhere cannot be left to each of them to remember.
+      _Route the poorer path through the richer one, so the step cannot be forgotten again._
 - [ ] Extract copy-pasted code — two functions with an identical AST must become one.
 - [ ] Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
       _Throw a named exception at the boundary, or bake a real default into the signature._
@@ -155,17 +157,17 @@ final class LazyLedgerExport
 }
 ```
 
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=backend/fix-at-the-source` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `constructor-side-effect`, `duplicate-function`, `manufactured-fake-fill`, `mutable-static-state`, `near-duplicate-function`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `constructor-side-effect`, `divergent-twin`, `duplicate-function`, `manufactured-fake-fill`, `mutable-static-state`, `near-duplicate-function`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

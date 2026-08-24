@@ -43,15 +43,12 @@ final class ResourceReach
 
     /**
      * @param  array<string, mixed>  $firstParty  the FQCNs this scan declares
-     * @param  array<string, array<string, true>>  $guarded  scope => the resources it reaches ONLY from
-     *                                                       inside a condition
      */
     private function __construct(
         private readonly Codebase $codebase,
         private readonly ResourcePopulation $classes,
         private readonly ResourcePopulation $scopes,
         private readonly array $firstParty,
-        private readonly array $guarded,
     ) {}
 
     /**
@@ -67,8 +64,6 @@ final class ResourceReach
     {
         $byClass = [];
         $byScope = [];
-        $guarded = [];
-        $always = [];
 
         // The dependency EDGES in one selector — an import, a type, a `new`, a static call, a catch.
         foreach ($codebase->whereClassReference()->get() as $reference) {
@@ -81,11 +76,6 @@ final class ResourceReach
             }
 
             EdgeMap::link($byScope, $reference->scope(), $reference->referencedClassName());
-            if ($reference->isWithinCondition()) {
-                EdgeMap::link($guarded, $reference->scope(), $reference->referencedClassName());
-            } else {
-                EdgeMap::link($always, $reference->scope(), $reference->referencedClassName());
-            }
         }
 
         // A global function is a resource too, and often the most telling: `rename` and `getmypid` name
@@ -93,11 +83,6 @@ final class ResourceReach
         foreach ($codebase->whereFunction()->get() as $call) {
             EdgeMap::link($byClass, $call->enclosingClassName(), self::FUNCTION . $call->callName());
             EdgeMap::link($byScope, $call->scope(), self::FUNCTION . $call->callName());
-            if ($call->isWithinCondition()) {
-                EdgeMap::link($guarded, $call->scope(), self::FUNCTION . $call->callName());
-            } else {
-                EdgeMap::link($always, $call->scope(), self::FUNCTION . $call->callName());
-            }
         }
 
         // A flag is part of what a call DOES: the same `file_put_contents` appends or replaces by it.
@@ -111,11 +96,6 @@ final class ResourceReach
             EdgeMap::link($byClass, $constant->enclosingClassName(), self::CONSTANT . $name);
             EdgeMap::link($byScope, $constant->scope(), self::CONSTANT . $name);
 
-            if ($constant->isWithinCondition()) {
-                EdgeMap::link($guarded, $constant->scope(), self::CONSTANT . $name);
-            } else {
-                EdgeMap::link($always, $constant->scope(), self::CONSTANT . $name);
-            }
         }
 
         $firstParty = $codebase->declarations();
@@ -126,7 +106,6 @@ final class ResourceReach
             new ResourcePopulation($closed, self::holders($closed)),
             new ResourcePopulation($byScope, self::holders($byScope)),
             $firstParty,
-            self::onlyGuarded($guarded, $always),
         );
     }
 
@@ -145,32 +124,6 @@ final class ResourceReach
     public function scopes(): ResourcePopulation
     {
         return $this->scopes;
-    }
-
-    /**
-     * Does $scope reach $resource ONLY from inside a condition? Then it is a CHECK that scope makes, not
-     * work it always does — and a twin lacking it is skipping the check.
-     */
-    public function isGuardedIn(string $scope, string $resource): bool
-    {
-        return isset($this->guarded[$scope][$resource]);
-    }
-
-    /**
-     * The resources each scope reaches from inside a condition and NOWHERE else — reached unconditionally
-     * somewhere too, and it is work the scope always does.
-     *
-     * @param  array<string, array<string, true>>  $guarded
-     * @param  array<string, array<string, true>>  $always
-     * @return array<string, array<string, true>>
-     */
-    private static function onlyGuarded(array $guarded, array $always): array
-    {
-        foreach ($guarded as $scope => $resources) {
-            $guarded[$scope] = array_diff_key($resources, $always[$scope] ?? []);
-        }
-
-        return array_filter($guarded);
     }
 
     /**

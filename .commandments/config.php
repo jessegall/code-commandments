@@ -91,6 +91,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Backend\DeNulledFinder::class,
         // Sins\Backend\DeepNesting::class,
         // Sins\Backend\DerivedArgument::class,
+        // Sins\Backend\DivergentTwin::class,
         // Sins\Backend\DuplicateFunction::class,
         // Sins\Backend\EnumCaseOrChain::class,
         // Sins\Backend\EnumValueMatch::class,

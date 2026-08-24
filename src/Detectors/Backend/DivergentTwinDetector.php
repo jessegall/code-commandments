@@ -17,7 +17,6 @@ use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Sins\Backend\DivergentTwin;
 use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Unpublished;
 
 /**
  * Flags a method that does the same job as another and does STRICTLY LESS of it. Sameness is
@@ -26,7 +25,7 @@ use JesseGall\CodeCommandments\Unpublished;
  * asked what it lacks. That asymmetry is what a refactor looks like when it landed in one of two places
  * that should have been one.
  */
-final class DivergentTwinDetector implements Detector, RecurrenceDetector, Unpublished
+final class DivergentTwinDetector implements Detector, RecurrenceDetector
 {
     use GroupsByFingerprint;
 
@@ -217,12 +216,7 @@ final class DivergentTwinDetector implements Detector, RecurrenceDetector, Unpub
             return null;
         }
 
-        $guards = array_values(array_filter(
-            $missing,
-            static fn (string $step): bool => $reach->isGuardedIn($richerScope, $step),
-        ));
-
-        return new Divergence($poorerScope, $richerScope, $missing, $guards);
+        return new Divergence($poorerScope, $richerScope, $missing);
     }
 
     /**
@@ -274,9 +268,12 @@ final class DivergentTwinDetector implements Detector, RecurrenceDetector, Unpub
         $codebase = $reach->codebase();
         $method = $poorer->match->methodName();
 
-        return $poorer->match->signature() === $richer->match->signature()
-            || ($codebase->overridesMethod($poorer->match->enclosingClassName(), $method)
-                && $codebase->overridesMethod($richer->match->enclosingClassName(), $method));
+        // A DECLARED contract only. Matching signatures alone exempted far too much — `rows(string):
+        // array` is a shape two unrelated classes reach by accident, and calling that a contract
+        // excused the very duplication being looked for. Two paths a caller genuinely chooses between
+        // are caught as alternatives instead, which needs no name to agree.
+        return $codebase->overridesMethod($poorer->match->enclosingClassName(), $method)
+            && $codebase->overridesMethod($richer->match->enclosingClassName(), $method);
     }
 
     /**

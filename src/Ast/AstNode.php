@@ -5363,7 +5363,9 @@ class AstNode
             return false;
         }
 
-        if ($this->walkUp(static fn (Node $node): bool => $node instanceof Param) !== null) {
+        // A parameter's type, and an ATTRIBUTE on the declaration: both describe the declaration rather
+        // than doing anything, and an attribute is read by whoever cares, not run by this body.
+        if ($this->walkUp(static fn (Node $node): bool => $node instanceof Param || $node instanceof Attribute) !== null) {
             return true;
         }
 
