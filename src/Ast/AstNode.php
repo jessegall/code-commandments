@@ -4632,34 +4632,16 @@ class AstNode
     }
 
     /**
-     * Render a native type declaration to a normalised key (lowercased, leading
-     * `?` and `\` stripped, union members sorted) so it can be compared against a
-     * docblock type. Returns null when there is no native type.
+     * A native type declaration as a normalised key — lowercased, leading `?`/`\\` stripped, union
+     * members sorted — so it can be compared against a docblock type. Null when there is no native type.
+     * The rendering itself is {@see TypeName::render}'s: one of these knew about intersection types and
+     * the other did not, which is what two renderers of one thing always come to.
      */
     protected static function typeToString(?Node $type): ?string
     {
-        if ($type === null) {
-            return null;
-        }
+        $rendered = TypeName::render($type);
 
-        if ($type instanceof NullableType) {
-            $inner = self::typeToString($type->type);
-
-            return $inner === null ? null : self::typeKey('?' . $inner);
-        }
-
-        if ($type instanceof UnionType || $type instanceof IntersectionType) {
-            $glue = $type instanceof UnionType ? '|' : '&';
-            $parts = array_map(static fn (Node $part): string => (string) self::typeToString($part), $type->types);
-
-            return self::typeKey(implode($glue, $parts));
-        }
-
-        if ($type instanceof Name || $type instanceof Identifier) {
-            return self::typeKey($type->toString());
-        }
-
-        return null;
+        return $rendered === '' ? null : self::typeKey($rendered);
     }
 
     protected static function typeKey(string $type): string

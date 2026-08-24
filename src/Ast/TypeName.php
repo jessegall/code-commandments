@@ -9,6 +9,7 @@ use PhpParser\Node\Identifier;
 use PhpParser\Node\Param;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
+use PhpParser\Node\IntersectionType;
 use PhpParser\Node\UnionType;
 
 /**
@@ -198,14 +199,16 @@ final class TypeName
             return ltrim($type->toString(), '\\');
         }
 
-        if ($type instanceof UnionType) {
+        if ($type instanceof UnionType || $type instanceof IntersectionType) {
             $parts = array_map(static fn (Node $member) => self::render($member), $type->types);
             sort($parts);
 
-            return implode('|', $parts);
+            return implode($type instanceof UnionType ? '|' : '&', $parts);
         }
 
-        return $type === null ? '' : $type::class;
+        // Anything else is not a type this can name, and a php-parser class name is not a type — a
+        // caller comparing what it gets back must be told nothing rather than told something false.
+        return '';
     }
 
     /**
