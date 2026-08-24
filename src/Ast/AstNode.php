@@ -5362,6 +5362,58 @@ class AstNode
     }
 
     /**
+     * Is this class reference part of a declaration's SIGNATURE — a parameter's type, attribute or
+     * default, or the return type — rather than something the body DOES? A signature states what a
+     * function accepts and yields; two functions accepting the same things are not thereby doing the
+     * same thing, so a rule reading what code DOES must not count them.
+     */
+    public function isSignatureType(): bool
+    {
+        $function = $this->enclosingFunction();
+
+        if (! $function instanceof FunctionLike) {
+            return false;
+        }
+
+        if ($this->walkUp(static fn (Node $node): bool => $node instanceof Param) !== null) {
+            return true;
+        }
+
+        return $this->isWithin($function->getReturnType());
+    }
+
+    /**
+     * Is $ancestor this node, or somewhere above it? The identity walk a caller needs when it holds the
+     * exact node it is asking about rather than a type to match.
+     */
+    public function isWithin(?Node $ancestor): bool
+    {
+        if ($ancestor === null) {
+            return false;
+        }
+
+        for ($node = $this->node; $node instanceof Node; $node = $node->getAttribute('parent')) {
+            if ($node === $ancestor) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Is the class-like this node sits in ANONYMOUS — declared with no name of its own? Such a class
+     * offers nothing a whole-program key can be built from, so anything keying BY scope must add an
+     * identity of its own ({@see \JesseGall\CodeCommandments\Ast\NodeMatch::scope}).
+     */
+    public function isInAnonymousClass(): bool
+    {
+        $class = $this->enclosingClass();
+
+        return $class instanceof Class_ && $class->name === null;
+    }
+
+    /**
      * The declaration this node sits in: `Class::method`, or `Class`.
      */
     public function scope(): string
