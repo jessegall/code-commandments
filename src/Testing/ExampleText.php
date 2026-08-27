@@ -38,15 +38,83 @@ final class ExampleText
      */
     public static function pair(array $bad, array $good, string $key): Example
     {
-        foreach ($bad as $b) {
-            foreach ($good as $g) {
-                if ($b[$key] === $g[$key]) {
-                    return new Example(new Comparison($b['source'], $g['source']));
+        $resolution = self::counterpart($bad, $good, $key);
+        $sinful = self::answered($bad, $resolution, $key);
+
+        return new Example(new Comparison($sinful['source'] ?? null, $resolution['source'] ?? null));
+    }
+
+    /**
+     * The resolutions that together form ONE fix: the {@see counterpart} of the sinful code first, then
+     * every other resolution marked in its FILE, in the order they were marked.
+     *
+     * A fix that MOVES behaviour has two ends — the call site that got thinner and the type that
+     * received the method — and publishing only the end that shrank teaches a reader to call a method
+     * that does not exist. The file is what says the ends belong together: a fixture file is one
+     * scenario, so everything marked as this sin's resolution in it is part of the same repair. The
+     * counterpart leads so the good half still lines up against the bad one as a before/after.
+     *
+     * @param  list<array<string, mixed>>  $bad
+     * @param  list<array<string, mixed>>  $good
+     * @return list<array<string, mixed>>
+     */
+    public static function resolution(array $bad, array $good, string $key): array
+    {
+        $counterpart = self::counterpart($bad, $good, $key);
+
+        if ($counterpart === null) {
+            return [];
+        }
+
+        $collaborators = [];
+
+        foreach ($good as $one) {
+            if ($one !== $counterpart && $one['file'] === $counterpart['file']) {
+                $collaborators[] = $one;
+            }
+        }
+
+        return [$counterpart, ...$collaborators];
+    }
+
+    /**
+     * The resolution that answers one of the $bad — the first found scanning the sinful in order, so the
+     * pair is one coherent before/after — falling back to the first resolution of all.
+     *
+     * @param  list<array<string, mixed>>  $bad
+     * @param  list<array<string, mixed>>  $good
+     * @return ?array<string, mixed>
+     */
+    private static function counterpart(array $bad, array $good, string $key): ?array
+    {
+        foreach ($bad as $one) {
+            foreach ($good as $other) {
+                if ($one[$key] === $other[$key]) {
+                    return $other;
                 }
             }
         }
 
-        return new Example(new Comparison($bad[0]['source'] ?? null, $good[0]['source'] ?? null));
+        return $good[0] ?? null;
+    }
+
+    /**
+     * The sinful declaration the given resolution repairs — the one sharing its $key — falling back to
+     * the first marked of all.
+     *
+     * @param  list<array<string, mixed>>  $bad
+     * @param  ?array<string, mixed>  $resolution
+     * @return ?array<string, mixed>
+     */
+    private static function answered(array $bad, ?array $resolution, string $key): ?array
+    {
+        foreach ($resolution === null ? [] : $bad as $one) {
+            if ($one[$key] === $resolution[$key]) {
+                return $one;
+            }
+        }
+
+        return $bad[0] ?? null;
     }
 
     /**
@@ -100,17 +168,20 @@ final class ExampleText
      * duplicate, and a reader given one copy has no way to see what it is a copy OF. So every member
      * of the group is shown, and named, because the point is that they are in different places.
      *
-     * @param  list<array<string, string>>  $occurrences
-     * @param  string  $key  which field names the place — the class on one engine, the file on the other
-     * @param  string  $open  how a comment opens in the language being shown, and $close how it ends
+     * Each block wears the `heading` its extractor wrote — a finished comment line in that block's own
+     * language, so a group mixing a template with the module beside it is commented correctly either
+     * way. A `null` heading prints the block bare: a marked class or interface opens by naming itself,
+     * and a line saying so above it is the same word twice.
+     *
+     * @param  list<array{source: string, heading: ?string, ...}>  $occurrences
      */
-    public static function group(array $occurrences, string $key, bool $lift, string $open = '//', string $close = ''): string
+    public static function group(array $occurrences, bool $lift): string
     {
         $blocks = [];
 
         foreach ($occurrences as $occurrence) {
             $source = $lift ? self::lifted($occurrence['source']) : $occurrence['source'];
-            $blocks[] = "{$open} in {$occurrence[$key]}{$close}\n{$source}";
+            $blocks[] = $occurrence['heading'] === null ? $source : "{$occurrence['heading']}\n{$source}";
         }
 
         return implode("\n\n", $blocks);

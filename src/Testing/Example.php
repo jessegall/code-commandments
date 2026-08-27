@@ -46,6 +46,15 @@ final class Example
     }
 
     /**
+     * The same example showing $good in place of its single declaration — what a fix that MOVES
+     * behaviour needs, since the call site that got thinner is only one end of it.
+     */
+    public function withGood(string $good): self
+    {
+        return new self($this->code->withGood($good), $this->language);
+    }
+
+    /**
      * The same example, told which language its fixture was written in.
      */
     public function in(Language $language): self

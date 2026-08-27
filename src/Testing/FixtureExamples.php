@@ -37,16 +37,28 @@ final class FixtureExamples
         foreach ($detectors as $detector) {
             $keys = [$detector->sin()::class, $detector::class, $detector->sin()->slug(), $detector->sin()->name()];
             $bad = ExampleText::forKeys($sinful, $keys);
-            $good = ExampleText::forKeys($fixed, $keys) ?: ExampleText::forKeys($righteous, $keys);
             $skill = $detector->sin()->skillClass();
             $lift = ! new $skill()->examplesKeepDocblocks();
 
+            // Only a RESOLUTION spans declarations. A righteous look-alike falls back one at a time:
+            // it is one documented exemption, and two of them in a file are two exemptions rather
+            // than one repair told in two places.
+            $resolution = ExampleText::resolution($bad, ExampleText::forKeys($fixed, $keys), 'class');
+            $good = $resolution ?: ExampleText::forKeys($righteous, $keys);
+
             $example = ExampleText::pair($bad, $good, 'class')->lifted($lift);
+
+            // A fix that MOVES behaviour is not in one declaration: the caller that got thinner and
+            // the type that received the method are both the fix, and showing only the first teaches
+            // a reader to call a method nothing declares.
+            if (count($resolution) > 1) {
+                $example = $example->withGood(ExampleText::group($resolution, $lift));
+            }
 
             // A RECURRENCE sin is a relationship, not a property: its example is the whole GROUP, or
             // it shows a duplicate with nothing to be a duplicate of.
             $examples[$detector::class] = [$detector instanceof RecurrenceDetector && count($bad) > 1
-                ? $example->withBad(ExampleText::group($bad, 'class', $lift))
+                ? $example->withBad(ExampleText::group($bad, $lift))
                 : $example];
         }
 
@@ -104,11 +116,31 @@ final class FixtureExamples
             $detector = self::detector($match);
 
             if ($detector !== null) {
-                $sources[$detector][] = ['class' => $match->enclosingClassName() ?? $match->file->path, 'source' => self::declarationSource($match)];
+                $sources[$detector][] = [
+                    'class' => $match->enclosingClassName() ?? $match->file->path,
+                    'file' => $match->file->path,
+                    'heading' => self::heading($match),
+                    'source' => self::declarationSource($match),
+                ];
             }
         }
 
         return $sources;
+    }
+
+    /**
+     * The comment line a block wears when it is shown beside others — the class it lives in, since a
+     * method shown on its own says nothing about where it belongs.
+     *
+     * A marked CLASS wears none: its source opens with `final class Badge` / `interface PricedFreight`,
+     * and a line above it saying the same is the word twice. Which it is, the marker already knows —
+     * the enclosing function is what the source was sliced from — so nothing here reads the text back.
+     */
+    private static function heading(NodeMatch $match): ?string
+    {
+        $class = $match->enclosingClassName();
+
+        return $match->enclosingFunction() === null || $class === null ? null : "// in {$class}";
     }
 
     /**

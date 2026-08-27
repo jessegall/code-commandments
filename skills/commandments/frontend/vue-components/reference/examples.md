@@ -103,7 +103,7 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
 ```vue
 ----------[ Bad ]----------
 
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/ProductReviewList.vue -->
+<!-- in ProductReviewList.vue -->
 <article class="review-card">
   <header class="review-head">
     <Avatar class="size-8" />
@@ -112,7 +112,7 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
   <p class="review-body">Exactly as described, shipped fast.</p>
 </article>
 
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/ProductReviewList.vue -->
+<!-- in ProductReviewList.vue -->
 <article class="review-card">
   <header class="review-head">
     <Avatar class="size-8" />
@@ -121,39 +121,39 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
   <p class="review-body">Exactly as described, shipped fast.</p>
 </article>
 
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/FilterSidebar.vue -->
+<!-- in FilterSidebar.vue -->
 <fieldset class="filter-group">
   <legend class="filter-legend">Brand</legend>
   <label class="filter-option"><input type="checkbox" /> Any brand</label>
 </fieldset>
 
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/FilterSidebar.vue -->
+<!-- in FilterSidebar.vue -->
 <fieldset class="filter-group">
   <legend class="filter-legend">Brand</legend>
   <label class="filter-option"><input type="checkbox" /> Any brand</label>
 </fieldset>
 
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/CheckoutPromoBanner.vue -->
+<!-- in CheckoutPromoBanner.vue -->
 <div class="promo-strip">
   <span class="promo-icon">%</span>
   <strong class="promo-headline">Free shipping this week</strong>
   <small class="promo-terms">On orders over 50.</small>
 </div>
 
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/BasketPromoBanner.vue -->
+<!-- in BasketPromoBanner.vue -->
 <div class="promo-strip">
   <span class="promo-icon">%</span>
   <strong class="promo-headline">Free shipping this week</strong>
   <small class="promo-terms">On orders over 50.</small>
 </div>
 
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/OrderLineItems.vue -->
+<!-- in OrderLineItems.vue -->
 <tr class="line-item">
   <td class="line-item__name">Sample product</td>
   <td class="line-item__qty">1</td>
 </tr>
 
-<!-- in /Users/jessegall/projects/code-commandments/tests/Fixtures/frontend/components/OrderLineItems.vue -->
+<!-- in OrderLineItems.vue -->
 <tr class="line-item">
   <td class="line-item__name">Sample product</td>
   <td class="line-item__qty">1</td>

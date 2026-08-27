@@ -67,7 +67,7 @@ final class VueFixtureExamples
             // A repeated block shown once is not repeated — the same rule as the backend's
             // duplicates, asked of the same interface, and labelled with the component it is in.
             $examples[] = $detector instanceof RecurrenceDetector && count($marked) > 1
-                ? $example->withBad(ExampleText::group($marked, 'file', lift: false, open: '<!--', close: ' -->'))
+                ? $example->withBad(ExampleText::group($marked, lift: false))
                 : $example;
         }
 
@@ -129,6 +129,7 @@ final class VueFixtureExamples
                 foreach (DeclarationMarkers::markersAbove($lines, $module->lineAt($node->start), $marker) as $name) {
                     $sources[$name][] = [
                         'file' => $module->file,
+                        'heading' => '// in ' . self::name($module->file),
                         'source' => ExampleText::dedent(explode("\n", $module->spanAt($node->start, $node->end)->text())),
                     ];
                 }
@@ -156,7 +157,11 @@ final class VueFixtureExamples
 
             if ($child->isElement()) {
                 foreach ($pending as $name) {
-                    $sources[$name][] = ['file' => $component->path, 'source' => self::source($child, $component)];
+                    $sources[$name][] = [
+                        'file' => $component->path,
+                        'heading' => '<!-- in ' . self::name($component->path) . ' -->',
+                        'source' => self::source($child, $component),
+                    ];
                 }
 
                 $pending = [];
@@ -164,6 +169,18 @@ final class VueFixtureExamples
 
             self::collect($child, $component, $marker, $sources);
         }
+    }
+
+    /**
+     * How a file is NAMED in a published example — its basename.
+     *
+     * The path a scan resolved is THIS machine's: a heading built from it printed the author's home
+     * directory into every shipped skill, where the component's name is the whole of what a reader
+     * needs to tell one block from the next.
+     */
+    private static function name(string $file): string
+    {
+        return basename($file);
     }
 
     /**

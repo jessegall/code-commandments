@@ -33,6 +33,15 @@ final class Comparison
         return new self($bad, $this->good);
     }
 
+    /**
+     * The same pair showing $good in place of its single declaration — what a fix that MOVES behaviour
+     * needs, since the call site that got thinner is only one end of it.
+     */
+    public function withGood(string $good): self
+    {
+        return new self($this->bad, $good);
+    }
+
     public function isEmpty(): bool
     {
         return $this->bad === null && $this->good === null;
