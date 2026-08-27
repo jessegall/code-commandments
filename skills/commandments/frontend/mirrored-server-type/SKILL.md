@@ -48,6 +48,10 @@ export interface OrderData {
   placedAt: string
   status: string
 }
+
+----------[ Good ]----------
+
+export type { OrderData } from '@/types/generated'
 ```
 
 The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).

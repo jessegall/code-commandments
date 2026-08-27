@@ -2,6 +2,11 @@
 // server `OrderData` payload field-for-field — a duplicated contract that drifts the
 // moment the server adds or renames a field.
 
+// The FIX: the server owns the shape, so the frontend takes the GENERATED type rather than
+// restating it. Mark the Data class `#[TypeScript]`, generate, and import what came out.
+// @fixed MirroredServerType
+export type { OrderData } from '@/types/generated'
+
 export type OrderChannel = 'web' | 'pos' | 'phone'
 
 // @sin MirroredServerType

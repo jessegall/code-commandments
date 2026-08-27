@@ -15,6 +15,10 @@ export interface OrderData {
   placedAt: string
   status: string
 }
+
+----------[ Good ]----------
+
+export type { OrderData } from '@/types/generated'
 ```
 
 ### mirrored-server-type — in Vue
