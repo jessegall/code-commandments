@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Vue\Codebase;
+use JesseGall\CodeCommandments\Vue\Element;
 
 /**
  * Frontend analog of `<!-- @sin -->` comments and `#[Sinful]` attributes. A `// @sin Name` comment
@@ -46,7 +47,43 @@ final class DeclarationMarkers
             }
         }
 
+        foreach ($codebase->components() as $component) {
+            self::inTemplate($component->template, $component->path, $tag, $marked);
+        }
+
         return $marked;
+    }
+
+    /**
+     * Every `<!-- @{$tag} Name -->` in a template, bound to the element that follows it.
+     *
+     * A marker in markup and a marker in a module are the same claim about the same codebase, so
+     * they are read in one place: a caller asking what is marked gets the whole answer, and neither
+     * side has to keep its own walk of the other's half.
+     *
+     * @param  array<string, list<string>>  $marked
+     */
+    private static function inTemplate(Element $node, string $file, string $tag, array &$marked): void
+    {
+        $pending = [];
+
+        foreach ($node->children as $child) {
+            if ($child->isComment()) {
+                $pending = [...$pending, ...self::markersAbove([$child->text], 2, $tag)];
+
+                continue;
+            }
+
+            if ($child->isElement()) {
+                foreach ($pending as $name) {
+                    $marked[$name][] = $file . ':' . $child->line;
+                }
+
+                $pending = [];
+            }
+
+            self::inTemplate($child, $file, $tag, $marked);
+        }
     }
 
     /**
@@ -70,11 +107,18 @@ final class DeclarationMarkers
                 continue;
             }
 
-            if (preg_match('/@' . preg_quote($tag, '/') . '\s+(\w+)/', $text, $match) !== 1) {
+            // A declaration wears every marker that applies to it, and they cannot all be the line
+            // nearest it. So a marker for ANOTHER tag is stepped over rather than ending the run —
+            // reading `@righteous` here must not hide the `@fixed` above it. Anything that is not
+            // marker-shaped still ends it, so prose above a declaration keeps a marker from binding
+            // across it.
+            if (preg_match('/@(\w+)\s+(\w+)/', $text, $match) !== 1) {
                 break;
             }
 
-            $names[] = $match[1];
+            if ($match[1] === $tag) {
+                $names[] = $match[2];
+            }
         }
 
         return $names;

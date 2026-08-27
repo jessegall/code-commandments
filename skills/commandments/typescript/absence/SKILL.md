@@ -61,7 +61,11 @@ return this.customer?.name
 
 ----------[ Good ]----------
 
+// in order-tracker.ts
 private shipment?: Shipment
+
+// in order-tracker.ts
+return this.shipment?.trackingCode ?? 'pending'
 ```
 
 The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).

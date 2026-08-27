@@ -22,6 +22,7 @@ defineProps<{ status: string }>();
     <template #default><span class="badge">Unknown</span></template>
   </SwitchCase>
 
+  <!-- @fixed ControlFlowOnElement -->
   <!-- @righteous ControlFlowOnElement -->
   <template v-if="status === 'paid'">
     <span class="badge badge-green">Paid</span>
