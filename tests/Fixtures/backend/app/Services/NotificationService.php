@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class NotificationService
 {
+    #[Fixed(FacadeCall::class)]
     public function __construct(private readonly Mailer $mailer) {}
 
     #[Sinful(ConfigRead::class)]

@@ -4,7 +4,11 @@ namespace Shop\Enums;
 
 use JesseGall\CodeCommandments\Sins\Backend\EnumCaseOrChain;
 use JesseGall\CodeCommandments\Testing\Fixed;
+use JesseGall\CodeCommandments\Sins\Backend\InArrayMirrorsEnum;
+use JesseGall\CodeCommandments\Sins\Backend\StringMatchMirrorsEnum;
 
+#[Fixed(InArrayMirrorsEnum::class)]
+#[Fixed(StringMatchMirrorsEnum::class)]
 enum PaymentMethod: string
 {
     case Card = 'card';

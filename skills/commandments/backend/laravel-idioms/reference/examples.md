@@ -174,6 +174,10 @@ public function notify(string $email, string $type): void
 
 ----------[ Good ]----------
 
+// in Shop\Services\NotificationService
+public function __construct(private readonly Mailer $mailer) {}
+
+// in Shop\Services\NotificationService
 public function notifyClean(string $email, string $template): void
 {
     $this->mailer->raw($template, function ($message) use ($email) {

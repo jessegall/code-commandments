@@ -149,9 +149,29 @@ public function allowed(string $method): bool
 
 ----------[ Good ]----------
 
+// in Shop\Payments\MethodWhitelist
 public function allowedClean(string $method): bool
 {
     return PaymentMethod::tryFrom($method) !== null;
+}
+
+enum PaymentMethod: string
+{
+    case Card = 'card';
+    case Ideal = 'ideal';
+    case PayPal = 'paypal';
+
+    /**
+     * The eligible set, sealed where the cases are. The call site used to re-derive it from an
+     * or-chain, which is a copy of this answer that no new case can update.
+     */
+    public function isInstant(): bool
+    {
+        return match ($this) {
+            self::Card, self::Ideal => true,
+            self::PayPal => false,
+        };
+    }
 }
 ```
 
@@ -219,6 +239,7 @@ public function endpoint(string $method): string
 
 ----------[ Good ]----------
 
+// in Shop\Payments\GatewayRouter
 public function endpointClean(PaymentMethod $method): string
 {
     return match ($method) {
@@ -226,6 +247,25 @@ public function endpointClean(PaymentMethod $method): string
         PaymentMethod::Ideal => 'https://pay.test/ideal',
         PaymentMethod::PayPal => 'https://pay.test/paypal',
     };
+}
+
+enum PaymentMethod: string
+{
+    case Card = 'card';
+    case Ideal = 'ideal';
+    case PayPal = 'paypal';
+
+    /**
+     * The eligible set, sealed where the cases are. The call site used to re-derive it from an
+     * or-chain, which is a copy of this answer that no new case can update.
+     */
+    public function isInstant(): bool
+    {
+        return match ($this) {
+            self::Card, self::Ideal => true,
+            self::PayPal => false,
+        };
+    }
 }
 ```
 
