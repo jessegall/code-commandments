@@ -83,9 +83,11 @@ Before you write or touch any detector, load these via the **Skill tool**:
    `AstNode`/`NodeMatch`), the call graph, the variable trace, and where a new
    helper belongs (the layering rule).
 3. **`detector-fixtures`** — the self-checking fixture: `#[Sinful]` = spec, `#[Fixed]` =
-   the RESOLUTION the docs publish as "Good" (distinct from `#[Righteous]`, which is a
-   look-alike the detector must not flag — usually an exemption, not a fix), the
-   ≥3-diverse-scenarios rule, righteous twins.
+   the RESOLUTION the docs publish as "Good" — **and every declaration it moved behaviour
+   into**, since a fix showing only the call site that got thinner teaches a reader to call
+   a method nothing declares (distinct from `#[Righteous]`, which is a look-alike the
+   detector must not flag — usually an exemption, not a fix), the ≥3-diverse-scenarios
+   rule, righteous twins.
 
 They encode the cardinal rules: **AST/semantic signals over name/suffix matching**
 (a name check is a smell to justify); **one check per `where()`/`reject()` line**;

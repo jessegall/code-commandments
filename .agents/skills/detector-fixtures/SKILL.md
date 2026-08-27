@@ -75,13 +75,44 @@ parameter required" where the rule said "default it to a Null Object". So the
 generated `## Bad → good` prefers `#[Fixed]` and falls back to `#[Righteous]`
 only where none exists; **the fallback is a stopgap, not a design**.
 
+Frontend twin: `<!-- @fixed Name -->` above a template element, `// @fixed Name`
+above a module declaration. Same claim, same preference over `@righteous`, same
+coverage gate.
+
+### A fix that MOVES behaviour spans declarations — mark BOTH ends
+
+A repair is rarely one declaration. `$customer->suspend($reason)` is only the call
+site that got thinner; the fix is `Customer::suspend()`. Mark **every** declaration
+carrying the substance, and the generated good half publishes them together:
+
+```php
+#[Fixed(TypeSwitch::class)]                  // the caller that stopped asking what it IS
+public function priceTold(PricedFreight $freight): int { … }
+
+#[Fixed(TypeSwitch::class)]                  // the contract it now asks
+interface PricedFreight { … }
+
+#[Fixed(TypeSwitch::class)]                  // and each type that answers
+public function priceCents(): int { … }
+```
+
+Which of them belong to ONE fix is decided by the file: the counterpart's own file,
+plus any file holding no `#[Sinful]` of that sin (a shared collaborator — a model,
+a Null Object, a generated type). That is what keeps a sin fixed three separate
+times from publishing all three repairs as one.
+
 Rules of thumb:
 
-- Put the `#[Fixed]` twin in the **same class** as its `#[Sinful]` — the renderer
-  prefers a same-class pair, so the reader gets one coherent before/after.
+- Put the counterpart `#[Fixed]` in the **same class** as its `#[Sinful]` — the
+  renderer pairs on the class, so the reader gets one coherent before/after — and
+  the collaborators wherever they honestly live.
+- **One scenario per sin per file.** Two classes in one file each holding a sin AND
+  its own repair is undecidable, and `FixedIsTheResolutionTest` fails it.
 - Repair *that* scenario. A fix for a different method teaches nothing.
 - Show the construct the sin's own `rule`/`suggestion` names — if the rule says
   `#[WithCast]`, the fix must contain `#[WithCast]`.
+- Never let a resolution name something the fixture does not declare. A published
+  fix calling a method nothing defines teaches a repair a reader cannot follow.
 - A resolution must also go unflagged, so `#[Fixed]` implies `#[Righteous]`, never
   the reverse. `FixedIsTheResolutionTest` fails if a detector flags its own fix.
 
