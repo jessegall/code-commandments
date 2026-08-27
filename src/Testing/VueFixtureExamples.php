@@ -28,13 +28,20 @@ final class VueFixtureExamples
     public static function extract(Codebase $codebase, array $detectors): array
     {
         $sinful = self::sourcesByMarker($codebase, 'sin');
+        $fixed = self::sourcesByMarker($codebase, 'fixed');
         $righteous = self::sourcesByMarker($codebase, 'righteous');
 
         $examples = [];
 
         foreach ($detectors as $detector) {
             $keys = [(new \ReflectionClass($detector->sin()))->getShortName(), (new \ReflectionClass($detector))->getShortName()];
-            $examples[$detector::class] = self::perLanguage($detector, ExampleText::forKeys($sinful, $keys), ExampleText::forKeys($righteous, $keys));
+
+            $examples[$detector::class] = self::perLanguage(
+                $detector,
+                ExampleText::forKeys($sinful, $keys),
+                ExampleText::forKeys($fixed, $keys),
+                ExampleText::forKeys($righteous, $keys),
+            );
         }
 
         return $examples;
@@ -47,31 +54,63 @@ final class VueFixtureExamples
      * not a `.vue` one they have to translate.
      *
      * @param  list<array{file: string, source: string}>  $bad
-     * @param  list<array{file: string, source: string}>  $good
+     * @param  list<array{file: string, source: string}>  $fixed
+     * @param  list<array{file: string, source: string}>  $righteous
      * @return list<Example>
      */
-    private static function perLanguage(Detector $detector, array $bad, array $good): array
+    private static function perLanguage(Detector $detector, array $bad, array $fixed, array $righteous): array
     {
         $badByLanguage = self::byLanguage($bad);
-        $goodByLanguage = self::byLanguage($good);
+        $fixedByLanguage = self::byLanguage($fixed);
+        $righteousByLanguage = self::byLanguage($righteous);
 
         if ($badByLanguage === []) {
-            return [ExampleText::pair($bad, $good, 'file')->in(Language::Vue)];
+            return [self::example($detector, $bad, $fixed, $righteous, Language::Vue)];
         }
 
         $examples = [];
 
         foreach ($badByLanguage as $language => $marked) {
-            $example = ExampleText::pair($marked, $goodByLanguage[$language] ?? [], 'file')->in(Language::from($language));
-
-            // A repeated block shown once is not repeated — the same rule as the backend's
-            // duplicates, asked of the same interface, and labelled with the component it is in.
-            $examples[] = $detector instanceof RecurrenceDetector && count($marked) > 1
-                ? $example->withBad(ExampleText::group($marked, lift: false))
-                : $example;
+            $examples[] = self::example(
+                $detector,
+                $marked,
+                $fixedByLanguage[$language] ?? [],
+                $righteousByLanguage[$language] ?? [],
+                Language::from($language),
+            );
         }
 
         return $examples;
+    }
+
+    /**
+     * One language's example — the same assembly the backend does, over elements and module nodes
+     * instead of PHP declarations.
+     *
+     * @param  list<array{file: string, source: string}>  $bad
+     * @param  list<array{file: string, source: string}>  $fixed
+     * @param  list<array{file: string, source: string}>  $righteous
+     */
+    private static function example(Detector $detector, array $bad, array $fixed, array $righteous, Language $language): Example
+    {
+        // Only a RESOLUTION spans blocks. A righteous look-alike falls back one at a time: two of
+        // them in a component are two exemptions, not one repair told in two places.
+        $resolution = ExampleText::resolution($bad, $fixed, 'file');
+        $good = $resolution ?: $righteous;
+
+        $example = ExampleText::pair($bad, $good, 'file')->in($language);
+
+        // A component extracted out of a template is the fix; the one-line call that replaced the
+        // markup is only where it went. Showing that line alone names a component nothing declares.
+        if (count($resolution) > 1) {
+            $example = $example->withGood(ExampleText::group($resolution, lift: false));
+        }
+
+        // A repeated block shown once is not repeated — the same rule as the backend's
+        // duplicates, asked of the same interface, and labelled with the component it is in.
+        return $detector instanceof RecurrenceDetector && count($bad) > 1
+            ? $example->withBad(ExampleText::group($bad, lift: false))
+            : $example;
     }
 
     /**
