@@ -21,6 +21,7 @@ defineProps<{ order: Order; history: OrderEvent[] }>();
       <p class="customer-phone">{{ order.customer.phone }}</p>
     </section>
 
+    <!-- @fixed DeepDataReach -->
     <!-- @righteous DeepDataReach -->
     <OrderCustomer :customer="order.customer" />
 

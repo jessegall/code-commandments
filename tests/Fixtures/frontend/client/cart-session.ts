@@ -17,6 +17,7 @@ export class CartSession {
     // @sin FalselyOptionalField
     private currency?: string = 'EUR'
 
+    // @fixed FalselyOptionalField
     // @righteous FalselyOptionalField
     private coupon?: Coupon
 

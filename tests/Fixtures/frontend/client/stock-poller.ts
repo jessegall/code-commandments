@@ -12,6 +12,7 @@ export class StockPoller {
     // @sin FalselyOptionalField
     private attempts?: number = 0
 
+    // @fixed DefendedCertainField
     private paused?: boolean
 
     poll(payload: string): void {
@@ -24,6 +25,7 @@ export class StockPoller {
     }
 
     resume(): void {
+        // @fixed DefendedCertainField
         // @righteous DefendedCertainField
         if (this.paused?.valueOf()) {
             this.channel.push('resume')

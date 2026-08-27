@@ -22,6 +22,7 @@ defineProps<{ productId: number }>();
       <p class="review-body">Exactly as described, shipped fast.</p>
     </article>
 
+    <!-- @fixed DuplicateElement -->
     <!-- @righteous DuplicateElement -->
     <template v-for="review in reviews" :key="review.id">
       <article class="review-card">
@@ -39,6 +40,7 @@ defineProps<{ productId: number }>();
       <li v-for="tag in tags" v-if="tag.visible" :key="tag.id" class="review-tag">{{ tag.label }}</li>
     </ul>
 
+    <!-- @fixed LoopWithCondition -->
     <!-- @righteous LoopWithCondition -->
     <template v-for="tag in tags" :key="tag.id">
       <template v-if="tag.visible">

@@ -57,6 +57,7 @@ defineProps<{ customer: Customer; orders: CustomerOrder[] }>();
     <div class="account__addresses">
       <h2 class="account__section">Addresses</h2>
       <ul class="account__address-list">
+        <!-- @fixed IndexAsKey -->
         <!-- @righteous IndexAsKey -->
         <template v-for="(address, index) in customer.addresses" :key="address.id">
           <li class="account__address">{{ address.line }}</li>

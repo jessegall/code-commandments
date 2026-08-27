@@ -40,6 +40,7 @@ function submit() {}
     </Dialog>
 
     <!-- Righteous: the same dialog already lives in its own component, referenced here. -->
+    <!-- @fixed CompoundInlineComponent -->
     <!-- @righteous CompoundInlineComponent -->
     <ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
   </section>

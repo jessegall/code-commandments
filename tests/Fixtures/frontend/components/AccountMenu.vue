@@ -24,6 +24,7 @@ defineProps<{ role: string; membership: string; notifications: Notification[]; a
     <!-- @sin PropDrilling -->
     <NotificationBell :items="notifications" />
 
+    <!-- @fixed PropDrilling -->
     <!-- @righteous PropDrilling -->
     <!-- `avatarUrl` is forwarded and unused here too, but UserAvatar CONSUMES it — composition. -->
     <UserAvatar :src="avatarUrl" />

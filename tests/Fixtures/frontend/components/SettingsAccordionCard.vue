@@ -38,6 +38,7 @@ const panelOpen = ref(false);
       </div>
     </div>
 
+    <!-- @fixed DeepNested -->
     <!-- @righteous DeepNested -->
     <SettingsCardBody :settings="settings" />
 
@@ -47,6 +48,7 @@ const panelOpen = ref(false);
       <CollapsibleTrigger>Advanced</CollapsibleTrigger>
     </Collapsible>
 
+    <!-- @fixed PropMutation -->
     <!-- @righteous PropMutation -->
     <Collapsible v-model:open="panelOpen">
       <CollapsibleTrigger>Advanced</CollapsibleTrigger>

@@ -37,7 +37,35 @@ A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a
 
 ----------[ Good ]----------
 
+<!-- in ReaderPairingPanel.vue -->
 <ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
+
+<!-- in ReaderPairingDialog.vue -->
+<Dialog :open="open" @update:open="$emit('update:open', $event)">
+  <DialogContent class="sm:max-w-md">
+    <DialogHeader>
+      <DialogTitle>Pair Reader</DialogTitle>
+      <DialogDescription>Enter the device name and reader model to pair.</DialogDescription>
+    </DialogHeader>
+    <form class="space-y-4" @submit.prevent="$emit('submit')">
+      <div class="field">
+        <Label>Device name</Label>
+        <Input v-model="form.name" type="text" placeholder="Front counter" />
+      </div>
+      <div class="select-row">
+        <Label>Reader model</Label>
+        <select v-model="form.model" class="select">
+          <option value="s1">SumUp Solo</option>
+          <option value="s2">SumUp Air</option>
+        </select>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="$emit('update:open', false)">Cancel</Button>
+        <Button type="submit">Pair reader</Button>
+      </DialogFooter>
+    </form>
+  </DialogContent>
+</Dialog>
 ```
 
 ### deep-data-reach
@@ -56,7 +84,16 @@ A CLUSTER of elements in a sizeable template all reaching deep into the same nes
 
 ----------[ Good ]----------
 
+<!-- in OrderDetailPanel.vue -->
 <OrderCustomer :customer="order.customer" />
+
+<!-- in OrderCustomer.vue -->
+<section class="order-customer">
+  <h2 class="section-title">Customer</h2>
+  <p class="customer-name">{{ customer.fullName }}</p>
+  <p class="customer-email">{{ customer.email }}</p>
+  <p class="customer-phone">{{ customer.phone }}</p>
+</section>
 ```
 
 ### deep-nested
@@ -93,7 +130,16 @@ Template markup nested far too deep — extract a subtree as its own component
 
 ----------[ Good ]----------
 
+<!-- in SettingsAccordionCard.vue -->
 <SettingsCardBody :settings="settings" />
+
+<!-- in SettingsCardBody.vue -->
+<div class="settings-card__body">
+  <div class="field-group">
+    <label class="field__label">{{ settings.profile.displayName }}</label>
+    <input class="field__input" :value="settings.profile.handle" />
+  </div>
+</div>
 ```
 
 ### duplicate-element
@@ -183,7 +229,11 @@ A prop forwarded through a chain of 2+ components, none of which read it — pip
 
 ----------[ Good ]----------
 
+<!-- in AccountMenu.vue -->
 <UserAvatar :src="avatarUrl" />
+
+<!-- in UserAvatar.vue -->
+<img :src="src" alt="" />
 ```
 
 ### prop-mutation

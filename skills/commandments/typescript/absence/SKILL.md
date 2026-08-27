@@ -61,7 +61,7 @@ return this.customer?.name
 
 ----------[ Good ]----------
 
-return this.shipment?.trackingCode ?? 'pending'
+private shipment?: Shipment
 ```
 
 The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).

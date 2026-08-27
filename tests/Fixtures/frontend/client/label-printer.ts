@@ -11,7 +11,9 @@ export class LabelPrinter {
 
     private readonly printer: Printer = { id: 'default' }
 
+    // @fixed FalselyOptionalField
     // @righteous FalselyOptionalField
+    // @fixed DefendedCertainField
     private lastError?: string
 
     target(): string {
@@ -20,6 +22,7 @@ export class LabelPrinter {
     }
 
     lastFailure(): string {
+        // @fixed DefendedCertainField
         // @righteous DefendedCertainField
         return this.lastError?.trim() ?? ''
     }

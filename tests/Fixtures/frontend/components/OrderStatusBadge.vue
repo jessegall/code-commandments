@@ -13,6 +13,7 @@ defineProps<{ status: string }>();
   <!-- @sin ControlFlowOnElement -->
   <span v-else class="badge">Unknown</span>
 
+  <!-- @fixed SwitchCase -->
   <!-- @righteous SwitchCase -->
   <SwitchCase :value="status">
     <template #paid><span class="badge badge-green">Paid</span></template>

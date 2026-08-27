@@ -13,7 +13,7 @@ return this.customer?.name
 
 ----------[ Good ]----------
 
-return this.shipment?.trackingCode ?? 'pending'
+private shipment?: Shipment
 ```
 
 ### falsely-optional-field

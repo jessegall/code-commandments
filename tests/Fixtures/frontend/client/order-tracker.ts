@@ -14,6 +14,7 @@ export class OrderTracker {
 
     private readonly reference: string = ''
 
+    // @fixed DefendedCertainField
     private shipment?: Shipment
 
     customerName(): string {
@@ -27,6 +28,7 @@ export class OrderTracker {
     }
 
     trackingCode(): string {
+        // @fixed DefendedCertainField
         // @righteous DefendedCertainField
         return this.shipment?.trackingCode ?? 'pending'
     }

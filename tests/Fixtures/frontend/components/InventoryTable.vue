@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // A purely-frontend view-model: it describes how the table renders, not a server
 // payload. No `Data` class backs it, so it has exactly one source of truth — itself.
+// @fixed MirroredServerType
 // @righteous MirroredServerType
 interface TableColumn {
   key: string
