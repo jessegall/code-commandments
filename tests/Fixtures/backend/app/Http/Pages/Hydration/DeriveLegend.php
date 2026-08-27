@@ -25,6 +25,7 @@ final class ShipStatusLegend extends Data
  * The cast that OWNS the `ShipState → StateChip` derivation — declared once on the collection property,
  * so every call site hands over the raw enum cases.
  */
+#[Fixed(DerivedCollectionCast::class)]
 final class StateChipCast
 {
     public function cast(ShipState $state): StateChip

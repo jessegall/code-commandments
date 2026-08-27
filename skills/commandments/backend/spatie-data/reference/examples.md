@@ -120,6 +120,21 @@ final class LayoutBox extends Data
         return $rows * $this->columns;
     }
 }
+
+// The container that carries the absence the leaves used to scatter.
+
+final class LayoutPanel extends Data
+{
+    public function __construct(
+        public readonly string $title,
+        public readonly LayoutBox|Optional $grid = new Optional(),
+    ) {}
+
+    public function hasGrid(): bool
+    {
+        return ! $this->grid instanceof Optional;
+    }
+}
 ```
 
 ### data-collection-type
@@ -297,12 +312,27 @@ public function map(array $rows): array
 
 ----------[ Good ]----------
 
+// in Shop\Catalog\ProductImportMapper
 // The FIX for {@see map()}: one pass, no loop — `::collect()` maps every row itself, and the
 // element type is declared once on the receiving `#[DataCollectionOf(ProductData::class)]` slot.
 
 public function collectAll(array $rows): mixed
 {
     return ProductData::collect($rows);
+}
+
+// The slot `collectAll()` fills. The element type is declared ONCE, here, which is what lets
+// `::collect()` map every row without a loop naming `ProductData` again at the call site.
+
+final class ProductImportBatch extends Data
+{
+    /**
+     * @param  array<int, ProductData>  $products
+     */
+    public function __construct(
+        #[DataCollectionOf(ProductData::class)]
+        public readonly array $products,
+    ) {}
 }
 ```
 
@@ -333,6 +363,16 @@ final class CastInboundOrderData extends Data
     public function priceLabel(): string
     {
         return $this->price->formatted();
+    }
+}
+
+// The one home of the raw → `Money` mapping.
+
+final class MoneyCast
+{
+    public function cast(mixed $value): Money
+    {
+        return new Money((int) $value, 'EUR');
     }
 }
 ```
@@ -402,6 +442,16 @@ final class CrewBoard extends Data
         return count($this->crew);
     }
 }
+
+#[TypeScript]
+final class CrewSeat extends Data
+{
+    public function __construct(
+        public readonly string $deck,
+        public readonly int $position,
+        public readonly bool $assigned = false,
+    ) {}
+}
 ```
 
 ### new-data-object
@@ -423,12 +473,26 @@ public function legacyPresent(Order $order): OrderData
 
 ----------[ Good ]----------
 
+// in Shop\Http\Presenters\OrderPresenter
 // The FIX for {@see legacyPresent()}: the same order presented through the magic factory —
 // `OrderData::from($order)` runs the casts, mappers and validation a raw `new` skips.
 
 public function present(Order $order): OrderData
 {
     return OrderData::from($order);
+}
+
+// Typed view of an order for the API.
+
+final class OrderData extends Data
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly OrderStatus $status,
+        public readonly int $totalCents,
+        #[DataCollectionOf(OrderLineData::class)]
+        public readonly array $lines,
+    ) {}
 }
 ```
 
@@ -503,12 +567,21 @@ public function position(): OptCoords|Optional
 
 ----------[ Good ]----------
 
+// in Shop\Http\Pages\Hydration\MoveRequest
 // The FIX: the null→`Optional` map lives in ONE named factory — `OptCoords::optionalOrMissing()`
 // (the scaffolded `OptionalOrMissing` trait) — so no producer re-derives it with a ternary.
 
 public function requestedPosition(): OptCoords|Optional
 {
     return OptCoords::optionalOrMissing($this->rawPosition);
+}
+
+trait OptionalOrMissing
+{
+    public static function optionalOrMissing(mixed $payload): static|Optional
+    {
+        return $payload === null ? Optional::create() : static::from($payload);
+    }
 }
 ```
 

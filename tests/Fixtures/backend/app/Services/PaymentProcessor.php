@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Testing\Sinful;
 
 final class PaymentProcessor
 {
+    #[Fixed(ContainerReach::class)]
     public function __construct(private readonly PaymentGatewayRegistry $gateways) {}
 
     // Righteous twin (ContainerReach): a class resolving ITSELF from a static factory

@@ -2,11 +2,15 @@
 
 namespace Shop\Labels;
 
+use JesseGall\CodeCommandments\Sins\Backend\UnnamedVocabularyLiteral;
+use JesseGall\CodeCommandments\Testing\Fixed;
+
 /**
  * The characters a printed receipt is built from, and what the printer does with them. Named once so
  * a layout reads as intent rather than punctuation — the vocabulary the printers below are meant to
  * spell their rows with.
  */
+#[Fixed(UnnamedVocabularyLiteral::class)]
 final class ReceiptGlyph
 {
     public const string BULLET = '•';

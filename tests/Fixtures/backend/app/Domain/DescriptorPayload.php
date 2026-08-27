@@ -63,6 +63,7 @@ final class Payload
     /**
      * @return array<string, mixed>
      */
+    #[Fixed(ConditionalArraySpread::class)]
     public static function of(mixed ...$values): array
     {
         $payload = [];

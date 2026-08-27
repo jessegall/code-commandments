@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Optional;
+use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 
 /**
  * A row from the legacy CSV importer — every field nullable, so a malformed row is
@@ -35,6 +36,7 @@ final class LegacyImportRow extends Data
  * real miss, so a valid row can't be confused with a malformed one.
  */
 #[Righteous(AllNullableData::class)]
+#[Fixed(ArrayBag::class)]
 final class ImportRow extends Data
 {
     public function __construct(

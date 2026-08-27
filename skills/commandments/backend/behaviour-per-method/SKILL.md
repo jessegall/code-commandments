@@ -84,12 +84,19 @@ public function announce(string $message, bool $urgent): void
 
 ----------[ Good ]----------
 
+// in Shop\Dispatch\ShiftAnnouncer
 // The same two announcements, named. The call site now says which one it wanted, and each half
 // is free to grow its own parameters without the other having to ignore them.
 
 public function announceUrgently(string $message): void
 {
     $this->log->record('SIREN ' . strtoupper($message));
+}
+
+// in Shop\Dispatch\ShiftAnnouncer
+public function announceQuietly(string $message): void
+{
+    $this->log->record($message);
 }
 ```
 

@@ -42,6 +42,7 @@ final class OwnedRateTable
     /**
      * @param  array<string, float>  $table
      */
+    #[Fixed(MutableStaticState::class)]
     public function __construct(private readonly array $table) {}
 
     #[Fixed(MutableStaticState::class)]

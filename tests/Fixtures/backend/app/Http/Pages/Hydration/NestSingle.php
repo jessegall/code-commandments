@@ -11,6 +11,7 @@ use Spatie\LaravelData\Data;
  * N1 scenario 1 — a single nested `Data` property wrapped in `BadgeCopy::from([...])` where the `badge`
  * slot auto-hydrates the array. Built through a small formatting helper.
  */
+#[Fixed(RedundantNestedFrom::class)]
 final class BadgeStrip extends Data
 {
     public function __construct(public readonly BadgeCopy $badge) {}

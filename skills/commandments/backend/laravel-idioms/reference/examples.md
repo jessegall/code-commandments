@@ -63,6 +63,10 @@ public function charge(string $token, int $amountCents): bool
 
 ----------[ Good ]----------
 
+// in Shop\Services\PaymentProcessor
+public function __construct(private readonly PaymentGatewayRegistry $gateways) {}
+
+// in Shop\Services\PaymentProcessor
 // The registry is a declared constructor parameter, so the class states what it needs and the
 // container hands it over — nothing reaches back into the container from the body.
 
@@ -105,9 +109,20 @@ public function boot(): void
 
 ----------[ Good ]----------
 
+// in Shop\Providers\StockEventProvider
 public function register(): void
 {
     Event::listen(PriceChanged::class, 'Shop\\Listeners\\RepricePublications');
+}
+
+// The live dispatcher that keeps PriceChanged's listener honest.
+
+final class PriceBroadcaster
+{
+    public function announce(string $sku, int $cents): void
+    {
+        event(new PriceChanged($sku, $cents));
+    }
 }
 ```
 
@@ -125,12 +140,19 @@ public function idleTimeout(): int
 
 ----------[ Good ]----------
 
+// in Shop\Support\ShopConfig
 // `config/kiosk.php` owns the default, so the reader states nothing about absence — it asks for
 // the value and there is one place to edit it.
 
 public function idleTimeoutSeconds(): int
 {
     return $this->int('kiosk.idle_timeout');
+}
+
+// in Shop\Support\ShopConfig
+private function int(string $key): int
+{
+    return 0;
 }
 ```
 
@@ -244,6 +266,7 @@ public function boot(): void
 
 ----------[ Good ]----------
 
+// in Shop\Providers\ShippingServiceProvider
 // The rates registration went out with the courier that needed it. What is left is wiring a
 // consumer actually asks for: RegionCoverage type-hints a ZoneTable, so this binding answers a
 // resolve.
@@ -251,6 +274,25 @@ public function boot(): void
 public function register(): void
 {
     $this->app->singleton(ZoneTable::class);
+}
+
+// A consignment's zone already knows which regions it serves. Asking through a
+// zone table keyed by the consignment's id — then testing membership out here —
+// exiles the answer from where it lives. Move it: `$consignment->covers($region)`.
+
+final class RegionCoverage
+{
+    public function __construct(private readonly ZoneTable $zones) {}
+
+    public function describe(): string
+    {
+        return 'region coverage via ' . ZoneTable::class;
+    }
+
+    public function covers(Consignment $consignment, string $region): bool
+    {
+        return $this->zones->lookup($consignment->zoneId)->includes($region);
+    }
 }
 ```
 
@@ -275,6 +317,7 @@ public function search(Request $request): array
 
 ----------[ Good ]----------
 
+// in Shop\Http\Controllers\ProductController
 // The same search, read through named getters on a `FormRequest` subclass — the key strings and
 // their types live once, in the request, instead of at every call site.
 
@@ -285,6 +328,12 @@ public function searchNamed(SearchProductRequest $request): array
         ->where('category', $request->category())
         ->get()
         ->all();
+}
+
+// in Shop\Http\Requests\SearchProductRequest
+public function term(): string
+{
+    return $this->string('q')->toString();
 }
 ```
 
@@ -307,6 +356,7 @@ public function search(Request $request): array
 
 ----------[ Good ]----------
 
+// in Shop\Http\Controllers\TermController
 // The coercion moved onto the typed request as `term()`, so the call site asks a named getter for
 // an already-`string` value instead of recasting an accessor.
 
@@ -317,5 +367,11 @@ public function searchNamed(SearchProductRequest $request): array
         ->orderBy('name')
         ->get()
         ->all();
+}
+
+// in Shop\Http\Requests\SearchProductRequest
+public function category(): string
+{
+    return $this->string('category')->toString();
 }
 ```

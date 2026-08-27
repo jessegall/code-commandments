@@ -20,12 +20,31 @@ public function normalize(array $row): void
 
 ----------[ Good ]----------
 
+// in Shop\Catalog\ImportRowNormalizer
 // The same import row, given its type the moment it arrives: `ImportRow::from($row)` names the
 // fields ONCE at the boundary, so nothing downstream reads `$row['sku']` off a loose array.
 
 public function ingest(array $row): void
 {
     $this->persist(ImportRow::from($row));
+}
+
+// The same row with its required fields non-nullable: `::from()` fails hard on a
+// real miss, so a valid row can't be confused with a malformed one.
+
+final class ImportRow extends Data
+{
+    public function __construct(
+        public readonly string $sku,
+        public readonly int $quantity,
+        public readonly ?int $priceCents = null,
+        public readonly ?string $note = null,
+    ) {}
+
+    public function lineTotal(): int
+    {
+        return $this->quantity * ($this->priceCents ?? 0);
+    }
 }
 ```
 
@@ -107,6 +126,14 @@ final class ShelfPlan
 }
 
 ----------[ Good ]----------
+
+final readonly class PriceRange
+{
+    public function __construct(
+        public int $floor,
+        public int $ceil,
+    ) {}
+}
 
 // The same band holding the value object instead of its parts: one `PriceRange|null` says "banded or not"
 // in one field, so the half-present state (floor set, ceil absent) cannot be spelled and the pair-guard
@@ -262,6 +289,7 @@ public function unpack(string $reference): array
 
 ----------[ Good ]----------
 
+// in Shop\Checkout\CheckoutUnpacker
 // The same reference, answered with a named result: the caller reads `->currency`, not `[3]`, so
 // adding a field never silently re-numbers what everyone else destructured.
 
@@ -274,6 +302,23 @@ public function parse(string $reference): CheckoutReference
         lines: array_slice($parts, 1),
         currency: strtoupper(substr($parts[0], 0, 3)),
     );
+}
+
+final readonly class CheckoutReference
+{
+    /**
+     * @param  list<string>  $lines
+     */
+    public function __construct(
+        public string $order,
+        public array $lines,
+        public string $currency,
+    ) {}
+
+    public function lineCount(): int
+    {
+        return count($this->lines);
+    }
 }
 ```
 
@@ -386,6 +431,16 @@ final class NestedPortView extends Data
     public function __construct(
         public readonly Wire $wire,
         public readonly int $index,
+    ) {}
+}
+
+#[TypeScript]
+final class Wire extends Data
+{
+    public function __construct(
+        public readonly string $type,
+        public readonly string $socket,
+        public readonly string $label,
     ) {}
 }
 ```

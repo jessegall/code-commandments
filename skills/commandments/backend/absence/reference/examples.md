@@ -100,9 +100,24 @@ public function lines(): array
 
 ----------[ Good ]----------
 
+// in Shop\Domain\Descriptor
 public function toArray(): array
 {
     return Payload::of(key: $this->key, label: $this->label, icon: $this->icon);
+}
+
+// in Shop\Domain\Payload
+public static function of(mixed ...$values): array
+{
+    $payload = [];
+
+    foreach ($values as $name => $value) {
+        if ($value !== null) {
+            $payload[$name] = $value;
+        }
+    }
+
+    return $payload;
 }
 ```
 

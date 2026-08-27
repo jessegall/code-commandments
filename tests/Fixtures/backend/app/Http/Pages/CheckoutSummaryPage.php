@@ -9,6 +9,8 @@ use Spatie\LaravelData\Attributes\Computed;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\LaravelData\Attributes\FromContainer;
 use Spatie\LaravelData\Data;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\RedundantEnumUnwrap;
+use JesseGall\CodeCommandments\Testing\Fixed;
 
 /**
  * Everything promoted in the constructor — the data slots AND the injected reader side by side. The
@@ -16,6 +18,7 @@ use Spatie\LaravelData\Data;
  */
 #[Sinful(InjectedServiceNotHidden::class)]
 #[Sinful(PageObjectMissingTypeScript::class)]
+#[Fixed(RedundantEnumUnwrap::class)]
 final class CheckoutSummaryPage extends Data
 {
     #[Computed]

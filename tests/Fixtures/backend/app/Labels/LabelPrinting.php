@@ -2,9 +2,13 @@
 
 namespace Shop\Labels;
 
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\BoundaryDuplicatedOperation;
+use JesseGall\CodeCommandments\Testing\Fixed;
+
 /**
  * The one home for "print a label" — the shared service every face should call.
  */
+#[Fixed(BoundaryDuplicatedOperation::class)]
 final class LabelPrinting
 {
     public function __construct(

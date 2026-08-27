@@ -43,6 +43,7 @@ final class AccessPolicy
         return $this->isLocked($user, $account);
     }
 
+    #[Fixed(RepeatedGuard::class)]
     private function isLocked($user, $account): bool
     {
         return $user->suspended && $account->frozen;

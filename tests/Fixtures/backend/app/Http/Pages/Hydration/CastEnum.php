@@ -11,6 +11,7 @@ use Spatie\LaravelData\Data;
  * N3 scenario 1 — a backed enum reconstructed from a code at an enum slot Spatie auto-casts. Built in a
  * class that also resolves a caption.
  */
+#[Fixed(RedundantNativeCast::class)]
 final class OrderState extends Data
 {
     public function __construct(public readonly FulfilmentState $state, public readonly string $caption) {}

@@ -75,6 +75,7 @@ final class LayoutBox extends Data
 /**
  * The container that carries the absence the leaves used to scatter.
  */
+#[Fixed(AllOptionalData::class)]
 final class LayoutPanel extends Data
 {
     public function __construct(

@@ -40,6 +40,7 @@ final class ShopConfig
         return $this->int('kiosk.idle_timeout');
     }
 
+    #[Fixed(DuplicatedConfigDefault::class)]
     private function int(string $key): int
     {
         return 0;

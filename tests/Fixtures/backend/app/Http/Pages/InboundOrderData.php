@@ -48,6 +48,7 @@ final class CastInboundOrderData extends Data
 /**
  * The one home of the raw → `Money` mapping.
  */
+#[Fixed(ManualInputCast::class)]
 final class MoneyCast
 {
     public function cast(mixed $value): Money

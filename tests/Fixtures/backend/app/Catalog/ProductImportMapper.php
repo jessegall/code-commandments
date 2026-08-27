@@ -7,6 +7,8 @@ use JesseGall\CodeCommandments\Sins\Backend\Spatie\ManualHydrationLoop;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\ProductData;
+use Spatie\LaravelData\Attributes\DataCollectionOf;
+use Spatie\LaravelData\Data;
 
 /**
  * Maps rows to ProductData with `::from()` in a foreach — the per-item mapping
@@ -104,4 +106,20 @@ final class ProductImportMapper
             $variants,
         );
     }
+}
+
+/**
+ * The slot `collectAll()` fills. The element type is declared ONCE, here, which is what lets
+ * `::collect()` map every row without a loop naming `ProductData` again at the call site.
+ */
+#[Fixed(ManualHydrationLoop::class)]
+final class ProductImportBatch extends Data
+{
+    /**
+     * @param  array<int, ProductData>  $products
+     */
+    public function __construct(
+        #[DataCollectionOf(ProductData::class)]
+        public readonly array $products,
+    ) {}
 }

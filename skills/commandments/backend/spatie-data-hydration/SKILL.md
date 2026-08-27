@@ -101,6 +101,7 @@ public function hold(BadgeCopy $badge, string $status): BadgeHolder
 
 ----------[ Good ]----------
 
+// in Shop\Http\Pages\Hydration\BadgeHolderBuilder
 // The FIX: the `badge` slot is typed `BadgeCopy`, so it takes the object as-is — no `->toArray()`,
 // no rebuild.
 
@@ -109,6 +110,11 @@ public function holdReady(BadgeCopy $badge, string $status): BadgeHolder
     $toned = new BadgeCopy($badge->label, $this->toneFor($status));
 
     return BadgeHolder::from(['badge' => $toned]);
+}
+
+final class BadgeCopy extends Data
+{
+    public function __construct(public readonly string $label, public readonly string $tone) {}
 }
 ```
 

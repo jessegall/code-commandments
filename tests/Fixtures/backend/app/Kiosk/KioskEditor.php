@@ -4,6 +4,7 @@ namespace Shop\Kiosk;
 
 use JesseGall\CodeCommandments\Sins\Backend\ComputedBooleanArgument;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Fixed;
 
 /**
  * The kiosk's on-screen editor, and the only thing that knows what mode it is in.
@@ -15,6 +16,7 @@ final class KioskEditor
         private readonly bool $panel,
     ) {}
 
+    #[Fixed(ComputedBooleanArgument::class)]
     public function inZenMode(): bool
     {
         return $this->zen;

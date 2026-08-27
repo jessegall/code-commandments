@@ -20,6 +20,7 @@ public function handle(string $sku, LabelRenderer $renderer, LabelQueue $queue, 
 
 ----------[ Good ]----------
 
+// in Shop\Mcp\PrintLabelTool
 // The FIX: render-queue-record is hoisted into `LabelPrinting`, the ONE home for the operation, and
 // every face calls it. What is left at this boundary is the only work that is genuinely its own —
 // translating the protocol and shaping the answer an agent reads.
@@ -27,6 +28,26 @@ public function handle(string $sku, LabelRenderer $renderer, LabelQueue $queue, 
 public function handleDelegating(string $sku, LabelPrinting $printing): string
 {
     return $this->answer($printing->print($sku));
+}
+
+// The one home for "print a label" — the shared service every face should call.
+
+final class LabelPrinting
+{
+    public function __construct(
+        private readonly LabelRenderer $renderer,
+        private readonly LabelQueue $queue,
+        private readonly PrintLog $log,
+    ) {}
+
+    public function print(string $sku): string
+    {
+        $jobId = $this->queue->push($this->renderer->render($sku));
+
+        $this->log->record($jobId);
+
+        return $jobId;
+    }
 }
 ```
 
@@ -103,9 +124,18 @@ public function build(ReportExportRequest $request): string
 
 ----------[ Good ]----------
 
+// in Shop\Http\Controllers\DuplicateActions\AnalyticsTrendController
 public function trend(ReportExportRequest $request): string
 {
     return $this->trends->plot($request);
+}
+
+final class TrendBuilder
+{
+    public function plot(ReportExportRequest $request): string
+    {
+        return 'trend';
+    }
 }
 ```
 
@@ -123,6 +153,7 @@ public function run(string $id): string
 
 ----------[ Good ]----------
 
+// in Shop\Http\Controllers\Delegated\AdminExportController
 // The FIX: the wrapper is gone. This action delegates INTO the domain — the same `WorkflowExporter`
 // the export controller calls — with the admin translation (`exportForAudit`) named on the service,
 // so there is no second HTTP door hanging off another controller.
@@ -130,5 +161,11 @@ public function run(string $id): string
 public function audit(string $id): string
 {
     return $this->exporter->exportForAudit($id);
+}
+
+// in Shop\Http\Controllers\Delegated\WorkflowExporter
+public function exportForAudit(string $id): string
+{
+    return 'audit-' . $id;
 }
 ```

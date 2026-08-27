@@ -257,6 +257,10 @@ public static function record(string $at, string $message): void
 
 ----------[ Good ]----------
 
+// in Shop\Pricing\OwnedRateTable
+public function __construct(private readonly array $table) {}
+
+// in Shop\Pricing\OwnedRateTable
 public function for(string $region): float
 {
     return $this->table[$region] ?? 1.0;

@@ -3,6 +3,8 @@
 namespace Shop\Http\Pages\RepeatedCall;
 
 use Spatie\LaravelData\Data;
+use JesseGall\CodeCommandments\Sins\Backend\RepeatedNamedCall;
+use JesseGall\CodeCommandments\Testing\Fixed;
 
 /*
  * The shared `with`-style trait, the element that uses it, and the payload Data classes the repeated-call
@@ -20,6 +22,7 @@ trait WithChanges
      * The operation the call sites kept spelling out, named ONCE on the type: the `copyWith(metadata: …)`
      * mapping AND the `->toArray()` flatten live here, so every site is `$node->withMetadata($meta)`.
      */
+    #[Fixed(RepeatedNamedCall::class)]
     public function withMetadata(Data $meta): static
     {
         return $this->copyWith(metadata: $meta->toArray());

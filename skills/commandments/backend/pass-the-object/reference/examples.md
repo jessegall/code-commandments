@@ -20,6 +20,7 @@ public static function of(bool $tucked): string
 
 ----------[ Good ]----------
 
+// in Shop\Kiosk\CornerInset
 // The FIX: take the SUBJECT the callers already hold. `CornerInset::for($editor)` asks the editor
 // itself, so the rule about which modes tuck the corners in lives here once — no call site holds a
 // half-remembered copy of it, and none can forget the panel.
@@ -27,6 +28,12 @@ public static function of(bool $tucked): string
 public static function for(KioskEditor $editor): string
 {
     return $editor->inZenMode() || $editor->hasPanelOpen() ? 'tight' : 'wide';
+}
+
+// in Shop\Kiosk\KioskEditor
+public function inZenMode(): bool
+{
+    return $this->zen;
 }
 ```
 
@@ -67,12 +74,19 @@ public function plan(array $aisles): void
 
 ----------[ Good ]----------
 
+// in Shop\Wire\HotkeyBinding
 // The FIX: the parameter is declared in the currency the caller holds, and the conversion lives on
 // the far side of the call.
 
 public function bindDirect(string $node): WireMessage
 {
     return WireMessage::raiseFor(HotkeyPressed::class, $node);
+}
+
+// in Shop\Wire\WireMessage
+public static function raiseFor(string $signal, string $target): self
+{
+    return new self(SignalAlias::of($signal), $target);
 }
 ```
 
@@ -94,11 +108,20 @@ public function dispatch(Waybill $waybill): string
 
 ----------[ Good ]----------
 
+// in Shop\Dispatch\ParcelDispatch
 // The FIX: hand over the waybill and let the courier read what it needs off it.
 
 public function dispatchWhole(Waybill $waybill): string
 {
     return $this->courier->bookWaybill($waybill);
+}
+
+// in Shop\Dispatch\CourierBooking
+public function bookWaybill(Waybill $waybill): string
+{
+    $heavy = $waybill->isHeavy() ? ':heavy' : '';
+
+    return $waybill->trackingCode() . ':' . $waybill->weightGrams() . $heavy;
 }
 ```
 

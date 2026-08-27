@@ -5,6 +5,7 @@ namespace Shop\Http\Controllers\Delegated;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\DuplicateRouteAction;
 use JesseGall\CodeCommandments\Sins\Backend\Laravel\RouteDelegatesToController;
 use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Fixed;
 
 /**
  * The real, routed controllers — each the ONE home for its operation, delegating INTO a domain service.
@@ -50,6 +51,7 @@ final class WorkflowExporter
         return $id;
     }
 
+    #[Fixed(RouteDelegatesToController::class)]
     public function exportForAudit(string $id): string
     {
         return 'audit-' . $id;

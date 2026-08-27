@@ -75,6 +75,7 @@ final class CrewBoard extends Data
 }
 
 #[TypeScript]
+#[Fixed(NestedTypeMissingTypeScript::class)]
 final class CrewSeat extends Data
 {
     public function __construct(

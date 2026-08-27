@@ -40,6 +40,7 @@ final class ShiftAnnouncer
         $this->log->record('SIREN ' . strtoupper($message));
     }
 
+    #[Fixed(FlagArgument::class)]
     public function announceQuietly(string $message): void
     {
         $this->log->record($message);

@@ -70,12 +70,31 @@ public function normalize(array $row): void
 
 ----------[ Good ]----------
 
+// in Shop\Catalog\ImportRowNormalizer
 // The same import row, given its type the moment it arrives: `ImportRow::from($row)` names the
 // fields ONCE at the boundary, so nothing downstream reads `$row['sku']` off a loose array.
 
 public function ingest(array $row): void
 {
     $this->persist(ImportRow::from($row));
+}
+
+// The same row with its required fields non-nullable: `::from()` fails hard on a
+// real miss, so a valid row can't be confused with a malformed one.
+
+final class ImportRow extends Data
+{
+    public function __construct(
+        public readonly string $sku,
+        public readonly int $quantity,
+        public readonly ?int $priceCents = null,
+        public readonly ?string $note = null,
+    ) {}
+
+    public function lineTotal(): int
+    {
+        return $this->quantity * ($this->priceCents ?? 0);
+    }
 }
 ```
 

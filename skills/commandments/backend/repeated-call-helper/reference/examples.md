@@ -78,12 +78,19 @@ public function visible($item): bool
 
 ----------[ Good ]----------
 
+// in Shop\Domain\AccessPolicy
 // The guard promoted to a NAME: `isLocked()` spells `$user->suspended && $account->frozen` once and
 // every site asks the predicate, so the condition has one home and moves in one place.
 
 public function review($user, $account): string
 {
     return $this->isLocked($user, $account) ? 'locked' : 'open';
+}
+
+// in Shop\Domain\AccessPolicy
+private function isLocked($user, $account): bool
+{
+    return $user->suspended && $account->frozen;
 }
 ```
 
@@ -118,12 +125,22 @@ public function hydrate(UiNode $node, string $title, string $state): UiNode
 
 ----------[ Good ]----------
 
+// in Shop\Http\Pages\RepeatedCall\CardHydrator
 // The repeated call promoted to a method on the receiver's type: `UiNode::withMetadata()` does the
 // `copyWith(metadata: $meta->toArray())`, so the call site says WHAT it does and says it once.
 
 public function decorate(UiNode $node, CardMeta $meta): UiNode
 {
     return $node->withMetadata($meta);
+}
+
+// in Shop\Http\Pages\RepeatedCall\WithChanges
+// The operation the call sites kept spelling out, named ONCE on the type: the `copyWith(metadata: …)`
+// mapping AND the `->toArray()` flatten live here, so every site is `$node->withMetadata($meta)`.
+
+public function withMetadata(Data $meta): static
+{
+    return $this->copyWith(metadata: $meta->toArray());
 }
 ```
 

@@ -141,12 +141,19 @@ public function visible($item): bool
 
 ----------[ Good ]----------
 
+// in Shop\Domain\AccessPolicy
 // The guard promoted to a NAME: `isLocked()` spells `$user->suspended && $account->frozen` once and
 // every site asks the predicate, so the condition has one home and moves in one place.
 
 public function review($user, $account): string
 {
     return $this->isLocked($user, $account) ? 'locked' : 'open';
+}
+
+// in Shop\Domain\AccessPolicy
+private function isLocked($user, $account): bool
+{
+    return $user->suspended && $account->frozen;
 }
 ```
 

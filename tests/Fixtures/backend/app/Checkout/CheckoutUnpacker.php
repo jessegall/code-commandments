@@ -42,6 +42,7 @@ final class CheckoutUnpacker
 }
 
 /* The tuple named: the four values that were positional now answer to what they are. */
+#[Fixed(PositionalTupleReturn::class)]
 final readonly class CheckoutReference
 {
     /**

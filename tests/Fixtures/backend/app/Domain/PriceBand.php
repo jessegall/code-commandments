@@ -27,6 +27,7 @@ final class PriceBand
 }
 
 /* The clump extracted: the two halves that only ever moved together ARE the range. */
+#[Fixed(CoupledFields::class)]
 final readonly class PriceRange
 {
     public function __construct(

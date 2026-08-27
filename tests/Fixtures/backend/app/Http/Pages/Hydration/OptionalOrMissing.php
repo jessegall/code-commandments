@@ -5,6 +5,7 @@ namespace Shop\Http\Pages\Hydration;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullToOptionalMap;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use Spatie\LaravelData\Optional;
+use JesseGall\CodeCommandments\Testing\Fixed;
 
 /*
  * Righteous twin: the shared `optionalOrMissing()` home ITSELF — the ONE named factory the rule tells
@@ -14,6 +15,7 @@ use Spatie\LaravelData\Optional;
  * Must NOT flag.
  */
 #[Righteous(NullToOptionalMap::class)]
+#[Fixed(NullToOptionalMap::class)]
 trait OptionalOrMissing
 {
     public static function optionalOrMissing(mixed $payload): static|Optional

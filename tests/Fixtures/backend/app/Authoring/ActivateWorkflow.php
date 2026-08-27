@@ -45,6 +45,7 @@ final class StampedActivateWorkflow
 /**
  * The source of the timestamp the fixed activation asks for.
  */
+#[Fixed(PlaceholderFilledData::class)]
 final class WorkflowClock
 {
     public function stamp(): string

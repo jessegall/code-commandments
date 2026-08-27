@@ -26,6 +26,7 @@ final class ContractData extends Data
  * `record_company → recordCompany` translation for every caller.
  */
 #[MapInputName(SnakeCaseMapper::class)]
+#[Fixed(HandKeyRemap::class)]
 final class MappedContractData extends Data
 {
     public function __construct(

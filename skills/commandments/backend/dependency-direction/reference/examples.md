@@ -66,6 +66,7 @@ public function inPanel(): Panel
 
 ----------[ Good ]----------
 
+// in Shop\Ui\Elements\Badge
 // The FIX: the arrow inverted. The badge hands out only what it owns — a token from the layer
 // BELOW it — and Shared assembles the panel from that. Elements names nothing above itself, so it
 // reads, tests and moves on its own again.
@@ -73,5 +74,17 @@ public function inPanel(): Panel
 public function accent(): Accent
 {
     return new Accent($this->label);
+}
+
+// A design token — the very bottom of the UI stack, which knows about nothing above it.
+
+final class Accent
+{
+    public function __construct(public readonly string $name) {}
+
+    public function hex(): string
+    {
+        return $this->name === 'primary' ? '#1b5e20' : '#616161';
+    }
 }
 ```

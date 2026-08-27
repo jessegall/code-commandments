@@ -90,6 +90,7 @@ public static function of(bool $tucked): string
 
 ----------[ Good ]----------
 
+// in Shop\Kiosk\CornerInset
 // The FIX: take the SUBJECT the callers already hold. `CornerInset::for($editor)` asks the editor
 // itself, so the rule about which modes tuck the corners in lives here once — no call site holds a
 // half-remembered copy of it, and none can forget the panel.
@@ -97,6 +98,12 @@ public static function of(bool $tucked): string
 public static function for(KioskEditor $editor): string
 {
     return $editor->inZenMode() || $editor->hasPanelOpen() ? 'tight' : 'wide';
+}
+
+// in Shop\Kiosk\KioskEditor
+public function inZenMode(): bool
+{
+    return $this->zen;
 }
 ```
 

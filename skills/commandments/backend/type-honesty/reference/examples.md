@@ -221,6 +221,16 @@ final class StampedActivateWorkflow
         );
     }
 }
+
+// The source of the timestamp the fixed activation asks for.
+
+final class WorkflowClock
+{
+    public function stamp(): string
+    {
+        return '2024-01-01T00:00:00Z';
+    }
+}
 ```
 
 ### useless-property-hook

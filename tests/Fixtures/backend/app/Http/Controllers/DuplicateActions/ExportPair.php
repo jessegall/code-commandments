@@ -98,6 +98,7 @@ final class AnalyticsTrendController
     }
 }
 
+#[Fixed(DuplicateRouteAction::class)]
 final class TrendBuilder
 {
     public function plot(ReportExportRequest $request): string

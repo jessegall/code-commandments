@@ -89,6 +89,7 @@ public function handle(string $sku, LabelRenderer $renderer, LabelQueue $queue, 
 
 ----------[ Good ]----------
 
+// in Shop\Mcp\PrintLabelTool
 // The FIX: render-queue-record is hoisted into `LabelPrinting`, the ONE home for the operation, and
 // every face calls it. What is left at this boundary is the only work that is genuinely its own —
 // translating the protocol and shaping the answer an agent reads.
@@ -96,6 +97,26 @@ public function handle(string $sku, LabelRenderer $renderer, LabelQueue $queue, 
 public function handleDelegating(string $sku, LabelPrinting $printing): string
 {
     return $this->answer($printing->print($sku));
+}
+
+// The one home for "print a label" — the shared service every face should call.
+
+final class LabelPrinting
+{
+    public function __construct(
+        private readonly LabelRenderer $renderer,
+        private readonly LabelQueue $queue,
+        private readonly PrintLog $log,
+    ) {}
+
+    public function print(string $sku): string
+    {
+        $jobId = $this->queue->push($this->renderer->render($sku));
+
+        $this->log->record($jobId);
+
+        return $jobId;
+    }
 }
 ```
 

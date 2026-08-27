@@ -3,12 +3,15 @@
 namespace Shop\Http\Pages\Hydration;
 
 use Spatie\LaravelData\Data;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DataToArrayRoundtrip;
+use JesseGall\CodeCommandments\Testing\Fixed;
 
 /*
  * Shared leaf Data classes, enums, and stubs the hydration-site fixtures nest, derive, and cast. Declared
  * once here (no findings of their own); the per-scenario site files reference them.
  */
 
+#[Fixed(DataToArrayRoundtrip::class)]
 final class BadgeCopy extends Data
 {
     public function __construct(public readonly string $label, public readonly string $tone) {}

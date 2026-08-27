@@ -5,10 +5,13 @@ namespace Shop\Data;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
 use Spatie\LaravelData\Data;
 use Shop\Enums\OrderStatus;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\NewDataObject;
+use JesseGall\CodeCommandments\Testing\Fixed;
 
 /**
  * Typed view of an order for the API.
  */
+#[Fixed(NewDataObject::class)]
 final class OrderData extends Data
 {
     public function __construct(
