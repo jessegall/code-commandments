@@ -50,9 +50,16 @@ final class ExampleText
      *
      * A fix that MOVES behaviour has two ends — the call site that got thinner and the type that
      * received the method — and publishing only the end that shrank teaches a reader to call a method
-     * that does not exist. The file is what says the ends belong together: a fixture file is one
-     * scenario, so everything marked as this sin's resolution in it is part of the same repair. The
-     * counterpart leads so the good half still lines up against the bad one as a before/after.
+     * that does not exist. The counterpart leads, so the good half still lines up against the bad one
+     * as a before/after, and two kinds of declaration follow it:
+     *
+     * - what is marked in the counterpart's OWN file — the interface pulled up beside it, the sibling
+     *   the behaviour moved onto;
+     * - what is marked in a file holding no sinful code of this sin — a SHARED collaborator, like the
+     *   model that grew the named transition or the Null Object a whole family of fixes defaults to.
+     *
+     * The sinful marker is what anchors a scenario to a file, which is what keeps a sin fixed three
+     * separate times (`DivergentTwin`) from publishing all three repairs as one.
      *
      * @param  list<array<string, mixed>>  $bad
      * @param  list<array<string, mixed>>  $good
@@ -66,10 +73,15 @@ final class ExampleText
             return [];
         }
 
+        $anchored = array_column($bad, 'file');
         $collaborators = [];
 
         foreach ($good as $one) {
-            if ($one !== $counterpart && $one['file'] === $counterpart['file']) {
+            if ($one === $counterpart) {
+                continue;
+            }
+
+            if ($one['file'] === $counterpart['file'] || ! in_array($one['file'], $anchored, true)) {
                 $collaborators[] = $one;
             }
         }

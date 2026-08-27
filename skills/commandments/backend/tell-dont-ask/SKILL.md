@@ -132,9 +132,21 @@ public function suspend(Customer $customer, string $reason): void
 
 ----------[ Good ]----------
 
+// in Shop\Customers\CustomerUpdater
 public function suspendByTelling(Customer $customer, string $reason): void
 {
     $customer->suspend($reason);
+}
+
+// in Shop\Models\Customer
+// Where every call site's poking-and-saving went: the transition named once, on the model that
+// owns the columns it writes.
+
+public function suspend(string $reason): void
+{
+    $this->suspended = true;
+    $this->suspended_reason = $reason;
+    $this->save();
 }
 ```
 

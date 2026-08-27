@@ -99,11 +99,26 @@ public function colour(Product $product): string
 
 ----------[ Good ]----------
 
+// in Shop\Catalog\StockBadge
 // The mapping lives ON the enum; the call site just asks for the colour.
 
 public function colourViaEnum(Product $product): string
 {
     return $product->category->badgeColour();
+}
+
+// in Shop\Enums\ProductCategory
+// Where the call site's re-match went. The knowledge is keyed off the cases, so it belongs
+// with them — and a case added here cannot be forgotten at a call site that no longer decides.
+
+public function badgeColour(): string
+{
+    return match ($this) {
+        self::Food => 'green',
+        self::Electronics => 'blue',
+        self::Clothing => 'purple',
+        self::Apparel => 'grey',
+    };
 }
 ```
 
@@ -146,6 +161,7 @@ public function for(Product $product): ?string
 
 ----------[ Good ]----------
 
+// in Shop\Catalog\PriorityLabel
 // The default arm throws a named exception, so an unhandled priority fails
 // loudly instead of being swallowed into null.
 
@@ -157,6 +173,17 @@ public function strictFor(Product $product): string
         3 => 'low',
         default => throw UnknownPriority::for($product->priority),
     };
+}
+
+// What the swallowed `default => null` becomes: the unhandled case, named. A priority nobody
+// mapped is a gap in the mapping, and this is the only thing that says so out loud.
+
+final class UnknownPriority extends RuntimeException
+{
+    public static function for(int $priority): self
+    {
+        return new self("No label is mapped for priority {$priority}.");
+    }
 }
 ```
 

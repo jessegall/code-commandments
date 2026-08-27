@@ -120,6 +120,7 @@ public function byBarcode(string $barcode): ?Product
 
 ----------[ Good ]----------
 
+// in Shop\Catalog\ProductFinder
 // Resolve-or-throw: a scanned barcode must exist, so the absence is decided
 // once at the source and the return type tells the truth.
 
@@ -127,6 +128,17 @@ public function requireByBarcode(string $barcode): Product
 {
     return Product::query()->where('barcode', $barcode)->first()
         ?? throw ProductNotFound::forBarcode($barcode);
+}
+
+// The absence the finder used to hand back as null, decided once and named. Every caller that
+// de-nulled the `?Product` is now spared the question.
+
+final class ProductNotFound extends RuntimeException
+{
+    public static function forBarcode(string $barcode): self
+    {
+        return new self("No product is registered under barcode {$barcode}.");
+    }
 }
 ```
 

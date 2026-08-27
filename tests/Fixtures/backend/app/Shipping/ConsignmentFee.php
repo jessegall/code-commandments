@@ -12,15 +12,31 @@ interface Freightable
     public function weightGrams(): int;
 }
 
-final class ExpressFreight implements Freightable
+/**
+ * What the caller actually wants to know. Each kind of freight answers it for itself, so pricing a
+ * new kind adds a class rather than a branch.
+ */
+#[Fixed(TypeSwitch::class)]
+interface PricedFreight
+{
+    public function priceCents(): int;
+}
+
+final class ExpressFreight implements Freightable, PricedFreight
 {
     public function weightGrams(): int
     {
         return 900;
     }
+
+    #[Fixed(TypeSwitch::class)]
+    public function priceCents(): int
+    {
+        return $this->weightGrams() * 12 + 500;
+    }
 }
 
-final class PalletFreight implements Freightable
+final class PalletFreight implements Freightable, PricedFreight
 {
     public function weightGrams(): int
     {
@@ -30,6 +46,12 @@ final class PalletFreight implements Freightable
     public function pallets(): int
     {
         return 3;
+    }
+
+    #[Fixed(TypeSwitch::class)]
+    public function priceCents(): int
+    {
+        return $this->pallets() * 4_000;
     }
 }
 
@@ -62,9 +84,4 @@ final class ConsignmentFee
     {
         return $freight->priceCents();
     }
-}
-
-interface PricedFreight
-{
-    public function priceCents(): int;
 }

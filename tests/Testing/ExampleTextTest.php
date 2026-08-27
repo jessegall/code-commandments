@@ -42,9 +42,12 @@ final class ExampleTextTest extends TestCase
         $this->assertSame('interface PricedFreight {}', $resolution[1]['source']);
     }
 
-    public function test_only_resolutions_in_the_counterparts_file_join_the_fix(): void
+    public function test_another_scenarios_repair_never_joins_this_one(): void
     {
-        $bad = [self::marked('Fee', 'Fee.php', 'sinful')];
+        $bad = [
+            self::marked('Fee', 'Fee.php', 'sinful'),
+            self::marked('Roster', 'Roster.php', 'sinful elsewhere'),
+        ];
         $good = [
             self::marked('Fee', 'Fee.php', 'the thinned caller'),
             self::marked('Express', 'Fee.php', 'the collaborator'),
@@ -59,7 +62,10 @@ final class ExampleTextTest extends TestCase
 
     public function test_a_sin_fixed_in_several_files_keeps_its_scenarios_apart(): void
     {
-        $bad = [self::marked('Roster', 'Roster.php', 'sinful')];
+        $bad = [
+            self::marked('Roster', 'Roster.php', 'sinful'),
+            self::marked('Evidence', 'Evidence.php', 'sinful too'),
+        ];
         $good = [
             self::marked('Evidence', 'Evidence.php', 'one scenario'),
             self::marked('Roster', 'Roster.php', 'another'),
@@ -69,6 +75,36 @@ final class ExampleTextTest extends TestCase
 
         $this->assertCount(1, $resolution);
         $this->assertSame('another', $resolution[0]['source']);
+    }
+
+    public function test_a_shared_collaborator_joins_whichever_scenario_is_shown(): void
+    {
+        $bad = [self::marked('Updater', 'Updater.php', 'sinful')];
+        $good = [
+            self::marked('Updater', 'Updater.php', 'the thinned caller'),
+            self::marked('Customer', 'Customer.php', 'the named transition'),
+        ];
+
+        $resolution = ExampleText::resolution($bad, $good, 'class');
+
+        $this->assertSame(['the thinned caller', 'the named transition'], array_column($resolution, 'source'));
+    }
+
+    public function test_a_file_with_its_own_sinful_code_is_another_scenario_not_a_collaborator(): void
+    {
+        $bad = [
+            self::marked('Roster', 'Roster.php', 'sinful roster'),
+            self::marked('Evidence', 'Evidence.php', 'sinful evidence'),
+        ];
+        $good = [
+            self::marked('Roster', 'Roster.php', 'the fixed roster'),
+            self::marked('Evidence', 'Evidence.php', 'the fixed evidence'),
+            self::marked('AssetPath', 'AssetPath.php', 'the canonical implementation'),
+        ];
+
+        $resolution = ExampleText::resolution($bad, $good, 'class');
+
+        $this->assertSame(['the fixed roster', 'the canonical implementation'], array_column($resolution, 'source'));
     }
 
     public function test_nothing_marked_as_fixed_resolves_to_nothing(): void

@@ -18,9 +18,21 @@ public function suspend(Customer $customer, string $reason): void
 
 ----------[ Good ]----------
 
+// in Shop\Customers\CustomerUpdater
 public function suspendByTelling(Customer $customer, string $reason): void
 {
     $customer->suspend($reason);
+}
+
+// in Shop\Models\Customer
+// Where every call site's poking-and-saving went: the transition named once, on the model that
+// owns the columns it writes.
+
+public function suspend(string $reason): void
+{
+    $this->suspended = true;
+    $this->suspended_reason = $reason;
+    $this->save();
 }
 ```
 
@@ -40,12 +52,22 @@ public function forItem(CatalogItem $item): array
 
 ----------[ Good ]----------
 
+// in Shop\Catalog\ReservedSkus
 // The item knows its own reserved SKUs — ask it directly instead of using its
 // code as a key back into a registry.
 
 public function forItemDirect(CatalogItem $item): array
 {
     return $item->reservedSkus();
+}
+
+// in Shop\Catalog\CatalogItem
+// Where the registry lookup went. The item held the key all along, so it can answer the
+// question the key was being used to ask.
+
+public function reservedSkus(): array
+{
+    return $this->reserved;
 }
 ```
 
@@ -69,11 +91,32 @@ public function price(Freightable $freight): int
 
 ----------[ Good ]----------
 
+// in Shop\Shipping\ConsignmentFee
 // The FIX: one method on the shared interface, implemented per freight type. Each kind answers
 // for itself, so a new kind needs no edit here at all.
 
 public function priceTold(PricedFreight $freight): int
 {
     return $freight->priceCents();
+}
+
+// What the caller actually wants to know. Each kind of freight answers it for itself, so pricing a
+// new kind adds a class rather than a branch.
+
+interface PricedFreight
+{
+    public function priceCents(): int;
+}
+
+// in Shop\Shipping\ExpressFreight
+public function priceCents(): int
+{
+    return $this->weightGrams() * 12 + 500;
+}
+
+// in Shop\Shipping\PalletFreight
+public function priceCents(): int
+{
+    return $this->pallets() * 4_000;
 }
 ```

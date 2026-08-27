@@ -57,10 +57,22 @@ public function carrierName(Shipment $shipment): string
 
 ----------[ Good ]----------
 
+// in Shop\Shipping\TrackingFormatter
 public function carrierNameNamed(Shipment $shipment): string
 {
     return $shipment->carrier?->displayName()
         ?? throw CarrierMissing::for($shipment->id);
+}
+
+// Where the message went. The failure is named once, so every throw site says WHAT went wrong
+// instead of spelling out a sentence the next site has to spell differently.
+
+final class CarrierMissing extends RuntimeException
+{
+    public static function for(int|string $shipment): self
+    {
+        return new self("Shipment {$shipment} has no carrier.");
+    }
 }
 ```
 

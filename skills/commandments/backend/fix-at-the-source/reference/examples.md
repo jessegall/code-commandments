@@ -217,6 +217,7 @@ public function import(array $rows): void
 
 ----------[ Good ]----------
 
+// in Shop\Legacy\LegacyOrderImporter
 // The FIX: a row with no email is an absence at the SOURCE, so the boundary names the failure and
 // throws. The `?? ''` version looked up "the customer whose email is the empty string" and carried
 // that fake all the way to the import — the throw stops the row here, where the truth is known.
@@ -228,6 +229,13 @@ public function importStrictly(array $rows): void
 
         $this->findCustomer($email)?->markImported();
     }
+}
+
+// in Shop\Models\Customer
+public function markImported(): void
+{
+    $this->imported = true;
+    $this->save();
 }
 ```
 
