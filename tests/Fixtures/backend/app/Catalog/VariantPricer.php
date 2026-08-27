@@ -57,3 +57,21 @@ final class Variant
         return 999;
     }
 }
+
+/**
+ * The caller's half of the same fix: it holds the catalogue, so it resolves the variant ONCE and
+ * owns the "no such sku" failure — which is exactly the knowledge the pricer was borrowing.
+ */
+final class CartPricing
+{
+    public function __construct(
+        private readonly ProductCatalogue $catalogue,
+        private readonly VariantPricer $pricer,
+    ) {}
+
+    #[Fixed(ParamResolvedFromParam::class)]
+    public function lineTotal(string $sku): int
+    {
+        return $this->pricer->priceForVariant($this->catalogue->variantBySku($sku));
+    }
+}

@@ -199,11 +199,18 @@ public function pairs(array $tokens): int
 
 ----------[ Good ]----------
 
+// in Shop\Domain\TokenScanner
 // The narrowing promoted to a NAME: `isBalancedBrace()` holds `$t instanceof Brace &&
 // $t->close instanceof Brace` once, and every site asks the predicate instead of copying the chain.
 
 public function balanced(array $tokens): int
 {
     return count(array_filter($tokens, $this->isBalancedBrace(...)));
+}
+
+// in Shop\Domain\TokenScanner
+private function isBalancedBrace($t): bool
+{
+    return $t instanceof Brace && $t->close instanceof Brace;
 }
 ```

@@ -66,6 +66,7 @@ public function clearsImmediately(PaymentMethod $method): bool
 
 ----------[ Good ]----------
 
+// in Shop\Payments\InstantSettlement
 public function clearsImmediatelyClean(PaymentMethod $method): bool
 {
     if ($this->retries > 3) {
@@ -73,6 +74,18 @@ public function clearsImmediatelyClean(PaymentMethod $method): bool
     }
 
     return $method->isInstant();
+}
+
+// in Shop\Enums\PaymentMethod
+// The eligible set, sealed where the cases are. The call site used to re-derive it from an
+// or-chain, which is a copy of this answer that no new case can update.
+
+public function isInstant(): bool
+{
+    return match ($this) {
+        self::Card, self::Ideal => true,
+        self::PayPal => false,
+    };
 }
 ```
 

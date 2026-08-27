@@ -118,11 +118,18 @@ public function priceFor(ProductCatalogue $catalogue, string $sku): int
 
 ----------[ Good ]----------
 
+// in Shop\Catalog\VariantPricer
 // Demands the resolved variant — the caller resolves it once by sku and owns
 // the "not found" failure, so this only prices what it is handed.
 
 public function priceForVariant(Variant $variant): int
 {
     return $variant->basePriceCents() + $this->markupCents;
+}
+
+// in Shop\Catalog\CartPricing
+public function lineTotal(string $sku): int
+{
+    return $this->pricer->priceForVariant($this->catalogue->variantBySku($sku));
 }
 ```

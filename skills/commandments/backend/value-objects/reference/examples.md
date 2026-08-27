@@ -50,6 +50,7 @@ public function daily(int $day): array
 
 ----------[ Good ]----------
 
+// in Shop\Reporting\SalesReport
 // The same daily figures as a typed report value object — named fields, not a
 // loose string-keyed bag.
 
@@ -61,6 +62,17 @@ public function dailyReport(int $day): DailyReport
         gross: $gross,
         net: (int) round($gross * 0.79),
     );
+}
+
+// What the string-keyed bag became. The keys a caller used to guess at are fields, so a typo is a
+// failure here rather than a null three layers down.
+
+final class DailyReport
+{
+    public function __construct(
+        public readonly int $gross,
+        public readonly int $net,
+    ) {}
 }
 ```
 
@@ -123,12 +135,25 @@ public function record(string $shopId, string $userId, string $channelId): strin
 
 ----------[ Good ]----------
 
+// in Shop\Reporting\AccessAuditor
 // The clump named: one value object carries the three fields that travelled
 // together.
 
 public function recordAccess(AccessContext $context): string
 {
     return implode(self::SEPARATOR, [$context->shopId, $context->userId, $context->channelId]);
+}
+
+// The three ids that always travelled together, named once. Signatures shrink to one parameter and
+// nothing can pass them in the wrong order any more.
+
+final class AccessContext
+{
+    public function __construct(
+        public readonly string $shopId,
+        public readonly string $userId,
+        public readonly string $channelId,
+    ) {}
 }
 ```
 
@@ -271,6 +296,7 @@ public function rates(string $base, array $symbols): array
 
 ----------[ Good ]----------
 
+// in Shop\Integrations\ExchangeRateClient
 public function ratesTyped(string $base, array $symbols): RateTable
 {
     $query = http_build_query([
@@ -279,6 +305,31 @@ public function ratesTyped(string $base, array $symbols): RateTable
     ]);
 
     return RateTable::from(json_decode($this->http->get("https://fx.test/latest?{$query}"), true));
+}
+
+// The shape the wire actually has, declared. A decoded response handed back raw asks every caller
+// to know the payload's keys; this states them once, at the boundary that read them.
+
+final class RateTable
+{
+    /**
+     * @param  array<string, float>  $rates
+     */
+    public function __construct(
+        public readonly string $base,
+        public readonly array $rates,
+    ) {}
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    public static function from(array $payload): self
+    {
+        return new self(
+            base: (string) $payload['base'],
+            rates: $payload['rates'],
+        );
+    }
 }
 ```
 

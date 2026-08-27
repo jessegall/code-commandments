@@ -45,6 +45,7 @@ final class TokenScanner
         return count(array_filter($tokens, $this->isBalancedBrace(...)));
     }
 
+    #[Fixed(RepeatedTypeGuard::class)]
     private function isBalancedBrace($t): bool
     {
         return $t instanceof Brace && $t->close instanceof Brace;

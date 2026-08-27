@@ -76,12 +76,24 @@ public function get(string $key): ?object
 
 ----------[ Good ]----------
 
+// in Shop\Support\NotificationChannels
 // The FIX: the store resolves-or-throws. A missing key is a named failure at the source
 // (`UnknownChannel::forKey($key)`), never a `null` every caller has to re-decide about.
 
 public function resolve(string $key): object
 {
     return $this->channels[$key] ?? throw UnknownChannel::forKey($key);
+}
+
+// The failure the nullable lookup used to hand back as null. Naming it is what lets the store
+// resolve-or-throw, so no caller re-decides what a missing channel means.
+
+final class UnknownChannel extends RuntimeException
+{
+    public static function forKey(string $key): self
+    {
+        return new self("No notification channel is registered under {$key}.");
+    }
 }
 ```
 

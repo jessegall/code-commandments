@@ -22,11 +22,22 @@ public function search(array $filters): array
 
 ----------[ Good ]----------
 
+// in Shop\Catalog\CatalogSearchService
 // Injects the typed settings object instead of reading config in the body.
 
 public function searchTop(string $term, string $sort): array
 {
     return $this->run($term, $sort, $this->settings->perPage);
+}
+
+// The config values the catalog actually uses, read once at the edge and typed. Every body that
+// used to reach for `config()` takes this instead, and gets an `int` rather than a `mixed`.
+
+final class CatalogSettings
+{
+    public function __construct(
+        public readonly int $perPage = 24,
+    ) {}
 }
 ```
 

@@ -37,3 +37,11 @@ final class SitemapController
         return 'sitemap';
     }
 }
+
+final class CatalogueListController
+{
+    public function list(): string
+    {
+        return 'catalogue';
+    }
+}
