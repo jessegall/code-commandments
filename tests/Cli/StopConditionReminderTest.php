@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\StopConditionReminder;
+use JesseGall\CodeCommandments\Hooks\StopHookCap;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
@@ -16,17 +17,36 @@ use PHPUnit\Framework\TestCase;
  */
 final class StopConditionReminderTest extends TestCase
 {
+    /**
+     * The harness cap these tests run under. Pinned, because the release point is measured against it
+     * ({@see StopHookCap}) — left to the ambient environment, a machine that raises the cap would move
+     * the very threshold under test and the suite would pass or fail by whose laptop it ran on.
+     */
+    private const int CAP = 6;
+
     private string $root;
 
     protected function setUp(): void
     {
+        putenv(StopHookCap::VARIABLE . '=' . self::CAP);
+
         $this->root = sys_get_temp_dir() . '/cc-untilhook-' . uniqid('', true);
         mkdir($this->root . '/.commandments', 0777, true);
     }
 
     protected function tearDown(): void
     {
+        putenv(StopHookCap::VARIABLE);
+
         exec('rm -rf ' . escapeshellarg($this->root));
+    }
+
+    /**
+     * How many stops this gate holds before releasing itself — one short of the harness cap.
+     */
+    private function holds(): int
+    {
+        return StopHookCap::budget(50);
     }
 
     /**
@@ -183,7 +203,7 @@ final class StopConditionReminderTest extends TestCase
     {
         $this->gate()->add('the impossible thing happens');
 
-        for ($i = 0; $i < 25; $i++) {
+        for ($i = 0; $i < $this->holds(); $i++) {
             $this->assertStringContainsString('Do not stop', $this->reason($this->stop()));
         }
 
@@ -202,7 +222,7 @@ final class StopConditionReminderTest extends TestCase
         $this->gate()->add('the impossible thing happens');
         $this->gate()->add('the other impossible thing happens');
 
-        for ($i = 0; $i <= 25; $i++) {
+        for ($i = 0; $i <= $this->holds(); $i++) {
             $this->stop();
         }
 
@@ -221,7 +241,7 @@ final class StopConditionReminderTest extends TestCase
     {
         $this->gate()->add('the impossible thing happens');
 
-        for ($i = 0; $i <= 25; $i++) {
+        for ($i = 0; $i <= $this->holds(); $i++) {
             $released = $this->reason($this->stop());
         }
 
@@ -333,8 +353,8 @@ final class StopConditionReminderTest extends TestCase
         $this->gate()->add('tests pass');
         $this->gate()->add('readme updated');
 
-        for ($i = 0; $i < 8; $i++) {
-            $this->stop();
+        for ($i = 0; $i < $this->holds() - 1; $i++) {
+            $this->stop(); // Short of the release point, so the countdown is running, not spent.
         }
 
         $this->gate()->met(1); // Real progress — the agent is working, not spinning.

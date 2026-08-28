@@ -52,6 +52,8 @@ final class StopConditionGate
                     . 'One-shot: the next held stop consumes it and drops the blocks, so a claim is always made '
                     . 'afresh about the list as it stands then',
                 'claim_round' => 'how many challenges the pending `stuck` claim has answered (0 = none pending)',
+                'work' => 'pieces of work done since the gate was set. Never reset, so a gate that has seen '
+                    . 'work and held no stop can say the Stop hook is not reaching it',
             ],
             defaults: new State(
                 held_stops: 0,
@@ -60,6 +62,7 @@ final class StopConditionGate
                 paused: false,
                 stuck: false,
                 claim_round: 0,
+                work: 0,
             ),
             list: 'one `id<TAB>condition` per line — what you may not stop until it holds. A third '
                 . 'tab-separated column is the reason that ONE condition cannot move without the user '
@@ -101,6 +104,14 @@ final class StopConditionGate
     }
 
     /**
+     * Has this gate seen any work at all? A gate that has and never held one stop is not being asked.
+     */
+    public function workDone(): bool
+    {
+        return $this->file->read()->int('work') > 0;
+    }
+
+    /**
      * Count one piece of work against the to-do list the USER can see, and answer whether it has now
      * drifted $every pieces from the work actually being done — the moment to tell the agent to true it
      * up. Firing restarts the count, so the nudge lands once per stretch of drift rather than on every
@@ -112,7 +123,7 @@ final class StopConditionGate
         $drift = $this->file->read()->int('todo_drift') + 1;
         $due = $drift >= $every;
 
-        $this->save(fn (State $state): State => $state->with(todo_drift: $due ? 0 : $drift));
+        $this->save(fn (State $state): State => $state->with(todo_drift: $due ? 0 : $drift, work: $state->int('work') + 1));
 
         return $due;
     }

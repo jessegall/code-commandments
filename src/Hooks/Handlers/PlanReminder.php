@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\PlanProfile;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\StopHookCap;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanReset;
@@ -116,7 +117,7 @@ final class PlanReminder extends Hook
 
         $state = $marker->recordNudge($this->git()->head($event->root));
 
-        if ($state->total > self::MAX_TOTAL) {
+        if ($state->total > StopHookCap::budget(self::MAX_TOTAL)) {
             $marker->clear(); // A plan this long was abandoned, not run — stop nudging for good.
 
             return $this->pass();
@@ -127,7 +128,7 @@ final class PlanReminder extends Hook
         $capped = match (true) {
             $mode->neverStops() => false,
             $mode->nudgesOnce() => $state->total > 1,
-            default => $state->stuck > self::MAX_STUCK,
+            default => $state->stuck > StopHookCap::budget(self::MAX_STUCK),
         };
 
         return $capped ? $this->pass() : $this->block($this->keepGoingNudge($mode));

@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\StopHookCap;
 use JesseGall\CodeCommandments\Hooks\TodoList;
 
 /**
@@ -34,9 +35,10 @@ final class StopConditionReminder extends Hook
      * Generous on purpose. This is a runaway backstop, not a work budget: a session draining a queue of
      * inbound issues holds many stops between one condition and the next, and releasing the gate on it
      * sets the user's conditions aside just as the work is going well. Ten was low enough to fire during
-     * ordinary progress.
+     * ordinary progress. Clamped by {@see StopHookCap} — the harness's own cap is the real ceiling, and
+     * a number above it never runs.
      */
-    private const int MAX_BLOCKS = 25;
+    private const int MAX_BLOCKS = 50;
 
     /**
      * How many conditions a held stop spells out. A long gate (the user parking dozens of tasks) would
@@ -182,7 +184,7 @@ final class StopConditionReminder extends Hook
 
         $blocks = $gate->recordBlock();
 
-        if ($blocks > self::MAX_BLOCKS) {
+        if ($blocks > StopHookCap::budget(self::MAX_BLOCKS)) {
             $gate->pause(); // SET ASIDE, never dropped: the cap protects the session from spinning, and
             // destroying what the user asked for is not part of that bargain — a `resume` puts it back.
 
@@ -264,7 +266,7 @@ final class StopConditionReminder extends Hook
      */
     private function released(array $conditions): string
     {
-        return "Code Commandments — you have been sent back " . self::MAX_BLOCKS . " times without meeting a stop "
+        return "Code Commandments — you have been sent back " . StopHookCap::budget(self::MAX_BLOCKS) . " times without meeting a stop "
             . "condition, so the gate has RELEASED itself: nothing holds your next stop, and "
             . count($conditions) . " condition(s) are SET ASIDE, kept verbatim:\n"
             . $this->excerpt($conditions, listable: false)

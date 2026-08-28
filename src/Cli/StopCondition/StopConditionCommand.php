@@ -8,7 +8,9 @@ use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Hooks\HookIO;
+use JesseGall\CodeCommandments\Hooks\StopHookCap;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -90,8 +92,10 @@ final class StopConditionCommand implements Command
                 . 'released only once every standing condition carries its own reason, and survives two '
                 . 'challenges (running low on context, a big or mechanical change and "this needs its own change" '
                 . 'are the WORK, not a blocker). A held stop DROPS every block, so the claim is always made afresh '
-                . 'about the list as it stands then. Loop-safe — 25 consecutive held stops with no progress release '
-                . 'the gate, and meeting a condition resets that count. An ACTIVE PLAN takes precedence: the gate '
+                . 'about the list as it stands then. Loop-safe — a run of held stops with no progress releases '
+                . 'the gate (kept under the harness\'s own stop-hook cap, so the gate sets itself aside with '
+                . 'every condition intact rather than being overridden), and meeting a condition resets that '
+                . 'count. An ACTIVE PLAN takes precedence: the gate '
                 . 'stays silent while the plan nudge owns the stop, then takes over at `plan done`.');
     }
 
@@ -173,6 +177,8 @@ final class StopConditionCommand implements Command
                 fwrite(STDOUT, "  Waiting on the user:\n");
                 $this->reasons($gate);
             }
+
+            $this->silences($gate);
         } else {
             fwrite(STDOUT, "○ No stop conditions in force.\n");
         }
@@ -183,6 +189,31 @@ final class StopConditionCommand implements Command
         }
 
         return 0;
+    }
+
+    /**
+     * Say so when the gate is standing but holding nothing.
+     *
+     * A gate that cannot hold looks exactly like a gate that is not there — the user sets conditions,
+     * the session runs to the end, and nothing is ever said. Two things quiet it, and both are
+     * knowable here: a plan owns the stop while it runs, and a session that has done real work
+     * without one single held stop is being overruled somewhere above us.
+     */
+    private function silences(StopConditionGate $gate): void
+    {
+        if (PlanMarker::inSession(Workspace::at($this->io->projectRoot()))->isActive()) {
+            fwrite(STDOUT, "  ⚠ A plan is active, so these hold NOTHING yet — the plan owns the stop.\n"
+                . "    They take over at `commandments plan done`.\n");
+
+            return;
+        }
+
+        if ($gate->heldStops() === 0 && $gate->workDone()) {
+            fwrite(STDOUT, "  ⚠ Work has been done and not ONE stop was held, which cannot happen while a gate\n"
+                . "    stands. The Stop hook is not reaching this gate — check that `.claude/settings.json`\n"
+                . "    still wires it, and that " . StopHookCap::VARIABLE . " is not set below the number of\n"
+                . "    holds this gate needs (the harness overrides a hook that blocks past its cap).\n");
+        }
     }
 
     /**
