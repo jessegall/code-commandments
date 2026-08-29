@@ -42,7 +42,7 @@ final class SessionCommand implements Command
 
     public function run(Input $input): int
     {
-        $root = $this->io->projectRoot();
+        $root = Workspace::ofSession($this->io->projectRoot())->root();
 
         if ($input->firstArgument()->unwrapOr('') === 'list') {
             return $this->list($root);

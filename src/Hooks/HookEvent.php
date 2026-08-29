@@ -55,6 +55,16 @@ final class HookEvent
     }
 
     /**
+     * This event's workspace for what belongs to the SESSION rather than the worktree — the journal. A hook
+     * fired while the shell sat in a worktree would otherwise file the conversation there and leave the
+     * record at home incomplete ({@see Workspace::ofSession}).
+     */
+    public function sessionWorkspace(): Workspace
+    {
+        return Workspace::ofSession($this->root, $this->sessionId() ?: null);
+    }
+
+    /**
      * Did this hook fire inside a spawned SUBAGENT (a `Task`/Explore agent) rather than the main coding
      * session? Claude Code stamps the payload with `agent_id`/`agent_type` when the invocation belongs to a
      * subagent; the main session carries neither. Our hooks — working-state injection, the judge/cardinal-rule

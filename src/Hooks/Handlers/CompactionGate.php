@@ -49,7 +49,7 @@ final class CompactionGate extends Hook
             return $this->pass(); // A compaction the user asked for is theirs; the binding says so too, and the hook holds to it either way.
         }
 
-        $journal = Journal::inSession($event->workspace());
+        $journal = Journal::inSession($event->sessionWorkspace());
 
         if (! $journal->isPreparedForCompaction()) {
             $journal->prepare();

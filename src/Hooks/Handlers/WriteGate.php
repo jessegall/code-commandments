@@ -63,7 +63,7 @@ final class WriteGate extends Hook
             return $this->pass();
         }
 
-        $journal = Journal::inSession($event->workspace());
+        $journal = Journal::inSession($event->sessionWorkspace());
 
         if (! $journal->hasRecorded(self::PROOF)) {
             return $this->pass();
@@ -88,7 +88,7 @@ final class WriteGate extends Hook
             return $this->pass();
         }
 
-        $journal = Journal::inSession($event->workspace());
+        $journal = Journal::inSession($event->sessionWorkspace());
         $touched = new TouchedSources($event->workspace(), $event->root, Config::load($event->root), 'writes');
         $changed = $this->authored($event, $touched->claim(self::SHOWN));
 

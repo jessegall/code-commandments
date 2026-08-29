@@ -140,6 +140,38 @@ final class CompactionGateTest extends TestCase
     }
 
     /**
+     * The vocabulary is the agent's discipline, not the user's. A user pasting a transcript or quoting the
+     * brief would otherwise open work nobody started — which the stop gate holds for, and which the write
+     * gate reads as permission to change files undeclared.
+     */
+    public function test_a_tag_the_user_pasted_opens_nothing(): void
+    {
+        $this->fire(new JournalRecorder, [
+            'hook_event_name' => 'UserPromptSubmit',
+            'prompt' => "look at this from the other agent:\n\n[!start] writing the sub-agent briefs",
+            'transcript_path' => '/tmp/sess-1.jsonl',
+        ]);
+
+        $this->assertSame([], $this->journal()->openSpans());
+        $this->assertTrue($this->journal()->entries()[0]->tag->isNone());
+    }
+
+    /**
+     * A tag inside a fence or indented is being SHOWN, not used — the brief, the skill and the README all
+     * quote them.
+     */
+    public function test_a_quoted_tag_is_not_a_declaration(): void
+    {
+        $this->fire(new JournalRecorder, $this->flush(
+            "[!start] the real one\n\n```\n[!start] a quoted example\n```\n\n  [!start] an indented one",
+            0,
+            true,
+        ));
+
+        $this->assertCount(1, $this->journal()->openSpans());
+    }
+
+    /**
      * The first automatic compaction buys the agent one turn to record what only it knows.
      */
     public function test_the_first_automatic_compaction_is_held(): void

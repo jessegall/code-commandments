@@ -74,6 +74,21 @@ final class Workspace
     }
 
     /**
+     * The workspace for the SESSION rather than the directory. A hook resolves its root from the git
+     * toplevel of wherever the shell happens to be, which is right for anything belonging to a WORKTREE —
+     * a plan is worked in one, and its state should not follow the agent out of it. A conversation is not
+     * like that: it is one thing wherever a command was run from, so its journal must be too, or a session
+     * that steps into a worktree files half its record there and reads an empty one back at home.
+     *
+     * `CLAUDE_PROJECT_DIR` is the harness stating which project this session IS, so it wins here; $fallback
+     * answers when nothing set it.
+     */
+    public static function ofSession(string $fallback, ?string $sessionId = null): self
+    {
+        return self::at(getenv('CLAUDE_PROJECT_DIR') ?: $fallback, $sessionId);
+    }
+
+    /**
      * The project's hand-written `config.php` — THE durable-tier file (default the cwd). One home,
      * so every consumer (`Config::load`, the config scribes, the disable menu) resolves the same path.
      */

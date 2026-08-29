@@ -59,7 +59,7 @@ final class JournalReminder extends Hook
      */
     protected function onStop(HookEvent $event): int
     {
-        $open = Journal::inSession($event->workspace())->openSpans();
+        $open = Journal::inSession($event->sessionWorkspace())->openSpans();
 
         if ($open === [] || StopHookCap::budget(self::HOLDS) < 1) {
             return $this->pass();

@@ -51,14 +51,26 @@ final class JournalRecorder extends Hook
         return $this->record($event, Kind::Agent, $event->delta());
     }
 
+    /**
+     * The user's words are filed WHOLE and never read for tags. The vocabulary is the agent's discipline,
+     * not theirs — and a user who pastes a transcript, quotes the brief, or asks about a tag would
+     * otherwise open work nobody started, which the stop gate then holds for and the write gate then
+     * treats as permission to change files undeclared.
+     */
     protected function onUserPromptSubmit(HookEvent $event): int
     {
-        return $this->record($event, Kind::User, $event->prompt());
+        if (trim($event->prompt()) === '') {
+            return $this->pass();
+        }
+
+        Journal::inSession($event->sessionWorkspace())->file($this->entry($event, Kind::User, Option::none(), $event->prompt()));
+
+        return $this->pass();
     }
 
     protected function onPostCompact(HookEvent $event): int
     {
-        Journal::inSession($event->workspace())->markCompaction($this->now(), $event->compactSummary());
+        Journal::inSession($event->sessionWorkspace())->markCompaction($this->now(), $event->compactSummary());
 
         return $this->pass();
     }
@@ -70,7 +82,7 @@ final class JournalRecorder extends Hook
      */
     protected function onSessionStart(HookEvent $event): int
     {
-        Journal::inSession($event->workspace())->follow($event->transcriptPath(), $event->sessionId());
+        Journal::inSession($event->sessionWorkspace())->follow($event->transcriptPath(), $event->sessionId());
 
         return $this->pass();
     }
@@ -86,7 +98,7 @@ final class JournalRecorder extends Hook
             return $this->pass();
         }
 
-        $journal = Journal::inSession($event->workspace());
+        $journal = Journal::inSession($event->sessionWorkspace());
         $tagged = Tag::taggedLines($text);
 
         if ($tagged === []) {

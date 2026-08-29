@@ -60,7 +60,7 @@ final class JournalCommand implements Command
 
     public function run(Input $input): int
     {
-        $workspace = Workspace::at($this->io->projectRoot());
+        $workspace = Workspace::ofSession($this->io->projectRoot());
         $sessions = Sessions::of($workspace);
 
         if ($input->firstArgument()->isNone() && Menu::isForAPerson()) {
@@ -159,7 +159,7 @@ final class JournalCommand implements Command
     private function show(Session $session, Input $input, bool $onlyTheUser): int
     {
         $back = $input->option('back')->mapOr(0, intval(...));
-        $reading = new Reading($session, $this->io->projectRoot(), $input->hasFlag('full') ? null : Reading::BUDGET);
+        $reading = new Reading($session, Workspace::ofSession($this->io->projectRoot())->root(), $input->hasFlag('full') ? null : Reading::BUDGET);
 
         return $this->console->say(
             $this->heading($session, $back),
@@ -212,7 +212,7 @@ final class JournalCommand implements Command
     private function pinned(Sessions $sessions): int
     {
         foreach ($this->chosen($sessions) as $session) {
-            $pinned = new Reading($session, $this->io->projectRoot())->pinned();
+            $pinned = new Reading($session, Workspace::ofSession($this->io->projectRoot())->root())->pinned();
 
             return $this->console->say($pinned === '' ? 'Nothing pinned yet — `commandments journal remember "<fact>"` pins one.' : $pinned);
         }
@@ -223,7 +223,7 @@ final class JournalCommand implements Command
     private function open(Sessions $sessions): int
     {
         foreach ($this->chosen($sessions) as $session) {
-            $open = new Reading($session, $this->io->projectRoot())->open();
+            $open = new Reading($session, Workspace::ofSession($this->io->projectRoot())->root())->open();
 
             return $this->console->say($open === '' ? 'No work left open.' : $open);
         }

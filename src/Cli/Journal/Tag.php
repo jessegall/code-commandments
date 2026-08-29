@@ -54,15 +54,19 @@ enum Tag: string
     private const string CLOSE = ']';
 
     /**
-     * The tag $text opens with, reading the bracketed prefix off the front of a message. Absent when the
-     * message carries none, which is a fact about that message rather than a failure.
+     * What opens and closes a code block. A tag inside one is quoted, not meant.
+     */
+    private const string FENCE = '```';
+
+    /**
+     * The tag $text opens with, reading the bracketed prefix off its very first character. Nothing may
+     * precede it — not even a space — because an INDENTED line is quoted or code, where a tag is being
+     * shown rather than used.
      *
      * @return Option<self>
      */
     public static function parse(string $text): Option
     {
-        $text = ltrim($text);
-
         if (! str_starts_with($text, self::OPEN)) {
             return Option::none();
         }
@@ -84,10 +88,21 @@ enum Tag: string
     public static function taggedLines(string $text): array
     {
         $tagged = [];
+        $fenced = false;
 
         foreach (explode("\n", $text) as $line) {
+            if (str_starts_with($line, self::FENCE)) {
+                $fenced = ! $fenced;
+
+                continue;
+            }
+
+            if ($fenced) {
+                continue; // Inside a fence a tag is being SHOWN — the brief and this very file quote them.
+            }
+
             foreach (self::parse($line) as $tag) {
-                $tagged[] = [$tag, trim($line)];
+                $tagged[] = [$tag, rtrim($line)];
             }
         }
 
