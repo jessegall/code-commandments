@@ -28,6 +28,14 @@ enum Stage: string
     case Accepted = 'accepted';
 
     /**
+     * The holder is GONE — not judged, not finished, simply no longer there. It is settled because the
+     * item must return to unclaimed, and it is its own stage because the record has to say the work was
+     * ABANDONED rather than decided: filing a vanished worker as a replacement would put a judgement about
+     * its work into the record, about a worker that may have been doing fine.
+     */
+    case Abandoned = 'abandoned';
+
+    /**
      * Does an item at this stage occupy one of the running slots? Only work actually being done does.
      * A reported or blocked item is waiting on the ORCHESTRATOR, and holding a slot hostage to how fast
      * it answers would be the tool charging the user for its own queue.
@@ -51,7 +59,7 @@ enum Stage: string
      */
     public function isSettled(): bool
     {
-        return $this === self::Accepted;
+        return $this === self::Accepted || $this === self::Abandoned;
     }
 
     /**
@@ -65,6 +73,7 @@ enum Stage: string
             self::Reported => 'accept <item>, or rework <item> --because="…"',
             self::Blocked => 'answer <lane> "…"',
             self::Accepted => 'nothing — it is done',
+            self::Abandoned => 'claim it again: build claim <item> --by=<who>',
         };
     }
 }

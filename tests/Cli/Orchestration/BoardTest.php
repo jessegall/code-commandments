@@ -117,6 +117,36 @@ final class BoardTest extends TestCase
         $this->assertTrue($claim->isHeldBy('lane-a'), 'rework is the same worker, or its context is wasted');
     }
 
+    /**
+     * A worker can simply vanish — `SendMessage` answering "no transcript found for agent id" while the
+     * lane is clean and its work committed. The item is then held by nobody, and the hold being bound to
+     * the board rather than the process is exactly why it cannot free itself. The item returns to
+     * unclaimed, and the record says ABANDONED rather than judged: naming it a replacement would file a
+     * decision about work that may have been fine.
+     */
+    public function test_an_abandoned_item_returns_to_unclaimed(): void
+    {
+        $board = $this->board();
+        $board->claim('payments', 'lane-gone', 'now');
+        $board->move('payments', Stage::Abandoned);
+
+        $this->assertTrue($this->board()->on('payments')->isNone(), 'nobody holds it any more');
+        $this->assertSame([], $this->board()->running(), 'a vanished holder occupies no slot');
+        $this->assertTrue($this->board()->claim('payments', 'lane-new', 'later')->isSome(), 'and somebody else may take it');
+    }
+
+    /**
+     * Abandoned and accepted both settle the item, and must not read as the same thing: one says the work
+     * was judged, the other says nobody was left to judge it.
+     */
+    public function test_abandoned_is_not_accepted(): void
+    {
+        $this->assertTrue(Stage::Abandoned->isSettled());
+        $this->assertTrue(Stage::Accepted->isSettled());
+        $this->assertNotSame(Stage::Accepted->nextAct(), Stage::Abandoned->nextAct());
+        $this->assertStringContainsString('claim it again', Stage::Abandoned->nextAct());
+    }
+
     public function test_the_board_keeps_one_line_per_item(): void
     {
         $board = $this->board();

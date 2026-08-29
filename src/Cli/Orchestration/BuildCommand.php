@@ -40,6 +40,7 @@ final class BuildCommand implements Command
             ->form('build accept <item>', 'release the hold and settle it')
             ->form('build rework <item> --because="…"', 'send it back for another round — the same holder, since its context is the point')
             ->form('build release <item> --reason="…"', 'give up a hold without settling the work')
+            ->form('build orphan <item>', 'the holder is GONE — the item returns to unclaimed and the record says the work was abandoned rather than judged')
             ->form('build log', 'every measurement filed, and what it measured — the observed record, not anybody\'s account of it')
             ->form('build doctor', 'what state everything is in, computed now — for when something has gone wrong and you do not know what')
             ->option('--by=NAME', 'who is taking the item')
@@ -64,6 +65,7 @@ final class BuildCommand implements Command
             'accept' => $this->settle($board, $input, Stage::Accepted, 'accepted'),
             'rework' => $this->rework($board, $input),
             'release' => $this->release($board, $input),
+            'orphan' => $this->orphan($board, $input),
             'log' => $this->log($board),
             'doctor' => $this->doctor($board),
             default => $this->show($board),
@@ -118,6 +120,29 @@ final class BuildCommand implements Command
             $running,
             $board->preferred(),
         )];
+    }
+
+    /**
+     * The holder is gone — a worker that vanished rather than finished. The item returns to unclaimed and
+     * the record says so, because the alternative verbs would all lie: `rework` names a holder that is not
+     * there, and `--replace` files a judgement about the work when this is an obituary about the worker.
+     */
+    private function orphan(Board $board, Input $input): int
+    {
+        $item = $input->argument(1)->unwrapOr('');
+
+        if ($board->on($item)->isNone()) {
+            return $this->console->say("Nobody holds {$item}.");
+        }
+
+        $holder = $board->on($item)->unwrap()->hold->holder;
+        $board->move($item, Stage::Abandoned);
+
+        return $this->console->say(
+            "▸ {$item} is unclaimed — {$holder} is gone.",
+            '  Recorded as abandoned, not judged: nothing here says the work was wrong.',
+            "  `commandments build claim {$item} --by=<who>` gives it to somebody.",
+        );
     }
 
     /**

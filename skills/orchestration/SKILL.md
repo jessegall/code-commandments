@@ -67,12 +67,27 @@ rewriting the feedback and rewrite the item.
 you asked for will not idle — it will find something adjacent and do that, gated, committed and
 plausible. Silence from you is not neutral. It is an instruction to improvise.
 
-## A role is never respawned
+## A role you may respawn is one whose knowledge lives outside it
 
 Reach a live worker by sending it a message — **never a fresh spawn with the same brief.** A new one gets
 the role and discards the history, and the history is the entire reason that worker is still alive: what
-it already tried, what you already ruled, what it already knows is a dead end. You will get a confident
-agent with none of the build in it, and you will pay for the same discoveries twice.
+it already tried, what you already ruled, what it already knows is a dead end.
+
+But the rule has a sharper form, and it tells you which losses are survivable. **A builder can be stood
+back up cold** — its knowledge is in the contract you wrote it and its work is in commits. **A standing
+reviewer or auditor cannot**, because what makes it worth keeping is the accumulated judgement of this
+build, and no document holds that. So: write down what a role IS, and then losing a builder costs you
+minutes while losing an assistant costs you the build.
+
+**And an agent can simply vanish.** A message answering *"no transcript found"* while the lane is clean
+and its work committed means the item is held by nobody — and the hold is bound to the board precisely so
+a dead process cannot free it. Use `build orphan <item>`: the item returns to unclaimed and the record
+says the work was **abandoned rather than judged**. Do not reach for `--replace` — that files a decision
+about the work, and this is an obituary about the worker, which may have been doing fine.
+
+**An absent agent is not a finished one.** A listing that does not show it cannot tell you which. One
+short ping settles it, and settles it cheaply — mistaking four healthy agents for dead is a worse mistake
+than the one you were checking for.
 
 ## Every ruling carries its reason
 
@@ -128,6 +143,7 @@ that exists.
 | `commandments build accept <item>` | release the hold and settle it |
 | `commandments build rework <item> --because="…"` | send it back for another round — the same holder, since its context is the point |
 | `commandments build release <item> --reason="…"` | give up a hold without settling the work |
+| `commandments build orphan <item>` | the holder is GONE — the item returns to unclaimed and the record says the work was abandoned rather than judged |
 | `commandments build log` | every measurement filed, and what it measured — the observed record, not anybody's account of it |
 | `commandments build doctor` | what state everything is in, computed now — for when something has gone wrong and you do not know what |
 
