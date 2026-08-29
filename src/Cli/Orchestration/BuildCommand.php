@@ -40,6 +40,8 @@ final class BuildCommand implements Command
             ->form('build accept <item>', 'release the hold and settle it')
             ->form('build rework <item> --because="…"', 'send it back for another round — the same holder, since its context is the point')
             ->form('build release <item> --reason="…"', 'give up a hold without settling the work')
+            ->form('build log', 'every measurement filed, and what it measured — the observed record, not anybody\'s account of it')
+            ->form('build doctor', 'what state everything is in, computed now — for when something has gone wrong and you do not know what')
             ->option('--by=NAME', 'who is taking the item')
             ->option('--ran=CMD', 'the command whose result IS the receipt — the number filed is the one the process returned')
             ->option('--against=REF', 'the branch a receipt is measured against, so a lane number is never read as the branch\'s')
@@ -61,6 +63,8 @@ final class BuildCommand implements Command
             'accept' => $this->settle($board, $input, Stage::Accepted, 'accepted'),
             'rework' => $this->rework($board, $input),
             'release' => $this->release($board, $input),
+            'log' => $this->log($board),
+            'doctor' => $this->doctor($board),
             default => $this->show($board),
         };
     }
@@ -113,6 +117,71 @@ final class BuildCommand implements Command
             $running,
             $board->preferred(),
         )];
+    }
+
+    /**
+     * Every measurement filed. It shows what a tool READ, so a reader can tell a measured number from a
+     * reported one without going to ask.
+     */
+    private function log(Board $board): int
+    {
+        $receipts = Receipts::inSession(Workspace::ofSession($this->io->projectRoot()));
+        $claims = $board->claims();
+
+        if ($claims === []) {
+            return $this->console->say('Nothing has been claimed, so nothing has been measured.');
+        }
+
+        $this->console->say(Text::heading('the record'), '');
+
+        foreach ($claims as $claim) {
+            $this->console->say($claim->render());
+
+            foreach ($receipts->latestFor($claim->item) as $receipt) {
+                $this->console->say($receipt->render());
+            }
+
+            if ($receipts->latestFor($claim->item)->isNone()) {
+                $this->console->say('  no receipt — nothing measured this, so it is somebody\'s word for it');
+            }
+
+            $this->console->say('');
+        }
+
+        return 0;
+    }
+
+    /**
+     * What state everything is in, every line computed in this invocation and every line ending in what
+     * to do about it. It exists for the moment somebody does not know what is going on — which is exactly
+     * the moment a remembered number would mislead them.
+     */
+    private function doctor(Board $board): int
+    {
+        if (! $board->exists()) {
+            return $this->console->say('No build here. `commandments build claim <item> --by=<who>` starts one.');
+        }
+
+        $receipts = Receipts::inSession(Workspace::ofSession($this->io->projectRoot()));
+        $running = count($board->running());
+
+        $this->console->say(Text::heading('doctor'), '');
+
+        foreach ($board->claims() as $claim) {
+            $measured = $receipts->latestFor($claim->item)
+                ->mapOr('no receipt', fn (Receipt $receipt) => $receipt->isGreen() ? 'measured green' : 'measured FAILING');
+
+            $this->console->say(sprintf(
+                '  %-22s %-10s round %d  %s  → %s',
+                $claim->item,
+                $claim->stage->value,
+                $claim->round,
+                $measured,
+                $claim->stage->nextAct(),
+            ));
+        }
+
+        return $this->console->say('', sprintf('  %d of %d slots in use, counted now.', $running, $board->limit()));
     }
 
     private function claim(Board $board, Input $input): int

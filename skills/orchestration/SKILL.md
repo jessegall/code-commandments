@@ -128,6 +128,8 @@ that exists.
 | `commandments build accept <item>` | release the hold and settle it |
 | `commandments build rework <item> --because="…"` | send it back for another round — the same holder, since its context is the point |
 | `commandments build release <item> --reason="…"` | give up a hold without settling the work |
+| `commandments build log` | every measurement filed, and what it measured — the observed record, not anybody's account of it |
+| `commandments build doctor` | what state everything is in, computed now — for when something has gone wrong and you do not know what |
 
 <!-- END: commands:build -->
 
