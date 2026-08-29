@@ -18,7 +18,7 @@ final readonly class Profiles
      * Where they live, under the durable tier — never the session one, since the whole point is that a
      * profile is the half a session cannot take with it.
      */
-    private const string FOLDER = 'orchestrator/profiles';
+    private const string FOLDER = Workspace::ORCHESTRATOR . '/profiles';
 
     public function __construct(private string $root) {}
 

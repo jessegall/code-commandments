@@ -384,10 +384,6 @@ that have a specific name in this harness:
 - **Load a skill with the Skill tool**, by the exact id in the briefing's bullets —
   e.g. `commandments-backend-absence`. The published skills are linked into
   `.claude/skills/`, so they also autocomplete as `/`-commands.
-- **The visible to-do list is `TodoWrite`.** Mirror every `stop-condition` condition into it,
-  mark an item completed the moment you strike its condition off, and keep the item
-  you are working on FIRST — the list is checked, and you will be sent back to
-  reorder it when its first line does not say what you are doing right now.
 - **Never delegate a write to a subagent.** Dispatch them for read-only work as much
   as you like; every edit is yours.
 - `/stop-condition "<condition>"` is available as a slash command, so the user can set a stop

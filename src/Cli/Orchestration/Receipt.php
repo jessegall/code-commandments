@@ -16,6 +16,17 @@ use JesseGall\PhpTypes\Option;
 final readonly class Receipt
 {
     /**
+     * No `--against` was given, so no distance was ever sought.
+     */
+    public const string NOT_ASKED = '-';
+
+    /**
+     * A base was named and git could not answer — a different thing from nobody asking, and the reason
+     * the two are not one symbol.
+     */
+    public const string UNRESOLVED = '?';
+
+    /**
      * @param  ?string  $unmeasurable  what stopped the check from being a measurement at all — a rig that
      *                                 was not up, a dependency missing. Absent when the run was genuine.
      */
@@ -86,8 +97,22 @@ final readonly class Receipt
 
         return implode("\n", [
             "  {$verdict} — {$this->argv}, read {$this->at}",
-            "  tree {$this->head} · merge-base {$this->mergeBase}",
+            "  tree {$this->head} · " . $this->distance(),
         ]);
+    }
+
+    /**
+     * How far this tree stands from the base it was measured against. An absence says which absence it
+     * is, in words: the receipt exists to stop a lane's number passing as the branch's, so this is the
+     * field a reader must not have to guess at.
+     */
+    private function distance(): string
+    {
+        return match ($this->mergeBase) {
+            self::NOT_ASKED => 'merge-base not asked (no --against)',
+            self::UNRESOLVED => 'merge-base could not be resolved',
+            default => "merge-base {$this->mergeBase}",
+        };
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
 
+use JesseGall\CodeCommandments\Cli\Orchestration\Receipt;
 use JesseGall\CodeCommandments\Cli\Orchestration\Verification;
 use PHPUnit\Framework\TestCase;
 
@@ -87,14 +88,15 @@ final class VerificationTest extends TestCase
      */
     public function test_an_unasked_base_is_said_to_be_absent(): void
     {
-        $this->assertSame('-', new Verification($this->root)->of('item', 'true', '')->mergeBase);
+        $this->assertSame(Receipt::NOT_ASKED, new Verification($this->root)->of('item', 'true', '')->mergeBase);
     }
 
     /**
-     * A base that cannot be resolved says the same thing rather than inventing a sha.
+     * A base that WAS asked about and could not be resolved is its own answer rather than inventing a
+     * sha — somebody asked and git could not say, which is not the same fact as nobody asking.
      */
-    public function test_an_unresolvable_base_is_absent_too(): void
+    public function test_an_unresolvable_base_is_told_apart_from_an_unasked_one(): void
     {
-        $this->assertSame('-', new Verification($this->root)->of('item', 'true', 'no-such-branch')->mergeBase);
+        $this->assertSame(Receipt::UNRESOLVED, new Verification($this->root)->of('item', 'true', 'no-such-branch')->mergeBase);
     }
 }

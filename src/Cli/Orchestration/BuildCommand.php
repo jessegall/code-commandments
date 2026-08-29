@@ -176,7 +176,7 @@ final class BuildCommand implements Command
         $item = $input->argument(1)->unwrapOr('');
 
         if ($board->on($item)->isNone()) {
-            return $this->console->say("Nobody holds {$item}.");
+            return $this->console->refuse("Nobody holds {$item}.");
         }
 
         $holder = $board->on($item)->unwrap()->hold->holder;
@@ -305,7 +305,7 @@ final class BuildCommand implements Command
         $holder = $input->option('by')->unwrapOr('');
 
         if ($item === '' || $holder === '') {
-            return $this->console->say('Say what and who: `commandments build claim <item> --by=<holder>`.');
+            return $this->console->refuse('Say what and who: `commandments build claim <item> --by=<holder>`.');
         }
 
         foreach ($board->claim($item, $holder, gmdate('H:i')) as $claim) {
@@ -314,7 +314,7 @@ final class BuildCommand implements Command
 
         $held = $board->on($item)->unwrap();
 
-        return $this->console->say(
+        return $this->console->refuse(
             "{$item} is already held by {$held->hold->holder}, since {$held->hold->since} (round {$held->round}).",
             'Send that worker back instead — its context is the reason it is still alive.',
         );
@@ -329,7 +329,7 @@ final class BuildCommand implements Command
         $item = $input->argument(1)->unwrapOr('');
 
         if ($board->on($item)->isNone()) {
-            return $this->console->say(
+            return $this->console->refuse(
                 "Nobody holds {$item}.",
                 "  Claim it first: `commandments build claim {$item} --by=<you>`",
             );
@@ -358,11 +358,11 @@ final class BuildCommand implements Command
         $because = $input->option('because')->unwrapOr('');
 
         if ($because === '') {
-            return $this->console->say('Say why: `build rework <item> --because="…"` — it is what the next round is told.');
+            return $this->console->refuse('Say why: `build rework <item> --because="…"` — it is what the next round is told.');
         }
 
         if ($board->on($item)->isNone()) {
-            return $this->console->say(
+            return $this->console->refuse(
                 "Nobody holds {$item}.",
                 "  Claim it first: `commandments build claim {$item} --by=<who>`",
             );
@@ -380,7 +380,7 @@ final class BuildCommand implements Command
     private function release(Board $board, Input $input): int
     {
         if ($input->option('reason')->unwrapOr('') === '') {
-            return $this->console->say('Say why: `build release <item> --reason="…"` — an abandoned item becomes somebody else\'s problem.');
+            return $this->console->refuse('Say why: `build release <item> --reason="…"` — an abandoned item becomes somebody else\'s problem.');
         }
 
         return $this->settle($board, $input, Stage::Accepted, 'released');
@@ -391,7 +391,7 @@ final class BuildCommand implements Command
         $item = $input->argument(1)->unwrapOr('');
 
         if ($board->on($item)->isNone()) {
-            return $this->console->say("Nobody holds {$item}.");
+            return $this->console->refuse("Nobody holds {$item}.");
         }
 
         $board->move($item, $stage);

@@ -89,25 +89,6 @@ final class StopConditionReminderTest extends TestCase
         return $io->emitted;
     }
 
-    /**
-     * A `TodoWrite` as the harness reports it — the list the user is watching, in the order it was written.
-     *
-     * @param  list<array<string, string>>  $todos
-     * @return list<array<string, mixed>>
-     */
-    private function todoWrite(array $todos): array
-    {
-        $io = new CapturingHookIO(new FakeGit($this->root), [
-            'hook_event_name' => 'PostToolUse',
-            'tool_name' => 'TodoWrite',
-            'tool_input' => ['todos' => $todos],
-        ]);
-
-        new StopConditionReminder($io)->run([]);
-
-        return $io->emitted;
-    }
-
     private function context(array $emitted): string
     {
         return $emitted[0]->context->unwrapOr('');
@@ -251,105 +232,6 @@ final class StopConditionReminderTest extends TestCase
         $this->assertStringContainsString('stop-condition resume', $released);
     }
 
-    public function test_it_calls_out_a_to_do_list_that_has_gone_stale_under_the_gate(): void
-    {
-        // The user watches the to-do list in their terminal. Twenty pieces of work with no update to it
-        // means they are reading a list that describes a different hour of the session.
-        $this->gate()->add('the suite is green');
-
-        for ($i = 0; $i < 19; $i++) {
-            $this->assertSame([], $this->postToolUse('Read'), 'a focused stretch of work is not interrupted');
-        }
-
-        $emitted = $this->postToolUse('Read');
-
-        $this->assertStringContainsString('TodoWrite', $this->context($emitted));
-        $this->assertStringContainsString('USER IS WATCHING', $this->context($emitted));
-    }
-
-    public function test_updating_the_to_do_list_restarts_the_drift(): void
-    {
-        $this->gate()->add('the suite is green');
-
-        for ($i = 0; $i < 19; $i++) {
-            $this->postToolUse('Read');
-        }
-
-        $this->postToolUse('TodoWrite');
-
-        $this->assertSame([], $this->postToolUse('Read'), 'the list is current — nothing to say');
-    }
-
-    public function test_it_asks_for_the_current_item_at_the_top_of_the_visible_list(): void
-    {
-        // The user reads the first line of the list to see where the agent is. An in-progress item buried
-        // behind finished and pending ones makes them scan for it.
-        $this->gate()->add('the suite is green');
-
-        $emitted = $this->todoWrite([
-            ['content' => 'Drop the spatie dependency', 'status' => 'pending'],
-            ['content' => 'Match children by id', 'status' => 'completed'],
-            ['content' => 'Fix the rename dialog', 'activeForm' => 'Fixing the rename dialog', 'status' => 'in_progress'],
-        ]);
-
-        $context = $this->context($emitted);
-        $this->assertStringContainsString('Fixing the rename dialog', $context, 'it names the item, as the user reads it');
-        $this->assertStringContainsString('#3', $context, 'and where it is buried');
-        $this->assertStringContainsString('TodoWrite', $context);
-    }
-
-    public function test_it_is_silent_when_the_list_already_leads_with_the_current_item(): void
-    {
-        $this->gate()->add('the suite is green');
-
-        $this->assertSame([], $this->todoWrite([
-            ['content' => 'Fix the rename dialog', 'status' => 'in_progress'],
-            ['content' => 'Drop the spatie dependency', 'status' => 'pending'],
-        ]));
-    }
-
-    public function test_a_list_with_nothing_in_progress_is_not_nudged(): void
-    {
-        // Nothing is being buried — a list of pending work makes no claim about the current moment.
-        $this->gate()->add('the suite is green');
-
-        $this->assertSame([], $this->todoWrite([
-            ['content' => 'Match children by id', 'status' => 'completed'],
-            ['content' => 'Drop the spatie dependency', 'status' => 'pending'],
-        ]));
-    }
-
-    public function test_the_ordering_nudge_never_fires_without_a_gate(): void
-    {
-        $this->assertSame([], $this->todoWrite([
-            ['content' => 'Drop the spatie dependency', 'status' => 'pending'],
-            ['content' => 'Fix the rename dialog', 'status' => 'in_progress'],
-        ]));
-    }
-
-    public function test_work_voids_a_half_answered_stuck_claim(): void
-    {
-        // The user's rule: the moment the agent accepts the challenge and gets back to work, the claim it
-        // was part-way through is gone. Talking to the gate is not work, so the challenge itself survives.
-        $this->gate()->add('the suite is green');
-        $this->gate()->advanceClaim('I need a decision');
-
-        $this->postToolUse('Bash', 'vendor/bin/commandments stop-condition list');
-
-        $this->assertSame(1, $this->gate()->claimRound(), 'gate chatter leaves the claim standing');
-
-        $this->postToolUse('Edit');
-
-        $this->assertSame(0, $this->gate()->claimRound(), 'real work voids it');
-    }
-
-    public function test_the_stale_list_nudge_never_fires_without_a_gate(): void
-    {
-        for ($i = 0; $i < 25; $i++) {
-            $this->assertSame([], $this->postToolUse('Read'));
-        }
-    }
-
     public function test_meeting_a_condition_resets_the_cap_countdown(): void
     {
         $this->gate()->add('tests pass');
@@ -391,15 +273,14 @@ final class StopConditionReminderTest extends TestCase
 
     public function test_the_triage_says_a_to_do_item_is_not_parking(): void
     {
-        // #406: "add it to the to-do list" was being satisfied with a tracker entry alone, which holds
-        // no stop and dies with the session — so the deferred task was silently lost.
+        // #406: a deferral was being satisfied with a note that holds no stop and dies with the session,
+        // so the task was silently lost. The gate is the half that brings it back.
         $this->gate()->add('the changelog has an entry');
 
         $context = $this->prompt()[0]->context->unwrapOr('');
 
-        $this->assertStringContainsString('add it to the to-do list', $context, 'the wording is named as a deferral');
-        $this->assertStringContainsString('A TO-DO ITEM IS NOT PARKING', $context);
-        $this->assertStringContainsString('TodoWrite', $context, 'and the visible half is still asked for');
+        $this->assertStringContainsString('don\'t forget to', $context, 'the wording is named as a deferral');
+        $this->assertStringContainsString('stop-condition', $context, 'and the gate is what brings it back');
     }
 
     public function test_the_triage_also_fires_during_a_plan_with_no_gate_yet(): void

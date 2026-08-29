@@ -33,6 +33,14 @@ final class Workspace
     public const string CUSTOM = 'custom';
 
     /**
+     * The durable-tier folder an ORCHESTRATOR writes its ways of working into — the profiles a team
+     * commits and reviews in a diff ({@see Cli\Orchestration\Profiles}). Durable like {@see CUSTOM},
+     * and kept out of the folder's `.gitignore` for the same reason: a profile that is not in git did
+     * not survive the machine it was written on.
+     */
+    public const string ORCHESTRATOR = 'orchestrator';
+
+    /**
      * Where the published skills REALLY live, relative to the project root — the one library every
      * agent reads, directly or through a link of its own. `.agents/skills` is the cross-agent
      * location rather than any one assistant's folder, so the agent that reads it natively needs no

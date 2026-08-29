@@ -164,7 +164,7 @@ final class PlanReminder extends Hook
         return "Code Commandments — a plan was just approved. Before writing any code, load the "
             . "`commandments-executing-plans` skill (Skill tool) and follow it. This project's plan profile:\n"
             . "• Branch first: cut a new `{$plan->prefix()}<slug>` branch off `{$plan->baseBranch()}` — never work a plan on the base branch.\n"
-            . "• Phases: write them as a todo list. Per phase, implement, run its scoped tests plus "
+            . "• Phases: write them down. Per phase, implement, run its scoped tests plus "
             . "`vendor/bin/commandments checks phase`{$push}. Do NOT run the full suite or `judge` between phases.\n"
             . "• End gate: run `vendor/bin/commandments checks complete` (your full checks + `judge --branch`), fix each "
             . "finding at its SOURCE, re-run until clean, then run `vendor/bin/commandments plan done`."

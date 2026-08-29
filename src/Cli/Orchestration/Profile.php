@@ -35,6 +35,12 @@ final readonly class Profile
         'traps' => 'failures already paid for, each with what it cost',
     ];
 
+    /**
+     * The headings a line added to a role's record can file under. Naming the set is what keeps an
+     * entry under a heading the file actually has.
+     */
+    public const array SECTIONS = ['caught', 'behaviour', 'restrictions', 'brief'];
+
     public function __construct(
         public string $name,
         public string $path,

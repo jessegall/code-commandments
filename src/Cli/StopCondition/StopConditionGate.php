@@ -23,7 +23,7 @@ use JesseGall\CodeCommandments\Workspace;
  * so nothing holds a stop while every condition is kept verbatim, and {@see resume} puts them back in
  * force. Being BLOCKED is recorded per condition ({@see markBlocked}), so `stuck` is exactly the
  * moment {@see unblocked} is empty. ONE session-scoped {@see StateFile} holds all of it — conditions
- * and their blocks, the held-stop count, the to-do drift, any pending claim — so lifting the gate
+ * and their blocks, the held-stop count, any pending claim — so lifting the gate
  * deletes the whole state at once and no half survives to answer for the next one.
  */
 final class StopConditionGate
@@ -43,7 +43,6 @@ final class StopConditionGate
                 . 'off with `commandments stop-condition met <id>` and the gate lifts when none are left.',
             [
                 'held_stops' => 'consecutive stops held with no condition met — 10 sets the gate aside',
-                'todo_drift' => 'work done since the visible to-do list was last updated (TodoWrite)',
                 'last_id' => 'the highest condition id ever handed out. Ids are STABLE: striking one off never '
                     . 'renumbers the rest, and an id is never reused',
                 'paused' => 'yes = THE USER set the gate aside. Every condition is kept verbatim and nothing '
@@ -57,7 +56,6 @@ final class StopConditionGate
             ],
             defaults: new State(
                 held_stops: 0,
-                todo_drift: 0,
                 last_id: 0,
                 paused: false,
                 stuck: false,
@@ -104,36 +102,20 @@ final class StopConditionGate
     }
 
     /**
+     * Count one piece of work done under this gate — what {@see workDone} answers from, and the reason a
+     * gate that has seen work and never held a stop can say the Stop hook is not reaching it.
+     */
+    public function recordWork(): void
+    {
+        $this->save(fn (State $state): State => $state->with(work: $state->int('work') + 1));
+    }
+
+    /**
      * Has this gate seen any work at all? A gate that has and never held one stop is not being asked.
      */
     public function workDone(): bool
     {
         return $this->file->read()->int('work') > 0;
-    }
-
-    /**
-     * Count one piece of work against the to-do list the USER can see, and answer whether it has now
-     * drifted $every pieces from the work actually being done — the moment to tell the agent to true it
-     * up. Firing restarts the count, so the nudge lands once per stretch of drift rather than on every
-     * tool use after the threshold. This one IS a count on purpose: it measures how long that list has
-     * gone untouched, not which condition is moving.
-     */
-    public function driftedFor(int $every): bool
-    {
-        $drift = $this->file->read()->int('todo_drift') + 1;
-        $due = $drift >= $every;
-
-        $this->save(fn (State $state): State => $state->with(todo_drift: $due ? 0 : $drift, work: $state->int('work') + 1));
-
-        return $due;
-    }
-
-    /**
-     * The visible list was just trued up — the drift starts over.
-     */
-    public function resetDrift(): void
-    {
-        $this->save(fn (State $state): State => $state->with(todo_drift: 0));
     }
 
     /**

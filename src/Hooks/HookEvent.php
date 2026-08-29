@@ -264,14 +264,6 @@ final class HookEvent
     }
 
     /**
-     * The to-do list a `TodoWrite` call wrote ({@see TodoList}) — empty for every other tool.
-     */
-    public function todos(): TodoList
-    {
-        return TodoList::from($this->payload['tool_input']['todos'] ?? []);
-    }
-
-    /**
      * A boolean flag on the payload (e.g. `stop_hook_active`), false when absent.
      */
     public function flag(string $key): bool

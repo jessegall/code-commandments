@@ -67,19 +67,19 @@ final readonly class Verification
 
     /**
      * Where this tree last agreed with $base — the fact that separates a lane's honest number from the
-     * branch's. Absent as a dash rather than an empty string, so a reader can tell "not asked" from a
-     * base that could not be resolved.
+     * branch's. The two ways it can be missing are told apart, because they mean opposite things: nobody
+     * asked, or somebody asked and git could not answer.
      */
     private function mergeBaseWith(string $base): string
     {
         if ($base === '') {
-            return '-';
+            return Receipt::NOT_ASKED;
         }
 
         $sha = trim((string) @shell_exec(
             'git -C ' . escapeshellarg($this->root) . ' merge-base ' . escapeshellarg($base) . ' HEAD 2>/dev/null',
         ));
 
-        return $sha === '' ? '-' : substr($sha, 0, 7);
+        return $sha === '' ? Receipt::UNRESOLVED : substr($sha, 0, 7);
     }
 }

@@ -264,6 +264,30 @@ final class SyncTest extends TestCase
         $this->assertStringContainsString("!custom/\n", $ignore, 'the directory is re-admitted');
         $this->assertStringContainsString("!custom/**\n", $ignore, 'and so is everything in it');
         $this->assertStringContainsString("!config.php\n", $ignore);
+        $this->assertStringContainsString("!orchestrator/\n", $ignore, 'a profile is durable, so it is tracked');
+        $this->assertStringContainsString("!orchestrator/**\n", $ignore);
+    }
+
+    /**
+     * The file is seeded by us and then edited by them. Re-asserting our version over it un-tracked
+     * whatever they had added — silently, since the files stay on disk and nothing breaks until
+     * somebody clones the repo.
+     */
+    public function test_the_commandments_gitignore_keeps_an_exception_the_project_added(): void
+    {
+        $path = "{$this->consumer}/.commandments/.gitignore";
+
+        @mkdir(dirname($path), 0777, true);
+        file_put_contents($path, "# code-commandments generated state; config.php and custom/ stay tracked\n*\n!.gitignore\n!config.php\n!custom/\n!custom/**\n!my-own-thing/\n!my-own-thing/**\n");
+
+        $this->sync();
+
+        $ignore = (string) file_get_contents($path);
+
+        $this->assertStringContainsString("!my-own-thing/\n", $ignore, "the project's own exception survives");
+        $this->assertStringContainsString("!my-own-thing/**\n", $ignore);
+        $this->assertStringContainsString("!orchestrator/\n", $ignore, 'and ours is added beside it');
+        $this->assertSame(1, substr_count($ignore, '# code-commandments'), 'our header is replaced, never accumulated');
     }
 
     private function sync(): void

@@ -17,7 +17,7 @@ The **plan-reminder hook** injects this project's concrete profile when the plan
 
 1. **Branch first.** If you're on the base branch (`main`/whatever the profile names), cut a new branch for the plan (the profile gives the prefix, e.g. `plan/<slug>`). Never grind a plan on the base branch.
 
-2. **Write the phases down** as a todo list — one item per phase — so progress is visible and nothing is dropped.
+2. **Write the phases down** — one item per phase — so progress is visible and nothing is dropped.
 
 3. **Run the start checks once:** `commandments checks start` (environment setup the plan needs — a no-op if the project declared none).
 

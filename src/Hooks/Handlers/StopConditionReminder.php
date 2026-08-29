@@ -10,7 +10,6 @@ use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Hooks\StopHookCap;
-use JesseGall\CodeCommandments\Hooks\TodoList;
 
 /**
  * The user-set stop gate — a `Stop` hook that holds the agent while any condition set with
@@ -20,9 +19,7 @@ use JesseGall\CodeCommandments\Hooks\TodoList;
  * conditions rather than to assume them, and says how to end the gate honestly: `stop-condition met <n>` when
  * one holds, `stop-condition stuck` when it is truly blocked. It leads with the COUNT and spells out only the
  * {@see EXCERPT} oldest conditions — a gate holding dozens of parked tasks would otherwise re-print the
- * whole list on every single stop — and points at `stop-condition list` for the rest. It also keeps the one thing
- * the user can see honest: the visible to-do list must be current ({@see DRIFT}) and must LEAD with the
- * item in progress ({@see buried}), so "what is it doing right now?" is answered by the first line.
+ * whole list on every single stop — and points at `stop-condition list` for the rest.
  * Loop-safe: {@see MAX_BLOCKS} consecutive holds
  * without progress release the gate, so a wedged session can always stop (striking a condition off
  * resets the count).
@@ -47,13 +44,6 @@ final class StopConditionReminder extends Hook
      */
     private const int EXCERPT = 3;
 
-    /**
-     * Pieces of work allowed to pass with no `TodoWrite` before the agent is told its visible to-do list
-     * has gone stale. High enough that a focused stretch of work is never interrupted for bookkeeping, low
-     * enough that the user is never left watching a list that describes a different hour of the session.
-     */
-    private const int DRIFT = 20;
-
     public function summary(): string
     {
         return 'Holds every stop while a `commandments stop-condition "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it.';
@@ -65,83 +55,34 @@ final class StopConditionReminder extends Hook
     }
 
     /**
-     * Watch the WORK done under the gate — for two things, and only while a gate stands, so an ordinary
-     * session pays nothing for it. Going back to work VOIDS a half-answered `stuck` claim (an agent that
-     * took the challenge and carried on starts the next claim from the beginning), and it is what the
-     * to-do drift is measured in.
+     * Watch the WORK done under the gate, and only while a gate stands, so an ordinary session pays
+     * nothing for it. Going back to work VOIDS a half-answered `stuck` claim — an agent that took the
+     * challenge and carried on starts the next claim from the beginning.
      */
     protected function onPostToolUse(HookEvent $event): int
     {
         $gate = StopConditionGate::inSession($event->workspace());
 
-        if (! $gate->isOpen()) {
-            return $this->pass();
-        }
-
-        if ($event->isTool('TodoWrite')) {
-            $gate->resetDrift(); // The visible list was just trued up — the drift starts over.
-
-            $todos = $event->todos();
-
-            // Trued up, but is it READABLE? The user watches this list to see what is happening now; an
-            // in-progress item sitting at #7 makes them scan for it. Said the moment the list is written,
-            // where the fix is one more `TodoWrite` away.
-            return $todos->leadsWithCurrent() ? $this->pass() : $this->inject($event, $this->buried($todos));
-        }
-
-        if (! $this->isWork($event)) {
+        if (! $gate->isOpen() || ! $this->isWork($event)) {
             return $this->pass();
         }
 
         $gate->dropClaim(); // Back at work, so the half-answered `stuck` claim is void.
+        $gate->recordWork();
 
-        // How far the to-do list the USER can see has drifted from the work actually being done. A long
-        // run of work with no update to that list means the user is watching a list that no longer
-        // describes the session — the thing they cannot check for themselves. It is the GATE's own count,
-        // so it lives and dies with the gate: a count kept beside it in a file of its own used to outlive
-        // it, and the next gate then inherited a drift that had nothing to do with its list.
-        return $gate->driftedFor(self::DRIFT) ? $this->inject($event, $this->stale()) : $this->pass();
+        return $this->pass();
     }
 
     /**
-     * The list is current but LEADS WITH THE WRONG THING — the item in progress is buried behind items
-     * that are finished or not started. One `TodoWrite` fixes it, so it is said at the point of writing.
-     */
-    private function buried(TodoList $todos): string
-    {
-        return "Code Commandments — your to-do list does not lead with what you are DOING. \"{$todos->current()}\" "
-            . "is in progress but sits at #{$todos->position()}, so the user has to scan the list to find out where "
-            . "you are. Rewrite it now (TodoWrite) with the in-progress item FIRST — every time you start a new "
-            . "item, it moves to the top. Same items, same statuses, only the order changes; do not mark anything "
-            . "completed to get it out of the way. The first line of that list is the one thing the user can check "
-            . "at a glance, so it must be the thing you are on.";
-    }
-
-    private function stale(): string
-    {
-        return "Code Commandments — " . self::DRIFT . " pieces of work have gone by without a single update to "
-            . "your to-do list, so the list the USER IS WATCHING no longer describes what you are doing. True it "
-            . "up NOW (TodoWrite): mark what is genuinely finished as completed, add what you have taken on since, "
-            . "put the item you are working on at the TOP, and make sure every standing stop condition appears on "
-            . "it. Do not report an item done there unless "
-            . "you have verified it — a to-do list that is merely optimistic is worse than a stale one.";
-    }
-
-    /**
-     * Is this tool use WORK — something that could move a condition — or only bookkeeping? Two moves let
-     * an agent look busy without touching the problem: talking to the GATE itself (`commandments stop-condition …`,
-     * which would otherwise let a `list` followed by a `stuck` count as progress) and reordering the
-     * to-do list. Everything else counts, deliberately generously — reading a file, running a command and
-     * editing code are all genuine attempts, and the bar this sets is only "you tried something". It
-     * recognises a shell verb rather than parsing code, so no engine is owed (as with
+     * Is this tool use WORK — something that could move a condition — or only bookkeeping? Talking to the
+     * GATE itself (`commandments stop-condition …`) would otherwise let a `list` followed by a `stuck`
+     * count as progress. Everything else counts, deliberately generously — reading a file, running a
+     * command and editing code are all genuine attempts, and the bar this sets is only "you tried
+     * something". It recognises a shell verb rather than parsing code, so no engine is owed (as with
      * {@see JudgeReminder::isGitCommit}).
      */
     private function isWork(HookEvent $event): bool
     {
-        if ($event->isTool('TodoWrite')) {
-            return false;
-        }
-
         return ! $event->isTool('Bash') || ! str_contains($event->command(), 'commandments stop-condition');
     }
 
@@ -218,15 +159,11 @@ final class StopConditionReminder extends Hook
             . "  • STEERING the work in hand (a correction, a change of approach, \"while you're in there…\") "
             . "— do it NOW. Do not park it; parking it is a way of not doing it.\n"
             . "  • A SEPARATE task, or one they deferred (\"later\", \"when you're done\", \"after this\", "
-            . "\"add it to the to-do list\", \"don't forget to…\"), or anything that would derail the phase "
-            . "you're in — PARK it, which means BOTH halves: run `vendor/bin/commandments stop-condition \"<the task, as "
-            . "a statement you can verify>\"` AND add the same statement to your to-do list (TodoWrite). Then "
-            . "carry on with what you were doing.\n"
+            . "\"don't forget to…\"), or anything that would derail the phase "
+            . "you're in — PARK it: run `vendor/bin/commandments stop-condition \"<the task, as "
+            . "a statement you can verify>\"`, then carry on with what you were doing.\n"
             . "  • Unsure? Cheap and inside the current phase → do it. Opens a new front → park it.\n"
-            . "A TO-DO ITEM IS NOT PARKING. The tracker is this session's scratch list — it holds no stop and is "
-            . "gone when the session is. The gate is what brings the task back: it blocks every stop until you "
-            . "have verified it. So \"add it to the to-do list\" is a DEFERRAL like any other and takes the gate "
-            . "too; the tracker alone loses the task silently.\n"
+            . "The gate is what brings a parked task back: it blocks every stop until you have verified it.\n"
             . "Park a task ONLY as something checkable (\"the changelog has an entry\", not \"look at the "
             . "changelog\") — you will have to verify it before you may stop.";
     }
@@ -240,8 +177,7 @@ final class StopConditionReminder extends Hook
             . "VERIFY each condition for real (run the command, read the file, check the output) — do not "
             . "assume it holds because you think you did the work.\n"
             . $this->excerpt($conditions)
-            . "\nFor each one that genuinely holds now, run `vendor/bin/commandments stop-condition met <n>` and mark its "
-            . "to-do item completed (add any condition still missing from your to-do list so the user can see it); "
+            . "\nFor each one that genuinely holds now, run `vendor/bin/commandments stop-condition met <n>`; "
             . "the gate lifts "
             . "when none are left. Otherwise keep working until it holds.\n"
             . "DRAIN THE LIST FIRST. One condition needing a decision from the user does NOT stop the others: take "

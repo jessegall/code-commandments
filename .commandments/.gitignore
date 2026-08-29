@@ -1,6 +1,9 @@
-# code-commandments generated state; config.php and custom/ stay tracked
+# code-commandments generated state; the lines below stay tracked.
+# Add your own exceptions underneath — they are preserved across a sync.
 *
 !.gitignore
 !config.php
 !custom/
 !custom/**
+!orchestrator/
+!orchestrator/**

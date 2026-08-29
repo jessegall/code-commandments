@@ -204,7 +204,7 @@ final class StopConditionCommand implements Command
         fwrite(STDOUT,
             "❙❙ Condition {$number} recorded WITH THE PAUSED GATE: {$condition}\n"
             . "  The user paused the gate, so nothing is holding you — this waits, intact, until they run\n"
-            . "  `commandments stop-condition resume`. Keep it on your to-do list (TodoWrite) so it is not lost.\n");
+            . "  `commandments stop-condition resume`.\n");
 
         return 0;
     }
@@ -216,8 +216,7 @@ final class StopConditionCommand implements Command
     {
         fwrite(STDOUT,
             "● Stop gate set (condition {$number}): {$condition}\n"
-            . "  You may not stop until this holds. Add this condition to your to-do list (TodoWrite) as a\n"
-            . "  pending item so the user can see what is holding you, and mark it done when you meet it.\n"
+            . "  You may not stop until this holds.\n"
             . "  Every time you try to stop you will be sent back in to verify it — when it genuinely holds,\n"
             . "  run `commandments stop-condition met {$number}`. If you are truly blocked and need the user, run\n"
             . "  `commandments stop-condition stuck` (that keeps the condition in force).\n");
@@ -303,10 +302,7 @@ final class StopConditionCommand implements Command
 
         fwrite(STDOUT, "✓ Condition met: {$condition}\n" . ($remaining === []
             ? "  The stop gate is lifted — nothing else is holding you.\n"
-            : '  ' . count($remaining) . " condition(s) still standing; run `commandments stop-condition list` to see them.\n")
-            . "  NOW update the to-do list the user can SEE (TodoWrite): mark this item completed. Striking a\n"
-            . "  condition off here does not touch that list — it goes stale the moment you skip this, and a\n"
-            . "  stale list is the user watching work they cannot check.\n");
+            : '  ' . count($remaining) . " condition(s) still standing; run `commandments stop-condition list` to see them.\n"));
 
         return 0;
     }
@@ -361,9 +357,7 @@ final class StopConditionCommand implements Command
         $left = $gate->unblocked();
 
         fwrite(STDOUT, '◼ Condition ' . implode(', ', $marked) . " marked as waiting on the user.\n"
-            . "  NOW say so on the to-do list the user can SEE (TodoWrite), and do NOT tick it off: a blocked\n"
-            . "  item is not a done item. Leave it open, and put what you need from them where they will read\n"
-            . "  it — a list that shows a blocker as completed is worse than one that is merely stale.\n");
+            . "  Put what you need from them where they will read it.\n");
 
         if ($left === []) {
             fwrite(STDOUT,

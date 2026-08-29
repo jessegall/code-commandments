@@ -113,7 +113,6 @@ final class Migration
 
         new StateFile("{$dir}/.until", StopConditionGate::legend())->write(new State(
             held_stops: $source->int(0),
-            todo_drift: $this->count("{$dir}/.until-todo-drift-count"),
             last_id: $lastId,
             paused: $live->isNone(),
             stuck: $source->isFlagged(1),

@@ -273,14 +273,18 @@ final class OrchestrateCommand implements Command
         $running = Instance::inSession($workspace)->profile();
 
         if ($running->isNone()) {
-            return $this->console->say('Not orchestrating. `commandments orchestrate use <profile>` first.');
+            return $this->console->refuse('Not orchestrating. `commandments orchestrate use <profile>` first.');
         }
 
         if (trim($document, '/') === '' || $text === '') {
-            return $this->console->say('Say where and what: `commandments orchestrate assistant <name> <section> "<text>"`.');
+            return $this->console->refuse('Say where and what: `commandments orchestrate assistant <name> <section> "<text>"`.');
         }
 
         foreach (Profiles::of($workspace)->named($running->unwrapOr('')) as $profile) {
+            foreach ($this->unknown($profile, $document, $section) as $refusal) {
+                return $this->console->refuse(...$refusal);
+            }
+
             $entry = $section === '' ? $text : "**{$section}** — {$text}";
 
             if ($replace) {
@@ -294,7 +298,33 @@ final class OrchestrateCommand implements Command
             return $this->console->say("▸ Added to {$document}.md in `{$profile->name}`.");
         }
 
-        return $this->console->say('The profile in force no longer exists.');
+        return $this->console->refuse('The profile in force no longer exists.');
+    }
+
+    /**
+     * Why this write is refused, or nothing at all. A role and a section are both TARGETS, so each is
+     * checked against what the profile actually holds — which is what keeps a typo from scaffolding a
+     * sixth role, or filing an entry under a heading of its own invention.
+     *
+     * @return list<list<string>>
+     */
+    private function unknown(Profile $profile, string $document, string $section): array
+    {
+        $role = str_starts_with($document, 'roles/') ? substr($document, strlen('roles/')) : '';
+
+        if ($role !== '' && ! in_array($role, $profile->roles(), true)) {
+            return [["No role `{$role}` in `{$profile->name}`.", '  It has: ' . implode(', ', $profile->roles())]];
+        }
+
+        if ($role === '' && ! array_key_exists($document, Profile::DOCUMENTS)) {
+            return [["No document `{$document}` in a profile.", '  It has: ' . implode(', ', array_keys(Profile::DOCUMENTS))]];
+        }
+
+        if ($section !== '' && ! in_array($section, Profile::SECTIONS, true)) {
+            return [["No section `{$section}` in a role's record.", '  It has: ' . implode(', ', Profile::SECTIONS)]];
+        }
+
+        return [];
     }
 
     /**

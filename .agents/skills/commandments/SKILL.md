@@ -125,12 +125,6 @@ read the output, never assume it holds because you did the work. Strike one off 
 blocked, `vendor/bin/commandments stop-condition stuck` hands back to the user while keeping the
 condition in force. Never `stop-condition clear` to escape a condition you simply haven't met.
 
-**Keep the to-do list the user can SEE honest.** Mirror every condition into whatever
-visible list your agent keeps, mark an item done the moment you strike its condition
-off — and keep whatever you are working on at the **TOP**, moving it up each time you
-start a new item. Its first line is the one thing the user can check at a glance, so it
-must say where you are right now.
-
 **The same gate is where mid-work interjections go.** When the user speaks while you are
 already working, decide what their message IS: **steering** the work in hand (a correction,
 a change of approach, "while you're in there…") is done **now** — parking it is a way of not

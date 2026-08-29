@@ -12,6 +12,12 @@ namespace JesseGall\CodeCommandments\Cli;
 final class Console
 {
     /**
+     * What a command answers when it declines to act — distinct from the 2 a malformed invocation
+     * answers, which is a caller that got the command wrong rather than an answer of no.
+     */
+    public const int REFUSED = 1;
+
+    /**
      * @param  resource  $out  where the words go — STDOUT for a person, and anything writable for a test
      */
     public function __construct(private $out = STDOUT) {}
@@ -36,5 +42,17 @@ final class Console
         }
 
         return 0;
+    }
+
+    /**
+     * Print each line, and answer non-zero — a command DECLINING to act. Everything a script chains
+     * behind one hangs on this: `build claim <item> --by=me && <work>` proceeds after a refused claim
+     * unless the refusal SAYS it refused, and a refusal only a person can see is not a refusal.
+     */
+    public function refuse(string ...$lines): int
+    {
+        $this->say(...$lines);
+
+        return self::REFUSED;
     }
 }

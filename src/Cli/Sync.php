@@ -185,24 +185,73 @@ final class Sync implements Command
 
     /**
      * The `.commandments/` folder carries its OWN `.gitignore`: ignore everything generated in here
-     * (the checklist, archives, tool-use counter), keeping the HAND-WRITTEN things tracked — the
-     * `config.php`, the ignore file itself, and the project's own `custom/` rules
-     * ({@see Workspace::CUSTOM}), which are source code and belong in the repo like any other.
+     * (the checklist, archives, tool-use counter), keeping the DURABLE things tracked — the
+     * `config.php`, the ignore file itself, the project's own `custom/` rules and its
+     * `orchestrator/` profiles, which are source and belong in the repo like any other.
      * Self-contained — nothing about the folder leaks into the project's root `.gitignore`.
      * Idempotent.
+     *
+     * A project's OWN lines are kept. This file is seeded by us and then edited by them, so
+     * re-asserting our version over it un-tracked whatever they had added — silently, since the
+     * files stay on disk and nothing breaks until somebody clones the repo.
      */
     private function ensureCommandmentsGitignore(string $consumer): void
     {
         $path = Workspace::at($consumer)->shared('.gitignore');
-        $custom = Workspace::CUSTOM;
-        // Un-ignoring a directory takes BOTH lines: `!custom/` re-admits the directory (git never
-        // descends into an ignored one) and `!custom/**` re-admits everything inside it.
-        $content = "# code-commandments generated state; config.php and custom/ stay tracked\n*\n!.gitignore\n!config.php\n!{$custom}/\n!{$custom}/**\n";
+        $content = implode("\n", [...self::gitignoreLines(), ...$this->linesTheProjectAdded($path)]) . "\n";
 
         if (! is_file($path) || (string) file_get_contents($path) !== $content) {
             @mkdir(dirname($path), 0777, true);
             File::write($path, $content);
         }
+    }
+
+    /**
+     * The lines the package guarantees. Un-ignoring a directory takes BOTH forms: `!custom/`
+     * re-admits the directory (git never descends into an ignored one) and `!custom/**` re-admits
+     * everything inside it.
+     *
+     * @return list<string>
+     */
+    private static function gitignoreLines(): array
+    {
+        $durable = [Workspace::CUSTOM, Workspace::ORCHESTRATOR];
+
+        return [
+            '# code-commandments generated state; the lines below stay tracked.',
+            '# Add your own exceptions underneath — they are preserved across a sync.',
+            '*',
+            '!.gitignore',
+            '!config.php',
+            ...array_merge(...array_map(fn (string $folder) => ["!{$folder}/", "!{$folder}/**"], $durable)),
+        ];
+    }
+
+    /**
+     * Whatever the project wrote into the file that is not ours — kept verbatim, in their order. Our
+     * own past headers are dropped rather than accumulating one per release; any other comment is
+     * theirs and stays.
+     *
+     * @return list<string>
+     */
+    private function linesTheProjectAdded(string $path): array
+    {
+        if (! is_file($path)) {
+            return [];
+        }
+
+        $ours = self::gitignoreLines();
+        $theirs = [];
+
+        foreach (explode("\n", (string) file_get_contents($path)) as $line) {
+            $kept = trim($line);
+
+            if ($kept !== '' && ! in_array($kept, $ours, true) && ! str_starts_with($kept, '# code-commandments')) {
+                $theirs[] = $kept;
+            }
+        }
+
+        return $theirs;
     }
 
     /**

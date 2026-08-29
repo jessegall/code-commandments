@@ -27,48 +27,17 @@ Set a condition the moment the user expresses one, in their own words:
 | "keep going until the tests pass" | `vendor/bin/commandments stop-condition "the full test suite passes"` |
 | "don't stop until the build is green and the README is updated" | two calls — one condition each |
 | "/until the linter is clean" | `vendor/bin/commandments stop-condition "the linter is clean"` |
-| "add it to the to-do list" | the gate **and** a TodoWrite item — see below |
-| "don't forget to X" / "remind me to X" / "later" | same: gate **and** tracker |
+| "add it to the to-do list" | the gate — that phrasing is a deferral |
+| "don't forget to X" / "remind me to X" / "later" | the same |
 
 Write the condition **as a checkable statement**, not as a task: "the full test suite passes", not
 "run the tests". You will be asked to verify it later, so it has to be something you can *check*.
 One condition per call — stacking them keeps each one independently verifiable.
 
-**Mirror it into your to-do list.** As soon as you record a condition, add the same statement to your
-to-do list (TodoWrite) as a pending item, so the user can see at a glance what is holding you. The
-gate's marker file is invisible to them; the to-do list is not. Keep the two in sync: when you strike
-a condition off with `stop-condition met <n>`, mark its to-do item completed in the same breath.
-
-### Lead with what you are doing NOW
-
-**The item in progress goes at the TOP of the list, always.** Every time you start a new item, move it
-to the first line — same items, same statuses, only the order changes. The user reads that first line
-to answer "where is it right now?", and an in-progress item buried at #7 makes them scan a list to find
-out. A `PostToolUse` hook checks each `TodoWrite` while a gate stands and tells you when the list does
-not lead with the current item.
-
-Order the rest as you like — what is next, then what is parked — but never reorder by marking something
-completed to get it out of the way. The list has to stay true; leading with the current item is about
-making a true list *readable*.
-
-### A to-do item is NOT a gate
-
-The two are not interchangeable, and only one of them survives you:
-
-| | To-do list (TodoWrite) | The gate (`commandments stop-condition`) |
-|---|---|---|
-| Who sees it | the user, live | the Stop hook |
-| Holds a stop | never | every stop, until verified |
-| Lives past this session | no | yes — it's a file |
-
-So when the user defers something — **"add it to the to-do list"**, "don't forget to…", "remind me
-to…", "later", "when you're done" — that phrasing is a DEFERRAL, and it takes **both**: the gate,
-which is what actually brings the task back, and the tracker item, which is what shows them it
-exists. Doing only the tracker satisfies the letter of "add it to the to-do list" and loses the task
-the moment the session ends — which is exactly the failure this rule exists to stop.
-
-Read it the other way too: nothing about the word "to-do" excuses you from the gate. If the user is
-handing you work to do later, it is a condition.
+A deferral is a gate, whatever the user calls it. **"add it to the to-do list"**, "don't forget
+to…", "remind me to…", "later", "when you're done" — every one of those is work handed to you for
+later, and the gate is what actually brings it back. Nothing about the word "to-do" excuses you from
+recording it as a condition; a note to yourself dies with the session, and a condition does not.
 
 Do **not** set a gate on your own initiative. It is the user's instrument; setting one for yourself
 just to stay busy is out of bounds.
@@ -84,15 +53,14 @@ puts this triage in front of you while work is in flight.
   it, and leaves the work wrong in the meantime.
 - **A separate task**, one they explicitly deferred ("later", "when you're done", "after this", "add
   it to the to-do list", "don't forget to…"), or anything that would derail the phase you're in. →
-  **Park it**, which is BOTH halves: `vendor/bin/commandments stop-condition "<the task, as a statement you
-  can verify>"` **and** the same statement in your to-do list. Then carry straight on with what you
-  were doing. The gate holds your stop at the end, so the task cannot be lost.
+  **Park it**: `vendor/bin/commandments stop-condition "<the task, as a statement you can verify>"`.
+  Then carry straight on with what you were doing. The gate holds your stop at the end, so the task
+  cannot be lost.
 - **Unsure?** Cheap and inside the current phase → do it. Opens a new front → park it. The
   tie-breaker: would doing it now change what this phase is about?
 
 Park it as something **checkable** — "the changelog has an entry for this release", not "look at the
-changelog" — because you must verify it before you may stop. The to-do item is the visible half, never
-the whole of it: a tracker entry with no gate behind it is a task you have agreed to lose.
+changelog" — because you must verify it before you may stop.
 
 ## A plan takes precedence
 
@@ -113,8 +81,7 @@ so when it says "and N more", run `vendor/bin/commandments stop-condition list` 
 2. **Condition holds?** `vendor/bin/commandments stop-condition met <n>` — the number the gate printed (see
    `stop-condition list`). Numbers are STABLE ids: striking one condition off never renumbers the rest, so
    you may read the list once and run several `met` calls off it safely. The gate lifts when the
-   last one is struck off. Mark the matching to-do item completed at the same time, so the visible
-   list tracks the gate.
+   last one is struck off.
 3. **Doesn't hold?** Keep working. That is the whole point of the gate.
 4. **Genuinely blocked** — that ONE condition needs a decision, a credential, something you cannot
    get? Say so against it: `vendor/bin/commandments stop-condition blocked <n> --reason="<what only they can
@@ -138,8 +105,8 @@ standing.
 
 Coming back with a question and four untouched conditions wastes the user's turn: they answer, and
 you were going to be busy for an hour anyway. Coming back with a question and everything else already
-DONE is what the gate is for. The same applies to the to-do list that mirrors it — a blocked item
-moves to the end, it does not become the reason the rest sit still.
+DONE is what the gate is for. A blocked condition moves to the end; it does not become the reason
+the rest sit still.
 
 `stop-condition stuck` is a claim about the WHOLE list, not about one condition — so it is not asserted, it is
 COUNTED. It is refused while a single standing condition has nothing said about it, and it names those
