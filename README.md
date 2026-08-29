@@ -19,6 +19,7 @@ should be a value object, and here's the discipline that explains why*.
 - [Install](#install)
 - [Usage](#usage)
 - [Configuration](#configuration)
+- [The journal](#the-journal)
 - [Freezing a file](#freezing-a-file)
 - [Agents](#agents)
 - [Hooks](#hooks)
@@ -243,6 +244,80 @@ because this command records the shape you have rather than the one you want. Th
 listed separately too, since no order can place them: break them with
 `judge --sin=namespace-cycle`, which needs no configuration at all, because a cycle is
 wrong under any stack.
+
+## The journal
+
+A context compaction rewrites the conversation into a summary. The summary keeps what was
+**done** — files changed, commands run, tests passed — and loses what was **decided**: the
+ruling you gave once, the approach that was abandoned and why, the thing the agent was
+half-way through.
+
+The session transcript on disk lost none of it. `commandments journal` reads that transcript
+and shows the parts worth reading.
+
+```bash
+commandments journal              # a menu, when a person runs it at a terminal
+commandments journal --back=1     # the stretch the last summary replaced
+commandments journal user         # your own words, in full
+commandments journal search "…"   # where a thing was decided
+commandments journal open         # work started and never closed
+```
+
+**It is an index, not a copy.** The transcript is the record; the journal notes only what the
+transcript cannot answer — where the compaction boundaries fall, and what each message said it
+carried. No hook ever opens the transcript, which is why consulting it costs under a
+millisecond.
+
+### What the agent does
+
+The discipline is enforced by hooks, not merely written down:
+
+| Moment | What happens |
+|---|---|
+| an assistant message streams | it is filed with its tag, live |
+| a write is attempted | **refused** while no `[!start]` stands — work is declared before it happens |
+| the context fills | the first automatic compaction is **cancelled**, buying one turn to pin what must survive |
+| the compaction runs | the pinned facts and open work are written into the **summariser's own instructions** |
+| the far side | the agent is handed those facts and told to read `journal --back=1` before touching anything |
+
+### Tags
+
+A tag opens a line, so one message can carry several:
+
+```
+[!start] making Drilldown a composition
+[!discovery] Banner and EmptyState already have no .vue half
+[!end] making Drilldown a composition
+```
+
+`[!start]` · `[!end]` · `[!discovery]` · `[!correction]` · `[!blocked]`
+
+Through a stretch where the agent works alone these are the only messages kept — an untagged
+stretch reads back as `⋯ 41 messages ⋯`, which is worth nothing to whoever comes next. **An
+`[!start]` with no `[!end]` is unfinished work**, the one piece of state a compaction cannot
+reconstruct, and it falls out of the pairing rather than being remembered.
+
+### Pinning
+
+```bash
+commandments journal remember "the client tracks its own changes; defaults never travel back"
+```
+
+A pinned fact outlives every compaction, heads every digest, and rides in the summariser's own
+instructions — so it reaches the far side whatever else is dropped.
+
+### Reading another session
+
+A hook knows which session it is in; a person at a terminal does not.
+
+```bash
+commandments journal sessions   # every session of this project, newest first
+commandments journal use <id>   # read that one — its id or its state folder, a prefix of either
+commandments session            # where this session keeps its state
+```
+
+The list is built from the transcripts themselves, so a session that ran long before any of
+this existed can still be read back.
 
 ## Freezing a file
 
