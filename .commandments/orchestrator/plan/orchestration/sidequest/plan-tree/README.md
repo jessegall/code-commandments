@@ -37,6 +37,26 @@ to with the day and sha stamped.
 - `stale [--for=N]` — a live branch untouched for N. The plan-shaped twin of
   "N items are waiting on YOU".
 
+## Scoping — the same split as a profile
+
+A plan has two halves, and confusing them is what makes it either die with a
+terminal or collide between two.
+
+- **Durable: the tree itself** — `orchestrator/plan/<name>/`, in git. The work, its
+  sidequests, their READMEs. A multi-day port's plan is the thing a fresh session
+  most needs, so it cannot live under `sessions/<id>/`.
+- **Session: the cursor** — WHICH plan this session is working, and WHERE in it.
+  Meaningless tomorrow, and correctly dies with the session.
+
+This is exactly how a profile already works: its content is durable in
+`orchestrator/profiles/<name>/`, and `Instance` holds which one is in force for this
+session. A plan is `use`d the same way.
+
+**So concurrent sessions do not collide.** One session works `dissolution`, another
+works `tooling` — different trees, both durable. The only real clash is two sessions
+on the SAME plan, which is the same case as two orchestrators on one board and has
+the same answer: the second is told it is a reader.
+
 ## Decided
 
 **The verb is not `plan`.** `commandments plan done/stuck/status` is plan-EXECUTION
