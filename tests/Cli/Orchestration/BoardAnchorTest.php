@@ -63,17 +63,21 @@ final class BoardAnchorTest extends TestCase
     }
 
     /**
-     * The harness saying which project this is still wins — it is a statement, where the git answer is an
-     * inference from where the process stands.
+     * The case that shipped broken: the harness stamps `CLAUDE_PROJECT_DIR` PER AGENT, so a worker
+     * running in a lane carries the LANE as its project directory. Taking that at its word put the
+     * conversation's own record inside the worktree — two boards for one build, each consistent with
+     * itself and neither able to see the other, which is worse than an empty one because it does not
+     * announce itself. Git wins here precisely because it answers about the repository rather than
+     * about the agent.
      */
-    public function test_the_harness_still_wins_where_it_speaks(): void
+    public function test_a_lane_agents_own_project_dir_does_not_move_the_board(): void
     {
-        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        putenv('CLAUDE_PROJECT_DIR=' . $this->lane);
 
-        $this->assertStringContainsString(
-            basename($this->root),
-            Workspace::ofSession('/somewhere/else', 'sess-1')->sessionDir(),
-        );
+        $resolved = Workspace::ofSession($this->lane, 'sess-1')->sessionDir();
+
+        $this->assertStringNotContainsString('.lanes', $resolved, 'a lane agent still writes to the project board');
+        $this->assertSame(Workspace::ofSession($this->root, 'sess-1')->sessionDir(), $resolved);
     }
 
     /**

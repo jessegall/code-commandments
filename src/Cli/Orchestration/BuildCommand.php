@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Text;
+use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Workspace;
 
@@ -24,6 +25,7 @@ final class BuildCommand implements Command
     public function __construct(
         private readonly HookIO $io = new HookIO,
         private readonly Console $console = new Console,
+        private readonly GitFiles $git = new GitFiles,
     ) {}
 
     public function names(): array
@@ -227,7 +229,9 @@ final class BuildCommand implements Command
     private function doctor(Board $board): int
     {
         if (! $board->exists()) {
-            return $this->console->say('No build here. `commandments build claim <item> --by=<who>` starts one.');
+            $this->console->say('No build here. `commandments build claim <item> --by=<who>` starts one.');
+
+            return $this->sayStranded();
         }
 
         $receipts = Receipts::inSession(Workspace::ofSession($this->io->projectRoot()));
@@ -249,7 +253,47 @@ final class BuildCommand implements Command
             ));
         }
 
-        return $this->console->say('', sprintf('  %d of %d slots in use, counted now.', $running, $board->limit()));
+        $this->console->say('', sprintf('  %d of %d slots in use, counted now.', $running, $board->limit()));
+
+        return $this->sayStranded();
+    }
+
+    /**
+     * Name any board left inside a worktree — most useful when THIS one is empty, since that is the shape
+     * a reader would otherwise resolve by finding two answers that disagree.
+     */
+    private function sayStranded(): int
+    {
+        foreach ($this->strandedBoards() as $path) {
+            $this->console->say(
+                '',
+                "  ! a board also exists at {$path} — it is not this one.",
+                '    Anything filed there is unread: it was written before boards were anchored to the project.',
+            );
+        }
+
+        return 0;
+    }
+
+    /**
+     * Boards left inside a worktree, from before they were anchored to the project. Nothing reads them
+     * any more, so a reader has to be TOLD they exist — otherwise the only way to find one is a
+     * contradiction between two answers, each perfectly consistent with itself.
+     *
+     * @return list<string>
+     */
+    private function strandedBoards(): array
+    {
+        $root = Workspace::ofSession($this->io->projectRoot())->root();
+        $stranded = [];
+
+        foreach ($this->git->worktrees($root) as $worktree) {
+            foreach (glob($worktree . '/.commandments/sessions/*/.board') ?: [] as $board) {
+                $stranded[] = $board;
+            }
+        }
+
+        return $stranded;
     }
 
     private function claim(Board $board, Input $input): int

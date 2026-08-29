@@ -81,14 +81,20 @@ final class Workspace
      * like that: it is one thing wherever a command was run from, so its journal must be too, or a session
      * that steps into a worktree files half its record there and reads an empty one back at home.
      *
-     * `CLAUDE_PROJECT_DIR` is the harness stating which project this session IS, so it wins where it is
-     * set. A plain shell has no such variable, so the repository's MAIN worktree answers instead — a
-     * worktree is its own git toplevel, and without this a `cd` into a lane silently changes which file
-     * is read. $fallback answers outside a repository.
+     * The repository's MAIN worktree answers, whatever directory the caller is standing in and whatever
+     * the harness stamped: a worktree is its own git toplevel and carries its own `CLAUDE_PROJECT_DIR`,
+     * so both the shell and the environment give a lane's own answer inside a lane. $fallback answers
+     * outside a repository, where there is nothing to ask.
      */
     public static function ofSession(string $fallback, ?string $sessionId = null): self
     {
-        return self::at(getenv('CLAUDE_PROJECT_DIR') ?: new GitFiles()->projectRoot($fallback) ?? $fallback, $sessionId);
+        $stated = getenv('CLAUDE_PROJECT_DIR') ?: $fallback;
+
+        // GIT WINS over the stated directory, which is the opposite of everywhere else and is the whole
+        // point: `CLAUDE_PROJECT_DIR` says which directory THIS AGENT has, and an agent working in a lane
+        // has the lane. Taking it would put the conversation's own record inside a worktree — two boards
+        // for one build, each consistent with itself and neither able to see the other.
+        return self::at(new GitFiles()->projectRoot($stated) ?? $stated, $sessionId);
     }
 
     /**

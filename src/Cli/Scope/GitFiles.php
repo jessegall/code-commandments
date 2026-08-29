@@ -117,6 +117,32 @@ class GitFiles
     }
 
     /**
+     * Every worktree of this repository EXCEPT the main one — the places a file may have been written
+     * that nothing reads any more.
+     *
+     * @return list<string>
+     */
+    public function worktrees(string $root): array
+    {
+        $listing = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' worktree list --porcelain 2>/dev/null');
+        $found = [];
+
+        foreach (explode("\n", $listing) as $line) {
+            if (! str_starts_with($line, 'worktree ')) {
+                continue;
+            }
+
+            $path = substr($line, strlen('worktree '));
+
+            if (realpath($path) !== realpath($root)) {
+                $found[] = $path;
+            }
+        }
+
+        return $found;
+    }
+
+    /**
      * Is $path $parent or somewhere beneath it?
      */
     private static function within(string $path, string $parent): bool
