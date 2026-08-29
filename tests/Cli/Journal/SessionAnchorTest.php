@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli\Journal;
 
+use JesseGall\CodeCommandments\Cli\Journal\Entry;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
+use JesseGall\CodeCommandments\Cli\Journal\Reading;
+use JesseGall\CodeCommandments\Cli\Journal\Session;
+use JesseGall\CodeCommandments\Cli\Journal\Tag;
 use JesseGall\CodeCommandments\Cli\Journal\Kind;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
@@ -80,6 +84,55 @@ final class SessionAnchorTest extends TestCase
         $this->assertSame(
             Workspace::at($this->worktree, 'sess-anchored')->sessionDir(),
             Workspace::ofSession($this->worktree, 'sess-anchored')->sessionDir(),
+        );
+    }
+
+    /**
+     * An agent cannot tell "I stopped tagging" from "I tagged and the tool did not hear me" — from the
+     * inside those are the same silence, and the second leaves it believing it closed work it did not.
+     */
+    public function test_verify_names_a_tag_that_was_said_but_never_filed(): void
+    {
+        $transcripts = dirname($this->project) . '/.claude/projects/' . str_replace('/', '-', $this->project);
+        mkdir($transcripts, 0777, true);
+        $path = $transcripts . '/sess-anchored.jsonl';
+        file_put_contents($path, implode("\n", [
+            json_encode(['type' => 'assistant', 'message' => ['content' => [['type' => 'text', 'text' => '[!start] the reader']]]]),
+            json_encode(['type' => 'assistant', 'message' => ['content' => [['type' => 'text', 'text' => '[!end] the reader']]]]),
+        ]) . "\n");
+
+        // The index holds only the START — the end was said into a record that never heard it.
+        Journal::inSession(Workspace::at($this->project, 'sess-anchored'))->file(
+            new Entry(Kind::Agent, 'now', 't', 'm', Tag::parse('[!start] the reader'), '[!start] the reader'),
+        );
+
+        $verdict = new Reading(new Session('sess-anchored', $path, 0, ''), $this->project)->verify();
+
+        $this->assertStringContainsString('NOT FILED', $verdict);
+        $this->assertStringContainsString('[!end] the reader', $verdict);
+        $this->assertStringNotContainsString('[!start] the reader', $verdict);
+    }
+
+    /**
+     * When the two records agree, say so plainly — the whole value is being able to trust the answer.
+     */
+    public function test_verify_says_so_when_the_record_agrees(): void
+    {
+        $transcripts = dirname($this->project) . '/.claude/projects/' . str_replace('/', '-', $this->project);
+        mkdir($transcripts, 0777, true);
+        $path = $transcripts . '/agreed.jsonl';
+        file_put_contents($path, json_encode([
+            'type' => 'assistant',
+            'message' => ['content' => [['type' => 'text', 'text' => '[!discovery] it agrees']]],
+        ]) . "\n");
+
+        Journal::inSession(Workspace::at($this->project, 'agreed'))->file(
+            new Entry(Kind::Agent, 'now', 't', 'm', Tag::parse('[!discovery] it agrees'), '[!discovery] it agrees'),
+        );
+
+        $this->assertStringContainsString(
+            'The record agrees',
+            new Reading(new Session('agreed', $path, 0, ''), $this->project)->verify(),
         );
     }
 

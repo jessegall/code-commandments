@@ -47,6 +47,7 @@ final class JournalCommand implements Command
             ->form('journal remember "<fact>"', 'pin a fact — it survives every compaction and is written into the summariser\'s own instructions')
             ->form('journal pinned [--last=N]', 'every pinned fact still standing, or only the most recent N')
             ->form('journal open', 'work started and never finished — the live state a compaction must carry')
+            ->form('journal verify', "does the record agree with what you SAID? names every tag the journal never filed — the one thing you cannot check from the inside")
             ->form('journal instructions', 'the brief — how to tag, what to pin, and how to read it back. Every refusal points here')
             ->form('journal sessions', 'the sessions of this project, newest first')
             ->form('journal use <id>', 'read that session from now on (a prefix of the id is enough)')
@@ -75,6 +76,7 @@ final class JournalCommand implements Command
             'remember', 'pin' => $this->remember($workspace, $this->text($input, from: 1)),
             'pinned' => $this->pinned($sessions, $input),
             'open' => $this->open($sessions),
+            'verify', 'check' => $this->verify($sessions),
             'user' => $this->read($sessions, $input, onlyTheUser: true),
             'search', 'find' => $this->search($sessions, $this->text($input, from: 1)),
             default => $this->read($sessions, $input, onlyTheUser: false),
@@ -217,6 +219,20 @@ final class JournalCommand implements Command
                 ->pinned($input->option('last')->map(intval(...))->unwrapOr(null));
 
             return $this->console->say($pinned === '' ? 'Nothing pinned yet — `commandments journal remember "<fact>"` pins one.' : $pinned);
+        }
+
+        return $this->sessions($sessions);
+    }
+
+    /**
+     * Does the record agree with what was said? The one question an agent cannot answer from the inside.
+     */
+    private function verify(Sessions $sessions): int
+    {
+        foreach ($this->chosen($sessions) as $session) {
+            return $this->console->say(
+                new Reading($session, Workspace::ofSession($this->io->projectRoot())->root())->verify(),
+            );
         }
 
         return $this->sessions($sessions);

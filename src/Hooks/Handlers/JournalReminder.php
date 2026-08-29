@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Journal\Entry;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
+use JesseGall\CodeCommandments\Cli\Journal\Reading;
+use JesseGall\CodeCommandments\Cli\Journal\Session;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
 use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\Hook;
@@ -70,10 +72,15 @@ final class JournalReminder extends Hook
      */
     protected function onStop(HookEvent $event): int
     {
+        $unheard = $this->unheard($event);
         $open = Journal::inSession($event->sessionWorkspace())->openSpans();
 
-        if ($open === []) {
-            return $this->pass(); // Nothing open costs nothing to report.
+        if ($open === [] && $unheard === '') {
+            return $this->pass(); // Nothing open and nothing lost costs nothing to report.
+        }
+
+        if ($unheard !== '') {
+            return $this->block($unheard);
         }
 
         if (StopHookCap::budget(self::HOLDS) < 1) {
@@ -95,6 +102,36 @@ final class JournalReminder extends Hook
 
             `{$binary} journal open` lists it.
             TEXT);
+    }
+
+    /**
+     * What the agent SAID that the record never heard. This is the one thing it cannot check from where it
+     * sits: "I stopped tagging" and "I tagged and the tool did not hear me" are the same silence, and the
+     * second leaves it believing it closed work that is still open. Read once, at the end of a turn.
+     */
+    private function unheard(HookEvent $event): string
+    {
+        if ($event->transcriptPath() === '') {
+            return '';
+        }
+
+        $session = new Session($event->sessionId(), $event->transcriptPath(), 0, '');
+        $verdict = new Reading($session, $event->sessionWorkspace()->root())->verify();
+
+        if (! str_contains($verdict, 'NOT FILED')) {
+            return '';
+        }
+
+        $binary = Binary::in($event->root);
+
+        return <<<TEXT
+            Code Commandments — the journal did NOT hear some of what you said:
+
+            {$verdict}
+
+            You may believe you closed work that is still open, or pinned a fact that was never kept. Say
+            those lines again, on their own line, before you stop — and `{$binary} journal verify` checks it.
+            TEXT;
     }
 
     /**

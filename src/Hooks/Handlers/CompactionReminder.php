@@ -62,7 +62,8 @@ final class CompactionReminder extends Hook
             . "user gave once, the approach you abandoned, the thing you were half-way through. The transcript "
             . "lost none of it. BEFORE your next substantive step:\n\n"
             . "  {$binary} journal --back=1   the stretch this summary replaced\n"
-            . "  {$binary} journal user       the user's own words, in full";
+            . "  {$binary} journal user       the user's own words, in full\n"
+            . "  {$binary} journal verify     whether the record agrees with what you SAID";
 
         if ($pinned !== '') {
             $said .= "\n\nFacts pinned to survive this compaction:\n" . $pinned;

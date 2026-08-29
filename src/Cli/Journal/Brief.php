@@ -54,6 +54,11 @@ final class Brief
               {$binary} journal user         only the user's own words, in full
               {$binary} journal search "<term>"
               {$binary} journal open         work you started and never closed
+              {$binary} journal verify       whether the record agrees with what you SAID
+
+            That last one answers the question you cannot answer from the inside. "I stopped tagging" and
+            "I tagged and the tool did not hear me" are the same silence from where you sit, and the second
+            leaves you believing you closed work that is still open. Run it when something feels missing.
             TEXT;
     }
 }

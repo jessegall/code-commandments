@@ -84,6 +84,85 @@ final readonly class Reading
     }
 
     /**
+     * Does the index agree with what was actually SAID? An agent cannot tell "I stopped tagging" from "I
+     * tagged and the tool did not hear me" — from the inside those are the same silence, and the second
+     * one leaves it believing it closed work it did not. So the two records are compared: the transcript
+     * holds every word, the index holds what was filed, and a tag in the first that is missing from the
+     * second is a recording loss the agent would otherwise carry as a false belief for hours.
+     */
+    public function verify(): string
+    {
+        $said = $this->tagsSaid();
+        $filed = $this->tagsFiled();
+        $lost = array_values(array_diff($said, $filed));
+
+        if ($said === []) {
+            return <<<TEXT
+                Nothing tagged in this stretch — so there is nothing to check.
+
+                If you HAVE been tagging, the recorder is not hearing you: check that `MessageDisplay` is
+                wired, and that you are not reading a different session's record than the one you spoke into.
+                TEXT;
+        }
+
+        if ($lost === []) {
+            return sprintf('The record agrees: all %d tagged line(s) were filed.', count($said));
+        }
+
+        $heading = Text::heading(sprintf('NOT FILED (%d of %d)', count($lost), count($said)));
+        $lines = implode("\n", array_map(fn (string $line) => '  • ' . Text::wrap($line, 4), $lost));
+
+        return <<<TEXT
+            {$heading}
+
+            You said these and the journal never recorded them. Anything you believe you closed here is
+            still open, and anything you believe you pinned was not.
+
+            {$lines}
+            TEXT;
+    }
+
+    /**
+     * Every tagged line the transcript holds for this stretch — what was said.
+     *
+     * @return list<string>
+     */
+    private function tagsSaid(): array
+    {
+        $said = [];
+
+        foreach ($this->session->transcript()->chunk() as $line) {
+            if (! $line->isSpeech() || $line->isPrompt()) {
+                continue;
+            }
+
+            foreach (Tag::taggedLines($line->text) as [, $tagged]) {
+                $said[] = $tagged;
+            }
+        }
+
+        return $said;
+    }
+
+    /**
+     * Every tagged line the index holds — what was filed.
+     *
+     * @return list<string>
+     */
+    private function tagsFiled(): array
+    {
+        $filed = [];
+
+        foreach ($this->journal()->entries() as $entry) {
+            if ($entry->tag->isSome()) {
+                $filed[] = $entry->text;
+            }
+        }
+
+        return $filed;
+    }
+
+    /**
      * Everything said in the current stretch, the machinery around it dropped.
      *
      * @return list<Line>
