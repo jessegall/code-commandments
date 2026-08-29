@@ -25,10 +25,18 @@ final class TouchedSources
      */
     private const array JUDGED = ['php', 'vue', 'ts'];
 
+    /**
+     * The original watcher — the per-edit check. Each watcher keeps its OWN mark, because claiming moves
+     * it: two of them sharing one cursor means whichever looked first swallows the evidence and the other
+     * sees a tree where nothing ever changed.
+     */
+    public const string EDITS = 'edits';
+
     public function __construct(
         private readonly Workspace $workspace,
         private readonly string $root,
         private readonly Config $config,
+        private readonly string $watcher = self::EDITS,
     ) {}
 
     /**
@@ -140,8 +148,10 @@ final class TouchedSources
 
     private function state(): StateFile
     {
-        return new StateFile($this->workspace->path('.touched-sources'), new Legend(
-            'Code-commandments — where the per-edit check has looked up to.',
+        $file = $this->watcher === self::EDITS ? '.touched-sources' : '.touched-sources-' . $this->watcher;
+
+        return new StateFile($this->workspace->path($file), new Legend(
+            "Code-commandments — where the `{$this->watcher}` watcher has looked up to.",
             ['marked_at' => 'the unix time of the last look; a judged file newer than this is one a tool has changed since'],
             defaults: new State(marked_at: 0),
         ));
