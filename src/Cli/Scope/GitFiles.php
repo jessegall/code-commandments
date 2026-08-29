@@ -97,6 +97,26 @@ class GitFiles
     }
 
     /**
+     * The MAIN worktree of the repository $path is in — the one fact every worktree agrees on, and the
+     * only honest home for anything belonging to the project rather than to one checkout of it. A
+     * worktree is its own git toplevel, so asking for the toplevel gives a different answer inside a
+     * lane, and a `cd` then silently moves which file is read. Null outside a repository.
+     */
+    public function projectRoot(string $path): ?string
+    {
+        $common = trim((string) @shell_exec('git -C ' . escapeshellarg($path) . ' rev-parse --git-common-dir 2>/dev/null'));
+
+        if ($common === '') {
+            return null;
+        }
+
+        // A relative answer means we are already standing in the main worktree; an absolute one names it.
+        $resolved = str_starts_with($common, '/') ? dirname($common) : $this->root($path);
+
+        return $resolved === false ? null : $resolved;
+    }
+
+    /**
      * Is $path $parent or somewhere beneath it?
      */
     private static function within(string $path, string $parent): bool

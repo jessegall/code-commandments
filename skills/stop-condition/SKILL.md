@@ -172,6 +172,9 @@ and tells you to report back. Meeting a condition resets that count — real pro
 | `commandments stop-condition met <n>` | strike condition <n> off as VERIFIED — the gate lifts when none remain |
 | `commandments stop-condition blocked <id> --reason="<what only the user can give>"` | record that ONE condition is waiting on the user, and why — the reason is kept against that condition |
 | `commandments stop-condition stuck` | release ONE stop, once EVERY standing condition carries a reason. The claim is CHALLENGED twice before it is acted on |
+| `commandments stop-condition defer <n>` | take ONE condition out of the hold, keeping it and its words in the record — the project's backlog rather than what this session promised |
+| `commandments stop-condition pull <n>` | put a deferred condition back in the hold |
+| `commandments stop-condition deferred` | what is kept but no longer holding |
 | `commandments stop-condition pause` | THE USER's switch — set the whole gate aside, conditions kept verbatim |
 | `commandments stop-condition resume` | put the paused gate back in force |
 | `commandments stop-condition clear` | drop the gate entirely — the user's call, never an escape hatch |

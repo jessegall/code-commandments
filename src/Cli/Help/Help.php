@@ -49,6 +49,27 @@ final class Help
         return $this->with(forms: [...$this->forms, new Form($syntax, $does)]);
     }
 
+    /**
+     * The NAME of every option this command declares, taken from its spec — `--last=N` is `last`. What an
+     * unknown flag is measured against.
+     *
+     * @return list<string>
+     */
+    public function optionNames(): array
+    {
+        $names = [];
+
+        foreach ($this->options as $option) {
+            $spec = ltrim(explode('=', $option->spec, 2)[0], '-');
+
+            if ($spec !== '') {
+                $names[] = $spec;
+            }
+        }
+
+        return $names;
+    }
+
     public function option(string $spec, string $does): self
     {
         return $this->with(options: [...$this->options, new Option($spec, $does)]);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments;
 
+use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 use JesseGall\CodeCommandments\Support\Directory;
 use JesseGall\CodeCommandments\Support\FileTree;
 
@@ -80,12 +81,14 @@ final class Workspace
      * like that: it is one thing wherever a command was run from, so its journal must be too, or a session
      * that steps into a worktree files half its record there and reads an empty one back at home.
      *
-     * `CLAUDE_PROJECT_DIR` is the harness stating which project this session IS, so it wins here; $fallback
-     * answers when nothing set it.
+     * `CLAUDE_PROJECT_DIR` is the harness stating which project this session IS, so it wins where it is
+     * set. A plain shell has no such variable, so the repository's MAIN worktree answers instead — a
+     * worktree is its own git toplevel, and without this a `cd` into a lane silently changes which file
+     * is read. $fallback answers outside a repository.
      */
     public static function ofSession(string $fallback, ?string $sessionId = null): self
     {
-        return self::at(getenv('CLAUDE_PROJECT_DIR') ?: $fallback, $sessionId);
+        return self::at(getenv('CLAUDE_PROJECT_DIR') ?: new GitFiles()->projectRoot($fallback) ?? $fallback, $sessionId);
     }
 
     /**

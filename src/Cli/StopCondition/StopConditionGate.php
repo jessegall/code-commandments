@@ -154,8 +154,8 @@ final class StopConditionGate
         $text = Line::flatten($condition);
 
         foreach ($conditions as $existing) {
-            if ($existing->text === $text) {
-                return $existing->id;
+            if ($existing->statement->is($text)) {
+                return $existing->statement->id;
             }
         }
 
@@ -207,6 +207,54 @@ final class StopConditionGate
     }
 
     /**
+     * Take $id out of the hold, keeping it and its words in the record. A project accumulates findings,
+     * deferred mechanisms and rulings worth writing down that are not what this session promised — and a
+     * gate holding every stop on all of them cannot be satisfied by doing the work, which is a gate an
+     * agent learns to route around. It is not `clear`: the condition stays, and `pull` puts it back.
+     */
+    public function park(int $id): bool
+    {
+        return $this->restate($id, static fn (Condition $condition) => $condition->parked());
+    }
+
+    /**
+     * Put a parked condition back in the hold — the user pulling one into this session's work.
+     */
+    public function pull(int $id): bool
+    {
+        return $this->restate($id, static fn (Condition $condition) => $condition->unparked());
+    }
+
+    /**
+     * The conditions taken out of the hold, still in the record.
+     *
+     * @return array<int, string>  id → its text
+     */
+    public function parked(): array
+    {
+        $parked = array_filter($this->conditionsOf($this->file->read()), static fn (Condition $c) => ! $c->isHolding());
+
+        return $this->texts($parked);
+    }
+
+    /**
+     * @param  callable(Condition): Condition  $restated
+     */
+    private function restate(int $id, callable $restated): bool
+    {
+        $conditions = $this->conditionsOf($this->file->read());
+
+        if (! array_key_exists($id, $conditions)) {
+            return false;
+        }
+
+        $conditions[$id] = $restated($conditions[$id]);
+        $this->write($this->file->read(), $conditions);
+
+        return true;
+    }
+
+    /**
      * The standing conditions the agent has named as waiting on the user, with the reason each gave.
      *
      * @return array<int, string>  id → reason
@@ -214,7 +262,7 @@ final class StopConditionGate
     public function blocked(): array
     {
         return array_map(
-            static fn (Condition $c): string => $c->blockedBecause->unwrapOr($c->text),
+            static fn (Condition $c): string => $c->standing->blockedBecause->unwrapOr($c->statement->text),
             array_filter($this->standing(), static fn (Condition $c): bool => $c->isBlocked()),
         );
     }
@@ -265,7 +313,7 @@ final class StopConditionGate
         // Progress: whatever the agent was claiming, the list has moved under it.
         $this->write($this->file->read()->with(held_stops: 0, claim_round: 0), $conditions);
 
-        return $condition->text;
+        return $condition->statement->text;
     }
 
     /**
@@ -390,7 +438,12 @@ final class StopConditionGate
     {
         $state = $this->file->read();
 
-        return $state->flag('paused') ? [] : $this->conditionsOf($state);
+        if ($state->flag('paused')) {
+            return [];
+        }
+
+        // A parked condition is in the record and out of the hold, so it is not among what stands.
+        return array_filter($this->conditionsOf($state), static fn (Condition $c) => $c->isHolding());
     }
 
     /**
@@ -399,7 +452,7 @@ final class StopConditionGate
      */
     private function texts(array $conditions): array
     {
-        return array_map(static fn (Condition $c): string => $c->text, $conditions);
+        return array_map(static fn (Condition $c): string => $c->statement->text, $conditions);
     }
 
     /**
@@ -449,7 +502,7 @@ final class StopConditionGate
             $condition = Condition::read($item);
 
             if ($condition !== null) {
-                $conditions[$condition->id] = $condition;
+                $conditions[$condition->statement->id] = $condition;
             }
         }
 

@@ -237,10 +237,10 @@ final class BuildCommand implements Command
 
         foreach ($board->claims() as $claim) {
             $measured = $receipts->latestFor($claim->item)
-                ->mapOr('no receipt', fn (Receipt $receipt) => $receipt->isGreen() ? 'measured green' : 'measured FAILING');
+                ->mapOr('no receipt', fn (Receipt $receipt) => $receipt->verdict());
 
             $this->console->say(sprintf(
-                '  %-22s %-10s round %d  %s  → %s',
+                '  %-22s %-10s round %d  %-18s → %s',
                 $claim->item,
                 $claim->stage->value,
                 $claim->round,

@@ -49,6 +49,21 @@ final readonly class Receipt
     }
 
     /**
+     * The verdict in a word, for a display with room for nothing more. It is ON the receipt because a
+     * display asking `isGreen()` gets a yes-or-no from a value with THREE states, and answers "failing"
+     * for a check that never ran — the exact lie the third state exists to prevent, on the surface a
+     * reader reaches for when they do not yet know what is wrong.
+     */
+    public function verdict(): string
+    {
+        return match (true) {
+            ! $this->isMeasurement() => 'COULD NOT MEASURE',
+            $this->isGreen() => 'measured green',
+            default => 'measured FAILING',
+        };
+    }
+
+    /**
      * Does this receipt measure the same tree as $other? Two receipts of one item that measured different
      * trees do not agree or disagree — the later one supersedes.
      */

@@ -8,19 +8,23 @@ use JesseGall\CodeCommandments\Cli\State\Line;
 use JesseGall\PhpTypes\Option;
 
 /**
- * One thing the user said must hold before the agent may stop — its STABLE id, its text, and the
- * reason it cannot move without the user. Being blocked is a fact about a CONDITION, so the reason
- * is recorded here ({@see StopConditionGate::markBlocked}) rather than as activity beside the gate.
+ * One thing the user said must hold before the agent may stop — its STABLE id, its text, the reason it
+ * cannot move without them, and whether it is PARKED. Being blocked is a fact about a condition, so the
+ * reason lives here rather than beside the gate; parking is the same shape one level up, because a gate
+ * holding every stop on a project's whole backlog cannot be satisfied by doing the work, and a gate like
+ * that is one an agent learns to route around.
  */
 final readonly class Condition
 {
     /**
-     * @param  Option<string>  $blockedBecause
+     * How a parked condition marks itself in the file — a word rather than a flag, so a human reading the
+     * file sees what it means.
      */
+    private const string PARKED = 'parked';
+
     public function __construct(
-        public int $id,
-        public string $text,
-        public Option $blockedBecause,
+        public Statement $statement,
+        public Standing $standing,
     ) {}
 
     /**
@@ -28,7 +32,7 @@ final readonly class Condition
      */
     public static function stated(int $id, string $text): self
     {
-        return new self($id, $text, Option::none());
+        return new self(new Statement($id, $text), Standing::holding());
     }
 
     /**
@@ -37,7 +41,11 @@ final readonly class Condition
      */
     public function line(): string
     {
-        return implode("\t", [$this->id, $this->text, ...$this->blockedBecause]);
+        $reason = $this->reason();
+
+        return $this->standing->isHolding()
+            ? rtrim(implode("\t", [$this->statement->id, $this->statement->text, $reason]), "\t")
+            : implode("\t", [$this->statement->id, $this->statement->text, $reason, self::PARKED]);
     }
 
     /**
@@ -45,20 +53,59 @@ final readonly class Condition
      */
     public static function read(string $line): ?self
     {
-        $parts = explode("\t", $line, 3);
+        $parts = explode("\t", $line, 4);
 
         if (count($parts) < 2) {
             return null;
         }
 
-        [$id, $text, $reason] = array_pad($parts, 3, '');
+        [$id, $text, $reason, $parked] = array_pad($parts, 4, '');
 
-        return new self((int) $id, $text, Option::fromTruthy($reason));
+        $standing = match (true) {
+            $parked === self::PARKED => Standing::parked(),
+            $reason !== '' => Standing::blockedBecause($reason),
+            default => Standing::holding(),
+        };
+
+        return new self(new Statement((int) $id, $text), $standing);
+    }
+
+    /**
+     * Take this out of the hold, keeping it and its reason in the record. What a finding worth writing
+     * down but not worth stopping for becomes.
+     */
+    public function parked(): self
+    {
+        return $this->standingAs(Standing::parked());
+    }
+
+    /**
+     * Put it back in the hold — the user pulling a parked item into this session's work.
+     */
+    public function unparked(): self
+    {
+        return $this->standingAs(Standing::holding());
+    }
+
+    /**
+     * Is this condition holding a stop? Only what this session promised is.
+     */
+    public function isHolding(): bool
+    {
+        return $this->standing->isHolding();
+    }
+
+    /**
+     * Why it cannot move without the user, or nothing where it can.
+     */
+    public function reason(): string
+    {
+        return $this->standing->blockedBecause->unwrapOr('');
     }
 
     public function isBlocked(): bool
     {
-        return $this->blockedBecause->isSome();
+        return $this->standing->isBlocked();
     }
 
     /**
@@ -67,7 +114,9 @@ final readonly class Condition
      */
     public function blockedBy(string $reason): self
     {
-        return $this->because(Option::fromTruthy(Line::flatten($reason)));
+        $reason = Line::flatten($reason);
+
+        return $this->standingAs($reason === '' ? Standing::holding() : Standing::blockedBecause($reason));
     }
 
     /**
@@ -76,18 +125,15 @@ final readonly class Condition
      */
     public function unblocked(): self
     {
-        return $this->because(Option::none());
+        return $this->standing->isHolding() ? $this->standingAs(Standing::holding()) : $this;
     }
 
     /**
-     * The same condition — same id, same words — carrying $reason instead of whatever it carried.
-     * The one place the statement itself is re-spelled, so a claim about it is a line rather than a
-     * rebuild.
-     *
-     * @param  Option<string>  $reason
+     * The same condition — same id, same words — standing differently. The one place the statement is
+     * re-spelled, so a claim about it is a line rather than a rebuild.
      */
-    private function because(Option $reason): self
+    private function standingAs(Standing $standing): self
     {
-        return new self($this->id, $this->text, $reason);
+        return new self($this->statement, $standing);
     }
 }

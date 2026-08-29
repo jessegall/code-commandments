@@ -255,7 +255,10 @@ final class StopConditionReminder extends Hook
             . "only the user can give>\"` — and carry on with the rest. Once EVERY standing condition carries a "
             . "reason, `vendor/bin/commandments stop-condition stuck` (NOT `stop-condition clear`) releases one stop. Nothing you said "
             . "before this message counts: being sent back in DROPS every block, so the claim is about the list as it "
-            . "stands now.";
+            . "stands now.\n\nAnd say this to the USER rather than working around it: `commandments stop-condition "
+            . "pause` is THEIR switch — it sets the whole gate aside with every condition kept verbatim, and "
+            . "`resume` puts it back. A gate holding a stop on work that is not what you are doing is a gate to "
+            . "tell them about, not one to route around.";
     }
 
     /**
@@ -303,7 +306,10 @@ final class StopConditionReminder extends Hook
     {
         $lines = '';
 
-        foreach (array_slice($conditions, 0, self::EXCERPT, preserve_keys: true) as $id => $condition) {
+        // The most RECENT, never the lowest-numbered. Ids only ever rise, so taking the first shows the
+        // OLDEST — the ones furthest from whatever is being worked on now, which teaches a reader that
+        // the sample is irrelevant and so that the list is.
+        foreach (array_slice($conditions, -self::EXCERPT, null, preserve_keys: true) as $id => $condition) {
             $lines .= "\n  {$id}. {$condition}";
         }
 
@@ -314,8 +320,8 @@ final class StopConditionReminder extends Hook
         }
 
         return $lines . "\n  … and {$rest} more" . ($listable
-            ? " — run `vendor/bin/commandments stop-condition list` for the full list (only these first "
-                . self::EXCERPT . " are shown so the gate doesn't flood every stop)."
+            ? " — run `vendor/bin/commandments stop-condition list` for the full list (the "
+                . self::EXCERPT . " most recent are shown so the gate doesn't flood every stop)."
             : ' that are gone with the gate and can no longer be listed.');
     }
 }

@@ -82,6 +82,9 @@ final class StopConditionCommand implements Command
             ->form('stop-condition stuck', 'release ONE stop, once EVERY standing condition carries a reason. The claim is CHALLENGED twice before it is acted on')
             ->option('--reason=TEXT', 'what a blocked condition needs from the user — a reason that would fit any condition is not a reason for this one')
             ->option('--blocked=IDS', 'on `stuck`, a bulk `blocked` for these ids with the same --reason. Anything you leave out is work you still owe')
+            ->form('stop-condition defer <n>', "take ONE condition out of the hold, keeping it and its words in the record — the project's backlog rather than what this session promised")
+            ->form('stop-condition pull <n>', 'put a deferred condition back in the hold')
+            ->form('stop-condition deferred', 'what is kept but no longer holding')
             ->form('stop-condition pause', "THE USER's switch — set the whole gate aside, conditions kept verbatim")
             ->form('stop-condition resume', 'put the paused gate back in force')
             ->form('stop-condition clear', "drop the gate entirely — the user's call, never an escape hatch")
@@ -97,6 +100,58 @@ final class StopConditionCommand implements Command
                 . 'every condition intact rather than being overridden), and meeting a condition resets that '
                 . 'count. An ACTIVE PLAN takes precedence: the gate '
                 . 'stays silent while the plan nudge owns the stop, then takes over at `plan done`.');
+    }
+
+    /**
+     * Take one condition out of the hold. A gate is for what THIS SESSION promised; a project accumulates
+     * findings and deferred mechanisms worth recording that are not that, and a gate holding every stop on
+     * all of them cannot be satisfied by doing the work — 118 standing conditions, where striking nine
+     * verified ones changed nothing. A gate like that is one an agent learns to route around, which is
+     * worse for everybody than one admitting the distinction.
+     */
+    private function defer(StopConditionGate $gate, int $id): int
+    {
+        if (! $gate->park($id)) {
+            return $this->tell("No condition {$id} — `commandments stop-condition list` shows what stands.");
+        }
+
+        return $this->tell(
+            "○ Deferred {$id}. It is still in the record and no longer holds a stop.",
+            "  `commandments stop-condition pull {$id}` puts it back when it becomes this session's work.",
+        );
+    }
+
+    private function pull(StopConditionGate $gate, int $id): int
+    {
+        if (! $gate->pull($id)) {
+            return $this->tell("No condition {$id}.");
+        }
+
+        return $this->tell("● Condition {$id} is holding again.");
+    }
+
+    private function listDeferred(StopConditionGate $gate): int
+    {
+        $deferred = $gate->parked();
+
+        if ($deferred === []) {
+            return $this->tell('Nothing deferred.');
+        }
+
+        $lines = [];
+
+        foreach ($deferred as $id => $text) {
+            $lines[] = sprintf('  %2d  %s', $id, $text);
+        }
+
+        return $this->tell(...$lines);
+    }
+
+    private function tell(string ...$lines): int
+    {
+        fwrite(STDOUT, implode("\n", $lines) . "\n");
+
+        return 0;
     }
 
     public function run(Input $input): int
@@ -117,6 +172,9 @@ final class StopConditionCommand implements Command
                 $this->ids($input->list('blocked')),
                 $input->option('reason')->unwrapOr(''),
             ),
+            'defer' => $this->defer($gate, $input->argument(1)->mapOr(0, intval(...))),
+            'pull' => $this->pull($gate, $input->argument(1)->mapOr(0, intval(...))),
+            'deferred' => $this->listDeferred($gate),
             'pause', 'hold' => $this->pause($gate),
             'resume', 'unpause', 'continue' => $this->resume($gate),
             'clear', 'cancel', 'drop' => $this->clear($gate),

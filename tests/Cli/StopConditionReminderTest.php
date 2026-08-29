@@ -146,8 +146,10 @@ final class StopConditionReminderTest extends TestCase
 
     public function test_a_long_gate_is_excerpted_instead_of_reprinted_in_full(): void
     {
-        // A user parking dozens of tasks would otherwise get the whole list back on EVERY stop. The
-        // oldest few are due next, so those are spelled out and the rest are a count plus `stop-condition list`.
+        // A user recording dozens of things would otherwise get the whole list back on EVERY stop. The
+        // MOST RECENT few are spelled out and the rest are a count plus `stop-condition list` — ids only
+        // rise, so the oldest are the ones furthest from whatever is being worked on now, and a sample of
+        // those teaches a reader that the list is irrelevant.
         for ($i = 1; $i <= 8; $i++) {
             $this->gate()->add("thing {$i} is done");
         }
@@ -155,9 +157,9 @@ final class StopConditionReminderTest extends TestCase
         $reason = $this->reason($this->stop());
 
         $this->assertStringContainsString('8 STOP CONDITIONS', $reason, 'the count leads');
-        $this->assertStringContainsString('1. thing 1 is done', $reason);
-        $this->assertStringContainsString('3. thing 3 is done', $reason);
-        $this->assertStringNotContainsString('thing 4 is done', $reason, 'the tail is not spelled out');
+        $this->assertStringContainsString('8. thing 8 is done', $reason, 'the newest is shown');
+        $this->assertStringContainsString('6. thing 6 is done', $reason);
+        $this->assertStringNotContainsString('thing 1 is done', $reason, 'the oldest are not spelled out');
         $this->assertStringContainsString('and 5 more', $reason);
         $this->assertStringContainsString('stop-condition list', $reason, 'with where to read the rest');
     }

@@ -78,6 +78,16 @@ final class Kernel
             return 2;
         }
 
+        $unknown = array_values(array_diff($input->given(), $handler->help()->optionNames()));
+
+        if ($unknown !== []) {
+            // A flag nobody declared is a wrong answer that reads exactly like a right one: the command
+            // runs, ignores it, and returns something the user believes was filtered.
+            fwrite(STDERR, "Unknown option --{$unknown[0]} for `{$command}`. Try: commandments {$command} --help\n");
+
+            return 2;
+        }
+
         try {
             return $handler->run($input);
         } catch (InvalidConfiguration $invalid) {

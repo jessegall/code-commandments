@@ -56,6 +56,44 @@ final class ReceiptTest extends TestCase
         $this->assertStringContainsString('exit 1', $this->receipt('a', 'b', exit: 1)->render());
     }
 
+    /**
+     * A display asking `isGreen()` gets a yes-or-no from a value with THREE states, and answers "failing"
+     * for a check that never ran — the exact lie the third state exists to prevent, on the surface a
+     * reader reaches for when they do not yet know what is wrong. A red nobody earned sends them to debug
+     * work that is fine; the honest reading sends them to fix their rig.
+     */
+    public function test_a_check_that_never_ran_is_never_called_failing(): void
+    {
+        $unmeasured = new Receipt('item', 'npm run type-check', 1, 'aaa', 'bbb', '14:02', '', 'the rig was down');
+
+        $this->assertSame('COULD NOT MEASURE', $unmeasured->verdict());
+        $this->assertStringNotContainsString('FAILING', $unmeasured->verdict());
+    }
+
+    /**
+     * Every surface reads the verdict from the same place, so two displays of one receipt cannot disagree.
+     */
+    public function test_the_short_verdict_and_the_long_one_agree(): void
+    {
+        $cases = [
+            new Receipt('i', 'c', 0, 'a', 'b', '14:02'),
+            new Receipt('i', 'c', 1, 'a', 'b', '14:02'),
+            new Receipt('i', 'c', 1, 'a', 'b', '14:02', '', 'the rig was down'),
+        ];
+
+        foreach ($cases as $receipt) {
+            $agrees = $receipt->isMeasurement()
+                ? str_contains($receipt->render(), $receipt->isGreen() ? 'green' : 'FAILED')
+                : str_contains($receipt->render(), 'COULD NOT MEASURE');
+
+            $this->assertTrue($agrees, 'the two displays of one receipt must not disagree');
+        }
+
+        $this->assertSame('measured green', $cases[0]->verdict());
+        $this->assertSame('measured FAILING', $cases[1]->verdict());
+        $this->assertSame('COULD NOT MEASURE', $cases[2]->verdict());
+    }
+
     public function test_a_receipt_survives_the_round_trip(): void
     {
         $receipt = $this->receipt('9f3a1c2', '4d81e0b', exit: 2);

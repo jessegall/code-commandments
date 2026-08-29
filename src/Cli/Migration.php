@@ -93,14 +93,14 @@ final class Migration
         $source = $either->unwrap();
         $conditions = $this->conditions($source);
         $lastId = max($this->headerOf($source) === 3 ? $source->int(2) : 0, ...[0, ...array_map(
-            fn (Condition $c): int => $c->id,
+            fn (Condition $c): int => $c->statement->id,
             $conditions,
         )]);
 
         if ($live->isSome()) {
             foreach ($paused as $setAside) {
                 foreach ($this->conditions($setAside) as $condition) {
-                    $conditions[] = Condition::stated(++$lastId, $condition->text);
+                    $conditions[] = Condition::stated(++$lastId, $condition->statement->text);
                 }
             }
         }

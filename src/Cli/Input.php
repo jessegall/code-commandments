@@ -118,6 +118,17 @@ final class Input
     }
 
     /**
+     * Every option and flag NAME the user typed, however it was spelled — `--name` and `--name=value`
+     * alike. What a caller checks against the ones a command declares.
+     *
+     * @return list<string>
+     */
+    public function given(): array
+    {
+        return array_values(array_unique([...array_keys($this->options), ...array_keys($this->flags)]));
+    }
+
+    /**
      * Is this run asking for HELP rather than work — `--help`, or the short `-h` the parser keeps in
      * the verbatim tail? Asked of the Input because the Input is what knows its own flags.
      */
