@@ -50,7 +50,7 @@ final class SessionCommand implements Command
 
         $dir = Workspace::at($root)->sessionDir();
 
-        if ($input->option('path')->isSome()) {
+        if ($input->hasFlag('path')) {
             return $this->console->say($dir);
         }
 

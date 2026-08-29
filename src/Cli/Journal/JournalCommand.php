@@ -51,6 +51,7 @@ final class JournalCommand implements Command
             ->form('journal sessions', 'the sessions of this project, newest first')
             ->form('journal use <id>', 'read that session from now on (a prefix of the id is enough)')
             ->option('--back=N', 'how many compactions back to read (default 0, the current stretch)')
+            ->option('--full', 'the whole stretch, unbounded — by default a reading is cut to fit, worst first, so it does not spend the context it exists to restore')
             ->note('A hook always knows which session it is in; a human does not, so `journal sessions` lists them '
                 . 'and `journal use <id>` MOUNTS one — every later command reads that session until you choose '
                 . 'another. The list is built from the transcripts themselves, so a session that ran before any '
@@ -158,7 +159,7 @@ final class JournalCommand implements Command
     private function show(Session $session, Input $input, bool $onlyTheUser): int
     {
         $back = $input->option('back')->mapOr(0, intval(...));
-        $reading = new Reading($session, $this->io->projectRoot());
+        $reading = new Reading($session, $this->io->projectRoot(), $input->hasFlag('full') ? null : Reading::BUDGET);
 
         return $this->console->say(
             $this->heading($session, $back),

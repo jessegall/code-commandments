@@ -14,9 +14,20 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final readonly class Reading
 {
+    /**
+     * How many characters a reading spends when nobody asked for the whole thing. A digest read after a
+     * compaction is paid for in the very context it exists to restore, so it is bounded by default — and a
+     * person at a terminal, who is spending their own scrollback and not a budget, passes none.
+     */
+    public const int BUDGET = 16000;
+
+    /**
+     * @param  ?int  $budget  characters to fit into, or none for the whole thing
+     */
     public function __construct(
         private Session $session,
         private string $root,
+        private ?int $budget = self::BUDGET,
     ) {}
 
     /**
@@ -24,7 +35,7 @@ final readonly class Reading
      */
     public function since(int $back): string
     {
-        return new Digest($this->session->transcript()->chunk($back))->render();
+        return new Digest($this->session->transcript()->chunk($back))->render($this->budget);
     }
 
     /**
@@ -33,7 +44,7 @@ final readonly class Reading
      */
     public function recent(int $count): string
     {
-        return new Digest(array_slice($this->spoken(), -$count))->render();
+        return new Digest(array_slice($this->spoken(), -$count))->render($this->budget);
     }
 
     /**
@@ -41,7 +52,7 @@ final readonly class Reading
      */
     public function said(): string
     {
-        return new Digest(array_values(array_filter($this->spoken(), fn (Line $line) => $line->isPrompt())))->render();
+        return new Digest(array_values(array_filter($this->spoken(), fn (Line $line) => $line->isPrompt())))->render($this->budget);
     }
 
     public function mentioning(string $term): string
@@ -50,7 +61,7 @@ final readonly class Reading
             return '';
         }
 
-        return new Digest(array_values(array_filter($this->spoken(), fn (Line $line) => $line->mentions($term))))->render();
+        return new Digest(array_values(array_filter($this->spoken(), fn (Line $line) => $line->mentions($term))))->render($this->budget);
     }
 
     /**

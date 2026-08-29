@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Journal;
 
 use JesseGall\CodeCommandments\Cli\Console;
+use JesseGall\CodeCommandments\Cli\Keyboard;
 use JesseGall\CodeCommandments\Cli\Text;
 use JesseGall\PhpTypes\Option;
 
@@ -28,11 +29,23 @@ final class Menu
      */
     private const int RECENT = 25;
 
+    /**
+     * How the reader answers — a keypress for the menu, a typed line for a search.
+     */
+    private readonly Keyboard $keyboard;
+
+    /**
+     * @param  resource  $input  where the reader's answers come from — STDIN for a person, and anything
+     *                           readable for a test, which is the only way a menu can be driven at all
+     */
     public function __construct(
         private readonly Sessions $sessions,
         private readonly string $root,
         private readonly Console $console = new Console,
-    ) {}
+        private $input = STDIN,
+    ) {
+        $this->keyboard = new Keyboard($this->input, $this->console);
+    }
 
     /**
      * Is there a PERSON here to answer? Two things must hold, and they fail differently: a terminal on both
@@ -62,7 +75,7 @@ final class Menu
         $chosen = $session->unwrap();
 
         while (true) {
-            $answer = $this->ask($this->menu($chosen));
+            $answer = $this->keyboard->key($this->menu($chosen));
 
             if ($answer === 'q' || $answer === '') {
                 return 0;
@@ -83,7 +96,7 @@ final class Menu
      */
     private function act(Session $session, string $answer): Option
     {
-        $reading = new Reading($session, $this->root);
+        $reading = new Reading($session, $this->root, budget: null);
 
         match ($answer) {
             '1' => $this->page($reading->recent(self::RECENT)),
@@ -92,7 +105,7 @@ final class Menu
             '4' => $this->page($reading->said()),
             '5' => $this->page($reading->pinned()),
             '6' => $this->page($reading->open()),
-            '7' => $this->page($reading->mentioning($this->ask('  search for: '))),
+            '7' => $this->page($reading->mentioning($this->keyboard->line('  search for: '))),
             '8' => null,
             default => $this->console->say('  (not an option)'),
         };
@@ -134,7 +147,7 @@ final class Menu
         }
 
         foreach (array_chunk($lines, self::PAGE) as $at => $page) {
-            if ($at > 0 && $this->ask('  ── more? (enter, or q) ') === 'q') {
+            if ($at > 0 && $this->keyboard->key('  ── more? (any key, or q) ') === 'q') {
                 return;
             }
 
@@ -161,7 +174,7 @@ final class Menu
             $this->console->say(sprintf('  %2d  %s', $at + 1, $session->describe()));
         }
 
-        $picked = $all[((int) $this->ask("\n  which? ")) - 1] ?? null;
+        $picked = $all[((int) $this->keyboard->key("\n  which? ")) - 1] ?? null;
 
         if ($picked === null) {
             return Option::none();
@@ -172,12 +185,7 @@ final class Menu
         return Option::some($picked);
     }
 
-    private function ask(string $prompt): string
-    {
-        fwrite(STDOUT, $prompt);
 
-        return strtolower(trim((string) fgets(STDIN)));
-    }
 
 
 

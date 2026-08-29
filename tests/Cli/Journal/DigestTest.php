@@ -148,6 +148,57 @@ final class DigestTest extends TestCase
         $this->assertStringContainsString('messages ⋯', new Digest($lines)->render());
     }
 
+    /**
+     * A digest read on the far side of a compaction is paid for in the very context it exists to restore,
+     * so it is cut to fit — worst first, and never the user.
+     */
+    public function test_it_is_cut_to_a_budget_worst_first(): void
+    {
+        $lines = [$this->user('the ruling that must survive')];
+
+        for ($i = 0; $i < 40; $i++) {
+            $lines[] = $this->agent("[!info] routine chatter number {$i} padding this out nicely");
+        }
+
+        $lines[] = $this->agent('[!correction] I had the flush index backwards');
+
+        $rendered = new Digest($lines)->render(budget: 400);
+
+        $this->assertStringContainsString('the ruling that must survive', $rendered);
+        $this->assertStringContainsString('[!correction] I had the flush index backwards', $rendered);
+        $this->assertStringNotContainsString('routine chatter number 20', $rendered);
+    }
+
+    /**
+     * A correction changes what the reader should do next; an untagged message kept only for sitting near
+     * a prompt said nothing about itself. The second goes first.
+     */
+    public function test_an_untagged_message_is_given_up_before_a_tagged_one(): void
+    {
+        $rendered = new Digest([
+            $this->user('go'),
+            $this->agent('untagged filler that was only kept for being near the prompt'),
+            $this->agent('[!blocked] waiting on the credentials'),
+        ])->render(budget: 60);
+
+        $this->assertStringContainsString('[!blocked] waiting on the credentials', $rendered);
+        $this->assertStringNotContainsString('untagged filler', $rendered);
+    }
+
+    /**
+     * With no budget the digest is whole — what a person asked for at a terminal.
+     */
+    public function test_no_budget_keeps_everything_chosen(): void
+    {
+        $lines = [$this->user('go')];
+
+        for ($i = 0; $i < 30; $i++) {
+            $lines[] = $this->agent("[!discovery] finding number {$i}");
+        }
+
+        $this->assertStringContainsString('finding number 29', new Digest($lines)->render());
+    }
+
     public function test_nothing_said_renders_as_nothing(): void
     {
         $this->assertSame('', new Digest([])->render());

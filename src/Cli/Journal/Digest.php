@@ -98,20 +98,17 @@ final class Digest
     }
 
     /**
-     * The digest as it reads, with the pinned facts first and the stretches the agent worked alone through
-     * marked rather than silently dropped.
+     * The digest as it reads: the pinned facts first, the stretches the agent worked alone through marked
+     * rather than silently dropped, and the whole thing cut to $budget characters when one is set.
      */
-    public function render(): string
+    public function render(?int $budget = null): string
     {
         $speech = $this->spoken();
+        $kept = $this->within($speech, $budget);
         $written = [];
         $previous = -1;
 
-        foreach ($speech as $at => $line) {
-            if (! $this->isWorthKeeping($speech, $at, $line)) {
-                continue;
-            }
-
+        foreach ($kept as $at => $line) {
             $skipped = $at - $previous - 1;
 
             if ($previous >= 0 && $skipped >= self::GAP) {
@@ -123,6 +120,79 @@ final class Digest
         }
 
         return implode("\n", [...$this->pinned($speech), ...$written]);
+    }
+
+    /**
+     * The chosen lines cut to $budget, worst first. A digest read on the far side of a compaction is paid
+     * for in the very context it exists to restore, so an unbounded one spends what it came to save.
+     *
+     * Nothing the USER said is ever dropped — their words are the whole reason for reading — and what goes
+     * first is what said least about itself: an untagged message kept only for sitting near a prompt, then
+     * the routine tiers, and a correction or a blocker last of all, because those change what the reader
+     * should DO next.
+     *
+     * @param  list<Line>  $speech
+     * @return array<int, Line>  the kept lines, by their position in $speech
+     */
+    private function within(array $speech, ?int $budget): array
+    {
+        $kept = [];
+
+        foreach ($speech as $at => $line) {
+            if ($this->isWorthKeeping($speech, $at, $line)) {
+                $kept[$at] = $line;
+            }
+        }
+
+        if ($budget === null) {
+            return $kept;
+        }
+
+        $droppable = $this->droppable($kept);
+
+        while ($this->sizeOf($kept) > $budget && $droppable !== []) {
+            unset($kept[array_shift($droppable)]);
+        }
+
+        return $kept;
+    }
+
+    /**
+     * The positions of $kept in the order they should be given up — least valuable first, and among equals
+     * the oldest, since the reader is closest to the end.
+     *
+     * @param  array<int, Line>  $kept
+     * @return list<int>
+     */
+    private function droppable(array $kept): array
+    {
+        $ranked = [];
+
+        foreach ($kept as $at => $line) {
+            if (! $line->isPrompt()) {
+                $ranked[$at] = $line->tag()->mapOr(PHP_INT_MAX, fn (Tag $tag) => $tag->priority());
+            }
+        }
+
+        arsort($ranked);
+
+        return array_keys($ranked);
+    }
+
+    /**
+     * How long the digest would read, in characters.
+     *
+     * @param  array<int, Line>  $kept
+     */
+    private function sizeOf(array $kept): int
+    {
+        $size = 0;
+
+        foreach ($kept as $line) {
+            $size += mb_strlen($line->text) + self::GUTTER;
+        }
+
+        return $size;
     }
 
     /**
