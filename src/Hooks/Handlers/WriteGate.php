@@ -87,7 +87,7 @@ final class WriteGate extends Hook
 
         $journal = Journal::inSession($event->workspace());
         $touched = new TouchedSources($event->workspace(), $event->root, Config::load($event->root), 'writes');
-        $changed = $touched->claim(self::SHOWN);
+        $changed = $this->authored($event, $touched->claim(self::SHOWN));
 
         if ($changed === [] || ! $journal->hasRecorded(self::PROOF) || $journal->openSpans() !== []) {
             return $this->pass();
@@ -96,6 +96,26 @@ final class WriteGate extends Hook
         $files = implode(', ', array_map(fn (string $path) => basename($path), $changed));
 
         return $this->block($this->refusal($event, "That shell command changed {$files} with no work declared."));
+    }
+
+    /**
+     * Of $changed, the files the AGENT wrote. A checkout, a merge, a rebase or a stash pop rewrites a
+     * great many judged files without anybody editing one, and the tree cannot tell those apart by mtime
+     * — but git can: work the agent did stands UNCOMMITTED against HEAD, while everything git itself
+     * wrote arrived already committed.
+     *
+     * @param  list<string>  $changed
+     * @return list<string>
+     */
+    private function authored(HookEvent $event, array $changed): array
+    {
+        if ($changed === []) {
+            return [];
+        }
+
+        $uncommitted = $this->git()->changedVsHead($event->root);
+
+        return array_values(array_filter($changed, fn (string $path) => isset($uncommitted[$path])));
     }
 
     private function refusal(HookEvent $event, string $what): string

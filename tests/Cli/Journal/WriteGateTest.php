@@ -122,6 +122,26 @@ final class WriteGateTest extends TestCase
     }
 
     /**
+     * A checkout, a merge or a rebase rewrites a great many judged files without anybody editing one.
+     * Those arrive already committed, so they are not the agent's work and are not refused.
+     */
+    public function test_files_git_itself_rewrote_are_not_the_agents_work(): void
+    {
+        $this->recording();
+
+        $io = new RecordingHookIO([
+            'hook_event_name' => 'PostToolUse',
+            'session_id' => 'sess-1',
+            'tool_name' => 'Bash',
+            'tool_input' => ['command' => 'git merge --ff-only plan/journal'],
+        ], new FakeGit($this->root));
+
+        new WriteGate($io)->run([]);
+
+        $this->assertSame([], $io->emitted);
+    }
+
+    /**
      * A tool that changes nothing is not the gate's business.
      */
     public function test_a_reading_tool_is_never_refused(): void
