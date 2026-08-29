@@ -15,6 +15,10 @@ use JesseGall\PhpTypes\Option;
  */
 final readonly class Receipt
 {
+    /**
+     * @param  ?string  $unmeasurable  what stopped the check from being a measurement at all — a rig that
+     *                                 was not up, a dependency missing. Absent when the run was genuine.
+     */
     public function __construct(
         public string $item,
         public string $argv,
@@ -23,14 +27,25 @@ final readonly class Receipt
         public string $mergeBase,
         public string $at,
         public string $output = '',
+        public ?string $unmeasurable = null,
     ) {}
+
+    /**
+     * Did anything actually get measured? A check that could not RUN says nothing about the work, and
+     * filing its exit code as a verdict would be a receipt that lies with provenance — worse than no
+     * receipt, because a reader trusts a receipt precisely for having been measured.
+     */
+    public function isMeasurement(): bool
+    {
+        return $this->unmeasurable === null;
+    }
 
     /**
      * Did the verification pass? The exit code answers, because it is the thing the process actually said.
      */
     public function isGreen(): bool
     {
-        return $this->exitCode === 0;
+        return $this->isMeasurement() && $this->exitCode === 0;
     }
 
     /**
@@ -48,7 +63,11 @@ final readonly class Receipt
      */
     public function render(): string
     {
-        $verdict = $this->isGreen() ? 'green' : "FAILED (exit {$this->exitCode})";
+        $verdict = match (true) {
+            ! $this->isMeasurement() => "COULD NOT MEASURE — {$this->unmeasurable}",
+            $this->isGreen() => 'green',
+            default => "FAILED (exit {$this->exitCode})",
+        };
 
         return implode("\n", [
             "  {$verdict} — {$this->argv}, read {$this->at}",
@@ -63,6 +82,7 @@ final readonly class Receipt
     {
         return implode("\t", [
             $this->item, $this->argv, (string) $this->exitCode, $this->head, $this->mergeBase, $this->at,
+            $this->unmeasurable ?? '',
         ]);
     }
 
@@ -73,14 +93,23 @@ final readonly class Receipt
      */
     public static function fromLine(string $line): Option
     {
-        $fields = explode("\t", $line, 6);
+        $fields = explode("\t", $line, 7);
 
-        if (count($fields) !== 6) {
+        if (count($fields) !== 7) {
             return Option::none();
         }
 
-        [$item, $argv, $exitCode, $head, $mergeBase, $at] = $fields;
+        [$item, $argv, $exitCode, $head, $mergeBase, $at, $unmeasurable] = $fields;
 
-        return Option::some(new self($item, $argv, (int) $exitCode, $head, $mergeBase, $at));
+        return Option::some(new self(
+            $item,
+            $argv,
+            (int) $exitCode,
+            $head,
+            $mergeBase,
+            $at,
+            '',
+            $unmeasurable === '' ? null : $unmeasurable,
+        ));
     }
 }

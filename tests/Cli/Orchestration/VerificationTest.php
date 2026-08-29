@@ -43,6 +43,45 @@ final class VerificationTest extends TestCase
     }
 
     /**
+     * A gate needing a live rig fails for the RIG rather than for the work, and filing that exit code as a
+     * verdict is a receipt that lies with provenance — worse than no receipt, since a reader trusts one
+     * precisely for having been measured.
+     */
+    public function test_a_failed_precondition_means_nothing_was_measured(): void
+    {
+        $receipt = new Verification($this->root)->of('item', "php -r 'exit(0);'", '', needs: "php -r 'exit(1);'");
+
+        $this->assertFalse($receipt->isMeasurement());
+        $this->assertFalse($receipt->isGreen(), 'a check that did not run is not green either');
+        $this->assertStringContainsString('COULD NOT MEASURE', $receipt->render());
+        $this->assertStringContainsString('nothing was measured', $receipt->render());
+    }
+
+    /**
+     * With the precondition holding, the run is a genuine measurement and reads as one.
+     */
+    public function test_a_holding_precondition_leaves_a_real_measurement(): void
+    {
+        $receipt = new Verification($this->root)->of('item', "php -r 'exit(0);'", '', needs: "php -r 'exit(0);'");
+
+        $this->assertTrue($receipt->isMeasurement());
+        $this->assertTrue($receipt->isGreen());
+    }
+
+    /**
+     * A failing check with its precondition intact is a real red, and must not be softened into "could
+     * not measure" — that would hide a genuine failure behind an excuse.
+     */
+    public function test_a_genuine_failure_is_still_a_failure(): void
+    {
+        $receipt = new Verification($this->root)->of('item', "php -r 'exit(1);'", '', needs: "php -r 'exit(0);'");
+
+        $this->assertTrue($receipt->isMeasurement());
+        $this->assertFalse($receipt->isGreen());
+        $this->assertStringContainsString('FAILED', $receipt->render());
+    }
+
+    /**
      * A base nobody asked about is stated as absent rather than blank — "not asked" and "could not be
      * resolved" are different facts, and a blank would let a reader assume the first.
      */

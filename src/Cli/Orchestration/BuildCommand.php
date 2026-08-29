@@ -45,6 +45,7 @@ final class BuildCommand implements Command
             ->option('--by=NAME', 'who is taking the item')
             ->option('--ran=CMD', 'the command whose result IS the receipt — the number filed is the one the process returned')
             ->option('--against=REF', 'the branch a receipt is measured against, so a lane number is never read as the branch\'s')
+            ->option('--needs=CMD', 'a precondition — where it fails the check is not run, and the receipt says it COULD NOT MEASURE rather than reporting the environment\'s failure as the work\'s')
             ->option('--because=TEXT', 'why it is going back — required, and it is what the next round is told')
             ->option('--reason=TEXT', 'why a hold is being given up — required, since an abandoned item is somebody else\'s problem')
             ->note('A hold is a fact about the board, never about a process. A worker\'s process ends every '
@@ -221,7 +222,7 @@ final class BuildCommand implements Command
 
         foreach ($input->option('ran') as $argv) {
             $receipt = new Verification($this->io->projectRoot())
-                ->of($item, $argv, $input->option('against')->unwrapOr(''));
+                ->of($item, $argv, $input->option('against')->unwrapOr(''), $input->option('needs')->toNullable());
 
             Receipts::inSession(Workspace::ofSession($this->io->projectRoot()))->file($receipt);
 

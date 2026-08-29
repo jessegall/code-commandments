@@ -20,14 +20,19 @@ final readonly class Verification
     ) {}
 
     /**
-     * Run $argv for $item and file what it said, stamped with the tree it stood in.
+     * Run $argv for $item and file what it said, stamped with the tree it stood in. $needs is a
+     * precondition — where it fails, the check is not run at all and the receipt says it could not
+     * measure, rather than reporting the environment's failure as the work's.
      */
-    public function of(string $item, string $argv, string $base): Receipt
+    public function of(string $item, string $argv, string $base, ?string $needs = null): Receipt
     {
+        $unmeasurable = $this->whatStopsIt($needs);
         $output = [];
         $exitCode = 0;
 
-        exec('cd ' . escapeshellarg($this->root) . ' && ' . $argv . ' 2>&1', $output, $exitCode);
+        if ($unmeasurable === null) {
+            exec('cd ' . escapeshellarg($this->root) . ' && ' . $argv . ' 2>&1', $output, $exitCode);
+        }
 
         return new Receipt(
             $item,
@@ -37,7 +42,27 @@ final readonly class Verification
             $this->mergeBaseWith($base),
             gmdate('H:i'),
             implode("\n", array_slice($output, -20)),
+            $unmeasurable,
         );
+    }
+
+    /**
+     * What would stop this check from measuring anything — the precondition failing. A gate that needs a
+     * running rig fails for the rig rather than for the work, and filing THAT exit code as a verdict is a
+     * receipt that lies with provenance, which is worse than no receipt.
+     */
+    private function whatStopsIt(?string $needs): ?string
+    {
+        if ($needs === null) {
+            return null;
+        }
+
+        $output = [];
+        $exitCode = 0;
+
+        exec('cd ' . escapeshellarg($this->root) . ' && ' . $needs . ' 2>&1', $output, $exitCode);
+
+        return $exitCode === 0 ? null : "`{$needs}` did not hold (exit {$exitCode}), so nothing was measured";
     }
 
     /**
