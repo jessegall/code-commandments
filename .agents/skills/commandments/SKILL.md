@@ -79,6 +79,27 @@ immutable — never to silence a sin you could fix.** A real finding you disagre
 with is a `report`; a rule you want off is `disable`; freezing is for files that
 by their nature cannot move.
 
+**The journal — how a session survives its own compaction.** A compaction keeps what was
+DONE and loses what was DECIDED: the ruling the user gave once, the approach you abandoned,
+the work you were half-way through. The transcript on disk lost none of it, so read it back
+rather than working from the summary — **after every compaction, before you touch anything**:
+
+  `vendor/bin/commandments journal --back=1` — the stretch the summary replaced
+  `vendor/bin/commandments journal user` — only the user's own words, in full
+
+**Declare your work before you change anything**, and close it when it is done — this is
+enforced, and a write is refused while nothing stands open:
+
+  `[!start] making Drilldown a composition` … `[!end] making Drilldown a composition`
+
+A `[!start]` with no `[!end]` is unfinished work, which is the one thing a compaction cannot
+reconstruct. Tag what your messages carry — `[!start]`, `[!end]`, `[!discovery]`,
+`[!correction]`, `[!blocked]` — because through a stretch where you work alone those are the
+ONLY messages kept. And when something genuinely must not be lost, do not merely say it:
+`vendor/bin/commandments journal remember "<the fact>"` outlives every compaction and is
+written into the summariser's own instructions. `vendor/bin/commandments journal
+instructions` is the whole brief; load the `commandments-journal` skill for the discipline.
+
 **Stop conditions — when the user says "keep going until X".** Record it at once:
 `vendor/bin/commandments stop-condition "<condition>"`. While it stands you may not stop: every
 stop is held and sends you back to VERIFY the condition — actually run the command and

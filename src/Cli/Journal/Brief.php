@@ -31,8 +31,8 @@ final class Brief
             so. The pair is what makes unfinished work visible on the far side of a compaction — a start
             with no end is the first thing the next reader needs to know.
 
-              [start] making Drilldown a composition
-              [end] making Drilldown a composition
+              [!start] making Drilldown a composition
+              [!end] making Drilldown a composition
 
             TAG WHAT YOU SAY. Put the tag at the front of the message, as its first characters:
 

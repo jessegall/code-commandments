@@ -68,13 +68,13 @@ final class DigestTest extends TestCase
             $lines[] = $this->agent("routine step {$i}");
         }
 
-        $lines[] = $this->agent('[discovery] the pattern already exists');
-        $lines[] = $this->agent('[correction] I had that backwards');
+        $lines[] = $this->agent('[!discovery] the pattern already exists');
+        $lines[] = $this->agent('[!correction] I had that backwards');
 
         $chosen = $this->chosen($lines);
 
-        $this->assertContains('[discovery] the pattern already exists', $chosen);
-        $this->assertContains('[correction] I had that backwards', $chosen);
+        $this->assertContains('[!discovery] the pattern already exists', $chosen);
+        $this->assertContains('[!correction] I had that backwards', $chosen);
         $this->assertNotContains('routine step 12', $chosen);
     }
 
@@ -113,9 +113,9 @@ final class DigestTest extends TestCase
     public function test_pinned_facts_stand_at_the_top(): void
     {
         $rendered = new Digest([
-            $this->agent('[start] the reader'),
+            $this->agent('[!start] the reader'),
             $this->user('carry on'),
-            $this->agent('[pinned] motion.ts is FORBIDDEN'),
+            $this->agent('[!pinned] motion.ts is FORBIDDEN'),
         ])->render();
 
         $this->assertStringContainsString('── pinned', $rendered);
@@ -137,7 +137,7 @@ final class DigestTest extends TestCase
             $lines[] = $this->agent("routine step {$i}");
         }
 
-        $lines[] = $this->agent('[end] done');
+        $lines[] = $this->agent('[!end] done');
 
         $this->assertStringContainsString('messages ⋯', new Digest($lines)->render());
     }

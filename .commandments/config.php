@@ -214,6 +214,7 @@ $disabledHooks = function (Config $config): void {
         // Hooks\Handlers\CompactionReminder::class,
         // Hooks\Handlers\ConstraintReminder::class,
         // Hooks\Handlers\JournalRecorder::class,
+        // Hooks\Handlers\JournalReminder::class,
         // Hooks\Handlers\JudgeReminder::class,
         // Hooks\Handlers\PlanReminder::class,
         // Hooks\Handlers\Remind::class,
@@ -224,6 +225,7 @@ $disabledHooks = function (Config $config): void {
         // Hooks\Handlers\TestingReminder::class,
         // Hooks\Handlers\UntilReminder::class,
         // Hooks\Handlers\WorkingState::class,
+        // Hooks\Handlers\WriteGate::class,
     );
 };
 

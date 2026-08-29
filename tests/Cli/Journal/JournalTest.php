@@ -43,10 +43,10 @@ final class JournalTest extends TestCase
 
     public function test_a_tag_is_read_off_the_front_of_a_message(): void
     {
-        $this->assertSame(Tag::Discovery, Tag::parse('[discovery] the pattern already exists')->unwrap());
-        $this->assertSame(Tag::Correction, Tag::parse('[correction] I had that backwards')->unwrap());
-        $this->assertSame(Tag::Start, Tag::parse('[start] making Drilldown a composition')->unwrap());
-        $this->assertSame(Tag::Done, Tag::parse('[done] 645 green')->unwrap());
+        $this->assertSame(Tag::Discovery, Tag::parse('[!discovery] the pattern already exists')->unwrap());
+        $this->assertSame(Tag::Correction, Tag::parse('[!correction] I had that backwards')->unwrap());
+        $this->assertSame(Tag::Start, Tag::parse('[!start] making Drilldown a composition')->unwrap());
+        $this->assertSame(Tag::Done, Tag::parse('[!done] 645 green')->unwrap());
     }
 
     /**
@@ -55,9 +55,9 @@ final class JournalTest extends TestCase
      */
     public function test_the_pinned_mark_is_not_mistaken_for_a_correction(): void
     {
-        $this->assertSame(Tag::Pinned, Tag::parse('[pinned] motion.ts is FORBIDDEN')->unwrap());
-        $this->assertTrue(Tag::parse('[pinned] motion.ts is FORBIDDEN')->unwrap()->isPinned());
-        $this->assertFalse(Tag::parse('[correction] a correction')->unwrap()->isPinned());
+        $this->assertSame(Tag::Pinned, Tag::parse('[!pinned] motion.ts is FORBIDDEN')->unwrap());
+        $this->assertTrue(Tag::parse('[!pinned] motion.ts is FORBIDDEN')->unwrap()->isPinned());
+        $this->assertFalse(Tag::parse('[!correction] a correction')->unwrap()->isPinned());
     }
 
     public function test_an_untagged_message_carries_no_tag(): void
@@ -70,11 +70,11 @@ final class JournalTest extends TestCase
 
     public function test_an_entry_survives_the_round_trip(): void
     {
-        $entry = $this->agent('[discovery] a discovery');
+        $entry = $this->agent('[!discovery] a discovery');
         $back = Entry::fromLine($entry->toLine())->unwrap();
 
         $this->assertSame(Kind::Agent, $back->kind);
-        $this->assertSame('[discovery] a discovery', $back->text);
+        $this->assertSame('[!discovery] a discovery', $back->text);
         $this->assertSame(Tag::Discovery, $back->tag->unwrap());
         $this->assertSame($entry->messageId, $back->messageId);
     }
@@ -97,14 +97,14 @@ final class JournalTest extends TestCase
     public function test_it_files_and_reads_back_in_order(): void
     {
         $journal = $this->journal();
-        $journal->file($this->agent('[start] first'));
-        $journal->file($this->agent('[discovery] second'));
+        $journal->file($this->agent('[!start] first'));
+        $journal->file($this->agent('[!discovery] second'));
 
         $entries = $journal->entries();
 
         $this->assertCount(2, $entries);
-        $this->assertSame('[start] first', $entries[0]->text);
-        $this->assertSame('[discovery] second', $entries[1]->text);
+        $this->assertSame('[!start] first', $entries[0]->text);
+        $this->assertSame('[!discovery] second', $entries[1]->text);
     }
 
     /**
@@ -113,39 +113,39 @@ final class JournalTest extends TestCase
     public function test_work_started_and_not_finished_is_open(): void
     {
         $journal = $this->journal();
-        $journal->file($this->agent('[start] the reader'));
-        $journal->file($this->agent('[discovery] a discovery in the middle'));
-        $journal->file($this->agent('[end] the reader'));
-        $journal->file($this->agent('[start] the digest'));
+        $journal->file($this->agent('[!start] the reader'));
+        $journal->file($this->agent('[!discovery] a discovery in the middle'));
+        $journal->file($this->agent('[!end] the reader'));
+        $journal->file($this->agent('[!start] the digest'));
 
         $open = $journal->openSpans();
 
         $this->assertCount(1, $open);
-        $this->assertSame('[start] the digest', $open[0]->text);
+        $this->assertSame('[!start] the digest', $open[0]->text);
     }
 
     public function test_nested_work_closes_innermost_first(): void
     {
         $journal = $this->journal();
-        $journal->file($this->agent('[start] outer'));
-        $journal->file($this->agent('[start] inner'));
-        $journal->file($this->agent('[end] inner'));
+        $journal->file($this->agent('[!start] outer'));
+        $journal->file($this->agent('[!start] inner'));
+        $journal->file($this->agent('[!end] inner'));
 
         $open = $journal->openSpans();
 
         $this->assertCount(1, $open);
-        $this->assertSame('[start] outer', $open[0]->text);
+        $this->assertSame('[!start] outer', $open[0]->text);
     }
 
     public function test_pinned_facts_are_gathered(): void
     {
         $journal = $this->journal();
-        $journal->file($this->agent('[info] routine'));
-        $journal->file($this->agent('[pinned] motion.ts is FORBIDDEN'));
-        $journal->file($this->agent('[pinned] judge is banned until the build is done'));
+        $journal->file($this->agent('[!info] routine'));
+        $journal->file($this->agent('[!pinned] motion.ts is FORBIDDEN'));
+        $journal->file($this->agent('[!pinned] judge is banned until the build is done'));
 
         $this->assertSame(
-            ['[pinned] motion.ts is FORBIDDEN', '[pinned] judge is banned until the build is done'],
+            ['[!pinned] motion.ts is FORBIDDEN', '[!pinned] judge is banned until the build is done'],
             array_map(fn (Entry $entry) => $entry->text, $journal->pinned()),
         );
     }
@@ -194,17 +194,17 @@ final class JournalTest extends TestCase
     public function test_a_pinned_fact_survives_an_overflowing_index(): void
     {
         $journal = $this->journal();
-        $journal->file($this->agent('[pinned] motion.ts is FORBIDDEN'));
+        $journal->file($this->agent('[!pinned] motion.ts is FORBIDDEN'));
 
         for ($i = 0; $i < 4100; $i++) {
-            $journal->file($this->agent("[info] message {$i}"));
+            $journal->file($this->agent("[!info] message {$i}"));
         }
 
         $entries = $journal->entries();
 
         $this->assertCount(4000, $entries);
-        $this->assertSame('[pinned] motion.ts is FORBIDDEN', $entries[0]->text);
-        $this->assertSame('[pinned] motion.ts is FORBIDDEN', $journal->pinned()[0]->text);
+        $this->assertSame('[!pinned] motion.ts is FORBIDDEN', $entries[0]->text);
+        $this->assertSame('[!pinned] motion.ts is FORBIDDEN', $journal->pinned()[0]->text);
     }
 
     /**
@@ -219,7 +219,7 @@ final class JournalTest extends TestCase
         $this->assertTrue($journal->isPreparedForCompaction());
 
         for ($i = 0; $i < 60; $i++) {
-            $journal->file($this->agent("[info] carried on {$i}"));
+            $journal->file($this->agent("[!info] carried on {$i}"));
         }
 
         $this->assertFalse($journal->isPreparedForCompaction());
@@ -243,12 +243,12 @@ final class JournalTest extends TestCase
         $journal = $this->journal();
 
         for ($i = 0; $i < 4010; $i++) {
-            $journal->file($this->agent("[info] message {$i}"));
+            $journal->file($this->agent("[!info] message {$i}"));
         }
 
         $entries = $journal->entries();
 
         $this->assertCount(4000, $entries);
-        $this->assertSame('[info] message 4009', end($entries)->text);
+        $this->assertSame('[!info] message 4009', end($entries)->text);
     }
 }

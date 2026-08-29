@@ -7,13 +7,13 @@ namespace JesseGall\CodeCommandments\Cli\Journal;
 use JesseGall\PhpTypes\Option;
 
 /**
- * What an agent's message is FOR, written as a bracketed prefix on its first line — `[discovery] the
+ * What an agent's message is FOR, written as a bracketed prefix on its first line — `[!discovery] the
  * pattern already exists`. A compaction summary keeps what was done and loses what was decided, so the tag
  * is how a message says which of the two it carries, cheaply enough to write every time.
  *
  * The words are SPELLED OUT because the user reads them: a `MessageDisplay` hook sees a message only after
  * the terminal has it, so nothing can strip a prefix on its way out. A tag is therefore part of what the
- * agent says, and `[discovery]` is a word a human can read where `[d]` is a code they must learn. What the
+ * agent says, and `[!discovery]` is a word a human can read where `[d]` is a code they must learn. What the
  * user should NOT see is not written into a message at all — it is recorded through the command instead
  * ({@see isSpoken}).
  *
@@ -26,23 +26,23 @@ enum Tag: string
      * The mark for a fact that must reach the far side of every compaction — the one tier the digest
      * never trims and the compaction instructions always carry.
      */
-    case Pinned = 'pinned';
+    case Pinned = '!pinned';
 
-    case Correction = 'correction';
+    case Correction = '!correction';
 
-    case Blocked = 'blocked';
+    case Blocked = '!blocked';
 
-    case Start = 'start';
+    case Start = '!start';
 
-    case End = 'end';
+    case End = '!end';
 
-    case Discovery = 'discovery';
+    case Discovery = '!discovery';
 
-    case Reply = 'reply';
+    case Reply = '!reply';
 
-    case Info = 'info';
+    case Info = '!info';
 
-    case Done = 'done';
+    case Done = '!done';
 
     private const string OPEN = '[';
 

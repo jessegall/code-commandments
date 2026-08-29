@@ -19,6 +19,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\CompactionReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\CompactionGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\WriteGate;
+use JesseGall\CodeCommandments\Hooks\Handlers\JournalReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\Handlers\WorkingState;
 use JesseGall\CodeCommandments\Cli\Install;
@@ -64,6 +65,7 @@ final class HookRegistry
         JournalRecorder::class,
         CompactionGate::class,
         WriteGate::class,
+        JournalReminder::class,
         SessionReset::class,
         SourceReminder::class,
         SkillReminder::class,

@@ -17,7 +17,7 @@ use JesseGall\CodeCommandments\Support\Binary;
 /**
  * Nothing is changed until the agent has SAID what it is changing. Unfinished work is the one thing a
  * compaction cannot reconstruct, and it only exists to be carried across if the work was declared when it
- * began — so a tool that names the file it will write is refused outright while no `[start]` stands, and a
+ * began — so a tool that names the file it will write is refused outright while no `[!start]` stands, and a
  * shell command, which cannot be judged before it runs, is caught the moment it has written one
  * ({@see TouchedSources} asks the TREE rather than reading the command).
  */
@@ -42,7 +42,7 @@ final class WriteGate extends Hook
 
     public function summary(): string
     {
-        return 'Refuses a file-changing tool while no `[start]` stands, so work is always declared before it happens and unfinished work survives a compaction.';
+        return 'Refuses a file-changing tool while no `[!start]` stands, so work is always declared before it happens and unfinished work survives a compaction.';
     }
 
     public function bindings(): array

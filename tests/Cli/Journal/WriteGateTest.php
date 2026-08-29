@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Nothing is changed until the work is declared. A tool that names its file is refused before it writes;
- * the gate stays out of the way once a `[start]` stands, and stays silent entirely in a session whose
+ * the gate stays out of the way once a `[!start]` stands, and stays silent entirely in a session whose
  * messages were never recorded, where it could not be satisfied at all.
  */
 final class WriteGateTest extends TestCase
@@ -62,7 +62,7 @@ final class WriteGateTest extends TestCase
 
     private function declareWork(Journal $journal): void
     {
-        $journal->file(new Entry(Kind::Agent, 'now', 't', 'm', Tag::parse('[start] the reader'), '[start] the reader'));
+        $journal->file(new Entry(Kind::Agent, 'now', 't', 'm', Tag::parse('[!start] the reader'), '[!start] the reader'));
     }
 
     /**
@@ -89,7 +89,7 @@ final class WriteGateTest extends TestCase
         $emitted = $this->edit();
 
         $this->assertCount(1, $emitted);
-        $this->assertStringContainsString('[start]', $emitted[0]->blockReason->unwrap());
+        $this->assertStringContainsString('[!start]', $emitted[0]->blockReason->unwrap());
         $this->assertStringContainsString('journal instructions', $emitted[0]->blockReason->unwrap());
     }
 
@@ -107,7 +107,7 @@ final class WriteGateTest extends TestCase
     {
         $journal = $this->recording();
         $this->declareWork($journal);
-        $journal->file(new Entry(Kind::Agent, 'now', 't', 'm2', Tag::parse('[end] the reader'), '[end] the reader'));
+        $journal->file(new Entry(Kind::Agent, 'now', 't', 'm2', Tag::parse('[!end] the reader'), '[!end] the reader'));
 
         $this->assertCount(1, $this->edit());
     }

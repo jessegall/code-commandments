@@ -74,9 +74,9 @@ final class TranscriptTest extends TestCase
         $replies = array_map(fn (Line $line) => $line->text, $this->of(Category::Reply));
 
         $this->assertSame([
-            '[reply] I had it backwards — defaults DO travel to the client.',
-            '[start] removing the Owned attribute',
-            '[end] removing the Owned attribute',
+            '[!reply] I had it backwards — defaults DO travel to the client.',
+            '[!start] removing the Owned attribute',
+            '[!end] removing the Owned attribute',
         ], $replies);
     }
 
