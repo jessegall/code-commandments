@@ -40,6 +40,9 @@ final class BuildCommand implements Command
             ->form('build accept <item>', 'release the hold and settle it')
             ->form('build rework <item> --because="…"', 'send it back for another round — the same holder, since its context is the point')
             ->form('build release <item> --reason="…"', 'give up a hold without settling the work')
+            ->form('build assign <role> --to=<agent-id>', 'give a role to an agent ALREADY ALIVE — its type was fixed at spawn, and the agents worth a role are the ones a respawn would ruin')
+            ->form('build roles', 'who holds which role')
+            ->option('--to=ID', 'the agent id taking the role, as its listing reports it')
             ->form('build orphan <item>', 'the holder is GONE — the item returns to unclaimed and the record says the work was abandoned rather than judged')
             ->form('build log', 'every measurement filed, and what it measured — the observed record, not anybody\'s account of it')
             ->form('build doctor', 'what state everything is in, computed now — for when something has gone wrong and you do not know what')
@@ -65,6 +68,8 @@ final class BuildCommand implements Command
             'accept' => $this->settle($board, $input, Stage::Accepted, 'accepted'),
             'rework' => $this->rework($board, $input),
             'release' => $this->release($board, $input),
+            'assign' => $this->assign($input),
+            'roles' => $this->roles(),
             'orphan' => $this->orphan($board, $input),
             'log' => $this->log($board),
             'doctor' => $this->doctor($board),
@@ -120,6 +125,43 @@ final class BuildCommand implements Command
             $running,
             $board->preferred(),
         )];
+    }
+
+    /**
+     * Give a role to an agent already running. A type is fixed at spawn, so without this the only way to
+     * have a reviewer is to spawn one — and respawning a standing reviewer discards the accumulated
+     * judgement that is the entire reason it was kept alive.
+     */
+    private function assign(Input $input): int
+    {
+        $role = $input->argument(1)->unwrapOr('');
+        $id = $input->option('to')->unwrapOr('');
+
+        if ($role === '' || $id === '') {
+            return $this->console->say('Say which and who: `commandments build assign <role> --to=<agent-id>`.');
+        }
+
+        Roles::inSession(Workspace::ofSession($this->io->projectRoot()))->assign($id, $role);
+
+        return $this->console->say("▸ {$id} is `{$role}`.", '  It keeps everything it already knows.');
+    }
+
+    private function roles(): int
+    {
+        $roles = Roles::inSession(Workspace::ofSession($this->io->projectRoot()))->all();
+
+        if ($roles === []) {
+            return $this->console->say(
+                'No roles assigned. An agent spawned under its own type needs none;',
+                '`commandments build assign <role> --to=<agent-id>` points one at an agent already alive.',
+            );
+        }
+
+        foreach ($roles as $id => $role) {
+            $this->console->say(sprintf('  %-20s %s', $role, $id));
+        }
+
+        return 0;
     }
 
     /**

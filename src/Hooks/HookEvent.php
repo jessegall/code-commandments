@@ -75,6 +75,16 @@ final class HookEvent
     }
 
     /**
+     * WHICH spawn this is. Opaque and unpredictable, but stable for one agent's whole life — so it is the
+     * only handle by which a LIVE agent can be given a role it was not spawned under. An agent already
+     * running cannot change its type; it can be pointed at.
+     */
+    public function agentId(): string
+    {
+        return (string) ($this->payload['agent_id'] ?? '');
+    }
+
+    /**
      * Did this hook fire inside a spawned SUBAGENT (a `Task`/Explore agent) rather than the main coding
      * session? Claude Code stamps the payload with `agent_id`/`agent_type` when the invocation belongs to a
      * subagent; the main session carries neither. Our hooks — working-state injection, the judge/cardinal-rule

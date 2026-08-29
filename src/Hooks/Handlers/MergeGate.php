@@ -8,7 +8,10 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Cli\Orchestration\Roles;
 use JesseGall\CodeCommandments\OrchestrationProfile;
+use JesseGall\CodeCommandments\Support\Binary;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Refuses a merge into the shared branch by any role but the one that owns it — the constraint that most
@@ -55,12 +58,24 @@ final class MergeGate extends Hook
             return $this->pass();
         }
 
-        if ($profile->writer()->isNone() || $profile->isWrittenBy($event->agentType())) {
+        if ($profile->writer()->isNone()) {
+            return $this->pass();
+        }
+
+        $actor = $this->whoIsActing($event);
+
+        if ($actor->isNone()) {
+            // Nobody said who this is. A rule that refuses an actor it cannot name would refuse the
+            // writer too, on the day the writer has not been distinguished yet — so it says so instead.
+            return $this->quietly($event, $this->cannotTell($event, $profile, $branch));
+        }
+
+        if ($profile->isWrittenBy($actor->unwrapOr(''))) {
             return $this->pass();
         }
 
         $writer = $profile->writer()->unwrapOr('');
-        $who = $event->agentType() === '' ? 'this session' : $event->agentType();
+        $who = $actor->unwrapOr('');
 
         return $this->block(<<<TEXT
             Code Commandments — only `{$writer}` merges into `{$branch}`, and you are {$who}.
@@ -70,6 +85,38 @@ final class MergeGate extends Hook
             runs the gates on the branch itself, and answers for what landed. A worker's own green is not
             the branch's.
             TEXT);
+    }
+
+    /**
+     * WHO is doing this, if anybody can say. An explicit assignment wins — it is the only way an agent
+     * already alive can hold a role, since a type is fixed at spawn and the agents worth a role are the
+     * ones a respawn would ruin. Otherwise the agent's own type, when it happens to name a role.
+     *
+     * Absent means nobody has said. That is not the same as "not the writer", and treating it so is what
+     * would refuse every merge in a build whose agents all share one type.
+     *
+     * @return Option<string>
+     */
+    private function whoIsActing(HookEvent $event): Option
+    {
+        $assigned = Roles::inSession($event->sessionWorkspace())->of($event->agentId());
+
+        return $assigned->isSome() ? $assigned : Option::fromTruthy($event->agentType());
+    }
+
+    /**
+     * Said, not refused, when the actor cannot be named — because silence here reads as approval, and a
+     * rule quietly doing nothing is how the original hook outage hid.
+     */
+    private function cannotTell(HookEvent $event, OrchestrationProfile $profile, string $branch): string
+    {
+        $writer = $profile->writer()->unwrapOr('');
+        $binary = Binary::in($event->root);
+
+        return "Code Commandments — `{$branch}` is declared as written by `{$writer}`, but this session "
+            . "carries no role, so the rule cannot tell you from the writer and is NOT enforcing. Spawn "
+            . "the role under its own agent type, or point it at a live agent: "
+            . "`{$binary} build assign {$writer} --to=<agent-id>`.";
     }
 
     /**
