@@ -22,6 +22,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\WriteGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\BoardReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
+use JesseGall\CodeCommandments\Hooks\Handlers\MergeGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\Handlers\WorkingState;
 use JesseGall\CodeCommandments\Cli\Install;
@@ -70,6 +71,7 @@ final class HookRegistry
         JournalReminder::class,
         BoardReminder::class,
         SharedBranchGate::class,
+        MergeGate::class,
         SessionReset::class,
         SourceReminder::class,
         SkillReminder::class,

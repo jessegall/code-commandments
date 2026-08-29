@@ -65,6 +65,16 @@ final class HookEvent
     }
 
     /**
+     * WHICH agent this is — the `name:` from its definition, and the only stable identity a hook is given.
+     * The name passed when spawning appears in no payload, so a role must BE an agent type for a rule to
+     * key on it. Empty on the main thread, which is a session rather than a role.
+     */
+    public function agentType(): string
+    {
+        return (string) ($this->payload['agent_type'] ?? '');
+    }
+
+    /**
      * Did this hook fire inside a spawned SUBAGENT (a `Task`/Explore agent) rather than the main coding
      * session? Claude Code stamps the payload with `agent_id`/`agent_type` when the invocation belongs to a
      * subagent; the main session carries neither. Our hooks — working-state injection, the judge/cardinal-rule
