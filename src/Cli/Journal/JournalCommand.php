@@ -45,12 +45,13 @@ final class JournalCommand implements Command
             ->form('journal user', "only the user's own words, in full")
             ->form('journal search "<term>"', 'every line mentioning it, so you can find where a thing was decided')
             ->form('journal remember "<fact>"', 'pin a fact — it survives every compaction and is written into the summariser\'s own instructions')
-            ->form('journal pinned', 'every pinned fact still standing')
+            ->form('journal pinned [--last=N]', 'every pinned fact still standing, or only the most recent N')
             ->form('journal open', 'work started and never finished — the live state a compaction must carry')
             ->form('journal instructions', 'the brief — how to tag, what to pin, and how to read it back. Every refusal points here')
             ->form('journal sessions', 'the sessions of this project, newest first')
             ->form('journal use <id>', 'read that session from now on (a prefix of the id is enough)')
             ->option('--back=N', 'how many compactions back to read (default 0, the current stretch)')
+            ->option('--last=N', 'on `pinned`, show only the most recent N — a long list is tailed, and the middle of it is what gets missed')
             ->option('--full', 'the whole stretch, unbounded — by default a reading is cut to fit, worst first, so it does not spend the context it exists to restore')
             ->note('A hook always knows which session it is in; a human does not, so `journal sessions` lists them '
                 . 'and `journal use <id>` MOUNTS one — every later command reads that session until you choose '
@@ -72,7 +73,7 @@ final class JournalCommand implements Command
             'sessions', 'list' => $this->sessions($sessions),
             'use', 'mount' => $this->use($sessions, $input, $input->argument(1)->unwrapOr('')),
             'remember', 'pin' => $this->remember($workspace, $this->text($input, from: 1)),
-            'pinned' => $this->pinned($sessions),
+            'pinned' => $this->pinned($sessions, $input),
             'open' => $this->open($sessions),
             'user' => $this->read($sessions, $input, onlyTheUser: true),
             'search', 'find' => $this->search($sessions, $this->text($input, from: 1)),
@@ -209,10 +210,11 @@ final class JournalCommand implements Command
         return $this->console->say('✓ Pinned. It survives every compaction, and rides in the summariser\'s own instructions.');
     }
 
-    private function pinned(Sessions $sessions): int
+    private function pinned(Sessions $sessions, Input $input): int
     {
         foreach ($this->chosen($sessions) as $session) {
-            $pinned = new Reading($session, Workspace::ofSession($this->io->projectRoot())->root())->pinned();
+            $pinned = new Reading($session, Workspace::ofSession($this->io->projectRoot())->root())
+                ->pinned($input->option('last')->map(intval(...))->unwrapOr(null));
 
             return $this->console->say($pinned === '' ? 'Nothing pinned yet — `commandments journal remember "<fact>"` pins one.' : $pinned);
         }

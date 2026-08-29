@@ -67,11 +67,12 @@ final readonly class Reading
     /**
      * The facts pinned to outlive every compaction. They come from the session's own INDEX rather than its
      * transcript: a pin is recorded through the command, never said in a message, so the transcript never
-     * saw it.
+     * saw it. $last shows only the most recent, for a list long enough that a reader would otherwise tail
+     * it and miss the middle.
      */
-    public function pinned(): string
+    public function pinned(?int $last = null): string
     {
-        return $this->listed($this->journal()->pinned(), 'pinned facts');
+        return $this->listed($this->journal()->pinned(), 'pinned facts', $last);
     }
 
     /**
@@ -107,15 +108,17 @@ final readonly class Reading
      *
      * @param  list<Entry>  $entries
      */
-    private function listed(array $entries, string $title): string
+    private function listed(array $entries, string $title, ?int $last = null): string
     {
         if ($entries === []) {
             return '';
         }
 
-        $lines = [Text::heading($title . ' (' . count($entries) . ')'), ''];
+        $shown = $last === null ? $entries : array_slice($entries, -$last);
+        $heading = $title . ' (' . count($entries) . ')' . (count($shown) < count($entries) ? ", last {$last}" : '');
+        $lines = [Text::heading($heading), ''];
 
-        foreach ($entries as $at => $entry) {
+        foreach ($shown as $at => $entry) {
             $lines[] = sprintf('%2d  %s', $at + 1, Text::wrap($entry->text, 4));
             $lines[] = '';
         }

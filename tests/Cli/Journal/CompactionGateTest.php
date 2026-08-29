@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Cli\Journal\Kind;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
 use JesseGall\CodeCommandments\Hooks\Handlers\CompactionGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
+use JesseGall\CodeCommandments\Hooks\Handlers\JournalReminder;
 use JesseGall\CodeCommandments\Hooks\HookResponse;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
 use JesseGall\CodeCommandments\Tests\Cli\FakeGit;

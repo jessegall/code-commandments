@@ -117,7 +117,7 @@ existed can still be read back.
 | `commandments journal user` | only the user's own words, in full |
 | `commandments journal search "<term>"` | every line mentioning it, so you can find where a thing was decided |
 | `commandments journal remember "<fact>"` | pin a fact — it survives every compaction and is written into the summariser's own instructions |
-| `commandments journal pinned` | every pinned fact still standing |
+| `commandments journal pinned [--last=N]` | every pinned fact still standing, or only the most recent N |
 | `commandments journal open` | work started and never finished — the live state a compaction must carry |
 | `commandments journal instructions` | the brief — how to tag, what to pin, and how to read it back. Every refusal points here |
 | `commandments journal sessions` | the sessions of this project, newest first |

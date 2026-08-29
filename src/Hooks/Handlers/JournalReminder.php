@@ -32,6 +32,11 @@ final class JournalReminder extends Hook
      */
     private const int HOLDS = 1;
 
+    /**
+     * How many open pieces of work the one-line word names before it becomes a list nobody reads.
+     */
+    private const int NAMED = 3;
+
     public function summary(): string
     {
         return 'Resurfaces the journal tags as you work, and holds one stop while work you declared is still open.';
@@ -55,14 +60,24 @@ final class JournalReminder extends Hook
 
     /**
      * A turn ending on work that was never closed leaves the next reader — after a compaction, or tomorrow
-     * — a start with no end and no idea whether it was finished. Held once, then let go.
+     * — a start with no end and no idea whether it was finished.
+     *
+     * The two mistakes are not alike, and that decides the shape of this. A SPURIOUS end is harmless: it
+     * closes something already done. A MISSING one is invisible, and invisible to the agent most of all,
+     * which believes it finished. So the count is said EVERY time, at the moment the agent thinks it is
+     * done, which is when it can still act on it — and the turn is HELD only while there is budget for it,
+     * because being told is the point and being stopped repeatedly is not.
      */
     protected function onStop(HookEvent $event): int
     {
         $open = Journal::inSession($event->sessionWorkspace())->openSpans();
 
-        if ($open === [] || StopHookCap::budget(self::HOLDS) < 1) {
-            return $this->pass();
+        if ($open === []) {
+            return $this->pass(); // Nothing open costs nothing to report.
+        }
+
+        if (StopHookCap::budget(self::HOLDS) < 1) {
+            return $this->quietly($event, $this->standing($open));
         }
 
         $binary = Binary::in($event->root);
@@ -80,6 +95,24 @@ final class JournalReminder extends Hook
 
             `{$binary} journal open` lists it.
             TEXT);
+    }
+
+    /**
+     * The one-line word for a stop this may no longer hold — said anyway, because the agent stopping is
+     * exactly the agent that believes there is nothing left open.
+     *
+     * @param  list<Entry>  $open
+     */
+    private function standing(array $open): string
+    {
+        $titles = implode('; ', array_map(fn (Entry $entry) => $entry->text, array_slice($open, 0, self::NAMED)));
+
+        return sprintf(
+            'Code Commandments — you still have %d piece(s) of work open: %s. Close each with %s, or say where it stands.',
+            count($open),
+            $titles,
+            Tag::End->marker(),
+        );
     }
 
     private function reminder(HookEvent $event): string
