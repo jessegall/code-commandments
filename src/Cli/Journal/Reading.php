@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Journal;
 
+use JesseGall\CodeCommandments\Cli\Text;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -59,7 +60,7 @@ final readonly class Reading
      */
     public function pinned(): string
     {
-        return $this->listed($this->journal()->pinned());
+        return $this->listed($this->journal()->pinned(), 'pinned facts');
     }
 
     /**
@@ -67,7 +68,7 @@ final readonly class Reading
      */
     public function open(): string
     {
-        return $this->listed($this->journal()->openSpans());
+        return $this->listed($this->journal()->openSpans(), 'work left open');
     }
 
     /**
@@ -90,10 +91,24 @@ final readonly class Reading
     }
 
     /**
+     * A numbered, wrapped list with air between the items. These are paragraphs a person weighs one at a
+     * time, not a set of labels — run together they read as one wall and none of them is found.
+     *
      * @param  list<Entry>  $entries
      */
-    private function listed(array $entries): string
+    private function listed(array $entries, string $title): string
     {
-        return implode("\n", array_map(fn (Entry $entry) => '  • ' . $entry->text, $entries));
+        if ($entries === []) {
+            return '';
+        }
+
+        $lines = [Text::heading($title . ' (' . count($entries) . ')'), ''];
+
+        foreach ($entries as $at => $entry) {
+            $lines[] = sprintf('%2d  %s', $at + 1, Text::wrap($entry->text, 4));
+            $lines[] = '';
+        }
+
+        return implode("\n", $lines);
     }
 }

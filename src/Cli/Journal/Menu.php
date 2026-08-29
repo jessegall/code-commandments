@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Journal;
 
 use JesseGall\CodeCommandments\Cli\Console;
+use JesseGall\CodeCommandments\Cli\Text;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -103,9 +104,10 @@ final class Menu
     {
         $name = substr($session->id, 0, 8) . '  ' . ($session->name === '' ? '(nothing said yet)' : $session->name);
 
-        return <<<TEXT
+        $rule = Text::heading('journal');
 
-            ── journal ───────────────────────────────────────────────
+        return <<<TEXT
+            {$rule}
               {$name}
 
               1  the last few messages          5  pinned facts
@@ -132,7 +134,7 @@ final class Menu
         }
 
         foreach (array_chunk($lines, self::PAGE) as $at => $page) {
-            if ($at > 0 && $this->ask('  — more? (enter, or q) ') === 'q') {
+            if ($at > 0 && $this->ask('  ── more? (enter, or q) ') === 'q') {
                 return;
             }
 

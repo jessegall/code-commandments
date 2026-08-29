@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Journal;
 
+use JesseGall\CodeCommandments\Cli\Text;
+
 /**
  * Chooses what is worth reading out of a stretch of conversation. A transcript is far too long to hand
  * back whole and a summary of it is what lost the decisions in the first place, so this SELECTS: the
@@ -28,6 +30,12 @@ final class Digest
      * above it, the agent was working alone and the reader should know.
      */
     private const int GAP = 3;
+
+    /**
+     * How far a message is indented from the speaker's label — the width of `USER  ` and `  me  `, so a
+     * wrapped line lands under the words rather than under the name.
+     */
+    private const int GUTTER = 6;
 
     /**
      * @param  list<Line>  $lines
@@ -166,7 +174,7 @@ final class Digest
             return [];
         }
 
-        return ['── pinned ' . str_repeat('─', 50), ...array_map($this->line(...), $pinned), ''];
+        return [Text::heading('pinned'), '', ...array_map($this->line(...), $pinned), ''];
     }
 
     /**
@@ -180,11 +188,12 @@ final class Digest
     }
 
     /**
-     * $text with its later lines indented under the first, so a multi-line message stays one block. The
-     * user's words are never cut — they are the whole reason for reading.
+     * $text laid out under the speaker's label — wrapped to the terminal, every later line indented to sit
+     * beneath the first. A paragraph the window folds where it likes is a wall; nothing is CUT, since the
+     * user's words are the whole reason for reading.
      */
     private function wrapped(string $text): string
     {
-        return implode("\n      ", explode("\n", $text));
+        return Text::reflow($text, self::GUTTER);
     }
 }

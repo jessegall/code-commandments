@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Journal;
 
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Console;
+use JesseGall\CodeCommandments\Cli\Text;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Hooks\HookIO;
@@ -243,7 +244,7 @@ final class JournalCommand implements Command
     {
         $chunk = $back === 0 ? 'since the last compaction' : "{$back} compaction(s) back";
 
-        return sprintf('── %s · %s %s', substr($session->id, 0, 8), $chunk, str_repeat('─', 30));
+        return Text::heading(substr($session->id, 0, 8) . ' · ' . $chunk);
     }
 
     /**

@@ -101,13 +101,19 @@ final class DigestTest extends TestCase
     }
 
     /**
-     * The user's words are the tier that is never cut — a long ruling is the thing most worth having.
+     * The user's words are the tier that is never cut — a long ruling is the thing most worth having. It
+     * is WRAPPED for the terminal, which moves the whitespace and nothing else, so the test is that every
+     * word survives rather than that the line did.
      */
     public function test_the_users_words_are_never_truncated(): void
     {
-        $ruling = str_repeat('this is a long standing ruling. ', 60);
+        $ruling = trim(str_repeat('this is a long standing ruling. ', 60));
+        $rendered = new Digest([$this->user($ruling)])->render();
 
-        $this->assertStringContainsString(trim($ruling), new Digest([$this->user($ruling)])->render());
+        $this->assertSame(
+            preg_split('/\s+/', $ruling),
+            array_values(array_filter(preg_split('/\s+/', $rendered), fn (string $word) => $word !== 'USER')),
+        );
     }
 
     public function test_pinned_facts_stand_at_the_top(): void
