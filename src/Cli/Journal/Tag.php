@@ -7,9 +7,15 @@ namespace JesseGall\CodeCommandments\Cli\Journal;
 use JesseGall\PhpTypes\Option;
 
 /**
- * What an agent's message is FOR, written as a bracketed prefix on its first line — `[d] the pattern
- * already exists`. A compaction summary keeps what was done and loses what was decided, so the tag is how
- * a message says which of the two it carries, cheaply enough to write every time.
+ * What an agent's message is FOR, written as a bracketed prefix on its first line — `[discovery] the
+ * pattern already exists`. A compaction summary keeps what was done and loses what was decided, so the tag
+ * is how a message says which of the two it carries, cheaply enough to write every time.
+ *
+ * The words are SPELLED OUT because the user reads them: a `MessageDisplay` hook sees a message only after
+ * the terminal has it, so nothing can strip a prefix on its way out. A tag is therefore part of what the
+ * agent says, and `[discovery]` is a word a human can read where `[d]` is a code they must learn. What the
+ * user should NOT see is not written into a message at all — it is recorded through the command instead
+ * ({@see isSpoken}).
  *
  * This is the ONE home of the vocabulary: the skill that teaches it, the reminder that resurfaces it, the
  * instructions a compaction is summarised under and the digest's own trimming all project from here.
@@ -20,23 +26,23 @@ enum Tag: string
      * The mark for a fact that must reach the far side of every compaction — the one tier the digest
      * never trims and the compaction instructions always carry.
      */
-    case Pinned = '!!';
+    case Pinned = 'pinned';
 
-    case Correction = '!';
+    case Correction = 'correction';
 
-    case Blocked = '?';
+    case Blocked = 'blocked';
 
-    case Start = 's';
+    case Start = 'start';
 
-    case End = 'e';
+    case End = 'end';
 
-    case Discovery = 'd';
+    case Discovery = 'discovery';
 
-    case Reply = 'r';
+    case Reply = 'reply';
 
-    case Info = 'i';
+    case Info = 'info';
 
-    case Done = '✓';
+    case Done = 'done';
 
     private const string OPEN = '[';
 
@@ -108,6 +114,20 @@ enum Tag: string
     }
 
     /**
+     * Does this tag belong in front of a message the user will read? A tag cannot be hidden once written —
+     * the terminal has the message before any hook sees it — so the ones that would only be noise are not
+     * written into a message at all: they are recorded through `commandments journal` instead, where they
+     * reach the index without reaching the user.
+     */
+    public function isSpoken(): bool
+    {
+        return match ($this) {
+            self::Start, self::End, self::Discovery, self::Correction, self::Blocked => true,
+            self::Pinned, self::Reply, self::Info, self::Done => false,
+        };
+    }
+
+    /**
      * Does this fact travel over every compaction boundary, whatever else is dropped?
      */
     public function isPinned(): bool
@@ -130,15 +150,21 @@ enum Tag: string
     }
 
     /**
-     * The whole vocabulary, one tag per line — what the reminder prints and what the skill publishes, so
-     * neither can drift from the cases above.
+     * The tags an agent WRITES, one per line — what the reminder prints and what the skill publishes, so
+     * neither can drift from the cases above. The unspoken ones are left out: they are recorded through the
+     * command, so a list of prefixes to type is not where they belong.
      */
     public static function vocabulary(): string
     {
         $lines = [];
 
         foreach (self::cases() as $tag) {
-            $lines[] = '  ' . str_pad($tag->marker(), 5) . ' ' . $tag->meaning();
+            if (! $tag->isSpoken()) {
+                continue;
+            }
+
+            $marker = $tag->marker();
+            $lines[] = '  ' . $marker . str_repeat(' ', max(1, 14 - mb_strlen($marker))) . $tag->meaning();
         }
 
         return implode("\n", $lines);

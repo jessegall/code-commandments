@@ -1,13 +1,13 @@
 {"type": "mode", "mode": "default"}
 {"type": "user", "promptSource": "typed", "timestamp": "2026-08-29T10:00:00Z", "message": {"content": "we should not send the default values over the wire"}}
-{"type": "assistant", "timestamp": "2026-08-29T10:00:05Z", "message": {"content": [{"type": "text", "text": "[r] I had it backwards \u2014 defaults DO travel to the client."}, {"type": "tool_use", "name": "Bash", "input": {}}]}}
+{"type": "assistant", "timestamp": "2026-08-29T10:00:05Z", "message": {"content": [{"type": "text", "text": "[reply] I had it backwards \u2014 defaults DO travel to the client."}, {"type": "tool_use", "name": "Bash", "input": {}}]}}
 {"type": "user", "toolUseResult": {"stdout": "ok"}, "timestamp": "2026-08-29T10:00:06Z", "message": {"content": [{"type": "tool_result", "content": "ok"}]}}
 {"type": "attachment", "attachment": {"type": "hook_additional_context"}, "timestamp": "2026-08-29T10:00:07Z", "message": {"content": "Code Commandments \u2014 cardinal rule"}}
 {"type": "user", "isMeta": true, "timestamp": "2026-08-29T10:00:08Z", "message": {"content": "Continue from where you left off."}}
-{"type": "assistant", "timestamp": "2026-08-29T10:00:09Z", "message": {"content": [{"type": "text", "text": "[s] removing the Owned attribute"}]}}
+{"type": "assistant", "timestamp": "2026-08-29T10:00:09Z", "message": {"content": [{"type": "text", "text": "[start] removing the Owned attribute"}]}}
 {"type": "system", "subtype": "stop_hook_summary", "timestamp": "2026-08-29T10:00:10Z", "content": "stop hook fired"}
 {"type": "system", "subtype": "compact_boundary", "parentUuid": null, "timestamp": "2026-08-29T10:05:00Z", "content": "Conversation compacted", "compactMetadata": {"trigger": "auto", "preTokens": 1000060, "postTokens": 30146}}
 {"type": "user", "isCompactSummary": true, "timestamp": "2026-08-29T10:05:01Z", "message": {"content": "The conversation was about a Vue migration."}}
 {"type": "user", "promptSource": "queued", "timestamp": "2026-08-29T10:10:00Z", "message": {"content": "motion.ts is FORBIDDEN"}}
-{"type": "assistant", "timestamp": "2026-08-29T10:10:05Z", "message": {"content": [{"type": "text", "text": "[e] removing the Owned attribute"}]}}
+{"type": "assistant", "timestamp": "2026-08-29T10:10:05Z", "message": {"content": [{"type": "text", "text": "[end] removing the Owned attribute"}]}}
 {"type": "ai-title", "title": "whatever"}

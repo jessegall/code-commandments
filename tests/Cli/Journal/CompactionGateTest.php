@@ -79,14 +79,14 @@ final class CompactionGateTest extends TestCase
     {
         $recorder = new JournalRecorder;
 
-        $this->fire($recorder, $this->flush('[d] the pattern already exists', 0, false));
+        $this->fire($recorder, $this->flush('[discovery] the pattern already exists', 0, false));
         $this->fire($recorder, [...$this->flush('and the rest of the message', 1, true), 'message_id' => 'msg-0']);
 
         $entries = $this->journal()->entries();
 
         $this->assertCount(1, $entries);
         $this->assertSame(Tag::Discovery, $entries[0]->tag->unwrap());
-        $this->assertSame('[d] the pattern already exists', $entries[0]->text);
+        $this->assertSame('[discovery] the pattern already exists', $entries[0]->text);
     }
 
     public function test_the_users_own_words_are_filed(): void
@@ -124,8 +124,8 @@ final class CompactionGateTest extends TestCase
     public function test_the_next_attempt_is_instructed_rather_than_held(): void
     {
         $journal = $this->journal();
-        $journal->file(new Entry(Kind::Agent, 'now', 't', 'm', Tag::parse('[!!] judge is banned until the build is done'), '[!!] judge is banned until the build is done'));
-        $journal->file(new Entry(Kind::Agent, 'now', 't', 'm2', Tag::parse('[s] making Drilldown a composition'), '[s] making Drilldown a composition'));
+        $journal->file(new Entry(Kind::Agent, 'now', 't', 'm', Tag::parse('[pinned] judge is banned until the build is done'), '[pinned] judge is banned until the build is done'));
+        $journal->file(new Entry(Kind::Agent, 'now', 't', 'm2', Tag::parse('[start] making Drilldown a composition'), '[start] making Drilldown a composition'));
 
         $gate = new CompactionGate;
         $this->fire($gate, ['hook_event_name' => 'PreCompact', 'trigger' => 'auto']);
