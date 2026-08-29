@@ -75,6 +75,26 @@ enum Tag: string
     }
 
     /**
+     * Every tagged LINE of $text, in order, as `[tag, the line]`. A tag opens a line rather than a message,
+     * so one message can carry several — closing a piece of work and opening the next is one thought, and
+     * splitting it across two messages to satisfy the parser would be the parser dictating how to speak.
+     *
+     * @return list<array{self, string}>
+     */
+    public static function taggedLines(string $text): array
+    {
+        $tagged = [];
+
+        foreach (explode("\n", $text) as $line) {
+            foreach (self::parse($line) as $tag) {
+                $tagged[] = [$tag, trim($line)];
+            }
+        }
+
+        return $tagged;
+    }
+
+    /**
      * How the tag is written where a human meets it — `[d]`.
      */
     public function marker(): string

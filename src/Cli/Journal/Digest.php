@@ -35,15 +35,26 @@ final class Digest
     public function __construct(private readonly array $lines) {}
 
     /**
-     * The lines that were SAID, with a prompt the user kept typing counted once. The harness records a
-     * message as it is sent and again when more of it follows, so the same words arrive twice with the
-     * second carrying the rest; the earlier one is a prefix of the later, which is what identifies it.
+     * The lines of THIS digest that somebody said.
      *
      * @return list<Line>
      */
     private function spoken(): array
     {
-        $spoken = array_values(array_filter($this->lines, fn (Line $line) => $line->isSpeech() && $line->text !== ''));
+        return self::spokenIn($this->lines);
+    }
+
+    /**
+     * The lines of $lines that somebody SAID, with a prompt the user kept typing counted once. The harness
+     * records a message as it is sent and again when more of it follows, so the same words arrive twice
+     * with the second carrying the rest; the earlier is a prefix of the later, which identifies it.
+     *
+     * @param  list<Line>  $lines
+     * @return list<Line>
+     */
+    public static function spokenIn(array $lines): array
+    {
+        $spoken = array_values(array_filter($lines, fn (Line $line) => $line->isSpeech() && $line->text !== ''));
         $kept = [];
 
         foreach ($spoken as $at => $line) {

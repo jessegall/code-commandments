@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Cli\Journal\Tag;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Files the conversation into the session {@see Journal} as it happens, so a compaction cannot take it:
@@ -74,22 +75,36 @@ final class JournalRecorder extends Hook
         return $this->pass();
     }
 
+    /**
+     * File what $text carried. A tag opens a LINE, so a message that closes one piece of work and opens
+     * the next files both — one entry per tagged line, and a single untagged entry for a message that
+     * declared nothing.
+     */
     private function record(HookEvent $event, Kind $kind, string $text): int
     {
         if (trim($text) === '') {
             return $this->pass();
         }
 
-        Journal::inSession($event->workspace())->file(new Entry(
-            $kind,
-            $this->now(),
-            $event->turnId(),
-            $event->messageId(),
-            Tag::parse($text),
-            $text,
-        ));
+        $journal = Journal::inSession($event->workspace());
+        $tagged = Tag::taggedLines($text);
+
+        if ($tagged === []) {
+            $journal->file($this->entry($event, $kind, Option::none(), $text));
+
+            return $this->pass();
+        }
+
+        foreach ($tagged as [$tag, $line]) {
+            $journal->file($this->entry($event, $kind, Option::some($tag), $line));
+        }
 
         return $this->pass();
+    }
+
+    private function entry(HookEvent $event, Kind $kind, Option $tag, string $text): Entry
+    {
+        return new Entry($kind, $this->now(), $event->turnId(), $event->messageId(), $tag, $text);
     }
 
     private function now(): string

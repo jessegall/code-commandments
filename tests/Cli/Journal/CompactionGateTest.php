@@ -89,6 +89,41 @@ final class CompactionGateTest extends TestCase
         $this->assertSame('[!discovery] the pattern already exists', $entries[0]->text);
     }
 
+    /**
+     * Closing one piece of work and opening the next is one thought, so a tag opens a LINE rather than a
+     * message and a single message files every tag it carried.
+     */
+    public function test_a_message_files_every_tagged_line_it_carries(): void
+    {
+        $this->fire(new JournalRecorder, $this->flush(
+            "[!end] the reader\n\nsome prose in between\n\n[!start] the digest\n[!discovery] pins live in the index",
+            0,
+            true,
+        ));
+
+        $entries = $this->journal()->entries();
+
+        $this->assertSame(
+            [Tag::End, Tag::Start, Tag::Discovery],
+            array_map(fn ($entry) => $entry->tag->unwrap(), $entries),
+        );
+        $this->assertSame('[!start] the digest', $entries[1]->text);
+    }
+
+    /**
+     * A message that declared nothing is still one entry — the journal knows it was said, and that it said
+     * nothing about itself.
+     */
+    public function test_an_untagged_message_is_filed_once(): void
+    {
+        $this->fire(new JournalRecorder, $this->flush("just prose\nand more prose", 0, true));
+
+        $entries = $this->journal()->entries();
+
+        $this->assertCount(1, $entries);
+        $this->assertTrue($entries[0]->tag->isNone());
+    }
+
     public function test_the_users_own_words_are_filed(): void
     {
         $this->fire(new JournalRecorder, [

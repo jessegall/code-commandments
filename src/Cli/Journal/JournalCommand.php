@@ -20,6 +20,12 @@ use JesseGall\PhpTypes\Option;
  */
 final class JournalCommand implements Command
 {
+    /**
+     * How many near misses a failed lookup offers back. Enough to recognise the one you meant, few enough
+     * that the answer is still an answer rather than the list you were trying to avoid reading.
+     */
+    private const int SUGGESTED = 3;
+
     public function __construct(
         private readonly HookIO $io = new HookIO,
         private readonly Console $console = new Console,
@@ -33,7 +39,7 @@ final class JournalCommand implements Command
     public function help(): Help
     {
         return Help::of('What a compaction took — the decisions, corrections and unfinished work a summary drops, read back out of the session transcript.')
-            ->form('journal', 'the conversation since the last compaction (or the session menu, if you have not picked one)')
+            ->form('journal', 'a MENU when a person runs it at a terminal — read the last stretch, the pins, the open work, or search. Anywhere else, the conversation since the last compaction')
             ->form('journal --back=N', 'N compactions further back — `--back=1` is the stretch the last summary replaced')
             ->form('journal user', "only the user's own words, in full")
             ->form('journal search "<term>"', 'every line mentioning it, so you can find where a thing was decided')
@@ -55,13 +61,17 @@ final class JournalCommand implements Command
         $workspace = Workspace::at($this->io->projectRoot());
         $sessions = Sessions::of($workspace);
 
+        if ($input->firstArgument()->isNone() && Menu::isForAPerson()) {
+            return new Menu($sessions, $workspace->root(), $this->console)->run();
+        }
+
         return match ($input->firstArgument()->unwrapOr('read')) {
             'instructions', 'brief', 'help' => $this->console->say(new Brief($workspace->root())->render()),
             'sessions', 'list' => $this->sessions($sessions),
-            'use', 'mount' => $this->use($sessions, $input->argument(1)->unwrapOr('')),
+            'use', 'mount' => $this->use($sessions, $input, $input->argument(1)->unwrapOr('')),
             'remember', 'pin' => $this->remember($workspace, $this->text($input, from: 1)),
-            'pinned' => $this->pinned($workspace),
-            'open' => $this->open($workspace),
+            'pinned' => $this->pinned($sessions),
+            'open' => $this->open($sessions),
             'user' => $this->read($sessions, $input, onlyTheUser: true),
             'search', 'find' => $this->search($sessions, $this->text($input, from: 1)),
             default => $this->read($sessions, $input, onlyTheUser: false),
@@ -89,15 +99,44 @@ final class JournalCommand implements Command
         return $this->console->say('', 'Read one with `commandments journal use <id>` — the first few characters are enough.');
     }
 
-    private function use(Sessions $sessions, string $handle): int
+    /**
+     * Mount a session AND read it. Choosing one is never the thing a person wanted — reading it is — so a
+     * `use` that only confirmed the choice would announce a reading it had not done and leave them to ask
+     * a second time for the answer they came for.
+     */
+    private function use(Sessions $sessions, Input $input, string $handle): int
     {
         foreach ($sessions->named($handle) as $session) {
             $sessions->mount($session);
+            $this->console->say('▸ ' . substr($session->id, 0, 8) . '  ' . $session->describe(), '');
 
-            return $this->console->say('▸ Reading ' . substr($session->id, 0, 8) . '  ' . $session->describe());
+            return $this->show($session, $input, onlyTheUser: false);
         }
 
-        return $this->console->say("No session here answers to '{$handle}'.", 'Run `commandments journal sessions` to see them.');
+        return $this->missing($sessions, $handle);
+    }
+
+    /**
+     * Nothing answered to $handle. A hash is unreadable by eye, so the likeliest reason is a character
+     * misread off the screen — which makes the near misses worth more than the fact of the failure.
+     */
+    private function missing(Sessions $sessions, string $handle): int
+    {
+        $this->console->say("No session here answers to '{$handle}'.");
+
+        $near = array_filter($sessions->all(), fn (Session $session) => $session->resembles($handle));
+
+        if ($near === []) {
+            return $this->console->say('Run `commandments journal sessions` to see them.');
+        }
+
+        $this->console->say('', 'Did you mean:');
+
+        foreach (array_slice($near, 0, self::SUGGESTED) as $session) {
+            $this->console->say('  ' . substr($session->id, 0, 8) . '  ' . $session->describe());
+        }
+
+        return 0;
     }
 
     /**
@@ -106,17 +145,25 @@ final class JournalCommand implements Command
     private function read(Sessions $sessions, Input $input, bool $onlyTheUser): int
     {
         foreach ($this->chosen($sessions) as $session) {
-            $back = $input->option('back')->mapOr(0, intval(...));
-            $lines = $session->transcript()->chunk($back);
-
-            if ($onlyTheUser) {
-                $lines = array_values(array_filter($lines, fn (Line $line) => $line->isPrompt() && $line->text !== ''));
-            }
-
-            return $this->console->say($this->heading($session, $back), '', new Digest($lines)->render());
+            return $this->show($session, $input, $onlyTheUser);
         }
 
         return $this->sessions($sessions);
+    }
+
+    /**
+     * One session's conversation, as much of it as is worth reading.
+     */
+    private function show(Session $session, Input $input, bool $onlyTheUser): int
+    {
+        $back = $input->option('back')->mapOr(0, intval(...));
+        $reading = new Reading($session, $this->io->projectRoot());
+
+        return $this->console->say(
+            $this->heading($session, $back),
+            '',
+            $onlyTheUser ? $reading->said() : $reading->since($back),
+        );
     }
 
     private function search(Sessions $sessions, string $term): int
@@ -160,34 +207,26 @@ final class JournalCommand implements Command
         return $this->console->say('✓ Pinned. It survives every compaction, and rides in the summariser\'s own instructions.');
     }
 
-    private function pinned(Workspace $workspace): int
+    private function pinned(Sessions $sessions): int
     {
-        $pinned = Journal::inSession($workspace)->pinned();
+        foreach ($this->chosen($sessions) as $session) {
+            $pinned = new Reading($session, $this->io->projectRoot())->pinned();
 
-        if ($pinned === []) {
-            return $this->console->say('Nothing pinned yet — `commandments journal remember "<fact>"` pins one.');
+            return $this->console->say($pinned === '' ? 'Nothing pinned yet — `commandments journal remember "<fact>"` pins one.' : $pinned);
         }
 
-        foreach ($pinned as $entry) {
-            $this->console->say('  • ' . $entry->text);
-        }
-
-        return 0;
+        return $this->sessions($sessions);
     }
 
-    private function open(Workspace $workspace): int
+    private function open(Sessions $sessions): int
     {
-        $open = Journal::inSession($workspace)->openSpans();
+        foreach ($this->chosen($sessions) as $session) {
+            $open = new Reading($session, $this->io->projectRoot())->open();
 
-        if ($open === []) {
-            return $this->console->say('No work left open.');
+            return $this->console->say($open === '' ? 'No work left open.' : $open);
         }
 
-        foreach ($open as $entry) {
-            $this->console->say('  • ' . $entry->text);
-        }
-
-        return 0;
+        return $this->sessions($sessions);
     }
 
     /**

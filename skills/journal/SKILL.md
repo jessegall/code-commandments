@@ -112,7 +112,7 @@ existed can still be read back.
 <!-- BEGIN: commands:journal (auto-generated, run `composer sins`) -->
 | Command | Does |
 |---|---|
-| `commandments journal` | the conversation since the last compaction (or the session menu, if you have not picked one) |
+| `commandments journal` | a MENU when a person runs it at a terminal — read the last stretch, the pins, the open work, or search. Anywhere else, the conversation since the last compaction |
 | `commandments journal --back=N` | N compactions further back — `--back=1` is the stretch the last summary replaced |
 | `commandments journal user` | only the user's own words, in full |
 | `commandments journal search "<term>"` | every line mentioning it, so you can find where a thing was decided |
