@@ -427,6 +427,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `WriteGate` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit, PreToolUse/NotebookEdit, PostToolUse/Bash` | Refuses a file-changing tool while no `[!start]` stands, so work is always declared before it happens and unfinished work survives a compaction. |
 | `JournalReminder` | `PostToolUse, Stop` | Resurfaces the journal tags as you work, and holds one stop while work you declared is still open. |
 | `BoardReminder` | `Stop` | At the end of a turn, names the work waiting on YOU — a worker that has reported is a decision nobody has made. |
+| `SharedBranchGate` | `PreToolUse/Bash` | Refuses `git pull --rebase` while other worktrees stand on the branch — it rewrites the commits they are built on. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
 | `SkillReminder` | `PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit, PostToolUse/Bash` | After an edit — including one made with the shell — checks the files against the rules that can judge one file and names the skill that teaches the fix. |

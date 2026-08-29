@@ -210,6 +210,7 @@ $disabledSins = function (Config $config): void {
  */
 $disabledHooks = function (Config $config): void {
     $config->disable(
+        // Hooks\Handlers\BoardReminder::class,
         // Hooks\Handlers\CompactionGate::class,
         // Hooks\Handlers\CompactionReminder::class,
         // Hooks\Handlers\ConstraintReminder::class,

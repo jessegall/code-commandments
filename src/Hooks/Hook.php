@@ -51,14 +51,14 @@ abstract class Hook
      * Stop in PLAN MODE ({@see HookEvent::isPlanMode}): the agent is presenting a plan for approval,
      * not abandoning work — no Stop handler may hold or nudge it.
      *
-     * A second rule holds for every hook and lives here too: a hook firing INSIDE a spawned subagent stays
-     * silent. Our reminders and injections speak only to the main session that owns the plan and working
-     * state; in a read-only exploration subagent they are noise that can derail its task ({@see
-     * HookEvent::isSubagent}).
+     * A hook firing INSIDE a spawned subagent stays silent BY DEFAULT: a reminder speaks to the session
+     * that owns the plan and the working state, and inside a read-only exploration agent it is noise that
+     * can derail the task. A hook that ENFORCES says otherwise ({@see speaksToSubagents}) — a refusal has
+     * to run where the work happens, and under orchestration the work happens in subagents.
      */
     protected function handle(HookEvent $event): int
     {
-        if ($event->isSubagent()) {
+        if ($event->isSubagent() && ! $this->speaksToSubagents()) {
             return $this->pass();
         }
 
@@ -73,6 +73,17 @@ abstract class Hook
             'Stop' => $event->hasPendingBackgroundWork() || $event->isPlanMode() ? $this->pass() : $this->onStop($event),
             default => $this->onManualRun($event),
         };
+    }
+
+    /**
+     * Does this hook speak inside a spawned subagent? A REMINDER does not: it addresses the session that
+     * owns the plan, and an exploration agent hearing it is being derailed by somebody else's business. A
+     * REFUSAL does, because the thing it refuses is done by the worker, and a rule that goes quiet exactly
+     * where the work happens is not a rule.
+     */
+    protected function speaksToSubagents(): bool
+    {
+        return false;
     }
 
     protected function onPostToolUse(HookEvent $event): int
