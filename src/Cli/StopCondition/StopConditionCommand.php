@@ -266,10 +266,14 @@ final class StopConditionCommand implements Command
         }
 
         if ($gate->heldStops() === 0 && $gate->workDone()) {
-            fwrite(STDOUT, "  ⚠ Work has been done and not ONE stop was held, which cannot happen while a gate\n"
-                . "    stands. The Stop hook is not reaching this gate — check that `.claude/settings.json`\n"
-                . "    still wires it, and that " . StopHookCap::VARIABLE . " is not set below the number of\n"
-                . "    holds this gate needs (the harness overrides a hook that blocks past its cap).\n");
+            $reach = $gate->reach();
+
+            fwrite(STDOUT, "  ⚠ {$reach['work']} pieces of work counted, {$reach['held']} stops held. The count is the\n"
+                . "    hook reporting in, so it IS running — what has not happened is a turn ENDING, which is\n"
+                . "    what a stop is. An agent that chains tool calls (or waits on a shell that never returns)\n"
+                . "    reaches no stop, so the conditions resurface as you work instead.\n"
+                . "    If you expected to have stopped by now, check " . StopHookCap::VARIABLE . " is not set below\n"
+                . "    the holds this gate needs — the harness overrides a hook that blocks past its cap.\n");
         }
     }
 

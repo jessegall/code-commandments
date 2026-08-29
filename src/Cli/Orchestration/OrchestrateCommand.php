@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
+use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
@@ -45,14 +47,17 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate profile <document> "<text>"', 'append to a profile-level document — `traps`, `behaviour`, `restrictions`')
             ->option('--set', 'replace the document rather than adding to it — the rare case')
             ->form('orchestrate', 'the declaration to paste, and what will NOT be enforced until something changes')
+            ->form('orchestrate --write', 'splice that declaration into .commandments/config.php, refusing to overwrite one already declared')
+            ->option('--write', 'write the proposal into .commandments/config.php instead of printing it to paste')
             ->note('A PROFILE is the durable half — how a team works, in `.commandments/orchestrator/'
                 . 'profiles/<name>/`, committed and reviewed in a diff. An INSTANCE is the live half and '
                 . 'belongs to the session, so a restart loses what was bound to a process and keeps what '
                 . 'was written down. A profile names no branch, port or lane: those are one build rather '
                 . 'than a way of working. ')
-            ->note('The bare form prints and never writes: an orchestration block is a decision about how a team works '
-                . 'and belongs in a diff somebody read. The runtime half — `commandments build` — needs none '
-                . 'of this and works with nothing declared at all.');
+            ->note('The bare form prints; `--write` splices the block in through the AST, keeping your config\'s own '
+                . 'formatting, and refuses rather than overwrite a block already declared — an orchestration block '
+                . 'is a decision about how a team works and belongs in a diff somebody read. The runtime half — '
+                . '`commandments build` — needs none of this and works with nothing declared at all.');
     }
 
     public function run(Input $input): int
@@ -356,42 +361,113 @@ final class OrchestrateCommand implements Command
     private function propose(Input $input): int
     {
         $root = $this->io->projectRoot();
-        $branch = trim((string) @shell_exec('git -C ' . escapeshellarg($root) . ' rev-parse --abbrev-ref HEAD 2>/dev/null'));
+        $branch = $this->io->git()->currentBranch($root);
         $declared = Config::load($root)->orchestrationSettings();
+        $write = $input->hasFlag('write');
 
         $this->console->say(Text::heading('orchestrate'), '');
 
         foreach ($declared->branch() as $already) {
-            return $this->already($already, $declared->writer()->unwrapOr(''));
+            $this->already($already, $declared->writer()->unwrapOr(''));
+
+            return $write ? $this->refuseToOverwrite() : 0;
         }
 
-        return $this->proposal($root, $branch === '' ? '<your shared branch>' : $branch);
+        return $write ? $this->writeDeclaration($root, $branch) : $this->proposal($root, $branch);
     }
 
-    private function already(string $branch, string $writer): int
+    private function already(string $branch, string $writer): void
     {
         $said = $writer === '' ? 'no writer declared, so no merge is refused' : "written by `{$writer}`";
 
-        return $this->console->say(
+        $this->console->say(
             "  Already declared: `{$branch}`, {$said}.",
             '',
             '  `commandments build roles` shows who currently holds a role.',
         );
     }
 
+    /**
+     * The block printed to paste. A branch is the one value that cannot be guessed, so outside a checkout
+     * it stands in the printed block as the words saying what to put there — which `--write` will not do,
+     * since a placeholder in a config reads as a rule that is on.
+     */
     private function proposal(string $root, string $branch): int
     {
         $this->console->say(
-            '  Paste this into `.commandments/config.php`:',
+            '  Paste this into `.commandments/config.php`, or re-run with `--write` to have it spliced in:',
             '',
-            "    \$config->orchestration(fn (\$o) => \$o",
-            "        ->branch('{$branch}')",
-            "        ->writtenBy('integrator')",
-            '        ->workers(most: 3, prefer: 2));',
+            self::declaration($branch === '' ? '<your shared branch>' : $branch),
             '',
         );
 
         return $this->cannot($root);
+    }
+
+    /**
+     * `--write` — the same proposal spliced into `.commandments/config.php` through the AST, the way
+     * `layers --write` does it, because a block a tool can write and asks a person to paste is a cost
+     * moved onto whoever adopts it.
+     */
+    private function writeDeclaration(string $root, string $branch): int
+    {
+        if ($branch === '') {
+            return $this->console->refuse(
+                '  Nothing written — there is no branch here to declare (a detached HEAD, or no checkout at all),',
+                '  and the branch the work converges on is the one thing the block cannot be written without.',
+            );
+        }
+
+        $config = ConfigFile::inProject($root);
+        $config->scaffoldIfMissing();
+
+        if ($config->declaresOrchestration()) {
+            return $this->refuseToOverwrite();
+        }
+
+        if (! ConfigScribe::inProject($root)->ensureOrchestration(self::declaration($branch))) {
+            return $this->console->refuse(
+                "  Nothing written — {$config->path} declares neither `paths()` nor `disable()`, so there is no",
+                '  statement of its own to write the block beside. Paste the block above in by hand.',
+            );
+        }
+
+        $this->console->say(
+            "  ✓ written to `.commandments/config.php` — branch `{$branch}`, written by `integrator`.",
+            '',
+            '  Read the diff before you commit it: every value in it is a judgement, and the tool only',
+            '  guessed the branch it found you standing on.',
+            '',
+        );
+
+        return $this->cannot($root);
+    }
+
+    /**
+     * A declared block is never overwritten — the same answer `layers` gives a declared stack. Non-zero,
+     * because anything chaining behind `orchestrate --write` reads a zero as a grant.
+     */
+    private function refuseToOverwrite(): int
+    {
+        return $this->console->refuse(
+            '',
+            '  `--write` will not overwrite it. Edit `.commandments/config.php` — what a declared block says',
+            '  was decided by somebody, and nothing here can tell which of its values were deliberate.',
+        );
+    }
+
+    /**
+     * The block as source, at the indentation the config's own statements stand at — the ONE renderer,
+     * so what is printed to paste and what `--write` splices in can never drift apart.
+     */
+    public static function declaration(string $branch): string
+    {
+        return <<<PHP
+                \$config->orchestration(fn (\$o) => \$o
+                    ->branch('{$branch}')
+                    ->writtenBy('integrator')
+                    ->workers(most: 3, prefer: 2));
+            PHP;
     }
 
     /**
@@ -422,8 +498,8 @@ final class OrchestrateCommand implements Command
         }
 
         return $this->console->say(
-            '  • It writes nothing. An orchestration block is a decision about how a team works, and',
-            '    belongs in a diff somebody read.',
+            '  • It decides nothing for you. `--write` splices the block in, but every value in it is a',
+            '    judgement — read the diff, since an orchestration block is how a team works.',
             '  • It does not bootstrap worktrees, allocate ports, or tune a reaper. Those were left out',
             '    deliberately: each would be a constant guessed from one project.',
         );

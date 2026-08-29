@@ -38,7 +38,7 @@ final class Brief
 
             {$tags}
 
-            The user reads these, so they are written as words and only these five are ever typed. Anything
+            The user reads these, so they are written as words and only these are ever typed. Anything
             else you want the journal to hold is RECORDED rather than said:
 
               {$binary} journal remember "<a fact you must not lose>"

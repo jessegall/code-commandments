@@ -70,8 +70,6 @@ final class ClaudeAgent extends Agent
         - **Load a skill with the Skill tool**, by the exact id in the briefing's bullets —
           e.g. `commandments-backend-absence`. The published skills are linked into
           `.claude/skills/`, so they also autocomplete as `/`-commands.
-        - **Never delegate a write to a subagent.** Dispatch them for read-only work as much
-          as you like; every edit is yours.
         - `/stop-condition "<condition>"` is available as a slash command, so the user can set a stop
           condition themselves.
 

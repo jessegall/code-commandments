@@ -175,13 +175,6 @@ final class Briefing
         file (or even read past a sin while working in it), fix it at the source per the
         rule above. Every finding on code you come across is yours to resolve.
 
-        **Do the writing yourself.** If your agent can dispatch other agents, use them ONLY
-        for READ-ONLY work: research, codebase exploration, search. EVERY write — every file
-        edit, creation, or rewrite — must be done by YOU directly, never handed to one you
-        spawned. A dispatched agent holds these disciplines and this project's context more
-        shallowly than you do, so a delegated edit is how violations slip in. Read-only
-        fan-out is welcome; the writing is yours alone.
-
         **The disciplines.** Each one is a skill, and each says in its own description WHEN to
         reach for it — the syntax you are about to write, the decision you are about to make. Load
         one when its subject comes up, and load it again rather than working from memory: a

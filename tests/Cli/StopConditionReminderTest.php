@@ -104,6 +104,72 @@ final class StopConditionReminderTest extends TestCase
         return StopConditionGate::inSession(Workspace::at($this->root));
     }
 
+    /**
+     * `Stop` needs a turn to END, and an agent that chains tool calls never ends one — so a gate resting
+     * on it alone held nothing for an hour while twelve conditions stood. The conditions come back on the
+     * work itself.
+     */
+    public function test_the_conditions_resurface_as_work_goes_by_without_a_stop(): void
+    {
+        $this->gate()->add('the suite is green');
+
+        for ($i = 0; $i < 19; $i++) {
+            $this->assertSame([], $this->postToolUse('Read'), 'quiet until the count is reached');
+        }
+
+        $context = $this->context($this->postToolUse('Read'));
+
+        $this->assertStringContainsString('1 stop condition(s) still stand', $context, 'it names its own number');
+        $this->assertStringContainsString('the suite is green', $context);
+    }
+
+    public function test_resurfacing_restarts_the_count(): void
+    {
+        $this->gate()->add('the suite is green');
+
+        for ($i = 0; $i < 20; $i++) {
+            $this->postToolUse('Read');
+        }
+
+        $this->assertSame([], $this->postToolUse('Read'), 'the next call is quiet again');
+    }
+
+    /**
+     * A nudge normally spends the very resource it protects. One delivered while the agent is blocked on
+     * a background process costs nothing it was going to spend — so it fires there regardless of count.
+     */
+    public function test_a_wait_surfaces_the_conditions_at_once(): void
+    {
+        $this->gate()->add('the suite is green');
+
+        $context = $this->context($this->postToolUse('Bash', 'sleep 300; tail -5 out.txt'));
+
+        $this->assertStringContainsString('waiting on a background process', $context);
+        $this->assertStringContainsString('the suite is green', $context);
+    }
+
+    /**
+     * Counting a wait as work inflates every number built on it — the gate believed forty pieces of work
+     * had happened when a dozen were sleeps.
+     */
+    public function test_waiting_is_not_counted_as_work(): void
+    {
+        $this->gate()->add('the suite is green');
+
+        $before = $this->gate()->reach()['work'];
+        $this->postToolUse('Bash', 'sleep 300');
+
+        $this->assertSame($before, $this->gate()->reach()['work'], 'a sleep moves no counter');
+    }
+
+    public function test_a_paused_gate_surfaces_nothing(): void
+    {
+        $this->gate()->add('the suite is green');
+        $this->gate()->pause();
+
+        $this->assertSame([], $this->postToolUse('Bash', 'sleep 300'));
+    }
+
     public function test_it_is_silent_when_no_condition_is_set(): void
     {
         $this->assertSame([], $this->stop());

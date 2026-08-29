@@ -44,6 +44,13 @@ final class StopConditionReminder extends Hook
      */
     private const int EXCERPT = 3;
 
+    /**
+     * Pieces of work between the conditions being put back in front of the agent. `Stop` is the only
+     * hook event an agent can AVOID — it needs a turn to end, and one that chains tool calls never ends
+     * — so a gate resting on it alone can hold nothing for hours while work goes on.
+     */
+    private const int RESURFACE = 20;
+
     public function summary(): string
     {
         return 'Holds every stop while a `commandments stop-condition "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it.';
@@ -63,14 +70,55 @@ final class StopConditionReminder extends Hook
     {
         $gate = StopConditionGate::inSession($event->workspace());
 
-        if (! $gate->isOpen() || ! $this->isWork($event)) {
+        if (! $gate->isOpen() || $gate->isPaused()) {
+            return $this->pass();
+        }
+
+        // Waiting on a background process is the CHEAPEST moment to spend the agent's attention: it is
+        // blocked anyway, so this is the one nudge that does not cost the resource it protects.
+        if ($this->isWaiting($event)) {
+            $gate->surfaced();
+
+            return $this->inject($event, $this->resurfaced($gate->all(), 'you are waiting on a background process'));
+        }
+
+        if (! $this->isWork($event)) {
             return $this->pass();
         }
 
         $gate->dropClaim(); // Back at work, so the half-answered `stuck` claim is void.
         $gate->recordWork();
 
-        return $this->pass();
+        if (! $gate->dueToResurface(self::RESURFACE)) {
+            return $this->pass();
+        }
+
+        return $this->inject($event, $this->resurfaced($gate->all(), self::RESURFACE . ' pieces of work have gone by'));
+    }
+
+    /**
+     * The conditions, in ONE line plus the excerpt. It rides on an ordinary tool call rather than a
+     * stop, so it names its own numbers and says nothing else — an agent that meets this twenty times
+     * in a session must not pay for the whole vocabulary each time.
+     *
+     * @param  array<int, string>  $conditions
+     */
+    private function resurfaced(array $conditions, string $because): string
+    {
+        return 'Code Commandments — ' . count($conditions) . ' stop condition(s) still stand and '
+            . "{$because} without one being struck off. They hold every stop; `commandments stop-condition "
+            . "list` is the full list.\n"
+            . $this->excerpt($conditions);
+    }
+
+    /**
+     * Is this tool call only WAITING? A command that leads with `sleep` is burning wall clock, not
+     * making progress — and while it runs the turn cannot end, so no stop can be held. Recognised by
+     * its shell verb, the same way {@see JudgeReminder::isGitCommit} is, so no engine is owed.
+     */
+    private function isWaiting(HookEvent $event): bool
+    {
+        return $event->isTool('Bash') && str_starts_with(ltrim($event->command()), 'sleep ');
     }
 
     /**
@@ -83,6 +131,10 @@ final class StopConditionReminder extends Hook
      */
     private function isWork(HookEvent $event): bool
     {
+        if ($this->isWaiting($event)) {
+            return false; // Waiting is not work, and counting it inflates every number built on this.
+        }
+
         return ! $event->isTool('Bash') || ! str_contains($event->command(), 'commandments stop-condition');
     }
 

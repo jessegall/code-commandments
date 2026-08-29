@@ -53,6 +53,9 @@ final class StopConditionGate
                 'claim_round' => 'how many challenges the pending `stuck` claim has answered (0 = none pending)',
                 'work' => 'pieces of work done since the gate was set. Never reset, so a gate that has seen '
                     . 'work and held no stop can say the Stop hook is not reaching it',
+                'since_surfaced' => 'pieces of work since the conditions were last put in front of the agent. '
+                    . '`Stop` needs a turn to END, and an agent that chains tool calls never ends one — so the '
+                    . 'gate resurfaces on this count instead of waiting for a stop that may never come',
             ],
             defaults: new State(
                 held_stops: 0,
@@ -61,6 +64,7 @@ final class StopConditionGate
                 stuck: false,
                 claim_round: 0,
                 work: 0,
+                since_surfaced: 0,
             ),
             list: 'one `id<TAB>condition` per line — what you may not stop until it holds. A third '
                 . 'tab-separated column is the reason that ONE condition cannot move without the user '
@@ -107,7 +111,49 @@ final class StopConditionGate
      */
     public function recordWork(): void
     {
-        $this->save(fn (State $state): State => $state->with(work: $state->int('work') + 1));
+        $this->save(fn (State $state): State => $state->with(
+            work: $state->int('work') + 1,
+            since_surfaced: $state->int('since_surfaced') + 1,
+        ));
+    }
+
+    /**
+     * Have $every pieces of work gone by since the conditions were last put in front of the agent?
+     * Answering yes RESTARTS the count, so the gate resurfaces on a rhythm rather than on every call
+     * once the threshold is passed.
+     */
+    public function dueToResurface(int $every): bool
+    {
+        if ($this->file->read()->int('since_surfaced') < $every) {
+            return false;
+        }
+
+        $this->surfaced();
+
+        return true;
+    }
+
+    /**
+     * The conditions have just been put in front of the agent — by the count, by a wait, or by a stop
+     * it was sent back from. The count starts again from here.
+     */
+    public function surfaced(): void
+    {
+        $this->save(fn (State $state): State => $state->with(since_surfaced: 0));
+    }
+
+    /**
+     * How many pieces of work this gate has seen, and how many stops it has held — the two numbers that
+     * say whether it is being REACHED at all, so a warning about it can state what it measured rather
+     * than name a cause it did not.
+     *
+     * @return array{work: int, held: int}
+     */
+    public function reach(): array
+    {
+        $state = $this->file->read();
+
+        return ['work' => $state->int('work'), 'held' => $state->int('held_stops')];
     }
 
     /**

@@ -43,6 +43,14 @@ enum Tag: string
 
     case Discovery = '!discovery';
 
+    /**
+     * Where the work STANDS — what is in flight, what has been decided since the last one and WHY, what
+     * is being waited on. Every other tag needs an event to have happened; an orchestrator mid-stretch
+     * often has none of that shape and a great deal worth keeping, which is why its record came out
+     * nearly empty while it was deciding constantly.
+     */
+    case Update = '!update';
+
     case Reply = '!reply';
 
     case Info = '!info';
@@ -129,6 +137,7 @@ enum Tag: string
             self::Start => 'starting a piece of work',
             self::End => 'that work is finished',
             self::Discovery => 'a discovery — the real shape of something you did not know',
+            self::Update => 'where the work stands — what is in flight, what you decided since the last one and WHY',
             self::Reply => 'answering the user',
             self::Info => 'routine narration',
             self::Done => 'a step completed',
@@ -148,6 +157,7 @@ enum Tag: string
             self::Blocked => 2,
             self::Start, self::End => 3,
             self::Discovery => 4,
+            self::Update => 4,
             self::Reply => 5,
             self::Info, self::Done => 6,
         };
@@ -162,7 +172,7 @@ enum Tag: string
     public function isSpoken(): bool
     {
         return match ($this) {
-            self::Start, self::End, self::Discovery, self::Correction, self::Blocked => true,
+            self::Start, self::End, self::Discovery, self::Correction, self::Blocked, self::Update => true,
             self::Pinned, self::Reply, self::Info, self::Done => false,
         };
     }

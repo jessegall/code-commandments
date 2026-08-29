@@ -147,21 +147,49 @@ final class ConfigScribe
     }
 
     /**
-     * Splice a layer declaration in before the `disable()` call, importing the detector it tunes.
-     * Returns false when the config already declares layers — the human's stack is theirs, and
-     * `commandments layers` proposes, it never overwrites. Same offset splice as
-     * {@see ensurePlanExecution}, so the surrounding lines stay exactly as they were.
+     * Splice a layer declaration in, importing the detector it tunes. Returns false when the config
+     * already declares layers — the human's stack is theirs, and `commandments layers` proposes, it
+     * never overwrites.
      */
     public function ensureLayers(string $declaration): bool
     {
-        if (! is_file($this->path) || $this->hasCall('layer')) {
+        if ($this->hasCall('layer') || ! $this->spliceDeclaration($declaration)) {
             return false;
         }
 
-        // `paths()` first: it is the one call that lives in the config's OWN closure. A real config
-        // carries `$disabledSkills`/`$disabledSins` menus that are closures full of `disable()`
-        // calls, and anchoring on the first `disable()` in the file dropped the layer declaration
-        // inside one of those menus — where it reads as if the layering were a disablement.
+        $this->importDetector();
+
+        return true;
+    }
+
+    /**
+     * Splice an orchestration declaration in the same way — what `commandments orchestrate --write`
+     * runs, the twin of `layers --write`, so an adopter is not left pasting a block by hand. False
+     * when the config already declares one: how a team works is a decision somebody made and read in
+     * a diff, and a proposal never overwrites it.
+     */
+    public function ensureOrchestration(string $declaration): bool
+    {
+        return ! $this->hasCall('orchestration') && $this->spliceDeclaration($declaration);
+    }
+
+    /**
+     * Write $declaration in as its own statement before the config's own `paths()` call — the ONE
+     * splice a proposed block goes through, so every `--write` lands the same way. Same offset splice
+     * as {@see ensurePlanExecution}, so the surrounding lines stay exactly as they were. False when
+     * the config has been edited past recognition (or is not there at all).
+     *
+     * `paths()` is the anchor because it is the one call that lives in the config's OWN closure: a
+     * real config carries `$disabledSkills`/`$disabledSins` menus that are closures full of
+     * `disable()` calls, and anchoring on the first `disable()` in the file dropped the declaration
+     * inside one of those menus — where it reads as if it were a disablement.
+     */
+    private function spliceDeclaration(string $declaration): bool
+    {
+        if (! is_file($this->path)) {
+            return false;
+        }
+
         $anchor = $this->call('paths') ?? $this->call('disable');
 
         if ($anchor === null) {
@@ -172,7 +200,7 @@ final class ConfigScribe
         $at = $anchor->getStartFilePos();
         $block = ltrim($declaration) . "\n\n    ";
 
-        file_put_contents($this->path, $this->withDetectorImport(substr($source, 0, $at)) . $block . substr($source, $at));
+        file_put_contents($this->path, substr($source, 0, $at) . $block . substr($source, $at));
 
         return true;
     }
@@ -180,16 +208,17 @@ final class ConfigScribe
     /**
      * Add the `NamespaceDependencyDetector` import after the `Config` one, unless it is already there.
      */
-    private function withDetectorImport(string $head): string
+    private function importDetector(): void
     {
+        $source = (string) file_get_contents($this->path);
         $existing = 'use JesseGall\CodeCommandments\Config;';
         $import = 'use JesseGall\CodeCommandments\Detectors\Backend\NamespaceDependencyDetector;';
 
-        if (str_contains($head, $import) || ! str_contains($head, $existing)) {
-            return $head;
+        if (str_contains($source, $import) || ! str_contains($source, $existing)) {
+            return;
         }
 
-        return str_replace($existing, $existing . "\n" . $import, $head);
+        file_put_contents($this->path, str_replace($existing, $existing . "\n" . $import, $source));
     }
 
     /**

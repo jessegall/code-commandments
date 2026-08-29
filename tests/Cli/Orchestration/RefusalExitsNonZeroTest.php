@@ -106,6 +106,17 @@ final class RefusalExitsNonZeroTest extends TestCase
     }
 
     /**
+     * `assign` is chained behind too — a dispatch that binds the role and then briefs the agent proceeds
+     * on a 0, so an invocation missing its half of "which role, which agent" has to say it refused.
+     */
+    public function test_an_assignment_missing_the_role_or_the_agent_refuses(): void
+    {
+        $this->assertSame(Console::REFUSED, $this->exitCodeOf('assign', 'integrator'));
+        $this->assertSame(Console::REFUSED, $this->exitCodeOf('assign', '--to=a5d4'));
+        $this->assertSame(0, $this->exitCodeOf('assign', 'integrator', '--to=a5d4'));
+    }
+
+    /**
      * Reading the build is never a refusal — a status screen that exited non-zero would break every
      * script that merely looks.
      */

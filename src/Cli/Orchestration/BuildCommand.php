@@ -133,6 +133,10 @@ final class BuildCommand implements Command
      * Give a role to an agent already running. A type is fixed at spawn, so without this the only way to
      * have a reviewer is to spawn one — and respawning a standing reviewer discards the accumulated
      * judgement that is the entire reason it was kept alive.
+     *
+     * The role is REBOUND, never added to: an agent id dies with its session, so a long build binds the
+     * same role several times, and a second line for it would leave the corpse and the live agent equally
+     * entitled to answer for the role.
      */
     private function assign(Input $input): int
     {
@@ -140,14 +144,25 @@ final class BuildCommand implements Command
         $id = $input->option('to')->unwrapOr('');
 
         if ($role === '' || $id === '') {
-            return $this->console->say('Say which and who: `commandments build assign <role> --to=<agent-id>`.');
+            return $this->console->refuse('Say which and who: `commandments build assign <role> --to=<agent-id>`.');
         }
 
-        Roles::inSession(Workspace::ofSession($this->io->projectRoot()))->assign($id, $role);
+        $roles = Roles::inSession(Workspace::ofSession($this->io->projectRoot()));
+        $replaced = $roles->agentFor($role);
+        $roles->assign($id, $role);
 
-        return $this->console->say("▸ {$id} is `{$role}`.", '  It keeps everything it already knows.');
+        return $this->console->say(
+            "▸ {$id} is `{$role}`.",
+            '  It keeps everything it already knows.',
+            ...$replaced->mapOr([], fn (string $was) => ["  It replaces {$was}, which no longer holds `{$role}`."]),
+        );
     }
 
+    /**
+     * Who holds which role — one line per role, because that is how many agents a role has. It says who
+     * was NAMED for the role, which is all this records: nothing here reaches an agent, so nothing here
+     * may imply it answered.
+     */
     private function roles(): int
     {
         $roles = Roles::inSession(Workspace::ofSession($this->io->projectRoot()))->all();
@@ -159,11 +174,15 @@ final class BuildCommand implements Command
             );
         }
 
-        foreach ($roles as $id => $role) {
-            $this->console->say(sprintf('  %-20s %s', $role, $id));
+        foreach ($roles as $binding) {
+            $this->console->say($binding->render());
         }
 
-        return 0;
+        return $this->console->say(
+            '',
+            '  Who was NAMED for each role — nothing here reaches an agent, so none of it says one is',
+            '  still alive. An id that has stopped answering is rebound with the same command.',
+        );
     }
 
     /**
