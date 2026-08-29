@@ -18,7 +18,8 @@ use JesseGall\CodeCommandments\Support\Binary;
  * compaction cannot reconstruct, and it only exists to be carried across if the work was declared when it
  * began — so a tool that names the file it will write is refused outright while no `[!start]` stands, and a
  * shell command, which cannot be judged before it runs, is caught the moment it has written one
- * ({@see TouchedSources} asks the TREE rather than reading the command).
+ * ({@see TouchedSources} asks the TREE rather than reading the command) and told about it quietly, since
+ * refusing what has already happened costs the user a line and buys nothing.
  */
 final class WriteGate extends Hook
 {
@@ -77,7 +78,9 @@ final class WriteGate extends Hook
 
     /**
      * A shell command cannot be judged before it runs without reading it, and reading a command to guess
-     * what it will write is how a parser starts lying. So it is judged AFTER, by what actually changed.
+     * what it will write is how a parser starts lying. So it is judged AFTER, by what actually changed —
+     * and only ever as a QUIET word to the agent. A refusal the user has to read is worth it where it
+     * stops something; here the write has already landed, so it would be noise with nothing bought.
      */
     protected function onPostToolUse(HookEvent $event): int
     {
@@ -95,7 +98,9 @@ final class WriteGate extends Hook
 
         $files = implode(', ', array_map(fn (string $path) => basename($path), $changed));
 
-        return $this->block($this->refusal($event, "That shell command changed {$files} with no work declared."));
+        // Quietly: the write has already happened, so blocking here buys nothing but a line in the
+        // user's terminal. The agent is told; the user is not made to watch it being told.
+        return $this->quietly($event, $this->refusal($event, "That shell command changed {$files} with no work declared."));
     }
 
     /**

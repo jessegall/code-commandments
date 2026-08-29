@@ -122,6 +122,29 @@ final class WriteGateTest extends TestCase
     }
 
     /**
+     * The write has already happened by the time a shell command is judged, so refusing it would cost the
+     * user a line in their terminal and stop nothing. The agent is told; the user is not made to watch.
+     */
+    public function test_a_shell_write_is_a_quiet_word_not_a_refusal(): void
+    {
+        $this->recording();
+        file_put_contents($this->root . '/Thing.php', '<?php');
+
+        $io = new RecordingHookIO([
+            'hook_event_name' => 'PostToolUse',
+            'session_id' => 'sess-1',
+            'tool_name' => 'Bash',
+            'tool_input' => ['command' => 'echo x > Thing.php'],
+        ], new FakeGit($this->root));
+
+        new WriteGate($io)->run([]);
+
+        $blocking = array_filter($io->emitted, fn (HookResponse $response) => $response->blockReason->isSome());
+
+        $this->assertSame([], $blocking, 'a shell write must never block — it has already happened');
+    }
+
+    /**
      * A checkout, a merge or a rebase rewrites a great many judged files without anybody editing one.
      * Those arrive already committed, so they are not the agent's work and are not refused.
      */
