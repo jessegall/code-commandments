@@ -33,6 +33,7 @@ final readonly class Profile
         'behaviour' => 'how the orchestrator works — the judgement no refusal can enforce',
         'restrictions' => 'what it may never do, including what no tool can catch',
         'traps' => 'failures already paid for, each with what it cost',
+        'routine' => 'what you do EVERY time you come to a stop — the standing habits, nudged not enforced',
     ];
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
 
 use JesseGall\CodeCommandments\Cli\Orchestration\Board;
+use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
 use JesseGall\CodeCommandments\Cli\Orchestration\Stage;
 use JesseGall\CodeCommandments\Hooks\Handlers\BoardReminder;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
@@ -39,6 +40,16 @@ final class BoardReminderTest extends TestCase
     private function board(): Board
     {
         return Board::inSession(new Workspace($this->root, 'sess-1'));
+    }
+
+    private function profileWith(string $document, string $body): void
+    {
+        $path = $this->root . '/.commandments/orchestrator/profiles/dogfood/' . $document . '.md';
+
+        mkdir(dirname($path), 0777, true);
+        file_put_contents($path, $body);
+
+        Instance::inSession(new Workspace($this->root, 'sess-1'))->start('dogfood', '10:00');
     }
 
     /**
@@ -90,6 +101,42 @@ final class BoardReminderTest extends TestCase
     }
 
     public function test_a_board_nobody_has_claimed_on_says_nothing(): void
+    {
+        $this->assertSame([], $this->said());
+    }
+
+    /**
+     * The standing habits a profile's author decided are done EVERY time the work stops. A nudge, never a
+     * gate — a habit worth repeating is not a rule worth refusing over.
+     */
+    public function test_the_profiles_routine_is_repeated_at_every_stop(): void
+    {
+        $this->profileWith('routine', "# routine\n\n**Told the workflows agent?** Every commit that has been pushed.");
+
+        $said = implode("\n", $this->said());
+
+        $this->assertStringContainsString('Told the workflows agent?', $said);
+        $this->assertStringContainsString('dogfood', $said, 'it names the profile the routine came from');
+    }
+
+    /**
+     * The routine rides on a stop that would otherwise be silent, so it does not need a build running.
+     */
+    public function test_the_routine_is_said_even_with_no_board(): void
+    {
+        $this->profileWith('routine', 'Check the record says what you would say out loud.');
+
+        $this->assertStringContainsString('say out loud', implode("\n", $this->said()));
+    }
+
+    public function test_a_profile_with_no_routine_says_nothing(): void
+    {
+        $this->profileWith('behaviour', 'how this team works');
+
+        $this->assertSame([], $this->said());
+    }
+
+    public function test_nothing_is_said_when_no_profile_is_in_force(): void
     {
         $this->assertSame([], $this->said());
     }

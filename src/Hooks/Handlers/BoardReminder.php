@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Orchestration\Board;
 use JesseGall\CodeCommandments\Cli\Orchestration\Claim;
+use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
+use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -26,7 +28,7 @@ final class BoardReminder extends Hook
 
     public function summary(): string
     {
-        return 'At the end of a turn, names the work waiting on YOU — a worker that has reported is a decision nobody has made.';
+        return 'At the end of a turn, names the work waiting on YOU, and repeats the profile\'s standing routine.';
     }
 
     public function bindings(): array
@@ -37,18 +39,48 @@ final class BoardReminder extends Hook
     protected function onStop(HookEvent $event): int
     {
         $board = Board::inSession($event->sessionWorkspace());
+        $said = array_filter([$this->pending($event, $board), $this->routine($event)]);
 
+        if ($said === []) {
+            return $this->pass(); // Nobody waiting and no routine — which costs nothing to say, and so is not said.
+        }
+
+        return $this->quietly($event, implode("\n\n", $said));
+    }
+
+    /**
+     * The work waiting on the reader, or nothing when a build is not running or nobody is waiting.
+     */
+    private function pending(HookEvent $event, Board $board): string
+    {
         if (! $board->exists()) {
-            return $this->pass(); // Nothing is claimed; there is no build to report on.
+            return ''; // Nothing is claimed; there is no build to report on.
         }
 
         $waiting = $board->awaiting();
 
-        if ($waiting === []) {
-            return $this->pass(); // Nobody is waiting, which costs nothing to say and so is not said.
+        return $waiting === [] ? '' : $this->waiting($event, $waiting);
+    }
+
+    /**
+     * The profile's standing routine — what its author decided is done EVERY time the work comes to a
+     * stop. It is a nudge and never a gate: a habit worth repeating is not a rule worth refusing over,
+     * and one that blocked a turn would be paid for in the context it exists to protect.
+     */
+    private function routine(HookEvent $event): string
+    {
+        $workspace = $event->sessionWorkspace();
+        $running = Instance::inSession($workspace)->profile();
+
+        foreach ($running as $name) {
+            foreach (Profiles::of($workspace)->named($name) as $profile) {
+                foreach ($profile->document('routine') as $routine) {
+                    return "Code Commandments — the `{$name}` routine, every time you come to a stop:\n\n" . trim($routine);
+                }
+            }
         }
 
-        return $this->quietly($event, $this->waiting($event, $waiting));
+        return '';
     }
 
     /**

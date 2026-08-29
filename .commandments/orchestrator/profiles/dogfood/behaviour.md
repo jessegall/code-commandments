@@ -20,3 +20,7 @@ the third one's cost is paid by the other two waiting.
 - (2026-08-29, cdf1247b) RULED: a per-worker todo queue is the board filtered by holder, never a parallel /todo folder. Every property asked for — outliving the worker, editable mid-run, run-don't-read completion, per-worker scope, history-not-queue — already falls out of items + holders + receipts. A second record is the thing whose reconciliation cost was the reason it was proposed.
 
 - (2026-08-29, cdf1247b) A detector finding on NEW code is a design signal, not an obstacle. A worker built a '(was …)' history field, CoupledFieldsDetector flagged the clump, and every way to keep the field was a restructure whose only purpose was dodging the rule — so it dropped the field and reported the replacement at the moment it happens instead. The listing carries only what is current.
+
+- (2026-08-29, ee0f6f01) RULED: the plan tree is the ITEM tree. 'Scope is where the item sits' is an argument for a parent relation, not for folders — and a folder tree beside the board would need the same reconciliation ('which plan owns this item?') that killed the parallel todo folder. One store, a parent, and a session cursor.
+
+- (2026-08-29, ee0f6f01) OVERRULED by Jesse, and it improves the design: the durable item IS a folder. The path is the parent chain, so the folder tree and the item list are ONE store rather than two — which was my whole objection, now answered by the structure instead of against it.
