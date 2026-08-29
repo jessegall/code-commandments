@@ -48,7 +48,6 @@ final class Journal
             [
                 'transcript' => "the session transcript this indexes — the `.jsonl` holding every word",
                 'session' => 'the Claude Code session id these entries belong to',
-                'previous_session' => 'the session this one continued from, so a reader can walk further back',
                 'chunk' => 'how many compactions have happened — entry chunks are numbered from 0',
                 'prepared' => 'yes = the agent has already been sent back once to prepare for the pending '
                     . 'compaction, so the next attempt proceeds instead of being cancelled again',
@@ -58,7 +57,6 @@ final class Journal
             defaults: new State(
                 transcript: '',
                 session: '',
-                previous_session: '',
                 chunk: 0,
                 prepared: false,
                 prepared_at: 0,
@@ -157,18 +155,12 @@ final class Journal
     }
 
     /**
-     * Record which transcript and session these entries belong to, and what this session continued from.
-     * The chain is what lets a reader walk back past a session boundary into an earlier transcript.
+     * Record which transcript and session these entries belong to. Walking further back is
+     * {@see Sessions}'s job and it reads the transcripts themselves, so no chain is kept here.
      */
-    public function follow(string $transcript, string $session, string $previous = ''): void
+    public function follow(string $transcript, string $session): void
     {
-        $state = $this->file->read();
-
-        $this->file->write($state->with(
-            transcript: $transcript,
-            session: $session,
-            previous_session: $previous === '' ? $state->text('previous_session') : $previous,
-        ));
+        $this->file->write($this->file->read()->with(transcript: $transcript, session: $session));
     }
 
     /**
@@ -213,6 +205,24 @@ final class Journal
         $state = $this->file->read();
 
         $this->file->write($state->with(prepared: true, prepared_at: count($state->items())));
+    }
+
+    /**
+     * Has the recorder demonstrably worked — are at least $atLeast of the agent's own messages filed? A
+     * session where it never fired has no way to open a span, so a gate that enforced there would refuse
+     * every write for ever with no answer available.
+     */
+    public function hasRecorded(int $atLeast): bool
+    {
+        $recorded = 0;
+
+        foreach ($this->entries() as $entry) {
+            if ($entry->kind === Kind::Agent) {
+                $recorded++;
+            }
+        }
+
+        return $recorded >= $atLeast;
     }
 
     /**

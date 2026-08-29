@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
-use JesseGall\CodeCommandments\Cli\Journal\Kind;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
@@ -65,7 +64,7 @@ final class WriteGate extends Hook
 
         $journal = Journal::inSession($event->workspace());
 
-        if (! $this->isEnforceable($journal)) {
+        if (! $journal->hasRecorded(self::PROOF)) {
             return $this->pass();
         }
 
@@ -90,31 +89,13 @@ final class WriteGate extends Hook
         $touched = new TouchedSources($event->workspace(), $event->root, Config::load($event->root), 'writes');
         $changed = $touched->claim(self::SHOWN);
 
-        if ($changed === [] || ! $this->isEnforceable($journal) || $journal->openSpans() !== []) {
+        if ($changed === [] || ! $journal->hasRecorded(self::PROOF) || $journal->openSpans() !== []) {
             return $this->pass();
         }
 
         $files = implode(', ', array_map(fn (string $path) => basename($path), $changed));
 
         return $this->block($this->refusal($event, "That shell command changed {$files} with no work declared."));
-    }
-
-    /**
-     * Can this gate be satisfied at all? It enforces only once the journal holds enough of the agent's own
-     * messages to prove they are being recorded — otherwise a session whose recorder never fired would be
-     * refused every write with no way to answer.
-     */
-    private function isEnforceable(Journal $journal): bool
-    {
-        $recorded = 0;
-
-        foreach ($journal->entries() as $entry) {
-            if ($entry->kind === Kind::Agent) {
-                $recorded++;
-            }
-        }
-
-        return $recorded >= self::PROOF;
     }
 
     private function refusal(HookEvent $event, string $what): string

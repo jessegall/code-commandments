@@ -182,7 +182,7 @@ final class JournalTest extends TestCase
     public function test_it_records_the_transcript_it_indexes_and_the_session_chain(): void
     {
         $journal = $this->journal();
-        $journal->follow('/tmp/sess-1.jsonl', 'sess-1', 'sess-0');
+        $journal->follow('/tmp/sess-1.jsonl', 'sess-1');
 
         $this->assertSame('/tmp/sess-1.jsonl', $journal->transcript()->unwrap());
     }
