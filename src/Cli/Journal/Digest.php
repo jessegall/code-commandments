@@ -35,13 +35,38 @@ final class Digest
     public function __construct(private readonly array $lines) {}
 
     /**
+     * The lines that were SAID, with a prompt the user kept typing counted once. The harness records a
+     * message as it is sent and again when more of it follows, so the same words arrive twice with the
+     * second carrying the rest; the earlier one is a prefix of the later, which is what identifies it.
+     *
+     * @return list<Line>
+     */
+    private function spoken(): array
+    {
+        $spoken = array_values(array_filter($this->lines, fn (Line $line) => $line->isSpeech() && $line->text !== ''));
+        $kept = [];
+
+        foreach ($spoken as $at => $line) {
+            $next = $spoken[$at + 1] ?? null;
+
+            if ($next !== null && $line->isPrompt() && $next->isPrompt() && str_starts_with($next->text, $line->text)) {
+                continue;
+            }
+
+            $kept[] = $line;
+        }
+
+        return $kept;
+    }
+
+    /**
      * The chosen lines, in order.
      *
      * @return list<Line>
      */
     public function selected(): array
     {
-        $speech = array_values(array_filter($this->lines, fn (Line $line) => $line->isSpeech() && $line->text !== ''));
+        $speech = $this->spoken();
         $keep = [];
 
         foreach ($speech as $at => $line) {
@@ -59,7 +84,7 @@ final class Digest
      */
     public function render(): string
     {
-        $speech = array_values(array_filter($this->lines, fn (Line $line) => $line->isSpeech() && $line->text !== ''));
+        $speech = $this->spoken();
         $written = [];
         $previous = -1;
 

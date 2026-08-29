@@ -81,6 +81,8 @@ final class CompactionGate extends Hook
 
             Pin the user's standing rulings, the constraint you keep nearly breaking, and the decision behind the
             work in hand. Then close or restate any work you have open. Do NOT start anything new.
+
+            `{$binary} journal instructions` is the whole brief, if you need it.
             {$open}
             TEXT;
     }

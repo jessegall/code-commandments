@@ -37,6 +37,15 @@ final readonly class Record
         return $this->text('type');
     }
 
+    /**
+     * The name the harness generated for this session, on the rows that carry one — how a human recognises
+     * a session in a list of them.
+     */
+    public function title(): string
+    {
+        return $this->text('aiTitle');
+    }
+
     public function subtype(): string
     {
         return $this->text('subtype');

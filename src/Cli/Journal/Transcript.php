@@ -47,12 +47,12 @@ final class Transcript
     }
 
     /**
-     * Every line of the transcript, in order. A generator, because a long session's transcript runs to
-     * tens of megabytes and no reader needs it all in memory at once.
+     * Every decoded line of the transcript, in order. A generator, because a long session's transcript
+     * runs to tens of megabytes and no reader needs it all in memory at once.
      *
-     * @return Generator<int, Line>
+     * @return Generator<int, Record>
      */
-    public function lines(): Generator
+    public function records(): Generator
     {
         $handle = @fopen($this->path, 'r');
 
@@ -62,11 +62,23 @@ final class Transcript
 
         while (($line = fgets($handle)) !== false) {
             foreach (Record::decode($line) as $record) {
-                yield new Line($this->categorise($record), $record->at()->unwrapOr(''), $record->said());
+                yield $record;
             }
         }
 
         fclose($handle);
+    }
+
+    /**
+     * Every line of the transcript as a {@see Line} — what it is, when, and what was said.
+     *
+     * @return Generator<int, Line>
+     */
+    public function lines(): Generator
+    {
+        foreach ($this->records() as $record) {
+            yield new Line($this->categorise($record), $record->at()->unwrapOr(''), $record->said());
+        }
     }
 
     /**
@@ -107,6 +119,33 @@ final class Transcript
         }
 
         return $count;
+    }
+
+    /**
+     * How this session is known to a human — the title the harness generated for it, else the first thing
+     * the user actually said. Only the head of the file is read: both appear early, and a menu of sessions
+     * must not cost a full pass over every transcript in the project.
+     */
+    public function name(int $within = 600): string
+    {
+        $spoken = '';
+        $read = 0;
+
+        foreach ($this->records() as $record) {
+            if ($record->title() !== '') {
+                return $record->title();
+            }
+
+            if ($spoken === '' && $this->categorise($record) === Category::Prompt) {
+                $spoken = $record->said();
+            }
+
+            if (++$read >= $within) {
+                break;
+            }
+        }
+
+        return $spoken;
     }
 
     /**
