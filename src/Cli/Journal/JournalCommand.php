@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Journal;
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Hooks\HookIO;
@@ -19,7 +20,10 @@ use JesseGall\PhpTypes\Option;
  */
 final class JournalCommand implements Command
 {
-    public function __construct(private readonly HookIO $io = new HookIO) {}
+    public function __construct(
+        private readonly HookIO $io = new HookIO,
+        private readonly Console $console = new Console,
+    ) {}
 
     public function names(): array
     {
@@ -52,7 +56,7 @@ final class JournalCommand implements Command
         $sessions = Sessions::of($workspace);
 
         return match ($input->firstArgument()->unwrapOr('read')) {
-            'instructions', 'brief', 'help' => $this->say(new Brief($workspace->root())->render()),
+            'instructions', 'brief', 'help' => $this->console->say(new Brief($workspace->root())->render()),
             'sessions', 'list' => $this->sessions($sessions),
             'use', 'mount' => $this->use($sessions, $input->argument(1)->unwrapOr('')),
             'remember', 'pin' => $this->remember($workspace, $this->text($input, from: 1)),
@@ -72,17 +76,17 @@ final class JournalCommand implements Command
         $all = $sessions->all();
 
         if ($all === []) {
-            return $this->say('No sessions recorded for this project yet.');
+            return $this->console->say('No sessions recorded for this project yet.');
         }
 
         $mounted = $sessions->mounted()->mapOr('', fn (Session $session) => $session->id);
 
         foreach ($all as $session) {
             $mark = $session->id === $mounted ? '▸' : ' ';
-            $this->say(sprintf('%s %s  %s', $mark, substr($session->id, 0, 8), $session->describe()));
+            $this->console->say(sprintf('%s %s  %s', $mark, substr($session->id, 0, 8), $session->describe()));
         }
 
-        return $this->say('', 'Read one with `commandments journal use <id>` — the first few characters are enough.');
+        return $this->console->say('', 'Read one with `commandments journal use <id>` — the first few characters are enough.');
     }
 
     private function use(Sessions $sessions, string $handle): int
@@ -90,10 +94,10 @@ final class JournalCommand implements Command
         foreach ($sessions->named($handle) as $session) {
             $sessions->mount($session);
 
-            return $this->say('▸ Reading ' . substr($session->id, 0, 8) . '  ' . $session->describe());
+            return $this->console->say('▸ Reading ' . substr($session->id, 0, 8) . '  ' . $session->describe());
         }
 
-        return $this->say("No session here answers to '{$handle}'.", 'Run `commandments journal sessions` to see them.');
+        return $this->console->say("No session here answers to '{$handle}'.", 'Run `commandments journal sessions` to see them.');
     }
 
     /**
@@ -109,7 +113,7 @@ final class JournalCommand implements Command
                 $lines = array_values(array_filter($lines, fn (Line $line) => $line->isPrompt() && $line->text !== ''));
             }
 
-            return $this->say($this->heading($session, $back), '', new Digest($lines)->render());
+            return $this->console->say($this->heading($session, $back), '', new Digest($lines)->render());
         }
 
         return $this->sessions($sessions);
@@ -118,7 +122,7 @@ final class JournalCommand implements Command
     private function search(Sessions $sessions, string $term): int
     {
         if ($term === '') {
-            return $this->say('Say what to look for: `commandments journal search "<term>"`.');
+            return $this->console->say('Say what to look for: `commandments journal search "<term>"`.');
         }
 
         foreach ($this->chosen($sessions) as $session) {
@@ -131,8 +135,8 @@ final class JournalCommand implements Command
             }
 
             return $found === []
-                ? $this->say("Nothing in this session mentions '{$term}'.")
-                : $this->say(new Digest($found)->render());
+                ? $this->console->say("Nothing in this session mentions '{$term}'.")
+                : $this->console->say(new Digest($found)->render());
         }
 
         return $this->sessions($sessions);
@@ -141,7 +145,7 @@ final class JournalCommand implements Command
     private function remember(Workspace $workspace, string $fact): int
     {
         if (trim($fact) === '') {
-            return $this->say('Say what to remember: `commandments journal remember "<fact>"`.');
+            return $this->console->say('Say what to remember: `commandments journal remember "<fact>"`.');
         }
 
         Journal::inSession($workspace)->file(new Entry(
@@ -153,7 +157,7 @@ final class JournalCommand implements Command
             $fact,
         ));
 
-        return $this->say('✓ Pinned. It survives every compaction, and rides in the summariser\'s own instructions.');
+        return $this->console->say('✓ Pinned. It survives every compaction, and rides in the summariser\'s own instructions.');
     }
 
     private function pinned(Workspace $workspace): int
@@ -161,11 +165,11 @@ final class JournalCommand implements Command
         $pinned = Journal::inSession($workspace)->pinned();
 
         if ($pinned === []) {
-            return $this->say('Nothing pinned yet — `commandments journal remember "<fact>"` pins one.');
+            return $this->console->say('Nothing pinned yet — `commandments journal remember "<fact>"` pins one.');
         }
 
         foreach ($pinned as $entry) {
-            $this->say('  • ' . $entry->text);
+            $this->console->say('  • ' . $entry->text);
         }
 
         return 0;
@@ -176,11 +180,11 @@ final class JournalCommand implements Command
         $open = Journal::inSession($workspace)->openSpans();
 
         if ($open === []) {
-            return $this->say('No work left open.');
+            return $this->console->say('No work left open.');
         }
 
         foreach ($open as $entry) {
-            $this->say('  • ' . $entry->text);
+            $this->console->say('  • ' . $entry->text);
         }
 
         return 0;
@@ -211,12 +215,4 @@ final class JournalCommand implements Command
         return trim(implode(' ', array_slice($input->arguments(), $from)));
     }
 
-    private function say(string ...$lines): int
-    {
-        foreach ($lines as $line) {
-            fwrite(STDOUT, $line . "\n");
-        }
-
-        return 0;
-    }
 }

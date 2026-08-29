@@ -75,6 +75,18 @@ final class SessionsTest extends TestCase
     }
 
     /**
+     * A session wears two names — the id its transcript is called after, and the hashed folder its state
+     * lives in. A person reading either off their screen must not have to know which they are holding.
+     */
+    public function test_a_session_answers_to_its_state_folder_as_well_as_its_id(): void
+    {
+        $session = $this->sessions()->named('aaaa')->unwrap();
+
+        $this->assertSame($session->id, $this->sessions()->named($session->key())->unwrap()->id);
+        $this->assertNotSame($session->key(), substr($session->id, 0, 5), 'the folder is a hash, not a prefix');
+    }
+
+    /**
      * Nothing mounted is not an error — it is the moment to show the list rather than guess.
      */
     public function test_nothing_is_mounted_until_a_session_is_chosen(): void

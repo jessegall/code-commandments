@@ -135,9 +135,17 @@ final class Workspace
      */
     public function sessionKey(): string
     {
-        return $this->sessionId === null
-            ? self::DEFAULT_SESSION
-            : substr(sha1($this->sessionId), 0, self::KEY_LENGTH);
+        return $this->sessionId === null ? self::DEFAULT_SESSION : self::keyFor($this->sessionId);
+    }
+
+    /**
+     * The folder name $sessionId is filed under. The ONE place the session id becomes a folder, so
+     * anything that has to recognise a folder by its session — or a session by its folder — asks here
+     * rather than re-deriving a hash that must agree.
+     */
+    public static function keyFor(string $sessionId): string
+    {
+        return substr(sha1($sessionId), 0, self::KEY_LENGTH);
     }
 
     /**

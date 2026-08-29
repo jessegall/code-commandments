@@ -4754,6 +4754,52 @@ class AstNode
     }
 
     /**
+     * Every method this class-like declares, as `name => visibility` (`public`/`protected`/`private`).
+     * PHP will not let an override be STRICTER than the method it overrides, and it decides that at
+     * class-load — a fatal no `try` can catch — so this is what a reader consults BEFORE loading a class
+     * it did not write.
+     *
+     * @return array<string, string>
+     */
+    public function methodVisibilities(): array
+    {
+        if (! $this->node instanceof ClassLike) {
+            return [];
+        }
+
+        $visibilities = [];
+
+        foreach ($this->node->getMethods() as $method) {
+            $visibilities[$method->name->toString()] = match (true) {
+                $method->isPrivate() => 'private',
+                $method->isProtected() => 'protected',
+                default => 'public',
+            };
+        }
+
+        return $visibilities;
+    }
+
+    /**
+     * Is $visibility stricter than $than — would declaring a method $visibility where the parent has it
+     * $than be the fatal PHP refuses to compile? Public is the weakest and private the strictest.
+     */
+    public static function isStricterVisibility(string $visibility, string $than): bool
+    {
+        $strictness = ['public' => 0, 'protected' => 1, 'private' => 2];
+
+        return ($strictness[$visibility] ?? 0) > ($strictness[$than] ?? 0);
+    }
+
+    /**
+     * The name of the class THIS declaration extends, or null when it extends nothing (or is not a class).
+     */
+    public function parentClassName(): ?string
+    {
+        return self::parentClassNameOf($this->node);
+    }
+
+    /**
      * The name of the class $declaration extends, or null when it extends nothing (or is not a
      * class at all).
      */

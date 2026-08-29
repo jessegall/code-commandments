@@ -134,6 +134,7 @@ Exit code is non-zero when sins are found.
 | `commandments testing show` | The plan's testing methodology — the working style the user chose at approval, in force for this run. |
 | `commandments stop-condition "<condition>"` | The user's STOP GATE — record what must hold before you may stop, and every stop is held until you have VERIFIED it. Needs no plan and no config. |
 | `commandments journal` | What a compaction took — the decisions, corrections and unfinished work a summary drops, read back out of the session transcript. |
+| `commandments session` | Where this session keeps its state — the folder holding its journal, checklist, plan marker and stop gate. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
 | `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched. |

@@ -101,8 +101,12 @@ final class Custom
      * Load the project's OWN classes — the detectors, sins, skills and packages it wrote into
      * `.commandments/custom/`. The folder is not PSR-4 mapped, so dropping a file in it is what
      * makes its class loadable, and this is the ONE place that happens: the config requires them
-     * before it composes, the catalogs before they discover. `require_once` per file, so a second
-     * load in the same process (the hooks, the fixture harness) never redeclares a class.
+     * before it composes, the catalogs before they discover.
+     *
+     * A file that would FATAL is skipped and named ({@see CustomFile}) rather than required. PHP decides a
+     * redeclaration or a too-strict override at class-load and reports it as a fatal no `try` can catch, so
+     * the only defence is not to load it — and every hook runs in one process, so one such file would
+     * otherwise kill the whole suite while presenting as non-blocking noise.
      */
     public static function load(?string $dir = null): void
     {
@@ -111,9 +115,29 @@ final class Custom
 
         self::autoloadFrom($root, self::snapshot($root, $files));
 
+        $declarations = $files === [] ? [] : Ast\Codebase::scan($root)->declarations();
+
         foreach ($files as $file) {
-            require_once $file;
+            $fault = CustomFile::at($file, $declarations)->fault();
+
+            foreach ($fault as $reason) {
+                self::refuse($file, $reason);
+            }
+
+            if ($fault->isNone()) {
+                require_once $file;
+            }
         }
+    }
+
+    /**
+     * Say which project file was left unloaded and why. It goes to STDERR because that is what a person
+     * actually sees — the harness surfaces a hook's error output — and being told which of your own files
+     * is broken is worth a line, where silently running without it is not.
+     */
+    private static function refuse(string $file, string $reason): void
+    {
+        fwrite(STDERR, "code-commandments: skipped {$file} — {$reason}\n");
     }
 
     /**

@@ -19,6 +19,11 @@ use JesseGall\PhpTypes\Option;
  *
  * This is the ONE home of the vocabulary: the skill that teaches it, the reminder that resurfaces it, the
  * instructions a compaction is summarised under and the digest's own trimming all project from here.
+ *
+ * A case's VALUE is a storage format — it is what a filed {@see Entry} writes down — so renaming one
+ * orphans every entry already written under the old spelling, which reads back as an untagged message.
+ * Change a value only with a {@see \JesseGall\CodeCommandments\Cli\State\Migration} to carry the
+ * existing journals across.
  */
 enum Tag: string
 {

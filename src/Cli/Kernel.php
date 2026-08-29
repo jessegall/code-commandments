@@ -135,6 +135,7 @@ final class Kernel
             new TestingCommand(),
             new StopConditionCommand(),
             new JournalCommand(),
+            new SessionCommand(),
             new HookDispatch(),
             new HookRunner(),
             new Configure(),
