@@ -60,7 +60,7 @@ final readonly class Entry
      */
     public static function fromLine(string $line): Option
     {
-        $fields = explode(self::SEPARATOR, $line);
+        $fields = explode(self::SEPARATOR, $line, self::FIELDS); // The text is last, so it keeps any tab of its own.
 
         if (count($fields) !== self::FIELDS) {
             return Option::none();

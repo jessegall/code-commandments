@@ -35,15 +35,17 @@ final class HooksTest extends TestCase
     {
         HookRegistry::wire($this->root);
 
-        // The builtins bind PostToolUse, Stop, PreToolUse and SessionStart — one entry each.
+        // The builtins bind PostToolUse, Stop, PreToolUse, SessionStart and MessageDisplay — one entry each.
         $this->assertSame(1, $this->dispatchers('PostToolUse'));
         $this->assertSame(1, $this->dispatchers('Stop'));
         $this->assertSame(1, $this->dispatchers('PreToolUse'));
         $this->assertSame(1, $this->dispatchers('SessionStart'));
+        $this->assertSame(1, $this->dispatchers('MessageDisplay'));
 
-        // PreCompact carries no context channel — we never wire it. (An `additionalContext` payload
-        // there is rejected outright by the harness.)
-        $this->assertSame(0, $this->dispatchers('PreCompact'));
+        // PreCompact carries no `additionalContext` channel, but it does speak: its stdout becomes the
+        // compaction's own instructions. One entry, matched to the automatic trigger alone.
+        $this->assertSame(1, $this->dispatchers('PreCompact'));
+        $this->assertSame(1, $this->dispatchers('PostCompact'));
     }
 
     public function test_it_converges_and_strips_our_old_entries_while_keeping_foreign_ones(): void

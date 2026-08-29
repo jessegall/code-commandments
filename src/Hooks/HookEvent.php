@@ -206,6 +206,17 @@ final class HookEvent
     }
 
     /**
+     * Is this the FIRST flush of its message? A delta carries only the lines completed since the previous
+     * flush, so a message's opening — its {@see \JesseGall\CodeCommandments\Cli\Journal\Tag} prefix and
+     * its first line — exists in this flush alone. A long message reaches its `final` flush having long
+     * since streamed the part that says what it is.
+     */
+    public function isFirstFlush(): bool
+    {
+        return ($this->payload['index'] ?? null) === 0;
+    }
+
+    /**
      * The shell command a `Bash` tool call is about to run (empty for other tools).
      */
     public function command(): string

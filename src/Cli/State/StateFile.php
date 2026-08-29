@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\State;
 
+use JesseGall\CodeCommandments\Support\File;
+
 /**
  * The ONE format every session-scoped state file is written in — the stop gate, the plan marker, the
  * plan's constraints and testing choice, every hook counter. An owner declares WHAT its values mean
@@ -49,7 +51,9 @@ final class StateFile
 
     /**
      * Write $state, then the list section (when this file keeps one), then the legend — three
-     * sections divided by `-----`, or two where the legend declares no list. Creates the folder.
+     * sections divided by `-----`, or two where the legend declares no list. Creates the folder, and
+     * goes through {@see File::write} so a reader concurrent with the write sees one whole file or the
+     * other — hooks write these from several processes at once.
      *
      *   name: value          ← the state, NAMED (never a positional line a reader must count to)
      *   -----
@@ -69,7 +73,7 @@ final class StateFile
         $sections[] = [$this->legend->render()];
 
         @mkdir(dirname($this->path), 0777, true);
-        @file_put_contents($this->path, $this->join($sections));
+        File::write($this->path, $this->join($sections));
     }
 
     public function delete(): void

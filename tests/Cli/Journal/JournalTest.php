@@ -188,6 +188,54 @@ final class JournalTest extends TestCase
     }
 
     /**
+     * A pinned fact was marked precisely because it must outlive the conversation around it, so age is
+     * exactly what must not evict it.
+     */
+    public function test_a_pinned_fact_survives_an_overflowing_index(): void
+    {
+        $journal = $this->journal();
+        $journal->file($this->agent('[!!] motion.ts is FORBIDDEN'));
+
+        for ($i = 0; $i < 4100; $i++) {
+            $journal->file($this->agent("[i] message {$i}"));
+        }
+
+        $entries = $journal->entries();
+
+        $this->assertCount(4000, $entries);
+        $this->assertSame('[!!] motion.ts is FORBIDDEN', $entries[0]->text);
+        $this->assertSame('[!!] motion.ts is FORBIDDEN', $journal->pinned()[0]->text);
+    }
+
+    /**
+     * A cancelled compaction that never came back leaves the agent working on — so the yes it left behind
+     * must not wave the NEXT compaction through unheld.
+     */
+    public function test_a_preparation_expires_once_the_session_works_on(): void
+    {
+        $journal = $this->journal();
+        $journal->prepare();
+
+        $this->assertTrue($journal->isPreparedForCompaction());
+
+        for ($i = 0; $i < 60; $i++) {
+            $journal->file($this->agent("[i] carried on {$i}"));
+        }
+
+        $this->assertFalse($journal->isPreparedForCompaction());
+    }
+
+    /**
+     * A tab inside a message must not make the entry vanish from the index.
+     */
+    public function test_text_carrying_a_tab_still_round_trips(): void
+    {
+        $entry = new Entry(Kind::Agent, 'now', 't', 'm', Option::none(), "a\tb\tc");
+
+        $this->assertSame("a\tb\tc", Entry::fromLine($entry->toLine())->unwrap()->text);
+    }
+
+    /**
      * A hook appends on every message flush, so the file must not grow without end.
      */
     public function test_the_index_is_bounded(): void

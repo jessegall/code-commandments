@@ -17,6 +17,8 @@ use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
 use JesseGall\CodeCommandments\Hooks\Handlers\SourceReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\CompactionReminder;
+use JesseGall\CodeCommandments\Hooks\Handlers\CompactionGate;
+use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\Handlers\WorkingState;
 use JesseGall\CodeCommandments\Cli\Install;
 use JesseGall\CodeCommandments\Cli\Sync;
@@ -58,6 +60,8 @@ final class HookRegistry
         ConstraintReminder::class,
         TestingReminder::class,
         StopConditionReminder::class,
+        JournalRecorder::class,
+        CompactionGate::class,
         SessionReset::class,
         SourceReminder::class,
         SkillReminder::class,

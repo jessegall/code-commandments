@@ -25,6 +25,13 @@ final class Journal
      */
     private const int CAPACITY = 4000;
 
+    /**
+     * How many entries a preparation survives before the compaction it was for counts as never having come.
+     * A held compaction re-fires within a turn or two of real work, so anything beyond that is a session
+     * that carried on — and must be held again rather than sail through on a stale yes.
+     */
+    private const int PREPARATION_LIFE = 60;
+
     public function __construct(private readonly StateFile $file) {}
 
     public static function inSession(Workspace $workspace): self
@@ -45,6 +52,8 @@ final class Journal
                 'chunk' => 'how many compactions have happened — entry chunks are numbered from 0',
                 'prepared' => 'yes = the agent has already been sent back once to prepare for the pending '
                     . 'compaction, so the next attempt proceeds instead of being cancelled again',
+                'prepared_at' => 'how many entries had been filed when that happened. Work done since means '
+                    . 'the compaction never came, so the preparation is spent and the next one is held again',
             ],
             defaults: new State(
                 transcript: '',
@@ -52,6 +61,7 @@ final class Journal
                 previous_session: '',
                 chunk: 0,
                 prepared: false,
+                prepared_at: 0,
             ),
             list: 'one `kind<TAB>time<TAB>turn<TAB>message<TAB>tag<TAB>text` per line, oldest first — the '
                 . 'index. `kind` is who spoke, `tag` is what the message said it carried ([!!] pinned, [!] '
@@ -80,15 +90,60 @@ final class Journal
     }
 
     /**
-     * File $entry. The oldest are dropped once {@see CAPACITY} is reached, so the file a per-flush hook
-     * writes stays bounded.
+     * File $entry, dropping the oldest once {@see CAPACITY} is reached so the index stays bounded. A
+     * PINNED entry is never dropped: it was marked precisely because it must outlive the conversation
+     * around it, and a long session would otherwise age out the very facts it was told to keep.
      */
     public function file(Entry $entry): void
     {
         $state = $this->file->read();
-        $items = [...$state->items(), $entry->toLine()];
 
-        $this->file->write($state->withItems(array_slice($items, -self::CAPACITY)));
+        $this->file->write($state->withItems($this->bounded([...$state->items(), $entry->toLine()])));
+    }
+
+    /**
+     * $lines cut to {@see CAPACITY}, oldest first out, keeping every pinned line whatever its age — their
+     * room is taken out of the budget before anything else, so the bound holds rather than growing by one
+     * for every fact that was pinned.
+     *
+     * @param  list<string>  $lines
+     * @return list<string>
+     */
+    private function bounded(array $lines): array
+    {
+        if (count($lines) <= self::CAPACITY) {
+            return $lines;
+        }
+
+        $budget = max(0, self::CAPACITY - count(array_filter($lines, $this->isPinnedLine(...))));
+        $kept = [];
+
+        foreach (array_reverse($lines, preserve_keys: true) as $at => $line) {
+            if ($this->isPinnedLine($line)) {
+                $kept[$at] = $line;
+
+                continue;
+            }
+
+            if ($budget <= 0) {
+                continue;
+            }
+
+            $kept[$at] = $line;
+            $budget--;
+        }
+
+        ksort($kept);
+
+        return array_values($kept);
+    }
+
+    /**
+     * Was $line filed as a fact that must outlive the conversation around it?
+     */
+    private function isPinnedLine(string $line): bool
+    {
+        return Entry::fromLine($line)->isSomeAnd(fn (Entry $entry) => $entry->isPinned());
     }
 
     /**
@@ -139,18 +194,25 @@ final class Journal
     }
 
     /**
-     * Has the agent already been sent back once to prepare for the compaction now pending? The gate
-     * cancels a compaction only on the first attempt; without this the next attempt would be cancelled
-     * too, and the session could never compact at all.
+     * Has the agent already been sent back once to prepare for the compaction now pending? The gate cancels
+     * a compaction only on its first attempt; without this the next would be cancelled too and the session
+     * could never compact at all. The answer EXPIRES: a cancelled compaction that never returned leaves the
+     * agent working on, and a preparation made {@see PREPARATION_LIFE} entries ago was for a compaction that
+     * is not this one — so it is spent, and this one is held in its own right.
      */
     public function isPreparedForCompaction(): bool
     {
-        return $this->file->read()->flag('prepared');
+        $state = $this->file->read();
+
+        return $state->flag('prepared')
+            && count($state->items()) - $state->int('prepared_at') < self::PREPARATION_LIFE;
     }
 
     public function prepare(): void
     {
-        $this->file->write($this->file->read()->with(prepared: true));
+        $state = $this->file->read();
+
+        $this->file->write($state->with(prepared: true, prepared_at: count($state->items())));
     }
 
     /**
