@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
+use JesseGall\CodeCommandments\Cli\StopOwner;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Hooks\StopHookCap;
 use JesseGall\CodeCommandments\Workspace;
@@ -259,7 +259,7 @@ final class StopConditionCommand implements Command
      */
     private function silences(StopConditionGate $gate): void
     {
-        if (PlanMarker::inSession(Workspace::at($this->io->projectRoot()))->isActive()) {
+        if (new StopOwner(Workspace::at($this->io->projectRoot()))->isAPlan()) {
             fwrite(STDOUT, "  ⚠ A plan is active, so these hold NOTHING yet — the plan owns the stop.\n"
                 . "    They take over at `commandments plan done`.\n");
 

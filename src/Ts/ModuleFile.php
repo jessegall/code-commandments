@@ -9,8 +9,6 @@ use JesseGall\CodeCommandments\Ts\Expr\Expr;
 use JesseGall\CodeCommandments\Ts\Node\ClassDecl;
 use JesseGall\CodeCommandments\Ts\Node\Module;
 use JesseGall\CodeCommandments\Ts\Node\Node;
-use JesseGall\CodeCommandments\Ts\Node\Param;
-use JesseGall\CodeCommandments\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\Ts\Parser;
 
 /**
@@ -148,13 +146,7 @@ final class ModuleFile
      */
     private static function annotations(Node $node): array
     {
-        $annotation = match (true) {
-            $node instanceof Param => $node->type,
-            $node instanceof VariableDecl => $node->typeAnnotation,
-            default => null,
-        };
-
-        $named = $annotation?->references() ?? [];
+        $named = $node->annotation()?->references() ?? [];
 
         if (count($named) !== 1) {
             return [];

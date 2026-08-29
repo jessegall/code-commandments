@@ -472,7 +472,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `TestingReminder` | `PostToolUse` | Re-surfaces the active plan's testing methodology once every 25 tool uses. |
 | `StopConditionReminder` | `Stop, UserPromptSubmit, PostToolUse` | Holds every stop while a `commandments stop-condition "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it. |
 | `JournalRecorder` | `MessageDisplay, UserPromptSubmit, PostCompact, SessionStart` | Files each message, its tag and every compaction boundary into the session journal, so `commandments journal` can rebuild what a compaction dropped. |
-| `CompactionGate` | `PreCompact/auto` | Cancels the first automatic compaction so you can pin what must survive, then writes the compaction its own instructions from the journal. |
+| `CompactionGate` | `PreCompact` | Writes a compaction its own instructions from the journal, naming the facts and the unfinished work the summary may not drop. |
 | `WriteGate` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit, PreToolUse/NotebookEdit, PostToolUse/Bash` | Refuses a file-changing tool while no `[!start]` stands, so work is always declared before it happens and unfinished work survives a compaction. |
 | `JournalReminder` | `PostToolUse, Stop` | Resurfaces the journal tags as you work, and holds one stop while work you declared is still open. |
 | `BoardReminder` | `Stop` | At the end of a turn, names the work waiting on YOU — a worker that has reported is a decision nobody has made. |

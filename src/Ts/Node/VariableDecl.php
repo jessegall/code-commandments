@@ -48,6 +48,11 @@ final class VariableDecl extends Node
         return $this->pattern->names();
     }
 
+    public function annotation(): ?TypeNode
+    {
+        return $this->typeAnnotation;
+    }
+
     /**
      * The initializer's own nodes — a `const x = useThing()` call, or the parameters of a
      * `const load = (page: number) => …` arrow, which are real parameters a rule judges like any

@@ -9,16 +9,13 @@ use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Support\Binary;
 
 /**
- * Stands in front of an AUTOMATIC compaction — the moment a session loses what the user decided, and never
- * a compaction the user asked for themselves. The first attempt is cancelled and the agent sent back to pin
- * anything it would be lost without; the attempt after that goes through carrying instructions built from
- * the {@see Journal} that tell the summariser what must survive. Cancelling happens ONCE because a blocked
- * compaction does not re-run at once — the harness carries on uncompacted and the context only grows — so
- * {@see Journal::isPreparedForCompaction} guarantees the next attempt lands, and expires so a compaction
- * that never came back leaves no yes behind it.
+ * Writes a compaction its own instructions from the {@see Journal} — the facts and the unfinished work the
+ * summary may not drop — on EVERY compaction, asked-for or automatic, since a summary the user requested
+ * loses as much as one the context forced. It never cancels one: blocking does not defer a compaction, so
+ * the turn it buys is paid for in the very resource that has run out. Pinning happens as the work does,
+ * which is {@see CompactionReminder}'s job.
  */
 final class CompactionGate extends Hook
 {
@@ -28,63 +25,19 @@ final class CompactionGate extends Hook
      */
     private const int CARRIED = 12;
 
-    /**
-     * The compaction this gate is for — the one the harness runs because the context filled up.
-     */
-    private const string AUTOMATIC = 'auto';
-
     public function summary(): string
     {
-        return 'Cancels the first automatic compaction so you can pin what must survive, then writes the compaction its own instructions from the journal.';
+        return 'Writes a compaction its own instructions from the journal, naming the facts and the unfinished work the summary may not drop.';
     }
 
     public function bindings(): array
     {
-        return [new HookBinding('PreCompact', self::AUTOMATIC)];
+        return [new HookBinding('PreCompact')];
     }
 
     protected function onPreCompact(HookEvent $event): int
     {
-        if ($event->trigger() !== self::AUTOMATIC) {
-            return $this->pass(); // A compaction the user asked for is theirs; the binding says so too, and the hook holds to it either way.
-        }
-
-        $journal = Journal::inSession($event->sessionWorkspace());
-
-        if (! $journal->isPreparedForCompaction()) {
-            $journal->prepare();
-
-            return $this->block($this->warning($event, $journal));
-        }
-
-        return $this->instruct($this->instructions($journal));
-    }
-
-    /**
-     * What the agent is told when the compaction is cancelled — one turn to record what only it knows,
-     * before the summary takes it.
-     */
-    private function warning(HookEvent $event, Journal $journal): string
-    {
-        $binary = Binary::in($event->root);
-        $open = $this->listing('You have work OPEN and unfinished — say where each stands, so the far side knows:', $journal->openSpans());
-
-        return <<<TEXT
-            Code Commandments — the context is FULL and a compaction is about to run. It has been held for ONE
-            turn, and will proceed on the next attempt whatever you do now.
-
-            A compaction keeps what was DONE and loses what was DECIDED — the ruling the user gave once, the
-            approach you changed your mind about, the thing you are half-way through. Spend this turn recording
-            what you would be lost without:
-
-              {$binary} journal remember "<the fact you must not lose>"
-
-            Pin the user's standing rulings, the constraint you keep nearly breaking, and the decision behind the
-            work in hand. Then close or restate any work you have open. Do NOT start anything new.
-
-            `{$binary} journal instructions` is the whole brief, if you need it.
-            {$open}
-            TEXT;
+        return $this->instruct($this->instructions(Journal::inSession($event->sessionWorkspace())));
     }
 
     /**

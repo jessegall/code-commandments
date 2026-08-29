@@ -173,34 +173,28 @@ final class CompactionGateTest extends TestCase
     }
 
     /**
-     * The first automatic compaction buys the agent one turn to record what only it knows.
+     * A compaction is never held. Blocking one does not defer it — the harness carries on uncompacted —
+     * so the turn it buys is paid for in the context that has already run out.
      */
-    public function test_the_first_automatic_compaction_is_held(): void
+    public function test_a_compaction_is_instructed_rather_than_held(): void
     {
         $emitted = $this->fire(new CompactionGate, ['hook_event_name' => 'PreCompact', 'trigger' => 'auto']);
 
         $this->assertCount(1, $emitted);
-        $this->assertTrue($emitted[0]->blockReason->isSome());
-        $this->assertStringContainsString('journal remember', $emitted[0]->blockReason->unwrap());
-        $this->assertTrue($this->journal()->isPreparedForCompaction());
+        $this->assertTrue($emitted[0]->blockReason->isNone());
     }
 
     /**
-     * The attempt after that must go through — a compaction held forever is a session that dies at the
-     * hard context wall instead.
+     * The instructions name what the summary may not drop: the facts pinned as the work happened, and the
+     * work still open at the door.
      */
-    public function test_the_next_attempt_is_instructed_rather_than_held(): void
+    public function test_the_instructions_carry_the_pinned_facts_and_the_open_work(): void
     {
         $journal = $this->journal();
         $journal->file(new Entry(Kind::Agent, 'now', 't', 'm', Tag::parse('[!pinned] judge is banned until the build is done'), '[!pinned] judge is banned until the build is done'));
         $journal->file(new Entry(Kind::Agent, 'now', 't', 'm2', Tag::parse('[!start] making Drilldown a composition'), '[!start] making Drilldown a composition'));
 
-        $gate = new CompactionGate;
-        $this->fire($gate, ['hook_event_name' => 'PreCompact', 'trigger' => 'auto']);
-        $emitted = $this->fire($gate, ['hook_event_name' => 'PreCompact', 'trigger' => 'auto']);
-
-        $this->assertCount(1, $emitted);
-        $this->assertTrue($emitted[0]->blockReason->isNone());
+        $emitted = $this->fire(new CompactionGate, ['hook_event_name' => 'PreCompact', 'trigger' => 'auto']);
 
         $instructions = $emitted[0]->json('PreCompact');
 
@@ -210,13 +204,15 @@ final class CompactionGateTest extends TestCase
     }
 
     /**
-     * A compaction the user asked for themselves is theirs, and is never held up.
+     * A compaction the user asked for loses precisely as much as one the context forced, so it is
+     * instructed too — the gate declines to hold either, and never only one of them.
      */
-    public function test_a_manual_compaction_is_not_the_gates_business(): void
+    public function test_a_manual_compaction_is_instructed_as_well(): void
     {
-        $this->assertSame(
-            [],
-            $this->fire(new CompactionGate, ['hook_event_name' => 'PreCompact', 'trigger' => 'manual']),
-        );
+        $emitted = $this->fire(new CompactionGate, ['hook_event_name' => 'PreCompact', 'trigger' => 'manual']);
+
+        $this->assertCount(1, $emitted);
+        $this->assertTrue($emitted[0]->blockReason->isNone());
+        $this->assertStringContainsString('PRESERVE DECISIONS', $emitted[0]->json('PreCompact'));
     }
 }

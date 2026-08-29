@@ -162,23 +162,6 @@ final class JournalTest extends TestCase
         $this->assertStringContainsString('the conversation, rewritten', $journal->entries()[0]->text);
     }
 
-    /**
-     * The gate cancels one compaction attempt, never the next — a session that could never compact would
-     * be worse than one that compacts badly.
-     */
-    public function test_preparing_is_remembered_until_the_compaction_happens(): void
-    {
-        $journal = $this->journal();
-
-        $this->assertFalse($journal->isPreparedForCompaction());
-
-        $journal->prepare();
-        $this->assertTrue($journal->isPreparedForCompaction());
-
-        $journal->markCompaction('now', 'summary');
-        $this->assertFalse($journal->isPreparedForCompaction());
-    }
-
     public function test_it_records_the_transcript_it_indexes_and_the_session_chain(): void
     {
         $journal = $this->journal();
@@ -205,24 +188,6 @@ final class JournalTest extends TestCase
         $this->assertCount(4000, $entries);
         $this->assertSame('[!pinned] motion.ts is FORBIDDEN', $entries[0]->text);
         $this->assertSame('[!pinned] motion.ts is FORBIDDEN', $journal->pinned()[0]->text);
-    }
-
-    /**
-     * A cancelled compaction that never came back leaves the agent working on — so the yes it left behind
-     * must not wave the NEXT compaction through unheld.
-     */
-    public function test_a_preparation_expires_once_the_session_works_on(): void
-    {
-        $journal = $this->journal();
-        $journal->prepare();
-
-        $this->assertTrue($journal->isPreparedForCompaction());
-
-        for ($i = 0; $i < 60; $i++) {
-            $journal->file($this->agent("[!info] carried on {$i}"));
-        }
-
-        $this->assertFalse($journal->isPreparedForCompaction());
     }
 
     /**

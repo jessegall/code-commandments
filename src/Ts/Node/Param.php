@@ -22,6 +22,11 @@ final class Param extends Node
         return [$this->name];
     }
 
+    public function annotation(): ?TypeNode
+    {
+        return $this->type;
+    }
+
     /**
      * Might this argument be MISSING — written `name?: T`, or typed to admit `null`/`undefined`?
      * The same question {@see FieldDecl::isOptional} answers, asked of a parameter.

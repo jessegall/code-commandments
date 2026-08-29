@@ -67,4 +67,13 @@ abstract class Node
     {
         return [];
     }
+
+    /**
+     * The type this node annotates its declared names with — null for a node that annotates none, which
+     * is every node that declares none.
+     */
+    public function annotation(): ?TypeNode
+    {
+        return null;
+    }
 }

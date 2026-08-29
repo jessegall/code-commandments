@@ -96,9 +96,15 @@ final readonly class Reading
         $filed = $this->tagsFiled();
         $lost = array_values(array_diff($said, $filed));
 
+        if ($said === [] && $this->agentSpeech() === []) {
+            return 'You have not spoken in this stretch yet, so there is nothing to check. Tag your work as '
+                . 'you go and run this again.';
+        }
+
         if ($said === []) {
             return <<<TEXT
-                Nothing tagged in this stretch — so there is nothing to check.
+                You have spoken in this stretch and tagged nothing — so there is nothing to check, and no
+                record of what you started or decided.
 
                 If you HAVE been tagging, the recorder is not hearing you: check that `MessageDisplay` is
                 wired, and that you are not reading a different session's record than the one you spoke into.
@@ -131,17 +137,33 @@ final readonly class Reading
     {
         $said = [];
 
-        foreach ($this->session->transcript()->chunk() as $line) {
-            if (! $line->isSpeech() || $line->isPrompt()) {
-                continue;
-            }
-
+        foreach ($this->agentSpeech() as $line) {
             foreach (Tag::taggedLines($line->text) as [, $tagged]) {
                 $said[] = $tagged;
             }
         }
 
         return $said;
+    }
+
+    /**
+     * The agent's own lines in this stretch. A stretch it has not spoken in yet is silent for a reason
+     * nothing is wrong with — which is why the tag check has to tell that apart from a recorder that is
+     * not hearing it.
+     *
+     * @return list<Line>
+     */
+    private function agentSpeech(): array
+    {
+        $spoken = [];
+
+        foreach ($this->session->transcript()->chunk() as $line) {
+            if ($line->isSpeech() && ! $line->isPrompt()) {
+                $spoken[] = $line;
+            }
+        }
+
+        return $spoken;
     }
 
     /**
