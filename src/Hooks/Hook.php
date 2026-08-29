@@ -67,7 +67,9 @@ abstract class Hook
             'UserPromptSubmit' => $this->onUserPromptSubmit($event),
             'PreToolUse' => $this->onPreToolUse($event),
             'SessionStart' => $this->onSessionStart($event),
-            'PreCompact' => $this->pass(),
+            'MessageDisplay' => $this->onMessageDisplay($event),
+            'PreCompact' => $this->onPreCompact($event),
+            'PostCompact' => $this->onPostCompact($event),
             'Stop' => $event->hasPendingBackgroundWork() || $event->isPlanMode() ? $this->pass() : $this->onStop($event),
             default => $this->onManualRun($event),
         };
@@ -92,6 +94,38 @@ abstract class Hook
     }
 
     protected function onPreToolUse(HookEvent $event): int
+    {
+        return $this->pass();
+    }
+
+    /**
+     * A batch of newly completed lines of an assistant message, as it streams. The ONE moment a hook can
+     * see what the agent itself is saying — every other event reports on tools and turns. Display-only:
+     * nothing emitted here reaches the model or changes the stored message, so this moment RECORDS and
+     * never speaks. It fires per flush, several times per message, so a handler must be cheap.
+     */
+    protected function onMessageDisplay(HookEvent $event): int
+    {
+        return $this->pass();
+    }
+
+    /**
+     * The context is ABOUT to be compacted. Two things are possible here and no others: BLOCK (which
+     * cancels the compaction outright) and plain STDOUT, which the harness takes verbatim as the
+     * compaction's own custom instructions ({@see HookIO::instruct}) — so this is the one moment a hook
+     * can tell the summariser what must survive. There is no context channel; see {@see HookIO::INJECTABLE}.
+     */
+    protected function onPreCompact(HookEvent $event): int
+    {
+        return $this->pass();
+    }
+
+    /**
+     * The compaction has happened and $event->compactSummary() is what it produced. Nothing said here
+     * reaches the model — only the user's display — so this moment records the boundary and no more. The
+     * far side is spoken to at `SessionStart` with source `compact`, which compaction re-fires.
+     */
+    protected function onPostCompact(HookEvent $event): int
     {
         return $this->pass();
     }
@@ -137,6 +171,17 @@ abstract class Hook
     protected function quietly(HookEvent $event, string $context): int
     {
         $this->io->inject($event->name(), $context, quietly: true);
+
+        return 0;
+    }
+
+    /**
+     * Write the instructions this compaction is to be summarised under — the `PreCompact` reply that is not
+     * a block ({@see HookResponse::instructing}).
+     */
+    protected function instruct(string $text): int
+    {
+        $this->io->emit(HookResponse::instructing($text), 'PreCompact');
 
         return 0;
     }

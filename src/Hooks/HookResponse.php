@@ -7,21 +7,23 @@ namespace JesseGall\CodeCommandments\Hooks;
 use JesseGall\PhpTypes\Option;
 
 /**
- * What the harness is told after a hook moment — three shapes and no more: SILENT, a BLOCK carrying a
- * reason, or injected CONTEXT (kept out of the transcript when the handler asked). A block wins over
- * context, and it is the ONE place the wire shape is written ({@see json}), so a handler names what it
- * wants to say and never the protocol's own keys.
+ * What the harness is told after a hook moment — four shapes and no more: SILENT, a BLOCK carrying a
+ * reason, injected CONTEXT (kept out of the transcript when the handler asked), or the compaction
+ * INSTRUCTIONS a `PreCompact` writes. A block wins over both, and this is the ONE place the wire shape is
+ * written ({@see json}), so a handler names what it wants to say and never the protocol's own keys.
  */
 final readonly class HookResponse
 {
     /**
      * @param  Option<string>  $blockReason
      * @param  Option<string>  $context
+     * @param  Option<string>  $instructions
      */
     private function __construct(
         public Option $blockReason,
         public Option $context,
-        public bool $suppressOutput = false,
+        public bool $suppressOutput,
+        public Option $instructions,
     ) {}
 
     /**
@@ -29,7 +31,21 @@ final readonly class HookResponse
      */
     public static function silent(): self
     {
-        return new self(Option::none(), Option::none());
+        return new self(Option::none(), Option::none(), false, Option::none());
+    }
+
+    /**
+     * The instructions a compaction is to be summarised UNDER — the one thing a `PreCompact` says besides
+     * blocking. The harness takes such a hook's stdout verbatim as `newCustomInstructions`, so this shape
+     * travels as raw text ({@see json}).
+     */
+    public static function instructing(string $text): self
+    {
+        $text = trim($text);
+
+        return $text === ''
+            ? self::silent() // The harness keeps only non-empty output; saying nothing is the same answer, plainly.
+            : new self(Option::none(), Option::none(), false, Option::some($text));
     }
 
     /**
@@ -37,7 +53,7 @@ final readonly class HookResponse
      */
     public static function blocking(string $reason): self
     {
-        return new self(Option::some($reason), Option::none());
+        return new self(Option::some($reason), Option::none(), false, Option::none());
     }
 
     /**
@@ -46,7 +62,7 @@ final readonly class HookResponse
      */
     public static function injecting(string $context, bool $quietly = false): self
     {
-        return new self(Option::none(), Option::some($context), $quietly);
+        return new self(Option::none(), Option::some($context), $quietly, Option::none());
     }
 
     /**
@@ -58,6 +74,7 @@ final readonly class HookResponse
     {
         $reasons = [];
         $contexts = [];
+        $instructions = [];
         $quietly = true;
 
         foreach ($responses as $response) {
@@ -69,10 +86,18 @@ final readonly class HookResponse
                 $contexts[] = $context;
                 $quietly = $quietly && $response->suppressOutput;
             }
+
+            foreach ($response->instructions as $text) {
+                $instructions[] = $text;
+            }
         }
 
         if ($reasons !== []) {
             return self::blocking(implode("\n\n", $reasons));
+        }
+
+        if ($instructions !== []) {
+            return self::instructing(implode("\n\n", $instructions)); // The harness joins several hooks' output the same way.
         }
 
         return $contexts === [] ? self::silent() : self::injecting(implode("\n\n", $contexts), $quietly);
@@ -83,7 +108,7 @@ final readonly class HookResponse
      */
     public function isSilent(): bool
     {
-        return $this->blockReason->isNone() && $this->context->isNone();
+        return $this->blockReason->isNone() && $this->context->isNone() && $this->instructions->isNone();
     }
 
     /**
@@ -94,6 +119,10 @@ final readonly class HookResponse
     {
         foreach ($this->blockReason as $reason) {
             return self::encode(['decision' => 'block', 'reason' => $reason]);
+        }
+
+        foreach ($this->instructions as $text) {
+            return $text; // RAW: the harness reads a PreCompact's stdout as the instructions themselves.
         }
 
         $injection = ['hookSpecificOutput' => ['hookEventName' => $event, 'additionalContext' => $this->context->unwrapOr('')]];

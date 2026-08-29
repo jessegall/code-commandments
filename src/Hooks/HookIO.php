@@ -19,8 +19,12 @@ class HookIO
      * The hook events that actually carry an `additionalContext` channel. Emitting the shape on any other
      * event is not merely ignored — the harness REJECTS the whole payload as invalid, so the hook fails
      * loudly on every fire. Stated once here, so no handler can re-learn it the hard way (`PreCompact`
-     * did: it supports only `decision`/`reason`/`continue`/`systemMessage`, and its stdout never reaches
-     * the model, so a pre-compaction nudge is undeliverable by design).
+     * did: it supports only `decision`/`reason`/`continue`/`systemMessage`).
+     *
+     * `PreCompact` is absent because it has no CONTEXT channel; it speaks through a different one. Its
+     * plain stdout is taken verbatim as the compaction's own `newCustomInstructions` — the channel for the
+     * one thing that moment is for, telling the summariser what must survive ({@see
+     * HookResponse::instructing}).
      */
     private const array INJECTABLE = [
         'SessionStart', 'Setup', 'SubagentStart', 'UserPromptSubmit', 'UserPromptExpansion',

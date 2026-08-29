@@ -118,6 +118,94 @@ final class HookEvent
     }
 
     /**
+     * The `.jsonl` transcript of this session — the COMPLETE, lossless conversation, which the harness
+     * stamps on every hook payload. It is the record: the journal indexes it and reads text from it live
+     * rather than keeping a copy, so there is never a second home for a message the transcript already
+     * holds. Empty for a manual CLI run.
+     */
+    public function transcriptPath(): string
+    {
+        return (string) ($this->payload['transcript_path'] ?? '');
+    }
+
+    /**
+     * What triggered a compaction — `auto` (the harness ran out of context) or `manual` (the user typed
+     * `/compact`). It is also the hook MATCHER for `PreCompact`/`PostCompact`, so a hook that speaks only
+     * to automatic compaction binds `new HookBinding('PreCompact', 'auto')` and never fires on the user's
+     * own deliberate one.
+     */
+    public function trigger(): string
+    {
+        return (string) ($this->payload['trigger'] ?? '');
+    }
+
+    /**
+     * The summary compaction produced, off a `PostCompact` payload — what the conversation was rewritten
+     * INTO. Recorded at the boundary so a later reader can see what the summary claimed, beside what the
+     * journal knows actually happened.
+     */
+    public function compactSummary(): string
+    {
+        return (string) ($this->payload['compact_summary'] ?? '');
+    }
+
+    /**
+     * The text of the assistant message that was ending, off a `Stop` payload. The harness supplies it
+     * precisely so a Stop hook need not open and parse the transcript — a 65MB read to answer a question
+     * about one message.
+     */
+    public function lastAssistantMessage(): string
+    {
+        return (string) ($this->payload['last_assistant_message'] ?? '');
+    }
+
+    /**
+     * What the user just typed, off a `UserPromptSubmit` payload — their OWN words, which is the one thing
+     * a compaction summary reliably loses.
+     */
+    public function prompt(): string
+    {
+        return (string) ($this->payload['prompt'] ?? '');
+    }
+
+    /**
+     * The assistant message a `MessageDisplay` flush belongs to. Stable across every flush of the same
+     * message, so the flushes of one message accumulate under one key.
+     */
+    public function messageId(): string
+    {
+        return (string) ($this->payload['message_id'] ?? '');
+    }
+
+    /**
+     * The turn a `MessageDisplay` flush belongs to — what groups the messages the agent wrote between one
+     * user prompt and the next.
+     */
+    public function turnId(): string
+    {
+        return (string) ($this->payload['turn_id'] ?? '');
+    }
+
+    /**
+     * The newly completed lines of an assistant message since the previous `MessageDisplay` flush. Always
+     * whole lines, except on the final flush which may end mid-line.
+     */
+    public function delta(): string
+    {
+        return (string) ($this->payload['delta'] ?? '');
+    }
+
+    /**
+     * Is this the LAST flush of its message? Exactly one flush per message carries it, and it is the
+     * end-of-message signal REGARDLESS of the delta — a message ending on a newline has an empty final
+     * delta, so emptiness is not the test.
+     */
+    public function isFinalFlush(): bool
+    {
+        return $this->flag('final');
+    }
+
+    /**
      * The shell command a `Bash` tool call is about to run (empty for other tools).
      */
     public function command(): string
