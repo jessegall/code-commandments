@@ -64,14 +64,40 @@ final readonly class CustomFile
      */
     private function faultOf(string $fqcn, NodeMatch $declaration): Option
     {
-        if ($this->isAlreadyDeclared($fqcn)) {
-            // A worktree checks out its own copy of the custom folder, so one process can reach the same
-            // class down two paths. `require_once` keys on the resolved path, not the name, so the second
-            // path redeclares.
-            return Option::some("{$fqcn} is already declared — this file is a second copy of it");
+        $elsewhere = $this->declaredElsewhere($fqcn);
+
+        if ($elsewhere->isSome()) {
+            return $elsewhere;
         }
 
         return $this->overrideFault($declaration, $fqcn);
+    }
+
+    /**
+     * Is $fqcn already declared by a DIFFERENT file? That is the fault worth naming: a worktree checks out
+     * its own copy of the custom folder, so one process reaches the same class down two paths, and
+     * `require_once` keys on the path rather than the name.
+     *
+     * Being already declared by the SAME file is not a fault at all — `Custom::load()` runs several times
+     * in one process (the config, the agent catalog, the hook registry each ask for it), and `require_once`
+     * makes every later pass a no-op. Reporting that would bury the case that matters under one line per
+     * file per load, which is the very failure the guard exists to end.
+     *
+     * @return Option<string>
+     */
+    private function declaredElsewhere(string $fqcn): Option
+    {
+        if (! $this->isAlreadyDeclared($fqcn)) {
+            return Option::none();
+        }
+
+        $declaring = new \ReflectionClass($fqcn)->getFileName();
+
+        if ($declaring === false || $declaring === realpath($this->path)) {
+            return Option::none();
+        }
+
+        return Option::some("{$fqcn} is already declared by {$declaring} — this file is a second copy of it");
     }
 
     /**

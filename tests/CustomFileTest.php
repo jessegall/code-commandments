@@ -55,14 +55,33 @@ final class CustomFileTest extends TestCase
      */
     public function test_a_second_copy_of_a_loaded_class_is_refused(): void
     {
-        $path = $this->write('Twin.php', 'final class Twin {}');
-        eval('namespace Probe; final class Twin {}');
+        // OUTSIDE the scanned folder — the two-roots case is precisely a copy the scan cannot see.
+        $elsewhere = $this->root . '-other.php';
+        file_put_contents($elsewhere, "<?php\n\nnamespace Probe;\n\nfinal class Twin {}\n");
+        require $elsewhere;
 
+        $path = $this->write('Twin.php', 'final class Twin {}');
         $fault = $this->fileAt($path)->fault();
 
         $this->assertTrue($fault->isSome());
-        $this->assertStringContainsString('already declared', $fault->unwrap());
-        $this->assertStringContainsString('second copy', $fault->unwrap());
+        $this->assertStringContainsString('already declared by', $fault->unwrap());
+        $this->assertStringContainsString('-other.php', $fault->unwrap());
+    }
+
+    /**
+     * `Custom::load()` runs several times in one process — the config, the agent catalog and the hook
+     * registry each ask for it — and `require_once` makes every later pass a no-op. Reporting that would
+     * print one line per file per load and bury the case that matters in its own noise.
+     */
+    public function test_the_same_file_loaded_again_is_not_a_fault(): void
+    {
+        $path = $this->write('Once.php', 'final class Once {}');
+
+        $this->assertTrue($this->fileAt($path)->fault()->isNone(), 'not yet loaded');
+
+        require $path;
+
+        $this->assertTrue($this->fileAt($path)->fault()->isNone(), 'loaded from this very file — expected');
     }
 
     /**
