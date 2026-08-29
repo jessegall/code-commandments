@@ -20,6 +20,7 @@ should be a value object, and here's the discipline that explains why*.
 - [Usage](#usage)
 - [Configuration](#configuration)
 - [The journal](#the-journal)
+- [Orchestration](#orchestration)
 - [Freezing a file](#freezing-a-file)
 - [Agents](#agents)
 - [Hooks](#hooks)
@@ -319,6 +320,52 @@ commandments session            # where this session keeps its state
 
 The list is built from the transcripts themselves, so a session that ran long before any of
 this existed can still be read back.
+
+## Orchestration
+
+When you are running a build with several agents rather than writing code yourself, `commandments
+build` is the board: who holds which piece of work, and what is waiting on **you**.
+
+It needs nothing declared. An item is a string and a holder is a string, so it works for subagents
+in one checkout before any branch, role or worktree exists.
+
+```bash
+commandments build                                   # the board, ordered by who is waiting
+commandments build claim <item> --by=<who>           # refused if somebody already holds it
+commandments build report <item> --ran="<the check>" # the TOOL runs it and files what came back
+commandments build accept <item>                     # settle it and free the hold
+```
+
+### A report is a claim; a receipt is a measurement
+
+A worker's report is its **words**. A receipt is what a tool **read from a process** — so
+`--ran` is the difference between a number an agent typed and one a process returned. The receipt
+stamps the tree and the merge-base it measured, because a lane's honest number is wrong for the
+branch the moment its base predates the last merge.
+
+### What is refused
+
+| | |
+|---|---|
+| a second claim on a held item | one lane's gated-green work is thrown away at merge |
+| `git merge` into the shared branch by any role but its writer | one writer keeps the branch a place work *arrives* |
+| a rebasing pull while other worktrees stand on the branch | it rewrites the commits they are built on |
+| plan mode while orchestrating | an orchestrator executing a plan has stopped orchestrating |
+
+A hold is a fact about the **board**, never about a process — a worker's process ends every time it
+reports, so a hold that died with it would free the item in the window you are deciding what to hand
+out next. And only work being *done* takes a slot: a worker waiting on your judgement holds none.
+
+### Declaring more
+
+```php
+$config->orchestration(fn ($o) => $o
+    ->branch('to-vue')
+    ->writtenBy('integrator')
+    ->workers(most: 3, prefer: 2));
+```
+
+Nothing is required, and an undeclared rule refuses nobody rather than guessing a default.
 
 ## Freezing a file
 

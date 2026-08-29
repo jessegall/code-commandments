@@ -100,6 +100,23 @@ ONLY messages kept. And when something genuinely must not be lost, do not merely
 written into the summariser's own instructions. `vendor/bin/commandments journal
 instructions` is the whole brief; load the `commandments-journal` skill for the discipline.
 
+**Running a build with WORKERS — the orchestration mode.** When you are dispatching agents
+rather than writing code, `commandments build` is the board: who holds which piece of work,
+and what is waiting on YOU. It needs nothing declared — an item is a string and a holder is
+a string:
+
+  `commandments build claim <item> --by=<who>` — refused if somebody already holds it
+  `commandments build report <item> --ran="<the check>"` — the TOOL runs it, so the number
+    filed is the one a process returned rather than one you typed
+  `commandments build accept <item>` — settle it and free the hold
+
+A worker's report is its WORDS; a receipt is what a tool READ. Never let a claim become a
+fact by being repeated, and remember a lane's honest number is wrong for the branch the
+moment its base predates the last merge. Prefer two workers running: a slot is a claim on
+your attention, and the third one's cost is paid by the other two waiting on you. Load the
+`commandments-orchestration` skill for the discipline — it carries what no refusal can
+enforce.
+
 **Stop conditions — when the user says "keep going until X".** Record it at once:
 `vendor/bin/commandments stop-condition "<condition>"`. While it stands you may not stop: every
 stop is held and sends you back to VERIFY the condition — actually run the command and

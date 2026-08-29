@@ -217,6 +217,7 @@ $disabledHooks = function (Config $config): void {
         // Hooks\Handlers\JournalRecorder::class,
         // Hooks\Handlers\JournalReminder::class,
         // Hooks\Handlers\JudgeReminder::class,
+        // Hooks\Handlers\MergeGate::class,
         // Hooks\Handlers\PlanReminder::class,
         // Hooks\Handlers\Remind::class,
         // Hooks\Handlers\SessionReset::class,
