@@ -19,10 +19,17 @@ use JesseGall\CodeCommandments\Workspace;
 final class Library
 {
     /**
-     * The hand-written process skills — not the teaching skills projected from sins, but documents
-     * that ship as they are.
+     * Where the hand-written process skills live — the documents that ship as they are, rather than the
+     * teaching skills projected from sins. They are DISCOVERED rather than listed: a list is a second
+     * place to remember, and forgetting it publishes nothing while looking like it worked. The journal
+     * and orchestration skills were both written, both synced, and neither reached an agent.
      */
-    private const array STANDALONE = ['executing-plans', 'stop-condition', 'writing-detectors'];
+    private const string STANDALONE = 'skills';
+
+    /**
+     * The subfolder holding the skills projected from sins, which are published by the catalog above.
+     */
+    private const string GENERATED = 'commandments';
 
     private const string MANIFEST = 'published-skills';
 
@@ -89,10 +96,8 @@ final class Library
             }
         }
 
-        foreach (self::STANDALONE as $slug) {
-            $source = "{$packageRoot}/skills/{$slug}";
-
-            if (is_dir($source) && Directory::copy($source, $this->path(Skill::idFor($slug)))) {
+        foreach ($this->standalone($packageRoot) as $slug => $source) {
+            if (Directory::copy($source, $this->path(Skill::idFor($slug)))) {
                 $ids[] = Skill::idFor($slug);
             }
         }
@@ -134,6 +139,27 @@ final class Library
                 Directory::delete("{$dir}/{$stale}");
             }
         }
+    }
+
+    /**
+     * Every hand-written skill the package ships, by slug. Anything directly under `skills/` that is not
+     * the generated `commandments/` tree is one, so writing the folder is all it takes to publish it.
+     *
+     * @return array<string, string>  slug => its directory
+     */
+    private function standalone(string $packageRoot): array
+    {
+        $found = [];
+
+        foreach (glob("{$packageRoot}/" . self::STANDALONE . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
+            $slug = basename($dir);
+
+            if ($slug !== self::GENERATED && is_file("{$dir}/SKILL.md")) {
+                $found[$slug] = $dir;
+            }
+        }
+
+        return $found;
     }
 
     /**

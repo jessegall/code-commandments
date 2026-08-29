@@ -89,6 +89,20 @@ about the work, and this is an obituary about the worker, which may have been do
 short ping settles it, and settles it cheaply — mistaking four healthy agents for dead is a worse mistake
 than the one you were checking for.
 
+### Losing one is not always your choice
+
+An agent can vanish involuntarily, and the observed pattern is the alarming one: **the ones that vanish
+are the ones carrying the most history.** Two builders lost at roughly 963k and 800k accumulated tokens;
+the lighter agents survived. If that holds, then a standing assistant — which accumulates by definition —
+is the most likely to go, and it is the one you cannot replace.
+
+So the rule is not only *do not respawn*. It is: **a role you cannot respawn is a single point of failure
+you must plan around**, and the only defence is to move its judgement out of it *as it accumulates*.
+
+**Write a standing role's ruling or calibration down WHEN IT HAPPENS, not at the end.** The failure gives
+no warning, and "at the end" is a moment you may not get. A profile's `roles/<role>.md` — what it is, what
+it may never do, and **what it has caught** — is not documentation for somebody else. It is the backup.
+
 ## Every ruling carries its reason
 
 Rule once, and say **why**. A conclusion can be re-derived by anyone; a reason is the only thing that lets

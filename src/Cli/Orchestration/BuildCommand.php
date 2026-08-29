@@ -282,7 +282,10 @@ final class BuildCommand implements Command
         $item = $input->argument(1)->unwrapOr('');
 
         if ($board->on($item)->isNone()) {
-            return $this->console->say("Nobody holds {$item} — claim it first.");
+            return $this->console->say(
+                "Nobody holds {$item}.",
+                "  Claim it first: `commandments build claim {$item} --by=<you>`",
+            );
         }
 
         $board->move($item, Stage::Reported);
@@ -312,7 +315,10 @@ final class BuildCommand implements Command
         }
 
         if ($board->on($item)->isNone()) {
-            return $this->console->say("Nobody holds {$item}.");
+            return $this->console->say(
+                "Nobody holds {$item}.",
+                "  Claim it first: `commandments build claim {$item} --by=<who>`",
+            );
         }
 
         $board->rework($item);
