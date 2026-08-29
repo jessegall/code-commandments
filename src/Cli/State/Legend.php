@@ -74,7 +74,11 @@ final class Legend
      */
     public function render(): string
     {
-        $blocks = [$this->about, $this->key()];
+        $blocks = [$this->about];
+
+        if ($this->variables !== []) {
+            $blocks[] = $this->key(); // A file may keep only a list; there is then no key to write.
+        }
 
         if ($this->hasList()) {
             $blocks[] = "Between the dividers is the list: {$this->list}";
@@ -86,7 +90,9 @@ final class Legend
     }
 
     /**
-     * The named values, one per line, aligned so the file reads as a key.
+     * The named values, one per line, aligned so the file reads as a key. Only called where there ARE
+     * some — a file that keeps a list and nothing else has no key, and writing an empty heading for one
+     * would describe a block the file does not have.
      */
     private function key(): string
     {

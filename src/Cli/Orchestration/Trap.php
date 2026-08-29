@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Orchestration;
+namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
 /**
  * Something about the WORLD that catches anyone who does not know it — `setsid` is absent on macOS, the

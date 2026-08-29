@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Orchestration;
+namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
 /**
  * Who is holding an item, and since when. It is the half of a {@see Claim} that does NOT move: a worker

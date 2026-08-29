@@ -19,6 +19,7 @@ use JesseGall\CodeCommandments\Cli\Plan\ConstraintsCommand;
 use JesseGall\CodeCommandments\Cli\Plan\TestingCommand;
 use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionCommand;
 use JesseGall\CodeCommandments\Cli\Journal\JournalCommand;
+use JesseGall\CodeCommandments\Cli\Orchestration\BuildCommand;
 use JesseGall\CodeCommandments\Cli\Plan\Checks;
 use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
 use JesseGall\CodeCommandments\Cli\Config\Configure;
@@ -136,6 +137,7 @@ final class Kernel
             new StopConditionCommand(),
             new JournalCommand(),
             new SessionCommand(),
+            new BuildCommand(),
             new HookDispatch(),
             new HookRunner(),
             new Configure(),

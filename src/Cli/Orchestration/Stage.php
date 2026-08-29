@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Orchestration;
+namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
 /**
  * Where a claimed item stands. The distinction that earns its keep is between WORKING and REPORTED: one

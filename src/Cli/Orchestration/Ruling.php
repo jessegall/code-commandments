@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Orchestration;
+namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
 /**
  * A decision somebody MADE, on facts as they stood — dated, overturnable, and carrying the REASON, which is

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Orchestration;
+namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
 use JesseGall\CodeCommandments\Cli\State\Legend;
 use JesseGall\CodeCommandments\Cli\State\State;

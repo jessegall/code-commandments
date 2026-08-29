@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Orchestration;
+namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
 
-use JesseGall\CodeCommandments\Orchestration\Board;
-use JesseGall\CodeCommandments\Orchestration\Claim;
-use JesseGall\CodeCommandments\Orchestration\Stage;
+use JesseGall\CodeCommandments\Cli\Orchestration\Board;
+use JesseGall\CodeCommandments\Cli\Orchestration\Claim;
+use JesseGall\CodeCommandments\Cli\Orchestration\Stage;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
@@ -129,7 +129,7 @@ final class BoardTest extends TestCase
 
     public function test_a_claim_survives_the_round_trip(): void
     {
-        $claim = new Claim('a', new \JesseGall\CodeCommandments\Orchestration\Hold('lane-a', 'now'), Stage::Blocked, 3);
+        $claim = new Claim('a', new \JesseGall\CodeCommandments\Cli\Orchestration\Hold('lane-a', 'now'), Stage::Blocked, 3);
         $back = Claim::fromLine($claim->toLine())->unwrap();
 
         $this->assertSame('a', $back->item);

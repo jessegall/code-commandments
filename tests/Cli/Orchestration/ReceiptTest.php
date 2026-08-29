@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Orchestration;
+namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
 
-use JesseGall\CodeCommandments\Orchestration\Receipt;
+use JesseGall\CodeCommandments\Cli\Orchestration\Receipt;
 use PHPUnit\Framework\TestCase;
 
 /**
