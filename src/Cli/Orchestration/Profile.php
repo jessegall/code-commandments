@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
+use JesseGall\CodeCommandments\Support\File;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -20,6 +21,11 @@ final readonly class Profile
     private const string TYPE = 'type:';
 
     /**
+     * The script a profile runs to stand a lane up, given its path and name.
+     */
+    public const string SETUP = 'lane.sh';
+
+    /**
      * The documents a profile is made of, each answering one question a brief would otherwise re-state.
      */
     public const array DOCUMENTS = [
@@ -33,6 +39,56 @@ final readonly class Profile
         public string $name,
         public string $path,
     ) {}
+
+    /**
+     * Add one entry to a document, stamped with when and against what. APPEND is the verb that matters:
+     * a role's record grows through a build — what it caught, a correction it made, a rule learned the
+     * hard way — and "write it down when it happens, not at the end" only works if adding a line costs
+     * one command. A helper that rewrites is used once; one that appends is used twenty times.
+     */
+    public function append(string $document, string $entry, string $stamp): bool
+    {
+        $path = $this->pathTo($document);
+        $existing = is_file($path) ? rtrim((string) file_get_contents($path)) : '# ' . basename($document);
+
+        @mkdir(dirname($path), 0777, true);
+
+        return File::write($path, $existing . "\n\n- {$stamp} {$entry}\n");
+    }
+
+    /**
+     * Replace a document outright — the rare case, where the whole thing is being rewritten rather than
+     * grown.
+     */
+    public function set(string $document, string $body): bool
+    {
+        @mkdir(dirname($this->pathTo($document)), 0777, true);
+
+        return File::write($this->pathTo($document), rtrim($body) . "\n");
+    }
+
+    /**
+     * Where a document lives — `traps` at the top, `roles/boktor` beneath.
+     */
+    private function pathTo(string $document): string
+    {
+        return $this->path . '/' . $document . '.md';
+    }
+
+    /**
+     * The script that stands a lane up — `lane.sh` in the profile, run with the lane's path and name.
+     * It is a FILE the project edits rather than steps the package guesses: what a worktree needs to be
+     * usable is per-project (a vendor copy, node_modules, a database, a port block), and a package
+     * inventing them would be guessing constants from one build.
+     *
+     * @return Option<string>
+     */
+    public function setupScript(): Option
+    {
+        $path = $this->path . '/' . self::SETUP;
+
+        return is_file($path) ? Option::some($path) : Option::none();
+    }
 
     public function exists(): bool
     {

@@ -20,6 +20,7 @@ use JesseGall\CodeCommandments\Cli\Plan\TestingCommand;
 use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionCommand;
 use JesseGall\CodeCommandments\Cli\Journal\JournalCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\BuildCommand;
+use JesseGall\CodeCommandments\Cli\Orchestration\LaneCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\OrchestrateCommand;
 use JesseGall\CodeCommandments\Cli\Plan\Checks;
 use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
@@ -150,6 +151,7 @@ final class Kernel
             new SessionCommand(),
             new BuildCommand(),
             new OrchestrateCommand(),
+            new LaneCommand(),
             new HookDispatch(),
             new HookRunner(),
             new Configure(),

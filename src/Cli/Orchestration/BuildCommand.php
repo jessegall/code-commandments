@@ -259,8 +259,10 @@ final class BuildCommand implements Command
     }
 
     /**
-     * Name any board left inside a worktree — most useful when THIS one is empty, since that is the shape
-     * a reader would otherwise resolve by finding two answers that disagree.
+     * Name any board found inside a worktree — most useful when THIS one is empty, since that is the
+     * shape a reader would otherwise resolve only by finding two answers that disagree. It says THAT one
+     * exists and does not say why: the likeliest cause is a worktree running an older vendor, and a
+     * warning confident about a cause it did not measure is the very thing it exists to catch.
      */
     private function sayStranded(): int
     {
@@ -268,7 +270,8 @@ final class BuildCommand implements Command
             $this->console->say(
                 '',
                 "  ! a board also exists at {$path} — it is not this one.",
-                '    Anything filed there is unread: it was written before boards were anchored to the project.',
+                '    Anything filed there is unread. Check which version that worktree runs: a lane keeps',
+                '    the vendor it was seeded with, so it may be writing with an older rule than this one.',
             );
         }
 

@@ -139,6 +139,7 @@ Exit code is non-zero when sins are found.
 | `commandments session` | Where this session keeps its state — the folder holding its journal, checklist, plan marker and stop gate. |
 | `commandments build` | Who is holding which piece of work, and what is waiting on you. |
 | `commandments orchestrate new <name>` | What this project would declare to turn the orchestration refusals on — read from the shape it already has, and what it cannot do yet. |
+| `commandments lane open <name>` | Open a place for a worker to work — the worktree, and whatever your project needs in it. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
 | `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched. |

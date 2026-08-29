@@ -41,6 +41,9 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate list', 'the profiles this project has written')
             ->form('orchestrate show [name]', 'read one out — what an orchestrator loads instead of copying a brief by hand')
             ->form('orchestrate stop', 'stop working under a profile; the profile is untouched')
+            ->form('orchestrate assistant <name> <section> "<text>"', 'APPEND one line to a role — `caught`, `behaviour`, `restrictions`, `brief`. Stamped with the day and the sha, which is the metadata you would forget to type')
+            ->form('orchestrate profile <document> "<text>"', 'append to a profile-level document — `traps`, `behaviour`, `restrictions`')
+            ->option('--set', 'replace the document rather than adding to it — the rare case')
             ->form('orchestrate', 'the declaration to paste, and what will NOT be enforced until something changes')
             ->note('A PROFILE is the durable half — how a team works, in `.commandments/orchestrator/'
                 . 'profiles/<name>/`, committed and reviewed in a diff. An INSTANCE is the live half and '
@@ -62,6 +65,20 @@ final class OrchestrateCommand implements Command
             'list' => $this->list($workspace),
             'show' => $this->show($workspace, $input->argument(1)->unwrapOr('')),
             'stop' => $this->stop($workspace),
+            'assistant', 'role' => $this->write(
+                $workspace,
+                'roles/' . $input->argument(1)->unwrapOr(''),
+                $input->argument(2)->unwrapOr(''),
+                $this->rest($input, from: 3),
+                $input->hasFlag('set'),
+            ),
+            'profile' => $this->write(
+                $workspace,
+                $input->argument(1)->unwrapOr(''),
+                '',
+                $this->rest($input, from: 2),
+                $input->hasFlag('set'),
+            ),
             default => $this->propose($input),
         };
     }
@@ -93,6 +110,7 @@ final class OrchestrateCommand implements Command
 ");
         }
 
+        File::write($dir . '/' . Profile::SETUP, $this->setupStub());
         File::write($dir . '/roles/integrator.md', $this->roleStub('integrator', 'the sole writer to the shared branch — it merges a committed sha, runs the gates on the branch itself, and answers for what landed'));
         File::write($dir . '/roles/auditor.md', $this->roleStub('auditor', 'read-only, on request only — reports violations most-severe first, and a ruling ignored outranks a new finding'));
 
@@ -113,6 +131,37 @@ final class OrchestrateCommand implements Command
         ];
 
         return $this->console->say(...$lines);
+    }
+
+    /**
+     * A starting `lane.sh`, carrying the two facts that have cost real time: a worktree checks out tracked
+     * files and nothing else, and a vendor directory must be COPIED rather than linked. The steps
+     * themselves are the project's own — what makes a worktree usable differs per project, and the
+     * package writing them would be inventing constants from one build.
+     */
+    private function setupStub(): string
+    {
+        return <<<'SH'
+            #!/bin/sh
+            # Stand a lane up. Run by `commandments lane open <name>` with:
+            #   $1  the lane's path      $2  the lane's name
+            #
+            # A worktree checks out TRACKED FILES ONLY — no vendor, no node_modules, no database, no .env.
+            # A lane missing them does not fail loudly: it runs its gates against nothing and reports green.
+            set -e
+
+            ROOT="$(git rev-parse --path-format=absolute --git-common-dir)/.."
+
+            # Copy vendor, never symlink it: composer resolves its base directory from its own real path,
+            # so a linked vendor silently loads and tests the MAIN checkout instead of this one.
+            # cp -c uses copy-on-write where the filesystem has it, which makes this close to free.
+            # cp -c -R "$ROOT/vendor" ./vendor 2>/dev/null || cp -R "$ROOT/vendor" ./vendor
+
+            # npm install --silent
+            # cp "$ROOT/.env" .env
+
+            echo "lane $2 prepared at $1"
+            SH;
     }
 
     /**
@@ -212,6 +261,59 @@ final class OrchestrateCommand implements Command
         }
 
         return $this->console->say("No profile `{$name}`.");
+    }
+
+    /**
+     * Add to a profile's prose. Append is the default because that is how these files are really used: a
+     * role's record GROWS through a build, and the skill's own instruction — write it down when it
+     * happens, not at the end — only holds if adding a line is one cheap command.
+     */
+    private function write(Workspace $workspace, string $document, string $section, string $text, bool $replace): int
+    {
+        $running = Instance::inSession($workspace)->profile();
+
+        if ($running->isNone()) {
+            return $this->console->say('Not orchestrating. `commandments orchestrate use <profile>` first.');
+        }
+
+        if (trim($document, '/') === '' || $text === '') {
+            return $this->console->say('Say where and what: `commandments orchestrate assistant <name> <section> "<text>"`.');
+        }
+
+        foreach (Profiles::of($workspace)->named($running->unwrapOr('')) as $profile) {
+            $entry = $section === '' ? $text : "**{$section}** — {$text}";
+
+            if ($replace) {
+                $profile->set($document, $entry);
+
+                return $this->console->say("▸ Wrote {$document}.md in `{$profile->name}`.");
+            }
+
+            $profile->append($document, $entry, $this->stamp());
+
+            return $this->console->say("▸ Added to {$document}.md in `{$profile->name}`.");
+        }
+
+        return $this->console->say('The profile in force no longer exists.');
+    }
+
+    /**
+     * When it happened and against what. Stamped rather than typed, because a record is worth more for
+     * saying when and against which tree — and that is exactly what a person writing mid-build forgets.
+     */
+    private function stamp(): string
+    {
+        $sha = trim((string) @shell_exec('git -C ' . escapeshellarg($this->io->projectRoot()) . ' rev-parse --short HEAD 2>/dev/null'));
+
+        return $sha === '' ? '(' . gmdate('Y-m-d') . ')' : '(' . gmdate('Y-m-d') . ', ' . $sha . ')';
+    }
+
+    /**
+     * The words after argument $from, joined — a sentence the user typed unquoted.
+     */
+    private function rest(Input $input, int $from): string
+    {
+        return trim(implode(' ', array_slice($input->arguments(), $from)));
     }
 
     private function stop(Workspace $workspace): int
