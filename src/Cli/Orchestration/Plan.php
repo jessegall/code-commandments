@@ -146,6 +146,27 @@ final readonly class Plan
     }
 
     /**
+     * WHY a level exists — the first line of prose under its heading. `where` prints it beside each step,
+     * because a path alone tells you where you are standing and not what you came for.
+     *
+     * @param  list<string>  $path
+     */
+    public function why(array $path): string
+    {
+        $body = $this->dirFor($path) . '/' . self::BODY;
+
+        foreach (explode("\n", is_file($body) ? (string) file_get_contents($body) : '') as $line) {
+            $line = trim($line);
+
+            if ($line !== '' && ! str_starts_with($line, '#') && ! str_starts_with($line, '-')) {
+                return $line;
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Is $path a level that is actually there? A cursor pointing at a closed level would otherwise report
      * a position nothing occupies.
      *

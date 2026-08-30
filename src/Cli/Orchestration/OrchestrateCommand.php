@@ -47,11 +47,13 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate plan open "<title>"', 'start this session\'s plan — the work you came here to do')
             ->form('orchestrate plan add <name> "<why>"', 'a SIDEQUEST under wherever you are standing, and stand in it. A detour is cheap to declare and impossible to reconstruct later')
             ->form('orchestrate plan up "<the reason>"', 'close this level and surface one. The reason goes UP into the parent; the folder goes')
+            ->form('orchestrate plan go [<name>|..|<a>/<b>]', 'stand somewhere that already exists — creating and closing nothing. Bare returns to the plan; `..` surfaces one WITHOUT closing it')
             ->form('orchestrate plan where', 'the path from the plan to here — what you were doing before the detour')
             ->form('orchestrate plan stale [--for=N]', 'live branches nobody has touched for N minutes (default 60)')
             ->form('orchestrate assistant <name> <section> "<text>"', 'APPEND one line to a role — `caught`, `behaviour`, `restrictions`, `brief`. Stamped with the day and the sha, which is the metadata you would forget to type')
             ->form('orchestrate profile <document> "<text>"', 'append to a profile-level document — `traps`, `behaviour`, `restrictions`')
             ->option('--set', 'replace the document rather than adding to it — the rare case')
+            ->option('--for', 'with `plan stale`: how many minutes untouched counts as stale (default 60)')
             ->form('orchestrate', 'the declaration to paste, and what will NOT be enforced until something changes')
             ->form('orchestrate --write', 'splice that declaration into .commandments/config.php, refusing to overwrite one already declared')
             ->option('--write', 'write the proposal into .commandments/config.php instead of printing it to paste')
@@ -111,6 +113,7 @@ final class OrchestrateCommand implements Command
             'open' => $this->openPlan($plan, $this->rest($input, from: 2)),
             'add' => $this->addLevel($plan, $instance, $input->argument(2)->unwrapOr(''), $this->rest($input, from: 3)),
             'up' => $this->closeLevel($plan, $instance, $this->rest($input, from: 2)),
+            'go' => $this->goTo($plan, $instance, $input->argument(2)->unwrapOr('')),
             'where' => $this->whereInPlan($plan, $instance),
             'stale' => $this->stalePlan($plan, (int) $input->option('for')->unwrapOr('60')),
             default => $this->planTree($plan, $instance),
@@ -197,13 +200,53 @@ final class OrchestrateCommand implements Command
         return $this->console->say('✓ ' . $plan->title($at === [] ? [] : $at) . ' closed.', '  Now at: ' . $this->breadcrumb($plan, $up));
     }
 
+    /**
+     * Stand somewhere that already exists, creating and closing NOTHING. Without it the only way to move
+     * is `up`, which closes — so looking elsewhere destroyed where you were, and two branches could never
+     * be open at once. An orchestrator with three workers is distracted in PARALLEL, and the tree is the
+     * thing that should hold that.
+     *
+     * `go` alone returns to the plan, `..` surfaces one level without closing it, and anything else is a
+     * path: a child of where you stand, or a `/`-separated path from the plan itself.
+     */
+    private function goTo(Plan $plan, Instance $instance, string $where): int
+    {
+        $at = $instance->at();
+
+        $to = match (true) {
+            $where === '' => [],
+            $where === '..' => array_slice($at, 0, -1),
+            $plan->has([...$at, $where]) => [...$at, $where],
+            default => explode('/', trim($where, '/')),
+        };
+
+        if (! $plan->has($to)) {
+            return $this->console->refuse("No level at `{$where}`.", '  `commandments orchestrate plan` shows what is open.');
+        }
+
+        $instance->standAt($to);
+
+        return $this->console->say('▸ ' . $this->breadcrumb($plan, $to));
+    }
+
     private function whereInPlan(Plan $plan, Instance $instance): int
     {
         if (! $plan->exists()) {
             return $this->console->say('No plan yet.');
         }
 
-        return $this->console->say($this->breadcrumb($plan, $instance->at()));
+        $at = $instance->at();
+        $lines = [];
+
+        for ($depth = 0; $depth <= count($at); $depth++) {
+            $step = array_slice($at, 0, $depth);
+            $why = $plan->why($step);
+
+            $lines[] = str_repeat('  ', $depth) . ($depth === 0 ? '' : '› ') . $plan->title($step)
+                . ($why === '' ? '' : ' — ' . $why);
+        }
+
+        return $this->console->say(...$lines);
     }
 
     /**

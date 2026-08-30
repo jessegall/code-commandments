@@ -165,4 +165,43 @@ final class PlanTest extends TestCase
 
         $this->assertSame('run-failure', $plan->title(['run-failure']));
     }
+
+    /**
+     * The gap that made the tree a single path: `add` nests and `up` CLOSES, so moving meant destroying
+     * where you were and two branches could never be open at once. An orchestrator with three workers is
+     * distracted in PARALLEL, and the tree is the thing that should hold that.
+     */
+    public function test_two_sidequests_can_be_open_at_once(): void
+    {
+        $plan = $this->plan();
+        $plan->open('the port');
+        $plan->add([], 'dissolution', 'the main thrust');
+        $plan->add([], 'product-defects', 'a walker is still adding to it');
+
+        $this->assertSame([[], ['dissolution'], ['product-defects']], $plan->levels());
+    }
+
+    public function test_the_why_is_the_first_prose_under_the_heading(): void
+    {
+        $plan = $this->plan();
+        $plan->open('the port');
+        $plan->add([], 'dissolution', 'the main thrust');
+
+        $this->assertSame('the main thrust', $plan->why(['dissolution']));
+    }
+
+    /**
+     * A level closed from beneath leaves its parent's reason list behind, which is prose the WHY must not
+     * mistake for the reason the level exists.
+     */
+    public function test_the_why_skips_the_reasons_of_closed_children(): void
+    {
+        $plan = $this->plan();
+        $plan->open('the port');
+        $plan->add([], 'dissolution', 'the main thrust');
+        $plan->add(['dissolution'], 'probe', 'answered before it was asked');
+        $plan->close(['dissolution', 'probe'], 'GroupBy is one file shaped like Sort');
+
+        $this->assertSame('the main thrust', $plan->why(['dissolution']));
+    }
 }
