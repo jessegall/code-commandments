@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Cli\State\State;
 use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\Support\Lock;
 use JesseGall\CodeCommandments\Workspace;
+use JesseGall\PhpTypes\Option;
 
 /**
  * The dispatches a moment has asked for and nobody has made yet — what holds the orchestrator's stop until
@@ -139,6 +140,21 @@ final readonly class Pending
         $this->file->write($state->with(held: $held));
 
         return $held;
+    }
+
+    /**
+     * The one that has waited longest — what `queue next` hands over. Absent means the list is empty,
+     * which is the scheduler's signal to go back to watching rather than an error.
+     *
+     * @return Option<Dispatched>
+     */
+    public function first(): Option
+    {
+        foreach ($this->all() as $work) {
+            return Option::some($work);
+        }
+
+        return Option::none();
     }
 
     public function isEmpty(): bool

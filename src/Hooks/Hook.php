@@ -84,7 +84,7 @@ abstract class Hook
      */
     protected function speaksToSubagents(): bool
     {
-        return false;
+        return $this instanceof Discipline;
     }
 
     /**

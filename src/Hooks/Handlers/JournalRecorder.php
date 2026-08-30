@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Cli\Journal\Entry;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Cli\Journal\Kind;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
+use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -20,7 +21,7 @@ use JesseGall\PhpTypes\Option;
  * at `SessionStart`. It writes and never speaks — an index is only worth keeping if it costs the session
  * nothing to keep.
  */
-final class JournalRecorder extends Hook
+final class JournalRecorder extends Hook implements Discipline
 {
     public function summary(): string
     {
@@ -35,15 +36,6 @@ final class JournalRecorder extends Hook
             new HookBinding('PostCompact'),
             new HookBinding('SessionStart'),
         ];
-    }
-
-    /**
-     * A worker records too, into ITS OWN journal. What it decided otherwise dies with its transcript,
-     * and a report is then the single point of failure for a whole session's reasoning.
-     */
-    protected function speaksToSubagents(): bool
-    {
-        return true;
     }
 
     /**

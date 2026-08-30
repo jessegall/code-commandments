@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\CrossFileSet;
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
+use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -27,7 +28,7 @@ use Throwable;
  * heredoc is an edit ({@see TouchedSources}). Not a `judge` run: only the rules that can judge one
  * file ({@see Catalog::singleFile}), reported as a nudge, never blocking.
  */
-final class SkillReminder extends Hook
+final class SkillReminder extends Hook implements Discipline
 {
     /**
      * The tools whose edits this watches. A write NAMES the file it wrote; `Bash` does not — a

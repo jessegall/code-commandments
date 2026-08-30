@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 
+use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -16,7 +17,7 @@ use JesseGall\CodeCommandments\Workspace;
  * A "did you judge?" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files
  * are touched but unchecked, deduped per changed-file set.
  */
-final class JudgeReminder extends Hook
+final class JudgeReminder extends Hook implements Discipline
 {
     /**
      * The base ref a `--branch` scope compares against — the same default as {@see Scope\Scope}.

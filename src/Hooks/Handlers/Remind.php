@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 
+use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -14,7 +15,7 @@ use JesseGall\CodeCommandments\Cli\Install;
  * PostToolUse hook that counts tool uses and surfaces the cardinal rule once every
  * INTERVAL—a steady heartbeat keeping 'trace to the source' present.
  */
-final class Remind extends Hook
+final class Remind extends Hook implements Discipline
 {
     private const int INTERVAL = 25;
 

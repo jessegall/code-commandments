@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
+use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -13,7 +14,7 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
  * already knows they exist and that is the whole condition. A rebase rewrites the commits they are built
  * on, so each ends up holding commits the branch no longer has, byte-identical and silent until a merge.
  */
-final class SharedBranchGate extends Hook
+final class SharedBranchGate extends Hook implements Discipline
 {
     /**
      * The rewrite this exists for. A pull that rebases is the one that mints byte-identical duplicates of
@@ -41,14 +42,6 @@ final class SharedBranchGate extends Hook
     public function bindings(): array
     {
         return [new HookBinding('PreToolUse', 'Bash')];
-    }
-
-    /**
-     * A refusal has to run where the work happens, and under orchestration the work happens in workers.
-     */
-    protected function speaksToSubagents(): bool
-    {
-        return true;
     }
 
     protected function onPreToolUse(HookEvent $event): int

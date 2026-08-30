@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -19,7 +20,7 @@ use JesseGall\PhpTypes\Option;
  * steps into a lane to inspect it and the shell stays there, so a rule reading the working directory
  * would strip the one role that must merge of the ability to, exactly as it was about to.
  */
-final class MergeGate extends Hook
+final class MergeGate extends Hook implements Discipline
 {
     private const string MERGE = 'merge';
 
@@ -31,14 +32,6 @@ final class MergeGate extends Hook
     public function bindings(): array
     {
         return [new HookBinding('PreToolUse', 'Bash')];
-    }
-
-    /**
-     * The merge it refuses is done by a worker, and a worker is a subagent.
-     */
-    protected function speaksToSubagents(): bool
-    {
-        return true;
     }
 
     protected function onPreToolUse(HookEvent $event): int

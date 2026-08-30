@@ -33,8 +33,6 @@ final class QueueCommand implements Command
         return Help::of('Agents a moment has asked for and nobody has dispatched yet.')
             ->form('queue', 'what is still owed — one line per undispatched agent')
             ->form('queue next', 'print the next agent\'s whole brief and strike it off as it reads — NOTHING when the list is empty, which is the signal to stop')
-            ->form('queue watching', 'the scheduler saying it has started watching, which unblocks tool use')
-            ->form('queue stopped', 'the scheduler saying it has stopped')
             ->form('queue brief <agent>', 'the WHOLE prompt to hand that agent, as it stands')
             ->form('queue dispatched <agent>', 'say you have made the call, so the stop it was holding is released')
             ->note('Nothing here starts an agent. A hook cannot start one where the person whose machine '
@@ -52,8 +50,6 @@ final class QueueCommand implements Command
             'dispatched', 'done' => $this->dispatched($workspace, $input->argument(1)->unwrapOr('')),
             'brief' => $this->brief($workspace, $input->argument(1)->unwrapOr('')),
             'next' => $this->next($workspace),
-            'watching' => $this->watching($workspace),
-            'stopped' => $this->stopped($workspace),
             default => $this->status($workspace),
         };
     }
@@ -100,25 +96,6 @@ final class QueueCommand implements Command
         }
 
         return 0;
-    }
-
-    /**
-     * The scheduler saying it is watching, and saying it has stopped. It answers for itself because
-     * nobody else can answer honestly — a mark written on its behalf says a scheduler is alive because
-     * somebody once meant to start one.
-     */
-    private function watching(Workspace $workspace): int
-    {
-        Watching::inSession($workspace)->started(gmdate('Y-m-d H:i'));
-
-        return $this->console->say('▸ scheduler watching. Tool use is unblocked.');
-    }
-
-    private function stopped(Workspace $workspace): int
-    {
-        Watching::inSession($workspace)->stopped();
-
-        return $this->console->say('▸ scheduler stopped. The next tool use will ask for one.');
     }
 
     private function brief(Workspace $workspace, string $agent): int

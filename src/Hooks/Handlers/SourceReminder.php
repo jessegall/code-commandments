@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 use JesseGall\CodeCommandments\Config;
 
 use JesseGall\CodeCommandments\Hooks\Counter;
+use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -16,7 +17,7 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
  * failing test usually means the PRODUCTION code needs the fix — trace to the source, don't launder the
  * failure in the test. Non-blocking, and rate-limited via a {@see Counter} a fresh session re-arms.
  */
-final class SourceReminder extends Hook
+final class SourceReminder extends Hook implements Discipline
 {
     /**
      * A tighter cadence than the broad reminders (25): this fires only on the narrow signal of a

@@ -39,7 +39,12 @@ final readonly class Scheduler
             trigger decided this work should happen and a profile decided who does it. Revisiting either
             is the only way you can do harm here.
 
-            WATCH THIS FILE:
+            SAY YOU ARE HERE FIRST. Until you do, the orchestrator is refused every tool but the one
+            that starts you — so this is the command that lets it work at all:
+
+              {$binary} queue watching
+
+            Then WATCH THIS FILE:
 
               {$file}
 
@@ -60,6 +65,11 @@ final readonly class Scheduler
             STOP AND REPORT if a command fails or an agent will not start. Name the brief you were on.
             Do not retry it: a scheduler that retries turns a queue into a spawn loop, and that has
             happened here — it put eight sessions on somebody's machine before anyone noticed.
+
+            IF YOU STOP for any reason, say so, or the orchestrator goes on writing work into a file
+            nothing drains while a mark claims somebody is reading it:
+
+              {$binary} queue stopped
 
             Each time you start one, say so in a line: who, and against what. Nothing else — you produce
             no findings and no opinions, and what you dispatch is not yours to have a view about.
