@@ -82,6 +82,15 @@ final class Workspace
      */
     private const int PRUNE_DAYS = 7;
 
+    /**
+     * Which repository each root belongs to, remembered for the life of the process. {@see sessionKey}
+     * asks on every path a hook builds, and the answer for a directory cannot change while the process
+     * runs — so it is read once rather than walked per call.
+     *
+     * @var array<string, string>
+     */
+    private static array $repositories = [];
+
     public function __construct(
         private readonly string $root,
         private readonly ?string $sessionId = null,
@@ -192,11 +201,33 @@ final class Workspace
             return self::DEFAULT_SESSION;
         }
 
-        foreach (SessionNames::in($this->dir())->nameOf($this->sessionId) as $name) {
+        foreach ($this->names()->nameOf($this->sessionId) as $name) {
             return $name;
         }
 
         return self::keyFor($this->sessionId);
+    }
+
+    /**
+     * The names this project has given its sessions — read from the REPOSITORY, never from whichever
+     * checkout this workspace points at. A name belongs to the session, and a session is one thing
+     * across every worktree; the map is generated state, so a lane has none of its own and would
+     * resolve a named session back to its hash. That is the whole defect: the same session then files
+     * its worktree-scoped state under `sessions/<hash>` while its journal goes to `sessions/<name>`,
+     * and nothing ever reconciles the two — {@see Cli\State\Adoption} is what merges one back.
+     */
+    public function names(): SessionNames
+    {
+        return SessionNames::in(self::$repositories[$this->root] ??= $this->repository());
+    }
+
+    /**
+     * The `.commandments` of the repository this root is in — its main worktree's, or this root's own
+     * outside a repository, where there is nothing to ask.
+     */
+    private function repository(): string
+    {
+        return (new GitFiles()->projectRoot($this->root) ?? $this->root) . '/' . self::DIR;
     }
 
     /**
@@ -222,7 +253,26 @@ final class Workspace
      */
     public function sessionDir(): string
     {
-        return $this->dir() . '/' . self::SESSIONS . '/' . $this->sessionKey();
+        return $this->sessionDirNamed($this->sessionKey());
+    }
+
+    /**
+     * The session folder filed under $key — a name, a hash, or `default`. The way a folder is addressed
+     * by what it is CALLED rather than by the session that owns it, which is the only handle a stranded
+     * folder still answers to; every caller asks here rather than assembling the path itself, since the
+     * layout is this class's to know.
+     */
+    public function sessionDirNamed(string $key): string
+    {
+        return $this->sessionsDir() . '/' . $key;
+    }
+
+    /**
+     * The folder holding one directory per session: `<root>/.commandments/sessions`.
+     */
+    public function sessionsDir(): string
+    {
+        return $this->dir() . '/' . self::SESSIONS;
     }
 
     /**
@@ -305,7 +355,7 @@ final class Workspace
     {
         $cutoff = time() - $days * 86400;
 
-        foreach (glob($this->dir() . '/' . self::SESSIONS . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
+        foreach (glob($this->sessionsDir() . '/*', GLOB_ONLYDIR) ?: [] as $dir) {
             if ($dir === $this->sessionDir()) {
                 continue;
             }

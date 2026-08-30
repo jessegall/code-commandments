@@ -6,9 +6,13 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Cli\Journal\Entry;
+use JesseGall\CodeCommandments\Cli\Journal\Journal;
+use JesseGall\CodeCommandments\Cli\Journal\Kind;
 use JesseGall\CodeCommandments\Cli\SessionCommand;
 use JesseGall\CodeCommandments\Cli\State\SessionNames;
 use JesseGall\CodeCommandments\Workspace;
+use JesseGall\PhpTypes\Option;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -27,7 +31,10 @@ final class SessionNamesTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-names-' . uniqid('', true);
+        // Resolved, because a worktree's `.git` file names its repository by an absolute path and the
+        // walk that reads it resolves too — an unresolved `/var` against a resolved `/private/var` is a
+        // fixture that passes for the wrong reason.
+        $this->root = realpath(sys_get_temp_dir()) . '/cc-names-' . uniqid('', true);
         mkdir($this->root . '/.commandments/sessions', 0777, true);
         $this->priorProjectDir = getenv('CLAUDE_PROJECT_DIR');
         $this->priorSession = getenv('CLAUDE_CODE_SESSION_ID');
@@ -131,11 +138,14 @@ final class SessionNamesTest extends TestCase
         $this->assertSame(Workspace::keyFor('def-456'), Workspace::at($this->root, 'def-456')->sessionKey());
     }
 
-    private function session(string ...$args): array
+    /**
+     * @param  list<string>  $worktrees
+     */
+    private function session(array $worktrees, string ...$args): array
     {
         $out = fopen('php://memory', 'r+');
 
-        $code = new SessionCommand(new CapturingHookIO(new FakeGit($this->root)), new Console($out))
+        $code = new SessionCommand(new CapturingHookIO(new FakeGit($this->root, worktrees: $worktrees)), new Console($out))
             ->run(Input::fromArgv(['commandments', 'session', ...$args]));
 
         rewind($out);
@@ -156,7 +166,7 @@ final class SessionNamesTest extends TestCase
         mkdir($was . '/plan', 0777, true);
         file_put_contents($was . '/plan/README.md', 'the work');
 
-        [$code, $said] = $this->session('name', 'dissolution');
+        [$code, $said] = $this->session([], 'name', 'dissolution');
 
         $this->assertSame(0, $code);
         $this->assertStringContainsString('dissolution', $said);
@@ -171,7 +181,7 @@ final class SessionNamesTest extends TestCase
         putenv('CLAUDE_CODE_SESSION_ID=abc-123');
         $this->names()->name('def-456', 'dissolution');
 
-        [$code, $said] = $this->session('name', 'dissolution');
+        [$code, $said] = $this->session([], 'name', 'dissolution');
 
         $this->assertSame(Console::REFUSED, $code);
         $this->assertStringContainsString('already belongs', $said);
@@ -182,7 +192,7 @@ final class SessionNamesTest extends TestCase
         putenv('CLAUDE_PROJECT_DIR=' . $this->root);
         putenv('CLAUDE_CODE_SESSION_ID=abc-123');
 
-        $this->assertSame(Console::REFUSED, $this->session('name')[0]);
+        $this->assertSame(Console::REFUSED, $this->session([], 'name')[0]);
     }
 
     public function test_forgetting_returns_the_folder_to_its_hash(): void
@@ -191,9 +201,9 @@ final class SessionNamesTest extends TestCase
         putenv('CLAUDE_CODE_SESSION_ID=abc-123');
 
         mkdir(Workspace::at($this->root, 'abc-123')->sessionDir(), 0777, true);
-        $this->session('name', 'dissolution');
+        $this->session([], 'name', 'dissolution');
 
-        [$code] = $this->session('forget', 'dissolution');
+        [$code] = $this->session([], 'forget', 'dissolution');
 
         $this->assertSame(0, $code);
         $this->assertDirectoryExists($this->root . '/.commandments/sessions/' . Workspace::keyFor('abc-123'));
@@ -204,7 +214,155 @@ final class SessionNamesTest extends TestCase
     {
         putenv('CLAUDE_PROJECT_DIR=' . $this->root);
 
-        $this->assertSame(Console::REFUSED, $this->session('forget', 'nothing')[0]);
+        $this->assertSame(Console::REFUSED, $this->session([], 'forget', 'nothing')[0]);
+    }
+
+    /**
+     * A lane is a checkout of its own, and `sessions/.names` is generated state — so a worktree has no map
+     * at all and resolved a NAMED session straight back to its hash. The same session then filed its
+     * worktree-scoped state under `sessions/<hash>` while its journal went to `sessions/<name>`, and nothing
+     * reconciled the two. The name belongs to the SESSION, so it is read from the repository.
+     */
+    public function test_a_named_session_keeps_its_name_inside_a_worktree(): void
+    {
+        $tree = $this->worktree();
+
+        $this->names()->name('abc-123', 'dissolution');
+
+        $this->assertSame('dissolution', Workspace::at($tree, 'abc-123')->sessionKey());
+        $this->assertSame($tree . '/.commandments/sessions/dissolution', Workspace::at($tree, 'abc-123')->sessionDir());
+    }
+
+    /**
+     * Naming moves the folder in EVERY checkout, or a lane that had already written its plan and counters
+     * goes on holding them under the key the session no longer answers to.
+     */
+    public function test_naming_moves_the_folder_in_every_checkout(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        putenv('CLAUDE_CODE_SESSION_ID=abc-123');
+
+        $tree = $this->worktree();
+        $lane = Workspace::at($tree, 'abc-123')->sessionDir();
+        mkdir($lane, 0777, true);
+        file_put_contents($lane . '/.plan-active', 'the work the lane holds');
+
+        [$code] = $this->session([$tree], 'name', 'dissolution');
+
+        $this->assertSame(0, $code);
+        $this->assertFileExists($tree . '/.commandments/sessions/dissolution/.plan-active');
+        $this->assertDirectoryDoesNotExist($lane, 'the folder in the lane followed the name too');
+    }
+
+    /**
+     * A hash folder no transcript and no name accounts for reads exactly like a live session, so somebody
+     * tidying up deletes a stretch of the record without knowing it was one. It is named as what it is.
+     */
+    public function test_list_marks_a_folder_nothing_points_at_as_an_orphan(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        $this->names()->name('abc-123', 'dissolution');
+        mkdir(Workspace::at($this->root, 'abc-123')->sessionDir(), 0777, true);
+        mkdir(Workspace::at($this->root)->sessionDirNamed('9da82'), 0777, true);
+
+        [$code, $said] = $this->session([], 'list');
+
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString('9da82', $said);
+        $this->assertStringContainsString('ORPHAN', $said);
+
+        foreach (explode("\n", $said) as $line) {
+            if (str_contains($line, 'dissolution')) {
+                $this->assertStringNotContainsString('ORPHAN', $line, 'a named folder is not an orphan');
+            }
+        }
+    }
+
+    /**
+     * Adopting takes what the folder HOLDS — a `reports/` directory no list named — and merges the one file
+     * both sides have, interleaved, so the earlier stretch reads before the later one.
+     */
+    public function test_adopt_takes_a_stranded_folder_into_this_session(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        putenv('CLAUDE_CODE_SESSION_ID=abc-123');
+        $this->names()->name('abc-123', 'dissolution');
+
+        $mine = Workspace::at($this->root, 'abc-123')->sessionDir();
+        Journal::at($mine . '/.journal')->file($this->entry('2026-08-30T05:00:00Z', 'the later stretch'));
+
+        $stranded = Workspace::at($this->root)->sessionDirNamed('9da82');
+        Journal::at($stranded . '/.journal')->file($this->entry('2026-08-30T03:00:00Z', 'the earlier stretch'));
+        mkdir($stranded . '/reports', 0777, true);
+        file_put_contents($stranded . '/reports/one.md', 'a report');
+        file_put_contents($stranded . '/.cardinal-remind-count', 'count: 3');
+
+        [$code, $said] = $this->session([], 'adopt', '9da82');
+
+        $this->assertSame(0, $code, $said);
+        $this->assertSame(
+            ['the earlier stretch', 'the later stretch'],
+            array_map(fn (Entry $entry) => $entry->text, Journal::at($mine . '/.journal')->entries()),
+        );
+        $this->assertFileExists($mine . '/reports/one.md', 'a folder no list named came across too');
+        $this->assertFileExists($mine . '/.cardinal-remind-count');
+        $this->assertDirectoryDoesNotExist($stranded, 'nothing was left behind, so no stub survives it');
+    }
+
+    /**
+     * What nothing knows how to merge is KEPT, and the folder stays standing — deleting a record that did
+     * not come across is the loss the whole verb exists to prevent, so the answer is a refusal.
+     */
+    public function test_adopt_keeps_what_it_cannot_merge_and_refuses(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        putenv('CLAUDE_CODE_SESSION_ID=abc-123');
+
+        $mine = Workspace::at($this->root, 'abc-123')->sessionDir();
+        mkdir($mine, 0777, true);
+        file_put_contents($mine . '/.touched-sources', 'marked-at: 2');
+
+        $stranded = Workspace::at($this->root)->sessionDirNamed('9da82');
+        mkdir($stranded, 0777, true);
+        file_put_contents($stranded . '/.touched-sources', 'marked-at: 1');
+        file_put_contents($stranded . '/.judge-reminded', 'count: 1');
+
+        [$code, $said] = $this->session([], 'adopt', '9da82');
+
+        $this->assertSame(Console::REFUSED, $code);
+        $this->assertStringContainsString('KEPT', $said);
+        $this->assertFileExists($mine . '/.judge-reminded', 'what could move, moved');
+        $this->assertStringEqualsFile($stranded . '/.touched-sources', 'marked-at: 1', 'and what could not was not deleted');
+        $this->assertStringEqualsFile($mine . '/.touched-sources', 'marked-at: 2', 'nor did it overwrite what was there');
+    }
+
+    public function test_adopting_a_folder_nothing_holds_is_refused(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        putenv('CLAUDE_CODE_SESSION_ID=abc-123');
+
+        $this->assertSame(Console::REFUSED, $this->session([], 'adopt', 'nowhere')[0]);
+        $this->assertSame(Console::REFUSED, $this->session([], 'adopt')[0], 'and so is naming none at all');
+    }
+
+    /**
+     * A checkout of this repository, as git writes one: its `.git` is a FILE naming the main worktree's
+     * `worktrees/` entry, which is how anything standing in the lane finds the repository it belongs to.
+     */
+    private function worktree(): string
+    {
+        mkdir($this->root . '/.git', 0777, true);
+
+        $tree = $this->root . '/tree';
+        mkdir($tree . '/.commandments/sessions', 0777, true);
+        file_put_contents($tree . '/.git', 'gitdir: ' . $this->root . '/.git/worktrees/tree' . "\n");
+
+        return $tree;
+    }
+
+    private function entry(string $moment, string $text): Entry
+    {
+        return new Entry(Kind::Agent, $moment, 'turn-1', uniqid('msg-', true), Option::none(), $text);
     }
 
 }

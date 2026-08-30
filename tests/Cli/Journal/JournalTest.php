@@ -216,4 +216,50 @@ final class JournalTest extends TestCase
         $this->assertCount(4000, $entries);
         $this->assertSame('[!info] message 4009', end($entries)->text);
     }
+
+    /**
+     * Two folders of one session: the stranded half holds the EARLIER stretch, so appending it as a block
+     * would put the opening of the conversation after its middle. It is interleaved by the stamp each line
+     * carries, and the work counts add up because the two stretches are disjoint halves of one session.
+     */
+    public function test_an_absorbed_journal_is_interleaved_by_when_each_line_was_filed(): void
+    {
+        $stranded = Journal::at($this->root . '/stranded/.journal');
+        $stranded->file($this->at('2026-08-29T03:00:00Z', 'the first thing'));
+        $stranded->file($this->at('2026-08-29T03:30:00Z', 'the second thing'));
+        $stranded->countCall();
+
+        $mine = $this->journal();
+        $mine->file($this->at('2026-08-29T04:00:00Z', 'the third thing'));
+        $mine->countCall();
+
+        $mine->absorb($stranded);
+
+        $this->assertSame(
+            ['the first thing', 'the second thing', 'the third thing'],
+            array_map(fn (Entry $entry) => $entry->text, $mine->entries()),
+        );
+        $this->assertSame(2, $mine->calls(), 'both stretches of work belong to this session');
+    }
+
+    /**
+     * Absorbing twice must not double the record — an adoption that failed half way is retried, and a
+     * doubled index reads as a session that said everything twice.
+     */
+    public function test_absorbing_the_same_journal_again_files_nothing_new(): void
+    {
+        $stranded = Journal::at($this->root . '/stranded/.journal');
+        $stranded->file($this->at('2026-08-29T03:00:00Z', 'the first thing'));
+
+        $mine = $this->journal();
+        $mine->absorb($stranded);
+        $mine->absorb($stranded);
+
+        $this->assertCount(1, $mine->entries());
+    }
+
+    private function at(string $moment, string $text): Entry
+    {
+        return new Entry(Kind::Agent, $moment, 'turn-1', uniqid('msg-', true), Option::none(), $text);
+    }
 }

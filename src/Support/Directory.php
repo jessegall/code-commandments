@@ -78,14 +78,36 @@ final class Directory
     }
 
     /**
-     * The direct children of $dir, as absolute paths. Deliberately one level: recursion happens in
-     * the callers above, so every level gets the same is-it-a-link question — a flattening iterator
-     * answers it once, at the top, which is exactly the bug.
+     * $dir's direct children, most recently written FIRST — how a folder reads to somebody asking what
+     * has been touched, which is the order every listing of one wants.
      *
      * @return list<string>
      */
-    private static function entries(string $dir): array
+    public static function newestFirst(string $dir): array
     {
+        $entries = self::entries($dir);
+
+        usort($entries, static fn (string $a, string $b) => (filemtime($b) ?: 0) <=> (filemtime($a) ?: 0));
+
+        return $entries;
+    }
+
+    /**
+     * The direct children of $dir, as absolute paths — DOTFILES included, which is most of what a
+     * session folder holds, so `glob` would read the fullest folder as empty. Deliberately one level:
+     * recursion happens in the callers above, so every level gets the same is-it-a-link question — a
+     * flattening iterator answers it once, at the top, which is exactly the bug.
+     *
+     * @return list<string>
+     */
+    public static function entries(string $dir): array
+    {
+        // A folder that is not there holds nothing, which is an ANSWER — a caller listing what a checkout
+        // has written must not have to test for the folder first, and `scandir` warns rather than saying so.
+        if (! is_dir($dir)) {
+            return [];
+        }
+
         $entries = [];
 
         foreach (scandir($dir) ?: [] as $entry) {
