@@ -56,6 +56,19 @@ final readonly class Templates
     }
 
     /**
+     * What the SHIPPED wording for $reminder says, with $holes filled — the same reading
+     * {@see Profile::reminder} does of a profile's own copy, so the two cannot answer differently about
+     * anything but the words. Absent when this package ships no reminder by that name, which is a typo
+     * rather than a choice.
+     *
+     * @return Option<string>
+     */
+    public function reminder(string $name, Holes $holes): Option
+    {
+        return $this->read('reminders/' . $name)->map(static fn (string $body) => Reminder::spoken($body, $holes));
+    }
+
+    /**
      * The first line of a template's prose — what a listing shows so a reader can choose between them
      * without printing each one in full.
      */

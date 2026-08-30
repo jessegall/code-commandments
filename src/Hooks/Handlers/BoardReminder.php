@@ -7,12 +7,15 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 use JesseGall\CodeCommandments\Cli\Orchestration\Board;
 use JesseGall\CodeCommandments\Cli\Orchestration\Claim;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
+use JesseGall\CodeCommandments\Cli\Orchestration\Holes;
 use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
 use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
+use JesseGall\CodeCommandments\Cli\Orchestration\Reminders;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Support\Binary;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Says who is waiting on the orchestrator, at the moment it believes it has finished. A worker that has
@@ -97,7 +100,9 @@ final class BoardReminder extends Hook
                         return '';
                     }
 
-                    return "Code Commandments — the `{$name}` routine, every time you come to a stop:\n\n" . trim($routine);
+                    $holes = Holes::none()->with('profile', $name)->with('routine', trim($routine));
+
+                    return $this->said(Reminders::inSession($workspace)->say('routine', $holes));
                 }
             }
         }
@@ -110,20 +115,30 @@ final class BoardReminder extends Hook
      */
     private function waiting(HookEvent $event, array $waiting): string
     {
-        $binary = Binary::in($event->root);
         $lines = array_map(
             fn (Claim $claim) => sprintf('  • %s — %s since %s, %s', $claim->item, $claim->stage->value, $claim->hold->since, $claim->stage->nextAct()),
             array_slice($waiting, 0, self::NAMED),
         );
-        $work = implode("\n", $lines);
-        $count = count($waiting);
 
-        return <<<TEXT
-            Code Commandments — {$count} piece(s) of work are waiting on YOU, not on a worker:
+        // Every one of these is read HERE, at the moment the nudge fires. A count of waiting work is the
+        // most perishable fact in the build, and one that arrives wearing the voice of the system does
+        // not read as stale — it reads as authoritative.
+        $holes = Holes::none()
+            ->with('count', count($waiting))
+            ->with('work', implode("\n", $lines))
+            ->with('binary', Binary::in($event->root));
 
-            {$work}
+        return $this->said(Reminders::inSession($event->sessionWorkspace())->say('board-waiting', $holes));
+    }
 
-            Each is a decision nobody has made. `{$binary} build` is the whole board.
-            TEXT;
+    /**
+     * What a reminder amounts to as a line of output — the package's name in front of it, and nothing at
+     * all where the profile has deleted the file.
+     *
+     * @param  Option<string>  $reminder
+     */
+    private function said(Option $reminder): string
+    {
+        return $reminder->mapOr('', static fn (string $words): string => 'Code Commandments — ' . $words);
     }
 }

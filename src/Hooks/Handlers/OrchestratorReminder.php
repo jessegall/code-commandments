@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 use JesseGall\CodeCommandments\Cli\Orchestration\Board;
 use JesseGall\CodeCommandments\Cli\Orchestration\Holes;
 use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
+use JesseGall\CodeCommandments\Cli\Orchestration\Reminders;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
@@ -52,22 +53,28 @@ final class OrchestratorReminder extends Hook
     /**
      * Quiet, always. It is addressed to the agent about its own habits, and a user watching a build does
      * not need to be told what its orchestrator is thinking about.
+     *
+     * The words come through {@see Reminders} like every other hook's, rather than off the profile
+     * directly: reading a reminder is one act with one rule, and a second way of doing it is a second
+     * place for that rule to be got wrong.
      */
     protected function onStop(HookEvent $event): int
     {
         $workspace = $event->sessionWorkspace();
 
-        foreach (Profiles::inForce($workspace) as $profile) {
-            $written = new TouchedSources($event->workspace(), $event->root, Config::load($event->root), self::WATCHER)
-                ->claim(self::A_BODY_OF_WORK * 2);
+        if (Profiles::inForce($workspace)->isNone()) {
+            return $this->pass(); // Not orchestrating, so there is no role to have forgotten.
+        }
 
-            if (count($written) < self::A_BODY_OF_WORK) {
-                return $this->pass();
-            }
+        $written = new TouchedSources($event->workspace(), $event->root, Config::load($event->root), self::WATCHER)
+            ->claim(self::A_BODY_OF_WORK * 2);
 
-            foreach ($profile->reminder(self::WATCHER, $this->values($event, $written)) as $said) {
-                return $this->quietly($event, 'Code Commandments — ' . $said);
-            }
+        if (count($written) < self::A_BODY_OF_WORK) {
+            return $this->pass();
+        }
+
+        foreach (Reminders::inSession($workspace)->say(self::WATCHER, $this->values($event, $written)) as $said) {
+            return $this->quietly($event, 'Code Commandments — ' . $said);
         }
 
         return $this->pass();
