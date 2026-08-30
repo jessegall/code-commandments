@@ -44,6 +44,8 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate list', 'the profiles this project has written')
             ->form('orchestrate show [name]', 'read one out — what an orchestrator loads instead of copying a brief by hand')
             ->form('orchestrate stop', 'stop working under a profile; the profile is untouched')
+            ->form('orchestrate cleanup [--lanes]', 'clear the sentinel files, counters and worlds a run leaves behind, and rewire the hooks — profiles, plan and journal are never touched')
+            ->option('--lanes', 'also remove lane worktrees, KEEPING any that hold uncommitted work')
             ->form('orchestrate settings', "what the profile in force turns ON, and whether it has ever actually FIRED")
             ->form('orchestrate moments', 'every moment a profile can bind to, and WHAT EACH ONE CARRIES')
             ->form('orchestrate test <moment>', 'dispatch it once, now, with a rehearsal subject, and print what the agent was handed — the only way to tell a healthy binding from a working one')
@@ -87,6 +89,7 @@ final class OrchestrateCommand implements Command
             'list' => $this->list($workspace),
             'show' => $this->show($workspace, $input->argument(1)->unwrapOr('')),
             'stop' => $this->stop($workspace),
+            'cleanup' => $this->cleanup($workspace, $input),
             'on', 'enable' => $this->switch($workspace, $input, on: true),
             'off', 'disable' => $this->switch($workspace, $input, on: false),
             'settings' => $this->settings($workspace),
@@ -920,6 +923,26 @@ final class OrchestrateCommand implements Command
         }
 
         return $names;
+    }
+
+    /**
+     * Clear what a run leaves behind. It NAMES each thing rather than reporting a count, because a
+     * cleanup that says "done" is one a reader has to go and verify by hand.
+     */
+    private function cleanup(Workspace $workspace, Input $input): int
+    {
+        $cleanup = new Cleanup($workspace, $this->io->projectRoot());
+        $said = $cleanup->sweep();
+
+        $said[] = $cleanup->rewire() ? '  rewired  hooks, from the registry as it stands today' : '  hooks were already current';
+
+        $lanes = $cleanup->lanes($input->hasFlag('lanes'));
+
+        return $this->console->say(
+            'Cleared:',
+            ...[...$said, ...$lanes['gone'], ...$lanes['kept']],
+            ...['', 'Untouched: the profiles, the plan, and the journal.'],
+        );
     }
 
     /**
