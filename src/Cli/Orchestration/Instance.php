@@ -33,8 +33,11 @@ final class Instance
             [
                 'profile' => 'the profile this session is working under',
                 'since' => 'when it started',
+                'at' => 'where in the plan this session is standing — a `/`-joined path of sidequest '
+                    . 'names, empty at the plan itself. Only the CURSOR is session state; the plan it '
+                    . 'points into is a folder tree that outlives any one reading of it',
             ],
-            defaults: new State(profile: '', since: ''),
+            defaults: new State(profile: '', since: '', at: ''),
             safe: 'the session is no longer orchestrating under any profile',
         );
     }
@@ -67,5 +70,31 @@ final class Instance
     public function isRunning(): bool
     {
         return $this->profile()->isSome();
+    }
+
+    /**
+     * Where in the plan this session is standing, as a path of sidequest names. Empty at the plan
+     * itself.
+     *
+     * @return list<string>
+     */
+    public function at(): array
+    {
+        $at = $this->file->read()->text('at');
+
+        return $at === '' ? [] : explode('/', $at);
+    }
+
+    /**
+     * Stand at $path. The cursor is the one part of a plan that belongs to the session — which level an
+     * orchestrator is working is a fact about it, not about the work.
+     *
+     * @param  list<string>  $path
+     */
+    public function standAt(array $path): void
+    {
+        $state = $this->file->read();
+
+        $this->file->write($state->with(at: implode('/', $path)));
     }
 }

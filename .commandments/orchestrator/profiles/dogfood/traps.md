@@ -25,3 +25,7 @@
 - (2026-08-29, cdf1247b) I accepted an item while its worker was still measuring, so its later receipt was refused with 'Nobody holds it' — true, but it reads as a mistake by the worker rather than a settled item. Numbers it had measured could not reach the record. Accept when the WORKER is done, not when my own check goes green.
 
 - (2026-08-30, d339339d) FOURTH instance of one shape in a day: identity resolved from where the PROCESS happens to be, when the process wanders. The journal, role-confinement, the board, and now MergeGate reading HEAD in the hook's own cwd. Worse than the others because the refusal was correct-LOOKING — it said a non-writer was merging into the protected branch, which is what it should say if that were true — so the natural reading was 'the gate works' and the natural fix was to route around it.
+
+- (2026-08-30, 0a3b0932) A test that ARRANGES the condition under test has decided the answer. MergeGateTest chdir'd into the repo, which normalised away the very variable — where the process is standing — that the bug was about, so the gate could not fail there. Worse than an ordinary weak test because the normalisation reads as hygiene: nobody reviewing a chdir in a setUp thinks 'this is the assumption'.
+
+- (2026-08-30, 0a3b0932) When you MOVE a thing, ask what was true of its old home. Plans were durable in orchestrator/; moving them into the session left the durability behind, silently, because the property belonged to the location rather than the thing.

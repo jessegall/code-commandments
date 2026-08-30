@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Journal\Sessions;
 use JesseGall\CodeCommandments\Hooks\HookIO;
+use JesseGall\CodeCommandments\Cli\State\SessionNames;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -33,6 +34,8 @@ final class SessionCommand implements Command
             ->form('session', 'print the folder, and what is in it')
             ->form('session list', "every session folder this project has, newest first — what a SECOND terminal asks, having no session of its own")
             ->form('session --path', 'print only the path, for piping somewhere')
+            ->form('session name "<name>"', 'NAME this session — the folder is renamed to match, so it is one you can come back to')
+            ->form('session forget "<name>"', 'drop a name; its session answers to its hash again')
             ->option('--path', 'the bare path and nothing else')
             ->note('Run it from inside Claude Code by typing `!vendor/bin/commandments session` at the prompt: '
                 . "the `!` prefix runs a shell command in the session, so the answer lands in the conversation "
@@ -44,10 +47,73 @@ final class SessionCommand implements Command
     {
         $root = Workspace::ofSession($this->io->projectRoot())->root();
 
-        if ($input->firstArgument()->unwrapOr('') === 'list') {
-            return $this->list($root);
+        return match ($input->firstArgument()->unwrapOr('')) {
+            'list' => $this->list($root),
+            'name' => $this->name($root, $input->argument(1)->unwrapOr('')),
+            'forget' => $this->forget($root, $input->argument(1)->unwrapOr('')),
+            default => $this->show($root, $input),
+        };
+    }
+
+    /**
+     * Give this session a name. The folder is RENAMED to match, because a five-character hash is not
+     * something anybody comes back to — and a session now holds its own plan, so coming back to it is
+     * the point. The map records which id the name belongs to, so an agent still finds its own folder
+     * from the id it was handed.
+     */
+    private function name(string $root, string $name): int
+    {
+        if ($name === '') {
+            return $this->console->refuse('Say what to call it: `commandments session name "<name>"`.');
         }
 
+        $id = getenv('CLAUDE_CODE_SESSION_ID') ?: '';
+
+        if ($id === '') {
+            return $this->console->refuse('No session to name — a shell outside the harness has none of its own.');
+        }
+
+        $was = Workspace::at($root)->sessionDir();
+        $names = SessionNames::in(Workspace::at($root)->dir());
+
+        if (! $names->name($id, $name)) {
+            return $this->console->refuse("`{$name}` already belongs to another session.");
+        }
+
+        $now = Workspace::at($root)->sessionDir();
+
+        if ($was !== $now && is_dir($was)) {
+            rename($was, $now);
+        }
+
+        return $this->console->say("▸ This session is `{$name}`.", '  ' . $now);
+    }
+
+    /**
+     * Drop a name, returning its session to its hash. The folder moves back with it, so the name and the
+     * directory can never disagree.
+     */
+    private function forget(string $root, string $name): int
+    {
+        $names = SessionNames::in(Workspace::at($root)->dir());
+
+        foreach ($names->idOf($name) as $id) {
+            $was = $root . '/.commandments/' . Workspace::SESSIONS . '/' . $name;
+            $names->forget($name);
+            $now = Workspace::at($root, $id)->sessionDir();
+
+            if (is_dir($was)) {
+                rename($was, $now);
+            }
+
+            return $this->console->say("▸ `{$name}` is forgotten.", '  ' . $now);
+        }
+
+        return $this->console->refuse("No session is called `{$name}`.");
+    }
+
+    private function show(string $root, Input $input): int
+    {
         $dir = Workspace::at($root)->sessionDir();
 
         if ($input->hasFlag('path')) {

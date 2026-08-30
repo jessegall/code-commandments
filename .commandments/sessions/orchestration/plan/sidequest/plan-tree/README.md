@@ -67,6 +67,27 @@ Both live in the session, so this is no longer about surviving a boundary — it
 about where a reader looks. A conclusion reached in a detour belongs with the work it
 was a detour from, not in a chronological index of everything said.
 
+## The verb: `orchestrate plan`
+
+Namespaced rather than renamed. `commandments plan` is plan-EXECUTION and keeps that
+meaning; `commandments orchestrate plan` is this tree. The word is right for both and
+the owner is what disambiguates.
+
+```
+orchestrate plan            the tree, with depth — read once after a compaction
+orchestrate plan where      the path from root to here, one line per level
+orchestrate plan up         close this level and surface one
+orchestrate plan add <name> a sidequest UNDER wherever you are
+orchestrate plan stale      a live branch untouched for N
+```
+
+## NOT BUILT YET
+
+Every plan folder in this session was written by hand. The structure is being used
+before its tooling exists, which is deliberate — two designs have already died from
+being described rather than coded, and a tool built first would have been the tool
+built wrong.
+
 ## Decided
 
 **The verb is not `plan`.** `commandments plan done/stuck/status` is plan-EXECUTION

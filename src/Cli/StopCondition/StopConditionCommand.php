@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\StopCondition;
 
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Console;
+use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
@@ -183,10 +185,38 @@ final class StopConditionCommand implements Command
         };
     }
 
+    /**
+     * An orchestrator's own work belongs in its PLAN, not in the user's stop gate. The gate is the
+     * user's instrument — "keep going until X" — and it holds every stop equally, which is right for a
+     * handful of conditions the user set and wrong for a running body of work: the answer to nearly all
+     * of an orchestrator's items is "not yet", which is neither met nor blocked, and a flat list has
+     * nowhere to put that. A plan does, as a live child of a live parent.
+     *
+     * An orchestrator also STOPS by nature — read a report, make a decision, dispatch — so holding its
+     * stops fights the shape of the role rather than serving it.
+     */
+    private function orchestratorsWorkIsAPlan(string $profile): int
+    {
+        $this->tell(
+            "Orchestrating under `{$profile}`, so this belongs in the PLAN rather than the stop gate.",
+            '  The gate is the USER\'s instrument — "keep going until X" — and it holds every stop the',
+            '  same, which is wrong for a body of work whose honest answer is mostly "not yet".',
+            '  Put it where it has a place: a live item under whatever you were doing when it came up.',
+            '',
+            '  If the USER asked for this condition, they can set it themselves — the gate is theirs.',
+        );
+
+        return Console::REFUSED;
+    }
+
     private function add(StopConditionGate $gate, string $condition): int
     {
         if ($condition === '') {
             return $this->usage();
+        }
+
+        foreach (Instance::inSession(Workspace::ofSession($this->io->projectRoot()))->profile() as $profile) {
+            return $this->orchestratorsWorkIsAPlan($profile);
         }
 
         return $gate->isPaused()

@@ -243,6 +243,9 @@ final class Sync implements Command
         $sessions = Workspace::SESSIONS;
 
         return [
+            '',
+            "# A session's PLAN is tracked; everything else in its folder is this run's own state.",
+            '# Un-ignoring something nested takes a line per level, so these four are one rule.',
             "!{$sessions}/",
             "!{$sessions}/*/",
             "!{$sessions}/*/plan/",

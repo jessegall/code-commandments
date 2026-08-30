@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Cli\Console;
+use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Cli\SessionCommand;
 use JesseGall\CodeCommandments\Cli\State\SessionNames;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
@@ -18,14 +21,22 @@ final class SessionNamesTest extends TestCase
 {
     private string $root;
 
+    private string|false $priorProjectDir;
+
+    private string|false $priorSession;
+
     protected function setUp(): void
     {
         $this->root = sys_get_temp_dir() . '/cc-names-' . uniqid('', true);
         mkdir($this->root . '/.commandments/sessions', 0777, true);
+        $this->priorProjectDir = getenv('CLAUDE_PROJECT_DIR');
+        $this->priorSession = getenv('CLAUDE_CODE_SESSION_ID');
     }
 
     protected function tearDown(): void
     {
+        putenv($this->priorProjectDir === false ? 'CLAUDE_PROJECT_DIR' : 'CLAUDE_PROJECT_DIR=' . $this->priorProjectDir);
+        putenv($this->priorSession === false ? 'CLAUDE_CODE_SESSION_ID' : 'CLAUDE_CODE_SESSION_ID=' . $this->priorSession);
         exec('rm -rf ' . escapeshellarg($this->root));
     }
 
@@ -118,5 +129,81 @@ final class SessionNamesTest extends TestCase
         $this->names()->name('abc-123', 'dissolution');
 
         $this->assertSame(Workspace::keyFor('def-456'), Workspace::at($this->root, 'def-456')->sessionKey());
+    }
+
+    private function session(string ...$args): array
+    {
+        $out = fopen('php://memory', 'r+');
+
+        $code = new SessionCommand(new CapturingHookIO(new FakeGit($this->root)), new Console($out))
+            ->run(Input::fromArgv(['commandments', 'session', ...$args]));
+
+        rewind($out);
+
+        return [$code, (string) stream_get_contents($out)];
+    }
+
+    /**
+     * The mechanism is only reachable if a verb sets it. Naming renames the FOLDER too, so the name and
+     * the directory can never disagree — and the session's state, its plan included, moves with it.
+     */
+    public function test_the_command_names_a_session_and_moves_its_folder(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        putenv('CLAUDE_CODE_SESSION_ID=abc-123');
+
+        $was = Workspace::at($this->root, 'abc-123')->sessionDir();
+        mkdir($was . '/plan', 0777, true);
+        file_put_contents($was . '/plan/README.md', 'the work');
+
+        [$code, $said] = $this->session('name', 'dissolution');
+
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString('dissolution', $said);
+        $this->assertDirectoryExists($this->root . '/.commandments/sessions/dissolution');
+        $this->assertFileExists($this->root . '/.commandments/sessions/dissolution/plan/README.md', 'the plan came with it');
+        $this->assertDirectoryDoesNotExist($was, 'and the hash folder is gone, not duplicated');
+    }
+
+    public function test_a_name_another_session_holds_is_refused(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        putenv('CLAUDE_CODE_SESSION_ID=abc-123');
+        $this->names()->name('def-456', 'dissolution');
+
+        [$code, $said] = $this->session('name', 'dissolution');
+
+        $this->assertSame(Console::REFUSED, $code);
+        $this->assertStringContainsString('already belongs', $said);
+    }
+
+    public function test_naming_with_no_name_is_refused(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        putenv('CLAUDE_CODE_SESSION_ID=abc-123');
+
+        $this->assertSame(Console::REFUSED, $this->session('name')[0]);
+    }
+
+    public function test_forgetting_returns_the_folder_to_its_hash(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+        putenv('CLAUDE_CODE_SESSION_ID=abc-123');
+
+        mkdir(Workspace::at($this->root, 'abc-123')->sessionDir(), 0777, true);
+        $this->session('name', 'dissolution');
+
+        [$code] = $this->session('forget', 'dissolution');
+
+        $this->assertSame(0, $code);
+        $this->assertDirectoryExists($this->root . '/.commandments/sessions/' . Workspace::keyFor('abc-123'));
+        $this->assertDirectoryDoesNotExist($this->root . '/.commandments/sessions/dissolution');
+    }
+
+    public function test_forgetting_a_name_nothing_holds_is_refused(): void
+    {
+        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
+
+        $this->assertSame(Console::REFUSED, $this->session('forget', 'nothing')[0]);
     }
 }

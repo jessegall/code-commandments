@@ -43,6 +43,12 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate list', 'the profiles this project has written')
             ->form('orchestrate show [name]', 'read one out — what an orchestrator loads instead of copying a brief by hand')
             ->form('orchestrate stop', 'stop working under a profile; the profile is untouched')
+            ->form('orchestrate plan', 'the whole tree with depth, and where you are standing in it')
+            ->form('orchestrate plan open "<title>"', 'start this session\'s plan — the work you came here to do')
+            ->form('orchestrate plan add <name> "<why>"', 'a SIDEQUEST under wherever you are standing, and stand in it. A detour is cheap to declare and impossible to reconstruct later')
+            ->form('orchestrate plan up "<the reason>"', 'close this level and surface one. The reason goes UP into the parent; the folder goes')
+            ->form('orchestrate plan where', 'the path from the plan to here — what you were doing before the detour')
+            ->form('orchestrate plan stale [--for=N]', 'live branches nobody has touched for N minutes (default 60)')
             ->form('orchestrate assistant <name> <section> "<text>"', 'APPEND one line to a role — `caught`, `behaviour`, `restrictions`, `brief`. Stamped with the day and the sha, which is the metadata you would forget to type')
             ->form('orchestrate profile <document> "<text>"', 'append to a profile-level document — `traps`, `behaviour`, `restrictions`')
             ->option('--set', 'replace the document rather than adding to it — the rare case')
@@ -70,6 +76,7 @@ final class OrchestrateCommand implements Command
             'list' => $this->list($workspace),
             'show' => $this->show($workspace, $input->argument(1)->unwrapOr('')),
             'stop' => $this->stop($workspace),
+            'plan' => $this->plan($workspace, $input),
             'assistant', 'role' => $this->write(
                 $workspace,
                 'roles/' . $input->argument(1)->unwrapOr(''),
@@ -86,6 +93,173 @@ final class OrchestrateCommand implements Command
             ),
             default => $this->propose($input),
         };
+    }
+
+    /**
+     * The orchestrator's plan — a main plan, and a sidequest nested under whatever was being done when
+     * it appeared. Namespaced under `orchestrate` because `commandments plan` already means
+     * plan-EXECUTION: the word is right for both, and the owner is what tells them apart.
+     */
+    private function plan(Workspace $workspace, Input $input): int
+    {
+        $plan = Plan::inSession($workspace);
+        $instance = Instance::inSession($workspace);
+
+        $this->trueUpCursor($plan, $instance);
+
+        return match ($input->argument(1)->unwrapOr('')) {
+            'open' => $this->openPlan($plan, $this->rest($input, from: 2)),
+            'add' => $this->addLevel($plan, $instance, $input->argument(2)->unwrapOr(''), $this->rest($input, from: 3)),
+            'up' => $this->closeLevel($plan, $instance, $this->rest($input, from: 2)),
+            'where' => $this->whereInPlan($plan, $instance),
+            'stale' => $this->stalePlan($plan, (int) $input->option('for')->unwrapOr('60')),
+            default => $this->planTree($plan, $instance),
+        };
+    }
+
+    /**
+     * A cursor can name a level that is not there — one closed from elsewhere, or one whose creation
+     * failed. Standing on a ghost would nest the next sidequest under nothing, so the cursor walks back
+     * to the deepest level that actually exists rather than being believed.
+     */
+    private function trueUpCursor(Plan $plan, Instance $instance): void
+    {
+        $at = $instance->at();
+
+        while ($at !== [] && ! $plan->has($at)) {
+            $at = array_slice($at, 0, -1);
+        }
+
+        if ($at !== $instance->at()) {
+            $instance->standAt($at);
+        }
+    }
+
+    private function openPlan(Plan $plan, string $title): int
+    {
+        if ($title === '') {
+            return $this->console->refuse('Say what the plan is: `commandments orchestrate plan open "<title>"`.');
+        }
+
+        if (! $plan->open($title)) {
+            return $this->console->refuse('There is already a plan here — add a sidequest under it instead.');
+        }
+
+        return $this->console->say("▸ Plan opened: {$title}");
+    }
+
+    /**
+     * A sidequest under WHEREVER the cursor stands, never a path the caller had to spell — that is what
+     * makes it cheap enough to say mid-flight, which is the only way a detour gets recorded at all.
+     */
+    private function addLevel(Plan $plan, Instance $instance, string $name, string $why): int
+    {
+        if ($name === '' || ! $plan->exists()) {
+            return $this->console->refuse($plan->exists()
+                ? 'Name it: `commandments orchestrate plan add <name> "<why>"`.'
+                : 'No plan yet: `commandments orchestrate plan open "<title>"` first.');
+        }
+
+        $at = $instance->at();
+
+        if (! $plan->add($at, $name, $why)) {
+            return $this->console->refuse("`{$name}` is already a sidequest here.");
+        }
+
+        $instance->standAt([...$at, $name]);
+
+        return $this->console->say("▸ {$name} — a sidequest of " . $plan->title($at), '  ' . $this->breadcrumb($plan, [...$at, $name]));
+    }
+
+    /**
+     * Close this level and surface one. The REASON goes up into the parent, because a conclusion can be
+     * re-derived where a reason is what lets a later reader see whether the premise still holds.
+     */
+    private function closeLevel(Plan $plan, Instance $instance, string $reason): int
+    {
+        $at = $instance->at();
+
+        if ($at === []) {
+            return $this->console->refuse('Standing at the plan itself — there is nothing to surface to.');
+        }
+
+        if ($reason === '') {
+            return $this->console->refuse('Say what came of it: `commandments orchestrate plan up "<the reason>"` — it is what goes up.');
+        }
+
+        if (! $plan->close($at, $reason)) {
+            return $this->console->refuse('Nothing to close here — the level the cursor names is not there.');
+        }
+
+        $up = array_slice($at, 0, -1);
+        $instance->standAt($up);
+
+        return $this->console->say('✓ ' . $plan->title($at === [] ? [] : $at) . ' closed.', '  Now at: ' . $this->breadcrumb($plan, $up));
+    }
+
+    private function whereInPlan(Plan $plan, Instance $instance): int
+    {
+        if (! $plan->exists()) {
+            return $this->console->say('No plan yet.');
+        }
+
+        return $this->console->say($this->breadcrumb($plan, $instance->at()));
+    }
+
+    /**
+     * The whole shape, with depth — what a reader wants once, after a compaction, before anything else.
+     */
+    private function planTree(Plan $plan, Instance $instance): int
+    {
+        if (! $plan->exists()) {
+            return $this->console->say('No plan yet. `commandments orchestrate plan open "<title>"` starts one.');
+        }
+
+        $at = $instance->at();
+
+        foreach ($plan->levels() as $level) {
+            $here = $level === $at ? ' ← you are here' : '';
+
+            $this->console->say(str_repeat('  ', count($level)) . ($level === [] ? '' : '└ ') . $plan->title($level) . $here);
+        }
+
+        return 0;
+    }
+
+    /**
+     * A live branch nobody has touched for $minutes — the plan-shaped twin of naming the work waiting on
+     * you, and the line that was missing when a plan sat open all evening unmentioned.
+     */
+    private function stalePlan(Plan $plan, int $minutes): int
+    {
+        $cutoff = time() - ($minutes * 60);
+        $stale = [];
+
+        foreach ($plan->levels() as $level) {
+            foreach ($plan->touched($level) as $at) {
+                if ($at < $cutoff) {
+                    $stale[] = '  ' . $this->breadcrumb($plan, $level) . ' — ' . intdiv(time() - $at, 60) . 'm';
+                }
+            }
+        }
+
+        return $stale === []
+            ? $this->console->say("Nothing untouched for {$minutes}m.")
+            : $this->console->say("Untouched for {$minutes}m or more:", ...$stale);
+    }
+
+    /**
+     * @param  list<string>  $path
+     */
+    private function breadcrumb(Plan $plan, array $path): string
+    {
+        $trail = [$plan->title([])];
+
+        for ($depth = 1; $depth <= count($path); $depth++) {
+            $trail[] = $plan->title(array_slice($path, 0, $depth));
+        }
+
+        return implode(' › ', $trail);
     }
 
     /**

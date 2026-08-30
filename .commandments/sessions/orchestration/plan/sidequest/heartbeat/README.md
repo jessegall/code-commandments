@@ -51,3 +51,9 @@ progress. Tell it to stop and ask the user where the project said to work
 autonomously. Run uncapped — a nudge becomes a status essay.
 
 Delivered between turns, never mid-turn.
+
+## Delivery
+
+Copied into a new profile by `orchestrate profile <name>`, beside
+`behaviour`/`restrictions`/`traps`/`lane.sh` — the package provides the contract and
+the traps already paid for; the project edits the content in a diff.

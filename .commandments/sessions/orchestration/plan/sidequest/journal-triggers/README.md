@@ -54,3 +54,13 @@ expensive to ignore. One short entry clears it.
 
 **`journal remember` stays voluntary.** It is the pin, it is deliberate, and that is
 why forty-nine of them carried a build.
+
+## Also open, from the same root
+
+**The nudge must reach an orchestrator's DECISIONS**, which live in its messages and
+its briefs rather than in file writes. `MessageDisplay` already sees assistant
+messages, so the reach exists; the trigger is what does not.
+
+**`[!update]` can name a board item**, so it joins that item's record instead of
+floating as a separate note — and `doctor` can then say "3 of 5 open", which is the
+first time the board would know how far along something actually is.

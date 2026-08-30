@@ -44,3 +44,14 @@ So an item stores a completion command, and closing it RUNS that command — the
 `--ran` machinery pointed at the smallest unit of work there is. Where a criterion
 genuinely cannot be a command, it is filed as `asserted` and **says so**, which is
 the three-verdict shape one level down.
+
+## Also open
+
+**A claim can optionally name files or globs**, and a second claim overlapping them
+is refused the way an overlapping item claim is — same refusal, holder and
+since-when, keyed on paths. **No path inference from diffs**: guessing from a change
+would be a constant tuned on one project.
+
+The gap this closes is measured, not theoretical: every file grant on a real build
+was made by a person reasoning about it by hand, and two lanes collided anyway. The
+board says nothing, because the items were different and both legitimately claimed.
