@@ -7,8 +7,8 @@ namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
 use JesseGall\CodeCommandments\Cli\Orchestration\Claim;
 use JesseGall\CodeCommandments\Cli\Orchestration\Events\Accepting;
 use JesseGall\CodeCommandments\Cli\Orchestration\Events\Event;
-use JesseGall\CodeCommandments\Cli\Orchestration\Events\Handler;
-use JesseGall\CodeCommandments\Cli\Orchestration\Events\Handlers;
+use JesseGall\CodeCommandments\Cli\Orchestration\Events\Trigger;
+use JesseGall\CodeCommandments\Cli\Orchestration\Events\Triggers;
 use JesseGall\CodeCommandments\Cli\Orchestration\Events\Reported;
 use JesseGall\CodeCommandments\Cli\Orchestration\Events\Verdict;
 use JesseGall\CodeCommandments\Cli\Orchestration\Hold;
@@ -22,7 +22,7 @@ use RuntimeException;
  * dispatcher: which moment a handler hears is its SIGNATURE, a refusal stands only where the act has not
  * happened yet, and a handler that cannot answer is passed over by itself while everything else runs.
  */
-final class OrchestrationHandlersTest extends TestCase
+final class TriggersTest extends TestCase
 {
     /**
      * @var resource
@@ -34,19 +34,19 @@ final class OrchestrationHandlersTest extends TestCase
         $this->err = fopen('php://memory', 'r+');
     }
 
-    public function test_a_handler_hears_the_moment_its_signature_names_and_no_other(): void
+    public function test_a_trigger_hears_the_moment_its_signature_names_and_no_other(): void
     {
-        $handlers = new Handlers([
-            new class extends Handler
+        $handlers = new Triggers([
+            new class extends Trigger
             {
-                public function handle(Reported $event): Verdict
+                public function fire(Reported $event): Verdict
                 {
                     return Verdict::note('the reporter spoke');
                 }
             },
-            new class extends Handler
+            new class extends Trigger
             {
-                public function handle(Accepting $event): Verdict
+                public function fire(Accepting $event): Verdict
                 {
                     return Verdict::note('the accepter spoke');
                 }
@@ -58,12 +58,12 @@ final class OrchestrationHandlersTest extends TestCase
         $this->assertSame('the reporter spoke', $said, 'only the handler typed for this moment ran');
     }
 
-    public function test_a_handler_typed_for_the_base_event_hears_every_moment(): void
+    public function test_a_trigger_typed_for_the_base_event_hears_every_moment(): void
     {
-        $handlers = new Handlers([
-            new class extends Handler
+        $handlers = new Triggers([
+            new class extends Trigger
             {
-                public function handle(Event $event): Verdict
+                public function fire(Event $event): Verdict
                 {
                     return Verdict::note('heard ' . $event->item());
                 }
@@ -76,7 +76,7 @@ final class OrchestrationHandlersTest extends TestCase
 
     public function test_a_refusal_stands_on_a_moment_that_has_not_happened_yet(): void
     {
-        $verdict = new Handlers([$this->refusing()], $this->err)->dispatch($this->accepting());
+        $verdict = new Triggers([$this->refusing()], $this->err)->dispatch($this->accepting());
 
         $this->assertSame('nothing measured it', $verdict->refusal()->unwrapOr(''), 'Accepting is raised before the board moves, so a veto is worth something');
     }
@@ -85,28 +85,28 @@ final class OrchestrationHandlersTest extends TestCase
     {
         // A receipt is on disk by the time `Reported` is raised. Refusing it would be theatre — but the
         // handler still SAW something, so the reason travels as a quiet note rather than vanishing.
-        $verdict = new Handlers([$this->refusing()], $this->err)->dispatch($this->reported());
+        $verdict = new Triggers([$this->refusing()], $this->err)->dispatch($this->reported());
 
         $this->assertTrue($verdict->refusal()->isNone(), 'nothing can be stopped here');
         $this->assertSame('nothing measured it', $verdict->message()->unwrapOr(''), 'the reason survives');
         $this->assertTrue($verdict->response->suppressOutput, 'demoted to a QUIET note');
     }
 
-    public function test_a_handler_that_throws_passes_for_itself_alone_and_is_named(): void
+    public function test_a_trigger_that_throws_passes_for_itself_alone_and_is_named(): void
     {
-        $thrower = new class extends Handler
+        $thrower = new class extends Trigger
         {
-            public function handle(Reported $event): Verdict
+            public function fire(Reported $event): Verdict
             {
                 throw new RuntimeException('the project class is broken');
             }
         };
 
-        $verdict = new Handlers([
+        $verdict = new Triggers([
             $thrower,
-            new class extends Handler
+            new class extends Trigger
             {
-                public function handle(Reported $event): Verdict
+                public function fire(Reported $event): Verdict
                 {
                     return Verdict::note('and this one still ran');
                 }
@@ -118,42 +118,42 @@ final class OrchestrationHandlersTest extends TestCase
         $this->assertStringContainsString('the project class is broken', $this->stderr());
     }
 
-    public function test_a_handler_that_names_no_moment_is_named_rather_than_silently_never_firing(): void
+    public function test_a_trigger_that_names_no_moment_is_named_rather_than_silently_never_firing(): void
     {
-        $untyped = new class extends Handler
+        $untyped = new class extends Trigger
         {
-            public function handle($event): Verdict // @phpstan-ignore-line deliberately written wrong
+            public function fire($event): Verdict // @phpstan-ignore-line deliberately written wrong
             {
                 return Verdict::refuse('never reached');
             }
         };
 
-        $verdict = new Handlers([$untyped], $this->err)->dispatch($this->accepting());
+        $verdict = new Triggers([$untyped], $this->err)->dispatch($this->accepting());
 
         $this->assertTrue($verdict->isSilent());
         $this->assertStringContainsString($untyped::class, $this->stderr());
         $this->assertStringContainsString('type-hint the moment', $this->stderr());
     }
 
-    public function test_a_handler_with_no_handle_at_all_is_named(): void
+    public function test_a_trigger_with_no_fire_at_all_is_named(): void
     {
-        $empty = new class extends Handler {};
+        $empty = new class extends Trigger {};
 
-        $verdict = new Handlers([$empty], $this->err)->dispatch($this->accepting());
+        $verdict = new Triggers([$empty], $this->err)->dispatch($this->accepting());
 
         $this->assertTrue($verdict->isSilent());
-        $this->assertStringContainsString('declares no handle()', $this->stderr());
+        $this->assertStringContainsString('declares no fire()', $this->stderr());
     }
 
     /**
      * A handler that refuses whatever it is given — the same class on both moments, so the only thing
      * separating the two outcomes is the moment's own type.
      */
-    private function refusing(): Handler
+    private function refusing(): Trigger
     {
-        return new class extends Handler
+        return new class extends Trigger
         {
-            public function handle(Event $event): Verdict
+            public function fire(Event $event): Verdict
             {
                 return Verdict::refuse('nothing measured it');
             }

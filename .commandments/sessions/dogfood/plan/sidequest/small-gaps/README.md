@@ -22,3 +22,12 @@ item is settled and how to reopen it.
 show`/`doctor` printing "10 files, 0 tracked" would make the gap between "the profile
 exists" and "the profile survives this machine" announce itself — the same shape as
 the stranded-board warning.
+
+**The durable half should say whether it is actually durable.** `orchestrate show` (or
+`doctor`) printing "10 files, 0 tracked" would make the gap between *the profile
+exists* and *the profile survives this machine* announce itself.
+
+That gap is not hypothetical: a profile's ten files were silently un-tracked by a
+`sync` and nothing said so, because a file that is present renders identically
+whether git knows it or not. Same shape as the stranded-board warning — a record that
+cannot say what it is missing.

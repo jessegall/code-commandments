@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
 use JesseGall\CodeCommandments\Support\File;
+use JesseGall\CodeCommandments\Cli\Orchestration\Events\Trigger;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -174,5 +175,52 @@ final readonly class Profile
     private function read(string $path): string
     {
         return is_file($path) ? trim((string) file_get_contents($path)) : '';
+    }
+
+    /**
+     * The triggers THIS way of working arms — loaded only while this profile is in force.
+     *
+     * A {@see \JesseGall\CodeCommandments\Hooks\Hook} is a fact about the PROJECT and applies to
+     * every session; a trigger is a fact about this build. "When a walker reports, dispatch the
+     * secretary" means nothing where there is no walker and no board, and a rule firing in a context
+     * that cannot satisfy it is how most false positives are born. So the scope IS the concept, and the
+     * profile is what carries it.
+     *
+     * @return list<\JesseGall\CodeCommandments\Cli\Orchestration\Events\Trigger>
+     */
+    public function triggers(): array
+    {
+        $armed = [];
+
+        foreach (glob($this->path . '/triggers/*.php') ?: [] as $file) {
+            foreach ($this->triggerIn($file) as $trigger) {
+                $armed[] = $trigger;
+            }
+        }
+
+        usort($armed, static fn (object $a, object $b): int => $a::class <=> $b::class);
+
+        return $armed;
+    }
+
+    /**
+     * The trigger $file declares, if it declares one. Loaded BY FILE the way a project's own detectors
+     * are — a profile is not PSR-4 mapped, so no autoloader knows these names.
+     *
+     * @return \JesseGall\PhpTypes\Option<\JesseGall\CodeCommandments\Cli\Orchestration\Events\Trigger>
+     */
+    private function triggerIn(string $file): Option
+    {
+        $before = get_declared_classes();
+
+        require_once $file;
+
+        foreach (array_diff(get_declared_classes(), $before) as $class) {
+            if (is_subclass_of($class, Trigger::class) && new \ReflectionClass($class)->isInstantiable()) {
+                return Option::some(new $class);
+            }
+        }
+
+        return Option::none();
     }
 }

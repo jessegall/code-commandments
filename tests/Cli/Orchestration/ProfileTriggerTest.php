@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
 use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Orchestration\Board;
+use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
 use JesseGall\CodeCommandments\Cli\Orchestration\BuildCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\Stage;
 use JesseGall\CodeCommandments\Tests\Cli\CapturingHookIO;
@@ -15,13 +16,13 @@ use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A project reaches an orchestration moment by writing a class into `.commandments/custom/` — the same
+ * A build reaches an orchestration moment by writing a class into its PROFILE's `triggers/` — the same
  * folder its skills, sins and detectors already load from — and the moment it wants is the type its
  * `handle()` takes. What that buys it is the trap the profile records in words: never accept an item
  * whose receipt says COULD NOT MEASURE. Written down, that rule is followed when somebody remembers it;
  * as a handler it is refused, with a non-zero exit, in the process about to settle the work.
  */
-final class ProjectHandlerTest extends TestCase
+final class ProfileTriggerTest extends TestCase
 {
     private string $root;
 
@@ -32,11 +33,16 @@ final class ProjectHandlerTest extends TestCase
     protected function setUp(): void
     {
         $this->root = sys_get_temp_dir() . '/cc-handler-' . uniqid('', true);
-        mkdir($this->root . '/.commandments/custom', 0777, true);
+        mkdir($this->root . '/.commandments/orchestrator/profiles/demo', 0777, true);
+        file_put_contents($this->root . '/.commandments/orchestrator/profiles/demo/profile.md', '# demo');
         $this->priorProjectDir = getenv('CLAUDE_PROJECT_DIR');
         $this->priorSession = getenv('CLAUDE_CODE_SESSION_ID');
         putenv('CLAUDE_PROJECT_DIR=' . $this->root);
         putenv('CLAUDE_CODE_SESSION_ID=handler-test');
+
+        // AFTER the environment is set: `ofSession` reads it, so starting first writes the instance into
+        // whichever session the suite itself is running under.
+        Instance::inSession(Workspace::ofSession($this->root))->start('demo', '10:00');
     }
 
     protected function tearDown(): void
@@ -92,25 +98,38 @@ final class ProjectHandlerTest extends TestCase
             ? 'Verdict::refuse("{$event->item()} was never measured — that is not a green.")'
             : 'Verdict::pass()';
 
-        file_put_contents("{$this->root}/.commandments/custom/{$name}.php", <<<PHP
+        file_put_contents($this->triggersDir() . "/{$name}.php", <<<PHP
             <?php
 
             declare(strict_types=1);
 
             namespace Demo\\Commandments;
 
-            use JesseGall\\CodeCommandments\\Cli\\Orchestration\\Events\\Handler;
+            use JesseGall\\CodeCommandments\\Cli\\Orchestration\\Events\\Trigger;
             use JesseGall\\CodeCommandments\\Cli\\Orchestration\\Events\\{$moment};
             use JesseGall\\CodeCommandments\\Cli\\Orchestration\\Events\\Verdict;
 
-            final class {$name} extends Handler
+            final class {$name} extends Trigger
             {
-                public function handle({$moment} \$event): Verdict
+                public function fire({$moment} \$event): Verdict
                 {
                     return \$event->receipt->isNone() ? {$answer} : Verdict::pass();
                 }
             }
             PHP);
+    }
+
+    /**
+     * A trigger belongs to the PROFILE it serves, not to the project — it is a fact about this way of
+     * working, and a session not orchestrating never loads one.
+     */
+    private function triggersDir(): string
+    {
+        $dir = $this->root . '/.commandments/orchestrator/profiles/demo/triggers';
+
+        is_dir($dir) || mkdir($dir, 0777, true);
+
+        return $dir;
     }
 
     private function board(): Board

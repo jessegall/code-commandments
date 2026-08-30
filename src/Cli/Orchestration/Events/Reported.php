@@ -10,4 +10,4 @@ namespace JesseGall\CodeCommandments\Cli\Orchestration\Events;
  * it: that a receipt COULD NOT MEASURE, that a lane's number was taken against a base older than the last
  * merge, that nobody ran a check at all.
  */
-final readonly class Reported extends Event {}
+final readonly class Reported extends ItemEvent {}

@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Hooks\HookResponse;
 use JesseGall\PhpTypes\Option;
 
 /**
- * What a {@see Handler} answers for one moment — silence, a note the reader sees, a note only the agent
+ * What a {@see Trigger} answers for one moment — silence, a note the reader sees, a note only the agent
  * sees, or a refusal. A hook moment already has exactly that vocabulary, so a verdict COMPOSES
  * {@see HookResponse} rather than restating it, since a second response type is one protocol written
  * twice; the fifth thing a response can say, a `PreCompact`'s compaction instructions, is absent because

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks;
 
+use JesseGall\CodeCommandments\Agent;
+
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -19,6 +21,12 @@ final class HookEvent
      * Background-task statuses that are FINISHED — work no longer holding the turn open.
      */
     private const array SETTLED_STATUSES = ['completed', 'done', 'failed', 'cancelled', 'canceled', 'error'];
+
+    /**
+     * The event on which the agent fields describe the worker that STOPPED rather than the process
+     * reading them.
+     */
+    private const string SUBAGENT_STOPPED = 'SubagentStop';
 
     /**
      * @param  array<string, mixed>  $payload
@@ -95,7 +103,24 @@ final class HookEvent
      */
     public function isSubagent(): bool
     {
+        // `SubagentStop` is the one event where those fields name somebody ELSE — the worker that
+        // stopped — while the hook itself runs in the session that spawned it. Reading them there
+        // silenced every hook on the one moment that reports a worker finishing.
+        if ($this->name() === self::SUBAGENT_STOPPED) {
+            return false;
+        }
+
         return $this->named('agent_id') || $this->named('agent_type');
+    }
+
+    /**
+     * The worker this payload names — which is the one that STOPPED on `SubagentStop`, and the one
+     * SPEAKING everywhere else. Paired rather than read apart, because an id without its type says which
+     * process and not which job.
+     */
+    public function agent(): Agent
+    {
+        return new Agent($this->agentId(), $this->agentType());
     }
 
     /**

@@ -405,7 +405,15 @@ final class StopConditionReminderTest extends TestCase
         $this->assertStringContainsString('tests pass', $this->reason($this->stop()));
     }
 
-    public function test_a_stop_parked_on_background_work_is_not_held(): void
+    /**
+     * A condition is unmet whether or not a suite is running, so the gate holds the stop either way.
+     *
+     * It used to stay silent, and the cost was measured rather than argued: one session counted 415
+     * pieces of work and held NOT ONE stop, because something was always pending. A gate that goes quiet
+     * whenever anything is in flight is quiet in exactly the long sessions it exists for — and it took
+     * every other Stop hook down with it, since the silence was blanket rather than per-hook.
+     */
+    public function test_a_stop_is_held_even_while_background_work_runs(): void
     {
         $this->gate()->add('tests pass');
 
@@ -415,7 +423,7 @@ final class StopConditionReminderTest extends TestCase
         );
         new StopConditionReminder($io)->run([]);
 
-        $this->assertSame([], $io->emitted);
-        $this->assertSame(0, $this->gate()->heldStops(), 'and it does not burn a block');
+        $this->assertStringContainsString('tests pass', $io->emitted[0]->blockReason->unwrapOr(''));
+        $this->assertSame(1, $this->gate()->heldStops());
     }
 }

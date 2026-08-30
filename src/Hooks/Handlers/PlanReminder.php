@@ -86,6 +86,15 @@ final class PlanReminder extends Hook
         return $this->inject($event, $this->replanNotice($hadPriorState, $working) . $this->approvedNudge($plan, $working));
     }
 
+    /**
+     * Not while a background task runs: this nudge says KEEP GOING, and an agent waiting on work it
+     * started already is. Every other Stop hook has something to say there and speaks by default.
+     */
+    protected function speaksWhileWorkPends(): bool
+    {
+        return false;
+    }
+
     protected function onStop(HookEvent $event): int
     {
         $marker = PlanMarker::inSession($event->workspace());

@@ -70,7 +70,8 @@ abstract class Hook
             'MessageDisplay' => $this->onMessageDisplay($event),
             'PreCompact' => $this->onPreCompact($event),
             'PostCompact' => $this->onPostCompact($event),
-            'Stop' => $event->hasPendingBackgroundWork() || $event->isPlanMode() ? $this->pass() : $this->onStop($event),
+            'Stop' => $this->staysQuietAt($event) ? $this->pass() : $this->onStop($event),
+            'SubagentStop' => $this->onSubagentStop($event),
             default => $this->onManualRun($event),
         };
     }
@@ -84,6 +85,32 @@ abstract class Hook
     protected function speaksToSubagents(): bool
     {
         return false;
+    }
+
+    /**
+     * Should this hook hold its tongue at THIS stop? Plan mode always, since nothing has been approved
+     * yet — and pending background work only for a hook that would tell the agent to carry on, which is
+     * already what it is doing.
+     */
+    private function staysQuietAt(HookEvent $event): bool
+    {
+        return $event->isPlanMode() || ($event->hasPendingBackgroundWork() && ! $this->speaksWhileWorkPends());
+    }
+
+    /**
+     * Does this hook still have something to say while a background task is running?
+     *
+     * YES for almost everything, and the default says so. A stop condition is unmet whether or not a
+     * suite is running; a routine is a checklist for the moment work comes to rest; an unclosed span is
+     * still unclosed. Silencing every Stop hook because SOMETHING is pending muted all of them for a
+     * whole session — 415 pieces of work, not one stop held — which is the same blanket that
+     * {@see speaksToSubagents} exists to undo one event over.
+     *
+     * NO only for a nudge to KEEP GOING, which is redundant advice to an agent that already is.
+     */
+    protected function speaksWhileWorkPends(): bool
+    {
+        return true;
     }
 
     protected function onPostToolUse(HookEvent $event): int
@@ -142,6 +169,16 @@ abstract class Hook
     }
 
     protected function onStop(HookEvent $event): int
+    {
+        return $this->pass();
+    }
+
+    /**
+     * A spawned agent stopped. Distinct from {@see onStop}, which is the SESSION coming to rest — this is
+     * one worker finishing while the session carries on, and it is the only measurement the harness gives
+     * of a completion. Everything else about a worker's fate has to be inferred.
+     */
+    protected function onSubagentStop(HookEvent $event): int
     {
         return $this->pass();
     }

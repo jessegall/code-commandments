@@ -10,7 +10,7 @@ use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Orchestration\Events\Accepting;
 use JesseGall\CodeCommandments\Cli\Orchestration\Events\Event;
-use JesseGall\CodeCommandments\Cli\Orchestration\Events\Handlers;
+use JesseGall\CodeCommandments\Cli\Orchestration\Events\Triggers;
 use JesseGall\CodeCommandments\Cli\Orchestration\Events\Reported;
 use JesseGall\CodeCommandments\Cli\Text;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
@@ -412,7 +412,7 @@ final class BuildCommand implements Command
      */
     private function raise(Event $event): Option
     {
-        $verdict = Handlers::forProject($this->io->projectRoot())->dispatch($event);
+        $verdict = Triggers::inSession(Workspace::ofSession($this->io->projectRoot()))->dispatch($event);
 
         foreach ($verdict->message() as $said) {
             $this->console->say($said);

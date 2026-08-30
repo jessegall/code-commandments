@@ -60,6 +60,16 @@ final class JudgeReminder extends Hook
         return $reason === null ? $this->pass() : $this->inject($event, $reason);
     }
 
+    /**
+     * Not while a background task runs, and for a reason of its own: this nudge CONSUMES the batch of
+     * touched files it reports on. Firing at a stop the agent is only parked at would mark them reminded,
+     * so the real stop afterwards — the one with the same dirty files — would say nothing.
+     */
+    protected function speaksWhileWorkPends(): bool
+    {
+        return false;
+    }
+
     protected function onStop(HookEvent $event): int
     {
         $reason = $this->reminder($event, 'before you wrap up');

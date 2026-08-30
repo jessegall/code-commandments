@@ -31,3 +31,7 @@
 - (2026-08-30, 0a3b0932) When you MOVE a thing, ask what was true of its old home. Plans were durable in orchestrator/; moving them into the session left the durability behind, silently, because the property belonged to the location rather than the thing.
 
 - (2026-08-30, 80a2eda7) An absent row in an agent listing is an ABSENCE YOU INTERPRET; a failed reach is a MEASUREMENT. ListAgents stopped showing idle agents, four live agents vanished from it, and that was read as four losses and reported as evidence. `orphan` must therefore rest on a failed ping, never on a shorter list than expected.
+
+- (2026-08-30, 09c8f69c) `verify` and `open` can be made to disagree. verify says re-state a [!start] the recorder never heard; doing so for FINISHED work files a start AFTER its end, and open pairs POSITIONALLY — so the span reads open forever. Obeying one tool broke the other. Pair by TEXT, or have verify say to re-state the pair.
+
+- (2026-08-30, 09c8f69c) The routine repeats VERBATIM at every stop, with no rate limit and no awareness of whether anything changed. Three identical firings in a row while waiting on one suite. That is the skimming failure the heartbeat design warns about, shipped in the routine — it needs the same treatment: say what CHANGED, stay silent when nothing did.

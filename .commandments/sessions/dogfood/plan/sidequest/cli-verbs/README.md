@@ -30,3 +30,8 @@ forced.
 
 Also: `orchestrate show <role> --last=N`, matching `journal pinned --last=N`, so a
 role's record can be read at its recent end without printing the whole profile.
+
+**`orchestrate show <role> --last=N`**, matching `journal pinned --last=N`. A role's
+record GROWS through a build and `show` prints the whole profile, so reading the
+recent end of one role means printing everything. The `--last` shape already exists
+and reads correctly here.
