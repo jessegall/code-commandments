@@ -89,9 +89,13 @@ final readonly class Cleanup
     }
 
     /**
-     * Every lane, with whether it can safely go. A lane holding uncommitted work is NAMED and left: the
-     * whole reason a builder checkpoints is that committed work cannot be mistaken for work never done,
-     * and deleting the uncommitted kind is the one loss nothing here can undo.
+     * Every lane, with whether it can safely go. A lane is removable only when its head is an ANCESTOR of
+     * the branch — everything in it has landed, so the worktree holds nothing the branch does not.
+     *
+     * Dirty-versus-clean is the wrong test and it protects the wrong thing. A builder that checkpoints
+     * correctly — which is what a lane is FOR, so committed work cannot be mistaken for work never done
+     * — produces a clean lane holding commits nobody has merged. Judged on dirtiness, the tidiest lane
+     * looks the most abandoned, and the discipline that makes work safe is what marks it for deletion.
      *
      * @return array{gone: list<string>, kept: list<string>}
      */
@@ -107,6 +111,12 @@ final readonly class Cleanup
 
             if ($this->hasWork($lane->path)) {
                 $kept[] = "  KEPT     {$lane->name()} — uncommitted work in it";
+
+                continue;
+            }
+
+            if (! $this->hasLanded($lane->path)) {
+                $kept[] = "  KEPT     {$lane->name()} — commits that have not landed on the branch";
 
                 continue;
             }
@@ -128,5 +138,22 @@ final readonly class Cleanup
     private function hasWork(string $lane): bool
     {
         return trim((string) @shell_exec('git -C ' . escapeshellarg($lane) . ' status --porcelain 2>/dev/null')) !== '';
+    }
+
+    /**
+     * Is everything in this lane already on the branch? Asked of git rather than inferred: an ancestor
+     * check is the only question whose answer cannot be wrong, where age, cleanliness and whether anybody
+     * holds it are all proxies for it.
+     */
+    private function hasLanded(string $lane): bool
+    {
+        $head = trim((string) @shell_exec('git -C ' . escapeshellarg($lane) . ' rev-parse HEAD 2>/dev/null'));
+        $branch = trim((string) @shell_exec('git -C ' . escapeshellarg($this->root) . ' rev-parse HEAD 2>/dev/null'));
+
+        if ($head === '' || $branch === '') {
+            return false; // Unreadable is not landed. Keeping a lane costs a directory; losing one costs the work.
+        }
+
+        return trim((string) @shell_exec('git -C ' . escapeshellarg($this->root) . ' merge-base --is-ancestor ' . escapeshellarg($head) . ' ' . escapeshellarg($branch) . ' && echo landed')) === 'landed';
     }
 }
