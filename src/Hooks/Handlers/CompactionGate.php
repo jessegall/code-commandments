@@ -19,12 +19,6 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
  */
 final class CompactionGate extends Hook
 {
-    /**
-     * How many pinned facts and open spans the instructions carry. The instructions ride in front of a
-     * summarisation prompt, so they must be short enough not to crowd out the conversation they are about.
-     */
-    private const int CARRIED = 12;
-
     public function summary(): string
     {
         return 'Writes a compaction its own instructions from the journal, naming the facts and the unfinished work the summary may not drop.';
@@ -70,7 +64,7 @@ final class CompactionGate extends Hook
             return '';
         }
 
-        $bullets = implode("\n", array_map(fn (Entry $entry) => '  • ' . $entry->text, array_slice($entries, -self::CARRIED)));
+        $bullets = implode("\n", array_map(fn (Entry $entry) => '  • ' . $entry->text, array_slice($entries, -Journal::CARRIED)));
 
         return <<<TEXT
 

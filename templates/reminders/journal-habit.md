@@ -11,6 +11,8 @@ re-derives. Each kind has its OWN home, and only the first of these is a pin:
   a FINDING, an open defect, work still owed         →  the plan
   a STATUS — who holds what, what was measured       →  the board
 
-A pin cannot be superseded, so anything that ROTS — a count, a defect that will be fixed,
-a list of work — becomes a confident falsehood the moment it changes. Those belong in the
-two places that can be updated.
+Nothing corrects a pin but you, so anything that ROTS — a count, a defect that will be
+fixed, a list of work — becomes a confident falsehood the moment it changes, wearing the
+same authority as the facts that still hold. Those belong in the two homes the build
+updates as it moves. And only the last twelve pins reach a compaction: a needless one
+does not add noise, it pushes a real one out.

@@ -44,15 +44,44 @@ final class Brief
 
               {$binary} journal remember "<a fact you must not lose>"
 
-            A remembered fact outlives every compaction and is written into the summariser's own
-            instructions, so it reaches the far side whatever else is dropped. Pin the user's standing
-            rulings, the constraint you keep nearly breaking, and the decision behind the work in hand.
+            WHAT EARNS A PIN. A tag is free — it rides on a message you were sending anyway, so tag
+            generously. A pin is not free. Only the last TWELVE live pins are written into the
+            summariser's own instructions, so the thirteenth does not merely add noise: it pushes the
+            first one out, silently. A pin that did not need to be there DELETES one that did.
 
-            CORRECT A PIN, NEVER LEAVE IT STANDING. That guarantee is why you reach for `remember`
-            whenever you are afraid of losing something — so the record fills with things that were true
-            when you wrote them. A count you measured, a version, what was in flight an hour ago: each one
-            now sits beside the facts that still hold, wearing the same confidence, and the next reader
-            inherits a settled bug as an open one. The moment a pin stops being true, say what is:
+            So ask three questions, and pin only on three yeses:
+
+              1. Did somebody DECIDE it? A ruling, a constraint, a choice and the reason for it — not
+                 something the code, the diff or the board already states.
+              2. Would the next reader get it WRONG without it? Not slower — WRONG. If reading one file
+                 answers it in a minute, that file is the record and no pin is needed.
+              3. Will it still be true tomorrow? A pin is carried forward wearing full confidence, and
+                 nothing corrects it but you.
+
+              PIN  "the user ruled motion.ts FORBIDDEN — the CSS transition replaces it"
+              PIN  "chose the tokenizer over a regex: a regex cannot see nesting"
+              PIN  "abandoned the AST approach — php-parser drops the attribute"
+              NOT  "fixed the import in motion.ts"      done work — the diff says it; tag the message
+              NOT  "judge: 412 findings"                a measurement, stale within the hour
+              NOT  "two workers in flight at v4.294.0"  a status — the board holds it
+              NOT  "16 primitives, not 14"              a count; it drifts with nothing touching it
+              NOT  "now reading src/Cli/Journal"        narration — say it, do not pin it
+
+            Three homes, and only the first is a pin. A fact or a ruling must SURVIVE — pin it. A
+            finding, a defect, work still owed must be WORKED — it belongs to the plan. A status — who
+            holds what, what a tool measured — must be CURRENT, and belongs to the board. The plan and
+            the board are updated as the build moves; a pin is only corrected if you remember to.
+
+            WRITE IT SO IT CAN BE FOUND. One line: the fact, then its reason, in the same breath. Short
+            — but carrying the word a later reader would search for, because the pin is the handle and
+            the transcript is the body, and `{$binary} journal search "<that word>"` fetches the rest.
+            "do not use that approach" names nothing, so it can be neither found nor checked.
+
+            CORRECT A PIN, NEVER LEAVE IT STANDING. Question 3 is why this command exists. Even a pin you
+            were right to make can stop being true — a ruling is overturned, a constraint is lifted — and
+            it then sits beside the facts that still hold, wearing the same confidence, so the next
+            reader inherits a settled question as an open one. The moment a pin stops being true, say
+            what is:
 
               {$binary} journal pins                              the numbered list — live and struck
               {$binary} journal remember "<the fact now>" --supersedes=<n>

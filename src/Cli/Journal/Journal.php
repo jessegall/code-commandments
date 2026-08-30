@@ -27,6 +27,14 @@ final class Journal
     private const int CAPACITY = 4000;
 
     /**
+     * How many live pins a compaction actually carries. The instructions ride in front of a summarisation
+     * prompt, so they are bounded — which makes a pin a SCARCE thing rather than a free one: past this
+     * many, the newest pushes the oldest out. Stated here beside the pins because it is a fact about the
+     * record, and everything that promises an agent its pin will survive has to mean it.
+     */
+    public const int CARRIED = 12;
+
+    /**
      * What the index is called inside a session's folder. Stated once, so anything that has to
      * RECOGNISE a journal among a folder's other files — {@see \JesseGall\CodeCommandments\Cli\State\Adoption}
      * merging a stranded folder in — names the same file the writers do.

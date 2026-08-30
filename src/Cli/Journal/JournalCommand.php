@@ -45,7 +45,7 @@ final class JournalCommand implements Command
             ->form('journal --back=N', 'N compactions further back — `--back=1` is the stretch the last summary replaced')
             ->form('journal user', "only the user's own words, in full")
             ->form('journal search "<term>"', 'every line mentioning it, so you can find where a thing was decided')
-            ->form('journal remember "<fact>"', 'pin a fact — it survives every compaction and is written into the summariser\'s own instructions')
+            ->form('journal remember "<fact>"', 'pin a fact the next reader would get WRONG without — a ruling, a constraint, a decision and its reason. It survives every compaction and is written into the summariser\'s own instructions. Never a status, a count, or what you just did')
             ->form('journal remember "<fact>" --supersedes=<n>', 'pin a fact that CORRECTS pin <n> — the old one is kept and marked, and only the new one is carried forward')
             ->form('journal pins [--last=N]', 'every pinned fact, numbered — the number is what `--supersedes` takes, and a superseded one is shown struck')
             ->form('journal agents', 'which WORKERS of this session kept a record, and how much each said')
@@ -58,6 +58,12 @@ final class JournalCommand implements Command
             ->option('--last=N', 'on `pins`, show only the most recent N — a long list is tailed, and the middle of it is what gets missed')
             ->option('--supersedes=N', 'on `remember`, the pin this fact replaces. Nothing is deleted: pin N stays in the record marked as superseded, the new pin names it, and only the new one reaches a compacted reader')
             ->option('--full', 'the whole stretch, unbounded — by default a reading is cut to fit, worst first, so it does not spend the context it exists to restore')
+            ->note('A TAG is free — it rides on a message you were sending anyway, so tag generously. A PIN is not: '
+                . 'only the last TWELVE live pins are carried into a compaction, so a needless one does not add '
+                . 'noise, it pushes a real one out. Pin on three yeses — somebody DECIDED it, the next reader would '
+                . 'get it WRONG without it, and it is still true tomorrow. A finding or work still owed goes to the '
+                . 'plan; a status or a measured number goes to the board. Both of those are updated as the build '
+                . 'moves, and a pin is not.')
             ->note('A pin promises to survive every compaction, so it is what an agent reaches for whenever it is '
                 . 'afraid of losing something — which fills the record with facts that were true when written and '
                 . 'are not now. Correcting one never DELETES it: `remember "<the fact now>" --supersedes=<n>` keeps '
@@ -291,13 +297,42 @@ final class JournalCommand implements Command
     {
         $number = count($journal->pins());
 
-        return $supersedes->mapOr(
+        $said = $supersedes->mapOr(
             ["✓ Pinned as {$number}. It survives every compaction, and rides in the summariser's own instructions."],
             fn (int $struck) => [
                 "✓ Pinned as {$number}, superseding pin {$struck}.",
                 "Pin {$struck} is kept and marked — `commandments journal pins` still shows it — and from now on only {$number} is carried across a compaction.",
             ],
         );
+
+        return [...$said, ...$this->crowded($journal)];
+    }
+
+    /**
+     * What a pin past the cap costs, said at the moment it is made. A compaction carries only the newest
+     * {@see Journal::CARRIED} live pins, so past that the promise above stops being true of the OLDEST
+     * one — and it is the agent spending the slot, at the one moment it is thinking about pins, that can
+     * still free it.
+     *
+     * @return list<string>
+     */
+    private function crowded(Journal $journal): array
+    {
+        $standing = $journal->pinned();
+        $live = count($standing);
+
+        if ($live <= Journal::CARRIED) {
+            return [];
+        }
+
+        // The OLDEST live pin, which is the one the newest just displaced. Naming it beats naming a count:
+        // it is the fact the agent must now decide it can spare, and it is already in front of them.
+        $displaced = $standing[0]->text;
+
+        return [
+            "⚠ {$live} pins stand and a compaction carries only the newest " . Journal::CARRIED . ". This no longer reaches one: \"{$displaced}\"",
+            'Strike what has stopped being true: `commandments journal pins`, then `remember "<the fact now>" --supersedes=<n>`.',
+        ];
     }
 
     private function pinned(Sessions $sessions, Input $input): int

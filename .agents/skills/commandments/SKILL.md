@@ -94,11 +94,16 @@ enforced, and a write is refused while nothing stands open:
 
 A `[!start]` with no `[!end]` is unfinished work, which is the one thing a compaction cannot
 reconstruct. Tag what your messages carry — `[!start]`, `[!end]`, `[!discovery]`,
-`[!correction]`, `[!blocked]` — because through a stretch where you work alone those are the
-ONLY messages kept. And when something genuinely must not be lost, do not merely say it:
-`vendor/bin/commandments journal remember "<the fact>"` outlives every compaction and is
-written into the summariser's own instructions. `vendor/bin/commandments journal
-instructions` is the whole brief; load the `commandments-journal` skill for the discipline.
+`[!correction]`, `[!update]`, `[!blocked]` — because through a stretch where you work alone
+those are the ONLY messages kept.
+
+**A tag is free; a pin is not.** `vendor/bin/commandments journal remember "<the fact>"` is
+written into the summariser's own instructions — but only the last TWELVE live pins are, so a
+needless pin does not add noise, it pushes a real one out. Tag generously and pin on three
+yeses: somebody DECIDED it, the next reader would get it WRONG without it, and it is still
+true tomorrow. A finding or work still owed goes to the plan; a status or a measured number
+goes to the board. `vendor/bin/commandments journal instructions` is the whole brief; load the
+`commandments-journal` skill for the discipline.
 
 **Running a build with WORKERS — the orchestration mode.** When you are dispatching agents
 rather than writing code, `commandments build` is the board: who holds which piece of work,

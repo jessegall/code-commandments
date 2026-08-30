@@ -63,6 +63,7 @@ Put the tag at the front of the message, as its first characters:
 | `[!end]` | that work is finished |
 | `[!discovery]` | the real shape of something you did not know |
 | `[!correction]` | something you had wrong is now right |
+| `[!update]` | where the work stands — what is in flight, what you decided since the last one and WHY |
 | `[!blocked]` | blocked, and on what |
 
 Through a long stretch where you work alone, these are the ONLY messages kept — everything else is
@@ -70,7 +71,7 @@ routine and is dropped. An untagged stretch reads back as `⋯ 41 messages ⋯`,
 nothing to the reader on the far side.
 
 **The user reads these.** A tag cannot be hidden: a `MessageDisplay` hook sees a message only after
-the terminal has it. So they are written as words, and only these five are ever typed.
+the terminal has it. So they are written as words, and only these are ever typed.
 
 ## Pin what must not be lost
 
@@ -82,9 +83,54 @@ A pinned fact outlives every compaction, stands at the top of every digest, and 
 **summariser's own instructions** — so it reaches the far side whatever else is dropped. It is
 recorded rather than said, so it never fills the user's terminal.
 
-Pin the user's standing rulings, the constraint you keep nearly breaking, and the decision behind the
-work in hand. When the context is about to be compacted you are given one turn to do exactly this,
-and only one.
+### A tag is free. A pin is not.
+
+A tag rides on a message you were sending anyway, so it costs nothing and you should **tag
+generously**. A pin does not ride on anything. Only the last **twelve** live pins are written into
+the summariser's instructions, so the thirteenth does not merely add noise — it pushes the first one
+out, silently. **A pin that did not need to be there deletes one that did.** Pin rarely.
+
+And the cost has been measured, not supposed. A session that compacted carrying its whole pin list
+sent a 50,053-byte wake-up block; the harness spilled that to a file and delivered a 2KB preview, so
+about 4% of what was sent was ever read. Over-pinning does not make the record thorough. It makes it
+undeliverable.
+
+### The test — three questions, one second
+
+Pin it only if the answer is yes three times:
+
+1. **Did somebody DECIDE it?** A ruling, a constraint, a choice and the reason for it. Not something
+   the code, the diff, or the board already states.
+2. **Would the next reader get it WRONG without it?** Not slower — *wrong*. If reading one file
+   answers it in a minute, that file is the record and no pin is needed.
+3. **Will it still be true tomorrow?** A pin is carried forward wearing full confidence, and nothing
+   corrects it but you.
+
+| Pin it | Not a pin — and where it goes |
+|---|---|
+| `the user ruled motion.ts FORBIDDEN — the CSS transition replaces it` | `fixed the import in motion.ts` — done work. The diff says it; tag the message `[!end]`. |
+| `chose the tokenizer over a regex: a regex cannot see nesting` | `now reading src/Vue/Query.php` — narration. Say it in the message; do not pin it. |
+| `Data classes stay final here — the 400 sites that are not ARE the debt` | `judge: 412 findings` — a measurement, stale within the hour. It belongs to the plan. |
+| `abandoned the AST approach — php-parser drops the attribute` | `16 primitives, not 14` — a count. It drifts with nothing touching the directory. |
+| `the user said: never run the full suite` | `two workers in flight at v4.294.0` — a status. The board holds it. |
+
+**Three homes, and only one of them is a pin.** A fact or a ruling must **survive** — pin it. A
+finding, an open defect, work still owed must be **worked** — it belongs to the plan. A status — who
+holds what, what a tool measured — must be **current**, and belongs to the board
+(`commandments build`). The plan and the board are updated as the build moves. A pin is only
+corrected if you remember to correct it, which is the next section.
+
+### Write it so it can be found
+
+One line: **the fact, then its reason, in the same breath.** Short — but carrying the word a later
+reader would search for, because the pin is the handle and the transcript is the body:
+
+```
+vendor/bin/commandments journal search "motion.ts"
+```
+
+- ✗ `do not use that approach` — names nothing. Nothing to search on, nothing to check.
+- ✓ `the user ruled motion.ts FORBIDDEN — the CSS transition replaces it`
 
 ## Strike a pin the moment it stops being true
 
@@ -93,18 +139,16 @@ vendor/bin/commandments journal pins
 vendor/bin/commandments journal remember "<the fact now>" --supersedes=<n>
 ```
 
-`remember` is the only mechanism whose whole promise is *survives the compaction*, so it is what you
-reach for whenever you are afraid of losing something — whether or not the thing is a lasting fact.
-That is not a discipline problem, it is the shape of the tool, and it means the record fills with
-statements that were true when you wrote them:
+Question 3 is why this command exists. Even a pin you were right to make can stop being true — a
+ruling is overturned, a constraint is lifted, the approach you rejected becomes the one you take:
 
 - `IN FLIGHT: two workers, uncommitted at v4.294.0` — true when written, false an hour later.
 - `only the FOURTEEN primitives keep one .vue half` — it is sixteen. The count drifted with nothing
   touching the directory.
 
 Each of those now sits beside the accurate pins wearing identical confidence, and the next reader
-inherits a fixed bug as an open one. So **pin freely, and correct what you pinned**: `journal pins`
-numbers them, and one command files the correction.
+inherits a fixed bug as an open one. So **check your pins against question 3, and correct what has
+moved**: `journal pins` numbers them, and one command files the correction.
 
 Nothing is ever deleted. The struck pin stays in the record and stays readable, marked with what
 replaced it; the new pin names the one it replaces, so the correction — the half worth keeping — can
@@ -143,7 +187,7 @@ existed can still be read back.
 | `commandments journal --back=N` | N compactions further back — `--back=1` is the stretch the last summary replaced |
 | `commandments journal user` | only the user's own words, in full |
 | `commandments journal search "<term>"` | every line mentioning it, so you can find where a thing was decided |
-| `commandments journal remember "<fact>"` | pin a fact — it survives every compaction and is written into the summariser's own instructions |
+| `commandments journal remember "<fact>"` | pin a fact the next reader would get WRONG without — a ruling, a constraint, a decision and its reason. It survives every compaction and is written into the summariser's own instructions. Never a status, a count, or what you just did |
 | `commandments journal remember "<fact>" --supersedes=<n>` | pin a fact that CORRECTS pin <n> — the old one is kept and marked, and only the new one is carried forward |
 | `commandments journal pins [--last=N]` | every pinned fact, numbered — the number is what `--supersedes` takes, and a superseded one is shown struck |
 | `commandments journal agents` | which WORKERS of this session kept a record, and how much each said |

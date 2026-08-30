@@ -231,6 +231,31 @@ final class SupersededPinTest extends TestCase
         $this->assertTrue(Entry::fromLine($entry->toLine())->unwrap()->supersedes()->isNone());
     }
 
+    /**
+     * A pin past the cap is not the pin the confirmation promises. A compaction carries only the newest
+     * {@see Journal::CARRIED}, so the thirteenth does not add to the record — it displaces the first — and
+     * the moment to say so is the one moment the agent is thinking about pins at all.
+     */
+    public function test_a_pin_past_the_cap_names_what_it_displaced(): void
+    {
+        $journal = $this->journal();
+
+        foreach (range(1, Journal::CARRIED - 1) as $n) {
+            $journal->file(Entry::pin(sprintf('2026-08-30T00:00:%02dZ', $n), "fact {$n}", Option::none()));
+        }
+
+        $atTheCap = $this->saidBy('remember', 'the twelfth fact');
+
+        $this->assertStringNotContainsString('no longer reaches one', $atTheCap, 'every pin still reaches a compaction, so there is nothing to warn about');
+
+        $past = $this->saidBy('remember', 'the thirteenth fact');
+
+        $this->assertStringContainsString('13 pins stand', $past, 'it says the number it counted');
+        $this->assertStringContainsString('only the newest 12', $past);
+        $this->assertStringContainsString('fact 1', $past, 'it names the pin that was displaced, not merely a count');
+        $this->assertStringContainsString('--supersedes', $past, 'and the one command that frees a slot');
+    }
+
     private function journal(): Journal
     {
         return Journal::inSession(Workspace::ofSession($this->root));
