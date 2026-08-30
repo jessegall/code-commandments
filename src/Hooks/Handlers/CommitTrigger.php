@@ -63,7 +63,10 @@ final class CommitTrigger extends Hook
             }
         }
 
-        return $said === [] ? $this->pass() : $this->quietly($event, implode("\n", $said));
+        // SEEN, not quiet. This starts a process on somebody's machine — an agent that appears, reads
+        // their code and writes files is the one thing here a person must never learn about by finding
+        // it in a log afterwards. Every other reminder is for the agent; this one is for them.
+        return $said === [] ? $this->pass() : $this->inject($event, implode("\n", $said));
     }
 
     /**
