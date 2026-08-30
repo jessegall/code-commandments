@@ -27,9 +27,10 @@ final class Migration
 {
     /**
      * The state-file format this package writes. 1 was the positional-line marker; 2 is the named
-     * `name: value` state with its legend.
+     * `name: value` state with its legend; 3 keeps the judge checklists in {@see Workspace::SINS}
+     * rather than at the session folder's top level.
      */
-    public const int FORMAT = 2;
+    public const int FORMAT = 3;
 
     public function __construct(private readonly Workspace $workspace) {}
 
@@ -68,6 +69,7 @@ final class Migration
             $this->plan($dir),
             $this->constraints($dir),
             $this->testing($dir),
+            $this->checklists($dir),
             $this->counters($dir),
         ]));
     }
@@ -189,6 +191,38 @@ final class Migration
             ->write(new State(methodology: implode(' ', $lines)));
 
         return 'the testing methodology';
+    }
+
+    /**
+     * The judge checklists a project holds at its session folders' top level are MOVED into
+     * {@see Workspace::SINS}, not dropped: each one is the record of what was true when its run
+     * happened, and `--repent=<stamp>` still addresses it. A name already taken in the new folder
+     * wins — the file there was written by a judge run that has already moved on.
+     */
+    private function checklists(string $dir): ?string
+    {
+        $folder = $dir . '/' . Workspace::SINS;
+        $strays = [...glob("{$dir}/sins.md") ?: [], ...glob("{$dir}/sins-*.md") ?: []];
+
+        if ($strays === []) {
+            return null;
+        }
+
+        if (! is_dir($folder) && ! @mkdir($folder, 0755, true) && ! is_dir($folder)) {
+            return null; // Nowhere to put them — leave them where they are rather than lose them.
+        }
+
+        $moved = 0;
+
+        foreach ($strays as $stray) {
+            $target = $folder . '/' . basename($stray);
+
+            if (! is_file($target) && @rename($stray, $target)) {
+                $moved++;
+            }
+        }
+
+        return $moved === 0 ? null : "{$moved} judge checklist(s) moved into " . Workspace::SINS . '/';
     }
 
     /**

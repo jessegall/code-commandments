@@ -37,6 +37,17 @@ final readonly class Profile
     ];
 
     /**
+     * The roles this package ships, and what each one IS. A project writes its own beside them; these
+     * three are the ones every orchestrated build turns out to need — somebody who writes to the branch,
+     * somebody who reads without touching, and somebody who files what the others found.
+     */
+    public const array ROLES = [
+        'integrator' => 'the sole writer to the shared branch — it merges a committed sha, runs the gates on the branch itself, and answers for what landed',
+        'auditor' => 'read-only, on request only — reports violations most-severe first, and a ruling ignored outranks a new finding',
+        'secretary' => 'files what workers report into the plan, so the orchestrator only decides — it quotes rather than summarises, and never closes anything',
+    ];
+
+    /**
      * The headings a line added to a role's record can file under. Naming the set is what keeps an
      * entry under a heading the file actually has.
      */

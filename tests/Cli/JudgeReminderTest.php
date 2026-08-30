@@ -71,8 +71,8 @@ final class JudgeReminderTest extends TestCase
 
     public function test_an_empty_worklist_does_not_nudge(): void
     {
-        mkdir(Workspace::at($this->repo)->sessionDir(), 0777, true);
-        file_put_contents(Workspace::at($this->repo)->path('sins.md'), "# Code Commandments\n\nAll clear.\n");
+        mkdir(Workspace::at($this->repo)->checklistDir(), 0777, true);
+        file_put_contents(Workspace::at($this->repo)->checklist(), "# Code Commandments\n\nAll clear.\n");
 
         $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'a worklist with no sin lines is done');
     }
@@ -85,7 +85,8 @@ final class JudgeReminderTest extends TestCase
             $body .= "- `{$line}`\n";
         }
 
-        file_put_contents(Workspace::at($this->repo)->path('sins.md'), $body);
+        mkdir(Workspace::at($this->repo)->checklistDir(), 0777, true);
+        file_put_contents(Workspace::at($this->repo)->checklist(), $body);
     }
 
     public function test_it_stays_silent_while_a_plan_is_active(): void

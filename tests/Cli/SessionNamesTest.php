@@ -206,4 +206,5 @@ final class SessionNamesTest extends TestCase
 
         $this->assertSame(Console::REFUSED, $this->session('forget', 'nothing')[0]);
     }
+
 }

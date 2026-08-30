@@ -44,7 +44,7 @@ final class JudgeOptions
         // very file it is reading.
         $checklist = $input->hasFlag('no-checklist') || Scope::repent($input->raw()) !== null
             ? Option::none()
-            : Option::some($input->option('checklist')->unwrapOr($workspace->path('sins.md')));
+            : Option::some($input->option('checklist')->unwrapOr($workspace->checklist()));
 
         return new self(
             path: rtrim($path->unwrapOr('.'), '/'),

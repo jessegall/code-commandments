@@ -57,3 +57,32 @@ Delivered between turns, never mid-turn.
 Copied into a new profile by `orchestrate profile <name>`, beside
 `behaviour`/`restrictions`/`traps`/`lane.sh` — the package provides the contract and
 the traps already paid for; the project edits the content in a diff.
+
+## SEQUENCING HAZARD — ship the file before anyone retires a custom one
+
+`routine.md` does NOT cover what a heartbeat does, and it would be easy to assume it
+does.
+
+- **The routine fires when the agent STOPS.** It is a checklist worked at a stop —
+  has a worker reported, is the board true, did the root move without the lanes. It
+  caught two real things at its first firing.
+- **The heartbeat fires whether the agent stops or not**, and re-installs the ROLE:
+  you are the orchestrator, you do not write feature code, you read verdicts rather
+  than diffs, here is the cast and how to reach them.
+
+**That is what survives a compaction**, and it is the one thing a heartbeat has
+reliably told an orchestrator that it did not already know — a live agent id, used
+straight out of it after a context loss.
+
+So retiring a project's own heartbeat before this exists leaves a gap nothing fills,
+**and the gap is invisible until a compaction** — which is exactly when nobody is
+checking. Say so in the release note rather than leaving it to be discovered.
+
+## The evidence, restated with today's numbers
+
+A custom heartbeat said *"the ratchet is at 138"* at every firing for a day. It was
+106, then 98, then 91, then **78**. And it named four agent ids of which two were
+dead, while the four that were alive were not on it.
+
+**It quoted numbers somebody typed once, and every one of them rotted.** `lane list`,
+`build`, `plan where` and `build roles` already compute all of it.

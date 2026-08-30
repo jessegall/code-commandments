@@ -153,7 +153,10 @@ final class SessionCommand implements Command
         $named = [];
 
         foreach (Sessions::of(Workspace::at($root))->all() as $session) {
-            $named[$session->key()] = $session;
+            // Keyed by the folder the session ACTUALLY occupies, which is its NAME once it has one.
+            // Asking for the derived hash instead left every renamed session unable to find its own
+            // transcript — and a named session is precisely one somebody means to come back to.
+            $named[Workspace::at($root, $session->id)->sessionKey()] = $session;
         }
 
         foreach ($dirs as $dir) {

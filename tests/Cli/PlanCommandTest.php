@@ -70,13 +70,15 @@ final class PlanCommandTest extends TestCase
     public function test_done_clears_the_leftover_checklist(): void
     {
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha0');
-        file_put_contents(Workspace::at($this->root)->path('sins.md'), "- `a.php:1`  A::m  [X]\n");
-        file_put_contents(Workspace::at($this->root)->path('sins-2026-07-04_101112.md'), "old\n");
+        $folder = Workspace::at($this->root)->checklistDir();
+        mkdir($folder, 0777, true);
+        file_put_contents(Workspace::at($this->root)->checklist(), "- `a.php:1`  A::m  [X]\n");
+        file_put_contents(Workspace::at($this->root)->checklistArchive('2026-07-04_101112'), "old\n");
 
         $this->assertSame(0, $this->exec('done'));
 
-        $this->assertFileDoesNotExist(Workspace::at($this->root)->path('sins.md'), 'the worklist is gone');
-        $this->assertCount(0, glob(Workspace::at($this->root)->path('sins*.md')) ?: [], 'its archives too');
+        $this->assertFileDoesNotExist(Workspace::at($this->root)->checklist(), 'the worklist is gone');
+        $this->assertCount(0, glob($folder . '/sins*.md') ?: [], 'its archives too');
     }
 
     public function test_done_is_a_no_op_without_an_active_plan(): void

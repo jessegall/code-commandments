@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments;
 
+use JesseGall\CodeCommandments\Cli\Orchestration\Events\Handler;
 use JesseGall\CodeCommandments\Packages\Package;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Skill;
@@ -46,6 +47,18 @@ final class Custom
     public static function agents(?string $dir = null): array
     {
         return self::instancesOf(Agents\Agent::class, $dir);
+    }
+
+    /**
+     * The project's own {@see Handler} classes — its tie-ins to an orchestration moment. Discovered like
+     * a skill rather than a detector: a handler declares the moment it wants in its own signature, so
+     * there is nothing left for a registration line to add, and `$config->disable(...)` turns one off.
+     *
+     * @return list<Handler>
+     */
+    public static function handlers(?string $dir = null): array
+    {
+        return self::instancesOf(Handler::class, $dir);
     }
 
     /**

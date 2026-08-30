@@ -153,4 +153,58 @@ final class HelpTest extends TestCase
 
         return $out;
     }
+
+    /**
+     * Every surface is projected from `help()`, so nothing can drift between the screen, the README and
+     * the skills. What NOTHING checked was the declaration against the CODE — and a form is a promise:
+     * `plan stale [--for=N]` told a reader the flag existed while the command rejected it as unknown,
+     * because it was written as a form and never declared as an option.
+     *
+     * So a flag mentioned in a form must be one the command actually declares. Both halves live in the
+     * same `help()` call, which is what makes this cheap to keep true.
+     */
+    public function test_a_form_never_promises_a_flag_the_command_does_not_declare(): void
+    {
+        foreach ($this->commands() as $command) {
+            $help = $command->help();
+            $declared = $help->optionNames();
+
+            foreach ($help->forms as $form) {
+                foreach ($this->flagsIn($form->syntax) as $flag) {
+                    $this->assertContains(
+                        $flag,
+                        $declared,
+                        "`{$form->syntax}` promises `--{$flag}`, which {$command->names()[0]} does not declare as an option",
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * The long flags a form's syntax mentions, by name — `[--for=N]` is `for`. A form is prose for a
+     * human, so this reads the words rather than parsing a grammar.
+     *
+     * @return list<string>
+     */
+    private function flagsIn(string $syntax): array
+    {
+        $flags = [];
+
+        foreach (preg_split('/\s+/', $syntax) ?: [] as $word) {
+            $word = trim($word, "[]().,|`'\"");
+
+            if (! str_starts_with($word, '--') || $word === '--') {
+                continue;
+            }
+
+            $name = explode('=', substr($word, 2), 2)[0];
+
+            if ($name !== '') {
+                $flags[] = $name;
+            }
+        }
+
+        return $flags;
+    }
 }

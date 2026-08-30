@@ -9,8 +9,8 @@ use JesseGall\CodeCommandments\Workspace;
 /**
  * The `--repent=ID|latest` scope: restrict to the files a previous judge run reported,
  * by reading that run's checklist. So `judge`/`repent --repent=latest` act on exactly
- * what the last run found — no scope to recompute. `latest` is the session's `sins.md`;
- * an ID is its archive (`sins-<id>.md`).
+ * what the last run found — no scope to recompute. `latest` is the session's live checklist;
+ * an ID is its archive.
  */
 final class ChecklistScope implements ChangeScope
 {
@@ -22,8 +22,8 @@ final class ChecklistScope implements ChangeScope
     public function restrictTo(string $path): ?array
     {
         $checklist = $this->id === 'latest'
-            ? $this->workspace->path('sins.md')
-            : $this->workspace->path("sins-{$this->id}.md");
+            ? $this->workspace->checklist()
+            : $this->workspace->checklistArchive($this->id);
 
         if (! is_file($checklist)) {
             throw ScopeUnavailable::noChecklist($this->id, $checklist);

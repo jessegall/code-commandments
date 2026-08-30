@@ -24,3 +24,5 @@ the third one's cost is paid by the other two waiting.
 - (2026-08-29, ee0f6f01) RULED: the plan tree is the ITEM tree. 'Scope is where the item sits' is an argument for a parent relation, not for folders — and a folder tree beside the board would need the same reconciliation ('which plan owns this item?') that killed the parallel todo folder. One store, a parent, and a session cursor.
 
 - (2026-08-29, ee0f6f01) OVERRULED by Jesse, and it improves the design: the durable item IS a folder. The path is the parent chain, so the folder tree and the item list are ONE store rather than two — which was my whole objection, now answered by the structure instead of against it.
+
+- (2026-08-30, 80a2eda7) CORRECTED BY A WORKER: the veto rule is not 'derives from a PreToolUse' — that is one INSTANCE of the shape, not the definition. The invariant is RAISED BEFORE THE ACT, IN THE PROCESS THAT PERFORMS IT. A CLI event qualifies: nothing has moved yet and the refusal exits non-zero from the process that would have moved it. The narrow rule would have left the layer with no vetoable event at all.

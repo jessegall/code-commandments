@@ -43,6 +43,9 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate list', 'the profiles this project has written')
             ->form('orchestrate show [name]', 'read one out — what an orchestrator loads instead of copying a brief by hand')
             ->form('orchestrate stop', 'stop working under a profile; the profile is untouched')
+            ->form('orchestrate template list', 'the documents and roles this package ships as a starting point')
+            ->form('orchestrate template show <name>', 'read one out before taking it')
+            ->form('orchestrate template use <name>', 'write it into the profile in force — never over a file you already have')
             ->form('orchestrate plan', 'the whole tree with depth, and where you are standing in it')
             ->form('orchestrate plan open "<title>"', 'start this session\'s plan — the work you came here to do')
             ->form('orchestrate plan add <name> "<why>"', 'a SIDEQUEST under wherever you are standing, and stand in it. A detour is cheap to declare and impossible to reconstruct later')
@@ -51,7 +54,7 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate plan where', 'the path from the plan to here — what you were doing before the detour')
             ->form('orchestrate plan stale [--for=N]', 'live branches nobody has touched for N minutes (default 60)')
             ->form('orchestrate assistant <name> <section> "<text>"', 'APPEND one line to a role — `caught`, `behaviour`, `restrictions`, `brief`. Stamped with the day and the sha, which is the metadata you would forget to type')
-            ->form('orchestrate profile <document> "<text>"', 'append to a profile-level document — `traps`, `behaviour`, `restrictions`')
+            ->form('orchestrate profile <document> "<text>"', 'append to a profile-level document — ' . implode(', ', array_map(fn (string $d) => "`{$d}`", array_keys(Profile::DOCUMENTS))))
             ->option('--set', 'replace the document rather than adding to it — the rare case')
             ->option('--for', 'with `plan stale`: how many minutes untouched counts as stale (default 60)')
             ->form('orchestrate', 'the declaration to paste, and what will NOT be enforced until something changes')
@@ -79,6 +82,7 @@ final class OrchestrateCommand implements Command
             'show' => $this->show($workspace, $input->argument(1)->unwrapOr('')),
             'stop' => $this->stop($workspace),
             'plan' => $this->plan($workspace, $input),
+            'template', 'templates' => $this->template($workspace, $input),
             'assistant', 'role' => $this->write(
                 $workspace,
                 'roles/' . $input->argument(1)->unwrapOr(''),
@@ -95,6 +99,88 @@ final class OrchestrateCommand implements Command
             ),
             default => $this->propose($input),
         };
+    }
+
+    /**
+     * The templates this package ships. A scaffold asks a question and leaves a blank; a template shows
+     * an answer somebody already found worth keeping, which is the difference between a file a project
+     * fills in and one it stares at.
+     */
+    private function template(Workspace $workspace, Input $input): int
+    {
+        $templates = Templates::shipped();
+
+        return match ($input->argument(1)->unwrapOr('list')) {
+            'show' => $this->showTemplate($templates, $input->argument(2)->unwrapOr('')),
+            'use' => $this->useTemplate($workspace, $templates, $input->argument(2)->unwrapOr('')),
+            'list' => $this->listTemplates($templates),
+            default => $this->console->refuse(
+                'No `template ' . $input->argument(1)->unwrapOr('') . '`.',
+                '  It has: list, show, use.',
+            ),
+        };
+    }
+
+    private function listTemplates(Templates $templates): int
+    {
+        $lines = [];
+
+        foreach ($templates->all() as $name) {
+            $lines[] = sprintf('  %-22s %s', $name, $templates->about($name));
+        }
+
+        if ($lines === []) {
+            return $this->console->say('This package ships no templates.');
+        }
+
+        return $this->console->say(
+            ...$lines,
+            ...['', '  `commandments orchestrate template use <name>` writes one into the profile in force.'],
+        );
+    }
+
+    private function showTemplate(Templates $templates, string $name): int
+    {
+        foreach ($templates->read($name) as $body) {
+            return $this->console->say($body);
+        }
+
+        return $this->console->refuse("No template `{$name}`.", '  `commandments orchestrate template list` shows them.');
+    }
+
+    /**
+     * Write a template into the profile in force. It REFUSES over a file that is already there: a
+     * template is a starting point, and overwriting somebody's own words with a default would be the
+     * worst thing this command could do.
+     */
+    private function useTemplate(Workspace $workspace, Templates $templates, string $name): int
+    {
+        $running = Instance::inSession($workspace)->profile();
+
+        if ($running->isNone()) {
+            return $this->console->refuse('Not orchestrating. `commandments orchestrate use <profile>` first.');
+        }
+
+        foreach ($templates->read($name) as $body) {
+            foreach (Profiles::of($workspace)->named($running->unwrapOr('')) as $profile) {
+                $to = $templates->homeIn($profile, $name);
+
+                if (is_file($to)) {
+                    return $this->console->refuse(
+                        "`{$name}` is already written in `{$profile->name}`.",
+                        '  A template never overwrites your own words — read it with `template show` and take what you want.',
+                    );
+                }
+
+                if (! File::write($to, $body)) {
+                    return $this->console->refuse("Could not write {$to}.");
+                }
+
+                return $this->console->say("▸ {$name} written into `{$profile->name}`.", '  ' . $to);
+            }
+        }
+
+        return $this->console->refuse("No template `{$name}`.", '  `commandments orchestrate template list` shows them.');
     }
 
     /**
@@ -350,8 +436,10 @@ final class OrchestrateCommand implements Command
         }
 
         File::write($dir . '/' . Profile::SETUP, $this->setupStub());
-        File::write($dir . '/roles/integrator.md', $this->roleStub('integrator', 'the sole writer to the shared branch — it merges a committed sha, runs the gates on the branch itself, and answers for what landed'));
-        File::write($dir . '/roles/auditor.md', $this->roleStub('auditor', 'read-only, on request only — reports violations most-severe first, and a ruling ignored outranks a new finding'));
+
+        foreach (Profile::ROLES as $role => $is) {
+            File::write($dir . '/roles/' . $role . '.md', $this->roleStub($role, $is));
+        }
 
         $written = array_map(
             static fn (string $document, string $about): string => "    {$document}.md — {$about}",
@@ -496,10 +584,40 @@ final class OrchestrateCommand implements Command
                 }
             }
 
-            return 0;
+            return $this->sayWhatIsMissing($profile);
         }
 
         return $this->console->say("No profile `{$name}`.");
+    }
+
+    /**
+     * Name the documents the scaffold has that this profile does not. A file that is absent renders as
+     * NOTHING, so a profile built before a document existed had no way to learn it was one short — and
+     * the only thing that caught it was a person remembering.
+     *
+     * It says they exist and writes nothing: the profile is the project's, and every one of these is a
+     * judgement somebody has to make rather than a blank the tool can fill.
+     */
+    private function sayWhatIsMissing(Profile $profile): int
+    {
+        $missing = [];
+
+        foreach (Profile::DOCUMENTS as $document => $answers) {
+            if ($profile->document($document)->isNone()) {
+                $missing[] = "  {$document} — {$answers}";
+            }
+        }
+
+        if ($missing === []) {
+            return 0;
+        }
+
+        return $this->console->say(
+            Text::heading('not written yet'),
+            '',
+            ...$missing,
+            ...['', '  `commandments orchestrate profile <document> "<text>"` starts one.'],
+        );
     }
 
     /**

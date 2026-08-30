@@ -29,3 +29,5 @@
 - (2026-08-30, 0a3b0932) A test that ARRANGES the condition under test has decided the answer. MergeGateTest chdir'd into the repo, which normalised away the very variable — where the process is standing — that the bug was about, so the gate could not fail there. Worse than an ordinary weak test because the normalisation reads as hygiene: nobody reviewing a chdir in a setUp thinks 'this is the assumption'.
 
 - (2026-08-30, 0a3b0932) When you MOVE a thing, ask what was true of its old home. Plans were durable in orchestrator/; moving them into the session left the durability behind, silently, because the property belonged to the location rather than the thing.
+
+- (2026-08-30, 80a2eda7) An absent row in an agent listing is an ABSENCE YOU INTERPRET; a failed reach is a MEASUREMENT. ListAgents stopped showing idle agents, four live agents vanished from it, and that was read as four losses and reported as evidence. `orphan` must therefore rest on a failed ping, never on a shorter list than expected.

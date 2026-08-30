@@ -161,6 +161,32 @@ final class StateMigrationTest extends TestCase
         $this->assertFileDoesNotExist($this->session . '/.cardinal-remind-count');
     }
 
+    public function test_judge_checklists_move_into_their_own_folder_and_are_kept(): void
+    {
+        file_put_contents($this->session . '/sins.md', "the live worklist\n");
+        file_put_contents($this->session . '/sins-2026-08-29_154514.md', "an earlier run\n");
+        file_put_contents($this->session . '/sins-2026-08-29_200830.md', "another\n");
+
+        $this->assertSame(['3 judge checklist(s) moved into sins/'], $this->migrate());
+
+        $folder = $this->session . '/' . Workspace::SINS;
+
+        $this->assertSame("the live worklist\n", (string) file_get_contents($folder . '/sins.md'));
+        $this->assertSame("an earlier run\n", (string) file_get_contents($folder . '/sins-2026-08-29_154514.md'));
+        $this->assertSame("another\n", (string) file_get_contents($folder . '/sins-2026-08-29_200830.md'));
+        $this->assertCount(0, glob($this->session . '/sins*.md') ?: [], 'nothing is left at the top level');
+    }
+
+    public function test_a_checklist_already_in_the_new_folder_is_not_overwritten_by_the_old_one(): void
+    {
+        mkdir($this->session . '/' . Workspace::SINS, 0777, true);
+        file_put_contents($this->session . '/' . Workspace::SINS . '/sins.md', "written since the upgrade\n");
+        file_put_contents($this->session . '/sins.md', "the stale one\n");
+
+        $this->assertSame([], $this->migrate(), 'nothing moved');
+        $this->assertSame("written since the upgrade\n", (string) file_get_contents($this->session . '/' . Workspace::SINS . '/sins.md'));
+    }
+
     public function test_it_runs_once_and_leaves_a_converted_project_alone(): void
     {
         $this->legacy('.until', '0', '0', '1', "1\ttests pass");

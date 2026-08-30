@@ -21,6 +21,13 @@ final readonly class Plan
 
     private const string CHILDREN = 'sidequest';
 
+    /**
+     * How much of a why is worth printing. `where` answers "what was I doing" at a glance, and a level
+     * whose body opens with a paragraph would push that off the screen — so the sentence is enough, and
+     * the file is there for the rest.
+     */
+    private const int GLANCE = 90;
+
     public function __construct(public string $root) {}
 
     public static function inSession(Workspace $workspace): self
@@ -146,8 +153,8 @@ final readonly class Plan
     }
 
     /**
-     * WHY a level exists — the first line of prose under its heading. `where` prints it beside each step,
-     * because a path alone tells you where you are standing and not what you came for.
+     * WHY a level exists — the first sentence of prose under its heading. `where` prints it beside each
+     * step, because a path alone says where you are standing and not what you came for.
      *
      * @param  list<string>  $path
      */
@@ -159,11 +166,35 @@ final readonly class Plan
             $line = trim($line);
 
             if ($line !== '' && ! str_starts_with($line, '#') && ! str_starts_with($line, '-')) {
-                return $line;
+                return $this->glanceable($line);
             }
         }
 
         return '';
+    }
+
+    /**
+     * $line cut to something readable in one look: its first sentence, or a clean word boundary when the
+     * sentence runs long. A why nobody can take in at a glance is a why they will scroll past.
+     */
+    private function glanceable(string $line): string
+    {
+        foreach (['. ', ' — ', '; '] as $break) {
+            $at = strpos($line, $break);
+
+            if ($at !== false && $at <= self::GLANCE) {
+                return substr($line, 0, $at);
+            }
+        }
+
+        if (strlen($line) <= self::GLANCE) {
+            return $line;
+        }
+
+        $cut = substr($line, 0, self::GLANCE);
+        $space = strrpos($cut, ' ');
+
+        return ($space === false ? $cut : substr($cut, 0, $space)) . '…';
     }
 
     /**

@@ -41,15 +41,10 @@ use JesseGall\PhpTypes\Option;
 
 /**
  * Scans a path and runs Sin Detectors, outputting findings grouped by skill (filterable by --skill/--sin).
- * Orchestrates Scope, Codebase, DetectorRunner (parallel), and SinReport; writes `.commandments/sins.md` checklist.
+ * Orchestrates Scope, Codebase, DetectorRunner (parallel), and SinReport; writes the session's checklist ({@see Checklist}).
  */
 final class Judge implements Command
 {
-    /**
-     * How many past checklists to keep alongside the live one.
-     */
-    private const int KEEP_ARCHIVES = 5;
-
     /**
      * The exit code for a run that found nothing but could not run every rule — distinct from
      * both "clean" (0) and "sins found" (1), because a broken rule is neither.
@@ -74,13 +69,14 @@ final class Judge implements Command
         return Help::of('Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.')
             ->form('judge [path]', 'scan a path — or, with none, the source roots declared in .commandments/config.php')
             ->form('judge --list', 'list every detector, grouped by skill')
+            ->option('--list', 'list every detector grouped by the skill that fixes it, and run none of them')
             ->option('--skill=NAME', 'only run detectors for one skill (group), e.g. spatie-data')
             ->option('--sin=NAME', 'only run detectors for one sin (lenient name match), e.g. nullable-callback')
             ->option('--exclude=A,B', 'skip findings in paths containing any fragment')
             ->adopt(Scope::options())
             ->option('--parallel=N', 'run detectors across N worker processes (default: 8, capped at cores; 1 = off)')
             ->option('--ignore-package-requirements', 'keep package-gated rules even if this project lacks the package (cross-project calibration)')
-            ->option('--checklist=FILE', "write the checklist here (default: your session's .commandments/sessions/<id>/sins.md)")
+            ->option('--checklist=FILE', "write the checklist here (default: your session's .commandments/sessions/<id>/sins/sins.md)")
             ->option('--no-checklist', "print only, don't write the checklist file")
             ->option('--benchmark', 'time each detector and print the slowest')
             ->note('With no [path], judge scans the source roots declared by $config->paths(...) in '
@@ -228,55 +224,35 @@ final class Judge implements Command
         $this->line($report->console());
 
         foreach ($checklist as $target) {
-            @mkdir(dirname($target), 0755, true);
-            $this->archive($target);
-            file_put_contents($target, $report->checklist());
-            $this->line("\033[2m↳ checklist written to {$target} — fix each item, then delete its line\033[0m");
+            $this->write($target, $report->checklist(), $workspace);
         }
 
         return 1;
     }
 
     /**
-     * Before overwriting the checklist, preserve the previous one alongside it as
-     * `<name>-<when>.<ext>` (stamped with its own write time) — so a re-run never
-     * clobbers the report you were working through. Archives live in the gitignored
-     * `.commandments/` folder; clear them out whenever.
+     * Put this run's findings on disk, and SAY where — the path the run prints is what the reader
+     * (and every `--repent=latest`) works from, so it is measured, never assumed: a folder that
+     * could not be made or a file that did not land is reported as the failure it is rather than
+     * announced as a checklist nobody wrote.
      */
-    private function archive(string $checklist): void
+    private function write(string $target, string $checklist, Workspace $workspace): void
     {
-        if (! is_file($checklist)) {
+        if (! Checklist::prepare($target, $workspace)) {
+            fwrite(STDERR, "Could not create the checklist folder " . dirname($target) . " — the findings above were not written.\n");
+
             return;
         }
 
-        $ext = pathinfo($checklist, PATHINFO_EXTENSION);
-        $stem = $ext === '' ? $checklist : substr($checklist, 0, -(strlen($ext) + 1));
-        $stamp = date('Y-m-d_His', @filemtime($checklist) ?: time());
+        new Checklist($target)->archive();
 
-        $archive = "{$stem}-{$stamp}" . ($ext === '' ? '' : ".{$ext}");
+        if (file_put_contents($target, $checklist) === false) {
+            fwrite(STDERR, "Could not write the checklist to {$target} — the findings above are all there is.\n");
 
-        // A second run within the same second would collide — keep both.
-        for ($n = 2; is_file($archive); $n++) {
-            $archive = "{$stem}-{$stamp}-{$n}" . ($ext === '' ? '' : ".{$ext}");
+            return;
         }
 
-        @rename($checklist, $archive);
-        $this->pruneArchives($stem, $ext);
-    }
-
-    /**
-     * Keep only the {@see KEEP_ARCHIVES} most-recent archives (by write time) for this checklist,
-     * deleting the older ones — so `.commandments/` doesn't grow a checklist per run forever.
-     */
-    private function pruneArchives(string $stem, string $ext): void
-    {
-        $archives = glob($stem . '-*' . ($ext === '' ? '' : ".{$ext}")) ?: [];
-
-        usort($archives, static fn (string $a, string $b): int => (@filemtime($b) ?: 0) <=> (@filemtime($a) ?: 0));
-
-        foreach (array_slice($archives, self::KEEP_ARCHIVES) as $old) {
-            @unlink($old);
-        }
+        $this->line("\033[2m↳ checklist written to {$target} — fix each item, then delete its line\033[0m");
     }
 
     /**

@@ -138,7 +138,7 @@ final class JudgeReminder extends Hook
 
     /**
      * The "finish your open worklist" nudge, or null. Fires when a prior `judge` left the session's
-     * `sins.md` with sins still in it — once per distinct state, re-arming as lines are
+     * live checklist with sins still in it — once per distinct state, re-arming as lines are
      * worked off (so it keeps saying "keep going, N left" without spamming an unchanged file). A cleared
      * worklist forgets the marker (the session's `.remind-checklist`, recording the state last nudged).
      */
@@ -166,7 +166,7 @@ final class JudgeReminder extends Hook
         $noun = $remaining === 1 ? 'sin' : 'sins';
 
         return "Code Commandments — {$lead}: you have an OPEN worklist with {$remaining} {$noun} still in "
-            . "`{$ws->relative('sins.md')}`. Finish it before you stop: work straight down — fix each at its "
+            . "`" . $ws->checklistRelative() . "`. Finish it before you stop: work straight down — fix each at its "
             . 'SOURCE, delete its line — and do NOT re-run judge, re-scan, or re-verify between fixes. '
             . 'Only when the file is EMPTY, run `judge` again (wave by wave; a clean run deletes it). If '
             . 'you are intentionally pausing here, just say so and carry on.';

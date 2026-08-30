@@ -202,7 +202,7 @@ final class Briefing
         own tree scopes to that subtree. (Also `--skill=NAME` to scope to one group; `--branch`
         for files new/changed vs `main`; `--changes` for uncommitted changes.) A full scan
         is slow, so it writes the findings to a checklist — your session's
-        `.commandments/sessions/<id>/sins.md` (the run prints the exact path) — and
+        `.commandments/sessions/<id>/sins/sins.md` (the run prints the exact path) — and
         that file, not repeated scans, is how you work:
 
         1. Open the checklist judge wrote. Each line is one sin: `file:line`, the scope, and

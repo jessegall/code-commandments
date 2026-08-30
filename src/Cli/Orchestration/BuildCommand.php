@@ -8,10 +8,15 @@ use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Cli\Orchestration\Events\Accepting;
+use JesseGall\CodeCommandments\Cli\Orchestration\Events\Event;
+use JesseGall\CodeCommandments\Cli\Orchestration\Events\Handlers;
+use JesseGall\CodeCommandments\Cli\Orchestration\Events\Reported;
 use JesseGall\CodeCommandments\Cli\Text;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Workspace;
+use JesseGall\PhpTypes\Option;
 
 /**
  * `commandments build` — who is holding what, and what is waiting on you. It needs no configuration (an
@@ -67,7 +72,7 @@ final class BuildCommand implements Command
         return match ($input->firstArgument()->unwrapOr('show')) {
             'claim' => $this->claim($board, $input),
             'report' => $this->report($board, $input),
-            'accept' => $this->settle($board, $input, Stage::Accepted, 'accepted'),
+            'accept' => $this->accept($board, $input),
             'rework' => $this->rework($board, $input),
             'release' => $this->release($board, $input),
             'assign' => $this->assign($input),
@@ -355,20 +360,65 @@ final class BuildCommand implements Command
         }
 
         $board->move($item, Stage::Reported);
+        $receipts = Receipts::inSession(Workspace::ofSession($this->io->projectRoot()));
 
         foreach ($input->option('ran') as $argv) {
             $receipt = new Verification($this->io->projectRoot())
                 ->of($item, $argv, $input->option('against')->unwrapOr(''), $input->option('needs')->toNullable());
 
-            Receipts::inSession(Workspace::ofSession($this->io->projectRoot()))->file($receipt);
+            $receipts->file($receipt);
+            $this->console->say("▸ {$item} reported.", $receipt->render());
 
-            return $this->console->say("▸ {$item} reported.", $receipt->render());
+            return $this->raise(new Reported($this->io->projectRoot(), $board->on($item)->unwrap(), Option::some($receipt)))->unwrapOr(0);
         }
 
-        return $this->console->say(
+        $this->console->say(
             "▸ {$item} reported — with no receipt.",
             '  Nothing measured it, so this is your word for it. `--ran="<command>"` files what a process actually said.',
         );
+
+        return $this->raise(new Reported($this->io->projectRoot(), $board->on($item)->unwrap(), $receipts->latestFor($item)))->unwrapOr(0);
+    }
+
+    /**
+     * Settle an item — but ask the project first. Nothing has moved when {@see Accepting} is raised, and
+     * this is the process that would move it, so a handler's refusal here actually stops the acceptance
+     * rather than commenting on one that already happened.
+     */
+    private function accept(Board $board, Input $input): int
+    {
+        $item = $input->argument(1)->unwrapOr('');
+
+        foreach ($board->on($item) as $claim) {
+            $receipts = Receipts::inSession(Workspace::ofSession($this->io->projectRoot()));
+
+            foreach ($this->raise(new Accepting($this->io->projectRoot(), $claim, $receipts->latestFor($item))) as $refused) {
+                return $refused;
+            }
+        }
+
+        return $this->settle($board, $input, Stage::Accepted, 'accepted');
+    }
+
+    /**
+     * Raise $event to the handlers the project wrote ({@see Handlers}) and say what they answered.
+     *
+     * Absent when nothing stood in the way; present, carrying the exit code, when a handler REFUSED —
+     * which only a moment that has not happened yet can be. On every other moment the dispatcher has
+     * already demoted the refusal to a note, so its reason arrives in the message above instead of being
+     * lost. A terminal has one channel, so a note and a quiet note both simply print.
+     *
+     * @return Option<int>
+     */
+    private function raise(Event $event): Option
+    {
+        $verdict = Handlers::forProject($this->io->projectRoot())->dispatch($event);
+
+        foreach ($verdict->message() as $said) {
+            $this->console->say($said);
+        }
+
+        return $verdict->refusal()->map(fn (string $reason): int => $this->console->refuse($reason));
     }
 
     private function rework(Board $board, Input $input): int

@@ -39,6 +39,13 @@ final class Workspace
     public const string CUSTOM = 'custom';
 
     /**
+     * The session-folder subdirectory the judge checklists live in. They are generated OUTPUT —
+     * large, dated, superseded, read once — and a session folder's other entries are its live
+     * STATE, which one folder per run buries. {@see Cli\Judge\Checklist} owns what they mean.
+     */
+    public const string SINS = 'sins';
+
+    /**
      * The durable-tier folder an ORCHESTRATOR writes its ways of working into — the profiles a team
      * commits and reviews in a diff ({@see Cli\Orchestration\Profiles}). Durable like {@see CUSTOM},
      * and kept out of the folder's `.gitignore` for the same reason: a profile that is not in git did
@@ -218,6 +225,38 @@ final class Workspace
     public function path(string $file): string
     {
         return $this->sessionDir() . '/' . $file;
+    }
+
+    /**
+     * The folder this session's judge checklists live in: `<session>/sins`.
+     */
+    public function checklistDir(): string
+    {
+        return $this->path(self::SINS);
+    }
+
+    /**
+     * The live judge worklist — the one an agent works line by line.
+     */
+    public function checklist(): string
+    {
+        return $this->checklistDir() . '/sins.md';
+    }
+
+    /**
+     * One archived run, addressed by the stamp in its name (`--repent=2026-08-29_154514`).
+     */
+    public function checklistArchive(string $stamp): string
+    {
+        return $this->checklistDir() . "/sins-{$stamp}.md";
+    }
+
+    /**
+     * The live worklist WITHOUT the project root, for a display string.
+     */
+    public function checklistRelative(): string
+    {
+        return $this->relative(self::SINS . '/sins.md');
     }
 
     /**
