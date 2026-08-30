@@ -29,6 +29,31 @@ final readonly class AgentType
      */
     private const string TOOLS = 'tools:';
 
+    /**
+     * What a role may state for itself. Read from the role rather than inferred, because a description is
+     * matched to decide whether this agent is the one for a job — a guessed one is a guess about when the
+     * agent gets used at all.
+     */
+    private const string DESCRIBED = 'description:';
+
+    /**
+     * The model a role runs on. Stated per role because the cost of a role is a property of the WORK it
+     * does, and the role is the only place that knows what that work is.
+     */
+    private const string MODEL = 'model:';
+
+    /**
+     * The lines a role uses to declare itself, which are therefore not part of what it SAYS.
+     */
+    private const array DECLARATIONS = [self::TOOLS, self::DESCRIBED, self::MODEL, self::SKILLS, 'type:'];
+
+    /**
+     * Skills the harness loads into the agent before it starts. Worth stating because the body REPLACES
+     * the whole system prompt rather than adding to it, so a role gets none of the disciplines this
+     * project works under unless it asks for them by name.
+     */
+    private const string SKILLS = 'skills:';
+
     public function __construct(
         private string $root,
         private Profile $profile,
@@ -62,54 +87,118 @@ final readonly class AgentType
      */
     private function render(string $role, string $brief): string
     {
-        $tools = $this->toolsFor($brief);
-        $about = $this->firstProse($brief) ?: "the {$role} role from the `{$this->profile->name}` profile";
+        $tools = $this->declared($brief, self::TOOLS) ?: self::READS_ONLY;
+        $about = $this->declared($brief, self::DESCRIBED) ?: $this->firstProse($brief);
+        $about = $about ?: "the {$role} role from the `{$this->profile->name}` profile";
+        $model = $this->declared($brief, self::MODEL);
+        $runsOn = $model === '' ? '' : "\nmodel: {$model}";
+        $body = $this->body($brief);
+        $skills = $this->declared($brief, self::SKILLS);
+        $loads = $skills === '' ? '' : "\nskills: {$skills}";
 
         return <<<TEXT
             ---
             name: {$role}
             description: {$about}
-            tools: {$tools}
+            tools: {$tools}{$runsOn}{$loads}
             ---
 
             <!-- GENERATED from `.commandments/orchestrator/profiles/{$this->profile->name}/roles/{$role}.md`
-                 by `commandments agent add {$role}`. Edit the ROLE, not this: the role is the one source
+                 by `commandments orchestrate agent {$role}`. Edit the ROLE, not this: the role is the one source
                  and this is rewritten from it. -->
 
-            {$brief}
+            {$body}
             TEXT;
     }
 
     /**
-     * The role's own first sentence, which is what a listing shows. Read from the brief rather than
-     * restated, so a role rewritten reads differently everywhere at once.
+     * The role's opening SENTENCE — a fallback for a role that did not describe itself, never the
+     * preferred path. Read a line at a time this truncated every role that wrapped (the published
+     * `reviewer` ended on the dash where its sentence continued), and read a paragraph at a time it is
+     * too long: a description is matched to decide whether this agent is chosen at all, and every
+     * custom agent's description is charged against ONE budget, so a verbose one taxes the others.
      */
     private function firstProse(string $brief): string
     {
+        $paragraph = [];
+
         foreach (explode("\n", $brief) as $line) {
             $line = trim($line);
 
-            if ($line !== '' && ! str_starts_with($line, '#') && ! str_starts_with($line, 'type:') && ! str_starts_with($line, 'tools:')) {
-                return $line;
+            if ($this->isDeclaration($line) || str_starts_with($line, '#')) {
+                continue;
+            }
+
+            if ($line === '') {
+                if ($paragraph !== []) {
+                    break;
+                }
+
+                continue;
+            }
+
+            $paragraph[] = $line;
+        }
+
+        return $this->firstSentence(implode(' ', $paragraph));
+    }
+
+    /**
+     * Up to the first full stop, the whole thing where it has none.
+     */
+    private function firstSentence(string $prose): string
+    {
+        $end = strpos($prose, '. ');
+
+        return $end === false ? $prose : substr($prose, 0, $end + 1);
+    }
+
+    /**
+     * The role's words, with its declarations taken out. What is in the frontmatter is already in front
+     * of the agent, and a system prompt that repeats its own metadata spends the agent's attention
+     * telling it what it is instead of what to do.
+     */
+    private function body(string $brief): string
+    {
+        $kept = [];
+
+        foreach (explode("\n", $brief) as $line) {
+            if (! $this->isDeclaration(trim($line))) {
+                $kept[] = $line;
+            }
+        }
+
+        return trim(implode("\n", $kept));
+    }
+
+    /**
+     * A line a role uses to declare something about itself rather than to say something.
+     */
+    private function isDeclaration(string $line): bool
+    {
+        foreach (self::DECLARATIONS as $declaration) {
+            if (str_starts_with($line, $declaration)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * What the role DECLARED under $key, empty where it declared nothing. One reader for every such line,
+     * so a key added later is read the same way as the ones already here.
+     */
+    private function declared(string $brief, string $key): string
+    {
+        foreach (explode("\n", $brief) as $line) {
+            if (str_starts_with(trim($line), $key)) {
+                return trim(substr(trim($line), strlen($key)));
             }
         }
 
         return '';
     }
 
-    /**
-     * What this role may reach for — its own `tools:` line, else read-only. A role whose restrictions say
-     * it never edits and never commits should not be ABLE to: those were instructions an agent broke
-     * tonight, and a type enforces what prose only requests.
-     */
-    private function toolsFor(string $brief): string
-    {
-        foreach (explode("\n", $brief) as $line) {
-            if (str_starts_with(trim($line), self::TOOLS)) {
-                return trim(substr(trim($line), strlen(self::TOOLS)));
-            }
-        }
 
-        return self::READS_ONLY;
-    }
 }
