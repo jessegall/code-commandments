@@ -60,7 +60,11 @@ final class Help
         $names = [];
 
         foreach ($this->options as $option) {
-            $spec = ltrim(explode('=', $option->spec, 2)[0], '-');
+            // Up to the first `=` OR `[`. An option whose value is optional is spelled `--branch[=BASE]`,
+            // and reading only to the `=` named it `branch[` — a name no invocation can ever match, so
+            // every such flag was documented in the help screen and refused by the parser that reads the
+            // same declaration. Three of them shipped that way: `--branch`, `--repent`, `--dry-run`.
+            $spec = ltrim(explode('[', explode('=', $option->spec, 2)[0], 2)[0], '-');
 
             if ($spec !== '') {
                 $names[] = $spec;

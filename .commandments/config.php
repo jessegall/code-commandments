@@ -215,6 +215,7 @@ $disabledHooks = function (Config $config): void {
         // Hooks\Handlers\CompactionGate::class,
         // Hooks\Handlers\CompactionReminder::class,
         // Hooks\Handlers\ConstraintReminder::class,
+        // Hooks\Handlers\ForbiddenCommandGate::class,
         // Hooks\Handlers\JournalRecorder::class,
         // Hooks\Handlers\JournalReminder::class,
         // Hooks\Handlers\JudgeReminder::class,
