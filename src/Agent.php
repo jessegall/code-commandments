@@ -18,6 +18,16 @@ final readonly class Agent
     ) {}
 
     /**
+     * How this worker is ADDRESSED — the pair, because neither half answers alone. A type says which job
+     * and names two different builders identically; an id says which process and means nothing tomorrow.
+     * A moment that carried only the type handed `general-purpose` to four agents as their whole subject.
+     */
+    public function address(): string
+    {
+        return $this->type === '' ? $this->id : $this->type . '#' . $this->id;
+    }
+
+    /**
      * How this worker reads where somebody has to recognise it — its job where it has one, since a type
      * means something tomorrow and an id does not.
      */
