@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks;
 
-use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
@@ -17,6 +16,12 @@ use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
  */
 abstract class Hook
 {
+    /**
+     * The type a hand nobody named is started as. It keeps no record across dispatches, so the
+     * bookkeeping hooks pass it by.
+     */
+    private const string ANONYMOUS = 'general-purpose';
+
     public function __construct(protected readonly HookIO $io = new HookIO) {}
 
     /**
@@ -63,6 +68,10 @@ abstract class Hook
             return $this->pass();
         }
 
+        if (! $this->boundToTool($event)) {
+            return $this->pass();
+        }
+
         return match ($event->name()) {
             'PostToolUse' => $this->onPostToolUse($event),
             'UserPromptSubmit' => $this->onUserPromptSubmit($event),
@@ -104,20 +113,41 @@ abstract class Hook
     }
 
     /**
-     * Is this worker one the profile named? An assistant is dispatched AS a role and the harness reports
-     * that as its type; anything else was spawned for one piece of work and is gone after it.
+     * Does a tool moment match what this hook BOUND itself to? A matcher on a binding scopes what gets
+     * WIRED, and the dispatcher hands every registered handler every moment — so a hook that declared
+     * `PreToolUse/Agent` was being asked about `Bash`, `Read` and everything else, and only stayed quiet
+     * if it happened to re-check the tool itself. A binding with no matcher still hears every tool.
+     */
+    private function boundToTool(HookEvent $event): bool
+    {
+        $matchers = [];
+
+        foreach ($this->bindings() as $binding) {
+            if ($binding->event !== $event->name()) {
+                continue;
+            }
+
+            if ($binding->matcher === null) {
+                return true;
+            }
+
+            $matchers[] = $binding->matcher;
+        }
+
+        return $matchers === [] || in_array($event->tool(), $matchers, true);
+    }
+
+    /**
+     * Is this worker one somebody NAMED? An assistant is dispatched as its own agent type — a role the
+     * project published — where a one-shot hand is started as the generic one and is gone after the work.
+     * The type is the whole test: asking the profile instead made this layer reach up into the CLI for a
+     * fact the payload already carries, and a published type is what a role IS now.
      */
     private function isAssistant(HookEvent $event): bool
     {
-        if ($event->agent()->type === '') {
-            return false;
-        }
+        $type = $event->agent()->type;
 
-        foreach (Profiles::inForce($event->sessionWorkspace()) as $profile) {
-            return $profile->role($event->agent()->type)->isSome();
-        }
-
-        return false;
+        return $type !== '' && $type !== self::ANONYMOUS;
     }
 
     /**

@@ -319,6 +319,25 @@ final class HookEvent
     }
 
     /**
+     * The agent TYPE an `Agent` tool call is about to start — `general-purpose`, or a role the project
+     * published with `orchestrate agent`. Empty for every other tool.
+     */
+    public function agentTypeRequested(): string
+    {
+        return (string) ($this->payload['tool_input']['subagent_type'] ?? '');
+    }
+
+    /**
+     * The model an `Agent` tool call NAMED, empty where it named none. Absent does not mean cheap: an
+     * unnamed model inherits the dispatcher's, so the expensive answer is the one that happens by
+     * default and the cheap one has to be asked for.
+     */
+    public function modelRequested(): string
+    {
+        return (string) ($this->payload['tool_input']['model'] ?? '');
+    }
+
+    /**
      * A boolean flag on the payload (e.g. `stop_hook_active`), false when absent.
      */
     public function flag(string $key): bool

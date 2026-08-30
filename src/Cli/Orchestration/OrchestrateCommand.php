@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Support\File;
 use JesseGall\CodeCommandments\Workspace;
+use JesseGall\PhpTypes\Option;
 
 /**
  * `commandments orchestrate` — what this project would declare for the refusals to apply, read from the
@@ -30,6 +31,12 @@ final class OrchestrateCommand implements Command
      * The verbs that reach automatic dispatch, and so reach nothing while {@see Parked::DISPATCH} stands.
      */
     private const array DISPATCH_VERBS = ['on', 'enable', 'off', 'disable', 'moments', 'test'];
+
+    /**
+     * What a published type IS, said once. The file is derived, so the sentence that keeps a reader from
+     * editing it belongs beside the act that writes it — not once per verb that can write one.
+     */
+    private const string GENERATED = '  Generated FROM the role — edit the role and run this again; do not edit that file.';
 
     public function __construct(
         private readonly HookIO $io = new HookIO,
@@ -50,6 +57,8 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate show [name]', 'read one out — what an orchestrator loads instead of copying a brief by hand')
             ->form('orchestrate stop', 'stop working under a profile; the profile is untouched')
             ->form('orchestrate agent <role>', 'generate a dispatchable TYPE from a profile role, so a binding can name it and the harness can start it')
+            ->form('orchestrate agent --all', 'generate one for EVERY role the profile declares — what a fresh checkout needs, since a role nobody published cannot be started by name')
+            ->option('--all', 'with `agent`: publish every role the profile declares, through the same writer one role goes through')
             ->form('orchestrate cleanup [--lanes]', 'clear the sentinel files, counters and worlds a run leaves behind, and rewire the hooks — profiles, plan and journal are never touched')
             ->option('--lanes', 'also remove lane worktrees, KEEPING any that hold uncommitted work')
             ->form('orchestrate settings', "what the profile in force turns ON, and whether it has ever actually FIRED")
@@ -102,7 +111,9 @@ final class OrchestrateCommand implements Command
             'show' => $this->show($workspace, $input->argument(1)->unwrapOr('')),
             'stop' => $this->stop($workspace),
             'cleanup' => $this->cleanup($workspace, $input),
-            'agent' => $this->agent($workspace, $input->argument(1)->unwrapOr('')),
+            'agent' => $input->hasFlag('all')
+                ? $this->everyAgent($workspace)
+                : $this->agent($workspace, $input->argument(1)->unwrapOr('')),
             'on', 'enable' => $this->switch($workspace, $input, on: true),
             'off', 'disable' => $this->switch($workspace, $input, on: false),
             'settings' => $this->settings($workspace),
@@ -939,6 +950,58 @@ final class OrchestrateCommand implements Command
     }
 
     /**
+     * Publish EVERY role at once, through the SAME writer one role goes through. A checkout that has
+     * never run this can start none of its roles by name, and discovering that one role at a time — at
+     * the moment you want to dispatch it — is how an evening's dispatches went to `general-purpose`
+     * agents standing in under another name.
+     */
+    private function everyAgent(Workspace $workspace): int
+    {
+        foreach (Profiles::inForce($workspace) as $profile) {
+            $written = [];
+
+            foreach ($profile->roles() as $role) {
+                foreach ($this->publish($profile, $role) as $path) {
+                    $written[] = '  ' . $role . '  ·  ' . $path;
+                }
+            }
+
+            if ($written === []) {
+                return $this->console->refuse("`{$profile->name}` declares no roles, so there is nothing to publish.");
+            }
+
+            return $this->console->say(
+                sprintf('▸ %d role(s) of `%s` can now be started by name.', count($written), $profile->name),
+                ...$written,
+                ...[self::GENERATED],
+            );
+        }
+
+        return $this->noProfile();
+    }
+
+    /**
+     * Nobody is orchestrating, so there are no roles to speak of. One sentence, in one place, for every
+     * verb that needs a profile and does not find one.
+     */
+    private function noProfile(): int
+    {
+        return $this->console->refuse('No profile is in force.', '  `commandments orchestrate use <profile>`');
+    }
+
+    /**
+     * The ONE place a role becomes a type. Both verbs come through here, so what `--all` writes and what
+     * one role writes can never drift — the second writer is how two spellings of the same act start
+     * disagreeing about tools, or about which file is the source.
+     *
+     * @return Option<string>  where it landed, absent when the profile declares no such role
+     */
+    private function publish(Profile $profile, string $role): Option
+    {
+        return new AgentType($this->io->projectRoot(), $profile)->write($role);
+    }
+
+    /**
      * Automatic dispatch is PARKED, so the verbs that reach it say so instead of half-working. Refused
      * at the door rather than deeper down: a trigger that binds but never fires is the worse failure,
      * because it reads as configured.
@@ -964,11 +1027,11 @@ final class OrchestrateCommand implements Command
         }
 
         foreach (Profiles::inForce($workspace) as $profile) {
-            foreach (new AgentType($this->io->projectRoot(), $profile)->write($role) as $path) {
+            foreach ($this->publish($profile, $role) as $path) {
                 return $this->console->say(
                     "▸ `{$role}` can now be started by name.",
                     '  ' . $path,
-                    '  Generated FROM the role — edit the role and run this again; do not edit that file.',
+                    self::GENERATED,
                     '  Its tools come from the role\'s own `tools:` line, else read-only, because a role that',
                     '  says it never edits should not be able to.',
                 );
@@ -980,7 +1043,7 @@ final class OrchestrateCommand implements Command
             );
         }
 
-        return $this->console->refuse('No profile is in force.', '  `commandments orchestrate use <profile>`');
+        return $this->noProfile();
     }
 
     /**
@@ -1085,7 +1148,7 @@ final class OrchestrateCommand implements Command
             return $this->console->say("`{$profile->name}` runs:", ...$said);
         }
 
-        return $this->console->refuse('No profile is in force.', '  `commandments orchestrate use <profile>`');
+        return $this->noProfile();
     }
 
     /**
