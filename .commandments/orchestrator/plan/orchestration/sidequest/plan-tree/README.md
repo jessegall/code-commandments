@@ -37,25 +37,60 @@ to with the day and sha stamped.
 - `stale [--for=N]` — a live branch untouched for N. The plan-shaped twin of
   "N items are waiting on YOU".
 
-## Scoping — the same split as a profile
+## Scoping — a plan is shared, a sidequest is this session's path
 
-A plan has two halves, and confusing them is what makes it either die with a
-terminal or collide between two.
+The split is not "durable vs volatile" but **what the thing is a fact ABOUT**.
 
-- **Durable: the tree itself** — `orchestrator/plan/<name>/`, in git. The work, its
-  sidequests, their READMEs. A multi-day port's plan is the thing a fresh session
-  most needs, so it cannot live under `sessions/<id>/`.
-- **Session: the cursor** — WHICH plan this session is working, and WHERE in it.
-  Meaningless tomorrow, and correctly dies with the session.
+- **A PLAN is a fact about the work.** The multi-day port exists whoever is running
+  it. It is durable, lives in `orchestrator/plan/<name>/`, and is in git.
+- **A SIDEQUEST is a fact about this session's path through the work.** The detour
+  THIS orchestrator took, in the order it took it. Entirely session-scoped, and it
+  correctly dies with the terminal it happened in.
 
-This is exactly how a profile already works: its content is durable in
-`orchestrator/profiles/<name>/`, and `Instance` holds which one is in force for this
-session. A plan is `use`d the same way.
+So the root folder holds plans and nothing else. The nesting — the breadcrumb, the
+stack of interruptions — belongs to the session, because it is a record of one
+orchestrator's route rather than of the work.
 
-**So concurrent sessions do not collide.** One session works `dissolution`, another
-works `tooling` — different trees, both durable. The only real clash is two sessions
-on the SAME plan, which is the same case as two orchestrators on one board and has
-the same answer: the second is told it is a reader.
+## The symlink is the binding AND the lock
+
+An orchestrator REFERENCES a plan by symlinking it into its own session folder.
+
+That one artifact does three jobs, which is why it beats a separate lease file:
+
+- **It binds** — the session's own folder says which plan is in force, the way
+  `Instance` says which profile is.
+- **It locks** — a live symlink IS the claim. Nothing to write, nothing to expire.
+- **It is legible** — `ls -l sessions/*/plan` shows every orchestrator and what it
+  holds. The record cannot disagree with itself, because there is only one copy.
+
+And it cleans itself up: the link dies when the session folder does, so an
+orchestrator that crashed leaves no lease anybody has to reap.
+
+**Use {@see Agents\SkillLink}, not a bare `symlink()`.** It already handles the cases
+this will meet — relative on POSIX, absolute on Windows (whose `symlink` resolves a
+relative target against the process cwd), and a content-idempotent COPY fallback
+where the filesystem has no links at all.
+
+## A second orchestrator on the same plan
+
+Refused for writing, allowed for reading — which is the answer already decided for
+two orchestrators on one board, arriving here unchanged.
+
+The refusal names who holds it and since when, the way a duplicate `claim` does. It
+is a refusal rather than a prompt because the cost is paid before anyone could read a
+warning: two orchestrators editing one plan produce a tree that is wrong in a way
+neither can see, which is the failure this whole design exists to prevent.
+
+## Closing a sidequest — the reason goes UP, not to the journal
+
+Closing writes the REASON and removes the folder. But the journal is ALSO
+session-scoped, so writing the reason there would lose it on exactly the boundary the
+sidequest already dies on.
+
+**So the reason is appended to the PLAN's durable record.** The session keeps the
+path it took; the plan keeps what was learned. That is the only way a conclusion
+reached in a detour reaches tomorrow's orchestrator, and it is what makes deleting
+the folder safe rather than lossy.
 
 ## Decided
 
