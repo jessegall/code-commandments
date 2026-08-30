@@ -26,11 +26,27 @@ final class Journal
      */
     private const int CAPACITY = 4000;
 
+    /**
+     * What the index is called inside a session's folder. Stated once, so anything that has to
+     * RECOGNISE a journal among a folder's other files — {@see \JesseGall\CodeCommandments\Cli\State\Adoption}
+     * merging a stranded folder in — names the same file the writers do.
+     */
+    public const string FILE = '.journal';
+
     public function __construct(private readonly StateFile $file) {}
 
     public static function inSession(Workspace $workspace): self
     {
-        return new self(new StateFile($workspace->path('.journal'), self::legend()));
+        return self::at($workspace->path(self::FILE));
+    }
+
+    /**
+     * The journal kept at $path — how a journal that belongs to no live workspace is read, which is what
+     * a folder being adopted holds.
+     */
+    public static function at(string $path): self
+    {
+        return new self(new StateFile($path, self::legend()));
     }
 
     /**
@@ -40,7 +56,7 @@ final class Journal
      */
     public static function ofAgent(Workspace $workspace, Agent $agent): self
     {
-        return new self(new StateFile($workspace->agentPath($agent, '.journal'), self::legend()));
+        return self::at($workspace->agentPath($agent, self::FILE));
     }
 
     public static function legend(): Legend
@@ -161,6 +177,52 @@ final class Journal
         }
 
         return $tagged;
+    }
+
+    /**
+     * Take $other's index into this one, INTERLEAVED by the moment each line was filed. A stranded folder
+     * holds an earlier stretch of the same conversation, so appending it as a block would put the opening
+     * of the session after its middle — and the order is the only thing that makes two stretches readable
+     * together. A line already filed here is not filed twice, so absorbing the same folder again is a
+     * no-op rather than a doubled record.
+     *
+     * The work counts SUM, because the two stretches are disjoint halves of one session's work; the
+     * silence count and the transcript stay this journal's own, since those describe where the session is
+     * NOW — except a transcript this side never learned, which the other side can still supply.
+     */
+    public function absorb(self $other): void
+    {
+        $taken = $other->file->read();
+        $mine = $this->file->read();
+
+        $this->file->write($mine
+            ->withItems($this->bounded(self::interleaved($mine->items(), $taken->items())))
+            ->with(
+                transcript: $mine->text('transcript') ?: $taken->text('transcript'),
+                session: $mine->text('session') ?: $taken->text('session'),
+                chunk: max($mine->int('chunk'), $taken->int('chunk')),
+                calls: $mine->int('calls') + $taken->int('calls'),
+            ));
+    }
+
+    /**
+     * $mine and $theirs as one index, ordered by the stamp each line carries and de-duplicated. A line
+     * this format did not write sorts by an empty stamp — first, where a hand-edited note is still read
+     * rather than dropped.
+     *
+     * @param  list<string>  $mine
+     * @param  list<string>  $theirs
+     * @return list<string>
+     */
+    private static function interleaved(array $mine, array $theirs): array
+    {
+        $lines = array_values(array_unique([...$mine, ...$theirs]));
+        $stamps = array_map(static fn (string $line) => Entry::fromLine($line)->mapOr('', fn (Entry $entry) => $entry->at), $lines);
+
+        // A stable sort, so two lines filed in the same second keep the order they were written in.
+        array_multisort($stamps, SORT_ASC, SORT_STRING, $lines);
+
+        return $lines;
     }
 
     /**

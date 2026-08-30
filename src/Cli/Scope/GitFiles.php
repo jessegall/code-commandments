@@ -22,6 +22,12 @@ class GitFiles
     private const string GITDIR = 'gitdir:';
 
     /**
+     * The folder a repository keeps its LINKED worktrees' git directories in — what tells one from a
+     * submodule, whose `.git` file names `modules/<name>` in the same shape.
+     */
+    private const string WORKTREES = 'worktrees';
+
+    /**
      * The git toplevel containing $path, or null when $path is not in a repository.
      */
     public function root(string $path): ?string
@@ -81,19 +87,13 @@ class GitFiles
 
         // A worktree's `.git` is a FILE naming the git directory it belongs to; a checkout of another
         // project names one somewhere else entirely, which is exactly the case being refused.
-        $contents = is_file($root . '/.git') ? trim((string) @file_get_contents($root . '/.git')) : '';
+        $gitdir = self::gitDirOf($root);
 
-        if (! str_starts_with($contents, self::GITDIR)) {
+        if ($gitdir === null) {
             return false;
         }
 
-        $gitdir = trim(substr($contents, strlen(self::GITDIR)));
-
-        if (! str_starts_with($gitdir, '/')) {
-            $gitdir = $root . '/' . $gitdir; // a worktree may name its git directory relatively
-        }
-
-        return self::within(realpath($gitdir) ?: $gitdir, $project);
+        return self::within($gitdir, $project);
     }
 
     /**
@@ -101,8 +101,67 @@ class GitFiles
      * only honest home for anything belonging to the project rather than to one checkout of it. A
      * worktree is its own git toplevel, so asking for the toplevel gives a different answer inside a
      * lane, and a `cd` then silently moves which file is read. Null outside a repository.
+     *
+     * Walked, not asked, for the same reason {@see root} is: this now answers where a SESSION's name is
+     * read from, so it is paid on every state path a hook builds, and a subprocess there is the most
+     * expensive thing a tool call does. Git still answers the setups a walk cannot know about — a bare
+     * repo, a `$GIT_DIR` override, a submodule.
      */
     public function projectRoot(string $path): ?string
+    {
+        $top = $this->root($path);
+
+        if ($top === null) {
+            return self::askProjectRoot($path);
+        }
+
+        return self::mainWorktreeOf($top) ?? self::askProjectRoot($path);
+    }
+
+    /**
+     * The main worktree $top belongs to, read off the filesystem. A normal checkout's `.git` is a
+     * DIRECTORY, so $top is already the answer; a LINKED worktree's is a file naming
+     * `<main>/.git/worktrees/<name>`, three levels below the main worktree. Null for anything else —
+     * a submodule names `<super>/.git/modules/<name>`, which is not a worktree of it — so git is asked
+     * rather than a wrong answer guessed.
+     */
+    private static function mainWorktreeOf(string $top): ?string
+    {
+        if (is_dir($top . '/.git')) {
+            return $top;
+        }
+
+        $gitdir = self::gitDirOf($top);
+
+        if ($gitdir === null || basename(dirname($gitdir)) !== self::WORKTREES) {
+            return null;
+        }
+
+        return dirname($gitdir, 3);
+    }
+
+    /**
+     * The git directory $root's `.git` FILE names — resolved absolute, since a worktree may name it
+     * relatively. Null when `.git` is a directory (a normal checkout) or names nothing.
+     */
+    private static function gitDirOf(string $root): ?string
+    {
+        $contents = is_file($root . '/.git') ? trim((string) @file_get_contents($root . '/.git')) : '';
+
+        if (! str_starts_with($contents, self::GITDIR)) {
+            return null;
+        }
+
+        $gitdir = trim(substr($contents, strlen(self::GITDIR)));
+
+        if (! str_starts_with($gitdir, '/')) {
+            $gitdir = $root . '/' . $gitdir;
+        }
+
+        return realpath($gitdir) ?: $gitdir;
+    }
+
+    private static function askProjectRoot(string $path): ?string
     {
         $common = trim((string) @shell_exec('git -C ' . escapeshellarg($path) . ' rev-parse --git-common-dir 2>/dev/null'));
 
@@ -111,7 +170,7 @@ class GitFiles
         }
 
         // A relative answer means we are already standing in the main worktree; an absolute one names it.
-        $resolved = str_starts_with($common, '/') ? dirname($common) : $this->root($path);
+        $resolved = str_starts_with($common, '/') ? dirname($common) : self::askGit($path);
 
         return $resolved === false ? null : $resolved;
     }
