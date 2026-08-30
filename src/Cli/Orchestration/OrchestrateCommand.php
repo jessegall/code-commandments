@@ -444,8 +444,11 @@ final class OrchestrateCommand implements Command
         }
 
         $profile = new Profile($name, $dir);
+        $templates = Templates::shipped();
 
         @mkdir($profile->roleFolder(), 0777, true);
+        @mkdir($profile->procedureFolder(), 0777, true);
+        @mkdir($profile->reminderFolder(), 0777, true);
 
         foreach (Profile::DOCUMENTS as $document => $about) {
             File::write($profile->pathTo($document), "# {$document}
@@ -454,22 +457,28 @@ final class OrchestrateCommand implements Command
 ");
         }
 
-        File::write($profile->pathTo(Profile::SETUP), $this->setupStub());
+        File::write($profile->setupPath(), $this->setupStub());
 
         foreach (Profile::ROLES as $role => $is) {
             File::write($profile->pathToRole($role), $this->roleStub($role, $is));
         }
 
-        // Every shipped reminder, written in. The wording is the part a project wants to change, and a
-        // folder that starts empty is one nobody discovers — so the words are there to edit from the
-        // first day, and deleting one is how it gets silenced.
-        foreach (Templates::shipped()->all() as $template) {
-            if (str_starts_with($template, 'reminders/')) {
-                foreach (Templates::shipped()->read($template) as $body) {
-                    File::write(Templates::shipped()->homeIn($profile, $template), $body);
-                }
+        // EVERYTHING this package ships, written in — every role, every procedure, every reminder. A
+        // folder that starts empty is one nobody discovers, and a project that has to go looking for the
+        // wording of a nudge before it can change it will keep the nudge it has. So the words are here to
+        // EDIT from the first day, and deleting a reminder is how it gets silenced. Written after the
+        // stubs, since a template shows an answer where a stub only asks the question.
+        foreach ($templates->all() as $template) {
+            foreach ($templates->read($template) as $body) {
+                File::write($templates->homeIn($profile, $template), $body);
             }
         }
+
+        // The switch file, EMPTY. Presence and activation are different things: a profile that arrived
+        // with a trigger already armed would spawn a process on somebody's machine the first time they
+        // committed, which is not a default anybody chose. So the file is here to be found and the
+        // arming is a line the reader types.
+        File::write($profile->settingsFile(), "{}\n");
 
         $written = array_map(
             static fn (string $document, string $about): string => "    {$document}.md — {$about}",
@@ -483,6 +492,11 @@ final class OrchestrateCommand implements Command
             '  Every file is yours to write — the tool asks the question, you answer it:',
             ...$written,
             '    roles/<role>.md — who a role is, its brief, what it may never do, what it has caught',
+            '    procedures/<name>.md — WHAT to do, separately from who is doing it',
+            '    reminders/<name>.md — what a hook SAYS; edit the words, or delete one to silence it',
+            '',
+            '  Nothing is armed. `settings.json` is empty, so no trigger runs until you say so:',
+            "    commandments orchestrate on <trigger> <agent> <procedure>",
             '',
             "  `commandments orchestrate use {$name}` puts it in force for this session.",
         ];

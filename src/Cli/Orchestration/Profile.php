@@ -166,16 +166,22 @@ final readonly class Profile
     }
 
     /**
-     * What a hook SAYS, with $values put in its holes — absent when this profile has no such file, which
-     * is how a project silences one: delete it.
+     * What THIS PROFILE says a hook says, with $values put in its holes. Absent means it has no file by
+     * that name and therefore no opinion; an EMPTY file is an opinion, and the opinion is silence.
+     *
+     * The two have to be told apart. A profile written before a reminder existed has no file for it and
+     * never chose anything, so reading that as "silence this" would mute a nudge nobody switched off —
+     * and every profile in the world is older than the next reminder we ship. Emptying the file is the
+     * off switch instead, which is also the better one: a deletion is invisible, where a file that has
+     * been emptied stands in the diff and in `orchestrate show` saying somebody meant it.
      *
      * @return Option<string>
      */
     public function reminder(string $reminder, Holes $holes): Option
     {
-        $body = $this->read($this->pathToReminder($reminder));
+        $path = $this->pathToReminder($reminder);
 
-        return $body === '' ? Option::none() : Option::some(trim($holes->fill($body)));
+        return is_file($path) ? Option::some(Reminder::spoken($this->read($path), $holes)) : Option::none();
     }
 
     /**
@@ -339,9 +345,17 @@ final readonly class Profile
      */
     public function setupScript(): Option
     {
-        $path = $this->path . '/' . self::SETUP;
+        return is_file($this->setupPath()) ? Option::some($this->setupPath()) : Option::none();
+    }
 
-        return is_file($path) ? Option::some($path) : Option::none();
+    /**
+     * Where the setup script lives — asked for rather than spelled again beside each write. It is NOT a
+     * document: `pathTo` gives everything the `.md` a profile's prose wears, and a shell script that
+     * inherited it was scaffolded to `lane.sh.md`, which the runner looking for `lane.sh` never found.
+     */
+    public function setupPath(): string
+    {
+        return $this->path . '/' . self::SETUP;
     }
 
     public function exists(): bool

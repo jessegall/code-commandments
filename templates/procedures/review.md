@@ -22,11 +22,12 @@ sharpened.
 
 ## Where the report goes
 
-**Write it to `.commandments/sessions/<session>/reports/<short-sha>.md`, and ALSO
-send it.** The file is the record; the message is the notification. A file nobody
-is told about is not read, and a message is gone after one reading — it does not
-survive the reader's compaction, its session restarting, or being wanted an hour
-later when a merge goes wrong.
+**Write it to `.commandments/sessions/<session>/reports/<short-sha>.md`.** The file
+is the record, and the record is what the leave message you owe your orchestrator
+POINTS AT — a message is gone after one reading, and does not survive the reader's
+compaction, its session restarting, or being wanted an hour later when a merge goes
+wrong. (Announcing itself is not this procedure's to state: every dispatched agent
+is told to, whatever it was dispatched to do.)
 
 **Named by the SHA, one file per commit.** Not by date, not by your name, never
 appended to a rolling file. The sha is the only name a reader always has, so

@@ -9,11 +9,15 @@ use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Cli\Journal\Reading;
 use JesseGall\CodeCommandments\Cli\Journal\Session;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
+use JesseGall\CodeCommandments\Cli\Orchestration\Holes;
+use JesseGall\CodeCommandments\Cli\Orchestration\Reminders;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Hooks\StopHookCap;
 use JesseGall\CodeCommandments\Support\Binary;
+use JesseGall\CodeCommandments\Workspace;
+use JesseGall\PhpTypes\Option;
 
 /**
  * Keeps the journal worth reading. A vocabulary nobody is reminded of decays to nothing, so the tags
@@ -73,7 +77,11 @@ final class JournalReminder extends Hook
         // A stretch this long has already lost its reasoning, and the fix costs one line — which is what
         // makes insisting fair rather than harsh.
         if ($quiet >= self::ENFORCED) {
-            return $this->block($this->enforced($event, $journal, $quiet));
+            $said = $this->enforced($event, $journal, $quiet);
+
+            // Silenced by deleting the file, and a refusal with nothing to say is not a refusal — it is a
+            // dead end the agent cannot act on. So the gate goes with the words.
+            return $said === '' ? $this->pass() : $this->block($said);
         }
 
         // Once per STRETCH of silence, not once per call past the threshold. Nagging every call is the
@@ -83,7 +91,9 @@ final class JournalReminder extends Hook
             return $this->pass();
         }
 
-        return $this->quietly($event, $this->reminder($event, $journal, $quiet));
+        $said = $this->reminder($event, $journal, $quiet);
+
+        return $said === '' ? $this->pass() : $this->quietly($event, $said);
     }
 
     /**
@@ -110,9 +120,13 @@ final class JournalReminder extends Hook
             // SILENCE is the debt and RECORDING pays it — the shape the per-call nudge already uses.
             // Pacing on total work instead asks again every stretch however much has been written down,
             // which is the metronome this whole thread exists to remove.
-            return $journal->quietFor() >= self::A_STRETCH
-                ? $this->quietly($event, $this->habit($event))
-                : $this->pass();
+            if ($journal->quietFor() < self::A_STRETCH) {
+                return $this->pass();
+            }
+
+            $habit = $this->habit($event);
+
+            return $habit === '' ? $this->pass() : $this->quietly($event, $habit);
         }
 
         if ($unheard !== '') {
@@ -120,24 +134,32 @@ final class JournalReminder extends Hook
         }
 
         if (StopHookCap::budget(self::HOLDS) < 1) {
-            return $this->quietly($event, $this->standing($open));
+            $standing = $this->standing($event, $open);
+
+            return $standing === '' ? $this->pass() : $this->quietly($event, $standing);
         }
 
-        $binary = Binary::in($event->root);
-        $work = implode("\n", array_map(fn (Entry $entry) => '  • ' . $entry->text, $open));
-        $end = Tag::End->marker();
+        $holes = Holes::none()
+            ->with('work', implode("\n", array_map(fn (Entry $entry) => '  • ' . $entry->text, $open)))
+            ->with('end', Tag::End->marker())
+            ->with('binary', Binary::in($event->root));
 
-        return $this->block(<<<TEXT
-            Code Commandments — you declared work that is still open:
+        $said = $this->words($event, 'journal-open', $holes);
 
-            {$work}
+        return $said === '' ? $this->pass() : $this->block($said);
+    }
 
-            Close it before you stop. If it is finished, say so — `{$end} <the same words>`. If it is not,
-            say where it got to and what the next step is, so a reader on the far side of a compaction is
-            not left with a start and no end.
-
-            `{$binary} journal open` lists it.
-            TEXT);
+    /**
+     * What a reminder amounts to as output — the package's name in front of it, and NOTHING where the
+     * profile in force has deleted the file. Every caller treats the empty string as "say nothing and do
+     * not hold the turn", because a gate whose reason has been silenced is a refusal the agent cannot act
+     * on.
+     */
+    private function words(HookEvent $event, string $name, Holes $holes): string
+    {
+        return Reminders::inSession($event->sessionWorkspace())
+            ->say($name, $holes)
+            ->mapOr('', static fn (string $said): string => 'Code Commandments — ' . $said);
     }
 
     /**
@@ -158,16 +180,11 @@ final class JournalReminder extends Hook
             return '';
         }
 
-        $binary = Binary::in($event->root);
+        $holes = Holes::none()
+            ->with('verdict', $verdict)
+            ->with('binary', Binary::in($event->root));
 
-        return <<<TEXT
-            Code Commandments — the journal did NOT hear some of what you said:
-
-            {$verdict}
-
-            You may believe you closed work that is still open, or pinned a fact that was never kept. Say
-            those lines again, on their own line, before you stop — and `{$binary} journal verify` checks it.
-            TEXT;
+        return $this->words($event, 'journal-unheard', $holes);
     }
 
     /**
@@ -176,16 +193,14 @@ final class JournalReminder extends Hook
      *
      * @param  list<Entry>  $open
      */
-    private function standing(array $open): string
+    private function standing(HookEvent $event, array $open): string
     {
-        $titles = implode('; ', array_map(fn (Entry $entry) => $entry->text, array_slice($open, 0, self::NAMED)));
+        $holes = Holes::none()
+            ->with('count', count($open))
+            ->with('work', implode('; ', array_map(fn (Entry $entry) => $entry->text, array_slice($open, 0, self::NAMED))))
+            ->with('end', Tag::End->marker());
 
-        return sprintf(
-            'Code Commandments — you still have %d piece(s) of work open: %s. Close each with %s, or say where it stands.',
-            count($open),
-            $titles,
-            Tag::End->marker(),
-        );
+        return $this->words($event, 'journal-standing', $holes);
     }
 
     /**
@@ -198,21 +213,7 @@ final class JournalReminder extends Hook
      */
     private function habit(HookEvent $event): string
     {
-        $binary = Binary::in($event->root);
-
-        return <<<TEXT
-            Code Commandments — nothing is open, so before you stop: did this turn produce a ruling, a
-            discovery, or a reason a later reader would need? A fact nobody wrote down is one the next
-            reader re-derives. Each kind has its OWN home, and only the first of these is a pin:
-
-              a FACT or a RULING that must outlive a compaction  →  `{$binary} journal remember "<it>"`
-              a FINDING, an open defect, work still owed         →  the plan
-              a STATUS — who holds what, what was measured       →  the board
-
-            A pin cannot be superseded, so anything that ROTS — a count, a defect that will be fixed, a
-            list of work — becomes a confident falsehood the moment it changes. Those belong in the two
-            places that can be updated.
-            TEXT;
+        return $this->words($event, 'journal-habit', Holes::none()->with('binary', Binary::in($event->root)));
     }
 
     /**
@@ -225,13 +226,16 @@ final class JournalReminder extends Hook
      */
     private function reminder(HookEvent $event, Journal $journal, int $quiet): string
     {
-        $binary = Binary::in($event->root);
         $tagged = $journal->tagged();
-        $said = $tagged === 1 ? '1 tag' : "{$tagged} tags";
 
-        return "Code Commandments — {$said} this session, and nothing recorded in the last "
-            . $quiet . " tool calls. A ruling you do not write down is one the next reader re-derives: "
-            . "open a line with [!discovery]/[!correction]/[!update], or `{$binary} journal remember \"<the fact>\"`.";
+        // Counted HERE, at the moment the line is said. A nudge arrives wearing the voice of the system,
+        // so a number in one does not read as stale — it reads as authoritative.
+        $holes = Holes::none()
+            ->with('tagged', $tagged === 1 ? '1 tag' : "{$tagged} tags")
+            ->with('quiet', $quiet)
+            ->with('binary', Binary::in($event->root));
+
+        return $this->words($event, 'journal-quiet', $holes);
     }
 
     /**
@@ -241,13 +245,11 @@ final class JournalReminder extends Hook
      */
     private function enforced(HookEvent $event, Journal $journal, int $quiet): string
     {
-        $binary = Binary::in($event->root);
-        $tagged = $journal->tagged();
+        $holes = Holes::none()
+            ->with('quiet', $quiet)
+            ->with('tagged', $journal->tagged())
+            ->with('binary', Binary::in($event->root));
 
-        return "Code Commandments — {$quiet} tool calls and nothing recorded. {$tagged} tag(s) this "
-            . "session. Whatever you have decided in that stretch is now only in your head, and a "
-            . "compaction takes exactly that. Record ONE line before the next call — open a line with "
-            . "[!discovery], [!correction] or [!update], or `{$binary} journal remember \"<the fact>\"`. "
-            . "It clears the moment anything is filed.";
+        return $this->words($event, 'journal-enforced', $holes);
     }
 }
