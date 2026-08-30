@@ -460,6 +460,17 @@ final class OrchestrateCommand implements Command
             File::write($profile->pathToRole($role), $this->roleStub($role, $is));
         }
 
+        // Every shipped reminder, written in. The wording is the part a project wants to change, and a
+        // folder that starts empty is one nobody discovers — so the words are there to edit from the
+        // first day, and deleting one is how it gets silenced.
+        foreach (Templates::shipped()->all() as $template) {
+            if (str_starts_with($template, 'reminders/')) {
+                foreach (Templates::shipped()->read($template) as $body) {
+                    File::write(Templates::shipped()->homeIn($profile, $template), $body);
+                }
+            }
+        }
+
         $written = array_map(
             static fn (string $document, string $about): string => "    {$document}.md — {$about}",
             array_keys(Profile::DOCUMENTS),

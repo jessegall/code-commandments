@@ -49,6 +49,14 @@ final readonly class Profile
     private const string PROCEDURE_FOLDER = 'procedures';
 
     /**
+     * Where the reminders live. Everything a hook SAYS to the orchestrator is a file here rather than a
+     * heredoc in a class: the wording is the part a project wants to change, and asking someone to fork
+     * a package to reword a nudge is asking them to keep the nudge they have. Deleting one silences it,
+     * which is the plainest off switch there is.
+     */
+    private const string REMINDER_FOLDER = 'reminders';
+
+    /**
      * The documents a profile is made of, each answering one question a brief would otherwise re-state.
      */
     public const array DOCUMENTS = [
@@ -145,6 +153,43 @@ final readonly class Profile
     public function procedureFolder(): string
     {
         return $this->path . '/' . self::PROCEDURE_FOLDER;
+    }
+
+    public function pathToReminder(string $reminder): string
+    {
+        return $this->path . '/' . self::REMINDER_FOLDER . '/' . $reminder . '.md';
+    }
+
+    public function reminderFolder(): string
+    {
+        return $this->path . '/' . self::REMINDER_FOLDER;
+    }
+
+    /**
+     * What a hook SAYS, with $values put in its holes — absent when this profile has no such file, which
+     * is how a project silences one: delete it.
+     *
+     * @return Option<string>
+     */
+    public function reminder(string $reminder, Holes $holes): Option
+    {
+        $body = $this->read($this->pathToReminder($reminder));
+
+        return $body === '' ? Option::none() : Option::some(trim($holes->fill($body)));
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function reminders(): array
+    {
+        $found = [];
+
+        foreach (glob($this->reminderFolder() . '/*.md') ?: [] as $file) {
+            $found[] = basename($file, '.md');
+        }
+
+        return $found;
     }
 
     /**

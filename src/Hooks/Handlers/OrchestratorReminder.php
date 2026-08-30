@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Orchestration\Board;
-use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
+use JesseGall\CodeCommandments\Cli\Orchestration\Holes;
+use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
@@ -54,24 +55,32 @@ final class OrchestratorReminder extends Hook
      */
     protected function onStop(HookEvent $event): int
     {
-        if (Instance::inSession($event->sessionWorkspace())->profile()->isNone()) {
-            return $this->pass(); // Not orchestrating, so there is no role to have forgotten.
+        $workspace = $event->sessionWorkspace();
+
+        foreach (Profiles::inForce($workspace) as $profile) {
+            $written = new TouchedSources($event->workspace(), $event->root, Config::load($event->root), self::WATCHER)
+                ->claim(self::A_BODY_OF_WORK * 2);
+
+            if (count($written) < self::A_BODY_OF_WORK) {
+                return $this->pass();
+            }
+
+            foreach ($profile->reminder(self::WATCHER, $this->values($event, $written)) as $said) {
+                return $this->quietly($event, 'Code Commandments — ' . $said);
+            }
         }
 
-        $written = new TouchedSources($event->workspace(), $event->root, Config::load($event->root), self::WATCHER)
-            ->claim(self::A_BODY_OF_WORK * 2);
-
-        if (count($written) < self::A_BODY_OF_WORK) {
-            return $this->pass();
-        }
-
-        return $this->quietly($event, $this->reminder($event, $written));
+        return $this->pass();
     }
 
     /**
+     * What the profile's own words are filled in with. Every one is computed HERE, at fire time — a
+     * nudge that arrives wearing the voice of the system and states a stale number is worse than one
+     * that states nothing, because it does not read as missing.
+     *
      * @param  list<string>  $written
      */
-    private function reminder(HookEvent $event, array $written): string
+    private function values(HookEvent $event, array $written): Holes
     {
         $binary = Binary::in($event->root);
         $count = count($written);
@@ -79,23 +88,10 @@ final class OrchestratorReminder extends Hook
         $running = count(Board::inSession($event->sessionWorkspace())->running());
         $workers = $running === 0 ? 'Nobody is holding any work' : "{$running} worker(s) are running";
 
-        return <<<TEXT
-            Code Commandments — you are ORCHESTRATING, and you have written {$count} source files yourself
-            since this was last said ({$named}…). {$workers}.
-
-            That is a body of work with a shape, and a piece of work with a shape can be given away. Your
-            context is the resource the whole role spends: read reports, receipts and the record, and let
-            a worker read the code. When it runs out you do not stop orchestrating — you keep going with a
-            confident, stale picture of a build that has moved on, and that failure is invisible from the
-            inside.
-
-            THIS IS NOT A RULE AGAINST TOUCHING CODE. If the user asked YOU to do something, do it
-            yourself — a direct request is not a delegation opportunity, and answering "I'll dispatch a
-            worker" to a question is a way of not answering it. A fix in passing, a one-line correction,
-            anything where explaining the work costs more than doing it: yours. The default for everything
-            LARGE is a worker.
-
-            `{$binary} build` is the board.
-            TEXT;
+        return Holes::none()
+            ->with('count', $count)
+            ->with('files', $named)
+            ->with('workers', $workers)
+            ->with('binary', $binary);
     }
 }

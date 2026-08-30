@@ -32,7 +32,7 @@ final readonly class Templates
     {
         $found = [];
 
-        foreach (['roles', 'procedures', 'documents'] as $kind) {
+        foreach (['roles', 'procedures', 'reminders', 'documents'] as $kind) {
             foreach (glob($this->root . self::FOLDER . '/' . $kind . '/*.md') ?: [] as $file) {
                 $found[] = $kind . '/' . basename($file, '.md');
             }
@@ -65,7 +65,10 @@ final readonly class Templates
             foreach (explode("\n", $body) as $line) {
                 $line = trim($line);
 
-                if ($line !== '' && ! str_starts_with($line, '#') && ! str_starts_with($line, 'type:')) {
+                // A guidance comment is for whoever EDITS the file, not for whoever is choosing between
+                // templates — showing it as the description makes every reminder look the same.
+                if ($line !== '' && ! str_starts_with($line, '#') && ! str_starts_with($line, 'type:')
+                    && ! str_starts_with($line, '<!--') && ! str_starts_with($line, '{')) {
                     return $line;
                 }
             }
@@ -85,6 +88,7 @@ final readonly class Templates
         return match ($kind) {
             'roles' => $profile->pathToRole($leaf),
             'procedures' => $profile->pathToProcedure($leaf),
+            'reminders' => $profile->pathToReminder($leaf),
             default => $profile->pathTo($leaf),
         };
     }
@@ -93,7 +97,7 @@ final readonly class Templates
     {
         [$kind, $leaf] = array_pad(explode('/', $name, 2), 2, '');
 
-        if ($kind === '' || $leaf === '' || ! in_array($kind, ['roles', 'procedures', 'documents'], true)) {
+        if ($kind === '' || $leaf === '' || ! in_array($kind, ['roles', 'procedures', 'reminders', 'documents'], true)) {
             return '';
         }
 
