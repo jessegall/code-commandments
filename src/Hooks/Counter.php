@@ -122,6 +122,28 @@ final class Counter
         }
     }
 
+    /**
+     * Has $work moved on by at least $stretch since this last marked it? Answering yes MARKS it, so a
+     * signal paced this way speaks once per stretch of work rather than once per firing — and a stretch
+     * with nothing in it says nothing at all. The first asking is always owed: a reader who has never
+     * been told cannot be repeating.
+     */
+    public function movedBy(int $work, ?int $stretch = null): bool
+    {
+        // Held one PAST the mark, so "never marked" and "marked before any work was done" stay different
+        // facts. Sharing 0 between them makes a signal fire for ever at the start of a session — which is
+        // precisely when nothing has happened worth saying.
+        $marked = $this->count();
+
+        if ($marked > 0 && $work - ($marked - 1) < ($stretch ?? $this->every)) {
+            return false;
+        }
+
+        $this->write($work + 1);
+
+        return true;
+    }
+
     private function write(int $count): void
     {
         $this->file->write(new State(count: $count));

@@ -158,19 +158,20 @@ final class BoardReminderTest extends TestCase
         $this->assertSame([], $this->said(), 'and not again with nothing in between');
     }
 
-    public function test_the_routine_speaks_again_once_more_has_been_said(): void
+    public function test_the_routine_speaks_again_once_more_work_has_been_done(): void
     {
         $this->profileWith('routine', 'Check the record says what you would say out loud.');
         $this->said();
 
+        // WORK, not words. A message is itself a journal entry, so pacing on entries would earn the
+        // checklist back every time the agent spoke — which is every stop.
         $journal = Journal::inSession(new Workspace($this->root, 'sess-1'));
 
-        // A STRETCH, not a line: one entry is what an agent produces by speaking at all, so a threshold of
-        // one would fire the routine at every stop that said anything — which is every stop.
-        foreach (range(1, 6) as $nth) {
-            $journal->file(new Entry(Kind::Agent, 'now', 't', 'm', Option::none(), "work happened {$nth}"));
+        foreach (range(1, 6) as $ignored) {
+            $journal->countCall();
         }
 
         $this->assertNotSame([], $this->said(), 'a stretch of work earns the checklist again');
     }
+
 }
