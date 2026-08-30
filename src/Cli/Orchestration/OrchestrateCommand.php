@@ -43,6 +43,9 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate list', 'the profiles this project has written')
             ->form('orchestrate show [name]', 'read one out — what an orchestrator loads instead of copying a brief by hand')
             ->form('orchestrate stop', 'stop working under a profile; the profile is untouched')
+            ->form('orchestrate settings', "what the profile in force turns ON, and how")
+            ->form('orchestrate on <feature> [key=value ...]', 'turn a feature on for the profile in force, with its settings')
+            ->form('orchestrate off <feature>', 'turn it off — the setting is REMOVED, since a feature a profile says nothing about is already off')
             ->form('orchestrate template list', 'the documents and roles this package ships as a starting point')
             ->form('orchestrate template show <name>', 'read one out before taking it')
             ->form('orchestrate template use <name>', 'write it into the profile in force — never over a file you already have')
@@ -81,6 +84,9 @@ final class OrchestrateCommand implements Command
             'list' => $this->list($workspace),
             'show' => $this->show($workspace, $input->argument(1)->unwrapOr('')),
             'stop' => $this->stop($workspace),
+            'on', 'enable' => $this->switch($workspace, $input, on: true),
+            'off', 'disable' => $this->switch($workspace, $input, on: false),
+            'settings' => $this->settings($workspace),
             'plan' => $this->plan($workspace, $input),
             'template', 'templates' => $this->template($workspace, $input),
             'assistant', 'role' => $this->write(
@@ -884,5 +890,82 @@ final class OrchestrateCommand implements Command
         }
 
         return $names;
+    }
+
+    /**
+     * Turn a feature on or off for the profile in force. It is written into the PROFILE rather than the
+     * project config because a way of working carries its own switches: taking a profile takes what it
+     * turns on with it, and two projects sharing one profile do not each have to remember.
+     */
+    private function switch(Workspace $workspace, Input $input, bool $on): int
+    {
+        $feature = $input->argument(1)->unwrapOr('');
+
+        if ($feature === '') {
+            return HelpScreen::usage($this, 'Name the feature: `commandments orchestrate ' . ($on ? 'on' : 'off') . ' <feature>`.');
+        }
+
+        foreach (Profiles::inForce($workspace) as $profile) {
+            if (! $profile->turn($feature, $on, $this->pairs($input))) {
+                return $this->console->refuse("Could not write {$profile->settingsFile()}.");
+            }
+
+            return $this->console->say(
+                "\u{25b8} {$feature} is " . ($on ? 'ON' : 'off') . " for `{$profile->name}`.",
+                '  ' . $profile->settingsFile(),
+            );
+        }
+
+        return $this->console->refuse(
+            'No profile is in force, and a switch belongs to a way of working rather than to a session.',
+            '  Start one first: `commandments orchestrate use <profile>`',
+        );
+    }
+
+    /**
+     * What the profile in force turns on. Read from the FILE rather than from a list of what the package
+     * supports, so a feature a project added shows up beside the shipped ones.
+     */
+    private function settings(Workspace $workspace): int
+    {
+        foreach (Profiles::inForce($workspace) as $profile) {
+            $declared = $profile->allSettings();
+
+            if ($declared === []) {
+                return $this->console->say("`{$profile->name}` turns nothing on.", '  `commandments orchestrate on <feature>`');
+            }
+
+            $said = [];
+
+            foreach ($declared as $feature => $with) {
+                $said[] = '  ' . $feature . ($with === [] ? '' : '  ' . json_encode($with, JSON_UNESCAPED_SLASHES));
+            }
+
+            return $this->console->say("`{$profile->name}` turns on:", ...$said);
+        }
+
+        return $this->console->refuse('No profile is in force.', '  `commandments orchestrate use <profile>`');
+    }
+
+    /**
+     * `key=value` arguments as a map — how a feature is given its settings without inventing a flag for
+     * every feature that will ever exist.
+     *
+     * @return array<string, mixed>
+     */
+    private function pairs(Input $input): array
+    {
+        $with = [];
+
+        foreach ($input->arguments() as $at => $argument) {
+            if ($at < 2 || ! str_contains($argument, '=')) {
+                continue;
+            }
+
+            [$key, $value] = explode('=', $argument, 2);
+            $with[$key] = $value;
+        }
+
+        return $with;
     }
 }

@@ -23,8 +23,12 @@ use JesseGall\CodeCommandments\Workspace;
 final class CommitReview extends Hook
 {
     /**
-     * The role this hands the commit to. A profile without it has not asked for commit review.
+     * The switch a profile turns on to get commit review, and the role it hands the commit to when it
+     * names none. The profile decides both — a hook that reviewed every commit everywhere would be the
+     * package choosing a way of working on a project's behalf.
      */
+    private const string FEATURE = 'commit-review';
+
     private const string ROLE = 'ponytail';
 
     /**
@@ -54,8 +58,14 @@ final class CommitReview extends Hook
         }
 
         foreach (Profiles::inForce($event->sessionWorkspace()) as $profile) {
-            foreach ($profile->role(self::ROLE) as $ignored) {
-                return $this->start($event);
+            foreach ($profile->settings(self::FEATURE) as $declared) {
+                $role = is_string($declared['role'] ?? null) ? $declared['role'] : self::ROLE;
+
+                foreach ($profile->role($role) as $ignored) {
+                    return $this->start($event, $role);
+                }
+
+                return $this->pass(); // Turned on, but naming a role this profile has not written.
             }
         }
 
@@ -67,7 +77,7 @@ final class CommitReview extends Hook
      * the reviewer keeps what it has learned about this codebase across a build rather than meeting it
      * fresh each time — a reader who has seen the last five commits is the one worth having.
      */
-    private function start(HookEvent $event): int
+    private function start(HookEvent $event, string $role): int
     {
         $sha = $this->git()->head($event->root);
         $state = $this->state($event->sessionWorkspace());
@@ -78,7 +88,7 @@ final class CommitReview extends Hook
             'cd %s && nohup claude %s -p %s >> %s 2>&1 &',
             escapeshellarg($event->root),
             $opened ? '--continue' : '',
-            escapeshellarg($this->brief($event, $sha, $opened)),
+            escapeshellarg($this->brief($event, $sha, $opened, $role)),
             escapeshellarg($log),
         ));
 
@@ -86,7 +96,7 @@ final class CommitReview extends Hook
 
         return $this->quietly($event, sprintf(
             'Code Commandments — the `%s` is reading %s in the background (%s). Its report lands in %s.',
-            self::ROLE,
+            $role,
             substr($sha, 0, 7),
             $opened ? 'continuing its own session' : 'a new session, opened now',
             $event->sessionWorkspace()->relative(self::LOG),
@@ -97,10 +107,9 @@ final class CommitReview extends Hook
      * What the reviewer is told. A CONTINUING one already holds the brief and everything it has learned,
      * so restating the standard would spend its context re-reading what it knows.
      */
-    private function brief(HookEvent $event, string $sha, bool $opened): string
+    private function brief(HookEvent $event, string $sha, bool $opened, string $role): string
     {
         $binary = Binary::in($event->root);
-        $role = self::ROLE;
 
         if ($opened) {
             return "Another commit landed: {$sha}. Review it the same way — `git show {$sha}`. Report only "

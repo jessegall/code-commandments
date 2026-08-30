@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
-use JesseGall\CodeCommandments\Support\File;
 use JesseGall\CodeCommandments\Cli\Orchestration\Events\Trigger;
+use JesseGall\CodeCommandments\Support\File;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -31,6 +31,14 @@ final readonly class Profile
      * itself is a second declaration of the same fact, and two declarations drift the moment one moves.
      */
     private const string ROLE_FOLDER = 'roles';
+
+    /**
+     * What this profile turns ON, and how. JSON because it is configuration a TOOL reads, where every
+     * other file in a profile is prose an AGENT reads — and the two want opposite things from a format.
+     * It lives with the profile rather than in the project config so that a way of working carries its
+     * own switches: taking a profile takes what it turns on with it.
+     */
+    private const string SETTINGS = 'settings.json';
 
     /**
      * The documents a profile is made of, each answering one question a brief would otherwise re-state.
@@ -116,6 +124,74 @@ final readonly class Profile
     public function roleFolder(): string
     {
         return $this->path . '/' . self::ROLE_FOLDER;
+    }
+
+    /**
+     * Where this profile's switches live.
+     */
+    public function settingsFile(): string
+    {
+        return $this->path . '/' . self::SETTINGS;
+    }
+
+    /**
+     * What this profile says about $feature, absent when it says nothing — which is what an unconfigured
+     * feature must be: OFF, and silently, rather than on by a default nobody chose.
+     *
+     * @return Option<array<string, mixed>>
+     */
+    public function settings(string $feature): Option
+    {
+        $file = $this->settingsFile();
+
+        if (! is_file($file)) {
+            return Option::none();
+        }
+
+        $declared = json_decode((string) file_get_contents($file), true);
+
+        if (! is_array($declared) || ! isset($declared[$feature]) || ! is_array($declared[$feature])) {
+            return Option::none();
+        }
+
+        return Option::some($declared[$feature]);
+    }
+
+    /**
+     * Everything this profile turns on, by feature — what `orchestrate settings` prints.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function allSettings(): array
+    {
+        $file = $this->settingsFile();
+        $declared = is_file($file) ? json_decode((string) file_get_contents($file), true) : [];
+
+        return is_array($declared) ? $declared : [];
+    }
+
+    /**
+     * Turn $feature on with $with, or off. OFF REMOVES it rather than writing `false`: a feature this
+     * profile says nothing about is already off, so two spellings of the same state would be one more
+     * thing a reader has to know.
+     *
+     * @param  array<string, mixed>  $with
+     */
+    public function turn(string $feature, bool $on, array $with = []): bool
+    {
+        $declared = $this->allSettings();
+
+        if ($on) {
+            $declared[$feature] = $with;
+        } else {
+            unset($declared[$feature]);
+        }
+
+        // An empty MAP, never an empty list: PHP encodes `[]` for both, and a settings file that reads
+        // as an array is a different shape from the one every reader of it expects.
+        $body = $declared === [] ? '{}' : json_encode($declared, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        return File::write($this->settingsFile(), $body . "\n");
     }
 
     /**
