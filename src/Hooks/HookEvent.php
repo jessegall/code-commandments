@@ -114,6 +114,24 @@ final class HookEvent
     }
 
     /**
+     * Is a real `git commit` about to run? Not `commit-graph`, and not a `--dry-run` rehearsal. It
+     * recognises the shell verb rather than parsing code, so no engine is owed — the same reading
+     * several hooks need, stated once.
+     */
+    public function isGitCommit(): bool
+    {
+        if (! $this->isTool('Bash')) {
+            return false;
+        }
+
+        $command = $this->command();
+
+        return str_contains($command, 'git commit')
+            && ! str_contains($command, 'commit-graph')
+            && ! str_contains($command, '--dry-run');
+    }
+
+    /**
      * The worker this payload names — which is the one that STOPPED on `SubagentStop`, and the one
      * SPEAKING everywhere else. Paired rather than read apart, because an id without its type says which
      * process and not which job.

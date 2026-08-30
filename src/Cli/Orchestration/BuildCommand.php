@@ -359,7 +359,6 @@ final class BuildCommand implements Command
             );
         }
 
-        $board->move($item, Stage::Reported);
         $receipts = Receipts::inSession(Workspace::ofSession($this->io->projectRoot()));
 
         foreach ($input->option('ran') as $argv) {
@@ -367,10 +366,13 @@ final class BuildCommand implements Command
                 ->of($item, $argv, $input->option('against')->unwrapOr(''), $input->option('needs')->toNullable());
 
             $receipts->file($receipt);
+            $board->move($item, Stage::Reported);
             $this->console->say("▸ {$item} reported.", $receipt->render());
 
             return $this->raise(new Reported($this->io->projectRoot(), $board->on($item)->unwrap(), Option::some($receipt)))->unwrapOr(0);
         }
+
+        $board->move($item, Stage::Reported);
 
         $this->console->say(
             "▸ {$item} reported — with no receipt.",

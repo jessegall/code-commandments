@@ -51,7 +51,7 @@ final class JudgeReminder extends Hook
 
     protected function onPreToolUse(HookEvent $event): int
     {
-        if (! $this->isGitCommit($event)) {
+        if (! $event->isGitCommit()) {
             return $this->pass(); // Some other Bash call — not our moment.
         }
 
@@ -127,23 +127,6 @@ final class JudgeReminder extends Hook
         $this->remember($ws, $files);
 
         return $this->reason(count($files), $useBranch, $lead);
-    }
-
-    /**
-     * Is this PreToolUse payload a `git commit` about to run? A real commit, not `commit-graph` or a
-     * `--dry-run` rehearsal. Recognises the shell verb; it does not parse code, so no engine is owed.
-     */
-    private function isGitCommit(HookEvent $event): bool
-    {
-        if (! $event->isTool('Bash')) {
-            return false;
-        }
-
-        $command = $event->command();
-
-        return str_contains($command, 'git commit')
-            && ! str_contains($command, 'commit-graph')
-            && ! str_contains($command, '--dry-run');
     }
 
     /**

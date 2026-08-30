@@ -163,8 +163,13 @@ final class BoardReminderTest extends TestCase
         $this->profileWith('routine', 'Check the record says what you would say out loud.');
         $this->said();
 
-        Journal::inSession(new Workspace($this->root, 'sess-1'))
-            ->file(new Entry(Kind::Agent, 'now', 't', 'm', Option::none(), 'work happened'));
+        $journal = Journal::inSession(new Workspace($this->root, 'sess-1'));
+
+        // A STRETCH, not a line: one entry is what an agent produces by speaking at all, so a threshold of
+        // one would fire the routine at every stop that said anything — which is every stop.
+        foreach (range(1, 6) as $nth) {
+            $journal->file(new Entry(Kind::Agent, 'now', 't', 'm', Option::none(), "work happened {$nth}"));
+        }
 
         $this->assertNotSame([], $this->said(), 'a stretch of work earns the checklist again');
     }

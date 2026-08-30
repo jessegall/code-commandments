@@ -73,6 +73,15 @@ final readonly class Entry
     }
 
     /**
+     * The hour and minute this was filed, UTC. What a reader wants off the stamp when the question is
+     * whether a span is still in flight or was abandoned hours ago; the date is the session's own.
+     */
+    public function time(): string
+    {
+        return substr($this->at, 11, 5);
+    }
+
+    /**
      * Is this entry the user speaking? Their words are the tier the digest never trims.
      */
     public function isUser(): bool

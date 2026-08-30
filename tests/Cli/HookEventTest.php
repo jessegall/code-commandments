@@ -60,4 +60,50 @@ final class HookEventTest extends TestCase
         $this->assertFalse(new HookEvent(['permission_mode' => 'acceptEdits'], '/tmp/p')->isPlanMode());
         $this->assertFalse(new HookEvent([], '/tmp/p')->isPlanMode());
     }
+
+    /**
+     * A real `git commit` is the moment worth interrupting; the two look-alikes are not. `commit-graph`
+     * writes an index and commits nothing, and a `--dry-run` is a rehearsal — stopping either would train
+     * a reader to work around the gate rather than through it.
+     */
+    public function test_a_real_git_commit_is_recognised(): void
+    {
+        $this->assertTrue($this->bash('git commit -m "the fix"')->isGitCommit());
+        $this->assertTrue($this->bash('git add -A && git commit -m "the fix"')->isGitCommit());
+    }
+
+    public function test_a_commit_graph_write_is_not_a_commit(): void
+    {
+        $this->assertFalse($this->bash('git commit-graph write --reachable')->isGitCommit());
+    }
+
+    public function test_a_dry_run_is_not_a_commit(): void
+    {
+        $this->assertFalse($this->bash('git commit --dry-run')->isGitCommit());
+    }
+
+    public function test_a_bash_call_that_is_not_a_commit_at_all(): void
+    {
+        $this->assertFalse($this->bash('git status --short')->isGitCommit());
+        $this->assertFalse($this->bash('')->isGitCommit());
+    }
+
+    /**
+     * Every other tool reads false whatever it carries — an `Edit` whose payload happens to hold the
+     * words is not a commit about to run, and the tool is checked before the text is.
+     */
+    public function test_a_non_bash_tool_is_never_a_commit(): void
+    {
+        $this->assertFalse(new HookEvent([
+            'tool_name' => 'Edit',
+            'tool_input' => ['command' => 'git commit -m "x"'],
+        ], '/tmp/p')->isGitCommit());
+
+        $this->assertFalse(new HookEvent([], '/tmp/p')->isGitCommit());
+    }
+
+    private function bash(string $command): HookEvent
+    {
+        return new HookEvent(['tool_name' => 'Bash', 'tool_input' => ['command' => $command]], '/tmp/p');
+    }
 }

@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
 use JesseGall\CodeCommandments\Cli\Orchestration\OrchestrateCommand;
+use JesseGall\CodeCommandments\Cli\Orchestration\Plan;
 use JesseGall\CodeCommandments\Tests\Cli\CapturingHookIO;
 use JesseGall\CodeCommandments\Tests\Cli\FakeGit;
 use JesseGall\CodeCommandments\Workspace;
@@ -140,5 +141,70 @@ final class PlanCursorTest extends TestCase
 
         $this->assertSame(Console::REFUSED, $this->exec('plan', 'bogus'));
         $this->assertSame(0, $this->exec('plan'), 'the bare form still shows the tree');
+    }
+
+    /**
+     * Issue #537, reproduced with the two commands that caused it. `add` stands you IN the level it made,
+     * so saying it twice — the natural thing when you cannot see the tree — nested `product-defects`
+     * inside `product-defects`. The refusal has to be measured BOTH ways: a non-zero exit, and the level
+     * genuinely not written, because a command that prints a complaint and creates the folder anyway is
+     * the shape that let this through.
+     */
+    public function test_adding_a_level_inside_one_of_its_own_name_is_refused(): void
+    {
+        $this->exec('plan', 'open', 'the port');
+        $this->exec('plan', 'add', 'product-defects', 'a walker is filing into it');
+
+        $this->assertSame(Console::REFUSED, $this->exec('plan', 'add', 'product-defects', 'again, blind'));
+
+        $this->assertFalse($this->plan()->has(['product-defects', 'product-defects']), 'nothing was created');
+        $this->assertSame(['product-defects'], $this->cursor(), 'and the cursor did not move');
+    }
+
+    /**
+     * The guard is the whole PATH, not the level you stand on — a name two levels up is just as much a
+     * breadcrumb that reads back ambiguously.
+     */
+    public function test_the_name_of_any_level_on_the_path_is_refused(): void
+    {
+        $this->exec('plan', 'open', 'the port');
+        $this->exec('plan', 'add', 'dissolution', 'the main thrust');
+        $this->exec('plan', 'add', 'the-enum', 'underneath it');
+
+        $this->assertSame(Console::REFUSED, $this->exec('plan', 'add', 'dissolution', 'blind again'));
+        $this->assertSame(['dissolution', 'the-enum'], $this->cursor());
+    }
+
+    /**
+     * And the guard costs nothing it should not: a DIFFERENT name still nests, which is the ordinary use
+     * the refusal must not have made harder.
+     */
+    public function test_a_different_name_still_nests(): void
+    {
+        $this->exec('plan', 'open', 'the port');
+        $this->exec('plan', 'add', 'product-defects', 'a walker is filing into it');
+
+        $this->assertSame(0, $this->exec('plan', 'add', 'the-enum', 'underneath it'));
+        $this->assertSame(['product-defects', 'the-enum'], $this->cursor());
+    }
+
+    /**
+     * A sibling of the same name is a different mistake with a different answer — it is refused by the
+     * plan itself ("already a sidequest here"), and asserting it here keeps the two guards from being
+     * mistaken for one.
+     */
+    public function test_a_sibling_of_the_same_name_is_still_refused_by_the_plan(): void
+    {
+        $this->exec('plan', 'open', 'the port');
+        $this->exec('plan', 'add', 'dissolution', 'the main thrust');
+        $this->exec('plan', 'go', '..');
+
+        $this->assertSame(Console::REFUSED, $this->exec('plan', 'add', 'dissolution', 'the same name beside itself'));
+        $this->assertSame([], $this->cursor(), 'a refused add leaves you where you were');
+    }
+
+    private function plan(): Plan
+    {
+        return Plan::inSession(Workspace::ofSession($this->root));
     }
 }

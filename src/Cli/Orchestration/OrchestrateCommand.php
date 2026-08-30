@@ -252,6 +252,17 @@ final class OrchestrateCommand implements Command
 
         $at = $instance->at();
 
+        // `add` stands you IN the new level, so a second `add` of the same name nests under the first —
+        // and `add` is the command run while NOT looking at the tree. Nesting a level inside one of its
+        // own name is never what somebody meant.
+        if (in_array($name, $at, true)) {
+            return $this->console->refuse(
+                "You are already standing in `{$name}`.",
+                '  ' . $this->breadcrumb($plan, $at),
+                "  `commandments orchestrate plan go ..` first, or name the sidequest something else.",
+            );
+        }
+
         if (! $plan->add($at, $name, $why)) {
             return $this->console->refuse("`{$name}` is already a sidequest here.");
         }

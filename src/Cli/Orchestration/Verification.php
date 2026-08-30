@@ -40,7 +40,7 @@ final readonly class Verification
             $exitCode,
             substr($this->git->head($this->root), 0, 7), // Abbreviated, as the merge-base is — a sha is read by eye.
             $this->mergeBaseWith($base),
-            gmdate('H:i'),
+            gmdate('Y-m-d H:i'), // Dated, because two receipts either side of midnight order by this.
             implode("\n", array_slice($output, -20)),
             $unmeasurable,
         );

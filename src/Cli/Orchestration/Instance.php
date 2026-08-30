@@ -17,6 +17,13 @@ use JesseGall\PhpTypes\Option;
  */
 final class Instance
 {
+    /**
+     * How many lines make a STRETCH — the distance the routine waits before it is worth another reading.
+     * One is not enough: a message is itself an entry, so a threshold of one fires at every stop where
+     * the agent said anything, which is every stop.
+     */
+    private const int A_STRETCH = 6;
+
     public function __construct(private readonly StateFile $file) {}
 
     public static function inSession(Workspace $workspace): self
@@ -114,8 +121,13 @@ final class Instance
     public function routineIsDue(int $said): bool
     {
         $state = $this->file->read();
+        $spoke = $state->int('routine_at', -1);
 
-        if ($said <= $state->int('routine_at', -1)) {
+        // A stretch is MORE than one line, because a message is itself a journal entry — so "something was
+        // said since last time" is true whenever the agent speaks, and a checklist that fires every time
+        // it speaks is the wallpaper this exists to stop. The FIRST reading is owed unconditionally: a
+        // session that has said nothing yet has still never heard the routine.
+        if ($spoke >= 0 && $said - $spoke < self::A_STRETCH) {
             return false;
         }
 

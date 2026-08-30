@@ -27,7 +27,14 @@ final class JournalReminder extends Hook
      * since the nudge last fired — so recording something clears the debt and a stretch of quiet earns
      * it back, where firing on a fixed rhythm would be a metronome to tune out.
      */
-    private const int QUIET = 12;
+    private const int QUIET = 10;
+
+    /**
+     * How much silence stops being a nudge and becomes a refusal. A stretch this long with nothing
+     * recorded is a stretch whose reasoning is already gone — and the fix costs one line, which is what
+     * makes insisting on it fair.
+     */
+    private const int ENFORCED = 50;
 
     /**
      * How many stops may be held for unfinished work. It is a reminder, not a gate: the work may genuinely
@@ -56,6 +63,12 @@ final class JournalReminder extends Hook
 
         $quiet = $journal->quietFor();
 
+        // A stretch this long has already lost its reasoning, and the fix costs one line — which is what
+        // makes insisting fair rather than harsh.
+        if ($quiet >= self::ENFORCED) {
+            return $this->block($this->enforced($event, $journal, $quiet));
+        }
+
         // Once per STRETCH of silence, not once per call past the threshold. Nagging every call is the
         // metronome the debt-and-payment shape exists to avoid: recording something clears it, and
         // staying quiet earns exactly one more.
@@ -63,7 +76,7 @@ final class JournalReminder extends Hook
             return $this->pass();
         }
 
-        return $this->quietly($event, $this->reminder($event, $journal));
+        return $this->quietly($event, $this->reminder($event, $journal, $quiet));
     }
 
     /**
@@ -82,7 +95,7 @@ final class JournalReminder extends Hook
         $open = Journal::inSession($event->sessionWorkspace())->openSpans();
 
         if ($open === [] && $unheard === '') {
-            return $this->pass(); // Nothing open and nothing lost costs nothing to report.
+            return $this->quietly($event, $this->habit($event));
         }
 
         if ($unheard !== '') {
@@ -159,6 +172,26 @@ final class JournalReminder extends Hook
     }
 
     /**
+     * What a stop with nothing open still gets. The turn that closed its work is the one most likely to
+     * carry a ruling or a discovery nobody wrote down — and a stop is the last moment it can be, since the
+     * next reader arrives on the far side of a compaction with only the record.
+     *
+     * Quiet, so it costs the user nothing to be reminded on every stop rather than on the stops a counter
+     * happened to pick.
+     */
+    private function habit(HookEvent $event): string
+    {
+        $binary = Binary::in($event->root);
+
+        return <<<TEXT
+            Code Commandments — nothing is open, so before you stop: did this turn produce a ruling, a
+            discovery, or a reason a later reader would need? Say it with a tag, or `{$binary} journal
+            remember "<the fact>"` if it must outlive a compaction. A fact nobody wrote down is one the
+            next reader re-derives.
+            TEXT;
+    }
+
+    /**
      * ONE line, and it says its own numbers. "3 tags in 40 tool calls" is a fact somebody can act on;
      * re-printing the vocabulary every time is wallpaper, and a nudge that arrives with nothing new in it
      * teaches a reader to skim the block that will eventually hold something.
@@ -166,14 +199,31 @@ final class JournalReminder extends Hook
      * The vocabulary is not repeated — `journal instructions` holds it, and a reader who needs it can ask
      * once rather than be shown it forty times.
      */
-    private function reminder(HookEvent $event, Journal $journal): string
+    private function reminder(HookEvent $event, Journal $journal, int $quiet): string
     {
         $binary = Binary::in($event->root);
         $tagged = $journal->tagged();
         $said = $tagged === 1 ? '1 tag' : "{$tagged} tags";
 
         return "Code Commandments — {$said} this session, and nothing recorded in the last "
-            . self::QUIET . " tool calls. A ruling you do not write down is one the next reader re-derives: "
+            . $quiet . " tool calls. A ruling you do not write down is one the next reader re-derives: "
             . "open a line with [!discovery]/[!correction]/[!update], or `{$binary} journal remember \"<the fact>\"`.";
+    }
+
+    /**
+     * Said when the silence has gone past asking. It names the number, says what one line would cost,
+     * and is CHEAP TO SATISFY — a gate that can only be answered by real work would be paid for in the
+     * thing it exists to protect.
+     */
+    private function enforced(HookEvent $event, Journal $journal, int $quiet): string
+    {
+        $binary = Binary::in($event->root);
+        $tagged = $journal->tagged();
+
+        return "Code Commandments — {$quiet} tool calls and nothing recorded. {$tagged} tag(s) this "
+            . "session. Whatever you have decided in that stretch is now only in your head, and a "
+            . "compaction takes exactly that. Record ONE line before the next call — open a line with "
+            . "[!discovery], [!correction] or [!update], or `{$binary} journal remember \"<the fact>\"`. "
+            . "It clears the moment anything is filed.";
     }
 }

@@ -72,7 +72,18 @@ final readonly class Reading
      */
     public function pinned(?int $last = null): string
     {
-        return $this->listed($this->journal()->pinned(), 'pinned facts', $last);
+        return $this->listed($this->pinnedFacts(), 'pinned facts', $last);
+    }
+
+    /**
+     * The pinned facts themselves. The prose above is how a person reads them; a {@see Recovery} block
+     * spends bytes it does not have on a heading and a wrap, so it takes the entries and renders its own.
+     *
+     * @return list<Entry>
+     */
+    public function pinnedFacts(): array
+    {
+        return $this->journal()->pinned();
     }
 
     /**
@@ -80,7 +91,17 @@ final readonly class Reading
      */
     public function open(): string
     {
-        return $this->listed($this->journal()->openSpans(), 'work left open');
+        return $this->listed($this->openWork(), 'work left open');
+    }
+
+    /**
+     * The open spans themselves, for a caller that renders its own.
+     *
+     * @return list<Entry>
+     */
+    public function openWork(): array
+    {
+        return $this->journal()->openSpans();
     }
 
     /**
@@ -92,11 +113,11 @@ final readonly class Reading
      */
     public function verify(): string
     {
-        $said = $this->tagsSaid();
-        $filed = $this->tagsFiled();
-        $lost = array_values(array_diff($said, $filed));
+        $spoken = $this->agentSpeech();
+        $said = $this->tagsSaid($spoken);
+        $lost = $this->lost($spoken);
 
-        if ($said === [] && $this->agentSpeech() === []) {
+        if ($said === [] && $spoken === []) {
             return 'You have not spoken in this stretch yet, so there is nothing to check. Tag your work as '
                 . 'you go and run this again.';
         }
@@ -129,15 +150,41 @@ final readonly class Reading
     }
 
     /**
-     * Every tagged line the transcript holds for this stretch — what was said.
+     * The tags said in a stretch that the index never recorded — the finding {@see verify} explains at
+     * length. It is data as well as prose because the reader who most needs it is the one on the far side
+     * of a compaction, where an explanation costs more than the finding is worth. $back chooses the
+     * stretch exactly as {@see since} does: the recovery asks about the one that just ENDED.
      *
      * @return list<string>
      */
-    private function tagsSaid(): array
+    public function unfiled(int $back = 0): array
+    {
+        return $this->lost($this->agentSpeech($back));
+    }
+
+    /**
+     * The tags in $spoken that the index never recorded. Taken over lines already read rather than over a
+     * stretch, so a caller that needs the speech as well pays for one pass instead of two.
+     *
+     * @param  list<Line>  $spoken
+     * @return list<string>
+     */
+    private function lost(array $spoken): array
+    {
+        return array_values(array_diff($this->tagsSaid($spoken), $this->tagsFiled()));
+    }
+
+    /**
+     * Every tagged line $spoken holds — what was said.
+     *
+     * @param  list<Line>  $spoken
+     * @return list<string>
+     */
+    private function tagsSaid(array $spoken): array
     {
         $said = [];
 
-        foreach ($this->agentSpeech() as $line) {
+        foreach ($spoken as $line) {
             foreach (Tag::taggedLines($line->text) as [, $tagged]) {
                 $said[] = $tagged;
             }
@@ -153,11 +200,11 @@ final readonly class Reading
      *
      * @return list<Line>
      */
-    private function agentSpeech(): array
+    private function agentSpeech(int $back = 0): array
     {
         $spoken = [];
 
-        foreach ($this->session->transcript()->chunk() as $line) {
+        foreach ($this->session->transcript()->chunk($back) as $line) {
             if ($line->isSpeech() && ! $line->isPrompt()) {
                 $spoken[] = $line;
             }

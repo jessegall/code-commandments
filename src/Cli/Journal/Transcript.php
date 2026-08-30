@@ -54,6 +54,10 @@ final class Transcript
      */
     public function records(): Generator
     {
+        if (! $this->exists()) {
+            return; // An event can arrive with no transcript at all, and an empty path is a ValueError rather than a false.
+        }
+
         $handle = @fopen($this->path, 'r');
 
         if ($handle === false) {

@@ -44,7 +44,9 @@ final class Receipts
     }
 
     /**
-     * The most recent receipt for $item.
+     * The most recent receipt for $item, by WHEN IT WAS READ rather than where it sits in the file. A
+     * measurement that starts first can land last, so file order would let a slow green settle on top of
+     * a fresh red with nothing in the record to show it happened.
      *
      * @return Option<Receipt>
      */
@@ -54,12 +56,27 @@ final class Receipts
 
         foreach ($this->file->read()->items() as $line) {
             foreach (Receipt::fromLine($line) as $receipt) {
-                if ($receipt->item === $item) {
+                if ($receipt->item === $item && $this->supersedes($receipt, $latest)) {
                     $latest = Option::some($receipt);
                 }
             }
         }
 
         return $latest;
+    }
+
+    /**
+     * Does $receipt stand over the one already held? Ties go to the later line, so two measurements read
+     * in the same minute keep the order they were filed in.
+     *
+     * @param  Option<Receipt>  $held
+     */
+    private function supersedes(Receipt $receipt, Option $held): bool
+    {
+        foreach ($held as $standing) {
+            return $receipt->at >= $standing->at;
+        }
+
+        return true;
     }
 }

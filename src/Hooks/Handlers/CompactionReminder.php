@@ -11,14 +11,12 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Support\Binary;
 
 /**
- * A `SessionStart` hook for the ONE source that silently drops loaded skills: `compact`. Context
- * compaction summarises the conversation and, in doing so, discards the full text of any skill the
- * agent had loaded — but the summary keeps the FEELING that they are in effect, so the agent goes on
- * acting from a half-remembered paraphrase of rules it no longer actually holds. Compaction re-fires
- * `SessionStart` with `source: compact`, so this catches that exact moment and injects a reminder to
- * RELOAD any skill governing the current task via the Skill tool, rather than trust a remembered
- * summary. Unconditional and unrate-limited on purpose: every compaction genuinely drops the skills,
- * and it is not tied to a plan or a config toggle — it should just always happen.
+ * A `SessionStart` hook for the ONE source that silently drops loaded skills: `compact`. Compaction
+ * discards the full text of every skill the agent had loaded while the summary keeps the FEELING that
+ * they are in effect, and it re-fires `SessionStart` with `source: compact`, so this catches that exact
+ * moment — unconditionally, since every compaction genuinely drops them. It carries the RECOVERY with it
+ * ({@see Journal\Recovery}) rather than the commands that would fetch one: telling a freshly compacted
+ * agent to go and read three things was measured on a real compaction, and it read none of them.
  */
 final class CompactionReminder extends Hook
 {
@@ -26,6 +24,15 @@ final class CompactionReminder extends Hook
      * The only SessionStart source that DROPS in-context skills — a fresh/forked/resumed session keeps them.
      */
     private const string COMPACT = 'compact';
+
+    /**
+     * How many bytes this injection may spend, and it is measured rather than chosen. A session that
+     * compacted with its whole pin list attached sent 50,053 bytes; the harness spilled that to a file
+     * and delivered a 2KB preview, so about 4% of what was sent was ever read. Past this size a block is
+     * not delivered, it is merely emitted — which makes the budget the design constraint and not a
+     * tidiness one: what goes in is CHOSEN, never concatenated.
+     */
+    private const int ARRIVES = 2_000;
 
     public function summary(): string
     {
@@ -43,46 +50,35 @@ final class CompactionReminder extends Hook
             return $this->pass(); // startup/clear/resume/fork keep loaded skills in context — nothing dropped.
         }
 
-        return $this->inject($event, $this->reminder() . $this->journal($event));
+        $reminder = $this->reminder();
+
+        return $this->inject($event, $reminder . $this->recovered($event, self::ARRIVES - strlen($reminder)));
     }
 
     /**
-     * What the summary took, and how to get it back. This is the moment the journal exists for: the agent
-     * on THIS side has never seen the conversation, only a paraphrase of it, and does not know what it is
-     * missing — so it is told the pinned facts outright and pointed at the record for the rest.
+     * The record, already read. The agent on this side has never seen the conversation — only a
+     * paraphrase — and does not know what it is missing, so it is handed the two things the paraphrase
+     * cannot hold and told where the rest is, inside whatever the reminder left of the budget.
      */
-    private function journal(HookEvent $event): string
+    private function recovered(HookEvent $event, int $budget): string
     {
-        $binary = Binary::in($event->root);
-        $reading = new Journal\Reading(new Journal\Session($event->sessionId(), $event->transcriptPath(), 0, ''), $event->root);
-        $pinned = $reading->pinned();
-        $open = $reading->open();
+        $session = new Journal\Session($event->sessionId(), $event->transcriptPath(), 0, '');
 
-        $said = "\n\nThe summary you are reading kept what was DONE and lost what was DECIDED — the ruling the "
-            . "user gave once, the approach you abandoned, the thing you were half-way through. The transcript "
-            . "lost none of it. BEFORE your next substantive step:\n\n"
-            . "  {$binary} journal --back=1   the stretch this summary replaced\n"
-            . "  {$binary} journal user       the user's own words, in full\n"
-            . "  {$binary} journal verify     whether the record agrees with what you SAID";
-
-        if ($pinned !== '') {
-            $said .= "\n\nFacts pinned to survive this compaction:\n" . $pinned;
-        }
-
-        if ($open !== '') {
-            $said .= "\n\nWork you had OPEN and never closed — say where it stands:\n" . $open;
-        }
-
-        return $said;
+        return new Journal\Recovery(
+            new Journal\Reading($session, $event->root),
+            Binary::in($event->root),
+            $budget,
+        )->render();
     }
 
+    /**
+     * Kept short deliberately. Every character of prose here is a character the record cannot have, and
+     * the record is the part that cannot be reconstructed from anywhere else.
+     */
     private function reminder(): string
     {
-        return "Code Commandments — the context was just COMPACTED. Compaction rewrites the conversation into a "
-            . "summary and, in doing so, drops the full instructions of any skill you had loaded — even though the "
-            . "summary can make it feel like they are still in effect. Do NOT act on a remembered paraphrase of a "
-            . "skill's rules. Before your next substantive step, RELOAD — re-invoke via the Skill tool — every skill "
-            . "that governs what you're currently doing — the ones carrying the cardinal rules for this task — so you "
-            . "are working from their actual text again, not a faded summary of it.";
+        return "Code Commandments — the context was just COMPACTED. That dropped the full text of every skill you "
+            . "had loaded while leaving the summary's impression that they still hold. Do not act on a remembered "
+            . "paraphrase of a rule: RELOAD, through the Skill tool, every skill governing what you are doing now.";
     }
 }
