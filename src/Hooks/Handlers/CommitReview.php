@@ -5,27 +5,37 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
+use JesseGall\CodeCommandments\Cli\State\Legend;
+use JesseGall\CodeCommandments\Cli\State\State;
+use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Support\Binary;
+use JesseGall\CodeCommandments\Workspace;
 
 /**
  * A commit has landed, so there is something fixed to read — a diff against the working tree moves under
- * its reader where a sha does not. It fires only where the profile in force declares the role, and names
- * the sha rather than "the last commit", since by the time anyone acts there may be another.
+ * its reader where a sha does not. This STARTS the reviewer rather than asking somebody to: a hook that
+ * hands over an instruction depends on the reader obeying it, and the reader is busy doing the thing that
+ * produced the commit. It fires only where the profile in force declares the role.
  */
 final class CommitReview extends Hook
 {
     /**
-     * The role this hands the commit to. A profile without it is a project that has not asked for
-     * commit review, and the hook stays silent rather than proposing a role nobody wrote.
+     * The role this hands the commit to. A profile without it has not asked for commit review.
      */
     private const string ROLE = 'ponytail';
 
+    /**
+     * Where the reviewer's own output goes. It runs detached, so its words must land somewhere a person
+     * can read them rather than on a stream nothing is attached to.
+     */
+    private const string LOG = '.ponytail.log';
+
     public function summary(): string
     {
-        return 'After a commit lands, hands its sha to the profile\'s reviewer role, when one is declared.';
+        return 'After a commit lands, starts the profile\'s reviewer in the background against that sha.';
     }
 
     public function bindings(): array
@@ -34,8 +44,8 @@ final class CommitReview extends Hook
     }
 
     /**
-     * A nudge, never a gate. The commit is already made and the review is worth having, not worth
-     * blocking on — a reviewer held in front of the next command is one that gets skipped in a hurry.
+     * Never blocks. The commit is already made, so the review is worth having and not worth holding the
+     * next command for — and a reviewer that runs detached cannot fail the thing it reviews.
      */
     protected function onPostToolUse(HookEvent $event): int
     {
@@ -45,7 +55,7 @@ final class CommitReview extends Hook
 
         foreach (Profiles::inForce($event->sessionWorkspace()) as $profile) {
             foreach ($profile->role(self::ROLE) as $ignored) {
-                return $this->inject($event, $this->handOver($event));
+                return $this->start($event);
             }
         }
 
@@ -53,25 +63,85 @@ final class CommitReview extends Hook
     }
 
     /**
-     * What the agent is told. It names the sha, the role, and where the brief is — an instruction that
-     * makes the reader look three things up is one that gets postponed.
+     * Spawn the reviewer detached. The FIRST commit opens its session; every one after CONTINUES it, so
+     * the reviewer keeps what it has learned about this codebase across a build rather than meeting it
+     * fresh each time — a reader who has seen the last five commits is the one worth having.
      */
-    private function handOver(HookEvent $event): string
+    private function start(HookEvent $event): int
+    {
+        $sha = $this->git()->head($event->root);
+        $state = $this->state($event->sessionWorkspace());
+        $opened = $state->read()->text('opened') !== '';
+        $log = $event->sessionWorkspace()->path(self::LOG);
+
+        exec(sprintf(
+            'cd %s && nohup claude %s -p %s >> %s 2>&1 &',
+            escapeshellarg($event->root),
+            $opened ? '--continue' : '',
+            escapeshellarg($this->brief($event, $sha, $opened)),
+            escapeshellarg($log),
+        ));
+
+        $state->write($state->read()->with(opened: $sha, last_sha: $sha));
+
+        return $this->quietly($event, sprintf(
+            'Code Commandments — the `%s` is reading %s in the background (%s). Its report lands in %s.',
+            self::ROLE,
+            substr($sha, 0, 7),
+            $opened ? 'continuing its own session' : 'a new session, opened now',
+            $event->sessionWorkspace()->relative(self::LOG),
+        ));
+    }
+
+    /**
+     * What the reviewer is told. A CONTINUING one already holds the brief and everything it has learned,
+     * so restating the standard would spend its context re-reading what it knows.
+     */
+    private function brief(HookEvent $event, string $sha, bool $opened): string
     {
         $binary = Binary::in($event->root);
-        $sha = $this->git()->head($event->root);
         $role = self::ROLE;
 
+        if ($opened) {
+            return "Another commit landed: {$sha}. Review it the same way — `git show {$sha}`. Report only "
+                . 'what is UNIDIOMATIC; "this commit is idiomatic" is a complete answer.';
+        }
+
         return <<<TEXT
-            Code Commandments — {$sha} just landed. Hand it to the `{$role}`: a reviewer for what is
-            UNIDIOMATIC in it, which is the one thing the tests and `judge` cannot see.
+            You are the `{$role}` for this codebase. Read your brief first — it is the standard you judge
+            by, not your own taste:
 
-            Dispatch one worker with `git show {$sha}` as its whole input, and give it the brief:
-            `{$binary} orchestrate show --role={$role}`.
+              {$binary} orchestrate show --role={$role}
 
-            It is looking for a fact declared twice, a caller reaching around whatever owns the answer,
-            a name that has stopped being true, and a local shape where the codebase already has a word.
-            "This commit is idiomatic" is a complete answer and should be the usual one.
+            Then review ONE commit: `git show {$sha}`. That is the whole input.
+
+            You are not hunting bugs; the tests and `judge` do that. You are the reader who says "that
+            works, and it is not how we do it here", and can say why. Look hardest for a fact declared
+            twice, a caller reaching around whatever owns the answer, a name that has stopped being true,
+            and a local shape where the codebase already has a word.
+
+            Report only — never edit, commit or fix. Say nothing rather than pad: "this commit is
+            idiomatic" is a complete report and should be the usual one.
+
+            You will be sent later commits in this same session, so what you learn now is worth keeping.
             TEXT;
+    }
+
+    /**
+     * Whether the reviewer's session is already open, and what it last read. Session-scoped, because a
+     * new session has no reviewer to continue and should open one rather than resume a conversation that
+     * belonged to a different build.
+     */
+    private function state(Workspace $workspace): StateFile
+    {
+        return new StateFile($workspace->path('.ponytail'), new Legend(
+            'The background reviewer started after each commit (`ponytail`). Deleting this only means the '
+                . 'next commit opens a fresh reviewer instead of continuing the one already reading.',
+            [
+                'opened' => 'the sha its session was opened on — empty until one has been started',
+                'last_sha' => 'the commit it was most recently handed',
+            ],
+            defaults: new State(opened: '', last_sha: ''),
+        ));
     }
 }
