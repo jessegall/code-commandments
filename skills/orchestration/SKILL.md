@@ -146,9 +146,32 @@ still not collide with the words of the rule. A hold is a fact about a name. Whe
 sharpening the wording of an announcement protocol, you are building a hold badly — reach for the one
 that exists.
 
+## The work is a numbered task, not a level in a tree
+
+What you are holding is a list, and every item on it needs an ADDRESS — because the moment you dispatch a
+worker you have to be able to say *which* piece of work in a sentence it can carry. `commandments task`
+gives it one: a task is one short markdown file called `002-port-the-widget.md`, and `002` means the same
+thing in a listing, in the file's name, and in the brief you paste into a worker's prompt.
+
+A detour off `002` becomes `002.1` — it carries its parent's NUMBER, and that is all. There is no folder
+to descend into and no cursor to be standing in, so two detours can be open at once without either of
+them being "where you are". Say what it is and move on:
+
+```
+commandments task add "port the widget" "the main thrust"   # → 001
+commandments task add --under=001 "probe the parser" "is it even the enum?"   # → 001.1
+commandments task start 001
+commandments task done 001.1 "the parser was never the cause"
+```
+
+The three folders (`queue/`, `active/`, `history/`) ARE the state — moving the file is the change, so
+`git status` shows it and nothing has to be kept in step. And closing one takes a REASON for the same
+reason a ruling does: `history/` keeps every task this session ever had, and what a later reader needs is
+not the conclusion — it is the premise, so they can see whether it still holds.
+
 ## The commands
 
-<!-- BEGIN: commands:build (auto-generated, run `composer sins`) -->
+<!-- BEGIN: commands:build,task (auto-generated, run `composer sins`) -->
 | Command | Does |
 |---|---|
 | `commandments build` | the whole board — what needs you first, then what is running |
@@ -162,8 +185,16 @@ that exists.
 | `commandments build orphan <item>` | the holder is GONE — the item returns to unclaimed and the record says the work was abandoned rather than judged |
 | `commandments build log` | every measurement filed, and what it measured — the observed record, not anybody's account of it |
 | `commandments build doctor` | what state everything is in, computed now — for when something has gone wrong and you do not know what |
+| `commandments task` | the board — every task still owed, in address order, subtasks beneath their parent |
+| `commandments task add "<title>" ["<why>"]` | queue one, and print the NUMBER it was given |
+| `commandments task add --under=<id> "<title>" ["<why>"]` | queue a SUBTASK of <id> — it carries <id>'s number (`002.1`), it does not move into a folder of its own |
+| `commandments task start <id>` | begin it — the file moves from `queue/` into `active/` |
+| `commandments task done <id> "<what came of it>"` | close it — the file moves into `history/`, and the reason goes in its log |
+| `commandments task show <id>` | read one out, whole — what you paste into a worker's brief |
+| `commandments task history` | what has been closed, and what came of each |
+| `commandments task stale [--for=N]` | active tasks nobody has touched for N minutes (default 60) |
 
-<!-- END: commands:build -->
+<!-- END: commands:build,task -->
 
 ## Related skills
 

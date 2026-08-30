@@ -23,6 +23,7 @@ use JesseGall\CodeCommandments\Cli\Orchestration\BuildCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\LaneCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\WorldCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\OrchestrateCommand;
+use JesseGall\CodeCommandments\Cli\Orchestration\TaskCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\UpgradeCommand;
 use JesseGall\CodeCommandments\Cli\Plan\Checks;
 use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
@@ -151,6 +152,7 @@ final class Kernel
             new StopConditionCommand(),
             new JournalCommand(),
             new SessionCommand(),
+            new TaskCommand(),
             new BuildCommand(),
             new OrchestrateCommand(),
             new WorldCommand(),
