@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Cli\Text;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Hooks\HookIO;
+use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
 
@@ -46,6 +47,7 @@ final class JournalCommand implements Command
             ->form('journal search "<term>"', 'every line mentioning it, so you can find where a thing was decided')
             ->form('journal remember "<fact>"', 'pin a fact — it survives every compaction and is written into the summariser\'s own instructions')
             ->form('journal pinned [--last=N]', 'every pinned fact still standing, or only the most recent N')
+            ->form('journal agents', 'which WORKERS of this session kept a record, and how much each said')
             ->form('journal open', 'work started and never finished — the live state a compaction must carry')
             ->form('journal verify', "does the record agree with what you SAID? names every tag the journal never filed — the one thing you cannot check from the inside")
             ->form('journal instructions', 'the brief — how to tag, what to pin, and how to read it back. Every refusal points here')
@@ -76,11 +78,38 @@ final class JournalCommand implements Command
             'remember', 'pin' => $this->remember($workspace, $this->text($input, from: 1)),
             'pinned' => $this->pinned($sessions, $input),
             'open' => $this->open($sessions),
+            'agents', 'workers' => $this->agents($workspace),
             'verify', 'check' => $this->verify($sessions),
             'user' => $this->read($sessions, $input, onlyTheUser: true),
             'search', 'find' => $this->search($sessions, $this->text($input, from: 1)),
             default => $this->read($sessions, $input, onlyTheUser: false),
         };
+    }
+
+    /**
+     * The WORKERS of this session that kept a record, and how much each said. A worker's reasoning is
+     * available when somebody goes looking rather than spilled into the orchestrator's own journal,
+     * where it would drown the thing they came to find.
+     */
+    private function agents(Workspace $workspace): int
+    {
+        $lines = [];
+
+        foreach (glob($workspace->sessionDir() . '/agents/*/.journal') ?: [] as $file) {
+            $agent = basename(dirname($file));
+            $said = count(new Journal(new StateFile($file, Journal::legend()))->entries());
+
+            $lines[] = sprintf('  %-20s %d entr%s', $agent, $said, $said === 1 ? 'y' : 'ies');
+        }
+
+        if ($lines === []) {
+            return $this->console->say('No worker has kept a record in this session.');
+        }
+
+        return $this->console->say(
+            ...$lines,
+            ...['', '  `commandments journal use <agent-id>` reads one out.'],
+        );
     }
 
     /**

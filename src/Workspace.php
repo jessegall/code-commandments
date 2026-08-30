@@ -31,6 +31,12 @@ final class Workspace
     public const string SESSIONS = 'sessions';
 
     /**
+     * Where a session's WORKERS keep what is theirs — one folder per agent id, beside the session's own
+     * state rather than inside it.
+     */
+    private const string AGENTS = 'agents';
+
+    /**
      * The durable-tier folder a PROJECT writes its own code into — its custom detectors, sins,
      * skills and packages ({@see custom}). The one folder under `.commandments/` that is neither
      * generated nor session-scoped, so it is the one (besides `config.php`) kept out of the
@@ -225,6 +231,20 @@ final class Workspace
     public function path(string $file): string
     {
         return $this->sessionDir() . '/' . $file;
+    }
+
+    /**
+     * A WORKER's own corner of this session: `<session>/agents/<agent-id>/<file>`.
+     *
+     * Its own rather than a lane in the session's, because the record is ABOUT the worker. A persistent
+     * agent — one kept alive and resumed across dispatches — has the same compaction problem the
+     * orchestrator has, and reads its own back the same way. Keyed on the agent because a subagent's
+     * payload carries the PARENT's session id, so filing by session would mix every worker's entries
+     * into the orchestrator's indistinguishably.
+     */
+    public function agentPath(Agent $agent, string $file): string
+    {
+        return $this->sessionDir() . '/' . self::AGENTS . '/' . $agent->id . '/' . $file;
     }
 
     /**

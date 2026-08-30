@@ -38,6 +38,15 @@ final class JournalRecorder extends Hook
     }
 
     /**
+     * A worker records too, into ITS OWN journal. What it decided otherwise dies with its transcript,
+     * and a report is then the single point of failure for a whole session's reasoning.
+     */
+    protected function speaksToSubagents(): bool
+    {
+        return true;
+    }
+
+    /**
      * A message arrives in flushes, each delta holding only the lines completed since the last one. The
      * FIRST carries the message's opening, which the journal files whether it is tagged or not.
      *
@@ -97,7 +106,7 @@ final class JournalRecorder extends Hook
             return $this->pass();
         }
 
-        $journal = Journal::inSession($event->sessionWorkspace());
+        $journal = $this->journalFor($event);
         $tagged = Tag::taggedLines($text);
 
         if ($tagged === []) {
@@ -113,6 +122,20 @@ final class JournalRecorder extends Hook
         }
 
         return $this->pass();
+    }
+
+    /**
+     * WHOSE record this line belongs to. A worker's goes in its own, keyed on its agent id — a
+     * subagent's payload carries the PARENT's session id, so filing by session would mix every worker's
+     * entries into the orchestrator's with no way to tell them apart.
+     */
+    private function journalFor(HookEvent $event): Journal
+    {
+        $workspace = $event->sessionWorkspace();
+
+        return $event->isSubagent()
+            ? Journal::ofAgent($workspace, $event->agent())
+            : Journal::inSession($workspace);
     }
 
     private function entry(HookEvent $event, Kind $kind, Option $tag, string $text): Entry

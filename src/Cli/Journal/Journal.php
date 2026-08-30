@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cli\Journal;
 use JesseGall\CodeCommandments\Cli\State\Legend;
 use JesseGall\CodeCommandments\Cli\State\State;
 use JesseGall\CodeCommandments\Cli\State\StateFile;
+use JesseGall\CodeCommandments\Agent;
 use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
 
@@ -30,6 +31,16 @@ final class Journal
     public static function inSession(Workspace $workspace): self
     {
         return new self(new StateFile($workspace->path('.journal'), self::legend()));
+    }
+
+    /**
+     * A WORKER's own journal, beside the session's rather than inside it. A one-shot worker's record
+     * helps only somebody else, but an agent kept alive across dispatches has the same compaction
+     * problem the orchestrator has — and this is what it reads back.
+     */
+    public static function ofAgent(Workspace $workspace, Agent $agent): self
+    {
+        return new self(new StateFile($workspace->agentPath($agent, '.journal'), self::legend()));
     }
 
     public static function legend(): Legend

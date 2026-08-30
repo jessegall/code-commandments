@@ -118,6 +118,7 @@ existed can still be read back.
 | `commandments journal search "<term>"` | every line mentioning it, so you can find where a thing was decided |
 | `commandments journal remember "<fact>"` | pin a fact — it survives every compaction and is written into the summariser's own instructions |
 | `commandments journal pinned [--last=N]` | every pinned fact still standing, or only the most recent N |
+| `commandments journal agents` | which WORKERS of this session kept a record, and how much each said |
 | `commandments journal open` | work started and never finished — the live state a compaction must carry |
 | `commandments journal verify` | does the record agree with what you SAID? names every tag the journal never filed — the one thing you cannot check from the inside |
 | `commandments journal instructions` | the brief — how to tag, what to pin, and how to read it back. Every refusal points here |
