@@ -65,19 +65,42 @@ final readonly class Reading
     }
 
     /**
-     * The facts pinned to outlive every compaction. They come from the session's own INDEX rather than its
-     * transcript: a pin is recorded through the command, never said in a message, so the transcript never
-     * saw it. $last shows only the most recent, for a list long enough that a reader would otherwise tail
-     * it and miss the middle.
+     * Every fact pinned to outlive every compaction, numbered, the superseded ones INCLUDED and marked.
+     * They come from the session's own INDEX rather than its transcript: a pin is recorded through the
+     * command, never said in a message, so the transcript never saw it. $last shows only the most recent,
+     * for a list long enough that a reader would otherwise tail it and miss the middle.
+     *
+     * This is the one view a struck pin still appears in, and the reason it must: the number is what
+     * `--supersedes` takes, and a correction whose subject had vanished would read as an unexplained
+     * second opinion.
      */
     public function pinned(?int $last = null): string
     {
-        return $this->listed($this->pinnedFacts(), 'pinned facts', $last);
+        $pins = $this->journal()->pins();
+
+        if ($pins === []) {
+            return '';
+        }
+
+        $shown = $last === null ? $pins : array_slice($pins, -$last);
+        $live = count(array_filter($pins, fn (Pin $pin) => $pin->isLive()));
+        $heading = sprintf('pinned facts (%d, %d still standing)', count($pins), $live)
+            . (count($shown) < count($pins) ? ", last {$last}" : '');
+        $lines = [Text::heading($heading), ''];
+
+        foreach ($shown as $pin) {
+            $lines[] = sprintf('%2d  %s', $pin->number, Text::wrap($pin->render(), 4));
+            $lines[] = '';
+        }
+
+        return implode("\n", $lines);
     }
 
     /**
-     * The pinned facts themselves. The prose above is how a person reads them; a {@see Recovery} block
-     * spends bytes it does not have on a heading and a wrap, so it takes the entries and renders its own.
+     * The pinned facts that STILL STAND. The prose above is how a person reads the whole record; this is
+     * what is carried FORWARD — into a {@see Recovery} block and a compaction's own instructions — so a
+     * fact a later pin corrected is not among them. It spends bytes it does not have on a heading and a
+     * wrap, so it takes the entries and renders its own.
      *
      * @return list<Entry>
      */
@@ -256,17 +279,15 @@ final readonly class Reading
      *
      * @param  list<Entry>  $entries
      */
-    private function listed(array $entries, string $title, ?int $last = null): string
+    private function listed(array $entries, string $title): string
     {
         if ($entries === []) {
             return '';
         }
 
-        $shown = $last === null ? $entries : array_slice($entries, -$last);
-        $heading = $title . ' (' . count($entries) . ')' . (count($shown) < count($entries) ? ", last {$last}" : '');
-        $lines = [Text::heading($heading), ''];
+        $lines = [Text::heading($title . ' (' . count($entries) . ')'), ''];
 
-        foreach ($shown as $at => $entry) {
+        foreach ($entries as $at => $entry) {
             $lines[] = sprintf('%2d  %s', $at + 1, Text::wrap($entry->text, 4));
             $lines[] = '';
         }

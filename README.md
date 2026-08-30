@@ -266,7 +266,14 @@ commandments journal --back=1     # the stretch the last summary replaced
 commandments journal user         # your own words, in full
 commandments journal search "…"   # where a thing was decided
 commandments journal open         # work started and never closed
+commandments journal pins         # every pinned fact, numbered — the struck ones marked
 ```
+
+**A pin can be corrected, never deleted.** `remember` is the one mechanism that promises to survive
+a compaction, so it is what an agent reaches for whenever it is afraid of losing something — and the
+record fills with facts that were true when written. `commandments journal remember "<the fact now>"
+--supersedes=<n>` files the correction: the old pin stays readable and marked, the new one names it,
+and only the live one is carried across.
 
 **It is an index, not a copy.** The transcript is the record; the journal notes only what the
 transcript cannot answer — where the compaction boundaries fall, and what each message said it

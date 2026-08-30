@@ -86,6 +86,33 @@ Pin the user's standing rulings, the constraint you keep nearly breaking, and th
 work in hand. When the context is about to be compacted you are given one turn to do exactly this,
 and only one.
 
+## Strike a pin the moment it stops being true
+
+```
+vendor/bin/commandments journal pins
+vendor/bin/commandments journal remember "<the fact now>" --supersedes=<n>
+```
+
+`remember` is the only mechanism whose whole promise is *survives the compaction*, so it is what you
+reach for whenever you are afraid of losing something — whether or not the thing is a lasting fact.
+That is not a discipline problem, it is the shape of the tool, and it means the record fills with
+statements that were true when you wrote them:
+
+- `IN FLIGHT: two workers, uncommitted at v4.294.0` — true when written, false an hour later.
+- `only the FOURTEEN primitives keep one .vue half` — it is sixteen. The count drifted with nothing
+  touching the directory.
+
+Each of those now sits beside the accurate pins wearing identical confidence, and the next reader
+inherits a fixed bug as an open one. So **pin freely, and correct what you pinned**: `journal pins`
+numbers them, and one command files the correction.
+
+Nothing is ever deleted. The struck pin stays in the record and stays readable, marked with what
+replaced it; the new pin names the one it replaces, so the correction — the half worth keeping — can
+be read either way round. Only the live pin is carried into a compaction's instructions and into the
+block you wake to, so a corrected fact stops reaching anybody who would act on it.
+
+A number that names no pin, or one already struck, is refused and told which pin stands.
+
 ## Finding a decision
 
 ```
@@ -117,7 +144,8 @@ existed can still be read back.
 | `commandments journal user` | only the user's own words, in full |
 | `commandments journal search "<term>"` | every line mentioning it, so you can find where a thing was decided |
 | `commandments journal remember "<fact>"` | pin a fact — it survives every compaction and is written into the summariser's own instructions |
-| `commandments journal pinned [--last=N]` | every pinned fact still standing, or only the most recent N |
+| `commandments journal remember "<fact>" --supersedes=<n>` | pin a fact that CORRECTS pin <n> — the old one is kept and marked, and only the new one is carried forward |
+| `commandments journal pins [--last=N]` | every pinned fact, numbered — the number is what `--supersedes` takes, and a superseded one is shown struck |
 | `commandments journal agents` | which WORKERS of this session kept a record, and how much each said |
 | `commandments journal open` | work started and never finished — the live state a compaction must carry |
 | `commandments journal verify` | does the record agree with what you SAID? names every tag the journal never filed — the one thing you cannot check from the inside |

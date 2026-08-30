@@ -105,15 +105,20 @@ final readonly class Recovery
     }
 
     /**
-     * The last few pins, and only the last few. The full list does not belong here: it reaches the
-     * summariser through the compaction's own instructions, and the pins that survived a real compaction
-     * did so by being rewritten INTO the summary rather than attached to the session that woke from it.
+     * The last few pins that STILL STAND, and only the last few. A pin a later one superseded is not
+     * carried: this block is on a measured byte budget, and a fact that has been corrected may not spend
+     * it — the struck one is kept in the record and read with `journal pins`, never handed to somebody
+     * who would act on it. Each carries the time it was filed, because a pin states what was true when it
+     * was written and nothing else in it says when that was. The full list does not belong here either:
+     * it reaches the summariser through the compaction's own instructions, and the pins that survived a
+     * real compaction did so by being rewritten INTO the summary rather than attached to the session that
+     * woke from it.
      */
     private function pinned(): string
     {
         return $this->listing(
-            'PINNED — the rest is in the summary above, in its own words',
-            array_map(fn (Entry $entry) => $entry->text, $this->reading->pinnedFacts()),
+            'PINNED — still standing, each stamped with when it was measured. The rest is in the summary above, in its own words',
+            array_map(fn (Entry $entry) => $entry->time() . '  ' . $entry->text, $this->reading->pinnedFacts()),
             self::PINS,
         );
     }

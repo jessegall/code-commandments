@@ -67,10 +67,13 @@ final class Journal
                 quiet_calls: 0,
                 calls: 0,
             ),
-            list: 'one `kind<TAB>time<TAB>turn<TAB>message<TAB>tag<TAB>text` per line, oldest first — the '
-                . 'index. `kind` is who spoke, `tag` is what the message said it carried ([!!] pinned, [!] '
-                . 'correction, [s]/[e] work started/finished, [d] discovery, …), and `text` is the first line '
-                . 'only; the rest lives in the transcript.',
+            list: 'one `kind<TAB>time<TAB>turn<TAB>message<TAB>tag<TAB>[>pin<TAB>]text` per line, oldest '
+                . 'first — the index. `kind` is who spoke, `tag` is what the message said it carried ([!!] '
+                . 'pinned, [!] correction, [s]/[e] work started/finished, [d] discovery, …), and `text` is the '
+                . 'first line only; the rest lives in the transcript. A pinned line that CORRECTS an earlier '
+                . 'one carries `>N` before its text — the pin it supersedes, counted from 1 among the pinned '
+                . 'lines. Nothing is ever struck out of this file: the superseded line stays where it is, and '
+                . 'only stops being carried to a reader who would take it as current.',
             safe: 'the transcript still holds the conversation — only the compaction boundaries are lost',
         );
     }
@@ -265,13 +268,53 @@ final class Journal
     }
 
     /**
-     * The facts marked to survive every compaction, oldest first.
+     * The facts marked to survive every compaction that STILL STAND, oldest first — a pin a later one
+     * superseded is not one of them. Nothing is deleted to make that true: the struck pin is still in the
+     * file and still listed ({@see pins}); it simply stops being carried forward, because every place this
+     * feeds is somewhere a reader takes what it says as current.
      *
      * @return list<Entry>
      */
     public function pinned(): array
     {
-        return array_values(array_filter($this->entries(), fn (Entry $entry) => $entry->isPinned()));
+        $live = [];
+
+        foreach ($this->pins() as $pin) {
+            if ($pin->isLive()) {
+                $live[] = $pin->entry;
+            }
+        }
+
+        return $live;
+    }
+
+    /**
+     * Every pinned fact, struck ones included, numbered as {@see Pin} counts them — what a reader is shown
+     * when they are choosing which one to correct, and the only view in which a superseded fact still
+     * appears.
+     *
+     * @return list<Pin>
+     */
+    public function pins(): array
+    {
+        return Pin::numbered(array_values(array_filter($this->entries(), fn (Entry $entry) => $entry->isPinned())));
+    }
+
+    /**
+     * The pin numbered $number, absent when the session has no such pin — which is what a reader who typed
+     * a number from another session, or from memory, has done.
+     *
+     * @return Option<Pin>
+     */
+    public function pin(int $number): Option
+    {
+        foreach ($this->pins() as $pin) {
+            if ($pin->number === $number) {
+                return Option::some($pin);
+            }
+        }
+
+        return Option::none();
     }
 
     /**

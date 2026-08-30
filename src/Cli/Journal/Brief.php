@@ -48,12 +48,26 @@ final class Brief
             instructions, so it reaches the far side whatever else is dropped. Pin the user's standing
             rulings, the constraint you keep nearly breaking, and the decision behind the work in hand.
 
+            CORRECT A PIN, NEVER LEAVE IT STANDING. That guarantee is why you reach for `remember`
+            whenever you are afraid of losing something — so the record fills with things that were true
+            when you wrote them. A count you measured, a version, what was in flight an hour ago: each one
+            now sits beside the facts that still hold, wearing the same confidence, and the next reader
+            inherits a settled bug as an open one. The moment a pin stops being true, say what is:
+
+              {$binary} journal pins                              the numbered list — live and struck
+              {$binary} journal remember "<the fact now>" --supersedes=<n>
+
+            Nothing is deleted. Pin <n> stays in the record marked as superseded, the new pin names it —
+            so the correction is readable, which is the half worth keeping — and only the new one is
+            carried across a compaction.
+
             READ IT BACK — after a compaction, before you touch anything:
 
               {$binary} journal              the conversation since the last compaction
               {$binary} journal --back=1     the stretch the last summary replaced
               {$binary} journal user         only the user's own words, in full
               {$binary} journal search "<term>"
+              {$binary} journal pins         every pinned fact, numbered, the struck ones marked
               {$binary} journal open         work you started and never closed
               {$binary} journal verify       whether the record agrees with what you SAID
 

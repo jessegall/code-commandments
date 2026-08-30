@@ -46,7 +46,8 @@ final class JournalCommand implements Command
             ->form('journal user', "only the user's own words, in full")
             ->form('journal search "<term>"', 'every line mentioning it, so you can find where a thing was decided')
             ->form('journal remember "<fact>"', 'pin a fact — it survives every compaction and is written into the summariser\'s own instructions')
-            ->form('journal pinned [--last=N]', 'every pinned fact still standing, or only the most recent N')
+            ->form('journal remember "<fact>" --supersedes=<n>', 'pin a fact that CORRECTS pin <n> — the old one is kept and marked, and only the new one is carried forward')
+            ->form('journal pins [--last=N]', 'every pinned fact, numbered — the number is what `--supersedes` takes, and a superseded one is shown struck')
             ->form('journal agents', 'which WORKERS of this session kept a record, and how much each said')
             ->form('journal open', 'work started and never finished — the live state a compaction must carry')
             ->form('journal verify', "does the record agree with what you SAID? names every tag the journal never filed — the one thing you cannot check from the inside")
@@ -54,8 +55,14 @@ final class JournalCommand implements Command
             ->form('journal sessions', 'the sessions of this project, newest first')
             ->form('journal use <id>', 'read that session from now on (a prefix of the id is enough)')
             ->option('--back=N', 'how many compactions back to read (default 0, the current stretch)')
-            ->option('--last=N', 'on `pinned`, show only the most recent N — a long list is tailed, and the middle of it is what gets missed')
+            ->option('--last=N', 'on `pins`, show only the most recent N — a long list is tailed, and the middle of it is what gets missed')
+            ->option('--supersedes=N', 'on `remember`, the pin this fact replaces. Nothing is deleted: pin N stays in the record marked as superseded, the new pin names it, and only the new one reaches a compacted reader')
             ->option('--full', 'the whole stretch, unbounded — by default a reading is cut to fit, worst first, so it does not spend the context it exists to restore')
+            ->note('A pin promises to survive every compaction, so it is what an agent reaches for whenever it is '
+                . 'afraid of losing something — which fills the record with facts that were true when written and '
+                . 'are not now. Correcting one never DELETES it: `remember "<the fact now>" --supersedes=<n>` keeps '
+                . 'the old pin readable, marks it, and stops carrying it forward. `journal pins` is where the '
+                . 'numbers are.')
             ->note('A hook always knows which session it is in; a human does not, so `journal sessions` lists them '
                 . 'and `journal use <id>` MOUNTS one — every later command reads that session until you choose '
                 . 'another. The list is built from the transcripts themselves, so a session that ran before any '
@@ -75,8 +82,8 @@ final class JournalCommand implements Command
             'instructions', 'brief', 'help' => $this->console->say(new Brief($workspace->root())->render()),
             'sessions', 'list' => $this->sessions($sessions),
             'use', 'mount' => $this->use($sessions, $input, $input->argument(1)->unwrapOr('')),
-            'remember', 'pin' => $this->remember($workspace, $this->text($input, from: 1)),
-            'pinned' => $this->pinned($sessions, $input),
+            'remember', 'pin' => $this->remember($workspace, $input),
+            'pins', 'pinned' => $this->pinned($sessions, $input),
             'open' => $this->open($sessions),
             'agents', 'workers' => $this->agents($workspace),
             'verify', 'check' => $this->verify($sessions),
@@ -223,22 +230,74 @@ final class JournalCommand implements Command
         return $this->sessions($sessions);
     }
 
-    private function remember(Workspace $workspace, string $fact): int
+    private function remember(Workspace $workspace, Input $input): int
     {
+        $fact = $this->text($input, from: 1);
+
         if (trim($fact) === '') {
-            return $this->console->say('Say what to remember: `commandments journal remember "<fact>"`.');
+            return $this->console->refuse('Say what to remember: `commandments journal remember "<fact>"`.');
         }
 
-        Journal::inSession($workspace)->file(new Entry(
-            Kind::Mark,
-            gmdate('Y-m-d\TH:i:s\Z'),
-            '',
-            '',
-            Option::some(Tag::Pinned),
-            $fact,
-        ));
+        $journal = Journal::inSession($workspace);
+        $supersedes = $input->option('supersedes')->map(intval(...));
 
-        return $this->console->say('✓ Pinned. It survives every compaction, and rides in the summariser\'s own instructions.');
+        foreach ($supersedes as $number) {
+            $refusal = $this->unstrikable($journal, $number);
+
+            if ($refusal !== []) {
+                return $this->console->refuse(...$refusal);
+            }
+        }
+
+        $journal->file(Entry::pin(gmdate('Y-m-d\TH:i:s\Z'), $fact, $supersedes));
+
+        return $this->console->say(...$this->pinnedIt($journal, $supersedes));
+    }
+
+    /**
+     * Why pin $number cannot be struck, said in full, or nothing when it can. A number that names no pin,
+     * or one already corrected, is the reader working from a stale listing — so the refusal says which
+     * pin stands now rather than filing a correction against a fact nobody is reading.
+     *
+     * @return list<string>
+     */
+    private function unstrikable(Journal $journal, int $number): array
+    {
+        foreach ($journal->pin($number) as $pin) {
+            foreach ($pin->supersededBy as $by) {
+                return [
+                    "Pin {$number} was already superseded by pin {$by}.",
+                    "Strike the one that still stands — `--supersedes={$by}` — or `commandments journal pins` to see them.",
+                ];
+            }
+
+            return [];
+        }
+
+        return [
+            "This session has no pin {$number}.",
+            'Run `commandments journal pins` — the number in front of each fact is what `--supersedes` takes.',
+        ];
+    }
+
+    /**
+     * What was just pinned, and what became of the pin it replaced. The old one is named as KEPT, because
+     * the whole reason to strike rather than delete is that the correction stays readable.
+     *
+     * @param  Option<int>  $supersedes
+     * @return list<string>
+     */
+    private function pinnedIt(Journal $journal, Option $supersedes): array
+    {
+        $number = count($journal->pins());
+
+        return $supersedes->mapOr(
+            ["✓ Pinned as {$number}. It survives every compaction, and rides in the summariser's own instructions."],
+            fn (int $struck) => [
+                "✓ Pinned as {$number}, superseding pin {$struck}.",
+                "Pin {$struck} is kept and marked — `commandments journal pins` still shows it — and from now on only {$number} is carried across a compaction.",
+            ],
+        );
     }
 
     private function pinned(Sessions $sessions, Input $input): int

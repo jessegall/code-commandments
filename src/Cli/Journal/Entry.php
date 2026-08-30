@@ -20,12 +20,29 @@ final readonly class Entry
     private const string SEPARATOR = "\t";
 
     /**
-     * How many fields a line has. A line with fewer is not an entry, so it is skipped rather than guessed at.
+     * How many fields every line has carried since the format began. A line with fewer is not an entry, so
+     * it is skipped rather than guessed at. The format GROWS in place — a line written before a field
+     * existed simply does not carry it, and still reads back — because a journal already on disk holds the
+     * open work no summary can reconstruct, and an upgrade that dropped it would be the loss it exists to
+     * prevent.
      */
     private const int FIELDS = 6;
 
     /**
+     * What marks the field that names a superseded pin, so the slot cannot be confused with the text that
+     * follows it: a line older than the field has no slot at all, and its text would otherwise be read as
+     * one the moment it happened to carry a tab.
+     */
+    private const string SUPERSEDES = '>';
+
+    /**
      * @param  Option<Tag>  $tag  absent when the message carried no prefix
+     * @param  ?int  $supersedes  the {@see Pin} this one replaces, for a pinned fact that corrects an
+     *                            earlier one. Every other entry supersedes nothing and says so by saying
+     *                            nothing, which is why this is the one field with a default: an `Option`
+     *                            cannot be one (its constructor is private), and making every caller
+     *                            declare "I strike no pin" is ceremony that only breaks them. Read it
+     *                            through {@see supersedes}, which is the whole outward spelling.
      */
     public function __construct(
         public Kind $kind,
@@ -34,7 +51,29 @@ final readonly class Entry
         public string $messageId,
         public Option $tag,
         public string $text,
+        private ?int $supersedes = null,
     ) {}
+
+    /**
+     * A fact pinned to outlive every compaction, optionally striking the pin it corrects. Pins are the one
+     * entry nothing says out loud — they are recorded through the command — so this is where they are made.
+     *
+     * @param  Option<int>  $supersedes
+     */
+    public static function pin(string $at, string $text, Option $supersedes): self
+    {
+        return new self(Kind::Mark, $at, '', '', Option::some(Tag::Pinned), $text, $supersedes->unwrapOr(null));
+    }
+
+    /**
+     * The pin this entry replaces — absent for all but a pinned fact filed to correct an earlier one.
+     *
+     * @return Option<int>
+     */
+    public function supersedes(): Option
+    {
+        return Option::fromNullable($this->supersedes);
+    }
 
     /**
      * A line as the {@see \JesseGall\CodeCommandments\Cli\State\StateFile} keeps it. Newlines are folded
@@ -48,6 +87,7 @@ final readonly class Entry
             $this->turnId,
             $this->messageId,
             $this->tag->mapOr('', fn (Tag $tag) => $tag->value),
+            ...$this->supersedes()->mapOr([], fn (int $pin) => [self::SUPERSEDES . $pin]),
             self::oneLine($this->text),
         ]);
     }
@@ -60,16 +100,38 @@ final readonly class Entry
      */
     public static function fromLine(string $line): Option
     {
-        $fields = explode(self::SEPARATOR, $line, self::FIELDS); // The text is last, so it keeps any tab of its own.
+        $fields = explode(self::SEPARATOR, $line);
 
-        if (count($fields) !== self::FIELDS) {
+        if (count($fields) < self::FIELDS) {
             return Option::none();
         }
 
-        [$kind, $at, $turnId, $messageId, $tag, $text] = $fields;
+        [$kind, $at, $turnId, $messageId, $tag] = $fields;
+        $supersedes = self::supersededPin($fields[self::FIELDS - 1]);
+        // Everything past the marked slot is the text, rejoined — so a line keeps any tab of its own.
+        $text = implode(self::SEPARATOR, array_slice($fields, self::FIELDS - ($supersedes->isNone() ? 1 : 0)));
 
         return Option::fromNullable(Kind::tryFrom($kind))
-            ->map(fn (Kind $kind) => new self($kind, $at, $turnId, $messageId, Option::fromNullable(Tag::tryFrom($tag)), $text));
+            ->map(fn (Kind $kind) => new self($kind, $at, $turnId, $messageId, Option::fromNullable(Tag::tryFrom($tag)), $text, $supersedes->unwrapOr(null)));
+    }
+
+    /**
+     * The pin $field names, absent when it is not the marked slot at all — which is every line written
+     * before the field existed, and every entry that superseded nothing.
+     *
+     * @return Option<int>
+     */
+    private static function supersededPin(string $field): Option
+    {
+        if (! str_starts_with($field, self::SUPERSEDES)) {
+            return Option::none();
+        }
+
+        return Option::fromNullable(filter_var(
+            substr($field, strlen(self::SUPERSEDES)),
+            FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1], 'flags' => FILTER_NULL_ON_FAILURE],
+        ));
     }
 
     /**
