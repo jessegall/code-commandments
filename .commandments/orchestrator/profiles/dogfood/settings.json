@@ -4,5 +4,13 @@
             "agent": "ponytail",
             "procedure": "review"
         }
+    ],
+    "forbid": [
+        "git stash",
+        "git push --force",
+        "git reset --hard",
+        "git clean -fd",
+        "git checkout -- .",
+        "git worktree remove"
     ]
 }

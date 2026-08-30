@@ -41,6 +41,12 @@ final readonly class Profile
     private const string SETTINGS = 'settings.json';
 
     /**
+     * Where the forbidden commands are declared, beside what the profile turns on. Not a trigger name:
+     * nothing dispatches on it, and {@see boundTo} only reads a key somebody asks for by moment.
+     */
+    private const string FORBID = 'forbid';
+
+    /**
      * Where procedures live. A procedure is WHAT to do; a role is WHO is doing it. They are separate
      * files because they have separate lifetimes: one procedure — read this commit, report what is not
      * idiomatic — can be run by a reviewer today and an auditor tomorrow, and neither should have to be
@@ -266,6 +272,29 @@ final readonly class Profile
         $declared = is_file($file) ? json_decode((string) file_get_contents($file), true) : [];
 
         return is_array($declared) ? $declared : [];
+    }
+
+    /**
+     * Commands no agent under this profile may run, as the fragments a command is checked against. A
+     * profile's own list, because what is unsafe is a property of how a project WORKS rather than of git:
+     * `git stash` reverts a whole tree in one move and leaves the change somewhere nobody thinks to look,
+     * which cost an evening here when a REJECTED call had already run it and the next four measurements
+     * were taken against the wrong tree.
+     *
+     * @return list<string>
+     */
+    public function forbidden(): array
+    {
+        $declared = $this->allSettings()[self::FORBID] ?? [];
+        $commands = [];
+
+        foreach (is_array($declared) ? $declared : [] as $command) {
+            if (is_string($command) && trim($command) !== '') {
+                $commands[] = trim($command);
+            }
+        }
+
+        return $commands;
     }
 
     /**
