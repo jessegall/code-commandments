@@ -44,13 +44,14 @@ final class MergeGateTest extends TestCase
         PHP);
     }
 
-    private function refusalFor(string $command, string $agentType = '', string $agentId = 'a123'): string
+    private function refusalFor(string $command, string $agentType = '', string $agentId = 'a123', string $cwd = ''): string
     {
         $payload = [
             'hook_event_name' => 'PreToolUse',
             'session_id' => 'sess-merge',
             'tool_name' => 'Bash',
             'tool_input' => ['command' => $command],
+            'cwd' => $cwd === '' ? $this->repo : $cwd,
         ];
 
         if ($agentType !== '') {
@@ -170,5 +171,48 @@ final class MergeGateTest extends TestCase
 
         $this->assertSame('', $this->refusalFor('echo "never run git merge here"', 'builder'));
         $this->assertSame('', $this->refusalFor("grep -rn 'git merge' docs/", 'builder'));
+    }
+
+    /**
+     * A lane pulling the shared branch INTO itself, with the hook's own process standing in the root
+     * checkout — which is on the shared branch. Resolving HEAD from the process rather than from the
+     * worktree the merge runs in made this read as a merge INTO the protected branch.
+     *
+     * It is also the direction that can never be what a writer rule protects: nothing is written to the
+     * protected branch at all. And the refusal was correct-LOOKING, so the natural reading was "the gate
+     * works" and the natural fix was to route around it.
+     */
+    public function test_a_lane_merging_the_shared_branch_into_itself_is_not_refused(): void
+    {
+        $this->declare("\$config->orchestration(fn (\$o) => \$o->branch('to-vue')->writtenBy('integrator'));");
+
+        $lane = $this->repo . '-lane';
+        exec('git -C ' . escapeshellarg($this->repo) . ' worktree add -q -b lane/editor ' . escapeshellarg($lane) . ' 2>/dev/null');
+
+        $this->assertSame(
+            '',
+            $this->refusalFor('git merge to-vue', 'builder', 'a999', $lane),
+            'the shared branch coming INTO a lane writes nothing to the shared branch',
+        );
+
+        exec('git -C ' . escapeshellarg($this->repo) . ' worktree remove --force ' . escapeshellarg($lane) . ' 2>/dev/null');
+    }
+
+    /**
+     * The other direction from the same lane still is the rule's business: standing on the protected
+     * branch is what the gate guards, wherever the hook's own process happens to be.
+     */
+    public function test_a_merge_into_the_shared_branch_is_still_refused_from_another_directory(): void
+    {
+        $this->declare("\$config->orchestration(fn (\$o) => \$o->branch('to-vue')->writtenBy('integrator'));");
+
+        $elsewhere = sys_get_temp_dir() . '/cc-mergegate-elsewhere-' . uniqid('', true);
+        mkdir($elsewhere, 0777, true);
+
+        $refusal = $this->refusalFor('git merge lane/editor', 'builder', 'a999', $this->repo);
+
+        rmdir($elsewhere);
+
+        $this->assertStringContainsString('to-vue', $refusal, 'the repo is on to-vue, so this is the guarded direction');
     }
 }

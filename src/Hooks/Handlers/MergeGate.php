@@ -54,7 +54,7 @@ final class MergeGate extends Hook
 
     private function judge(HookEvent $event, OrchestrationProfile $profile, string $branch): int
     {
-        if (! $this->isMergeInto($event->command(), $branch)) {
+        if (! $this->isMergeInto($event->command(), $branch, $event->cwd())) {
             return $this->pass();
         }
 
@@ -124,7 +124,7 @@ final class MergeGate extends Hook
      * on it? A command carrying a heredoc or a quote may be WRITING about a merge, and text about a
      * command is not a command.
      */
-    private function isMergeInto(string $command, string $branch): bool
+    private function isMergeInto(string $command, string $branch, string $in): bool
     {
         foreach (['<<', "'", '"'] as $quoted) {
             if (! str_contains($command, $quoted)) {
@@ -136,7 +136,7 @@ final class MergeGate extends Hook
 
         foreach (explode('&&', $command) as $part) {
             if ($this->isMerge(trim($part))) {
-                return $this->standingOn($branch);
+                return $this->standingOn($branch, $in);
             }
         }
 
@@ -151,11 +151,19 @@ final class MergeGate extends Hook
     }
 
     /**
-     * Is the checkout on $branch right now? A merge lands where you are standing, so that is what decides
-     * whether this merge is the one being guarded.
+     * Is the checkout at $in on $branch right now? A merge lands where you are STANDING, so this is also
+     * the direction check: standing on the protected branch is what separates `lane -> branch`, which is
+     * the thing guarded, from `branch -> lane`, which every lane does before reporting and which writes
+     * nothing to the protected branch at all.
+     *
+     * It must be asked of the worktree the merge is running in, not of the hook's own process. Reading
+     * the hook's directory made a lane pulling the shared branch INTO itself look like a merge into the
+     * shared branch — and the refusal was correct-looking, which is worse than one that reads as broken.
      */
-    private function standingOn(string $branch): bool
+    private function standingOn(string $branch, string $in): bool
     {
-        return trim((string) @shell_exec('git rev-parse --abbrev-ref HEAD 2>/dev/null')) === $branch;
+        $head = @shell_exec('git -C ' . escapeshellarg($in) . ' rev-parse --abbrev-ref HEAD 2>/dev/null');
+
+        return trim((string) $head) === $branch;
     }
 }

@@ -7,8 +7,9 @@ namespace JesseGall\CodeCommandments\Cli\Journal;
 use JesseGall\PhpTypes\Option;
 
 /**
- * What an agent's message is FOR, written as a bracketed prefix on its first line — `[!discovery] the
- * pattern already exists`. A compaction summary keeps what was done and loses what was decided, so the tag
+ * What an agent's message is FOR, written as a bracketed prefix at the START OF A LINE — `[!discovery]
+ * the pattern already exists`. Anywhere in the message will do, so long as the tag opens its own line:
+ * an agent that answers first and declares the work below has still declared it. A compaction summary keeps what was done and loses what was decided, so the tag
  * is how a message says which of the two it carries, cheaply enough to write every time.
  *
  * The words are SPELLED OUT because the user reads them: a `MessageDisplay` hook sees a message only after

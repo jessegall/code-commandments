@@ -159,7 +159,7 @@ final class JournalReminder extends Hook
 
         return <<<TEXT
             Code Commandments — the journal. A compaction keeps what was DONE and loses what was DECIDED, so
-            say what your messages carry. Tag the front of a message with one of:
+            say what your messages carry. Open a LINE with one of these — anywhere in the message:
 
             {$tags}
 

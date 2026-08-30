@@ -34,7 +34,8 @@ final class Brief
               [!start] making Drilldown a composition
               [!end] making Drilldown a composition
 
-            TAG WHAT YOU SAY. Put the tag at the front of the message, as its first characters:
+            TAG WHAT YOU SAY. Put the tag at the START OF A LINE — anywhere in the message, so long as
+            it opens its own line:
 
             {$tags}
 

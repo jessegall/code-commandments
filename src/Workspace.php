@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments;
 
+use JesseGall\CodeCommandments\Cli\State\SessionNames;
+
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 use JesseGall\CodeCommandments\Support\Directory;
 use JesseGall\CodeCommandments\Support\FileTree;
@@ -22,7 +24,11 @@ final class Workspace
 {
     private const string DIR = '.commandments';
 
-    private const string SESSIONS = 'sessions';
+    /**
+     * The folder holding one directory per session. Public because a session's own PLAN is tracked while
+     * the rest of its folder is not, so the ignore rules have to name it.
+     */
+    public const string SESSIONS = 'sessions';
 
     /**
      * The durable-tier folder a PROJECT writes its own code into — its custom detectors, sins,
@@ -163,11 +169,21 @@ final class Workspace
     }
 
     /**
-     * The 5-char folder name for this session — `substr(sha1(id), 0, 5)`, or `default` without an id.
+     * The folder name for this session — the NAME it was given, else `substr(sha1(id), 0, 5)`, else
+     * `default` without an id. A named session's folder IS its name, which is what makes a session
+     * something a person can come back to now that it holds its own plan.
      */
     public function sessionKey(): string
     {
-        return $this->sessionId === null ? self::DEFAULT_SESSION : self::keyFor($this->sessionId);
+        if ($this->sessionId === null) {
+            return self::DEFAULT_SESSION;
+        }
+
+        foreach (SessionNames::in($this->dir())->nameOf($this->sessionId) as $name) {
+            return $name;
+        }
+
+        return self::keyFor($this->sessionId);
     }
 
     /**

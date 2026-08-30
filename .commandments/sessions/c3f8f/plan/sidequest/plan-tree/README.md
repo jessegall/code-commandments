@@ -37,60 +37,35 @@ to with the day and sha stamped.
 - `stale [--for=N]` — a live branch untouched for N. The plan-shaped twin of
   "N items are waiting on YOU".
 
-## Scoping — a plan is shared, a sidequest is this session's path
+## Scoping — everything here is the session's
 
-The split is not "durable vs volatile" but **what the thing is a fact ABOUT**.
+A plan and its sidequests are **entirely session-scoped**. The orchestrator folder
+holds profiles and nothing else.
 
-- **A PLAN is a fact about the work.** The multi-day port exists whoever is running
-  it. It is durable, lives in `orchestrator/plan/<name>/`, and is in git.
-- **A SIDEQUEST is a fact about this session's path through the work.** The detour
-  THIS orchestrator took, in the order it took it. Entirely session-scoped, and it
-  correctly dies with the terminal it happened in.
+This is simpler than the two designs it replaces, and it deletes work rather than
+adding it: nothing is shared, so nothing can collide, so there is no symlink, no
+lock, and no second-orchestrator question to answer.
 
-So the root folder holds plans and nothing else. The nesting — the breadcrumb, the
-stack of interruptions — belongs to the session, because it is a record of one
-orchestrator's route rather than of the work.
+**What makes it safe is that the SESSION is the durable unit.** A session holds its
+own plan, so it is the thing you come back to — and a session can be NAMED, its
+folder renamed to match, with `sessions/.names` recording which name belongs to which
+id. `sessions/dissolution/plan/` is a plan you can return to by saying its name.
 
-## The symlink is the binding AND the lock
+So the split is not plan-versus-sidequest. It is:
 
-An orchestrator REFERENCES a plan by symlinking it into its own session folder.
+- **`orchestrator/profiles/<name>/`** — a WAY OF WORKING. Durable, in git, reusable
+  across every session and every plan.
+- **`sessions/<name>/`** — a RUN OF WORK. Its plan, its sidequests, its board, its
+  journal, its stop conditions. Named so it can be found again.
 
-That one artifact does three jobs, which is why it beats a separate lease file:
+## Closing a sidequest — the reason goes UP
 
-- **It binds** — the session's own folder says which plan is in force, the way
-  `Instance` says which profile is.
-- **It locks** — a live symlink IS the claim. Nothing to write, nothing to expire.
-- **It is legible** — `ls -l sessions/*/plan` shows every orchestrator and what it
-  holds. The record cannot disagree with itself, because there is only one copy.
+Closing writes the REASON and removes the folder. The reason is appended to the
+PLAN's README, one level up, rather than into the journal.
 
-And it cleans itself up: the link dies when the session folder does, so an
-orchestrator that crashed leaves no lease anybody has to reap.
-
-**Use {@see Agents\SkillLink}, not a bare `symlink()`.** It already handles the cases
-this will meet — relative on POSIX, absolute on Windows (whose `symlink` resolves a
-relative target against the process cwd), and a content-idempotent COPY fallback
-where the filesystem has no links at all.
-
-## A second orchestrator on the same plan
-
-Refused for writing, allowed for reading — which is the answer already decided for
-two orchestrators on one board, arriving here unchanged.
-
-The refusal names who holds it and since when, the way a duplicate `claim` does. It
-is a refusal rather than a prompt because the cost is paid before anyone could read a
-warning: two orchestrators editing one plan produce a tree that is wrong in a way
-neither can see, which is the failure this whole design exists to prevent.
-
-## Closing a sidequest — the reason goes UP, not to the journal
-
-Closing writes the REASON and removes the folder. But the journal is ALSO
-session-scoped, so writing the reason there would lose it on exactly the boundary the
-sidequest already dies on.
-
-**So the reason is appended to the PLAN's durable record.** The session keeps the
-path it took; the plan keeps what was learned. That is the only way a conclusion
-reached in a detour reaches tomorrow's orchestrator, and it is what makes deleting
-the folder safe rather than lossy.
+Both live in the session, so this is no longer about surviving a boundary — it is
+about where a reader looks. A conclusion reached in a detour belongs with the work it
+was a detour from, not in a chronological index of everything said.
 
 ## Decided
 

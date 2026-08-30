@@ -224,6 +224,29 @@ final class Sync implements Command
             '!.gitignore',
             '!config.php',
             ...array_merge(...array_map(fn (string $folder) => ["!{$folder}/", "!{$folder}/**"], $durable)),
+            ...self::sessionPlanLines(),
+        ];
+    }
+
+    /**
+     * A session holds its own plan, which makes the session the thing you come BACK to — so its plan is
+     * tracked while everything else in it is not. Only `plan/` is re-admitted: the board, the journal and
+     * the counters are this run's state and belong to nobody but this run.
+     *
+     * Un-ignoring something nested takes a line per level, because git never descends into an ignored
+     * directory to find an exception inside it.
+     *
+     * @return list<string>
+     */
+    private static function sessionPlanLines(): array
+    {
+        $sessions = Workspace::SESSIONS;
+
+        return [
+            "!{$sessions}/",
+            "!{$sessions}/*/",
+            "!{$sessions}/*/plan/",
+            "!{$sessions}/*/plan/**",
         ];
     }
 

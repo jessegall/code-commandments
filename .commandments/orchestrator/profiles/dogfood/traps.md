@@ -23,3 +23,5 @@
 - (2026-08-29, cdf1247b) A worker measured ANOTHER worker's in-progress tree and reported the failure as current; the methods had already been removed. In a shared checkout a gate result is a claim about two workers' code at the instant it ran, so a red from a neighbour's file must be re-measured before it is believed.
 
 - (2026-08-29, cdf1247b) I accepted an item while its worker was still measuring, so its later receipt was refused with 'Nobody holds it' — true, but it reads as a mistake by the worker rather than a settled item. Numbers it had measured could not reach the record. Accept when the WORKER is done, not when my own check goes green.
+
+- (2026-08-30, d339339d) FOURTH instance of one shape in a day: identity resolved from where the PROCESS happens to be, when the process wanders. The journal, role-confinement, the board, and now MergeGate reading HEAD in the hook's own cwd. Worse than the others because the refusal was correct-LOOKING — it said a non-writer was merging into the protected branch, which is what it should say if that were true — so the natural reading was 'the gate works' and the natural fix was to route around it.

@@ -38,17 +38,16 @@ final class JournalRecorder extends Hook
     }
 
     /**
-     * A message arrives in flushes, each delta holding only the lines completed since the last one — so the
-     * FIRST flush is the one carrying the message's opening, which is both its tag and the line the journal
-     * files. Every later flush of the same message is the middle of a sentence, and is ignored.
+     * A message arrives in flushes, each delta holding only the lines completed since the last one. The
+     * FIRST carries the message's opening, which the journal files whether it is tagged or not.
+     *
+     * Every LATER flush is read too, but for TAGS alone. A tag is a declaration wherever it stands at the
+     * start of a line — an agent that says something first and declares the work below it has still
+     * declared it — where narration from the middle of a message is not news and would flood the index.
      */
     protected function onMessageDisplay(HookEvent $event): int
     {
-        if (! $event->isFirstFlush()) {
-            return $this->pass();
-        }
-
-        return $this->record($event, Kind::Agent, $event->delta());
+        return $this->record($event, Kind::Agent, $event->delta(), untagged: $event->isFirstFlush());
     }
 
     /**
@@ -92,7 +91,7 @@ final class JournalRecorder extends Hook
      * the next files both — one entry per tagged line, and a single untagged entry for a message that
      * declared nothing.
      */
-    private function record(HookEvent $event, Kind $kind, string $text): int
+    private function record(HookEvent $event, Kind $kind, string $text, bool $untagged = true): int
     {
         if (trim($text) === '') {
             return $this->pass();
@@ -102,7 +101,9 @@ final class JournalRecorder extends Hook
         $tagged = Tag::taggedLines($text);
 
         if ($tagged === []) {
-            $journal->file($this->entry($event, $kind, Option::none(), $text));
+            if ($untagged) {
+                $journal->file($this->entry($event, $kind, Option::none(), $text));
+            }
 
             return $this->pass();
         }

@@ -247,6 +247,18 @@ final class HookEvent
     }
 
     /**
+     * The directory the TOOL is acting in — which is not `$root`, and the difference is the whole point.
+     * `$root` says which project this is; `cwd` says where the process making the call is standing, so an
+     * operation on a worktree (a merge, a checkout) is a question only the second can answer.
+     */
+    public function cwd(): string
+    {
+        $cwd = $this->payload['cwd'] ?? '';
+
+        return is_string($cwd) && $cwd !== '' ? $cwd : $this->root;
+    }
+
+    /**
      * The shell command a `Bash` tool call is about to run (empty for other tools).
      */
     public function command(): string
