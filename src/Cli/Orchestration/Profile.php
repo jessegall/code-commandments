@@ -27,6 +27,12 @@ final readonly class Profile
     public const string SETUP = 'lane.sh';
 
     /**
+     * Where roles sit inside a profile. Stated HERE and nowhere else: a caller that spells `/roles/`
+     * itself is a second declaration of the same fact, and two declarations drift the moment one moves.
+     */
+    private const string ROLE_FOLDER = 'roles';
+
+    /**
      * The documents a profile is made of, each answering one question a brief would otherwise re-state.
      */
     public const array DOCUMENTS = [
@@ -87,11 +93,29 @@ final readonly class Profile
     }
 
     /**
-     * Where a document lives — `traps` at the top, `roles/boktor` beneath.
+     * Where a DOCUMENT of this profile lives — `traps` at the top, a role beneath. Public because
+     * everything that writes into a profile — scaffolding a new one, taking a template — must ask for
+     * the layout rather than spell it again beside the write.
      */
-    private function pathTo(string $document): string
+    public function pathTo(string $document): string
     {
         return $this->path . '/' . $document . '.md';
+    }
+
+    /**
+     * Where a ROLE of this profile lives.
+     */
+    public function pathToRole(string $role): string
+    {
+        return $this->path . '/' . self::ROLE_FOLDER . '/' . $role . '.md';
+    }
+
+    /**
+     * The folder roles sit in — what a scaffold makes before it writes any of them.
+     */
+    public function roleFolder(): string
+    {
+        return $this->path . '/' . self::ROLE_FOLDER;
     }
 
     /**
@@ -134,7 +158,7 @@ final readonly class Profile
     {
         $roles = [];
 
-        foreach (glob($this->path . '/roles/*.md') ?: [] as $file) {
+        foreach (glob($this->roleFolder() . '/*.md') ?: [] as $file) {
             $roles[] = basename($file, '.md');
         }
 
@@ -149,7 +173,7 @@ final readonly class Profile
      */
     public function role(string $name): Option
     {
-        return Option::fromTruthy($this->read($this->path . '/roles/' . $name . '.md'));
+        return Option::fromTruthy($this->read($this->pathToRole($name)));
     }
 
     /**

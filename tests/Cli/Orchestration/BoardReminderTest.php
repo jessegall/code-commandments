@@ -167,7 +167,9 @@ final class BoardReminderTest extends TestCase
         // checklist back every time the agent spoke — which is every stop.
         $journal = Journal::inSession(new Workspace($this->root, 'sess-1'));
 
-        foreach (range(1, 6) as $ignored) {
+        // Asked of the hook, never restated here — a threshold spelled in two places is one that drifts
+        // the moment either moves.
+        foreach (range(1, BoardReminder::A_STRETCH) as $ignored) {
             $journal->countCall();
         }
 

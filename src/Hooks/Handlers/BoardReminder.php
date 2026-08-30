@@ -28,10 +28,14 @@ final class BoardReminder extends Hook
     private const int NAMED = 4;
 
     /**
-     * How much work goes by before the routine is worth another reading. Read it at every stop and it is
-     * wallpaper; read it once per stretch and it is a checklist.
+     * How much work goes by before the routine is worth another reading.
+     *
+     * The number matters more than the mechanism. Six tool calls is not a stretch — every stop has more
+     * than six in it, so a threshold that small fires at every stop however the pacing is measured, and
+     * the checklist becomes the wallpaper it exists to avoid. This is a BODY of work: a stretch long
+     * enough that coming to rest is a real event.
      */
-    private const int A_STRETCH = 6;
+    public const int A_STRETCH = 60;
 
     public function summary(): string
     {

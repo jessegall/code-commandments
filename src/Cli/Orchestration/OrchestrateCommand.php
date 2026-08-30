@@ -437,19 +437,21 @@ final class OrchestrateCommand implements Command
             return $this->console->say("`{$name}` already exists at {$dir}.");
         }
 
-        @mkdir($dir . '/roles', 0777, true);
+        $profile = new Profile($name, $dir);
+
+        @mkdir($profile->roleFolder(), 0777, true);
 
         foreach (Profile::DOCUMENTS as $document => $about) {
-            File::write($dir . '/' . $document . '.md', "# {$document}
+            File::write($profile->pathTo($document), "# {$document}
 
 <!-- {$about} -->
 ");
         }
 
-        File::write($dir . '/' . Profile::SETUP, $this->setupStub());
+        File::write($profile->pathTo(Profile::SETUP), $this->setupStub());
 
         foreach (Profile::ROLES as $role => $is) {
-            File::write($dir . '/roles/' . $role . '.md', $this->roleStub($role, $is));
+            File::write($profile->pathToRole($role), $this->roleStub($role, $is));
         }
 
         $written = array_map(

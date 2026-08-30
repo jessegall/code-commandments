@@ -75,14 +75,14 @@ final readonly class Templates
     }
 
     /**
-     * Where $name lands inside a profile — a role under `roles/`, a document at the top. The template's
-     * own folder decides it, so nothing has to be told twice.
+     * Where $name lands inside a profile. The template's own folder decides WHICH of the two it is; the
+     * PROFILE decides where that is, so the layout is asked for rather than spelled again here.
      */
     public function homeIn(Profile $profile, string $name): string
     {
         [$kind, $leaf] = array_pad(explode('/', $name, 2), 2, '');
 
-        return $profile->path . ($kind === 'roles' ? '/roles/' : '/') . $leaf . '.md';
+        return $kind === 'roles' ? $profile->pathToRole($leaf) : $profile->pathTo($leaf);
     }
 
     private function fileFor(string $name): string

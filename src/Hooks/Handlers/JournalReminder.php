@@ -49,9 +49,10 @@ final class JournalReminder extends Hook
 
     /**
      * How long a silence earns the stop question. Recording anything pays the debt, so an agent that
-     * keeps its record is never asked, and one that has written nothing is asked once per stretch.
+     * keeps its record is never asked, and one that has written nothing is asked once per stretch — and
+     * the stretch is long, because a question asked at every stop is one nobody reads by the third time.
      */
-    private const int A_STRETCH = 6;
+    private const int A_STRETCH = 25;
 
     public function summary(): string
     {
