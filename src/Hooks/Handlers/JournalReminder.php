@@ -9,7 +9,6 @@ use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Cli\Journal\Reading;
 use JesseGall\CodeCommandments\Cli\Journal\Session;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
-use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -24,9 +23,11 @@ use JesseGall\CodeCommandments\Support\Binary;
 final class JournalReminder extends Hook
 {
     /**
-     * How many tool uses pass between reminders — the same heartbeat the cardinal rule keeps.
+     * How many tool calls of SILENCE earn a nudge. Counted since anything was last tagged or pinned, not
+     * since the nudge last fired — so recording something clears the debt and a stretch of quiet earns
+     * it back, where firing on a fixed rhythm would be a metronome to tune out.
      */
-    private const int INTERVAL = 25;
+    private const int QUIET = 12;
 
     /**
      * How many stops may be held for unfinished work. It is a reminder, not a gate: the work may genuinely
@@ -51,13 +52,18 @@ final class JournalReminder extends Hook
 
     protected function onPostToolUse(HookEvent $event): int
     {
-        $counter = Counter::named($event->workspace(), 'journal-tags', 'resurfaces the journal tag vocabulary once every 25 tool uses', every: self::INTERVAL);
+        $journal = Journal::inSession($event->sessionWorkspace());
 
-        if (! $counter->due()) {
+        $quiet = $journal->quietFor();
+
+        // Once per STRETCH of silence, not once per call past the threshold. Nagging every call is the
+        // metronome the debt-and-payment shape exists to avoid: recording something clears it, and
+        // staying quiet earns exactly one more.
+        if ($quiet < self::QUIET || $quiet % self::QUIET !== 0) {
             return $this->pass();
         }
 
-        return $this->quietly($event, $this->reminder($event));
+        return $this->quietly($event, $this->reminder($event, $journal));
     }
 
     /**
@@ -152,24 +158,22 @@ final class JournalReminder extends Hook
         );
     }
 
-    private function reminder(HookEvent $event): string
+    /**
+     * ONE line, and it says its own numbers. "3 tags in 40 tool calls" is a fact somebody can act on;
+     * re-printing the vocabulary every time is wallpaper, and a nudge that arrives with nothing new in it
+     * teaches a reader to skim the block that will eventually hold something.
+     *
+     * The vocabulary is not repeated — `journal instructions` holds it, and a reader who needs it can ask
+     * once rather than be shown it forty times.
+     */
+    private function reminder(HookEvent $event, Journal $journal): string
     {
         $binary = Binary::in($event->root);
-        $tags = Tag::vocabulary();
+        $tagged = $journal->tagged();
+        $said = $tagged === 1 ? '1 tag' : "{$tagged} tags";
 
-        return <<<TEXT
-            Code Commandments — the journal. A compaction keeps what was DONE and loses what was DECIDED, so
-            say what your messages carry. Open a LINE with one of these — anywhere in the message:
-
-            {$tags}
-
-            Declare a piece of work before you change anything and close it when it is done — a start with
-            no end is what tells the next reader work was left in flight. And when something is genuinely
-            important, do not merely say it:
-
-              {$binary} journal remember "<the fact you must not lose>"
-
-            That outlives every compaction and is written into the summariser's own instructions.
-            TEXT;
+        return "Code Commandments — {$said} this session, and nothing recorded in the last "
+            . self::QUIET . " tool calls. A ruling you do not write down is one the next reader re-derives: "
+            . "open a line with [!discovery]/[!correction]/[!update], or `{$binary} journal remember \"<the fact>\"`.";
     }
 }

@@ -53,11 +53,15 @@ final class Journal
                 'transcript' => "the session transcript this indexes — the `.jsonl` holding every word",
                 'session' => 'the Claude Code session id these entries belong to',
                 'chunk' => 'how many compactions have happened — entry chunks are numbered from 0',
+                'quiet_calls' => 'tool calls since anything was TAGGED or pinned. It is what the nudge '
+                    . 'measures, so the nudge counts silence rather than time — and it resets when '
+                    . 'something is recorded, never when the nudge fires, or it becomes a metronome',
             ],
             defaults: new State(
                 transcript: '',
                 session: '',
                 chunk: 0,
+                quiet_calls: 0,
             ),
             list: 'one `kind<TAB>time<TAB>turn<TAB>message<TAB>tag<TAB>text` per line, oldest first — the '
                 . 'index. `kind` is who spoke, `tag` is what the message said it carried ([!!] pinned, [!] '
@@ -93,8 +97,41 @@ final class Journal
     public function file(Entry $entry): void
     {
         $state = $this->file->read();
+        $recorded = $state->withItems($this->bounded([...$state->items(), $entry->toLine()]));
 
-        $this->file->write($state->withItems($this->bounded([...$state->items(), $entry->toLine()])));
+        // A TAGGED line is the thing the nudge is asking for, so filing one clears the debt. Untagged
+        // narration is not — it is what the silence is made of.
+        $this->file->write($entry->tag->isSome() ? $recorded->with(quiet_calls: 0) : $recorded);
+    }
+
+    /**
+     * Count one tool call against the silence, and answer how long it has been. The nudge measures what
+     * has NOT been said rather than how much time has passed — a stretch of reading and dispatching says
+     * nothing and is exactly when a ruling goes unrecorded.
+     */
+    public function quietFor(): int
+    {
+        $state = $this->file->read();
+        $quiet = $state->int('quiet_calls') + 1;
+
+        $this->file->write($state->with(quiet_calls: $quiet));
+
+        return $quiet;
+    }
+
+    /**
+     * How many lines in this stretch carried a tag — the number the nudge says back, because "3 tags in
+     * 40 tool calls" is a fact to act on where "remember to tag" is wallpaper.
+     */
+    public function tagged(): int
+    {
+        $tagged = 0;
+
+        foreach ($this->entries() as $entry) {
+            $tagged += $entry->tag->isSome() ? 1 : 0;
+        }
+
+        return $tagged;
     }
 
     /**
