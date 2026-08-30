@@ -32,7 +32,7 @@ final readonly class Templates
     {
         $found = [];
 
-        foreach (['roles', 'documents'] as $kind) {
+        foreach (['roles', 'procedures', 'documents'] as $kind) {
             foreach (glob($this->root . self::FOLDER . '/' . $kind . '/*.md') ?: [] as $file) {
                 $found[] = $kind . '/' . basename($file, '.md');
             }
@@ -82,14 +82,18 @@ final readonly class Templates
     {
         [$kind, $leaf] = array_pad(explode('/', $name, 2), 2, '');
 
-        return $kind === 'roles' ? $profile->pathToRole($leaf) : $profile->pathTo($leaf);
+        return match ($kind) {
+            'roles' => $profile->pathToRole($leaf),
+            'procedures' => $profile->pathToProcedure($leaf),
+            default => $profile->pathTo($leaf),
+        };
     }
 
     private function fileFor(string $name): string
     {
         [$kind, $leaf] = array_pad(explode('/', $name, 2), 2, '');
 
-        if ($kind === '' || $leaf === '' || ! in_array($kind, ['roles', 'documents'], true)) {
+        if ($kind === '' || $leaf === '' || ! in_array($kind, ['roles', 'procedures', 'documents'], true)) {
             return '';
         }
 

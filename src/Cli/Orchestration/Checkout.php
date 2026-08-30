@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Orchestration;
 
+use JesseGall\CodeCommandments\Workspace;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 
 /**
@@ -21,6 +22,13 @@ final readonly class Checkout
     public const string PACKAGE = 'jessegall/code-commandments';
 
     /**
+     * Where lanes go when nothing says otherwise, and the profile setting that moves them.
+     */
+    private const string LANES_FOLDER = '.lanes';
+
+    private const string LANES = 'lanes';
+
+    /**
      * Nothing is installed here at all. A lane in that state runs its gates against nothing.
      */
     public const string NO_VENDOR = 'no vendor';
@@ -36,6 +44,29 @@ final readonly class Checkout
     public const string UNKNOWN = 'unknown';
 
     public function __construct(public string $path) {}
+
+    /**
+     * Where this project's lanes live — what the profile in force says, else beside the repository. A
+     * relative setting resolves against the ROOT rather than the cwd, so a lane opened from a
+     * subdirectory does not land inside it.
+     *
+     * It lives HERE because a lane's home is a fact about lanes, and two callers asking two different
+     * objects would be two declarations of one location.
+     */
+    public static function homeFor(Workspace $workspace, string $root): string
+    {
+        foreach (Profiles::inForce($workspace) as $profile) {
+            foreach ($profile->settings(self::LANES) as $declared) {
+                $at = is_string($declared['at'] ?? null) ? $declared['at'] : '';
+
+                if ($at !== '') {
+                    return str_starts_with($at, '/') ? $at : $root . '/' . $at;
+                }
+            }
+        }
+
+        return $root . '/' . self::LANES_FOLDER;
+    }
 
     /**
      * Every LANE of the project at $root — each worktree is a checkout of its own, and the main one is

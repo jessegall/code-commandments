@@ -41,6 +41,14 @@ final readonly class Profile
     private const string SETTINGS = 'settings.json';
 
     /**
+     * Where procedures live. A procedure is WHAT to do; a role is WHO is doing it. They are separate
+     * files because they have separate lifetimes: one procedure — read this commit, report what is not
+     * idiomatic — can be run by a reviewer today and an auditor tomorrow, and neither should have to be
+     * rewritten for the other to use it.
+     */
+    private const string PROCEDURE_FOLDER = 'procedures';
+
+    /**
      * The documents a profile is made of, each answering one question a brief would otherwise re-state.
      */
     public const array DOCUMENTS = [
@@ -127,6 +135,45 @@ final readonly class Profile
     }
 
     /**
+     * Where a PROCEDURE of this profile lives — what an agent is told to DO, as opposed to who it is.
+     */
+    public function pathToProcedure(string $procedure): string
+    {
+        return $this->path . '/' . self::PROCEDURE_FOLDER . '/' . $procedure . '.md';
+    }
+
+    public function procedureFolder(): string
+    {
+        return $this->path . '/' . self::PROCEDURE_FOLDER;
+    }
+
+    /**
+     * What $procedure says, absent when this profile has not written one by that name.
+     *
+     * @return Option<string>
+     */
+    public function procedure(string $procedure): Option
+    {
+        return Option::fromTruthy($this->read($this->pathToProcedure($procedure)));
+    }
+
+    /**
+     * Every procedure written down, by name.
+     *
+     * @return list<string>
+     */
+    public function procedures(): array
+    {
+        $found = [];
+
+        foreach (glob($this->procedureFolder() . '/*.md') ?: [] as $file) {
+            $found[] = basename($file, '.md');
+        }
+
+        return $found;
+    }
+
+    /**
      * Where this profile's switches live.
      */
     public function settingsFile(): string
@@ -171,24 +218,67 @@ final readonly class Profile
     }
 
     /**
-     * Turn $feature on with $with, or off. OFF REMOVES it rather than writing `false`: a feature this
-     * profile says nothing about is already off, so two spellings of the same state would be one more
-     * thing a reader has to know.
+     * What runs when $trigger fires. A list, because two agents can answer one moment and neither is the
+     * other's fallback.
      *
-     * @param  array<string, mixed>  $with
+     * @return list<Duty>
      */
-    public function turn(string $feature, bool $on, array $with = []): bool
+    public function boundTo(string $trigger): array
+    {
+        $bound = [];
+
+        foreach ($this->allSettings()[$trigger] ?? [] as $declared) {
+            $binding = Duty::fromDeclared($declared);
+
+            if ($binding !== null) {
+                $bound[] = $binding;
+            }
+        }
+
+        return $bound;
+    }
+
+    /**
+     * Bind $agent to carry out $procedure when $trigger fires. Binding the same pair twice does not
+     * double it — a trigger fires once per agent-and-procedure however often the command was run.
+     */
+    public function bind(string $trigger, Duty $duty): bool
+    {
+        $kept = array_values(array_filter(
+            $this->boundTo($trigger),
+            static fn (Duty $it): bool => ! $it->is($duty->agent, $duty->procedure),
+        ));
+
+        return $this->writeBindings($trigger, [...$kept, $duty]);
+    }
+
+    /**
+     * Unbind whatever matches. An empty $agent or $procedure means "any", so `off commit` drops the whole
+     * trigger and `off commit ponytail` drops only what that agent was doing.
+     */
+    public function unbind(string $trigger, string $agent = '', string $procedure = ''): bool
+    {
+        return $this->writeBindings($trigger, array_values(array_filter(
+            $this->boundTo($trigger),
+            static fn (Duty $it): bool => ! $it->matches($agent, $procedure),
+        )));
+    }
+
+    /**
+     * @param  list<Duty>  $bindings
+     */
+    private function writeBindings(string $trigger, array $bindings): bool
     {
         $declared = $this->allSettings();
 
-        if ($on) {
-            $declared[$feature] = $with;
+        if ($bindings === []) {
+            unset($declared[$trigger]);
         } else {
-            unset($declared[$feature]);
+            $declared[$trigger] = array_map(static fn (Duty $it): array => $it->toDeclared(), $bindings);
         }
 
-        // An empty MAP, never an empty list: PHP encodes `[]` for both, and a settings file that reads
-        // as an array is a different shape from the one every reader of it expects.
+        // An empty MAP, never an empty list: PHP encodes `[]` for both, and a settings file that reads as
+        // an array is a different shape from the one every reader of it expects.
         $body = $declared === [] ? '{}' : json_encode($declared, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
         return File::write($this->settingsFile(), $body . "\n");

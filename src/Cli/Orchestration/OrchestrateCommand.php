@@ -44,8 +44,8 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate show [name]', 'read one out — what an orchestrator loads instead of copying a brief by hand')
             ->form('orchestrate stop', 'stop working under a profile; the profile is untouched')
             ->form('orchestrate settings', "what the profile in force turns ON, and how")
-            ->form('orchestrate on <feature> [key=value ...]', 'turn a feature on for the profile in force, with its settings')
-            ->form('orchestrate off <feature>', 'turn it off — the setting is REMOVED, since a feature a profile says nothing about is already off')
+            ->form('orchestrate on <trigger> <agent> <procedure>', 'when <trigger> fires, <agent> carries out <procedure> — both must exist in the profile')
+            ->form('orchestrate off <trigger> [<agent>] [<procedure>]', 'unbind; an omitted agent or procedure means ANY, so `off commit` drops the whole trigger')
             ->form('orchestrate template list', 'the documents and roles this package ships as a starting point')
             ->form('orchestrate template show <name>', 'read one out before taking it')
             ->form('orchestrate template use <name>', 'write it into the profile in force — never over a file you already have')
@@ -899,19 +899,44 @@ final class OrchestrateCommand implements Command
      */
     private function switch(Workspace $workspace, Input $input, bool $on): int
     {
-        $feature = $input->argument(1)->unwrapOr('');
+        $trigger = $input->argument(1)->unwrapOr('');
+        $agent = $input->argument(2)->unwrapOr('');
+        $procedure = $input->argument(3)->unwrapOr('');
 
-        if ($feature === '') {
-            return HelpScreen::usage($this, 'Name the feature: `commandments orchestrate ' . ($on ? 'on' : 'off') . ' <feature>`.');
+        if ($trigger === '' || ($on && ($agent === '' || $procedure === ''))) {
+            return HelpScreen::usage($this, $on
+                ? 'Say all three: `commandments orchestrate on <trigger> <agent> <procedure>`.'
+                : 'Name the trigger: `commandments orchestrate off <trigger> [<agent>] [<procedure>]`.');
         }
 
         foreach (Profiles::inForce($workspace) as $profile) {
-            if (! $profile->turn($feature, $on, $this->pairs($input))) {
+            if ($on && $profile->role($agent)->isNone()) {
+                return $this->console->refuse(
+                    "`{$profile->name}` has no `{$agent}` role, and an agent that is not written cannot be dispatched.",
+                    "  Take one: `commandments orchestrate template use roles/{$agent}`",
+                );
+            }
+
+            if ($on && $profile->procedure($procedure)->isNone()) {
+                return $this->console->refuse(
+                    "`{$profile->name}` has no `{$procedure}` procedure — a procedure is WHAT the agent does.",
+                    '  Write one at ' . $profile->pathToProcedure($procedure),
+                    "  Or take a shipped one: `commandments orchestrate template use procedures/{$procedure}`",
+                );
+            }
+
+            $written = $on
+                ? $profile->bind($trigger, new Duty($agent, $procedure))
+                : $profile->unbind($trigger, $agent, $procedure);
+
+            if (! $written) {
                 return $this->console->refuse("Could not write {$profile->settingsFile()}.");
             }
 
             return $this->console->say(
-                "\u{25b8} {$feature} is " . ($on ? 'ON' : 'off') . " for `{$profile->name}`.",
+                $on
+                    ? "▸ on {$trigger}, `{$agent}` runs `{$procedure}` for `{$profile->name}`."
+                    : "▸ {$trigger} unbound for `{$profile->name}`.",
                 '  ' . $profile->settingsFile(),
             );
         }
@@ -937,11 +962,13 @@ final class OrchestrateCommand implements Command
 
             $said = [];
 
-            foreach ($declared as $feature => $with) {
-                $said[] = '  ' . $feature . ($with === [] ? '' : '  ' . json_encode($with, JSON_UNESCAPED_SLASHES));
+            foreach (array_keys($declared) as $trigger) {
+                foreach ($profile->boundTo($trigger) as $binding) {
+                    $said[] = sprintf('  on %-10s %s', $trigger, $binding->render());
+                }
             }
 
-            return $this->console->say("`{$profile->name}` turns on:", ...$said);
+            return $this->console->say("`{$profile->name}` runs:", ...$said);
         }
 
         return $this->console->refuse('No profile is in force.', '  `commandments orchestrate use <profile>`');

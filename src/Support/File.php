@@ -19,7 +19,17 @@ final class File
      */
     public static function write(string $path, string $contents): bool
     {
-        $temporary = @tempnam(dirname($path), '.cc-');
+        $folder = dirname($path);
+
+        // The temporary file is written BESIDE the target, so a folder that is not there yet fails the
+        // whole write — and answers false rather than throwing, which is how a caller ends up reporting
+        // something it never wrote. Making it is this function's job: every caller needing the same two
+        // lines is one declaration of the same fact per caller.
+        if (! is_dir($folder) && ! @mkdir($folder, 0777, true) && ! is_dir($folder)) {
+            return false;
+        }
+
+        $temporary = @tempnam($folder, '.cc-');
 
         if ($temporary === false) {
             return false;
