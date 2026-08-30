@@ -68,9 +68,25 @@ final readonly class Pending
     }
 
     /**
+     * Abandon everything waiting, answering how much went. Distinct from marking work dispatched: that
+     * says an agent was started, and a reader who cannot tell the two apart cannot tell abandoned work
+     * from work in flight.
+     */
+    public function dropAll(): int
+    {
+        $state = $this->file->read();
+        $gone = count($state->items());
+
+        $this->file->write($state->withItems([]));
+
+        return $gone;
+    }
+
+    /**
      * Where the waiting work is written. The scheduler WATCHES this rather than being told when to look,
      * so it has to be able to name the file.
      */
+
     public function path(): string
     {
         return $this->file->path();

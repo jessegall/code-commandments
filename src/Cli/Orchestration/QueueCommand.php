@@ -32,6 +32,7 @@ final class QueueCommand implements Command
     {
         return Help::of('Agents a moment has asked for and nobody has dispatched yet.')
             ->form('queue', 'what is still owed — one line per undispatched agent')
+            ->form('queue drop [<agent>]', 'abandon waiting work without claiming it was dispatched — all of it, or one agent\'s')
             ->form('queue next', 'print the next agent\'s whole brief and strike it off as it reads — NOTHING when the list is empty, which is the signal to stop')
             ->form('queue brief <agent>', 'the WHOLE prompt to hand that agent, as it stands')
             ->form('queue dispatched <agent>', 'say you have made the call, so the stop it was holding is released')
@@ -48,6 +49,7 @@ final class QueueCommand implements Command
 
         return match ($input->firstArgument()->unwrapOr('status')) {
             'dispatched', 'done' => $this->dispatched($workspace, $input->argument(1)->unwrapOr('')),
+            'drop' => $this->drop($workspace, $input->argument(1)->unwrapOr('')),
             'brief' => $this->brief($workspace, $input->argument(1)->unwrapOr('')),
             'next' => $this->next($workspace),
             default => $this->status($workspace),
@@ -74,6 +76,30 @@ final class QueueCommand implements Command
     }
 
     /**
+     * Drop waiting work without pretending it was dispatched. Striking a line off used to require
+     * CLAIMING an agent had been started for it, so clearing a stale entry meant lying about it — and
+     * eleven ghosts from a loop hours ago sat ahead of the one real dispatch, each naming a worker that
+     * had long since finished. Abandoning is a different act from placing, and saying so is the point.
+     */
+    private function drop(Workspace $workspace, string $agent): int
+    {
+        $pending = Pending::inSession($workspace);
+        $before = count($pending->all());
+
+        if ($before === 0) {
+            return $this->console->say('Nothing is waiting.');
+        }
+
+        $dropped = $agent === '' ? $pending->dropAll() : $pending->dispatched($agent);
+
+        return $this->console->say(sprintf(
+            '▸ dropped %d of %d. They were abandoned, not dispatched — nothing was started for them.',
+            $dropped,
+            $before,
+        ));
+    }
+
+    /**
      * The next agent's whole brief, striking the line off AS IT READS. Consuming on read is what stops a
      * failed dispatch being retried for ever — a line that survives its own failure is a spawn loop, and
      * that has already put eight sessions on somebody's machine. Losing one dispatch is recoverable;
@@ -83,6 +109,7 @@ final class QueueCommand implements Command
      * it is a signal rather than a sentence because a loop that has to read prose to learn it is done
      * eventually misreads it.
      */
+
     private function next(Workspace $workspace): int
     {
         $pending = Pending::inSession($workspace);
@@ -129,7 +156,7 @@ final class QueueCommand implements Command
         return $said === []
             ? $this->console->say('Nothing is waiting to be dispatched.')
             : $this->console->say(
-                'Waiting to be dispatched — your stop is held until each has been:',
+                'Waiting to be dispatched — nothing is holding you; start a scheduler when you want them placed:',
                 ...$said,
                 ...['', '  `commandments queue brief <agent>` — the prompt; `queue dispatched <agent>` once you have made the call.'],
             );
