@@ -116,7 +116,8 @@ final class OrchestrateCommand implements Command
             'go' => $this->goTo($plan, $instance, $input->argument(2)->unwrapOr('')),
             'where' => $this->whereInPlan($plan, $instance),
             'stale' => $this->stalePlan($plan, (int) $input->option('for')->unwrapOr('60')),
-            default => $this->planTree($plan, $instance),
+            '' => $this->planTree($plan, $instance),
+            default => $this->noSuchPlanVerb($input->argument(1)->unwrapOr('')),
         };
     }
 
@@ -198,6 +199,22 @@ final class OrchestrateCommand implements Command
         $instance->standAt($up);
 
         return $this->console->say('✓ ' . $plan->title($at === [] ? [] : $at) . ' closed.', '  Now at: ' . $this->breadcrumb($plan, $up));
+    }
+
+    /**
+     * A verb this version does not have. It used to fall through to the tree, which printed a plausible
+     * screen and answered 0 — so a caller on an older binary saw its command apparently succeed and do
+     * nothing, and only a NEIGHBOURING command's output revealed the truth. An unknown verb is the one
+     * thing a version-skewed caller can be told directly, so it says so and refuses.
+     */
+    private function noSuchPlanVerb(string $verb): int
+    {
+        return $this->console->refuse(
+            "No `plan {$verb}` in this version.",
+            '  It has: open, add, up, go, where, stale.',
+            '  If you expected one of these, the binary you ran may be older than you think —',
+            '  a lane keeps its own `vendor/`, so check the one you actually invoked.',
+        );
     }
 
     /**
