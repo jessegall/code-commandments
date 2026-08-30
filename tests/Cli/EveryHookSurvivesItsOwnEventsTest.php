@@ -7,11 +7,9 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
-use JesseGall\CodeCommandments\Cli\Orchestration\Board;
 use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
 use JesseGall\CodeCommandments\Cli\Orchestration\Profile;
 use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
-use JesseGall\CodeCommandments\Cli\Orchestration\Stage;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Support\File;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
@@ -98,13 +96,6 @@ final class EveryHookSurvivesItsOwnEventsTest extends TestCase
         File::write($profile->pathTo('behaviour'), "# behaviour\n\nHow this team works.\n");
 
         Instance::inSession($workspace)->start('smoke', '10:00');
-
-        $board = Board::inSession($workspace);
-        $board->claim('a-working-item', 'lane-1', '10:01');
-        $board->claim('a-reported-item', 'lane-2', '10:02');
-        $board->move('a-reported-item', Stage::Reported);
-        $board->claim('a-blocked-item', 'lane-3', '10:03');
-        $board->move('a-blocked-item', Stage::Blocked);
 
         $journal = Journal::inSession($workspace);
 

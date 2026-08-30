@@ -23,7 +23,7 @@ final class HookResponseTest extends TestCase
         ]);
 
         $this->assertSame("did you judge?\n\nkeep going.", $merged->blockReason->unwrapOr(''));
-        $this->assertTrue($merged->context->isNone(), 'a block carries no context');
+        $this->assertSame('a stray inject', $merged->context->unwrapOr(''), 'a block does not silence what other hooks had to say');
     }
 
     public function test_injected_contexts_concatenate(): void
