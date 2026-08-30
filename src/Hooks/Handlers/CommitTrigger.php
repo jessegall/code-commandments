@@ -134,7 +134,7 @@ final class CommitTrigger extends Hook
         $inner = sprintf(
             '%s lane open %s >> %s 2>&1; cd %s 2>/dev/null || cd %s; c=%s; '
                 . 'while :; do claude --print $c < %s >> %s 2>&1; c=--continue; '
-                . '%s queue next %s > %s 2>/dev/null; [ -s %s ] || break; done',
+                . '(cd %s && %s queue next %s) > %s 2>/dev/null; [ -s %s ] || break; done',
             escapeshellarg($binary),
             escapeshellarg($duty->agent),
             escapeshellarg($log),
@@ -143,6 +143,7 @@ final class CommitTrigger extends Hook
             $started ? '--continue' : "''",
             escapeshellarg($prompt),
             escapeshellarg($log),
+            escapeshellarg($event->root),
             escapeshellarg($binary),
             escapeshellarg($duty->agent),
             escapeshellarg($prompt),
@@ -166,6 +167,7 @@ final class CommitTrigger extends Hook
                 . "`{$binary} build report {$duty->procedure} --ran=\"<the check>\"` and stop.";
         }
 
+        $session = $event->sessionId();
         $role = $profile->role($duty->agent)->unwrapOr('');
         $procedure = $profile->procedure($duty->procedure)->unwrapOr('');
 
@@ -179,13 +181,18 @@ final class CommitTrigger extends Hook
 
             {$procedure}
 
-            ANNOUNCE YOURSELF, at both ends, because the orchestrator cannot see you otherwise:
+            TELL THE ORCHESTRATOR, at both ends. It cannot see you otherwise — you are a session of your
+            own, and a board it has to remember to read is one it reads late.
+
+            Find it with `ListAgents`: it is the session on this machine that is not you, and its Claude
+            session id is `{$session}`. Then `SendMessage` it — once now, one line, saying you have
+            started on {$sha}; and once when you finish, with what you found. If `SendMessage` is not
+            available to you, say so in your report rather than staying silent, and file it instead:
 
               {$binary} build report {$duty->procedure} --ran="<the check you ran>"
 
-            You already hold `{$duty->procedure}` on its board — that is how it knows you started. Say
-            what you found when you finish, and stop. If more commits landed while you were reading, you
-            will be handed the next one automatically; what you learn now is worth keeping for it.
+            Then stop. If more commits landed while you were reading you will be handed the next one
+            automatically, so what you learn now is worth keeping for it.
             TEXT;
     }
 
