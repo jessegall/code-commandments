@@ -41,8 +41,16 @@ final readonly class Scheduler
                  off AS IT READS, so the same work can never be started twice.
               2. If it printed nothing, the list is empty — say so and STOP. You are finished.
               3. Otherwise start that agent with the Agent tool, handing it that output as its WHOLE
-                 prompt: unchanged, unsummarised, nothing added. Use the SAME MODEL as the session that
-                 started you — the work needs judgement even though this does not.
+                 prompt: unchanged, unsummarised, nothing added.
+
+                 START IT AS `general-purpose`, ALWAYS. The name in the brief — `ponytail`, `secretary`
+                 — is a ROLE, which is a brief for an agent, not an agent type the harness knows. There
+                 is no `secretary` type to start; asking for one fails with `Agent type not found`, and
+                 the tempting repair is to start something else under that name, which writes a false
+                 attribution into the record. Use `general-purpose` and let the brief make it the role.
+
+                 Use the SAME MODEL as the session that started you — the work needs judgement even
+                 though this does not.
               4. Go back to 1.
 
             You are EPHEMERAL. Do not watch, do not monitor, do not wait for more work: an agent sitting

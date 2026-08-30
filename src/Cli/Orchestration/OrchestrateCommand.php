@@ -967,6 +967,8 @@ final class OrchestrateCommand implements Command
                 return $this->console->refuse(
                     "`{$profile->name}` has no `{$agent}` role, and an agent that is not written cannot be dispatched.",
                     "  Take one: `commandments orchestrate template use roles/{$agent}`",
+                    '  A role is a BRIEF, not an agent type the harness knows — it is started as',
+                    '  `general-purpose` and the brief is what makes it the role.',
                 );
             }
 
