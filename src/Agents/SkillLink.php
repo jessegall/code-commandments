@@ -7,7 +7,8 @@ namespace JesseGall\CodeCommandments\Agents;
 use JesseGall\CodeCommandments\Support\Directory;
 
 /**
- * Points an agent's skill folder at the library, one entry per skill. Both agents follow a symlinked
+ * Points an agent's folder at what it should read — a skill directory, or a single generated file such
+ * as a published agent type. Both agents follow a symlinked
  * skill directory, so the skills are written ONCE and every agent reads the same file — a copy per
  * agent would be the same document going stale in different places.
  */
@@ -25,7 +26,7 @@ final class SkillLink
      */
     public function point(string $link, string $target): bool
     {
-        if (! is_dir($target)) {
+        if (! file_exists($target)) {
             return false;
         }
 
@@ -48,7 +49,7 @@ final class SkillLink
 
         // Not an error worth reporting: plenty of filesystems simply have no links, and a copy reads
         // exactly the same to the agent. It only costs the single-source property.
-        return Directory::copy($target, $link);
+        return is_dir($target) ? Directory::copy($target, $link) : copy($target, $link);
     }
 
     /**

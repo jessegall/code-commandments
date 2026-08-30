@@ -75,6 +75,16 @@ final readonly class Cleanup
         Counter::clearAll($this->workspace);
         $said[] = '  cleared  hook counters';
 
+        // And the links this session put in the user's own agents folder. That folder outlives every
+        // run, so a role published from a checkout somebody has since left would otherwise stay
+        // startable for ever — the links are prefixed with this session precisely so a sweep can find
+        // its own and leave every other session's alone.
+        $unlinked = new UserAgents($this->workspace)->sweep();
+
+        if ($unlinked > 0) {
+            $said[] = "  cleared  {$unlinked} agent type(s) from the user's folder";
+        }
+
         return $said;
     }
 

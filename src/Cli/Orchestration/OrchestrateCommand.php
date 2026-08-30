@@ -998,7 +998,24 @@ final class OrchestrateCommand implements Command
      */
     private function publish(Profile $profile, string $role): Option
     {
-        return new AgentType($this->io->projectRoot(), $profile)->write($role);
+        foreach (new AgentType($this->io->projectRoot(), $profile)->write($role) as $path) {
+            // And into the user's own folder, so the role is startable from another checkout too. A
+            // failure there is not a failure to publish: the project's type is written either way, and a
+            // machine with no home to write into still gets the thing it asked for.
+            $this->users()->publish($role, $path);
+
+            return Option::some($path);
+        }
+
+        return Option::none();
+    }
+
+    /**
+     * The user's agents folder for THIS session.
+     */
+    private function users(): UserAgents
+    {
+        return new UserAgents(Workspace::ofSession($this->io->projectRoot()));
     }
 
     /**
