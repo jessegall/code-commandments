@@ -199,6 +199,62 @@ final class MergeGateTest extends TestCase
     }
 
     /**
+     * THE SHAPE THAT WAS REPORTED FOUR TIMES. A subagent's shell starts in the repository root whatever
+     * worktree its work is in, so it reaches its lane with a leading `cd` inside the one command. The
+     * gate asked the hook's own process where it was standing, got the root — which is on the shared
+     * branch — and refused the bootstrap every builder must run.
+     */
+    public function test_a_lane_reached_by_cd_inside_the_command_is_not_refused(): void
+    {
+        $this->declare("\$config->orchestration(fn (\$o) => \$o->branch('to-vue')->writtenBy('integrator'));");
+
+        $lane = $this->repo . '-cd-lane';
+        exec('git -C ' . escapeshellarg($this->repo) . ' worktree add -q -b lane/cd ' . escapeshellarg($lane) . ' 2>/dev/null');
+
+        $refusal = $this->refusalFor('cd ' . $lane . ' && git merge to-vue', 'builder', 'a999', $this->repo);
+
+        exec('git -C ' . escapeshellarg($this->repo) . ' worktree remove --force ' . escapeshellarg($lane) . ' 2>/dev/null');
+
+        $this->assertSame('', $refusal, 'the merge runs in the lane, not in the directory the hook stands in');
+    }
+
+    /**
+     * `git -C <dir>` names a worktree for one invocation without moving anything, and merging by sha
+     * rather than by name does not change where the merge LANDS — which is the whole question. The
+     * spelling that defeated the earlier rule was `git merge $(git rev-parse origin/to-vue)`: it reads
+     * the destination from the argv, and the destination was never in the argv.
+     */
+    public function test_a_merge_is_judged_by_the_worktree_git_is_pointed_at(): void
+    {
+        $this->declare("\$config->orchestration(fn (\$o) => \$o->branch('to-vue')->writtenBy('integrator'));");
+
+        $lane = $this->repo . '-dashc-lane';
+        exec('git -C ' . escapeshellarg($this->repo) . ' worktree add -q -b lane/dashc ' . escapeshellarg($lane) . ' 2>/dev/null');
+
+        $intoLane = $this->refusalFor('git -C ' . $lane . ' merge to-vue', 'builder', 'a999', $this->repo);
+        $intoBranch = $this->refusalFor('git -C ' . $this->repo . ' merge lane/dashc', 'builder', 'a999', $lane);
+
+        exec('git -C ' . escapeshellarg($this->repo) . ' worktree remove --force ' . escapeshellarg($lane) . ' 2>/dev/null');
+
+        $this->assertSame('', $intoLane, 'pointed at the lane, so nothing reaches the shared branch');
+        $this->assertStringContainsString('only `integrator` merges', $intoBranch, 'pointed at the root, which is on to-vue');
+    }
+
+    /**
+     * A commit message is prose about the work, and the work is often the very rule the gate enforces.
+     * Blanking only quoted strings left a heredoc body reading as commands, so a message describing a
+     * merge was refused as one.
+     */
+    public function test_a_merge_described_in_a_heredoc_is_not_a_merge(): void
+    {
+        $this->declare("\$config->orchestration(fn (\$o) => \$o->branch('to-vue')->writtenBy('integrator'));");
+
+        $message = "git commit -F - <<'EOF'\nfix: the gate\n\ngit merge to-vue was refused in a lane\nEOF";
+
+        $this->assertSame('', $this->refusalFor($message, 'builder'));
+    }
+
+    /**
      * The other direction from the same lane still is the rule's business: standing on the protected
      * branch is what the gate guards, wherever the hook's own process happens to be.
      */

@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\ShellCommand;
 
 /**
  * Refuses a command the profile forbids. A {@see Discipline}, so it reaches every worker: a rule about
@@ -52,80 +53,23 @@ final class ForbiddenCommandGate extends Hook implements Discipline
     }
 
     /**
-     * Does this command RUN the forbidden one, rather than merely mention it? Asked of each segment the
-     * shell would execute, because a command that only contains the words is a different thing: the
-     * first version of this gate refused an `echo` that quoted the command it was testing for, which is
-     * how a check earns a reputation for firing on nothing and gets worked around instead of heeded.
+     * Does this command RUN the forbidden one, rather than merely mention it? Asked of each command the
+     * shell would actually start, because a command that only contains the words is a different thing:
+     * the first version of this gate refused an `echo` that quoted the command it was testing for, which
+     * is how a check earns a reputation for firing on nothing and gets worked around instead of heeded.
+     *
+     * What a shell would run is {@see ShellCommand}'s to say, not this gate's. Two gates each answering
+     * it for themselves is how one of them learned about quoted strings and the other did not.
      */
     private function runs(string $command, string $forbidden): bool
     {
-        foreach ($this->segments($command) as $segment) {
-            if (str_starts_with($segment, $forbidden)) {
+        foreach (ShellCommand::of($command)->invocations() as $invocation) {
+            if ($invocation->runs($forbidden)) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    /**
-     * The command split at the points a shell would start a new one, each trimmed of the whitespace and
-     * grouping that carry no meaning for what is about to run.
-     *
-     * A BACKTICK is not one of those points, though the shell would treat it as one. Backticks are how
-     * prose quotes a command, so counting them refused this gate's own commit message for naming what it
-     * forbids — and a rule that cannot be written about is one nobody can explain. `$(` stays, being
-     * substitution and nothing else.
-     *
-     * @return list<string>
-     */
-    private function segments(string $command): array
-    {
-        $segments = [];
-
-        foreach (explode("\n", str_replace(['&&', '||', ';', '|', '$('], "\n", $this->unquoted($command))) as $segment) {
-            $segments[] = ltrim(trim($segment), '({ ');
-        }
-
-        return $segments;
-    }
-
-    /**
-     * The command with the CONTENTS of every quoted string blanked out, the quotes themselves kept so the
-     * shape around them survives. A separator inside quotes is not a separator — a shell would never
-     * start a command there — and the two earlier versions of this gate both got that wrong in different
-     * costumes: first by matching anywhere, then by treating any `;` or `&&` as a boundary wherever it
-     * appeared. Both fired on PROSE ABOUT THE RULE, three times between two sessions, including on the
-     * commit messages describing the feature.
-     *
-     * That is worse than an ordinary false positive. A refusal that fires on writing ABOUT a command
-     * teaches people to rephrase until it stops, and an agent that has learned to rephrase past one
-     * refusal has learned it about all of them.
-     */
-    private function unquoted(string $command): string
-    {
-        $out = '';
-        $quote = '';
-
-        foreach (str_split($command) as $char) {
-            if ($quote === '' && ($char === '"' || $char === "'")) {
-                $quote = $char;
-                $out .= $char;
-
-                continue;
-            }
-
-            if ($quote !== '' && $char === $quote) {
-                $quote = '';
-                $out .= $char;
-
-                continue;
-            }
-
-            $out .= $quote === '' ? $char : ' ';
-        }
-
-        return $out;
     }
 
     /**

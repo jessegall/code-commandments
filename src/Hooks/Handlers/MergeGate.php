@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\ShellCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\Roles;
 use JesseGall\CodeCommandments\OrchestrationProfile;
 use JesseGall\CodeCommandments\Support\Binary;
@@ -113,34 +114,22 @@ final class MergeGate extends Hook implements Discipline
     }
 
     /**
-     * Is this command a merge whose destination is the shared branch — that is, a merge run while standing
-     * on it? A command carrying a heredoc or a quote may be WRITING about a merge, and text about a
-     * command is not a command.
+     * Is this command a merge whose destination is the shared branch — that is, a merge run while
+     * STANDING on it? Asked of every command the shell would start and of the directory each one would
+     * run in, because an agent whose session is pinned to the repository root reaches its lane with a
+     * leading `cd` inside the command string. Reading the hook's own directory answered for the root,
+     * which stands on the shared branch, and refused every lane that pulled the branch into itself —
+     * the one direction this gate's own docblock says it must allow.
      */
     private function isMergeInto(string $command, string $branch, string $in): bool
     {
-        foreach (['<<', "'", '"'] as $quoted) {
-            if (! str_contains($command, $quoted)) {
-                continue;
-            }
-
-            return false;
-        }
-
-        foreach (explode('&&', $command) as $part) {
-            if ($this->isMerge(trim($part))) {
-                return $this->standingOn($branch, $in);
+        foreach (ShellCommand::of($command)->invocations($in) as $invocation) {
+            if ($invocation->isGit(self::MERGE) && $this->standingOn($branch, $invocation->in)) {
+                return true;
             }
         }
 
         return false;
-    }
-
-    private function isMerge(string $part): bool
-    {
-        $words = preg_split('/\s+/', $part) ?: [];
-
-        return ($words[0] ?? '') === 'git' && in_array(self::MERGE, $words, true);
     }
 
     /**
@@ -149,8 +138,8 @@ final class MergeGate extends Hook implements Discipline
      * the thing guarded, from `branch -> lane`, which every lane does before reporting and which writes
      * nothing to the protected branch at all.
      *
-     * It must be asked of the worktree the merge is running in, not of the hook's own process. Reading
-     * the hook's directory made a lane pulling the shared branch INTO itself look like a merge into the
+     * It must be asked of the worktree the merge is running IN, not of the hook's own process. Reading
+     * the hook's directory made a lane pulling the shared branch into itself look like a merge into the
      * shared branch — and the refusal was correct-looking, which is worse than one that reads as broken.
      */
     private function standingOn(string $branch, string $in): bool
