@@ -83,11 +83,49 @@ final class ForbiddenCommandGate extends Hook implements Discipline
     {
         $segments = [];
 
-        foreach (explode("\n", str_replace(['&&', '||', ';', '|', '$('], "\n", $command)) as $segment) {
+        foreach (explode("\n", str_replace(['&&', '||', ';', '|', '$('], "\n", $this->unquoted($command))) as $segment) {
             $segments[] = ltrim(trim($segment), '({ ');
         }
 
         return $segments;
+    }
+
+    /**
+     * The command with the CONTENTS of every quoted string blanked out, the quotes themselves kept so the
+     * shape around them survives. A separator inside quotes is not a separator — a shell would never
+     * start a command there — and the two earlier versions of this gate both got that wrong in different
+     * costumes: first by matching anywhere, then by treating any `;` or `&&` as a boundary wherever it
+     * appeared. Both fired on PROSE ABOUT THE RULE, three times between two sessions, including on the
+     * commit messages describing the feature.
+     *
+     * That is worse than an ordinary false positive. A refusal that fires on writing ABOUT a command
+     * teaches people to rephrase until it stops, and an agent that has learned to rephrase past one
+     * refusal has learned it about all of them.
+     */
+    private function unquoted(string $command): string
+    {
+        $out = '';
+        $quote = '';
+
+        foreach (str_split($command) as $char) {
+            if ($quote === '' && ($char === '"' || $char === "'")) {
+                $quote = $char;
+                $out .= $char;
+
+                continue;
+            }
+
+            if ($quote !== '' && $char === $quote) {
+                $quote = '';
+                $out .= $char;
+
+                continue;
+            }
+
+            $out .= $quote === '' ? $char : ' ';
+        }
+
+        return $out;
     }
 
     /**

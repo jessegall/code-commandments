@@ -60,11 +60,7 @@ final class Help
         $names = [];
 
         foreach ($this->options as $option) {
-            // Up to the first `=` OR `[`. An option whose value is optional is spelled `--branch[=BASE]`,
-            // and reading only to the `=` named it `branch[` — a name no invocation can ever match, so
-            // every such flag was documented in the help screen and refused by the parser that reads the
-            // same declaration. Three of them shipped that way: `--branch`, `--repent`, `--dry-run`.
-            $spec = ltrim(explode('[', explode('=', $option->spec, 2)[0], 2)[0], '-');
+            $spec = self::nameOf($option->spec);
 
             if ($spec !== '') {
                 $names[] = $spec;
@@ -72,6 +68,18 @@ final class Help
         }
 
         return $names;
+    }
+
+    /**
+     * The name a user actually types, from the way an option is SPELLED. Up to the first `=` or `[`: an
+     * option whose value is optional is written `--branch[=BASE]`, and reading only to the `=` named it
+     * `branch[`, which no invocation can match — so three flags were documented by the help screen and
+     * refused by the parser reading that same declaration. One reader for it, because the two places
+     * that answered this question separately are exactly how they came to disagree.
+     */
+    public static function nameOf(string $spec): string
+    {
+        return ltrim(explode('[', explode('=', $spec, 2)[0], 2)[0], '-');
     }
 
     public function option(string $spec, string $does): self

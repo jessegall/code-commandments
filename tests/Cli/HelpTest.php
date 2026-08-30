@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Doc\CommandBlocks;
 use JesseGall\CodeCommandments\Cli\Doc\CommandTable;
+use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Kernel;
 use PHPUnit\Framework\TestCase;
@@ -198,7 +199,7 @@ final class HelpTest extends TestCase
                 continue;
             }
 
-            $name = explode('=', substr($word, 2), 2)[0];
+            $name = Help::nameOf($word);
 
             if ($name !== '') {
                 $flags[] = $name;
