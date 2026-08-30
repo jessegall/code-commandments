@@ -81,18 +81,27 @@ final class CommitReview extends Hook
     {
         $sha = $this->git()->head($event->root);
         $state = $this->state($event->sessionWorkspace());
-        $opened = $state->read()->text('opened') !== '';
+        $held = $state->read();
+        $session = $held->text('session');
+        $opened = $session !== '';
         $log = $event->sessionWorkspace()->path(self::LOG);
 
+        // Its OWN session, named by us and resumed BY ID. `--continue` picks the most recent conversation
+        // in the directory, which is the ORCHESTRATOR's — so the reviewer would have no independence from
+        // the context that wrote the code, and every commit would spend the very attention the role exists
+        // to protect.
+        $session = $opened ? $session : $this->newSessionId();
+
         exec(sprintf(
-            'cd %s && nohup claude %s -p %s >> %s 2>&1 &',
+            'cd %s && nohup claude %s %s -p %s >> %s 2>&1 &',
             escapeshellarg($event->root),
-            $opened ? '--continue' : '',
+            $opened ? '--resume' : '--session-id',
+            escapeshellarg($session),
             escapeshellarg($this->brief($event, $sha, $opened, $role)),
             escapeshellarg($log),
         ));
 
-        $state->write($state->read()->with(opened: $sha, last_sha: $sha));
+        $state->write($held->with(session: $session, last_sha: $sha));
 
         return $this->quietly($event, sprintf(
             'Code Commandments — the `%s` is reading %s in the background (%s). Its report lands in %s.',
@@ -101,6 +110,19 @@ final class CommitReview extends Hook
             $opened ? 'continuing its own session' : 'a new session, opened now',
             $event->sessionWorkspace()->relative(self::LOG),
         ));
+    }
+
+    /**
+     * A session id for the reviewer to live in. Version 4, because the harness wants a UUID and one we
+     * choose is the only way to reach the same conversation again from a hook that keeps no handles.
+     */
+    private function newSessionId(): string
+    {
+        $bytes = random_bytes(16);
+        $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+        $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+
+        return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
     }
 
     /**
@@ -147,10 +169,12 @@ final class CommitReview extends Hook
             'The background reviewer started after each commit (`ponytail`). Deleting this only means the '
                 . 'next commit opens a fresh reviewer instead of continuing the one already reading.',
             [
-                'opened' => 'the sha its session was opened on — empty until one has been started',
+                'session' => 'the id of the reviewer\'s OWN conversation — empty until one has been '
+                    . 'opened. Resumed by this id rather than by "the most recent conversation", which '
+                    . 'would be the orchestrator\'s own',
                 'last_sha' => 'the commit it was most recently handed',
             ],
-            defaults: new State(opened: '', last_sha: ''),
+            defaults: new State(session: '', last_sha: ''),
         ));
     }
 }
