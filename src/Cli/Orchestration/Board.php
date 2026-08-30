@@ -151,6 +151,38 @@ final class Board
     }
 
     /**
+     * The live claim a LANE is working under — the question `upgrade` has to answer before it swaps a
+     * worktree's `vendor/` out from under somebody, because a spurious gate failure in a running builder
+     * is indistinguishable from a real bug in its work.
+     *
+     * Matched by NAME, since a lane and a claim share nothing else: `lane open <name>` and `build claim
+     * <item> --by=<holder>` are two commands and neither forces the other's word, so BOTH halves are
+     * compared. A lane named for the item it holds and a lane named for the worker holding it are equally
+     * common, and matching only one would leave a live worker unprotected — where matching both can at
+     * worst skip a lane, which is the side to be wrong on.
+     *
+     * Only WORKING counts. A reported or blocked worker is waiting on the orchestrator and is not running
+     * anything a swapped vendor could spoil, which is what makes "run it again when they report" a real
+     * instruction rather than a hope.
+     *
+     * @return Option<Claim>
+     */
+    public function workingIn(string $lane): Option
+    {
+        foreach ($this->claims() as $claim) {
+            if (! $claim->stage->isRunning()) {
+                continue;
+            }
+
+            if ($claim->item === $lane || $claim->isHeldBy($lane)) {
+                return Option::some($claim);
+            }
+        }
+
+        return Option::none();
+    }
+
+    /**
      * Write $claim, replacing any earlier line for the same item so the board holds one line per item.
      */
     private function put(Claim $claim): void

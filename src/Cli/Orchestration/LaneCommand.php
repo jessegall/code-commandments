@@ -91,15 +91,11 @@ final class LaneCommand implements Command
      */
     private function prepare(Workspace $workspace, string $name, string $at): int
     {
-        $profile = Instance::inSession($workspace)->profile()
-            ->andThen(fn (string $running) => Profiles::of($workspace)->named($running));
-
-        foreach ($profile as $running) {
+        foreach (Profiles::inForce($workspace) as $running) {
             foreach ($running->setupScript() as $script) {
                 $this->console->say('', "▸ {$name} at {$at}", "  running {$script}", '');
 
-                $ran = 0;
-                passthru('cd ' . escapeshellarg($at) . ' && sh ' . escapeshellarg($script) . ' ' . escapeshellarg($at) . ' ' . escapeshellarg($name), $ran);
+                $ran = new Checkout($at)->prepareWith($script);
 
                 return $ran === 0
                     ? $this->console->say('', "✓ {$name} is ready.")
@@ -124,43 +120,22 @@ final class LaneCommand implements Command
     private function list(Workspace $workspace): int
     {
         $root = $workspace->root();
-        $lanes = $this->git->worktrees($root);
+        $lanes = Checkout::lanesOf($root, $this->git);
 
         if ($lanes === []) {
             return $this->console->say('No lanes. `commandments lane open <name>` makes one.');
         }
 
-        $mine = $this->versionIn($root);
+        $mine = new Checkout($root)->version();
 
         foreach ($lanes as $lane) {
-            $version = $this->versionIn($lane);
-            $mark = $version === $mine ? ' ' : '!';
-
-            $this->console->say(sprintf('%s %-12s %s', $mark, $version, $lane));
+            $this->console->say($lane->row($mine));
         }
 
-        return $this->console->say('', "  the project runs {$mine}; a lane marked ! runs something else.");
-    }
-
-    /**
-     * Which version of this package a checkout has installed — read now, from its own lockfile.
-     */
-    private function versionIn(string $path): string
-    {
-        $installed = $path . '/vendor/composer/installed.json';
-
-        if (! is_file($installed)) {
-            return 'no vendor';
-        }
-
-        $packages = json_decode((string) file_get_contents($installed), true);
-
-        foreach ($packages['packages'] ?? [] as $package) {
-            if (($package['name'] ?? '') === 'jessegall/code-commandments') {
-                return (string) ($package['version'] ?? 'unknown');
-            }
-        }
-
-        return 'not installed';
+        return $this->console->say(
+            '',
+            "  the project runs {$mine}; a lane marked ! runs something else.",
+            '  `commandments upgrade` brings them all forward.',
+        );
     }
 }

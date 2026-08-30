@@ -28,6 +28,19 @@ final readonly class Profiles
     }
 
     /**
+     * The profile THIS SESSION is working under, absent when it is not orchestrating under one. Two
+     * commands need it for the same reason — `lane open` stands a worktree up with it and `upgrade`
+     * stands every worktree up again — so the two-step read lives here rather than once in each.
+     *
+     * @return Option<Profile>
+     */
+    public static function inForce(Workspace $workspace): Option
+    {
+        return Instance::inSession($workspace)->profile()
+            ->andThen(fn (string $running): Option => self::of($workspace)->named($running));
+    }
+
+    /**
      * Every profile written down, by name.
      *
      * @return list<Profile>

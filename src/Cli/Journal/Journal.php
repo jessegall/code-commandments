@@ -56,12 +56,16 @@ final class Journal
                 'quiet_calls' => 'tool calls since anything was TAGGED or pinned. It is what the nudge '
                     . 'measures, so the nudge counts silence rather than time — and it resets when '
                     . 'something is recorded, never when the nudge fires, or it becomes a metronome',
+                'calls' => 'tool calls this session, counted for good. It is the WORK measure a nudge '
+                    . 'paces itself against — entries will not do, because a message is itself an entry, '
+                    . 'so pacing on those fires every time the agent speaks',
             ],
             defaults: new State(
                 transcript: '',
                 session: '',
                 chunk: 0,
                 quiet_calls: 0,
+                calls: 0,
             ),
             list: 'one `kind<TAB>time<TAB>turn<TAB>message<TAB>tag<TAB>text` per line, oldest first — the '
                 . 'index. `kind` is who spoke, `tag` is what the message said it carried ([!!] pinned, [!] '
@@ -108,15 +112,37 @@ final class Journal
      * Count one tool call against the silence, and answer how long it has been. The nudge measures what
      * has NOT been said rather than how much time has passed — a stretch of reading and dispatching says
      * nothing and is exactly when a ruling goes unrecorded.
+     *
+     * Counting is its OWN verb, kept apart from the question {@see quietFor} asks: a getter that counts
+     * answers a different number to its second caller, and a nudge naming that number names one nothing
+     * measured.
      */
-    public function quietFor(): int
+    public function countCall(): int
     {
         $state = $this->file->read();
         $quiet = $state->int('quiet_calls') + 1;
 
-        $this->file->write($state->with(quiet_calls: $quiet));
+        $this->file->write($state->with(quiet_calls: $quiet, calls: $state->int('calls') + 1));
 
         return $quiet;
+    }
+
+    /**
+     * How long the silence has run, asked without adding to it — so a reader deciding whether to speak
+     * cannot change the answer by looking.
+     */
+    public function quietFor(): int
+    {
+        return $this->file->read()->int('quiet_calls');
+    }
+
+    /**
+     * How much WORK this session has done. Tool calls rather than entries, because a message is itself an
+     * entry: pacing a nudge on entries fires it every time the agent speaks, which is every stop.
+     */
+    public function calls(): int
+    {
+        return $this->file->read()->int('calls');
     }
 
     /**

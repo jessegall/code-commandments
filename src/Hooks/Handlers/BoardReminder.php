@@ -80,15 +80,19 @@ final class BoardReminder extends Hook
     private function routine(HookEvent $event): string
     {
         $workspace = $event->sessionWorkspace();
-        $running = Instance::inSession($workspace)->profile();
 
-        if (! $this->workMovedOn($event, 'orchestrator-routine', self::A_STRETCH)) {
-            return ''; // No work since it last spoke, so there is nothing to come to rest from.
-        }
-
-        foreach ($running as $name) {
+        foreach (Instance::inSession($workspace)->profile() as $name) {
             foreach (Profiles::of($workspace)->named($name) as $profile) {
                 foreach ($profile->document('routine') as $routine) {
+                    // The mark is spent LAST, once there is a routine to say. Marking before knowing
+                    // burns the first reading — which is owed unconditionally — on a stop that said
+                    // nothing, and a profile started mid-session then waits a stretch for its own.
+                    $work = Journal::inSession($workspace)->calls();
+
+                    if (! $this->workMovedOn($event, 'orchestrator-routine', $work, self::A_STRETCH)) {
+                        return '';
+                    }
+
                     return "Code Commandments — the `{$name}` routine, every time you come to a stop:\n\n" . trim($routine);
                 }
             }

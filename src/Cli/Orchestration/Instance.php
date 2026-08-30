@@ -17,13 +17,6 @@ use JesseGall\PhpTypes\Option;
  */
 final class Instance
 {
-    /**
-     * How many lines make a STRETCH — the distance the routine waits before it is worth another reading.
-     * One is not enough: a message is itself an entry, so a threshold of one fires at every stop where
-     * the agent said anything, which is every stop.
-     */
-    private const int A_STRETCH = 6;
-
     public function __construct(private readonly StateFile $file) {}
 
     public static function inSession(Workspace $workspace): self
@@ -40,16 +33,11 @@ final class Instance
             [
                 'profile' => 'the profile this session is working under',
                 'since' => 'when it started',
-                'routine_at' => 'how much the session had SAID when the routine last spoke — -1 until it '
-                    . 'has spoken at all, since a session that has said nothing yet has still not heard '
-                    . 'it. A routine '
-                    . 'repeated at a stop where nothing has happened is the nudge that teaches skimming, '
-                    . 'so it stays quiet until there is something to have come to rest from',
                 'at' => 'where in the plan this session is standing — a `/`-joined path of sidequest '
                     . 'names, empty at the plan itself. Only the CURSOR is session state; the plan it '
                     . 'points into is a folder tree that outlives any one reading of it',
             ],
-            defaults: new State(profile: '', since: '', at: '', routine_at: -1),
+            defaults: new State(profile: '', since: '', at: ''),
             safe: 'the session is no longer orchestrating under any profile',
         );
     }
@@ -108,31 +96,5 @@ final class Instance
         $state = $this->file->read();
 
         $this->file->write($state->with(at: implode('/', $path)));
-    }
-
-    /**
-     * Has anything been SAID since the routine last spoke? A checklist repeated at a stop where nothing
-     * has happened is a nudge with nothing new in it, and one of those every time teaches a reader to
-     * skim the block that will eventually hold something.
-     *
-     * Answering yes RECORDS this firing, so the routine speaks once per stretch of work rather than once
-     * per stop.
-     */
-    public function routineIsDue(int $said): bool
-    {
-        $state = $this->file->read();
-        $spoke = $state->int('routine_at', -1);
-
-        // A stretch is MORE than one line, because a message is itself a journal entry — so "something was
-        // said since last time" is true whenever the agent speaks, and a checklist that fires every time
-        // it speaks is the wallpaper this exists to stop. The FIRST reading is owed unconditionally: a
-        // session that has said nothing yet has still never heard the routine.
-        if ($spoke >= 0 && $said - $spoke < self::A_STRETCH) {
-            return false;
-        }
-
-        $this->file->write($state->with(routine_at: $said));
-
-        return true;
     }
 }

@@ -113,6 +113,20 @@ abstract class Hook
         return true;
     }
 
+    /**
+     * Has the WORK moved on since this hook last said $slug? The repeat-suppressor for a line worth
+     * saying again only when something has changed: a nudge that arrives unchanged is what teaches a
+     * reader to skim the block that will eventually hold something.
+     *
+     * $work is the caller's OWN measure — the base class does not know what "work" means for a given
+     * signal, and reaching for one concrete source would tie every hook to it.
+     */
+    protected function workMovedOn(HookEvent $event, string $slug, int $work, int $stretch): bool
+    {
+        return Counter::named($event->sessionWorkspace(), $slug, 'marks the work count when this last spoke')
+            ->movedBy($work, $stretch);
+    }
+
     protected function onPostToolUse(HookEvent $event): int
     {
         return $this->pass();

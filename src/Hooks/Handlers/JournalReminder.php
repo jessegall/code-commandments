@@ -47,6 +47,12 @@ final class JournalReminder extends Hook
      */
     private const int NAMED = 3;
 
+    /**
+     * How long a silence earns the stop question. Recording anything pays the debt, so an agent that
+     * keeps its record is never asked, and one that has written nothing is asked once per stretch.
+     */
+    private const int A_STRETCH = 6;
+
     public function summary(): string
     {
         return 'Resurfaces the journal tags as you work, and holds one stop while work you declared is still open.';
@@ -61,7 +67,7 @@ final class JournalReminder extends Hook
     {
         $journal = Journal::inSession($event->sessionWorkspace());
 
-        $quiet = $journal->quietFor();
+        $quiet = $journal->countCall();
 
         // A stretch this long has already lost its reasoning, and the fix costs one line — which is what
         // makes insisting fair rather than harsh.
@@ -91,11 +97,21 @@ final class JournalReminder extends Hook
      */
     protected function onStop(HookEvent $event): int
     {
+        $journal = Journal::inSession($event->sessionWorkspace());
         $unheard = $this->unheard($event);
-        $open = Journal::inSession($event->sessionWorkspace())->openSpans();
+        $open = $journal->openSpans();
+
+        if ($open === [] && $unheard === '' && $event->hasPendingBackgroundWork()) {
+            return $this->pass(); // Parked on a worker: the turn has not ended, so there is nothing to ask about.
+        }
 
         if ($open === [] && $unheard === '') {
-            return $this->quietly($event, $this->habit($event));
+            // SILENCE is the debt and RECORDING pays it — the shape the per-call nudge already uses.
+            // Pacing on total work instead asks again every stretch however much has been written down,
+            // which is the metronome this whole thread exists to remove.
+            return $journal->quietFor() >= self::A_STRETCH
+                ? $this->quietly($event, $this->habit($event))
+                : $this->pass();
         }
 
         if ($unheard !== '') {
@@ -185,9 +201,16 @@ final class JournalReminder extends Hook
 
         return <<<TEXT
             Code Commandments — nothing is open, so before you stop: did this turn produce a ruling, a
-            discovery, or a reason a later reader would need? Say it with a tag, or `{$binary} journal
-            remember "<the fact>"` if it must outlive a compaction. A fact nobody wrote down is one the
-            next reader re-derives.
+            discovery, or a reason a later reader would need? A fact nobody wrote down is one the next
+            reader re-derives. Each kind has its OWN home, and only the first of these is a pin:
+
+              a FACT or a RULING that must outlive a compaction  →  `{$binary} journal remember "<it>"`
+              a FINDING, an open defect, work still owed         →  the plan
+              a STATUS — who holds what, what was measured       →  the board
+
+            A pin cannot be superseded, so anything that ROTS — a count, a defect that will be fixed, a
+            list of work — becomes a confident falsehood the moment it changes. Those belong in the two
+            places that can be updated.
             TEXT;
     }
 

@@ -22,6 +22,7 @@ use JesseGall\CodeCommandments\Cli\Journal\JournalCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\BuildCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\LaneCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\OrchestrateCommand;
+use JesseGall\CodeCommandments\Cli\Orchestration\UpgradeCommand;
 use JesseGall\CodeCommandments\Cli\Plan\Checks;
 use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
 use JesseGall\CodeCommandments\Cli\Config\Configure;
@@ -152,6 +153,7 @@ final class Kernel
             new BuildCommand(),
             new OrchestrateCommand(),
             new LaneCommand(),
+            new UpgradeCommand(),
             new HookDispatch(),
             new HookRunner(),
             new Configure(),
