@@ -72,7 +72,11 @@ final readonly class Dispatcher
         $this->spawn($profile, $duty, $subject, $queue);
 
         return [sprintf(
-            'Code Commandments — `%s` is running `%s` against %s in its own lane, holding `%s` on the board. Its words land in %s.',
+            "Code Commandments — `%s` is running `%s` against %s in its own lane, holding `%s` on the board. "
+                . "Its words land in %s.\n"
+                . 'SAY THIS TO THE USER, in your next reply, in one line. A hook cannot reach their terminal '
+                . '— it can only reach you — and this one started a process on their machine that reads '
+                . 'their code and writes files. Nobody should learn an agent appeared by finding it in a log.',
             $duty->agent,
             $duty->procedure,
             $this->short($subject),
