@@ -21,6 +21,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\CompactionGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\WriteGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\BoardReminder;
+use JesseGall\CodeCommandments\Hooks\Handlers\OrchestratorReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\CommitTrigger;
 use JesseGall\CodeCommandments\Hooks\Handlers\CommitReview;
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
@@ -72,6 +73,7 @@ final class HookRegistry
         WriteGate::class,
         JournalReminder::class,
         BoardReminder::class,
+        OrchestratorReminder::class,
         CommitTrigger::class,
         CommitReview::class,
         SharedBranchGate::class,
