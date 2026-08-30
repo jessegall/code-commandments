@@ -30,8 +30,14 @@ final readonly class Queue
         return new Legend(
             "What `{$agent}` is reading and what is still waiting. Deleting it only means the next trigger "
                 . 'starts a fresh run; nothing that was queued is owed once the build is over.',
-            ['running' => 'what it is working on now — empty when it is idle'],
-            defaults: new State(running: ''),
+            [
+                'running' => 'what it is working on now — empty when it is idle',
+                'session' => "the agent's own conversation id, minted once and RESUMED by id after. "
+                    . '`--continue` resolves to the most recent conversation in a directory, which forks '
+                    . 'every spawn off the same root instead of chaining them — so each believes it is '
+                    . 'the first and none can see what the others found',
+            ],
+            defaults: new State(running: '', session: ''),
             list: 'one waiting subject per line, oldest first',
         );
     }
@@ -47,17 +53,33 @@ final readonly class Queue
      */
     public function take(string $subject): bool
     {
-        $state = $this->file->read();
+        $lock = @fopen($this->file->path() . '.lock', 'c');
 
-        if ($state->text('running') !== '') {
-            $this->file->write($state->withItems([...$state->items(), $subject]));
-
-            return false;
+        if ($lock === false) {
+            return false; // Cannot lock, so cannot safely start — queueing nothing is better than two.
         }
 
-        $this->file->write($state->with(running: $subject));
+        // The read and the write must be ONE act. Two triggers firing close together both read "idle",
+        // both write, and two agents start in one lane — which is the collision the queue exists to
+        // prevent, committed by the queue itself. A claim that is read and then written is not a claim.
+        flock($lock, LOCK_EX);
 
-        return true;
+        try {
+            $state = $this->file->read();
+
+            if ($state->text('running') !== '') {
+                $this->file->write($state->withItems([...$state->items(), $subject]));
+
+                return false;
+            }
+
+            $this->file->write($state->with(running: $subject));
+
+            return true;
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
     }
 
     /**
@@ -95,5 +117,35 @@ final readonly class Queue
     public function running(): string
     {
         return $this->file->read()->text('running');
+    }
+
+    /**
+     * This agent's conversation, minted on the first dispatch and reused by id after. Held HERE because
+     * it belongs to the agent exactly as its queue does, and a handle kept under a key that does not say
+     * whose it is gets resumed by whoever asks next.
+     */
+    public function conversation(): string
+    {
+        $state = $this->file->read();
+        $session = $state->text('session');
+
+        if ($session !== '') {
+            return $session;
+        }
+
+        $minted = sprintf(
+            '%04x%04x-%04x-4%03x-%04x-%04x%04x%04x',
+            random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xfff),
+            random_int(0, 0x3fff) | 0x8000, random_int(0, 0xffff), random_int(0, 0xffff), random_int(0, 0xffff),
+        );
+
+        $this->file->write($state->with(session: $minted));
+
+        return $minted;
+    }
+
+    public function hasConversation(): bool
+    {
+        return $this->file->read()->text('session') !== '';
     }
 }

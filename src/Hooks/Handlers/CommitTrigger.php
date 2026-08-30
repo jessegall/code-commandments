@@ -49,6 +49,10 @@ final class CommitTrigger extends Hook
             return $this->pass();
         }
 
+        if (! $this->landedHere($event)) {
+            return $this->pass();
+        }
+
         $said = [];
 
         foreach (Profiles::inForce($event->sessionWorkspace()) as $profile) {
@@ -120,9 +124,11 @@ final class CommitTrigger extends Hook
         $lane = Checkout::homeFor($workspace, $event->root) . '/' . $duty->agent;
         $log = $workspace->path($this->logFor($duty));
         $prompt = $workspace->path('.' . $duty->agent . '.prompt');
-        $started = is_dir($lane);
+        $queue = Queue::forAgent($workspace, $duty->agent);
+        $resuming = $queue->hasConversation();
+        $conversation = $queue->conversation();
 
-        File::write($prompt, $this->brief($event, $profile, $duty, $started));
+        File::write($prompt, $this->brief($event, $profile, $duty, $resuming));
 
         // The prompt goes on STDIN, never in argv: a brief carries a whole role and procedure, and argv
         // has a length nobody discovers until the day a procedure grows past it.
@@ -133,16 +139,17 @@ final class CommitTrigger extends Hook
         // order, rather than by five that each know only their own diff.
         $inner = sprintf(
             '%s lane open %s >> %s 2>&1; cd %s 2>/dev/null || cd %s; c=%s; '
-                . 'while :; do claude --print $c < %s >> %s 2>&1; c=--continue; '
+                . 'while :; do claude --print $c < %s >> %s 2>&1; c=%s; '
                 . '(cd %s && %s queue next %s) > %s 2>/dev/null; [ -s %s ] || break; done',
             escapeshellarg($binary),
             escapeshellarg($duty->agent),
             escapeshellarg($log),
             escapeshellarg($lane),
             escapeshellarg($event->root),
-            $started ? '--continue' : "''",
+            $resuming ? '--resume ' . escapeshellarg($conversation) : '--session-id ' . escapeshellarg($conversation),
             escapeshellarg($prompt),
             escapeshellarg($log),
+            '--resume ' . escapeshellarg($conversation),
             escapeshellarg($event->root),
             escapeshellarg($binary),
             escapeshellarg($duty->agent),
