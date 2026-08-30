@@ -135,7 +135,23 @@ final class TaskTest extends TestCase
 
         $this->assertSame(TaskState::Done, $closed->state);
         $this->assertFileExists($this->root . '/history/001-fix-the-enum.md');
-        $this->assertSame('the enum was never the cause', $closed->outcome());
+        $this->assertSame('the enum was never the cause', $closed->outcome()->unwrap());
+    }
+
+    /**
+     * A state entered WITHOUT a reason has none, and that is not the same as a reason that is empty. The
+     * two lived under one value while the reader manufactured `''` for a line carrying no reason at all —
+     * so a history could not say whether nobody gave a reason or somebody gave a blank one, which is
+     * exactly the question a history is read to answer.
+     */
+    public function test_a_state_entered_without_a_reason_has_no_outcome(): void
+    {
+        $tasks = $this->tasks();
+        $task = $tasks->add(TaskId::board(), 'Fix the enum', 'a walker found it')->unwrap();
+
+        $started = $tasks->move($task, TaskState::Active, '')->unwrap();
+
+        $this->assertTrue($started->outcome()->isNone(), 'no reason was given, so there is no outcome');
     }
 
     public function test_the_file_logs_every_state_it_entered(): void

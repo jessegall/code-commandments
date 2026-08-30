@@ -150,7 +150,7 @@ final class TaskCommandTest extends TestCase
         $closed = $this->tasks()->find(TaskId::of(1))->unwrap();
 
         $this->assertSame(TaskState::Done, $closed->state);
-        $this->assertSame('the enum was never the cause', $closed->outcome());
+        $this->assertSame('the enum was never the cause', $closed->outcome()->unwrap());
     }
 
     /**

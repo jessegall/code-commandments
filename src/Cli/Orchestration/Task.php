@@ -124,13 +124,15 @@ final readonly class Task
     }
 
     /**
-     * WHAT CAME OF IT — the reason on the last state the log recorded, empty where that state was entered
-     * without one. It is the half of a closed task worth reading, so `task history` prints it beside the
-     * title rather than making a reader open the file to learn how the work ended.
+     * WHAT CAME OF IT — the reason on the last state the log recorded, ABSENT where that state was
+     * entered without one. It is the half of a closed task worth reading, so `task history` prints it
+     * beside the title rather than making a reader open the file to learn how the work ended.
+     *
+     * @return Option<string>
      */
-    public function outcome(): string
+    public function outcome(): Option
     {
-        $outcome = '';
+        $outcome = Option::none();
 
         foreach (explode("\n", $this->body()) as $line) {
             if (str_starts_with($line, '- ')) {
@@ -193,11 +195,17 @@ final readonly class Task
     }
 
     /**
-     * The reason a log line carries, empty for one written without.
+     * The reason a log line carries, ABSENT for one written without. A state entered without a reason
+     * has none — answering an empty string would put "no reason given" and "the reason is nothing" under
+     * one value, and a history is read to tell exactly those apart.
+     *
+     * @return Option<string>
      */
-    private static function reasonIn(string $line): string
+    private static function reasonIn(string $line): Option
     {
-        return trim(explode(self::REASON, $line, 2)[1] ?? '');
+        $parts = explode(self::REASON, $line, 2);
+
+        return count($parts) === 2 ? Option::some(trim($parts[1])) : Option::none();
     }
 
     private static function contentsOf(string $path): string

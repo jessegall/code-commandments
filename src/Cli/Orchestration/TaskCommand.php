@@ -188,9 +188,8 @@ final class TaskCommand implements Command
         $lines = [];
 
         foreach ($closed as $task) {
-            $outcome = $task->outcome();
             $lines[] = $task->state->mark() . ' ' . $task->id->render() . '  ' . $task->title;
-            $lines[] = '    ' . ($outcome === '' ? 'closed without a reason' : $outcome);
+            $lines[] = '    ' . $task->outcome()->unwrapOr('closed without a reason');
         }
 
         return $this->console->say(...$lines);
