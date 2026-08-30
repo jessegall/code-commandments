@@ -83,6 +83,18 @@ final readonly class Dispatched
             && $this->procedure === $other->procedure;
     }
 
+    /**
+     * Would dispatching this REPEAT one already waiting, ignoring what it is about? The question a
+     * self-feeding moment asks: two secretaries owed for two different workers are still two secretaries,
+     * and one of them was caused by the other finishing.
+     */
+    public function wouldRepeat(self $other): bool
+    {
+        return $this->moment === $other->moment
+            && $this->agent === $other->agent
+            && $this->procedure === $other->procedure;
+    }
+
     public function render(): string
     {
         return sprintf('%s  %-16s %-28s %s → %s', $this->at, $this->moment, $this->subject, $this->agent, $this->procedure);

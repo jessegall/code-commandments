@@ -90,7 +90,7 @@ final class QueueCommand implements Command
             return $this->console->say('Nothing is waiting.');
         }
 
-        $dropped = $agent === '' ? $pending->dropAll() : $pending->dispatched($agent);
+        $dropped = $agent === '' ? $pending->dropAll() : $pending->drop($agent);
 
         return $this->console->say(sprintf(
             '▸ dropped %d of %d. They were abandoned, not dispatched — nothing was started for them.',

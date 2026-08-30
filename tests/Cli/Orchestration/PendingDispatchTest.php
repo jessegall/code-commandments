@@ -77,30 +77,30 @@ final class PendingDispatchTest extends TestCase
         // the routine — and work nobody was made to notice is work that did not happen.
         $said = $this->stop();
 
-        $this->assertStringContainsString('nobody has started', $said);
-        $this->assertStringContainsString('Agent tool', $said, 'the orchestrator starts the SCHEDULER itself, in view, in its own session');
+        $this->assertStringContainsString('1 dispatch(es) waiting', $said, 'a COUNT, which is all the orchestrator can act on');
+        $this->assertStringContainsString('scheduler', $said, 'and the one command that does something about it');
     }
 
-    public function test_the_hold_hands_over_the_WHOLE_brief_rather_than_a_summary_of_it(): void
+    public function test_the_orchestrator_is_told_a_count_and_not_the_contents(): void
     {
         $this->pending()->add($this->work('sha-a'));
 
         $said = $this->stop();
 
-        // The hold hands over ONE brief however many are waiting — the scheduler's — because placing N
-        // agents by hand spends the orchestrator's context on bookkeeping, which is the one job where
-        // having judgement is no advantage.
-        $this->assertStringContainsString('SCHEDULER', $said, 'it hands over the scheduler, not each agent');
-        $this->assertStringContainsString('queue next', $said, 'and the command that yields one brief at a time');
-        $this->assertStringContainsString('EPHEMERAL', $said, 'and that it exits rather than watching');
-        $this->assertStringNotContainsString('Read the diff. Say what is unidiomatic.', $said, 'the procedure is the scheduler\'s to fetch, not the hold\'s to inline');
+        // The DETAIL goes to whoever can act on it, and that is not the orchestrator. Its only move is
+        // to start a scheduler, whatever the queue holds — so a subject, a moment or an agent name in
+        // this message is detail delivered to the one party that cannot use it, while the scheduler,
+        // which reads the queue itself, is told nothing until it is summoned.
+        $this->assertStringNotContainsString('sha-a', $said, 'no subject: it changes nothing the orchestrator decides');
+        $this->assertStringNotContainsString('ponytail', $said, 'no agent name, for the same reason');
+        $this->assertStringNotContainsString('Read the diff. Say what is unidiomatic.', $said, 'and certainly not the procedure');
     }
 
-    public function test_the_hold_says_the_exact_words_that_release_it(): void
+    public function test_it_names_the_command_that_does_something_about_it(): void
     {
         $this->pending()->add($this->work('sha-a'));
 
-        $this->assertStringContainsString('queue next', $this->stop());
+        $this->assertStringContainsString('scheduler', $this->stop(), 'the one command the orchestrator can act on');
     }
 
     public function test_saying_it_was_dispatched_releases_the_stop(): void
@@ -137,15 +137,14 @@ final class PendingDispatchTest extends TestCase
     {
         $this->pending()->add($this->work('sha-a'));
 
-        // It TELLS, every time, and never holds. A hold is answered by dispatching, so an agent that
-        // cannot answers by stopping — which fires the stop again. That pinned a finished worker for a
-        // hundred and two fires, and nothing but its own judgement stopped it becoming a hundred and two
-        // agents.
-        foreach (range(1, 4) as $stop) {
-            $this->assertStringContainsString('SCHEDULER', $this->stop(), "said at stop {$stop}");
-        }
-
-        $this->assertStringNotContainsString('held', $this->stop(), 'and nothing is holding the agent here');
+        // Said ONCE, then quiet. A queue does not change what the orchestrator can do about it, so the
+        // second telling adds nothing and the tenth teaches the reader to skim — which is what happened:
+        // nine lines repeated a dozen times, answered a dozen times with "Declining", unread by the
+        // fourth. And it never HOLDS, because a hold is answered by dispatching and an agent that cannot
+        // answers by stopping, which fires the stop again.
+        $this->assertStringContainsString('waiting', $this->stop(), 'it says so');
+        $this->assertSame('', $this->stop(), 'and does not say it again on the next stop');
+        $this->assertSame('', $this->stop(), 'nor the one after');
     }
 
     public function test_the_brief_can_be_asked_for_on_its_own(): void

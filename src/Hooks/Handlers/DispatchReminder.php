@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Orchestration\Scheduler;
 use JesseGall\CodeCommandments\Cli\Orchestration\Pending;
+use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -19,6 +20,12 @@ use JesseGall\CodeCommandments\Support\Binary;
  */
 final class DispatchReminder extends Hook
 {
+    /**
+     * How much work goes by before it says so again. A queue does not change what the orchestrator can
+     * do about it, so saying it twice adds nothing and saying it ten times teaches the reader to skim.
+     */
+    private const int A_STRETCH = 25;
+
     public function summary(): string
     {
         return 'Asks for a scheduler while a dispatch is waiting — on every tool use, and again at a stop. It never holds one.';
@@ -59,40 +66,26 @@ final class DispatchReminder extends Hook
             return $this->pass();
         }
 
-        $listed = [];
-
-        foreach ($waiting as $work) {
-            $listed[] = "  {$work->agent} → {$work->procedure}   (`{$work->moment}` on {$work->subject}, {$work->at})";
+        // ONE LINE, to the one who can only make one decision. The orchestrator cannot act on a
+        // subject, a moment or an agent name — whatever the list holds, its whole move is to start a
+        // scheduler — while the party that CAN act on the detail reads it itself with `queue next`. So
+        // the detail was being delivered to whoever could not use it and withheld from whoever could.
+        //
+        // And ONCE PER STRETCH, not per stop: nine lines repeated a dozen times were answered a dozen
+        // times with "Declining", and by the fourth the reader had stopped looking. The one time it
+        // changes is the time that gets skimmed too.
+        if (! $this->workMovedOn($event, 'dispatch-waiting', Journal::inSession($event->sessionWorkspace())->calls(), self::A_STRETCH)) {
+            return $this->pass();
         }
 
-        $asked = count($waiting) === 1
-            ? 'A moment asked for an agent and nobody has started it:'
-            : count($waiting) . ' moments asked for agents and nobody has started them:';
-        $work = implode("\n", $listed);
-        $binary = Binary::in($event->root);
-        $brief = new Scheduler($event->root)->brief();
-
-        // ONE agent, however many are waiting. The orchestrator starts the SCHEDULER and the scheduler
-        // starts the rest — handing an orchestrator N briefs to place by hand spends the most expensive
-        // context in the build on bookkeeping, which is the one job where judgement is no advantage.
-        // TOLD, never held. A hold is answered by DISPATCHING, and an agent that cannot — a worker whose
-        // stop this should never have reached — answers by stopping, which fires the stop again. That
-        // pinned a finished worker for a hundred and two fires, and it spawned eight sessions pointing
-        // the other way. Saying what to do cannot deadlock; requiring it can.
-        return $this->inject($event, <<<TEXT
-            {$asked}
-
-            {$work}
-
-            Start the SCHEDULER now, with the Agent tool, and let it place them. It is a subagent of
-            yours, so you can watch it work and everything it starts shares this session. Give it a small
-            model — scheduling needs no judgement — and this as its whole prompt:
-
-            {$brief}
-
-            It reads the list itself, starts one agent at a time on YOUR model, and strikes each off.
-            Nothing is holding you here — if you have decided this work should not be dispatched, say so
-            and carry on, and `{$binary} queue` is the list whenever you want it.
-            TEXT);
+        return $this->inject($event, sprintf(
+            'Code Commandments — %d dispatch(es) waiting. `%s scheduler` prepares one and prints the '
+                . 'prompt to start it with; `%s queue` is the list, and `%s queue drop` abandons it if '
+                . 'you have decided against it.',
+            count($waiting),
+            $binary = Binary::in($event->root),
+            $binary,
+            $binary,
+        ));
     }
 }

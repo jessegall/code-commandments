@@ -52,8 +52,16 @@ final readonly class Pending
         }
 
         try {
+            // A SELF-FEEDING moment keeps at most one outstanding dispatch per agent and procedure,
+            // whatever its subject. `worker-finished` is raised by any subagent stopping, and an agent it
+            // dispatches is a subagent — so without this the thing it acts on is a member of the set it
+            // produces, and every dispatch creates exactly one more. Six in twenty-one seconds.
+            $feedsItself = Moment::named($work->moment)
+                ->map(static fn (Moment $moment): bool => $moment->canFeedItself())
+                ->unwrapOr(false);
+
             foreach ($this->all() as $standing) {
-                if ($standing->isSameAs($work)) {
+                if ($standing->isSameAs($work) || ($feedsItself && $standing->wouldRepeat($work))) {
                     return false;
                 }
             }
@@ -68,10 +76,32 @@ final readonly class Pending
     }
 
     /**
-     * Abandon everything waiting, answering how much went. Distinct from marking work dispatched: that
-     * says an agent was started, and a reader who cannot tell the two apart cannot tell abandoned work
-     * from work in flight.
+     * Abandon what $agent was owed, answering how much went. Separate from {@see dispatched} even though
+     * the lines removed are the same: that one says an agent WAS STARTED, and a reader who cannot tell
+     * the two apart cannot tell abandoned work from work in flight. The distinction is the whole reason
+     * the verb exists, so implementing it by claiming a dispatch would hollow it out.
      */
+    public function drop(string $agent): int
+    {
+        $state = $this->file->read();
+        $kept = [];
+        $gone = 0;
+
+        foreach ($this->all() as $work) {
+            if ($work->agent === $agent) {
+                $gone++;
+
+                continue;
+            }
+
+            $kept[] = $work->toLine();
+        }
+
+        $this->file->write($state->withItems($kept));
+
+        return $gone;
+    }
+
     public function dropAll(): int
     {
         $state = $this->file->read();

@@ -30,6 +30,25 @@ enum Moment: string
     }
 
     /**
+     * Can this moment be raised by the EFFECTS of its own dispatch? `worker-finished` is raised by any
+     * subagent stopping, and an agent it dispatches is a subagent — so the thing it acts on is a member
+     * of the set it produces, and every dispatch creates exactly one more. Six in twenty-one seconds,
+     * bounded by nothing, until somebody pulled the binding.
+     *
+     * A moment like that keeps at most ONE outstanding dispatch per agent and procedure, whatever its
+     * subject: the second is dropped rather than queued, so the sequence has a fixed point instead of a
+     * growth rate. It costs a subject — a second worker finishing while one is owed is not queued twice
+     * — and that is the right price, because the alternative is unbounded.
+     */
+    public function canFeedItself(): bool
+    {
+        return match ($this) {
+            self::Commit => false,
+            self::WorkerFinished => true,
+        };
+    }
+
+    /**
      * What this moment's SUBJECT is — the thing the agent is dispatched to work on. Stated here so a
      * trigger cannot decide it privately and a profile need not read our source to find out.
      */
