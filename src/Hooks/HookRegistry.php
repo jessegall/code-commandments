@@ -23,6 +23,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\JournalReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\BoardReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\OrchestratorReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\CommitTrigger;
+use JesseGall\CodeCommandments\Hooks\Handlers\DispatchReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\WorkerFinishedTrigger;
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\MergeGate;
@@ -75,6 +76,7 @@ final class HookRegistry
         BoardReminder::class,
         OrchestratorReminder::class,
         CommitTrigger::class,
+        DispatchReminder::class,
         WorkerFinishedTrigger::class,
         SharedBranchGate::class,
         MergeGate::class,

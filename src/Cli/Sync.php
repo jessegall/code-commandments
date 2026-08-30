@@ -26,6 +26,8 @@ use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
 use JesseGall\CodeCommandments\Cli\Migration;
 use JesseGall\CodeCommandments\Support\Directory;
 use JesseGall\CodeCommandments\Support\File;
+use JesseGall\CodeCommandments\Support\Lock;
+use JesseGall\PhpTypes\Option;
 /**
  * `commandments sync` — refresh the consumer's code-commandments integration on install and every
  * `composer update`. Publishes the skills into the project's library, points every {@see Agent} at
@@ -85,46 +87,24 @@ final class Sync implements Command
 
         fwrite(STDOUT, '↻ code-commandments synced — ' . count($published) . " skills published to " . Workspace::LIBRARY . ", read by {$names}.\n");
 
-        $this->unlock($lock);
+        foreach ($lock as $held) {
+            $held->release();
+        }
 
         return 0;
     }
 
     /**
-     * Hold the project's sync lock for the length of the run, waiting for another one to finish
-     * rather than interleaving with it. A sync clears the published skills and writes them back; two
-     * at once (a CI matrix, a second worktree, an editor firing `composer install` under a manual
-     * one) means one deleting what the other just wrote. Null when the lock cannot be taken at all,
-     * which is not worth refusing over — the lock is a courtesy, not a permission.
+     * Hold the project's sync lock for the length of the run. A sync clears the published skills and
+     * writes them back; two at once (a CI matrix, a second worktree, an editor firing `composer install`
+     * under a manual one) means one deleting what the other just wrote. A hold that cannot be taken at
+     * all is absent rather than refused — here the lock is a courtesy, not a permission.
      *
-     * @return ?resource
+     * @return Option<Lock>
      */
-    private function lock(string $consumer)
+    private function lock(string $consumer): Option
     {
-        $path = Workspace::at($consumer)->shared('.sync.lock');
-
-        @mkdir(dirname($path), 0775, true);
-
-        $handle = @fopen($path, 'c');
-
-        if ($handle === false) {
-            return null;
-        }
-
-        flock($handle, LOCK_EX);
-
-        return $handle;
-    }
-
-    /**
-     * @param  ?resource  $lock
-     */
-    private function unlock($lock): void
-    {
-        if ($lock !== null) {
-            flock($lock, LOCK_UN);
-            fclose($lock);
-        }
+        return Lock::on(Workspace::at($consumer)->shared('.sync.lock'));
     }
 
     /**

@@ -12,9 +12,9 @@ use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
- * What a triggered agent still has to read. It is the agent's OWN loop that calls this, not a person: a
- * dispatched agent finishes one subject, asks for the next, and stops when there is none — so a run of
- * commits is read one at a time by one conversation rather than by several fighting over a lane.
+ * What a moment has asked for and nobody has dispatched yet. A hook writes the work down and holds the
+ * orchestrator's stop until it has started the agent ITSELF — so this is the pair of that hold: what is
+ * still owed, and the word that says one has been given.
  */
 final class QueueCommand implements Command
 {
@@ -30,9 +30,14 @@ final class QueueCommand implements Command
 
     public function help(): Help
     {
-        return Help::of('What a triggered agent is reading, and what is still waiting for it.')
-            ->form('queue status [<agent>]', 'what each triggered agent is working on, and how much is behind it')
-            ->form('queue next <agent>', 'finish the current subject and print the brief for the next — prints NOTHING when the queue is empty, which is how the agent knows to stop')
+        return Help::of('Agents a moment has asked for and nobody has dispatched yet.')
+            ->form('queue', 'what is still owed — one line per undispatched agent')
+            ->form('queue brief <agent>', 'the WHOLE prompt to hand that agent, as it stands')
+            ->form('queue dispatched <agent>', 'say you have made the call, so the stop it was holding is released')
+            ->note('Nothing here starts an agent. A hook cannot start one where the person whose machine '
+                . 'it runs on can see it, and one started behind them outlives the binding that asked for '
+                . 'it — so the orchestrator dispatches it in its own session, where a subagent already '
+                . 'shares the board, the plan and the journal.')
             ->section(Help::HOOKS);
     }
 
@@ -41,88 +46,65 @@ final class QueueCommand implements Command
         $workspace = Workspace::ofSession($this->io->projectRoot());
 
         return match ($input->firstArgument()->unwrapOr('status')) {
-            'next' => $this->next($workspace, $input->argument(1)->unwrapOr('')),
-            default => $this->status($workspace, $input->argument(1)->unwrapOr('')),
+            'dispatched', 'done' => $this->dispatched($workspace, $input->argument(1)->unwrapOr('')),
+            'brief' => $this->brief($workspace, $input->argument(1)->unwrapOr('')),
+            default => $this->status($workspace),
         };
     }
 
     /**
-     * Finish what the agent was reading and hand it the next brief. Printing NOTHING is the signal to
-     * stop — a loop that has to parse a sentence to learn it is done is one that eventually misreads it.
+     * Strike off what $agent was owed. Only the orchestrator can say this: whether an Agent call was
+     * actually made is the one fact no tool here can observe.
      */
-    private function next(Workspace $workspace, string $agent): int
+    private function dispatched(Workspace $workspace, string $agent): int
     {
         if ($agent === '') {
-            return $this->console->refuse('Name the agent: `commandments queue next <agent>`.');
+            return $this->console->refuse('Name the agent you dispatched: `commandments queue dispatched <agent>`.');
         }
 
-        $queue = Queue::forAgent($workspace, $agent);
+        $struck = Pending::inSession($workspace)->dispatched($agent);
 
-        foreach ($queue->finishAndTakeNext() as $subject) {
-            foreach (Profiles::inForce($workspace) as $profile) {
-                $this->console->write($this->brief($profile, $agent, $subject));
-
-                return 0;
-            }
+        if ($struck === 0) {
+            return $this->console->refuse("Nothing was waiting for `{$agent}`.", '  `commandments queue` — what is.');
         }
 
-        // Idle: the hold it took when it started is settled, so the orchestrator's board stops showing
-        // work that has finished. An item left `working` is the record lying, which is the one thing the
-        // board exists to prevent.
-        foreach (Profiles::inForce($workspace) as $profile) {
-            foreach ($profile->boundTo('commit') as $duty) {
-                if ($duty->agent === $agent) {
-                    Board::inSession($workspace)->move($duty->procedure, Stage::Reported);
-                }
-            }
-        }
-
-        return 0;
+        return $this->console->say("Struck off {$struck} for `{$agent}`.");
     }
 
-    /**
-     * What a continuing agent is told: the new subject and nothing else. It already holds its role and
-     * its procedure from the brief that opened the session, so restating them would spend the context
-     * that makes a continuing reader worth having.
-     */
-    private function brief(Profile $profile, string $agent, string $subject): string
+    private function brief(Workspace $workspace, string $agent): int
     {
-        foreach ($profile->boundTo('commit') as $duty) {
-            if ($duty->agent === $agent) {
-                return "Another commit landed: {$subject}. Carry out the same procedure against it, and "
-                    . 'report as before.';
-            }
+        if ($agent === '') {
+            return $this->console->refuse('Name the agent: `commandments queue brief <agent>`.');
         }
 
-        return "Another subject: {$subject}. Carry out the same procedure against it, and report as before.";
-    }
-
-    private function status(Workspace $workspace, string $agent): int
-    {
+        $dispatcher = new Dispatcher($workspace, $this->io->projectRoot());
         $said = [];
 
-        foreach (Profiles::inForce($workspace) as $profile) {
-            foreach ($profile->allSettings() as $trigger => $ignored) {
-                foreach ($profile->boundTo((string) $trigger) as $duty) {
-                    if ($agent !== '' && $duty->agent !== $agent) {
-                        continue;
-                    }
-
-                    $queue = Queue::forAgent($workspace, $duty->agent);
-                    $running = $queue->running();
-
-                    $said[] = sprintf(
-                        '  %-12s %s%s',
-                        $duty->agent,
-                        $running === '' ? 'idle' : 'reading ' . substr($running, 0, 7),
-                        $queue->waiting() === [] ? '' : sprintf('  (%d waiting)', count($queue->waiting())),
-                    );
-                }
+        foreach (Pending::inSession($workspace)->all() as $work) {
+            if ($work->agent === $agent) {
+                $said[] = $dispatcher->briefFor($work);
             }
         }
 
         return $said === []
-            ? $this->console->say('Nothing is triggered. `commandments orchestrate on <trigger> <agent> <procedure>`.')
-            : $this->console->say('Triggered agents:', ...$said);
+            ? $this->console->refuse("Nothing is waiting for `{$agent}`.")
+            : $this->console->say(...$said);
+    }
+
+    private function status(Workspace $workspace): int
+    {
+        $said = [];
+
+        foreach (Pending::inSession($workspace)->all() as $work) {
+            $said[] = '  ' . $work->render();
+        }
+
+        return $said === []
+            ? $this->console->say('Nothing is waiting to be dispatched.')
+            : $this->console->say(
+                'Waiting to be dispatched — your stop is held until each has been:',
+                ...$said,
+                ...['', '  `commandments queue brief <agent>` — the prompt; `queue dispatched <agent>` once you have made the call.'],
+            );
     }
 }

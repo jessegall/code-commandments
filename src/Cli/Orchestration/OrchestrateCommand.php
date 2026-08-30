@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Text;
 use JesseGall\CodeCommandments\Config;
@@ -43,7 +44,9 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate list', 'the profiles this project has written')
             ->form('orchestrate show [name]', 'read one out — what an orchestrator loads instead of copying a brief by hand')
             ->form('orchestrate stop', 'stop working under a profile; the profile is untouched')
-            ->form('orchestrate settings', "what the profile in force turns ON, and how")
+            ->form('orchestrate settings', "what the profile in force turns ON, and whether it has ever actually FIRED")
+            ->form('orchestrate moments', 'every moment a profile can bind to, and WHAT EACH ONE CARRIES')
+            ->form('orchestrate test <moment>', 'dispatch it once, now, with a rehearsal subject, and print what the agent was handed — the only way to tell a healthy binding from a working one')
             ->form('orchestrate on <trigger> <agent> <procedure>', 'when <trigger> fires, <agent> carries out <procedure> — both must exist in the profile')
             ->form('orchestrate off <trigger> [<agent>] [<procedure>]', 'unbind; an omitted agent or procedure means ANY, so `off commit` drops the whole trigger')
             ->form('orchestrate template list', 'the documents and roles this package ships as a starting point')
@@ -87,6 +90,8 @@ final class OrchestrateCommand implements Command
             'on', 'enable' => $this->switch($workspace, $input, on: true),
             'off', 'disable' => $this->switch($workspace, $input, on: false),
             'settings' => $this->settings($workspace),
+            'moments' => $this->moments(),
+            'test' => $this->rehearse($workspace, $input),
             'plan' => $this->plan($workspace, $input),
             'template', 'templates' => $this->template($workspace, $input),
             'assistant', 'role' => $this->write(
@@ -971,11 +976,12 @@ final class OrchestrateCommand implements Command
                 return $this->console->say("`{$profile->name}` turns nothing on.", '  `commandments orchestrate on <feature>`');
             }
 
+            $waiting = Pending::inSession($workspace)->all();
             $said = [];
 
             foreach (array_keys($declared) as $trigger) {
-                foreach ($profile->boundTo($trigger) as $binding) {
-                    $said[] = sprintf('  on %-10s %s', $trigger, $binding->render());
+                foreach ($profile->boundTo((string) $trigger) as $binding) {
+                    $said[] = sprintf('  on %-14s %-28s %s', $trigger, $binding->render(), $this->health($waiting, (string) $trigger));
                 }
             }
 
@@ -983,6 +989,102 @@ final class OrchestrateCommand implements Command
         }
 
         return $this->console->refuse('No profile is in force.', '  `commandments orchestrate use <profile>`');
+    }
+
+    /**
+     * Whether a binding is DOING anything, as opposed to whether it is written. A healthy-looking line
+     * printed above a dead transport all evening: the binding registered, this command showed it, the
+     * profile was right, and nothing ever ran. So it answers from the work actually waiting, and points
+     * at the one command that settles the question either way.
+     *
+     * @param  list<Dispatched>  $waiting
+     */
+    private function health(array $waiting, string $trigger): string
+    {
+        foreach ($waiting as $work) {
+            if ($work->moment === $trigger) {
+                return "asked for an agent at {$work->at}, STILL UNDISPATCHED — your stop is held for it";
+            }
+        }
+
+        foreach (Moment::named($trigger) as $moment) {
+            return 'nothing waiting; raised by ' . $moment->raisedBy() . ' — `orchestrate test ' . $trigger . '` proves it now';
+        }
+
+        return 'NOTHING RAISES IT — `orchestrate moments` lists the moments that exist';
+    }
+
+    /**
+     * Every moment a profile can bind to. Nobody should have to read our source to learn that
+     * `worker-finished` exists, or what an agent bound to it will be handed.
+     */
+    private function moments(): int
+    {
+        $said = [];
+
+        foreach (Moment::cases() as $moment) {
+            $said[] = sprintf('  %-16s carries %s', $moment->value, $moment->carries());
+            $said[] = sprintf('  %-16s raised by %s', '', $moment->raisedBy());
+            $said[] = '';
+        }
+
+        return $this->console->say('Moments a profile can bind an agent to:', ...$said);
+    }
+
+    /**
+     * Dispatch a moment ONCE, now, with a rehearsal subject, and print exactly what the agent was handed.
+     * It is the probe promoted to a command: reading a binding proves nothing, and every layer above the
+     * transport reported success while nothing ran. This is the difference between believing it fires and
+     * having watched it.
+     */
+    private function rehearse(Workspace $workspace, Input $input): int
+    {
+        $named = $input->argument(1)->unwrapOr('');
+
+        if ($named === '') {
+            return HelpScreen::usage($this, 'name the moment to rehearse: `commandments orchestrate test <moment>`. `orchestrate moments` lists them.');
+        }
+
+        foreach (Moment::named($named) as $moment) {
+            return $this->dispatchRehearsal($workspace, $moment);
+        }
+
+        return $this->console->refuse(
+            "No moment is called `{$named}`.",
+            '  `commandments orchestrate moments` — the ones that exist, and what each carries.',
+        );
+    }
+
+    private function dispatchRehearsal(Workspace $workspace, Moment $moment): int
+    {
+        $said = new Dispatcher($workspace, $this->io->projectRoot())->fire(
+            $moment->value,
+            $moment->rehearsal(),
+            'nowhere — this is a REHEARSAL of the `' . $moment->value . '` moment, recorded by hand to '
+                . 'prove the chain works. Say what you were handed and stop; do not go looking for work '
+                . 'nobody did.',
+        );
+
+        if ($said === []) {
+            return $this->console->refuse(
+                "Nothing is bound to `{$moment->value}`, so nothing was recorded.",
+                "  `commandments orchestrate on {$moment->value} <agent> <procedure>`",
+            );
+        }
+
+        $waiting = [];
+
+        foreach (Pending::inSession($workspace)->all() as $work) {
+            $waiting[] = '  ' . $work->render();
+        }
+
+        return $this->console->say(
+            "Rehearsed `{$moment->value}`. What it said:",
+            ...$said,
+            ...['', 'Waiting to be dispatched — your next stop is held until each has been:'],
+            ...$waiting,
+            ...['', '  `commandments queue brief <agent>` — the whole prompt to hand over.'],
+        );
     }
 
     /**
