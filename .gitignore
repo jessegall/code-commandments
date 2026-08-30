@@ -63,3 +63,6 @@ phpcs.xml
 
 # code-commandments published slash commands (regenerated on composer update)
 .claude/commands/stop-condition.md
+
+# Worktrees a lane is opened in — checkouts of this repo, never content of it.
+.lanes/
