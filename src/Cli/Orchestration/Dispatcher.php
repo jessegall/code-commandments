@@ -91,7 +91,7 @@ final readonly class Dispatcher
     public function briefFor(Dispatched $work): string
     {
         foreach (Profiles::inForce($this->workspace) as $profile) {
-            return new Envelope($profile, new Duty($work->agent, $work->procedure), $this->root)
+            return new Envelope($profile, new Duty($work->agent, $work->procedure), $this->root, Reminders::inSession($this->workspace))
                 ->opening($work->subject, $work->source);
         }
 

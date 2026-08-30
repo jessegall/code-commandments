@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
-use JesseGall\CodeCommandments\Cli\Orchestration\Dispatcher;
+use JesseGall\CodeCommandments\Cli\Orchestration\Scheduler;
 use JesseGall\CodeCommandments\Cli\Orchestration\Pending;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Support\Binary;
 
 /**
  * Holds the stop while a moment's work is still undispatched — where a trigger actually becomes an agent,
@@ -49,29 +48,34 @@ final class DispatchReminder extends Hook
             return $this->pass();
         }
 
-        $dispatcher = new Dispatcher($event->sessionWorkspace(), $event->root);
-        $binary = Binary::in($event->root);
-        $said = [];
+        $listed = [];
 
         foreach ($waiting as $work) {
-            $said[] = "── {$work->agent} → {$work->procedure}  (asked for by `{$work->moment}` on {$work->subject} at {$work->at})";
-            $said[] = '';
-            $said[] = $dispatcher->briefFor($work);
-            $said[] = '';
-            $said[] = "Dispatch it with the Agent tool, then: {$binary} queue dispatched {$work->agent}";
-            $said[] = '';
+            $listed[] = "  {$work->agent} → {$work->procedure}   (`{$work->moment}` on {$work->subject}, {$work->at})";
         }
 
-        return $this->block(implode("\n", [
-            count($waiting) === 1
-                ? 'A moment asked for an agent and it has not been dispatched. Start it NOW, with the Agent tool, before you stop:'
-                : count($waiting) . ' moments asked for agents that have not been dispatched. Start them NOW, with the Agent tool, before you stop:',
-            '',
-            ...$said,
-            'Each brief is the WHOLE prompt for that agent — hand it over as it stands rather than '
-                . 'summarising it, since everything it does not say, the agent will work out for itself '
-                . 'and get wrong. Mark each one dispatched once the call is made; this stop is held until '
-                . 'none are left.',
-        ]));
+        $asked = count($waiting) === 1
+            ? 'A moment asked for an agent and nobody has started it:'
+            : count($waiting) . ' moments asked for agents and nobody has started them:';
+        $work = implode("\n", $listed);
+        $brief = new Scheduler($event->root, Pending::inSession($event->sessionWorkspace())->path())->brief();
+
+        // ONE agent, however many are waiting. The orchestrator starts the SCHEDULER and the scheduler
+        // starts the rest — handing an orchestrator N briefs to place by hand spends the most expensive
+        // context in the build on bookkeeping, which is the one job where judgement is no advantage.
+        return $this->block(<<<TEXT
+            {$asked}
+
+            {$work}
+
+            Start the SCHEDULER now, with the Agent tool, and let it place them. It is a subagent of
+            yours, so you can watch it work and everything it starts shares this session. Give it a small
+            model — scheduling needs no judgement — and this as its whole prompt:
+
+            {$brief}
+
+            It reads the list itself, starts one agent at a time on YOUR model, and strikes each off.
+            This stop is held until the list is empty.
+            TEXT);
     }
 }

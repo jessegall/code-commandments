@@ -118,12 +118,12 @@ final class RemindersTest extends TestCase
      */
     public function test_a_brief_resolves_even_where_a_nudge_would_be_silenced(): void
     {
-        $this->orchestratingWith(['dispatch-announce' => '']);
+        $this->orchestratingWith(['dispatch' => '']);
 
-        $said = $this->reminders()->insist('dispatch-announce', Holes::none()->with('item', 'review')->with('binary', 'bin/x'));
+        $said = $this->reminders()->insist('dispatch', Holes::none()->with('procedure', 'review')->with('binary', 'bin/x'));
 
-        $this->assertStringContainsString('ANNOUNCE YOURSELF', $said);
-        $this->assertStringContainsString('bin/x build report review', $said);
+        $this->assertStringContainsString('subagent of the orchestrator', $said);
+        $this->assertStringContainsString('bin/x build', $said);
     }
 
     /**
@@ -163,9 +163,6 @@ final class RemindersTest extends TestCase
             'journal-standing',
             'journal-unheard',
             'journal-habit',
-            'dispatch-opening',
-            'dispatch-continued',
-            'dispatch-announce',
         ];
     }
 }

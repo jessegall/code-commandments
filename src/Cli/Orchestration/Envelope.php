@@ -18,6 +18,7 @@ final readonly class Envelope
         private Profile $profile,
         private Duty $duty,
         private string $root,
+        private Reminders $reminders,
     ) {}
 
     /**
@@ -36,35 +37,9 @@ final readonly class Envelope
             ->with('source', $source === '' ? '(nothing further was recorded about it)' : $source)
             ->with('binary', Binary::in($this->root));
 
-        foreach ($this->profile->reminder('dispatch', $holes) as $written) {
-            return $written;
-        }
-
-        return $holes->fill($this->shipped());
-    }
-
-    /**
-     * The envelope when a profile has not written its own. It is stated here so a project that never took
-     * the template still gets an agent that knows its whole job from the words it was given.
-     */
-    private function shipped(): string
-    {
-        return <<<'TEXT'
-            You are `{agent}`. This is WHO you are:
-
-            {role}
-
-            This is WHAT to do, against {subject}:
-
-            {work}
-
-            Where to find {subject} itself: {source}
-
-            You are a subagent of the orchestrator that dispatched you, so its board, its plan and its
-            journal are the ones you read — `{binary} build` answers for the build you are part of, and
-            `{procedure}`, which you hold on it, is something you can actually see. Report by RETURNING:
-            a SHORT account of what you did and what you found, in your final message. Do not go looking
-            for the orchestrator; it is the thing that called you.
-            TEXT;
+        // Through Reminders like every other piece of prose, so the profile-then-shipped rule is stated
+        // once. Keeping a copy here 'as a fallback' is what Reminders' own docblock forbids: a second
+        // copy is one that drifts, and the one that drifts is the one nobody reads.
+        return $this->reminders->insist('dispatch', $holes);
     }
 }

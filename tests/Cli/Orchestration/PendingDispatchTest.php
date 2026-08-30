@@ -77,8 +77,8 @@ final class PendingDispatchTest extends TestCase
         // the routine — and work nobody was made to notice is work that did not happen.
         $said = $this->stop();
 
-        $this->assertStringContainsString('has not been dispatched', $said);
-        $this->assertStringContainsString('Agent tool', $said, 'the orchestrator starts it ITSELF, in view, in its own session');
+        $this->assertStringContainsString('nobody has started', $said);
+        $this->assertStringContainsString('Agent tool', $said, 'the orchestrator starts the SCHEDULER itself, in view, in its own session');
     }
 
     public function test_the_hold_hands_over_the_WHOLE_brief_rather_than_a_summary_of_it(): void
@@ -87,17 +87,20 @@ final class PendingDispatchTest extends TestCase
 
         $said = $this->stop();
 
-        $this->assertStringContainsString('You read, you do not write.', $said, 'WHO it is');
-        $this->assertStringContainsString('Read the diff. Say what is unidiomatic.', $said, 'WHAT to do');
-        $this->assertStringContainsString('sha-a', $said, 'and what to do it TO');
-        $this->assertStringContainsString('git show sha-a', $said, 'plus where to find the thing itself');
+        // The hold hands over ONE brief however many are waiting — the scheduler's — because placing N
+        // agents by hand spends the orchestrator's context on bookkeeping, which is the one job where
+        // having judgement is no advantage.
+        $this->assertStringContainsString('SCHEDULER', $said, 'it hands over the scheduler, not each agent');
+        $this->assertStringContainsString('queue next', $said, 'and the command that yields one brief at a time');
+        $this->assertStringContainsString('.scheduled', $said, 'naming the file it watches');
+        $this->assertStringNotContainsString('Read the diff. Say what is unidiomatic.', $said, 'the procedure is the scheduler\'s to fetch, not the hold\'s to inline');
     }
 
     public function test_the_hold_says_the_exact_words_that_release_it(): void
     {
         $this->pending()->add($this->work('sha-a'));
 
-        $this->assertStringContainsString('queue dispatched ' . self::AGENT, $this->stop());
+        $this->assertStringContainsString('queue next', $this->stop());
     }
 
     public function test_saying_it_was_dispatched_releases_the_stop(): void

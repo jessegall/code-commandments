@@ -22,7 +22,7 @@ final readonly class Pending
 
     public static function inSession(Workspace $workspace): self
     {
-        return new self(new StateFile($workspace->path('.pending-dispatches'), self::legend()));
+        return new self(new StateFile($workspace->path('.scheduled'), self::legend()));
     }
 
     private static function legend(): Legend
@@ -64,6 +64,15 @@ final readonly class Pending
         } finally {
             $lock->unwrap()->release();
         }
+    }
+
+    /**
+     * Where the waiting work is written. The scheduler WATCHES this rather than being told when to look,
+     * so it has to be able to name the file.
+     */
+    public function path(): string
+    {
+        return $this->file->path();
     }
 
     /**
