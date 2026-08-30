@@ -69,7 +69,7 @@ final class PendingDispatchTest extends TestCase
         $this->assertSame('', $this->stop(), 'a hold nobody owes is how a reader learns to skim the block that will eventually matter');
     }
 
-    public function test_a_stop_is_BLOCKED_while_a_dispatch_is_owed(): void
+    public function test_a_stop_is_TOLD_while_a_dispatch_is_owed(): void
     {
         $this->pending()->add($this->work('sha-a'));
 
@@ -133,15 +133,19 @@ final class PendingDispatchTest extends TestCase
         $this->assertCount(2, $this->pending()->all(), 'dropping one means a commit nobody reviewed, which is invisible');
     }
 
-    public function test_a_hold_asks_often_and_stops_rarely(): void
+    public function test_it_tells_the_orchestrator_and_never_holds_it(): void
     {
         $this->pending()->add($this->work('sha-a'));
 
-        // It holds for as long as the work is undispatched. Starting the scheduler is one act, and a
-        // gate that lets go before it happens is asking rather than requiring.
+        // It TELLS, every time, and never holds. A hold is answered by dispatching, so an agent that
+        // cannot answers by stopping — which fires the stop again. That pinned a finished worker for a
+        // hundred and two fires, and nothing but its own judgement stopped it becoming a hundred and two
+        // agents.
         foreach (range(1, 4) as $stop) {
-            $this->assertNotSame('', $this->stop(), "held at stop {$stop}");
+            $this->assertStringContainsString('SCHEDULER', $this->stop(), "said at stop {$stop}");
         }
+
+        $this->assertStringNotContainsString('held', $this->stop(), 'and nothing is holding the agent here');
     }
 
     public function test_the_brief_can_be_asked_for_on_its_own(): void
@@ -184,8 +188,10 @@ final class PendingDispatchTest extends TestCase
 
         $said = [];
 
+        // Whatever it said, by whichever channel. It TELLS now rather than holding, so reading only the
+        // block reason would report silence from a hook that spoke.
         foreach ($io->emitted as $response) {
-            $said[] = $response->blockReason->unwrapOr('');
+            $said[] = $response->blockReason->unwrapOr('') . $response->context->unwrapOr('');
         }
 
         return implode("\n", $said);

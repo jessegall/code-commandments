@@ -40,7 +40,10 @@ final readonly class AgentSettings
             $wired[$event] = [[
                 'hooks' => [[
                     'type' => 'command',
-                    'command' => sprintf('php %s hooks # @code-commandments-managed', escapeshellarg(Binary::in($this->root))),
+                    // ABSOLUTE. The agent runs in a world of its own, so a path relative to a project
+                    // it is not standing in resolves to nothing — and a hook that cannot be found does
+                    // not fail loudly, it simply never speaks.
+                    'command' => sprintf('php %s hooks # @code-commandments-managed', escapeshellarg($this->binary())),
                 ]],
             ]];
         }
@@ -49,6 +52,17 @@ final readonly class AgentSettings
             rtrim($configDir, '/') . '/' . self::FILE,
             json_encode(['hooks' => $wired], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
         );
+    }
+
+    /**
+     * Where the executable is, said in full. `Binary::in` answers relative to the project root, which is
+     * right for a hook wired INTO that project and wrong for an agent that never stands in it.
+     */
+    private function binary(): string
+    {
+        $binary = Binary::in($this->root);
+
+        return str_starts_with($binary, '/') ? $binary : rtrim($this->root, '/') . '/' . $binary;
     }
 
     /**

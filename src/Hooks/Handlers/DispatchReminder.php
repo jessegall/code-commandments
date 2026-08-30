@@ -21,7 +21,7 @@ final class DispatchReminder extends Hook
 {
     public function summary(): string
     {
-        return 'Asks for a scheduler on every tool use while a dispatch is waiting, and holds a stop occasionally rather than every time.';
+        return 'Asks for a scheduler while a dispatch is waiting — on every tool use, and again at a stop. It never holds one.';
     }
 
     public function bindings(): array
@@ -59,8 +59,6 @@ final class DispatchReminder extends Hook
             return $this->pass();
         }
 
-        $pending->held();
-
         $listed = [];
 
         foreach ($waiting as $work) {
@@ -71,12 +69,17 @@ final class DispatchReminder extends Hook
             ? 'A moment asked for an agent and nobody has started it:'
             : count($waiting) . ' moments asked for agents and nobody has started them:';
         $work = implode("\n", $listed);
+        $binary = Binary::in($event->root);
         $brief = new Scheduler($event->root)->brief();
 
         // ONE agent, however many are waiting. The orchestrator starts the SCHEDULER and the scheduler
         // starts the rest — handing an orchestrator N briefs to place by hand spends the most expensive
         // context in the build on bookkeeping, which is the one job where judgement is no advantage.
-        return $this->block(<<<TEXT
+        // TOLD, never held. A hold is answered by DISPATCHING, and an agent that cannot — a worker whose
+        // stop this should never have reached — answers by stopping, which fires the stop again. That
+        // pinned a finished worker for a hundred and two fires, and it spawned eight sessions pointing
+        // the other way. Saying what to do cannot deadlock; requiring it can.
+        return $this->inject($event, <<<TEXT
             {$asked}
 
             {$work}
@@ -88,7 +91,8 @@ final class DispatchReminder extends Hook
             {$brief}
 
             It reads the list itself, starts one agent at a time on YOUR model, and strikes each off.
-            This stop is held until the list is empty.
+            Nothing is holding you here — if you have decided this work should not be dispatched, say so
+            and carry on, and `{$binary} queue` is the list whenever you want it.
             TEXT);
     }
 }

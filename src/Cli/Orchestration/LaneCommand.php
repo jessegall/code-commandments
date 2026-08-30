@@ -92,6 +92,15 @@ final class LaneCommand implements Command
      */
     private function prepare(Workspace $workspace, string $name, string $at): int
     {
+        // The lane's WORLD, before anything runs in it. A worker sent here inherits the project's
+        // instructions, skills and hooks otherwise — including one that holds its stop, which it can
+        // then never satisfy. Named for the lane, since the lane is what the worker is.
+        $world = World::forWorker($workspace, $workspace->root(), $name);
+
+        if (! $world->prepare()) {
+            $this->console->say('', "! could not prepare the lane's world at {$world->path()}.");
+        }
+
         foreach (Profiles::inForce($workspace) as $running) {
             foreach ($running->setupScript() as $script) {
                 $this->console->say('', "▸ {$name} at {$at}", "  running {$script}", '');
@@ -99,7 +108,7 @@ final class LaneCommand implements Command
                 $ran = new Checkout($at)->prepareWith($script);
 
                 return $ran === 0
-                    ? $this->console->say('', "✓ {$name} is ready.")
+                    ? $this->console->say('', "✓ {$name} is ready.", "  world: {$world->path()} — hand it over as CLAUDE_CONFIG_DIR")
                     : $this->console->say('', "! the setup exited {$ran}. The worktree exists and is NOT prepared.");
             }
         }
