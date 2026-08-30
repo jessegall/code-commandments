@@ -27,6 +27,12 @@ final class BoardReminder extends Hook
      */
     private const int NAMED = 4;
 
+    /**
+     * How much work goes by before the routine is worth another reading. Read it at every stop and it is
+     * wallpaper; read it once per stretch and it is a checklist.
+     */
+    private const int A_STRETCH = 6;
+
     public function summary(): string
     {
         return 'At the end of a turn, names the work waiting on YOU, and repeats the profile\'s standing routine.';
@@ -74,11 +80,10 @@ final class BoardReminder extends Hook
     private function routine(HookEvent $event): string
     {
         $workspace = $event->sessionWorkspace();
-        $instance = Instance::inSession($workspace);
-        $running = $instance->profile();
+        $running = Instance::inSession($workspace)->profile();
 
-        if (! $instance->routineIsDue(count(Journal::inSession($workspace)->entries()))) {
-            return ''; // Nothing has been said since it last spoke, so there is nothing to come to rest from.
+        if (! $this->workMovedOn($event, 'orchestrator-routine', self::A_STRETCH)) {
+            return ''; // No work since it last spoke, so there is nothing to come to rest from.
         }
 
         foreach ($running as $name) {
