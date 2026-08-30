@@ -4,3 +4,4 @@ On main since the tasks lane merged; the worker was stopped mid round-2 before c
 
 - queued 2026-08-30 16:28
 - started 2026-08-30 16:54
+- done 2026-08-30 16:56 — reasonIn and outcome answer Option; the display names the absence instead of printing a blank
