@@ -6,7 +6,6 @@ namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
 
 use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Orchestration\OrchestrateCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\TaskCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\TaskId;
 use JesseGall\CodeCommandments\Cli\Orchestration\Tasks;
@@ -239,20 +238,4 @@ final class TaskCommandTest extends TestCase
         $this->assertSame(2, $exit);
     }
 
-    /**
-     * `orchestrate plan` used to answer, so a caller who keeps typing it has to be TOLD it is gone —
-     * otherwise the command apparently succeeds and records nothing, which is exactly how a version-skewed
-     * caller loses a morning.
-     */
-    public function test_the_old_plan_verb_says_where_the_work_went(): void
-    {
-        $out = fopen('php://memory', 'r+');
-        $exit = new OrchestrateCommand(new CapturingHookIO(new FakeGit($this->root)), new Console($out))
-            ->run(Input::fromArgv(['commandments', 'orchestrate', 'plan', 'open', 'the port']));
-
-        rewind($out);
-
-        $this->assertSame(Console::REFUSED, $exit);
-        $this->assertStringContainsString('commandments task', (string) stream_get_contents($out));
-    }
 }

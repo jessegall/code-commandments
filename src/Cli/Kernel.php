@@ -19,12 +19,7 @@ use JesseGall\CodeCommandments\Cli\Plan\ConstraintsCommand;
 use JesseGall\CodeCommandments\Cli\Plan\TestingCommand;
 use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionCommand;
 use JesseGall\CodeCommandments\Cli\Journal\JournalCommand;
-use JesseGall\CodeCommandments\Cli\Orchestration\BuildCommand;
-use JesseGall\CodeCommandments\Cli\Orchestration\LaneCommand;
-use JesseGall\CodeCommandments\Cli\Orchestration\WorldCommand;
-use JesseGall\CodeCommandments\Cli\Orchestration\OrchestrateCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\TaskCommand;
-use JesseGall\CodeCommandments\Cli\Orchestration\UpgradeCommand;
 use JesseGall\CodeCommandments\Cli\Plan\Checks;
 use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
 use JesseGall\CodeCommandments\Cli\Config\Configure;
@@ -153,11 +148,6 @@ final class Kernel
             new JournalCommand(),
             new SessionCommand(),
             new TaskCommand(),
-            new BuildCommand(),
-            new OrchestrateCommand(),
-            new WorldCommand(),
-            new LaneCommand(),
-            new UpgradeCommand(),
             new HookDispatch(),
             new HookRunner(),
             new Configure(),
