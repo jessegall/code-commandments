@@ -33,11 +33,16 @@ final class Instance
             [
                 'profile' => 'the profile this session is working under',
                 'since' => 'when it started',
+                'routine_at' => 'how much the session had SAID when the routine last spoke — -1 until it '
+                    . 'has spoken at all, since a session that has said nothing yet has still not heard '
+                    . 'it. A routine '
+                    . 'repeated at a stop where nothing has happened is the nudge that teaches skimming, '
+                    . 'so it stays quiet until there is something to have come to rest from',
                 'at' => 'where in the plan this session is standing — a `/`-joined path of sidequest '
                     . 'names, empty at the plan itself. Only the CURSOR is session state; the plan it '
                     . 'points into is a folder tree that outlives any one reading of it',
             ],
-            defaults: new State(profile: '', since: '', at: ''),
+            defaults: new State(profile: '', since: '', at: '', routine_at: -1),
             safe: 'the session is no longer orchestrating under any profile',
         );
     }
@@ -96,5 +101,26 @@ final class Instance
         $state = $this->file->read();
 
         $this->file->write($state->with(at: implode('/', $path)));
+    }
+
+    /**
+     * Has anything been SAID since the routine last spoke? A checklist repeated at a stop where nothing
+     * has happened is a nudge with nothing new in it, and one of those every time teaches a reader to
+     * skim the block that will eventually hold something.
+     *
+     * Answering yes RECORDS this firing, so the routine speaks once per stretch of work rather than once
+     * per stop.
+     */
+    public function routineIsDue(int $said): bool
+    {
+        $state = $this->file->read();
+
+        if ($said <= $state->int('routine_at', -1)) {
+            return false;
+        }
+
+        $this->file->write($state->with(routine_at: $said));
+
+        return true;
     }
 }

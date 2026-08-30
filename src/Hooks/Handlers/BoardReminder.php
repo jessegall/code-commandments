@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Cli\Orchestration\Board;
 use JesseGall\CodeCommandments\Cli\Orchestration\Claim;
+use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
 use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
 use JesseGall\CodeCommandments\Hooks\Hook;
@@ -63,14 +64,22 @@ final class BoardReminder extends Hook
     }
 
     /**
-     * The profile's standing routine — what its author decided is done EVERY time the work comes to a
-     * stop. It is a nudge and never a gate: a habit worth repeating is not a rule worth refusing over,
-     * and one that blocked a turn would be paid for in the context it exists to protect.
+     * The profile's standing routine — what its author decided is done every time the work comes to a
+     * rest. A nudge and never a gate: a habit worth repeating is not a rule worth refusing over.
+     *
+     * Once per STRETCH OF WORK rather than once per stop, because a checklist repeated where nothing has
+     * happened is a nudge with nothing new in it, and one of those every time teaches a reader to skim
+     * the block that will eventually hold something.
      */
     private function routine(HookEvent $event): string
     {
         $workspace = $event->sessionWorkspace();
-        $running = Instance::inSession($workspace)->profile();
+        $instance = Instance::inSession($workspace);
+        $running = $instance->profile();
+
+        if (! $instance->routineIsDue(count(Journal::inSession($workspace)->entries()))) {
+            return ''; // Nothing has been said since it last spoke, so there is nothing to come to rest from.
+        }
 
         foreach ($running as $name) {
             foreach (Profiles::of($workspace)->named($name) as $profile) {

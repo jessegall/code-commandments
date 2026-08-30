@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
 
 use JesseGall\CodeCommandments\Cli\Orchestration\Board;
+use JesseGall\CodeCommandments\Cli\Journal\Entry;
+use JesseGall\CodeCommandments\Cli\Journal\Journal;
+use JesseGall\CodeCommandments\Cli\Journal\Kind;
 use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
+use JesseGall\PhpTypes\Option;
 use JesseGall\CodeCommandments\Cli\Orchestration\Stage;
 use JesseGall\CodeCommandments\Hooks\Handlers\BoardReminder;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
@@ -139,5 +143,29 @@ final class BoardReminderTest extends TestCase
     public function test_nothing_is_said_when_no_profile_is_in_force(): void
     {
         $this->assertSame([], $this->said());
+    }
+
+    /**
+     * Once per STRETCH OF WORK, not once per stop. Four identical firings while waiting on one suite is
+     * a nudge with nothing new in it — and one of those every time teaches a reader to skim the block
+     * that will eventually hold something.
+     */
+    public function test_the_routine_stays_quiet_when_nothing_has_been_said_since(): void
+    {
+        $this->profileWith('routine', 'Check the record says what you would say out loud.');
+
+        $this->assertNotSame([], $this->said(), 'it speaks the first time');
+        $this->assertSame([], $this->said(), 'and not again with nothing in between');
+    }
+
+    public function test_the_routine_speaks_again_once_more_has_been_said(): void
+    {
+        $this->profileWith('routine', 'Check the record says what you would say out loud.');
+        $this->said();
+
+        Journal::inSession(new Workspace($this->root, 'sess-1'))
+            ->file(new Entry(Kind::Agent, 'now', 't', 'm', Option::none(), 'work happened'));
+
+        $this->assertNotSame([], $this->said(), 'a stretch of work earns the checklist again');
     }
 }

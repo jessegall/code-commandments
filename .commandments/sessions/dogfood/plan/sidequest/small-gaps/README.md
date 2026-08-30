@@ -31,3 +31,13 @@ That gap is not hypothetical: a profile's ten files were silently un-tracked by 
 `sync` and nothing said so, because a file that is present renders identically
 whether git knows it or not. Same shape as the stranded-board warning — a record that
 cannot say what it is missing.
+
+**A hook that goes quiet should say so ONCE.** Two sessions ran with every Stop hook
+suppressed by pending background work. One measured 415 pieces of work and zero stops
+and knew something was wrong; the other saw two firings, assumed a slow clock, and
+could not tell suppression from silence from the outside.
+
+*"A hook that says `silenced, 3 pending` once would have told both of us in a
+second."* Once — not every time, or it becomes the noise it is reporting on. The same
+shape as `COULD NOT MEASURE`: a mechanism that is not running says so, rather than
+looking like one that ran and found nothing.
