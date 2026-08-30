@@ -51,6 +51,7 @@ final class BuildCommand implements Command
             ->form('build roles', 'who holds which role')
             ->option('--to=ID', 'the agent id taking the role, as its listing reports it')
             ->form('build orphan <item>', 'the holder is GONE — the item returns to unclaimed and the record says the work was abandoned rather than judged')
+            ->form('build end', 'end the build outright — every hold forgotten. Refuses while anything is still WORKING: settle or release it first')
             ->form('build log', 'every measurement filed, and what it measured — the observed record, not anybody\'s account of it')
             ->form('build doctor', 'what state everything is in, computed now — for when something has gone wrong and you do not know what')
             ->option('--by=NAME', 'who is taking the item')
@@ -78,6 +79,7 @@ final class BuildCommand implements Command
             'assign' => $this->assign($input),
             'roles' => $this->roles(),
             'orphan' => $this->orphan($board, $input),
+            'end' => $this->end($board),
             'log' => $this->log($board),
             'doctor' => $this->doctor($board),
             default => $this->show($board),
@@ -210,6 +212,30 @@ final class BuildCommand implements Command
             "▸ {$item} is unclaimed — {$holder} is gone.",
             '  Recorded as abandoned, not judged: nothing here says the work was wrong.',
             "  `commandments build claim {$item} --by=<who>` gives it to somebody.",
+        );
+    }
+
+    /**
+     * End the build — every hold forgotten. Refused while anything is still WORKING, since that holder
+     * has no idea the board it is about to report to has vanished; a reported or blocked item is already
+     * waiting on the orchestrator and ends with it.
+     */
+    private function end(Board $board): int
+    {
+        $running = $board->running();
+
+        if ($running !== []) {
+            return $this->console->refuse(
+                sprintf('%d item(s) still WORKING — settle or release them first:', count($running)),
+                ...array_map(static fn (Claim $claim): string => '  ' . $claim->render(), $running),
+            );
+        }
+
+        $board->clear();
+
+        return $this->console->say(
+            '✓ build ended. Every hold is forgotten.',
+            '  `commandments build claim <item> --by=<who>` starts a new one.',
         );
     }
 

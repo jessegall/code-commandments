@@ -151,6 +151,15 @@ final class Board
     }
 
     /**
+     * End the build outright — every hold forgotten, exactly what the legend already promises is safe.
+     * The caller answers for whether anything is still {@see running}; this only does the forgetting.
+     */
+    public function clear(): void
+    {
+        $this->file->delete();
+    }
+
+    /**
      * The live claim a LANE is working under — the question `upgrade` has to answer before it swaps a
      * worktree's `vendor/` out from under somebody, because a spurious gate failure in a running builder
      * is indistinguishable from a real bug in its work.

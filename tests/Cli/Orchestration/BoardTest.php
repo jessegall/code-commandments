@@ -157,6 +157,23 @@ final class BoardTest extends TestCase
         $this->assertCount(1, $board->claims());
     }
 
+    /**
+     * Ending a build forgets every hold outright — the same act the legend already calls safe, now
+     * reachable without deleting the file by hand.
+     */
+    public function test_clearing_the_board_forgets_every_hold(): void
+    {
+        $board = $this->board();
+        $board->claim('a', 'lane-a', 'now');
+        $board->move('a', Stage::Accepted);
+        $board->claim('b', 'lane-b', 'now');
+
+        $board->clear();
+
+        $this->assertFalse($this->board()->exists());
+        $this->assertSame([], $this->board()->claims());
+    }
+
     public function test_a_claim_survives_the_round_trip(): void
     {
         $claim = new Claim('a', new \JesseGall\CodeCommandments\Cli\Orchestration\Hold('lane-a', 'now'), Stage::Blocked, 3);

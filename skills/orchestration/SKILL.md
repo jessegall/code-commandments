@@ -183,6 +183,7 @@ not the conclusion — it is the premise, so they can see whether it still holds
 | `commandments build assign <role> --to=<agent-id>` | give a role to an agent ALREADY ALIVE — its type was fixed at spawn, and the agents worth a role are the ones a respawn would ruin |
 | `commandments build roles` | who holds which role |
 | `commandments build orphan <item>` | the holder is GONE — the item returns to unclaimed and the record says the work was abandoned rather than judged |
+| `commandments build end` | end the build outright — every hold forgotten. Refuses while anything is still WORKING: settle or release it first |
 | `commandments build log` | every measurement filed, and what it measured — the observed record, not anybody's account of it |
 | `commandments build doctor` | what state everything is in, computed now — for when something has gone wrong and you do not know what |
 | `commandments task` | the board — every task still owed, in address order, subtasks beneath their parent |
