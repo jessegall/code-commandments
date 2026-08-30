@@ -92,7 +92,7 @@ final class PendingDispatchTest extends TestCase
         // having judgement is no advantage.
         $this->assertStringContainsString('SCHEDULER', $said, 'it hands over the scheduler, not each agent');
         $this->assertStringContainsString('queue next', $said, 'and the command that yields one brief at a time');
-        $this->assertStringContainsString('.scheduled', $said, 'naming the file it watches');
+        $this->assertStringContainsString('EPHEMERAL', $said, 'and that it exits rather than watching');
         $this->assertStringNotContainsString('Read the diff. Say what is unidiomatic.', $said, 'the procedure is the scheduler\'s to fetch, not the hold\'s to inline');
     }
 
@@ -133,17 +133,15 @@ final class PendingDispatchTest extends TestCase
         $this->assertCount(2, $this->pending()->all(), 'dropping one means a commit nobody reviewed, which is invisible');
     }
 
-    public function test_a_hold_that_nothing_ever_answers_lets_go_rather_than_looping_for_ever(): void
+    public function test_a_hold_asks_often_and_stops_rarely(): void
     {
         $this->pending()->add($this->work('sha-a'));
 
-        // An orchestrator with no Agent tool, or one that will not play the role, must not be pinned by a
-        // rule meant to stop it forgetting. A loop is a worse failure than a missed review.
-        for ($stop = 0; $stop < 5; $stop++) {
-            $this->assertNotSame('', $this->stop(), "stop {$stop} is still held");
+        // It holds for as long as the work is undispatched. Starting the scheduler is one act, and a
+        // gate that lets go before it happens is asking rather than requiring.
+        foreach (range(1, 4) as $stop) {
+            $this->assertNotSame('', $this->stop(), "held at stop {$stop}");
         }
-
-        $this->assertSame('', $this->stop(), 'and then it lets go');
     }
 
     public function test_the_brief_can_be_asked_for_on_its_own(): void

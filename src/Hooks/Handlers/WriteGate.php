@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Hooks\Handlers;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
 use JesseGall\CodeCommandments\Config;
-use JesseGall\CodeCommandments\Hooks\Discipline;
+use JesseGall\CodeCommandments\Hooks\ForAssistants;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -22,7 +22,7 @@ use JesseGall\CodeCommandments\Support\Binary;
  * ({@see TouchedSources} asks the TREE rather than reading the command) and told about it quietly, since
  * refusing what has already happened costs the user a line and buys nothing.
  */
-final class WriteGate extends Hook implements Discipline
+final class WriteGate extends Hook implements ForAssistants
 {
     /**
      * The tools that say which file they will write, so their intent is known before they run.

@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Cli\Orchestration\Pending;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Support\Binary;
 
 /**
  * Holds the stop while a moment's work is still undispatched — where a trigger actually becomes an agent,
@@ -18,21 +19,35 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
  */
 final class DispatchReminder extends Hook
 {
-    /**
-     * How many stops one standing dispatch may hold before it is let go. An orchestrator that cannot
-     * dispatch — no Agent tool, a role it will not play — must not be held for ever by a rule meant to
-     * stop it forgetting; a loop is a worse failure than a missed review.
-     */
-    private const int MOST_HELD = 5;
-
     public function summary(): string
     {
-        return 'Holds a stop while a moment has asked for an agent nobody has dispatched yet, and hands over the brief to dispatch it with.';
+        return 'Asks for a scheduler on every tool use while a dispatch is waiting, and holds a stop occasionally rather than every time.';
     }
 
     public function bindings(): array
     {
-        return [new HookBinding('Stop')];
+        return [new HookBinding('Stop'), new HookBinding('PostToolUse')];
+    }
+
+    /**
+     * Asked on every tool use while anything is waiting — quietly, since it is addressed to the agent
+     * about its own bookkeeping. Repetition is the point: it is cheap, and it means the orchestrator
+     * hears it long before a stop arrives.
+     */
+    protected function onPostToolUse(HookEvent $event): int
+    {
+        $waiting = Pending::inSession($event->sessionWorkspace())->all();
+
+        if ($waiting === []) {
+            return $this->pass();
+        }
+
+        return $this->quietly($event, sprintf(
+            'Code Commandments — %d dispatch(es) are waiting and no scheduler has placed them. Start one '
+                . 'with the Agent tool; `%s queue` lists what is owed.',
+            count($waiting),
+            Binary::in($event->root),
+        ));
     }
 
     protected function onStop(HookEvent $event): int
@@ -44,9 +59,7 @@ final class DispatchReminder extends Hook
             return $this->pass();
         }
 
-        if ($pending->held() > self::MOST_HELD) {
-            return $this->pass();
-        }
+        $pending->held();
 
         $listed = [];
 
@@ -58,7 +71,7 @@ final class DispatchReminder extends Hook
             ? 'A moment asked for an agent and nobody has started it:'
             : count($waiting) . ' moments asked for agents and nobody has started them:';
         $work = implode("\n", $listed);
-        $brief = new Scheduler($event->root, Pending::inSession($event->sessionWorkspace())->path())->brief();
+        $brief = new Scheduler($event->root)->brief();
 
         // ONE agent, however many are waiting. The orchestrator starts the SCHEDULER and the scheduler
         // starts the rest — handing an orchestrator N briefs to place by hand spends the most expensive

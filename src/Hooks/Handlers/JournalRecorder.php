@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Cli\Journal\Entry;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Cli\Journal\Kind;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
-use JesseGall\CodeCommandments\Hooks\Discipline;
+use JesseGall\CodeCommandments\Hooks\ForAssistants;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -21,7 +21,7 @@ use JesseGall\PhpTypes\Option;
  * at `SessionStart`. It writes and never speaks — an index is only worth keeping if it costs the session
  * nothing to keep.
  */
-final class JournalRecorder extends Hook implements Discipline
+final class JournalRecorder extends Hook implements ForAssistants
 {
     public function summary(): string
     {

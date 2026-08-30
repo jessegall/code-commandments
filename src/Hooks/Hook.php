@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks;
 
+use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
@@ -58,7 +59,7 @@ abstract class Hook
      */
     protected function handle(HookEvent $event): int
     {
-        if ($event->isSubagent() && ! $this->speaksToSubagents()) {
+        if ($event->isSubagent() && ! $this->speaksTo($event)) {
             return $this->pass();
         }
 
@@ -85,6 +86,38 @@ abstract class Hook
     protected function speaksToSubagents(): bool
     {
         return $this instanceof Discipline;
+    }
+
+    /**
+     * Does this hook speak to THIS worker? A {@see Discipline} speaks to any of them, because a rule about
+     * the code is true whoever holds it. A {@see ForAssistants} speaks only to one the profile NAMED — an
+     * assistant with a record across dispatches — and stays quiet for an anonymous hand, whose whole
+     * record is the report it returns.
+     */
+    private function speaksTo(HookEvent $event): bool
+    {
+        if (! $this->speaksToSubagents()) {
+            return false;
+        }
+
+        return ! $this instanceof ForAssistants || $this->isAssistant($event);
+    }
+
+    /**
+     * Is this worker one the profile named? An assistant is dispatched AS a role and the harness reports
+     * that as its type; anything else was spawned for one piece of work and is gone after it.
+     */
+    private function isAssistant(HookEvent $event): bool
+    {
+        if ($event->agent()->type === '') {
+            return false;
+        }
+
+        foreach (Profiles::inForce($event->sessionWorkspace()) as $profile) {
+            return $profile->role($event->agent()->type)->isSome();
+        }
+
+        return false;
     }
 
     /**
