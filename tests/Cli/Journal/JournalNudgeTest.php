@@ -192,17 +192,17 @@ final class JournalNudgeTest extends TestCase
     }
 
     /**
-     * The whole graduated response in one run, measured rather than remembered: fifty-two quiet calls are
-     * four nudges (ten, twenty, thirty, forty) and then three refusals (fifty onwards). Asserting the two
-     * counts together is what proves the tiers do not overlap — a nudge at fifty as well as a block would
+     * The whole graduated response in one run, measured rather than remembered: twenty-seven quiet calls
+     * are two nudges (ten, twenty) and then three refusals (twenty-five onwards). Asserting the two counts
+     * together is what proves the tiers do not overlap — a nudge at twenty-five as well as a block would
      * pass either count on its own.
      */
-    public function test_a_long_silence_earns_four_nudges_and_then_refuses_every_call(): void
+    public function test_a_long_silence_earns_two_nudges_and_then_refuses_every_call(): void
     {
-        $said = $this->calls(52);
+        $said = $this->calls(27);
 
-        $this->assertCount(4, $this->nudges($said), 'one per stretch of ten, up to the point it stops asking');
-        $this->assertCount(3, $this->blocks($said), 'and from fifty on, every call');
+        $this->assertCount(2, $this->nudges($said), 'one per stretch of ten, up to the point it stops asking');
+        $this->assertCount(3, $this->blocks($said), 'and from twenty-five on, every call');
     }
 
     /**

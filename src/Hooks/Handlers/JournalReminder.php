@@ -38,7 +38,7 @@ final class JournalReminder extends Hook
      * recorded is a stretch whose reasoning is already gone — and the fix costs one line, which is what
      * makes insisting on it fair.
      */
-    private const int ENFORCED = 50;
+    private const int ENFORCED = 25;
 
     /**
      * How many stops may be held for unfinished work. It is a reminder, not a gate: the work may genuinely

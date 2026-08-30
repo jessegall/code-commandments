@@ -26,6 +26,11 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class OrchestrateCommand implements Command
 {
+    /**
+     * The verbs that reach automatic dispatch, and so reach nothing while {@see Parked::DISPATCH} stands.
+     */
+    private const array DISPATCH_VERBS = ['on', 'enable', 'off', 'disable', 'moments', 'test'];
+
     public function __construct(
         private readonly HookIO $io = new HookIO,
         private readonly Console $console = new Console,
@@ -44,6 +49,7 @@ final class OrchestrateCommand implements Command
             ->form('orchestrate list', 'the profiles this project has written')
             ->form('orchestrate show [name]', 'read one out — what an orchestrator loads instead of copying a brief by hand')
             ->form('orchestrate stop', 'stop working under a profile; the profile is untouched')
+            ->form('orchestrate agent <role>', 'generate a dispatchable TYPE from a profile role, so a binding can name it and the harness can start it')
             ->form('orchestrate cleanup [--lanes]', 'clear the sentinel files, counters and worlds a run leaves behind, and rewire the hooks — profiles, plan and journal are never touched')
             ->option('--lanes', 'also remove lane worktrees, KEEPING any that hold uncommitted work')
             ->form('orchestrate settings', "what the profile in force turns ON, and whether it has ever actually FIRED")
@@ -83,13 +89,20 @@ final class OrchestrateCommand implements Command
     {
         $workspace = Workspace::ofSession($this->io->projectRoot());
 
-        return match ($input->firstArgument()->unwrapOr('propose')) {
+        $verb = $input->firstArgument()->unwrapOr('propose');
+
+        if (Parked::DISPATCH && in_array($verb, self::DISPATCH_VERBS, true)) {
+            return $this->parked($verb);
+        }
+
+        return match ($verb) {
             'new' => $this->scaffold($workspace, $input->argument(1)->unwrapOr('')),
             'use' => $this->use($workspace, $input->argument(1)->unwrapOr('')),
             'list' => $this->list($workspace),
             'show' => $this->show($workspace, $input->argument(1)->unwrapOr('')),
             'stop' => $this->stop($workspace),
             'cleanup' => $this->cleanup($workspace, $input),
+            'agent' => $this->agent($workspace, $input->argument(1)->unwrapOr('')),
             'on', 'enable' => $this->switch($workspace, $input, on: true),
             'off', 'disable' => $this->switch($workspace, $input, on: false),
             'settings' => $this->settings($workspace),
@@ -923,6 +936,51 @@ final class OrchestrateCommand implements Command
         }
 
         return $names;
+    }
+
+    /**
+     * Automatic dispatch is PARKED, so the verbs that reach it say so instead of half-working. Refused
+     * at the door rather than deeper down: a trigger that binds but never fires is the worse failure,
+     * because it reads as configured.
+     */
+    private function parked(string $verb): int
+    {
+        return $this->console->refuse(
+            "`orchestrate {$verb}` is parked: triggers, the queue and the scheduler do not run.",
+            '  Everything else stands — profiles, roles, the board, lanes and worlds are untouched.',
+            '  The switch is `' . Parked::class . '::DISPATCH`, and turning it back on is a diff.',
+        );
+    }
+
+    /**
+     * Make a role dispatchable BY NAME. A role is a brief and a type is what a dispatch names, and this
+     * is the one act that connects them — GENERATED from the role so the role stays the single source,
+     * rather than copied, which is a fact declared twice and drifts the day one is sharpened.
+     */
+    private function agent(Workspace $workspace, string $role): int
+    {
+        if ($role === '') {
+            return HelpScreen::usage($this, 'Name the role: `commandments orchestrate agent <role>`.');
+        }
+
+        foreach (Profiles::inForce($workspace) as $profile) {
+            foreach (new AgentType($this->io->projectRoot(), $profile)->write($role) as $path) {
+                return $this->console->say(
+                    "▸ `{$role}` can now be started by name.",
+                    '  ' . $path,
+                    '  Generated FROM the role — edit the role and run this again; do not edit that file.',
+                    '  Its tools come from the role\'s own `tools:` line, else read-only, because a role that',
+                    '  says it never edits should not be able to.',
+                );
+            }
+
+            return $this->console->refuse(
+                "`{$profile->name}` has no `{$role}` role, so there is no brief to make a type from.",
+                "  `commandments orchestrate template use roles/{$role}` takes a shipped one.",
+            );
+        }
+
+        return $this->console->refuse('No profile is in force.', '  `commandments orchestrate use <profile>`');
     }
 
     /**

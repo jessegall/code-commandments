@@ -21,8 +21,6 @@ use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionCommand;
 use JesseGall\CodeCommandments\Cli\Journal\JournalCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\BuildCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\LaneCommand;
-use JesseGall\CodeCommandments\Cli\Orchestration\QueueCommand;
-use JesseGall\CodeCommandments\Cli\Orchestration\SchedulerCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\WorldCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\OrchestrateCommand;
 use JesseGall\CodeCommandments\Cli\Orchestration\UpgradeCommand;
@@ -155,8 +153,6 @@ final class Kernel
             new SessionCommand(),
             new BuildCommand(),
             new OrchestrateCommand(),
-            new QueueCommand(),
-            new SchedulerCommand(),
             new WorldCommand(),
             new LaneCommand(),
             new UpgradeCommand(),

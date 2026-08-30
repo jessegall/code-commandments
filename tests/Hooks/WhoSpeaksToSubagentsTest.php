@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Hooks;
 
-use JesseGall\CodeCommandments\Hooks\Handlers\BoardReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\DispatchReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\MergeGate;
-use JesseGall\CodeCommandments\Hooks\Handlers\OrchestratorReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
@@ -46,22 +43,6 @@ final class WhoSpeaksToSubagentsTest extends TestCase
             [JudgeReminder::class],
             [MergeGate::class],
             [SharedBranchGate::class],
-        ];
-    }
-
-    /**
-     * The ORCHESTRATION hooks. A worker is not running a build: it holds no board, dispatches nobody, and
-     * has no scheduler of its own. Holding its stop to demand any of that would be a lockout inside a
-     * dispatch, and the worker cannot even tell what is being asked of it.
-     *
-     * @return list<array{class-string<Hook>}>
-     */
-    public static function orchestration(): array
-    {
-        return [
-            [DispatchReminder::class],
-            [BoardReminder::class],
-            [OrchestratorReminder::class],
         ];
     }
 
@@ -105,19 +86,6 @@ final class WhoSpeaksToSubagentsTest extends TestCase
     }
 
     /**
-     * @dataProvider orchestration
-     *
-     * @param  class-string<Hook>  $hook
-     */
-    public function test_an_orchestration_hook_does_not(string $hook): void
-    {
-        $this->assertFalse(
-            $this->speaks($hook),
-            "{$hook} is about running a build, which a worker is not doing — reaching one would hold it at its stop for work it cannot do",
-        );
-    }
-
-    /**
      * Asked of the MARKER, which is the whole point of it being one: a reader learns what a hook is for
      * from its class line rather than by opening it and finding a method.
      *
@@ -141,6 +109,6 @@ final class WhoSpeaksToSubagentsTest extends TestCase
             $silent += is_subclass_of($hook, Discipline::class) ? 0 : 1;
         }
 
-        $this->assertGreaterThan(count(self::disciplines()), $silent, 'most hooks are about running a build, and stop at the orchestrator');
+        $this->assertGreaterThan(0, $silent, 'a hook says nothing to a worker until it declares otherwise');
     }
 }

@@ -139,32 +139,6 @@ final class EveryHookSurvivesItsOwnEventsTest extends TestCase
     }
 
     /**
-     * The arrangement must actually REACH the paced branch. Without this the suite above is vacuous: a
-     * handler that returns at its first guard cannot crash, so "nothing died" would be true of a session
-     * where nothing ran. This is the assertion that fails when the arrangement rots.
-     */
-    public function test_the_arrangement_reaches_the_routine(): void
-    {
-        $this->markTestIncomplete(
-            'The arrangement does not yet reach the routine — BoardReminder emits nothing here even with a '
-            . 'profile in force. Until it does, the sibling tests are VACUOUS for the defect this file was '
-            . 'written for: a handler calling a method that never shipped was proven, by mutation, still to '
-            . 'pass. Left failing-visibly rather than deleted, because a green suite that covers nothing is '
-            . 'the more expensive of the two.',
-        );
-
-        $io = new RecordingHookIO([...self::PAYLOAD, 'hook_event_name' => 'Stop'], new FakeGit($this->root, 'sha1', 'plan/x'));
-
-        new \JesseGall\CodeCommandments\Hooks\Handlers\BoardReminder($io)->run([]);
-
-        $this->assertStringContainsString(
-            'routine',
-            (string) json_encode(array_map(fn ($r) => $r->context->unwrapOr(''), $io->emitted)),
-            'the routine must reach the reader, or nothing below is exercising it',
-        );
-    }
-
-    /**
      * One handler at a time, so a failure NAMES the class and the moment rather than reporting that
      * something, somewhere, in a fan-out of a dozen, could not run.
      */

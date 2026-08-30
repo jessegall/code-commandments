@@ -52,12 +52,28 @@ final class FileTest extends TestCase
         $this->assertSame(['thing.md'], array_values(array_diff(scandir($this->dir) ?: [], ['.', '..'])));
     }
 
-    public function test_a_write_that_cannot_land_changes_nothing(): void
+    /**
+     * A write MAKES its folder. Every caller otherwise carries the same two lines before every write, and
+     * the one that forgets loses the write silently.
+     */
+    public function test_a_write_into_a_missing_folder_makes_it(): void
     {
-        $path = "{$this->dir}/locked/file.md";
+        $path = "{$this->dir}/nested/deeper/file.md";
 
-        // No such directory: the temp file cannot even be created, so there is nothing to roll back
-        // — the point is that the failure is REPORTED rather than swallowed.
+        $this->assertTrue(File::write($path, 'x'));
+        $this->assertSame('x', file_get_contents($path));
+    }
+
+    /**
+     * And where it genuinely cannot land, the failure is REPORTED rather than swallowed — here the parent
+     * is a FILE, so no folder can be made in its place.
+     */
+    public function test_a_write_that_cannot_land_says_so(): void
+    {
+        file_put_contents("{$this->dir}/blocker", 'i am not a folder');
+
+        $path = "{$this->dir}/blocker/file.md";
+
         $this->assertFalse(File::write($path, 'x'));
         $this->assertFileDoesNotExist($path);
     }

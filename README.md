@@ -139,6 +139,7 @@ Exit code is non-zero when sins are found.
 | `commandments session` | Where this session keeps its state — the folder holding its journal, checklist, plan marker and stop gate. |
 | `commandments build` | Who is holding which piece of work, and what is waiting on you. |
 | `commandments orchestrate new <name>` | What this project would declare to turn the orchestration refusals on — read from the shape it already has, and what it cannot do yet. |
+| `commandments world <agent>` | Prepare the isolated world an agent runs in — settings, and nothing it was not marked for. |
 | `commandments lane open <name>` | Open a place for a worker to work — the worktree, and whatever your project needs in it. |
 | `commandments upgrade` | Move this package to what your project can install, and bring every lane with it. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
@@ -483,7 +484,6 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `CompactionGate` | `PreCompact` | Writes a compaction its own instructions from the journal, naming the facts and the unfinished work the summary may not drop. |
 | `WriteGate` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit, PreToolUse/NotebookEdit, PostToolUse/Bash` | Refuses a file-changing tool while no `[!start]` stands, so work is always declared before it happens and unfinished work survives a compaction. |
 | `JournalReminder` | `PostToolUse, Stop` | Resurfaces the journal tags as you work, and holds one stop while work you declared is still open. |
-| `BoardReminder` | `Stop` | At the end of a turn, names the work waiting on YOU, and repeats the profile's standing routine. |
 | `SharedBranchGate` | `PreToolUse/Bash` | Refuses `git pull --rebase` while other worktrees stand on the branch — it rewrites the commits they are built on. |
 | `MergeGate` | `PreToolUse/Bash` | Refuses a merge into the declared shared branch by any role but the one that owns it. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |

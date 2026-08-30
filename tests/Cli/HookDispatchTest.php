@@ -70,12 +70,14 @@ final class HookDispatchTest extends TestCase
 
         $emitted = [];
 
-        for ($i = 0; $i < 25; $i++) {
+        $context = '';
+
+        for ($i = 0; $i < 40 && ! str_contains($context, 'trace every fix'); $i++) {
             $emitted = $this->dispatch(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Edit']);
+            $context = $emitted === [] ? '' : $emitted[0]->context->unwrapOr('');
         }
 
         $this->assertCount(1, $emitted, 'one merged response, not one per handler');
-        $context = $emitted[0]->context->unwrapOr('');
         $this->assertStringContainsString('trace every fix to its SOURCE', $context, 'the cardinal-rule reminder');
         $this->assertStringContainsString('No frontend logic.', $context, 'the constraint reminder');
     }
@@ -116,11 +118,14 @@ final class HookDispatchTest extends TestCase
         $this->assertSame([], $emitted, 'no Stop handler fires while planning');
     }
 
-    public function test_every_hook_is_silent_inside_a_subagent(): void
+    /**
+     * What a subagent hears is decided by the {@see Discipline} marker, not by being a subagent. A rule
+     * about the CODE is true whoever holds it — a worker has LESS context than the orchestrator, not more
+     * — so the cardinal rule reaches it, while a constraint belonging to the orchestrator's plan does not.
+     */
+    public function test_a_subagent_hears_the_disciplines_and_nothing_else(): void
     {
-        // A read-only exploration subagent must receive none of our reminders/injections — they speak only
-        // to the main session. The `agent_id` stamp makes even the 25th tool use (which normally fires the
-        // cardinal-rule Remind) stay silent.
+        // The `agent_id` stamp is what marks it a worker.
         $this->writeConfig('$config->planExecution(fn ($p) => $p->constraint(\'No frontend logic.\'));');
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha1');
 
@@ -130,6 +135,9 @@ final class HookDispatchTest extends TestCase
             $emitted = $this->dispatch(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Edit', 'agent_id' => 'sub-7']);
         }
 
-        $this->assertSame([], $emitted, 'no reminder fires inside a subagent');
+        $context = $emitted === [] ? '' : $emitted[0]->context->unwrapOr('');
+
+        $this->assertStringContainsString('trace every fix to its SOURCE', $context, 'a discipline reaches a worker — it is writing code too');
+        $this->assertStringNotContainsString('No frontend logic.', $context, "the orchestrator's own plan constraint does not");
     }
 }

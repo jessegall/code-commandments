@@ -92,8 +92,17 @@ final readonly class HookResponse
             }
         }
 
+        // A refusal does NOT silence the rest. One hook blocking used to drop every other hook's
+        // context on that call, so the cardinal rule vanished on exactly the calls where the agent had
+        // gone longest without recording anything — the moment it was most owed. A block is a verdict
+        // about the call; it is not a claim that nobody else had something to say.
         if ($reasons !== []) {
-            return self::blocking(implode("\n\n", $reasons));
+            return new self(
+                Option::some(implode("\n\n", $reasons)),
+                $contexts === [] ? Option::none() : Option::some(implode("\n\n", $contexts)),
+                false,
+                Option::none(),
+            );
         }
 
         if ($instructions !== []) {
