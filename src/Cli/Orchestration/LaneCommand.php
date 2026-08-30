@@ -21,6 +21,20 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class LaneCommand implements Command
 {
+    /**
+     * Where lanes go when nothing says otherwise. Stated ONCE: a default spelled again in a help string
+     * is a second declaration, and the two drift the moment either moves.
+     */
+    private const string LANES = '.lanes';
+
+    /**
+     * The feature a profile turns on to put its lanes somewhere else — `orchestrate on lanes at=../lanes`.
+     * A way of working decides this, not the package: a project whose worktrees must sit outside the
+     * repository (a watcher that scans it, a tool that walks every subdirectory) has a real reason, and
+     * only it knows.
+     */
+    private const string FEATURE = 'lanes';
+
     public function __construct(
         private readonly HookIO $io = new HookIO,
         private readonly Console $console = new Console,
@@ -38,7 +52,7 @@ final class LaneCommand implements Command
             ->form('lane open <name>', 'add the worktree and run the profile\'s `lane.sh` in it')
             ->form('lane list', 'every lane, and which version of this package each one runs')
             ->option('--from=REF', 'the branch to cut from (default: the current one)')
-            ->option('--at=PATH', 'where to put it (default: `.lanes/<name>`)')
+            ->option('--at=PATH', 'where to put it (default: `' . self::LANES . '/<name>`, or what the profile says)')
             ->note('The setup lives in `lane.sh` inside the profile, not in this command. A worktree checks '
                 . 'out tracked files and nothing else — no vendor, no node_modules, no database — and what '
                 . 'it takes to fix that is the project\'s business. Writing it down means every lane gets '
@@ -64,7 +78,7 @@ final class LaneCommand implements Command
         }
 
         $root = $workspace->root();
-        $at = $input->option('at')->unwrapOr($root . '/.lanes/' . $name);
+        $at = $input->option('at')->unwrapOr($this->lanesIn($workspace, $root) . '/' . $name);
         $from = $input->option('from')->unwrapOr(trim((string) @shell_exec('git -C ' . escapeshellarg($root) . ' rev-parse --abbrev-ref HEAD 2>/dev/null')));
 
         if (is_dir($at)) {
@@ -137,5 +151,25 @@ final class LaneCommand implements Command
             "  the project runs {$mine}; a lane marked ! runs something else.",
             '  `commandments upgrade` brings them all forward.',
         );
+    }
+
+    /**
+     * Where this project's lanes live — what the profile in force says, else beside the repository. A
+     * relative setting is resolved against the ROOT rather than the cwd, since a lane opened from a
+     * subdirectory must not land in it.
+     */
+    private function lanesIn(Workspace $workspace, string $root): string
+    {
+        foreach (Profiles::inForce($workspace) as $profile) {
+            foreach ($profile->settings(self::FEATURE) as $declared) {
+                $at = is_string($declared['at'] ?? null) ? $declared['at'] : '';
+
+                if ($at !== '') {
+                    return str_starts_with($at, '/') ? $at : $root . '/' . $at;
+                }
+            }
+        }
+
+        return $root . '/' . self::LANES;
     }
 }
