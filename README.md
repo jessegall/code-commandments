@@ -137,6 +137,7 @@ Exit code is non-zero when sins are found.
 | `commandments stop-condition "<condition>"` | The user's STOP GATE — record what must hold before you may stop, and every stop is held until you have VERIFIED it. Needs no plan and no config. |
 | `commandments journal` | What a compaction took — the decisions, corrections and unfinished work a summary drops, read back out of the session transcript. |
 | `commandments session` | Where this session keeps its state — the folder holding its journal, checklist, plan marker and stop gate. |
+| `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments build` | Who is holding which piece of work, and what is waiting on you. |
 | `commandments orchestrate new <name>` | What this project would declare to turn the orchestration refusals on — read from the shape it already has, and what it cannot do yet. |
 | `commandments world <agent>` | Prepare the isolated world an agent runs in — settings, and nothing it was not marked for. |

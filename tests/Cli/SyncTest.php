@@ -269,31 +269,53 @@ final class SyncTest extends TestCase
     }
 
     /**
-     * A session holds its own plan, which makes the session the thing you come BACK to — so the plan is
-     * tracked while the board, the journal and the counters beside it are not. Moving plans into the
-     * session without this put the record of a project's decisions straight back into the ignored pile.
+     * A rule the package RETIRES is still ours. Kept as the project's own it would travel forward for
+     * ever, so every consumer that had ever synced would keep un-ignoring `plan/` — a folder nothing
+     * writes to any more — while a reader of the file could not tell which of the two rules was live.
      */
-    public function test_a_sessions_plan_is_tracked_while_its_state_is_not(): void
+    public function test_a_retired_ignore_rule_is_dropped_rather_than_kept_as_the_projects_own(): void
     {
         $this->sync();
 
         $ignore = "{$this->consumer}/.commandments/.gitignore";
 
-        $this->assertStringContainsString("!sessions/*/plan/\n", (string) file_get_contents($ignore));
-        $this->assertStringContainsString("!sessions/*/plan/**\n", (string) file_get_contents($ignore));
+        file_put_contents($ignore, (string) file_get_contents($ignore) . "!sessions/*/plan/\n!sessions/*/plan/**\n# mine\n");
+
+        $this->sync();
+
+        $after = (string) file_get_contents($ignore);
+
+        $this->assertStringNotContainsString('plan/', $after, 'the rule we retired is gone');
+        $this->assertStringContainsString('# mine', $after, 'and a line the project added is not');
+    }
+
+    /**
+     * A session holds its own tasks, which makes the session the thing you come BACK to — so `tasks/` is
+     * tracked while the board, the journal and the counters beside it are not. Moving the work into the
+     * session without this put the record of a project's decisions straight back into the ignored pile.
+     */
+    public function test_a_sessions_tasks_are_tracked_while_its_state_is_not(): void
+    {
+        $this->sync();
+
+        $ignore = "{$this->consumer}/.commandments/.gitignore";
+
+        $this->assertStringContainsString("!sessions/*/tasks/\n", (string) file_get_contents($ignore));
+        $this->assertStringContainsString("!sessions/*/tasks/**\n", (string) file_get_contents($ignore));
 
         exec('git -C ' . escapeshellarg($this->consumer) . ' init -q 2>/dev/null');
-        @mkdir("{$this->consumer}/.commandments/sessions/abc/plan/sidequest/x", 0777, true);
-        file_put_contents("{$this->consumer}/.commandments/sessions/abc/plan/README.md", 'the plan');
-        file_put_contents("{$this->consumer}/.commandments/sessions/abc/plan/sidequest/x/README.md", 'a detour');
+        @mkdir("{$this->consumer}/.commandments/sessions/abc/tasks/queue", 0777, true);
+        file_put_contents("{$this->consumer}/.commandments/sessions/abc/tasks/queue/001-the-port.md", '# the port');
+        @mkdir("{$this->consumer}/.commandments/sessions/abc/tasks/history", 0777, true);
+        file_put_contents("{$this->consumer}/.commandments/sessions/abc/tasks/history/002-the-enum.md", '# the enum');
         file_put_contents("{$this->consumer}/.commandments/sessions/abc/.board", 'this run only');
 
         exec('git -C ' . escapeshellarg($this->consumer) . ' add -A 2>/dev/null');
         exec('git -C ' . escapeshellarg($this->consumer) . ' ls-files', $tracked);
         $tracked = implode("\n", $tracked);
 
-        $this->assertStringContainsString('sessions/abc/plan/README.md', $tracked, 'the plan is in git');
-        $this->assertStringContainsString('sessions/abc/plan/sidequest/x/README.md', $tracked, 'and so is a sidequest');
+        $this->assertStringContainsString('sessions/abc/tasks/queue/001-the-port.md', $tracked, 'a queued task is in git');
+        $this->assertStringContainsString('sessions/abc/tasks/history/002-the-enum.md', $tracked, 'and so is what history keeps');
         $this->assertStringNotContainsString('sessions/abc/.board', $tracked, 'this run\'s state is not');
     }
 

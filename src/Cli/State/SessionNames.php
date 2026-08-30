@@ -9,7 +9,7 @@ use JesseGall\PhpTypes\Option;
 /**
  * The names a project has given its sessions. A session folder is a five-character hash by default,
  * which is unreadable to the person picking one out of a dozen — and now that a session holds its own
- * plan, it is the thing you come BACK to, so it needs a name you can say. Naming renames the folder;
+ * tasks, it is the thing you come BACK to, so it needs a name you can say. Naming renames the folder;
  * this file records which name belongs to which id, because the id is the only thing an agent knows
  * about itself.
  */

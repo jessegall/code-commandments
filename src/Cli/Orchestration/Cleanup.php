@@ -14,7 +14,7 @@ use JesseGall\CodeCommandments\Workspace;
  * Clears what a build leaves behind, never what a build produced. State from a version that no longer
  * exists is worse than absent — a queue holding entries for a deleted mechanism, a mark claiming a
  * process that never ran — because it reads as current while answering about a system that has moved.
- * The PROFILES, the PLAN and the JOURNAL are never touched: they outlive any run.
+ * The PROFILES, the TASKS and the JOURNAL are never touched: they outlive any run.
  */
 final readonly class Cleanup
 {

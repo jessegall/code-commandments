@@ -36,6 +36,21 @@ use JesseGall\PhpTypes\Option;
  */
 final class Sync implements Command
 {
+    /**
+     * Lines the package USED to guarantee in a consumer's `.commandments/.gitignore`. A rule we retire is
+     * still OURS: without saying so it reads as a line the project added and travels forward for ever, so
+     * every consumer that ever synced keeps un-ignoring a folder nothing writes to any more. They are the
+     * literal text once written, not the text derived from today's constants — what was retired cannot
+     * change when a constant does.
+     *
+     * @var list<string>
+     */
+    private const array RETIRED_GITIGNORE_LINES = [
+        "# A session's PLAN is tracked; everything else in its folder is this run's own state.",
+        '!sessions/*/plan/',
+        '!sessions/*/plan/**',
+    ];
+
     public function names(): array
     {
         return ['sync'];
@@ -204,39 +219,39 @@ final class Sync implements Command
             '!.gitignore',
             '!config.php',
             ...array_merge(...array_map(fn (string $folder) => ["!{$folder}/", "!{$folder}/**"], $durable)),
-            ...self::sessionPlanLines(),
+            ...self::sessionTaskLines(),
         ];
     }
 
     /**
-     * A session holds its own plan, which makes the session the thing you come BACK to — so its plan is
-     * tracked while everything else in it is not. Only `plan/` is re-admitted: the board, the journal and
-     * the counters are this run's state and belong to nobody but this run.
+     * A session holds its own tasks, which makes the session the thing you come BACK to — so `tasks/` is
+     * tracked while everything else in it is not. Its three folders ARE the state of the work, so a diff
+     * shows what moved; the board, the journal and the counters are this run's own and stay ignored.
      *
      * Un-ignoring something nested takes a line per level, because git never descends into an ignored
      * directory to find an exception inside it.
      *
      * @return list<string>
      */
-    private static function sessionPlanLines(): array
+    private static function sessionTaskLines(): array
     {
         $sessions = Workspace::SESSIONS;
 
         return [
             '',
-            "# A session's PLAN is tracked; everything else in its folder is this run's own state.",
+            "# A session's TASKS are tracked; everything else in its folder is this run's own state.",
             '# Un-ignoring something nested takes a line per level, so these four are one rule.',
             "!{$sessions}/",
             "!{$sessions}/*/",
-            "!{$sessions}/*/plan/",
-            "!{$sessions}/*/plan/**",
+            "!{$sessions}/*/tasks/",
+            "!{$sessions}/*/tasks/**",
         ];
     }
 
     /**
-     * Whatever the project wrote into the file that is not ours — kept verbatim, in their order. Our
-     * own past headers are dropped rather than accumulating one per release; any other comment is
-     * theirs and stays.
+     * Whatever the project wrote into the file that is not ours — kept verbatim, in their order. Our own
+     * past headers and {@see RETIRED_GITIGNORE_LINES} are dropped rather than travelling forward for ever;
+     * any other comment is theirs and stays.
      *
      * @return list<string>
      */
@@ -252,12 +267,27 @@ final class Sync implements Command
         foreach (explode("\n", (string) file_get_contents($path)) as $line) {
             $kept = trim($line);
 
-            if ($kept !== '' && ! in_array($kept, $ours, true) && ! str_starts_with($kept, '# code-commandments')) {
-                $theirs[] = $kept;
+            if ($kept === '' || self::isOurs($kept, $ours)) {
+                continue;
             }
+
+            $theirs[] = $kept;
         }
 
         return $theirs;
+    }
+
+    /**
+     * Is $line one the PACKAGE wrote — a rule it guarantees today, one it has since retired, or one of its
+     * own headers? Everything else in the file is the project's, and stays.
+     *
+     * @param  list<string>  $ours  the lines this version guarantees
+     */
+    private static function isOurs(string $line, array $ours): bool
+    {
+        return in_array($line, $ours, true)
+            || in_array($line, self::RETIRED_GITIGNORE_LINES, true)
+            || str_starts_with($line, '# code-commandments');
     }
 
     /**

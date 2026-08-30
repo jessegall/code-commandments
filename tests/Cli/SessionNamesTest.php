@@ -17,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * A session folder is a five-character hash, which is unreadable to somebody picking one out of a dozen
- * — and a session now holds its own plan, so it is the thing you come BACK to. Naming makes it findable
+ * — and a session now holds its own tasks, so it is the thing you come BACK to. Naming makes it findable
  * by a word, while every lookup still starts from the id the harness reports, since that is the only
  * thing an agent knows about itself.
  */
@@ -155,7 +155,7 @@ final class SessionNamesTest extends TestCase
 
     /**
      * The mechanism is only reachable if a verb sets it. Naming renames the FOLDER too, so the name and
-     * the directory can never disagree — and the session's state, its plan included, moves with it.
+     * the directory can never disagree — and the session's state, its tasks included, moves with it.
      */
     public function test_the_command_names_a_session_and_moves_its_folder(): void
     {
@@ -163,15 +163,15 @@ final class SessionNamesTest extends TestCase
         putenv('CLAUDE_CODE_SESSION_ID=abc-123');
 
         $was = Workspace::at($this->root, 'abc-123')->sessionDir();
-        mkdir($was . '/plan', 0777, true);
-        file_put_contents($was . '/plan/README.md', 'the work');
+        mkdir($was . '/tasks/queue', 0777, true);
+        file_put_contents($was . '/tasks/queue/001-the-work.md', 'the work');
 
         [$code, $said] = $this->session([], 'name', 'dissolution');
 
         $this->assertSame(0, $code);
         $this->assertStringContainsString('dissolution', $said);
         $this->assertDirectoryExists($this->root . '/.commandments/sessions/dissolution');
-        $this->assertFileExists($this->root . '/.commandments/sessions/dissolution/plan/README.md', 'the plan came with it');
+        $this->assertFileExists($this->root . '/.commandments/sessions/dissolution/tasks/queue/001-the-work.md', 'the tasks came with it');
         $this->assertDirectoryDoesNotExist($was, 'and the hash folder is gone, not duplicated');
     }
 
