@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli;
 
 use JesseGall\CodeCommandments\Cli\Help\Help;
-use JesseGall\CodeCommandments\Cli\Journal\Session;
-use JesseGall\CodeCommandments\Cli\Journal\Sessions;
+use JesseGall\CodeCommandments\Cli\Session\Session;
+use JesseGall\CodeCommandments\Cli\Session\Sessions;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Support\Directory;
 use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
 
 /**
- * `commandments session` — where this session keeps its state. Everything session-scoped (the journal,
+ * `commandments session` — where this session keeps its state. Everything session-scoped (the
  * the sins checklist, the plan marker, the stop gate, every hook counter) lives in one folder named by a
  * hash of the session id, which is deliberately unguessable from the outside — so the way to find it is
  * to ask, not to work it out.
@@ -32,13 +32,13 @@ final class SessionCommand implements Command
 
     public function help(): Help
     {
-        return Help::of("Where this session keeps its state — the folder holding its journal, checklist, plan marker and stop gate.")
+        return Help::of("Where this session keeps its state — the folder holding its checklist, plan marker and stop gate.")
             ->form('session', 'print the folder, and what is in it')
             ->form('session list', "every session folder this project has, newest first — what a SECOND terminal asks, having no session of its own. An ORPHAN, a folder no session and no name points at any more, is marked as one")
             ->form('session --path', 'print only the path, for piping somewhere')
             ->form('session name "<name>"', 'NAME this session — the folder is renamed to match in every checkout, so it is one you can come back to')
             ->form('session forget "<name>"', 'drop a name; its session answers to its hash again')
-            ->form('session adopt <folder>', 'take a stranded folder INTO this session — the journal is merged and interleaved, everything else moved, and nothing that did not come across is deleted')
+            ->form('session adopt <folder>', 'take a stranded folder INTO this session — everything it holds is moved, and nothing that did not come across is deleted')
             ->option('--path', 'the bare path and nothing else')
             ->option('--into', 'the folder to adopt INTO, for a terminal with no session of its own')
             ->note('Run it from inside Claude Code by typing `!vendor/bin/commandments session` at the prompt: '
@@ -214,10 +214,6 @@ final class SessionCommand implements Command
         $entries = $adoption->count() === 1 ? '1 entry' : $adoption->count() . ' entries';
         $lines = ["▸ `{$folder}` — {$entries} adopted into", '  ' . $to];
 
-        foreach ($adoption->merged() as $entry) {
-            $lines[] = "  merged   {$entry}";
-        }
-
         foreach ($adoption->moved() as $entry) {
             $lines[] = "  moved    {$entry}";
         }
@@ -357,7 +353,7 @@ final class SessionCommand implements Command
      */
     private function contents(string $dir): array
     {
-        // Most of what a session keeps is a DOTFILE (`.journal`, `.until`, `.plan-active`), which `glob`
+        // Most of what a session keeps is a DOTFILE (`.until`, `.plan-active`), which `glob`
         // skips — so the folder would read as empty exactly when it is fullest.
         return array_map(
             fn (string $file) => sprintf('  %-24s %6s  %s', basename($file), $this->size($file), date('H:i', filemtime($file) ?: 0)),

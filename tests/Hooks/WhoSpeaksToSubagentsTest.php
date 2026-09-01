@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Hooks;
 
-use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SourceReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\WriteGate;
 use JesseGall\CodeCommandments\Hooks\Discipline;
-use JesseGall\CodeCommandments\Hooks\ForAssistants;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use PHPUnit\Framework\TestCase;
@@ -42,32 +39,6 @@ final class WhoSpeaksToSubagentsTest extends TestCase
             [JudgeReminder::class],
             [SharedBranchGate::class],
         ];
-    }
-
-    /**
-     * The narrower level: bookkeeping for agents that KEEP a record across dispatches. An anonymous
-     * worker is dispatched, does one thing and reports — asking it to open a span before every write is
-     * bookkeeping nobody reads, charged to the agent least able to spare the attention.
-     *
-     * @return list<array{class-string<Hook>}>
-     */
-    public static function forAssistants(): array
-    {
-        return [
-            [WriteGate::class],
-            [JournalRecorder::class],
-        ];
-    }
-
-    /**
-     * @dataProvider forAssistants
-     *
-     * @param  class-string<Hook>  $hook
-     */
-    public function test_journal_bookkeeping_is_for_agents_that_keep_a_record(string $hook): void
-    {
-        $this->assertTrue(is_subclass_of($hook, ForAssistants::class), "{$hook} is bookkeeping — a one-shot worker keeps no record to write into");
-        $this->assertTrue(is_subclass_of($hook, Discipline::class), 'and it still reaches an assistant, which ForAssistants narrows rather than replaces');
     }
 
     /**

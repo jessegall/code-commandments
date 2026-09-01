@@ -228,7 +228,7 @@ final class Sync implements Command
     /**
      * A session holds its own tasks, which makes the session the thing you come BACK to — so `tasks/` is
      * tracked while everything else in it is not. Its three folders ARE the state of the work, so a diff
-     * shows what moved; the board, the journal and the counters are this run's own and stay ignored.
+     * shows what moved; the board and the counters are this run's own and stay ignored.
      *
      * Un-ignoring something nested takes a line per level, because git never descends into an ignored
      * directory to find an exception inside it.

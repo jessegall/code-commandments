@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Journal;
+namespace JesseGall\CodeCommandments\Cli\Session;
 
 use JesseGall\PhpTypes\Option;
 

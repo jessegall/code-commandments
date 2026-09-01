@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Journal;
+namespace JesseGall\CodeCommandments\Cli\Session;
 
 /**
  * What one line of a transcript IS. The harness writes a great deal under `type: "user"` that no human

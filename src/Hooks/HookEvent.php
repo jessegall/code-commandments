@@ -63,9 +63,9 @@ final class HookEvent
     }
 
     /**
-     * This event's workspace for what belongs to the SESSION rather than the worktree — the journal. A hook
-     * fired while the shell sat in a worktree would otherwise file the conversation there and leave the
-     * record at home incomplete ({@see Workspace::ofSession}).
+     * This event's workspace for what belongs to the SESSION rather than the worktree. A hook fired while
+     * the shell sat in a worktree would otherwise file session state there and read an empty one back at
+     * home ({@see Workspace::ofSession}).
      */
     public function sessionWorkspace(): Workspace
     {
@@ -192,9 +192,7 @@ final class HookEvent
 
     /**
      * The `.jsonl` transcript of this session — the COMPLETE, lossless conversation, which the harness
-     * stamps on every hook payload. It is the record: the journal indexes it and reads text from it live
-     * rather than keeping a copy, so there is never a second home for a message the transcript already
-     * holds. Empty for a manual CLI run.
+     * stamps on every hook payload. Empty for a manual CLI run.
      */
     public function transcriptPath(): string
     {
@@ -214,8 +212,7 @@ final class HookEvent
 
     /**
      * The summary compaction produced, off a `PostCompact` payload — what the conversation was rewritten
-     * INTO. Recorded at the boundary so a later reader can see what the summary claimed, beside what the
-     * journal knows actually happened.
+     * INTO.
      */
     public function compactSummary(): string
     {
@@ -280,9 +277,8 @@ final class HookEvent
 
     /**
      * Is this the FIRST flush of its message? A delta carries only the lines completed since the previous
-     * flush, so a message's opening — its {@see \JesseGall\CodeCommandments\Cli\Journal\Tag} prefix and
-     * its first line — exists in this flush alone. A long message reaches its `final` flush having long
-     * since streamed the part that says what it is.
+     * flush, so a message's opening exists in this flush alone — a long message reaches its `final` flush
+     * having long since streamed the part that says what it is.
      */
     public function isFirstFlush(): bool
     {

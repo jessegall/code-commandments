@@ -6,9 +6,6 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Journal\Entry;
-use JesseGall\CodeCommandments\Cli\Journal\Journal;
-use JesseGall\CodeCommandments\Cli\Journal\Kind;
 use JesseGall\CodeCommandments\Cli\SessionCommand;
 use JesseGall\CodeCommandments\Cli\State\SessionNames;
 use JesseGall\CodeCommandments\Workspace;
@@ -220,7 +217,7 @@ final class SessionNamesTest extends TestCase
     /**
      * A lane is a checkout of its own, and `sessions/.names` is generated state — so a worktree has no map
      * at all and resolved a NAMED session straight back to its hash. The same session then filed its
-     * worktree-scoped state under `sessions/<hash>` while its journal went to `sessions/<name>`, and nothing
+     * worktree-scoped state under `sessions/<hash>` while the rest went to `sessions/<name>`, and nothing
      * reconciled the two. The name belongs to the SESSION, so it is read from the repository.
      */
     public function test_a_named_session_keeps_its_name_inside_a_worktree(): void
@@ -279,8 +276,8 @@ final class SessionNamesTest extends TestCase
     }
 
     /**
-     * Adopting takes what the folder HOLDS — a `reports/` directory no list named — and merges the one file
-     * both sides have, interleaved, so the earlier stretch reads before the later one.
+     * Adopting takes what the folder HOLDS — a `reports/` directory no list named — and leaves nothing
+     * behind, so no stub survives to read as a live session.
      */
     public function test_adopt_takes_a_stranded_folder_into_this_session(): void
     {
@@ -289,10 +286,9 @@ final class SessionNamesTest extends TestCase
         $this->names()->name('abc-123', 'dissolution');
 
         $mine = Workspace::at($this->root, 'abc-123')->sessionDir();
-        Journal::at($mine . '/.journal')->file($this->entry('2026-08-30T05:00:00Z', 'the later stretch'));
+        mkdir($mine, 0777, true);
 
         $stranded = Workspace::at($this->root)->sessionDirNamed('9da82');
-        Journal::at($stranded . '/.journal')->file($this->entry('2026-08-30T03:00:00Z', 'the earlier stretch'));
         mkdir($stranded . '/reports', 0777, true);
         file_put_contents($stranded . '/reports/one.md', 'a report');
         file_put_contents($stranded . '/.cardinal-remind-count', 'count: 3');
@@ -300,10 +296,6 @@ final class SessionNamesTest extends TestCase
         [$code, $said] = $this->session([], 'adopt', '9da82');
 
         $this->assertSame(0, $code, $said);
-        $this->assertSame(
-            ['the earlier stretch', 'the later stretch'],
-            array_map(fn (Entry $entry) => $entry->text, Journal::at($mine . '/.journal')->entries()),
-        );
         $this->assertFileExists($mine . '/reports/one.md', 'a folder no list named came across too');
         $this->assertFileExists($mine . '/.cardinal-remind-count');
         $this->assertDirectoryDoesNotExist($stranded, 'nothing was left behind, so no stub survives it');
@@ -358,11 +350,6 @@ final class SessionNamesTest extends TestCase
         file_put_contents($tree . '/.git', 'gitdir: ' . $this->root . '/.git/worktrees/tree' . "\n");
 
         return $tree;
-    }
-
-    private function entry(string $moment, string $text): Entry
-    {
-        return new Entry(Kind::Agent, $moment, 'turn-1', uniqid('msg-', true), Option::none(), $text);
     }
 
 }

@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Journal\Journal;
+use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Support\File;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
@@ -84,10 +84,8 @@ final class EveryHookSurvivesItsOwnEventsTest extends TestCase
         // be written where nothing reads it.
         $workspace = Workspace::at($this->root, 'sess-smoke');
 
-        $journal = Journal::inSession($workspace);
-
         foreach (range(1, 12) as $ignored) {
-            $journal->countCall();
+            Counter::named($workspace, 'smoke', 'marks a stretch of work')->count();
         }
     }
 

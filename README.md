@@ -19,8 +19,6 @@ should be a value object, and here's the discipline that explains why*.
 - [Install](#install)
 - [Usage](#usage)
 - [Configuration](#configuration)
-- [The journal](#the-journal)
-- [Orchestration](#orchestration)
 - [Freezing a file](#freezing-a-file)
 - [Agents](#agents)
 - [Hooks](#hooks)
@@ -135,8 +133,7 @@ Exit code is non-zero when sins are found.
 | `commandments constraints list` | The plan's architectural invariants — the rules the whole branch must still hold at the end. |
 | `commandments testing show` | The plan's testing methodology — the working style the user chose at approval, in force for this run. |
 | `commandments stop-condition "<condition>"` | The user's STOP GATE — record what must hold before you may stop, and every stop is held until you have VERIFIED it. Needs no plan and no config. |
-| `commandments journal` | What a compaction took — the decisions, corrections and unfinished work a summary drops, read back out of the session transcript. |
-| `commandments session` | Where this session keeps its state — the folder holding its journal, checklist, plan marker and stop gate. |
+| `commandments session` | Where this session keeps its state — the folder holding its checklist, plan marker and stop gate. |
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
@@ -247,133 +244,6 @@ listed separately too, since no order can place them: break them with
 `judge --sin=namespace-cycle`, which needs no configuration at all, because a cycle is
 wrong under any stack.
 
-## The journal
-
-A context compaction rewrites the conversation into a summary. The summary keeps what was
-**done** — files changed, commands run, tests passed — and loses what was **decided**: the
-ruling you gave once, the approach that was abandoned and why, the thing the agent was
-half-way through.
-
-The session transcript on disk lost none of it. `commandments journal` reads that transcript
-and shows the parts worth reading.
-
-```bash
-commandments journal              # a menu, when a person runs it at a terminal
-commandments journal --back=1     # the stretch the last summary replaced
-commandments journal user         # your own words, in full
-commandments journal search "…"   # where a thing was decided
-commandments journal open         # work started and never closed
-commandments journal pins         # every pinned fact, numbered — the struck ones marked
-```
-
-**A pin can be corrected, never deleted.** `remember` is the one mechanism that promises to survive
-a compaction, so it is what an agent reaches for whenever it is afraid of losing something — and the
-record fills with facts that were true when written. `commandments journal remember "<the fact now>"
---supersedes=<n>` files the correction: the old pin stays readable and marked, the new one names it,
-and only the live one is carried across.
-
-**It is an index, not a copy.** The transcript is the record; the journal notes only what the
-transcript cannot answer — where the compaction boundaries fall, and what each message said it
-carried. No hook ever opens the transcript, which is why consulting it costs under a
-millisecond.
-
-### What the agent does
-
-The discipline is enforced by hooks, not merely written down:
-
-| Moment | What happens |
-|---|---|
-| an assistant message streams | it is filed with its tag, live |
-| a write is attempted | **refused** while no `[!start]` stands — work is declared before it happens |
-| the context fills | the first automatic compaction is **cancelled**, buying one turn to pin what must survive |
-| the compaction runs | the pinned facts and open work are written into the **summariser's own instructions** |
-| the far side | the agent is handed those facts and told to read `journal --back=1` before touching anything |
-
-### Tags
-
-A tag opens a line, so one message can carry several:
-
-```
-[!start] making Drilldown a composition
-[!discovery] Banner and EmptyState already have no .vue half
-[!end] making Drilldown a composition
-```
-
-`[!start]` · `[!end]` · `[!discovery]` · `[!correction]` · `[!blocked]`
-
-Through a stretch where the agent works alone these are the only messages kept — an untagged
-stretch reads back as `⋯ 41 messages ⋯`, which is worth nothing to whoever comes next. **An
-`[!start]` with no `[!end]` is unfinished work**, the one piece of state a compaction cannot
-reconstruct, and it falls out of the pairing rather than being remembered.
-
-### Pinning
-
-```bash
-commandments journal remember "the client tracks its own changes; defaults never travel back"
-```
-
-A pinned fact outlives every compaction, heads every digest, and rides in the summariser's own
-instructions — so it reaches the far side whatever else is dropped.
-
-### Reading another session
-
-A hook knows which session it is in; a person at a terminal does not.
-
-```bash
-commandments journal sessions   # every session of this project, newest first
-commandments journal use <id>   # read that one — its id or its state folder, a prefix of either
-commandments session            # where this session keeps its state
-```
-
-The list is built from the transcripts themselves, so a session that ran long before any of
-this existed can still be read back.
-
-## Orchestration
-
-When you are running a build with several agents rather than writing code yourself, `commandments
-build` is the board: who holds which piece of work, and what is waiting on **you**.
-
-It needs nothing declared. An item is a string and a holder is a string, so it works for subagents
-in one checkout before any branch, role or worktree exists.
-
-```bash
-commandments build                                   # the board, ordered by who is waiting
-commandments build claim <item> --by=<who>           # refused if somebody already holds it
-commandments build report <item> --ran="<the check>" # the TOOL runs it and files what came back
-commandments build accept <item>                     # settle it and free the hold
-```
-
-### A report is a claim; a receipt is a measurement
-
-A worker's report is its **words**. A receipt is what a tool **read from a process** — so
-`--ran` is the difference between a number an agent typed and one a process returned. The receipt
-stamps the tree and the merge-base it measured, because a lane's honest number is wrong for the
-branch the moment its base predates the last merge.
-
-### What is refused
-
-| | |
-|---|---|
-| a second claim on a held item | one lane's gated-green work is thrown away at merge |
-| `git merge` into the shared branch by any role but its writer | one writer keeps the branch a place work *arrives* |
-| a rebasing pull while other worktrees stand on the branch | it rewrites the commits they are built on |
-| plan mode while orchestrating | an orchestrator executing a plan has stopped orchestrating |
-
-A hold is a fact about the **board**, never about a process — a worker's process ends every time it
-reports, so a hold that died with it would free the item in the window you are deciding what to hand
-out next. And only work being *done* takes a slot: a worker waiting on your judgement holds none.
-
-### Declaring more
-
-```php
-$config->orchestration(fn ($o) => $o
-    ->branch('to-vue')
-    ->writtenBy('integrator')
-    ->workers(most: 3, prefer: 2));
-```
-
-Nothing is required, and an undeclared rule refuses nobody rather than guessing a default.
-
 ## Freezing a file
 
 Some files must not change even though they carry sins — a frozen graph migration
@@ -476,16 +346,11 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `ConstraintReminder` | `PostToolUse` | Re-surfaces the active plan's constraints once every 25 tool uses. |
 | `TestingReminder` | `PostToolUse` | Re-surfaces the active plan's testing methodology once every 25 tool uses. |
 | `StopConditionReminder` | `Stop, UserPromptSubmit, PostToolUse` | Holds every stop while a `commandments stop-condition "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it. |
-| `JournalRecorder` | `MessageDisplay, UserPromptSubmit, PostCompact, SessionStart` | Files each message, its tag and every compaction boundary into the session journal, so `commandments journal` can rebuild what a compaction dropped. |
-| `CompactionGate` | `PreCompact` | Writes a compaction its own instructions from the journal, naming the facts and the unfinished work the summary may not drop. |
-| `WriteGate` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit, PreToolUse/NotebookEdit, PostToolUse/Bash` | Refuses a file-changing tool while no `[!start]` stands, so work is always declared before it happens and unfinished work survives a compaction. |
-| `JournalReminder` | `PostToolUse, Stop` | Resurfaces the journal tags as you work, and holds one stop while work you declared is still open. |
 | `SharedBranchGate` | `PreToolUse/Bash` | Refuses `git pull --rebase` while other worktrees stand on the branch — it rewrites the commits they are built on. |
 | `ModelChoiceReminder` | `PreToolUse/Agent` | Asks for an explicit model when an agent is dispatched without one, since an unnamed model inherits the dispatcher's. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
 | `SkillReminder` | `PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit, PostToolUse/Bash` | After an edit — including one made with the shell — checks the files against the rules that can judge one file and names the skill that teaches the fix. |
-| `CompactionReminder` | `SessionStart` | After a context compaction (which silently drops loaded skills), reminds you to reload any skill governing your current task. |
 | `WorkingState` | `PostToolUse, SessionStart` | Keeps the plan's working-state record alive across compaction — a refresh heartbeat and re-injection on compact/resume. |
 <!-- END: hooks-table -->
 

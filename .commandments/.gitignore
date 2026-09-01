@@ -12,5 +12,3 @@
 !sessions/*/
 !sessions/*/tasks/
 !sessions/*/tasks/**
-!orchestrator/
-!orchestrator/**

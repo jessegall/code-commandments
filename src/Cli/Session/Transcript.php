@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Journal;
+namespace JesseGall\CodeCommandments\Cli\Session;
 
 use Generator;
-use JesseGall\PhpTypes\Option;
 
 /**
- * Reads a session's `.jsonl` transcript — the complete, lossless record of a conversation, which the
- * journal indexes rather than copies. It is read a line at a time and categorised by the FIELDS each line
- * carries, never by what its text looks like: a real session's 1467 `user` lines are 38 people speaking,
- * 1372 tool results and the rest synthesized, and only the fields tell them apart.
+ * Reads a session's `.jsonl` transcript — the record the harness writes — for the one thing this package
+ * asks of it: what the session is CALLED, so `session list` can say what a folder named after a hash
+ * holds. It is read a line at a time and categorised by the FIELDS each line carries, never by what its
+ * text looks like: a real session's 1467 `user` lines are 38 people speaking, 1372 tool results and the
+ * rest synthesized, and only the fields tell them apart.
  */
 final class Transcript
 {
@@ -71,58 +71,6 @@ final class Transcript
         }
 
         fclose($handle);
-    }
-
-    /**
-     * Every line of the transcript as a {@see Line} — what it is, when, and what was said.
-     *
-     * @return Generator<int, Line>
-     */
-    public function lines(): Generator
-    {
-        foreach ($this->records() as $record) {
-            yield new Line($this->categorise($record), $record->at()->unwrapOr(''), $record->said());
-        }
-    }
-
-    /**
-     * The lines of one chunk — the stretch between two compaction boundaries. `$back` counts backwards
-     * from the conversation as it stands: 0 is since the last compaction, 1 the chunk before it.
-     *
-     * @return list<Line>
-     */
-    public function chunk(int $back = 0): array
-    {
-        $chunks = [[]];
-
-        foreach ($this->lines() as $line) {
-            if ($line->category === Category::Boundary) {
-                $chunks[] = [];
-
-                continue;
-            }
-
-            $chunks[count($chunks) - 1][] = $line;
-        }
-
-        return $chunks[count($chunks) - 1 - max(0, $back)] ?? [];
-    }
-
-    /**
-     * How many compactions this transcript has been through. The boundary is written INTO the file, so
-     * this is answered by the record itself rather than by anything a hook had to be present for.
-     */
-    public function compactions(): int
-    {
-        $count = 0;
-
-        foreach ($this->lines() as $line) {
-            if ($line->category === Category::Boundary) {
-                $count++;
-            }
-        }
-
-        return $count;
     }
 
     /**

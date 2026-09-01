@@ -16,13 +16,8 @@ use JesseGall\CodeCommandments\Hooks\Handlers\StopConditionReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
 use JesseGall\CodeCommandments\Hooks\Handlers\SourceReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\CompactionReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\CompactionGate;
-use JesseGall\CodeCommandments\Hooks\Handlers\WriteGate;
-use JesseGall\CodeCommandments\Hooks\Handlers\JournalReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\ModelChoiceReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\Handlers\WorkingState;
 use JesseGall\CodeCommandments\Cli\Install;
 use JesseGall\CodeCommandments\Cli\Sync;
@@ -64,16 +59,11 @@ final class HookRegistry
         ConstraintReminder::class,
         TestingReminder::class,
         StopConditionReminder::class,
-        JournalRecorder::class,
-        CompactionGate::class,
-        WriteGate::class,
-        JournalReminder::class,
         SharedBranchGate::class,
         ModelChoiceReminder::class,
         SessionReset::class,
         SourceReminder::class,
         SkillReminder::class,
-        CompactionReminder::class,
         WorkingState::class,
     ];
 

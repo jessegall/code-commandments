@@ -16,12 +16,6 @@ use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
  */
 abstract class Hook
 {
-    /**
-     * The type a hand nobody named is started as. It keeps no record across dispatches, so the
-     * bookkeeping hooks pass it by.
-     */
-    private const string ANONYMOUS = 'general-purpose';
-
     public function __construct(protected readonly HookIO $io = new HookIO) {}
 
     /**
@@ -99,17 +93,11 @@ abstract class Hook
 
     /**
      * Does this hook speak to THIS worker? A {@see Discipline} speaks to any of them, because a rule about
-     * the code is true whoever holds it. A {@see ForAssistants} speaks only to one the profile NAMED — an
-     * assistant with a record across dispatches — and stays quiet for an anonymous hand, whose whole
-     * record is the report it returns.
+     * the code is true whoever holds it.
      */
     private function speaksTo(HookEvent $event): bool
     {
-        if (! $this->speaksToSubagents()) {
-            return false;
-        }
-
-        return ! $this instanceof ForAssistants || $this->isAssistant($event);
+        return $this->speaksToSubagents();
     }
 
     /**
@@ -135,19 +123,6 @@ abstract class Hook
         }
 
         return $matchers === [] || in_array($event->tool(), $matchers, true);
-    }
-
-    /**
-     * Is this worker one somebody NAMED? An assistant is dispatched as its own agent type — a role the
-     * project published — where a one-shot hand is started as the generic one and is gone after the work.
-     * The type is the whole test: asking the profile instead made this layer reach up into the CLI for a
-     * fact the payload already carries, and a published type is what a role IS now.
-     */
-    private function isAssistant(HookEvent $event): bool
-    {
-        $type = $event->agent()->type;
-
-        return $type !== '' && $type !== self::ANONYMOUS;
     }
 
     /**

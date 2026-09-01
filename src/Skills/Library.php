@@ -21,8 +21,8 @@ final class Library
     /**
      * Where the hand-written process skills live — the documents that ship as they are, rather than the
      * teaching skills projected from sins. They are DISCOVERED rather than listed: a list is a second
-     * place to remember, and forgetting it publishes nothing while looking like it worked. The journal
-     * skill was written, synced, and never reached an agent.
+     * place to remember, and forgetting it publishes nothing while looking like it worked: a skill was
+     * written, synced, and never reached an agent.
      */
     private const string STANDALONE = 'skills';
 

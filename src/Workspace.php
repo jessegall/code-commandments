@@ -106,8 +106,8 @@ final class Workspace
      * The workspace for the SESSION rather than the directory. A hook resolves its root from the git
      * toplevel of wherever the shell happens to be, which is right for anything belonging to a WORKTREE —
      * a plan is worked in one, and its state should not follow the agent out of it. A conversation is not
-     * like that: it is one thing wherever a command was run from, so its journal must be too, or a session
-     * that steps into a worktree files half its record there and reads an empty one back at home.
+     * like that: it is one thing wherever a command was run from, so its state must be too, or a session
+     * that steps into a worktree files half of it there and reads an empty one back at home.
      *
      * The repository's MAIN worktree answers, whatever directory the caller is standing in and whatever
      * the harness stamped: a worktree is its own git toplevel and carries its own `CLAUDE_PROJECT_DIR`,
@@ -205,8 +205,8 @@ final class Workspace
      * checkout this workspace points at. A name belongs to the session, and a session is one thing
      * across every worktree; the map is generated state, so a lane has none of its own and would
      * resolve a named session back to its hash. That is the whole defect: the same session then files
-     * its worktree-scoped state under `sessions/<hash>` while its journal goes to `sessions/<name>`,
-     * and nothing ever reconciles the two — {@see Cli\State\Adoption} is what merges one back.
+     * its worktree-scoped state under `sessions/<hash>` while the rest goes to `sessions/<name>`, and
+     * nothing ever reconciles the two — {@see Cli\Adoption} is what takes one back into the other.
      */
     public function names(): SessionNames
     {

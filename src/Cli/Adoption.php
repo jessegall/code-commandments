@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli;
 
-use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Support\Directory;
 
 /**
  * Taking a STRANDED session folder into the one a session actually reads — a stretch written before the
  * session had a name, or from a checkout that could not see it, left in a hash folder nothing will open
  * again. Whatever the folder HOLDS moves, rather than a list of files we happen to know about, so a
- * `reports/` directory travels with the counters; the journal is the one file both sides can own, and it
- * is merged and interleaved ({@see Journal::absorb}). Anything else present on both sides is KEPT and the
- * source left standing, since deleting what did not come across is the loss this exists to prevent.
+ * `reports/` directory travels with the counters. Anything present on both sides is KEPT and the source
+ * left standing, since deleting what did not come across is the loss this exists to prevent.
  */
 final class Adoption
 {
@@ -23,13 +21,6 @@ final class Adoption
      * @var list<string>
      */
     private array $moved = [];
-
-    /**
-     * Entries that existed on both sides and were merged into one.
-     *
-     * @var list<string>
-     */
-    private array $merged = [];
 
     /**
      * Entries left where they were — a collision nothing knows how to merge, or a move that failed.
@@ -73,14 +64,6 @@ final class Adoption
     /**
      * @return list<string>
      */
-    public function merged(): array
-    {
-        return $this->merged;
-    }
-
-    /**
-     * @return list<string>
-     */
     public function kept(): array
     {
         return $this->kept;
@@ -91,7 +74,7 @@ final class Adoption
      */
     public function count(): int
     {
-        return count($this->moved) + count($this->merged);
+        return count($this->moved);
     }
 
     private function absorb(string $from, string $into): void
@@ -133,37 +116,13 @@ final class Adoption
             return;
         }
 
-        if (self::isJournal($entry) && self::isJournal($target)) {
-            $this->mergeJournal($entry, $target);
-
-            return;
-        }
-
         $this->kept[] = $this->named($entry);
     }
 
-    /**
-     * Both stretches are real, so the target's index takes the source's rather than replacing it — and
-     * the source is dropped only once the merge has been written, so a failure leaves the record whole
-     * in the folder that still holds it.
-     */
-    private function mergeJournal(string $entry, string $target): void
-    {
-        Journal::at($target)->absorb(Journal::at($entry));
-
-        $this->record($entry, @unlink($entry), merged: true);
-    }
-
-    private function record(string $entry, bool $succeeded, bool $merged = false): void
+    private function record(string $entry, bool $succeeded): void
     {
         if (! $succeeded) {
             $this->kept[] = $this->named($entry);
-
-            return;
-        }
-
-        if ($merged) {
-            $this->merged[] = $this->named($entry);
 
             return;
         }
@@ -173,8 +132,8 @@ final class Adoption
 
     /**
      * Drop the emptied folder — but ONLY once every entry is accounted for elsewhere. A folder holding
-     * something nothing merged is left exactly as it stands: a stub whose only content is a partial
-     * record is worse than the folder it came from, because it reads as complete.
+     * something that did not move is left exactly as it stands: a stub holding half of what was there is
+     * worse than the folder it came from, because it reads as complete.
      */
     private function settle(): void
     {
@@ -192,11 +151,6 @@ final class Adoption
     private function named(string $path): string
     {
         return substr($path, strlen($this->from) + 1);
-    }
-
-    private static function isJournal(string $path): bool
-    {
-        return is_file($path) && basename($path) === Journal::FILE;
     }
 
     /**
