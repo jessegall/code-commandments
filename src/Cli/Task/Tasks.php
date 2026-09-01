@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Orchestration;
+namespace JesseGall\CodeCommandments\Cli\Task;
 
 use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
@@ -63,7 +63,7 @@ final readonly class Tasks
             }
         }
 
-        usort($tasks, static fn (Task $a, Task $b): int => TaskId::compare($a->id, $b->id));
+        usort($tasks, static fn (Task $a, Task $b) => TaskId::compare($a->id, $b->id));
 
         return $tasks;
     }

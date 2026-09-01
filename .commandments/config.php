@@ -210,18 +210,14 @@ $disabledSins = function (Config $config): void {
  */
 $disabledHooks = function (Config $config): void {
     $config->disable(
-        // Hooks\Handlers\BoardReminder::class,
         // Hooks\Handlers\CommitTrigger::class,
         // Hooks\Handlers\CompactionGate::class,
         // Hooks\Handlers\CompactionReminder::class,
         // Hooks\Handlers\ConstraintReminder::class,
-        // Hooks\Handlers\ForbiddenCommandGate::class,
         // Hooks\Handlers\JournalRecorder::class,
         // Hooks\Handlers\JournalReminder::class,
         // Hooks\Handlers\JudgeReminder::class,
-        // Hooks\Handlers\MergeGate::class,
         // Hooks\Handlers\ModelChoiceReminder::class,
-        // Hooks\Handlers\OrchestratorReminder::class,
         // Hooks\Handlers\PlanReminder::class,
         // Hooks\Handlers\Remind::class,
         // Hooks\Handlers\SessionReset::class,

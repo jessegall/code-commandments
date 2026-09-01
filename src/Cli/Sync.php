@@ -49,6 +49,8 @@ final class Sync implements Command
         "# A session's PLAN is tracked; everything else in its folder is this run's own state.",
         '!sessions/*/plan/',
         '!sessions/*/plan/**',
+        '!orchestrator/',
+        '!orchestrator/**',
     ];
 
     public function names(): array
@@ -181,8 +183,8 @@ final class Sync implements Command
     /**
      * The `.commandments/` folder carries its OWN `.gitignore`: ignore everything generated in here
      * (the checklist, archives, tool-use counter), keeping the DURABLE things tracked — the
-     * `config.php`, the ignore file itself, the project's own `custom/` rules and its
-     * `orchestrator/` profiles, which are source and belong in the repo like any other.
+     * `config.php`, the ignore file itself and the project's own `custom/` rules, which are source
+     * and belong in the repo like any other.
      * Self-contained — nothing about the folder leaks into the project's root `.gitignore`.
      * Idempotent.
      *
@@ -210,7 +212,7 @@ final class Sync implements Command
      */
     private static function gitignoreLines(): array
     {
-        $durable = [Workspace::CUSTOM, Workspace::ORCHESTRATOR];
+        $durable = [Workspace::CUSTOM];
 
         return [
             '# code-commandments generated state; the lines below stay tracked.',

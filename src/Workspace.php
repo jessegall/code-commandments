@@ -52,14 +52,6 @@ final class Workspace
     public const string SINS = 'sins';
 
     /**
-     * The durable-tier folder an ORCHESTRATOR writes its ways of working into — the profiles a team
-     * commits and reviews in a diff ({@see Cli\Orchestration\Profiles}). Durable like {@see CUSTOM},
-     * and kept out of the folder's `.gitignore` for the same reason: a profile that is not in git did
-     * not survive the machine it was written on.
-     */
-    public const string ORCHESTRATOR = 'orchestrator';
-
-    /**
      * Where the published skills REALLY live, relative to the project root — the one library every
      * agent reads, directly or through a link of its own. `.agents/skills` is the cross-agent
      * location rather than any one assistant's folder, so the agent that reads it natively needs no
@@ -286,11 +278,11 @@ final class Workspace
     /**
      * A WORKER's own corner of this session: `<session>/agents/<agent-id>/<file>`.
      *
-     * Its own rather than a lane in the session's, because the record is ABOUT the worker. A persistent
-     * agent — one kept alive and resumed across dispatches — has the same compaction problem the
-     * orchestrator has, and reads its own back the same way. Keyed on the agent because a subagent's
-     * payload carries the PARENT's session id, so filing by session would mix every worker's entries
-     * into the orchestrator's indistinguishably.
+     * Its own rather than a corner of the session's, because the record is ABOUT the worker. A persistent
+     * agent — one kept alive and resumed across several turns — has the same compaction problem its
+     * parent has, and reads its own back the same way. Keyed on the agent because a subagent's payload
+     * carries the PARENT's session id, so filing by session would mix every worker's entries into the
+     * parent's indistinguishably.
      */
     public function agentPath(Agent $agent, string $file): string
     {

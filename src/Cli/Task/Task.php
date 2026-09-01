@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Orchestration;
+namespace JesseGall\CodeCommandments\Cli\Task;
 
 use JesseGall\CodeCommandments\Support\File;
 use JesseGall\PhpTypes\Option;

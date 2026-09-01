@@ -8,7 +8,6 @@ use JesseGall\CodeCommandments\Cli\Journal\Entry;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Cli\Journal\Kind;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
-use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalReminder;
 use JesseGall\CodeCommandments\Hooks\HookResponse;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
@@ -57,25 +56,6 @@ final class JournalStopTest extends TestCase
             ->file(new Entry(Kind::Agent, 'now', 't', 'm' . uniqid(), Option::some(Tag::Start), Tag::Start->marker() . ' ' . $work));
     }
 
-    /**
-     * A profile in force whose reminders folder holds exactly what it is given — so an EMPTY body is the
-     * project switching one off, which is the case the design turns on.
-     *
-     * @param  array<string, string>  $reminders
-     */
-    private function orchestratingWith(array $reminders): void
-    {
-        $folder = $this->root . '/.commandments/orchestrator/profiles/house/reminders';
-
-        mkdir($folder, 0777, true);
-
-        foreach ($reminders as $name => $body) {
-            file_put_contents($folder . '/' . $name . '.md', $body);
-        }
-
-        Instance::inSession($this->workspace())->start('house', '10:00');
-    }
-
     private function stop(): HookResponse
     {
         $io = new RecordingHookIO(['hook_event_name' => 'Stop', 'session_id' => 'sess-1'], new FakeGit($this->root));
@@ -97,47 +77,5 @@ final class JournalStopTest extends TestCase
         $this->assertStringContainsString('making Drilldown a composition', $said);
         $this->assertStringContainsString(Tag::End->marker(), $said, 'it says how to close the work');
         $this->assertStringContainsString('journal open', $said, 'and the command that lists it');
-    }
-
-    /**
-     * The words are the FILE's. A copy left in the class as a fallback would pass every other test here
-     * and fail only this one, which is why it is worth its own name.
-     */
-    public function test_the_profile_rewrites_what_is_said(): void
-    {
-        $this->orchestratingWith(['journal-open' => "# journal-open\n\nOi. {work}"]);
-        $this->declares('rewiring the queue');
-
-        $this->assertStringContainsString('Oi. ', $this->stop()->blockReason->unwrapOr(''));
-    }
-
-    /**
-     * The heading and the editor comment are addressed to whoever has the file open, not to the agent.
-     */
-    public function test_a_reminders_own_scaffolding_is_not_spoken(): void
-    {
-        $this->orchestratingWith(['journal-open' => "# journal-open\n\n<!-- holes: {work} -->\n\nClose it: {work}"]);
-        $this->declares('rewiring the queue');
-
-        $said = $this->stop()->blockReason->unwrapOr('');
-
-        $this->assertStringNotContainsString('# journal-open', $said);
-        $this->assertStringNotContainsString('holes:', $said);
-        $this->assertStringContainsString('Close it: ', $said);
-    }
-
-    /**
-     * Emptying the file is the off switch, and it takes the HOLD with it — being stopped by a gate that
-     * then says nothing is the one outcome worse than not being stopped at all.
-     */
-    public function test_emptying_the_reminder_releases_the_stop_as_well_as_silencing_it(): void
-    {
-        $this->orchestratingWith(['journal-open' => '']);
-        $this->declares('rewiring the queue');
-
-        $response = $this->stop();
-
-        $this->assertTrue($response->blockReason->isNone(), 'a gate with nothing to say does not hold the turn');
-        $this->assertSame('', $response->context->unwrapOr(''));
     }
 }

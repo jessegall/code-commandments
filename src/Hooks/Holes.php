@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Orchestration;
+namespace JesseGall\CodeCommandments\Hooks;
 
 /**
  * What a reminder's holes are filled with. A type rather than a bare map because every value in here is

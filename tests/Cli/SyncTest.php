@@ -264,8 +264,6 @@ final class SyncTest extends TestCase
         $this->assertStringContainsString("!custom/\n", $ignore, 'the directory is re-admitted');
         $this->assertStringContainsString("!custom/**\n", $ignore, 'and so is everything in it');
         $this->assertStringContainsString("!config.php\n", $ignore);
-        $this->assertStringContainsString("!orchestrator/\n", $ignore, 'a profile is durable, so it is tracked');
-        $this->assertStringContainsString("!orchestrator/**\n", $ignore);
     }
 
     /**
@@ -287,6 +285,25 @@ final class SyncTest extends TestCase
 
         $this->assertStringNotContainsString('plan/', $after, 'the rule we retired is gone');
         $this->assertStringContainsString('# mine', $after, 'and a line the project added is not');
+    }
+
+    /**
+     * The orchestrator went to its own repository, and its profiles folder went with it. A consumer that
+     * synced while it existed still carries the two lines that tracked it, and they are OURS to withdraw:
+     * left in place they un-ignore a folder nothing writes to, in a file whose reader cannot tell which
+     * rule is live.
+     */
+    public function test_the_retired_orchestrator_rule_is_withdrawn_from_a_consumer_that_had_it(): void
+    {
+        $this->sync();
+
+        $ignore = "{$this->consumer}/.commandments/.gitignore";
+
+        file_put_contents($ignore, (string) file_get_contents($ignore) . "!orchestrator/\n!orchestrator/**\n");
+
+        $this->sync();
+
+        $this->assertStringNotContainsString('orchestrator/', (string) file_get_contents($ignore));
     }
 
     /**
@@ -337,7 +354,7 @@ final class SyncTest extends TestCase
 
         $this->assertStringContainsString("!my-own-thing/\n", $ignore, "the project's own exception survives");
         $this->assertStringContainsString("!my-own-thing/**\n", $ignore);
-        $this->assertStringContainsString("!orchestrator/\n", $ignore, 'and ours is added beside it');
+        $this->assertStringContainsString("!sessions/*/tasks/\n", $ignore, 'and ours is added beside it');
         $this->assertSame(1, substr_count($ignore, '# code-commandments'), 'our header is replaced, never accumulated');
     }
 

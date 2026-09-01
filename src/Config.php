@@ -57,7 +57,6 @@ final class Config
      */
     private ?Closure $planExecutionConfigurator = null;
 
-    private ?Closure $orchestrationConfigurator = null;
 
     /**
      * @var list<string> The source roots to scan (relative to the project). Empty ⇒ auto-detect + scaffold.
@@ -362,33 +361,6 @@ final class Config
 
         if ($this->planExecutionConfigurator !== null) {
             ($this->planExecutionConfigurator)($builder);
-        }
-
-        return $builder->build();
-    }
-
-    /**
-     * Declare how several workers converge on one branch ({@see Orchestration}) — the branch, the role
-     * that alone may merge into it, the traps everybody is told and the rulings that travel. Optional in
-     * full: undeclared means the rules that need it do not apply, never that one was guessed.
-     */
-    public function orchestration(Closure $configurator): self
-    {
-        $this->orchestrationConfigurator = $configurator;
-
-        return $this;
-    }
-
-    /**
-     * The resolved {@see OrchestrationProfile} — a fresh builder with the project's configurator applied,
-     * frozen for reading.
-     */
-    public function orchestrationSettings(): OrchestrationProfile
-    {
-        $builder = new Orchestration;
-
-        if ($this->orchestrationConfigurator !== null) {
-            ($this->orchestrationConfigurator)($builder);
         }
 
         return $builder->build();

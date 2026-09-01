@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
+namespace JesseGall\CodeCommandments\Tests\Cli\Task;
 
-use JesseGall\CodeCommandments\Cli\Orchestration\Task;
-use JesseGall\CodeCommandments\Cli\Orchestration\TaskId;
-use JesseGall\CodeCommandments\Cli\Orchestration\Tasks;
-use JesseGall\CodeCommandments\Cli\Orchestration\TaskState;
+use JesseGall\CodeCommandments\Cli\Task\Task;
+use JesseGall\CodeCommandments\Cli\Task\TaskId;
+use JesseGall\CodeCommandments\Cli\Task\Tasks;
+use JesseGall\CodeCommandments\Cli\Task\TaskState;
 use PHPUnit\Framework\TestCase;
 
 /**

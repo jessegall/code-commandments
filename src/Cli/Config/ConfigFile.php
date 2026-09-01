@@ -192,16 +192,6 @@ final class ConfigFile
         return $statements === [] ? null : $statements[count($statements) - 1];
     }
 
-    /**
-     * Does the config declare an orchestration block? What `commandments orchestrate --write` asks
-     * BEFORE proposing one, so a refusal names the reason it measured rather than one of two it
-     * guessed between.
-     */
-    public function declaresOrchestration(): bool
-    {
-        return $this->calls()->has('orchestration');
-    }
-
     private function calls(): ConfigCalls
     {
         return new ConfigCalls($this->path);

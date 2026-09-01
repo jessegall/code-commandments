@@ -9,14 +9,13 @@ use JesseGall\CodeCommandments\Cli\Journal\Journal;
 use JesseGall\CodeCommandments\Cli\Journal\Reading;
 use JesseGall\CodeCommandments\Cli\Journal\Session;
 use JesseGall\CodeCommandments\Cli\Journal\Tag;
-use JesseGall\CodeCommandments\Cli\Orchestration\Holes;
-use JesseGall\CodeCommandments\Cli\Orchestration\Reminders;
+use JesseGall\CodeCommandments\Hooks\Holes;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\Reminders;
 use JesseGall\CodeCommandments\Hooks\StopHookCap;
 use JesseGall\CodeCommandments\Support\Binary;
-use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -79,8 +78,8 @@ final class JournalReminder extends Hook
         if ($quiet >= self::ENFORCED) {
             $said = $this->enforced($event, $journal, $quiet);
 
-            // Silenced by deleting the file, and a refusal with nothing to say is not a refusal — it is a
-            // dead end the agent cannot act on. So the gate goes with the words.
+            // A refusal with nothing to say is not a refusal — it is a dead end the agent cannot act on.
+            // So the gate goes with the words.
             return $said === '' ? $this->pass() : $this->block($said);
         }
 
@@ -134,7 +133,7 @@ final class JournalReminder extends Hook
         }
 
         if (StopHookCap::budget(self::HOLDS) < 1) {
-            $standing = $this->standing($event, $open);
+            $standing = $this->standing($open);
 
             return $standing === '' ? $this->pass() : $this->quietly($event, $standing);
         }
@@ -144,20 +143,19 @@ final class JournalReminder extends Hook
             ->with('end', Tag::End->marker())
             ->with('binary', Binary::in($event->root));
 
-        $said = $this->words($event, 'journal-open', $holes);
+        $said = $this->words('journal-open', $holes);
 
         return $said === '' ? $this->pass() : $this->block($said);
     }
 
     /**
      * What a reminder amounts to as output — the package's name in front of it, and NOTHING where the
-     * profile in force has deleted the file. Every caller treats the empty string as "say nothing and do
-     * not hold the turn", because a gate whose reason has been silenced is a refusal the agent cannot act
-     * on.
+     * words cannot be read. Every caller treats the empty string as "say nothing and do not hold the
+     * turn", because a gate whose reason is missing is a refusal the agent cannot act on.
      */
-    private function words(HookEvent $event, string $name, Holes $holes): string
+    private function words(string $name, Holes $holes): string
     {
-        return Reminders::inSession($event->sessionWorkspace())
+        return Reminders::shipped()
             ->say($name, $holes)
             ->mapOr('', static fn (string $said): string => 'Code Commandments — ' . $said);
     }
@@ -184,7 +182,7 @@ final class JournalReminder extends Hook
             ->with('verdict', $verdict)
             ->with('binary', Binary::in($event->root));
 
-        return $this->words($event, 'journal-unheard', $holes);
+        return $this->words('journal-unheard', $holes);
     }
 
     /**
@@ -193,14 +191,14 @@ final class JournalReminder extends Hook
      *
      * @param  list<Entry>  $open
      */
-    private function standing(HookEvent $event, array $open): string
+    private function standing(array $open): string
     {
         $holes = Holes::none()
             ->with('count', count($open))
             ->with('work', implode('; ', array_map(fn (Entry $entry) => $entry->text, array_slice($open, 0, self::NAMED))))
             ->with('end', Tag::End->marker());
 
-        return $this->words($event, 'journal-standing', $holes);
+        return $this->words('journal-standing', $holes);
     }
 
     /**
@@ -213,7 +211,7 @@ final class JournalReminder extends Hook
      */
     private function habit(HookEvent $event): string
     {
-        return $this->words($event, 'journal-habit', Holes::none()->with('binary', Binary::in($event->root)));
+        return $this->words('journal-habit', Holes::none()->with('binary', Binary::in($event->root)));
     }
 
     /**
@@ -235,7 +233,7 @@ final class JournalReminder extends Hook
             ->with('quiet', $quiet)
             ->with('binary', Binary::in($event->root));
 
-        return $this->words($event, 'journal-quiet', $holes);
+        return $this->words('journal-quiet', $holes);
     }
 
     /**
@@ -250,6 +248,6 @@ final class JournalReminder extends Hook
             ->with('tagged', $journal->tagged())
             ->with('binary', Binary::in($event->root));
 
-        return $this->words($event, 'journal-enforced', $holes);
+        return $this->words('journal-enforced', $holes);
     }
 }

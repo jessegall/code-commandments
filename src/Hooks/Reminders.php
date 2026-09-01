@@ -2,20 +2,42 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Orchestration;
+namespace JesseGall\CodeCommandments\Hooks;
+
+use JesseGall\PhpTypes\Option;
 
 /**
- * One reminder file, read as the thing a hook actually SAYS — which is less than the file holds.
+ * Where a hook's words come from — one file per reminder under `templates/reminders/`, so the wording a
+ * nudge arrives in is edited as prose rather than buried in the handler that says it. The file is the
+ * ONLY copy: no class keeps a string of its own "as a fallback", since a second copy is one that drifts
+ * and the one that drifts is the one nobody reads.
  */
-final readonly class Reminder
+final readonly class Reminders
 {
-    /**
-     * What $body says, with $holes filled. Its own scaffolding is dropped first, so a hole carrying
-     * markdown — a whole role document, a procedure — keeps the headings inside it.
-     */
-    public static function spoken(string $body, Holes $holes): string
+    private const string FOLDER = '/templates/reminders/';
+
+    public function __construct(private string $root) {}
+
+    public static function shipped(): self
     {
-        return trim($holes->fill(self::prose($body)));
+        return new self(dirname(__DIR__, 2));
+    }
+
+    /**
+     * What $name says with $holes filled, absent when this package ships no reminder by that name —
+     * which is a typo rather than a choice.
+     *
+     * @return Option<string>
+     */
+    public function say(string $name, Holes $holes): Option
+    {
+        $file = $this->root . self::FOLDER . basename($name) . '.md';
+
+        if (! is_file($file)) {
+            return Option::none();
+        }
+
+        return Option::some(trim($holes->fill($this->prose((string) file_get_contents($file)))));
     }
 
     /**
@@ -24,7 +46,7 @@ final readonly class Reminder
      * it off, both addressed to somebody with the file open. Speaking them puts `# journal-quiet` and a
      * paragraph of instructions in front of an agent that asked for one line.
      */
-    private static function prose(string $body): string
+    private function prose(string $body): string
     {
         $said = [];
         $commenting = false;

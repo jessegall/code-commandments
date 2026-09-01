@@ -6,7 +6,6 @@ namespace JesseGall\CodeCommandments\Tests\Hooks;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\MergeGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
@@ -30,7 +29,7 @@ final class WhoSpeaksToSubagentsTest extends TestCase
     /**
      * The DISCIPLINES. A worker writes code, so it needs the cardinal rule, the skill for the subject it
      * is touching, the judge nudge before it commits, and the gate that makes it declare its work. It has
-     * LESS context than the orchestrator, not more, so these are worth more there rather than less.
+     * LESS context than its parent, not more, so these are worth more there rather than less.
      *
      * @return list<array{class-string<Hook>}>
      */
@@ -41,7 +40,6 @@ final class WhoSpeaksToSubagentsTest extends TestCase
             [SourceReminder::class],
             [SkillReminder::class],
             [JudgeReminder::class],
-            [MergeGate::class],
             [SharedBranchGate::class],
         ];
     }

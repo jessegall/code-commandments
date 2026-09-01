@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
+namespace JesseGall\CodeCommandments\Tests\Cli\Task;
 
 use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Orchestration\TaskCommand;
-use JesseGall\CodeCommandments\Cli\Orchestration\TaskId;
-use JesseGall\CodeCommandments\Cli\Orchestration\Tasks;
-use JesseGall\CodeCommandments\Cli\Orchestration\TaskState;
+use JesseGall\CodeCommandments\Cli\Task\TaskCommand;
+use JesseGall\CodeCommandments\Cli\Task\TaskId;
+use JesseGall\CodeCommandments\Cli\Task\Tasks;
+use JesseGall\CodeCommandments\Cli\Task\TaskState;
 use JesseGall\CodeCommandments\Tests\Cli\CapturingHookIO;
 use JesseGall\CodeCommandments\Tests\Cli\FakeGit;
 use JesseGall\CodeCommandments\Workspace;

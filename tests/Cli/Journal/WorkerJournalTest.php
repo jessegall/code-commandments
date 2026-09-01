@@ -6,8 +6,6 @@ namespace JesseGall\CodeCommandments\Tests\Cli\Journal;
 
 use JesseGall\CodeCommandments\Agent;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
-use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
-use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
 use JesseGall\CodeCommandments\Tests\Cli\FakeGit;
@@ -65,23 +63,6 @@ final class WorkerJournalTest extends TestCase
     }
 
     /**
-     * Put a profile in force naming $roles. The recorder is {@see ForAssistants}, so an agent keeps a
-     * journal only where the profile NAMED its type — a one-shot hand keeps nothing, since its whole
-     * record is the report it returns. Without this the test asserts of a stranger what is true of a role.
-     */
-    private function underProfileNaming(string ...$roles): void
-    {
-        $dir = $this->workspace()->shared('orchestrator/profiles') . '/t/roles';
-        mkdir($dir, 0777, true);
-
-        foreach ($roles as $role) {
-            file_put_contents($dir . '/' . $role . '.md', "# {$role}\n\nReads and reports.\n");
-        }
-
-        Instance::inSession($this->workspace())->start('t', 'now');
-    }
-
-    /**
      * @return list<string>
      */
     private function texts(Journal $journal): array
@@ -91,8 +72,6 @@ final class WorkerJournalTest extends TestCase
 
     public function test_a_worker_records_into_its_own_journal(): void
     {
-        $this->underProfileNaming('walker');
-
         $this->says('[!discovery] the enum was never the cause', ['agent_id' => 'a999', 'agent_type' => 'walker']);
 
         $mine = Journal::ofAgent($this->workspace(), new Agent('a999', 'walker'));
@@ -102,16 +81,16 @@ final class WorkerJournalTest extends TestCase
 
     /**
      * The property that matters most. A subagent's payload carries the PARENT's session id, so filing by
-     * session would mix every worker's entries into the orchestrator's with no way to tell them apart.
+     * session would mix every worker's entries into the parent's with no way to tell them apart.
      */
-    public function test_a_workers_words_never_land_in_the_orchestrators_journal(): void
+    public function test_a_workers_words_never_land_in_the_parents_journal(): void
     {
         $this->says('[!discovery] the enum was never the cause', ['agent_id' => 'a999', 'agent_type' => 'walker']);
 
         $this->assertSame([], $this->texts(Journal::inSession($this->workspace())));
     }
 
-    public function test_the_orchestrators_own_words_stay_in_the_sessions_journal(): void
+    public function test_the_parents_own_words_stay_in_the_sessions_journal(): void
     {
         $this->says('[!start] the port');
 
@@ -124,8 +103,6 @@ final class WorkerJournalTest extends TestCase
      */
     public function test_two_workers_keep_separate_records(): void
     {
-        $this->underProfileNaming('walker', 'auditor');
-
         $this->says('[!discovery] the walker found it', ['agent_id' => 'a111', 'agent_type' => 'walker']);
         $this->says('[!discovery] the auditor found something else', ['agent_id' => 'a222', 'agent_type' => 'auditor']);
 

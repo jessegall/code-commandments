@@ -7,9 +7,6 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Journal\Journal;
-use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
-use JesseGall\CodeCommandments\Cli\Orchestration\Profile;
-use JesseGall\CodeCommandments\Cli\Orchestration\Profiles;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Support\File;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
@@ -86,16 +83,6 @@ final class EveryHookSurvivesItsOwnEventsTest extends TestCase
         // literal `sessions/sess-smoke` would be a different directory and every arrangement below would
         // be written where nothing reads it.
         $workspace = Workspace::at($this->root, 'sess-smoke');
-
-        // Asked of the things that OWN these locations. Building the path here would be a second
-        // declaration of where a profile lives, and it would keep passing while the real one moved.
-        $profile = new Profile('smoke', Profiles::of($workspace)->folder() . '/smoke');
-
-        mkdir($profile->roleFolder(), 0777, true);
-        File::write($profile->pathTo('routine'), "# routine\n\nCheck the record says what you would say out loud.\n");
-        File::write($profile->pathTo('behaviour'), "# behaviour\n\nHow this team works.\n");
-
-        Instance::inSession($workspace)->start('smoke', '10:00');
 
         $journal = Journal::inSession($workspace);
 

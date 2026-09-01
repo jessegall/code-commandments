@@ -5,8 +5,6 @@
 !config.php
 !custom/
 !custom/**
-!orchestrator/
-!orchestrator/**
 
 # A session's TASKS are tracked; everything else in its folder is this run's own state.
 # Un-ignoring something nested takes a line per level, so these four are one rule.
@@ -14,3 +12,5 @@
 !sessions/*/
 !sessions/*/tasks/
 !sessions/*/tasks/**
+!orchestrator/
+!orchestrator/**

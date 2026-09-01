@@ -163,17 +163,6 @@ final class ConfigScribe
     }
 
     /**
-     * Splice an orchestration declaration in the same way — what `commandments orchestrate --write`
-     * runs, the twin of `layers --write`, so an adopter is not left pasting a block by hand. False
-     * when the config already declares one: how a team works is a decision somebody made and read in
-     * a diff, and a proposal never overwrites it.
-     */
-    public function ensureOrchestration(string $declaration): bool
-    {
-        return ! $this->hasCall('orchestration') && $this->spliceDeclaration($declaration);
-    }
-
-    /**
      * Write $declaration in as its own statement before the config's own `paths()` call — the ONE
      * splice a proposed block goes through, so every `--write` lands the same way. Same offset splice
      * as {@see ensurePlanExecution}, so the surrounding lines stay exactly as they were. False when

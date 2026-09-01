@@ -134,26 +134,9 @@ final class Briefing
         written into the summariser's own instructions — but only the last TWELVE live pins are, so a
         needless pin does not add noise, it pushes a real one out. Tag generously and pin on three
         yeses: somebody DECIDED it, the next reader would get it WRONG without it, and it is still
-        true tomorrow. A finding or work still owed goes to the plan; a status or a measured number
-        goes to the board. `vendor/bin/commandments journal instructions` is the whole brief; load the
+        true tomorrow. A finding or work still owed goes to the plan, never to a pin.
+        `vendor/bin/commandments journal instructions` is the whole brief; load the
         `commandments-journal` skill for the discipline.
-
-        **Running a build with WORKERS — the orchestration mode.** When you are dispatching agents
-        rather than writing code, `commandments build` is the board: who holds which piece of work,
-        and what is waiting on YOU. It needs nothing declared — an item is a string and a holder is
-        a string:
-
-          `commandments build claim <item> --by=<who>` — refused if somebody already holds it
-          `commandments build report <item> --ran="<the check>"` — the TOOL runs it, so the number
-            filed is the one a process returned rather than one you typed
-          `commandments build accept <item>` — settle it and free the hold
-
-        A worker's report is its WORDS; a receipt is what a tool READ. Never let a claim become a
-        fact by being repeated, and remember a lane's honest number is wrong for the branch the
-        moment its base predates the last merge. Prefer two workers running: a slot is a claim on
-        your attention, and the third one's cost is paid by the other two waiting on you. Load the
-        `commandments-orchestration` skill for the discipline — it carries what no refusal can
-        enforce.
 
         **Stop conditions — when the user says "keep going until X".** Record it at once:
         `vendor/bin/commandments stop-condition "<condition>"`. While it stands you may not stop: every

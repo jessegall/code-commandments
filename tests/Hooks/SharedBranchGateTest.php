@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Tests\Cli\Orchestration;
+namespace JesseGall\CodeCommandments\Tests\Cli\Task;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
 use JesseGall\CodeCommandments\Hooks\HookResponse;

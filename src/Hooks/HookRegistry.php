@@ -21,8 +21,6 @@ use JesseGall\CodeCommandments\Hooks\Handlers\CompactionGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\WriteGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
-use JesseGall\CodeCommandments\Hooks\Handlers\ForbiddenCommandGate;
-use JesseGall\CodeCommandments\Hooks\Handlers\MergeGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\ModelChoiceReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\JournalRecorder;
 use JesseGall\CodeCommandments\Hooks\Handlers\WorkingState;
@@ -71,8 +69,6 @@ final class HookRegistry
         WriteGate::class,
         JournalReminder::class,
         SharedBranchGate::class,
-        MergeGate::class,
-        ForbiddenCommandGate::class,
         ModelChoiceReminder::class,
         SessionReset::class,
         SourceReminder::class,

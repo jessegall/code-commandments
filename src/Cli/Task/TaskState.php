@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Cli\Orchestration;
+namespace JesseGall\CodeCommandments\Cli\Task;
 
 /**
  * Where a task stands — and the folder it therefore sits in. The state is not a field anybody keeps in

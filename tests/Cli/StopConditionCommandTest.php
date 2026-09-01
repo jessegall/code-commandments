@@ -6,7 +6,6 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Orchestration\Instance;
 use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
 use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionCommand;
 use JesseGall\CodeCommandments\Workspace;
@@ -468,36 +467,11 @@ final class StopConditionCommandTest extends TestCase
     }
 
     /**
-     * The gate is the USER's instrument — "keep going until X" — and it holds every stop the same. That
-     * is right for a handful of conditions a person set and wrong for an orchestrator's running body of
-     * work, whose honest answer is mostly "not yet": neither met nor blocked, and a flat list has
-     * nowhere to put that. An orchestrator also stops by nature, so holding its stops fights the role.
+     * The gate belongs to the user: a condition they speak is recorded, and that is the whole of it.
      */
-    public function test_an_orchestrator_is_sent_to_its_plan_instead(): void
-    {
-        $this->orchestrating('dogfood');
-
-        $this->assertSame(Console::REFUSED, $this->exec('a piece of the orchestrator\'s own work'));
-        $this->assertSame([], $this->gate()->all(), 'and nothing was recorded');
-    }
-
-    /**
-     * The gate still belongs to the user. Outside an orchestration it behaves exactly as before.
-     */
-    public function test_a_condition_is_recorded_when_not_orchestrating(): void
+    public function test_a_condition_is_recorded(): void
     {
         $this->assertSame(0, $this->exec('the suite is green'));
         $this->assertCount(1, $this->gate()->all());
     }
-
-    private function orchestrating(string $profile): void
-    {
-        $path = $this->root . '/.commandments/orchestrator/profiles/' . $profile . '/profile.md';
-
-        mkdir(dirname($path), 0777, true);
-        file_put_contents($path, 'a way of working');
-
-        Instance::inSession(Workspace::ofSession($this->root))->start($profile, '10:00');
-    }
-
 }
