@@ -6,7 +6,6 @@ namespace JesseGall\CodeCommandments\Hooks;
 
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 
-use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 /**

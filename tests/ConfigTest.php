@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Ast\Codebase as AstCodebase;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
+use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
 use JesseGall\CodeCommandments\Backend\Detector as BackendDetector;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Frontend\PropDrilling;
@@ -71,9 +71,9 @@ final class ConfigTest extends TestCase
         // The SAME disable() verb silences a Claude Code hook — enabledHooks filters the given set.
         $config = new Config()->disable(JudgeReminder::class);
 
-        $kept = $config->enabledHooks([JudgeReminder::class, Remind::class]);
+        $kept = $config->enabledHooks([JudgeReminder::class, SkillReminder::class]);
 
-        $this->assertSame([Remind::class], $kept, 'the disabled hook is gone, the other stays');
+        $this->assertSame([SkillReminder::class], $kept, 'the disabled hook is gone, the other stays');
     }
 
     public function test_register_adds_a_custom_detector_routed_to_its_engine(): void

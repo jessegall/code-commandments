@@ -9,43 +9,52 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 /**
- * The constraint heartbeat — a `PostToolUse` hook that, while a plan is active and constraints are in
- * force, re-surfaces them once every {@see INTERVAL} tool uses, then resets, so the run's invariants
- * stay present through a long grind. Silent otherwise.
+ * The constraint recall — a `SessionStart` hook that re-surfaces the active plan's constraints on the
+ * ONE moment they can go missing: a compaction (or a resume), which drops what was loaded while leaving
+ * the agent believing it is still there. Silent otherwise, and never on a timer — an unprompted block
+ * arriving on a tool use that broke nothing teaches the reader to clear it unread, and the findings that
+ * DO name a violation ({@see SkillReminder}) get cleared with it. The plan-scoped sibling of
+ * {@see TestingReminder}, and the same moment {@see WorkingState} recalls its record on.
  */
 final class ConstraintReminder extends Hook
 {
-    private const int INTERVAL = 25;
+    /**
+     * SessionStart sources that CONTINUE a live plan — the ones the constraints are re-surfaced on. A
+     * `startup`/`clear` is a new session, which has no plan of ours to hold constraints for.
+     */
+    private const array CONTINUING_SOURCES = ['compact', 'resume'];
 
     public function summary(): string
     {
-        return "Re-surfaces the active plan's constraints once every 25 tool uses.";
+        return "Re-surfaces the active plan's constraints after a compaction or resume.";
     }
 
     public function bindings(): array
     {
-        return [new HookBinding('PostToolUse')];
+        return [new HookBinding('SessionStart')];
     }
 
-    protected function onPostToolUse(HookEvent $event): int
+    protected function onSessionStart(HookEvent $event): int
     {
-        $active = $this->active($event);
-        $counter = Counter::named($event->workspace(), 'constraint-remind', "re-surfaces the active plan's constraints once every 25 tool uses", every: self::INTERVAL);
-
-        if ($active === [] || ! $counter->due()) {
+        if (! in_array($event->source(), self::CONTINUING_SOURCES, true)) {
             return $this->pass();
         }
 
-        return $this->quietly($event, $this->reminder($active));
+        $active = $this->active($event);
+
+        if ($active === []) {
+            return $this->pass();
+        }
+
+        return $this->inject($event, $this->reminder($active));
     }
 
     protected function onManualRun(HookEvent $event): int
     {
-        return $this->onPostToolUse($event);
+        return $this->pass();
     }
 
     /**

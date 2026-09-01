@@ -10,8 +10,9 @@ use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The constraint heartbeat: while a plan is active and constraints are in force, it re-surfaces them
- * once every 25 tool uses. Silent otherwise. Driven through a {@see CapturingHookIO} + {@see FakeGit}.
+ * The constraint recall: while a plan is active and constraints are in force, a compaction or resume
+ * re-surfaces them — and nothing else does, least of all a tool use that broke no rule. Driven through
+ * a {@see CapturingHookIO} + {@see FakeGit}.
  */
 final class ConstraintReminderTest extends TestCase
 {
@@ -31,9 +32,9 @@ final class ConstraintReminderTest extends TestCase
     /**
      * @return list<array<string, mixed>>
      */
-    private function fire(): array
+    private function fire(array $payload = ['hook_event_name' => 'SessionStart', 'source' => 'compact']): array
     {
-        $io = new CapturingHookIO(new FakeGit($this->root), ['hook_event_name' => 'PostToolUse', 'tool_name' => 'Edit']);
+        $io = new CapturingHookIO(new FakeGit($this->root), $payload);
         new ConstraintReminder($io)->run([]);
 
         return $io->emitted;
@@ -53,38 +54,59 @@ final class ConstraintReminderTest extends TestCase
         );
     }
 
-    public function test_surfaces_the_constraints_once_every_interval_during_a_plan(): void
+    public function test_surfaces_the_constraints_when_a_compaction_continues_the_plan(): void
     {
         $this->writeConstraint();
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
-
-        for ($i = 1; $i < 25; $i++) {
-            $this->assertSame([], $this->fire(), "silent on tick {$i}");
-        }
 
         $context = $this->context($this->fire());
         $this->assertStringContainsString('No frontend logic.', $context);
         $this->assertStringContainsString('CONSTRAINTS', $context);
 
-        // Resets after firing — the next 24 are silent again.
-        $this->assertSame([], $this->fire(), 'counter reset after the reminder');
+        $this->assertStringContainsString(
+            'No frontend logic.',
+            $this->context($this->fire(['hook_event_name' => 'SessionStart', 'source' => 'resume'])),
+            'a resume continues the same plan',
+        );
+    }
+
+    /**
+     * The point of the change: constraints ride the compaction boundary, NOT a tool-use timer. A hook
+     * that speaks when nothing prompted it is the thing that trains an agent to skim what does.
+     */
+    public function test_never_speaks_on_a_tool_use(): void
+    {
+        $this->writeConstraint();
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
+
+        for ($i = 0; $i < 60; $i++) {
+            $this->assertSame([], $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Edit']), "silent on tool use {$i}");
+        }
+    }
+
+    /**
+     * A `startup`/`clear` is a NEW session — whatever plan state survived is {@see SessionReset}'s to
+     * wipe, not ours to re-inject into a session that never asked for it.
+     */
+    public function test_silent_on_a_fresh_session(): void
+    {
+        $this->writeConstraint();
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
+
+        $this->assertSame([], $this->fire(['hook_event_name' => 'SessionStart', 'source' => 'startup']));
     }
 
     public function test_silent_when_no_plan_is_active(): void
     {
         $this->writeConstraint(); // constraints exist, but no plan marker
 
-        for ($i = 0; $i < 30; $i++) {
-            $this->assertSame([], $this->fire());
-        }
+        $this->assertSame([], $this->fire());
     }
 
     public function test_silent_when_a_plan_has_no_constraints(): void
     {
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha'); // active plan, but no constraints configured
 
-        for ($i = 0; $i < 30; $i++) {
-            $this->assertSame([], $this->fire());
-        }
+        $this->assertSame([], $this->fire());
     }
 }

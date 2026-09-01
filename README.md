@@ -126,7 +126,6 @@ Exit code is non-zero when sins are found.
 | `commandments freeze <path>` | Mark a file intentionally immutable, or lift the mark. A frozen file is still scanned (so cross-file rules stay correct) but never flagged and never rewritten. |
 | `commandments sync` | Refresh this project's code-commandments integration — publish the skills into the library every agent reads, refresh the AGENTS.md briefing and the config surface, and wire each agent's own view of them. |
 | `commandments install` | Wire a consumer project up once — the composer sync hook, every agent it supports (skills, AGENTS.md, and under Claude Code the hook suite) and .gitignore — then sync. |
-| `commandments remind` | PostToolUse hook that counts tool uses and surfaces the cardinal rule once every INTERVAL—a steady heartbeat keeping 'trace to the source' present. |
 | `commandments judge-reminder` | A "did you judge?" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files are touched but unchecked, deduped per changed-file set. |
 | `commandments plan-reminder` | The plan-execution Hook wired to `PostToolUse/ExitPlanMode` and `Stop`. |
 | `commandments plan status` | The handle on the ACTIVE PLAN marker the keep-going Stop hook reads — scoped to this worktree. |
@@ -306,8 +305,8 @@ subagents, `config.toml`) but no hook events, so there is nothing to wire.
 
 That difference is worth being plain about, because it is the difference between a
 discipline that is **enforced** and one that is merely **written down**. Under Claude
-Code the cardinal rule resurfaces as you work, `judge` is nudged before risky
-commands and on stop, an approved plan is ground to completion, and a standing
+Code the rule you just broke is named on the edit that broke it, `judge` is nudged
+before risky commands and on stop, an approved plan is ground to completion, and a standing
 `until` condition holds every stop until it has been verified. Under any other agent
 all of that is still available — the skills, `AGENTS.md`, and `judge` / `repent` /
 `until` / `plan` as ordinary CLI verbs — but nothing checks that the agent used them.
@@ -326,7 +325,7 @@ you had force-committed `.claude/skills/` you will see those deletions.
 ## Hooks
 
 `install` (and every `composer update`, via `sync`) wires a set of **Claude Code
-hooks** into `.claude/settings.json`: the cardinal-rule reminder, the "did you
+hooks** into `.claude/settings.json`: the per-edit rule check, the "did you
 judge?" nudge, and the plan-execution hooks. They self-heal: a hook change reaches
 every project on the next `composer update`. They are Claude Code only — see
 [Agents](#agents) for what that means under a different assistant.
@@ -340,11 +339,10 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 <!-- BEGIN: hooks-table (auto-generated, run `composer readme`) -->
 | Hook | Events | What it does |
 |---|---|---|
-| `Remind` | `PostToolUse` | Surfaces the cardinal *trace to the source* rule once every 25 tool uses. |
 | `JudgeReminder` | `Stop, PreToolUse/Bash` | Nudges you to `judge` what you changed — before a risky Bash command, and on stop. |
 | `PlanReminder` | `PostToolUse/ExitPlanMode, Stop` | On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Supervised/Autonomous/BestEffort/Relentless). |
-| `ConstraintReminder` | `PostToolUse` | Re-surfaces the active plan's constraints once every 25 tool uses. |
-| `TestingReminder` | `PostToolUse` | Re-surfaces the active plan's testing methodology once every 25 tool uses. |
+| `ConstraintReminder` | `SessionStart` | Re-surfaces the active plan's constraints after a compaction or resume. |
+| `TestingReminder` | `SessionStart` | Re-surfaces the active plan's testing methodology after a compaction or resume. |
 | `StopConditionReminder` | `Stop, UserPromptSubmit, PostToolUse` | Holds every stop while a `commandments stop-condition "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it. |
 | `SharedBranchGate` | `PreToolUse/Bash` | Refuses `git pull --rebase` while other worktrees stand on the branch — it rewrites the commits they are built on. |
 | `ModelChoiceReminder` | `PreToolUse/Agent` | Asks for an explicit model when an agent is dispatched without one, since an unnamed model inherits the dispatcher's. |

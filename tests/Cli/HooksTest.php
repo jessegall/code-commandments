@@ -116,8 +116,8 @@ final class HooksTest extends TestCase
 
         $settings = (array) json_decode((string) file_get_contents($this->path), true);
 
-        // PostToolUse mixes matchers (Remind unmatched, PlanReminder/ExitPlanMode) → one UNMATCHED entry;
-        // the handlers self-filter by tool inside the dispatcher.
+        // PostToolUse mixes matchers (WorkingState unmatched, PlanReminder/ExitPlanMode) → one UNMATCHED
+        // entry; the handlers self-filter by tool inside the dispatcher.
         $post = $settings['hooks']['PostToolUse'][0] ?? [];
         $this->assertArrayNotHasKey('matcher', $post, 'PostToolUse is unmatched — the dispatcher filters by tool');
 
@@ -142,7 +142,7 @@ final class HooksTest extends TestCase
         $hooks = HookRegistry::forProject($dir);
 
         $this->assertNotContains(\JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder::class, $hooks);
-        $this->assertContains(\JesseGall\CodeCommandments\Hooks\Handlers\Remind::class, $hooks, 'the other builtins stay');
+        $this->assertContains(\JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder::class, $hooks, 'the other builtins stay');
 
         exec('rm -rf ' . escapeshellarg($dir));
     }

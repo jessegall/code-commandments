@@ -7,7 +7,6 @@ namespace JesseGall\CodeCommandments\Hooks;
 use JesseGall\CodeCommandments\Support\JsonFile;
 use JesseGall\CodeCommandments\Config;
 
-use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\ConstraintReminder;
@@ -43,7 +42,10 @@ final class HookRegistry
     private const string STAMP = '# @code-commandments-managed';
 
     /**
-     * Our reminder subcommands, for recognising PRE-stamp hooks we wrote so they migrate to stamped.
+     * Our reminder subcommands, for recognising PRE-stamp hooks we wrote so they migrate to stamped —
+     * `remind` among them precisely because the command is GONE: a wired call to it is recognised as
+     * ours, stripped, and never re-added, so an old install stops invoking a subcommand that would now
+     * fail rather than being left to error on every tool use.
      */
     private const array LEGACY_SUBCOMMANDS = ['remind', 'judge-reminder', 'plan-reminder'];
 
@@ -53,7 +55,6 @@ final class HookRegistry
      * @var list<class-string<Hook>>
      */
     public const array BUILTINS = [
-        Remind::class,
         JudgeReminder::class,
         PlanReminder::class,
         ConstraintReminder::class,

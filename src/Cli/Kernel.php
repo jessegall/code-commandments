@@ -11,7 +11,6 @@ use JesseGall\CodeCommandments\InvalidConfiguration;
 use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Hooks\HookRunner;
 use JesseGall\CodeCommandments\Cli\Hooks\HookCommand;
-use JesseGall\CodeCommandments\Hooks\Handlers\Remind;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use JesseGall\CodeCommandments\Cli\Plan\PlanCommand;
@@ -137,7 +136,6 @@ final class Kernel
             new Freeze(),
             new Sync(),
             new Install(),
-            new HookCommand(['remind'], new Remind()),
             new HookCommand(['judge-reminder'], new JudgeReminder()),
             new HookCommand(['plan-reminder'], new PlanReminder()),
             new PlanCommand(),

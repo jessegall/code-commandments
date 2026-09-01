@@ -9,44 +9,50 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 /**
- * The testing-methodology heartbeat — a `PostToolUse` hook that, while a plan is active and a testing
- * methodology is in force, re-surfaces it once every {@see INTERVAL} tool uses, then resets, so the
- * run's chosen way of writing tests stays present through a long grind (or after a compaction). Silent
- * otherwise. The plan-scoped sibling of {@see ConstraintReminder}.
+ * The testing-methodology recall — a `SessionStart` hook that re-surfaces the active plan's chosen way
+ * of writing tests on the ONE moment it can go missing: a compaction (or a resume). Never on a timer:
+ * a reminder that arrives when nothing prompted it is read once and skimmed thereafter, and it takes
+ * the messages that DO report a violation down with it. The plan-scoped sibling of
+ * {@see ConstraintReminder}.
  */
 final class TestingReminder extends Hook
 {
-    private const int INTERVAL = 25;
+    /**
+     * SessionStart sources that CONTINUE a live plan — see {@see ConstraintReminder::CONTINUING_SOURCES}.
+     */
+    private const array CONTINUING_SOURCES = ['compact', 'resume'];
 
     public function summary(): string
     {
-        return "Re-surfaces the active plan's testing methodology once every 25 tool uses.";
+        return "Re-surfaces the active plan's testing methodology after a compaction or resume.";
     }
 
     public function bindings(): array
     {
-        return [new HookBinding('PostToolUse')];
+        return [new HookBinding('SessionStart')];
     }
 
-    protected function onPostToolUse(HookEvent $event): int
+    protected function onSessionStart(HookEvent $event): int
     {
-        $method = $this->active($event);
-        $counter = Counter::named($event->workspace(), 'testing-remind', "re-surfaces the active plan's testing methodology once every 25 tool uses", every: self::INTERVAL);
-
-        if ($method === '' || ! $counter->due()) {
+        if (! in_array($event->source(), self::CONTINUING_SOURCES, true)) {
             return $this->pass();
         }
 
-        return $this->quietly($event, $this->reminder($method));
+        $method = $this->active($event);
+
+        if ($method === '') {
+            return $this->pass();
+        }
+
+        return $this->inject($event, $this->reminder($method));
     }
 
     protected function onManualRun(HookEvent $event): int
     {
-        return $this->onPostToolUse($event);
+        return $this->pass();
     }
 
     /**

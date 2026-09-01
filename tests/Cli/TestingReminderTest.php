@@ -12,8 +12,8 @@ use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The testing-methodology heartbeat: while a plan is active and a methodology is in force, it
- * re-surfaces it once every 25 tool uses. Silent otherwise. Driven through a {@see CapturingHookIO}.
+ * The testing-methodology recall: while a plan is active and a methodology is in force, a compaction or
+ * resume re-surfaces it — and no tool use ever does. Driven through a {@see CapturingHookIO}.
  */
 final class TestingReminderTest extends TestCase
 {
@@ -33,9 +33,9 @@ final class TestingReminderTest extends TestCase
     /**
      * @return list<array<string, mixed>>
      */
-    private function fire(): array
+    private function fire(array $payload = ['hook_event_name' => 'SessionStart', 'source' => 'compact']): array
     {
-        $io = new CapturingHookIO(new FakeGit($this->root), ['hook_event_name' => 'PostToolUse', 'tool_name' => 'Edit']);
+        $io = new CapturingHookIO(new FakeGit($this->root), $payload);
         new TestingReminder($io)->run([]);
 
         return $io->emitted;
@@ -51,20 +51,42 @@ final class TestingReminderTest extends TestCase
         PlanTesting::inSession(Workspace::at($this->root), new PlanExecution()->build())->set('Only fix broken tests.');
     }
 
-    public function test_surfaces_the_methodology_once_every_interval_during_a_plan(): void
+    public function test_surfaces_the_methodology_when_a_compaction_continues_the_plan(): void
     {
         $this->chooseMethod();
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
-
-        for ($i = 1; $i < 25; $i++) {
-            $this->assertSame([], $this->fire(), "silent on tick {$i}");
-        }
 
         $context = $this->context($this->fire());
         $this->assertStringContainsString('Only fix broken tests.', $context);
         $this->assertStringContainsString('TESTING METHODOLOGY', $context);
 
-        $this->assertSame([], $this->fire(), 'counter reset after the reminder');
+        $this->assertStringContainsString(
+            'Only fix broken tests.',
+            $this->context($this->fire(['hook_event_name' => 'SessionStart', 'source' => 'resume'])),
+            'a resume continues the same plan',
+        );
+    }
+
+    /**
+     * The methodology rides the compaction boundary, never a tool-use timer — see the sibling assertion
+     * in {@see ConstraintReminderTest}.
+     */
+    public function test_never_speaks_on_a_tool_use(): void
+    {
+        $this->chooseMethod();
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
+
+        for ($i = 0; $i < 60; $i++) {
+            $this->assertSame([], $this->fire(['hook_event_name' => 'PostToolUse', 'tool_name' => 'Edit']), "silent on tool use {$i}");
+        }
+    }
+
+    public function test_silent_on_a_fresh_session(): void
+    {
+        $this->chooseMethod();
+        PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
+
+        $this->assertSame([], $this->fire(['hook_event_name' => 'SessionStart', 'source' => 'startup']));
     }
 
     public function test_falls_back_to_the_configured_default(): void
@@ -76,10 +98,6 @@ final class TestingReminderTest extends TestCase
         );
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha');
 
-        for ($i = 1; $i < 25; $i++) {
-            $this->fire();
-        }
-
         $this->assertStringContainsString('Write tests each phase.', $this->context($this->fire()));
     }
 
@@ -87,17 +105,13 @@ final class TestingReminderTest extends TestCase
     {
         $this->chooseMethod(); // a methodology exists, but no plan marker
 
-        for ($i = 0; $i < 30; $i++) {
-            $this->assertSame([], $this->fire());
-        }
+        $this->assertSame([], $this->fire());
     }
 
     public function test_silent_when_a_plan_has_no_methodology(): void
     {
         PlanMarker::inSession(Workspace::at($this->root))->activate('sha'); // active plan, nothing configured or chosen
 
-        for ($i = 0; $i < 30; $i++) {
-            $this->assertSame([], $this->fire());
-        }
+        $this->assertSame([], $this->fire());
     }
 }
