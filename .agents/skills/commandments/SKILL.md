@@ -1,6 +1,6 @@
 ---
 name: commandments
-description: "The index of this project's architectural disciplines — every code-commandments skill, when each one fires, and the commands that find and fix sins (`judge`, `info`, `repent`, `report`, `make`, `stop-condition`). Load this when you start work in this codebase, when you need to know WHICH discipline covers a subject you are about to write, when a `judge` finding names a rule you do not recognise, or when a context compaction may have dropped the disciplines you loaded earlier."
+description: "The index of this project's architectural disciplines — every code-commandments skill, when each one fires, and the commands that find and fix sins (`judge`, `info`, `repent`, `report`, `make`). Load this when you start work in this codebase, when you need to know WHICH discipline covers a subject you are about to write, when a `judge` finding names a rule you do not recognise, or when a context compaction may have dropped the disciplines you loaded earlier."
 ---
 
 # Code Commandments — the disciplines in force here
@@ -78,24 +78,6 @@ dropped whole, never half-applied). Lift it with
 immutable — never to silence a sin you could fix.** A real finding you disagree
 with is a `report`; a rule you want off is `disable`; freezing is for files that
 by their nature cannot move.
-
-**Stop conditions — when the user says "keep going until X".** Record it at once:
-`vendor/bin/commandments stop-condition "<condition>"`. While it stands you may not stop: every
-stop is held and sends you back to VERIFY the condition — actually run the command and
-read the output, never assume it holds because you did the work. Strike one off with
-`vendor/bin/commandments stop-condition met <n>` once it genuinely holds; if you are truly
-blocked, `vendor/bin/commandments stop-condition stuck` hands back to the user while keeping the
-condition in force. Never `stop-condition clear` to escape a condition you simply haven't met.
-
-**The same gate is where mid-work interjections go.** When the user speaks while you are
-already working, decide what their message IS: **steering** the work in hand (a correction,
-a change of approach, "while you're in there…") is done **now** — parking it is a way of not
-doing it. A **separate task**, one they deferred ("later", "when you're done"), or anything
-that would derail the phase you're on is **parked**: `vendor/bin/commandments stop-condition "<the
-task, as a statement you can verify>"`, then carry on with what you were doing. Unsure?
-Cheap and inside the current phase → do it; opens a new front → park it. A plan takes
-precedence over the gate, so parked work surfaces at `plan done` — exactly "later".
-Load the `commandments-stop-condition` skill for the discipline.
 
 When in doubt, load `commandments-backend-fix-at-the-source` and re-read it. It is the parent move
 behind every other skill.

@@ -26,7 +26,7 @@ final class Router
      */
     private const string TRIGGER = 'The index of this project\'s architectural disciplines — every '
         . 'code-commandments skill, when each one fires, and the commands that find and fix sins '
-        . '(`judge`, `info`, `repent`, `report`, `make`, `stop-condition`). Load this when you start work in this '
+        . '(`judge`, `info`, `repent`, `report`, `make`). Load this when you start work in this '
         . 'codebase, when you need to know WHICH discipline covers a subject you are about to write, '
         . 'when a `judge` finding names a rule you do not recognise, or when a context compaction may '
         . 'have dropped the disciplines you loaded earlier.';

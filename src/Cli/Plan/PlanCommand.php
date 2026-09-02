@@ -11,7 +11,6 @@ use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
-use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Workspace;
 
@@ -126,31 +125,8 @@ final class PlanCommand implements Command
         Checklist::inSession(Workspace::at($root))->clearAll(); // the plan is over — drop its worklist so no stale
         // reference from an older judge run outlives the plan; the next scan regenerates it.
         fwrite(STDOUT, "✓ Plan marked done — the keep-going Stop nudge is cleared.\n");
-        $this->handOverToTheGate(StopConditionGate::inSession(Workspace::at($root))->all());
 
         return 0;
-    }
-
-    /**
-     * The handover: a plan holds the stop while it runs, so anything parked with `stop-condition` waited for
-     * this moment. Name those conditions here — they take over the next stop, and the agent should not
-     * meet them for the first time as a block it forgot about.
-     *
-     * @param  list<string>  $conditions
-     */
-    private function handOverToTheGate(array $conditions): void
-    {
-        if ($conditions === []) {
-            return;
-        }
-
-        fwrite(STDOUT, '● ' . count($conditions) . " stop condition(s) now hold you — the work parked during the plan:\n");
-
-        foreach ($conditions as $index => $condition) {
-            fwrite(STDOUT, '  ' . ($index + 1) . ". {$condition}\n");
-        }
-
-        fwrite(STDOUT, "  Do them now, then `commandments stop-condition met <n>` for each once you have VERIFIED it.\n");
     }
 
     private function status(PlanMarker $marker, string $root): int

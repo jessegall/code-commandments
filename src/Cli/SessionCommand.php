@@ -353,7 +353,7 @@ final class SessionCommand implements Command
      */
     private function contents(string $dir): array
     {
-        // Most of what a session keeps is a DOTFILE (`.until`, `.plan-active`), which `glob`
+        // Most of what a session keeps is a DOTFILE (`.plan-active`, `.plan-constraints`), which `glob`
         // skips — so the folder would read as empty exactly when it is fullest.
         return array_map(
             fn (string $file) => sprintf('  %-24s %6s  %s', basename($file), $this->size($file), date('H:i', filemtime($file) ?: 0)),

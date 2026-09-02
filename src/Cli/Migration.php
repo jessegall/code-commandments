@@ -9,8 +9,6 @@ use JesseGall\PhpTypes\Option;
 use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
 use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
-use JesseGall\CodeCommandments\Cli\StopCondition\Condition;
-use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
 use JesseGall\CodeCommandments\Cli\State\LegacyLines;
 use JesseGall\CodeCommandments\Cli\State\Legend;
 use JesseGall\CodeCommandments\Cli\State\StateFile;
@@ -19,18 +17,18 @@ use JesseGall\CodeCommandments\Workspace;
 
 /**
  * Carries a project's session state forward when the FORMAT of these files changes, on every `sync`.
- * What holds the USER's intent is CONVERTED — a stop gate's conditions and a plan's constraints are
- * instructions the agent is meant to be held to — and only the heartbeats are dropped. One-shot:
- * {@see FORMAT} is stamped into the project once it has run.
+ * What holds the USER's intent is CONVERTED — a plan's constraints are instructions the agent is
+ * meant to be held to — and only the heartbeats, and the state of a feature that no longer exists,
+ * are dropped. One-shot: {@see FORMAT} is stamped into the project once it has run.
  */
 final class Migration
 {
     /**
      * The state-file format this package writes. 1 was the positional-line marker; 2 is the named
      * `name: value` state with its legend; 3 keeps the judge checklists in {@see Workspace::SINS}
-     * rather than at the session folder's top level.
+     * rather than at the session folder's top level; 4 has no stop gate.
      */
-    public const int FORMAT = 3;
+    public const int FORMAT = 4;
 
     public function __construct(private readonly Workspace $workspace) {}
 
@@ -75,55 +73,19 @@ final class Migration
     }
 
     /**
-     * The stop gate: the live conditions, the ones a pause set aside, the pending claim and the two
-     * counts were five files; they are one now. A gate that was PAUSED becomes a `paused: yes` flag
-     * over the same conditions. If a session somehow holds both a live and a paused marker (only
-     * possible from before #418), the live one wins and the set-aside conditions are folded in behind
-     * it — keeping the user's conditions matters more than keeping a distinction that shape should
-     * never have had.
+     * The stop gate. The feature is gone — the journal's to-do list is where deferred work lives now —
+     * so whatever a session still holds of it (the live marker, a paused twin, a pending claim, its
+     * counters) is deleted rather than carried into a shape nothing reads.
      */
     private function gate(string $dir): ?string
     {
-        $live = $this->legacy("{$dir}/.until");
-        $paused = $this->legacy("{$dir}/.until.pause");
-        $either = $live->or($paused);
+        $files = glob("{$dir}/.until*") ?: [];
 
-        if ($either->isNone()) {
-            return null;
+        foreach ($files as $path) {
+            @unlink($path);
         }
 
-        $source = $either->unwrap();
-        $conditions = $this->conditions($source);
-        $lastId = max($this->headerOf($source) === 3 ? $source->int(2) : 0, ...[0, ...array_map(
-            fn (Condition $c): int => $c->statement->id,
-            $conditions,
-        )]);
-
-        if ($live->isSome()) {
-            foreach ($paused as $setAside) {
-                foreach ($this->conditions($setAside) as $condition) {
-                    $conditions[] = Condition::stated(++$lastId, $condition->statement->text);
-                }
-            }
-        }
-
-        if ($conditions === []) {
-            return $this->drop($dir, ['.until', '.until.pause', '.until.claim']);
-        }
-
-        $claim = $this->legacy("{$dir}/.until.claim")->unwrapOr(new LegacyLines());
-
-        new StateFile("{$dir}/.until", StopConditionGate::legend())->write(new State(
-            held_stops: $source->int(0),
-            last_id: $lastId,
-            paused: $live->isNone(),
-            stuck: $source->isFlagged(1),
-            claim_round: $claim->int(0),
-        )->withItems(array_map(fn (Condition $c): string => $c->line(), $conditions)));
-
-        $this->delete($dir, ['.until.pause', '.until.claim', '.until-work-count', '.until-todo-drift-count']);
-
-        return count($conditions) . ' stop condition(s)';
+        return $files === [] ? null : count($files) . ' stop-gate file(s) removed';
     }
 
     /**
@@ -244,8 +206,7 @@ final class Migration
     /**
      * The value lines of an OLD marker — everything above the `-----` — or null when the file isn't
      * there or has already been converted. The old shape is positional (`0`, `0`, `5`) with one
-     * concern per file: a gate in `.until`, its paused twin in `.until.pause`, its claim in
-     * `.until.claim`, a plan in `.plan-active` with its stuck signal in `.plan-stuck`, constraints
+     * concern per file: a plan in `.plan-active` with its stuck signal in `.plan-stuck`, constraints
      * split across `.plan-constraints`/`.constraints-verified`.
      *
      * @return Option<LegacyLines>
@@ -290,48 +251,6 @@ final class Migration
     private function isCurrent(array $lines): bool
     {
         return isset($lines[0]) && str_contains($lines[0], ': ');
-    }
-
-    /**
-     * The conditions of an old gate marker: `id<TAB>text` lines, or — from before stable ids — bare
-     * condition texts, which take their position as their id.
-     *
-     * @return list<Condition>
-     */
-    private function conditions(LegacyLines $marker): array
-    {
-        $conditions = [];
-
-        foreach ($marker->from($this->headerOf($marker)) as $line) {
-            $condition = Condition::read($line);
-            $conditions[] = $condition ?? Condition::stated(count($conditions) + 1, $line);
-        }
-
-        return $conditions;
-    }
-
-    /**
-     * How many header lines an old gate marker carries before its conditions: three once ids were
-     * stable (blocks, stuck, last-id), two before that — the third line was a condition itself.
-     */
-    private function headerOf(LegacyLines $marker): int
-    {
-        return $marker->isNumeric(2) ? 3 : 2;
-    }
-
-    private function count(string $path): int
-    {
-        return new LegacyLines($this->lines($path) ?? [])->int(0);
-    }
-
-    /**
-     * @param  list<string>  $files
-     */
-    private function drop(string $dir, array $files): ?string
-    {
-        $this->delete($dir, $files);
-
-        return null;
     }
 
     /**

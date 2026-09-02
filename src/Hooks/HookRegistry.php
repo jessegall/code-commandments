@@ -11,7 +11,6 @@ use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\ConstraintReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\TestingReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\StopConditionReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
 use JesseGall\CodeCommandments\Hooks\Handlers\SourceReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
@@ -59,7 +58,6 @@ final class HookRegistry
         PlanReminder::class,
         ConstraintReminder::class,
         TestingReminder::class,
-        StopConditionReminder::class,
         SharedBranchGate::class,
         ModelChoiceReminder::class,
         SessionReset::class,

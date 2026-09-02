@@ -70,13 +70,10 @@ final class ClaudeAgent extends Agent
         - **Load a skill with the Skill tool**, by the exact id in the briefing's bullets —
           e.g. `commandments-backend-absence`. The published skills are linked into
           `.claude/skills/`, so they also autocomplete as `/`-commands.
-        - `/stop-condition "<condition>"` is available as a slash command, so the user can set a stop
-          condition themselves.
 
         **The disciplines here are ENFORCED, not just written down.** Hooks are wired into
         `.claude/settings.json`: the cardinal rule resurfaces as you work, `judge` is nudged
-        before risky commands and on stop, an approved plan is ground to completion, and a
-        standing `stop-condition` condition holds every stop until you have VERIFIED it. That is a
+        before risky commands and on stop, and an approved plan is ground to completion. That is a
         property of this agent alone — under an agent with no hook protocol the same
         disciplines are documents you are asked to follow, and nothing checks that you did.
         MD;
@@ -86,7 +83,6 @@ final class ClaudeAgent extends Agent
     {
         return [
             '# code-commandments published skills (regenerated on composer update)' => '.claude/skills/commandments-*',
-            '# code-commandments published slash commands (regenerated on composer update)' => '.claude/commands/stop-condition.md',
         ];
     }
 

@@ -102,10 +102,6 @@ vendor/bin/commandments checks start          # run the project's start / phase 
 vendor/bin/commandments checks phase
 vendor/bin/commandments checks complete       # full gate: your checks, then `judge --branch`
 vendor/bin/commandments plan status           # is a plan active? (`plan done` ends it)
-
-# hold every stop until a condition you set holds (no plan needed — see Hooks below)
-vendor/bin/commandments until "the full test suite passes"
-vendor/bin/commandments until met 1           # verified it — strike it off (`until list` shows them)
 ```
 
 Exit code is non-zero when sins are found.
@@ -131,7 +127,6 @@ Exit code is non-zero when sins are found.
 | `commandments plan status` | The handle on the ACTIVE PLAN marker the keep-going Stop hook reads — scoped to this worktree. |
 | `commandments constraints list` | The plan's architectural invariants — the rules the whole branch must still hold at the end. |
 | `commandments testing show` | The plan's testing methodology — the working style the user chose at approval, in force for this run. |
-| `commandments stop-condition "<condition>"` | The user's STOP GATE — record what must hold before you may stop, and every stop is held until you have VERIFIED it. Needs no plan and no config. |
 | `commandments session` | Where this session keeps its state — the folder holding its checklist, plan marker and stop gate. |
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
@@ -306,10 +301,9 @@ subagents, `config.toml`) but no hook events, so there is nothing to wire.
 That difference is worth being plain about, because it is the difference between a
 discipline that is **enforced** and one that is merely **written down**. Under Claude
 Code the rule you just broke is named on the edit that broke it, `judge` is nudged
-before risky commands and on stop, an approved plan is ground to completion, and a standing
-`until` condition holds every stop until it has been verified. Under any other agent
-all of that is still available — the skills, `AGENTS.md`, and `judge` / `repent` /
-`until` / `plan` as ordinary CLI verbs — but nothing checks that the agent used them.
+before risky commands and on stop, and an approved plan is ground to completion. Under any
+other agent all of that is still available — the skills, `AGENTS.md`, and `judge` /
+`repent` / `plan` as ordinary CLI verbs — but nothing checks that the agent used them.
 
 One further gap: session state is scoped by `CLAUDE_CODE_SESSION_ID`
 ([`Workspace`](src/Workspace.php)), so under another agent every run shares the
@@ -343,7 +337,6 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `PlanReminder` | `PostToolUse/ExitPlanMode, Stop` | On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Supervised/Autonomous/BestEffort/Relentless). |
 | `ConstraintReminder` | `SessionStart` | Re-surfaces the active plan's constraints after a compaction or resume. |
 | `TestingReminder` | `SessionStart` | Re-surfaces the active plan's testing methodology after a compaction or resume. |
-| `StopConditionReminder` | `Stop, UserPromptSubmit, PostToolUse` | Holds every stop while a `commandments stop-condition "<condition>"` gate stands (a plan takes precedence), and has you park a mid-work interjection as a condition instead of losing it. |
 | `SharedBranchGate` | `PreToolUse/Bash` | Refuses `git pull --rebase` while other worktrees stand on the branch — it rewrites the commits they are built on. |
 | `ModelChoiceReminder` | `PreToolUse/Agent` | Asks for an explicit model when an agent is dispatched without one, since an unnamed model inherits the dispatcher's. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
@@ -429,55 +422,6 @@ The completion gate verifying the declared constraints against the branch diff b
 <p align="center">
   <img src="docs/constraint-gate.svg" width="660" alt="The completion gate: composer test and judge --branch pass, then the agent reviews the branch diff against three declared constraints, confirms each, and plan done is allowed." />
 </p>
-
-### Stop conditions — `until`
-
-No plan required, no configuration: **you** decide, mid-session, that the agent may not
-stop yet. Say it in chat (`/until the full test suite passes`) or have the agent record
-it — either way it lands in the same gate:
-
-```bash
-vendor/bin/commandments until "the full test suite passes"   # set a condition
-vendor/bin/commandments until list                           # what's still standing
-vendor/bin/commandments until met 1                          # verified — strike it off
-vendor/bin/commandments until stuck                          # blocked: release ONE stop, keep the condition
-vendor/bin/commandments until pause                          # set the gate aside (conditions kept, nothing holds)
-vendor/bin/commandments until resume                         # put it back in force
-vendor/bin/commandments until clear                          # drop the gate
-```
-
-While any condition stands, a `Stop` hook holds every stop the agent attempts and sends it
-back in with the condition text, telling it to **verify** the condition for real rather than
-assume it. The gate lifts when the last condition is struck off. Conditions stack — one call
-each — and the whole gate is scoped to that session and worktree, so it never holds another
-session's stop.
-
-**Pausing is yours, not the agent's.** Want to do something else in between without being sent
-back to the conditions? `until pause` moves the whole gate aside (the marker becomes
-`.until.pause`): every condition is kept verbatim, but nothing holds a stop and the interjection
-nudge below goes quiet too. A pause means **nothing** holds: a condition recorded while the gate
-stands aside joins the paused ones and waits there too, so the next `until "…"` can never re-arm
-the gate behind your back — `until resume` is the one thing that puts them back in force (ids stay
-monotonic, so nothing is overwritten or double-listed). `clear` is still the only thing that throws
-conditions away.
-
-The `/until` slash command and the `commandments-until` skill are published into the project
-on `composer update`, so the agent knows the discipline: never `clear` a condition it simply
-hasn't met, and `until stuck` (not `clear`) when it genuinely needs you. Loop-safe — after 10
-held stops with no progress the gate releases itself and the agent reports back, and meeting a
-condition resets that count.
-
-**Interjections get parked here too.** When you speak while the agent is mid-work, a
-`UserPromptSubmit` hook puts a triage in front of it: *steering* the work in hand (a
-correction, "while you're in there…") is done now, but a **separate task** — or one you
-deferred ("later", "when you're done") — is parked as a condition and picked up at the end
-instead of derailing the phase or being lost. It fires only while work is actually in flight,
-so an ordinary conversation isn't taxed with it.
-
-**A plan takes precedence.** While a plan is active the gate stays silent — the plan's own
-keep-going hook owns the stop, and parked conditions don't burn their release cap during a long
-grind. They take over the moment `commandments plan done` clears the plan, which lists what is
-now holding you so the handover is never a surprise.
 
 ### Register your own hook
 

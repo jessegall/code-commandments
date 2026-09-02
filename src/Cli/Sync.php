@@ -53,6 +53,26 @@ final class Sync implements Command
         '!orchestrator/**',
     ];
 
+    /**
+     * Slash commands the package USED to publish into an agent's command folder, by file name. The stop
+     * gate they fired is gone; a copy left in a consumer would keep offering a verb the CLI no longer has.
+     *
+     * @var list<string>
+     */
+    private const array RETIRED_COMMANDS = ['until.md', 'stop-condition.md'];
+
+    /**
+     * The root `.gitignore` lines that once ignored those commands — the comment and the rule, each an
+     * exact line, so a rule the user wrote is never taken for one of ours.
+     *
+     * @var list<string>
+     */
+    private const array RETIRED_COMMANDS_IGNORED = [
+        '# code-commandments published slash commands (regenerated on composer update)',
+        '.claude/commands/until.md',
+        '.claude/commands/stop-condition.md',
+    ];
+
     public function names(): array
     {
         return ['sync'];
@@ -361,6 +381,7 @@ final class Sync implements Command
         $stale = [
             '.commandments/', '.commandments/*', '!.commandments/config.php', '!.commandments/repent.php',
             '.claude/skills/commandments/', '.claude/skills/commandments-*/',
+            ...self::RETIRED_COMMANDS_IGNORED,
         ];
         $existing = implode("\n", array_filter(
             explode("\n", $existing),
@@ -455,11 +476,17 @@ final class Sync implements Command
 
     /**
      * Publish the package's commands into an agent's command folder — the HUMAN's handle on the
-     * agent-facing verbs (currently `/until "<condition>"`). A skill teaches the agent; a command
+     * agent-facing verbs. A skill teaches the agent; a command
      * lets the user fire it in one line.
      */
     private function publishCommands(string $source, string $target): void
     {
+        // A command we no longer ship is removed by exact name: nothing else writes into an agent's
+        // command folder under that name, and a stale copy would keep offering a verb that is gone.
+        foreach (self::RETIRED_COMMANDS as $retired) {
+            @unlink("{$target}/{$retired}");
+        }
+
         foreach (glob("{$source}/*.md") ?: [] as $command) {
             @mkdir($target, 0775, true);
             File::write($target . '/' . basename($command), (string) file_get_contents($command));

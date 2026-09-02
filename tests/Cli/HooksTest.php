@@ -35,15 +35,16 @@ final class HooksTest extends TestCase
     {
         HookRegistry::wire($this->root);
 
-        // The builtins bind PostToolUse, Stop, PreToolUse, UserPromptSubmit and SessionStart — one entry each.
+        // The builtins bind PostToolUse, Stop, PreToolUse and SessionStart — one entry each.
         $this->assertSame(1, $this->dispatchers('PostToolUse'));
         $this->assertSame(1, $this->dispatchers('Stop'));
         $this->assertSame(1, $this->dispatchers('PreToolUse'));
-        $this->assertSame(1, $this->dispatchers('UserPromptSubmit'));
         $this->assertSame(1, $this->dispatchers('SessionStart'));
 
         // A moment nothing binds to is not wired at all. The wiring is DERIVED from the bindings, so a
-        // hook retired takes its moment with it rather than leaving a dispatcher nothing answers.
+        // hook retired takes its moment with it rather than leaving a dispatcher nothing answers —
+        // UserPromptSubmit went with the stop gate's interjection nudge.
+        $this->assertSame(0, $this->dispatchers('UserPromptSubmit'));
         $this->assertSame(0, $this->dispatchers('MessageDisplay'));
         $this->assertSame(0, $this->dispatchers('PreCompact'));
         $this->assertSame(0, $this->dispatchers('PostCompact'));
@@ -69,7 +70,7 @@ final class HooksTest extends TestCase
         HookRegistry::wire($this->root);
 
         $this->assertNotContains('php vendor/bin/commandments remind', $this->commands('UserPromptSubmit'), 'the stale pre-stamp remind is gone');
-        $this->assertSame(1, $this->dispatchers('UserPromptSubmit'), 'and the event now carries exactly one stamped dispatcher');
+        $this->assertSame(0, $this->dispatchers('UserPromptSubmit'), 'and nothing of ours is put back under it — no builtin binds there');
         $this->assertContains('my-own-hook', $this->commands('UserPromptSubmit'), "the human's own hook is untouched");
         $this->assertSame(1, $this->dispatchers('Stop'), 'the old per-class stamped entry is replaced by one dispatcher');
         $this->assertContains('keep-me-too', $this->commands('Stop'), 'a foreign hook under Stop is preserved');

@@ -58,11 +58,5 @@ phpcs.xml
 # code-commandments published skills (regenerated on composer update)
 .claude/skills/commandments-*
 
-# code-commandments published slash commands (regenerated on composer update)
-.claude/commands/until.md
-
-# code-commandments published slash commands (regenerated on composer update)
-.claude/commands/stop-condition.md
-
 # Worktrees a lane is opened in — checkouts of this repo, never content of it.
 .lanes/

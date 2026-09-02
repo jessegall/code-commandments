@@ -220,9 +220,7 @@ $disabledHooks = function (Config $config): void {
         // Hooks\Handlers\SharedBranchGate::class,
         // Hooks\Handlers\SkillReminder::class,
         // Hooks\Handlers\SourceReminder::class,
-        // Hooks\Handlers\StopConditionReminder::class,
         // Hooks\Handlers\TestingReminder::class,
-        // Hooks\Handlers\UntilReminder::class,
         // Hooks\Handlers\WorkerFinishedTrigger::class,
         // Hooks\Handlers\WorkingState::class,
     );

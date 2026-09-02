@@ -60,13 +60,13 @@ final class HelpTest extends TestCase
 
     public function test_a_command_page_shows_every_form_and_option(): void
     {
-        $until = $this->command('until');
-        $page = new HelpScreen($this->commands())->page($until);
+        $plan = $this->command('plan');
+        $page = new HelpScreen($this->commands())->page($plan);
 
-        // The regression that started this: `pause`/`resume` existed as subcommands but no help
-        // mentioned them, because the screen was hand-maintained.
-        $this->assertStringContainsString('stop-condition pause', $page);
-        $this->assertStringContainsString('stop-condition resume', $page);
+        // The regression that started this: subcommands existed that no help mentioned, because
+        // the screen was hand-maintained. Every declared form is on the page.
+        $this->assertStringContainsString('plan stuck', $page);
+        $this->assertStringContainsString('plan status', $page);
 
         $judge = new HelpScreen($this->commands())->page($this->command('judge'));
 
@@ -78,16 +78,16 @@ final class HelpTest extends TestCase
     public function test_asking_for_help_prints_the_overview_or_one_page(): void
     {
         $this->assertStringContainsString('Usage:', $this->render(['commandments', '--help']));
-        $this->assertStringContainsString('commandments stop-condition', $this->render(['commandments', 'help', 'until']));
+        $this->assertStringContainsString('commandments plan done', $this->render(['commandments', 'help', 'plan']));
         $this->assertStringContainsString('commandments layers add', $this->render(['commandments', 'layers', '--help']));
     }
 
     public function test_a_usage_error_prints_the_same_page_on_stderr(): void
     {
-        $command = $this->command('until');
+        $command = $this->command('plan');
 
         ob_start();
-        $exit = HelpScreen::usage($command, 'Name the condition.');
+        $exit = HelpScreen::usage($command, 'Name the subcommand.');
         ob_end_clean();
 
         $this->assertSame(2, $exit, 'a usage error exits 2');
@@ -95,9 +95,9 @@ final class HelpTest extends TestCase
 
     public function test_the_markdown_table_projects_the_same_forms(): void
     {
-        $table = CommandTable::forVerbs('until');
+        $table = CommandTable::forVerbs('plan');
 
-        foreach ($this->command('until')->help()->forms as $form) {
+        foreach ($this->command('plan')->help()->forms as $form) {
             $this->assertStringContainsString('commandments ' . $form->syntax, $table);
         }
 
@@ -106,12 +106,12 @@ final class HelpTest extends TestCase
 
     public function test_a_document_block_is_filled_from_the_live_cli(): void
     {
-        $document = "# Doc\n\n<!-- BEGIN: commands:stop-condition (auto-generated, run `composer sins`) -->\nstale\n<!-- END: commands:stop-condition -->\n";
+        $document = "# Doc\n\n<!-- BEGIN: commands:plan (auto-generated, run `composer sins`) -->\nstale\n<!-- END: commands:plan -->\n";
 
         $refreshed = CommandBlocks::refresh($document);
 
         $this->assertStringNotContainsString('stale', $refreshed);
-        $this->assertStringContainsString('commandments stop-condition met <n>', $refreshed);
+        $this->assertStringContainsString('commandments plan done', $refreshed);
         $this->assertSame($refreshed, CommandBlocks::refresh($refreshed), 'refreshing twice must be a no-op');
     }
 

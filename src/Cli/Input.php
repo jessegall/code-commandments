@@ -189,17 +189,6 @@ final class Input
     }
 
     /**
-     * A POSITIONAL given as a comma-list (`stop-condition blocked 2,5,7`) — the positional twin of
-     * {@see list}, so a command reads either shape the same way.
-     *
-     * @return list<string>
-     */
-    public function listArgument(int $index): array
-    {
-        return self::commas($this->argument($index));
-    }
-
-    /**
      * A comma-list value, split and emptied of blanks — absent is simply the empty list.
      *
      * @param  Option<string>  $value

@@ -12,7 +12,7 @@ use JesseGall\CodeCommandments\Support\GeneratedBlock;
  * teaches a command declares WHERE its reference goes, naming the verbs it covers
  * (`<!-- BEGIN: commands:plan,checks … -->`, or `commands:all` for the whole surface), and the
  * generator writes WHAT it says from each command's own {@see \JesseGall\CodeCommandments\Cli\Help\Help}.
- * So a skill can never drift from the CLI it teaches: adding `stop-condition pause` puts it in the skill.
+ * So a skill can never drift from the CLI it teaches: adding `plan stuck` puts it in the skill.
  */
 final class CommandBlocks
 {

@@ -9,16 +9,15 @@ use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 use JesseGall\CodeCommandments\Cli\Migration;
 use JesseGall\CodeCommandments\Cli\State\StateFile;
-use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionGate;
 use JesseGall\CodeCommandments\PlanExecution;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Upgrading a project must not throw away what the USER asked for. The old layout put one concern per
- * file — a gate, its paused twin, its claim, its counts — and the new one puts each feature's whole
- * state in a single named file; the conditions of a stop gate and a plan's constraints are carried
- * across, and only the hook heartbeats are dropped.
+ * file — a plan, its stuck signal, its constraints, their stamp — and the new one puts each feature's
+ * whole state in a single named file; a plan's constraints are carried across, and only the hook
+ * heartbeats and the files of a feature that no longer exists are dropped.
  */
 final class StateMigrationTest extends TestCase
 {
@@ -51,60 +50,17 @@ final class StateMigrationTest extends TestCase
         return new Migration(Workspace::at($this->root, 'a-session'))->run();
     }
 
-    private function gate(): StopConditionGate
+    public function test_the_files_of_the_removed_stop_gate_are_deleted(): void
     {
-        return new StopConditionGate(new StateFile($this->session . '/.until', StopConditionGate::legend()));
-    }
-
-    public function test_a_gates_conditions_counts_and_claim_become_one_file(): void
-    {
-        $this->legacy('.until', '4', '0', '7', "3\tthe suite is green", "7\tthe changelog has an entry");
+        // The stop gate is gone — deferred work lives in the journal now — so nothing reads these, and
+        // every shape the gate ever wrote (live, paused, claim, counters) goes rather than lingering.
+        $this->legacy('.until', '4', '0', '7', "3\tthe suite is green");
+        $this->legacy('.until.pause', '0', '0', '2', "1\ttests pass");
         $this->legacy('.until.claim', '1', 'the user must choose');
-        $this->legacy('.until-todo-drift-count', '12');
         $this->legacy('.until-work-count', '5');
 
-        $this->migrate();
-
-        $gate = $this->gate();
-        $this->assertSame([3 => 'the suite is green', 7 => 'the changelog has an entry'], $gate->all());
-        $this->assertSame(4, $gate->heldStops(), 'the held-stop count carries over');
-        $this->assertSame(1, $gate->claimRound(), 'and so does a half-answered claim');
-        $this->assertFileDoesNotExist($this->session . '/.until.claim');
-        $this->assertFileDoesNotExist($this->session . '/.until-work-count');
-    }
-
-    public function test_a_paused_gate_becomes_a_flag_over_the_same_conditions(): void
-    {
-        $this->legacy('.until.pause', '0', '0', '2', "1\ttests pass", "2\tthe docs build");
-
-        $this->migrate();
-
-        $this->assertTrue($this->gate()->isPaused());
-        $this->assertSame([1 => 'tests pass', 2 => 'the docs build'], $this->gate()->pausedConditions());
-        $this->assertSame([], $this->gate()->all(), 'and it still holds nothing');
-        $this->assertFileDoesNotExist($this->session . '/.until.pause');
-    }
-
-    public function test_a_split_gate_from_an_older_session_keeps_both_sides(): void
-    {
-        // #403/#418 left some sessions with a live AND a paused marker. The live one wins — but the
-        // set-aside conditions are the user's too, so they are folded in rather than dropped.
-        $this->legacy('.until', '0', '0', '1', "1\tlive one");
-        $this->legacy('.until.pause', '0', '0', '1', "1\tset aside");
-
-        $this->migrate();
-
-        $this->assertSame([1 => 'live one', 2 => 'set aside'], $this->gate()->all());
-        $this->assertFalse($this->gate()->isPaused());
-    }
-
-    public function test_a_pre_stable_ids_gate_reads_back_with_positional_ids(): void
-    {
-        $this->legacy('.until', '0', '0', 'tests pass', 'readme updated');
-
-        $this->migrate();
-
-        $this->assertSame([1 => 'tests pass', 2 => 'readme updated'], $this->gate()->all());
+        $this->assertSame(['4 stop-gate file(s) removed'], $this->migrate());
+        $this->assertCount(0, glob($this->session . '/.until*') ?: [], 'nothing of the gate is left');
     }
 
     public function test_the_plan_marker_absorbs_its_separate_stuck_signal(): void
@@ -189,14 +145,15 @@ final class StateMigrationTest extends TestCase
 
     public function test_it_runs_once_and_leaves_a_converted_project_alone(): void
     {
-        $this->legacy('.until', '0', '0', '1', "1\ttests pass");
+        $this->legacy('.plan-active', 'abc123', '2', '9');
         $this->migrate();
 
-        $this->gate()->add('a condition set after the upgrade');
-        $before = (string) file_get_contents($this->session . '/.until');
+        $marker = new PlanMarker(new StateFile($this->session . '/.plan-active', PlanMarker::legend()));
+        $marker->activate('def456');
+        $before = (string) file_get_contents($this->session . '/.plan-active');
 
         $this->assertSame([], $this->migrate(), 'the project is stamped, so there is nothing to do');
-        $this->assertSame($before, (string) file_get_contents($this->session . '/.until'));
+        $this->assertSame($before, (string) file_get_contents($this->session . '/.plan-active'));
     }
 
     public function test_a_project_with_no_state_at_all_is_simply_stamped(): void

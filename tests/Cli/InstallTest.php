@@ -77,7 +77,7 @@ final class InstallTest extends TestCase
         $this->assertTrue($this->hasDispatcher($settings['hooks']['PostToolUse'] ?? []), 'our hook dispatcher is wired under PostToolUse');
     }
 
-    public function test_it_migrates_our_old_user_prompt_submit_remind_to_post_tool_use(): void
+    public function test_it_strips_our_old_user_prompt_submit_remind_and_wires_post_tool_use(): void
     {
         $this->settings([
             'hooks' => [
@@ -92,7 +92,7 @@ final class InstallTest extends TestCase
         $commands = array_column(array_merge(...array_column($settings['hooks']['UserPromptSubmit'] ?? [], 'hooks')), 'command');
 
         $this->assertNotContains('php vendor/bin/commandments remind', $commands, 'the old per-command remind is gone');
-        $this->assertTrue($this->hasDispatcher($settings['hooks']['UserPromptSubmit'] ?? []), 'the event now carries the dispatcher instead');
+        $this->assertArrayNotHasKey('UserPromptSubmit', $settings['hooks'], 'and the event, emptied, is not left behind — no builtin binds there');
         $this->assertTrue($this->hasDispatcher($settings['hooks']['PostToolUse'] ?? []), 'the dispatcher is wired under PostToolUse');
     }
 

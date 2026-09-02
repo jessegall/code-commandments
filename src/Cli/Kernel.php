@@ -16,7 +16,6 @@ use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 use JesseGall\CodeCommandments\Cli\Plan\PlanCommand;
 use JesseGall\CodeCommandments\Cli\Plan\ConstraintsCommand;
 use JesseGall\CodeCommandments\Cli\Plan\TestingCommand;
-use JesseGall\CodeCommandments\Cli\StopCondition\StopConditionCommand;
 use JesseGall\CodeCommandments\Cli\Task\TaskCommand;
 use JesseGall\CodeCommandments\Cli\Plan\Checks;
 use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
@@ -141,7 +140,6 @@ final class Kernel
             new PlanCommand(),
             new ConstraintsCommand(),
             new TestingCommand(),
-            new StopConditionCommand(),
             new SessionCommand(),
             new TaskCommand(),
             new HookDispatch(),
