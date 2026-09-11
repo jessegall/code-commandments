@@ -148,6 +148,27 @@ final class HooksTest extends TestCase
         exec('rm -rf ' . escapeshellarg($dir));
     }
 
+    public function test_a_registered_hook_nobody_can_load_is_skipped_and_named_rather_than_fatal(): void
+    {
+        // A hook class the autoloader cannot find reached `new` and took the run down as a fatal — under
+        // `sync`, AFTER the briefing and the skills had already been rewritten (#531). It is one hook
+        // missing, reported once, and the rest still wires.
+        @mkdir("{$this->root}/.commandments", 0777, true);
+        $fake = FakeHook::class;
+        file_put_contents(
+            "{$this->root}/.commandments/config.php",
+            "<?php return function (\$config) { \$config->hook('{$fake}', 'App\\\\Hooks\\\\Vanished'); };",
+        );
+
+        $hooks = HookRegistry::forProject($this->root);
+
+        $this->assertContains($fake, $hooks, 'the loadable consumer hook stays');
+        $this->assertNotContains('App\\Hooks\\Vanished', $hooks, 'the one nobody can load is dropped');
+
+        HookRegistry::wire($this->root);
+        $this->assertSame(1, $this->dispatchers('Notification'), 'and wiring still completes');
+    }
+
     /** @param array<string, mixed> $settings */
     private function write(array $settings): void
     {

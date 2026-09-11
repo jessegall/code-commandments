@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Config;
 
 use JesseGall\CodeCommandments\Workspace;
 
-use Composer\InstalledVersions;
+use JesseGall\CodeCommandments\Support\InstalledPackage;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detectors\Catalog as DetectorCatalog;
 use JesseGall\CodeCommandments\Packages\Catalog as PackageCatalog;
@@ -52,7 +52,7 @@ final class ConfigCommand implements Command
         $roots = $config->sourceRoots() !== [] ? $config->sourceRoots() : new SourceRoots()->detect($root);
         $file = Workspace::config($root);
 
-        echo "\n  \033[1mcode-commandments\033[0m  " . $this->version() . "\n\n";
+        echo "\n  \033[1mcode-commandments\033[0m  " . InstalledPackage::versionOf(InstalledPackage::OURS) . "\n\n";
 
         $this->row('Config', is_file($file) ? '.commandments/config.php' : '.commandments/config.php (not yet written)');
         $this->row('Source roots', implode(', ', $roots));
@@ -82,15 +82,6 @@ final class ConfigCommand implements Command
     private function row(string $label, string $value): void
     {
         echo "  \033[36m" . str_pad($label . ' ', 22, '.') . "\033[0m {$value}\n";
-    }
-
-    private function version(): string
-    {
-        if (class_exists(InstalledVersions::class) && InstalledVersions::isInstalled('jessegall/code-commandments')) {
-            return (string) InstalledVersions::getPrettyVersion('jessegall/code-commandments');
-        }
-
-        return 'dev';
     }
 
     private function usage(string $subcommand): int

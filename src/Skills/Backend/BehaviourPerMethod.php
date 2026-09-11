@@ -25,7 +25,7 @@ final class BehaviourPerMethod extends Skill
 
     public function trigger(): string
     {
-        return "A parameter that selects WHICH behaviour runs rather than feeding one. When a method's whole body is `if (\$flag) { … } else { … }`, it is two methods sharing a name, and every call site reads `render(\$order, true)` — a truth value that says nothing about what it asked for. Split it into two named methods and let the caller say which it wants. Read this before adding a `bool` parameter, before writing a method whose body is one branch on a parameter, and when a call site passes a bare `true`/`false` literal.";
+        return "A parameter that selects WHICH behaviour runs rather than feeding one. When a method's whole body is `if (\$flag) { … } else { … }`, it is two methods sharing a name, and every call site reads `render(\$order, true)` — a truth value that says nothing about what it asked for. Split it into two named methods and let the caller say which it wants. Read this before adding a `bool` parameter, before widening a required parameter to `?T = null` so that leaving it out means 'all of them', before writing a method whose body is one branch on a parameter, and when a call site passes a bare `true`/`false` literal.";
     }
 
     public function intro(): string
@@ -65,6 +65,17 @@ So: **name the two behaviours.** `render($order, true)` becomes `renderCompact($
 and `renderFull($order)`. The shared middle, if there is any, becomes a private method
 they both call — which is the honest structure, and was invisible before.
 
+### The disguise: a nullable that means "all of them"
+
+The flag does not have to be a `bool`. The commonest form it takes in a growing codebase
+is a REQUIRED parameter widened to nullable so that leaving it out asks a different
+question: `attributes(string $kind)` becomes `attributes(?string $kind = null)`, and now
+`attributes(Slot::class)` means "the ones of this kind" while `attributes()` means
+"every one it carries". That is two questions behind one name, selected by an ABSENCE at
+the call site — which says even less than a bare `true`, because nothing is written there
+at all. It arrives disguised as an additive, backward-compatible change, which is why it
+passes review. The fix is the same: `attributesOfKind(string $kind)` and `attributes()`.
+
 ### What is NOT this sin
 
 - **A flag that is DATA the method stores or forwards.** `setVisible(bool $visible)`,
@@ -83,7 +94,8 @@ they both call — which is the honest structure, and was invisible before.
 ### The tell
 
 The method's entire body is `if ($flag) { … } else { … }`, or a `match ($flag)` with a
-`true` arm and a `false` arm. Ask what you would call each half on its own. If both
+`true` arm and a `false` arm — or `if ($kind === null) { … } else { … }` on a parameter
+that used to be required. Ask what you would call each half on its own. If both
 halves have an obvious name, they are already two methods — give them their names.
 PRINCIPLE;
     }

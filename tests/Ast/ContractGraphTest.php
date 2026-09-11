@@ -40,6 +40,18 @@ final class ContractGraphTest extends TestCase
         $this->assertFalse($codebase->implements('App\Loose', 'App\Bedrock'));
     }
 
+    public function test_a_node_answers_for_the_contract_of_the_class_it_belongs_to(): void
+    {
+        // The per-node twin (#560): a detector rejecting classes marked by an interface asks the match,
+        // never reads `$node->node->implements` and the resolved name by hand.
+        $codebase = Codebase::fromString(self::CODE);
+        $named = static fn (string $name): NodeMatch => $codebase->whereClass()->where(fn (NodeMatch $n) => $n->enclosingClassName() === $name)->first();
+
+        $this->assertTrue($named('App\Mount')->implementsInterface('App\Bedrock'), 'through the intermediate contract');
+        $this->assertTrue($named('App\Child')->implementsInterface('\App\Named'), 'through the parent, leading slash or not');
+        $this->assertFalse($named('App\Loose')->implementsInterface('App\Named'));
+    }
+
     public function test_an_inherited_contract_still_answers(): void
     {
         $codebase = Codebase::fromString(self::CODE);

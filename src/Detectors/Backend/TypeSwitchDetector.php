@@ -16,7 +16,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * knowledge that belongs to each type ends up outside all of them, and every new type means finding
  * every ladder again; the interface, by contrast, cannot be forgotten. Spelling is irrelevant
  * ({@see AstNode::isTypeSwitchHead}) — a ladder, sequential `if`s and a `match (true)` are one sin,
- * while a single test is narrowing and a union in ONE condition asks one question.
+ * while a single test is narrowing and a union in ONE condition asks one question. A switch whose
+ * every arm TRANSLATES the subject into another type is a mapper, not a question
+ * ({@see AstNode::typeSwitchTranslatesEveryArm}) — the owner of the wire shapes is the right home.
  */
 final class TypeSwitchDetector implements Detector
 {
@@ -31,6 +33,7 @@ final class TypeSwitchDetector implements Detector
             ->where(static fn (AstNode $node): bool => $node->isTypeSwitchHead())
             ->where(fn (AstNode $node) => $this->everyTypeIsOwned($node, $codebase))
             ->reject(static fn (AstNode $node): bool => $node->isInFromSourceFactory())
+            ->reject(static fn (AstNode $node): bool => $node->typeSwitchTranslatesEveryArm())
             ->get();
     }
 

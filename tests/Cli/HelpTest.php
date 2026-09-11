@@ -139,6 +139,25 @@ final class HelpTest extends TestCase
         $this->fail("no command answers to `{$verb}`");
     }
 
+    public function test_a_bare_flag_nobody_declared_is_refused_without_naming_the_default_verb(): void
+    {
+        // `judge` is both the default verb and the most expensive one, so a typo aimed at the tool must
+        // never be handed to it — a flag judge happens to accept would have started a scan.
+        ob_start();
+        $exit = new Kernel()->run(['commandments', '--bogus']);
+        ob_end_clean();
+
+        $this->assertSame(2, $exit);
+    }
+
+    public function test_version_is_answered_at_the_top_level(): void
+    {
+        $out = $this->render(['commandments', '--version']);
+
+        $this->assertStringStartsWith('code-commandments ', $out);
+        $this->assertStringNotContainsString('judge', $out);
+    }
+
     /**
      * Run the Kernel and capture what it printed.
      *

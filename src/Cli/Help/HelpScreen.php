@@ -37,6 +37,7 @@ final class HelpScreen
     private const array GLOBAL_OPTIONS = [
         '--help, -h' => 'show this help — or, after a verb, that command\'s own usage',
         '--memory=LIMIT' => 'memory ceiling for the run (default: 2G; -1 for no limit)',
+        '--version' => 'print the installed version of code-commandments',
     ];
 
     /**

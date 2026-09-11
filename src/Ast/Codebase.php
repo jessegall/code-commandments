@@ -808,6 +808,14 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
                 return true;
             }
 
+            // The chain has left the tree: an in-tree base extending a vendor class (`AuthoringTool
+            // extends Laravel\Mcp\Server\Tool`). The parsed graph has nothing more to say, but the
+            // vendor class is autoloadable, and reflection answers for it — otherwise a method the
+            // framework declares reads as chosen here, and every override of it is a fresh name to judge.
+            if (! isset($this->declarationMap()[$ancestor]) && (class_exists($ancestor) || interface_exists($ancestor)) && method_exists($ancestor, $method)) {
+                return true;
+            }
+
             if ($this->ancestorDeclares($ancestor, $method, $seen)) {
                 return true;
             }

@@ -16,7 +16,8 @@ use JesseGall\CodeCommandments\Ast\NodeMatch;
  * many places: hoist it to a shared method, trait, or base and call it once.
  * Trivial declarations (tiny getters, empty stubs) are below the size floor; a
  * resolve-or-throw guard accessor (a language idiom, not shared logic), a sole
- * `return <expr>;` descriptor/delegate (no procedure to hoist), and a `@deprecated`
+ * `return <expr>;` descriptor/delegate (no procedure to hoist), a named constructor seeding its
+ * own class (`new self` binds per class, like `__construct`), and a `@deprecated`
  * declaration (a frozen snapshot you never refactor toward) are excluded, so incidental
  * likeness across independent classes isn't flagged. Points at fix-at-the-source.
  */
@@ -39,6 +40,7 @@ final class DuplicateFunctionDetector extends RecurringPattern
             ->whereMethodDeclaration()
             ->where(static fn (NodeMatch $match): bool => $match->bodyNodeCount() >= self::MIN_BODY_NODES)
             ->reject(static fn (NodeMatch $match): bool => $match->isGuardedAccessor())
+            ->reject(static fn (NodeMatch $match): bool => $match->isSelfSeedingFactory())
             ->reject(static fn (NodeMatch $match): bool => $match->isSoleReturnExpression())
             ->reject(static fn (NodeMatch $match): bool => $match->isDeprecated())
             ->get();

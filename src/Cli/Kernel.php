@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Cli\Hints\Hints;
 use JesseGall\PhpTypes\Option;
 use JesseGall\CodeCommandments\InvalidConfiguration;
+use JesseGall\CodeCommandments\Support\InstalledPackage;
 
 use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Hooks\HookRunner;
@@ -60,6 +61,12 @@ final class Kernel
             return $this->help(Option::fromTruthy($named));
         }
 
+        if ($named === '' && $input->hasFlag('version')) {
+            echo 'code-commandments ' . InstalledPackage::versionOf(InstalledPackage::OURS) . "\n";
+
+            return 0;
+        }
+
         $command = $named === '' ? 'judge' : $named;
         $handler = $this->registry[$command] ?? null;
 
@@ -70,6 +77,15 @@ final class Kernel
         }
 
         $unknown = array_values(array_diff($input->given(), $handler->help()->optionNames()));
+
+        if ($unknown !== [] && $named === '') {
+            // A bare flag nobody declared was aimed at the TOOL, not at the default verb — and the default
+            // verb is the most expensive one. Naming `judge` here would put a scan the user never asked
+            // for into the transcript, and a flag judge happens to accept would have started one.
+            fwrite(STDERR, "Unknown option --{$unknown[0]}. Try: commandments --help\n");
+
+            return 2;
+        }
 
         if ($unknown !== []) {
             // A flag nobody declared is a wrong answer that reads exactly like a right one: the command

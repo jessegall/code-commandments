@@ -41,7 +41,7 @@ final class LookupEnvy
     /**
      * @param  array<string, true>  $ownedClasses
      */
-    private function __construct(private readonly array $ownedClasses) {}
+    private function __construct(private readonly Codebase $codebase, private readonly array $ownedClasses) {}
 
     /**
      * Index the keyed stores each class owns — a whole-tree walk, so it is built ONCE per codebase
@@ -62,7 +62,7 @@ final class LookupEnvy
             }
         }
 
-        return new self($owned);
+        return new self($codebase, $owned);
     }
 
     /**
@@ -92,18 +92,18 @@ final class LookupEnvy
         $host = ($class->namespacedName ?? null)?->toString() ?? '';
         $param = $this->soleOwnedParam($method, $host);
 
-        if ($param === null || ! $this->usedOnlyViaMembers($method, $param['name'])) {
+        if ($param === null || ! $this->usedOnlyViaMembers($method, $param->name)) {
             return null;
         }
 
-        return $this->returnsAKeyedFetch($method, $param['name']) ? $param['type'] : null;
+        return $this->returnsAKeyedFetch($method, $param) ? $param->type : null;
     }
 
     /**
      * A non-`$this` member access (`$x->m()` / `$x->p`) whose receiver expression
      * roots in `$this` and whose result is read — keyed by the param's member.
      */
-    private function returnsAKeyedFetch(ClassMethod $method, string $param): bool
+    private function returnsAKeyedFetch(ClassMethod $method, OwnedParam $param): bool
     {
         $finder = new NodeFinder;
 
@@ -122,7 +122,7 @@ final class LookupEnvy
         return false;
     }
 
-    private function isKeyedFetchRead(Node $node, string $param): bool
+    private function isKeyedFetchRead(Node $node, OwnedParam $param): bool
     {
         // $node reads a result: it's a member access whose receiver is a call.
         if (! $this->isMemberAccess($node)) {
@@ -139,15 +139,44 @@ final class LookupEnvy
         // (`$this->registry->get($node->key)`). A chain of the host's OWN methods
         // (`$this->find($ref->nodeId)->…`) is NOT envy — the method already lives on the owner of
         // the data it keys into, tell-dont-ask's prescribed home (#348).
+        // Keyed by the object's IDENTITY, not by a closed set it belongs to: `$store->get($agent->provider)`
+        // where `provider` is an ENUM selects the strategy for a whole family of objects — two agents on
+        // one provider resolve the same entry — which is dispatch on a scalar field, tell-dont-ask's own
+        // exception, not the object's data being fetched from outside it (#568, #573).
         return $this->onCollaborator($producer)
-            && $this->anyArgUsesParamMember($producer->args, $param)
+            && $this->anyArgUsesParamMember($producer->args, $param->name)
+            && ! $this->everyKeyIsAnEnumField($producer->args, $param)
             && $this->navigationDepth($node) <= self::MAX_DEPTH;
     }
 
     /**
-     * @return array{name: string, type: string}|null
+     * Is every member of $param the arguments read a property whose declared type is an enum?
+     *
+     * @param  array<Node\Arg|Node\VariadicPlaceholder>  $args
      */
-    private function soleOwnedParam(ClassMethod $method, string $host): ?array
+    private function everyKeyIsAnEnumField(array $args, OwnedParam $param): bool
+    {
+        $resolver = TypeResolver::forCodebase($this->codebase);
+        $keys = [];
+
+        foreach ($args as $arg) {
+            if (! $arg instanceof Arg) {
+                continue;
+            }
+
+            foreach ((new NodeFinder)->find([$arg->value], static fn (Node $node) => true) as $node) {
+                if ($this->isMemberAccess($node) && $node->var instanceof Variable && $node->var->name === $param->name) {
+                    $keys[] = $node;
+                }
+            }
+        }
+
+        return $keys !== [] && array_all($keys, fn (Node $key): bool => $key instanceof PropertyFetch
+            && $key->name instanceof Identifier
+            && $this->codebase->isEnum($resolver->propertyTypeOf($param->type, $key->name->toString())));
+    }
+
+    private function soleOwnedParam(ClassMethod $method, string $host): ?OwnedParam
     {
         $found = null;
 
@@ -162,7 +191,7 @@ final class LookupEnvy
                 return null; // two owned params — not a single-subject lookup
             }
 
-            $found = ['name' => $param->var->name, 'type' => $type];
+            $found = new OwnedParam($param->var->name, $type);
         }
 
         return $found;

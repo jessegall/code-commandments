@@ -243,16 +243,19 @@ final class FeatureEnvy
     }
 
     /**
-     * In a `foreach ($param->coll as $el)`, is each element $el handed to one of
-     * THIS object's own collaborators — `$this->collaborator($el, …)` — rather than
-     * worked on through its own data? That is orchestration (the owner of the loop
-     * does its job over the collection), not envy. A call to the enclosing method
-     * itself (recursion) is excluded: that genuinely belongs on the owner.
+     * In a `foreach ($param->coll as $el)`, is each element $el brought together with one of THIS
+     * method's own collaborators — handed to `$this->collaborator($el, …)`, or joined in one call with
+     * another parameter (`$el::register($events)`, `$events->listen($el)`) — rather than worked on
+     * through its own data? That is orchestration (the owner of the loop does its job over the
+     * collection, between two objects), not envy: moving the loop onto the owner would invert the
+     * dependency (#557). A call to the enclosing method itself (recursion) is excluded: that genuinely
+     * belongs on the owner.
      */
     private function delegatesElementToCollaborator(ClassMethod $method, string $param): bool
     {
         $self = $method->name->toString();
         $finder = new NodeFinder;
+        $collaborators = array_diff(array_keys($this->allParamTypes($method)), [$param]);
 
         foreach ($finder->findInstanceOf($method->stmts, Foreach_::class) as $loop) {
             if (! $this->isMemberAccessOf($loop->expr, $param)) {
@@ -265,21 +268,53 @@ final class FeatureEnvy
                 continue;
             }
 
-            foreach ($finder->findInstanceOf($loop->stmts, MethodCall::class) as $call) {
-                if (! $call->var instanceof Variable || $call->var->name !== 'this'
-                    || ! $call->name instanceof Identifier || $call->name->toString() === $self) {
+            foreach ($finder->find($loop->stmts, static fn (Node $n): bool => $n instanceof MethodCall || $n instanceof StaticCall) as $call) {
+                if ($call->name instanceof Identifier && $call->name->toString() === $self && $call instanceof MethodCall && AstNode::isThis($call->var)) {
                     continue;
                 }
 
-                foreach ($finder->findInstanceOf($call->args, Variable::class) as $arg) {
-                    if ($arg->name === $element->name) {
-                        return true;
-                    }
+                $involved = $this->variablesInCall($call);
+
+                if (! in_array($element->name, $involved, true)) {
+                    continue;
+                }
+
+                if (in_array('this', $involved, true) || array_intersect($collaborators, $involved) !== []) {
+                    return true;
                 }
             }
         }
 
         return false;
+    }
+
+    /**
+     * The variables a call brings together — its receiver (a variable, or `$this` under a property
+     * chain), the class a static call is made on when that is a variable, and every variable named
+     * anywhere in its arguments (`'  - ' . $error` hands `$error` over as much as `$error` does).
+     *
+     * @return list<string>
+     */
+    private function variablesInCall(MethodCall|StaticCall $call): array
+    {
+        $names = [];
+        $receiver = $call instanceof MethodCall ? $call->var : $call->class;
+
+        while ($receiver instanceof PropertyFetch) {
+            $receiver = $receiver->var;
+        }
+
+        if ($receiver instanceof Variable && is_string($receiver->name)) {
+            $names[] = $receiver->name;
+        }
+
+        foreach ((new NodeFinder)->findInstanceOf($call->args, Variable::class) as $variable) {
+            if (is_string($variable->name)) {
+                $names[] = $variable->name;
+            }
+        }
+
+        return $names;
     }
 
     /**

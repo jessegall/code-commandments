@@ -77,8 +77,9 @@ final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetecto
 
             // A constructor is not a near-duplicate: its fix would be one shared method, but two DIFFERENT
             // classes can't share a constructor — each declares its own (assign params, forward to parent),
-            // so a similar `__construct` is expected structure, not a redundant algorithm.
-            if ($match->isConstructorDeclaration()) {
+            // so a similar `__construct` is expected structure, not a redundant algorithm. A named
+            // constructor that seeds its own class (`$x = new self; $x->…= …; return $x;`) is the same case.
+            if ($match->isConstructorDeclaration() || $match->isSelfSeedingFactory()) {
                 continue;
             }
 

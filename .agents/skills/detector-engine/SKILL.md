@@ -32,8 +32,10 @@ never inline AST poking in the detector, never a name/suffix list.
 2. **`Codebase`** — whole-program queries that need the class graph. Selectors
    (`whereMethod`, `whereNew`, `whereClass`, `whereClassExtending`,
    `whereMethodDeclaration`, `whereStaticCall`, `whereFunction`, `whereParamType`,
-   `whereComment`, `whereAttribute`, and bare `where(\Closure)`), plus `extends()`
-   and the lazy `index()` (call graph).
+   `whereComment`, `whereAttribute`, and bare `where(\Closure)`), plus `extends()`,
+   `implements()` (the WHOLE contract graph — parent chain and interface-extends)
+   and the lazy `index()` (call graph). A `NodeMatch` asks the graph for its own
+   class: `$n->implementsInterface($fqcn)`, `$n->nameIsInherited()`.
 3. **`src/Ast/Support/`** — a framework/cross-cutting concept used by **≥2**
    detectors (e.g. `ReceiverResolver`, `ChainResolver`). Rule-specific composition and
    domain constants stay **in the detector**.

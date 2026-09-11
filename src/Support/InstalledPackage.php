@@ -14,6 +14,24 @@ use Composer\InstalledVersions;
 final class InstalledPackage
 {
     /**
+     * This package, as composer names it — for the surfaces that report their own version.
+     */
+    public const string OURS = 'jessegall/code-commandments';
+
+    /**
+     * The installed version of $package as composer prints it, or `dev` when it is not installed
+     * through composer at all — a checkout running its own `bin/`.
+     */
+    public static function versionOf(string $package): string
+    {
+        if (! class_exists(InstalledVersions::class) || ! InstalledVersions::isInstalled($package)) {
+            return 'dev';
+        }
+
+        return (string) InstalledVersions::getPrettyVersion($package);
+    }
+
+    /**
      * WHICH build of $package is installed — its version and the exact commit under it, so a project
      * on `dev-main` is told apart from the same branch a day later. Null when the package is absent.
      */

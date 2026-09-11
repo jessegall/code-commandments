@@ -89,7 +89,7 @@ final class SkillReminder extends Hook implements Discipline
             $sins = array_merge_recursive($sins, $this->sinsIn($file, Languages::from($config), $single));
         }
 
-        return $sins === [] ? $this->pass() : $this->inject($event, $this->nudge($files, $sins));
+        return $sins === [] ? $this->pass() : $this->inject($event, $this->nudge($event, $files, $sins));
     }
 
     /**
@@ -200,14 +200,33 @@ final class SkillReminder extends Hook implements Discipline
     }
 
     /**
+     * What is being judged, said as what is KNOWN. An edit tool names the file it wrote. A shell
+     * command does not: it is judged on the files that changed since the last check, and a read — a
+     * `git log`, a status — claims a merge somebody else landed. Saying "what you just wrote" there
+     * names an author the reader may not be, which is what teaches a reader to discount the check.
+     *
+     * @param  list<string>  $files
+     */
+    private function attribution(HookEvent $event, array $files): string
+    {
+        $named = implode('`, `', array_map(basename(...), $files));
+
+        if ($event->tool() !== 'Bash') {
+            return 'the edit you just made to `' . $named . '`';
+        }
+
+        return count($files) === 1
+            ? '`' . $named . '`, changed since the last check,'
+            : 'the files changed since the last check (`' . $named . '`)';
+    }
+
+    /**
      * @param  list<string>  $files
      * @param  array<string, list<string>>  $sins
      */
-    private function nudge(array $files, array $sins): string
+    private function nudge(HookEvent $event, array $files, array $sins): string
     {
-        $edit = count($files) === 1 ? 'the edit you just made to `' . basename($files[0]) . '`' : 'what you just wrote';
-
-        $lines = ['Code Commandments — ' . $edit . ' breaks a rule. '
+        $lines = ['Code Commandments — ' . $this->attribution($event, $files) . ' breaks a rule. '
             . 'Fix it now, at its SOURCE, while the code is still in front of you:'];
 
         foreach ($sins as $slug => $found) {

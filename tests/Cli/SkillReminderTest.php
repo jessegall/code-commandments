@@ -123,6 +123,11 @@ final class SkillReminderTest extends TestCase
         $this->assertStringContainsString('archaeology-comment', $context);
         $this->assertStringContainsString('Shipper.php', $context);
         $this->assertStringContainsString('commandments-backend-documentation', $context);
+
+        // A shell command is judged on what CHANGED, and the hook cannot tell whether this command wrote
+        // it — a `git log` claims a merge somebody else landed — so it must not call it "what you wrote".
+        $this->assertStringContainsString('changed since the last check', $context);
+        $this->assertStringNotContainsString('you just wrote', $context);
     }
 
     public function test_a_shell_command_that_changed_nothing_is_silent(): void

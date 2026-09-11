@@ -13,6 +13,26 @@ use PHPUnit\Framework\TestCase;
  */
 final class InheritanceGraphTest extends TestCase
 {
+    public function test_an_override_is_recognised_through_an_in_tree_base_that_extends_a_vendor_class(): void
+    {
+        // `RetriggerTool extends AuthoringTool extends Laravel\Mcp\Server\Tool`: the parsed graph ends at
+        // AuthoringTool, and the method is declared one step further, in code the scan never reads but
+        // the autoloader can (#566). Reflection has to take over where the tree stops.
+        $codebase = Codebase::fromString(<<<'PHP'
+            <?php
+            namespace App\Mcp;
+            abstract class AuthoringTool extends \ArrayObject {}
+            final class RetriggerTool extends AuthoringTool
+            {
+                public function getArrayCopy(): array { return ['a' => 1, 'b' => 2]; }
+                public function receipt(): array { return ['a' => 1, 'b' => 2]; }
+            }
+            PHP);
+
+        $this->assertTrue($codebase->overridesMethod('App\Mcp\RetriggerTool', 'getArrayCopy'), 'declared by the vendor base two steps up');
+        $this->assertFalse($codebase->overridesMethod('App\Mcp\RetriggerTool', 'receipt'), 'a name chosen here');
+    }
+
     public function test_the_parent_chain_reads_nearest_first(): void
     {
         $codebase = Codebase::fromString(<<<'PHP'

@@ -614,6 +614,97 @@ class AstNode
     }
 
     /**
+     * Does the type switch headed by this node TRANSLATE its subject in every arm — each arm's result a
+     * call or construction the subject is handed to (`Action::raises($value)`, `$this->compileAt($value,
+     * …)`), with at most a `default` that returns the subject unchanged? Then this is a MAPPER: the
+     * subject is not being told anything, it is being turned into a different type by the code that
+     * owns those types. Moving each arm onto its type would make a domain object name its own wire
+     * shape — the dependency inversion tell-dont-ask's mapper exception exists to prevent (#525). Read
+     * on an {@see isTypeSwitchHead} node; false when any arm does something OTHER than translate.
+     */
+    public function typeSwitchTranslatesEveryArm(): bool
+    {
+        if (! $this->node instanceof Instanceof_) {
+            return false;
+        }
+
+        $function = $this->enclosingFunction();
+
+        if ($function === null) {
+            return false;
+        }
+
+        $subject = new self($this->node->expr)->exactHash();
+        $arms = [];
+
+        foreach (new NodeFinder()->findInstanceOf([$function], Instanceof_::class) as $test) {
+            $found = self::branchPointOf($test);
+
+            if ($found->isNone() || new self($test->expr)->exactHash() !== $subject) {
+                continue;
+            }
+
+            $arms[spl_object_id($found->unwrap())] = $found->unwrap();
+        }
+
+        if (count($arms) < 2) {
+            return false;
+        }
+
+        foreach ($arms as $arm) {
+            $result = self::armResultOf($arm);
+
+            if ($result === null || ! self::isTranslationOf($result, $subject)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * What a branch HANDS BACK — a `match` arm's body, or the sole `return` of an `if`/`elseif`
+     * block, or a ternary's branch. Null for an arm that does anything else.
+     */
+    private static function armResultOf(Node $arm): ?Node
+    {
+        if ($arm instanceof MatchArm) {
+            return $arm->body;
+        }
+
+        if ($arm instanceof Ternary) {
+            return $arm->if;
+        }
+
+        if (! $arm instanceof If_ && ! $arm instanceof ElseIf_) {
+            return null;
+        }
+
+        $only = count($arm->stmts) === 1 ? $arm->stmts[0] : null;
+
+        return $only instanceof Return_ ? $only->expr : null;
+    }
+
+    /**
+     * Is $result the subject handed to something that makes a different thing of it — a `new`, a
+     * static factory, or a method call carrying an expression equal to the subject among its arguments?
+     */
+    private static function isTranslationOf(Node $result, string $subject): bool
+    {
+        if (! $result instanceof New_ && ! $result instanceof StaticCall && ! $result instanceof MethodCall) {
+            return false;
+        }
+
+        foreach ($result->args as $arg) {
+            if ($arg instanceof Arg && new self($arg->value)->exactHash() === $subject) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * The classes a type switch headed by this node tests — read on an {@see isTypeSwitchHead} node,
      * so a caller can ask whether the codebase OWNS them. It only owns a fix if it owns every one:
      * you cannot give `DOMText` a method.
@@ -3001,6 +3092,64 @@ class AstNode
     }
 
     /**
+     * Is this a NAMED CONSTRUCTOR that seeds its own class — a static method whose whole body is
+     * `$x = new self(…)`, then only assignments INTO `$x` (`$x->state->row = $row`), then `return $x`?
+     * Like a `__construct`, it is one per class by construction: `new self` binds to the class that
+     * declares it, so two of them on two classes share an IDIOM, never a procedure anything could
+     * hoist (#561, #574, #575). The fields it writes are the object's own being born.
+     */
+    public function isSelfSeedingFactory(): bool
+    {
+        if (! $this->node instanceof ClassMethod || ! $this->node->isStatic()) {
+            return false;
+        }
+
+        $stmts = $this->node->stmts ?? [];
+
+        if (count($stmts) < 3) {
+            return false;
+        }
+
+        $first = $stmts[0];
+        $last = end($stmts);
+
+        if (! $first instanceof Expression || ! $first->expr instanceof Assign || ! $first->expr->expr instanceof New_) {
+            return false;
+        }
+
+        $seed = self::variableNameOf($first->expr->var);
+        $class = $first->expr->expr->class;
+
+        if ($seed === null || ! $class instanceof Name || ! in_array(strtolower($class->toString()), ['self', 'static'], true)) {
+            return false;
+        }
+
+        if (! $last instanceof Return_ || self::variableNameOf($last->expr) !== $seed) {
+            return false;
+        }
+
+        foreach (array_slice($stmts, 1, -1) as $stmt) {
+            if (! $stmt instanceof Expression || ! $stmt->expr instanceof Assign || ! self::isFetchRootedAt($stmt->expr->var, $seed)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Is $target a property chain standing on the variable $name — `$x->a`, `$x->a->b`?
+     */
+    private static function isFetchRootedAt(Node $target, string $name): bool
+    {
+        while ($target instanceof PropertyFetch) {
+            $target = $target->var;
+        }
+
+        return self::variableNameOf($target) === $name;
+    }
+
+    /**
      * An `if (…) { throw … }` with no else — a pure bail-out guard.
      */
     private static function isThrowingGuard(Node $stmt): bool
@@ -4430,14 +4579,41 @@ class AstNode
     }
 
     /**
+     * Is this a method/function whose ENTIRE body is one two-way branch on whether one of its own
+     * NULLABLE parameters was given — `if ($kind === null) {…} else {…}`? The flag's commonest
+     * disguise (#524): a required parameter widened to `?T = null` so that passing nothing selects a
+     * different question (`attributes(Slot::class)` asks for one kind, `attributes()` for all of them).
+     * Two methods behind one name again, and the call site says even less than a bare `true` — it
+     * says nothing at all.
+     */
+    public function switchesEntirelyOnAnAbsentParam(): bool
+    {
+        if (! $this->isFunctionDeclaration()) {
+            return false;
+        }
+
+        foreach ($this->node->params as $param) {
+            $name = AstNode::variableNameOf($param->var);
+
+            if ($name !== null && TypeName::isNullable($param->type) && $this->bodyIsTwoWayBranchOn($name, self::testsAbsence(...))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Is this declaration's ENTIRE body one two-way branch on the variable $name — an `if ($flag)
      * {…} else {…}` with nothing around it, or a `match ($flag)` with a true arm and a false arm?
      * Then the parameter is not something the method works WITH; it selects which of two methods
      * the caller actually wanted. A branch with anything before or after it fails: that is a method
      * doing its job with a conditional in it, not a method that IS the conditional.
      */
-    public function bodyIsTwoWayBranchOn(string $name): bool
+    public function bodyIsTwoWayBranchOn(string $name, ?\Closure $tests = null): bool
     {
+        $tests ??= self::testsVariable(...);
+
         if (! $this->isFunctionDeclaration() || count($this->node->stmts ?? []) !== 1) {
             return false;
         }
@@ -4449,7 +4625,7 @@ class AstNode
                 && $only->else !== null
                 && self::armDoesWork($only->stmts)
                 && self::armDoesWork($only->else->stmts)
-                && self::testsVariable($only->cond, $name);
+                && $tests($only->cond, $name);
         }
 
         $expression = match (true) {
@@ -4461,7 +4637,7 @@ class AstNode
         return $expression instanceof Match_
             && count($expression->arms) === 2
             && array_all($expression->arms, static fn (MatchArm $arm): bool => ! self::isBareValue($arm->body))
-            && self::testsVariable($expression->cond, $name);
+            && $tests($expression->cond, $name);
     }
 
     /**
@@ -4507,6 +4683,30 @@ class AstNode
         }
 
         return $condition instanceof Variable && $condition->name === $name;
+    }
+
+    /**
+     * Is this condition asking whether $name was GIVEN — `$x === null`, `$x !== null`, `is_null($x)`,
+     * or any of those negated? The nullable twin of {@see testsVariable}: the parameter's absence is
+     * the switch, not its value.
+     */
+    private static function testsAbsence(Node $condition, string $name): bool
+    {
+        if ($condition instanceof BooleanNot) {
+            $condition = $condition->expr;
+        }
+
+        if ($condition instanceof Identical || $condition instanceof NotIdentical) {
+            return (self::isNullConstant($condition->right) && self::testsVariable($condition->left, $name))
+                || (self::isNullConstant($condition->left) && self::testsVariable($condition->right, $name));
+        }
+
+        return $condition instanceof FuncCall
+            && $condition->name instanceof Name
+            && strtolower($condition->name->toString()) === 'is_null'
+            && isset($condition->args[0])
+            && $condition->args[0] instanceof Arg
+            && self::testsVariable($condition->args[0]->value, $name);
     }
 
     /**

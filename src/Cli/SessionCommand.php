@@ -318,7 +318,7 @@ final class SessionCommand implements Command
                 '  %-8s %-10s %s  %s',
                 $key,
                 $session?->id === null ? '' : substr($session->id, 0, 8),
-                date('Y-m-d H:i', filemtime($dir) ?: 0),
+                $this->modifiedAt($dir, 'Y-m-d H:i'),
                 $this->describe($key, $session, $names),
             );
         }, array_values($dirs));
@@ -356,7 +356,7 @@ final class SessionCommand implements Command
         // Most of what a session keeps is a DOTFILE (the hook counters, the reminder marks), which `glob`
         // skips — so the folder would read as empty exactly when it is fullest.
         return array_map(
-            fn (string $file) => sprintf('  %-24s %6s  %s', basename($file), $this->size($file), date('H:i', filemtime($file) ?: 0)),
+            fn (string $file) => sprintf('  %-24s %6s  %s', basename($file), $this->size($file), $this->modifiedAt($file, 'H:i')),
             Directory::newestFirst($dir),
         );
     }
@@ -368,4 +368,11 @@ final class SessionCommand implements Command
         return $bytes < 1024 ? "{$bytes}B" : round($bytes / 1024, 1) . 'K';
     }
 
+    /**
+     * When $path last changed, in $format — the one read both listings make of a file's clock.
+     */
+    private function modifiedAt(string $path, string $format): string
+    {
+        return date($format, filemtime($path) ?: 0);
+    }
 }

@@ -18,7 +18,11 @@ use PhpParser\Node\Identifier;
 use PhpParser\Node\IntersectionType;
 use PhpParser\Node\Name;
 use PhpParser\Node\NullableType;
+use PhpParser\Node\Expr\Throw_;
 use PhpParser\Node\Stmt\ClassMethod;
+use PhpParser\Node\Stmt\Expression;
+use PhpParser\Node\Stmt\If_;
+use PhpParser\Node\Stmt\Return_;
 use PhpParser\Node\UnionType;
 use PhpParser\NodeFinder;
 
@@ -54,7 +58,9 @@ final class ParamResolution
                 continue;
             }
 
-            if ($this->capturedLocal($call) === null) {
+            $local = $this->capturedLocal($call);
+
+            if ($local === null || $this->isTheResolver($method, $local)) {
                 continue;
             }
 
@@ -64,6 +70,32 @@ final class ParamResolution
         }
 
         return false;
+    }
+
+    /**
+     * Is this method the RESOLVER itself — the lookup, a guard that names the not-found failure, and
+     * the resolved object handed back, nothing else? `$tree = $page->templateTree($named); if ($tree ===
+     * null) { throw … } return $tree;` is the one place the rule says the resolution and its refusal
+     * should live; a caller that holds it is passing the object BECAUSE this exists (#523). A method
+     * that goes on to work with what it resolved is the sin; one that only resolves is the fix.
+     */
+    private function isTheResolver(ClassMethod $method, string $local): bool
+    {
+        $stmts = $method->stmts ?? [];
+        $last = $stmts === [] ? null : end($stmts);
+
+        if (! $last instanceof Return_ || AstNode::variableNameOf($last->expr) !== $local) {
+            return false;
+        }
+
+        foreach (array_slice($stmts, 1, -1) as $between) {
+            if (! $between instanceof If_ || $between->else !== null || $between->elseifs !== []
+                || ! array_all($between->stmts, static fn (Node $stmt): bool => $stmt instanceof Throw_ || ($stmt instanceof Expression && $stmt->expr instanceof Throw_))) {
+                return false;
+            }
+        }
+
+        return count($stmts) >= 2;
     }
 
     /**

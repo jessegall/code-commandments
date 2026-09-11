@@ -68,6 +68,17 @@ class NodeMatch extends AstNode implements Located
     }
 
     /**
+     * Does the class this node belongs to — or IS, for a class declaration — implement $interface?
+     * Declared directly, inherited up the extends chain, or reached through an interface that extends
+     * it: the whole contract graph ({@see Codebase::implements}), so a rule that classifies by a marker
+     * interface sees a class marked through its base. A node outside any class answers false.
+     */
+    public function implementsInterface(string $interface): bool
+    {
+        return $this->codebase->implements($this->enclosingClassName(), $interface);
+    }
+
+    /**
      * Is this method's NAME inherited rather than chosen — declared by a parent class or an interface,
      * ours or a package's? Renaming it would break the contract, so a naming rule has nothing to say.
      * {@see Codebase::overridesMethod} answers for both (the parsed graph, then reflection).

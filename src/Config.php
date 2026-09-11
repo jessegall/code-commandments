@@ -265,7 +265,25 @@ final class Config
      */
     public function enabledHooks(array $all): array
     {
-        return $this->enabled($all);
+        return $this->enabled($this->loadable($all, 'hook'));
+    }
+
+    /**
+     * $classes minus the ones no autoloader can find, which are reported ONCE and skipped — the same
+     * answer {@see apply} gives a registered detector. A class that reached `new` and was not there
+     * took the whole run down as a fatal, and under `sync` that fatal landed AFTER the briefing and the
+     * skills had been rewritten from a registry the run never finished building (#531).
+     *
+     * @param  list<class-string>  $classes
+     * @return list<class-string>
+     */
+    private function loadable(array $classes, string $kind): array
+    {
+        $missing = array_values(array_filter($classes, static fn (string $class): bool => ! class_exists($class)));
+
+        $this->reportMissing($missing, $kind);
+
+        return array_values(array_diff($classes, $missing));
     }
 
     /**
@@ -363,19 +381,19 @@ final class Config
     }
 
     /**
-     * Say ONCE which configured detectors could not be loaded — a project that keeps its rules in a
-     * folder it forgot to commit names every one of them, and a paragraph repeated per class buries
+     * Say ONCE which configured classes of a $kind could not be loaded — a project that keeps its rules
+     * in a folder it forgot to commit names every one of them, and a paragraph repeated per class buries
      * the run's actual output.
      *
      * @param  list<string>  $missing
      */
-    private function reportMissing(array $missing): void
+    private function reportMissing(array $missing, string $kind = 'detector'): void
     {
         if ($missing === []) {
             return;
         }
 
-        fwrite(STDERR, '⚠ ' . count($missing) . " configured detector(s) could not be loaded, and were skipped:\n  "
+        fwrite(STDERR, '⚠ ' . count($missing) . " configured {$kind}(s) could not be loaded, and were skipped:\n  "
             . implode("\n  ", $missing)
             . "\n  A project's own rules live in .commandments/" . Workspace::CUSTOM
             . "/ (loaded by file, so they need no autoloader) — check they are present and committed,"
