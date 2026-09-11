@@ -187,3 +187,23 @@ generates the helper into your source root with its namespace set. Scaffold the
 construct, then write the fix that uses it (`scaffold` creates the helper; `repent`
 fixes call sites).
 <!-- END: code-commandments briefing -->
+
+<!-- BEGIN: agent-journal (auto-generated, run `journal update`) -->
+
+## Rules the journal ships
+
+These come with the journal itself and hold in every project that installs it. They are not this project's opinions; `journal rules` shows the project's own beside them.
+
+**B1 — Never dispatch a subagent without naming its model: haiku for mechanical work with a known answer, sonnet for care without invention, opus only where the task turns on judgement. Unset hands out the orchestrator's own, which is the most expensive model in the room.**
+
+Decide from what the task demands, not from habit.
+
+**haiku** — mechanical work with a known answer: run this, list what matches, apply a stated substitution.
+**sonnet** — ordinary work that needs care but no invention: trim comments to one sentence, convert a file to a stated pattern, write a test to a given shape.
+**opus** — only where the task turns on judgement: a design call, a review, an ambiguous failure.
+
+The orchestrator's own model is the most expensive one in the room and is almost never the right one for the work it hands out; leaving `model` unset hands out exactly that.
+
+The user naming a model is not an exception to this rule — it is the rule being followed. What it forbids is dispatching without deciding.
+
+<!-- END: agent-journal -->

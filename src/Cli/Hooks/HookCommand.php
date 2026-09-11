@@ -14,8 +14,7 @@ use ReflectionClass;
 use JesseGall\CodeCommandments\Cli\Kernel;
 use JesseGall\CodeCommandments\Cli\Input;
 /**
- * Adapts a {@see Hook} to a {@see Command} so the reminder verbs (`remind`, `judge-reminder`,
- * `plan-reminder`) dispatch through the same registry as every other command. A Hook reads its
+ * Adapts a {@see Hook} to a {@see Command} so the reminder verbs (`judge-reminder`) dispatch through the same registry as every other command. A Hook reads its
  * payload from stdin, not from flags, so the adapter simply forwards — but it lets the Kernel stay
  * uniform: one registry, one dispatch, no special case for hooks.
  */

@@ -7,7 +7,6 @@ namespace JesseGall\CodeCommandments\Hooks;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 /**
  * Shared plumbing for hook commands: reads JSON payload from STDIN, emits JSON response to STDOUT,
  * resolves the worktree (git toplevel for worktree scope). Not final — tests substitute it to feed/capture.

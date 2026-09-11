@@ -8,13 +8,11 @@ use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Sync;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Custom;
-use JesseGall\CodeCommandments\Moment;
 use PHPUnit\Framework\TestCase;
 
 /**
- * `commandments sync` wires a consumer end-to-end: it publishes the standalone `executing-plans`
- * skill, injects a `planExecution()` block inferred from the project's scripts, and self-heals the
- * hooks — all idempotently. Exercised in a temp consumer dir the process cd's into.
+ * `commandments sync` wires a consumer end-to-end: it publishes the skills, self-heals the config
+ * and the hooks — all idempotently. Exercised in a temp consumer dir the process cd's into.
  */
 final class SyncTest extends TestCase
 {
@@ -45,20 +43,14 @@ final class SyncTest extends TestCase
         // The skill is a REAL file in the library, and the agent's folder is a link to it. Asserting
         // only that the path is readable would pass just as well if the link were a silent copy —
         // the whole single-source property could be dead and the test still green.
-        $this->assertFileExists("{$this->consumer}/.agents/skills/commandments-executing-plans/SKILL.md");
-        $this->assertTrue(is_link("{$this->consumer}/.claude/skills/commandments-executing-plans"));
+        $this->assertFileExists("{$this->consumer}/.agents/skills/commandments-backend-absence/SKILL.md");
+        $this->assertTrue(is_link("{$this->consumer}/.claude/skills/commandments-backend-absence"));
         $this->assertSame(
-            realpath("{$this->consumer}/.agents/skills/commandments-executing-plans"),
-            realpath("{$this->consumer}/.claude/skills/commandments-executing-plans"),
+            realpath("{$this->consumer}/.agents/skills/commandments-backend-absence"),
+            realpath("{$this->consumer}/.claude/skills/commandments-backend-absence"),
         );
 
-        // Config gained a planExecution block, its onComplete inferred from composer scripts.
-        $this->assertSame(
-            ['composer test', 'composer lint'],
-            Config::load($this->consumer)->planExecutionSettings()->checksFor(Moment::Complete),
-        );
-
-        // The plan-reminder hook is wired (via the generic `hook '<class>'` runner) and stamped.
+        // The hooks are wired (via the generic dispatcher) and stamped.
         $settings = (string) file_get_contents("{$this->consumer}/.claude/settings.json");
         $this->assertStringContainsString(' hooks ', $settings, 'the dispatcher entry point is wired');
         $this->assertStringContainsString('@code-commandments-managed', $settings);
@@ -72,12 +64,44 @@ final class SyncTest extends TestCase
         $this->assertStringNotContainsString(".claude/skills/commandments-*/\n", $ignore);
     }
 
+    public function test_a_config_still_calling_plan_execution_is_healed_before_anything_loads_it(): void
+    {
+        // An earlier release injected `$config->planExecution(...)` into every consumer. Config no
+        // longer has the method, so left in place the file would fatal on load — and sync loads it.
+        @mkdir("{$this->consumer}/.commandments", 0777, true);
+        file_put_contents("{$this->consumer}/.commandments/config.php", <<<'PHP'
+            <?php
+
+            use JesseGall\CodeCommandments\Config;
+
+            return function (Config $config): void {
+                $config->paths('app');
+
+                $config->planExecution(function (\JesseGall\CodeCommandments\PlanExecution $plan): void {
+                    $plan->onComplete('composer test');
+                });
+
+                $config->disable(
+                    // nothing
+                );
+            };
+
+            PHP);
+
+        $this->sync();
+
+        $source = (string) file_get_contents("{$this->consumer}/.commandments/config.php");
+        $this->assertStringNotContainsString('planExecution', $source);
+        $this->assertStringContainsString("\$config->paths('app');\n\n    \$config->disable(", $source, 'only the block went');
+        Config::load($this->consumer);
+    }
+
     public function test_a_project_on_the_old_layout_migrates_in_one_sync(): void
     {
         // Everything a consumer wired by an older release has: skills COPIED into the agent's own
         // folder, the briefing inline in CLAUDE.md under the markers that release used, and the
         // ignore rule whose trailing slash no longer matches. None of it should need a human.
-        $copied = "{$this->consumer}/.claude/skills/commandments-executing-plans";
+        $copied = "{$this->consumer}/.claude/skills/commandments-backend-absence";
         @mkdir($copied, 0775, true);
         file_put_contents("{$copied}/SKILL.md", "an old release's copy\n");
         file_put_contents("{$this->consumer}/.gitignore", "/vendor\n\n# code-commandments published skills (regenerated on composer update)\n.claude/skills/commandments-*/\n");
@@ -89,7 +113,7 @@ final class SyncTest extends TestCase
         $claude = (string) file_get_contents("{$this->consumer}/CLAUDE.md");
 
         $this->assertTrue(is_link($copied), 'the copied directory became a link');
-        $this->assertFileExists("{$this->consumer}/.agents/skills/commandments-executing-plans/SKILL.md");
+        $this->assertFileExists("{$this->consumer}/.agents/skills/commandments-backend-absence/SKILL.md");
         $this->assertStringContainsString('@AGENTS.md', $claude, 'the inline briefing became an import of the canon');
         $this->assertStringNotContainsString('the old inline briefing', $claude);
         $this->assertStringContainsString("# My project\n\nmy own standing orders\n", $claude, "and the project's own words are untouched");

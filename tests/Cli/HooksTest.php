@@ -117,7 +117,7 @@ final class HooksTest extends TestCase
 
         $settings = (array) json_decode((string) file_get_contents($this->path), true);
 
-        // PostToolUse mixes matchers (WorkingState unmatched, PlanReminder/ExitPlanMode) → one UNMATCHED
+        // PostToolUse mixes matchers (SkillReminder per writer tool, others unmatched) → one UNMATCHED
         // entry; the handlers self-filter by tool inside the dispatcher.
         $post = $settings['hooks']['PostToolUse'][0] ?? [];
         $this->assertArrayNotHasKey('matcher', $post, 'PostToolUse is unmatched — the dispatcher filters by tool');

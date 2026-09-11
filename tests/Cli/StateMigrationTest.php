@@ -4,20 +4,13 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Cli\Plan\PlanConstraints;
-use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
-use JesseGall\CodeCommandments\Cli\Plan\PlanTesting;
 use JesseGall\CodeCommandments\Cli\Migration;
-use JesseGall\CodeCommandments\Cli\State\StateFile;
-use JesseGall\CodeCommandments\PlanExecution;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Upgrading a project must not throw away what the USER asked for. The old layout put one concern per
- * file — a plan, its stuck signal, its constraints, their stamp — and the new one puts each feature's
- * whole state in a single named file; a plan's constraints are carried across, and only the hook
- * heartbeats and the files of a feature that no longer exists are dropped.
+ * Upgrading a project must not throw away what still has a reader: the judge checklists are moved, and
+ * only the hook heartbeats and the files of a feature that no longer exists are dropped.
  */
 final class StateMigrationTest extends TestCase
 {
@@ -63,48 +56,21 @@ final class StateMigrationTest extends TestCase
         $this->assertCount(0, glob($this->session . '/.until*') ?: [], 'nothing of the gate is left');
     }
 
-    public function test_the_plan_marker_absorbs_its_separate_stuck_signal(): void
+    public function test_the_files_of_the_removed_plan_are_deleted(): void
     {
+        // Plan execution lives in its own package now, so every file a plan ever wrote — its marker,
+        // the stuck signal, constraints and their stamp, the testing choice, the working-state record
+        // — goes rather than lingering in a folder nothing reads.
         $this->legacy('.plan-active', 'abc123', '2', '9');
         $this->legacy('.plan-stuck', 'abc123');
-
-        $this->migrate();
-
-        $marker = new PlanMarker(new StateFile($this->session . '/.plan-active', PlanMarker::legend()));
-        $this->assertTrue($marker->isActive());
-        $this->assertSame('abc123', $marker->stuckAt());
-        $this->assertFileDoesNotExist($this->session . '/.plan-stuck');
-    }
-
-    public function test_the_plan_constraints_absorb_their_verification_stamp(): void
-    {
-        file_put_contents($this->session . '/.plan-constraints', "never touch the schema\nkeep the API stable\n");
+        file_put_contents($this->session . '/.plan-constraints', "never touch the schema\n");
         file_put_contents($this->session . '/.constraints-verified', "head123\n");
+        file_put_contents($this->session . '/.plan-testing', "write the test first\n");
+        file_put_contents($this->session . '/.plan-working-state', "doing: the thing\n");
 
-        $this->migrate();
-
-        $constraints = new PlanConstraints(
-            new StateFile($this->session . '/.plan-constraints', PlanConstraints::legend()),
-            new PlanExecution()->build(),
-        );
-
-        $this->assertSame(['never touch the schema', 'keep the API stable'], $constraints->local());
-        $this->assertTrue($constraints->isVerifiedAt('head123'));
+        $this->assertSame(['6 plan file(s) removed'], $this->migrate());
+        $this->assertCount(0, glob($this->session . '/.plan-*') ?: [], 'nothing of the plan is left');
         $this->assertFileDoesNotExist($this->session . '/.constraints-verified');
-    }
-
-    public function test_the_testing_methodology_carries_over(): void
-    {
-        file_put_contents($this->session . '/.plan-testing', "write the test first, then the code\n");
-
-        $this->migrate();
-
-        $testing = new PlanTesting(
-            new StateFile($this->session . '/.plan-testing', PlanTesting::legend()),
-            new PlanExecution()->build(),
-        );
-
-        $this->assertSame('write the test first, then the code', $testing->chosen());
     }
 
     public function test_hook_counters_are_dropped_rather_than_converted(): void
@@ -145,15 +111,13 @@ final class StateMigrationTest extends TestCase
 
     public function test_it_runs_once_and_leaves_a_converted_project_alone(): void
     {
-        $this->legacy('.plan-active', 'abc123', '2', '9');
+        $this->legacy('.cardinal-remind-count', '17');
         $this->migrate();
 
-        $marker = new PlanMarker(new StateFile($this->session . '/.plan-active', PlanMarker::legend()));
-        $marker->activate('def456');
-        $before = (string) file_get_contents($this->session . '/.plan-active');
+        $this->legacy('.cardinal-remind-count', '3');
 
         $this->assertSame([], $this->migrate(), 'the project is stamped, so there is nothing to do');
-        $this->assertSame($before, (string) file_get_contents($this->session . '/.plan-active'));
+        $this->assertFileExists($this->session . '/.cardinal-remind-count');
     }
 
     public function test_a_project_with_no_state_at_all_is_simply_stamped(): void

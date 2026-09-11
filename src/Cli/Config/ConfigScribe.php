@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Workspace;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use PhpParser\Node\Expr\MethodCall;
 
-use JesseGall\CodeCommandments\Cli\Plan\ChecksInference;
+use PhpParser\Node\Stmt\Expression;
 /**
  * The config scribe — it WRITES the project's `.commandments/config.php`. It scaffolds a fresh
  * config with the auto-detected source roots baked into `$config->paths(...)`, and fills the paths
@@ -118,32 +118,31 @@ final class ConfigScribe
     }
 
     /**
-     * Inject a `$config->planExecution(...)` block if the config has none yet — self-healing the
-     * plan-execution surface into an existing consumer on `composer update`, the way {@see ensurePaths}
-     * fills the scan roots. Idempotent: a config that already declares `planExecution` (the human's or
-     * a prior sync's) is left untouched. The block is spliced BEFORE the `disable()` call by node
-     * offset — the human's own lines stay exactly as they were — and carries $completionChecks
-     * (inferred from the project's scripts by {@see ChecksInference}) as its `onComplete` gate, with
-     * the other knobs as commented examples so the surface is discoverable.
-     *
-     * @param  list<string>  $completionChecks
+     * Strip a `$config->planExecution(...)` statement the config still carries — plan execution is
+     * not this package's any more, and a config calling a method {@see \JesseGall\CodeCommandments\Config}
+     * no longer has would fatal on load, taking every command with it. The whole statement goes, by
+     * node offset, along with the blank line that separated it; the human's own lines stay exactly
+     * as they were. True when something was removed.
      */
-    public function ensurePlanExecution(array $completionChecks): void
+    public function removePlanExecution(): bool
     {
-        if (! is_file($this->path) || $this->hasCall('planExecution')) {
-            return;
-        }
+        $statement = $this->statementOf('planExecution');
 
-        $anchor = $this->call('disable') ?? $this->call('paths');
-
-        if ($anchor === null) {
-            return; // A config edited past recognition — nothing safe to anchor to.
+        if ($statement === null) {
+            return false;
         }
 
         $source = (string) file_get_contents($this->path);
-        $at = $anchor->getStartFilePos();
+        $from = $statement->getStartFilePos();
+        $to = $statement->getEndFilePos() + 1;
 
-        file_put_contents($this->path, substr($source, 0, $at) . $this->renderPlanExecution($completionChecks) . substr($source, $at));
+        // Take the indent before it and the blank line after it, so no empty line is left behind.
+        $from -= strlen(substr($source, 0, $from)) - strlen(rtrim(substr($source, 0, $from), " \t"));
+        $to += strspn($source, "\n", $to) === 0 ? 0 : min(2, strspn($source, "\n", $to));
+
+        file_put_contents($this->path, substr($source, 0, $from) . substr($source, $to));
+
+        return true;
     }
 
     /**
@@ -164,9 +163,9 @@ final class ConfigScribe
 
     /**
      * Write $declaration in as its own statement before the config's own `paths()` call — the ONE
-     * splice a proposed block goes through, so every `--write` lands the same way. Same offset splice
-     * as {@see ensurePlanExecution}, so the surrounding lines stay exactly as they were. False when
-     * the config has been edited past recognition (or is not there at all).
+     * splice a proposed block goes through, so every `--write` lands the same way. An offset splice, so
+     * the surrounding lines stay exactly as they were. False when the config has been edited past
+     * recognition (or is not there at all).
      *
      * `paths()` is the anchor because it is the one call that lives in the config's OWN closure: a
      * real config carries `$disabledSkills`/`$disabledSins` menus that are closures full of
@@ -208,36 +207,6 @@ final class ConfigScribe
         }
 
         file_put_contents($this->path, str_replace($existing, $existing . "\n" . $import, $source));
-    }
-
-    /**
-     * The `planExecution()` block spliced in before the anchor call. Its first line takes the
-     * anchor's existing indent; it ends with a blank line + a 4-space indent so the anchor stays
-     * exactly where it was. Explicit lines (not a heredoc) so the emitted indentation is exact.
-     *
-     * @param  list<string>  $checks
-     */
-    public function renderPlanExecution(array $checks): string
-    {
-        $onComplete = $checks === []
-            ? "// \$plan->onComplete('composer test');            // the end gate; judge --branch runs after"
-            : '$plan->onComplete(' . $this->renderRoots($checks) . ');';
-
-        $block = <<<PHP
-        \$config->planExecution(function (\JesseGall\CodeCommandments\PlanExecution \$plan): void {
-                // \$plan->branchFrom('main')->branchPrefix('plan/')->pushEachPhase();  // branch + push cadence
-                // \$plan->mode(\JesseGall\CodeCommandments\PlanMode::Autonomous);  // Supervised | Autonomous | BestEffort | Relentless (never stop)
-                // \$plan->onStart('composer install');          // once, before the first phase
-                // \$plan->eachPhase('composer lint');           // after each phase — keep it fast
-                {$onComplete}
-                // \$plan->constraint('The frontend is presentation-only; all logic lives in the backend.');
-                // \$plan->enforceConstraintsEachPhase();        // force the constraint check each phase, not just at the end
-                // \$plan->testFlow('Write and run the tests for each phase before committing it.');  // default test methodology, offered at approval
-                // \$plan->trackWorkingState();                  // keep a living working-state record that survives context compaction
-            });
-        PHP;
-
-        return $block . "\n\n    ";
     }
 
     /**
@@ -295,5 +264,21 @@ final class ConfigScribe
     private function hasCall(string $method): bool
     {
         return new ConfigCalls($this->path)->has($method);
+    }
+
+    /**
+     * The whole `$config-><method>(...);` statement, or null when the config declares none.
+     */
+    private function statementOf(string $method): ?Expression
+    {
+        foreach (new ConfigCalls($this->path)->statements() as $statement) {
+            foreach (new ConfigCalls($this->path)->all($method) as $call) {
+                if ($call->getStartFilePos() >= $statement->getStartFilePos() && $call->getEndFilePos() <= $statement->getEndFilePos()) {
+                    return $statement;
+                }
+            }
+        }
+
+        return null;
     }
 }

@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Cli\Kernel;
 
 /**
  * The Markdown projection of the CLI — the same {@see Help} declarations the terminal help renders,
- * as a table a document can embed. Sibling of {@see PlanExecutionOptions} and {@see HookCatalog}: a
+ * as a table a document can embed. Sibling of {@see HookCatalog} and {@see AgentCatalog}: a
  * doc never restates a command's grammar, it embeds this, so a new subcommand shows up in the README
  * and in every skill that teaches the command the moment it is declared.
  */

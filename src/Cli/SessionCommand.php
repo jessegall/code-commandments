@@ -14,7 +14,7 @@ use JesseGall\PhpTypes\Option;
 
 /**
  * `commandments session` — where this session keeps its state. Everything session-scoped (the
- * the sins checklist, the plan marker, the stop gate, every hook counter) lives in one folder named by a
+ * sins checklist, every hook counter, the reminder marks) lives in one folder named by a
  * hash of the session id, which is deliberately unguessable from the outside — so the way to find it is
  * to ask, not to work it out.
  */
@@ -32,7 +32,7 @@ final class SessionCommand implements Command
 
     public function help(): Help
     {
-        return Help::of("Where this session keeps its state — the folder holding its checklist, plan marker and stop gate.")
+        return Help::of("Where this session keeps its state — the folder holding its checklist and hook counters.")
             ->form('session', 'print the folder, and what is in it')
             ->form('session list', "every session folder this project has, newest first — what a SECOND terminal asks, having no session of its own. An ORPHAN, a folder no session and no name points at any more, is marked as one")
             ->form('session --path', 'print only the path, for piping somewhere')
@@ -64,7 +64,7 @@ final class SessionCommand implements Command
 
     /**
      * Give this session a name. The folder is RENAMED to match, because a five-character hash is not
-     * something anybody comes back to — and a session now holds its own plan, so coming back to it is
+     * something anybody comes back to — and a session holds its own checklist, so coming back to it is
      * the point. The map records which id the name belongs to, so an agent still finds its own folder
      * from the id it was handed.
      */
@@ -113,7 +113,7 @@ final class SessionCommand implements Command
 
     /**
      * The folder $id occupies in EVERY checkout of this repository, keyed by the checkout. A session is
-     * one thing across its worktrees while its state is not — a lane keeps its own plan and counters —
+     * one thing across its worktrees while its state is not — a lane keeps its own checklist and counters —
      * so a rename that moved only the main checkout's folder would leave a lane writing under the name
      * the session no longer answers to.
      *
@@ -274,7 +274,7 @@ final class SessionCommand implements Command
 
         $lines = [];
 
-        // Every CHECKOUT, because a lane keeps its own counters and plan under the same session — and a
+        // Every CHECKOUT, because a lane keeps its own counters and checklist under the same session — and a
         // folder listed nowhere is one nobody can adopt and anybody can delete.
         foreach ([$root, ...$this->io->git()->worktrees($root)] as $checkout) {
             $folders = $this->folders($checkout, $named, Workspace::at($root)->names()->all());
@@ -353,7 +353,7 @@ final class SessionCommand implements Command
      */
     private function contents(string $dir): array
     {
-        // Most of what a session keeps is a DOTFILE (`.plan-active`, `.plan-constraints`), which `glob`
+        // Most of what a session keeps is a DOTFILE (the hook counters, the reminder marks), which `glob`
         // skips — so the folder would read as empty exactly when it is fullest.
         return array_map(
             fn (string $file) => sprintf('  %-24s %6s  %s', basename($file), $this->size($file), date('H:i', filemtime($file) ?: 0)),

@@ -9,7 +9,6 @@ use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
-use JesseGall\CodeCommandments\Cli\Plan\PlanMarker;
 use JesseGall\CodeCommandments\Cli\Judge\Checklist;
 use JesseGall\CodeCommandments\Workspace;
 
@@ -93,12 +92,6 @@ final class JudgeReminder extends Hook implements Discipline
         }
 
         $ws = Workspace::at($root, $event->sessionId() ?: null);
-
-        if (PlanMarker::inSession($ws)->isActive()) {
-            return null; // A plan is running — the executing-plans discipline judges ONCE at the end
-            // (`checks complete` → `judge --branch`) and commits each phase unjudged on purpose, so a
-            // per-commit nudge is noise. It resumes once `plan done` clears the marker.
-        }
 
         // A leftover worklist from a prior `judge` takes priority over "did you judge?" — you already
         // judged; the job now is to finish it, wave by wave.

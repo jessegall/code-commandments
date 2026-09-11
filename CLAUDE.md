@@ -208,10 +208,7 @@ Frontend mirror: `Vue\Codebase`→`Vue\Query`→`ElementMatch`, `Vue\Expr\Parser
 | `bin/commandments layers [path] [--floor] [--write] [--refresh]` / `layers add <Namespace> [--may-use=A,B]` / `layers allow <Layer> <Target>` | Read the dependency stack the project ALREADY has and propose the layer declaration for it (`--write` adds it to `.commandments/config.php`, `--floor` proposes only the bottom). Once a stack is declared the proposal refuses to overwrite it — so a GROWING codebase edits it INCREMENTALLY instead: `add` declares a new layer (or widens one with `--may-use`), `allow` adds a single arrow, and `--write --refresh` regenerates the whole block from today's shape. Every edit goes through the AST ({@see Cli\Config\ConfigFile}) and replaces only the `->layer(...)` chain, keeping the config's own formatting and indentation — never text surgery on a file a formatter has touched. |
 | `bin/commandments make <Name> [--engine=backend\|frontend] [--skill=NAME] [--force]` | Scaffold a commandment a CONSUMER project owns: the three classes a rule is made of (a `Skill` that teaches it, a `Sin` that names it, a `Detector` that finds it) written into `.commandments/custom/`, the detector registered in the project's config through the AST ({@see Cli\Config\ConfigFile::registerDetector}), and the REST of the process printed — probe, calibrate, publish — because a scaffold is not a detector yet. `--skill` leniently matches an EXISTING skill (shipped or the project's own) and points the sin at it instead of writing a new one. The consumer-side twin of the package's own detector workflow; the published `writing-detectors` skill teaches it in full. |
 | `bin/commandments disable <sin>` / `enable <sin>` | Toggle a rule in the project's `.commandments/config.php`: resolve the sin id (lenient) to its `Sin` class and add/remove it in the `$config->disable(...)` call. Edited through the AST ({@see Cli\ConfigFile}), never text-scanned; the file stays valid PHP and the human's own `register`/`configure` lines are untouched. |
-| `bin/commandments install` | Wire a consumer: composer sync hook + the Claude Code hook suite (per-edit rule check, judge nudge, plan-execution hooks) + gitignore, then sync. Every wired hook is stamped so re-wiring never touches the user's own hooks. Idempotent. |
-| `bin/commandments checks [start\|phase\|complete] [--list]` | Run the project's `planExecution()` checks for one moment of a plan (default `complete`). `start` runs once before the first phase, `phase` after each phase, `complete` at the end — and `complete` always appends `judge --branch`, so a plan can't finish unjudged. Runs each command in order, stops at the first failure; `--list` prints them. The `executing-plans` skill calls these as it grinds a plan. |
-| `bin/commandments plan [done\|stuck\|status]` | `done` ends the active plan — clears the worktree's `.plan-active` marker so the keep-going Stop hook stops nudging (the `executing-plans` skill runs it once the end gate is clean). `stuck` signals the agent is BLOCKED and needs the user: it pauses the keep-going nudge (a `stuck` flag on the plan's own state, stamped with HEAD) but keeps the plan ACTIVE — you may only `done` a COMPLETE plan, never a blocked one. The Stop hook stays silent while stuck at that HEAD and auto-clears the signal once HEAD moves (progress). **In the never-stop modes (`BestEffort`, `Relentless`) `stuck` REFUSES** — there is no waiting; the agent skips the blocker (BestEffort defers + retries at the end, Relentless just moves on). `status` reports whether a plan is active (and stuck), the resolved profile, and the `mode`. |
-| `bin/commandments plan-reminder` | The plan-execution hook (see below). Emits the "load the `executing-plans` skill" nudge on `PostToolUse`/`ExitPlanMode` (plan approved), and the keep-going block-and-continue on `Stop`. Wired by `install`/`sync`. |
+| `bin/commandments install` | Wire a consumer: composer sync hook + the Claude Code hook suite (per-edit rule check, judge nudge, skill nudge) + gitignore, then sync. Every wired hook is stamped so re-wiring never touches the user's own hooks. Idempotent. |
 | `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
 
 **🧾 A consumer writes commandments of its OWN — `.commandments/custom/`.** A project's own `Skill`s,
@@ -242,7 +239,7 @@ from their owner, e.g. `Scope::options()`). EVERY surface is projected from that
 (the page), a wrong invocation (`HelpScreen::usage($this, "why")` — the ONLY way to fail a command;
 never `fwrite(STDERR, "Usage: …")`), the README's command table, and the command references inside
 the skills. A skill that teaches a command embeds a block —
-`<!-- BEGIN: commands:plan (auto-generated, run `composer sins`) -->` (comma-separate several verbs,
+`<!-- BEGIN: commands:make (auto-generated, run `composer sins`) -->` (comma-separate several verbs,
 or `commands:all`) — which `composer sins` fills from the live CLI; `HelpTest` fails if any skill
 block is stale or any command declares no help. So adding a subcommand means adding ONE `->form(...)`
 line, and it appears everywhere.
@@ -294,38 +291,20 @@ preserved, a path resolving outside the project is left alone, and sameness is d
 (`realpath` strings answer `false === false` on a fresh project and ignore case-insensitive collisions).
 Writes go through {@see Support\File::write} (temp + rename) under a per-project sync lock.
 
-**Plan execution — the `executing-plans` discipline.** On plan approval a `PostToolUse`/
-`ExitPlanMode` hook loads the standalone `executing-plans` skill and injects the project's
-profile; the agent then branches, works phase-by-phase (scoped tests + `checks phase`, commit
-each), and runs the full gate (`checks complete`, which appends `judge --branch`) ONCE at the
-end. A `Stop` hook re-nudges "keep going" until `plan done` per the project's `mode()` — a
-`PlanMode`: `Supervised` (nudge once), `Autonomous` (grind; `plan stuck` may pause to ask when
-genuinely blocked), `BestEffort` (**never ask** — skip a blocker, DEFER it, keep going, then
-retry every deferred step at the end to finish as much as possible), or `Relentless` (**never
-stop** — skip a blocker and move on, no waiting, no end retry; only the runaway MAX_TOTAL backstop
-can end it). `plan stuck` REFUSES in both never-stop modes. Loop-safe: in the ask-capable modes a
-stuck-counter caps a spinning agent, HEAD movement resets it. All per-plan state (`.commandments/.plan-active`) is scoped to
-the current **worktree**, never `CLAUDE_PROJECT_DIR`. The profile is configured with
-`$config->planExecution(...)` — a `PlanExecution` builder
-(`branchFrom`/`branchPrefix`/`pushEachPhase`/`mode` (legacy `keepGoing`) + `onStart`/
-`eachPhase`/`onComplete`) that `sync` auto-injects (AST, never overwriting) with its `onComplete`
-inferred from the project's composer/npm scripts. **Every hook we wire is stamped
-`@code-commandments-managed`; `sync` strips only stamped hooks, so a user's own hooks are never
-touched.**
+**Every hook we wire is stamped `@code-commandments-managed`; `sync` strips only stamped hooks,
+so a user's own hooks are never touched.**
 
 **🗂 Session state is ONE format, and it NAMES itself — `Cli\State\`.** Every session-scoped state file
-(the stop gate, the plan marker, its constraints and testing choice, every hook {@see Hooks\Counter}) is
-a {@see Cli\State\StateFile}: `name: value` lines, `-----`, the list the file keeps (a gate's
-conditions, a plan's constraints), `-----`, then the {@see Cli\State\Legend} that says what every value
-means and that deleting it is safe. Values are read and written BY NAME as PHP named arguments —
-`new State(held_stops: 0)`, `$state->with(stuck: true, stuck_at: $head)` (underscores in code, dashes in
-the file) — and the legend is the SCHEMA: writing or reading a value it does not declare THROWS
+(every hook {@see Hooks\Counter}, the touched-sources mark, the session names) is
+a {@see Cli\State\StateFile}: `name: value` lines, `-----`, the list the file keeps, `-----`, then the
+{@see Cli\State\Legend} that says what every value means and that deleting it is safe. Values are read
+and written BY NAME as PHP named arguments — `new State(count: 0)`, `$state->with(count: $n)`
+(underscores in code, dashes in the file) — and the legend is the SCHEMA: writing or reading a value it does not declare THROWS
 ({@see Cli\State\UnknownValue}), so a typo can never land in a file under a name nothing reads back.
 **One feature = ONE file.** A count or a flag that belongs to a larger state lives INSIDE it, never in a
-file of its own: while the gate's counts sat beside it they outlived the gate they belonged to, and the
-next gate inherited them. Lifting the gate deletes the whole state at once. A format change is carried
-across by {@see Cli\State\Migration}, run once from `sync` — what holds the USER's intent (conditions,
-constraints) is CONVERTED, and only the heartbeats are dropped.
+file of its own: a count kept beside the state it belongs to outlives it, and the next one inherits it.
+A format change is carried across by {@see Cli\Migration}, run once from `sync` — what still has a
+reader is MOVED, and the heartbeats and the files of a removed feature are dropped.
 
 **Fixing sins — the checklist workflow.** A full scan is slow (~30s on a large
 tree), so judge ONCE, then work the generated `.commandments/sins.md` line-by-line:
@@ -385,7 +364,27 @@ that have a specific name in this harness:
 
 **The disciplines here are ENFORCED, not just written down.** Hooks are wired into
 `.claude/settings.json`: the cardinal rule resurfaces as you work, `judge` is nudged
-before risky commands and on stop, and an approved plan is ground to completion. That is a
-property of this agent alone — under an agent with no hook protocol the same
-disciplines are documents you are asked to follow, and nothing checks that you did.
+before risky commands and on stop. That is a property of this agent alone — under an
+agent with no hook protocol the same disciplines are documents you are asked to follow,
+and nothing checks that you did.
 <!-- END: code-commandments skills -->
+
+<!-- BEGIN: agent-journal (auto-generated, run `journal update`) -->
+
+## Rules the journal ships
+
+These come with the journal itself and hold in every project that installs it. They are not this project's opinions; `journal rules` shows the project's own beside them.
+
+**B1 — Never dispatch a subagent without naming its model: haiku for mechanical work with a known answer, sonnet for care without invention, opus only where the task turns on judgement. Unset hands out the orchestrator's own, which is the most expensive model in the room.**
+
+Decide from what the task demands, not from habit.
+
+**haiku** — mechanical work with a known answer: run this, list what matches, apply a stated substitution.
+**sonnet** — ordinary work that needs care but no invention: trim comments to one sentence, convert a file to a stated pattern, write a test to a given shape.
+**opus** — only where the task turns on judgement: a design call, a review, an ambiguous failure.
+
+The orchestrator's own model is the most expensive one in the room and is almost never the right one for the work it hands out; leaving `model` unset hands out exactly that.
+
+The user naming a model is not an exception to this rule — it is the rule being followed. What it forbids is dispatching without deciding.
+
+<!-- END: agent-journal -->

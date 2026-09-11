@@ -12,12 +12,7 @@ use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Hooks\HookRunner;
 use JesseGall\CodeCommandments\Cli\Hooks\HookCommand;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
-use JesseGall\CodeCommandments\Cli\Plan\PlanCommand;
-use JesseGall\CodeCommandments\Cli\Plan\ConstraintsCommand;
-use JesseGall\CodeCommandments\Cli\Plan\TestingCommand;
 use JesseGall\CodeCommandments\Cli\Task\TaskCommand;
-use JesseGall\CodeCommandments\Cli\Plan\Checks;
 use JesseGall\CodeCommandments\Cli\Config\ConfigCommand;
 use JesseGall\CodeCommandments\Cli\Config\Configure;
 use JesseGall\CodeCommandments\Cli\Report\Report;
@@ -126,7 +121,6 @@ final class Kernel
         return [
             new Judge(),
             new Make(),
-            new Checks(),
             new Hints(),
             new Repent(),
             new Scaffold(),
@@ -136,10 +130,6 @@ final class Kernel
             new Sync(),
             new Install(),
             new HookCommand(['judge-reminder'], new JudgeReminder()),
-            new HookCommand(['plan-reminder'], new PlanReminder()),
-            new PlanCommand(),
-            new ConstraintsCommand(),
-            new TestingCommand(),
             new SessionCommand(),
             new TaskCommand(),
             new HookDispatch(),

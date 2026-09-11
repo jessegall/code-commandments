@@ -95,9 +95,8 @@ final class HookEvent
     /**
      * Did this hook fire inside a spawned SUBAGENT (a `Task`/Explore agent) rather than the main coding
      * session? Claude Code stamps the payload with `agent_id`/`agent_type` when the invocation belongs to a
-     * subagent; the main session carries neither. Our hooks — working-state injection, the judge/cardinal-rule
-     * reminders, the plan and skill-invocation nudges — are meaningful ONLY to the session that owns the plan
-     * and working state; in a read-only subagent they are noise that can derail its task, so every moment is
+     * subagent; the main session carries neither. Our hooks — the judge/cardinal-rule reminders, the
+     * skill-invocation nudges — are meaningful ONLY to the session that owns the work; in a read-only subagent they are noise that can derail its task, so every moment is
      * suppressed there. Absent fields (older Claude Code, a manual CLI run) read as the main session — the
      * guard is additive and never changes existing behaviour.
      */

@@ -60,13 +60,13 @@ final class HelpTest extends TestCase
 
     public function test_a_command_page_shows_every_form_and_option(): void
     {
-        $plan = $this->command('plan');
-        $page = new HelpScreen($this->commands())->page($plan);
+        $layers = $this->command('layers');
+        $page = new HelpScreen($this->commands())->page($layers);
 
         // The regression that started this: subcommands existed that no help mentioned, because
         // the screen was hand-maintained. Every declared form is on the page.
-        $this->assertStringContainsString('plan stuck', $page);
-        $this->assertStringContainsString('plan status', $page);
+        $this->assertStringContainsString('layers add', $page);
+        $this->assertStringContainsString('layers allow', $page);
 
         $judge = new HelpScreen($this->commands())->page($this->command('judge'));
 
@@ -78,13 +78,13 @@ final class HelpTest extends TestCase
     public function test_asking_for_help_prints_the_overview_or_one_page(): void
     {
         $this->assertStringContainsString('Usage:', $this->render(['commandments', '--help']));
-        $this->assertStringContainsString('commandments plan done', $this->render(['commandments', 'help', 'plan']));
+        $this->assertStringContainsString('commandments layers allow', $this->render(['commandments', 'help', 'layers']));
         $this->assertStringContainsString('commandments layers add', $this->render(['commandments', 'layers', '--help']));
     }
 
     public function test_a_usage_error_prints_the_same_page_on_stderr(): void
     {
-        $command = $this->command('plan');
+        $command = $this->command('layers');
 
         ob_start();
         $exit = HelpScreen::usage($command, 'Name the subcommand.');
@@ -95,9 +95,9 @@ final class HelpTest extends TestCase
 
     public function test_the_markdown_table_projects_the_same_forms(): void
     {
-        $table = CommandTable::forVerbs('plan');
+        $table = CommandTable::forVerbs('layers');
 
-        foreach ($this->command('plan')->help()->forms as $form) {
+        foreach ($this->command('layers')->help()->forms as $form) {
             $this->assertStringContainsString('commandments ' . $form->syntax, $table);
         }
 
@@ -106,12 +106,12 @@ final class HelpTest extends TestCase
 
     public function test_a_document_block_is_filled_from_the_live_cli(): void
     {
-        $document = "# Doc\n\n<!-- BEGIN: commands:plan (auto-generated, run `composer sins`) -->\nstale\n<!-- END: commands:plan -->\n";
+        $document = "# Doc\n\n<!-- BEGIN: commands:layers (auto-generated, run `composer sins`) -->\nstale\n<!-- END: commands:layers -->\n";
 
         $refreshed = CommandBlocks::refresh($document);
 
         $this->assertStringNotContainsString('stale', $refreshed);
-        $this->assertStringContainsString('commandments plan done', $refreshed);
+        $this->assertStringContainsString('commandments layers add', $refreshed);
         $this->assertSame($refreshed, CommandBlocks::refresh($refreshed), 'refreshing twice must be a no-op');
     }
 

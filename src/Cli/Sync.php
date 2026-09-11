@@ -19,7 +19,6 @@ use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Skills\Library;
 
-use JesseGall\CodeCommandments\Cli\Plan\ChecksInference;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Config\DisableMenu;
@@ -94,6 +93,11 @@ final class Sync implements Command
 
         $lock = $this->lock($consumer);
         $packageRoot = dirname(__DIR__, 2);
+
+        // Before ANYTHING loads the config: a call to a method this package no longer has would fatal
+        // the load, and everything below — the agents, the languages, the disable menus — loads it.
+        $this->removePlanExecution($consumer);
+
         $agents = Agents::forProject($consumer);
 
         // The ignore rules go in FIRST. They are pure and idempotent, and everything after this
@@ -113,7 +117,6 @@ final class Sync implements Command
 
         $this->ensureComposerHook($consumer);
         $this->ensureConfigStub($consumer);
-        $this->ensurePlanExecution($consumer);
         $this->ensureDisableMenus($consumer);
         $this->ensureCommandmentsGitignore($consumer);
         $this->readWhichRulesReadBeyondOneFile($consumer);
@@ -168,14 +171,16 @@ final class Sync implements Command
     }
 
     /**
-     * Self-heal the plan-execution surface into the consumer's config: a `$config->planExecution(...)`
-     * block, its `onComplete` gate inferred from the project's own composer/npm scripts. A no-op once
-     * the config already declares one (see {@see ConfigScribe::ensurePlanExecution}), so a project's
-     * edits survive every `composer update`.
+     * Strip the `$config->planExecution(...)` block an earlier version injected into the consumer's
+     * config. Plan execution lives in its own package now, and {@see \JesseGall\CodeCommandments\Config}
+     * has no such method — a config still calling it would fatal on load. A no-op once it is gone
+     * (see {@see ConfigScribe::removePlanExecution}).
      */
-    private function ensurePlanExecution(string $consumer): void
+    private function removePlanExecution(string $consumer): void
     {
-        ConfigScribe::inProject($consumer)->ensurePlanExecution(ChecksInference::detect($consumer));
+        if (ConfigScribe::inProject($consumer)->removePlanExecution()) {
+            fwrite(STDOUT, "↻ removed the planExecution() block from .commandments/config.php — plan execution is a separate package now.\n");
+        }
     }
 
     /**

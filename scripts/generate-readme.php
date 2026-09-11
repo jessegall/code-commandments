@@ -248,10 +248,9 @@ $tables = [
     ],
 ];
 
-// ---- Plan-execution options + hooks (embedded tables, from the builder / hook classes) ----
+// ---- Hooks, commands, agents (embedded tables, from the hook / command / agent classes) ----
 
 $embedded = [
-    'plan-options' => \JesseGall\CodeCommandments\Cli\Doc\PlanExecutionOptions::table(),
     'hooks-table' => \JesseGall\CodeCommandments\Cli\Doc\HookCatalog::table(),
     'commands-table' => \JesseGall\CodeCommandments\Cli\Doc\CommandTable::overview(),
     'agents-table' => \JesseGall\CodeCommandments\Cli\Doc\AgentCatalog::table(),

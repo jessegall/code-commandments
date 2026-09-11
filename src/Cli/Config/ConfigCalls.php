@@ -13,7 +13,7 @@ use PhpParser\Node\Stmt\Expression;
  * The `$config->…(…)` calls a project's `config.php` declares, read through the AST — the ONE
  * home of "find me the `paths()` call" for everything that edits the file. {@see ConfigFile} (the
  * disable list, the layer chain, the registered detectors) and {@see ConfigScribe} (the scaffold,
- * the plan-execution block) both compose it, so there is a single answer to what counts as a call
+ * the leftover a removed feature left behind) both compose it, so there is a single answer to what counts as a call
  * and a single place where the config is parsed rather than scanned.
  */
 final class ConfigCalls

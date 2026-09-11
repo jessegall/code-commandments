@@ -96,12 +96,6 @@ vendor/bin/commandments layers --floor        # only the namespaces nothing of y
 vendor/bin/commandments layers add 'App\Parts' --may-use='App\Ui\Tokens'
 vendor/bin/commandments layers allow 'App\Ui\Pages' 'App\Parts'   # one arrow
 vendor/bin/commandments layers --write --refresh                   # regenerate the block
-
-# executing an approved plan (see Hooks below)
-vendor/bin/commandments checks start          # run the project's start / phase / complete checks
-vendor/bin/commandments checks phase
-vendor/bin/commandments checks complete       # full gate: your checks, then `judge --branch`
-vendor/bin/commandments plan status           # is a plan active? (`plan done` ends it)
 ```
 
 Exit code is non-zero when sins are found.
@@ -113,7 +107,6 @@ Exit code is non-zero when sins are found.
 |---|---|
 | `commandments judge [path]` | Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run. |
 | `commandments make <Name>` | Scaffold a commandment of your own — a skill, a sin and a detector in `.commandments/custom/`, registered in your config, with the rest of the process printed for you. |
-| `commandments checks [start\|phase\|complete]` | Run the project's planExecution() checks for one moment of a plan. |
 | `commandments hints [path]` | Auto-fix the Spatie Data magic surface — rename non-`from…` object factories to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the `@method from(...)`/`collect(...)` docblock hints. |
 | `commandments repent [path]` | Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, backend and frontend. |
 | `commandments scaffold` | Generate the reusable helper a sin's fix uses — written into your source root with its namespace injected. Idempotent: an existing file is skipped. |
@@ -123,11 +116,7 @@ Exit code is non-zero when sins are found.
 | `commandments sync` | Refresh this project's code-commandments integration — publish the skills into the library every agent reads, refresh the AGENTS.md briefing and the config surface, and wire each agent's own view of them. |
 | `commandments install` | Wire a consumer project up once — the composer sync hook, every agent it supports (skills, AGENTS.md, and under Claude Code the hook suite) and .gitignore — then sync. |
 | `commandments judge-reminder` | A "did you judge?" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files are touched but unchecked, deduped per changed-file set. |
-| `commandments plan-reminder` | The plan-execution Hook wired to `PostToolUse/ExitPlanMode` and `Stop`. |
-| `commandments plan status` | The handle on the ACTIVE PLAN marker the keep-going Stop hook reads — scoped to this worktree. |
-| `commandments constraints list` | The plan's architectural invariants — the rules the whole branch must still hold at the end. |
-| `commandments testing show` | The plan's testing methodology — the working style the user chose at approval, in force for this run. |
-| `commandments session` | Where this session keeps its state — the folder holding its checklist, plan marker and stop gate. |
+| `commandments session` | Where this session keeps its state — the folder holding its checklist and hook counters. |
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
@@ -189,8 +178,8 @@ shipped skill and sin as a commented-out `disable()` argument. Remove the `//` t
 turn a rule off. New rules are appended on `composer update`; your edits are kept.
 
 Each move is named for what it registers: `paths`, `disable`, `detector`,
-`configure`, `package` (see [Developing detectors](#developing-detectors)), `hook`
-and `planExecution` (see [Hooks](#hooks)). `configure` finds the detector by the
+`configure`, `package` (see [Developing detectors](#developing-detectors)) and `hook`
+(see [Hooks](#hooks)). `configure` finds the detector by the
 closure's first parameter type. Run `commandments config` for a summary of what's
 in effect.
 
@@ -301,9 +290,9 @@ subagents, `config.toml`) but no hook events, so there is nothing to wire.
 That difference is worth being plain about, because it is the difference between a
 discipline that is **enforced** and one that is merely **written down**. Under Claude
 Code the rule you just broke is named on the edit that broke it, `judge` is nudged
-before risky commands and on stop, and an approved plan is ground to completion. Under any
-other agent all of that is still available — the skills, `AGENTS.md`, and `judge` /
-`repent` / `plan` as ordinary CLI verbs — but nothing checks that the agent used them.
+before risky commands and on stop. Under any other agent all of that is still available —
+the skills, `AGENTS.md`, and `judge` / `repent` as ordinary CLI verbs — but nothing checks
+that the agent used them.
 
 One further gap: session state is scoped by `CLAUDE_CODE_SESSION_ID`
 ([`Workspace`](src/Workspace.php)), so under another agent every run shares the
@@ -320,7 +309,7 @@ you had force-committed `.claude/skills/` you will see those deletions.
 
 `install` (and every `composer update`, via `sync`) wires a set of **Claude Code
 hooks** into `.claude/settings.json`: the per-edit rule check, the "did you
-judge?" nudge, and the plan-execution hooks. They self-heal: a hook change reaches
+judge?" nudge, the skill-invocation nudge. They self-heal: a hook change reaches
 every project on the next `composer update`. They are Claude Code only — see
 [Agents](#agents) for what that means under a different assistant.
 
@@ -334,94 +323,12 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | Hook | Events | What it does |
 |---|---|---|
 | `JudgeReminder` | `Stop, PreToolUse/Bash` | Nudges you to `judge` what you changed — before a risky Bash command, and on stop. |
-| `PlanReminder` | `PostToolUse/ExitPlanMode, Stop` | On plan approval loads the executing-plans skill with your profile; on stop, keeps you going until `plan done` per the plan `mode()` (Supervised/Autonomous/BestEffort/Relentless). |
-| `ConstraintReminder` | `SessionStart` | Re-surfaces the active plan's constraints after a compaction or resume. |
-| `TestingReminder` | `SessionStart` | Re-surfaces the active plan's testing methodology after a compaction or resume. |
 | `SharedBranchGate` | `PreToolUse/Bash` | Refuses `git pull --rebase` while other worktrees stand on the branch — it rewrites the commits they are built on. |
 | `ModelChoiceReminder` | `PreToolUse/Agent` | Asks for an explicit model when an agent is dispatched without one, since an unnamed model inherits the dispatcher's. |
-| `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering plan state, so a crashed run never nudges a new session. |
+| `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering hook counters and prunes stale session folders. |
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
 | `SkillReminder` | `PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit, PostToolUse/Bash` | After an edit — including one made with the shell — checks the files against the rules that can judge one file and names the skill that teaches the fix. |
-| `WorkingState` | `PostToolUse, SessionStart` | Keeps the plan's working-state record alive across compaction — a refresh heartbeat and re-injection on compact/resume. |
 <!-- END: hooks-table -->
-
-### Plan execution
-
-Optional. When you approve a plan, a `PostToolUse`/`ExitPlanMode` hook loads the
-`executing-plans` skill with your project's profile. The agent branches, works
-phase by phase (`checks phase`, commit each), and runs the full gate
-(`checks complete`, which appends `judge --branch`) once at the end. Opt into
-`keepGoing()` and a `Stop` hook re-nudges until `commandments plan done`.
-
-The profile lives in `.commandments/config.php`, next to everything else. A
-starter block is injected on `composer update`, its `onComplete` inferred from
-your composer/npm scripts. Edit or remove it freely:
-
-```php
-use JesseGall\CodeCommandments\PlanExecution;
-
-$config->planExecution(fn (PlanExecution $plan) => $plan
-    ->branchFrom('main')            // base to cut from + judge --branch base
-    ->branchPrefix('plan/')         // the plan branch prefix
-    ->pushEachPhase()               // push after every phase (default: once at the end)
-    ->keepGoing()                   // Stop hook re-nudges until `plan done`
-    ->onStart('composer install')   // once, before the first phase
-    ->eachPhase('composer lint')    // after each phase (keep it fast)
-    ->onComplete('composer test')   // the end gate; judge --branch runs after
-    ->constraint('Every new query is scoped to the current tenant.')
-    ->constraint('Public API responses stay backwards-compatible — no field removed or renamed.')
-    ->enforceConstraintsEachPhase()  // check constraints every phase, not just at the end
-    ->testFlow('Write and run the tests for each phase before committing it.') // default test methodology, offered at approval
-    ->trackWorkingState());          // keep a living working-state record that survives context compaction
-```
-
-Every option (from the `PlanExecution` builder):
-
-<!-- BEGIN: plan-options (auto-generated, run `composer readme`) -->
-| Option | What it does |
-|---|---|
-| `->branchFrom(…)` | The branch a plan is cut from and judged against — the base for the new plan branch and the `judge --branch=<base>` the end gate runs. |
-| `->branchPrefix(…)` | The prefix for the branch a plan auto-creates (`plan/` → `plan/<slug>`). |
-| `->pushEachPhase(…)` | Push after every phase commit, rather than once at the end. |
-| `->mode(…)` | The plan-execution MODE — how autonomously the agent runs an approved plan (confirm-first, supervised, grind-to-finish, or never-stop). |
-| `->keepGoing(…)` | Legacy alias for mode: turn on the keep-going Stop hook. |
-| `->onStart(…)` | Commands to run ONCE before the first phase — environment setup the whole plan needs (`composer install`, `npm ci`, a `git fetch`). |
-| `->eachPhase(…)` | Commands to run after EACH phase's commit — the fast, cheap signal (a linter, a type check) that keeps a phase honest without the full suite. |
-| `->onComplete(…)` | Commands to run ONCE at the very end, after the last phase — the exhaustive gate: the full test suite, a lint, a static analysis. |
-| `->constraint(…)` | A CONSTRAINT the agent must respect for every plan run — a natural-language architectural invariant `judge` can't decide (e.g. "the frontend is presentation-only"). |
-| `->enforceConstraintsEachPhase(…)` | Force the constraint diff-check after EVERY phase, not just at completion. |
-| `->testFlow(…)` | The project's DEFAULT testing methodology for a plan run — how tests are written and run as the agent grinds a plan (e.g. "write and run the tests for each phase before committing it"). |
-| `->trackWorkingState(…)` | Keep a living WORKING-STATE record while a plan runs — an opt-in discipline where the agent writes its progress and, above all, the conversational deltas (decisions and their rejected alternatives, plan changes agreed in chat, hard-won gotchas, the exact next step) to the session's `.plan-working-state` file (the approval nudge names the exact path), refreshed after each phase and each important event — kept near-current by a `PostToolUse` heartbeat, and re-injected on compact/resume, so a compacted agent resumes with the full picture. |
-<!-- END: plan-options -->
-
-**Working state** (`trackWorkingState()`) is opt-in: the agent maintains a living record at
-`.commandments/.plan-working-state` — the decisions, conversational plan changes, gotchas, and next step
-that live *only* in the conversation — refreshed after each phase and each important event, with a
-`PostToolUse` heartbeat nudging a refresh so the record stays near-current, and re-injected on
-compact/resume, so a compacted agent resumes with the full picture. It captures only what `git log` + the plan can't reconstruct.
-
-**Constraints** are natural-language architectural invariants a detector *can't* decide
-from the AST — "every new query is scoped to the current tenant", "public API responses
-stay backwards-compatible", "new endpoints run behind the existing authorization checks".
-Where a detector reads a sin off the code's shape, a constraint captures intent only a
-reading of the *change* can confirm: the agent verifies each by reviewing its own branch
-diff, and the completion gate blocks `commandments plan done` until they hold. By default
-a phase gets a soft reminder and completion is the hard gate;
-`enforceConstraintsEachPhase()` makes every phase a hard check too. Declare project-wide
-ones here; a single run can add its own with `commandments constraints add "…"`.
-
-A plan run in the terminal:
-
-<p align="center">
-  <img src="docs/plan-execution.svg" width="660" alt="An agent executing an approved plan: branch, two phases each ending in checks phase and a commit, then checks complete with judge --branch, then plan done." />
-</p>
-
-The completion gate verifying the declared constraints against the branch diff before
-`plan done` is allowed:
-
-<p align="center">
-  <img src="docs/constraint-gate.svg" width="660" alt="The completion gate: composer test and judge --branch pass, then the agent reviews the branch diff against three declared constraints, confirms each, and plan done is allowed." />
-</p>
 
 ### Register your own hook
 

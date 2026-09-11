@@ -7,7 +7,6 @@ namespace JesseGall\CodeCommandments\Hooks;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
 /**
  * Base class for all code-commandments hooks. Subclasses declare the moments they wire;
  * {@see handle} dispatches to moment handlers. Responses use {@see block}, {@see inject},
@@ -51,7 +50,7 @@ abstract class Hook
      * not abandoning work — no Stop handler may hold or nudge it.
      *
      * A hook firing INSIDE a spawned subagent stays silent BY DEFAULT: a reminder speaks to the session
-     * that owns the plan and the working state, and inside a read-only exploration agent it is noise that
+     * that owns the work, and inside a read-only exploration agent it is noise that
      * can derail the task. A hook that ENFORCES says otherwise ({@see speaksToSubagents}) — a refusal has
      * to run where the work happens, and under orchestration the work happens in subagents.
      */
@@ -81,7 +80,7 @@ abstract class Hook
 
     /**
      * Does this hook speak inside a spawned subagent? A REMINDER does not: it addresses the session that
-     * owns the plan, and an exploration agent hearing it is being derailed by somebody else's business. A
+     * owns the work, and an exploration agent hearing it is being derailed by somebody else's business. A
      * REFUSAL does, because the thing it refuses is done by the worker, and a rule that goes quiet exactly
      * where the work happens is not a rule.
      */

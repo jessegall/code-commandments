@@ -8,15 +8,11 @@ use JesseGall\CodeCommandments\Support\JsonFile;
 use JesseGall\CodeCommandments\Config;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\PlanReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\ConstraintReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\TestingReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
 use JesseGall\CodeCommandments\Hooks\Handlers\SourceReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SharedBranchGate;
 use JesseGall\CodeCommandments\Hooks\Handlers\ModelChoiceReminder;
-use JesseGall\CodeCommandments\Hooks\Handlers\WorkingState;
 use JesseGall\CodeCommandments\Cli\Install;
 use JesseGall\CodeCommandments\Cli\Sync;
 use JesseGall\CodeCommandments\Support\Binary;
@@ -55,15 +51,11 @@ final class HookRegistry
      */
     public const array BUILTINS = [
         JudgeReminder::class,
-        PlanReminder::class,
-        ConstraintReminder::class,
-        TestingReminder::class,
         SharedBranchGate::class,
         ModelChoiceReminder::class,
         SessionReset::class,
         SourceReminder::class,
         SkillReminder::class,
-        WorkingState::class,
     ];
 
     /**

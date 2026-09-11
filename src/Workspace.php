@@ -13,7 +13,7 @@ use JesseGall\CodeCommandments\Support\FileTree;
 /**
  * The ONE home of the `.commandments/` layout — every artifact path in the package is built here.
  * Two tiers: the durable tier ({@see shared} — `config.php`, `repent.php`, `.gitignore`, the vue-tsc
- * cache) stays flat, and the session tier ({@see path} — counters, plan markers, the sins checklist)
+ * cache) stays flat, and the session tier ({@see path} — counters, reminder marks, the sins checklist)
  * is scoped into `.commandments/sessions/<key>/` so concurrent sessions never overwrite each other.
  * The key is a 5-char hash of the session id: an explicit id (a hook payload, via
  * {@see Hooks\HookEvent::workspace}) → the `CLAUDE_CODE_SESSION_ID` env var (exported to every shell
@@ -105,7 +105,7 @@ final class Workspace
     /**
      * The workspace for the SESSION rather than the directory. A hook resolves its root from the git
      * toplevel of wherever the shell happens to be, which is right for anything belonging to a WORKTREE —
-     * a plan is worked in one, and its state should not follow the agent out of it. A conversation is not
+     * work is done in one, and its state should not follow the agent out of it. A conversation is not
      * like that: it is one thing wherever a command was run from, so its state must be too, or a session
      * that steps into a worktree files half of it there and reads an empty one back at home.
      *
@@ -185,7 +185,7 @@ final class Workspace
     /**
      * The folder name for this session — the NAME it was given, else `substr(sha1(id), 0, 5)`, else
      * `default` without an id. A named session's folder IS its name, which is what makes a session
-     * something a person can come back to now that it holds its own plan.
+     * something a person can come back to now that it holds its own state.
      */
     public function sessionKey(): string
     {
