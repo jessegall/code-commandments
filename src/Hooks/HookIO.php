@@ -82,6 +82,11 @@ class HookIO
     }
 
     /**
+     * A line for the host's activity list, when the host keeps one; Claude Code has none.
+     */
+    public function activity(string $line): void {}
+
+    /**
      * A non-blocking context injection: the tool/turn proceeds; Claude reads $context as context.
      * When $quietly the harness keeps it out of the transcript. Silent on an event with no context
      * channel — better nothing than an invalid payload.

@@ -24,6 +24,8 @@ final class JournalHook implements Command
 {
     public const QUIET = 'COMMANDMENTS_QUIET_HOOKS';
 
+    public const DATA = 'JOURNAL_PLUGIN_DATA';
+
     public function __construct(private readonly HookIO $io = new HookIO) {}
 
     public function names(): array
@@ -58,9 +60,46 @@ final class JournalHook implements Command
             }
         }
 
-        echo json_encode($this->answer(HookResponse::merge($recorder->emitted)), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+        $answer = $this->answer(HookResponse::merge($recorder->emitted));
+        $activity = $this->activity($payload, $event->root, $recorder->activity);
+
+        if ($activity !== []) {
+            $answer['activity'] = $activity;
+        }
+
+        echo json_encode($answer, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
 
         return 0;
+    }
+
+    /**
+     * "Sin found" for what this edit broke; "Sin repented" when an edit clears a file that had some.
+     * The sins each file had last time are kept in the plugin's data folder.
+     *
+     * @param  array<string, mixed>  $payload
+     * @param  list<string>  $found
+     * @return array<string, string>
+     */
+    private function activity(array $payload, string $root, array $found): array
+    {
+        $file = (string) ($payload['tool_input']['file_path'] ?? '');
+        $kept = getenv(self::DATA) ? getenv(self::DATA) . '/sins.json' : '';
+
+        if ($file === '' || $kept === '') {
+            return $found === [] ? [] : ['title' => 'Sin found', 'brief' => implode("\n", $found)];
+        }
+
+        $file = str_replace(rtrim($root, '/') . '/', '', $file);
+        $known = is_file($kept) ? (array) json_decode((string) file_get_contents($kept), true) : [];
+        $before = (array) ($known[$file] ?? []);
+        $known[$file] = $found;
+        file_put_contents($kept, json_encode(array_filter($known), JSON_UNESCAPED_SLASHES));
+
+        if ($found !== []) {
+            return ['title' => 'Sin found', 'brief' => implode("\n", $found)];
+        }
+
+        return $before === [] ? [] : ['title' => 'Sin repented', 'brief' => implode("\n", $before)];
     }
 
     /**
@@ -109,7 +148,7 @@ final class JournalHook implements Command
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
     private function answer(HookResponse $merged): array
     {

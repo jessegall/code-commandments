@@ -89,6 +89,10 @@ final class SkillReminder extends Hook implements Discipline
             $sins = array_merge_recursive($sins, $this->sinsIn($file, Languages::from($config), $single));
         }
 
+        foreach (array_merge(...array_values($sins)) as $found) {
+            $this->io->activity(str_replace(rtrim($event->root, '/') . '/', '', $found));
+        }
+
         return $sins === [] ? $this->pass() : $this->inject($event, $this->nudge($event, $files, $sins));
     }
 

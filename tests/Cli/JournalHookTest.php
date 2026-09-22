@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalHook;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
@@ -104,6 +105,31 @@ final class JournalHookTest extends TestCase
         } finally {
             chdir($before);
         }
+    }
+
+    public function test_a_sin_in_an_edit_is_written_to_the_journals_activity(): void
+    {
+        mkdir($this->root . '/src', 0777, true);
+        file_put_contents($this->root . '/src/Thing.vue', "<template>\n    <div>\n        <span v-for=\"item in items\" :key=\"item\" :class=\"{on: item}\">{{ item }}</span>\n    </div>\n</template>\n");
+        ConfigFile::inProject($this->root)->scaffoldIfMissing();
+
+        $edited = [
+            'event' => 'hook.PostToolUse',
+            'agent' => ['session' => 'claude-1', 'cwd' => $this->root],
+            'data' => ['hook' => 'PostToolUse', 'tool' => 'Edit', 'file' => $this->root . '/src/Thing.vue'],
+        ];
+        $answer = $this->answer($edited);
+
+        $this->assertSame('Sin found', $answer['activity']['title'] ?? null);
+        $this->assertStringContainsString('src/Thing.vue:3', $answer['activity']['brief']);
+
+        putenv(JournalHook::DATA . '=' . $this->root);
+        $this->answer($edited);
+        file_put_contents($this->root . '/src/Thing.vue', "<template>\n    <div>\n        <template v-for=\"item in items\" :key=\"item\">\n            <span :class=\"{on: item}\">{{ item }}</span>\n        </template>\n    </div>\n</template>\n");
+        $answer = $this->answer($edited);
+        putenv(JournalHook::DATA);
+
+        $this->assertSame('Sin repented', $answer['activity']['title'] ?? null, 'the edit that clears a file says so');
     }
 
     public function test_the_journal_owns_the_hooks_once_the_plugin_is_installed(): void

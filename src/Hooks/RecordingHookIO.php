@@ -19,6 +19,11 @@ final class RecordingHookIO extends HookIO
     public array $emitted = [];
 
     /**
+     * @var list<string>  every activity line a handler wrote, in order
+     */
+    public array $activity = [];
+
+    /**
      * @param  array<string, mixed>  $payload  the payload read once by the dispatcher
      */
     public function __construct(private readonly array $payload, GitFiles $git)
@@ -34,5 +39,10 @@ final class RecordingHookIO extends HookIO
     public function emit(HookResponse $response, string $event): void
     {
         $this->emitted[] = $response;
+    }
+
+    public function activity(string $line): void
+    {
+        $this->activity[] = $line;
     }
 }
