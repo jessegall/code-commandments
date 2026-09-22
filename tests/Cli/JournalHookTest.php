@@ -125,6 +125,7 @@ final class JournalHookTest extends TestCase
 
         putenv(JournalHook::DATA . '=' . $this->root);
         $this->answer($edited);
+        $this->assertArrayNotHasKey('activity', $this->answer($edited), 'the same sins in the same file are not found twice');
         $this->assertSame([], $this->answer(['event' => 'hook.PreToolUse', 'agent' => $edited['agent'], 'tool' => ['name' => 'Edit', 'file' => $this->root . '/src/Thing.vue']]), 'asking before the edit keeps no score');
         file_put_contents($this->root . '/src/Thing.vue', "<template>\n    <div>\n        <template v-for=\"item in items\" :key=\"item\">\n            <span :class=\"{on: item}\">{{ item }}</span>\n        </template>\n    </div>\n</template>\n");
         $answer = $this->answer($edited);

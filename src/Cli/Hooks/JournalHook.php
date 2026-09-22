@@ -86,7 +86,7 @@ final class JournalHook implements Command
         $kept = getenv(self::DATA) ? getenv(self::DATA) . '/sins.json' : '';
 
         if ($file === '' || $kept === '') {
-            return $found === [] ? [] : ['title' => 'Sin found', 'brief' => implode("\n", $found)];
+            return $found === [] ? [] : ['title' => 'Sin found', 'brief' => implode("\n", $found), 'tone' => 'warn'];
         }
 
         $file = str_replace(rtrim($root, '/') . '/', '', $file);
@@ -95,11 +95,11 @@ final class JournalHook implements Command
         $known[$file] = $found;
         file_put_contents($kept, json_encode(array_filter($known), JSON_UNESCAPED_SLASHES));
 
-        if ($found !== []) {
-            return ['title' => 'Sin found', 'brief' => implode("\n", $found)];
+        if ($found !== [] && $found !== $before) {
+            return ['title' => 'Sin found', 'brief' => implode("\n", $found), 'tone' => 'warn'];
         }
 
-        return $before === [] ? [] : ['title' => 'Sin repented', 'brief' => implode("\n", $before)];
+        return $found === [] && $before !== [] ? ['title' => 'Sin repented', 'brief' => implode("\n", $before), 'tone' => 'good'] : [];
     }
 
     /**
