@@ -1,6 +1,6 @@
 {
   "name": "code-commandments",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "title": "Code Commandments",
   "description": "The architecture linter judges the codebase, and its hooks run inside the journal instead of beside it",
   "journal": "2.85.55",
@@ -35,5 +35,13 @@
     "hook.Stop": "bin/commandments journal-hook",
     "hook.SessionStart": "bin/commandments journal-hook",
     "hook.SubagentStart": "bin/commandments journal-hook"
+  },
+  "settings": {
+    "quiet_hooks": {
+      "title": "Hooks that stay quiet",
+      "help": "Names of the linter's hooks the journal should not run, separated by commas: JudgeReminder, SourceReminder, SkillReminder, ModelChoiceReminder, SharedBranchGate, SessionReset.",
+      "default": "",
+      "env": "COMMANDMENTS_QUIET_HOOKS"
+    }
   }
 }

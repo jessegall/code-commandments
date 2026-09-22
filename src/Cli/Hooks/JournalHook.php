@@ -22,6 +22,8 @@ use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
  */
 final class JournalHook implements Command
 {
+    public const QUIET = 'COMMANDMENTS_QUIET_HOOKS';
+
     public function __construct(private readonly HookIO $io = new HookIO) {}
 
     public function names(): array
@@ -43,8 +45,10 @@ final class JournalHook implements Command
         $event = new HookEvent($payload, $this->io->projectRoot());
         $recorder = new RecordingHookIO($payload, $this->io->git());
 
+        $quiet = $this->quiet();
+
         foreach (HookRegistry::forProject($event->root) as $class) {
-            if (is_subclass_of($class, Hook::class)) {
+            if (is_subclass_of($class, Hook::class) && ! in_array((new \ReflectionClass($class))->getShortName(), $quiet, true)) {
                 new $class($recorder)->run([]);
             }
         }
@@ -52,6 +56,16 @@ final class JournalHook implements Command
         echo json_encode($this->answer(HookResponse::merge($recorder->emitted)), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
 
         return 0;
+    }
+
+    /**
+     * The hooks the journal plugin's settings keep quiet: short class names, comma separated.
+     *
+     * @return list<string>
+     */
+    private function quiet(): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', (string) getenv(self::QUIET)))));
     }
 
     /**

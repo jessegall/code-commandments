@@ -73,6 +73,21 @@ final class JournalHookTest extends TestCase
         $this->assertArrayNotHasKey('refuse', $answer, 'a reminder never stops the call');
     }
 
+    public function test_a_hook_the_plugin_settings_keep_quiet_does_not_run(): void
+    {
+        putenv(JournalHook::QUIET . '=ModelChoiceReminder, SourceReminder');
+
+        try {
+            $this->assertSame([], $this->answer([
+                'event' => 'hook.PreToolUse',
+                'agent' => ['session' => 'claude-1', 'cwd' => $this->root],
+                'tool' => ['name' => 'Agent', 'command' => ''],
+            ]));
+        } finally {
+            putenv(JournalHook::QUIET);
+        }
+    }
+
     public function test_the_journal_owns_the_hooks_once_the_plugin_is_installed(): void
     {
         $this->assertFalse(HookRegistry::journalDriven($this->root), 'a project without the plugin wires its own hooks');
