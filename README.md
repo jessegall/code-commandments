@@ -119,6 +119,7 @@ Exit code is non-zero when sins are found.
 | `commandments session` | Where this session keeps its state — the folder holding its checklist and hook counters. |
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
+| `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
 | `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
 | `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched. |
 | `commandments config` | Inspect and manage .commandments/config.php — what is configured, and what is actually running. |
@@ -329,6 +330,25 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 | `SourceReminder` | `PreToolUse/Edit, PreToolUse/Write, PreToolUse/MultiEdit` | When you edit a test/stub/fixture (which `judge` never scans), nudges you to check the real fix belongs at the SOURCE. |
 | `SkillReminder` | `PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit, PostToolUse/Bash` | After an edit — including one made with the shell — checks the files against the rules that can judge one file and names the skill that teaches the fix. |
 <!-- END: hooks-table -->
+
+### Under the agent journal
+
+In a project that runs the [agent journal](https://github.com/jessegall/agent-journal), the journal
+already owns the hooks — it sees every tool call and decides what reaches the agent. Install this
+package as a journal plugin and the two share one chain instead of wiring two:
+
+```
+journal plugin install <path-or-url-to-this-package>
+```
+
+The plugin declares `.journal-plugin/plugin.json`. On install it files `commandments judge` as a
+journal **check**, so a failing judge files a notification and is told to the agent, and the next
+clean pass clears it. Every moment the journal sees is handed to `commandments journal-hook`, which
+runs the same handlers as `commandments hooks`: a nudge comes back as a journal line to the agent
+alone, and a refusal — the shared-branch gate, for one — stops the tool call with its own reason.
+
+While the plugin is installed, `install` and `sync` wire **no** Claude Code hooks of their own: the
+journal calls them. Take the plugin away and the next `composer update` wires them back.
 
 ### Register your own hook
 

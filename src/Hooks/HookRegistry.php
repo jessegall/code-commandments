@@ -83,6 +83,17 @@ final class HookRegistry
      *
      * @param  list<class-string<Hook>>  $hookClasses
      */
+    public const JOURNAL_PLUGIN = 'code-commandments';
+
+    /**
+     * Whether the agent journal owns this project's hooks: its plugin folder is installed and the journal
+     * is set up beside it.
+     */
+    public static function journalDriven(string $root): bool
+    {
+        return is_file("{$root}/.journal/plugins/" . self::JOURNAL_PLUGIN . '/.journal-plugin/plugin.json');
+    }
+
     public static function wire(string $root): bool
     {
         // The set is DERIVED from the project, not asked for: every caller held the root and handed
@@ -103,7 +114,9 @@ final class HookRegistry
 
         $hooks = self::stripOurs(is_array($settings['hooks'] ?? null) ? $settings['hooks'] : []);
 
-        foreach (self::moments($hookClasses) as $event => $matcher) {
+        // A project with the agent journal has one hook chain, and it is the journal's: its plugin calls
+        // `commandments journal-hook` for every moment. Wiring ours beside it would run each handler twice.
+        foreach (self::journalDriven($root) ? [] : self::moments($hookClasses) as $event => $matcher) {
             $group = ['hooks' => [['type' => 'command', 'command' => self::command($root)]]];
 
             if ($matcher !== null) {

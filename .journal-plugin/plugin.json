@@ -1,0 +1,32 @@
+{
+  "name": "code-commandments",
+  "version": "1.0.0",
+  "title": "Code Commandments",
+  "description": "The architecture linter judges the codebase, and its hooks run inside the journal instead of beside it",
+  "journal": "2.85.55",
+  "requires": {
+    "php": {
+      "check": "php -v",
+      "hint": "code-commandments runs on PHP 8.4 or newer"
+    },
+    "commandments": {
+      "check": "test -x vendor/bin/commandments",
+      "hint": "composer require --dev jessegall/code-commandments in this project"
+    }
+  },
+  "setup": [
+    {
+      "name": "Judge the codebase as a check",
+      "run": "journal check create \"The codebase keeps its architecture\" --set command=\"vendor/bin/commandments judge\" --set every=0"
+    }
+  ],
+  "refuse": "vendor/bin/commandments journal-hook",
+  "reads": true,
+  "refuse_seconds": 20,
+  "on": {
+    "hook.PostToolUse": "vendor/bin/commandments journal-hook",
+    "hook.Stop": "vendor/bin/commandments journal-hook",
+    "hook.SessionStart": "vendor/bin/commandments journal-hook",
+    "hook.SubagentStart": "vendor/bin/commandments journal-hook"
+  }
+}
