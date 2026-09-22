@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
+use JesseGall\CodeCommandments\Language;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -95,6 +96,14 @@ final class SourceRootsTest extends TestCase
 
         $this->assertSame(['app', 'web/src'], $roots->detect($this->root));
         $this->assertSame(['vendor', 'web/dist', 'web/node_modules'], $roots->built($this->root), 'what an installer or a build wrote is left out');
+
+        file_put_contents($this->root . '/web/src/App.vue', '<template><div /></template>');
+        mkdir($this->root . '/web/node_modules/lib', 0777, true);
+        file_put_contents($this->root . '/web/node_modules/lib/index.ts', 'export {}');
+
+        $this->assertTrue($roots->writes($this->root, Language::Vue), 'a .vue file in a source folder is Vue written');
+        $this->assertFalse($roots->writes($this->root, Language::TypeScript), 'a .ts file only under node_modules is not');
+        $this->assertFalse($roots->writes($this->root, Language::Php), 'no .php file, no PHP');
     }
 
     private function dirs(string ...$dirs): void

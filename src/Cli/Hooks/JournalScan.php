@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Language;
 
 /**
  * `commandments journal-scan` — run by the journal right after install: finds the project's source
@@ -31,9 +32,16 @@ final class JournalScan implements Command
         $project = (string) (getenv(JournalConfig::PROJECT) ?: getcwd());
         $roots = new SourceRoots();
 
+        $languages = [];
+
+        foreach (Language::cases() as $language) {
+            $languages[JournalManifest::languageKey($language)] = $roots->writes($project, $language) ? 'true' : 'false';
+        }
+
         echo json_encode(['settings' => [
             JournalManifest::JUDGED => implode("\n", $roots->detect($project)),
             JournalManifest::SKIPPED => implode("\n", $roots->built($project)),
+            ...$languages,
         ]], JSON_UNESCAPED_SLASHES) . "\n";
 
         return 0;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Config;
 
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Language;
 
 /**
  * Resolves the source roots a CLI command scans — the ONE resolution `judge` and `repent` share,
@@ -99,6 +100,27 @@ final class SourceRoots
         }
 
         return $this->absolute($root, $declared);
+    }
+
+    /**
+     * Whether any source folder under $root holds a file in $language, build output left aside.
+     */
+    public function writes(string $root, Language $language): bool
+    {
+        foreach ($this->detect($root) as $dir) {
+            $files = new \RecursiveIteratorIterator(new \RecursiveCallbackFilterIterator(
+                new \RecursiveDirectoryIterator("{$root}/{$dir}", \FilesystemIterator::SKIP_DOTS),
+                static fn (\SplFileInfo $file): bool => ! $file->isDir() || ! in_array($file->getFilename(), self::BUILT, true),
+            ));
+
+            foreach ($files as $file) {
+                if ($file->getExtension() === $language->value) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
