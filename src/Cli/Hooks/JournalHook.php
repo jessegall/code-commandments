@@ -42,6 +42,11 @@ final class JournalHook implements Command
     {
         $given = $this->io->payload();
         $payload = $this->translated($given);
+
+        if (is_dir($payload['cwd'])) {
+            chdir($payload['cwd']);
+        }
+
         $event = new HookEvent($payload, $this->io->projectRoot());
         $recorder = new RecordingHookIO($payload, $this->io->git());
 

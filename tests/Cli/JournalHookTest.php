@@ -88,6 +88,24 @@ final class JournalHookTest extends TestCase
         }
     }
 
+    public function test_the_hook_judges_the_agents_project_not_the_folder_it_is_run_from(): void
+    {
+        $before = (string) getcwd();
+        chdir(sys_get_temp_dir());
+
+        try {
+            $this->answer([
+                'event' => 'hook.PostToolUse',
+                'agent' => ['session' => 'claude-1', 'cwd' => $this->root],
+                'data' => ['hook' => 'PostToolUse', 'tool' => 'Edit', 'file' => $this->root . '/src/Thing.php'],
+            ]);
+
+            $this->assertSame(realpath($this->root), realpath((string) getcwd()), 'the journal runs the plugin from its own folder; the hook works in the agent\'s');
+        } finally {
+            chdir($before);
+        }
+    }
+
     public function test_the_journal_owns_the_hooks_once_the_plugin_is_installed(): void
     {
         $this->assertFalse(HookRegistry::journalDriven($this->root), 'a project without the plugin wires its own hooks');
