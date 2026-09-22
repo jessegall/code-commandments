@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.85.55",
@@ -58,21 +58,21 @@
         },
         "language_php": {
             "title": "PHP",
-            "help": "Scan and teach PHP. Off, nothing written in it is read or taught.",
+            "help": "Enables PHP sin detection",
             "type": "flag",
             "default": "true",
             "group": "Languages"
         },
         "language_vue": {
             "title": "Vue",
-            "help": "Scan and teach Vue. Off, nothing written in it is read or taught.",
+            "help": "Enables Vue sin detection",
             "type": "flag",
             "default": "true",
             "group": "Languages"
         },
         "language_ts": {
             "title": "TypeScript",
-            "help": "Scan and teach TypeScript. Off, nothing written in it is read or taught.",
+            "help": "Enables TypeScript sin detection",
             "type": "flag",
             "default": "true",
             "group": "Languages"

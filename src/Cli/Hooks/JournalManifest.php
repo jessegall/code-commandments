@@ -60,7 +60,7 @@ final class JournalManifest
         foreach (Language::cases() as $language) {
             $settings[self::languageKey($language)] = [
                 'title' => $language->label(),
-                'help' => "Scan and teach {$language->label()}. Off, nothing written in it is read or taught.",
+                'help' => "Enables {$language->label()} sin detection",
                 'type' => 'flag',
                 'default' => 'true',
                 'group' => self::LANGUAGES,
