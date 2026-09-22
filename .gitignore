@@ -60,3 +60,4 @@ phpcs.xml
 
 # Worktrees a lane is opened in — checkouts of this repo, never content of it.
 .lanes/
+/journal-skills/

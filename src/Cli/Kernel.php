@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Support\InstalledPackage;
 
 use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalConfig;
+use JesseGall\CodeCommandments\Cli\Hooks\JournalSkills;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalHook;
 use JesseGall\CodeCommandments\Cli\Hooks\HookRunner;
 use JesseGall\CodeCommandments\Cli\Hooks\HookCommand;
@@ -153,6 +154,7 @@ final class Kernel
             new HookDispatch(),
             new JournalHook(),
             new JournalConfig(),
+            new JournalSkills(),
             new HookRunner(),
             new Configure(),
             new ConfigCommand(),

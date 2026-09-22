@@ -72,6 +72,8 @@ final class JournalConfig implements Command
             $file->skipFolders(self::folders($chosen, JournalManifest::SKIPPED));
         }
 
+        JournalSkills::render();
+
         $answer = $changed ? ['notify' => "config.php follows the plugin's switches: {$changed} changed"] : [];
 
         if ($judged === []) {

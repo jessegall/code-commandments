@@ -121,6 +121,7 @@ Exit code is non-zero when sins are found.
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
 | `commandments journal-config` | Write the agent journal plugin's chosen switches into .commandments/config.php. |
+| `commandments journal-skills` | Render the skills into the agent journal plugin's folder, for the journal to publish. |
 | `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
 | `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched. |
 | `commandments config` | Inspect and manage .commandments/config.php — what is configured, and what is actually running. |
