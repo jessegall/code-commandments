@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.85.55",
@@ -42,6 +42,20 @@
         "plugin.updated": "bin/commandments journal-config"
     },
     "settings": {
+        "folders_judged": {
+            "title": "Folders to check",
+            "help": "One folder per line, from the project root. Empty, config.php keeps the folders it names.",
+            "type": "list",
+            "default": "",
+            "group": "Folders"
+        },
+        "folders_skipped": {
+            "title": "Folders to leave out",
+            "help": "One folder per line, never read or reported, such as generated code.",
+            "type": "list",
+            "default": "",
+            "group": "Folders"
+        },
         "language_php": {
             "title": "PHP",
             "help": "Scan and teach PHP. Off, nothing written in it is read or taught.",

@@ -62,6 +62,14 @@ final class JournalConfig implements Command
             }
         }
 
+        foreach ([JournalManifest::JUDGED => $file->judgeFolders(...), JournalManifest::SKIPPED => $file->skipFolders(...)] as $key => $write) {
+            $folders = array_values(array_filter(array_map('trim', explode("\n", (string) ($chosen[$key] ?? '')))));
+
+            if ($folders !== []) {
+                $write($folders);
+            }
+        }
+
         echo json_encode($changed ? ['notify' => "config.php follows the plugin's switches: {$changed} changed"] : new \stdClass) . "\n";
 
         return 0;

@@ -19,6 +19,12 @@ final class JournalManifest
 {
     public const LANGUAGES = 'Languages';
 
+    public const FOLDERS = 'Folders';
+
+    public const JUDGED = 'folders_judged';
+
+    public const SKIPPED = 'folders_skipped';
+
     public static function sinKey(Sin $sin): string
     {
         return "sin_{$sin->name()}";
@@ -35,6 +41,21 @@ final class JournalManifest
     public static function settings(): array
     {
         $settings = [];
+
+        $settings[self::JUDGED] = [
+            'title' => 'Folders to check',
+            'help' => 'One folder per line, from the project root. Empty, config.php keeps the folders it names.',
+            'type' => 'list',
+            'default' => '',
+            'group' => self::FOLDERS,
+        ];
+        $settings[self::SKIPPED] = [
+            'title' => 'Folders to leave out',
+            'help' => 'One folder per line, never read or reported, such as generated code.',
+            'type' => 'list',
+            'default' => '',
+            'group' => self::FOLDERS,
+        ];
 
         foreach (Language::cases() as $language) {
             $settings[self::languageKey($language)] = [

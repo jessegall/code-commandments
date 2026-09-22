@@ -61,6 +61,44 @@ final class ConfigFile
     }
 
     /**
+     * The folders the config judges — its `paths()` call, written in place.
+     *
+     * @param  list<string>  $folders
+     */
+    public function judgeFolders(array $folders): void
+    {
+        $this->scaffoldIfMissing();
+        $this->writeStrings('paths', $folders);
+    }
+
+    /**
+     * The folders the config leaves out — its `exclude()` call, written in place or added after the
+     * last statement.
+     *
+     * @param  list<string>  $folders
+     */
+    public function skipFolders(array $folders): void
+    {
+        $this->scaffoldIfMissing();
+        $this->writeStrings('exclude', $folders);
+    }
+
+    /**
+     * @param  list<string>  $values
+     */
+    private function writeStrings(string $method, array $values): void
+    {
+        $call = $this->calls()->named($method);
+        $args = array_map(static fn (string $value): string => var_export($value, true), $values);
+
+        if ($call !== null) {
+            $this->writeArgs($call, $args);
+        } elseif ($values !== []) {
+            $this->appendStatement("\$config->{$method}(" . implode(', ', $args) . ');');
+        }
+    }
+
+    /**
      * The sin/detector classes the config currently disables — read from the `disable()` call's
      * `::class` arguments via the AST.
      *
@@ -470,36 +508,31 @@ final class ConfigFile
      */
     private function rewriteArgs(MethodCall $call, array $classes, array $languages): void
     {
-        $source = (string) file_get_contents($this->path);
-        $close = $call->getEndFilePos();
-        $indent = $this->indentOf($source, $close);
-        $args = [
+        $this->writeArgs($call, [
             ...array_map(static fn (Language $l): string => '\\' . Language::class . "::{$l->name}", $languages),
             ...array_map(static fn (string $c): string => "\\{$c}::class", $classes),
-        ];
+        ]);
+    }
+
+    /**
+     * Replace a call's arguments with $args, already written as PHP, one per line.
+     *
+     * @param  list<string>  $args
+     */
+    private function writeArgs(MethodCall $call, array $args): void
+    {
+        $source = (string) file_get_contents($this->path);
+        $close = $call->getEndFilePos();
+        $indent = Span::lineIndentAt($source, $close);
         $rendered = implode('', array_map(static fn (string $arg): string => "{$indent}    {$arg},\n", $args));
         $first = $call->args === [] ? $close : $call->args[0]->value->getStartFilePos();
 
-        if ($this->lineStart($source, $close) === $this->lineStart($source, $call->getStartFilePos())) {
+        if (Span::lineStartAt($source, $close) === Span::lineStartAt($source, $call->getStartFilePos())) {
             [$from, $to, $rendered] = [$first, $close, "\n{$rendered}{$indent}"];
         } else {
-            [$from, $to] = [$this->lineStart($source, $first), $this->lineStart($source, $close)];
+            [$from, $to] = [Span::lineStartAt($source, $first), Span::lineStartAt($source, $close)];
         }
 
         file_put_contents($this->path, substr($source, 0, $from) . $rendered . substr($source, $to));
-    }
-
-    private function lineStart(string $source, int $offset): int
-    {
-        $newline = strrpos(substr($source, 0, $offset), "\n");
-
-        return $newline === false ? 0 : $newline + 1;
-    }
-
-    private function indentOf(string $source, int $offset): string
-    {
-        $line = substr($source, $this->lineStart($source, $offset));
-
-        return substr($line, 0, strspn($line, " \t"));
     }
 }

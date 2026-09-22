@@ -185,6 +185,22 @@ final class ConfigFileTest extends TestCase
         $this->assertValidPhp($file);
     }
 
+    public function test_the_folders_it_judges_and_leaves_out_are_written_in_place(): void
+    {
+        $file = $this->file();
+        $file->judgeFolders(['src', 'app']);
+        $file->skipFolders(['src/Generated']);
+
+        $this->assertSame(['src', 'app'], $file->paths());
+        $this->assertStringContainsString("\$config->exclude('src/Generated');", $this->read($file));
+        $this->assertValidPhp($file);
+
+        $file->skipFolders([]);
+
+        $this->assertStringNotContainsString('src/Generated', $this->read($file), 'an empty list leaves nothing out');
+        $this->assertValidPhp($file);
+    }
+
     private function file(): ConfigFile
     {
         $dir = sys_get_temp_dir() . '/cc-cfgfile-' . uniqid('', true);

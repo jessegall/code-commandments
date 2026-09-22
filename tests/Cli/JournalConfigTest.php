@@ -66,7 +66,8 @@ final class JournalConfigTest extends TestCase
     {
         $settings = JournalManifest::settings();
 
-        $this->assertCount(count(Language::cases()) + count(Detectors::all()), $settings);
+        $this->assertCount(count(Language::cases()) + count(Detectors::all()) + 2, $settings, "a switch per language and per sin, and the two folder lists");
+        $this->assertSame("list", $settings[JournalManifest::JUDGED]["type"]);
         $this->assertSame('flag', $settings[JournalManifest::languageKey(Language::Php)]['type']);
     }
 }
