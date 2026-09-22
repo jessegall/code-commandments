@@ -61,7 +61,7 @@ final class JournalHook implements Command
         }
 
         $answer = $this->answer(HookResponse::merge($recorder->emitted));
-        $activity = $this->activity($payload, $event->root, $recorder->activity);
+        $activity = $payload['hook_event_name'] === 'PostToolUse' ? $this->activity($payload, $event->root, $recorder->activity) : [];
 
         if ($activity !== []) {
             $answer['activity'] = $activity;
