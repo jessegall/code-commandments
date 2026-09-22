@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.11.0",
+    "version": "1.12.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.85.55",
@@ -27,8 +27,8 @@
             "run": "bin/commandments journal-config"
         },
         {
-            "name": "Judge the codebase as a check",
-            "run": "journal check create \"The codebase keeps its architecture\" --set command=\".journal/plugins/code-commandments/bin/commandments judge\" --set every=0"
+            "name": "Check for sins, on demand",
+            "run": "journal check create \"Check for sins\" --set command=\".journal/plugins/code-commandments/bin/commandments judge\" --set every=0 --set failure=\"Code Commandments found {summary}\""
         }
     ],
     "refuse": "bin/commandments journal-hook",
