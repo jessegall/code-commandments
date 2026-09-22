@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.7.0",
+    "version": "1.8.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.85.55",
@@ -39,8 +39,7 @@
         "hook.Stop": "bin/commandments journal-hook",
         "hook.SessionStart": "bin/commandments journal-hook",
         "hook.SubagentStart": "bin/commandments journal-hook",
-        "plugin.updated": "bin/commandments journal-config",
-        "plugin.created": "bin/commandments journal-config"
+        "plugin.updated": "bin/commandments journal-config"
     },
     "settings": {
         "folders_judged": {
@@ -1798,5 +1797,6 @@
             "detail": true
         }
     },
-    "skills": "journal-skills/.agents/skills"
+    "skills": "journal-skills/.agents/skills",
+    "installed": "bin/commandments journal-scan"
 }

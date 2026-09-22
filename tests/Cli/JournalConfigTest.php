@@ -82,7 +82,6 @@ final class JournalConfigTest extends TestCase
         $file = $this->apply([JournalManifest::JUDGED => '', JournalManifest::SKIPPED => '']);
 
         $this->assertSame(['src', 'app'], $file->paths(), 'no folders to check keeps the ones config.php names');
-        $this->assertSame(['settings' => [JournalManifest::JUDGED => "src\napp"]], $this->answered([JournalManifest::JUDGED => '']), 'and hands them back to fill the setting');
         $this->assertStringNotContainsString('src/Generated', (string) file_get_contents($file->path), 'an empty leave-out list leaves nothing out');
     }
 

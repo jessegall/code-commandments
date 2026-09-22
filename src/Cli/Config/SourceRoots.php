@@ -22,6 +22,11 @@ final class SourceRoots
     private const array NOT_SOURCE = ['database', 'tests', 'test'];
 
     /**
+     * What a build, an installer or a framework writes — never the code under review.
+     */
+    private const array BUILT = ['vendor', 'node_modules', 'dist', 'build', 'coverage', 'storage', 'bootstrap/cache', 'public/build', '.next', '.nuxt'];
+
+    /**
      * The absolute source roots to scan under $root: an explicit path as given, else the config's
      * declared paths — auto-detected and scaffolded into `config.php` the first time.
      *
@@ -97,6 +102,31 @@ final class SourceRoots
     }
 
     /**
+     * The generated folders present in the project or beside a detected source root, to leave out.
+     *
+     * @return list<string>
+     */
+    public function built(string $root): array
+    {
+        $found = [];
+
+        foreach (['.', ...array_map(static fn (string $dir): string => dirname($dir), $this->detect($root))] as $base) {
+            foreach (self::BUILT as $built) {
+                $path = $base === '.' ? $built : "{$base}/{$built}";
+
+                if (is_dir("{$root}/{$path}")) {
+                    $found[$path] = true;
+                }
+            }
+        }
+
+        $found = array_keys($found);
+        sort($found);
+
+        return $found;
+    }
+
+    /**
      * Infer the source roots: every PSR-4 autoload dir that isn't scaffolding, plus `app`/`src` if
      * present. Falls back to the project root when nothing is detected, so a run is never empty.
      * Public so `commandments paths` can regenerate the config's declaration from a fresh detection.
@@ -115,9 +145,17 @@ final class SourceRoots
             }
         }
 
-        foreach (['app', 'src'] as $convention) {
+        foreach (['app', 'src', 'resources/js'] as $convention) {
             if (is_dir($root . '/' . $convention)) {
                 $roots[$convention] = true;
+            }
+        }
+
+        foreach (glob($root . '/*/package.json') ?: [] as $manifest) {
+            $app = basename(dirname($manifest));
+
+            if (is_dir("{$root}/{$app}/src") && ! in_array($app, self::BUILT, true)) {
+                $roots["{$app}/src"] = true;
             }
         }
 

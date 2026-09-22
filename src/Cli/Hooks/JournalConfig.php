@@ -74,13 +74,7 @@ final class JournalConfig implements Command
 
         JournalSkills::render();
 
-        $answer = $changed ? ['notify' => "config.php follows the plugin's switches: {$changed} changed"] : [];
-
-        if ($judged === []) {
-            $answer['settings'] = [JournalManifest::JUDGED => implode("\n", $file->paths())];
-        }
-
-        echo json_encode($answer === [] ? new \stdClass : $answer) . "\n";
+        echo json_encode($changed ? ['notify' => "config.php follows the plugin's switches: {$changed} changed"] : new \stdClass) . "\n";
 
         return 0;
     }

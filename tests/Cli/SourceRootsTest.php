@@ -86,6 +86,17 @@ final class SourceRootsTest extends TestCase
         $this->assertSame([$this->root], $roots);
     }
 
+    public function test_a_frontend_app_beside_the_backend_is_found_and_its_build_left_out(): void
+    {
+        $this->dirs('app', 'vendor', 'web/src', 'web/dist', 'web/node_modules');
+        file_put_contents($this->root . '/web/package.json', '{}');
+
+        $roots = new SourceRoots();
+
+        $this->assertSame(['app', 'web/src'], $roots->detect($this->root));
+        $this->assertSame(['vendor', 'web/dist', 'web/node_modules'], $roots->built($this->root), 'what an installer or a build wrote is left out');
+    }
+
     private function dirs(string ...$dirs): void
     {
         foreach ($dirs as $dir) {
