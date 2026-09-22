@@ -56,6 +56,11 @@ final class JournalManifest
                 'type' => 'flag',
                 'default' => 'true',
                 'group' => $detector->sin()->slug(),
+                'when' => array_map(
+                    static fn (Language $language): array => [self::languageKey($language) => true],
+                    new ($detector->sin()->skillClass())()->languages(),
+                ),
+                'detail' => true,
             ];
         }
 

@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.85.55",
@@ -68,924 +68,1719 @@
             "help": "A declaration typed as a TOTAL `string` defaulting to the blank, whose own scope then asks that name `=== ''` / `empty(...)` — the question is the proof that the blank is absence wearing a total type.",
             "type": "flag",
             "default": "true",
-            "group": "backend/absence"
+            "group": "backend/absence",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_blank-string-on-the-wire": {
             "title": "BlankStringOnTheWire",
             "help": "A public field typed as a TOTAL `string` whose reader on the FAR SIDE asks it `=== ''`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/absence"
+            "group": "backend/absence",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_cancelled-coalesce": {
             "title": "CancelledCoalesce",
             "help": "A manufactured fake compared against itself — `($x ?? '') !== ''`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/absence"
+            "group": "backend/absence",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_conditional-array-spread": {
             "title": "ConditionalArraySpread",
             "help": "Flags a conditional array-element spread — `...($x ? ['k' => $x] : [])` inside an array literal, or `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise.",
             "type": "flag",
             "default": "true",
-            "group": "backend/absence"
+            "group": "backend/absence",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_de-nulled-finder": {
             "title": "DeNulledFinder",
             "help": "Detects a nullable finder whose result is de-nulled at every call site (≥2 sites); absence should be decided at the source, not re-checked everywhere.",
             "type": "flag",
             "default": "true",
-            "group": "backend/absence"
+            "group": "backend/absence",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_erased-null-object": {
             "title": "ErasedNullObject",
             "help": "A `new X` whose `__toString` renders `''`, written where the declared type is `string` — a default or a return.",
             "type": "flag",
             "default": "true",
-            "group": "backend/absence"
+            "group": "backend/absence",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_nullable-callback": {
             "title": "NullableCallback",
             "help": "A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/absence"
+            "group": "backend/absence",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_option-as-nullable": {
             "title": "OptionAsNullable",
             "help": "Detects `?Option`, `Option | null`, and `unwrapOr(null)` collapsing absence; exempt in argument position, flagged only in return/assignment. /",
             "type": "flag",
             "default": "true",
-            "group": "backend/absence"
+            "group": "backend/absence",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_flag-argument": {
             "title": "FlagArgument",
             "help": "A method whose whole body is `if ($flag) {…} else {…}` on one of its own `bool` parameters — two methods sharing a name, and a call site that reads `render($order, true)`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/behaviour-per-method"
+            "group": "backend/behaviour-per-method",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_member-after-method": {
             "title": "MemberAfterMethod",
             "help": "Detects state declared below behaviour: a trait use, constant, property, property hook or enum case that sits after a method in the same class body.",
             "type": "flag",
             "default": "true",
-            "group": "backend/class-layout"
+            "group": "backend/class-layout",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_member-out-of-order": {
             "title": "MemberOutOfOrder",
             "help": "Detects a head of class assembled in an ad-hoc order — a constant under a property, a public field under a private one, a derived hook above the fields it reads.",
             "type": "flag",
             "default": "true",
-            "group": "backend/class-layout"
+            "group": "backend/class-layout",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_concurrent-subclass": {
             "title": "ConcurrentSubclass",
             "help": "A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy — inheriting the thread-safe shared-state wrapper instead of composing it.",
             "type": "flag",
             "default": "true",
-            "group": "backend/concurrent-state"
+            "group": "backend/concurrent-state",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_namespace-cycle": {
             "title": "NamespaceCycle",
             "help": "Two namespaces that reference each other — `App\\Billing` reaching into `App\\Orders` while `App\\Orders` reaches back — so the pair is one unit wearing two names.",
             "type": "flag",
             "default": "true",
-            "group": "backend/dependency-direction"
+            "group": "backend/dependency-direction",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_namespace-dependency": {
             "title": "NamespaceDependency",
             "help": "A reference OUT of a declared layer into a layer that layer may not use — the arrow pointing back up the stack, or sideways.",
             "type": "flag",
             "default": "true",
-            "group": "backend/dependency-direction"
+            "group": "backend/dependency-direction",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_archaeology-comment": {
             "title": "ArchaeologyComment",
             "help": "Detects comments describing history instead of present code.",
             "type": "flag",
             "default": "true",
-            "group": "backend/documentation"
+            "group": "backend/documentation",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_bloated-docblock": {
             "title": "BloatedDocblock",
             "help": "A class whose docblock runs to multiple paragraphs.",
             "type": "flag",
             "default": "true",
-            "group": "backend/documentation"
+            "group": "backend/documentation",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_ceremony-docblock": {
             "title": "CeremonyDocblock",
             "help": "A docblock that only restates the typed signature — `@param Type $x` with no description on an already-typed parameter, plus maybe a bare `@return Type`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/documentation"
+            "group": "backend/documentation",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_dangling-doc-reference": {
             "title": "DanglingDocReference",
             "help": "A docblock cross-reference (`…` / `{@link …}`) that points at a FIRST-PARTY class the codebase does not declare — a name that was renamed or removed, its documentation left dangling.",
             "type": "flag",
             "default": "true",
-            "group": "backend/documentation"
+            "group": "backend/documentation",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_inline-docblock": {
             "title": "InlineDocblock",
             "help": "Detects a docblock crammed onto its delimiters — the whole thing on one line, or a block that opens or closes beside its text.",
             "type": "flag",
             "default": "true",
-            "group": "backend/documentation"
+            "group": "backend/documentation",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_negative-space-comment": {
             "title": "NegativeSpaceComment",
             "help": "Detects comments that defend code against strawmen — a negation paired with a word like \"random\", \"magic\", or \"coincidence\", where the code should simply state what it IS.",
             "type": "flag",
             "default": "true",
-            "group": "backend/documentation"
+            "group": "backend/documentation",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_restated-comment": {
             "title": "RestatedComment",
             "help": "Detects an inline comment that only narrates the statement it sits on: reduce the comment to its content words and the annotated statement's head to the words it spells (AstNode::codeWords()), and flag when EVERY comment word is already one of them — a comment carrying a why brings a word the code lacks, so it survives.",
             "type": "flag",
             "default": "true",
-            "group": "backend/documentation"
+            "group": "backend/documentation",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_stacked-docblock": {
             "title": "StackedDocblock",
             "help": "Detects a declaration wearing several docblocks.",
             "type": "flag",
             "default": "true",
-            "group": "backend/documentation"
+            "group": "backend/documentation",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_const-class-enum": {
             "title": "ConstClassEnum",
             "help": "A class that is nothing but scalar constants — a closed set of values hand- rolled as `const STATUS_PENDING = 'pending'` instead of a native backed enum.",
             "type": "flag",
             "default": "true",
-            "group": "backend/enums-with-behaviour"
+            "group": "backend/enums-with-behaviour",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_enum-case-or-chain": {
             "title": "EnumCaseOrChain",
             "help": "`$x === Status::Pending || $x === Status::Paid` — a hand-rolled membership test against two-or-more cases of the same backed enum.",
             "type": "flag",
             "default": "true",
-            "group": "backend/enums-with-behaviour"
+            "group": "backend/enums-with-behaviour",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_enum-value-match": {
             "title": "EnumValueMatch",
             "help": "Detects `match`/`switch` over a backed enum's `->value` at a call site.",
             "type": "flag",
             "default": "true",
-            "group": "backend/enums-with-behaviour"
+            "group": "backend/enums-with-behaviour",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_in-array-mirrors-enum": {
             "title": "InArrayMirrorsEnum",
             "help": "`in_array($x, ['a', 'b', …])` whose literals ARE an existing backed enum's case values — testing membership of a set the type already seals.",
             "type": "flag",
             "default": "true",
-            "group": "backend/enums-with-behaviour"
+            "group": "backend/enums-with-behaviour",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_match-default-returns-null": {
             "title": "MatchDefaultReturnsNull",
             "help": "A `match` whose `default` arm returns `null`/`false`/`[]` instead of throwing.",
             "type": "flag",
             "default": "true",
-            "group": "backend/enums-with-behaviour"
+            "group": "backend/enums-with-behaviour",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_string-match-mirrors-enum": {
             "title": "StringMatchMirrorsEnum",
             "help": "Detects `match`/`switch` arm conditions that are string/int literals mirroring an existing backed enum's case values.",
             "type": "flag",
             "default": "true",
-            "group": "backend/enums-with-behaviour"
+            "group": "backend/enums-with-behaviour",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_unnamed-vocabulary-literal": {
             "title": "UnnamedVocabularyLiteral",
             "help": "A raw string filling an argument the codebase ELSEWHERE fills from a named vocabulary — a `$this->expect('{')` beside a `$this->expect(Token::COLON)`, when `Token::BRACE_OPEN` already holds it.",
             "type": "flag",
             "default": "true",
-            "group": "backend/enums-with-behaviour"
+            "group": "backend/enums-with-behaviour",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_generic-exception": {
             "title": "GenericException",
             "help": "Throwing a generic SPL/base exception (`throw new \\RuntimeException(...)`) instead of a named domain exception.",
             "type": "flag",
             "default": "true",
-            "group": "backend/exceptions"
+            "group": "backend/exceptions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_message-at-throw": {
             "title": "MessageAtThrow",
             "help": "`throw new X(\"…message…\")` — the failure described with a prose string at the throw site instead of a named factory carrying domain VALUES (`throw OrderNotFound::forId($id)`).",
             "type": "flag",
             "default": "true",
-            "group": "backend/exceptions"
+            "group": "backend/exceptions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_swallow-catch": {
             "title": "SwallowCatch",
             "help": "A `catch` that swallows the failure into absence — an empty body, or whose only effect is `return null/false/[]`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/exceptions"
+            "group": "backend/exceptions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_wrapping-without-cause": {
             "title": "WrappingWithoutCause",
             "help": "Throwing a new exception inside a `catch` without passing the caught one on as its cause (`previous`) — the original failure and its stack trace are dropped, so the wrapped error lies about where it came from.",
             "type": "flag",
             "default": "true",
-            "group": "backend/exceptions"
+            "group": "backend/exceptions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_constructor-side-effect": {
             "title": "ConstructorSideEffect",
             "help": "A constructor with a SIDE EFFECT — it calls a collaborator and throws the result away, so the call was made for what it DID: eager-loading a relation, writing a global default, narrowing a query builder the caller still holds.",
             "type": "flag",
             "default": "true",
-            "group": "backend/fix-at-the-source"
+            "group": "backend/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_divergent-twin": {
             "title": "DivergentTwin",
             "help": "Flags a method that does the same job as another and does STRICTLY LESS of it.",
             "type": "flag",
             "default": "true",
-            "group": "backend/fix-at-the-source"
+            "group": "backend/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_duplicate-function": {
             "title": "DuplicateFunction",
             "help": "Two-or-more functions/methods with an identical AST — the same code copy-pasted, down to a formatting-blind structural hash (spacing, newlines, and comments are ignored; only real code differences count).",
             "type": "flag",
             "default": "true",
-            "group": "backend/fix-at-the-source"
+            "group": "backend/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_manufactured-fake-fill": {
             "title": "ManufacturedFakeFill",
             "help": "Detects filling an argument with a manufactured fake (empty string, zero, false) on absence; real defaults like `?? 'EUR'` are legitimate.",
             "type": "flag",
             "default": "true",
-            "group": "backend/fix-at-the-source"
+            "group": "backend/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_mutable-static-state": {
             "title": "MutableStaticState",
             "help": "A write to static state — a global with a namespace in front of it.",
             "type": "flag",
             "default": "true",
-            "group": "backend/fix-at-the-source"
+            "group": "backend/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_near-duplicate-function": {
             "title": "NearDuplicateFunction",
             "help": "Two-or-more functions/methods with the same SHAPE but not identical text — the same control-flow skeleton differing only in variable names or literal values (a type-2 clone).",
             "type": "flag",
             "default": "true",
-            "group": "backend/fix-at-the-source"
+            "group": "backend/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_coalesced-loop-subject": {
             "title": "CoalescedLoopSubject",
             "help": "A `foreach` that decides in its own header whether it was HANDED anything to iterate — `foreach ($below[$id] ?? [] as $child)`, `$below` being a parameter.",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_deep-nesting": {
             "title": "DeepNesting",
             "help": "An `if` nested three-deep — a pyramid of conditions.",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_if-else-ladder": {
             "title": "IfElseLadder",
             "help": "An `if`/`elseif` ladder of four-plus branches — a chain of conditions doing the job of a `match`, a method on the type, or polymorphic dispatch.",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_inline-throw": {
             "title": "InlineThrow",
             "help": "Detects `?? throw` buried in a call arg or dereference, not bare return statements. /",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_loop-inverted-guard": {
             "title": "LoopInvertedGuard",
             "help": "A loop whose entire body is wrapped in one `if` — the iteration's real work pushed a level deep behind a condition.",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_nested-ternary": {
             "title": "NestedTernary",
             "help": "A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap.",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_non-counting-for": {
             "title": "NonCountingFor",
             "help": "A `for` that is not counting — its step ASSIGNS the next thing rather than advancing a counter, as in `for ($one = $r; $one !== null; $one = $one instanceof Traceable ? $one->getAbove() : null)`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_redundant-else": {
             "title": "RedundantElse",
             "help": "An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/ `break`).",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_short-circuit-statement": {
             "title": "ShortCircuitStatement",
             "help": "A short-circuit operator standing as a whole statement — `$node->isBuilt() && $node->built()->forget();`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_ternary-statement": {
             "title": "TernaryStatement",
             "help": "A ternary standing as a whole statement — `$this->holds($id) ? array_push(…) : $gone[] = $id;`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/guard-clauses-and-flow"
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_config-read": {
             "title": "ConfigRead",
             "help": "Reading configuration with `config(...)` inside a class instead of injecting a typed config object.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_container-reach": {
             "title": "ContainerReach",
             "help": "Reaching into the container with `app()`/`resolve()` from a class the container resolves — the dependency belongs in the constructor.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_dead-config-key": {
             "title": "DeadConfigKey",
             "help": "A key declared in `config/*.php` that nothing in the codebase names.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_dead-event-wiring": {
             "title": "DeadEventWiring",
             "help": "An `Event::listen(X::class, …)` whose event class nothing can fire: X is never constructed and never dispatched statically.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_duplicated-config-default": {
             "title": "DuplicatedConfigDefault",
             "help": "A read of a config key that supplies its OWN fallback while the config file already states one — `intOr('shop.realtime.port', 8086)` against `'port' => env('PORT', 8086)`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_facade-call": {
             "title": "FacadeCall",
             "help": "Detects Laravel facade calls that hide dependencies; inject the underlying contract instead.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_mass-update-at-call-site": {
             "title": "MassUpdateAtCallSite",
             "help": "A mass `->update([...])` on an Eloquent model at a call site — an untyped array of attributes smuggling a mutation past the model's own methods.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_model-mutation-at-call-site": {
             "title": "ModelMutationAtCallSite",
             "help": "Setting an Eloquent model's properties at a call site and then `->save()`-ing it — the mutation belongs behind an intention-revealing method on the model (`$order->markPaid()`), not smeared across the caller.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_orphaned-binding": {
             "title": "OrphanedBinding",
             "help": "A `bind`/`singleton`/`scoped`/`instance` registration whose abstract nothing outside the registration ever names — no type-hint, no `app()`/`make()`, no mention at all.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_raw-request-input": {
             "title": "RawRequestInput",
             "help": "An untyped read off a Laravel request — `->input(...)`, `->get(...)`, `->query(...)`, `->post(...)` on a `Request`/`FormRequest`/MCP request.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_request-accessor-recast": {
             "title": "RequestAccessorRecast",
             "help": "A typed request accessor immediately re-flattened to a bare string — `$request->string($k)->toString()` or `(string) $request->string($k)`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/laravel-idioms"
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_bare-state-predicate": {
             "title": "BareStatePredicate",
             "help": "A `bool` about the object's OWN state, named as a bare verb — `binds()` where `isBound()` belongs.",
             "type": "flag",
             "default": "true",
-            "group": "backend/method-mood"
+            "group": "backend/method-mood",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_narrated-command": {
             "title": "NarratedCommand",
             "help": "A command whose name narrates instead of ordering — `hides()` where `hide()` belongs.",
             "type": "flag",
             "default": "true",
-            "group": "backend/method-mood"
+            "group": "backend/method-mood",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_constructor-orchestration": {
             "title": "ConstructorOrchestration",
             "help": "A page object imperatively filling a public slot in its constructor.",
             "type": "flag",
             "default": "true",
-            "group": "backend/page-objects"
+            "group": "backend/page-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_injected-service-not-hidden": {
             "title": "InjectedServiceNotHidden",
             "help": "Detects injected services in public properties without #[Hidden] on page objects; non-public properties are exempt. /",
             "type": "flag",
             "default": "true",
-            "group": "backend/page-objects"
+            "group": "backend/page-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_manual-output-transform": {
             "title": "ManualOutputTransform",
             "help": "Flags a `Data` slot that hand-flattens one value object into a wire array — a getter hook, a `#[Computed]` method, or a constructor assignment — where a `#[WithTransformer]` should own the shape. /",
             "type": "flag",
             "default": "true",
-            "group": "backend/page-objects"
+            "group": "backend/page-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_page-object-missing-typescript": {
             "title": "PageObjectMissingTypeScript",
             "help": "Flags a page object — a `Data` that composes multiple nested `Data` AND travels back in a response — carrying no `#[TypeScript]`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/page-objects"
+            "group": "backend/page-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_service-location-in-page-object": {
             "title": "ServiceLocationInPageObject",
             "help": "Detects page objects using service location (`app()`, `resolve()`) instead of injecting via `#[FromContainer]` attributes. /",
             "type": "flag",
             "default": "true",
-            "group": "backend/page-objects"
+            "group": "backend/page-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_transformer-without-ts-type": {
             "title": "TransformerWithoutTsType",
             "help": "Flags a custom `#[WithTransformer]` on a `Data` property with no paired `#[TypeScriptType]` / `#[LiteralTypeScriptType]`, so the generated TS keeps the PHP type while the wire carries the transformed shape.",
             "type": "flag",
             "default": "true",
-            "group": "backend/page-objects"
+            "group": "backend/page-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_computed-boolean-argument": {
             "title": "ComputedBooleanArgument",
             "help": "A chooser taking only bool(s) that every caller computes off the SAME object — `CornerInset::of($editor->inZenMode() || $editor->hasPanelOpen())`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/pass-the-object"
+            "group": "backend/pass-the-object",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_converted-argument": {
             "title": "ConvertedArgument",
             "help": "Flags a parameter declared in the wrong currency: the caller holds a value, converts it into the form the callee wants, and passes the conversion — `Raises::of(ClassAlias::of($interaction), …)`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/pass-the-object"
+            "group": "backend/pass-the-object",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_derived-argument": {
             "title": "DerivedArgument",
             "help": "Flags a call site that hands over a PROJECTION of a value rather than the value itself, where the callee could have derived it — `persist($request, $request->getShopChannelId())` wanted only `$request`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/pass-the-object"
+            "group": "backend/pass-the-object",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_param-resolved-from-param": {
             "title": "ParamResolvedFromParam",
             "help": "Detects methods unpacking a target from a container parameter; pass the resolved object, not the container plus a key. /",
             "type": "flag",
             "default": "true",
-            "group": "backend/pass-the-object"
+            "group": "backend/pass-the-object",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_repeated-guard": {
             "title": "RepeatedGuard",
             "help": "Flags a compound boolean guard (≥2 substantive conjuncts, at least one NOT a bare `instanceof` — pure-type chains are the repeated-type-guard's domain) that recurs in ≥2 places.",
             "type": "flag",
             "default": "true",
-            "group": "backend/repeated-call-helper"
+            "group": "backend/repeated-call-helper",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_repeated-named-call": {
             "title": "RepeatedNamedCall",
             "help": "Flags a `with`-style (variadic-parameter) method — `copyWith(mixed ...$changes)` — called with the SAME named argument, carrying construction boilerplate, at $threshold+ sites that resolve to the SAME method (grouped by its declaring class, so inherited calls on subclasses of one base collapse into one group and unrelated classes stay separate).",
             "type": "flag",
             "default": "true",
-            "group": "backend/repeated-call-helper"
+            "group": "backend/repeated-call-helper",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_repeated-type-guard": {
             "title": "RepeatedTypeGuard",
             "help": "Flags a multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) that recurs VERBATIM in ≥2 places — a check copied instead of named.",
             "type": "flag",
             "default": "true",
-            "group": "backend/repeated-call-helper"
+            "group": "backend/repeated-call-helper",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_nullable-registry-lookup": {
             "title": "NullableRegistryLookup",
             "help": "Detects registries returning null on miss (`$this->items[$key] ?? null`) instead of throwing.",
             "type": "flag",
             "default": "true",
-            "group": "backend/role-vocabulary"
+            "group": "backend/role-vocabulary",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_boundary-duplicated-operation": {
             "title": "BoundaryDuplicatedOperation",
             "help": "Two entry points on DIFFERENT kinds of boundary — a console command and an MCP tool, a controller and a command — performing the same domain calls.",
             "type": "flag",
             "default": "true",
-            "group": "backend/route-actions"
+            "group": "backend/route-actions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_dangling-route-name": {
             "title": "DanglingRouteName",
             "help": "A `route('x')` / `to_route('x')` lookup whose name no registration mints.",
             "type": "flag",
             "default": "true",
-            "group": "backend/route-actions"
+            "group": "backend/route-actions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_duplicate-route": {
             "title": "DuplicateRoute",
             "help": "Detects two-or-more routes with the same verb+action bound to different URLs.",
             "type": "flag",
             "default": "true",
-            "group": "backend/route-actions"
+            "group": "backend/route-actions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_duplicate-route-action": {
             "title": "DuplicateRouteAction",
             "help": "Detects duplicate thin delegations to the same service across ≥2 controllers.",
             "type": "flag",
             "default": "true",
-            "group": "backend/route-actions"
+            "group": "backend/route-actions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_route-delegates-to-controller": {
             "title": "RouteDelegatesToController",
             "help": "Detects a route action that thin-wraps another route action — a controller pass-through that creates redundant HTTP entry points.",
             "type": "flag",
             "default": "true",
-            "group": "backend/route-actions"
+            "group": "backend/route-actions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_all-nullable-data": {
             "title": "AllNullableData",
             "help": "Detects Spatie Data classes where every field is nullable; make required fields non-nullable so `from()` fails on a real miss.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_all-optional-data": {
             "title": "AllOptionalData",
             "help": "Detects a `Data` class where EVERY promoted property is `T|Optional` — the all-optional sibling of the all-nullable \"god\" DTO.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_data-collection-type": {
             "title": "DataCollectionType",
             "help": "Flags a `Data` property typed as `DataCollection` — it must be `array` (preferred) or `Collection` with `#[DataCollectionOf(X)]`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_data-method-hint-collision": {
             "title": "DataMethodHintCollision",
             "help": "A Spatie `Data` class with a `@method` docblock tag that re-declares a method the class ACTUALLY has, colliding with it (`@method static static fromCredential(...)` over a real `fromCredential()`).",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_hook-missing-computed": {
             "title": "HookMissingComputed",
             "help": "Flags a get-only property hook on a `Data` class that lacks `#[Computed]`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_manual-hydration-loop": {
             "title": "ManualHydrationLoop",
             "help": "`<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_manual-input-cast": {
             "title": "ManualInputCast",
             "help": "Flags a `Data` value-object property that is hand-built at EVERY `::from()` site (via the whole-program DataConstructions index), where a `#[WithCast]` / `Castable` should own the mapping once. /",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_nested-type-missing-typescript": {
             "title": "NestedTypeMissingTypeScript",
             "help": "Flags a property on a `#[TypeScript]` Data whose nested Data/backed-enum type itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated frontend contract.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_new-data-object": {
             "title": "NewDataObject",
             "help": "Detects `new Data(...)` instead of `::from(...)` — skips casts, name maps, nested hydration, and factories.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_non-final-data": {
             "title": "NonFinalData",
             "help": "Detects non-final Spatie Data classes (DTOs are values, not bases).",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_null-to-optional-map": {
             "title": "NullToOptionalMap",
             "help": "Flags a hand-rolled null→`Optional` map — an \"absent\" Optional (`new Optional` OR the preferred `Optional::create()`) sitting as a ternary fallback (`$x === null ? Optional::create() : Foo::from($x)`) or the right of a `??` (`expr() ?? Optional::create()`).",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_nullable-wire-object": {
             "title": "NullableWireObject",
             "help": "Flags a nullable nested-object field (`T | null`, T a `Data` subclass or enum) on a `#[TypeScript]` Data class, where `T | Optional` belongs: on the wire `?T = null` ships `\"field\": null`, whereas `Optional` omits it — what the frontend's optional-chaining reads for \"absent\".",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_prefer-optional-create": {
             "title": "PreferOptionalCreate",
             "help": "Flags a raw `new Optional` in a runtime expression and prefers Spatie's built-in `Optional::create()` factory.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data"
+            "group": "backend/spatie-data",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_data-to-array-roundtrip": {
             "title": "DataToArrayRoundtrip",
             "help": "Flags `X::from(...)->toArray()` whose array result sits in a `::from` slot typed `X` (a nested `Data` or a `#[DataCollectionOf(X)]` element) that re-hydrates it — a build → array → build round-trip.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data-hydration"
+            "group": "backend/spatie-data-hydration",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_derived-collection-cast": {
             "title": "DerivedCollectionCast",
             "help": "Flags `array_map(E::for(...), $xs)` filling a `#[DataCollectionOf(E)]` slot — a per-item DERIVATION the call site does by hand, where a `#[WithCast]`/`IterableItemCast` on the property should own it.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data-hydration"
+            "group": "backend/spatie-data-hydration",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_hand-key-remap": {
             "title": "HandKeyRemap",
             "help": "Flags `SomeData::from(['camelKey' => $src['snake_key'], …])` — a hand-written snake→camel key translation off one source array that a class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)` owns once.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data-hydration"
+            "group": "backend/spatie-data-hydration",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_redundant-enum-unwrap": {
             "title": "RedundantEnumUnwrap",
             "help": "Flags an enum destructured to `->value` inside a `Data::from([...])` slot whose property is typed as that same enum (`'status' => $order->status->value`).",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data-hydration"
+            "group": "backend/spatie-data-hydration",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_redundant-native-cast": {
             "title": "RedundantNativeCast",
             "help": "Flags `Enum::from($x)` / `new DateTime($x)` / `Carbon::parse($x)` sitting in a `Data::from([...])` slot typed as that enum or a `DateTimeInterface` — the value Spatie auto-casts from the raw scalar, so the construction is ceremony.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data-hydration"
+            "group": "backend/spatie-data-hydration",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_redundant-nested-from": {
             "title": "RedundantNestedFrom",
             "help": "Flags `X::from([array literal])` sitting in a parent `SomeData::from([...])` where the destination slot — a nested `Data` property or a `#[DataCollectionOf(X)]` element — auto-hydrates the array itself, so the wrapper is ceremony.",
             "type": "flag",
             "default": "true",
-            "group": "backend/spatie-data-hydration"
+            "group": "backend/spatie-data-hydration",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_feature-envy": {
             "title": "FeatureEnvy",
             "help": "Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned object's structure, iterating its collection, to do work that belongs ON that object (`$node->edges()`, not `EdgeDetector::detect($node)`).",
             "type": "flag",
             "default": "true",
-            "group": "backend/tell-dont-ask"
+            "group": "backend/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_keyed-lookup-envy": {
             "title": "KeyedLookupEnvy",
             "help": "Feature envy through an indirect lookup — a method that uses an owned object's identity as a KEY to fetch data about it through a collaborator, then reads a fact back (`$this->registry->get($node->key)->reservedOutputNames`).",
             "type": "flag",
             "default": "true",
-            "group": "backend/tell-dont-ask"
+            "group": "backend/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_type-switch": {
             "title": "TypeSwitch",
             "help": "A run of `instanceof` tests on the same subject, each deciding a different branch — the caller asking a value what it IS so it can decide what to do, when the value could simply be told.",
             "type": "flag",
             "default": "true",
-            "group": "backend/tell-dont-ask"
+            "group": "backend/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_assembled-template": {
             "title": "AssembledTemplate",
             "help": "Detects a fixed multi-line template built as an array of line fragments and joined with a newline.",
             "type": "flag",
             "default": "true",
-            "group": "backend/templates"
+            "group": "backend/templates",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_masked-invariant": {
             "title": "MaskedInvariant",
             "help": "`$this->scratch?->call() ?? false` — defaulting a reach into the object's own TRANSIENT nullable state.",
             "type": "flag",
             "default": "true",
-            "group": "backend/type-honesty"
+            "group": "backend/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_phantom-nullable": {
             "title": "PhantomNullable",
             "help": "A field typed `?T` whose value is always consumed as present (never guarded) per the ValueFlow provenance graph.",
             "type": "flag",
             "default": "true",
-            "group": "backend/type-honesty"
+            "group": "backend/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_placeholder-filled-data": {
             "title": "PlaceholderFilledData",
             "help": "A Data construction handing `''` to a slot typed as a required, non-nullable `string` — the envelope's TYPES stay honest while its VALUES are manufactured.",
             "type": "flag",
             "default": "true",
-            "group": "backend/type-honesty"
+            "group": "backend/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_redundant-arrow-return-type": {
             "title": "RedundantArrowReturnType",
             "help": "An arrow function carrying a return type its own expression already proves — `fn (): string => $this->name` where `$name` IS a `string`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/type-honesty"
+            "group": "backend/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_scratch-state-restore": {
             "title": "ScratchStateRestore",
             "help": "A method that SAVES one of its own properties to a local and RESTORES it afterwards — `$prev = $this->scope; … $this->scope = $prev;`.",
             "type": "flag",
             "default": "true",
-            "group": "backend/type-honesty"
+            "group": "backend/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_useless-property-hook": {
             "title": "UselessPropertyHook",
             "help": "A `get` hook whose body references no `$this` (and no `parent::`) — it computes nothing from the object, so the property is stored, not derived; the hook syntax is a lie usually copied from an interface's `{ get; }` (which a plain property satisfies).",
             "type": "flag",
             "default": "true",
-            "group": "backend/type-honesty"
+            "group": "backend/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_array-bag": {
             "title": "ArrayBag",
             "help": "An `array` read by string-literal keys — a structured bag that should be a typed value object.",
             "type": "flag",
             "default": "true",
-            "group": "backend/value-objects"
+            "group": "backend/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_array-return-bag": {
             "title": "ArrayReturnBag",
             "help": "Detects multi-field string-keyed array returns (bags for value objects).",
             "type": "flag",
             "default": "true",
-            "group": "backend/value-objects"
+            "group": "backend/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_coupled-fields": {
             "title": "CoupledFields",
             "help": "A class's own VALUE fields that are really ONE object.",
             "type": "flag",
             "default": "true",
-            "group": "backend/value-objects"
+            "group": "backend/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_data-clump": {
             "title": "DataClump",
             "help": "The same three-or-more value parameters (`string $shopId, string $userId, string $channelId`) threaded through two-or-more signatures in different classes.",
             "type": "flag",
             "default": "true",
-            "group": "backend/value-objects"
+            "group": "backend/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_flat-field-cluster": {
             "title": "FlatFieldCluster",
             "help": "Flags a `#[TypeScript]` `Data` that spreads a value object flat across sibling scalar fields sharing a camelCase prefix — `wireType`/`wireLabel` that should be `wire: Wire{type, label}` — WHEN a small value object named for that prefix, whose fields ARE the flat remainders, already exists.",
             "type": "flag",
             "default": "true",
-            "group": "backend/value-objects"
+            "group": "backend/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_hand-rolled-wither": {
             "title": "HandRolledWither",
             "help": "A wither that rebuilds its object by re-spelling the WHOLE constructor field list (`return new self($this->a, $this->b, $changed, $this->d);`) instead of saying only what changes.",
             "type": "flag",
             "default": "true",
-            "group": "backend/value-objects"
+            "group": "backend/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_mutable-value-object": {
             "title": "MutableValueObject",
             "help": "A VALUE that can change after it is built.",
             "type": "flag",
             "default": "true",
-            "group": "backend/value-objects"
+            "group": "backend/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_positional-tuple-return": {
             "title": "PositionalTupleReturn",
             "help": "Detects positional tuples — keyless arrays without types or names that callers must destructure by position.",
             "type": "flag",
             "default": "true",
-            "group": "backend/value-objects"
+            "group": "backend/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_raw-decoded-array-return": {
             "title": "RawDecodedArrayReturn",
             "help": "Detects raw `json_decode(...)` arrays returned from boundaries.",
             "type": "flag",
             "default": "true",
-            "group": "backend/value-objects"
+            "group": "backend/value-objects",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
         },
         "sin_mirrored-server-type": {
             "title": "MirroredServerType",
             "help": "Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. /",
             "type": "flag",
             "default": "true",
-            "group": "frontend/mirrored-server-type"
+            "group": "frontend/mirrored-server-type",
+            "when": [
+                {
+                    "language_vue": true
+                },
+                {
+                    "language_ts": true
+                }
+            ],
+            "detail": true
         },
         "sin_compound-inline-component": {
             "title": "CompoundInlineComponent",
             "help": "Detects compound UI primitives assembled inline (component root with ≥2 descendants sharing a prefix tag).",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-components"
+            "group": "frontend/vue-components",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_deep-data-reach": {
             "title": "DeepDataReach",
             "help": "Detects clusters of deep data reaches (e.g., `order.customer.name`, `order.customer.email`) sharing one nested object.",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-components"
+            "group": "frontend/vue-components",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_deep-nested": {
             "title": "DeepNested",
             "help": "A template nested far too deep; identifies the natural extraction boundary by climbing from the deep element up the single-child wrapper stack for a coherent unit. /",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-components"
+            "group": "frontend/vue-components",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_duplicate-element": {
             "title": "DuplicateElement",
             "help": "Detects identical template blocks (structural comparison, blind to formatting); only substantial blocks and the largest duplicate are flagged.",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-components"
+            "group": "frontend/vue-components",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_prop-drilling": {
             "title": "PropDrilling",
             "help": "Detects a prop threaded through ≥2 components unused.",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-components"
+            "group": "frontend/vue-components",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_prop-mutation": {
             "title": "PropMutation",
             "help": "Detects component writing its own props (v-model or assignment); only bare prop writes are flagged, not shadowed locals. /",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-components"
+            "group": "frontend/vue-components",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_control-flow-on-element": {
             "title": "ControlFlowOnElement",
             "help": "Detects structural directives (`v-if`/`v-else-if`/`v-else`/`v-for`) on real elements instead of `<template>` wrappers — mixes structure (what renders) with content.",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-control-flow"
+            "group": "frontend/vue-control-flow",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_index-as-key": {
             "title": "IndexAsKey",
             "help": "Detects `v-for` keyed by numeric index (`:key=\"index\"`), which shifts when items insert/reorder, breaking Vue patching and state.",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-control-flow"
+            "group": "frontend/vue-control-flow",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_loop-with-condition": {
             "title": "LoopWithCondition",
             "help": "Detects `v-for` and `v-if`/`v-else-if` on the same element (Vue prioritizes if over for, causing correctness/performance issues).",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-control-flow"
+            "group": "frontend/vue-control-flow",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_switch-case": {
             "title": "SwitchCase",
             "help": "Detects `v-if`/`v-else-if` chains testing the same value against different cases (switch as conditionals).",
             "type": "flag",
             "default": "true",
-            "group": "frontend/vue-control-flow"
+            "group": "frontend/vue-control-flow",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         },
         "sin_defended-certain-field": {
             "title": "DefendedCertainField",
             "help": "An `?.` on one of the enclosing class's OWN fields, where that field is declared total — a guard against a case the type rules out.",
             "type": "flag",
             "default": "true",
-            "group": "typescript/absence"
+            "group": "typescript/absence",
+            "when": [
+                {
+                    "language_ts": true
+                }
+            ],
+            "detail": true
         },
         "sin_falsely-optional-field": {
             "title": "FalselyOptionalField",
             "help": "A field declared optional that is INITIALISED where it is declared.",
             "type": "flag",
             "default": "true",
-            "group": "typescript/absence"
+            "group": "typescript/absence",
+            "when": [
+                {
+                    "language_ts": true
+                }
+            ],
+            "detail": true
         }
     }
 }
