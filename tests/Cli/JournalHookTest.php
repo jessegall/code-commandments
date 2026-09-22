@@ -107,7 +107,7 @@ final class JournalHookTest extends TestCase
         }
     }
 
-    public function test_a_sin_in_an_edit_is_written_to_the_journals_activity(): void
+    public function test_a_sin_in_an_edit_raises_sin_found_and_clearing_it_raises_sin_resolved(): void
     {
         mkdir($this->root . '/src', 0777, true);
         file_put_contents($this->root . '/src/Thing.vue', "<template>\n    <div>\n        <span v-for=\"item in items\" :key=\"item\" :class=\"{on: item}\">{{ item }}</span>\n    </div>\n</template>\n");
@@ -120,18 +120,18 @@ final class JournalHookTest extends TestCase
         ];
         $answer = $this->answer($edited);
 
-        $this->assertSame('Sin found', $answer['activity']['title'] ?? null);
-        $this->assertStringContainsString('src/Thing.vue:3', $answer['activity']['brief']);
+        $this->assertSame('sin-found', $answer['raise']['event'] ?? null);
+        $this->assertStringContainsString('src/Thing.vue:3', $answer['raise']['brief']);
 
         putenv(JournalHook::DATA . '=' . $this->root);
         $this->answer($edited);
-        $this->assertArrayNotHasKey('activity', $this->answer($edited), 'the same sins in the same file are not found twice');
+        $this->assertArrayNotHasKey('raise', $this->answer($edited), 'the same sins in the same file are not found twice');
         $this->assertSame([], $this->answer(['event' => 'hook.PreToolUse', 'agent' => $edited['agent'], 'tool' => ['name' => 'Edit', 'file' => $this->root . '/src/Thing.vue']]), 'asking before the edit keeps no score');
         file_put_contents($this->root . '/src/Thing.vue', "<template>\n    <div>\n        <template v-for=\"item in items\" :key=\"item\">\n            <span :class=\"{on: item}\">{{ item }}</span>\n        </template>\n    </div>\n</template>\n");
         $answer = $this->answer($edited);
         putenv(JournalHook::DATA);
 
-        $this->assertSame('Sin repented', $answer['activity']['title'] ?? null, 'the edit that clears a file says so');
+        $this->assertSame('sin-resolved', $answer['raise']['event'] ?? null, 'the edit that clears a file says so');
     }
 
     public function test_the_journal_owns_the_hooks_once_the_plugin_is_installed(): void

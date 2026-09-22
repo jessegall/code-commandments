@@ -61,10 +61,10 @@ final class JournalHook implements Command
         }
 
         $answer = $this->answer(HookResponse::merge($recorder->emitted));
-        $activity = $payload['hook_event_name'] === 'PostToolUse' ? $this->activity($payload, $event->root, $recorder->activity) : [];
+        $raised = $payload['hook_event_name'] === 'PostToolUse' ? $this->raised($payload, $event->root, $recorder->activity) : [];
 
-        if ($activity !== []) {
-            $answer['activity'] = $activity;
+        if ($raised !== []) {
+            $answer['raise'] = $raised;
         }
 
         echo json_encode($answer, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
@@ -73,20 +73,20 @@ final class JournalHook implements Command
     }
 
     /**
-     * "Sin found" for what this edit broke; "Sin repented" when an edit clears a file that had some.
+     * The sin-found event for what this edit broke; sin-resolved when an edit clears a file that had some.
      * The sins each file had last time are kept in the plugin's data folder.
      *
      * @param  array<string, mixed>  $payload
      * @param  list<string>  $found
      * @return array<string, string>
      */
-    private function activity(array $payload, string $root, array $found): array
+    private function raised(array $payload, string $root, array $found): array
     {
         $file = (string) ($payload['tool_input']['file_path'] ?? '');
         $kept = getenv(self::DATA) ? getenv(self::DATA) . '/sins.json' : '';
 
         if ($file === '' || $kept === '') {
-            return $found === [] ? [] : ['title' => 'Sin found', 'brief' => implode("\n", $found), 'tone' => 'warn'];
+            return $found === [] ? [] : ['event' => 'sin-found', 'brief' => implode("\n", $found)];
         }
 
         $file = str_replace(rtrim($root, '/') . '/', '', $file);
@@ -96,10 +96,10 @@ final class JournalHook implements Command
         file_put_contents($kept, json_encode(array_filter($known), JSON_UNESCAPED_SLASHES));
 
         if ($found !== [] && $found !== $before) {
-            return ['title' => 'Sin found', 'brief' => implode("\n", $found), 'tone' => 'warn'];
+            return ['event' => 'sin-found', 'brief' => implode("\n", $found)];
         }
 
-        return $found === [] && $before !== [] ? ['title' => 'Sin repented', 'brief' => implode("\n", $before), 'tone' => 'good'] : [];
+        return $found === [] && $before !== [] ? ['event' => 'sin-resolved', 'brief' => implode("\n", $before)] : [];
     }
 
     /**

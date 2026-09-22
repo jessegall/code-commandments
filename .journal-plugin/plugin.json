@@ -1,9 +1,19 @@
 {
     "name": "code-commandments",
-    "version": "1.12.0",
+    "version": "1.13.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
-    "journal": "2.85.55",
+    "journal": "2.91.0",
+    "events": {
+        "sin-found": {
+            "title": "Sin found",
+            "tone": "warn"
+        },
+        "sin-resolved": {
+            "title": "Sin repented",
+            "tone": "good"
+        }
+    },
     "requires": {
         "php": {
             "check": "php -v",
