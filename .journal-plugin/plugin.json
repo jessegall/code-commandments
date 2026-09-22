@@ -9,24 +9,31 @@
       "check": "php -v",
       "hint": "code-commandments runs on PHP 8.4 or newer"
     },
-    "commandments": {
-      "check": "test -x vendor/bin/commandments",
-      "hint": "composer require --dev jessegall/code-commandments in this project"
+    "composer": {
+      "check": "composer --version",
+      "hint": "composer installs the linter inside the plugin's own folder"
     }
+  },
+  "env": {
+    "CLAUDE_PROJECT_DIR": "{project}"
   },
   "setup": [
     {
+      "name": "Install the linter in the plugin's folder",
+      "run": "composer install --no-interaction --no-progress --quiet"
+    },
+    {
       "name": "Judge the codebase as a check",
-      "run": "journal check create \"The codebase keeps its architecture\" --set command=\"vendor/bin/commandments judge\" --set every=0"
+      "run": "journal check create \"The codebase keeps its architecture\" --set command=\".journal/plugins/code-commandments/bin/commandments judge\" --set every=0"
     }
   ],
-  "refuse": "vendor/bin/commandments journal-hook",
+  "refuse": "bin/commandments journal-hook",
   "reads": true,
   "refuse_seconds": 20,
   "on": {
-    "hook.PostToolUse": "vendor/bin/commandments journal-hook",
-    "hook.Stop": "vendor/bin/commandments journal-hook",
-    "hook.SessionStart": "vendor/bin/commandments journal-hook",
-    "hook.SubagentStart": "vendor/bin/commandments journal-hook"
+    "hook.PostToolUse": "bin/commandments journal-hook",
+    "hook.Stop": "bin/commandments journal-hook",
+    "hook.SessionStart": "bin/commandments journal-hook",
+    "hook.SubagentStart": "bin/commandments journal-hook"
   }
 }
