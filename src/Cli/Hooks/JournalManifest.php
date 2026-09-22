@@ -51,7 +51,7 @@ final class JournalManifest
         ];
         $settings[self::SKIPPED] = [
             'title' => 'Folders to leave out',
-            'help' => 'One folder per line, never read or reported, such as generated code.',
+            'help' => 'One folder per line, never read or reported, such as generated code. This list is what config.php leaves out.',
             'type' => 'list',
             'default' => '',
             'group' => self::FOLDERS,

@@ -62,16 +62,33 @@ final class JournalConfig implements Command
             }
         }
 
-        foreach ([JournalManifest::JUDGED => $file->judgeFolders(...), JournalManifest::SKIPPED => $file->skipFolders(...)] as $key => $write) {
-            $folders = array_values(array_filter(array_map('trim', explode("\n", (string) ($chosen[$key] ?? '')))));
+        $judged = self::folders($chosen, JournalManifest::JUDGED);
 
-            if ($folders !== []) {
-                $write($folders);
-            }
+        if ($judged !== []) {
+            $file->judgeFolders($judged);
         }
 
-        echo json_encode($changed ? ['notify' => "config.php follows the plugin's switches: {$changed} changed"] : new \stdClass) . "\n";
+        if (array_key_exists(JournalManifest::SKIPPED, $chosen)) {
+            $file->skipFolders(self::folders($chosen, JournalManifest::SKIPPED));
+        }
+
+        $answer = $changed ? ['notify' => "config.php follows the plugin's switches: {$changed} changed"] : [];
+
+        if ($judged === []) {
+            $answer['settings'] = [JournalManifest::JUDGED => implode("\n", $file->paths())];
+        }
+
+        echo json_encode($answer === [] ? new \stdClass : $answer) . "\n";
 
         return 0;
+    }
+
+    /**
+     * @param  array<string, mixed>  $chosen
+     * @return list<string>
+     */
+    private static function folders(array $chosen, string $key): array
+    {
+        return array_values(array_filter(array_map('trim', explode("\n", (string) ($chosen[$key] ?? '')))));
     }
 }

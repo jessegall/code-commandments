@@ -40,12 +40,22 @@ final class JournalConfigTest extends TestCase
      */
     private function apply(array $chosen): ConfigFile
     {
+        $this->answered($chosen);
+
+        return ConfigFile::inProject($this->root);
+    }
+
+    /**
+     * @param  array<string, string>  $chosen
+     * @return array<string, mixed>
+     */
+    private function answered(array $chosen): array
+    {
         putenv(JournalConfig::SETTINGS . '=' . json_encode($chosen));
         ob_start();
         new JournalConfig()->run(Input::of('journal-config'));
-        ob_end_clean();
 
-        return ConfigFile::inProject($this->root);
+        return (array) json_decode((string) ob_get_clean(), true);
     }
 
     public function test_a_switch_turned_off_disables_its_rule_and_its_language(): void
@@ -60,6 +70,20 @@ final class JournalConfigTest extends TestCase
 
         $this->assertNotContains($sin::class, $file->disabled(), 'switched back on, it is enabled again');
         $this->assertSame([], $file->disabledLanguages());
+    }
+
+    public function test_the_folder_lists_reach_config_php(): void
+    {
+        $file = $this->apply([JournalManifest::JUDGED => "src\napp", JournalManifest::SKIPPED => 'src/Generated']);
+
+        $this->assertSame(['src', 'app'], $file->paths());
+        $this->assertStringContainsString("exclude('src/Generated')", (string) file_get_contents($file->path));
+
+        $file = $this->apply([JournalManifest::JUDGED => '', JournalManifest::SKIPPED => '']);
+
+        $this->assertSame(['src', 'app'], $file->paths(), 'no folders to check keeps the ones config.php names');
+        $this->assertSame(['settings' => [JournalManifest::JUDGED => "src\napp"]], $this->answered([JournalManifest::JUDGED => '']), 'and hands them back to fill the setting');
+        $this->assertStringNotContainsString('src/Generated', (string) file_get_contents($file->path), 'an empty leave-out list leaves nothing out');
     }
 
     public function test_every_sin_and_language_has_a_switch(): void
