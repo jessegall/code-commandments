@@ -1,6 +1,6 @@
 # Code Commandments
 
-> An architecture linter for PHP & Vue, built to drive AI coding agents.
+> A static code checker for PHP & Vue, built to drive AI coding agents.
 
 **code-commandments** judges a PHP and Vue codebase against a set of architectural
 disciplines. Every violation (a "sin") is reported as a `file:line`, grouped under
@@ -120,6 +120,7 @@ Exit code is non-zero when sins are found.
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
+| `commandments journal-config` | Write the agent journal plugin's chosen switches into .commandments/config.php. |
 | `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
 | `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched. |
 | `commandments config` | Inspect and manage .commandments/config.php — what is configured, and what is actually running. |
@@ -346,6 +347,12 @@ journal **check**, so a failing judge files a notification and is told to the ag
 clean pass clears it. Every moment the journal sees is handed to `commandments journal-hook`, which
 runs the same handlers as `commandments hooks`: a nudge comes back as a journal line to the agent
 alone, and a refusal — the shared-branch gate, for one — stops the tool call with its own reason.
+
+Its settings, in the journal's Plugins page, are a switch for every sin — named, with what it
+flags, grouped under the skill that teaches its fix — and a switch per language. They are generated
+from the registry by `composer readme`, so they never drift. Flipping one writes
+`.commandments/config.php` through `commandments journal-config`, the same `disable()` call you
+would edit by hand; your own lines in it are kept.
 
 While the plugin is installed, `install` and `sync` wire **no** Claude Code hooks of their own: the
 journal calls them. Take the plugin away and the next `composer update` wires them back.

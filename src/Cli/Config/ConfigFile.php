@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Config;
 
+use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Workspace;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
@@ -91,7 +92,57 @@ final class ConfigFile
             return false;
         }
 
-        $this->rewriteArgs($call, [...$current, $fqcn]);
+        $this->rewriteArgs($call, [...$current, $fqcn], self::argLanguages($call));
+
+        return true;
+    }
+
+    /**
+     * The languages the config's `disable()` call names — `Language::TypeScript` and the like.
+     *
+     * @return list<Language>
+     */
+    public function disabledLanguages(): array
+    {
+        return is_file($this->path) ? self::argLanguages($this->disableCall()) : [];
+    }
+
+    /**
+     * Add `Language::$language` to the `disable()` call (scaffolding the file first). False if it
+     * was already there.
+     */
+    public function disableLanguage(Language $language): bool
+    {
+        $this->scaffoldIfMissing();
+        $call = $this->disableCall();
+        $current = self::argLanguages($call);
+
+        if (in_array($language, $current, true)) {
+            return false;
+        }
+
+        $this->rewriteArgs($call, self::argClasses($call), [...$current, $language]);
+
+        return true;
+    }
+
+    /**
+     * Take `Language::$language` out of the `disable()` call. False if it wasn't there.
+     */
+    public function enableLanguage(Language $language): bool
+    {
+        if (! is_file($this->path)) {
+            return false;
+        }
+
+        $call = $this->disableCall();
+        $current = self::argLanguages($call);
+
+        if (! in_array($language, $current, true)) {
+            return false;
+        }
+
+        $this->rewriteArgs($call, self::argClasses($call), array_values(array_filter($current, static fn (Language $l): bool => $l !== $language)));
 
         return true;
     }
@@ -113,7 +164,7 @@ final class ConfigFile
             return false;
         }
 
-        $this->rewriteArgs($call, $remaining);
+        $this->rewriteArgs($call, $remaining, self::argLanguages($call));
 
         return true;
     }
@@ -152,7 +203,7 @@ final class ConfigFile
                 return false;
             }
 
-            $this->rewriteArgs($call, [...$current, $fqcn]);
+            $this->rewriteArgs($call, [...$current, $fqcn], []);
 
             return true;
         }
@@ -369,6 +420,30 @@ final class ConfigFile
     }
 
     /**
+     * The languages in a `disable(Language::Vue, …)` call.
+     *
+     * @return list<Language>
+     */
+    private static function argLanguages(MethodCall $call): array
+    {
+        $languages = [];
+
+        foreach ($call->args as $arg) {
+            $value = $arg->value;
+
+            if ($value instanceof ClassConstFetch && $value->name->toString() !== 'class' && $value->class->getLast() === 'Language') {
+                foreach (Language::cases() as $case) {
+                    if ($case->name === $value->name->toString()) {
+                        $languages[] = $case;
+                    }
+                }
+            }
+        }
+
+        return $languages;
+    }
+
+    /**
      * The string-literal arguments in a `paths('app', 'src')` call.
      *
      * @return list<string>
@@ -387,15 +462,19 @@ final class ConfigFile
     }
 
     /**
-     * Replace the argument list of $call with the given classes, spliced by node offset — the
-     * parens (and everything around the call) are left exactly as they were.
+     * Replace the argument list of $call with the given languages and classes, spliced by node
+     * offset — the parens (and everything around the call) are left exactly as they were.
      *
      * @param  list<string>  $classes
+     * @param  list<Language>  $languages
      */
-    private function rewriteArgs(MethodCall $call, array $classes): void
+    private function rewriteArgs(MethodCall $call, array $classes, array $languages): void
     {
         $source = (string) file_get_contents($this->path);
-        $rendered = implode(', ', array_map(static fn (string $c): string => "\\{$c}::class", $classes));
+        $rendered = implode(', ', [
+            ...array_map(static fn (Language $l): string => '\\' . Language::class . "::{$l->name}", $languages),
+            ...array_map(static fn (string $c): string => "\\{$c}::class", $classes),
+        ]);
 
         if ($call->args !== []) {
             $from = $call->args[0]->value->getStartFilePos();

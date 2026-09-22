@@ -15,6 +15,8 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\Repentable;
+use JesseGall\CodeCommandments\Support\Summary;
+use JesseGall\CodeCommandments\Cli\Hooks\JournalManifest;
 use JesseGall\CodeCommandments\Scribes\Catalog as Scribes;
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use JesseGall\CodeCommandments\Skills\Catalog as SkillsCatalog;
@@ -27,28 +29,8 @@ $readmePath = __DIR__ . '/../README.md';
 /** A string made table-cell safe (escape the column separator). */
 $cell = static fn (string $text): string => str_replace('|', '\|', trim($text));
 
-/** The first sentence of a class's docblock, `{@see …}` tags reduced to their short name. */
-$summary = static function (object|string $subject) use ($cell): string {
-    $doc = (new ReflectionClass($subject))->getDocComment();
-
-    if ($doc === false) {
-        return '';
-    }
-
-    $text = (string) preg_replace('#/\*\*|\*/|^\s*\*\s?#m', '', $doc);
-    $text = (string) preg_replace_callback(
-        '/\{@see\s+\\\\?([^}\s]+)\}/',
-        static fn (array $m): string => (static fn (array $p): string => (string) end($p))(explode('\\', $m[1])),
-        $text,
-    );
-    $text = trim((string) preg_replace('/\s+/', ' ', $text));
-    // The first sentence: a period that ENDS a sentence — followed by whitespace then a capital, or
-    // the end of the text. This skips mid-sentence abbreviations (`e.g.`, `i.e.`) whose period is
-    // followed by a lowercase word or a code span, so a cell never truncates on one.
-    $first = preg_match('/^(.*?[.])(?:\s+[A-Z]|\s*$)/u', $text, $m) === 1 ? $m[1] : $text;
-
-    return $cell($first);
-};
+/** The first sentence of a class's docblock, table-cell safe. */
+$summary = static fn (object|string $subject): string => $cell(Summary::of($subject));
 
 $shortName = static fn (object|string $subject): string => (new ReflectionClass($subject))->getShortName();
 
@@ -279,6 +261,20 @@ foreach ($embedded as $marker => $block) {
 if ($updated !== $readme) {
     file_put_contents($readmePath, $updated);
     $written[] = 'README.md';
+}
+
+// ---- The agent journal plugin's settings ------------------------------------
+// The manifest is hand-kept except its settings, which are the registry's: a switch per language
+// and per sin, so the plugin's Settings panel can never name a rule that is gone or miss a new one.
+
+$pluginPath = __DIR__ . '/../.journal-plugin/plugin.json';
+$plugin = json_decode((string) file_get_contents($pluginPath), true);
+$plugin['settings'] = JournalManifest::settings();
+$pluginJson = json_encode($plugin, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
+
+if (file_get_contents($pluginPath) !== $pluginJson) {
+    file_put_contents($pluginPath, $pluginJson);
+    $written[] = '.journal-plugin/plugin.json';
 }
 
 if ($written === []) {

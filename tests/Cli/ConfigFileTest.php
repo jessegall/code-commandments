@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
+use JesseGall\CodeCommandments\Language;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -132,6 +133,31 @@ final class ConfigFileTest extends TestCase
         $this->assertStringContainsString('$config->paths(', $this->read($file));
         $this->assertSame(['Demo\\Foo'], $file->disabled(), 'the disable list survived the insert');
         $this->assertStringContainsString(rtrim(substr($before, 0, strpos($before, '$config->disable') ?: 0)), $this->read($file));
+        $this->assertValidPhp($file);
+    }
+
+    public function test_a_language_is_disabled_and_enabled_like_a_rule(): void
+    {
+        $file = $this->file();
+
+        $this->assertTrue($file->disableLanguage(Language::TypeScript));
+        $this->assertFalse($file->disableLanguage(Language::TypeScript), 'already disabled');
+        $this->assertSame([Language::TypeScript], $file->disabledLanguages());
+        $this->assertValidPhp($file);
+
+        $this->assertTrue($file->enableLanguage(Language::TypeScript));
+        $this->assertSame([], $file->disabledLanguages());
+    }
+
+    public function test_toggling_a_rule_keeps_a_disabled_language(): void
+    {
+        $file = $this->file();
+        $file->disableLanguage(Language::Vue);
+
+        $file->disable('Demo\\Foo');
+        $file->enable('Demo\\Foo');
+
+        $this->assertSame([Language::Vue], $file->disabledLanguages(), 'a rule toggle never drops a language');
         $this->assertValidPhp($file);
     }
 

@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\InvalidConfiguration;
 use JesseGall\CodeCommandments\Support\InstalledPackage;
 
 use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
+use JesseGall\CodeCommandments\Cli\Hooks\JournalConfig;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalHook;
 use JesseGall\CodeCommandments\Cli\Hooks\HookRunner;
 use JesseGall\CodeCommandments\Cli\Hooks\HookCommand;
@@ -151,6 +152,7 @@ final class Kernel
             new TaskCommand(),
             new HookDispatch(),
             new JournalHook(),
+            new JournalConfig(),
             new HookRunner(),
             new Configure(),
             new ConfigCommand(),
