@@ -471,18 +471,35 @@ final class ConfigFile
     private function rewriteArgs(MethodCall $call, array $classes, array $languages): void
     {
         $source = (string) file_get_contents($this->path);
-        $rendered = implode(', ', [
+        $close = $call->getEndFilePos();
+        $indent = $this->indentOf($source, $close);
+        $args = [
             ...array_map(static fn (Language $l): string => '\\' . Language::class . "::{$l->name}", $languages),
             ...array_map(static fn (string $c): string => "\\{$c}::class", $classes),
-        ]);
+        ];
+        $rendered = implode('', array_map(static fn (string $arg): string => "{$indent}    {$arg},\n", $args));
+        $first = $call->args === [] ? $close : $call->args[0]->value->getStartFilePos();
 
-        if ($call->args !== []) {
-            $from = $call->args[0]->value->getStartFilePos();
-            $to = end($call->args)->value->getEndFilePos() + 1;
+        if ($this->lineStart($source, $close) === $this->lineStart($source, $call->getStartFilePos())) {
+            [$from, $to, $rendered] = [$first, $close, "\n{$rendered}{$indent}"];
         } else {
-            $from = $to = $call->getEndFilePos(); // between the empty `()`
+            [$from, $to] = [$this->lineStart($source, $first), $this->lineStart($source, $close)];
         }
 
         file_put_contents($this->path, substr($source, 0, $from) . $rendered . substr($source, $to));
+    }
+
+    private function lineStart(string $source, int $offset): int
+    {
+        $newline = strrpos(substr($source, 0, $offset), "\n");
+
+        return $newline === false ? 0 : $newline + 1;
+    }
+
+    private function indentOf(string $source, int $offset): string
+    {
+        $line = substr($source, $this->lineStart($source, $offset));
+
+        return substr($line, 0, strspn($line, " \t"));
     }
 }

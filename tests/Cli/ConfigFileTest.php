@@ -58,7 +58,6 @@ final class ConfigFileTest extends TestCase
         $file->disable('Demo\\Bar');
 
         $this->assertSame(['Demo\\Foo', 'Demo\\Bar'], $file->disabled());
-        $this->assertStringContainsString('\\Demo\\Foo::class, \\Demo\\Bar::class', $this->read($file));
         $this->assertValidPhp($file);
     }
 
@@ -158,6 +157,31 @@ final class ConfigFileTest extends TestCase
         $file->enable('Demo\\Foo');
 
         $this->assertSame([Language::Vue], $file->disabledLanguages(), 'a rule toggle never drops a language');
+        $this->assertValidPhp($file);
+    }
+
+    public function test_each_disabled_class_sits_on_its_own_indented_line(): void
+    {
+        $file = $this->file();
+        $file->disable('Demo\\Foo');
+        $file->disable('Demo\\Bar');
+
+        $this->assertStringContainsString("\$config->disable(\n        // \\JesseGall\\CodeCommandments\\Sins\\Backend\\SwallowCatch::class,\n        \\Demo\\Foo::class,\n        \\Demo\\Bar::class,\n    );", $this->read($file));
+
+        $file->enable('Demo\\Foo');
+        $file->enable('Demo\\Bar');
+
+        $this->assertStringContainsString("\$config->disable(\n        // \\JesseGall\\CodeCommandments\\Sins\\Backend\\SwallowCatch::class,\n    );", $this->read($file));
+    }
+
+    public function test_a_single_line_call_is_spread_over_lines(): void
+    {
+        $file = $this->file();
+        mkdir(dirname($file->path), 0777, true);
+        file_put_contents($file->path, "<?php\n\nreturn function (\\JesseGall\\CodeCommandments\\Config \$config): void {\n    \$config->disable(\\Demo\\Old::class);\n};\n");
+        $file->disable('Demo\\Foo');
+
+        $this->assertStringContainsString("    \$config->disable(\n        \\Demo\\Old::class,\n        \\Demo\\Foo::class,\n    );", $this->read($file));
         $this->assertValidPhp($file);
     }
 
