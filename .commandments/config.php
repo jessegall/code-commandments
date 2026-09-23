@@ -267,6 +267,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\RawDecodedReturn::class,
         // Sins\Python\RedundantElse::class,
         // Sins\Python\RepeatedGuard::class,
+        // Sins\Python\RepeatedNamedCall::class,
         // Sins\Python\ScratchStateRestore::class,
         // Sins\Python\ShortCircuitStatement::class,
         // Sins\Python\StringMatchMirrorsEnum::class,

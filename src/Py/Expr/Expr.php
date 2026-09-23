@@ -719,6 +719,39 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * The keyword arguments this call passes — `meta=…` in `copy_with(meta=…)` — none for anything else.
+     *
+     * @return list<self>
+     */
+    public function keywordArguments(): array
+    {
+        return $this->isCall() ? array_values(array_filter($this->get('arguments'), static fn (self $argument): bool => $argument->kind === ExprKind::Keyword)) : [];
+    }
+
+    /**
+     * Does this build a value — a method call (`Payload.of(x)`, `p.to_dict()`), or a dict, list or set
+     * written out — rather than pass one along? A bare `f(x)` may be any function, `_("text")` included,
+     * so it is not counted as building anything.
+     */
+    public function isConstruction(): bool
+    {
+        return ($this->isCall() && $this->get('callee')->is(ExprKind::Attribute)) || in_array($this->kind, [ExprKind::Dict, ExprKind::List, ExprKind::Set], true);
+    }
+
+    /**
+     * The skeleton of how this value is built, blind to names and literals — `Payload(port=1).to_dict()` and
+     * `Other().to_dict()` share `name().to_dict()`, and a dict literal is `dict` whatever it holds.
+     */
+    public function constructionShape(): string
+    {
+        return match ($this->kind) {
+            ExprKind::Call => $this->get('callee')->constructionShape() . '()',
+            ExprKind::Attribute => $this->get('object')->constructionShape() . '.' . $this->get('name'),
+            default => $this->kind->value,
+        };
+    }
+
+    /**
      * Is this an `and`?
      */
     public function isAnd(): bool

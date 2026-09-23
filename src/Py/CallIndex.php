@@ -39,6 +39,11 @@ final class CallIndex
     private ?array $homes = null;
 
     /**
+     * @var array<int, ModuleFile>|null  the module each `def` is declared in, by the def's object id
+     */
+    private ?array $declarations = null;
+
+    /**
      * @var array<int, true>|null  the object ids of every `def` bound to an instance or class when called
      */
     private ?array $bound = null;
@@ -60,6 +65,35 @@ final class CallIndex
         $this->callers ??= $this->graph();
 
         return $this->callers[spl_object_id($function)] ?? [];
+    }
+
+    /**
+     * Where $function is declared — `path:line` — the name its calls share across processes.
+     */
+    public function declarationOf(FunctionDef $function): string
+    {
+        $this->declarations ??= $this->declarations();
+        $module = $this->declarations[spl_object_id($function)];
+
+        return "{$module->file}:{$module->lineAt($function->start)}";
+    }
+
+    /**
+     * @return array<int, ModuleFile>
+     */
+    private function declarations(): array
+    {
+        $declarations = [];
+
+        foreach ($this->codebase->modules() as $module) {
+            foreach ($module->nodes() as $node) {
+                if ($node instanceof FunctionDef) {
+                    $declarations[spl_object_id($node)] = $module;
+                }
+            }
+        }
+
+        return $declarations;
     }
 
     /**

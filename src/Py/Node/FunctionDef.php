@@ -217,6 +217,14 @@ final class FunctionDef extends Node
     }
 
     /**
+     * Does this take any keyword it is handed — a `**changes` rest?
+     */
+    public function takesKeywordRest(): bool
+    {
+        return array_any($this->params, static fn (Param $param): bool => $param->kind === '**');
+    }
+
+    /**
      * Is this a `@classmethod` — called with the class, not an instance, bound to its first parameter?
      */
     public function isClassMethod(): bool
