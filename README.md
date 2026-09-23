@@ -518,7 +518,7 @@ Every sin (the `--sin=` key) and what it flags. Each sin has one detector that
 finds it, named `<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`).
 
 <!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
-_191 sins across 46 skills. Full tables in [README.sins.md](README.sins.md)._
+_192 sins across 46 skills. Full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
 ## Auto-fixing

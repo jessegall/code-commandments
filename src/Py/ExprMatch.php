@@ -304,7 +304,7 @@ class ExprMatch implements Located
      */
     public function isSubstantiveGuard(): bool
     {
-        if (! $this->expr->isAnd() || $this->module->wrapperOf($this->expr)->isSomeAnd(static fn (Expr $around): bool => $around->isAnd())) {
+        if (! $this->isOutermostAnd()) {
             return false;
         }
 
@@ -312,6 +312,24 @@ class ExprMatch implements Located
 
         return ! array_all($conjuncts, static fn (Expr $conjunct): bool => $conjunct->isInstanceCheck())
             && array_sum(array_map(static fn (Expr $conjunct): int => $conjunct->reachCount(), $conjuncts)) >= 2;
+    }
+
+    /**
+     * Is this the outermost `and` of a chain that narrows a value through two or more `isinstance` checks —
+     * `isinstance(n, Call) and isinstance(n.func, Attribute)`? One chain is one finding.
+     */
+    public function isTypeNarrowingGuard(): bool
+    {
+        return $this->isOutermostAnd()
+            && count(array_filter($this->expr->conjuncts(), static fn (Expr $conjunct): bool => $conjunct->isInstanceCheck())) >= 2;
+    }
+
+    /**
+     * Is this an `and` no other `and` holds — the root of its chain?
+     */
+    private function isOutermostAnd(): bool
+    {
+        return $this->expr->isAnd() && ! $this->module->wrapperOf($this->expr)->isSomeAnd(static fn (Expr $around): bool => $around->isAnd());
     }
 
     /**

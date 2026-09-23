@@ -98,3 +98,51 @@ class RoutedTicket:
     def escalated_to(self, level: int) -> "RoutedTicket":
         return self.evolve(meta=TicketMeta.of(level).to_dict())
 ```
+
+### python-repeated-type-guard
+
+the SAME multi-`isinstance` narrowing (`isinstance(x, A) and isinstance(x.y, B)`) is written in 2+ places — a check on a shape with no name
+
+```py
+----------[ Bad ]----------
+
+# in refund_events.py
+def refund_cents(event: object, limit_cents: int) -> int:
+    if isinstance(event, CardPayment) and isinstance(event.step, Challenge):
+        return 0
+    return limit_cents
+
+# in report_cells.py
+def render(self, cell: object) -> str:
+    if isinstance(cell, Cell) and isinstance(cell.content, Table):
+        return f"<table rows={len(cell.content.rows)}>"
+    return str(cell)
+
+# in report_cells.py
+def export(self, cells: list) -> list:
+    return [cell.content.rows for cell in cells if isinstance(cell, Cell) and isinstance(cell.content, Table)]
+
+# in payment_events.py
+def challenge_url(event: object) -> str:
+    if isinstance(event, CardPayment) and isinstance(event.step, Challenge):
+        return event.step.url
+    return ""
+
+# in payment_events.py
+def notify_customer(event: object, outbox: list[str]) -> None:
+    if isinstance(event, CardPayment) and isinstance(event.step, Challenge):
+        outbox.append(event.step.url)
+
+----------[ Good ]----------
+
+# in payment_events.py
+@property
+def is_challenged(self) -> bool:
+    return isinstance(self.step, Challenge)
+
+# in payment_events.py
+def challenge_link(event: object) -> str:
+    if isinstance(event, CardPayment) and event.is_challenged:
+        return str(event.step)
+    return ""
+```

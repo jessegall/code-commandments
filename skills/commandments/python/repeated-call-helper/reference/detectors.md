@@ -4,3 +4,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 
 - **`python-repeated-guard`** — the SAME compound `and` condition recurs in 2+ places — reordered or read through a local still counts — a question with no name — `RepeatedGuardDetector`
 - **`python-repeated-named-call`** — the same `**changes` function is called with the same keyword, built the same way, at 2+ sites — an operation the type never named — `RepeatedNamedCallDetector`
+- **`python-repeated-type-guard`** — the SAME multi-`isinstance` narrowing (`isinstance(x, A) and isinstance(x.y, B)`) is written in 2+ places — a check on a shape with no name — `RepeatedTypeGuardDetector`
