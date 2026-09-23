@@ -2,6 +2,45 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### csharp-coalesced-loop-subject
+
+a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header
+
+```cs
+----------[ Bad ]----------
+
+public static List<string> Lines(List<string>? skus)
+{
+    var lines = new List<string>();
+
+    foreach (var sku in skus ?? [])
+    {
+        lines.Add($"[ ] {sku}");
+    }
+
+    return lines;
+}
+
+----------[ Good ]----------
+
+public static List<string> GuardedLines(List<string>? skus)
+{
+    if (skus is null)
+    {
+        return [];
+    }
+
+    var lines = new List<string>();
+
+    foreach (var sku in skus)
+    {
+        lines.Add($"[ ] {sku}");
+    }
+
+    return lines;
+}
+```
+
 ### deep-csharp-nesting
 
 An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops

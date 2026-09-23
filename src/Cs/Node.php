@@ -287,6 +287,20 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this an empty collection written out — `[]`, `Enumerable.Empty<T>()`, `Array.Empty<T>()`, or a
+     * `new List<T>()` with nothing in it?
+     */
+    public function isEmptyCollection(): bool
+    {
+        return match (true) {
+            $this->is('CollectionExpression') => $this->expressions() === [] && ! array_any($this->children, static fn (self $child): bool => $child->is('ExpressionElement', 'SpreadElement')),
+            $this->is('InvocationExpression') => $this->target?->name === 'Empty' && in_array($this->target->type, ['global::System.Linq.Enumerable', 'global::System.Array'], true),
+            $this->is('ObjectCreationExpression') => $this->arguments() === [] && ! array_any($this->children, static fn (self $child): bool => str_ends_with($child->kind, 'InitializerExpression')),
+            default => false,
+        };
+    }
+
+    /**
      * Is this literal the same value as $other — the same literal written again, or two spellings of one
      * empty value, `""` and `string.Empty`?
      */

@@ -1813,6 +1813,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-coalesced-loop-subject": {
+            "title": "CoalescedLoopSubject",
+            "help": "A loop over a collection defaulted to empty in its own header — the C# twin of the PHP and Python coalesced-loop-subject rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/flow",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-loop-wrapped-in-if": {
             "title": "LoopWrappedInIf",
             "help": "A loop whose whole body is one `if` around real work — the C# twin of the backend's and Python's loop-wrapped-in-if rules.",

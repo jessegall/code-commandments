@@ -307,6 +307,7 @@ $disabledSins = function (Config $config): void {
         // ----------[ C# ]----------
         // Sins\CSharp\BlankStringDefault::class,
         // Sins\CSharp\CancelledCoalesce::class,
+        // Sins\CSharp\CoalescedLoopSubject::class,
         // Sins\CSharp\ConstructorSideEffect::class,
         // Sins\CSharp\DataClump::class,
         // Sins\CSharp\DeepNesting::class,

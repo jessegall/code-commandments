@@ -76,6 +76,8 @@ or extract the inner block into a method named for what it decides.
 
 ## Rules
 
+- [ ] Check for a missing collection at the top with an early return, so the loop runs over something that is there.
+      _Write `if (items is null) { return; }` above the loop — or better, make the collection non-nullable where it comes from._
 - [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a method.
       _Guard the outer levels away (`return`/`continue` past what does not apply), let LINQ do the inner iteration, or extract the inner block into a method named for what it decides._
 - [ ] Invert a loop body wrapped in one `if` into a `continue` guard so the work sits at the loop's own level.
@@ -87,60 +89,56 @@ or extract the inner block into a method named for what it decides.
 
 ## Worked example
 
-### deep-csharp-nesting
+### csharp-coalesced-loop-subject
 
-An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops
+a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header
 
 ```cs
 ----------[ Bad ]----------
 
-public IReadOnlyList<string> Reorders()
+public static List<string> Lines(List<string>? skus)
 {
-    var reorders = new List<string>();
+    var lines = new List<string>();
 
-    foreach (var (warehouse, shelves) in warehouses)
+    foreach (var sku in skus ?? [])
     {
-        foreach (var shelf in shelves)
-        {
-            if (shelf.OnHand < shelf.Minimum)
-            {
-                if (shelf.Supplier is not null)
-                {
-                    reorders.Add($"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}");
-                }
-            }
-        }
+        lines.Add($"[ ] {sku}");
     }
 
-    return reorders;
+    return lines;
 }
 
 ----------[ Good ]----------
 
-// in Restock.cs
-public IReadOnlyList<string> ReordersFlat() =>
-    warehouses
-        .SelectMany(warehouse => warehouse.Value.Select(shelf => (Warehouse: warehouse.Key, Shelf: shelf)))
-        .Where(entry => entry.Shelf.OnHand < entry.Shelf.Minimum && entry.Shelf.Supplier is not null)
-        .Select(entry => Reorder(entry.Warehouse, entry.Shelf))
-        .ToList();
+public static List<string> GuardedLines(List<string>? skus)
+{
+    if (skus is null)
+    {
+        return [];
+    }
 
-// in Restock.cs
-private static string Reorder(string warehouse, Shelf shelf) =>
-    $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
+    var lines = new List<string>();
+
+    foreach (var sku in skus)
+    {
+        lines.Add($"[ ] {sku}");
+    }
+
+    return lines;
+}
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/flow` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-csharp-nesting`, `csharp-loop-wrapped-in-if`, `redundant-csharp-else`, `csharp-subject-ladder`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-coalesced-loop-subject`, `deep-csharp-nesting`, `csharp-loop-wrapped-in-if`, `redundant-csharp-else`, `csharp-subject-ladder`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
