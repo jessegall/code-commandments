@@ -198,6 +198,32 @@ final class FunctionDef extends Node
     }
 
     /**
+     * How often this function reaches an attribute of each of $names — `order.lines`, `self.count` — by name.
+     *
+     * @param  list<string>  $names
+     * @return array<string, int>
+     */
+    public function attributeReachesOn(array $names): array
+    {
+        $reached = array_filter(array_map(
+            static fn (Expr $expression): string => $expression->is(ExprKind::Attribute) && $expression->get('object')->is(ExprKind::Name) ? (string) $expression->get('object')->get('name') : '',
+            $this->expressionsWithin(),
+        ), static fn (string $name): bool => in_array($name, $names, true));
+
+        return array_count_values($reached);
+    }
+
+    /**
+     * Every `for` statement in this function over a collection of $name — `for line in order.lines`.
+     *
+     * @return list<ForLoop>
+     */
+    public function loopsOver(string $name): array
+    {
+        return array_values(array_filter($this->body->descendants(), static fn (Node $node): bool => $node instanceof ForLoop && $node->iterable->projectionRoot() === $name));
+    }
+
+    /**
      * The locals this function assigns exactly once, from a plain `name = value` — name → value. A local
      * written twice has no single meaning, so it is left out.
      *

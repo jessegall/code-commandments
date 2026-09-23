@@ -56,6 +56,19 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * Every expression written beneath this node, at any depth, each sub-expression included.
+     *
+     * @return list<Expr>
+     */
+    final public function expressionsWithin(): array
+    {
+        return array_merge([], ...array_map(
+            static fn (self $node): array => array_merge([], ...array_map(static fn (Expr $expression): array => $expression->flatten(), $node->expressions())),
+            $this->descendants(),
+        ));
+    }
+
+    /**
      * What tells this node from another of its kind beyond its children and expressions — a jump's
      * `break` or `continue`, an augmented assignment's operator. Empty for a kind with nothing more.
      */

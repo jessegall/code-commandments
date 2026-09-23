@@ -2583,6 +2583,19 @@
             ],
             "detail": true
         },
+        "sin_python-feature-envy": {
+            "title": "FeatureEnvy",
+            "help": "Exiled behaviour — the twin of the backend's FeatureEnvyDetector, decided by FeatureEnvy.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/tell-dont-ask",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-type-switch": {
             "title": "TypeSwitch",
             "help": "An `isinstance` ladder over the codebase's own classes — the twin of the backend's TypeSwitchDetector.",

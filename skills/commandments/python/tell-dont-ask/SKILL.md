@@ -58,39 +58,51 @@ instead of a ladder at every call site.
 
 ## Rules
 
+- [ ] Move the behaviour onto the object whose data it works on; ask it (`order.heaviest_line()`), don't reach through it.
+      _Move the method onto the envied class and call it there; keep only the orchestration here._
 - [ ] Give each type the method and call it (`shape.area()`) instead of asking a value what it is in an `isinstance` ladder.
       _Declare the method on the shared base, implement it on each class, and replace the ladder with the call._
 
 ## Worked example
 
-### python-type-switch
+### python-feature-envy
 
-an `isinstance` ladder over classes the codebase owns — the value asked what it IS so the caller can decide what to do
+a method that loops another object's collection or writes its fields, reaching into it more than into its own state — behaviour exiled from the object it works on
 
 ```py
 ----------[ Bad ]----------
 
-def quote(parcel: Parcel) -> int:
-    if isinstance(parcel, Letter):
-        return 120
-    elif isinstance(parcel, Pallet):
-        return 4000 + parcel.weight_grams // 100
-    return 500
+def redeem(self, card: StampCard) -> None:
+    card.closed = True
+    card.reward = "free coffee"
+    card.stamps = 0
+    self.rewards_given += 1
 
 ----------[ Good ]----------
 
-def quote_told(parcel: Parcel) -> int:
-    return parcel.rate_cents()
+# in stamp_cards.py
+def close_with(self, reward: str) -> None:
+    self.closed = True
+    self.reward = reward
+    self.stamps = 0
+
+# in stamp_cards.py
+def redeem_card(self, card: StampCard) -> None:
+    card.close_with("free coffee")
+    self.rewards_given += 1
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/tell-dont-ask` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-type-switch`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-feature-envy`, `python-type-switch`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
