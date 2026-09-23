@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Cli\Hooks\JournalConfig;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalScan;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalSkills;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalHook;
+use JesseGall\CodeCommandments\Cli\Hooks\JournalServe;
 use JesseGall\CodeCommandments\Cli\Hooks\HookRunner;
 use JesseGall\CodeCommandments\Cli\Hooks\HookCommand;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
@@ -154,6 +155,7 @@ final class Kernel
             new TaskCommand(),
             new HookDispatch(),
             new JournalHook(),
+            new JournalServe(),
             new JournalConfig(),
             new JournalScan(),
             new JournalSkills(),

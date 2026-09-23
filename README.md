@@ -120,6 +120,7 @@ Exit code is non-zero when sins are found.
 | `commandments task` | The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history. |
 | `commandments hooks` | The wired hook entry point — reads one hook payload from stdin, runs every registered handler, and merges their responses into one. |
 | `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
+| `commandments journal-serve` | Answer the agent journal's hooks from one running process, over the socket the journal names in $JOURNAL_PLUGIN_SOCKET. |
 | `commandments journal-config` | Write the agent journal plugin's chosen switches into .commandments/config.php. |
 | `commandments journal-scan` | Scan the project for the folders to check and the ones to leave out, for the agent journal plugin. |
 | `commandments journal-skills` | Render the skills into the agent journal plugin's folder, for the journal to publish. |

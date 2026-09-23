@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\CodeCommandments\Hooks\HookResponse;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
+use JesseGall\PhpTypes\Option;
 
 /**
  * `commandments journal-hook` — the entry point the agent journal's plugin calls. The journal owns the
@@ -42,13 +43,27 @@ final class JournalHook implements Command
 
     public function run(Input $input): int
     {
-        $given = $this->io->payload();
-        $payload = $this->translated($given);
+        echo $this->answerFor($this->io->payload())->toJson() . "\n";
 
-        if (is_dir($payload['cwd'])) {
-            chdir($payload['cwd']);
+        return 0;
+    }
+
+    /**
+     * The journal's answer to one moment — `refuse`, `whisper`, `raise` — given its payload. The whole
+     * hook, without the pipes: the command answers one moment and exits, {@see JournalServe} answers
+     * many from one process.
+     *
+     * @param  array<string, mixed>  $given  the journal's payload
+     */
+    public function answerFor(array $given): JournalAnswer
+    {
+        $moment = JournalMoment::fromPayload($given);
+
+        if (is_dir($moment->cwd)) {
+            chdir($moment->cwd);
         }
 
+        $payload = $moment->hookPayload();
         $event = new HookEvent($payload, $this->io->projectRoot());
         $recorder = new RecordingHookIO($payload, $this->io->git());
 
@@ -61,45 +76,41 @@ final class JournalHook implements Command
         }
 
         $answer = $this->answer(HookResponse::merge($recorder->emitted));
-        $raised = $payload['hook_event_name'] === 'PostToolUse' ? $this->raised($payload, $event->root, $recorder->activity) : [];
 
-        if ($raised !== []) {
-            $answer['raise'] = $raised;
+        if (! $moment->isPostToolUse()) {
+            return $answer;
         }
 
-        echo json_encode($answer, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
-
-        return 0;
+        return $this->raised($moment, $event->root, $recorder->activity)->mapOr($answer, $answer->raising(...));
     }
 
     /**
      * The sin-found event for what this edit broke; sin-resolved when an edit clears a file that had some.
      * The sins each file had last time are kept in the plugin's data folder.
      *
-     * @param  array<string, mixed>  $payload
      * @param  list<string>  $found
-     * @return array<string, string>
+     * @return Option<JournalRaise>
      */
-    private function raised(array $payload, string $root, array $found): array
+    private function raised(JournalMoment $moment, string $root, array $found): Option
     {
-        $file = (string) ($payload['tool_input']['file_path'] ?? '');
-        $kept = getenv(self::DATA) ? getenv(self::DATA) . '/sins.json' : '';
+        $data = getenv(self::DATA) ?: null;
 
-        if ($file === '' || $kept === '') {
-            return $found === [] ? [] : ['event' => 'sin-found', 'brief' => implode("\n", $found)];
+        if ($moment->file === null || $data === null) {
+            return $found === [] ? Option::none() : Option::some(new JournalRaise('sin-found', implode("\n", $found)));
         }
 
-        $file = str_replace(rtrim($root, '/') . '/', '', $file);
+        $kept = "{$data}/sins.json";
+        $file = str_replace(rtrim($root, '/') . '/', '', $moment->file);
         $known = is_file($kept) ? (array) json_decode((string) file_get_contents($kept), true) : [];
         $before = (array) ($known[$file] ?? []);
         $known[$file] = $found;
         file_put_contents($kept, json_encode(array_filter($known), JSON_UNESCAPED_SLASHES));
 
         if ($found !== [] && $found !== $before) {
-            return ['event' => 'sin-found', 'brief' => implode("\n", $found)];
+            return Option::some(new JournalRaise('sin-found', implode("\n", $found)));
         }
 
-        return $found === [] && $before !== [] ? ['event' => 'sin-resolved', 'brief' => implode("\n", $before)] : [];
+        return $found === [] && $before !== [] ? Option::some(new JournalRaise('sin-resolved', implode("\n", $before))) : Option::none();
     }
 
     /**
@@ -112,54 +123,16 @@ final class JournalHook implements Command
         return array_values(array_filter(array_map('trim', explode(',', (string) getenv(self::QUIET)))));
     }
 
-    /**
-     * @param  array<string, mixed>  $given
-     * @return array<string, mixed>
-     */
-    private function translated(array $given): array
-    {
-        $tool = is_array($given['tool'] ?? null) ? $given['tool'] : [];
-        $data = is_array($given['data'] ?? null) ? $given['data'] : [];
-        $agent = is_array($given['agent'] ?? null) ? $given['agent'] : [];
-        $name = (string) ($tool['name'] ?? $data['tool'] ?? '');
-        $file = (string) ($tool['file'] ?? $data['file'] ?? '');
-        $command = (string) ($tool['command'] ?? $data['command'] ?? '');
-
-        return [
-            'hook_event_name' => $this->moment($given),
-            'session_id' => (string) ($agent['session'] ?? ''),
-            'cwd' => (string) ($agent['cwd'] ?? $given['project'] ?? getcwd()),
-            'tool_name' => $name,
-            'tool_input' => array_filter([
-                'command' => $command,
-                'file_path' => $file,
-            ], static fn (string $value): bool => $value !== ''),
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $given
-     */
-    private function moment(array $given): string
-    {
-        $event = (string) ($given['event'] ?? '');
-
-        return str_starts_with($event, 'hook.') ? substr($event, 5) : $event;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function answer(HookResponse $merged): array
+    private function answer(HookResponse $merged): JournalAnswer
     {
         foreach ($merged->blockReason as $reason) {
-            return ['refuse' => $reason, 'whisper' => $reason];
+            return new JournalAnswer(refuse: $reason, whisper: $reason);
         }
 
         foreach ($merged->context as $text) {
-            return trim($text) === '' ? [] : ['whisper' => trim($text)];
+            return trim($text) === '' ? new JournalAnswer() : new JournalAnswer(whisper: trim($text));
         }
 
-        return [];
+        return new JournalAnswer();
     }
 }
