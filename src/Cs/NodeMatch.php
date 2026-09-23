@@ -323,6 +323,60 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a write — an assignment, `++` or `--` — to a static field of its own type that is neither
+     * `readonly` nor `const`, made from a method or accessor rather than the static constructor or the
+     * field's own initializer?
+     */
+    public function isWritingStaticState(): bool
+    {
+        $writes = str_ends_with($this->node->kind, 'AssignmentExpression') || $this->node->is('PostIncrementExpression', 'PostDecrementExpression', 'PreIncrementExpression', 'PreDecrementExpression');
+        $scope = array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->isFunction()))[0] ?? null;
+
+        if (! $writes || $scope === null || ($scope->is('ConstructorDeclaration') && $scope->hasModifier('static'))) {
+            return false;
+        }
+
+        $target = $this->node->children[0];
+
+        return $this->enclosingType()->isSomeAnd(static fn (Node $type): bool => in_array(self::fieldWritten($target, $type, $scope), self::mutableStaticFieldsOf($type), true));
+    }
+
+    /**
+     * The field of $type that $target names — `hits`, or `Counter.hits` through the type's own name —
+     * empty for anything else, including a local or parameter of $scope's that shadows it.
+     */
+    private static function fieldWritten(Node $target, Node $type, Node $scope): string
+    {
+        if ($target->is('SimpleMemberAccessExpression')) {
+            return $target->children[0]->is('IdentifierName') && $target->children[0]->name === $type->name ? (string) $target->children[1]->name : '';
+        }
+
+        if (! $target->is('IdentifierName') || in_array($target->name, $scope->ownNames(), true)) {
+            return '';
+        }
+
+        return (string) $target->name;
+    }
+
+    /**
+     * The static fields $type declares that anything may overwrite — neither `readonly` nor `const`.
+     *
+     * @return list<string>
+     */
+    private static function mutableStaticFieldsOf(Node $type): array
+    {
+        $fields = array_filter($type->children, static fn (Node $member): bool => $member->is('FieldDeclaration')
+            && $member->hasModifier('static')
+            && ! $member->hasModifier('readonly')
+            && ! $member->hasModifier('const'));
+
+        return array_values(array_filter(array_map(
+            static fn (Node $declarator): ?string => $declarator->name,
+            array_filter(array_merge([], ...array_map(static fn (Node $field): array => $field->descendants(), $fields)), static fn (Node $node): bool => $node->is('VariableDeclarator')),
+        )));
+    }
+
+    /**
      * Does this member answer a lookup miss with an invented empty value? Every value it returns — each
      * arm of a conditional counted on its own — is either `""`/`0`/`false`, or what a dictionary lookup
      * found: the lookup itself, or the `out` variable a `TryGetValue` in this member filled.

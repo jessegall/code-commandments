@@ -44,6 +44,8 @@ needs it (usually through the constructor), and the dependency is in the signatu
 
 - [ ] A constructor sets up the object; creating one should never change anything outside it.
       _Keep the collaborator in a field and call it from the method someone actually calls to do the work._
+- [ ] Keep state that changes on an instance someone owns and passes around; don't write to a static field from a method.
+      _Move the field onto an object and hand that object to the code that reads and changes it; for a value computed once, use a `static readonly Lazy<T>`._
 
 ## Worked example
 
@@ -69,14 +71,17 @@ public sealed class NewsletterSignup(string address, MailingList list)
 }
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/fix-at-the-source` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-constructor-side-effect`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-constructor-side-effect`, `csharp-mutable-static-state`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

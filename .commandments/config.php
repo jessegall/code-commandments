@@ -315,6 +315,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\GenericThrow::class,
         // Sins\CSharp\InventedDefault::class,
         // Sins\CSharp\LoopWrappedInIf::class,
+        // Sins\CSharp\MutableStaticState::class,
         // Sins\CSharp\NearDuplicateMethod::class,
         // Sins\CSharp\NullForgiven::class,
         // Sins\CSharp\RedundantElse::class,
