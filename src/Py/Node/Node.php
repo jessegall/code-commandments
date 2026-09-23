@@ -87,6 +87,14 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * Is this a `return` of nothing — bare, `None`, `False`, or an empty value?
+     */
+    public function returnsAbsence(): bool
+    {
+        return false;
+    }
+
+    /**
      * Does this statement do nothing with what came before it — `pass`, `...`, a string left alone,
      * `continue`, or a `return` of nothing or of an empty value?
      */

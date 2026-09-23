@@ -191,6 +191,22 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a `match` over one declared enum's members whose `case _:` answers with nothing — `None`,
+     * `False`, an empty value — while every member it handles gets a real answer? A member added later
+     * falls into the wildcard and comes back as nothing, silently.
+     */
+    public function isEnumMatchWithAbsentWildcard(Enums $enums): bool
+    {
+        if (! $this->node instanceof MatchStmt) {
+            return false;
+        }
+
+        $classes = $this->node->memberCaseClasses();
+
+        return count($classes) === 1 && $enums->isEnum($classes[0]) && $this->node->onlyTheWildcardAnswersAbsence();
+    }
+
+    /**
      * Is this a class that is nothing but scalar constants — `PENDING = 'pending'`, `PAID = 'paid'` — a
      * closed set of values written out by hand instead of an `Enum`? A class with a base other than
      * `object` or a decorator is something else already, and has no enum to become.

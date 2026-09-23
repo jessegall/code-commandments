@@ -27,4 +27,22 @@ final class MatchCase extends Node
     {
         return self::present([$this->pattern, $this->guard]);
     }
+
+    /**
+     * Is this `case _:` — the arm every value no other case took falls into?
+     */
+    public function isWildcard(): bool
+    {
+        return $this->pattern->dottedName() === '_' && $this->guard === null;
+    }
+
+    /**
+     * Does this arm end by returning nothing — `return`, `return None`, `return False`, an empty value?
+     */
+    public function isAnswerAbsent(): bool
+    {
+        $body = $this->body->body;
+
+        return $body !== [] && end($body)->returnsAbsence();
+    }
 }

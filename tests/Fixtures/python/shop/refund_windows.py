@@ -32,9 +32,9 @@ def refund_window(order) -> int:
 
 
 # @righteous EnumValueMatch
-def counter_staffed(order) -> bool:
+def return_address(order) -> str:
     match order.channel:
         case SalesChannel.SHOP:
-            return True
+            return "the shop counter"
         case _:
-            return False
+            return "the returns depot"

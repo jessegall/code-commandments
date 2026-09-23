@@ -73,3 +73,29 @@ def route_by_priority(self, ticket) -> None:
     if not Priority(ticket.priority).can_wait:
         self.oncall.page(ticket.number)
 ```
+
+### python-match-wildcard-returns-none
+
+a `match` over an enum's members whose `case _:` returns `None` — a member nobody handled answers nothing instead of failing
+
+```py
+----------[ Bad ]----------
+
+def shows_card_icon(self, method: PaymentMethod) -> bool:
+    match method:
+        case PaymentMethod.CARD | PaymentMethod.IDEAL:
+            return True
+        case _:
+            return False
+
+----------[ Good ]----------
+
+def shows_card_icon_for(self, method: PaymentMethod) -> bool:
+    match method:
+        case PaymentMethod.CARD | PaymentMethod.IDEAL:
+            return True
+        case PaymentMethod.INVOICE:
+            return False
+        case _:
+            raise UnhandledMethod.of(method)
+```

@@ -241,6 +241,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\InLiteralsMirrorsEnum::class,
         // Sins\Python\InventedDefault::class,
         // Sins\Python\LoopWrappedInIf::class,
+        // Sins\Python\MatchWildcardReturnsNone::class,
         // Sins\Python\MessageStringRaise::class,
         // Sins\Python\MutableStaticState::class,
         // Sins\Python\NearDuplicateFunction::class,

@@ -39,6 +39,11 @@ final class Return_ extends Node
 
     public function isNoOp(): bool
     {
+        return $this->returnsAbsence();
+    }
+
+    public function returnsAbsence(): bool
+    {
         return $this->returnedValue()->isNoneOr(static fn (Expr $value): bool => $value->isAbsenceValue());
     }
 }
