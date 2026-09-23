@@ -58,9 +58,10 @@ final class BridgeProcess
         }
 
         $files = [];
+        $vocabulary = new Vocabulary();
 
         while (! array_key_exists('resolution', $line = $this->line())) {
-            $files[] = WrittenFile::fromContract($line);
+            $files[] = WrittenFile::fromContract($line, $vocabulary);
         }
 
         return new BridgeRead($files, Resolution::fromContract($line['resolution']));

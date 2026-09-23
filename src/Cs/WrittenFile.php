@@ -20,8 +20,8 @@ final readonly class WrittenFile
     /**
      * @param  array<string, mixed>  $written  a file as the bridge's contract writes it
      */
-    public static function fromContract(array $written): self
+    public static function fromContract(array $written, Vocabulary $vocabulary): self
     {
-        return new self((string) $written['path'], (int) $written['errors'], array_key_exists('test', $written), Node::fromBridge($written['root']));
+        return new self((string) $written['path'], (int) $written['errors'], array_key_exists('test', $written), Node::fromBridge($written['root'], $vocabulary));
     }
 }

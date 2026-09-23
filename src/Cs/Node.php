@@ -93,21 +93,21 @@ final class Node implements SyntaxNode, SyntaxExpression
     /**
      * @param  array<string, mixed>  $written  a node as the bridge's contract writes it
      */
-    public static function fromBridge(array $written): self
+    public static function fromBridge(array $written, Vocabulary $vocabulary = new Vocabulary()): self
     {
         $target = $written['target'] ?? null;
 
         return new self(
-            kind: (string) $written['kind'],
-            role: (string) $written['role'],
-            children: array_map(self::fromBridge(...), $written['children'] ?? []),
-            name: $written['name'] ?? null,
+            kind: $vocabulary->word((string) $written['kind']),
+            role: $vocabulary->word((string) $written['role']),
+            children: array_map(static fn (array $child): self => self::fromBridge($child, $vocabulary), $written['children'] ?? []),
+            name: $vocabulary->maybe($written['name'] ?? null),
             text: $written['text'] ?? null,
-            operator: $written['operator'] ?? null,
-            modifiers: $written['modifiers'] ?? [],
-            type: isset($written['type']) ? new ResolvedType($written['type'], $written['nullable']) : null,
-            target: is_array($target) ? new CallTarget($target['type'], $target['name'], $target['parameters'] ?? []) : null,
-            symbol: $written['symbol'] ?? null,
+            operator: $vocabulary->maybe($written['operator'] ?? null),
+            modifiers: $vocabulary->words($written['modifiers'] ?? []),
+            type: isset($written['type']) ? $vocabulary->type($written['type'], $written['nullable']) : null,
+            target: is_array($target) ? $vocabulary->target($target['type'], $target['name'], $target['parameters'] ?? []) : null,
+            symbol: $vocabulary->maybe($written['symbol'] ?? null),
             inherited: array_key_exists('inherited', $written),
             constant: array_key_exists('constant', $written),
             forgivesNull: array_key_exists('forgivesNull', $written),
