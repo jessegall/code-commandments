@@ -2,6 +2,37 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### python-coupled-fields
+
+a class whose own fields always travel together — assembled into one value again and again, guarded together, or one mirroring a sibling's — one concept held as several fields
+
+```py
+----------[ Bad ]----------
+
+class Weekday:
+    def __init__(self, name: str, opens: int, closes: int) -> None:
+        self.name = name
+        self.opens = opens
+        self.closes = closes
+
+    def hours(self) -> Hours:
+        return Hours(self.opens, self.closes)
+
+    def label(self) -> str:
+        opens, closes = (self.opens, self.closes)
+        return f"{self.name}: {opens}-{closes}"
+
+----------[ Good ]----------
+
+class OpenWeekday:
+    def __init__(self, name: str, hours: Hours) -> None:
+        self.name = name
+        self.hours = hours
+
+    def label(self) -> str:
+        return f"{self.name}: {self.hours.opens}-{self.hours.closes}"
+```
+
 ### python-data-clump
 
 The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept wearing no name

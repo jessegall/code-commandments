@@ -44,7 +44,7 @@ final class Codebase implements ModuleCodebase
     private ?Dataclasses $dataclasses = null;
 
     /**
-     * @var array<string, true>|null  the name of every class a module declares
+     * @var array<string, ClassDef>|null  every class a module declares, by its name — the first of a name
      */
     private ?array $classNames = null;
 
@@ -183,13 +183,31 @@ final class Codebase implements ModuleCodebase
      */
     public function declaresClass(string $dotted): bool
     {
-        $this->classNames ??= array_fill_keys(array_merge([], ...array_map(
-            static fn (ModuleFile $module): array => array_map(static fn (ClassDef $class): string => $class->name, array_values(array_filter($module->nodes(), static fn (Node $node): bool => $node instanceof ClassDef))),
-            $this->modules(),
-        )), true);
+        return $this->classNamed($dotted)->isSome();
+    }
+
+    /**
+     * The class a module here declares under the name $dotted ends in — the first, when several share it.
+     *
+     * @return Option<ClassDef>
+     */
+    public function classNamed(string $dotted): Option
+    {
+        if ($this->classNames === null) {
+            $this->classNames = [];
+
+            foreach ($this->modules() as $module) {
+                foreach ($module->nodes() as $node) {
+                    if ($node instanceof ClassDef) {
+                        $this->classNames[$node->name] ??= $node;
+                    }
+                }
+            }
+        }
+
         $parts = explode('.', $dotted);
 
-        return isset($this->classNames[end($parts)]);
+        return Option::fromNullable($this->classNames[end($parts)] ?? null);
     }
 
     /**

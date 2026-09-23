@@ -82,6 +82,26 @@ final class ClassDef extends Node
     }
 
     /**
+     * The instance's fields — the names the class body annotates, `ClassVar`s aside, and the attributes its
+     * `__init__` sets on `self` — in the order first written.
+     *
+     * @return list<string>
+     */
+    public function fieldNames(): array
+    {
+        $declared = array_map(static fn (AnnAssign $field): string => (string) $field->target->get('name'), array_filter(
+            $this->body->body,
+            static fn (Node $statement): bool => $statement instanceof AnnAssign && $statement->target->is(ExprKind::Name) && ! $statement->annotation->isClassVarType(),
+        ));
+        $set = $this->initializer()->mapOr([], static fn (FunctionDef $init): array => array_merge([], ...array_map(
+            static fn (Node $statement): array => array_map(static fn (Expr $target): string => $target->selfAttribute(), $statement->writtenTargets()),
+            $init->body->descendants(),
+        )));
+
+        return array_values(array_unique(array_filter([...$declared, ...$set])));
+    }
+
+    /**
      * The `__init__` this class declares — none for a class that inherits its own.
      *
      * @return Option<FunctionDef>
