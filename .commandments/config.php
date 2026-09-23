@@ -72,6 +72,7 @@ $disabledSkills = function (Config $config): void {
         // ----------[ C# ]----------
         // Skills\CSharp\Absence::class,
         // Skills\CSharp\Duplication::class,
+        // Skills\CSharp\Enums::class,
         // Skills\CSharp\Exceptions::class,
         // Skills\CSharp\Flow::class,
         // Skills\CSharp\ValueObjects::class,

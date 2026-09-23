@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "in my C# code order.Status is a string and I check == \"paid\" or == \"refunded\" in several services, is that ok",
+        "should I use public const string Pending = \"pending\" fields or something else for statuses",
+        "I switch on shipment.Kind against \"box\", \"pallet\" and \"crate\" in three different C# classes, should that be something else"
+    ],
+    "not": [
+        "should CreateShipment take street, city and postcode separately or an object"
+    ]
+}
