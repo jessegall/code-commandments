@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Bridge\ConsumesContracts;
 use JesseGall\CodeCommandments\Cli\Benchmark;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
+use JesseGall\CodeCommandments\Cli\Dashboard\FindingsStore;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
@@ -223,6 +224,11 @@ final class Judge implements Command
         }
 
         $judgement = $judgement->withFindings($this->keep($judgement->findings, $options->exclude, $scope));
+
+        // Under the agent journal the plugin's Sins dashboard shows what the last runs found, file by file.
+        if ($workspace->isJournalDriven()) {
+            new FindingsStore($workspace)->record($judgement->findings, $scope->files());
+        }
 
         $skipped = new SkippedRules($judgement->skipped);
 
