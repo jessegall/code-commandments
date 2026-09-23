@@ -5,17 +5,23 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Python;
 
 use JesseGall\CodeCommandments\Detectors\Python\SwallowedExceptionDetector;
-use JesseGall\CodeCommandments\Py\Codebase;
-use JesseGall\CodeCommandments\Py\NodeMatch;
-use PHPUnit\Framework\Attributes\DataProvider;
+use JesseGall\CodeCommandments\Python\Detector;
 use PHPUnit\Framework\TestCase;
 
 final class SwallowedExceptionDetectorTest extends TestCase
 {
+    use ProvesAPythonRule;
+    use FlagsEachSnippetOnce;
+
+    private function rule(): Detector
+    {
+        return new SwallowedExceptionDetector();
+    }
+
     /**
      * @return iterable<string, array{string}>
      */
-    public static function swallows(): iterable
+    public static function thisSin(): iterable
     {
         yield 'bare except, pass' => ["try:\n    load()\nexcept:\n    pass\n"];
         yield 'Exception, return None' => ["def a():\n    try:\n        return load()\n    except Exception:\n        return None\n"];
@@ -23,12 +29,6 @@ final class SwallowedExceptionDetectorTest extends TestCase
         yield 'Exception as e, continue' => ["for f in fs:\n    try:\n        f()\n    except Exception as e:\n        continue\n"];
         yield 'return False' => ["def a():\n    try:\n        check()\n    except Exception:\n        return False\n    return True\n"];
         yield 'ellipsis' => ["try:\n    load()\nexcept Exception:\n    ...\n"];
-    }
-
-    #[DataProvider('swallows')]
-    public function test_flags_a_broad_handler_that_makes_the_failure_vanish(string $source): void
-    {
-        $this->assertCount(1, $this->findIn($source));
     }
 
     /**
@@ -41,19 +41,5 @@ final class SwallowedExceptionDetectorTest extends TestCase
         yield 'broad and re-raised' => ["try:\n    load()\nexcept Exception as e:\n    raise LoadFailed.of(p) from e\n"];
         yield 'broad but returning a real value' => ["def a():\n    try:\n        return load()\n    except Exception:\n        return DEFAULTS\n"];
         yield 'two statements' => ["try:\n    load()\nexcept Exception:\n    count()\n    pass\n"];
-    }
-
-    #[DataProvider('notThisSin')]
-    public function test_leaves_what_does_not_swallow_everything(string $source): void
-    {
-        $this->assertSame([], $this->findIn($source));
-    }
-
-    /**
-     * @return list<NodeMatch>
-     */
-    private function findIn(string $source): array
-    {
-        return new SwallowedExceptionDetector()->find(Codebase::fromString($source));
     }
 }

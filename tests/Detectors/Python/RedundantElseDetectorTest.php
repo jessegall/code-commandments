@@ -5,28 +5,28 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Python;
 
 use JesseGall\CodeCommandments\Detectors\Python\RedundantElseDetector;
-use JesseGall\CodeCommandments\Py\Codebase;
-use JesseGall\CodeCommandments\Py\NodeMatch;
-use PHPUnit\Framework\Attributes\DataProvider;
+use JesseGall\CodeCommandments\Python\Detector;
 use PHPUnit\Framework\TestCase;
 
 final class RedundantElseDetectorTest extends TestCase
 {
+    use ProvesAPythonRule;
+    use FlagsEachSnippetOnce;
+
+    private function rule(): Detector
+    {
+        return new RedundantElseDetector();
+    }
+
     /**
      * @return iterable<string, array{string}>
      */
-    public static function exits(): iterable
+    public static function thisSin(): iterable
     {
         yield 'return' => ["def a(x):\n    if x is None:\n        return 0\n    else:\n        return x.total\n"];
         yield 'raise' => ["def a(x):\n    if x is None:\n        raise Missing()\n    else:\n        use(x)\n"];
         yield 'continue' => ["def a(rows):\n    for row in rows:\n        if not row:\n            continue\n        else:\n            use(row)\n"];
         yield 'break' => ["def a(rows):\n    for row in rows:\n        if row.last:\n            break\n        else:\n            use(row)\n"];
-    }
-
-    #[DataProvider('exits')]
-    public function test_flags_an_else_after_a_branch_that_left(string $source): void
-    {
-        $this->assertCount(1, $this->findIn($source));
     }
 
     /**
@@ -40,19 +40,5 @@ final class RedundantElseDetectorTest extends TestCase
         yield 'a branch that falls through' => ["def a(x):\n    if x:\n        log(x)\n    else:\n        skip()\n"];
         yield 'an exit that is not the last statement' => ["def a(x):\n    if x:\n        if x.done:\n            return 1\n        log(x)\n    else:\n        skip()\n"];
         yield 'no else' => ["def a(x):\n    if x is None:\n        return 0\n    return x.total\n"];
-    }
-
-    #[DataProvider('notThisSin')]
-    public function test_leaves_what_is_not_an_else_after_an_exit(string $source): void
-    {
-        $this->assertSame([], $this->findIn($source));
-    }
-
-    /**
-     * @return list<NodeMatch>
-     */
-    private function findIn(string $source): array
-    {
-        return new RedundantElseDetector()->find(Codebase::fromString($source));
     }
 }

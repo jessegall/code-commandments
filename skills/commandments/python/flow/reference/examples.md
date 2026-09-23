@@ -2,6 +2,38 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### python-coalesced-loop-subject
+
+`for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard
+
+```py
+----------[ Bad ]----------
+
+def descendants(below: dict, parent: str) -> list:
+    found = []
+    for child in below.get(parent, []):
+        found.append(child)
+        found.extend(descendants(below, child))
+    return found
+
+----------[ Good ]----------
+
+# in categories.py
+def children_index(pairs) -> defaultdict:
+    below = defaultdict(list)
+    for parent, child in pairs:
+        below[parent].append(child)
+    return below
+
+# in categories.py
+def descendants_of(below: defaultdict, parent: str) -> list:
+    found = []
+    for child in below[parent]:
+        found.append(child)
+        found.extend(descendants_of(below, child))
+    return found
+```
+
 ### deep-python-nesting
 
 An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops

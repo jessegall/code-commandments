@@ -68,10 +68,10 @@ final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetecto
                 continue;
             }
 
-            // A pure manifest (`return [ … ];`) DECLARES a data shape, it doesn't compute one —
-            // there's no control-flow skeleton to parameterise, so independent classes sharing the
-            // shape (every node's `outputs()`, every request's `rules()`) is not duplication.
-            if ($match->returnsArrayLiteralOnly()) {
+            // A pure manifest (`return [ … ];`, or a data provider's `yield` lines) DECLARES a data
+            // shape, it doesn't compute one — there's no control-flow skeleton to parameterise, so
+            // independent classes sharing the shape (every node's `outputs()`) is not duplication.
+            if ($match->returnsArrayLiteralOnly() || $match->yieldsEntriesOnly()) {
                 continue;
             }
 

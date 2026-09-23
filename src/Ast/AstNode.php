@@ -62,6 +62,7 @@ use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Ternary;
 use PhpParser\Node\Expr\Throw_;
 use PhpParser\Node\Expr\Variable;
+use PhpParser\Node\Expr\Yield_;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\MatchArm;
@@ -2747,6 +2748,18 @@ class AstNode
     public function returnsArrayLiteralOnly(): bool
     {
         return $this->isFunctionDeclaration() && $this->soleArrayLiteralOutput() !== null;
+    }
+
+    /**
+     * Is this declaration a manifest written a line at a time — a body of nothing but `yield … => …;`
+     * statements, as a test's data provider is? Like {@see returnsArrayLiteralOnly}, it declares entries
+     * and computes nothing, so two that share a shape differ only in their data.
+     */
+    public function yieldsEntriesOnly(): bool
+    {
+        $statements = $this->isFunctionDeclaration() ? (array) $this->node->stmts : [];
+
+        return $statements !== [] && array_all($statements, static fn (Node $statement): bool => $statement instanceof Expression && $statement->expr instanceof Yield_);
     }
 
     /**

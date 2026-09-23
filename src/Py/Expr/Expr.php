@@ -72,7 +72,7 @@ final class Expr implements SyntaxExpression
             return $this->get('type')->isAbsence((string) $this->get('value'));
         }
 
-        return $this->kind->isDisplay() && count($this->flatten()) === 1;
+        return $this->isEmptyCollection();
     }
 
     /**
@@ -156,18 +156,65 @@ final class Expr implements SyntaxExpression
     }
 
     /**
-     * The value this falls back to when its subject is missing — `d` in `x or d`, `x if x else d` and
-     * `x if x is not None else d`. None for any other expression, and for `c and a or b`, which is a
-     * conditional written the old way rather than a default.
+     * The value this falls back to when its subject is missing — `d` in `x or d`, `x if x else d`,
+     * `x if x is not None else d` and `m.get(k, d)`. None for any other expression, and for `c and a or b`,
+     * which is a conditional written the old way rather than a default.
      *
      * @return Option<self>
      */
     public function fallback(): Option
     {
+        return $this->defaulted()->map(static fn (array $pair): self => $pair[1]);
+    }
+
+    /**
+     * What this reads before falling back — `x` in `x or d` and its conditional spellings, `m` in
+     * `m.get(k, d)` — the value whose absence the default answers.
+     *
+     * @return Option<self>
+     */
+    public function fallbackSubject(): Option
+    {
+        return $this->defaulted()->map(static fn (array $pair): self => $pair[0]);
+    }
+
+    /**
+     * An empty list, tuple, dict or set written out — "no items", as a value.
+     */
+    public function isEmptyCollection(): bool
+    {
+        return $this->kind->isDisplay() && count($this->flatten()) === 1;
+    }
+
+    /**
+     * The name a chain of reads starts from — `order` in `order.lines[0].sku` and `order.total()` —
+     * empty when it starts from anything but a name.
+     */
+    public function rootName(): string
+    {
+        return match ($this->kind) {
+            ExprKind::Name => (string) $this->get('name'),
+            ExprKind::Attribute, ExprKind::Subscript => $this->get('object')->rootName(),
+            ExprKind::Call => $this->get('callee')->rootName(),
+            default => '',
+        };
+    }
+
+    /**
+     * The subject and the default of a defaulted read, in that order.
+     *
+     * @return Option<array{self, self}>
+     */
+    private function defaulted(): Option
+    {
         if ($this->kind === ExprKind::Binary && $this->get('op') === 'or') {
             $left = $this->get('left');
 
-            return $left->is(ExprKind::Binary) && $left->get('op') === 'and' ? Option::none() : Option::some($this->get('right'));
+            return $left->is(ExprKind::Binary) && $left->get('op') === 'and' ? Option::none() : Option::some([$left, $this->get('right')]);
+        }
+
+        if ($this->isCall()) {
+            return $this->keyedDefault();
         }
 
         if ($this->kind !== ExprKind::Conditional) {
@@ -179,7 +226,25 @@ final class Expr implements SyntaxExpression
         $isNotNone = $test->is(ExprKind::Compare) && $test->get('operators') === ['is not']
             && $test->get('operands')[0]->isSame($subject) && $test->get('operands')[1]->literalType() === LiteralType::None;
 
-        return $test->isSame($subject) || $isNotNone ? Option::some($this->get('else')) : Option::none();
+        return $test->isSame($subject) || $isNotNone ? Option::some([$subject, $this->get('else')]) : Option::none();
+    }
+
+    /**
+     * `m.get(k, d)` read as its mapping and its default — two plain arguments, the second the default.
+     *
+     * @return Option<array{self, self}>
+     */
+    private function keyedDefault(): Option
+    {
+        $callee = $this->get('callee');
+        $arguments = $this->get('arguments');
+        $plain = array_filter($arguments, static fn (self $argument): bool => ! $argument->is(ExprKind::Keyword) && ! $argument->is(ExprKind::Starred));
+
+        if (! $callee->is(ExprKind::Attribute) || $callee->get('name') !== 'get' || count($arguments) !== 2 || count($plain) !== 2) {
+            return Option::none();
+        }
+
+        return Option::some([$callee->get('object'), $arguments[1]]);
     }
 
     /**

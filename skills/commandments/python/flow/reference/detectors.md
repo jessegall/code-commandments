@@ -2,6 +2,7 @@
 
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
+- **`python-coalesced-loop-subject`** — `for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard — `CoalescedLoopSubjectDetector`
 - **`deep-python-nesting`** — An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops — `DeepNestingDetector`
 - **`python-loop-wrapped-in-if`** — A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition — `LoopWrappedInIfDetector`
 - **`redundant-python-else`** — An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing — `RedundantElseDetector`

@@ -20,9 +20,14 @@ final class CustomFileTest extends TestCase
 {
     use TemporaryFolder;
 
+    protected function setUp(): void
+    {
+        mkdir($this->root . '/custom');
+    }
+
     private function write(string $name, string $php): string
     {
-        $path = $this->root . '/' . $name;
+        $path = $this->root . '/custom/' . $name;
         file_put_contents($path, "<?php\n\nnamespace Probe;\n\n" . $php);
 
         return $path;
@@ -30,7 +35,7 @@ final class CustomFileTest extends TestCase
 
     private function fileAt(string $path): CustomFile
     {
-        return CustomFile::at($path, Codebase::scan($this->root)->declarations());
+        return CustomFile::at($path, Codebase::scan($this->root . '/custom')->declarations());
     }
 
     /**
@@ -62,7 +67,7 @@ final class CustomFileTest extends TestCase
     public function test_a_second_copy_of_a_loaded_class_is_refused(): void
     {
         // OUTSIDE the scanned folder — the two-roots case is precisely a copy the scan cannot see.
-        $elsewhere = $this->root . '-other.php';
+        $elsewhere = $this->root . '/other.php';
         file_put_contents($elsewhere, "<?php\n\nnamespace Probe;\n\nfinal class Twin {}\n");
         require $elsewhere;
 
@@ -71,7 +76,7 @@ final class CustomFileTest extends TestCase
 
         $this->assertTrue($fault->isSome());
         $this->assertStringContainsString('already declared by', $fault->unwrap());
-        $this->assertStringContainsString('-other.php', $fault->unwrap());
+        $this->assertStringContainsString($elsewhere, $fault->unwrap());
     }
 
     /**

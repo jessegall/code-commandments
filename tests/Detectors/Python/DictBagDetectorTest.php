@@ -5,13 +5,20 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Python;
 
 use JesseGall\CodeCommandments\Detectors\Python\DictBagDetector;
-use JesseGall\CodeCommandments\Py\Codebase;
 use JesseGall\CodeCommandments\Py\ExprMatch;
+use JesseGall\CodeCommandments\Python\Detector;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class DictBagDetectorTest extends TestCase
 {
+    use ProvesAPythonRule;
+
+    private function rule(): Detector
+    {
+        return new DictBagDetector();
+    }
+
     /**
      * @return iterable<string, array{string, int}>
      */
@@ -40,12 +47,6 @@ final class DictBagDetectorTest extends TestCase
         yield 'a named constructor' => ["class Line:\n    @classmethod\n    def from_payload(cls, payload: dict) -> 'Line':\n        return cls(payload['sku'], payload['quantity'])\n"];
     }
 
-    #[DataProvider('notThisSin')]
-    public function test_leaves_maps_typed_objects_and_the_hydration_boundary(string $source): void
-    {
-        $this->assertSame([], $this->findIn($source));
-    }
-
     public function test_a_string_key_handed_to_a_helper_that_reads_by_it_is_the_same_read(): void
     {
         $helpers = "def text_of(raw: dict, *keys) -> str:\n    for key in keys:\n        value = raw.get(key)\n        if value:\n            return str(value)\n    return ''\n\n\ndef mapping_of(raw, key):\n    return raw[key]\n\n\n";
@@ -59,13 +60,5 @@ final class DictBagDetectorTest extends TestCase
         $source = "def level(stock, sku):\n    return stock[sku]\n\n\ndef report(stock, sku):\n    return level(stock, sku)\n";
 
         $this->assertSame([], $this->findIn($source));
-    }
-
-    /**
-     * @return list<ExprMatch>
-     */
-    private function findIn(string $source): array
-    {
-        return new DictBagDetector()->find(Codebase::fromString($source));
     }
 }

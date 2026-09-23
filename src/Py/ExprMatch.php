@@ -7,7 +7,10 @@ namespace JesseGall\CodeCommandments\Py;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
+use JesseGall\CodeCommandments\Py\Node\Node;
+use JesseGall\CodeCommandments\Py\Node\Param;
 use JesseGall\CodeCommandments\Span;
 
 /**
@@ -104,5 +107,45 @@ class ExprMatch implements Located
     public function isWithinNamedConstructor(): bool
     {
         return $this->module->functionOf($this->expr)->isSomeAnd(static fn (FunctionDef $function): bool => $function->isNamedConstructor());
+    }
+
+    /**
+     * Is this the collection a `for` statement walks — `rows` in `for row in rows:`?
+     */
+    public function isLoopSubject(): bool
+    {
+        return $this->module->ownerOf($this->expr)->isSomeAnd(fn (Node $owner): bool => $owner instanceof ForLoop && $owner->iterable === $this->expr);
+    }
+
+    /**
+     * Does this fall back to an empty collection — `x or []`, `m.get(k, ())`?
+     */
+    public function fallsBackToEmptyCollection(): bool
+    {
+        return $this->expr->fallback()->isSomeAnd(static fn (Expr $fallback): bool => $fallback->isEmptyCollection());
+    }
+
+    /**
+     * Is what this falls back FROM read off a parameter the caller handed in — `below` in
+     * `below.get(id, [])`? A method's own `self` or `cls` is not handed in: reading its state is the
+     * object answering for itself.
+     */
+    public function fallbackReachesIntoParameter(): bool
+    {
+        return $this->expr->fallbackSubject()->isSomeAnd(fn (Expr $subject): bool => $this->module->functionOf($this->expr)->isSomeAnd(
+            fn (FunctionDef $function): bool => in_array($subject->rootName(), $this->handedIn($function), true),
+        ));
+    }
+
+    /**
+     * The names of the parameters a caller of $function supplies — every one but a bound method's first.
+     *
+     * @return list<string>
+     */
+    private function handedIn(FunctionDef $function): array
+    {
+        $names = array_map(static fn (Param $param): string => $param->name, $function->params);
+
+        return $this->module->isMethod($function) && ! $function->isStatic() ? array_slice($names, 1) : $names;
     }
 }

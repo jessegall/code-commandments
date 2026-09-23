@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Detectors\Backend\NearDuplicateFunctionDetector;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class NearDuplicateFunctionDetectorTest extends TestCase
@@ -42,80 +43,130 @@ final class NearDuplicateFunctionDetectorTest extends TestCase
         $this->assertSame(['A::sumA', 'A::sumB'], $scopes);
     }
 
-    public function test_does_not_flag_near_identical_constructors(): void
+    /**
+     * Shapes that share a skeleton and are still not a near-duplicate.
+     *
+     * @return iterable<string, array{string}>
+     */
+    public static function notThisSin(): iterable
     {
         // Two DIFFERENT classes cannot share a constructor — each declares its own (assign params, forward
         // to parent) — so a similar `__construct` is expected structure, not a redundant algorithm. (Found
         // by dogfooding: every Sin's `parent::__construct(name: …, skill: …, …)` shares this exact shape.)
-        $code = <<<'PHP'
-        <?php
-        class Base { public function __construct(string $a, string $b, string $c, string $d, string $e) {} }
-        class Alpha extends Base {
-            public function __construct() {
-                parent::__construct(a: 'alpha', b: 'one', c: 'two', d: 'three', e: 'four');
+        yield 'does not flag near identical constructors' => [<<<'PHP'
+            <?php
+            class Base { public function __construct(string $a, string $b, string $c, string $d, string $e) {} }
+            class Alpha extends Base {
+                public function __construct() {
+                    parent::__construct(a: 'alpha', b: 'one', c: 'two', d: 'three', e: 'four');
+                }
             }
-        }
-        class Beta extends Base {
-            public function __construct() {
-                parent::__construct(a: 'beta', b: 'five', c: 'six', d: 'seven', e: 'eight');
+            class Beta extends Base {
+                public function __construct() {
+                    parent::__construct(a: 'beta', b: 'five', c: 'six', d: 'seven', e: 'eight');
+                }
             }
-        }
-        PHP;
+            PHP];
 
-        $this->assertSame([], (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code)));
-    }
-
-    public function test_does_not_flag_declarative_manifests_that_share_a_shape(): void
-    {
         // Reported (#259): every node's outputs() shares the socket-declaration shape. A pure
         // `return [ … ]` manifest DECLARES a shape — there's no logic to parameterise, and the
         // classes are independent — so a shared shape across them is not a near-duplicate.
-        $code = <<<'PHP'
-        <?php
-        class OutputSocket { public static function make(string $n): self { return new self; } public function typed(string $t): self { return $this; } public function label(string $l): self { return $this; } public function describe(string $d): self { return $this; } }
-        class LoadAccountNode {
-            public function outputs(): array {
-                return [
-                    OutputSocket::make('account')->typed('account')->label('Account')->describe('the account'),
-                    OutputSocket::make('error')->typed('string')->label('Error')->describe('the error'),
-                    OutputSocket::make('status')->typed('bool')->label('Status')->describe('the status'),
-                ];
+        yield 'does not flag declarative manifests that share a shape' => [<<<'PHP'
+            <?php
+            class OutputSocket { public static function make(string $n): self { return new self; } public function typed(string $t): self { return $this; } public function label(string $l): self { return $this; } public function describe(string $d): self { return $this; } }
+            class LoadAccountNode {
+                public function outputs(): array {
+                    return [
+                        OutputSocket::make('account')->typed('account')->label('Account')->describe('the account'),
+                        OutputSocket::make('error')->typed('string')->label('Error')->describe('the error'),
+                        OutputSocket::make('status')->typed('bool')->label('Status')->describe('the status'),
+                    ];
+                }
             }
-        }
-        class SendEmailNode {
-            public function outputs(): array {
-                return [
-                    OutputSocket::make('sent')->typed('bool')->label('Sent')->describe('was it sent'),
-                    OutputSocket::make('message')->typed('string')->label('Message')->describe('the message'),
-                    OutputSocket::make('failure')->typed('string')->label('Failure')->describe('the failure'),
-                ];
+            class SendEmailNode {
+                public function outputs(): array {
+                    return [
+                        OutputSocket::make('sent')->typed('bool')->label('Sent')->describe('was it sent'),
+                        OutputSocket::make('message')->typed('string')->label('Message')->describe('the message'),
+                        OutputSocket::make('failure')->typed('string')->label('Failure')->describe('the failure'),
+                    ];
+                }
             }
-        }
-        PHP;
+            PHP];
 
-        $this->assertSame([], (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code)));
+        // A provider written as `yield 'case' => [ … ];` lines is the same manifest spelled a line at a
+        // time: two of them differ only in their data, and there is no logic to parameterise.
+        yield 'does not flag two data providers that only yield their cases' => [<<<'PHP'
+            <?php
+            final class FlagsTest {
+                public static function sinful(): iterable {
+                    yield 'a keyed default' => ["def a(below, id):\n    for child in below.get(id, []):\n        visit(child)\n"];
+                    yield 'an or-empty' => ["def a(rows):\n    for row in rows or []:\n        save(row)\n"];
+                    yield 'a conditional' => ["def a(tags):\n    for tag in tags if tags else ():\n        see(tag)\n"];
+                    yield 'through a field' => ["def a(order):\n    for line in order.lines or []:\n        ship(line)\n"];
+                }
+            }
+            final class LeavesTest {
+                public static function righteous(): iterable {
+                    yield 'a plain loop' => ["def a(rows):\n    for row in rows:\n        save(row)\n"];
+                    yield 'its own state' => ["def a(self):\n    for row in self.rows or []:\n        keep(row)\n"];
+                    yield 'a local' => ["def a():\n    for hit in found() or []:\n        show(hit)\n"];
+                    yield 'a real fallback' => ["def a(rows, spare):\n    for row in rows or spare:\n        save(row)\n"];
+                }
+            }
+            PHP];
+
+        yield 'leaves byte identical duplicates to the exact detector' => [<<<'PHP'
+            <?php
+            class A {
+                public function run(int $x): int {
+                    $sum = 0;
+                    for ($i = 0; $i < $x; $i++) { $sum += $i * 2; }
+                    return $sum;
+                }
+            }
+            class B {
+                public function run(int $x): int {
+                    $sum = 0;
+                    for ($i = 0; $i < $x; $i++) { $sum += $i * 2; }
+                    return $sum;
+                }
+            }
+            PHP];
+
+        // Two migration steps that share nothing but the DB API they call: one INSERT … ON CONFLICT,
+        // one UPDATE … FROM, on different tables with a different binding order. A literal-blind
+        // hash sees `$this->db->statement(<<<SQL, [4 bindings])` twice — but the SQL IS the logic,
+        // and parameterising it would hide two intent-revealing steps behind a generic runner.
+        yield 'leaves two one call statements alone though only their data differs' => [<<<'PHP'
+            <?php
+            class ShopResourceReparenter {
+                private function upsertTargetRows(string $target, string $source, ResourceType $type, string $ids): void {
+                    $this->database->statement(<<<'SQL'
+                        INSERT INTO shop_resources (id, shop_id, resource_type, local_id)
+                        SELECT gen_random_uuid(), ?, sr.resource_type, sr.local_id
+                        FROM shop_resources sr
+                        WHERE sr.shop_id = ? AND sr.resource_type = ? AND sr.local_id = ANY(?)
+                        ON CONFLICT (shop_id, resource_type, local_id) DO NOTHING
+                    SQL, [$target, $source, $type->value, $ids]);
+                }
+                private function repointResourceOrigins(string $source, string $target, ResourceType $type, string $ids): void {
+                    $this->database->statement(<<<'SQL'
+                        UPDATE resource_origins ro
+                        SET shop_resource_id = target_sr.id, updated_at = now()
+                        FROM shop_resources source_sr, shop_resources target_sr
+                        WHERE ro.shop_resource_id = source_sr.id AND source_sr.shop_id = ?
+                          AND target_sr.shop_id = ? AND source_sr.resource_type = ?
+                          AND source_sr.local_id = ANY(?)
+                    SQL, [$source, $target, $type->value, $ids]);
+                }
+            }
+            PHP];
     }
 
-    public function test_leaves_byte_identical_duplicates_to_the_exact_detector(): void
+    #[DataProvider('notThisSin')]
+    public function test_leaves_what_is_not_a_near_duplicate(string $code): void
     {
-        $code = <<<'PHP'
-        <?php
-        class A {
-            public function run(int $x): int {
-                $sum = 0;
-                for ($i = 0; $i < $x; $i++) { $sum += $i * 2; }
-                return $sum;
-            }
-        }
-        class B {
-            public function run(int $x): int {
-                $sum = 0;
-                for ($i = 0; $i < $x; $i++) { $sum += $i * 2; }
-                return $sum;
-            }
-        }
-        PHP;
-
         $this->assertSame([], (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code)));
     }
 
@@ -187,40 +238,6 @@ final class NearDuplicateFunctionDetectorTest extends TestCase
         <?php
         class ImportMissingOrdersAction { {$copy('Import Missing Orders', 'Import')} }
         class SyncOrderStatusesAction { {$copy('Sync Order Statuses', 'Sync')} }
-        PHP;
-
-        $this->assertSame([], (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code)));
-    }
-
-    public function test_leaves_two_one_call_statements_alone_though_only_their_data_differs(): void
-    {
-        // Two migration steps that share nothing but the DB API they call: one INSERT … ON CONFLICT,
-        // one UPDATE … FROM, on different tables with a different binding order. A literal-blind
-        // hash sees `$this->db->statement(<<<SQL, [4 bindings])` twice — but the SQL IS the logic,
-        // and parameterising it would hide two intent-revealing steps behind a generic runner.
-        $code = <<<'PHP'
-        <?php
-        class ShopResourceReparenter {
-            private function upsertTargetRows(string $target, string $source, ResourceType $type, string $ids): void {
-                $this->database->statement(<<<'SQL'
-                    INSERT INTO shop_resources (id, shop_id, resource_type, local_id)
-                    SELECT gen_random_uuid(), ?, sr.resource_type, sr.local_id
-                    FROM shop_resources sr
-                    WHERE sr.shop_id = ? AND sr.resource_type = ? AND sr.local_id = ANY(?)
-                    ON CONFLICT (shop_id, resource_type, local_id) DO NOTHING
-                SQL, [$target, $source, $type->value, $ids]);
-            }
-            private function repointResourceOrigins(string $source, string $target, ResourceType $type, string $ids): void {
-                $this->database->statement(<<<'SQL'
-                    UPDATE resource_origins ro
-                    SET shop_resource_id = target_sr.id, updated_at = now()
-                    FROM shop_resources source_sr, shop_resources target_sr
-                    WHERE ro.shop_resource_id = source_sr.id AND source_sr.shop_id = ?
-                      AND target_sr.shop_id = ? AND source_sr.resource_type = ?
-                      AND source_sr.local_id = ANY(?)
-                SQL, [$source, $target, $type->value, $ids]);
-            }
-        }
         PHP;
 
         $this->assertSame([], (new NearDuplicateFunctionDetector)->find(Codebase::fromString($code)));

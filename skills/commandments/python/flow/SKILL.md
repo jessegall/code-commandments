@@ -68,6 +68,8 @@ iteration, or extract the inner block into a function named for what it decides.
 
 ## Rules
 
+- [ ] State an absent collection at the top as a guard; don't bury `or []` or `.get(k, [])` in a `for` header.
+      _Return early when the collection is absent — or make the caller always hand one over — so the loop walks something that is there._
 - [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a function.
       _Guard the outer levels away (`return`/`continue` past what does not apply), let a comprehension do the inner iteration, or extract the inner block into a function named for what it decides._
 - [ ] Invert a loop body wrapped in one `if` into a `continue` guard so the work sits at the loop's own level.
@@ -79,44 +81,49 @@ iteration, or extract the inner block into a function named for what it decides.
 
 ## Worked example
 
-### deep-python-nesting
+### python-coalesced-loop-subject
 
-An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops
+`for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard
 
 ```py
 ----------[ Bad ]----------
 
-def usable_coupon(coupons, customer, today):
-    for coupon in coupons:
-        if coupon.customer == customer.id:
-            if coupon.starts <= today <= coupon.ends:
-                if coupon.uses_left > 0:
-                    if not coupon.revoked:
-                        return coupon
-    return None
+def descendants(below: dict, parent: str) -> list:
+    found = []
+    for child in below.get(parent, []):
+        found.append(child)
+        found.extend(descendants(below, child))
+    return found
 
 ----------[ Good ]----------
 
-def first_usable_coupon(coupons, customer, today):
-    for coupon in coupons:
-        if coupon.customer != customer.id or coupon.revoked:
-            continue
-        if coupon.starts <= today <= coupon.ends and coupon.uses_left > 0:
-            return coupon
-    return None
+# in categories.py
+def children_index(pairs) -> defaultdict:
+    below = defaultdict(list)
+    for parent, child in pairs:
+        below[parent].append(child)
+    return below
+
+# in categories.py
+def descendants_of(below: defaultdict, parent: str) -> list:
+    found = []
+    for child in below[parent]:
+        found.append(child)
+        found.extend(descendants_of(below, child))
+    return found
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/flow` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-python-nesting`, `python-loop-wrapped-in-if`, `redundant-python-else`, `python-subject-ladder`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `deep-python-nesting`, `python-loop-wrapped-in-if`, `redundant-python-else`, `python-subject-ladder`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
