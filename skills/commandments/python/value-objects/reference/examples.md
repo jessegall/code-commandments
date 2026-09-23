@@ -91,3 +91,19 @@ class ImportProgress:
     def left(self) -> int:
         return self.total - self.done - self.failed
 ```
+
+### python-hand-rolled-replace
+
+`return Order(self.number, self.lines, self.note, "paid")` in a dataclass — every field re-listed to change one
+
+```py
+----------[ Bad ]----------
+
+def rerated(self, factor: float) -> "PriceRule":
+    return type(self)(self.sku, min(self.rate * factor, 0.9), self.starts, self.ends)
+
+----------[ Good ]----------
+
+def extended(self, ends: str) -> "PriceRule":
+    return replace(self, ends=ends)
+```

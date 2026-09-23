@@ -53,4 +53,16 @@ final class ClassDef extends Node
 
         return array_values(array_filter(array_map(static fn (Assign $member): string => $member->value->literalKey(), $members)));
     }
+
+    /**
+     * Is this class a dataclass — decorated `@dataclass`, bare or called?
+     */
+    public function isDataclass(): bool
+    {
+        return array_any($this->decorators, static function (Expr $decorator): bool {
+            $named = $decorator->isCall() ? $decorator->get('callee') : $decorator;
+
+            return in_array($named->dottedName(), ['dataclass', 'dataclasses.dataclass'], true);
+        });
+    }
 }

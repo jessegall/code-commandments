@@ -225,6 +225,38 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * The value this argument hands over — a keyword's value, or the argument itself.
+     */
+    public function argumentValue(): self
+    {
+        return $this->kind === ExprKind::Keyword ? $this->get('value') : $this;
+    }
+
+    /**
+     * Is this a plain read of one of the object's own attributes — `self.number` — a field carried across
+     * as it is, rather than a value computed or handed in?
+     */
+    public function isOwnAttributeRead(): bool
+    {
+        return $this->kind === ExprKind::Attribute && $this->get('object')->dottedName() === 'self';
+    }
+
+    /**
+     * Does this call build an object of $class — `Order(…)`, `type(self)(…)`, `self.__class__(…)`?
+     */
+    public function constructs(string $class): bool
+    {
+        if (! $this->isCall()) {
+            return false;
+        }
+
+        $callee = $this->get('callee');
+        $ofSelf = $callee->isCall() && $callee->get('callee')->dottedName() === 'type';
+
+        return $ofSelf || in_array($callee->dottedName(), [$class, 'self.__class__'], true);
+    }
+
+    /**
      * How many string-literal keys this dict display names — none for anything but a dict.
      */
     public function stringKeyCount(): int

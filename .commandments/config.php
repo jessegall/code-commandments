@@ -239,6 +239,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\DuplicateFunction::class,
         // Sins\Python\EnumCaseOrChain::class,
         // Sins\Python\EnumValueMatch::class,
+        // Sins\Python\HandRolledReplace::class,
         // Sins\Python\InLiteralsMirrorsEnum::class,
         // Sins\Python\InventedDefault::class,
         // Sins\Python\LoopWrappedInIf::class,

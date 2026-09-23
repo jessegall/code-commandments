@@ -7,11 +7,13 @@ namespace JesseGall\CodeCommandments\Py;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Node;
 use JesseGall\CodeCommandments\Py\Node\Param;
 use JesseGall\CodeCommandments\Span;
+use JesseGall\PhpTypes\Option;
 
 /**
  * A Python expression a query selected, together with its module — so it knows its `file:line`.
@@ -220,6 +222,39 @@ class ExprMatch implements Located
     {
         return $this->module->functionOf($this->expr)->isSomeAnd(static fn (FunctionDef $function): bool => $function->returns !== null
             && $codebase->typedDicts()->isTypedDict($function->returns->dottedName()));
+    }
+
+    /**
+     * Is this call a dataclass method rebuilding its own object by hand — the sole `return`, carrying at
+     * least three fields across as `self.x` and changing at least one — where `dataclasses.replace`
+     * would say only what changes?
+     */
+    public function isHandRolledReplace(): bool
+    {
+        $arguments = $this->expr->isCall() ? $this->expr->get('arguments') : [];
+
+        if ($arguments === [] || array_any($arguments, static fn (Expr $argument): bool => $argument->is(ExprKind::Starred))) {
+            return false;
+        }
+
+        $carried = count(array_filter($arguments, static fn (Expr $argument): bool => $argument->argumentValue()->isOwnAttributeRead()));
+
+        return $carried >= 3 && $carried < count($arguments) && $this->isSoleReturnOfOwnDataclass();
+    }
+
+    /**
+     * Is this the only statement of a method of a dataclass, returning a new object of that class?
+     */
+    private function isSoleReturnOfOwnDataclass(): bool
+    {
+        return $this->module->functionOf($this->expr)->isSomeAnd(function (FunctionDef $method): bool {
+            $body = $method->body->body;
+            $class = $this->module->parentOf($method)->andThen(fn (Node $block): Option => $this->module->parentOf($block));
+
+            return count($body) === 1
+                && $body[0]->returnedValue()->isSomeAnd(fn (Expr $value): bool => $value === $this->expr)
+                && $class->isSomeAnd(fn (Node $owner): bool => $owner instanceof ClassDef && $owner->isDataclass() && $this->expr->constructs($owner->name));
+        });
     }
 
     /**
