@@ -32,6 +32,7 @@ use JesseGall\CodeCommandments\Ts\Node\FunctionType;
 use JesseGall\CodeCommandments\Ts\Node\ImportDecl;
 use JesseGall\CodeCommandments\Ts\Node\IndexedAccessType;
 use JesseGall\CodeCommandments\Ts\Node\InterfaceDecl;
+use JesseGall\CodeCommandments\Ts\Node\JumpStmt;
 use JesseGall\CodeCommandments\Ts\Node\KeywordType;
 use JesseGall\CodeCommandments\Ts\Node\LiteralType;
 use JesseGall\CodeCommandments\Ts\Node\Member;
@@ -214,7 +215,7 @@ final class Parser
             $this->atId(Keyword::RETURN) => $this->parseReturn(),
             $this->atId(Keyword::THROW) => $this->parseThrow(),
             $this->atId(Keyword::FOR), $this->atId(Keyword::WHILE), $this->atId(Keyword::DO) => $this->parseLoop(),
-            $this->atId(Keyword::BREAK), $this->atId(Keyword::CONTINUE) => $this->skipEmptyStatement(),
+            $this->atId(Keyword::BREAK), $this->atId(Keyword::CONTINUE) => $this->parseJump(),
             $this->atId(Keyword::CONST), $this->atId(Keyword::LET), $this->atId(Keyword::VAR) => $this->parseVariable(),
             $this->atId(Keyword::CLASS_), $this->atId('abstract') && $this->at(1)->isIdentifier(Keyword::CLASS_) => $this->parseClass(),
             $this->atId(Keyword::FUNCTION), $this->atId(Keyword::ASYNC) && $this->at(1)->isIdentifier(Keyword::FUNCTION) => $this->parseFunction(),
@@ -257,7 +258,7 @@ final class Parser
             return $this->parseExpressionStatement();
         }
 
-        return new CallExpr($call->callee, $call->typeArguments, $call->arguments, $this->expressionBetween($start, $this->consumeToStatementEnd()));
+        return new CallExpr($call->callee, $call->typeArguments, $call->arguments, $this->expressionBetween($start, $this->consumeToStatementEnd($this->lastConsumed())));
     }
 
     // ---- declarations ---------------------------------------------------------
@@ -378,13 +379,17 @@ final class Parser
             $this->advanceIfId(Keyword::AWAIT); // `= await useX()` — trace through to the call
             $initStart = $this->peek()->start;
 
+            if ($this->atId(Keyword::ASYNC) && $this->at(1)->isPunct(Token::PAREN_OPEN)) {
+                $this->advance(); // `= async (…) => …` — a modifier on the arrow, not a call to `async`
+            }
+
             if ($this->atCall()) {
                 $initCall = $this->tryCall();
             } elseif ($this->atPunct(Token::PAREN_OPEN)) {
                 [$initParams, $initReturnType] = $this->tryArrowSignature();
             }
 
-            $initEnd = $this->consumeToStatementEnd();
+            $initEnd = $this->consumeToStatementEnd($this->lastConsumed());
             // `consumeToStatementEnd` swallows the terminating `;`; the initializer is the expression
             // WITHOUT it (VariableDecl::render re-appends one), so strip a trailing statement `;`.
             $initRaw = rtrim(trim(substr($this->source, $initStart, $initEnd - $initStart)), ';');
@@ -427,18 +432,23 @@ final class Parser
      */
     private function bodyOf(string $source, int $offset): BlockStmt
     {
-        if (trim($source) === '') {
-            return new BlockStmt();
-        }
-
         // $offset is relative to THIS parser's source, so the child's base is OURS plus it. Passing
         // the relative value straight down worked only while this parser was the outermost one: a
         // function inside a function — or any function inside a `<script>` block — lost the outer
         // base, and every node under it reported a position drifting further the deeper it sat.
-        $base = $this->base + $offset;
-        $body = new self($source, $base)->parseStatementsToEnd();
+        return self::block($source, $this->base + $offset);
+    }
 
-        return new BlockStmt($body)->locatedAt($base, $base + strlen($source));
+    /**
+     * The statements of a `{ … }` body whose inside ($source, braces excluded) begins at $baseOffset
+     * in the file — what the expression parser hands an arrow's block to, so an arrow's body is the
+     * same tree a `function`'s is.
+     */
+    public static function block(string $source, int $baseOffset = 0): BlockStmt
+    {
+        $body = trim($source) === '' ? [] : new self($source, $baseOffset)->parseStatementsToEnd();
+
+        return new BlockStmt($body)->locatedAt($baseOffset, $baseOffset + strlen($source));
     }
 
     /**
@@ -951,6 +961,18 @@ final class Parser
     }
 
     // ---- statements -----------------------------------------------------------
+
+    /**
+     * `break` / `continue`, with the label it names if any.
+     */
+    private function parseJump(): JumpStmt
+    {
+        $keyword = $this->advance()->value;
+        $label = $this->peek()->isIdentifier() ? $this->advance()->value : null;
+        $this->advanceIfPunct(Token::SEMICOLON);
+
+        return new JumpStmt($keyword, $label);
+    }
 
     private function skipEmptyStatement(): ?Node
     {
@@ -1579,13 +1601,15 @@ final class Parser
 
     /**
      * Advance to the end of the current statement — a top-level `;` or a newline gap — respecting
-     * `()[]{}` nesting. Returns the byte offset just past the last consumed content.
+     * `()[]{}` nesting. Returns the byte offset just past the last consumed content. $after is the last
+     * token the statement already read (a call taken before the rest), so a newline straight after it
+     * ends the statement too.
      */
-    private function consumeToStatementEnd(): int
+    private function consumeToStatementEnd(?Lexeme $after = null): int
     {
         $depth = 0;
         $end = $this->peek()->start;
-        $previous = null;
+        $previous = $after;
 
         while (! $this->eof()) {
             $token = $this->peek();
@@ -1600,7 +1624,7 @@ final class Parser
                 // A newline ends the statement (ASI) — but only where the expression could BE
                 // finished. After a `=>`, a `.` or any other operator the language is still
                 // mid-expression, and the rest of it lives on the next line.
-                if ($previous?->couldEndAnExpression() === true && str_contains(substr($this->source, $previous->end, $token->start - $previous->end), "\n")) {
+                if ($previous?->couldEndAnExpression() === true && ! $token->continuesExpression() && str_contains(substr($this->source, $previous->end, $token->start - $previous->end), "\n")) {
                     break;
                 }
             }
@@ -1617,6 +1641,14 @@ final class Parser
         }
 
         return $end;
+    }
+
+    /**
+     * The token the cursor last stepped past.
+     */
+    private function lastConsumed(): Lexeme
+    {
+        return $this->lexemes[$this->pos - 1] ?? Lexeme::none($this->pos);
     }
 
     private function consumeUntilPunct(string $value): string

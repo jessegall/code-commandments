@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Ts;
 
+use JesseGall\CodeCommandments\Ts\Node\ReturnStmt;
 use JesseGall\CodeCommandments\Ts\Node\VariableDecl;
 use JesseGall\CodeCommandments\Ts\Parser;
 use PHPUnit\Framework\TestCase;
@@ -60,6 +61,33 @@ final class MultiLineInitialiserTest extends TestCase
     /**
      * @param  list<object>  $body
      */
+    public function test_a_call_initialiser_ends_at_the_newline(): void
+    {
+        $body = Parser::block("const runtime = snapshot()\n\nreturn { version: runtime.version }")->body;
+
+        $this->assertInstanceOf(VariableDecl::class, $body[0]);
+        $this->assertInstanceOf(ReturnStmt::class, $body[1] ?? null, 'the return after a semicolon-less call is a statement of its own');
+    }
+
+    public function test_a_call_statement_ends_at_the_newline(): void
+    {
+        $body = Parser::block("refresh()\nreturn done")->body;
+
+        $this->assertCount(2, $body);
+        $this->assertInstanceOf(ReturnStmt::class, $body[1]);
+    }
+
+    public function test_a_chain_continued_on_the_next_line_stays_one_statement(): void
+    {
+        $module = Parser::module(<<<'TS'
+            const names = users
+                .filter((user) => user.active)
+                .map((user) => user.name)
+            TS);
+
+        $this->assertStringContainsString('.map(', (string) $this->onlyDeclaration($module->body)->initRaw);
+    }
+
     private function onlyDeclaration(array $body): VariableDecl
     {
         $declarations = array_values(array_filter($body, static fn (object $s): bool => $s instanceof VariableDecl));

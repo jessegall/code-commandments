@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Codebase as BaseCodebase;
+use JesseGall\CodeCommandments\Detectors\BucketsByGroupKey;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 use JesseGall\CodeCommandments\Located;
 
@@ -20,6 +21,7 @@ use JesseGall\CodeCommandments\Located;
  */
 abstract class RecurringPattern implements Detector, RecurrenceDetector
 {
+    use BucketsByGroupKey;
     use GroupsByFingerprint;
 
     /**
@@ -53,20 +55,10 @@ abstract class RecurringPattern implements Detector, RecurrenceDetector
 
     final public function find(Codebase $codebase): array
     {
-        $buckets = [];
-
-        foreach ($this->candidates($codebase) as $candidate) {
-            $key = $this->fingerprint($candidate, $codebase);
-
-            if ($key !== null) {
-                $buckets[$key][] = $candidate;
-            }
-        }
-
         $findings = [];
 
-        foreach ($buckets as $occurrences) {
-            if (count($occurrences) >= $this->minimumOccurrences() && $this->qualifies($occurrences, $codebase)) {
+        foreach ($this->recurringBuckets($this->candidates($codebase), $codebase, $this->minimumOccurrences()) as $occurrences) {
+            if ($this->qualifies($occurrences, $codebase)) {
                 array_push($findings, ...$occurrences);
             }
         }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ts\Expr;
 
 use JesseGall\CodeCommandments\Ts\Keyword;
+use JesseGall\CodeCommandments\Ts\Node\BlockStmt;
 use JesseGall\CodeCommandments\Ts\Token;
 
 /**
@@ -40,6 +41,26 @@ final class Expr
         }
 
         return $all;
+    }
+
+    /**
+     * The statement blocks of every block-bodied arrow in this tree — `() => { … }` wherever it sits,
+     * as an argument, a value, an initializer. The statements inside are nodes, not expressions, so
+     * {@see flatten} stops at the block and a node walk carries on from here.
+     *
+     * @return list<BlockStmt>
+     */
+    public function blocks(): array
+    {
+        $blocks = [];
+
+        foreach ($this->flatten() as $part) {
+            if ($part->is(ExprKind::Arrow) && $part->get('block') !== null) {
+                $blocks[] = $part->get('block');
+            }
+        }
+
+        return $blocks;
     }
 
     /**

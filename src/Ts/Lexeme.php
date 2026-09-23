@@ -97,6 +97,19 @@ final readonly class Lexeme
     }
 
     /**
+     * Does a line that BEGINS with this lexeme carry on the expression above it — a `.`/`?.` continuing a
+     * chain, or an infix operator taking the line above as its left side? Then the newline before it
+     * ends nothing. A bracket, a `;` or a prefix operator starts something new.
+     */
+    public function continuesExpression(): bool
+    {
+        return $this->isPunct()
+            && ! $this->isGroupOpener()
+            && ! $this->isGroupCloser()
+            && ! in_array($this->value, [Token::SEMICOLON, Token::COMMA, Token::BANG, Token::SPREAD, Token::AT, Token::HASH, '++', '--'], true);
+    }
+
+    /**
      * Is this lexeme the OPENING bracket of a TYPE — the `<` of `Ref<T>` and its kin?
      */
     public function isTypeOpener(): bool

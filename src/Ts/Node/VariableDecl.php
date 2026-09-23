@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ts\Node;
 
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\CodeCommandments\Ts\Expr\ExprKind;
+use JesseGall\PhpTypes\Option;
 
 /**
  * A `const`/`let`/`var` declaration — its binding {@see Pattern}, an optional type annotation, and
@@ -46,6 +48,23 @@ final class VariableDecl extends Node
     public function declaredNames(): array
     {
         return $this->pattern->names();
+    }
+
+    /**
+     * The block of the arrow this declaration is bound to — `const load = async () => { … }` is how a
+     * `<script setup>` writes most of its functions.
+     */
+    public function functionBody(): Option
+    {
+        return Option::fromNullable($this->declaresArrow() ? $this->initializer->get('block') : null);
+    }
+
+    /**
+     * Is this a function written as `const name = (…) => …` — bound to an arrow, whatever its body?
+     */
+    public function declaresArrow(): bool
+    {
+        return $this->initializer?->is(ExprKind::Arrow) ?? false;
     }
 
     public function annotation(): ?TypeNode

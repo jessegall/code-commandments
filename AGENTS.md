@@ -125,6 +125,7 @@ most:**
 - **`commandments-backend-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two methods share one name — split them and let the call site say which it wants, instead of passing a bare `true`.
 - **`commandments-frontend-mirrored-server-type`** — a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one.
 - **`commandments-typescript-absence`** — model absence honestly — one spelling for missing, no `??` that invents a value, no `?.` on something always set.
+- **`commandments-typescript-duplication`** — a function body written twice becomes one shared function or composable, parameterised by what differs.
 
 **Finding and fixing sins — the checklist workflow.** Run
 `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the
@@ -207,3 +208,23 @@ The orchestrator's own model is the most expensive one in the room and is almost
 The user naming a model is not an exception to this rule — it is the rule being followed. What it forbids is dispatching without deciding.
 
 <!-- END: agent-journal -->
+
+<!-- BEGIN: agent-journal law (auto-generated, run `journal upgrade`) -->
+
+## The journal's law
+
+These rules ship with the journal and cannot be switched off.
+
+**L1 — Every subagent dispatch names its model and chooses the least expensive model that reliably fits the work.**
+
+Use a fast, economical model for mechanical work with a known answer, a capable general model for careful implementation, and the strongest model only when the task turns on difficult judgement. Inheriting the orchestrator's model is not a model choice. If the dispatch API cannot accept a model, that operation is exempt.
+
+**L2 — Every subagent is bound to a concrete job; never dispatch a generic or default agent.**
+
+Use the most specific available agent type whose declared purpose matches the assignment. On providers without agent types, give the dispatch a concrete task name and bounded prompt. If no suitable specialization exists, keep the work in the main agent instead of manufacturing an unscoped helper.
+
+**L3 — Read narrowly: grep for the line, sed a range, head the file; never print a whole file or long output you do not need.**
+
+Everything a tool returns stays in the context for good and is paid for on every turn after it. Search before you read, read the range you need, and cap output with grep, head or tail. Read a whole file only when you need all of it.
+
+<!-- END: agent-journal law -->

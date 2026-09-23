@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ts\Node;
 
 use JesseGall\CodeCommandments\Ts\Modifiers;
+use JesseGall\PhpTypes\Option;
 
 /**
  * A method declared in a class body — `private async load(page: number): Promise<Page> { … }`, a
@@ -33,6 +34,11 @@ final class MethodDecl extends Node
     public function children(): array
     {
         return array_values(array_filter([...$this->params, $this->body]));
+    }
+
+    public function functionBody(): Option
+    {
+        return Option::fromNullable($this->body);
     }
 
     public function isConstructor(): bool

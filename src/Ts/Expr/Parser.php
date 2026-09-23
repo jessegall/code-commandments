@@ -6,6 +6,8 @@ namespace JesseGall\CodeCommandments\Ts\Expr;
 
 use JesseGall\CodeCommandments\Ts\Keyword;
 use JesseGall\CodeCommandments\Ts\Lexeme;
+use JesseGall\CodeCommandments\Ts\Node\BlockStmt;
+use JesseGall\CodeCommandments\Ts\Parser as StatementParser;
 use JesseGall\CodeCommandments\Ts\Token;
 
 /**
@@ -33,7 +35,28 @@ final class Parser
     /**
      * The prefix operators the grammar reads — `!x`, `-x`, `+x`.
      */
-    private const array PREFIX_OPERATORS = [Token::BANG, Token::MINUS, Token::PLUS];
+    private const array PREFIX_OPERATORS = [Token::BANG, Token::MINUS, Token::PLUS, '++', '--', Token::SPREAD];
+
+    /**
+     * The prefix operators spelled as a WORD — each wraps the whole operand after it, so `await
+     * api.get(url)` waits on the call and `new Map(entries)` constructs with its arguments.
+     */
+    private const array PREFIX_KEYWORDS = [Keyword::TYPEOF, Keyword::AWAIT, Keyword::NEW, Keyword::YIELD, 'void', 'delete'];
+
+    /**
+     * The binary operators spelled as a WORD, at the precedence of the comparisons they sit among.
+     */
+    private const array KEYWORD_OPERATORS = [Keyword::INSTANCEOF => 5, Keyword::IN => 5];
+
+    /**
+     * Every way to assign — plain `=` and each operator that updates what it assigns to.
+     */
+    private const array ASSIGNMENTS = [Token::ASSIGN, '+=', '-=', '*=', '/=', '%=', '**=', '??=', '||=', '&&='];
+
+    /**
+     * The update operators written AFTER their target — `count++`.
+     */
+    private const array POSTFIX_UPDATES = ['++', '--'];
 
     /**
      * @var list<Lexeme>
@@ -48,7 +71,7 @@ final class Parser
      * statement out of a `.ts` module). Every node's recorded position is absolute because of it,
      * so an expression buried three calls deep still reports its own `file:line`.
      */
-    private function __construct(string $source, private readonly int $base = 0)
+    private function __construct(private readonly string $source, private readonly int $base = 0)
     {
         $this->tokens = new Lexer()->tokenize($source);
     }
@@ -146,12 +169,14 @@ final class Parser
         $left = $this->ternary();
 
         // Assignment is the loosest binding and right-associative — `x = expr` (a `@click`
-        // handler writing a value). `==`/`===`/`<=`/`>=` are their own tokens, so a lone `=`
-        // here is only ever assignment.
-        if ($this->isPunct(Token::ASSIGN)) {
+        // handler writing a value), `sum += x` in a body. `==`/`===`/`<=`/`>=` are their own
+        // tokens, so these are only ever assignment.
+        $operator = $this->peek();
+
+        if ($operator->isPunct() && in_array($operator->value, self::ASSIGNMENTS, true)) {
             $this->next();
 
-            return $this->located(new Expr(ExprKind::Assign, ['target' => $left, 'value' => $this->expression()]), $start);
+            return $this->located(new Expr(ExprKind::Assign, ['op' => $operator->value, 'target' => $left, 'value' => $this->expression()]), $start);
         }
 
         return $left;
@@ -188,19 +213,34 @@ final class Parser
         }
 
         while (true) {
-            $token = $this->peek();
-            $operator = $token->value;
+            $operator = $this->peek()->value;
+            $precedence = $this->binaryPrecedence();
 
-            if (! $token->isPunct() || ! isset(self::PRECEDENCE[$operator]) || self::PRECEDENCE[$operator] < $minPrecedence) {
+            if ($precedence === null || $precedence < $minPrecedence) {
                 break;
             }
 
             $this->next();
-            $right = $this->binary(self::PRECEDENCE[$operator] + 1);
+            $right = $this->binary($precedence + 1);
             $left = $this->located(new Expr(ExprKind::Binary, ['op' => $operator, 'left' => $left, 'right' => $right]), $start);
         }
 
         return $left;
+    }
+
+    /**
+     * How tightly the operator under the cursor binds as a BINARY operator — null when it is not one,
+     * which is where a chain of them ends.
+     */
+    private function binaryPrecedence(): ?int
+    {
+        $token = $this->peek();
+
+        return match (true) {
+            $token->isPunct() => self::PRECEDENCE[$token->value] ?? null,
+            $token->isIdentifier() => self::KEYWORD_OPERATORS[$token->value] ?? null,
+            default => null,
+        };
     }
 
     private function unary(): Expr
@@ -208,19 +248,51 @@ final class Parser
         $start = $this->offset();
         $token = $this->peek();
 
-        if ($token->isPunct() && in_array($token->value, ['!', '-', '+'], true)) {
+        if ($this->isPrefixOperator($token)) {
             $this->next();
 
             return $this->located(new Expr(ExprKind::Unary, ['op' => $token->value, 'argument' => $this->unary()]), $start);
         }
 
-        if ($token->isIdentifier(Keyword::TYPEOF)) {
+        $operand = $this->postfix();
+        $update = $this->peek();
+
+        if ($update->isPunct() && in_array($update->value, self::POSTFIX_UPDATES, true)) {
             $this->next();
 
-            return $this->located(new Expr(ExprKind::Unary, ['op' => 'typeof', 'argument' => $this->unary()]), $start);
+            return $this->located(new Expr(ExprKind::Unary, ['op' => $update->value, 'argument' => $operand]), $start);
         }
 
-        return $this->postfix();
+        return $operand;
+    }
+
+    /**
+     * Does $token open a prefix operation — a sign, a `!`, a `++`, a spread, or a word like `await`?
+     * A word counts only with an operand after it, so a variable named `delete` stays a name.
+     */
+    private function isPrefixOperator(Lexeme $token): bool
+    {
+        if ($token->isPunct()) {
+            return in_array($token->value, self::PREFIX_OPERATORS, true);
+        }
+
+        return $token->isIdentifier()
+            && in_array($token->value, self::PREFIX_KEYWORDS, true)
+            && $this->beginsOperand($this->pos + 1);
+    }
+
+    /**
+     * Can an operand begin at token $at — a name, a literal, or an opening bracket?
+     */
+    private function beginsOperand(int $at): bool
+    {
+        $token = $this->tokens[$at] ?? Lexeme::none($at);
+
+        return $token->isIdentifier()
+            || $token->is(Token::STRING)
+            || $token->is(Token::NUMBER)
+            || $token->isGroupOpener()
+            || ($token->isPunct() && in_array($token->value, self::PREFIX_OPERATORS, true));
     }
 
     /**
@@ -281,8 +353,21 @@ final class Parser
             $this->isPunct(Token::OPTIONAL_CHAIN) => $this->optionalMember($node),
             $this->isPunct(Token::BRACKET_OPEN) => $this->index($node),
             $this->isPunct(Token::PAREN_OPEN) => $this->located(new Expr(ExprKind::Call, ['callee' => $node, 'arguments' => $this->arguments()]), $node->start),
+            $this->isPunct(Token::BANG) => $this->asserted($node),
             default => null,
         };
+    }
+
+    /**
+     * $node with a `!` after it stepped over — TypeScript's non-null assertion, compile-time only like
+     * an `as` cast, so the runtime value is the operand itself. Nothing binary is spelled `!` (`!=` and
+     * `!==` are tokens of their own), so right after an operand it can only be the assertion.
+     */
+    private function asserted(Expr $node): Expr
+    {
+        $this->next();
+
+        return $node;
     }
 
     /**
@@ -340,6 +425,16 @@ final class Parser
         $start = $this->offset();
         $token = $this->peek();
 
+        if ($token->value === Keyword::ASYNC && $this->beginsFunction($this->pos + 1)) {
+            $this->next();
+
+            return $this->primary();
+        }
+
+        if ($token->isIdentifier(Keyword::FUNCTION)) {
+            return $this->functionExpression();
+        }
+
         if ($token->isIdentifier()) {
             $this->next();
 
@@ -351,7 +446,7 @@ final class Parser
                 $this->next();
                 $param = new Expr(ExprKind::Identifier, ['name' => $token->value])->locatedAt($start, $start + strlen($token->value));
 
-                return $this->located(new Expr(ExprKind::Arrow, ['params' => [$param], 'body' => $this->expression()]), $start);
+                return $this->located(new Expr(ExprKind::Arrow, ['params' => [$param], ...$this->arrowBody()]), $start);
             }
 
             return $this->located(new Expr(ExprKind::Identifier, ['name' => $token->value]), $start);
@@ -401,9 +496,10 @@ final class Parser
         if ($this->closingParenLeadsToArrow()) {
             $params = $this->arrowParameters();
             $this->expect(Token::PAREN_CLOSE);
+            $this->skipReturnType();
             $this->skipArrowMarker();
 
-            return $this->located(new Expr(ExprKind::Arrow, ['params' => $params, 'body' => $this->expression()]), $start);
+            return $this->located(new Expr(ExprKind::Arrow, ['params' => $params, ...$this->arrowBody()]), $start);
         }
 
         if ($this->isPunct(Token::PAREN_CLOSE)) {
@@ -419,25 +515,169 @@ final class Parser
     }
 
     /**
+     * An arrow's body — an expression, or a `{ … }` block of statements. A block is read by the
+     * statement parser, so its `if`s and `return`s are real nodes; `body` then stands in as an
+     * {@see ExprKind::Unknown} over the block's span, since a block is not one expression.
+     *
+     * @return array{body: Expr, block: ?BlockStmt}
+     */
+    private function arrowBody(): array
+    {
+        if (! $this->isPunct(Token::BRACE_OPEN)) {
+            return ['body' => $this->expression(), 'block' => null];
+        }
+
+        $start = $this->offset();
+        $open = $this->peek();
+        $depth = 0;
+
+        do {
+            $depth += $this->depthChange();
+            $this->next();
+        } while ($depth > 0 && ! $this->isEof());
+
+        $close = $this->tokens[$this->pos - 1];
+        $inside = substr($this->source, $open->end, max(0, $close->start - $open->end));
+
+        return [
+            'body' => $this->located(new Expr(ExprKind::Unknown), $start),
+            'block' => StatementParser::block($inside, $this->base + $open->end),
+        ];
+    }
+
+    /**
+     * `function name(params): Type { … }` as a VALUE — a callback, an initializer. It is read as an
+     * arrow with a block, since what a rule asks of it (its parameters, its statements) is the same;
+     * the name it may give itself is visible only inside its own body.
+     */
+    private function functionExpression(): Expr
+    {
+        $start = $this->offset();
+        $this->next(); // `function`
+
+        if ($this->isPunct(Token::STAR)) {
+            $this->next(); // a generator
+        }
+
+        if ($this->peek()->isIdentifier()) {
+            $this->next();
+        }
+
+        $this->expect(Token::PAREN_OPEN);
+        $params = $this->arrowParameters();
+        $this->expect(Token::PAREN_CLOSE);
+        $this->skipReturnType();
+
+        return $this->located(new Expr(ExprKind::Arrow, ['params' => $params, ...$this->arrowBody()]), $start);
+    }
+
+    /**
+     * Step over a `: Type` return annotation, up to the `=>` or the `{` of the body. A `{` opens the
+     * body only where a type could END — after a name or a closing bracket; after `:`, `|` or `<` it
+     * opens an object type instead.
+     */
+    private function skipReturnType(): void
+    {
+        if (! $this->isPunct(Token::COLON)) {
+            return;
+        }
+
+        $this->next();
+        $depth = 0;
+        $previous = Lexeme::none($this->pos);
+
+        while (! $this->isEof()) {
+            $token = $this->peek();
+            $endsType = $previous->isIdentifier() || $previous->isTypeCloser();
+
+            if ($depth === 0 && ($token->isPunct(Token::ARROW) || ($token->isPunct(Token::BRACE_OPEN) && $endsType))) {
+                return;
+            }
+
+            $depth += $token->typeDepthChange();
+            $previous = $token;
+            $this->next();
+        }
+    }
+
+    /**
+     * Does a function begin at token $at — `function`, a lone parameter before `=>`, or a parameter
+     * list whose closing `)` leads to one? What tells `async (x) => …` from a call to a function named
+     * `async`.
+     */
+    private function beginsFunction(int $at): bool
+    {
+        $token = $this->tokens[$at] ?? Lexeme::none($at);
+
+        if ($token->isIdentifier(Keyword::FUNCTION)) {
+            return true;
+        }
+
+        if ($token->isIdentifier()) {
+            return ($this->tokens[$at + 1] ?? Lexeme::none($at))->isPunct(Token::ARROW);
+        }
+
+        return $token->isPunct(Token::PAREN_OPEN) && $this->closingParenLeadsToArrow($at + 1);
+    }
+
+    /**
      * Does the `)` that closes the just-opened `(` come immediately before a `=>`? A pure token
      * lookahead (depth-balanced over every bracket kind) that classifies the group as an arrow
-     * parameter list vs a grouped expression, without committing the parse.
+     * parameter list vs a grouped expression, without committing the parse. $from is the token just
+     * past that `(` — the cursor, unless the caller is looking ahead of it.
      */
-    private function closingParenLeadsToArrow(): bool
+    private function closingParenLeadsToArrow(?int $from = null): bool
     {
         $depth = 0;
 
-        for ($i = $this->pos, $n = count($this->tokens); $i < $n; $i++) {
+        for ($i = $from ?? $this->pos, $n = count($this->tokens); $i < $n; $i++) {
             $token = $this->tokens[$i];
 
             if ($token->isGroupCloser() && $depth === 0) {
-                return ($this->tokens[$i + 1] ?? Lexeme::none($i))->isPunct(Token::ARROW);
+                $after = $this->tokens[$i + 1] ?? Lexeme::none($i);
+
+                return $after->isPunct(Token::ARROW) || ($after->isPunct(Token::COLON) && $this->returnTypeLeadsToArrow($i + 2));
             }
 
             $depth += $token->groupDepthChange();
         }
 
         return false;
+    }
+
+    /**
+     * Does the type that begins at token $from run on to a `=>` — `(x): Promise<T> => …` — rather than
+     * end first, as the `: b` of a ternary over a group does? A comma, a `;`, a `?`, a `:` or a `=`
+     * at depth 0, or a bracket closing one this scan did not open, ends a type.
+     */
+    private function returnTypeLeadsToArrow(int $from): bool
+    {
+        $depth = 0;
+
+        for ($i = $from, $n = count($this->tokens); $i < $n; $i++) {
+            $token = $this->tokens[$i];
+
+            if ($depth === 0 && $token->isPunct(Token::ARROW)) {
+                return true;
+            }
+
+            if ($depth === 0 && ($token->isTypeCloser() || self::endsReturnType($token))) {
+                return false;
+            }
+
+            $depth += $token->typeDepthChange();
+        }
+
+        return false;
+    }
+
+    private static function endsReturnType(Lexeme $token): bool
+    {
+        return $token->isPunct(Token::COMMA)
+            || $token->isPunct(Token::SEMICOLON)
+            || $token->isPunct(Token::QUESTION)
+            || $token->isPunct(Token::COLON)
+            || $token->isPunct(Token::ASSIGN);
     }
 
     /**

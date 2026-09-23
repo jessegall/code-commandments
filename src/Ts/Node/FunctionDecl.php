@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ts\Node;
 
+use JesseGall\PhpTypes\Option;
+
 /**
  * A `function name(params): Return` declaration (its body is not modelled). Its {@see signature} is
  * the equivalent `(params) => Return` function type — how a function referenced as a callable prop
@@ -34,6 +36,11 @@ final class FunctionDecl extends Node
     public function children(): array
     {
         return array_values(array_filter([...$this->params, $this->body]));
+    }
+
+    public function functionBody(): Option
+    {
+        return Option::fromNullable($this->body);
     }
 
     public function signature(): FunctionType

@@ -163,13 +163,25 @@ final class VueFixtureExamples
 
         foreach ($codebase->modules() as $module) {
             $lines = explode("\n", $module->source);
+            $shown = [];
 
             foreach ($module->nodes() as $node) {
-                foreach (DeclarationMarkers::markersAbove($lines, $module->lineAt($node->start), $marker) as $name) {
+                $line = $module->lineAt($node->start);
+
+                // A marker names the declaration its line OPENS — the outermost node there, which the
+                // walk reaches first; a method's parameters and body begin on that line too.
+                if (isset($shown[$line])) {
+                    continue;
+                }
+
+                $shown[$line] = true;
+                $indent = substr($lines[$line - 1], 0, strspn($lines[$line - 1], " \t"));
+
+                foreach (DeclarationMarkers::markersAbove($lines, $line, $marker) as $name) {
                     $sources[$name][] = [
                         'file' => $module->file,
                         'heading' => '// in ' . self::name($module->file),
-                        'source' => ExampleText::dedent(explode("\n", $module->spanAt($node->start, $node->end)->text())),
+                        'source' => ExampleText::dedent(explode("\n", $indent . $module->spanAt($node->start, $node->end)->text())),
                     ];
                 }
             }

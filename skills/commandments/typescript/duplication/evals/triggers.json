@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I need the same formatPrice helper in CartSummary.vue that ProductCard.vue already has — can I just copy the function into its script setup?",
+        "resources/js/composables/useOrders.ts and useInvoices.ts both have a loadPage function that's identical except for the endpoint URL, is that fine or should I merge them",
+        "judge flagged duplicate-typescript-function on two handlers in NewsletterSignup.vue that do the exact same fetch — what's the fix"
+    ],
+    "not": [
+        "how do I extract the repeated <div class=\"field\"> markup in CheckoutForm.vue into its own component"
+    ]
+}

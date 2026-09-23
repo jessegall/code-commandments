@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ts\Node;
 
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\PhpTypes\Option;
 
 /**
  * The root of the `<script setup>` syntax tree — every declaration, pattern, and type is a Node.
@@ -30,6 +31,36 @@ abstract class Node
     public function children(): array
     {
         return [];
+    }
+
+    /**
+     * Every node DIRECTLY beneath this one — its {@see children}, and the statement blocks of the
+     * arrows its own expressions hold. `onMounted(() => { … })` is a call, yet its callback's `if`s
+     * and `return`s are statements a walk must reach like any function's.
+     *
+     * @return list<self>
+     */
+    final public function nested(): array
+    {
+        $blocks = [];
+
+        foreach ($this->expressions() as $expression) {
+            $blocks = [...$blocks, ...$expression->blocks()];
+        }
+
+        return [...$this->children(), ...$blocks];
+    }
+
+    /**
+     * The statements this node runs AS A FUNCTION — a `function`'s body, a method's, a `const` bound
+     * to a block-bodied arrow's. None for a node that is not a function, and for one declared without
+     * a body (an overload, an `abstract` method).
+     *
+     * @return Option<BlockStmt>
+     */
+    public function functionBody(): Option
+    {
+        return Option::none();
     }
 
     /**

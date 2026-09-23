@@ -299,12 +299,15 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     // so a rule about a function, a class or a call reads the same whichever language it judges.
 
     /**
-     * Every FUNCTION — a `function` declaration and a class method alike, because a rule about what a
-     * function is named or how its body is shaped does not care which form declared it.
+     * Every FUNCTION — a `function` declaration, a class method and a `const` bound to an arrow alike,
+     * because a rule about what a function is named or how its body is shaped does not care which
+     * form declared it.
      */
     public function whereFunction(): TsQuery
     {
-        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof FunctionDecl || $node instanceof MethodDecl);
+        return $this->whereTsNode(static fn (TsNode $node): bool => $node instanceof FunctionDecl
+            || $node instanceof MethodDecl
+            || ($node instanceof VariableDecl && $node->declaresArrow()));
     }
 
     /**

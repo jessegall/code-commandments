@@ -100,7 +100,7 @@ final class ModuleFile
                 }
             }
 
-            $this->gather($node->children(), $within, $found);
+            $this->gather($node->nested(), $within, $found);
         }
     }
 
@@ -175,7 +175,7 @@ final class ModuleFile
 
         foreach ($nodes as $node) {
             $flat[] = $node;
-            $flat = [...$flat, ...self::flatten($node->children())];
+            $flat = [...$flat, ...self::flatten($node->nested())];
         }
 
         return $flat;
