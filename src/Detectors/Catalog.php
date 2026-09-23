@@ -25,7 +25,7 @@ final class Catalog
      */
     public static function all(): array
     {
-        return [...self::backend(), ...self::frontend()];
+        return [...self::backend(), ...self::frontend(), ...self::python()];
     }
 
     /**
@@ -84,6 +84,16 @@ final class Catalog
     }
 
     /**
+     * The Python detectors — run over a {@see \JesseGall\CodeCommandments\Py\Codebase}.
+     *
+     * @return list<Detector>
+     */
+    public static function python(): array
+    {
+        return self::discover('Python');
+    }
+
+    /**
      * The detectors that can judge ONE file honestly — everything $beyond does not find reading past
      * it, whether the rule says so of itself ({@see WholeTree}) or its source shows it. Both engines:
      * a `.vue` edit deserves the same check a `.php` one gets.
@@ -98,7 +108,7 @@ final class Catalog
     public static function singleFile(CrossFileSet $beyond, ?array $detectors = null): array
     {
         return array_values(array_filter(
-            $detectors ?? [...self::backend(), ...self::frontend()],
+            $detectors ?? self::all(),
             static fn (RootDetector $detector): bool => ! $beyond->has($detector),
         ));
     }

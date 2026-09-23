@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Discovery;
 use JesseGall\CodeCommandments\Unpublished;
 
 /**
- * Every sin that ships, discovered from the `Backend/` and `Frontend/` folders — the
+ * Every sin that ships, discovered from the `Backend/`, `Frontend/` and `Python/` folders — the
  * sin twin of {@see \JesseGall\CodeCommandments\Detectors\Catalog}. A sin counts the
  * moment its file exists; a consumer's own `Sins/` class auto-enrols the same way. The
  * generated `SKILL.md` "when it fires" rows are projected from this registry.
@@ -36,13 +36,23 @@ final class Catalog
     }
 
     /**
-     * Every sin, both engines.
+     * The Python sins.
+     *
+     * @return list<Sin>
+     */
+    public static function python(): array
+    {
+        return self::discover('Python');
+    }
+
+    /**
+     * Every sin, every engine.
      *
      * @return list<Sin>
      */
     public static function every(): array
     {
-        return [...self::all(), ...self::frontend()];
+        return [...self::all(), ...self::frontend(), ...self::python()];
     }
 
     /**
