@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my ReportExport.__init__ calls client.warm(period) so the cache is ready — is that fine or should it happen somewhere else?",
+        "I keep a module-level _registry dict and a register() function that does global _registry and adds to it; judge says mutable static state, what's the fix",
+        "a KeyError keeps surfacing in three handlers that read the same config dict, should I add a try/except in each of them"
+    ],
+    "not": [
+        "how do I write a match statement over an enum in Python"
+    ]
+}

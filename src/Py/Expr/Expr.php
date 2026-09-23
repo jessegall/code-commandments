@@ -328,6 +328,20 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * The first attribute a chain of reads takes off its root name — `self.client` in
+     * `self.client.rows().first()` — empty when the chain starts from anything but a name.
+     */
+    public function reachedThrough(): string
+    {
+        return match ($this->kind) {
+            ExprKind::Attribute => $this->get('object')->is(ExprKind::Name) ? $this->dottedName() : $this->get('object')->reachedThrough(),
+            ExprKind::Subscript => $this->get('object')->reachedThrough(),
+            ExprKind::Call => $this->get('callee')->reachedThrough(),
+            default => '',
+        };
+    }
+
+    /**
      * The subject and the default of a defaulted read, in that order.
      *
      * @return Option<array{self, self}>

@@ -66,6 +66,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\Python\Duplication::class,
         // Skills\Python\Enums::class,
         // Skills\Python\Exceptions::class,
+        // Skills\Python\FixAtTheSource::class,
         // Skills\Python\Flow::class,
         // Skills\Python\ValueObjects::class,
 
@@ -229,6 +230,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\CoalescedLoopSubject::class,
         // Sins\Python\ConditionalSpread::class,
         // Sins\Python\ConditionalStatement::class,
+        // Sins\Python\ConstructorSideEffect::class,
         // Sins\Python\DataClump::class,
         // Sins\Python\DeepNesting::class,
         // Sins\Python\DictBag::class,

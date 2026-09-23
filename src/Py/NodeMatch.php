@@ -171,6 +171,74 @@ class NodeMatch implements Located
     }
 
     /**
+     * Does this class's `__init__` tell a collaborator to act and throw the answer away — one it was
+     * handed, or one it keeps in a field? Discarding the result is what shows the call was made for
+     * what it DID. Asking a collaborator for something and keeping it, calling its own helpers,
+     * filling its own fields, and a call tried to see whether it raises are assembly, not this.
+     */
+    public function constructorHasSideEffect(): bool
+    {
+        return $this->constructor()->isSomeAnd(fn (FunctionDef $init): bool => array_any(
+            $this->module->expressionsIn($init),
+            fn (Expr $expression): bool => $this->module->isDiscarded($expression)
+                && ! $this->module->isProbed($expression)
+                && $this->actsOnCollaborator($expression, $init),
+        ));
+    }
+
+    /**
+     * The `__init__` this class declares — none for a class that inherits its own.
+     *
+     * @return Option<FunctionDef>
+     */
+    private function constructor(): Option
+    {
+        $body = $this->node instanceof ClassDef ? $this->node->body->body : [];
+        $declared = array_filter($body, static fn (Node $statement): bool => $statement instanceof FunctionDef && $statement->name === '__init__');
+
+        return Option::fromNullable(array_values($declared)[0] ?? null);
+    }
+
+    /**
+     * Is $call a method called on something $init was handed — the parameter itself, or a field
+     * assigned from one? `*args` and `**options` are not handed in: each call builds them afresh.
+     */
+    private function actsOnCollaborator(Expr $call, FunctionDef $init): bool
+    {
+        if (! $call->isCall() || ! $call->get('callee')->is(ExprKind::Attribute)) {
+            return false;
+        }
+
+        $receiver = $call->get('callee')->get('object');
+        $collaborators = array_filter(array_slice($init->params, 1), static fn (Param $param): bool => $param->kind === '');
+        $handed = array_values(array_map(static fn (Param $param): string => $param->name, $collaborators));
+        $held = $receiver->reachedThrough();
+
+        return in_array($receiver->rootName(), $handed, true) || ($held !== '' && in_array($held, $this->heldCollaborators($init, $handed), true));
+    }
+
+    /**
+     * The `self.x` fields $init assigns only from what it was handed — a field it ever fills from
+     * something else is its own.
+     *
+     * @param  list<string>  $handed
+     * @return list<string>
+     */
+    private function heldCollaborators(FunctionDef $init, array $handed): array
+    {
+        $assigns = array_filter($this->module->nodes(), fn (Node $node): bool => $node instanceof Assign && in_array($init, $this->module->ancestorsOf($node), true));
+        $sources = [];
+
+        foreach ($assigns as $assign) {
+            foreach ($assign->targets as $target) {
+                $sources[$target->dottedName()][] = $assign->value->rootName();
+            }
+        }
+
+        return array_keys(array_filter($sources, static fn (array $roots): bool => array_all($roots, static fn (string $root): bool => in_array($root, $handed, true))));
+    }
+
+    /**
      * Is this a `raise` of a new exception inside an `except` block with no `from` — the failure it
      * handles left as an implicit context instead of named as the cause? `raise` bare, `raise e` of the
      * caught one, and `from None` all say what they mean and are not this.

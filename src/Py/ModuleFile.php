@@ -11,10 +11,12 @@ use JesseGall\CodeCommandments\ParsedModule;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
+use JesseGall\CodeCommandments\Py\Node\ExprStmt;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\IfStmt;
 use JesseGall\CodeCommandments\Py\Node\Module;
 use JesseGall\CodeCommandments\Py\Node\Node;
+use JesseGall\CodeCommandments\Py\Node\TryStmt;
 use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\PhpTypes\Option;
@@ -112,13 +114,46 @@ final class ModuleFile implements ParsedModule
     }
 
     /**
+     * Every expression written inside $scope, each sub-expression included.
+     *
+     * @return list<Expr>
+     */
+    public function expressionsIn(Node $scope): array
+    {
+        return array_values(array_filter($this->expressions(), fn (Expr $expression) => $this->isWithin($expression, $scope)));
+    }
+
+    /**
+     * Is $expression the whole of a statement — a value computed and thrown away?
+     */
+    public function isDiscarded(Expr $expression): bool
+    {
+        return $this->ownerOf($expression)->isSomeAnd(static fn (Node $owner): bool => $owner instanceof ExprStmt && $owner->value === $expression);
+    }
+
+    /**
+     * Is $expression written in the body of a `try` that handles a failure — run to see whether it
+     * raises, the handler being the other answer?
+     */
+    public function isProbed(Expr $expression): bool
+    {
+        return $this->ownerOf($expression)->isSomeAnd(function (Node $owner): bool {
+            $chain = [$owner, ...$this->ancestorsOf($owner)];
+
+            return array_any(array_keys($chain), static fn (int $at): bool => ($chain[$at + 2] ?? null) instanceof TryStmt
+                && $chain[$at + 2]->handlers !== []
+                && $chain[$at + 1] === $chain[$at + 2]->body);
+        });
+    }
+
+    /**
      * Does any expression written inside $scope satisfy $asks?
      *
      * @param  Closure(Expr): bool  $asks
      */
     private function anyWithin(Node $scope, Closure $asks): bool
     {
-        return array_any($this->expressions(), fn (Expr $expression): bool => $this->isWithin($expression, $scope) && $asks($expression));
+        return array_any($this->expressionsIn($scope), $asks);
     }
 
     /**

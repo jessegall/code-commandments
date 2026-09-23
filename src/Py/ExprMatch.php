@@ -7,7 +7,6 @@ namespace JesseGall\CodeCommandments\Py;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
-use JesseGall\CodeCommandments\Py\Node\ExprStmt;
 use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Node;
@@ -160,7 +159,7 @@ class ExprMatch implements Located
      */
     public function resultIsDiscarded(): bool
     {
-        return $this->module->ownerOf($this->expr)->isSomeAnd(fn (Node $owner): bool => $owner instanceof ExprStmt && $owner->value === $this->expr);
+        return $this->module->isDiscarded($this->expr);
     }
 
     /**
