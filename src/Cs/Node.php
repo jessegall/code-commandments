@@ -30,12 +30,14 @@ final class Node implements SyntaxNode, SyntaxExpression
     ];
 
     /**
-     * What an expression is made of, by name — what the shared readings walk.
+     * What an expression is made of, by name — what the shared readings walk. A call names what it calls
+     * (`callee`) and a member access the member it reads (`member`, by name), so both survive where a
+     * reading blanks the names a body chose for itself.
      *
      * @var array<string, mixed>
      */
     public array $props {
-        get => array_filter(['name' => $this->name, 'text' => $this->text, 'operator' => $this->operator, 'children' => $this->children], static fn (mixed $value): bool => $value !== null && $value !== []);
+        get => array_filter([...$this->parts(), 'name' => $this->name, 'text' => $this->text, 'operator' => $this->operator], static fn (mixed $value): bool => $value !== null && $value !== []);
     }
 
     /**
@@ -217,6 +219,22 @@ final class Node implements SyntaxNode, SyntaxExpression
         }
 
         return $all;
+    }
+
+    /**
+     * The children by the part each plays: a call's callee before the rest, a member access's receiver
+     * and the name of the member it reads; any other node's children in order.
+     *
+     * @return array<string, mixed>
+     */
+    private function parts(): array
+    {
+        return match (true) {
+            $this->isCall() => ['callee' => $this->children[0], 'children' => array_slice($this->children, 1)],
+            $this->is('SimpleMemberAccessExpression', 'PointerMemberAccessExpression') => ['receiver' => $this->children[0], 'member' => $this->children[1]->name],
+            $this->is('MemberBindingExpression') => ['member' => $this->children[0]->name],
+            default => ['children' => $this->children],
+        };
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cs;
 
 use JesseGall\CodeCommandments\Located;
+use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
 
 /**
@@ -13,6 +14,8 @@ use JesseGall\CodeCommandments\Span;
  */
 class NodeMatch implements Located
 {
+    use ReadsFunctionBody;
+
     public function __construct(
         public readonly Node $node,
         public readonly ModuleFile $module,
@@ -53,5 +56,10 @@ class NodeMatch implements Located
     public function scope(): string
     {
         return $this->name() === '' ? $this->node->kind : "{$this->node->kind} {$this->name()}";
+    }
+
+    protected static function syntaxHash(): string
+    {
+        return StructuralHash::class;
     }
 }
