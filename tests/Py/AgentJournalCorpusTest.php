@@ -18,7 +18,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * The parser against a real Python codebase: every first-party file of agent-journal parses without a
  * degraded expression, and holds exactly as many statements as Python's own `ast` module counts in it —
- * so no statement is skipped or split. Skipped where the corpus or a Python interpreter is not present.
+ * so no statement is skipped or split. `PY_CORPUS=<dir>` points it at another codebase to prove one
+ * before calibrating on it. Skipped where the corpus or a Python interpreter is not present.
  */
 final class AgentJournalCorpusTest extends TestCase
 {
@@ -34,7 +35,7 @@ final class AgentJournalCorpusTest extends TestCase
 
     public function test_every_file_parses_whole_and_counts_as_python_counts_it(): void
     {
-        $root = (string) getenv('HOME') . self::CORPUS;
+        $root = getenv('PY_CORPUS') ?: (string) getenv('HOME') . self::CORPUS;
 
         if (! is_dir($root) || trim((string) shell_exec('command -v python3')) === '') {
             $this->markTestSkipped('needs ~/projects/agent-journal and python3');
