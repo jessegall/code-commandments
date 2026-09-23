@@ -1,5 +1,5 @@
 # An escalation policy that pages the on-call engineer and bumps the ticket — the desk's call again.
-from support_tickets import Ticket, TicketMeta
+from .support_tickets import Ticket, TicketMeta
 
 
 class EscalationPolicy:

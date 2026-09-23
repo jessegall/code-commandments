@@ -56,6 +56,39 @@ Move the thing both sides need down into the lower layer, pass it in from above,
 behind a protocol the lower layer owns. An import moved into a function body is not a fix: the arrow is
 still there.
 
+## Rules
+
+- [ ] Keep imports between the project's packages pointing one way; two packages that import each other are a cycle.
+      _Move what both need into the lower package, pass it in from above, or invert it behind a protocol the lower one owns._
+
+## Worked example
+
+### python-namespace-cycle
+
+two of the project's packages import each other — a cycle that makes them one package wearing two names
+
+```py
+----------[ Bad ]----------
+
+def results_page(query: str) -> str:
+    from shop.search import engine
+    return engine.render(query)
+
+----------[ Good ]----------
+
+from ..tracking.events import record
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/dependency-direction` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-namespace-cycle`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/dependency-direction`](../../backend/dependency-direction/SKILL.md) — the same discipline over PHP namespaces.

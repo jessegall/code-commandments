@@ -425,6 +425,54 @@ final class CallIndex
     }
 
     /**
+     * Every module of this codebase an import in $module reaches, with the import that reaches it — the module
+     * imported, the one a `from` imports a name out of, or the submodule it names. An import naming nothing
+     * here reaches none.
+     *
+     * @return list<array{Import, ModuleFile}>
+     */
+    public function importsOf(ModuleFile $module): array
+    {
+        $reached = [];
+
+        foreach ($module->nodes() as $import) {
+            if (! $import instanceof Import) {
+                continue;
+            }
+
+            foreach (array_keys($import->names) as $name) {
+                $this->importedModule($import, (string) $name, $module)->inspect(static function (ModuleFile $found) use (&$reached, $import): void {
+                    $reached[] = [$import, $found];
+                });
+            }
+        }
+
+        return $reached;
+    }
+
+    /**
+     * The module $import reaches for $name, read from $module.
+     *
+     * @return Option<ModuleFile>
+     */
+    private function importedModule(Import $import, string $name, ModuleFile $module): Option
+    {
+        if ($import->module === null) {
+            return $this->moduleNamed($name, $module, 0);
+        }
+
+        $source = $this->moduleNamed($import->module, $module, $import->level);
+
+        if ($source->isSomeAnd(static fn (ModuleFile $found): bool => $found->binds($name))) {
+            return $source;
+        }
+
+        $submodule = $this->moduleNamed(ltrim("{$import->module}.{$name}", '.'), $module, $import->level);
+
+        return $submodule->isSome() ? $submodule : $source;
+    }
+
+    /**
      * The one module $dotted names, read from $from — `$level` dots up from its package for a relative
      * import. None when no module or more than one has that name.
      *
@@ -437,7 +485,7 @@ final class CallIndex
             $path = $package . ($dotted === '' ? '' : '/' . str_replace('.', '/', $dotted));
             $found = array_filter($this->codebase->modules(), static fn (ModuleFile $module): bool => $module->file === "{$path}.py" || $module->file === "{$path}/__init__.py");
         } else {
-            $found = array_filter($this->codebase->modules(), static fn (ModuleFile $module): bool => $module->isNamed($dotted));
+            return $this->codebase->moduleCalled($dotted);
         }
 
         return count($found) === 1 ? Option::some(array_values($found)[0]) : Option::none();

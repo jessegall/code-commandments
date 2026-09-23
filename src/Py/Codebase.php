@@ -21,6 +21,7 @@ use JesseGall\CodeCommandments\Support\FileTree;
 use JesseGall\CodeCommandments\Support\HeldTool;
 use JesseGall\CodeCommandments\Support\Path;
 use JesseGall\CodeCommandments\WorkingCopy;
+use JesseGall\PhpTypes\Option;
 
 /**
  * The Python sources a run judges, and the selectors a Python rule opens its query with — named as the
@@ -50,6 +51,13 @@ final class Codebase implements ModuleCodebase
     private ?Types $types = null;
 
     private ?AttributeFlow $attributeFlow = null;
+
+    private ?PackageGraph $packageGraph = null;
+
+    /**
+     * @var array<string, list<ModuleFile>>|null  each module under the full dotted name Python imports it by
+     */
+    private ?array $byName = null;
 
     /**
      * @param  array<string, string>  $sources  path => source
@@ -138,6 +146,14 @@ final class Codebase implements ModuleCodebase
     }
 
     /**
+     * Which of this codebase's packages import which — built once and kept.
+     */
+    public function packageGraph(): PackageGraph
+    {
+        return $this->packageGraph ??= new PackageGraph($this);
+    }
+
+    /**
      * How this codebase reads the attributes of its classes — built once and kept.
      */
     public function attributeFlow(): AttributeFlow
@@ -177,19 +193,51 @@ final class Codebase implements ModuleCodebase
     }
 
     /**
-     * Does this codebase hold the top-level module or package $name — `shop` for `shop/__init__.py` or
-     * `shop.py` in a folder that is no package itself? A `flask/logging.py` is `flask.logging`, not the
-     * standard library's `logging`.
+     * The full dotted name Python imports $module by — its path from the top of its outermost package, each
+     * folder on the way a package (an `__init__.py`): `shop.cart` for `shop/cart.py`, `shop` for
+     * `shop/__init__.py`, `tool` for a `tool.py` in no package.
+     */
+    public function fullNameOf(ModuleFile $module): string
+    {
+        $parts = basename($module->file) === '__init__.py' ? [] : [basename($module->file, '.py')];
+        $folder = dirname($module->file);
+
+        while ($this->isPackage($folder)) {
+            array_unshift($parts, basename($folder));
+            $folder = dirname($folder);
+        }
+
+        return implode('.', $parts);
+    }
+
+    /**
+     * The one module this codebase holds under the full dotted name $dotted — none when it holds none, or
+     * more than one.
+     *
+     * @return Option<ModuleFile>
+     */
+    public function moduleCalled(string $dotted): Option
+    {
+        if ($this->byName === null) {
+            $this->byName = [];
+
+            foreach ($this->modules() as $module) {
+                $this->byName[$this->fullNameOf($module)][] = $module;
+            }
+        }
+
+        $found = $this->byName[$dotted] ?? [];
+
+        return count($found) === 1 ? Option::some($found[0]) : Option::none();
+    }
+
+    /**
+     * Does this codebase hold the top-level module or package $name — so that a reference into it can be
+     * checked from here?
      */
     public function ownsPackage(string $name): bool
     {
-        $packages = array_fill_keys(array_map(static fn (ModuleFile $module): string => dirname($module->file), array_filter($this->modules(), static fn (ModuleFile $module): bool => basename($module->file) === '__init__.py')), true);
-
-        return array_any($this->modules(), static function (ModuleFile $module) use ($name, $packages): bool {
-            $home = basename($module->file) === '__init__.py' ? dirname($module->file, 2) : dirname($module->file);
-
-            return $module->isNamed($name) && ! isset($packages[$home]);
-        });
+        return $this->moduleCalled($name)->isSome();
     }
 
     /**
@@ -201,15 +249,22 @@ final class Codebase implements ModuleCodebase
         $parts = explode('.', $dotted);
 
         for ($depth = count($parts); $depth >= 1; $depth--) {
-            $named = implode('.', array_slice($parts, 0, $depth));
-            $module = array_values(array_filter($this->modules(), static fn (ModuleFile $module): bool => $module->isNamed($named)))[0] ?? null;
+            $module = $this->moduleCalled(implode('.', array_slice($parts, 0, $depth)));
 
-            if ($module !== null) {
-                return $depth === count($parts) || $module->binds($parts[$depth]);
+            if ($module->isSome()) {
+                return $depth === count($parts) || $module->unwrap()->binds($parts[$depth]);
             }
         }
 
         return false;
+    }
+
+    /**
+     * Is $folder a package — does this codebase hold its `__init__.py`?
+     */
+    private function isPackage(string $folder): bool
+    {
+        return isset($this->sources["{$folder}/__init__.py"]);
     }
 
     /**

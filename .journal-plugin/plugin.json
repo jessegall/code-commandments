@@ -2089,6 +2089,19 @@
             ],
             "detail": true
         },
+        "sin_python-namespace-cycle": {
+            "title": "NamespaceCycle",
+            "help": "Two packages importing each other — the twin of the backend's NamespaceCycleDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/dependency-direction",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-archaeology-comment": {
             "title": "ArchaeologyComment",
             "help": "A comment or docstring about the code's past — the twin of the backend's ArchaeologyCommentDetector, reading the same phrases.",
