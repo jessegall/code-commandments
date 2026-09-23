@@ -129,7 +129,7 @@ final class VueTscOracle implements TypeOracle
 
     private function buildInfo(): string
     {
-        $path = Workspace::at(rtrim($this->root, '/'))->shared('.vue-tsc.tsbuildinfo');
+        $path = Workspace::at(rtrim($this->root, '/'))->cache('.vue-tsc.tsbuildinfo');
 
         if (! is_dir($directory = dirname($path))) {
             @mkdir($directory, 0777, true);

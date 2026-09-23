@@ -67,6 +67,38 @@ final class WorkspaceTest extends TestCase
         $this->assertSame(".commandments/sessions/{$key}/sins.md", $ws->relative('sins.md'));
     }
 
+    public function test_under_the_agent_journal_generated_state_lives_in_the_plugins_data_folder(): void
+    {
+        $this->installPlugin();
+        $ws = new Workspace($this->dir, 'abc');
+        $key = $ws->sessionKey();
+        $data = '.journal/plugin-data/code-commandments';
+
+        $this->assertSame($this->dir . "/{$data}/sessions/{$key}/sins.md", $ws->path('sins.md'));
+        $this->assertSame($this->dir . "/{$data}/.cache", $ws->cache('.cache'));
+        $this->assertSame("{$data}/sessions/{$key}/sins/sins.md", $ws->checklistRelative());
+        $this->assertSame($this->dir . '/.commandments/config.php', $ws->shared('config.php'), 'the project\'s own files stay in the project');
+    }
+
+    public function test_session_folders_written_before_the_journal_move_across_once(): void
+    {
+        $ws = new Workspace($this->dir, 'abc');
+        mkdir($ws->sessionDir(), 0777, true);
+        file_put_contents($ws->path('note'), 'kept');
+        $this->installPlugin();
+
+        $this->assertSame(1, $ws->relocateSessions());
+        $this->assertSame('kept', file_get_contents($ws->path('note')));
+        $this->assertDirectoryDoesNotExist($this->dir . '/.commandments/sessions');
+        $this->assertSame(0, $ws->relocateSessions(), 'nothing is left to move');
+    }
+
+    private function installPlugin(): void
+    {
+        mkdir($this->dir . '/.journal/plugins/code-commandments/.journal-plugin', 0777, true);
+        file_put_contents($this->dir . '/.journal/plugins/code-commandments/.journal-plugin/plugin.json', '{}');
+    }
+
     public function test_prune_sweeps_stale_siblings_but_spares_current_fresh_and_durable(): void
     {
         $ws = new Workspace($this->dir, 'current');

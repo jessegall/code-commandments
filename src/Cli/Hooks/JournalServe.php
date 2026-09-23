@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Support\FileTree;
+use JesseGall\CodeCommandments\Workspace;
 
 /**
  * `commandments journal-serve` — {@see JournalHook} kept running. The journal starts it as one of the
@@ -51,6 +52,7 @@ final class JournalServe implements Command
         }
 
         ConfigScribe::inProject($this->io->projectRoot())->removePlanExecution();
+        Workspace::at($this->io->projectRoot())->relocateSessions();
 
         if (file_exists($path)) {
             unlink($path);

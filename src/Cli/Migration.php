@@ -33,13 +33,13 @@ final class Migration
      */
     public function run(): array
     {
+        $relocated = $this->workspace->relocateSessions();
+        $done = $relocated === 0 ? [] : ["{$relocated} session folder(s) moved to " . substr($this->workspace->sessionsDir(), strlen($this->workspace->root()) + 1)];
         $stamp = $this->stamp();
 
         if ($stamp->read()->int('format') >= self::FORMAT) {
-            return [];
+            return $done;
         }
-
-        $done = [];
 
         foreach ($this->sessions() as $dir) {
             $done = [...$done, ...$this->session($dir)];
@@ -150,7 +150,7 @@ final class Migration
      */
     private function sessions(): array
     {
-        return glob($this->workspace->dir() . '/sessions/*', GLOB_ONLYDIR) ?: [];
+        return glob($this->workspace->sessionsDir() . '/*', GLOB_ONLYDIR) ?: [];
     }
 
     /**
@@ -159,7 +159,7 @@ final class Migration
      */
     private function stamp(): StateFile
     {
-        return new StateFile($this->workspace->shared('.state-format'), new Legend(
+        return new StateFile($this->workspace->cache('.state-format'), new Legend(
             'Which format code-commandments writes its session state files in. It exists so an upgrade '
                 . 'can convert what is already on disk exactly once.',
             ['format' => 'the state-file format this project has been brought up to'],
