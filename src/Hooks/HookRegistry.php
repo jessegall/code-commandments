@@ -47,7 +47,7 @@ final class HookRegistry
     /**
      * The plugin folder the agent journal installs this package into.
      */
-    private const string JOURNAL_PLUGIN = 'code-commandments';
+    public const string JOURNAL_PLUGIN = 'code-commandments';
 
     /**
      * The hooks that ship with the package; a consumer adds its own via `$config->hook(...)`.
