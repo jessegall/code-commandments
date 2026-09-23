@@ -415,7 +415,7 @@ final class Expr implements SyntaxExpression
     public function testsBlanknessOf(string $dotted): bool
     {
         if ($this->kind === ExprKind::Unary) {
-            return $this->get('op') === 'not' && $this->get('operand')->dottedName() === $dotted;
+            return $this->isNegation() && $this->get('operand')->dottedName() === $dotted;
         }
 
         if ($this->kind !== ExprKind::Compare || ! in_array($this->get('operators'), [['=='], ['!=']], true)) {
@@ -565,13 +565,7 @@ final class Expr implements SyntaxExpression
             return Option::none();
         }
 
-        [$left, $right] = [$this->get('left'), $this->get('right')];
-
-        if ($right->literalType() === LiteralType::None) {
-            return Option::some($left);
-        }
-
-        return $left->literalType() === LiteralType::None ? Option::some($right) : Option::none();
+        return self::besideNone($this->get('left'), $this->get('right'));
     }
 
     /**
@@ -588,7 +582,7 @@ final class Expr implements SyntaxExpression
      */
     public function testsFlag(string $name): bool
     {
-        $tested = $this->kind === ExprKind::Unary && $this->get('op') === 'not' ? $this->get('operand') : $this;
+        $tested = $this->isNegation() ? $this->get('operand') : $this;
 
         return $tested->kind === ExprKind::Name && $tested->get('name') === $name;
     }
@@ -784,6 +778,74 @@ final class Expr implements SyntaxExpression
     public function isFixedText(): bool
     {
         return $this->literalType() === LiteralType::String || $this->kind === ExprKind::FString;
+    }
+
+    /**
+     * Does this reach into $inner as though it were there — `inner.x`, `inner()`, `inner[k]`?
+     */
+    public function dereferences(self $inner): bool
+    {
+        if ($this->kind === ExprKind::Call) {
+            return $this->get('callee') === $inner;
+        }
+
+        return in_array($this->kind, [ExprKind::Attribute, ExprKind::Subscript], true) && $this->get('object') === $inner;
+    }
+
+    /**
+     * Does this admit that $inner may be missing — `inner is None`, `not inner`, `inner or d`, `inner and x`?
+     */
+    public function acknowledgesAbsenceOf(self $inner): bool
+    {
+        if ($this->noneTestedOperand()->isSomeAnd(static fn (self $operand): bool => $operand === $inner)) {
+            return true;
+        }
+
+        return $this->isNegation() || $this->isShortCircuit();
+    }
+
+    /**
+     * The attribute this reads off `self` — `total` in `self.total` — or empty for anything else.
+     */
+    public function selfAttribute(): string
+    {
+        return $this->isOwnAttributeRead() ? (string) $this->get('name') : '';
+    }
+
+    /**
+     * What this compares with `None` — `x` in `x is None` and `x is not None`.
+     *
+     * @return Option<self>
+     */
+    public function noneTestedOperand(): Option
+    {
+        if ($this->kind !== ExprKind::Compare || ! in_array($this->get('operators'), [['is'], ['is not']], true)) {
+            return Option::none();
+        }
+
+        return self::besideNone(...$this->get('operands'));
+    }
+
+    /**
+     * Whichever of $left and $right is not the literal `None`, when the other one is.
+     *
+     * @return Option<self>
+     */
+    private static function besideNone(self $left, self $right): Option
+    {
+        if ($right->literalType() === LiteralType::None) {
+            return Option::some($left);
+        }
+
+        return $left->literalType() === LiteralType::None ? Option::some($right) : Option::none();
+    }
+
+    /**
+     * Is this `not x`?
+     */
+    public function isNegation(): bool
+    {
+        return $this->kind === ExprKind::Unary && $this->get('op') === 'not';
     }
 
     /**

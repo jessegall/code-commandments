@@ -118,4 +118,26 @@ final class ClassDef extends Node
 
         return array_any($arguments, static fn (Expr $argument): bool => $argument->is(ExprKind::Keyword) && $argument->get('name') === 'init' && $argument->get('value')->get('value') === 'False');
     }
+
+    /**
+     * The attributes its methods ask `self` about being absent — `note` in `if self.note is None:`.
+     *
+     * @return list<string>
+     */
+    public function attributesTestedForAbsence(): array
+    {
+        $names = [];
+
+        foreach ($this->body->descendants() as $node) {
+            foreach ($node->expressions() as $expression) {
+                foreach ($expression->flatten() as $part) {
+                    $part->noneTestedOperand()->inspect(static function (Expr $operand) use (&$names): void {
+                        $names[] = $operand->selfAttribute();
+                    });
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter($names, static fn (string $name): bool => $name !== '')));
+    }
 }

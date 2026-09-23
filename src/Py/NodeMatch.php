@@ -805,4 +805,53 @@ class NodeMatch implements Located
 
         return $enclosing;
     }
+
+    /**
+     * Every group of two or more distinct own attributes this class assembles into ONE value together — the
+     * items of a tuple, list or set written out, or the arguments of a call that builds a class the codebase
+     * declares. A plain call only forwards them, so it is no group.
+     *
+     * @return list<list<string>>
+     */
+    public function selfAttributeGroupsAssembled(Codebase $codebase): array
+    {
+        if (! $this->node instanceof ClassDef) {
+            return [];
+        }
+
+        $groups = [];
+
+        foreach ($this->module->expressionsIn($this->node) as $expression) {
+            $names = array_values(array_unique(array_filter(
+                array_map(static fn (Expr $part): string => $part->selfAttribute(), $this->assembledParts($expression, $codebase)),
+                static fn (string $name): bool => $name !== '',
+            )));
+            sort($names);
+
+            if (count($names) >= 2) {
+                $groups[] = $names;
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
+     * The values $expression puts together into one — a literal collection's items, or the arguments of a
+     * call building a class $codebase declares — none for anything else.
+     *
+     * @return list<Expr>
+     */
+    private function assembledParts(Expr $expression, Codebase $codebase): array
+    {
+        if (in_array($expression->kind, [ExprKind::Tuple, ExprKind::List, ExprKind::Set], true)) {
+            return $expression->get('elements');
+        }
+
+        if (! $expression->isCall() || ! $codebase->declaresClass($expression->get('callee')->dottedName())) {
+            return [];
+        }
+
+        return array_map(static fn (Expr $argument): Expr => $argument->is(ExprKind::Keyword) ? $argument->get('value') : $argument, $expression->get('arguments'));
+    }
 }

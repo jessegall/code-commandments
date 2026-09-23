@@ -201,7 +201,7 @@ final class ModuleFile implements ParsedModule
     /**
      * Is $expression the whole condition of an `if`, a `while` or a conditional expression?
      */
-    private function isTested(Expr $expression): bool
+    public function isTested(Expr $expression): bool
     {
         $owner = $this->ownerOf($expression)->isSomeAnd(static fn (Node $node): bool => ($node instanceof IfStmt || $node instanceof WhileLoop) && $node->test === $expression);
 
@@ -283,6 +283,20 @@ final class ModuleFile implements ParsedModule
             $around = array_filter([$owner, ...$this->ancestorsOf($owner)], static fn (Node $node): bool => $node instanceof FunctionDef);
 
             return Option::fromNullable(array_values($around)[0] ?? null);
+        });
+    }
+
+    /**
+     * The class whose method $expression is written in — none outside every method.
+     *
+     * @return Option<ClassDef>
+     */
+    public function classOf(Expr $expression): Option
+    {
+        return $this->functionOf($expression)->andThen(function (FunctionDef $function): Option {
+            $class = $this->ancestorsOf($function)[1] ?? null;
+
+            return Option::fromNullable($class instanceof ClassDef ? $class : null);
         });
     }
 

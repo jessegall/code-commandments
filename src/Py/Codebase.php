@@ -49,6 +49,8 @@ final class Codebase implements ModuleCodebase
 
     private ?Types $types = null;
 
+    private ?AttributeFlow $attributeFlow = null;
+
     /**
      * @param  array<string, string>  $sources  path => source
      * @param  list<string>  $roots  what was scanned — the whole project mypy types, though only $sources are judged
@@ -133,6 +135,14 @@ final class Codebase implements ModuleCodebase
         }
 
         return $this->types ??= $this->bridge->tool()->mapOr(new Types(), fn (TypeBridge $bridge) => $bridge->read($this->roots, array_keys($this->sources)));
+    }
+
+    /**
+     * How this codebase reads the attributes of its classes — built once and kept.
+     */
+    public function attributeFlow(): AttributeFlow
+    {
+        return $this->attributeFlow ??= new AttributeFlow($this);
     }
 
     /**
