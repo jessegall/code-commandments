@@ -8,10 +8,13 @@ use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\NodeSpans;
 use JesseGall\CodeCommandments\ParsedModule;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
+use JesseGall\CodeCommandments\Py\Expr\ExprKind;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
+use JesseGall\CodeCommandments\Py\Node\IfStmt;
 use JesseGall\CodeCommandments\Py\Node\Module;
 use JesseGall\CodeCommandments\Py\Node\Node;
+use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\PhpTypes\Option;
 
@@ -27,6 +30,11 @@ final class ModuleFile implements ParsedModule
      * @var list<Node>|null
      */
     private ?array $nodes = null;
+
+    /**
+     * @var list<Expr>|null
+     */
+    private ?array $expressions = null;
 
     /**
      * @var array<int, true>|null  the object ids of every `def` written directly in a class body
@@ -76,15 +84,38 @@ final class ModuleFile implements ParsedModule
      */
     public function expressions(): array
     {
-        $expressions = [];
+        return $this->expressions ??= array_merge(...array_map(
+            static fn (Node $node): array => array_merge([], ...array_map(static fn (Expr $expression): array => $expression->flatten(), $node->expressions())),
+            $this->nodes(),
+        ));
+    }
 
-        foreach ($this->nodes() as $node) {
-            foreach ($node->expressions() as $expression) {
-                $expressions = [...$expressions, ...$expression->flatten()];
-            }
-        }
+    /**
+     * Does anything written inside $scope ask whether $dotted is blank — compare it to `''`, negate it,
+     * or test it bare as the condition of an `if`, a `while` or a conditional expression?
+     */
+    public function asksBlanknessOf(Node $scope, string $dotted): bool
+    {
+        return array_any($this->expressions(), fn (Expr $expression): bool => $this->isWithin($expression, $scope)
+            && ($expression->testsBlanknessOf($dotted) || ($expression->dottedName() === $dotted && $this->isTested($expression))));
+    }
 
-        return $expressions;
+    /**
+     * Is $expression the whole condition of an `if`, a `while` or a conditional expression?
+     */
+    private function isTested(Expr $expression): bool
+    {
+        $owner = $this->ownerOf($expression)->isSomeAnd(static fn (Node $node): bool => ($node instanceof IfStmt || $node instanceof WhileLoop) && $node->test === $expression);
+
+        return $owner || $this->wrapperOf($expression)->isSomeAnd(static fn (Expr $around): bool => $around->is(ExprKind::Conditional) && $around->get('test') === $expression);
+    }
+
+    /**
+     * Is $expression written somewhere inside $scope?
+     */
+    private function isWithin(Expr $expression, Node $scope): bool
+    {
+        return $this->ownerOf($expression)->isSomeAnd(fn (Node $owner): bool => $owner === $scope || in_array($scope, $this->ancestorsOf($owner), true));
     }
 
     /**

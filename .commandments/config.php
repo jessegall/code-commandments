@@ -224,6 +224,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Frontend\TypeScript\NearDuplicateFunction::class,
 
         // ----------[ Python ]----------
+        // Sins\Python\BlankStringDefault::class,
         // Sins\Python\CoalescedLoopSubject::class,
         // Sins\Python\ConditionalStatement::class,
         // Sins\Python\DataClump::class,

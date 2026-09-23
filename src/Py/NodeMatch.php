@@ -6,12 +6,14 @@ namespace JesseGall\CodeCommandments\Py;
 
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Node\AnnAssign;
 use JesseGall\CodeCommandments\Py\Node\Block;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\IfStmt;
 use JesseGall\CodeCommandments\Py\Node\Node;
+use JesseGall\CodeCommandments\Py\Node\Param;
 use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
@@ -161,6 +163,47 @@ class NodeMatch implements Located
         [$block, $loop] = [...$this->module->ancestorsOf($this->node), null, null];
 
         return ($loop instanceof ForLoop || $loop instanceof WhileLoop) && $loop->body === $block && count($block->body) === 1;
+    }
+
+    /**
+     * Is this a `str` declaration defaulting to the blank — a parameter `x: str = ''`, or a class field
+     * `x: str = ''` — a total type whose default says "nothing"?
+     */
+    public function isBlankStringDefault(): bool
+    {
+        return $this->blankDefault()->isSome();
+    }
+
+    /**
+     * Does the scope of this blank-defaulted declaration ask whether it is blank — the question that
+     * proves the blank is absence wearing a total type? A parameter is asked in its function, a field
+     * as `self.x` in its class.
+     */
+    public function defaultedNameTestedForBlankness(): bool
+    {
+        return $this->blankDefault()->isSomeAnd(fn (array $declared): bool => $this->module->asksBlanknessOf(...$declared));
+    }
+
+    /**
+     * The scope a blank-defaulted `str` declaration is read in, and the name it is read by there.
+     *
+     * @return Option<array{Node, string}>
+     */
+    private function blankDefault(): Option
+    {
+        $node = $this->node;
+        $ancestors = $this->module->ancestorsOf($node);
+
+        if ($node instanceof Param && $node->annotation?->dottedName() === 'str' && $node->default?->isBlankString() === true) {
+            return Option::some([$ancestors[0], $node->name]);
+        }
+
+        $inClass = ($ancestors[1] ?? null) instanceof ClassDef;
+        $field = $node instanceof AnnAssign && $inClass && $node->target->is(ExprKind::Name);
+
+        return $field && $node->annotation->dottedName() === 'str' && $node->value?->isBlankString() === true
+            ? Option::some([$ancestors[1], 'self.' . $node->target->get('name')])
+            : Option::none();
     }
 
     /**

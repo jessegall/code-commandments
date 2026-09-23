@@ -179,6 +179,32 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this the blank string written out — `''` or `""`?
+     */
+    public function isBlankString(): bool
+    {
+        return $this->literalType() === LiteralType::String && $this->get('value') === '';
+    }
+
+    /**
+     * Does this ask whether $dotted is blank — `x == ''`, `x != ''`, `not x`?
+     */
+    public function testsBlanknessOf(string $dotted): bool
+    {
+        if ($this->kind === ExprKind::Unary) {
+            return $this->get('op') === 'not' && $this->get('operand')->dottedName() === $dotted;
+        }
+
+        if ($this->kind !== ExprKind::Compare || ! in_array($this->get('operators'), [['=='], ['!=']], true)) {
+            return false;
+        }
+
+        [$left, $right] = $this->get('operands');
+
+        return ($left->dottedName() === $dotted && $right->isBlankString()) || ($right->dottedName() === $dotted && $left->isBlankString());
+    }
+
+    /**
      * Is this an `and` or an `or` — an operator that may leave its right side unrun?
      */
     public function isShortCircuit(): bool

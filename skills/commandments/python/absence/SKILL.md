@@ -42,44 +42,44 @@ place it lands.
 
 ## Rules
 
+- [ ] Say a value may be missing in its type; never default a `str` to `""` and read that blank back as "missing".
+      _`x: str | None = None`, asked `x is None` — so the blank is not a value every reader has to decode._
 - [ ] Never fill an argument with an invented `""`, `0` or `False` on absence — handle the missing case, or make the value certain where it is born.
       _Decide at the source: raise when the value must be there, or pass `None` on to a parameter that admits it. A real default (`or "EUR"`) is a choice, not an invention._
 
 ## Worked example
 
-### python-invented-default
+### python-blank-string-default
 
-`f(x or "")` — an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data
+`x: str = ""` standing in for absence — then asked `x == ""`, `not x` or `if x:` in its own scope
 
 ```py
 ----------[ Bad ]----------
 
-def send_receipt(order, mailer) -> None:
-    mailer.send(order.email or "", subject=f"Receipt {order.number}")
+def book(self, parcel: str, tracking: str = "") -> str:
+    if not tracking:
+        tracking = self.api.issue(parcel)
+    return self.api.book(parcel, tracking)
 
 ----------[ Good ]----------
 
-# in receipts.py
-class NoEmail(LookupError):
-    @classmethod
-    def on(cls, order) -> "NoEmail":
-        return cls(f"order {order.number} has no email to send the receipt to")
-
-# in receipts.py
-def mail_receipt(order, mailer) -> None:
-    if order.email is None:
-        raise NoEmail.on(order)
-    mailer.send(order.email, subject=f"Receipt {order.number}")
+def book_tracked(self, parcel: str, tracking: str | None = None) -> str:
+    if tracking is None:
+        tracking = self.api.issue(parcel)
+    return self.api.book(parcel, tracking)
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/absence` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-invented-default`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-blank-string-default`, `python-invented-default`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
