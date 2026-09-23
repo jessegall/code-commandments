@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Py\Expr;
 use JesseGall\CodeCommandments\ExpressionTree;
 use JesseGall\CodeCommandments\Positioned;
 use JesseGall\CodeCommandments\SyntaxExpression;
+use JesseGall\PhpTypes\Option;
 
 /**
  * A node of a parsed Python expression — a kind and the properties that kind carries, shaped like the
@@ -16,6 +17,11 @@ final class Expr implements SyntaxExpression
 {
     use ExpressionTree;
     use Positioned;
+
+    /**
+     * The annotations that spell a dict of any kind.
+     */
+    private const array DICT_TYPES = ['dict', 'Dict', 'typing.Dict', 'Mapping', 'typing.Mapping', 'MutableMapping', 'typing.MutableMapping', 'collections.abc.Mapping'];
 
     /**
      * @param  array<string, mixed>  $props
@@ -85,6 +91,35 @@ final class Expr implements SyntaxExpression
     public function isEmptyScalar(): bool
     {
         return $this->kind === ExprKind::Literal && $this->get('type')->isEmptyScalar((string) $this->get('value'));
+    }
+
+    /**
+     * Does this annotation spell a dict — `dict`, `dict[str, Any]`, `Mapping[str, object]` and the like?
+     */
+    public function isDictType(): bool
+    {
+        $named = $this->kind === ExprKind::Subscript ? $this->get('object') : $this;
+
+        return in_array($named->dottedName(), self::DICT_TYPES, true);
+    }
+
+    /**
+     * What this reads a string key out of — `row` in `row["sku"]` and `row.get("sku")`. None for any
+     * other expression.
+     *
+     * @return Option<self>
+     */
+    public function stringKeyBase(): Option
+    {
+        if ($this->kind === ExprKind::Subscript && $this->get('index')->literalType()?->isText() === true) {
+            return Option::some($this->get('object'));
+        }
+
+        $callee = $this->isCall() ? $this->get('callee') : null;
+        $key = $this->isCall() ? ($this->get('arguments')[0] ?? null) : null;
+        $readsKey = $callee?->is(ExprKind::Attribute) === true && $callee->get('name') === 'get' && $key?->literalType()?->isText() === true;
+
+        return $readsKey ? Option::some($callee->get('object')) : Option::none();
     }
 
     /**

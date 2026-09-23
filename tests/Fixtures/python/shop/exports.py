@@ -3,4 +3,5 @@
 
 def export_row(writer, payload: dict) -> None:
     # @sin InventedDefault
+    # @sin DictBag
     writer.writerow([str(payload.get("sku") or ""), payload["name"], payload["price"]])

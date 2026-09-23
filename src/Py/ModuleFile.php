@@ -43,6 +43,11 @@ final class ModuleFile implements ParsedModule
      */
     private ?array $wrappers = null;
 
+    /**
+     * @var array<int, Node>|null  the node holding each expression, by the expression's object id
+     */
+    private ?array $owners = null;
+
     private function __construct(
         public readonly Module $module,
         public readonly string $file,
@@ -114,6 +119,32 @@ final class ModuleFile implements ParsedModule
         $this->wrappers ??= $this->wrapperIds();
 
         return Option::fromNullable($this->wrappers[spl_object_id($expression)] ?? null);
+    }
+
+    /**
+     * The node that holds $expression — the statement it is part of.
+     *
+     * @return Option<Node>
+     */
+    public function ownerOf(Expr $expression): Option
+    {
+        $this->owners ??= $this->ownerIds();
+
+        return Option::fromNullable($this->owners[spl_object_id($expression)] ?? null);
+    }
+
+    /**
+     * The `def` $expression is written in — none at a module's or a class's top level.
+     *
+     * @return Option<FunctionDef>
+     */
+    public function functionOf(Expr $expression): Option
+    {
+        return $this->ownerOf($expression)->andThen(function (Node $owner): Option {
+            $around = array_filter([$owner, ...$this->ancestorsOf($owner)], static fn (Node $node): bool => $node instanceof FunctionDef);
+
+            return Option::fromNullable(array_values($around)[0] ?? null);
+        });
     }
 
     /**
@@ -228,5 +259,23 @@ final class ModuleFile implements ParsedModule
         }
 
         return $wrappers;
+    }
+
+    /**
+     * @return array<int, Node>
+     */
+    private function ownerIds(): array
+    {
+        $owners = [];
+
+        foreach ($this->nodes() as $node) {
+            foreach ($node->expressions() as $expression) {
+                foreach ($expression->flatten() as $part) {
+                    $owners[spl_object_id($part)] = $node;
+                }
+            }
+        }
+
+        return $owners;
     }
 }

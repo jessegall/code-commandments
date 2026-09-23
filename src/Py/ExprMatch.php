@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Py;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Span;
 
 /**
@@ -80,5 +81,28 @@ class ExprMatch implements Located
         }
 
         return $wrapper->isSomeAnd(fn (Expr $call): bool => $call->isCall() && $call->get('callee') !== $this->expr);
+    }
+
+    /**
+     * Is this a string-key read — `row["sku"]`, `row.get("sku")` — of a name the enclosing function
+     * annotates as a dict?
+     */
+    public function isDictKeyRead(): bool
+    {
+        $base = $this->expr->stringKeyBase()->filter(static fn (Expr $read): bool => $read->is(ExprKind::Name));
+
+        return $base->isSomeAnd(fn (Expr $name): bool => $this->module->functionOf($this->expr)->isSomeAnd(
+            static fn (FunctionDef $function): bool => $function->annotationOf((string) $name->get('name'))->isSomeAnd(
+                static fn (Expr $annotation): bool => $annotation->isDictType(),
+            ),
+        ));
+    }
+
+    /**
+     * Is this written in a named constructor — a `@classmethod` returning `cls(...)`?
+     */
+    public function isWithinNamedConstructor(): bool
+    {
+        return $this->module->functionOf($this->expr)->isSomeAnd(static fn (FunctionDef $function): bool => $function->isNamedConstructor());
     }
 }

@@ -50,6 +50,50 @@ waiting to be named. Give them one type and pass that.
   value you did not write in the source.
 - `**kwargs` forwarded unchanged, and the dict a serializer hands you right before you convert it.
 
+## Rules
+
+- [ ] Give a record a type — a frozen dataclass — instead of a dict read by string keys.
+      _Declare the keys as fields of a frozen dataclass, build it where the data enters (a `from_payload` classmethod), and take that type as the parameter._
+
+## Worked example
+
+### python-dict-bag
+
+A parameter typed as a dict read by string keys — `row["sku"]`, `row.get("quantity")` — a record nobody declared
+
+```py
+----------[ Bad ]----------
+
+def label(parcel: dict[str, Any]) -> str:
+    return f"{parcel['recipient']}\n{parcel['street']}\n{parcel['postcode']} {parcel['city']}"
+
+----------[ Good ]----------
+
+@dataclass(frozen=True)
+class Parcel:
+    recipient: str
+    street: str
+    postcode: str
+    city: str
+
+    @classmethod
+    def from_payload(cls, payload: dict[str, Any]) -> "Parcel":
+        return cls(payload["recipient"], payload["street"], payload["postcode"], payload["city"])
+
+    def label(self) -> str:
+        return f"{self.recipient}\n{self.street}\n{self.postcode} {self.city}"
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/value-objects` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-dict-bag`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/value-objects`](../../backend/value-objects/SKILL.md) — the same discipline on the PHP backend.

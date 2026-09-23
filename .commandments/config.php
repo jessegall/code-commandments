@@ -216,6 +216,7 @@ $disabledSins = function (Config $config): void {
 
         // ----------[ Python ]----------
         // Sins\Python\DeepNesting::class,
+        // Sins\Python\DictBag::class,
         // Sins\Python\DuplicateFunction::class,
         // Sins\Python\InventedDefault::class,
         // Sins\Python\LoopWrappedInIf::class,

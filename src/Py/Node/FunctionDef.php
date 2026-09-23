@@ -76,4 +76,20 @@ final class FunctionDef extends Node
 
         return Option::none();
     }
+
+    /**
+     * Is this a named constructor — a `@classmethod` that returns `cls(...)`? It is where loose data
+     * becomes the class, the one place reading that data by key belongs.
+     */
+    public function isNamedConstructor(): bool
+    {
+        $classmethod = array_any($this->decorators, static fn (Expr $decorator): bool => $decorator->dottedName() === 'classmethod');
+
+        return $classmethod && array_any(
+            $this->body->descendants(),
+            static fn (Node $node): bool => $node->returnedValue()->isSomeAnd(
+                static fn (Expr $value): bool => $value->isCall() && $value->get('callee')->dottedName() === 'cls',
+            ),
+        );
+    }
 }
