@@ -36,6 +36,8 @@ unit out, props in.
 - [ ] Pass the mid-object as a prop; don't reach deep into nested data from the template.
 - [ ] Extract a far-too-deeply-nested subtree into its own component.
 - [ ] Extract repeated identical markup into one component.
+- [ ] Extract markup that repeats with different data into one component, and pass what differs as props.
+      _Make the shared skeleton a component; each place that repeated it renders the component with its own data._
 - [ ] Don't thread a prop through a component that doesn't use it; provide/inject it, or give the child the data directly.
 - [ ] Never write a prop. For two-way state use `defineModel`; otherwise emit an `update:` event and let the parent own the value.
 
@@ -104,18 +106,18 @@ A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a
 </Dialog>
 ```
 
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=frontend/vue-components` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`, `prop-drilling`, `prop-mutation`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`, `near-duplicate-element`, `prop-drilling`, `prop-mutation`.
 - `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`. Review it with `--dry-run` first.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

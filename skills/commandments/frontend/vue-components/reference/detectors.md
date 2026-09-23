@@ -6,5 +6,6 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`deep-data-reach`** — A CLUSTER of elements in a sizeable template all reaching deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop — `DeepDataReachDetector`
 - **`deep-nested`** — Template markup nested far too deep — extract a subtree as its own component — `DeepNestedDetector`
 - **`duplicate-element`** — Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component — `DuplicateElementDetector`
+- **`near-duplicate-element`** — Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates — `NearDuplicateElementDetector`
 - **`prop-drilling`** — A prop forwarded through a chain of 2+ components, none of which read it — piped from parent to leaf through dead conduits — `PropDrillingDetector`
 - **`prop-mutation`** — A prop is WRITTEN — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op) — `PropMutationDetector`

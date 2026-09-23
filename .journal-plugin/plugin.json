@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.16.0",
+    "version": "1.17.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.102.0",
@@ -1700,6 +1700,19 @@
         "sin_duplicate-element": {
             "title": "DuplicateElement",
             "help": "Detects identical template blocks (structural comparison, blind to formatting); only substantial blocks and the largest duplicate are flagged.",
+            "type": "flag",
+            "default": "true",
+            "group": "frontend/vue-components",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_near-duplicate-element": {
+            "title": "NearDuplicateElement",
+            "help": "Template blocks with one SKELETON that bind different data — the same tags, attribute names and nesting, with the values and text left out — within a template, across components, or as two components' whole templates.",
             "type": "flag",
             "default": "true",
             "group": "frontend/vue-components",

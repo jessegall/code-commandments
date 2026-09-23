@@ -198,6 +198,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Frontend\IndexAsKey::class,
         // Sins\Frontend\LoopWithCondition::class,
         // Sins\Frontend\MirroredServerType::class,
+        // Sins\Frontend\NearDuplicateElement::class,
         // Sins\Frontend\PropDrilling::class,
         // Sins\Frontend\PropMutation::class,
         // Sins\Frontend\SwitchCase::class,

@@ -215,6 +215,106 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
 </template>
 ```
 
+### near-duplicate-element
+
+Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates
+
+```vue
+----------[ Bad ]----------
+
+<!-- in ShippingAddressPage.vue -->
+<section class="address-page">
+    <header class="address-head">
+        <h2>Shipping address</h2>
+        <p>Where we deliver your order.</p>
+    </header>
+    <form class="address-form">
+        <label class="address-field">Street<input v-model="shipping.street" name="shipping-street" /></label>
+        <label class="address-field">City<input v-model="shipping.city" name="shipping-city" /></label>
+    </form>
+</section>
+
+<!-- in StockTables.vue -->
+<tbody>
+    <tr class="loading-row">
+        <td colspan="4">
+            <div role="status" class="loading">
+                <span class="spinner" />
+                <span class="sr-only">Loading stock</span>
+                <small class="loading-hint">Counting the shelves</small>
+            </div>
+        </td>
+    </tr>
+</tbody>
+
+<!-- in StockTables.vue -->
+<tbody>
+    <tr class="loading-row">
+        <td colspan="6">
+            <div role="status" class="loading">
+                <span class="spinner" />
+                <span class="sr-only">Loading orders</span>
+                <small class="loading-hint">Fetching this week's orders</small>
+            </div>
+        </td>
+    </tr>
+</tbody>
+
+<!-- in BillingAddressPage.vue -->
+<section class="address-page billing">
+    <header class="address-head">
+        <h2>Billing address</h2>
+        <p>Where we send your invoice.</p>
+    </header>
+    <form class="address-form">
+        <label class="address-field">Street<input v-model="billing.street" name="billing-street" /></label>
+        <label class="address-field">Town<input v-model="billing.city" name="billing-town" /></label>
+    </form>
+</section>
+
+<!-- in DeliverySlots.vue -->
+<article class="slot">
+    <h3>Standard</h3>
+    <strong class="slot-price">{{ standard.price }}</strong>
+    <ul class="slot-perks">
+        <li>{{ standard.days }} working days</li>
+        <li>Tracked parcel</li>
+    </ul>
+    <button type="button" @click="emit('choose', 'standard')">Choose standard</button>
+</article>
+
+<!-- in DeliverySlots.vue -->
+<article class="slot slot-express">
+    <h3>Express</h3>
+    <strong class="slot-price">{{ express.price }}</strong>
+    <ul class="slot-perks">
+        <li>{{ express.days }} working day</li>
+        <li>Signed for on delivery</li>
+    </ul>
+    <button type="button" @click="emit('choose', 'express')">Choose express</button>
+</article>
+
+----------[ Good ]----------
+
+<!-- in DeliveryOptions.vue -->
+<div class="slots">
+    <DeliveryOptionCard :option="standard" />
+    <DeliveryOptionCard :option="express" />
+</div>
+
+<!-- in DeliveryOptionCard.vue -->
+<article class="slot">
+    <h3>{{ option.title }}</h3>
+    <strong class="slot-price">{{ option.price }}</strong>
+    <ul class="slot-perks">
+        <template v-for="perk in option.perks" :key="perk">
+            <li>{{ perk }}</li>
+        </template>
+    </ul>
+    <button type="button" @click="emit('choose', option.key)">Choose {{ option.title }}</button>
+</article>
+```
+
 ### prop-drilling
 
 A prop forwarded through a chain of 2+ components, none of which read it — piped from parent to leaf through dead conduits
