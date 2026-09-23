@@ -69,15 +69,24 @@ final class JournalServe implements Command
         $root = $this->io->projectRoot();
         $stamp = self::stamp($root);
 
-        while (self::stamp($root) === $stamp) {
+        while (true) {
             $connection = stream_socket_accept($server, -1);
 
-            if ($connection !== false) {
-                $this->answer($connection, $home);
+            if ($connection === false) {
+                continue;
             }
-        }
 
-        return 0;
+            // Code that changed under a running process is never run: half of it is loaded, the rest would
+            // be read fresh off the disk. Hang up unanswered — the caller runs the command itself — and end,
+            // so the journal starts this again on the new code.
+            if (self::stamp($root) !== $stamp) {
+                fclose($connection);
+
+                return 0;
+            }
+
+            $this->answer($connection, $home);
+        }
     }
 
     /**
@@ -104,6 +113,7 @@ final class JournalServe implements Command
      */
     private static function stamp(string $root): int
     {
+        clearstatcache(); // a long-lived process otherwise reads the first mtime it saw, for ever
         $installed = dirname((string) new \ReflectionClass(ClassLoader::class)->getFileName()) . '/installed.php';
         $custom = "{$root}/.commandments/custom";
         $rules = is_dir($custom) ? iterator_to_array(FileTree::filesIn($custom, 'php'), false) : [];

@@ -83,6 +83,23 @@ final class JournalServeTest extends TestCase
         $this->assertSame('{}', $this->ask(['event' => 'hook.PreToolUse', 'agent' => ['session' => 's', 'cwd' => $this->root], 'tool' => ['name' => 'Agent', 'command' => '']]));
     }
 
+    public function test_code_that_changed_under_it_is_never_run_it_hangs_up_and_ends(): void
+    {
+        $this->assertSame('{}', $this->ask(['event' => 'hook.PreToolUse', 'agent' => ['session' => 's', 'cwd' => $this->root], 'tool' => ['name' => 'Read']]));
+
+        @mkdir("{$this->root}/.commandments", 0777, true);
+        file_put_contents("{$this->root}/.commandments/config.php", "<?php\n\nreturn static function (): void {};\n");
+        touch("{$this->root}/.commandments/config.php", time() + 60);
+
+        $this->assertSame('', $this->ask(['event' => 'hook.PreToolUse', 'agent' => ['session' => 's', 'cwd' => $this->root], 'tool' => ['name' => 'Read']]), 'the caller falls back to running the command, on the new code');
+
+        for ($waited = 0; proc_get_status($this->service)['running'] && $waited < 100; $waited++) {
+            usleep(50_000);
+        }
+
+        $this->assertFalse(proc_get_status($this->service)['running'], 'the journal starts it again, on the new code');
+    }
+
     public function test_a_line_it_cannot_read_is_answered_and_the_next_one_still_is(): void
     {
         $this->assertSame('{}', $this->ask('not json at all'));
