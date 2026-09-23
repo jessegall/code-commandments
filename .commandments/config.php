@@ -304,6 +304,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\UnnamedVocabularyLiteral::class,
 
         // ----------[ C# ]----------
+        // Sins\CSharp\BlankStringDefault::class,
         // Sins\CSharp\DataClump::class,
         // Sins\CSharp\DeepNesting::class,
         // Sins\CSharp\DictionaryBag::class,

@@ -49,6 +49,8 @@ place it lands.
 
 ## Rules
 
+- [ ] If a value can be missing, say so in its type with `string?`; don't default it to `""` and then check for the blank.
+      _Make it `string? note = null` and check `note is null`, so nobody has to know that `""` means "not given"._
 - [ ] Never fill a value with an invented `""`, `0` or `false` on absence — handle the missing case, or make the value certain where it is born.
       _Decide at the source: throw when the value must be there, or pass the absence on to a parameter typed to admit it (`T?`, `TryGetValue`). A real default (`?? "EUR"`) is a choice, not an invention._
 - [ ] Never hush a nullable warning with `!` — decide the missing case where the value is born, or handle it here.
@@ -56,42 +58,47 @@ place it lands.
 
 ## Worked example
 
-### csharp-invented-default
+### csharp-blank-string-default
 
-`F(x ?? "")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data
+a `string` parameter or property defaulted to `""` and then checked with `== ""` or `string.IsNullOrEmpty` — the blank is being used to mean "missing"
 
 ```cs
 ----------[ Bad ]----------
 
-public void Send(string? email, string body)
+public static string Of(string heading, string strapline = "")
 {
-    mail(email ?? "", body);
+    if (strapline == "")
+    {
+        return heading;
+    }
+
+    return $"{heading} — {strapline}";
 }
 
 ----------[ Good ]----------
 
-public void SendIfAddressed(string? email, string body)
+public static string Lined(string heading, string? strapline = null)
 {
-    if (email is null)
+    if (strapline is null)
     {
-        return;
+        return heading;
     }
 
-    mail(email, body);
+    return $"{heading} — {strapline}";
 }
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/absence` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-invented-default`, `csharp-null-forgiven`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-blank-string-default`, `csharp-invented-default`, `csharp-null-forgiven`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

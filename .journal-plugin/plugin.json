@@ -1657,6 +1657,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-blank-string-default": {
+            "title": "BlankStringDefault",
+            "help": "A `string` defaulted to `\"\"` and then asked whether it is blank — absence spelled as a blank in a type that says the value is always there.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/absence",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-invented-default": {
             "title": "InventedDefault",
             "help": "A missing value papered over with an invented `\"\"`, `0` or `false` — the C# twin of Python's invented-default rule, in its hardened shape.",

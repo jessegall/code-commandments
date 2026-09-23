@@ -2,6 +2,36 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### csharp-blank-string-default
+
+a `string` parameter or property defaulted to `""` and then checked with `== ""` or `string.IsNullOrEmpty` — the blank is being used to mean "missing"
+
+```cs
+----------[ Bad ]----------
+
+public static string Of(string heading, string strapline = "")
+{
+    if (strapline == "")
+    {
+        return heading;
+    }
+
+    return $"{heading} — {strapline}";
+}
+
+----------[ Good ]----------
+
+public static string Lined(string heading, string? strapline = null)
+{
+    if (strapline is null)
+    {
+        return heading;
+    }
+
+    return $"{heading} — {strapline}";
+}
+```
+
 ### csharp-invented-default
 
 `F(x ?? "")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data

@@ -55,6 +55,11 @@ final class Node implements SyntaxNode, SyntaxExpression
     ];
 
     /**
+     * The string type, by the name the compiler gives it.
+     */
+    private const string STRING = 'global::System.String';
+
+    /**
      * The exceptions that name no failure a caller could catch by meaning.
      */
     private const array GENERIC_EXCEPTIONS = ['global::System.Exception', 'global::System.SystemException', 'global::System.ApplicationException', 'global::System.InvalidOperationException'];
@@ -217,6 +222,68 @@ final class Node implements SyntaxNode, SyntaxExpression
             $this->is('SimpleMemberAccessExpression') => $this->type?->name === 'global::System.String' && $this->children[1]->name === 'Empty',
             default => false,
         };
+    }
+
+    /**
+     * Is this a parameter or property defaulted to a blank string — `string note = ""`, `= string.Empty`?
+     */
+    public function isBlankStringDefault(): bool
+    {
+        return $this->is('Parameter', 'PropertyDeclaration') && array_any(
+            $this->children,
+            static fn (self $child): bool => $child->is('EqualsValueClause') && ($child->children[0] ?? null)?->isBlankString() === true,
+        );
+    }
+
+    /**
+     * Does this expression ask whether $name is blank — `name == ""`, `name != string.Empty`, `name is ""`,
+     * `name.Length == 0`, or `string.IsNullOrEmpty(name)` and its whitespace twin?
+     */
+    public function testsBlanknessOf(string $name): bool
+    {
+        if ($this->is('InvocationExpression')) {
+            return $this->target?->type === self::STRING
+                && in_array($this->target->name, ['IsNullOrEmpty', 'IsNullOrWhiteSpace'], true)
+                && array_any($this->arguments(), static fn (self $argument): bool => $argument->names($name));
+        }
+
+        if ($this->is('IsPatternExpression')) {
+            return $this->children[0]->names($name) && ($this->children[1]->children[0] ?? null)?->isBlankString() === true;
+        }
+
+        if (! $this->is('EqualsExpression', 'NotEqualsExpression')) {
+            return false;
+        }
+
+        [$left, $right] = $this->children;
+
+        return ($left->names($name) && $right->isBlankString()) || ($right->names($name) && $left->isBlankString())
+            || ($left->isLengthOf($name) && $right->text === '0') || ($right->isLengthOf($name) && $left->text === '0');
+    }
+
+    /**
+     * Is this the blank string — `""` or `string.Empty`?
+     */
+    private function isBlankString(): bool
+    {
+        return $this->type?->name === self::STRING && $this->isEmptyScalar();
+    }
+
+    /**
+     * Does this expression read $name — the bare name, or `this.` it?
+     */
+    private function names(string $name): bool
+    {
+        return ($this->is('IdentifierName') && $this->name === $name)
+            || ($this->is('SimpleMemberAccessExpression') && $this->children[0]->is('ThisExpression') && $this->children[1]->name === $name);
+    }
+
+    /**
+     * Is this `$name.Length`?
+     */
+    private function isLengthOf(string $name): bool
+    {
+        return $this->is('SimpleMemberAccessExpression') && $this->children[0]->names($name) && $this->children[1]->name === 'Length';
     }
 
     /**

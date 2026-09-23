@@ -284,6 +284,24 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this blank-defaulted parameter or property asked, in its own scope, whether it is blank — the
+     * question that proves the blank stands in for absence? A parameter is asked in its function, a
+     * property in its type.
+     */
+    public function defaultedNameTestedForBlankness(): bool
+    {
+        $name = (string) $this->node->name;
+        $scope = $this->node->is('Parameter')
+            ? Option::fromNullable(array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->isFunction()))[0] ?? null)
+            : $this->enclosingType();
+
+        return $scope->isSomeAnd(static fn (Node $owner): bool => array_any(
+            array_merge([], ...array_map(static fn (Node $expression): array => $expression->flatten(), $owner->outermostExpressions())),
+            static fn (Node $expression): bool => $expression->testsBlanknessOf($name),
+        ));
+    }
+
+    /**
      * What this node belongs to — the type it is declared in, or its file for a top-level function —
      * named by where it is, so two of them compare.
      */
