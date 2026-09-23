@@ -10,8 +10,8 @@ use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The nudge fires ONCE per batch (keyed on the changed-file set) when judged files are touched, then
- * stays silent — across a commit too — and says nothing in a clean tree or outside a repo. The
+ * The nudge fires ONCE per batch — the work on top of one commit — when judged files changed since it,
+ * then stays silent until the next commit, and says nothing in a clean tree or outside a repo. The
  * PreToolUse path only speaks for a real `git commit`. Proven against a real temp git repo, since the
  * whole point is its reading of git state.
  */
@@ -109,14 +109,28 @@ final class JudgeReminderTest extends TestCase
         $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'no second nudge for the same set across a commit');
     }
 
-    public function test_touching_a_new_file_earns_a_fresh_nudge(): void
+    public function test_touching_a_new_file_in_the_same_batch_stays_silent(): void
     {
         file_put_contents($this->repo . '/Service.php', "<?php\n");
         $this->assertNotNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)));
-        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'silent for the same set');
 
         file_put_contents($this->repo . '/Other.vue', "<template></template>\n");
-        $this->assertNotNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'a NEW file grows the set — nudge again');
+        $this->assertNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)), 'one nudge per batch, however many files it grows by');
+    }
+
+    public function test_a_commit_starts_a_new_batch_counting_only_what_changed_since(): void
+    {
+        file_put_contents($this->repo . '/Service.php', "<?php\n");
+        file_put_contents($this->repo . '/Other.php', "<?php\n");
+        $this->assertNotNull((new JudgeReminder)->reminder(new HookEvent([], $this->repo)));
+        $this->git('add Service.php');
+        $this->git('commit -q -m part');
+
+        file_put_contents($this->repo . '/Third.php', "<?php\n");
+        $again = (new JudgeReminder)->reminder(new HookEvent([], $this->repo));
+
+        $this->assertNotNull($again, 'the next commit opened a new batch');
+        $this->assertStringContainsString('changed 2 judged files since the last commit', $again, 'the committed file is not counted');
     }
 
     public function test_a_clean_tree_clears_the_marker_so_the_next_batch_starts_over(): void

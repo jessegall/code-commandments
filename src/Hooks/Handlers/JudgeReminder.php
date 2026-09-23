@@ -19,24 +19,19 @@ use JesseGall\CodeCommandments\Workspace;
 final class JudgeReminder extends Hook implements Discipline
 {
     /**
-     * The base ref a `--branch` scope compares against — the same default as {@see Scope\Scope}.
-     */
-    private const string BASE = 'main';
-
-    /**
-     * The marker section separator: the reminded file set sits above it, the explanation below.
+     * The marker section separator: the commit last reminded at sits above it, the explanation below.
      */
     private const string SEPARATOR = '-----';
 
     /**
-     * What the marker file explains about itself, below the set (the {@see stored} read stops at the separator).
+     * What the marker file explains about itself, below the commit (the {@see stored} read stops at the separator).
      */
     private const string EXPLANATION = <<<'TXT'
         Batch marker for the code-commandments judge reminder (`commandments judge-reminder`, wired as
-        Stop + PreToolUse hooks). The lines above the separator are the changed-file set it last
-        reminded at; the hook nudges once per set to run `judge`, staying silent until a new file is
-        touched, and clears itself when the tree is clean. Safe to delete — it regenerates, at most
-        costing you one extra nudge.
+        Stop + PreToolUse hooks). The line above the separator is the commit it last reminded at: a
+        batch is the work on top of one commit, so it nudges once per batch to run `judge`, silent
+        until the next commit, and clears itself when the tree is clean. Safe to delete — it
+        regenerates, at most costing you one extra nudge.
         TXT;
 
     public function summary(): string
@@ -78,9 +73,9 @@ final class JudgeReminder extends Hook implements Discipline
     }
 
     /**
-     * The nudge to surface, or null to stay silent. Fires only when judged files (`.php`/`.vue`) are
-     * touched AND this batch's set hasn't been reminded yet — deciding to fire records the set, so a
-     * subsequent call with no new files stays quiet. A clean tree clears the marker. Pure of I/O
+     * The nudge to surface, or null to stay silent. Fires only when judged files changed since HEAD AND
+     * this batch — the work on top of that commit — has not been reminded yet; deciding to fire records
+     * the commit, so every later call stays quiet until the next one. A clean tree clears the marker. Pure of I/O
      * beyond the git reads and the marker it owns, so the once-per-batch behaviour is directly testable.
      */
     public function reminder(HookEvent $event, string $lead = 'before you wrap up'): ?string
@@ -101,12 +96,8 @@ final class JudgeReminder extends Hook implements Discipline
             return $open;
         }
 
-        // Prefer --branch when there's committed branch work beyond the working tree (its set is a
-        // superset of the working-tree set), so the nudge covers the whole branch; else --changes.
-        $working = $this->git()->changedVsHead($root);
-        $branch = $this->git()->changedVsBranch($root, self::BASE) ?? $working;
-        $useBranch = count($branch) > count($working);
-        $files = array_keys($useBranch ? $branch : $working);
+        // The batch is what changed on top of HEAD — work committed long ago on this branch is not in it.
+        $files = array_keys($this->git()->changedVsHead($root));
 
         if ($files === []) {
             $this->forget($ws); // Clean tree — the next batch starts fresh.
@@ -114,13 +105,15 @@ final class JudgeReminder extends Hook implements Discipline
             return null;
         }
 
-        if ($this->alreadyReminded($ws, $files)) {
-            return null; // No new files since the last nudge this batch.
+        $head = $this->git()->head($root);
+
+        if ($this->stored($ws) === $head) {
+            return null; // This batch was reminded; a new file does not make it a new batch.
         }
 
-        $this->remember($ws, $files);
+        $this->remember($ws, $head);
 
-        return $this->reason(count($files), $useBranch, $lead);
+        return $this->reason(count($files), $lead);
     }
 
     /**
@@ -159,44 +152,23 @@ final class JudgeReminder extends Hook implements Discipline
             . 'you are intentionally pausing here, just say so and carry on.';
     }
 
-    private function reason(int $count, bool $useBranch, string $lead): string
+    private function reason(int $count, string $lead): string
     {
         $noun = $count === 1 ? 'file' : 'files';
-        $command = $useBranch
-            ? 'vendor/bin/commandments judge --branch'
-            : 'vendor/bin/commandments judge --changes';
 
-        return "Code Commandments — {$lead}: you've touched {$count} judged {$noun} (.php/.vue) this "
-            . "batch. Consider running `{$command}` to confirm they conform, and fix any sin at its "
-            . 'SOURCE (don\'t launder a finding with a default/cast/null-check). This is a one-time '
-            . 'nudge for this batch — if you\'ve already judged, or these changes aren\'t worth a '
-            . 'scan, just say so and carry on.';
+        return "Code Commandments — {$lead}: you've changed {$count} judged {$noun} since the last commit. "
+            . 'Consider running `vendor/bin/commandments judge --changes` to confirm they conform, and fix any '
+            . 'sin at its SOURCE (don\'t launder a finding with a default/cast/null-check). This is a one-time '
+            . 'nudge for this batch — if you\'ve already judged, or these changes aren\'t worth a scan, just say '
+            . 'so and carry on.';
     }
 
-    /**
-     * Has this batch's set already been reminded — i.e. is the current set a subset of the stored one?
-     * A subset means no new files were touched since, so there's nothing fresh to nudge about.
-     *
-     * @param  list<string>  $current
-     */
-    private function alreadyReminded(Workspace $ws, array $current): bool
+    private function remember(Workspace $ws, string $head): void
     {
-        $stored = $this->stored($ws);
-
-        return $stored !== [] && array_diff($current, $stored) === [];
-    }
-
-    /**
-     * @param  list<string>  $files
-     */
-    private function remember(Workspace $ws, array $files): void
-    {
-        sort($files);
-
         $file = self::markerFile($ws);
 
         @mkdir(dirname($file), 0777, true);
-        @file_put_contents($file, implode("\n", $files) . "\n" . self::SEPARATOR . "\n" . self::EXPLANATION . "\n");
+        @file_put_contents($file, $head . "\n" . self::SEPARATOR . "\n" . self::EXPLANATION . "\n");
     }
 
     private function forget(Workspace $ws): void
@@ -205,31 +177,13 @@ final class JudgeReminder extends Hook implements Discipline
     }
 
     /**
-     * The file set recorded on the marker — the lines above the {@see SEPARATOR}.
-     *
-     * @return list<string>
+     * The commit recorded on the marker — the line above the {@see SEPARATOR} — empty when there is none.
      */
-    private function stored(Workspace $ws): array
+    private function stored(Workspace $ws): string
     {
         $file = self::markerFile($ws);
 
-        if (! is_file($file)) {
-            return [];
-        }
-
-        $paths = [];
-
-        foreach (preg_split('/\R/', (string) file_get_contents($file)) ?: [] as $line) {
-            if ($line === self::SEPARATOR) {
-                break;
-            }
-
-            if ($line !== '') {
-                $paths[] = $line;
-            }
-        }
-
-        return $paths;
+        return is_file($file) ? trim(explode(self::SEPARATOR, (string) file_get_contents($file))[0]) : '';
     }
 
     private static function markerFile(Workspace $ws): string
