@@ -295,6 +295,11 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
             json.WriteBoolean("forgivesNull", true);
         }
 
+        if (node is ExpressionSyntax step && step.Parent is ForStatementSyntax loop && loop.Incrementors.Contains(step))
+        {
+            json.WriteBoolean("step", true);
+        }
+
         if (node is ExpressionSyntax value && IsConstant(value, model))
         {
             json.WriteBoolean("constant", true);

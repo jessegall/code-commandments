@@ -93,6 +93,7 @@ final class Node implements SyntaxNode, SyntaxExpression
         public readonly bool $inherited,
         public readonly bool $constant,
         public readonly bool $forgivesNull,
+        public readonly bool $step,
     ) {}
 
     /**
@@ -116,6 +117,7 @@ final class Node implements SyntaxNode, SyntaxExpression
             inherited: array_key_exists('inherited', $written),
             constant: array_key_exists('constant', $written),
             forgivesNull: array_key_exists('forgivesNull', $written),
+            step: array_key_exists('step', $written),
         )->locatedAt((int) $written['start'], (int) $written['end']);
     }
 
@@ -522,6 +524,54 @@ final class Node implements SyntaxNode, SyntaxExpression
     public function isLoop(): bool
     {
         return $this->is('ForStatement', 'ForEachStatement', 'ForEachVariableStatement', 'WhileStatement', 'DoStatement');
+    }
+
+    /**
+     * Is this a `for` whose step moves no counter — it assigns the next item instead, as in
+     * `for (var link = head; link != null; link = link.Next)`? A `for` with no step at all is not one.
+     */
+    public function isNonCountingFor(): bool
+    {
+        $steps = array_filter($this->children, static fn (self $child): bool => $child->step);
+
+        return $this->is('ForStatement')
+            && $steps !== []
+            && ! array_any($steps, static fn (self $step): bool => $step->advancesACounter());
+    }
+
+    /**
+     * Does this expression move a counter along — `i++`, `++i`, `i--`, `--i`, `i += n`, `i -= n`, an
+     * assignment of one of those (`row[i] = i++`), or a step by a fixed amount (`date = date.PlusDays(1)`)?
+     */
+    public function advancesACounter(): bool
+    {
+        if ($this->is('PostIncrementExpression', 'PreIncrementExpression', 'PostDecrementExpression', 'PreDecrementExpression', 'AddAssignmentExpression', 'SubtractAssignmentExpression')) {
+            return true;
+        }
+
+        if (! $this->is('SimpleAssignmentExpression')) {
+            return false;
+        }
+
+        [$target, $value] = $this->children;
+
+        return $value->advancesACounter() || $value->isFixedStepFrom($target);
+    }
+
+    /**
+     * Is this a call on $start that is handed only constants — `date.PlusDays(1)`, the next value a fixed
+     * distance on from $start?
+     */
+    private function isFixedStepFrom(self $start): bool
+    {
+        $arguments = $this->arguments();
+
+        return $this->isCall()
+            && $start->is('IdentifierName')
+            && $this->children[0]->is('SimpleMemberAccessExpression')
+            && $this->children[0]->children[0]->names((string) $start->name)
+            && $arguments !== []
+            && array_all($arguments, static fn (self $argument): bool => $argument->isConstant());
     }
 
     /**

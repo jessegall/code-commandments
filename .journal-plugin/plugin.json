@@ -1865,6 +1865,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-non-counting-for": {
+            "title": "NonCountingFor",
+            "help": "A `for` whose step assigns the next item rather than moving a counter — the C# twin of the PHP non-counting-for rule.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/flow",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-subject-ladder": {
             "title": "SubjectLadder",
             "help": "An `if`/`else if` ladder comparing one subject with constant after constant — the C# twin of the backend's and Python's ladder rules.",

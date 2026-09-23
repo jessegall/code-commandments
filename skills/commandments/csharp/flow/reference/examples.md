@@ -169,6 +169,43 @@ public static string Classed(int grams) => grams switch
 };
 ```
 
+### csharp-non-counting-for
+
+a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count
+
+```cs
+----------[ Bad ]----------
+
+public static List<string> Approvers(Approval first)
+{
+    var names = new List<string>();
+
+    for (Approval? step = first; step != null; step = step.Next)
+    {
+        names.Add(step.Approver);
+    }
+
+    return names;
+}
+
+----------[ Good ]----------
+
+// in Approvals.cs
+public IEnumerable<Approval> Chain()
+{
+    Approval? current = this;
+
+    while (current != null)
+    {
+        yield return current;
+        current = current.Next;
+    }
+}
+
+// in Approvals.cs
+public static List<string> Signed(Approval first) => first.Chain().Select(step => step.Approver).ToList();
+```
+
 ### redundant-csharp-else
 
 An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing
