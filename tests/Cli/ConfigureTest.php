@@ -51,12 +51,12 @@ final class ConfigureTest extends TestCase
 
     public function test_disable_a_whole_skill_by_slug(): void
     {
-        $this->assertSame(0, $this->exec('disable', 'value-objects'));
+        $this->assertSame(0, $this->exec('disable', 'backend/value-objects'));
 
         $config = (string) file_get_contents($this->dir . '/.commandments/config.php');
         $this->assertStringContainsString('\\' . ValueObjects::class . '::class', $config);
 
-        $this->assertSame(0, $this->exec('enable', 'value-objects'));
+        $this->assertSame(0, $this->exec('enable', 'backend/value-objects'));
         $config = (string) file_get_contents($this->dir . '/.commandments/config.php');
         $this->assertStringNotContainsString(ValueObjects::class, $config, 'enable removed the skill again');
     }
@@ -70,6 +70,11 @@ final class ConfigureTest extends TestCase
     public function test_missing_argument_errors(): void
     {
         $this->assertSame(2, $this->exec('disable'));
+    }
+
+    public function test_a_name_two_engines_share_is_refused_with_both_named(): void
+    {
+        $this->assertSame(2, $this->exec('disable', 'value-objects'), 'backend/value-objects and python/value-objects both answer to it');
     }
 
     private function exec(string $action, string ...$args): int

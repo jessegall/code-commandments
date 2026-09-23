@@ -1,6 +1,6 @@
 ---
 name: commandments-python-enums
-description: "A fixed set of values in Python — statuses, kinds, modes — written as string literals compared at call sites (`if status == \"paid\"`, `kind in (\"box\", \"pallet\")`), as module constants, or dispatched on with a `match` over strings. Read this BEFORE comparing a value against a literal it is one of a handful of, and when a Python dispatch finding points here."
+description: "A fixed set of values in Python — statuses, kinds, modes — written as string literals compared at call sites (`if status == \"paid\"`, `kind in (\"box\", \"pallet\")`), as module constants, or dispatched on with a `match` over strings. Read this BEFORE comparing a value against a literal it is one of a handful of."
 ---
 
 # Python enums — seal the set, put the knowledge on the case

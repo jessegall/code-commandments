@@ -47,13 +47,22 @@ final class Configure implements Command
         }
 
         $query = $named->unwrap();
-        $target = $this->resolve($query);
+        $matches = $this->matching($query);
 
-        if ($target === null) {
+        if ($matches === []) {
             fwrite(STDERR, "No sin or skill matches \"{$query}\". Run `commandments judge --list` to see them.\n");
 
             return 2;
         }
+
+        if (count($matches) > 1) {
+            $names = implode(', ', array_map(static fn (Sin|Skill $match): string => $match instanceof Skill ? $match->slug : $match->name(), $matches));
+            fwrite(STDERR, "\"{$query}\" matches more than one: {$names}. Name the one you mean.\n");
+
+            return 2;
+        }
+
+        $target = $matches[0];
 
         $file = ConfigFile::inProject();
         $changed = $action === 'enable' ? $file->enable($target::class) : $file->disable($target::class);
@@ -77,28 +86,25 @@ final class Configure implements Command
     }
 
     /**
-     * The sin or skill for a query — an EXACT id/slug first, then a unique lenient match across
-     * both; null when nothing matches or the query is ambiguous.
+     * The sin or skill $query names — exactly, or leniently when nothing is named exactly. More than one
+     * when a lenient name is shared, as a skill of one discipline is across engines.
+     *
+     * @return list<Sin|Skill>
      */
-    private function resolve(string $query): Sin|Skill|null
+    private function matching(string $query): array
     {
-        foreach (Catalog::every() as $sin) {
-            if ($sin->name() === $query) {
-                return $sin;
-            }
-        }
-
-        foreach (Skills::all() as $skill) {
-            if ($skill->slug === $query) {
-                return $skill;
-            }
-        }
-
-        $matches = [
-            ...array_filter(Catalog::every(), static fn (Sin $sin): bool => $sin->matches($query)),
-            ...array_filter(Skills::all(), static fn (Skill $skill): bool => $skill->matches($query)),
+        $exact = [
+            ...array_filter(Catalog::every(), static fn (Sin $sin): bool => $sin->name() === $query),
+            ...array_filter(Skills::all(), static fn (Skill $skill): bool => $skill->slug === $query),
         ];
 
-        return count($matches) === 1 ? array_values($matches)[0] : null;
+        if ($exact !== []) {
+            return array_values($exact);
+        }
+
+        return array_values([
+            ...array_filter(Catalog::every(), static fn (Sin $sin): bool => $sin->matches($query)),
+            ...array_filter(Skills::all(), static fn (Skill $skill): bool => $skill->matches($query)),
+        ]);
     }
 }
