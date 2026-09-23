@@ -68,6 +68,14 @@ final class Views
     }
 
     /**
+     * How many files this engine's codebase holds, whatever the scope reports on.
+     */
+    public function fileCount(): int
+    {
+        return $this->whole->fileCount();
+    }
+
+    /**
      * The codebase $detector is judged against — the scoped view when it reads no further than the
      * file in hand, the whole tree when it does.
      *

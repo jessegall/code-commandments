@@ -80,6 +80,11 @@ final class Codebase implements ModuleCodebase
         return new self(array_filter($this->sources, static fn (string $file): bool => isset($wanted[Path::resolved($file)]), ARRAY_FILTER_USE_KEY));
     }
 
+    public function fileCount(): int
+    {
+        return count($this->modules());
+    }
+
     /**
      * @return list<ModuleFile>
      */

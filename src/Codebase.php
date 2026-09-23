@@ -23,4 +23,9 @@ interface Codebase
      * which rules those are. A path the parse never held simply isn't there.
      */
     public function focusedOn(string ...$paths): static;
+
+    /**
+     * How many files the parse holds — what a clean run says it judged.
+     */
+    public function fileCount(): int;
 }

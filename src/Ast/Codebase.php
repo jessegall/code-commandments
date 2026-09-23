@@ -633,6 +633,11 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
         return (new Query($this, static fn (Node $node) => true))->where($check);
     }
 
+    public function fileCount(): int
+    {
+        return count($this->files);
+    }
+
     /**
      * The parsed files the queries run over.
      *

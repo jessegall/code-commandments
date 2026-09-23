@@ -435,6 +435,11 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
         return new ExprQuery(fn () => $this->tsExpressions(), $select);
     }
 
+    public function fileCount(): int
+    {
+        return count($this->components()) + count($this->modules());
+    }
+
     /**
      * Every parsed module — a standalone `.ts` file, and every component's `<script>` block.
      *
