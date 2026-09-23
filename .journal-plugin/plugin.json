@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.30.0",
+    "version": "1.31.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.119.0",
@@ -2050,6 +2050,19 @@
             ],
             "detail": true
         },
+        "sin_python-flag-argument": {
+            "title": "FlagArgument",
+            "help": "A function that is nothing but a choice on one of its own parameters — the twin of the backend's FlagArgumentDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/behaviour-per-method",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-member-after-method": {
             "title": "MemberAfterMethod",
             "help": "Class-level state written below a method — the twin of the backend's MemberAfterMethodDetector.",
@@ -2342,6 +2355,97 @@
             "type": "flag",
             "default": "true",
             "group": "python/flow",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-bare-state-predicate": {
+            "title": "BareStatePredicate",
+            "help": "A `bool` about the receiver named as a bare verb — the twin of the backend's BareStatePredicateDetector, over the same verb lexicon, read in snake_case.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/method-mood",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-narrated-command": {
+            "title": "NarratedCommand",
+            "help": "A command named in the third person — `def hides(self) -> None` — the twin of the backend's NarratedCommandDetector, over the same verb lexicon, read in snake_case.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/method-mood",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-repeated-guard": {
+            "title": "RepeatedGuard",
+            "help": "One compound condition written in two places — the twin of the backend's RepeatedGuardDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/repeated-call-helper",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-repeated-named-call": {
+            "title": "RepeatedNamedCall",
+            "help": "One `**changes` function called with the same keyword, built the same way, at site after site — the twin of the backend's RepeatedNamedCallDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/repeated-call-helper",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-repeated-type-guard": {
+            "title": "RepeatedTypeGuard",
+            "help": "One `isinstance` narrowing written in two places — the twin of the backend's RepeatedTypeGuardDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/repeated-call-helper",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-type-switch": {
+            "title": "TypeSwitch",
+            "help": "An `isinstance` ladder over the codebase's own classes — the twin of the backend's TypeSwitchDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/tell-dont-ask",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-assembled-template": {
+            "title": "AssembledTemplate",
+            "help": "A template assembled from line fragments — the twin of the backend's AssembledTemplateDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/templates",
             "when": [
                 {
                     "language_py": true
