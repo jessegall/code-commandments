@@ -11,18 +11,11 @@ public static class GlobalUsings
 
     private static readonly string[] Web = ["System.Net.Http.Json", "Microsoft.AspNetCore.Builder", "Microsoft.AspNetCore.Hosting", "Microsoft.AspNetCore.Http", "Microsoft.AspNetCore.Routing", "Microsoft.Extensions.Configuration", "Microsoft.Extensions.DependencyInjection", "Microsoft.Extensions.Hosting", "Microsoft.Extensions.Logging"];
 
-    /// <summary>One source per project under $roots, holding its global using directives.</summary>
-    public static IEnumerable<string> Under(IEnumerable<string> roots) =>
-        roots.Where(Directory.Exists)
-            .SelectMany(root => Directory.EnumerateFiles(root, "*.csproj", SearchOption.AllDirectories))
-            .Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
-            .Select(Of)
-            .Where(source => source != "");
-
-    private static string Of(string csproj)
+    /// <summary>The global using directives the project <paramref name="csproj"/> compiles with, as source.</summary>
+    public static string Of(string csproj)
     {
         var name = Path.GetFileNameWithoutExtension(csproj);
-        var obj = Path.Combine(Path.GetDirectoryName(csproj)!, "obj");
+        var obj = ProjectFile.Read(csproj).Intermediate();
         var generated = Directory.Exists(obj)
             ? Directory.EnumerateFiles(obj, $"{name}.GlobalUsings.g.cs", SearchOption.AllDirectories).OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault()
             : null;

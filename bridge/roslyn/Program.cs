@@ -39,7 +39,7 @@ var project = workspace.Read(roots);
 // --diagnose: the compiler's most common errors, on stderr — why a call did not resolve.
 if (args.Contains("--diagnose"))
 {
-    foreach (var group in project.Compilation.GetDiagnostics()
+    foreach (var group in project.Diagnostics()
                  .Where(diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
                  .GroupBy(diagnostic => diagnostic.Id + " " + diagnostic.GetMessage())
                  .OrderByDescending(group => group.Count())

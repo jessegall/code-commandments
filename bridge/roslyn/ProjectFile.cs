@@ -13,11 +13,19 @@ public sealed class ProjectFile
 
     private readonly Dictionary<string, string> central;
 
+    private readonly string directory;
+
+    private readonly string name;
+
+    /// <summary>The file each of <see cref="documents"/> was read from, in the same order.</summary>
+    private readonly string[] paths;
+
     private ProjectFile(string csproj)
     {
-        var directory = Path.GetDirectoryName(csproj)!;
-
-        documents = [Load(csproj), .. BuildProps(directory).Select(Load)];
+        directory = Path.GetDirectoryName(csproj)!;
+        name = Path.GetFileNameWithoutExtension(csproj);
+        paths = [csproj, .. BuildProps(directory)];
+        documents = paths.Select(Load).ToArray();
         central = CentralVersions(Nearest(directory, "Directory.Packages.props"));
         Sdk = (documents[0].Root?.Attribute("Sdk")?.Value ?? "").Split('/')[0];
     }
@@ -44,6 +52,41 @@ public sealed class ProjectFile
 
     /// <summary>The namespaces the project adds as global usings with <c>&lt;Using Include&gt;</c>.</summary>
     public IEnumerable<string> Usings() => Included("Using").Select(reference => reference.Id);
+
+    /// <summary>
+    /// The folder MSBuild writes the project's restore output and generated sources to: <c>obj/</c> beside
+    /// it, or <c>obj/&lt;project&gt;</c> under the solution's artifacts folder when it uses that layout.
+    /// </summary>
+    public string Intermediate() => Artifacts() is { } artifacts ? Path.Combine(artifacts, "obj", name) : Path.Combine(directory, "obj");
+
+    /// <summary>
+    /// The artifacts folder the solution declares — <c>ArtifactsPath</c>, read relative to the file that
+    /// sets it, or the folder beside the nearest Directory.Build.props when only <c>UseArtifactsOutput</c>
+    /// is on. None when the layout is not in use, or the path names a property this reader cannot expand.
+    /// </summary>
+    private string? Artifacts()
+    {
+        for (var index = 0; index < documents.Length; index++)
+        {
+            var declared = documents[index].Descendants().FirstOrDefault(element => element.Name.LocalName == "ArtifactsPath")?.Value.Trim();
+
+            if (declared is not null)
+            {
+                var from = Path.GetDirectoryName(paths[index])!;
+                var expanded = declared.Replace("$(MSBuildThisFileDirectory)", from + Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+
+                return expanded.Contains('$') ? null : Path.GetFullPath(expanded, from);
+            }
+        }
+
+        var enabled = documents.SelectMany(document => document.Descendants()).Any(element => element.Name.LocalName == "UseArtifactsOutput" && element.Value.Trim() == "true");
+
+        return enabled ? Path.Combine(Path.GetDirectoryName(paths.Length > 1 ? paths[1] : paths[0])!, "artifacts") : null;
+    }
+
+    /// <summary>The projects this one references, as full paths.</summary>
+    public IEnumerable<string> ProjectReferences() =>
+        Included("ProjectReference").Select(reference => Path.GetFullPath(Path.Combine(directory, reference.Id.Replace('\\', Path.DirectorySeparatorChar))));
 
     /// <summary>The shared frameworks the project references by name.</summary>
     public IEnumerable<string> FrameworkReferences() => Included("FrameworkReference").Select(reference => reference.Id);

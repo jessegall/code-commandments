@@ -4,12 +4,16 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace CodeCommandments.Bridge;
 
 /// <summary>
-/// The files of one run, parsed, and compiled together with their projects' global usings against the
-/// references that resolve. Only the files themselves are written out.
+/// The files of one run, parsed, each compiled in its own project's compilation — its references, its
+/// global usings, the projects it references. Only the files asked for are written out.
 /// </summary>
-public sealed class Project(IReadOnlyList<SyntaxTree> trees, CSharpCompilation compilation)
+public sealed class Project(IReadOnlyList<SyntaxTree> trees, IReadOnlyDictionary<SyntaxTree, CSharpCompilation> compilations)
 {
     public IReadOnlyList<SyntaxTree> Trees { get; } = trees;
 
-    public CSharpCompilation Compilation { get; } = compilation;
+    /// <summary>What the compiler knows about <paramref name="tree"/>, read in the compilation it belongs to.</summary>
+    public SemanticModel Model(SyntaxTree tree) => compilations[tree].GetSemanticModel(tree);
+
+    /// <summary>Every compilation's diagnostics, each reported once.</summary>
+    public IEnumerable<Diagnostic> Diagnostics() => compilations.Values.Distinct().SelectMany(compilation => compilation.GetDiagnostics());
 }

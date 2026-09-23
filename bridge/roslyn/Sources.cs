@@ -27,6 +27,6 @@ public static class Sources
         return files.ToList();
     }
 
-    private static bool IsSource(string file) =>
+    public static bool IsSource(string file) =>
         !file.Split(Path.DirectorySeparatorChar).Any(part => Skipped.Contains(part));
 }

@@ -37,7 +37,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
         foreach (var tree in project.Trees.Where(tree => written is null || written.Count == 0 || written.Contains(tree.FilePath)))
         {
-            var model = project.Compilation.GetSemanticModel(tree);
+            var model = project.Model(tree);
             bytes = ByteOffsets(tree.GetText().ToString(), MarkLength(tree.FilePath));
 
             Line(output, json =>

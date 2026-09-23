@@ -12,16 +12,25 @@ namespace CodeCommandments.Bridge;
 /// </summary>
 public static class References
 {
-    public static IReadOnlyList<MetadataReference> For(IEnumerable<string> roots)
+    /// <summary>What the project <paramref name="csproj"/> compiles against — the runtime's own assemblies when it says nothing that resolves.</summary>
+    public static IReadOnlyList<MetadataReference> Of(string csproj)
+    {
+        var assets = Path.Combine(ProjectFile.Read(csproj).Intermediate(), "project.assets.json");
+
+        return Load(File.Exists(assets) ? FromAssets(assets) : FromProjectFile(csproj));
+    }
+
+    /// <summary>What a file that belongs to no project compiles against: the running runtime's assemblies.</summary>
+    public static IReadOnlyList<MetadataReference> Loose() => Load([]);
+
+    /// <summary><paramref name="found"/> once each by file name, with the runtime's assemblies when they name no System.Runtime.</summary>
+    private static IReadOnlyList<MetadataReference> Load(IEnumerable<string> found)
     {
         var dlls = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var project in roots.SelectMany(Projects))
+        foreach (var dll in found)
         {
-            foreach (var dll in ForProject(project))
-            {
-                dlls.TryAdd(Path.GetFileName(dll), dll);
-            }
+            dlls.TryAdd(Path.GetFileName(dll), dll);
         }
 
         if (!dlls.Keys.Any(name => name.Equals("System.Runtime.dll", StringComparison.OrdinalIgnoreCase)))
@@ -33,18 +42,6 @@ public static class References
         }
 
         return dlls.Values.Select(dll => (MetadataReference)MetadataReference.CreateFromFile(dll)).ToList();
-    }
-
-    private static IEnumerable<string> Projects(string root) =>
-        File.Exists(root)
-            ? []
-            : Directory.EnumerateFiles(root, "*.csproj", SearchOption.AllDirectories).Where(file => !file.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"));
-
-    private static IEnumerable<string> ForProject(string csproj)
-    {
-        var assets = Path.Combine(Path.GetDirectoryName(csproj)!, "obj", "project.assets.json");
-
-        return File.Exists(assets) ? FromAssets(assets) : FromProjectFile(csproj);
     }
 
     /// <summary>What a restored project compiles against: its frameworks and every package it resolved.</summary>
