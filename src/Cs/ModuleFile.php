@@ -34,13 +34,11 @@ final class ModuleFile implements ParsedModule
     ) {}
 
     /**
-     * @param  array<string, mixed>  $written  a file as the bridge's contract writes it
+     * $written, named $file — the path as the walk found it, which the bridge wrote resolved.
      */
-    public static function fromBridge(array $written): self
+    public static function fromBridge(WrittenFile $written, string $file): self
     {
-        $file = (string) $written['path'];
-
-        return new self($file, (string) file_get_contents($file), Node::fromBridge($written['root']));
+        return new self($file, (string) file_get_contents($file), $written->root);
     }
 
     /**

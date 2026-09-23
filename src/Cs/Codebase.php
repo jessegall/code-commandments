@@ -24,31 +24,32 @@ final class Codebase implements ModuleCodebase
     private function __construct(private readonly array $modules) {}
 
     /**
-     * Every C# file under $path, read by a bridge located for the scan — none when `dotnet` is missing.
+     * Every C# file under $path, read by a bridge located for the scan — none when `dotnet` is missing,
+     * and no bridge sought at all when there is no C# to read.
      *
      * @param  string|list<string>  $path
      */
     public static function scan(string|array $path, ExcludedPaths $excluded = new ExcludedPaths()): self
     {
-        return Bridge::located()->mapOr(new self([]), static fn (Bridge $bridge): self => self::readBy($bridge, $path, $excluded));
-    }
-
-    /**
-     * Every C# file under $path, read by $bridge — a bridge its holder keeps warm across reads. The
-     * bridge compiles the whole project so every type resolves, and writes back only the files the
-     * walk every engine shares let through.
-     *
-     * @param  string|list<string>  $path
-     */
-    public static function readBy(Bridge $bridge, string|array $path, ExcludedPaths $excluded = new ExcludedPaths()): self
-    {
-        $files = array_merge(...array_map(static fn (string $root): array => iterator_to_array(FileTree::filesIn($root, 'cs', $excluded), false), (array) $path));
+        $files = self::filesUnder((array) $path, $excluded);
 
         if ($files === []) {
             return new self([]);
         }
 
-        return new self(array_map(ModuleFile::fromBridge(...), $bridge->read((array) $path, $files)['files']));
+        return Bridge::located()->mapOr(new self([]), static fn (Bridge $bridge): self => self::read($bridge, (array) $path, $files));
+    }
+
+    /**
+     * Every C# file under $path, read by $bridge — a bridge its holder keeps warm across reads.
+     *
+     * @param  string|list<string>  $path
+     */
+    public static function readBy(Bridge $bridge, string|array $path, ExcludedPaths $excluded = new ExcludedPaths()): self
+    {
+        $files = self::filesUnder((array) $path, $excluded);
+
+        return $files === [] ? new self([]) : self::read($bridge, (array) $path, $files);
     }
 
     /**
@@ -177,5 +178,31 @@ final class Codebase implements ModuleCodebase
         }
 
         return $pairs;
+    }
+
+    /**
+     * The C# files under $roots the walk every engine shares lets through.
+     *
+     * @param  list<string>  $roots
+     * @return list<string>
+     */
+    private static function filesUnder(array $roots, ExcludedPaths $excluded): array
+    {
+        return array_merge(...array_map(static fn (string $root): array => iterator_to_array(FileTree::filesIn($root, 'cs', $excluded), false), $roots));
+    }
+
+    /**
+     * $files read by $bridge, which compiles every project under $roots so each type resolves and
+     * writes back only $files — each named as the walk named it, as every engine names its files,
+     * though the bridge answers with links resolved.
+     *
+     * @param  list<string>  $roots
+     * @param  list<string>  $files
+     */
+    private static function read(Bridge $bridge, array $roots, array $files): self
+    {
+        $named = array_combine(array_map(Path::resolved(...), $files), $files);
+
+        return new self(array_map(static fn (WrittenFile $written) => ModuleFile::fromBridge($written, $named[$written->path]), $bridge->read($roots, $files)->files));
     }
 }

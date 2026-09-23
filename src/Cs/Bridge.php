@@ -62,9 +62,8 @@ final class Bridge
      *
      * @param  list<string>  $paths
      * @param  list<string>  $written
-     * @return array<string, mixed>
      */
-    public function read(array $paths, array $written = []): array
+    public function read(array $paths, array $written = []): BridgeRead
     {
         $read = $this->process()->read(array_map(self::resolved(...), $paths), array_map(self::resolved(...), $written));
 
@@ -72,7 +71,7 @@ final class Bridge
             throw BridgeFailed::onVersion($read['version'] ?? null);
         }
 
-        return $read;
+        return BridgeRead::fromContract($read);
     }
 
     /**
