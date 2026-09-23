@@ -43,9 +43,11 @@ final class SinsDashboardTest extends TestCase
         $this->assertSame('overview', $dashboard['start']);
         $this->assertSame(['4', '2', '2'], array_column($overview[0]['children'], 'value'), 'sins, files, skills');
         $this->assertSame([['array-bag', 3, 'sin/array-bag'], ['deep-nesting', 1, 'sin/deep-nesting']], array_map(static fn (array $bar): array => [$bar['label'], $bar['value'], $bar['open']], $overview[1]['items']));
-        $this->assertSame([['src/Order.php', '2'], ['src/Cart.php', '1']], array_column($dashboard['pages']['sin/array-bag']['view']['children'][2]['rows'], 'cells'));
+        $sinPage = $dashboard['pages']['sin/array-bag']['view']['children'];
+        $this->assertSame([['src/Order.php', '2'], ['src/Cart.php', '1']], array_column($sinPage[3]['rows'], 'cells'));
+        $this->assertSame(['What it is', 'The rule', 'How to fix it'], array_column($sinPage[1]['children'], 'label'));
+        $this->assertSame('commandments info array-bag', $sinPage[2]['text']);
         $this->assertSame([12, 30], array_column($dashboard['pages']['sin/array-bag/src/Order.php']['view']['children'][1]['children'], 'line'));
-        $this->assertStringContainsString('**How to fix it:**', $dashboard['pages']['sin/array-bag']['view']['children'][1]['body']);
     }
 
     public function test_a_scoped_run_replaces_only_the_files_it_judged(): void
