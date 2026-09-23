@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I'm generating a Python class as text by appending strings to a `lines` list and joining with newlines — is there a better way?",
+        "how should I write a multi-line config block my Python script prints out?",
+        "judge flagged python-assembled-template on my `\"\\n\".join([...])`, how do I fix it"
+    ],
+    "not": [
+        "how do I read environment variables in Python"
+    ]
+}
