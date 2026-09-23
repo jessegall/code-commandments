@@ -52,3 +52,38 @@ def price_of(line: Line) -> int:
     subtotal = line.unit_price * line.quantity
     return subtotal - subtotal // 100 if line.quantity >= 100 else subtotal
 ```
+
+### python-subject-ladder
+
+An `if`/`elif` chain of four or more rungs that each test ONE subject for equality with a constant — a dispatch written as a ladder
+
+```py
+----------[ Bad ]----------
+
+def carrier_for(service: str) -> str:
+    if service == "express":
+        return "dhl"
+    elif service == "standard":
+        return "postnl"
+    elif service == "economy":
+        return "dpd"
+    elif service == "freight":
+        return "schenker"
+    raise ValueError(service)
+
+----------[ Good ]----------
+
+class Service(Enum):
+    EXPRESS = "express"
+    STANDARD = "standard"
+    ECONOMY = "economy"
+    FREIGHT = "freight"
+
+    def carrier(self) -> str:
+        return {
+            Service.EXPRESS: "dhl",
+            Service.STANDARD: "postnl",
+            Service.ECONOMY: "dpd",
+            Service.FREIGHT: "schenker",
+        }[self]
+```

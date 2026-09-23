@@ -27,6 +27,14 @@ abstract class SyntaxHash
     }
 
     /**
+     * A formatting-blind fingerprint of one expression — two spellings of the same read hash alike.
+     */
+    public static function ofExpression(SyntaxExpression $expression): string
+    {
+        return sha1(self::expression($expression, false));
+    }
+
+    /**
      * How many nodes and expressions the subtree holds — the size a clone rule floors trivial bodies by.
      */
     public static function weight(SyntaxNode $node): int

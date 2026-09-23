@@ -31,6 +31,26 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * What an `==` test is ABOUT — the side that is not the constant, for `x == 'a'` and `'a' == x`
+     * alike. Named as the TypeScript engine names it; the unknown expression when this is not a single
+     * `==`, or when both sides or neither are constants.
+     */
+    public function comparisonSubject(): self
+    {
+        if ($this->kind !== ExprKind::Compare || $this->get('operators') !== ['==']) {
+            return new self(ExprKind::Unknown);
+        }
+
+        [$left, $right] = $this->get('operands');
+
+        return match (true) {
+            ! $left->isConstant() && $right->isConstant() => $left,
+            $left->isConstant() && ! $right->isConstant() => $right,
+            default => new self(ExprKind::Unknown),
+        };
+    }
+
+    /**
      * Any literal — an f-string is its own kind, as it computes its fields.
      */
     public function isConstant(): bool

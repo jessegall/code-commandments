@@ -31,4 +31,14 @@ final class IfStmt extends Node
     {
         return true;
     }
+
+    /**
+     * The rungs of the chain this `if` opens — itself, then each `elif` in turn.
+     *
+     * @return list<IfStmt>
+     */
+    public function chain(): array
+    {
+        return [$this, ...($this->else instanceof self ? $this->else->chain() : [])];
+    }
 }

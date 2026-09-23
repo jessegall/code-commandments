@@ -125,6 +125,15 @@ final class ParserTest extends TestCase
         $this->assertNotNull($try->finally);
     }
 
+    public function test_a_handler_names_several_types_without_parentheses(): void
+    {
+        $try = $this->only("try:\n    save()\nexcept FileNotFoundError, PermissionError:\n    pass\n");
+
+        $this->assertInstanceOf(TryStmt::class, $try);
+        $this->assertSame(ExprKind::Tuple, $try->handlers[0]->type?->kind);
+        $this->assertCount(1, $try->body->body, 'the handler is parsed whole, not read as a new statement');
+    }
+
     public function test_a_with_reads_its_items_parenthesised_or_not(): void
     {
         $plain = $this->only("with open(path) as fh, lock:\n    fh.read()\n");

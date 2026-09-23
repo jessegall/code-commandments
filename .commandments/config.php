@@ -216,6 +216,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\DuplicateFunction::class,
         // Sins\Python\NearDuplicateFunction::class,
         // Sins\Python\RedundantElse::class,
+        // Sins\Python\SubjectLadder::class,
     );
 };
 

@@ -323,7 +323,8 @@ final class Parser
         $start = $this->cursor->offset();
         $this->cursor->advance(); // `except`
         $group = $this->cursor->advanceIfOp('*');
-        $type = $this->cursor->atOp(':') ? null : $this->expressions->expression();
+        // `except A, B:` is a tuple of types without its parentheses, as Python 3.14 writes it.
+        $type = $this->cursor->atOp(':') ? null : $this->expressions->expressionList();
         $name = $this->cursor->advanceIfName('as') ? $this->cursor->advance()->value : null;
 
         return $this->located(new ExceptHandler($type, $name, $this->block(), $group), $start);

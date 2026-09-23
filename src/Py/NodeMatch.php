@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Py;
 
 use JesseGall\CodeCommandments\Located;
+use JesseGall\CodeCommandments\Py\Expr\ExprKind;
 use JesseGall\CodeCommandments\Py\Node\Block;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
@@ -107,6 +108,33 @@ class NodeMatch implements Located
         $body = $this->node->body->body;
 
         return $body !== [] && end($body)->isBailOut();
+    }
+
+    /**
+     * How many rungs this `if` chain has when every one tests the SAME subject for equality with a
+     * constant — `if kind == "box": … elif kind == "pallet": …` — the subjects compared as parsed
+     * expressions. Zero for a chain whose rungs test anything else, and for an `elif` itself.
+     */
+    public function subjectLadderLength(): int
+    {
+        if (! $this->node instanceof IfStmt || $this->isElif()) {
+            return 0;
+        }
+
+        $chain = $this->node->chain();
+        $subjects = [];
+
+        foreach ($chain as $rung) {
+            $subject = $rung->test->comparisonSubject();
+
+            if ($subject->is(ExprKind::Unknown)) {
+                return 0;
+            }
+
+            $subjects[StructuralHash::ofExpression($subject)] = true;
+        }
+
+        return count($subjects) === 1 ? count($chain) : 0;
     }
 
     /**
