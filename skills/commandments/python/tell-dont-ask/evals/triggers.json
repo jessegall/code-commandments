@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I have a helper `def total(order)` that sums over `order.lines` — should it live somewhere else?",
+        "my Python function has an `isinstance(shape, Circle)` / `elif isinstance(shape, Square)` ladder to compute the area, is that okay?",
+        "judge flagged python-type-switch on my isinstance chain, how do I fix it"
+    ],
+    "not": [
+        "how do I format a date as ISO 8601 in Python"
+    ]
+}
