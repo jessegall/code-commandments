@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my find_order function returns Order | None and every place that calls it does if order is None: raise NotFound — is there a better way",
+        "is it ok to write title = row.get('title') or '' in Python when the title is required",
+        "should get_config return None when the file is missing or raise"
+    ],
+    "not": [
+        "judge flagged an except Exception: pass in my loader, what's the fix"
+    ]
+}

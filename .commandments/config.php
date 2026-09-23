@@ -62,6 +62,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\Frontend\VueControlFlow::class,
 
         // ----------[ Python ]----------
+        // Skills\Python\Absence::class,
         // Skills\Python\Duplication::class,
         // Skills\Python\Exceptions::class,
         // Skills\Python\Flow::class,
