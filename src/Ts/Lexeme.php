@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ts;
 
+use JesseGall\CodeCommandments\Support\TokenOfKind;
+
 /**
  * One token from either of the Vue engine's lexers — the TS {@see Ts\Lexer} over a `<script setup>`
  * and the {@see Expr\Lexer} over a binding expression. A kind ({@see Token} constant), its source text,
@@ -14,6 +16,8 @@ namespace JesseGall\CodeCommandments\Ts;
  */
 final readonly class Lexeme
 {
+    use TokenOfKind;
+
     public function __construct(
         public string $kind,
         public string $value,
@@ -41,10 +45,6 @@ final readonly class Lexeme
         return $this->kind === Token::NONE;
     }
 
-    public function is(string $kind, ?string $value = null): bool
-    {
-        return $this->kind === $kind && ($value === null || $this->value === $value);
-    }
 
     public function isIdentifier(?string $value = null): bool
     {
