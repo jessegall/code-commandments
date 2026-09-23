@@ -16,7 +16,7 @@ final class Bridge
     /**
      * The bridge's output format this engine reads — {@see self::read} refuses any other.
      */
-    public const int VERSION = 1;
+    public const int VERSION = 2;
 
     private const string SOURCE = __DIR__ . '/../../bridge/roslyn';
 
@@ -65,13 +65,7 @@ final class Bridge
      */
     public function read(array $paths, array $written = []): BridgeRead
     {
-        $read = $this->process()->read(array_map(self::resolved(...), $paths), array_map(self::resolved(...), $written));
-
-        if (($read['version'] ?? null) !== self::VERSION) {
-            throw BridgeFailed::onVersion($read['version'] ?? null);
-        }
-
-        return BridgeRead::fromContract($read);
+        return $this->process()->read(array_map(self::resolved(...), $paths), array_map(self::resolved(...), $written));
     }
 
     /**

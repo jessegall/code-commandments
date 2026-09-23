@@ -88,6 +88,17 @@ final class CodebaseTest extends TestCase
         $this->assertSame(15, $if->line());
     }
 
+    /**
+     * A file saved with a UTF-8 byte-order mark — as generated code often is — still spans its bytes: the
+     * parser drops the mark, the file PHP reads keeps it.
+     */
+    public function test_a_span_counts_the_byte_order_mark(): void
+    {
+        $codebase = Codebase::fromString("\u{FEFF}public class Box\n{\n    public int Size() => 1;\n}\n", 'Box.cs');
+
+        $this->assertSame('public int Size() => 1;', $codebase->whereFunction()->get()[0]->span()->text());
+    }
+
     public function test_an_expression_bodied_member_has_its_expression_as_its_body_and_its_ancestors_lead_out(): void
     {
         $label = self::$codebase->whereFunction()->kindIs('PropertyDeclaration')->get()[0];

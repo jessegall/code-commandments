@@ -31,6 +31,7 @@ final class ModuleFile implements ParsedModule
         public readonly string $file,
         public readonly string $source,
         public readonly Node $root,
+        public readonly int $errors,
     ) {}
 
     /**
@@ -38,7 +39,7 @@ final class ModuleFile implements ParsedModule
      */
     public static function fromBridge(WrittenFile $written, string $file): self
     {
-        return new self($file, (string) file_get_contents($file), $written->root);
+        return new self($file, (string) file_get_contents($file), $written->root, $written->errors);
     }
 
     /**

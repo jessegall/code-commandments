@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cs;
 
 /**
- * One running `roslyn-bridge --serve`: a request per line in, a JSON document per line out. It keeps the
+ * One running `roslyn-bridge --serve`: a request per line in, answered a file per line out. It keeps the
  * references it loaded and the trees it parsed between requests, so the second read of a project costs
  * a fraction of the first.
  */
@@ -41,22 +41,45 @@ final class BridgeProcess
     }
 
     /**
-     * The trees of the C# files under $paths — all of them, or those in $written.
+     * The trees of the C# files under $paths — all of them, or those in $written — read a line at a time,
+     * so no more than one file's tree is ever held as text.
      *
      * @param  list<string>  $paths
      * @param  list<string>  $written
-     * @return array<string, mixed>
      */
-    public function read(array $paths, array $written = []): array
+    public function read(array $paths, array $written = []): BridgeRead
     {
         fwrite($this->input, json_encode(['paths' => $paths, 'write' => $written], JSON_UNESCAPED_SLASHES) . "\n");
-        $read = json_decode((string) fgets($this->output), true);
 
-        if (! is_array($read)) {
+        $version = $this->line()['version'] ?? null;
+
+        if ($version !== Bridge::VERSION) {
+            throw BridgeFailed::onVersion($version);
+        }
+
+        $files = [];
+
+        while (! array_key_exists('resolution', $line = $this->line())) {
+            $files[] = WrittenFile::fromContract($line);
+        }
+
+        return new BridgeRead($files, Resolution::fromContract($line['resolution']));
+    }
+
+    /**
+     * The next line the bridge wrote, decoded — a bridge that stopped answering fails with what it said.
+     *
+     * @return array<string, mixed>
+     */
+    private function line(): array
+    {
+        $line = json_decode((string) fgets($this->output), true);
+
+        if (! is_array($line)) {
             throw BridgeFailed::withOutput(-1, (string) file_get_contents($this->errors));
         }
 
-        return $read;
+        return $line;
     }
 
     public function __destruct()

@@ -9,6 +9,10 @@ use JesseGall\CodeCommandments\Cli\Judge\DetectorRunner;
 use JesseGall\CodeCommandments\Cli\Judge\Views;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
+use JesseGall\CodeCommandments\CSharp\Detector as CSharpDetector;
+use JesseGall\CodeCommandments\Cs\Bridge;
+use JesseGall\CodeCommandments\Cs\Codebase as CSharpCodebase;
+use JesseGall\CodeCommandments\Cs\NodeMatch as CSharpNodeMatch;
 use JesseGall\CodeCommandments\Detectors\Backend\DuplicateFunctionDetector;
 use JesseGall\CodeCommandments\Detectors\CrossFileSet;
 use JesseGall\CodeCommandments\Finding;
@@ -35,10 +39,27 @@ final class DetectorRunnerEnginesTest extends TestCase
         $this->assertSame($sequential, $this->locations(4));
     }
 
+    public function test_a_csharp_rule_is_judged_beside_the_others(): void
+    {
+        if (Bridge::located()->isNone()) {
+            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
+        }
+
+        $csharp = CSharpCodebase::fromString("public class Orders\n{\n    public int Total() => 1;\n}\n", 'Orders.cs');
+        $group = [[new EveryCSharpFunction()], Views::of($csharp, Scope::everything(), CrossFileSet::unread())];
+
+        $sequential = $this->locations(1, [$group]);
+
+        $this->assertContains('Orders.cs:3', $sequential);
+        $this->assertContains('orders.py:1', $sequential);
+        $this->assertSame($sequential, $this->locations(4, [$group]));
+    }
+
     /**
+     * @param  list<array{0: list<\JesseGall\CodeCommandments\Detector>, 1: Views}>  $more  more engines' rules and views
      * @return list<string>
      */
-    private function locations(int $parallel): array
+    private function locations(int $parallel, array $more = []): array
     {
         $php = PhpCodebase::fromString(<<<'PHP'
             <?php
@@ -55,6 +76,7 @@ final class DetectorRunnerEnginesTest extends TestCase
         $judgement = new DetectorRunner($parallel)->run([
             [[new DuplicateFunctionDetector()], Views::of($php, $scope, $beyond)],
             [[new EveryFunction()], Views::of($python, $scope, $beyond)],
+            ...$more,
         ], new ProgressBar());
 
         $locations = array_map(static fn (Finding $finding): string => basename($finding->location), $judgement->findings);
@@ -88,5 +110,24 @@ final class EveryFunctionSin extends Sin
     public function __construct()
     {
         parent::__construct(name: 'every-function', skill: FixAtTheSource::class, description: 'probe', rule: 'probe');
+    }
+}
+
+/**
+ * A C# rule flagging every function.
+ */
+final class EveryCSharpFunction implements CSharpDetector
+{
+    public function sin(): Sin
+    {
+        return new EveryFunctionSin();
+    }
+
+    /**
+     * @return list<CSharpNodeMatch>
+     */
+    public function find(CSharpCodebase $codebase): array
+    {
+        return $codebase->whereFunction()->get();
     }
 }

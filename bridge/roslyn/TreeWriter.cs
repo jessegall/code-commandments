@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -19,40 +20,55 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
     private int resolved;
 
-    public const int Version = 1;
+    public const int Version = 2;
 
     /// <summary>How every type and member is written: fully qualified, `System.String` never `string`, `?` kept.</summary>
     private static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
         .RemoveMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.UseSpecialTypes)
         .AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
+    /// <summary>
+    /// The response as lines: the version, one line per file, then the resolution, which closes it — so
+    /// a reader holds one file at a time, however large the project.
+    /// </summary>
     public void Write(Stream output)
     {
-        using var json = new Utf8JsonWriter(output);
-
-        json.WriteStartObject();
-        json.WriteNumber("version", Version);
-        json.WriteStartArray("files");
+        Line(output, json => json.WriteNumber("version", Version));
 
         foreach (var tree in project.Trees.Where(tree => written is null || written.Count == 0 || written.Contains(tree.FilePath)))
         {
             var model = project.Compilation.GetSemanticModel(tree);
-            bytes = ByteOffsets(tree.GetText().ToString());
+            bytes = ByteOffsets(tree.GetText().ToString(), MarkLength(tree.FilePath));
 
+            Line(output, json =>
+            {
+                json.WriteString("path", tree.FilePath);
+                json.WriteNumber("errors", tree.GetDiagnostics().Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+                json.WritePropertyName("root");
+                WriteNode(json, tree.GetRoot(), model);
+            });
+        }
+
+        Line(output, json =>
+        {
+            json.WriteStartObject("resolution");
+            json.WriteNumber("calls", calls);
+            json.WriteNumber("resolved", resolved);
+            json.WriteEndObject();
+        });
+    }
+
+    /// <summary>One JSON object on a line of its own, its members written by <paramref name="members"/>.</summary>
+    private static void Line(Stream output, Action<Utf8JsonWriter> members)
+    {
+        using (var json = new Utf8JsonWriter(output))
+        {
             json.WriteStartObject();
-            json.WriteString("path", tree.FilePath);
-            json.WriteNumber("errors", tree.GetDiagnostics().Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
-            json.WritePropertyName("root");
-            WriteNode(json, tree.GetRoot(), model);
+            members(json);
             json.WriteEndObject();
         }
 
-        json.WriteEndArray();
-        json.WriteStartObject("resolution");
-        json.WriteNumber("calls", calls);
-        json.WriteNumber("resolved", resolved);
-        json.WriteEndObject();
-        json.WriteEndObject();
+        output.WriteByte((byte)'\n');
     }
 
     private void WriteNode(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
@@ -86,13 +102,14 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     }
 
     /// <summary>
-    /// Where each character position of $text falls in its UTF-8 encoding — Roslyn counts UTF-16 units,
-    /// a PHP reader counts bytes, and the two part at the first character outside ASCII.
+    /// Where each character position of <paramref name="text"/> falls in the file's bytes — Roslyn counts
+    /// UTF-16 units from after the byte-order mark, a PHP reader counts bytes from the file's first, and
+    /// the two part at the mark and at the first character outside ASCII.
     /// </summary>
-    private static int[] ByteOffsets(string text)
+    private static int[] ByteOffsets(string text, int mark)
     {
         var offsets = new int[text.Length + 1];
-        var total = 0;
+        var total = mark;
 
         for (var i = 0; i < text.Length; i++)
         {
@@ -103,6 +120,15 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
         offsets[text.Length] = total;
 
         return offsets;
+    }
+
+    /// <summary>The length of the UTF-8 byte-order mark <paramref name="path"/> opens with, which the parsed text drops.</summary>
+    private static int MarkLength(string path)
+    {
+        using var file = File.OpenRead(path);
+        Span<byte> head = stackalloc byte[3];
+
+        return file.Read(head) == 3 && head.SequenceEqual(Encoding.UTF8.Preamble) ? 3 : 0;
     }
 
     /// <summary>

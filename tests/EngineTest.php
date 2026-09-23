@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests;
 
+use JesseGall\CodeCommandments\Cs\Bridge;
+use JesseGall\CodeCommandments\Cs\Codebase as CSharpCodebase;
 use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Py\Codebase as PythonCodebase;
@@ -22,6 +24,7 @@ final class EngineTest extends TestCase
         $this->assertSame(Engine::Frontend, Language::Vue->engine());
         $this->assertSame(Engine::Frontend, Language::TypeScript->engine());
         $this->assertSame(Engine::Python, Language::Python->engine());
+        $this->assertSame(Engine::CSharp, Language::CSharp->engine());
     }
 
     public function test_an_engine_scans_a_path_into_its_own_codebase(): void
@@ -38,5 +41,23 @@ final class EngineTest extends TestCase
         $this->assertInstanceOf(PythonCodebase::class, $python);
         $this->assertCount(1, $python->whereFunction()->get());
         $this->assertInstanceOf(VueCodebase::class, $frontend);
+    }
+
+    public function test_the_csharp_engine_scans_through_the_bridge(): void
+    {
+        if (Bridge::located()->isNone()) {
+            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
+        }
+
+        $root = sys_get_temp_dir() . '/cc-engine-scan-' . uniqid();
+        mkdir($root);
+        file_put_contents("{$root}/Orders.cs", "public class Orders\n{\n    public int Total() => 1;\n}\n");
+
+        $csharp = Engine::CSharp->scan($root);
+
+        exec('rm -rf ' . escapeshellarg($root));
+
+        $this->assertInstanceOf(CSharpCodebase::class, $csharp);
+        $this->assertCount(1, $csharp->whereFunction()->get());
     }
 }

@@ -13,4 +13,12 @@ final readonly class Resolution
         public int $calls,
         public int $resolved,
     ) {}
+
+    /**
+     * @param  array<string, mixed>  $written  the resolution as the bridge's contract writes it
+     */
+    public static function fromContract(array $written): self
+    {
+        return new self((int) $written['calls'], (int) $written['resolved']);
+    }
 }

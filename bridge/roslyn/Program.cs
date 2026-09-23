@@ -3,11 +3,11 @@ using CodeCommandments.Bridge;
 
 // roslyn-bridge <path>...  — parses every C# file under the given roots (or the files named), compiles
 // them together without building the project, and writes the trees and what the compiler knows about
-// them to stdout as one JSON document.
+// them to stdout as JSON lines: the version, a line per file, then the resolution (CONTRACT.md).
 //
-// roslyn-bridge --serve    — the same, kept warm: one request per line on stdin, {"paths": [...]}, and
-// one JSON document per line on stdout, reusing loaded references and unchanged trees between requests.
-// "write": [...] limits the document to those files; the rest are still compiled, for their types.
+// roslyn-bridge --serve    — the same, kept warm: one request per line on stdin, {"paths": [...]}, each
+// answered with those lines, reusing loaded references and unchanged trees between requests.
+// "write": [...] limits the answer to those files; the rest are still compiled, for their types.
 var workspace = new Workspace();
 
 if (args.Contains("--serve"))
@@ -20,7 +20,6 @@ if (args.Contains("--serve"))
         var paths = request.GetProperty("paths").EnumerateArray().Select(path => path.GetString()!).ToList();
         var written = request.TryGetProperty("write", out var write) ? write.EnumerateArray().Select(path => Path.GetFullPath(path.GetString()!)).ToHashSet() : [];
         new TreeWriter(workspace.Read(paths), written).Write(output);
-        output.WriteByte((byte)'\n');
         output.Flush();
     }
 
