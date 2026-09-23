@@ -26,7 +26,7 @@ Every syntax node, nested as Roslyn nests them. Tokens and trivia (comments, whi
 | `text` | literals and interpolated text | the value as written, unescaped |
 | `operator` | binary, assignment and unary expressions | the operator token, e.g. `==`, `??`, `+=`, `!` |
 | `modifiers` | members, local functions, parameters | e.g. `["public", "static", "override"]` |
-| `type` | expressions the compiler typed | the type, fully qualified (`global::System.String`) |
+| `type` | expressions the compiler typed | the type, fully qualified with `?` for a nullable reference (`global::System.String?`), never a keyword like `string` |
 | `nullable` | with `type` | whether the type is annotated nullable (`string?`) |
 | `target` | invocations and object creations it resolved | `{ "type", "name", "parameters" }` — the method called, its containing type and parameter types |
 | `symbol` | member declarations | the declared member, fully qualified |

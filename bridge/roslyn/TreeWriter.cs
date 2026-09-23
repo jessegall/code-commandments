@@ -14,6 +14,11 @@ public sealed class TreeWriter(Project project)
 {
     public const int Version = 1;
 
+    /// <summary>How every type and member is written: fully qualified, `System.String` never `string`, `?` kept.</summary>
+    private static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
+        .RemoveMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.UseSpecialTypes)
+        .AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+
     public void Write(Stream output)
     {
         using var json = new Utf8JsonWriter(output);
@@ -148,13 +153,13 @@ public sealed class TreeWriter(Project project)
     /// <summary>What the compiler resolved about the node, when it resolved anything.</summary>
     private static void WriteFacts(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
     {
-        if (node is ExpressionSyntax expression && node is not TypeSyntax)
+        if (node is ExpressionSyntax expression && !SyntaxFacts.IsInTypeOnlyContext(expression))
         {
             var type = model.GetTypeInfo(expression).Type;
 
             if (type is not null and not IErrorTypeSymbol)
             {
-                json.WriteString("type", type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                json.WriteString("type", type.ToDisplayString(Qualified));
                 json.WriteBoolean("nullable", type.NullableAnnotation == NullableAnnotation.Annotated);
             }
         }
@@ -164,13 +169,13 @@ public sealed class TreeWriter(Project project)
             if (model.GetSymbolInfo(node).Symbol is IMethodSymbol target)
             {
                 json.WriteStartObject("target");
-                json.WriteString("type", target.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                json.WriteString("type", target.ContainingType.ToDisplayString(Qualified));
                 json.WriteString("name", target.Name);
                 json.WriteStartArray("parameters");
 
                 foreach (var parameter in target.Parameters)
                 {
-                    json.WriteStringValue(parameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                    json.WriteStringValue(parameter.Type.ToDisplayString(Qualified));
                 }
 
                 json.WriteEndArray();
@@ -180,7 +185,7 @@ public sealed class TreeWriter(Project project)
 
         if (node is MemberDeclarationSyntax member && model.GetDeclaredSymbol(member) is { } declared)
         {
-            json.WriteString("symbol", declared.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+            json.WriteString("symbol", declared.ToDisplayString(Qualified));
 
             if (declared.IsOverride || ImplementsInterfaceMember(declared))
             {
