@@ -26,6 +26,7 @@ use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Support\VerbMood;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -220,6 +221,27 @@ class NodeMatch implements Located
         $classes = $this->node->memberCaseClasses();
 
         return count($classes) === 1 && $enums->isEnum($classes[0]) && $this->node->onlyTheWildcardAnswersAbsence();
+    }
+
+    /**
+     * Is this a method answering a `bool` about its own object, named as a bare verb — `binds()` where
+     * `is_bound()` belongs? With no argument beside the receiver there is no second party, so it can only
+     * be describing the receiver. A dunder, an override and a question already name themselves.
+     */
+    public function isBareStatePredicate(Codebase $codebase): bool
+    {
+        $method = $this->node;
+
+        return $method instanceof FunctionDef
+            && $this->isMethod()
+            && count($method->params) === 1
+            && $method->returns?->dottedName() === 'bool'
+            && ! (str_starts_with($method->name, '__') && str_ends_with($method->name, '__'))
+            && ! VerbMood::readsAsQuestion($method->name)
+            && VerbMood::isThirdPerson($method->name)
+            && ! $this->isOverride($codebase)
+            && ! $codebase->index()->isOverridden($method, $this->module)
+            && ! $codebase->index()->extendsOutside($method, $this->module);
     }
 
     /**

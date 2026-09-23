@@ -87,9 +87,9 @@ final class VerbMood
             return false;
         }
 
-        $rest = CamelCase::afterLeadingToken($name);
+        $rest = self::afterLeadingWord($name);
 
-        return $rest !== '' && in_array(strtolower(CamelCase::leadingToken(lcfirst($rest))), self::PREPOSITIONS, true);
+        return $rest !== '' && in_array(strtolower(self::leadingWord(lcfirst($rest))), self::PREPOSITIONS, true);
     }
 
     /**
@@ -122,7 +122,7 @@ final class VerbMood
             return false;
         }
 
-        $token = CamelCase::leadingToken($name);
+        $token = self::leadingWord($name);
 
         return $token !== '' && in_array(strtolower($token), self::QUESTION_PREFIXES, true);
     }
@@ -137,7 +137,7 @@ final class VerbMood
             return null;
         }
 
-        $token = strtolower(CamelCase::leadingToken($name));
+        $token = strtolower(self::leadingWord($name));
 
         if (! str_ends_with($token, 's')) {
             return null;
@@ -150,6 +150,25 @@ final class VerbMood
         }
 
         return null;
+    }
+
+    /**
+     * The first word of $name in either convention — `hides` in `hidesPanel` and in `hides_panel` —
+     * leading underscores aside, so a private `_binds` is read as `binds`.
+     */
+    private static function leadingWord(string $name): string
+    {
+        return CamelCase::leadingToken((string) strtok(ltrim($name, '_'), '_'));
+    }
+
+    /**
+     * What follows $name's first word — `ForUser` in `hidesForUser`, `for_user` in `hides_for_user`.
+     */
+    private static function afterLeadingWord(string $name): string
+    {
+        $bare = ltrim($name, '_');
+
+        return str_contains($bare, '_') ? substr($bare, (int) strpos($bare, '_') + 1) : CamelCase::afterLeadingToken($bare);
     }
 
     /**

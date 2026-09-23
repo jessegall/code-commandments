@@ -9,7 +9,7 @@ class ReturnReason(StrEnum):
     CHANGED_MIND = "changed_mind"
 
     @property
-    def refunds_shipping(self) -> bool:
+    def is_shipping_refunded(self) -> bool:
         return self is not ReturnReason.CHANGED_MIND
 
 
@@ -17,7 +17,7 @@ class ReturnForm:
     def __init__(self, reason: str) -> None:
         self.reason = reason
 
-    def refunds_shipping(self) -> bool:
+    def is_shipping_refunded(self) -> bool:
         # @sin StringMatchMirrorsEnum
         match self.reason:
             case "damaged" | "wrong_item":
@@ -31,5 +31,5 @@ class TypedReturnForm:
     def __init__(self, reason: ReturnReason) -> None:
         self.reason = reason
 
-    def refunds_shipping(self) -> bool:
-        return self.reason.refunds_shipping
+    def is_shipping_refunded(self) -> bool:
+        return self.reason.is_shipping_refunded

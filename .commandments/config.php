@@ -228,6 +228,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Frontend\TypeScript\NearDuplicateFunction::class,
 
         // ----------[ Python ]----------
+        // Sins\Python\BareStatePredicate::class,
         // Sins\Python\BlankStringDefault::class,
         // Sins\Python\CancelledFallback::class,
         // Sins\Python\CoalescedLoopSubject::class,

@@ -12,5 +12,5 @@ class Order:
         return (self.note or "") != ""
 
     # @fixed CancelledFallback
-    def carries_note(self) -> bool:
+    def is_noted(self) -> bool:
         return self.note is not None
