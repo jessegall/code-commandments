@@ -328,6 +328,19 @@ final class ModuleFile implements ParsedModule
     }
 
     /**
+     * The class whose instances $function is a method of — written in its body, neither static nor without
+     * the parameter its instance is bound to. None for anything else.
+     *
+     * @return Option<ClassDef>
+     */
+    public function boundClassOf(FunctionDef $function): Option
+    {
+        $class = $this->ancestorsOf($function)[1] ?? null;
+
+        return Option::fromNullable($class instanceof ClassDef && $this->isMethod($function) && ! $function->isStatic() && $function->params !== [] ? $class : null);
+    }
+
+    /**
      * The name the instance or class is bound to in the method $expression is written in — `self`, `cls`,
      * whatever the first parameter is called — none in a function, or a static method, that binds neither.
      *

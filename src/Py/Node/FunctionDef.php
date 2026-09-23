@@ -302,6 +302,30 @@ final class FunctionDef extends Node
     }
 
     /**
+     * The type this declares it returns, named without its parameters — `list` for `-> list[str]` — empty
+     * when it declares none.
+     */
+    public function returnedTypeName(): string
+    {
+        $named = $this->returns?->is(ExprKind::Subscript) === true ? $this->returns->get('object') : $this->returns;
+
+        return $named?->dottedName() ?? '';
+    }
+
+    /**
+     * Every value this function hands back with a `return`.
+     *
+     * @return list<Expr>
+     */
+    public function returnedValues(): array
+    {
+        return array_values(array_filter(array_map(
+            static fn (Node $node): ?Expr => $node instanceof Return_ ? $node->value : null,
+            $this->body->descendants(),
+        )));
+    }
+
+    /**
      * Does this function answer a missed lookup with an invented `""`, `0` or `False`? It returns an
      * empty scalar, and every other value it returns comes from looking a parameter up by key — so the
      * empty one is what a miss gets instead of the absence.

@@ -29,6 +29,27 @@ def redeem_card(self, card: StampCard) -> None:
     self.rewards_given += 1
 ```
 
+### python-keyed-lookup-envy
+
+a method that uses an object's key to fetch a fact about it through a collaborator — `self.registry.get(node.key).reserved` — treating the object as a key into its own data
+
+```py
+----------[ Bad ]----------
+
+def heading(self, aisle: Aisle) -> str:
+    return self.catalogue.entry(aisle.number).heading
+
+----------[ Good ]----------
+
+# in aisle_signs.py
+def sign_heading(self) -> str:
+    return self.spec.heading
+
+# in aisle_signs.py
+def heading_of(self, aisle: Aisle) -> str:
+    return aisle.sign_heading()
+```
+
 ### python-type-switch
 
 an `isinstance` ladder over classes the codebase owns — the value asked what it IS so the caller can decide what to do

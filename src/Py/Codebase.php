@@ -193,6 +193,24 @@ final class Codebase implements ModuleCodebase
     }
 
     /**
+     * The parameters of $method, a method of $host, annotated with an object this codebase owns — a class
+     * it declares, neither $host itself nor an enum — the instance's own parameter aside.
+     *
+     * @return list<string>
+     */
+    public function ownedParameters(FunctionDef $method, ClassDef $host): array
+    {
+        $instance = $method->params[0];
+
+        return $method->parameterNamesWhere(function (Param $param) use ($host, $instance): bool {
+            $type = $param->annotation?->dottedName() ?? '';
+            $short = array_last(explode('.', $type));
+
+            return $param !== $instance && $type !== '' && $short !== $host->name && $this->declaresClass($type) && ! $this->enums()->isEnum($short);
+        });
+    }
+
+    /**
      * The full dotted name Python imports $module by — its path from the top of its outermost package, each
      * folder on the way a package (an `__init__.py`): `shop.cart` for `shop/cart.py`, `shop` for
      * `shop/__init__.py`, `tool` for a `tool.py` in no package.

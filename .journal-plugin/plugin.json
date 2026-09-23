@@ -2596,6 +2596,19 @@
             ],
             "detail": true
         },
+        "sin_python-keyed-lookup-envy": {
+            "title": "KeyedLookupEnvy",
+            "help": "Feature envy through a keyed lookup — the twin of the backend's KeyedLookupEnvyDetector, decided by LookupEnvy.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/tell-dont-ask",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-type-switch": {
             "title": "TypeSwitch",
             "help": "An `isinstance` ladder over the codebase's own classes — the twin of the backend's TypeSwitchDetector.",

@@ -10,7 +10,6 @@ use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Node;
-use JesseGall\CodeCommandments\Py\Node\Param;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -32,18 +31,14 @@ final readonly class FeatureEnvy
      */
     public function enviedParameter(FunctionDef $method, ModuleFile $module): Option
     {
-        $class = $module->ancestorsOf($method)[1] ?? null;
+        $class = $module->boundClassOf($method);
 
-        if (! $class instanceof ClassDef || ! $module->isMethod($method) || $method->isStatic() || $method->params === []) {
-            return Option::none();
-        }
-
-        if ($this->fillsAContract($class, $module) || $this->constructs($method, $module)) {
+        if ($class->isNoneOr(fn (ClassDef $host) => $this->fillsAContract($host, $module)) || $this->constructs($method, $module)) {
             return Option::none();
         }
 
         $self = $method->params[0]->name;
-        $owned = $method->parameterNamesWhere(fn (Param $param): bool => $param->name !== $self && $this->isOwned($param, $class));
+        $owned = $this->codebase->ownedParameters($method, $class->unwrap());
         $reaches = $method->attributeReachesOn([$self, ...$owned]);
         $own = $reaches[$self] ?? 0;
         unset($reaches[$self]);
@@ -73,17 +68,6 @@ final readonly class FeatureEnvy
         return array_any($class->body->body, fn (Node $member): bool => $member instanceof FunctionDef
             && ! $member->isDunder()
             && $this->codebase->index()->isOverride($member, $module));
-    }
-
-    /**
-     * A parameter annotated with a class the codebase declares — not the method's own class, not an enum.
-     */
-    private function isOwned(Param $param, ClassDef $host): bool
-    {
-        $type = $param->annotation?->dottedName() ?? '';
-        $parts = explode('.', $type);
-
-        return $type !== '' && end($parts) !== $host->name && $this->codebase->declaresClass($type) && ! $this->codebase->enums()->isEnum(end($parts));
     }
 
     /**

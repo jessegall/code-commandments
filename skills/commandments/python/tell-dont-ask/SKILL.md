@@ -60,6 +60,8 @@ instead of a ladder at every call site.
 
 - [ ] Move the behaviour onto the object whose data it works on; ask it (`order.heaviest_line()`), don't reach through it.
       _Move the method onto the envied class and call it there; keep only the orchestration here._
+- [ ] Put the fact on the object it is about and ask it (`node.reserved_names()`), instead of looking it up from outside by the object's key.
+      _Give the object the method, holding what it needs to answer, and call it where this method was called._
 - [ ] Give each type the method and call it (`shape.area()`) instead of asking a value what it is in an `isinstance` ladder.
       _Declare the method on the shared base, implement it on each class, and replace the ladder with the call._
 
@@ -92,17 +94,17 @@ def redeem_card(self, card: StampCard) -> None:
     self.rewards_given += 1
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/tell-dont-ask` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-feature-envy`, `python-type-switch`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-feature-envy`, `python-keyed-lookup-envy`, `python-type-switch`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
