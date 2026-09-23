@@ -79,10 +79,19 @@ final class CallIndex
      */
     public function declarationOf(FunctionDef $function): string
     {
-        $this->declarations ??= $this->declarations();
-        $module = $this->declarations[spl_object_id($function)];
+        $module = $this->moduleOf($function);
 
         return "{$module->file}:{$module->lineAt($function->start)}";
+    }
+
+    /**
+     * The module $function is declared in.
+     */
+    public function moduleOf(FunctionDef $function): ModuleFile
+    {
+        $this->declarations ??= $this->declarations();
+
+        return $this->declarations[spl_object_id($function)];
     }
 
     /**

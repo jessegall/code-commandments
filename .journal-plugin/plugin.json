@@ -2518,6 +2518,19 @@
             ],
             "detail": true
         },
+        "sin_python-derived-argument": {
+            "title": "DerivedArgument",
+            "help": "A call that hands over a projection of a value beside the value itself, or the value in pieces — the twin of the backend's DerivedArgumentDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/pass-the-object",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-repeated-guard": {
             "title": "RepeatedGuard",
             "help": "One compound condition written in two places — the twin of the backend's RepeatedGuardDetector.",

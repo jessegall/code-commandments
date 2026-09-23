@@ -35,6 +35,14 @@ final class Param extends Node
         return in_array($this->annotation?->dottedName(), self::SCALARS, true);
     }
 
+    /**
+     * Is this parameter annotated to take anything at all — `Any` or `object`?
+     */
+    public function takesAnything(): bool
+    {
+        return in_array($this->annotation?->dottedName(), ['Any', 'typing.Any', 'object'], true);
+    }
+
     public function expressions(): array
     {
         return self::present([$this->default]);

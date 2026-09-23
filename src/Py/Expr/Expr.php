@@ -941,6 +941,19 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * The name this expression is a projection of — `order` in `order.customer.email` and `order.total()` —
+     * empty for anything that is no plain read: a call with arguments, a subscript, a bare name.
+     */
+    public function projectionRoot(): string
+    {
+        return match ($this->kind) {
+            ExprKind::Attribute => $this->get('object')->is(ExprKind::Name) ? (string) $this->get('object')->get('name') : $this->get('object')->projectionRoot(),
+            ExprKind::Call => $this->get('arguments') === [] && $this->get('callee')->is(ExprKind::Attribute) ? $this->get('callee')->projectionRoot() : '',
+            default => '',
+        };
+    }
+
+    /**
      * The first attribute a chain of reads takes off its root name — `self.client` in
      * `self.client.rows().first()` — empty when the chain starts from anything but a name.
      */

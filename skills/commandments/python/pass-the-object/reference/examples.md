@@ -72,3 +72,19 @@ def ring_up_honestly(jar: TipJar, typed: str) -> None:
 def ledger_line_for(entry: LedgerEntry) -> str:
     return f"#{str(entry.number).zfill(6)} {entry.amount}"
 ```
+
+### python-derived-argument
+
+a call that hands over an object and a projection of it — `persist(request, request.channel_id)` — or an object in three pieces, where the function could read them itself
+
+```py
+----------[ Bad ]----------
+
+def finish(session: KioskSession) -> str:
+    return receipt(session.total, session.items(), session.paid_by_card())
+
+----------[ Good ]----------
+
+def receipt_of(session: KioskSession) -> str:
+    return f"{session.items()} items, {session.total} ({'card' if session.paid_by_card() else 'cash'})"
+```

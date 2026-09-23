@@ -38,6 +38,18 @@ final class PackageGraph
     }
 
     /**
+     * Would $referrer, reaching into $target, close a cycle — does $target's package already import
+     * $referrer's? Then the reach is the arrow back that another rule forbids.
+     */
+    public function wouldCloseACycle(ModuleFile $referrer, ModuleFile $target): bool
+    {
+        $from = dirname($referrer->file);
+        $to = dirname($target->file);
+
+        return $from !== $to && array_any($this->arrows, static fn (array $arrow): bool => $arrow[1] === $to && $arrow[2] === $from);
+    }
+
+    /**
      * The imports of the direction worth cutting in every mutual pair — the thinner of the two, the one with
      * fewer imports, ties broken on the name so a codebase always yields the same answer. One per module and
      * package it reaches, each named where it is written.

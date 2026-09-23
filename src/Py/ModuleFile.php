@@ -328,6 +328,19 @@ final class ModuleFile implements ParsedModule
     }
 
     /**
+     * The name the instance or class is bound to in the method $expression is written in — `self`, `cls`,
+     * whatever the first parameter is called — none in a function, or a static method, that binds neither.
+     *
+     * @return Option<string>
+     */
+    public function receiverNameAt(Expr $expression): Option
+    {
+        return $this->functionOf($expression)
+            ->filter(fn (FunctionDef $function): bool => $this->isMethod($function) && ! $function->isStatic() && $function->params !== [])
+            ->map(static fn (FunctionDef $function): string => $function->params[0]->name);
+    }
+
+    /**
      * The class whose method $expression is written in — none outside every method.
      *
      * @return Option<ClassDef>

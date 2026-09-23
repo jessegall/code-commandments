@@ -4,3 +4,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 
 - **`python-computed-boolean-argument`** — a method taking only bools that every caller computes from the same object — the decision re-derived at each call site — `ComputedBooleanArgumentDetector`
 - **`python-converted-argument`** — a scalar parameter its callers keep filling with the same conversion — `receipt_for(str(order.id))` call after call — because it asks for the converted form instead of the value — `ConvertedArgumentDetector`
+- **`python-derived-argument`** — a call that hands over an object and a projection of it — `persist(request, request.channel_id)` — or an object in three pieces, where the function could read them itself — `DerivedArgumentDetector`
