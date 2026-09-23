@@ -217,6 +217,15 @@ final class FunctionDef extends Node
     }
 
     /**
+     * Is this a dunder — `__init__`, `__sub__` — a protocol method whose name and signature the language
+     * fixes?
+     */
+    public function isDunder(): bool
+    {
+        return str_starts_with($this->name, '__') && str_ends_with($this->name, '__');
+    }
+
+    /**
      * Does this take any keyword it is handed — a `**changes` rest?
      */
     public function takesKeywordRest(): bool

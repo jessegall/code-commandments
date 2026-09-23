@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Py\Node;
 
 use Closure;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
+use JesseGall\CodeCommandments\Py\StructuralHash;
 
 /**
  * The statements a compound statement owns — the indented suite after its `:`, or the simple
@@ -47,6 +48,26 @@ final class Block extends Node
         }
 
         return count($statements) === 2 && $statements[0]->isTwoWayBranchBefore($statements[1], $tests);
+    }
+
+    /**
+     * Is this block one `return` of a call handed the value fingerprinted $subject — `return payload(shape)`?
+     */
+    public function translates(string $subject): bool
+    {
+        $statements = $this->statementsBeyondText();
+
+        return count($statements) === 1 && $statements[0]->returnedValue()->isSomeAnd(
+            static fn (Expr $value): bool => $value->isCall() && array_any($value->get('arguments'), static fn (Expr $argument): bool => StructuralHash::ofExpression($argument) === $subject),
+        );
+    }
+
+    /**
+     * Does this block end by leaving — a `return`, a `raise`, a `continue` or a `break`?
+     */
+    public function hasTrailingExit(): bool
+    {
+        return $this->body !== [] && $this->body[array_key_last($this->body)]->isBailOut();
     }
 
     /**

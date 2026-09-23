@@ -277,6 +277,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\StringMatchMirrorsEnum::class,
         // Sins\Python\SubjectLadder::class,
         // Sins\Python\SwallowedException::class,
+        // Sins\Python\TypeSwitch::class,
 
         // ----------[ C# ]----------
         // Sins\CSharp\DataClump::class,

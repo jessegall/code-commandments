@@ -12,6 +12,7 @@ use JesseGall\CodeCommandments\Py\Node\Assign;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
+use JesseGall\CodeCommandments\Py\Node\IfStmt;
 use JesseGall\CodeCommandments\Py\Node\Node;
 use JesseGall\CodeCommandments\Py\Node\Param;
 use JesseGall\CodeCommandments\Span;
@@ -103,6 +104,15 @@ class ExprMatch implements Located
                 static fn (Expr $annotation): bool => $annotation->isDictType(),
             ),
         ));
+    }
+
+    /**
+     * Is this written in a dunder — `__init__`, `__sub__` — whose protocol hands it a value of any type to
+     * sort out?
+     */
+    public function isInDunder(): bool
+    {
+        return $this->module->functionOf($this->expr)->isSomeAnd(static fn (FunctionDef $function): bool => $function->isDunder());
     }
 
     /**
@@ -357,5 +367,89 @@ class ExprMatch implements Located
             static fn (Expr $conjunct): Expr => $conjunct->is(ExprKind::Name) && isset($aliases[$conjunct->get('name')]) ? $aliases[$conjunct->get('name')] : $conjunct,
             $this->expr->conjuncts(),
         );
+    }
+
+    /**
+     * Is this `isinstance` the head of a type switch — the first of two or more tests on one subject, each
+     * the whole condition of a different `if` in its function, over two or more classes? The value is
+     * asked what it IS instead of told what to do.
+     */
+    public function isTypeSwitchHead(): bool
+    {
+        $arms = $this->typeSwitchArms();
+
+        return count($arms) >= 2 && $arms[0]->test === $this->expr && count(array_unique($this->typeSwitchClasses())) >= 2;
+    }
+
+    /**
+     * The classes the switch this test belongs to asks about, one per arm.
+     *
+     * @return list<string>
+     */
+    public function typeSwitchClasses(): array
+    {
+        return array_map(static fn (IfStmt $arm): string => $arm->test->get('arguments')[1]->dottedName(), $this->typeSwitchArms());
+    }
+
+    /**
+     * Does every arm of this switch hand the subject to a call and return what it gives — a MAPPER turning
+     * the value into another type, which the code owning that type is the right home for?
+     */
+    public function typeSwitchTranslatesEveryArm(): bool
+    {
+        $subject = $this->switchSubject();
+
+        return array_all($this->typeSwitchArms(), static fn (IfStmt $arm): bool => $arm->body->translates($subject));
+    }
+
+    /**
+     * Is this written in a named constructor — `@classmethod` building `cls(...)` from what it is handed,
+     * the one place a value's type decides how the class is born?
+     */
+    public function isInFromSourceFactory(): bool
+    {
+        return $this->module->functionOf($this->expr)->isSomeAnd(static fn (FunctionDef $function): bool => $function->isNamedConstructor());
+    }
+
+    /**
+     * The `if`s in this test's function whose whole condition is a type test of the same subject, in the
+     * order they are written — none when this is no type test.
+     *
+     * @return list<IfStmt>
+     */
+    private function typeSwitchArms(): array
+    {
+        if (! $this->expr->isTypeTest()) {
+            return [];
+        }
+
+        $subject = $this->switchSubject();
+        $tests = $this->module->functionOf($this->expr)->map(fn (FunctionDef $function): array => array_values(array_filter(
+            $this->module->expressionsIn($function),
+            fn (Expr $test): bool => $test->isTypeTest()
+                && StructuralHash::ofExpression($test->get('arguments')[0]) === $subject
+                && $this->module->ownerOf($test)->isSomeAnd(fn (Node $owner): bool => $owner instanceof IfStmt && $owner->test === $test && $this->isSwitchArm($owner)),
+        )))->unwrapOr([]);
+
+        return array_map(fn (Expr $test): IfStmt => $this->module->ownerOf($test)->unwrap(), $tests);
+    }
+
+    /**
+     * Does $if branch as one arm of a choice — a link of an `if`/`elif` chain, or an `if` that leaves? A
+     * lone `if` that falls through only adjusts the value on its way.
+     */
+    private function isSwitchArm(IfStmt $if): bool
+    {
+        return $if->else !== null
+            || $if->body->hasTrailingExit()
+            || $this->module->parentOf($if)->isSomeAnd(static fn (Node $parent): bool => $parent instanceof IfStmt && $parent->else === $if);
+    }
+
+    /**
+     * The fingerprint of the value this type test asks about.
+     */
+    private function switchSubject(): string
+    {
+        return StructuralHash::ofExpression($this->expr->get('arguments')[0]);
     }
 }

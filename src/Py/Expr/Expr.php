@@ -806,6 +806,17 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this `isinstance(subject, Cls)` — one value tested against ONE class? A tuple of classes is a
+     * membership question, not an arm of a switch.
+     */
+    public function isTypeTest(): bool
+    {
+        $arguments = $this->isInstanceCheck() ? $this->get('arguments') : [];
+
+        return count($arguments) === 2 && $arguments[1]->dottedName() !== '';
+    }
+
+    /**
      * Is this an `isinstance(...)` check?
      */
     public function isInstanceCheck(): bool

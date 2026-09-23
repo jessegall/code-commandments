@@ -286,7 +286,7 @@ class NodeMatch implements Located
         $method = $this->node;
 
         return $method instanceof FunctionDef
-            && ! (str_starts_with($method->name, '__') && str_ends_with($method->name, '__'))
+            && ! $method->isDunder()
             && ! $this->isOverride($codebase)
             && ! $codebase->index()->isOverridden($method, $this->module)
             && ! $codebase->index()->extendsOutside($method, $this->module);

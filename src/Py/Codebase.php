@@ -42,6 +42,11 @@ final class Codebase implements ModuleCodebase
     private ?Dataclasses $dataclasses = null;
 
     /**
+     * @var array<string, true>|null  the name of every class a module declares
+     */
+    private ?array $classNames = null;
+
+    /**
      * @param  array<string, string>  $sources  path => source
      */
     public function __construct(private readonly array $sources) {}
@@ -121,6 +126,21 @@ final class Codebase implements ModuleCodebase
     public function typedDicts(): TypedDicts
     {
         return $this->typedDicts ??= new TypedDicts($this);
+    }
+
+    /**
+     * Does a module here declare a class named as $dotted ends — `Circle` for `shapes.Circle`? Judging a
+     * subtree can only answer no for a class declared outside it, never yes for one that is not declared.
+     */
+    public function declaresClass(string $dotted): bool
+    {
+        $this->classNames ??= array_fill_keys(array_merge([], ...array_map(
+            static fn (ModuleFile $module): array => array_map(static fn (ClassDef $class): string => $class->name, array_values(array_filter($module->nodes(), static fn (Node $node): bool => $node instanceof ClassDef))),
+            $this->modules(),
+        )), true);
+        $parts = explode('.', $dotted);
+
+        return isset($this->classNames[end($parts)]);
     }
 
     /**
