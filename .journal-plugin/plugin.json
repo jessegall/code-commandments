@@ -1683,6 +1683,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-loop-wrapped-in-if": {
+            "title": "LoopWrappedInIf",
+            "help": "A loop whose whole body is one `if` around real work — the C# twin of the backend's and Python's loop-wrapped-in-if rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/flow",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-subject-ladder": {
             "title": "SubjectLadder",
             "help": "An `if`/`else if` ladder comparing one subject with constant after constant — the C# twin of the backend's and Python's ladder rules.",

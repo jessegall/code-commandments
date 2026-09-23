@@ -45,6 +45,50 @@ private static string Reorder(string warehouse, Shelf shelf) =>
     $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
 ```
 
+### csharp-loop-wrapped-in-if
+
+A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition
+
+```cs
+----------[ Bad ]----------
+
+public long Bill(Order order, List<string> journal)
+{
+    long billed = 0;
+
+    foreach (var line in order.Lines)
+    {
+        if (line.Quantity > 0)
+        {
+            billed += line.Subtotal.Cents;
+            journal.Add($"{line.Sku}: {line.Subtotal.Cents}");
+        }
+    }
+
+    return billed;
+}
+
+----------[ Good ]----------
+
+public long BillFlat(Order order, List<string> journal)
+{
+    long billed = 0;
+
+    foreach (var line in order.Lines)
+    {
+        if (line.Quantity <= 0)
+        {
+            continue;
+        }
+
+        billed += line.Subtotal.Cents;
+        journal.Add($"{line.Sku}: {line.Subtotal.Cents}");
+    }
+
+    return billed;
+}
+```
+
 ### redundant-csharp-else
 
 An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing

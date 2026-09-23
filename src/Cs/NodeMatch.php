@@ -183,6 +183,30 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this `if` — no `else` — the whole body of a loop, burying real work (two statements or more) a
+     * level deep behind its condition? The loop wants `if (!…) continue;`. A one-statement filter stays
+     * as it is, and so does a search — a body that ends by leaving the loop picks the one item it wanted.
+     */
+    public function isSoleLoopBodyGuard(): bool
+    {
+        if (! $this->node->is('IfStatement') || count($this->node->children()) !== 1) {
+            return false;
+        }
+
+        $branch = $this->node->children()[0];
+        $work = $branch->is('Block') ? $branch->children() : [$branch];
+
+        if (count($work) < 2 || end($work)->isBailOut()) {
+            return false;
+        }
+
+        $ancestors = $this->module->ancestorsOf($this->node);
+        [$holder, $loop] = ($ancestors[0] ?? null)?->is('Block') === true ? [$ancestors[0], $ancestors[1] ?? null] : [null, $ancestors[0] ?? null];
+
+        return $loop?->isLoop() === true && ($holder === null || count($holder->children()) === 1);
+    }
+
+    /**
      * How many choices this node sits inside, within the function it belongs to: each `if`, loop or
      * `switch` whose body holds it — an `else if` a rung of the ladder it continues, not a level of its
      * own.

@@ -102,6 +102,14 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this a loop — `for`, `foreach`, `while`, `do`?
+     */
+    public function isLoop(): bool
+    {
+        return $this->is('ForStatement', 'ForEachStatement', 'ForEachVariableStatement', 'WhileStatement', 'DoStatement');
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool
