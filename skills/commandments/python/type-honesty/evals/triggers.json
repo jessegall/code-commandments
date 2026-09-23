@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my GradeSelector has self.batch: Batch | None = None, set in run(), and accepts() does `return self.batch.permits(sku) if self.batch else False` — pyright is happy, is this fine?",
+        "I save `previous = self.scope`, set self.scope for the nested call and restore it afterwards; is there a better shape for this?",
+        "the dataclass needs a note: str but this caller has none, so I pass note=\"\" — ok?"
+    ],
+    "not": [
+        "how do I write a match statement over an enum in Python"
+    ]
+}

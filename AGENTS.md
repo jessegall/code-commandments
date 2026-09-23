@@ -116,6 +116,7 @@ most:**
 - **`commandments-csharp-absence`** — decide absence where the value is born — throw, return an empty collection, or a Null Object — with nullable reference types saying honestly what may be missing; never `?? ""` a required value, never `!` to silence the compiler.
 - **`commandments-csharp-value-objects`** — give related data a type — an immutable `record` built at the edge — instead of a dictionary read by fixed string keys, or values that always travel together.
 - **`commandments-python-fix-at-the-source`** — trace a value, an effect or a piece of state to where it starts, and fix it there.
+- **`commandments-python-type-honesty`** — a type must not lie: don't fake optionality with `| None` a value never is, or keep per-call scratch state on `self`.
 
 **ON CONTACT — load the moment the work touches the subject:**
 
