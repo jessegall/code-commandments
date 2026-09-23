@@ -377,6 +377,28 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a `?? throw` buried in the work — handed to a call as an argument, or the thing a member is
+     * read or called on — rather than assigned or returned as the guard it is?
+     */
+    public function isBuriedThrow(): bool
+    {
+        if (! $this->node->is('CoalesceExpression') || ! ($this->node->children[1] ?? null)?->is('ThrowExpression')) {
+            return false;
+        }
+
+        $inner = $this->node;
+        $parent = $this->module->parentOf($inner);
+
+        while ($parent->isSomeAnd(static fn (Node $around): bool => $around->is('ParenthesizedExpression'))) {
+            $inner = $parent->unwrap();
+            $parent = $this->module->parentOf($inner);
+        }
+
+        return $parent->isSomeAnd(static fn (Node $around): bool => $around->is('Argument')
+            || ($around->is('SimpleMemberAccessExpression', 'ConditionalAccessExpression') && $around->children[0] === $inner));
+    }
+
+    /**
      * Does this member answer a lookup miss with an invented empty value? Every value it returns — each
      * arm of a conditional counted on its own — is either `""`/`0`/`false`, or what a dictionary lookup
      * found: the lookup itself, or the `out` variable a `TryGetValue` in this member filled.

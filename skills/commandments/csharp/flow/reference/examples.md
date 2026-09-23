@@ -84,6 +84,28 @@ private static string Reorder(string warehouse, Shelf shelf) =>
     $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
 ```
 
+### csharp-inline-throw
+
+a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work
+
+```cs
+----------[ Bad ]----------
+
+public static string Upper(string? country)
+{
+    return Normalise(country ?? throw new AddressIncomplete("country"));
+}
+
+----------[ Good ]----------
+
+public static string CheckedUpper(string? country)
+{
+    var given = country ?? throw new AddressIncomplete("country");
+
+    return Normalise(given);
+}
+```
+
 ### csharp-loop-wrapped-in-if
 
 A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition
