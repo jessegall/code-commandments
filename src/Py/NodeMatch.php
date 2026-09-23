@@ -702,6 +702,52 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a field of a class built from stored data ({@see Codebase::isBuiltFromData})? A blank there is
+     * what the data stored, not a default the code chose.
+     */
+    public function isFieldOfDataBuiltClass(Codebase $codebase): bool
+    {
+        $class = $this->module->ancestorsOf($this->node)[1] ?? null;
+
+        return $this->node instanceof AnnAssign && $class instanceof ClassDef && $codebase->isBuiltFromData($class);
+    }
+
+    /**
+     * Is this a parameter of a public method on a class dispatched by name
+     * ({@see Codebase::isDispatchedByName}) — a command-line verb or a dispatcher's handler, which takes what
+     * that boundary hands it?
+     */
+    public function isParameterOfADispatchedMethod(Codebase $codebase): bool
+    {
+        $method = $this->module->ancestorsOf($this->node)[0] ?? null;
+
+        return $this->node instanceof Param
+            && $method instanceof FunctionDef
+            && ! str_starts_with($method->name, '_')
+            && $this->module->boundClassOf($method)->isSomeAnd(static fn (ClassDef $class): bool => $codebase->isDispatchedByName($class));
+    }
+
+    /**
+     * Is this a parameter every call hands an argument for — so its default is never taken, and a blank
+     * that arrives here is one a caller passed, decided where the caller got it?
+     */
+    public function isParameterEveryCallFills(Codebase $codebase): bool
+    {
+        $function = $this->module->ancestorsOf($this->node)[0] ?? null;
+
+        if (! $this->node instanceof Param || ! $function instanceof FunctionDef) {
+            return false;
+        }
+
+        $name = $this->node->name;
+        $calls = $codebase->index()->callersOf($function);
+
+        return $calls !== [] && array_all($calls, static fn (ExprMatch $call): bool => $codebase->index()->argumentsAt($call->expr)->isSomeAnd(
+            static fn (array $bound): bool => isset($bound[$name]),
+        ));
+    }
+
+    /**
      * The scope a blank-defaulted `str` declaration is read in, and the name it is read by there.
      *
      * @return Option<array{Node, string}>

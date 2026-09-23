@@ -31,6 +31,9 @@ final class BlankStringDefaultDetector implements Detector
             ->whereNode(static fn (Node $node) => $node instanceof Param || $node instanceof AnnAssign)
             ->where(static fn (NodeMatch $match): bool => $match->isBlankStringDefault())
             ->where(static fn (NodeMatch $match): bool => $match->defaultedNameTestedForBlankness())
+            ->reject(static fn (NodeMatch $match): bool => $match->isFieldOfDataBuiltClass($codebase))
+            ->reject(static fn (NodeMatch $match): bool => $match->isParameterOfADispatchedMethod($codebase))
+            ->reject(static fn (NodeMatch $match): bool => $match->isParameterEveryCallFills($codebase))
             ->get();
     }
 }
