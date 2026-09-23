@@ -38,6 +38,11 @@ final class ModuleFile implements ParsedModule
      */
     private ?array $parents = null;
 
+    /**
+     * @var array<int, Expr>|null  the expression each sub-expression sits in, by its object id
+     */
+    private ?array $wrappers = null;
+
     private function __construct(
         public readonly Module $module,
         public readonly string $file,
@@ -97,6 +102,18 @@ final class ModuleFile implements ParsedModule
         $this->parents ??= $this->parentIds($this->module);
 
         return Option::fromNullable($this->parents[spl_object_id($node)] ?? null);
+    }
+
+    /**
+     * The expression $expression sits directly inside — none for one a statement holds itself.
+     *
+     * @return Option<Expr>
+     */
+    public function wrapperOf(Expr $expression): Option
+    {
+        $this->wrappers ??= $this->wrapperIds();
+
+        return Option::fromNullable($this->wrappers[spl_object_id($expression)] ?? null);
     }
 
     /**
@@ -195,5 +212,21 @@ final class ModuleFile implements ParsedModule
         }
 
         return $parents;
+    }
+
+    /**
+     * @return array<int, Expr>
+     */
+    private function wrapperIds(): array
+    {
+        $wrappers = [];
+
+        foreach ($this->expressions() as $expression) {
+            foreach ($expression->subExpressions() as $inner) {
+                $wrappers[spl_object_id($inner)] = $expression;
+            }
+        }
+
+        return $wrappers;
     }
 }

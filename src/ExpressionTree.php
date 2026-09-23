@@ -64,7 +64,7 @@ trait ExpressionTree
      *
      * @return list<self>
      */
-    private function subExpressions(): array
+    public function subExpressions(): array
     {
         $children = [];
 

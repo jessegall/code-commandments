@@ -79,6 +79,15 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this an empty scalar written out — `""`, `0`, `False` — a value that stands in for data rather
+     * than being any? An empty collection is not one: "no items" is a real answer.
+     */
+    public function isEmptyScalar(): bool
+    {
+        return $this->kind === ExprKind::Literal && $this->get('type')->isEmptyScalar((string) $this->get('value'));
+    }
+
+    /**
      * Any literal — an f-string is its own kind, as it computes its fields.
      */
     public function isConstant(): bool

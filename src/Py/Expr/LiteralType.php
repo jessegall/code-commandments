@@ -55,4 +55,18 @@ enum LiteralType: string
             self::Number, self::Ellipsis, self::Format => false,
         };
     }
+
+    /**
+     * Does a literal of this type holding $value stand in for data rather than being any — `""`, `0`,
+     * `False`? `None` says "missing" outright and is not one.
+     */
+    public function isEmptyScalar(string $value): bool
+    {
+        return match ($this) {
+            self::String, self::Bytes => $value === '',
+            self::Number => (float) $value === 0.0 && is_numeric($value),
+            self::Bool => $value === 'False',
+            self::None, self::Ellipsis, self::Format => false,
+        };
+    }
 }

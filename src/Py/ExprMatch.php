@@ -66,4 +66,19 @@ class ExprMatch implements Located
             default => $expr->kind->value,
         };
     }
+
+    /**
+     * Is this expression passed straight into a call — a positional argument, or a keyword's value?
+     * Named as the backend names it.
+     */
+    public function fillsArgument(): bool
+    {
+        $wrapper = $this->module->wrapperOf($this->expr);
+
+        if ($wrapper->isSomeAnd(static fn (Expr $keyword): bool => $keyword->is(ExprKind::Keyword))) {
+            $wrapper = $this->module->wrapperOf($wrapper->unwrap());
+        }
+
+        return $wrapper->isSomeAnd(fn (Expr $call): bool => $call->isCall() && $call->get('callee') !== $this->expr);
+    }
 }

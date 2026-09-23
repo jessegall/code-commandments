@@ -40,6 +40,48 @@ A single local lookup checked right where it is produced — one caller, one `is
 no ceremony. The smell is a `None` that **travels**: returned, passed on, and re-checked at every
 place it lands.
 
+## Rules
+
+- [ ] Never fill an argument with an invented `""`, `0` or `False` on absence — handle the missing case, or make the value certain where it is born.
+      _Decide at the source: raise when the value must be there, or pass `None` on to a parameter that admits it. A real default (`or "EUR"`) is a choice, not an invention._
+
+## Worked example
+
+### python-invented-default
+
+`f(x or "")` — an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data
+
+```py
+----------[ Bad ]----------
+
+def send_receipt(order, mailer) -> None:
+    mailer.send(order.email or "", subject=f"Receipt {order.number}")
+
+----------[ Good ]----------
+
+# in receipts.py
+class NoEmail(LookupError):
+    @classmethod
+    def on(cls, order) -> "NoEmail":
+        return cls(f"order {order.number} has no email to send the receipt to")
+
+# in receipts.py
+def mail_receipt(order, mailer) -> None:
+    if order.email is None:
+        raise NoEmail.on(order)
+    mailer.send(order.email, subject=f"Receipt {order.number}")
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/absence` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-invented-default`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/absence`](../../backend/absence/SKILL.md) — the same decision on the PHP backend, with `Option`.

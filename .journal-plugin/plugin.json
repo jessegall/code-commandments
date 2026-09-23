@@ -1808,6 +1808,19 @@
             ],
             "detail": true
         },
+        "sin_python-invented-default": {
+            "title": "InventedDefault",
+            "help": "`f(x or \"\")` — an empty scalar invented to fill an argument on absence.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/absence",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-python-function": {
             "title": "DuplicateFunction",
             "help": "Two-or-more Python functions with one body — module functions and methods alike — compared by a formatting-blind fingerprint of the body alone, docstrings aside, so the copy that was renamed is caught with the one that was not.",
