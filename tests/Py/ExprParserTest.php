@@ -41,7 +41,7 @@ final class ExprParserTest extends TestCase
         $literal = Parser::parse($source);
 
         $this->assertSame(ExprKind::Literal, $literal->kind);
-        $this->assertSame($type, $literal->get('type'));
+        $this->assertSame($type, $literal->literalType()?->value);
         $this->assertSame($value, $literal->get('value'));
     }
 

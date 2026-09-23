@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py;
 
+use JesseGall\CodeCommandments\HashesFunctionBody;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Node;
@@ -16,6 +17,8 @@ use JesseGall\CodeCommandments\Support\ClassName;
  */
 class NodeMatch implements Located
 {
+    use HashesFunctionBody;
+
     public function __construct(
         public readonly Node $node,
         public readonly ModuleFile $module,
@@ -65,5 +68,10 @@ class NodeMatch implements Located
     public function isMethod(): bool
     {
         return $this->node instanceof FunctionDef && $this->module->isMethod($this->node);
+    }
+
+    protected static function syntaxHash(): string
+    {
+        return StructuralHash::class;
     }
 }

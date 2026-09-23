@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ts\Node;
 
+use JesseGall\CodeCommandments\SyntaxNode;
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
 use JesseGall\PhpTypes\Option;
 
@@ -13,7 +14,7 @@ use JesseGall\PhpTypes\Option;
  * re-emitted into a generated component exactly, and a {@see TypeNode} additionally reports the
  * type names it {@see TypeNode::references} (for carrying a local type into an extracted child).
  */
-abstract class Node
+abstract class Node implements SyntaxNode
 {
     use \JesseGall\CodeCommandments\Positioned;
 

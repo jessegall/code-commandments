@@ -158,7 +158,7 @@ final class FStringReader
             return;
         }
 
-        $this->parts[] = new Expr(ExprKind::Literal, ['type' => $inSpec ? 'format' : 'string', 'value' => $text])
+        $this->parts[] = new Expr(ExprKind::Literal, ['type' => $inSpec ? LiteralType::Format : LiteralType::String, 'value' => $text])
             ->locatedAt($this->base + $start, $this->base + $this->pos);
     }
 }

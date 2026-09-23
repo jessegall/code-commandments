@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Py\Node;
 
 use JesseGall\CodeCommandments\Positioned;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
+use JesseGall\CodeCommandments\SyntaxNode;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -13,7 +14,7 @@ use JesseGall\PhpTypes\Option;
  * it contains, the expressions it holds, what kind of its kind it is, what it declares, and the body
  * it runs as a function — so one tool reads either engine's tree the same way.
  */
-abstract class Node
+abstract class Node implements SyntaxNode
 {
     use Positioned;
 

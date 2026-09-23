@@ -504,14 +504,14 @@ final class Parser
         $token = $this->cursor->peek();
 
         return match (true) {
-            $token->isName('True'), $token->isName('False') => $this->literal('bool'),
-            $token->isName('None') => $this->literal('none'),
+            $token->isName('True'), $token->isName('False') => $this->literal(LiteralType::Bool),
+            $token->isName('None') => $this->literal(LiteralType::None),
             $token->isName('yield') => $this->yield(),
             $token->isName('lambda') => $this->lambda(),
             $token->isName() && ! in_array($token->value, self::NOT_EXPRESSION_STARTS, true) => $this->name(),
-            $token->is(TokenKind::Number) => $this->literal('number'),
+            $token->is(TokenKind::Number) => $this->literal(LiteralType::Number),
             $token->is(TokenKind::String) => $this->strings(),
-            $token->isOp('...') => $this->literal('ellipsis'),
+            $token->isOp('...') => $this->literal(LiteralType::Ellipsis),
             $token->isOp('(') => $this->parenthesised(),
             $token->isOp('[') => $this->bracketed(),
             $token->isOp('{') => $this->braced(),
@@ -526,7 +526,7 @@ final class Parser
         return $this->located(ExprKind::Name, ['name' => $this->cursor->advance()->value], $start);
     }
 
-    private function literal(string $type): Expr
+    private function literal(LiteralType $type): Expr
     {
         $start = $this->cursor->offset();
 
@@ -555,7 +555,7 @@ final class Parser
         }
 
         return $this->located(ExprKind::Literal, [
-            'type' => str_contains($prefixes, 'b') ? 'bytes' : 'string',
+            'type' => str_contains($prefixes, 'b') ? LiteralType::Bytes : LiteralType::String,
             'value' => implode('', array_map(static fn (Token $part) => self::contentOf($part->value), $parts)),
         ], $start);
     }
@@ -572,7 +572,7 @@ final class Parser
             return FStringReader::parts($string->value, $offset);
         }
 
-        return [new Expr(ExprKind::Literal, ['type' => 'string', 'value' => self::contentOf($string->value)])->locatedAt($offset, $offset + strlen($string->value))];
+        return [new Expr(ExprKind::Literal, ['type' => LiteralType::String, 'value' => self::contentOf($string->value)])->locatedAt($offset, $offset + strlen($string->value))];
     }
 
     /**

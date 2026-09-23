@@ -17,4 +17,12 @@ final class ExprStmt extends Node
     {
         return [$this->value];
     }
+
+    /**
+     * Is this a string standing alone — a docstring, or text left in the code — which runs nothing?
+     */
+    public function isBareString(): bool
+    {
+        return $this->value->literalType()?->isText() === true;
+    }
 }

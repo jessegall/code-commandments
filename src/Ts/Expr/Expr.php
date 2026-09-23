@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Ts\Expr;
 
 use JesseGall\CodeCommandments\ExpressionTree;
 use JesseGall\CodeCommandments\Positioned;
+use JesseGall\CodeCommandments\SyntaxExpression;
 use JesseGall\CodeCommandments\Ts\Keyword;
 use JesseGall\CodeCommandments\Ts\Node\BlockStmt;
 use JesseGall\CodeCommandments\Ts\Token;
@@ -14,7 +15,7 @@ use JesseGall\CodeCommandments\Ts\Token;
  * A node of parsed Vue binding expressions (JS in `:x="…"`, `v-if="…"`, `{{ … }}`). Second AST for frontend
  * detectors to reason about member chains/calls structurally, matching backend's php-parser approach. Kind-tagged node with predicates.
  */
-final class Expr
+final class Expr implements SyntaxExpression
 {
     use ExpressionTree;
     use Positioned;
@@ -110,7 +111,7 @@ final class Expr
     public function isBlankLiteral(): bool
     {
         return $this->kind === ExprKind::Literal
-            && $this->literalType() === 'string'
+            && $this->literalType() === LiteralType::String
             && $this->get('value') === '';
     }
 
@@ -476,7 +477,7 @@ final class Expr
      * checker could resolve those). Lets the script reader type an inferred `ref(false)`
      * without a generic, instead of falling back to `unknown`.
      */
-    public function literalType(): ?string
+    public function literalType(): ?LiteralType
     {
         if ($this->kind !== ExprKind::Literal) {
             return null;
@@ -486,11 +487,11 @@ final class Expr
         $first = $raw[0] ?? '';
 
         return match (true) {
-            $raw === 'true', $raw === 'false' => 'boolean',
-            $raw === 'null' => 'null',
-            $raw === 'undefined' => 'undefined',
-            $first === '"', $first === "'", $first === '`' => 'string',
-            is_numeric($raw) => 'number',
+            $raw === 'true', $raw === 'false' => LiteralType::Boolean,
+            $raw === 'null' => LiteralType::Null,
+            $raw === 'undefined' => LiteralType::Undefined,
+            $first === '"', $first === "'", $first === '`' => LiteralType::String,
+            is_numeric($raw) => LiteralType::Number,
             default => null,
         };
     }
@@ -505,7 +506,7 @@ final class Expr
     public function inferType(): ?string
     {
         return match ($this->kind) {
-            ExprKind::Literal => $this->literalType(),
+            ExprKind::Literal => $this->literalType()?->value,
             // Every operator the parser can emit, and no fallback arm: one it learns to produce
             // without a type decided here must fail rather than quietly infer nothing.
             ExprKind::Unary => match ((string) $this->get('op')) {

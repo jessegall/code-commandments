@@ -6,12 +6,13 @@ namespace JesseGall\CodeCommandments\Py\Expr;
 
 use JesseGall\CodeCommandments\ExpressionTree;
 use JesseGall\CodeCommandments\Positioned;
+use JesseGall\CodeCommandments\SyntaxExpression;
 
 /**
  * A node of a parsed Python expression — a kind and the properties that kind carries, shaped like the
  * TypeScript engine's {@see \JesseGall\CodeCommandments\Ts\Expr\Expr} so a tool reads either the same way.
  */
-final class Expr
+final class Expr implements SyntaxExpression
 {
     use ExpressionTree;
     use Positioned;
@@ -27,5 +28,13 @@ final class Expr
     public function isCall(): bool
     {
         return $this->kind === ExprKind::Call;
+    }
+
+    /**
+     * What this literal holds — null for an expression that is no literal.
+     */
+    public function literalType(): ?LiteralType
+    {
+        return $this->kind === ExprKind::Literal ? $this->get('type') : null;
     }
 }

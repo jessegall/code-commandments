@@ -4,119 +4,49 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ts;
 
-use JesseGall\CodeCommandments\Support\ClassName;
-use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\CodeCommandments\SyntaxExpression;
+use JesseGall\CodeCommandments\SyntaxHash;
+use JesseGall\CodeCommandments\SyntaxNode;
 use JesseGall\CodeCommandments\Ts\Expr\ExprKind;
 use JesseGall\CodeCommandments\Ts\Node\Node;
 use JesseGall\CodeCommandments\Ts\Node\TypeNode;
 
 /**
- * A formatting-blind fingerprint of a TypeScript subtree, read through the walk hooks every node
- * already answers — its kind and variant, the names it declares, its expressions and its children —
- * never its source text, so spacing, comments and quote style do not count. Type annotations are left
- * out, as the expression parser erases an `as` cast: what runs is the same with or without them.
- * {@see self::normalized} also blanks local names and string/number literals for type-2 clone detection,
- * keeping what is called and which members are read: the backend's
+ * The {@see SyntaxHash} of a TypeScript subtree. Type annotations read as one leaf, as the expression
+ * parser erases an `as` cast: what runs is the same with or without them. The backend's
  * {@see \JesseGall\CodeCommandments\Ast\Support\StructuralHash} drawn over the other language.
  */
-final class StructuralHash
+final class StructuralHash extends SyntaxHash
 {
-    public static function of(Node $node): string
+    protected static function isName(SyntaxExpression $expression): bool
     {
-        return sha1(self::node($node, false));
-    }
-
-    public static function normalized(Node $node): string
-    {
-        return sha1(self::node($node, true));
+        return $expression->is(ExprKind::Identifier);
     }
 
     /**
-     * How many nodes and expressions the subtree holds — the size a clone rule floors trivial bodies by.
+     * `'a'` and `"a"` are one string; `true`, `null` and the rest are not data but meaning.
      */
-    public static function weight(Node $node): int
+    protected static function literal(SyntaxExpression $literal, bool $normalize): ?string
     {
-        $weight = 1;
-
-        foreach ($node->expressions() as $expression) {
-            $weight += count($expression->flatten());
+        if (! $literal->is(ExprKind::Literal)) {
+            return null;
         }
 
-        foreach ($node->nested() as $child) {
-            $weight += self::weight($child);
-        }
+        $type = $literal->literalType();
 
-        return $weight;
-    }
-
-    private static function node(Node $node, bool $normalize): string
-    {
-        if ($node instanceof TypeNode) {
-            return 'T:' . $node->render();
-        }
-
-        $parts = [ClassName::short($node::class)];
-
-        if (! $normalize) {
-            $parts[] = implode(',', $node->declaredNames());
-        }
-
-        $parts[] = $node->variant();
-
-        foreach ($node->expressions() as $expression) {
-            $parts[] = self::expression($expression, $normalize);
-        }
-
-        foreach ($node->children() as $child) {
-            $parts[] = self::node($child, $normalize);
-        }
-
-        return '(' . implode('|', $parts) . ')';
-    }
-
-    private static function expression(Expr $expression, bool $normalize): string
-    {
-        if ($normalize && $expression->is(ExprKind::Identifier)) {
-            return 'id';
-        }
-
-        if ($expression->is(ExprKind::Literal)) {
-            return self::literal($expression, $normalize);
-        }
-
-        $parts = [$expression->kind->value];
-
-        foreach ($expression->props as $key => $value) {
-            $parts[] = $key . '=' . self::value($value, $normalize, $expression->isCall() && $key === 'callee');
-        }
-
-        return '(' . implode(',', $parts) . ')';
+        return 'lit:' . $type?->value . ':' . ($normalize && $type?->isData() ? '_' : (string) $literal->get('value'));
     }
 
     /**
-     * A literal by its type and VALUE — never its spelling, so `'a'` and `"a"` are one string. Normalising
-     * blanks the value of a string or a number; `true`, `null` and the rest are not data but meaning.
+     * A node's children, and the statement blocks of the arrows its own expressions hold.
      */
-    private static function literal(Expr $literal, bool $normalize): string
+    protected static function nested(SyntaxNode $node): array
     {
-        $blanked = $normalize && in_array($literal->literalType(), ['string', 'number'], true);
-
-        return 'lit:' . $literal->literalType() . ':' . ($blanked ? '_' : self::value($literal->get('value'), false));
+        return $node instanceof Node ? $node->nested() : [];
     }
 
-    /**
-     * $callee: the value is what a call calls — its name survives normalising, since two bodies that
-     * call different functions do different things.
-     */
-    private static function value(mixed $value, bool $normalize, bool $callee = false): string
+    protected static function leaf(SyntaxNode $node): ?string
     {
-        return match (true) {
-            $value instanceof Expr => self::expression($value, $normalize && ! ($callee && $value->is(ExprKind::Identifier))),
-            $value instanceof Node => self::node($value, $normalize),
-            is_array($value) => '[' . implode(',', array_map(static fn (mixed $item) => self::value($item, $normalize), $value)) . ']',
-            is_bool($value) => $value ? '1' : '0',
-            is_scalar($value) => (string) $value,
-            default => 'null',
-        };
+        return $node instanceof TypeNode ? 'T:' . $node->render() : null;
     }
 }
