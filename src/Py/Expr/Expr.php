@@ -184,6 +184,15 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this a mapping lookup that names its own default — `m.get(k, d)` — the value an absent optional
+     * key has, stated where it is read, rather than a `None` papered over after the fact?
+     */
+    public function isKeyedDefault(): bool
+    {
+        return $this->isCall() && $this->keyedDefault()->isSome();
+    }
+
+    /**
      * What this reads before falling back — `x` in `x or d` and its conditional spellings, `m` in
      * `m.get(k, d)` — the value whose absence the default answers.
      *

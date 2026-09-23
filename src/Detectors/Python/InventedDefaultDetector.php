@@ -33,6 +33,7 @@ final class InventedDefaultDetector implements Detector
         $filled = $codebase
             ->whereExpression(static fn (Expr $expression): bool => $expression->fallback()->isSomeAnd(static fn (Expr $fallback): bool => $fallback->isEmptyScalar()))
             ->where(static fn (ExprMatch $match): bool => $match->fillsArgument())
+            ->reject(static fn (ExprMatch $match): bool => $match->expr->isKeyedDefault())
             ->get();
 
         $returned = $codebase
