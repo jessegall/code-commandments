@@ -59,6 +59,12 @@ final class JournalHook implements Command
     {
         $moment = JournalMoment::fromPayload($given);
 
+        // The journal names every moment it asks about. One that names none is no hook moment, and must
+        // not fall to the handlers' manual run, which answers as a Stop and reads git to do it.
+        if ($moment->event === '') {
+            return new JournalAnswer();
+        }
+
         if (is_dir($moment->cwd)) {
             chdir($moment->cwd);
         }
