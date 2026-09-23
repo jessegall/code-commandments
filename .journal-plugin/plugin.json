@@ -10,7 +10,6 @@
             "tone": "warn",
             "card": {
                 "label": "Sin found",
-                "color": "#e0707a",
                 "icon": "warn"
             }
         },
@@ -19,7 +18,6 @@
             "tone": "good",
             "card": {
                 "label": "Sin repented",
-                "color": "#5fb87a",
                 "icon": "check"
             }
         }
