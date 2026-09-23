@@ -60,6 +60,8 @@ waiting to be named. Give them one type and pass that.
       _A `@dataclass(frozen=True)` for the result, built where it is returned — or a `TypedDict` when a dict must cross a boundary._
 - [ ] Derive a changed dataclass with `dataclasses.replace`, naming only what changes; don't re-list every field by hand.
       _`return replace(self, status="paid")` — a field added later needs no change here._
+- [ ] Make a value immutable: build it complete and derive a new one to change it; never write its fields after construction.
+      _`@dataclass(frozen=True)` and `return replace(self, amount=…)` from the method that changed it._
 
 ## Worked example
 
@@ -103,17 +105,17 @@ def schedule_delivery(address: Address, carrier) -> str:
     return carrier.book(address.line())
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/value-objects` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-data-clump`, `python-dict-bag`, `python-dict-return-bag`, `python-hand-rolled-replace`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-data-clump`, `python-dict-bag`, `python-dict-return-bag`, `python-hand-rolled-replace`, `python-mutable-value-object`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

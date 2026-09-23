@@ -107,3 +107,38 @@ def rerated(self, factor: float) -> "PriceRule":
 def extended(self, ends: str) -> "PriceRule":
     return replace(self, ends=ends)
 ```
+
+### python-mutable-value-object
+
+a dataclass whose own methods write the fields it was built from after construction — a value that changes under everyone holding it
+
+```py
+----------[ Bad ]----------
+
+@dataclass
+class DeliveryAddress:
+    street: str
+    city: str
+    postcode: str
+
+    def envelope(self) -> list:
+        return [self.street, f"{self.postcode}  {self.city.upper()}"]
+
+    def in_city(self, city: str) -> bool:
+        return self.city.casefold() == city.casefold()
+
+    def move(self, street: str, city: str) -> None:
+        self.street = street
+        self.city = city
+
+----------[ Good ]----------
+
+@dataclass(frozen=True)
+class ShippingAddress:
+    street: str
+    city: str
+    postcode: str
+
+    def moved(self, street: str, city: str) -> "ShippingAddress":
+        return replace(self, street=street, city=city)
+```

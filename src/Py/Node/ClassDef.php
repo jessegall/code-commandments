@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Py\Node;
 
 use JesseGall\CodeCommandments\Py\Expr\Expr;
+use JesseGall\CodeCommandments\Py\Expr\ExprKind;
 
 /**
  * A `class` with its decorators, bases (keyword arguments such as `metaclass=` among them) and body.
@@ -64,5 +65,42 @@ final class ClassDef extends Node
 
             return in_array($named->dottedName(), ['dataclass', 'dataclasses.dataclass'], true);
         });
+    }
+
+    /**
+     * The fields a caller hands this class when building it — the annotated names of its body, less a
+     * `ClassVar` and a `field(init=False)`, which the class keeps for itself.
+     *
+     * @return list<string>
+     */
+    public function initFieldNames(): array
+    {
+        $fields = array_filter($this->body->body, static fn (Node $statement): bool => $statement instanceof AnnAssign
+            && $statement->target->is(ExprKind::Name)
+            && ! $statement->annotation->isClassVarType()
+            && ! self::isKeptOutOfInit($statement->value));
+
+        return array_values(array_map(static fn (AnnAssign $field): string => (string) $field->target->get('name'), $fields));
+    }
+
+    /**
+     * The methods written in this class's body, the constructor and its `__post_init__` aside.
+     *
+     * @return list<FunctionDef>
+     */
+    public function methodsAfterConstruction(): array
+    {
+        return array_values(array_filter($this->body->body, static fn (Node $statement): bool => $statement instanceof FunctionDef
+            && ! in_array($statement->name, ['__init__', '__post_init__'], true)));
+    }
+
+    /**
+     * Is $default a `field(…, init=False)` — a field the class fills itself?
+     */
+    private static function isKeptOutOfInit(?Expr $default): bool
+    {
+        $arguments = $default?->isCall() === true && $default->get('callee')->dottedName() === 'field' ? $default->get('arguments') : [];
+
+        return array_any($arguments, static fn (Expr $argument): bool => $argument->is(ExprKind::Keyword) && $argument->get('name') === 'init' && $argument->get('value')->get('value') === 'False');
     }
 }

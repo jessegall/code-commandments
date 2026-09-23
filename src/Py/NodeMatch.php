@@ -223,6 +223,39 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a dataclass whose own methods write one of the fields it was built from — `self.amount
+     * += …`, or `object.__setattr__(self, 'amount', …)` past `frozen` — after construction? Equality,
+     * sharing and caching all rest on the value staying what it is.
+     */
+    public function isValueWrittenAfterConstruction(): bool
+    {
+        if (! $this->node instanceof ClassDef || ! $this->node->isDataclass()) {
+            return false;
+        }
+
+        $fields = $this->node->initFieldNames();
+
+        return array_any($this->node->methodsAfterConstruction(), fn (FunctionDef $method): bool => array_any(
+            $this->module->expressionsIn($method),
+            static fn (Expr $expression): bool => $expression->setsOwnAttribute($fields),
+        ) || $this->assignsOwnField($method, $fields));
+    }
+
+    /**
+     * Does $method assign `self.x` for one of $fields — other than filling it once as a memo?
+     *
+     * @param  list<string>  $fields
+     */
+    private function assignsOwnField(FunctionDef $method, array $fields): bool
+    {
+        $writes = array_filter($this->module->nodes(), fn (Node $node): bool => in_array($method, $this->module->ancestorsOf($node), true));
+
+        return array_any($writes, fn (Node $write): bool => array_any($write->writtenTargets(), fn (Expr $target): bool => $target->isOwnAttributeRead()
+            && in_array($target->get('name'), $fields, true)
+            && ! $this->isMemoFill($write, $target->dottedName())));
+    }
+
+    /**
      * Is this a class that is nothing but scalar constants — `PENDING = 'pending'`, `PAID = 'paid'` — a
      * closed set of values written out by hand instead of an `Enum`? A class with a base other than
      * `object` or a decorator is something else already, and has no enum to become.
@@ -260,7 +293,7 @@ class NodeMatch implements Located
     private function writesStatic(Expr $target, FunctionDef $function): bool
     {
         if ($target->is(ExprKind::Name)) {
-            return in_array($target->get('name'), $this->globalsOf($function), true) && ! $this->isMemoFill($target->get('name'));
+            return in_array($target->get('name'), $this->globalsOf($function), true) && ! $this->isMemoFill($this->node, $target->get('name'));
         }
 
         if (! $target->is(ExprKind::Attribute)) {
@@ -277,9 +310,9 @@ class NodeMatch implements Located
      * Is this write the one-time fill of a memo — inside `if x is None:`, `if not x:` or
      * `if len(x) == 0:` asking about the very name it writes? It adds nothing a caller can observe but speed.
      */
-    private function isMemoFill(string $name): bool
+    private function isMemoFill(Node $write, string $name): bool
     {
-        [$block, $if] = [...$this->module->ancestorsOf($this->node), null, null];
+        [$block, $if] = [...$this->module->ancestorsOf($write), null, null];
 
         return $if instanceof IfStmt && $if->body === $block && ($if->test->testsNoneOf($name) || $if->test->testsBlanknessOf($name) || $if->test->testsEmptinessOf($name));
     }

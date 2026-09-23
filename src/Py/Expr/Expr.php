@@ -242,6 +242,18 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this `object.__setattr__(self, 'x', …)` for one of $fields — a write past `frozen`?
+     *
+     * @param  list<string>  $fields
+     */
+    public function setsOwnAttribute(array $fields): bool
+    {
+        $arguments = $this->isCall() && $this->get('callee')->dottedName() === 'object.__setattr__' ? $this->get('arguments') : [];
+
+        return count($arguments) === 3 && $arguments[0]->dottedName() === 'self' && in_array($arguments[1]->get('value'), $fields, true);
+    }
+
+    /**
      * Does this call build an object of $class — `Order(…)`, `type(self)(…)`, `self.__class__(…)`?
      */
     public function constructs(string $class): bool
@@ -432,6 +444,16 @@ final class Expr implements SyntaxExpression
         [$then, $else] = [$this->get('value')->get('then'), $this->get('value')->get('else')];
 
         return ($then->isEmptyCollection() && $else->kind->isDisplay()) || ($else->isEmptyCollection() && $then->kind->isDisplay());
+    }
+
+    /**
+     * Does this annotation spell a class variable — `ClassVar`, `ClassVar[int]`, through `typing` or bare?
+     */
+    public function isClassVarType(): bool
+    {
+        $named = $this->kind === ExprKind::Subscript ? $this->get('object') : $this;
+
+        return in_array($named->dottedName(), ['ClassVar', 'typing.ClassVar'], true);
     }
 
     /**
