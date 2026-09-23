@@ -166,6 +166,14 @@ public sealed class TreeWriter(Project project)
                 json.WriteStartObject("target");
                 json.WriteString("type", target.ContainingType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
                 json.WriteString("name", target.Name);
+                json.WriteStartArray("parameters");
+
+                foreach (var parameter in target.Parameters)
+                {
+                    json.WriteStringValue(parameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+                }
+
+                json.WriteEndArray();
                 json.WriteEndObject();
             }
         }
