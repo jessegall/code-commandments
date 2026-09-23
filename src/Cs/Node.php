@@ -575,6 +575,44 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this a class of two or more `const` fields, each a one-line string or number written in the
+     * source, and nothing else — a closed set spelled out as constants? A multi-line string is a document
+     * kept on a shelf, not a case anything dispatches on.
+     */
+    public function isConstClassEnum(): bool
+    {
+        $members = array_filter($this->children, static fn (self $child): bool => $child->role === 'member');
+        $values = array_merge([], ...array_map(static fn (self $member): array => $member->constantValues(), $members));
+
+        return $this->is('ClassDeclaration')
+            && $members !== []
+            && array_all($members, static fn (self $member): bool => $member->is('FieldDeclaration') && $member->hasModifier('const'))
+            && count($values) >= 2
+            && array_all($values, static fn (self $value): bool => $value->isCaseLiteral());
+    }
+
+    /**
+     * The values this field declaration's declarators are given.
+     *
+     * @return list<self>
+     */
+    private function constantValues(): array
+    {
+        $clauses = array_filter($this->descendants(), static fn (self $node): bool => $node->is('EqualsValueClause'));
+
+        return array_values(array_map(static fn (self $clause): self => $clause->children[0], $clauses));
+    }
+
+    /**
+     * Is this a literal that could name a case — a number, or a string on one line?
+     */
+    private function isCaseLiteral(): bool
+    {
+        return $this->is('NumericLiteralExpression')
+            || ($this->is('StringLiteralExpression') && ! str_contains((string) $this->text, "\n"));
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

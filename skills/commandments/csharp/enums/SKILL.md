@@ -52,55 +52,60 @@ the code passes the enum, never the string.
 
 ## Rules
 
+- [ ] Make a closed set of values an `enum`, not a class of `const` strings or numbers.
+      _Declare `public enum Status { Pending, Paid }`, and serialise it by name with `JsonStringEnumConverter` where it must still read as its string._
 - [ ] Dispatch on the enum, never on strings that spell its members — parse the string into the enum where it enters.
       _Parse the string into the enum at the edge (`Enum.Parse<T>` or the JSON converter), switch on the enum, and put the per-case answer beside it._
 
 ## Worked example
 
-### csharp-string-mirrors-enum
+### csharp-const-class-enum
 
-A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text
+a class that holds nothing but `const` strings or numbers — a closed set of values written as constants instead of an `enum`
 
 ```cs
 ----------[ Bad ]----------
 
-public void Handle(string reference, string status)
+public static class PaymentState
 {
-    switch (status)
-    {
-        case "shipped":
-            notify($"{reference} is on its way");
-            break;
-        case "delivered":
-            notify($"{reference} has arrived");
-            break;
-    }
+    public const string Pending = "pending";
+    public const string Captured = "captured";
+    public const string Refunded = "refunded";
 }
 
 ----------[ Good ]----------
 
-public void HandleParsed(string reference, string status)
+// in PaymentStates.cs
+public enum PaymentStatus
 {
-    switch (Enum.Parse<OrderStatus>(status, ignoreCase: true))
+    Pending,
+    Captured,
+    Refunded,
+}
+
+// in PaymentStates.cs
+public static class PaymentStatusRules
+{
+    public static bool IsSettled(this PaymentStatus status) => status switch
     {
-        case OrderStatus.Shipped:
-            notify($"{reference} is on its way");
-            break;
-        case OrderStatus.Delivered:
-            notify($"{reference} has arrived");
-            break;
-    }
+        PaymentStatus.Pending => false,
+        PaymentStatus.Captured => true,
+        PaymentStatus.Refunded => true,
+    };
 }
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/enums` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-string-mirrors-enum`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-const-class-enum`, `csharp-string-mirrors-enum`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

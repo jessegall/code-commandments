@@ -31,6 +31,11 @@ final class Codebase implements ModuleCodebase
     private ?array $enumCases = null;
 
     /**
+     * @var list<string>|null  every class one of whose constants is compared as a case somewhere
+     */
+    private ?array $casedClasses = null;
+
+    /**
      * @param  list<ModuleFile>  $modules
      */
     private function __construct(private readonly array $modules) {}
@@ -224,6 +229,33 @@ final class Codebase implements ModuleCodebase
         $names = array_values(array_unique(array_map(strtolower(...), $literals)));
 
         return count($names) >= 2 && array_any($this->enumCases(), static fn (array $cases): bool => array_diff($names, $cases) === []);
+    }
+
+    /**
+     * Is a constant of the class $symbol compared as a case anywhere — `status == Status.Paid`,
+     * `case Status.Paid:`, `Status.Paid => …`? A constant only ever handed on as a name is not a case.
+     */
+    public function comparesAsACase(string $symbol): bool
+    {
+        return in_array($symbol, $this->casedClasses ??= $this->casedClasses(), true);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function casedClasses(): array
+    {
+        $classes = [];
+
+        foreach ($this->modules as $module) {
+            foreach ($module->expressions() as $expression) {
+                if ($expression->is('SimpleMemberAccessExpression') && $expression->constant && $module->isComparedAsACase($expression)) {
+                    $classes[] = (string) $expression->children[0]->type?->name;
+                }
+            }
+        }
+
+        return array_values(array_unique($classes));
     }
 
     /**

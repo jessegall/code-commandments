@@ -1735,6 +1735,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-const-class-enum": {
+            "title": "ConstClassEnum",
+            "help": "A class of nothing but `const` strings or numbers, one of which is compared as a case somewhere — the C# twin of the PHP const-class-enum rule.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/enums",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-string-mirrors-enum": {
             "title": "StringMirrorsEnum",
             "help": "A `switch` or an `if` ladder dispatching on two or more strings that all name members of one enum the codebase declares — the C# twin of the backend's string-match-mirrors-enum rule.",

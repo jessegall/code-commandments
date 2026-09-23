@@ -65,6 +65,17 @@ final class ModuleFile implements ParsedModule
     }
 
     /**
+     * Is $value compared as a case where it stands — a side of `==` or `!=`, a `case` label, or a
+     * constant pattern (`Status.Paid => …`, `is Status.Paid`)?
+     */
+    public function isComparedAsACase(Node $value): bool
+    {
+        return $this->parentOf($value)->isSomeAnd(fn (Node $parent): bool => $parent->is('ParenthesizedExpression')
+            ? $this->isComparedAsACase($parent)
+            : $parent->is('EqualsExpression', 'NotEqualsExpression', 'CaseSwitchLabel', 'ConstantPattern'));
+    }
+
+    /**
      * The node $node sits directly inside — none for the file's root.
      *
      * @return Option<Node>
