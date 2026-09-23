@@ -1,0 +1,265 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Py;
+
+use JesseGall\CodeCommandments\Py\Expr\Expr;
+use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Node\ClassDef;
+use JesseGall\CodeCommandments\Py\Node\FunctionDef;
+use JesseGall\CodeCommandments\Py\Node\Import;
+use JesseGall\CodeCommandments\Py\Node\Node;
+use JesseGall\PhpTypes\Option;
+
+/**
+ * The call graph of a Python codebase: which calls reach which `def`. A call is resolved through the
+ * module's imports — absolute and relative, aliased or not — through `self` inside a method, and
+ * through a parameter or variable annotated with a class; a method a class does not declare is looked
+ * up in its bases. The Python twin of {@see \JesseGall\CodeCommandments\Ast\CodebaseIndex}: a call
+ * that cannot be resolved is never guessed, and an import that names more than one module resolves
+ * to none.
+ */
+final class CallIndex
+{
+    /**
+     * @var array<int, list<ExprMatch>>|null  each `def`'s callers, by the def's object id
+     */
+    private ?array $callers = null;
+
+    /**
+     * @var array<int, ModuleFile>  the module each class is declared in, by the class's object id
+     */
+    private array $homes = [];
+
+    /**
+     * @var array<string, array{modules: array<string, ModuleFile>, members: array<string, Node>}>
+     */
+    private array $bindings = [];
+
+    public function __construct(private readonly Codebase $codebase) {}
+
+    /**
+     * Every call that reaches $function.
+     *
+     * @return list<ExprMatch>
+     */
+    public function callersOf(FunctionDef $function): array
+    {
+        $this->callers ??= $this->graph();
+
+        return $this->callers[spl_object_id($function)] ?? [];
+    }
+
+    /**
+     * @return array<int, list<ExprMatch>>
+     */
+    private function graph(): array
+    {
+        foreach ($this->codebase->modules() as $module) {
+            foreach ($module->nodes() as $node) {
+                if ($node instanceof ClassDef) {
+                    $this->homes[spl_object_id($node)] = $module;
+                }
+            }
+        }
+
+        $callers = [];
+
+        foreach ($this->codebase->modules() as $module) {
+            foreach ($module->nodes() as $node) {
+                foreach ($node->expressions() as $expression) {
+                    foreach ($expression->flatten() as $call) {
+                        if (! $call->isCall()) {
+                            continue;
+                        }
+
+                        $target = $this->resolve($call->get('callee'), $node, $module);
+
+                        if ($target->isSome()) {
+                            $callers[spl_object_id($target->unwrap())][] = new ExprMatch($call, $module);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $callers;
+    }
+
+    /**
+     * The `def` $callee names, read where $node stands in $module.
+     *
+     * @return Option<FunctionDef>
+     */
+    private function resolve(Expr $callee, Node $node, ModuleFile $module): Option
+    {
+        if ($callee->is(ExprKind::Name)) {
+            return $this->named((string) $callee->get('name'), $module)
+                ->filter(static fn (Node $found): bool => $found instanceof FunctionDef);
+        }
+
+        $dotted = $callee->dottedName();
+
+        if ($dotted === '') {
+            return Option::none();
+        }
+
+        $owner = substr($dotted, 0, (int) strrpos($dotted, '.'));
+        $member = substr($dotted, strrpos($dotted, '.') + 1);
+        $bound = $this->bindingsOf($module)['modules'][$owner] ?? null;
+
+        if ($bound !== null) {
+            return $bound->declared($member)->filter(static fn (Node $found): bool => $found instanceof FunctionDef);
+        }
+
+        return $this->classOf($owner, $node, $module)->andThen(fn (ClassDef $class) => $this->methodOf($class, $member));
+    }
+
+    /**
+     * The class $owner stands for where $node sits: `self` in a method, a parameter or variable
+     * annotated with a class, or a class named outright.
+     *
+     * @return Option<ClassDef>
+     */
+    private function classOf(string $owner, Node $node, ModuleFile $module): Option
+    {
+        $ancestors = [$node, ...$module->ancestorsOf($node)];
+        $function = array_values(array_filter($ancestors, static fn (Node $ancestor): bool => $ancestor instanceof FunctionDef))[0] ?? null;
+
+        if ($owner === 'self' && $function !== null) {
+            $class = $module->ancestorsOf($function)[1] ?? null;
+
+            return Option::fromNullable($class instanceof ClassDef ? $class : null);
+        }
+
+        $annotation = $function === null ? Option::none() : $function->annotationOf($owner);
+
+        if ($annotation->isSome()) {
+            return $this->classNamed($annotation->unwrap(), $module);
+        }
+
+        return str_contains($owner, '.') ? Option::none() : $this->classNamed(new Expr(ExprKind::Name, ['name' => $owner]), $module);
+    }
+
+    /**
+     * The class an annotation or a name spells, read in $module — a string annotation spells it too.
+     *
+     * @return Option<ClassDef>
+     */
+    private function classNamed(Expr $spelled, ModuleFile $module): Option
+    {
+        $dotted = $spelled->literalType()?->isText() === true ? (string) $spelled->get('value') : $spelled->dottedName();
+        $owner = substr($dotted, 0, max(0, (int) strrpos($dotted, '.')));
+        $bound = $this->bindingsOf($module)['modules'][$owner] ?? null;
+        $found = $bound !== null
+            ? $bound->declared(substr($dotted, strrpos($dotted, '.') + 1))
+            : $this->named($dotted, $module);
+
+        return $found->filter(static fn (Node $node): bool => $node instanceof ClassDef);
+    }
+
+    /**
+     * $name as $class declares it, or as the first of its bases that does.
+     *
+     * @return Option<FunctionDef>
+     */
+    private function methodOf(ClassDef $class, string $name): Option
+    {
+        foreach ($class->body->body as $member) {
+            if ($member instanceof FunctionDef && $member->name === $name) {
+                return Option::some($member);
+            }
+        }
+
+        $home = $this->homes[spl_object_id($class)] ?? null;
+
+        foreach ($home === null ? [] : $class->bases as $base) {
+            $inherited = $this->classNamed($base, $home)->andThen(fn (ClassDef $parent) => $this->methodOf($parent, $name));
+
+            if ($inherited->isSome()) {
+                return $inherited;
+            }
+        }
+
+        return Option::none();
+    }
+
+    /**
+     * What $name is bound to at the top of $module — a function or class it declares, or one it imports.
+     *
+     * @return Option<Node>
+     */
+    private function named(string $name, ModuleFile $module): Option
+    {
+        $imported = $this->bindingsOf($module)['members'][$name] ?? null;
+
+        return $imported !== null ? Option::some($imported) : $module->declared($name);
+    }
+
+    /**
+     * The names $module's imports bind: those bound to a module, and those bound to a function or class
+     * another module declares.
+     *
+     * @return array{modules: array<string, ModuleFile>, members: array<string, Node>}
+     */
+    private function bindingsOf(ModuleFile $module): array
+    {
+        if (isset($this->bindings[$module->file])) {
+            return $this->bindings[$module->file];
+        }
+
+        $modules = [];
+        $members = [];
+
+        foreach ($module->nodes() as $import) {
+            if (! $import instanceof Import) {
+                continue;
+            }
+
+            foreach ($import->names as $name => $alias) {
+                if ($import->module === null) {
+                    $this->moduleNamed($name, $module, 0)->inspect(function (ModuleFile $found) use (&$modules, $name, $alias): void {
+                        $modules[$alias === explode('.', $name)[0] ? $name : $alias] = $found;
+                    });
+
+                    continue;
+                }
+
+                $source = $this->moduleNamed($import->module, $module, $import->level);
+                $declared = $source->andThen(static fn (ModuleFile $found) => $found->declared($name));
+
+                if ($declared->isSome()) {
+                    $members[$alias] = $declared->unwrap();
+
+                    continue;
+                }
+
+                $this->moduleNamed(ltrim("{$import->module}.{$name}", '.'), $module, $import->level)->inspect(function (ModuleFile $found) use (&$modules, $alias): void {
+                    $modules[$alias] = $found;
+                });
+            }
+        }
+
+        return $this->bindings[$module->file] = ['modules' => $modules, 'members' => $members];
+    }
+
+    /**
+     * The one module $dotted names, read from $from — `$level` dots up from its package for a relative
+     * import. None when no module or more than one has that name.
+     *
+     * @return Option<ModuleFile>
+     */
+    private function moduleNamed(string $dotted, ModuleFile $from, int $level): Option
+    {
+        if ($level > 0) {
+            $package = dirname($from->file, $level);
+            $path = $package . ($dotted === '' ? '' : '/' . str_replace('.', '/', $dotted));
+            $found = array_filter($this->codebase->modules(), static fn (ModuleFile $module): bool => $module->file === "{$path}.py" || $module->file === "{$path}/__init__.py");
+        } else {
+            $found = array_filter($this->codebase->modules(), static fn (ModuleFile $module): bool => $module->isNamed($dotted));
+        }
+
+        return count($found) === 1 ? Option::some(array_values($found)[0]) : Option::none();
+    }
+}

@@ -117,6 +117,33 @@ final class ModuleFile implements ParsedModule
         return $ancestors;
     }
 
+    /**
+     * Does this module's file sit at the path a dotted module name spells — `a.b` at `…/a/b.py` or
+     * `…/a/b/__init__.py`?
+     */
+    public function isNamed(string $dotted): bool
+    {
+        $path = '/' . str_replace('.', '/', $dotted);
+
+        return str_ends_with($this->file, "{$path}.py") || str_ends_with($this->file, "{$path}/__init__.py");
+    }
+
+    /**
+     * The function or class this module declares at its top level as $name.
+     *
+     * @return Option<Node>
+     */
+    public function declared(string $name): Option
+    {
+        foreach ($this->module->body as $node) {
+            if (($node instanceof FunctionDef || $node instanceof ClassDef) && $node->name === $name) {
+                return Option::some($node);
+            }
+        }
+
+        return Option::none();
+    }
+
     public function language(): Language
     {
         return Language::Python;

@@ -33,6 +33,8 @@ final class Codebase implements BaseCodebase
      */
     private ?array $modules = null;
 
+    private ?CallIndex $index = null;
+
     /**
      * @param  array<string, string>  $sources  path => source
      */
@@ -84,6 +86,14 @@ final class Codebase implements BaseCodebase
     public function modules(): array
     {
         return $this->modules ??= array_map(static fn (string $source, string $file) => ModuleFile::fromFile($source, $file), $this->sources, array_keys($this->sources));
+    }
+
+    /**
+     * The call graph — which calls reach which `def` — built once and kept.
+     */
+    public function index(): CallIndex
+    {
+        return $this->index ??= new CallIndex($this);
     }
 
     public function whereFile(): FileQuery

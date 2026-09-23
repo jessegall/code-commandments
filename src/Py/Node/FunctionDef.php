@@ -53,4 +53,27 @@ final class FunctionDef extends Node
     {
         return Option::some($this->body);
     }
+
+    /**
+     * The annotation $name carries in this function — as one of its parameters, or as a local it
+     * declares with one.
+     *
+     * @return Option<Expr>
+     */
+    public function annotationOf(string $name): Option
+    {
+        foreach ($this->params as $param) {
+            if ($param->name === $name && $param->annotation !== null) {
+                return Option::some($param->annotation);
+            }
+        }
+
+        foreach ($this->body->descendants() as $statement) {
+            if ($statement instanceof AnnAssign && $statement->target->dottedName() === $name) {
+                return Option::some($statement->annotation);
+            }
+        }
+
+        return Option::none();
+    }
 }
