@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Ts\Expr;
+namespace JesseGall\CodeCommandments;
 
 use RuntimeException;
+use UnitEnum;
 
 /**
- * A property asked of an expression that its KIND does not carry. Which properties a kind holds is
+ * A property asked of an expression — TypeScript's or Python's — that its KIND does not carry. Which properties a kind holds is
  * fixed by the kind — a `Binary` has `left`, `right` and `op` — so this is a programming error, not
  * an absence: read as "not set" it would silently take a branch nobody meant.
  */
@@ -16,7 +17,7 @@ final class UnknownProperty extends RuntimeException
     /**
      * @param  list<string>  $available
      */
-    public static function of(ExprKind $kind, string $key, array $available): self
+    public static function of(UnitEnum $kind, string $key, array $available): self
     {
         $has = $available === [] ? 'nothing' : implode(', ', $available);
 

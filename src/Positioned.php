@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Ts;
+namespace JesseGall\CodeCommandments;
 
 /**
- * The source range a parsed thing occupies, and the parser's one way to record it. Shared by the two
- * frontend ASTs — the TypeScript {@see Node\Node} and the expression {@see Expr\Expr} — because
- * "where did this come from" is one question, and each answering it separately is how two answers
- * begin to differ.
+ * The source range a parsed thing occupies, and the parser's one way to record it. Shared by every AST
+ * the tool builds itself — TypeScript's and Python's, nodes and expressions alike — because "where did
+ * this come from" is one question, and each answering it separately is how two answers begin to differ.
  */
 trait Positioned
 {
@@ -16,7 +15,7 @@ trait Positioned
      * The `[start, end)` byte range this occupies IN THE MODULE SOURCE it was parsed from — 0/0 for
      * something built by hand rather than parsed. Module-relative on purpose: the parser is handed a
      * string and knows nothing of the file it came from, so turning this into a `file:line` is
-     * {@see ModuleFile}'s job, which owns both the path and the offset the script block begins at.
+     * the module's job, which owns both the path and the offset the script block begins at.
      */
     public private(set) int $start = 0;
 

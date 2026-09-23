@@ -15,7 +15,7 @@ use JesseGall\PhpTypes\Option;
  */
 abstract class Node
 {
-    use \JesseGall\CodeCommandments\Ts\Positioned;
+    use \JesseGall\CodeCommandments\Positioned;
 
     abstract public function render(): string;
 

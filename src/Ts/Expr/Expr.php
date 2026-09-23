@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ts\Expr;
 
+use JesseGall\CodeCommandments\ExpressionTree;
+use JesseGall\CodeCommandments\Positioned;
 use JesseGall\CodeCommandments\Ts\Keyword;
 use JesseGall\CodeCommandments\Ts\Node\BlockStmt;
 use JesseGall\CodeCommandments\Ts\Token;
@@ -14,7 +16,8 @@ use JesseGall\CodeCommandments\Ts\Token;
  */
 final class Expr
 {
-    use \JesseGall\CodeCommandments\Ts\Positioned;
+    use ExpressionTree;
+    use Positioned;
 
     /**
      * @param  array<string, mixed>  $props
@@ -23,25 +26,6 @@ final class Expr
         public readonly ExprKind $kind,
         public readonly array $props = [],
     ) {}
-
-
-    /**
-     * Every expression in this tree, this one first — the flat walk a query selects over, so a
-     * selector reaches a call nested in an argument of another call without knowing the shape it
-     * is buried in.
-     *
-     * @return list<self>
-     */
-    public function flatten(): array
-    {
-        $all = [$this];
-
-        foreach ($this->subExpressions() as $child) {
-            $all = [...$all, ...$child->flatten()];
-        }
-
-        return $all;
-    }
 
     /**
      * The statement blocks of every block-bodied arrow in this tree — `() => { … }` wherever it sits,
@@ -61,33 +45,6 @@ final class Expr
         }
 
         return $blocks;
-    }
-
-    /**
-     * The value of $key on this expression — resolve-or-THROW. Which properties a kind carries is
-     * fixed by the kind, so asking for one it does not have is a programming error rather than an
-     * absence; returning null for it made a typo'd key read as "not set". A property that is
-     * legitimately optional is present and null, which is why {@see has} is the probe.
-     */
-    public function get(string $key): mixed
-    {
-        return array_key_exists($key, $this->props)
-            ? $this->props[$key]
-            : throw UnknownProperty::of($this->kind, $key, array_keys($this->props));
-    }
-
-    /**
-     * Does this expression CARRY $key at all — the question to ask when the kind is not already
-     * known from the branch you are in.
-     */
-    public function has(string $key): bool
-    {
-        return array_key_exists($key, $this->props);
-    }
-
-    public function is(ExprKind $kind): bool
-    {
-        return $this->kind === $kind;
     }
 
     // ---- the shared shape vocabulary ------------------------------------------
@@ -710,28 +667,6 @@ final class Expr
         foreach ($this->subExpressions() as $child) {
             $child->gatherChains($chains);
         }
-    }
-
-    /**
-     * @return list<self>
-     */
-    private function subExpressions(): array
-    {
-        $children = [];
-
-        foreach ($this->props as $value) {
-            if ($value instanceof self) {
-                $children[] = $value;
-            } elseif (is_array($value)) {
-                foreach ($value as $item) {
-                    if ($item instanceof self) {
-                        $children[] = $item;
-                    }
-                }
-            }
-        }
-
-        return $children;
     }
 
     /**
