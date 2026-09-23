@@ -26,6 +26,20 @@ class ShopSession:
         return started + self.LIFETIME_SECONDS
 ```
 
+### python-phantom-nullable
+
+a field annotated `X | None` that every read assumes is there and none guards — a `None` the design never has
+
+```py
+----------[ Bad ]----------
+
+promotion: str | None = None
+
+----------[ Good ]----------
+
+promotion: str
+```
+
 ### python-placeholder-filled-data
 
 `Card(title=…, body="")` — a dataclass field required as `str` handed the blank to satisfy the signature, a value the type cannot catch

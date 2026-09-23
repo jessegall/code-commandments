@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Py\Node;
 use JesseGall\CodeCommandments\Py\Docstring;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Expr\LiteralType;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -99,6 +100,38 @@ final class ClassDef extends Node
         )));
 
         return array_values(array_unique(array_filter([...$declared, ...$set])));
+    }
+
+    /**
+     * Where the field $name is declared — its annotation in the class body, or else the statement in
+     * `__init__` that first sets it on `self`.
+     *
+     * @return Option<Node>
+     */
+    public function fieldDeclaration(string $name): Option
+    {
+        $declared = array_filter($this->body->body, static fn (Node $statement): bool => $statement instanceof AnnAssign && $statement->target->dottedName() === $name);
+        $set = $this->initializer()->mapOr([], static fn (FunctionDef $init): array => array_filter(
+            $init->body->descendants(),
+            static fn (Node $statement): bool => array_any($statement->writtenTargets(), static fn (Expr $target): bool => $target->selfAttribute() === $name),
+        ));
+
+        return Option::fromNullable(array_values([...$declared, ...$set])[0] ?? null);
+    }
+
+    /**
+     * Does a method other than `__init__` set the field $name back to `None` — so it genuinely goes absent?
+     */
+    public function resetsToNone(string $name): bool
+    {
+        $methods = array_filter($this->body->body, static fn (Node $member): bool => $member instanceof FunctionDef && $member->name !== '__init__');
+
+        return array_any($methods, static fn (FunctionDef $method): bool => array_any(
+            $method->body->descendants(),
+            static fn (Node $statement): bool => $statement instanceof Assign
+                && $statement->value->literalType() === LiteralType::None
+                && array_any($statement->targets, static fn (Expr $target): bool => $target->selfAttribute() === $name),
+        ));
     }
 
     /**

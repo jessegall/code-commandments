@@ -81,20 +81,28 @@ final class FunctionDef extends Node
     }
 
     /**
-     * The annotation of what this function stores in `self.$attribute` — declared there with one, or
-     * taken from the annotated parameter it assigns.
+     * The annotation of what this function stores in `self.$attribute` — declared there with one, or taken
+     * from the annotated parameter it assigns. The parameter's annotation holds only for a store written
+     * straight in the body, of a parameter nothing rebinds: behind an `if` the value may be narrowed, and a
+     * rebound name holds something else.
      *
      * @return Option<Expr>
      */
     public function storedAnnotation(string $attribute): Option
     {
-        $stores = array_filter($this->body->descendants(), static fn (Node $statement): bool => $statement instanceof Assign
+        $stores = array_filter($this->body->body, static fn (Node $statement): bool => $statement instanceof Assign
             && count($statement->targets) === 1
             && $statement->targets[0]->dottedName() === "self.{$attribute}"
             && $statement->value->is(ExprKind::Name));
+        $rebound = array_merge([], ...array_map(
+            static fn (Node $statement): array => array_map(static fn (Expr $target): string => $target->dottedName(), $statement->writtenTargets()),
+            $this->body->descendants(),
+        ));
 
         return $this->annotationOf("self.{$attribute}")->orElse(fn () => Option::fromNullable(array_values($stores)[0] ?? null)
-            ->andThen(fn (Assign $store) => $this->annotationOf((string) $store->value->get('name'))));
+            ->map(static fn (Assign $store): string => (string) $store->value->get('name'))
+            ->filter(static fn (string $parameter): bool => ! in_array($parameter, $rebound, true))
+            ->andThen(fn (string $parameter) => $this->annotationOf($parameter)));
     }
 
     /**

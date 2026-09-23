@@ -2648,6 +2648,19 @@
             ],
             "detail": true
         },
+        "sin_python-phantom-nullable": {
+            "title": "PhantomNullable",
+            "help": "A field typed `X | None` whose every read assumes it is there and none guards — the twin of the backend's PhantomNullableDetector, decided by the codebase's AttributeFlow.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/type-honesty",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-placeholder-filled-data": {
             "title": "PlaceholderFilledData",
             "help": "A dataclass built with `\"\"` in a field it requires as text — the twin of the backend's PlaceholderFilledDataDetector.",
