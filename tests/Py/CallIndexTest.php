@@ -65,6 +65,17 @@ final class CallIndexTest extends TestCase
                     Order.lines(order)
                     unknown.rounded(amount)
                 PY,
+            'shop/nested.py' => <<<'PY'
+                def outer():
+                    def rows():
+                        return []
+
+                    return rows()
+
+
+                def elsewhere():
+                    return rows()
+                PY,
             'shop/desk.py' => <<<'PY'
                 from .orders import Order
 
@@ -109,6 +120,11 @@ final class CallIndexTest extends TestCase
             ['desk.py:12', 'desk.py:12'],
             array_values(array_filter($this->callersOf('lines'), static fn (string $site): bool => str_starts_with($site, 'desk.py'))),
         );
+    }
+
+    public function test_a_function_nested_in_another_is_reached_from_the_one_it_is_nested_in(): void
+    {
+        $this->assertSame(['nested.py:5'], $this->callersOf('rows'));
     }
 
     public function test_an_inherited_method_is_reached_through_the_subclass(): void

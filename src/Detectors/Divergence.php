@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Detectors\Backend;
+namespace JesseGall\CodeCommandments\Detectors;
 
 /**
  * One path found to be another doing strictly less: which is poorer, which it should route through,

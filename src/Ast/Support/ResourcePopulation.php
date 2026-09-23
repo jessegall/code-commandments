@@ -21,6 +21,35 @@ final class ResourcePopulation
     ) {}
 
     /**
+     * The population $reach makes, each resource counted by how many units reach it.
+     *
+     * @param  array<string, array<string, true>>  $reach  unit => every resource it reaches
+     */
+    public static function counting(array $reach): self
+    {
+        return new self($reach, self::holdersIn($reach));
+    }
+
+    /**
+     * How many units of $reach reach each resource.
+     *
+     * @param  array<string, array<string, true>>  $reach
+     * @return array<string, int>
+     */
+    public static function holdersIn(array $reach): array
+    {
+        $holders = [];
+
+        foreach ($reach as $resources) {
+            foreach (array_keys($resources) as $resource) {
+                $holders[$resource] = ($holders[$resource] ?? 0) + 1;
+            }
+        }
+
+        return $holders;
+    }
+
+    /**
      * @return array<string, true>
      */
     public function of(?string $unit): array

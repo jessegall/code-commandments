@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\ExprStmt;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\IfStmt;
+use JesseGall\CodeCommandments\Py\Node\Import;
 use JesseGall\CodeCommandments\Py\Node\MatchStmt;
 use JesseGall\CodeCommandments\Py\Node\Module;
 use JesseGall\CodeCommandments\Py\Node\Node;
@@ -70,6 +71,11 @@ final class ModuleFile implements ParsedModule
      */
     private ?array $ownLineComments = null;
 
+    /**
+     * @var array<string, string>|null  each imported name's dotted meaning
+     */
+    private ?array $imported = null;
+
     private function __construct(
         public readonly Module $module,
         public readonly string $file,
@@ -102,6 +108,20 @@ final class ModuleFile implements ParsedModule
         }
 
         return isset($this->bound[$name]);
+    }
+
+    /**
+     * The dotted name each imported name stands for, across every import in the module — see
+     * {@see Import::dottedBindings}.
+     *
+     * @return array<string, string>
+     */
+    public function importedNames(): array
+    {
+        return $this->imported ??= array_merge([], ...array_map(
+            static fn (Import $import): array => $import->dottedBindings(),
+            array_values(array_filter($this->nodes(), static fn (Node $node): bool => $node instanceof Import)),
+        ));
     }
 
     /**

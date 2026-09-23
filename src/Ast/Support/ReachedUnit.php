@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
-use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Located;
 
 /**
  * One unit of code and what it reaches — the pairing every reach-comparing rule works in terms of, so
  * the declaration a finding is reported at travels with the resources the verdict is drawn from.
+ *
+ * @template T of Located
  */
 final class ReachedUnit
 {
     /**
+     * @param  T  $match
      * @param  list<string>  $resources  what this unit reaches, rarest first
      */
     public function __construct(
-        public readonly NodeMatch $match,
+        public readonly Located $match,
         public readonly array $resources,
     ) {}
 

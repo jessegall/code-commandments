@@ -232,6 +232,17 @@ final class FunctionDef extends Node
     }
 
     /**
+     * Does this function bind $name itself — as a parameter, a nested `def` or `class`, or anything it
+     * assigns?
+     */
+    public function bindsLocally(string $name): bool
+    {
+        return in_array($name, array_map(static fn (Param $param): string => $param->name, $this->params), true)
+            || array_any($this->body->descendants(), static fn (Node $node): bool => in_array($name, $node->declaredNames(), true)
+                || array_any($node->writtenTargets(), static fn (Expr $target): bool => $target->dottedName() === $name));
+    }
+
+    /**
      * The locals this function assigns exactly once, from a plain `name = value` — name → value. A local
      * written twice has no single meaning, so it is left out.
      *

@@ -15,12 +15,12 @@ use JesseGall\PhpTypes\Option;
 
 /**
  * The call graph of a Python codebase: which calls reach which `def`. A call is resolved through the
- * module's imports — absolute and relative, aliased or not — through `self` inside a method,
- * through a parameter or variable annotated with a class, and through an attribute of `self` whose class
- * the class body or `__init__` declares; a method a class does not declare is looked
- * up in its bases. The Python twin of {@see \JesseGall\CodeCommandments\Ast\CodebaseIndex}: a call
- * that cannot be resolved is never guessed, and an import that names more than one module resolves
- * to none.
+ * module's imports — absolute and relative, aliased or not — through a `def` nested in an enclosing
+ * function, through `self` inside a method, through a parameter or variable annotated with a class, and
+ * through an attribute of `self` whose class the class body or `__init__` declares; a method a class does
+ * not declare is looked up in its bases. The Python twin of
+ * {@see \JesseGall\CodeCommandments\Ast\CodebaseIndex}: a call that cannot be resolved is never guessed,
+ * and an import that names more than one module resolves to none.
  */
 final class CallIndex
 {
@@ -285,8 +285,10 @@ final class CallIndex
     private function resolve(Expr $callee, Node $node, ModuleFile $module): Option
     {
         if ($callee->is(ExprKind::Name)) {
-            return $this->named((string) $callee->get('name'), $module)
-                ->filter(static fn (Node $found): bool => $found instanceof FunctionDef);
+            $name = (string) $callee->get('name');
+
+            return $this->nestedIn($name, $node, $module)->orElse(fn () => $this->named($name, $module)
+                ->filter(static fn (Node $found): bool => $found instanceof FunctionDef));
         }
 
         $dotted = $callee->dottedName();
@@ -304,6 +306,31 @@ final class CallIndex
         }
 
         return $this->classOf($owner, $node, $module)->andThen(fn (ClassDef $class) => $this->methodOf($class, $member));
+    }
+
+    /**
+     * The `def` named $name that a function enclosing $node declares in its own body — the nearest one, as
+     * Python looks a name up — none when no enclosing function declares one.
+     *
+     * @return Option<FunctionDef>
+     */
+    private function nestedIn(string $name, Node $node, ModuleFile $module): Option
+    {
+        foreach ([$node, ...$module->ancestorsOf($node)] as $scope) {
+            if (! $scope instanceof FunctionDef) {
+                continue;
+            }
+
+            $declared = array_filter($scope->body->descendants(), static fn (Node $inner): bool => $inner instanceof FunctionDef
+                && $inner->name === $name
+                && array_values(array_filter($module->ancestorsOf($inner), static fn (Node $around): bool => $around instanceof FunctionDef))[0] === $scope);
+
+            if ($declared !== []) {
+                return Option::some(array_values($declared)[0]);
+            }
+        }
+
+        return Option::none();
     }
 
     /**

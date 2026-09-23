@@ -52,6 +52,8 @@ final class Codebase implements ModuleCodebase
 
     private ?AttributeFlow $attributeFlow = null;
 
+    private ?ResourceReach $resourceReach = null;
+
     private ?PackageGraph $packageGraph = null;
 
     /**
@@ -159,6 +161,14 @@ final class Codebase implements ModuleCodebase
     public function attributeFlow(): AttributeFlow
     {
         return $this->attributeFlow ??= new AttributeFlow($this);
+    }
+
+    /**
+     * What each of this codebase's functions reaches — built once and kept.
+     */
+    public function resourceReach(): ResourceReach
+    {
+        return $this->resourceReach ??= new ResourceReach($this);
     }
 
     /**

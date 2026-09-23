@@ -95,16 +95,15 @@ final class ResourceReach
 
             EdgeMap::link($byClass, $constant->enclosingClassName(), self::CONSTANT . $name);
             EdgeMap::link($byScope, $constant->scope(), self::CONSTANT . $name);
-
         }
 
         $firstParty = $codebase->declarations();
-        $closed = self::closed($byClass, $firstParty, self::holders($byClass));
+        $closed = self::closed($byClass, $firstParty);
 
         return new self(
             $codebase,
-            new ResourcePopulation($closed, self::holders($closed)),
-            new ResourcePopulation($byScope, self::holders($byScope)),
+            ResourcePopulation::counting($closed),
+            ResourcePopulation::counting($byScope),
             $firstParty,
         );
     }
@@ -151,12 +150,12 @@ final class ResourceReach
      *
      * @param  array<string, array<string, true>>  $direct
      * @param  array<string, mixed>  $firstParty
-     * @param  array<string, int>  $reached  how many units reach each resource DIRECTLY, which is what
-     *                                       marks a hub before any folding has blurred it
      * @return array<string, array<string, true>>
      */
-    private static function closed(array $direct, array $firstParty, array $reached): array
+    private static function closed(array $direct, array $firstParty): array
     {
+        // How many units reach each resource DIRECTLY, which is what marks a hub before any folding blurs it.
+        $reached = ResourcePopulation::holdersIn($direct);
         $reach = $direct;
 
         for ($step = 0; $step < self::DEPTH; $step++) {
@@ -190,22 +189,5 @@ final class ResourceReach
         }
 
         return $reach;
-    }
-
-    /**
-     * @param  array<string, array<string, true>>  $reach
-     * @return array<string, int>
-     */
-    private static function holders(array $reach): array
-    {
-        $holders = [];
-
-        foreach ($reach as $resources) {
-            foreach (array_keys($resources) as $resource) {
-                $holders[$resource] = ($holders[$resource] ?? 0) + 1;
-            }
-        }
-
-        return $holders;
     }
 }

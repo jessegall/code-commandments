@@ -28,4 +28,30 @@ final class Import extends Node
     {
         return array_values($this->names);
     }
+
+    /**
+     * The dotted name each name this binds stands for — `j` → `json` for `import json as j`, `os` → `os` for
+     * `import os.path`, `r` → `os.rename` for `from os import rename as r`. A relative import names a module
+     * of the project's own, and binds nothing here.
+     *
+     * @return array<string, string>
+     */
+    public function dottedBindings(): array
+    {
+        if ($this->level > 0) {
+            return [];
+        }
+
+        $bound = [];
+
+        foreach ($this->names as $imported => $alias) {
+            $bound[$alias] = match (true) {
+                $this->module !== null => "{$this->module}.{$imported}",
+                $alias === explode('.', $imported)[0] => $alias,
+                default => $imported,
+            };
+        }
+
+        return $bound;
+    }
 }

@@ -2362,6 +2362,19 @@
             ],
             "detail": true
         },
+        "sin_python-divergent-twin": {
+            "title": "DivergentTwin",
+            "help": "A function that does the same job as another and strictly less of it — the twin of the backend's DivergentTwinDetector, read by the shared DivergentTwins over what each function reaches.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/fix-at-the-source",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-mutable-static-state": {
             "title": "MutableStaticState",
             "help": "A write to state no instance owns — the twin of the backend's MutableStaticStateDetector.",

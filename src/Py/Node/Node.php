@@ -69,6 +69,31 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * Every expression this scope writes itself, at any depth, each sub-expression included — a function or
+     * class nested inside is its own scope, and its body is left to it.
+     *
+     * @return list<Expr>
+     */
+    final public function ownExpressions(): array
+    {
+        $own = [];
+
+        foreach ($this->children() as $child) {
+            if ($child->isScope()) {
+                continue;
+            }
+
+            $own = [
+                ...$own,
+                ...array_merge([], ...array_map(static fn (Expr $expression): array => $expression->flatten(), $child->expressions())),
+                ...$child->ownExpressions(),
+            ];
+        }
+
+        return $own;
+    }
+
+    /**
      * What tells this node from another of its kind beyond its children and expressions — a jump's
      * `break` or `continue`, an augmented assignment's operator. Empty for a kind with nothing more.
      */
