@@ -86,3 +86,28 @@ def mail_receipt(order, mailer) -> None:
         raise NoEmail.on(order)
     mailer.send(order.email, subject=f"Receipt {order.number}")
 ```
+
+### python-nullable-callback
+
+`cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op wearing a disguise
+
+```py
+----------[ Bad ]----------
+
+def with_retries(work: Callable[[], bool], attempts: int, on_retry: Callable[[int], None] | None = None) -> bool:
+    for attempt in range(attempts):
+        if work():
+            return True
+        if on_retry is not None:
+            on_retry(attempt)
+    return False
+
+----------[ Good ]----------
+
+def retrying(work: Callable[[], bool], attempts: int, on_retry: Callable[[int], None] = ignore) -> bool:
+    for attempt in range(attempts):
+        if work():
+            return True
+        on_retry(attempt)
+    return False
+```

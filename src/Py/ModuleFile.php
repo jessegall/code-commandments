@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py;
 
+use Closure;
 use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\NodeSpans;
 use JesseGall\CodeCommandments\ParsedModule;
@@ -96,8 +97,37 @@ final class ModuleFile implements ParsedModule
      */
     public function asksBlanknessOf(Node $scope, string $dotted): bool
     {
-        return array_any($this->expressions(), fn (Expr $expression): bool => $this->isWithin($expression, $scope)
-            && ($expression->testsBlanknessOf($dotted) || ($expression->dottedName() === $dotted && $this->isTested($expression))));
+        return $this->anyWithin($scope, fn (Expr $expression): bool => $expression->testsBlanknessOf($dotted) || $this->isTestedBare($expression, $dotted));
+    }
+
+    /**
+     * Does anything written inside $scope stand in for $dotted being `None` — ask `x is None` or
+     * `x is not None`, test it bare as a condition, or default it with `x or …`?
+     */
+    public function asksAbsenceOf(Node $scope, string $dotted): bool
+    {
+        return $this->anyWithin($scope, fn (Expr $expression): bool => $expression->testsNoneOf($dotted)
+            || $this->isTestedBare($expression, $dotted)
+            || $expression->fallbackSubject()->isSomeAnd(static fn (Expr $subject): bool => $subject->dottedName() === $dotted));
+    }
+
+    /**
+     * Does any expression written inside $scope satisfy $asks?
+     *
+     * @param  Closure(Expr): bool  $asks
+     */
+    private function anyWithin(Node $scope, Closure $asks): bool
+    {
+        return array_any($this->expressions(), fn (Expr $expression): bool => $this->isWithin($expression, $scope) && $asks($expression));
+    }
+
+    /**
+     * Is $expression $dotted itself, standing as the whole condition of an `if`, a `while` or a
+     * conditional expression?
+     */
+    private function isTestedBare(Expr $expression, string $dotted): bool
+    {
+        return $expression->dottedName() === $dotted && $this->isTested($expression);
     }
 
     /**

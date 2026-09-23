@@ -20,6 +20,11 @@ final class Expr implements SyntaxExpression
     use Positioned;
 
     /**
+     * The annotations that spell a callable.
+     */
+    private const array CALLABLE_TYPES = ['Callable', 'typing.Callable', 'collections.abc.Callable'];
+
+    /**
      * The annotations that spell a dict of any kind.
      */
     private const array DICT_TYPES = ['dict', 'Dict', 'typing.Dict', 'Mapping', 'typing.Mapping', 'MutableMapping', 'typing.MutableMapping', 'collections.abc.Mapping'];
@@ -231,6 +236,50 @@ final class Expr implements SyntaxExpression
         [$then, $else] = [$this->get('value')->get('then'), $this->get('value')->get('else')];
 
         return ($then->isEmptyCollection() && $else->kind->isDisplay()) || ($else->isEmptyCollection() && $then->kind->isDisplay());
+    }
+
+    /**
+     * Does this annotation spell a callable that may be `None` — `Callable[..] | None`, `None | Callable`,
+     * `Optional[Callable[..]]`?
+     */
+    public function isOptionalCallableType(): bool
+    {
+        if ($this->kind === ExprKind::Subscript && in_array($this->get('object')->dottedName(), ['Optional', 'typing.Optional'], true)) {
+            return $this->get('index')->isCallableType();
+        }
+
+        if ($this->kind !== ExprKind::Binary || $this->get('op') !== '|') {
+            return false;
+        }
+
+        [$left, $right] = [$this->get('left'), $this->get('right')];
+
+        return ($left->isCallableType() && $right->literalType() === LiteralType::None) || ($right->isCallableType() && $left->literalType() === LiteralType::None);
+    }
+
+    /**
+     * Does this annotation spell a callable — `Callable`, `Callable[[int], None]`, spelled through
+     * `typing` or `collections.abc` or bare?
+     */
+    public function isCallableType(): bool
+    {
+        $named = $this->kind === ExprKind::Subscript ? $this->get('object') : $this;
+
+        return in_array($named->dottedName(), self::CALLABLE_TYPES, true);
+    }
+
+    /**
+     * Does this ask whether $dotted is `None` — `x is None`, `x is not None`?
+     */
+    public function testsNoneOf(string $dotted): bool
+    {
+        if ($this->kind !== ExprKind::Compare || ! in_array($this->get('operators'), [['is'], ['is not']], true)) {
+            return false;
+        }
+
+        [$left, $right] = $this->get('operands');
+
+        return ($left->dottedName() === $dotted && $right->literalType() === LiteralType::None) || ($right->dottedName() === $dotted && $left->literalType() === LiteralType::None);
     }
 
     /**

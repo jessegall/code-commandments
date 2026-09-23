@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Py;
 
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Expr\LiteralType;
 use JesseGall\CodeCommandments\Py\Node\AnnAssign;
 use JesseGall\CodeCommandments\Py\Node\Block;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
@@ -163,6 +164,17 @@ class NodeMatch implements Located
         [$block, $loop] = [...$this->module->ancestorsOf($this->node), null, null];
 
         return ($loop instanceof ForLoop || $loop instanceof WhileLoop) && $loop->body === $block && count($block->body) === 1;
+    }
+
+    /**
+     * Does this function take a callable defaulted to `None` — `cb: Callable | None = None` — and then
+     * ask in its own body whether it was given one, where a no-op default would let it just call?
+     */
+    public function hasNullNormalisedOptionalCallback(): bool
+    {
+        return $this->node instanceof FunctionDef && array_any($this->node->params, fn (Param $param): bool => $param->annotation?->isOptionalCallableType() === true
+            && $param->default?->literalType() === LiteralType::None
+            && $this->module->asksAbsenceOf($this->node, $param->name));
     }
 
     /**
