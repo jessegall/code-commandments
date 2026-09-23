@@ -20,7 +20,7 @@ final class TypeBridge implements LocatedTool
     /**
      * The bridge's output format this engine reads — {@see self::read} refuses any other.
      */
-    public const int VERSION = 1;
+    public const int VERSION = 2;
 
     private const string SOURCE = __DIR__ . '/../../bridge/mypy';
 

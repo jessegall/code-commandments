@@ -16,13 +16,14 @@ from mypy import build
 from mypy.find_sources import InvalidSourceList, create_source_list
 from mypy.modulefinder import BuildSource
 from mypy.build import State
+from mypy.errors import CompileError
 from mypy.nodes import Expression
 from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
 from mypy.server.update import FineGrainedBuildManager
-from mypy.types import AnyType, Instance, NoneType, ProperType, Type, UnionType, get_proper_type
+from mypy.types import AnyType, FunctionLike, Instance, NoneType, ProperType, Type, UnionType, get_proper_type
 
-VERSION = 1
+VERSION = 2
 
 
 def options(python: str | None) -> Options:
@@ -55,6 +56,22 @@ def stamp(path: str) -> tuple[float, int]:
     return status.st_mtime, status.st_size
 
 
+def built(found: list[BuildSource], chosen: Options) -> FineGrainedBuildManager | None:
+    """A build of $found held for updates. A module mypy refuses to build at all — one that shadows a
+    standard-library module, like a top-level `logging.py` — is left out and so untyped, rather than taking
+    every other module's types down with it; none when nothing is left to build."""
+    while found:
+        try:
+            return FineGrainedBuildManager(build.build(found, chosen))
+        except CompileError as refused:
+            blamed = {os.path.realpath(message.split(":", 1)[0]) for message in refused.messages if ": error:" in message}
+            kept = [source for source in found if not (source.path and os.path.realpath(source.path) in blamed)]
+            if len(kept) == len(found):
+                return None
+            found = kept
+    return None
+
+
 class Session:
     """One project held checked in memory: built whole on the first request, then updated by the modules
     whose files changed since the last."""
@@ -70,9 +87,9 @@ class Session:
         stamps = {s.path: stamp(s.path) for s in found if s.path}
         key = (tuple(sorted(paths)), python)
         if self.manager is None or key != self.key or stamps.keys() != self.stamps.keys():
-            self.manager = FineGrainedBuildManager(build.build(found, chosen)) if found else None
+            self.manager = built(found, chosen)
         else:
-            changed = [(s.module, s.path) for s in found if s.path and stamps[s.path] != self.stamps[s.path]]
+            changed = [(s.module, s.path) for s in found if s.path and stamps[s.path] != self.stamps[s.path] and s.module in self.manager.graph]
             if changed:
                 self.manager.update(changed, [])
         self.key, self.stamps = key, stamps
@@ -100,6 +117,8 @@ def described(typ: Type) -> dict[str, object] | None:
     fact: dict[str, object] = {"type": str(typ), "nullable": nullable}
     if isinstance(present, Instance):
         fact["class"] = present.type.fullname
+    if isinstance(present, FunctionLike) and present.is_type_obj():
+        fact["constructs"] = present.type_object().fullname
     return fact
 
 

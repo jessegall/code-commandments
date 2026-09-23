@@ -47,6 +47,8 @@ So the signature demands what it uses — `def rename(node: Node, title: str)` �
 
 - [ ] Hand the method the object its callers keep asking, and let it ask; a bool every caller computes the same way is a decision living in the wrong place.
       _Take the object (`text(order)`) and read `order.status`/`order.total` inside, so the rule lives once._
+- [ ] Declare the parameter in the type callers actually hold and convert inside — one rule about the conversion, in one place.
+      _Move the conversion into the function and take what the callers had (`receipt_for(order)` or `receipt_for(order_id: int)`); a caller that forgets the conversion can no longer pass the wrong thing._
 
 ## Worked example
 
@@ -71,14 +73,17 @@ def offers_honestly(self, purchases: list[Purchase]) -> list[Purchase]:
     return [purchase for purchase in purchases if self.policy.allows_for(purchase)]
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/pass-the-object` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-computed-boolean-argument`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-computed-boolean-argument`, `python-converted-argument`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

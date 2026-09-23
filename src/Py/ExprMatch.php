@@ -465,6 +465,29 @@ class ExprMatch implements Located
     }
 
     /**
+     * The conversion $argument, written in this module, is — a call of one positional argument that builds a
+     * class, `str(order.id)` or `Money.of(raw)` — named by that class, and `.method` for a named constructor.
+     * None for anything else, a plain function like `len(items)` among them: mypy says whether a callee
+     * builds a class, so no list of names decides it.
+     *
+     * @return Option<string>
+     */
+    public function conversionIn(Expr $argument, Codebase $codebase): Option
+    {
+        $arguments = $argument->isCall() ? $argument->get('arguments') : [];
+
+        if (count($arguments) !== 1 || $arguments[0]->is(ExprKind::Keyword) || $arguments[0]->is(ExprKind::Starred)) {
+            return Option::none();
+        }
+
+        $callee = $argument->get('callee');
+        $named = $callee->is(ExprKind::Attribute) ? $callee->get('object') : $callee;
+        $built = $codebase->types()->at($this->module->file, $named->start, $named->end)->andThen(static fn (Type $type) => $type->constructedClass());
+
+        return $callee->is(ExprKind::Attribute) ? $built->map(static fn (string $class): string => "{$class}.{$callee->get('name')}") : $built;
+    }
+
+    /**
      * The one class every argument of this call is asked of — `text(order.status == "paid", order.total > 100)`
      * answers with the order's class, because both arguments are answers the same object gave. None when an
      * argument asks nothing (a literal, a bare name), when mypy typed no receiver, or when the arguments

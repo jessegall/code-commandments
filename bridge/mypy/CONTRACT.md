@@ -4,7 +4,7 @@
 time. Version 1:
 
 ```json
-{"version": 1}
+{"version": 2}
 {"path": "/abs/path/shop/cart.py", "types": [{"start": 120, "end": 131, "type": "shop.cart.Cart", "nullable": false, "class": "shop.cart.Cart"}]}
 {"resolution": {"expressions": 9992, "typed": 7823}}
 ```
@@ -37,6 +37,7 @@ One entry per expression mypy resolved, in source order:
 | `type` | always | the type as mypy writes it: `str \| None`, `list[int]`, `shop.cart.Cart` |
 | `class` | the type is a class instance, or one class or `None` | the class's fully qualified name: `builtins.str`, `shop.cart.Cart` |
 | `nullable` | always | whether the type is a union with `None` |
+| `constructs` | the expression names a class — `str`, `Money` in `Money.of` — so calling it builds one | the class's fully qualified name: `builtins.str`, `shop.money.Money` |
 
 A type mypy could not resolve (`Any`) is absent: never guessed, never `null`. mypy also types a few shapes of
 its own, such as the pieces of an f-string, that the PHP parser has no node for; a reader matching by span

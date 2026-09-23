@@ -45,6 +45,21 @@ final class TypeBridgeTest extends TestCase
         $this->assertSame('builtins.str', $this->typeOf($codebase, 'cart.owner()', 10)->className()->unwrap());
     }
 
+    public function test_a_name_that_builds_a_class_says_which_and_a_function_does_not(): void
+    {
+        $codebase = Codebase::scan($this->root);
+
+        $this->assertSame('shop.cart.Cart', $this->typeOf($codebase, 'Cart', 5)->constructedClass()->unwrap());
+        $this->assertTrue($this->typeOf($codebase, 'make', 9)->constructedClass()->isNone());
+    }
+
+    public function test_a_module_shadowing_the_standard_library_leaves_the_rest_typed(): void
+    {
+        file_put_contents("{$this->root}/logging.py", "def warn() -> None:\n    pass\n");
+
+        $this->assertSame('shop.cart.Cart', $this->typeOf(Codebase::scan($this->root), 'cart', 10)->className()->unwrap());
+    }
+
     public function test_a_codebase_built_from_strings_is_untyped(): void
     {
         $codebase = Codebase::fromString("x = 1\n");

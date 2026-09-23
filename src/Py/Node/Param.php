@@ -14,6 +14,11 @@ use JesseGall\CodeCommandments\Py\Expr\LiteralType;
  */
 final class Param extends Node
 {
+    /**
+     * The builtin scalar types a loose value is annotated with.
+     */
+    public const array SCALARS = ['str', 'int', 'float', 'bool'];
+
     public function __construct(
         public readonly string $name,
         public readonly string $kind = '',
@@ -21,6 +26,14 @@ final class Param extends Node
         public readonly ?Expr $default = null,
         public readonly bool $keywordOnly = false,
     ) {}
+
+    /**
+     * Is this parameter annotated with a builtin scalar — `str`, `int`, `float`, `bool`?
+     */
+    public function isScalar(): bool
+    {
+        return in_array($this->annotation?->dottedName(), self::SCALARS, true);
+    }
 
     public function expressions(): array
     {

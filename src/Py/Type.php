@@ -16,6 +16,7 @@ final readonly class Type
         public string $written,
         private ?string $class,
         public bool $nullable,
+        private ?string $constructs = null,
     ) {}
 
     /**
@@ -23,7 +24,7 @@ final readonly class Type
      */
     public static function fromContract(array $contract): self
     {
-        return new self((string) $contract['type'], isset($contract['class']) ? (string) $contract['class'] : null, (bool) $contract['nullable']);
+        return new self((string) $contract['type'], isset($contract['class']) ? (string) $contract['class'] : null, (bool) $contract['nullable'], isset($contract['constructs']) ? (string) $contract['constructs'] : null);
     }
 
     /**
@@ -34,5 +35,16 @@ final readonly class Type
     public function className(): Option
     {
         return Option::fromNullable($this->class);
+    }
+
+    /**
+     * The class this expression names, so that calling it builds one — `builtins.str` for `str`,
+     * `shop.money.Money` for the `Money` in `Money.of` — none for anything else.
+     *
+     * @return Option<string>
+     */
+    public function constructedClass(): Option
+    {
+        return Option::fromNullable($this->constructs);
     }
 }

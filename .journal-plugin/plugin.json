@@ -2505,6 +2505,19 @@
             ],
             "detail": true
         },
+        "sin_python-converted-argument": {
+            "title": "ConvertedArgument",
+            "help": "A scalar parameter declared in the wrong currency — the twin of the backend's ConvertedArgumentDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/pass-the-object",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-repeated-guard": {
             "title": "RepeatedGuard",
             "help": "One compound condition written in two places — the twin of the backend's RepeatedGuardDetector.",

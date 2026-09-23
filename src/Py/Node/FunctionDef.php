@@ -17,11 +17,6 @@ use JesseGall\PhpTypes\Option;
 final class FunctionDef extends Node
 {
     /**
-     * The builtin scalar types a loose value is annotated with.
-     */
-    private const array SCALARS = ['str', 'int', 'float', 'bool'];
-
-    /**
      * @param  list<Param>  $params
      * @param  list<Expr>  $decorators
      */
@@ -127,10 +122,8 @@ final class FunctionDef extends Node
         $fields = [];
 
         foreach ($this->params as $param) {
-            $type = $param->annotation?->dottedName() ?? '';
-
-            if (in_array($type, self::SCALARS, true)) {
-                $fields[] = "{$type} {$param->name}";
+            if ($param->isScalar()) {
+                $fields[] = "{$param->annotation?->dottedName()} {$param->name}";
             }
         }
 
