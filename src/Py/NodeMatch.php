@@ -191,6 +191,22 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a `match` on anything but `x.value` whose cases are strings — every one a value of one
+     * enum the codebase declares? The loose strings stand in for the type that already seals them.
+     */
+    public function isStringMatchMirroringEnum(Enums $enums): bool
+    {
+        if (! $this->node instanceof MatchStmt) {
+            return false;
+        }
+
+        $subject = $this->node->subject;
+        $readsValue = $subject->is(ExprKind::Attribute) && $subject->get('name') === 'value';
+
+        return ! $readsValue && $enums->holdAll($this->node->textCaseKeys());
+    }
+
+    /**
      * Is this a `match` over one declared enum's members whose `case _:` answers with nothing — `None`,
      * `False`, an empty value — while every member it handles gets a real answer? A member added later
      * falls into the wildcard and comes back as nothing, silently.

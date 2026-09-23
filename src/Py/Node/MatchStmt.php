@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py\Node;
 
+use Closure;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Expr\LiteralType;
 
 /**
  * A `match subject:` with its cases.
@@ -43,11 +45,32 @@ final class MatchStmt extends Node
      */
     public function literalCaseKeys(): array
     {
-        $alternatives = array_merge([], ...array_map(static fn (MatchCase $case): array => $case->pattern->alternatives(), $this->cases));
-        $tested = array_filter($alternatives, static fn (Expr $pattern): bool => $pattern->dottedName() !== '_');
-        $keys = array_map(static fn (Expr $pattern): string => $pattern->literalKey(), array_values($tested));
+        return $this->caseKeys(static fn (Expr $pattern): bool => $pattern->literalType() !== null);
+    }
 
-        return in_array('', $keys, true) ? [] : $keys;
+    /**
+     * The strings every `case` tests for, as comparable keys — empty unless every case other than the
+     * `_` wildcard is strings alone.
+     *
+     * @return list<string>
+     */
+    public function textCaseKeys(): array
+    {
+        return $this->caseKeys(static fn (Expr $pattern): bool => $pattern->literalType() === LiteralType::String);
+    }
+
+    /**
+     * The keys of the case alternatives $admits, other than `_` — empty when any alternative is not.
+     *
+     * @param  Closure(Expr): bool  $admits
+     * @return list<string>
+     */
+    private function caseKeys(Closure $admits): array
+    {
+        $alternatives = array_merge([], ...array_map(static fn (MatchCase $case): array => $case->pattern->alternatives(), $this->cases));
+        $tested = array_values(array_filter($alternatives, static fn (Expr $pattern): bool => $pattern->dottedName() !== '_'));
+
+        return array_all($tested, $admits) ? array_map(static fn (Expr $pattern): string => $pattern->literalKey(), $tested) : [];
     }
 
     /**

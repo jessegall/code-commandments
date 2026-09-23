@@ -117,15 +117,15 @@ def invoice_delivered(orders, ledger) -> int:
 ----------[ Bad ]----------
 
 def badge(order) -> str:
-    return "green" if order.status == "paid" else "amber" if order.status == "pending" else "red"
+    return "green" if order.status == "sent" else "amber" if order.status == "draft" else "red"
 
 ----------[ Good ]----------
 
 def badge_for(order) -> str:
     match order.status:
-        case "paid":
+        case "sent":
             return "green"
-        case "pending":
+        case "draft":
             return "amber"
         case _:
             return "red"

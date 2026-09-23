@@ -99,3 +99,27 @@ def shows_card_icon_for(self, method: PaymentMethod) -> bool:
         case _:
             raise UnhandledMethod.of(method)
 ```
+
+### python-string-match-mirrors-enum
+
+`match raw: case "pending": …` whose cases are an existing enum's values — dispatching on loose strings the enum already seals
+
+```py
+----------[ Bad ]----------
+
+def handle(event_type: str, payment_id: str, ledger) -> None:
+    match event_type:
+        case "payment.succeeded":
+            ledger.settle(payment_id)
+        case "payment.failed":
+            ledger.flag(payment_id)
+
+----------[ Good ]----------
+
+def handle_event(event: PaymentEvent, payment_id: str, ledger) -> None:
+    match event:
+        case PaymentEvent.SUCCEEDED:
+            ledger.settle(payment_id)
+        case PaymentEvent.FAILED:
+            ledger.flag(payment_id)
+```

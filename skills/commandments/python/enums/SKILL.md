@@ -58,6 +58,8 @@ passes the enum, never the string.
       _A property on the enum naming the group — `Status(x).is_open` — or `x in (Status.PENDING, Status.LATE)` when the value is already the enum._
 - [ ] End a `match` over an enum's members with a `case _:` that raises, or handle every member; never let the wildcard return `None`.
       _`case _: raise UnhandledStatus.of(status)` — or `assert_never(status)` so the type checker names the member left out._
+- [ ] Dispatch on the enum, not on loose strings that mirror its values; turn the string into the enum where it arrives.
+      _`Status(raw)` at the boundary, then `match status: case Status.PENDING: …` — or a method on the enum._
 
 ## Worked example
 
@@ -79,17 +81,17 @@ class CarrierCode(StrEnum):
     DHL = "DHL"
 ```
 
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/enums` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-class-enum`, `python-enum-case-or-chain`, `python-enum-value-match`, `python-in-literals-mirrors-enum`, `python-match-wildcard-returns-none`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-class-enum`, `python-enum-case-or-chain`, `python-enum-value-match`, `python-in-literals-mirrors-enum`, `python-match-wildcard-returns-none`, `python-string-match-mirrors-enum`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -7,3 +7,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`python-enum-value-match`** — `match status.value: case "paid": …` at a call site — the enum's raw values matched again where the enum could answer — `EnumValueMatchDetector`
 - **`python-in-literals-mirrors-enum`** — `x in ("pending", "late")` whose literals are an existing enum's values — a group of its members spelled as raw strings at the call site — `InLiteralsMirrorsEnumDetector`
 - **`python-match-wildcard-returns-none`** — a `match` over an enum's members whose `case _:` returns `None` — a member nobody handled answers nothing instead of failing — `MatchWildcardReturnsNoneDetector`
+- **`python-string-match-mirrors-enum`** — `match raw: case "pending": …` whose cases are an existing enum's values — dispatching on loose strings the enum already seals — `StringMatchMirrorsEnumDetector`
