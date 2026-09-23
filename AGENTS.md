@@ -147,6 +147,7 @@ most:**
 - **`commandments-python-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two functions share one name — split them and let the call say which it wants, instead of passing a bare `True`.
 - **`commandments-python-templates`** — a multi-line string is a triple-quoted f-string that SHOWS its output, never a list of line fragments joined.
 - **`commandments-python-tell-dont-ask`** — behaviour belongs with its data: move a loop over one object's collection onto that object, and replace an `isinstance` ladder with a method each type answers.
+- **`commandments-python-dependency-direction`** — a declared layer may only import the layers it declared it may use — down the stack, never back up, never sideways, and never in a cycle.
 
 **Finding and fixing sins — the checklist workflow.** Run
 `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the

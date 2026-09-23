@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I need a helper from shop.ui.shared inside shop.ui.elements — can I just import it?",
+        "I get a circular import between two of my Python packages; should I move the import inside the function?",
+        "judge flagged python-namespace-dependency on an import in my domain package, what does it want"
+    ],
+    "not": [
+        "how do I install a Python package with pip"
+    ]
+}
