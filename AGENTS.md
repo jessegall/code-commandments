@@ -114,6 +114,7 @@ most:**
 - **`commandments-python-absence`** — decide absence where the value is born — raise, return an empty collection, or a Null Object — instead of an `X | None` every caller re-checks; never `or ""` a required value.
 - **`commandments-python-value-objects`** — give related data a type — a frozen dataclass — instead of a dict with string keys passed around, or values that always travel together.
 - **`commandments-csharp-absence`** — decide absence where the value is born — throw, return an empty collection, or a Null Object — with nullable reference types saying honestly what may be missing; never `?? ""` a required value, never `!` to silence the compiler.
+- **`commandments-csharp-value-objects`** — give related data a type — an immutable `record` built at the edge — instead of a dictionary read by fixed string keys, or values that always travel together.
 
 **ON CONTACT — load the moment the work touches the subject:**
 

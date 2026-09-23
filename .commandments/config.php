@@ -74,6 +74,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\CSharp\Duplication::class,
         // Skills\CSharp\Exceptions::class,
         // Skills\CSharp\Flow::class,
+        // Skills\CSharp\ValueObjects::class,
     );
 };
 

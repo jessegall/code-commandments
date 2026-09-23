@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my C# services pass around Dictionary<string, object> like row[\"sku\"], row[\"qty\"], row[\"price\"] everywhere, should they be something else",
+        "I keep reading payload[\"name\"] and payload[\"email\"] from the same JsonNode in five places",
+        "should CreateShipment(string street, string city, string postcode, string country) take an object instead"
+    ],
+    "not": [
+        "my FindOrder method returns Order? and callers check it, what should I do"
+    ]
+}
