@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py\Node;
 
+use Closure;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 
 /**
@@ -40,5 +41,21 @@ final class IfStmt extends Node
     public function chain(): array
     {
         return [$this, ...($this->else instanceof self ? $this->else->chain() : [])];
+    }
+
+    public function isTwoWayBranch(Closure $tests): bool
+    {
+        return $this->else instanceof Block && $this->body->doesWork() && $this->else->doesWork() && $tests($this->test);
+    }
+
+    public function isTwoWayBranchBefore(Node $rest, Closure $tests): bool
+    {
+        $last = $this->body->body[array_key_last($this->body->body)] ?? null;
+
+        return $this->else === null
+            && $last?->isReturn() === true
+            && $this->body->doesWork()
+            && new Block([$rest])->doesWork()
+            && $tests($this->test);
     }
 }

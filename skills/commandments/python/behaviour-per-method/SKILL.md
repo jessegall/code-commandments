@@ -52,6 +52,50 @@ The whole body is `if flag: … else: …`, a `match flag:` with a `True` and a 
 `if kind is None: … else: …` on a parameter that used to be required. Ask what you would call each half on
 its own. If both have an obvious name, they are already two functions — give them their names.
 
+## Rules
+
+- [ ] Split a function whose body is one branch on a flag into two NAMED functions — never make a call say `True`, and never widen a required parameter to `X | None = None` so that leaving it out means 'all of them'.
+      _Name each half for what it does (`render_compact()` / `render_full()`), with any shared middle as a private function both call._
+
+## Worked example
+
+### python-flag-argument
+
+a function whose whole body branches on a `bool` parameter — or on whether an optional one was given — two functions sharing one name
+
+```py
+----------[ Bad ]----------
+
+def render(self, compact: bool) -> str:
+    if compact:
+        return f"{self.number}: {len(self.lines)} lines"
+    else:
+        return "\n".join([self.number, *self.lines])
+
+----------[ Good ]----------
+
+class InvoiceSheet:
+    def __init__(self, number: str, lines: list[str]) -> None:
+        self.number = number
+        self.lines = lines
+
+    def render_compact(self) -> str:
+        return f"{self.number}: {len(self.lines)} lines"
+
+    def render_full(self) -> str:
+        return "\n".join([self.number, *self.lines])
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/behaviour-per-method` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-flag-argument`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/behaviour-per-method`](../../backend/behaviour-per-method/SKILL.md) — the same discipline over PHP methods.

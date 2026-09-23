@@ -181,6 +181,16 @@ final class FunctionDef extends Node
     }
 
     /**
+     * Is this function's whole body one two-way branch on one of its own parameters — an `if`/`else` on a
+     * `bool`, or on whether an optional one was given? Then the parameter selects which of two functions
+     * the caller wanted.
+     */
+    public function switchesEntirelyOnAParameter(): bool
+    {
+        return array_any($this->params, fn (Param $param): bool => $this->body->isTwoWayBranch($param->isSelectedBy(...)));
+    }
+
+    /**
      * Is this a `@classmethod` — called with the class, not an instance, bound to its first parameter?
      */
     public function isClassMethod(): bool

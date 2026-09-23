@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py\Node;
 
+use Closure;
+use JesseGall\CodeCommandments\Py\Expr\Expr;
+
 /**
  * The statements a compound statement owns — the indented suite after its `:`, or the simple
  * statements written on that same line.
@@ -28,5 +31,36 @@ final class Block extends Node
     public function statementsBeyondText(): array
     {
         return array_values(array_filter($this->body, static fn (Node $statement): bool => ! ($statement instanceof ExprStmt && $statement->isBareString())));
+    }
+
+    /**
+     * Is this block one two-way choice $tests accepts — a lone `if`/`else` or `return a if … else b`, or an
+     * `if` whose arm returns followed by the one statement that is the other arm? Text above it is a
+     * docstring, not work.
+     */
+    public function isTwoWayBranch(Closure $tests): bool
+    {
+        $statements = $this->statementsBeyondText();
+
+        if (count($statements) === 1) {
+            return $statements[0]->isTwoWayBranch($tests);
+        }
+
+        return count($statements) === 2 && $statements[0]->isTwoWayBranchBefore($statements[1], $tests);
+    }
+
+    /**
+     * Does this block DO something, rather than hand back a value or nothing? An arm that only returns a
+     * literal or a name maps a choice to a value, and one that passes does no work at all.
+     */
+    public function doesWork(): bool
+    {
+        if (count($this->body) !== 1) {
+            return $this->body !== [];
+        }
+
+        $only = $this->body[0];
+
+        return ! $only->isNoOp() && ! $only->returnedValue()->isSomeAnd(static fn (Expr $value): bool => $value->isBareValue());
     }
 }

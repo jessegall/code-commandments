@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py\Node;
 
+use Closure;
 use JesseGall\CodeCommandments\Positioned;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\SyntaxNode;
@@ -90,6 +91,28 @@ abstract class Node implements SyntaxNode
      * Is this a `return` of nothing — bare, `None`, `False`, or an empty value?
      */
     public function returnsAbsence(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Is this statement one two-way choice that $tests accepts, each side doing work of its own? False for
+     * every statement but an `if`/`else` and a `return a if … else b`.
+     *
+     * @param  Closure(Expr): bool  $tests
+     */
+    public function isTwoWayBranch(Closure $tests): bool
+    {
+        return false;
+    }
+
+    /**
+     * Is this an `if` $tests accepts whose arm does its work and returns, with $rest — the one statement
+     * after it — as the other arm? The same two-way choice as an `if`/`else`, written without the `else`.
+     *
+     * @param  Closure(Expr): bool  $tests
+     */
+    public function isTwoWayBranchBefore(Node $rest, Closure $tests): bool
     {
         return false;
     }

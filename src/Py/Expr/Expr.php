@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py\Expr;
 
+use Closure;
 use JesseGall\CodeCommandments\ExpressionTree;
 use JesseGall\CodeCommandments\Positioned;
 use JesseGall\CodeCommandments\Py\Enums;
@@ -545,17 +546,65 @@ final class Expr implements SyntaxExpression
      */
     public function isOptionalCallableType(): bool
     {
+        return $this->optionalOf()->isSomeAnd(static fn (self $type): bool => $type->isCallableType());
+    }
+
+    /**
+     * The type this annotation makes optional — `X` in `X | None`, `None | X` and `Optional[X]` — none for
+     * an annotation that admits no `None`.
+     *
+     * @return Option<self>
+     */
+    public function optionalOf(): Option
+    {
         if ($this->kind === ExprKind::Subscript && in_array($this->get('object')->dottedName(), ['Optional', 'typing.Optional'], true)) {
-            return $this->get('index')->isCallableType();
+            return Option::some($this->get('index'));
         }
 
         if ($this->kind !== ExprKind::Binary || $this->get('op') !== '|') {
-            return false;
+            return Option::none();
         }
 
         [$left, $right] = [$this->get('left'), $this->get('right')];
 
-        return ($left->isCallableType() && $right->literalType() === LiteralType::None) || ($right->isCallableType() && $left->literalType() === LiteralType::None);
+        if ($right->literalType() === LiteralType::None) {
+            return Option::some($left);
+        }
+
+        return $left->literalType() === LiteralType::None ? Option::some($right) : Option::none();
+    }
+
+    /**
+     * Is this a value sitting there — a literal or a bare name — rather than work that computes one?
+     */
+    public function isBareValue(): bool
+    {
+        return $this->literalType() !== null || $this->kind === ExprKind::Name;
+    }
+
+    /**
+     * Does this ask only whether $name is set — `name` or `not name`? Anything richer is reasoning, not
+     * obeying a flag.
+     */
+    public function testsFlag(string $name): bool
+    {
+        $tested = $this->kind === ExprKind::Unary && $this->get('op') === 'not' ? $this->get('operand') : $this;
+
+        return $tested->kind === ExprKind::Name && $tested->get('name') === $name;
+    }
+
+    /**
+     * Is this `a if test else b` on a test $tests accepts, with work on both sides rather than two
+     * constants — a choice between behaviours, not a mapping to values?
+     *
+     * @param  Closure(self): bool  $tests
+     */
+    public function choosesBetweenWork(Closure $tests): bool
+    {
+        return $this->kind === ExprKind::Conditional
+            && ! $this->get('then')->isBareValue()
+            && ! $this->get('else')->isBareValue()
+            && $tests($this->get('test'));
     }
 
     /**

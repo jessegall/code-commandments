@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py\Node;
 
+use Closure;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\PhpTypes\Option;
 
@@ -45,5 +46,10 @@ final class Return_ extends Node
     public function returnsAbsence(): bool
     {
         return $this->returnedValue()->isNoneOr(static fn (Expr $value): bool => $value->isAbsenceValue());
+    }
+
+    public function isTwoWayBranch(Closure $tests): bool
+    {
+        return $this->returnedValue()->isSomeAnd(static fn (Expr $value): bool => $value->choosesBetweenWork($tests));
     }
 }
