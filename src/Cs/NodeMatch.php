@@ -265,6 +265,72 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this written where a type builds itself from loose data — a constructor, or a static factory
+     * whose declared return type is the type it sits in? Reading the input by name there is the edge.
+     */
+    public function isWithinNamedConstructor(): bool
+    {
+        $ancestors = $this->module->ancestorsOf($this->node);
+        $member = array_values(array_filter($ancestors, static fn (Node $node): bool => $node->is('ConstructorDeclaration', 'MethodDeclaration')))[0] ?? null;
+        $type = array_values(array_filter($ancestors, static fn (Node $node): bool => $node->is('ClassDeclaration', 'RecordDeclaration', 'StructDeclaration', 'RecordStructDeclaration')))[0] ?? null;
+
+        if ($member === null || $type === null) {
+            return false;
+        }
+
+        $returns = array_values(array_filter($member->children(), static fn (Node $child): bool => $child->role === 'type'))[0] ?? null;
+
+        return $member->is('ConstructorDeclaration') || ($member->hasModifier('static') && $returns?->name === $type->name);
+    }
+
+    /**
+     * Does this keyed read read a dictionary the code in hand owns — a parameter or a local of a function
+     * it sits in — rather than one reached through another object?
+     */
+    public function isReadingOwnDictionary(): bool
+    {
+        $names = array_merge([], ...array_map(static fn (Node $function): array => $function->ownNames(), array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->isFunction())));
+
+        return $this->node->readsDictionaryNamed($names);
+    }
+
+    /**
+     * Is this indexer being assigned to — a write, not a read?
+     */
+    public function isAssignedTo(): bool
+    {
+        return $this->module->parentOf($this->node)->isSomeAnd(fn (Node $parent): bool => str_ends_with($parent->kind, 'AssignmentExpression') && $parent->children[0] === $this->node);
+    }
+
+    /**
+     * Does this sit in a member that overrides or implements a contract — whose signature, and whatever
+     * data it is handed, the contract decided?
+     */
+    public function isWithinOverride(): bool
+    {
+        return array_any($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->inherited);
+    }
+
+    /**
+     * Does this feed straight into an object being created — an argument or an initializer of a `new`
+     * within the same function? Reading loose data there is converting it, at the edge.
+     */
+    public function isBuildingAnObject(): bool
+    {
+        foreach ($this->module->ancestorsOf($this->node) as $ancestor) {
+            if ($ancestor->isFunction()) {
+                return false;
+            }
+
+            if ($ancestor->is('ObjectCreationExpression', 'ImplicitObjectCreationExpression')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * How many choices this node sits inside, within the function it belongs to: each `if`, loop or
      * `switch` whose body holds it — an `else if` a rung of the ladder it continues, not a level of its
      * own.

@@ -27,6 +27,11 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
         .RemoveMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.UseSpecialTypes)
         .AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
+    /// <summary>How a declared member is named: fully qualified, with its containing type and its parameters' types — as a call's resolved target names it.</summary>
+    private static readonly SymbolDisplayFormat Declared = Qualified
+        .WithMemberOptions(SymbolDisplayMemberOptions.IncludeContainingType | SymbolDisplayMemberOptions.IncludeParameters)
+        .WithParameterOptions(SymbolDisplayParameterOptions.IncludeType);
+
     /// <summary>
     /// The response as lines: the version, one line per file, then the resolution, which closes it — so
     /// a reader holds one file at a time, however large the project.
@@ -312,7 +317,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
         if (node is MemberDeclarationSyntax member && model.GetDeclaredSymbol(member) is { } declared)
         {
-            json.WriteString("symbol", declared.ToDisplayString(Qualified));
+            json.WriteString("symbol", declared.ToDisplayString(Declared));
 
             if (declared.IsOverride || ImplementsInterfaceMember(declared))
             {

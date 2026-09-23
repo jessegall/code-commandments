@@ -1787,6 +1787,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-dictionary-bag": {
+            "title": "DictionaryBag",
+            "help": "A string-keyed dictionary or JSON object read by keys written in the source — the C# twin of Python's dict-bag rule, and like it, found both where the key is read and where a lookup helper is handed the key — a dictionary the reading code owns, a parameter or a local.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/value-objects",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_mirrored-server-type": {
             "title": "MirroredServerType",
             "help": "Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. /",

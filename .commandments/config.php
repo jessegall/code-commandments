@@ -237,6 +237,7 @@ $disabledSins = function (Config $config): void {
 
         // ----------[ C# ]----------
         // Sins\CSharp\DeepNesting::class,
+        // Sins\CSharp\DictionaryBag::class,
         // Sins\CSharp\DuplicateMethod::class,
         // Sins\CSharp\GenericThrow::class,
         // Sins\CSharp\InventedDefault::class,

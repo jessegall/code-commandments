@@ -18,4 +18,12 @@ final readonly class CallTarget
         public string $name,
         public array $parameters,
     ) {}
+
+    /**
+     * The method called, named as its declaration's `symbol` names it — so a call finds its declaration.
+     */
+    public function symbol(): string
+    {
+        return "{$this->type}.{$this->name}(" . implode(', ', $this->parameters) . ')';
+    }
 }

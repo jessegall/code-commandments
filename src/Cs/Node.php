@@ -40,6 +40,11 @@ final class Node implements SyntaxNode, SyntaxExpression
     ];
 
     /**
+     * The JSON object types read by a string indexer.
+     */
+    private const array JSON_OBJECTS = ['global::System.Text.Json.Nodes.JsonNode', 'global::System.Text.Json.Nodes.JsonObject'];
+
+    /**
      * The exceptions that name no failure a caller could catch by meaning.
      */
     private const array GENERIC_EXCEPTIONS = ['global::System.Exception', 'global::System.SystemException', 'global::System.ApplicationException', 'global::System.InvalidOperationException'];
@@ -240,6 +245,102 @@ final class Node implements SyntaxNode, SyntaxExpression
         }
 
         return $this->isCall() && in_array($this->target?->name, ['TryGetValue', 'GetValueOrDefault'], true) && self::isDictionary($this->target->type);
+    }
+
+    /**
+     * The argument expressions this call, object creation or indexer is handed, in order.
+     *
+     * @return list<self>
+     */
+    public function arguments(): array
+    {
+        $list = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('ArgumentList', 'BracketedArgumentList')))[0] ?? null;
+
+        return array_values(array_filter(array_map(static fn (self $argument): ?self => $argument->expressions()[0] ?? null, $list?->children ?? [])));
+    }
+
+    /**
+     * Does this read a dictionary or a JSON object by a string written in the source — `row["sku"]`,
+     * `settings.TryGetValue("timeout", out …)`, `json.GetProperty("name")`? The receiver and the
+     * method are the ones the compiler resolved.
+     */
+    public function isStringKeyRead(): bool
+    {
+        $key = $this->arguments()[0] ?? null;
+
+        if ($key === null || ! $key->isConstant() || $key->type?->name !== 'global::System.String') {
+            return false;
+        }
+
+        return $this->isKeyedRead();
+    }
+
+    /**
+     * Does this read a string-keyed dictionary or a JSON object by its first argument — whatever that
+     * argument is?
+     */
+    public function isKeyedRead(): bool
+    {
+        return match (true) {
+            $this->is('ElementAccessExpression') => self::isStringKeyed($this->children[0]->type?->name),
+            $this->isCall() && $this->target?->name === 'GetProperty' => $this->target->type === 'global::System.Text.Json.JsonElement',
+            $this->isCall() && in_array($this->target?->name, ['TryGetValue', 'GetValueOrDefault'], true) => self::isStringKeyed($this->target->type),
+            default => false,
+        };
+    }
+
+    /**
+     * What a keyed read reads from — the indexed expression, or the receiver of the lookup method.
+     *
+     * @return Option<self>
+     */
+    public function keyedReceiver(): Option
+    {
+        if ($this->is('ElementAccessExpression')) {
+            return Option::some($this->children[0]);
+        }
+
+        $callee = $this->isCall() ? $this->children[0] : null;
+
+        return Option::fromNullable($callee?->is('SimpleMemberAccessExpression') === true ? $callee->children[0] : null);
+    }
+
+    /**
+     * Does this keyed read read a dictionary held under one of $names — a variable named there, not a
+     * member reached through another object?
+     *
+     * @param  list<string|null>  $names
+     */
+    public function readsDictionaryNamed(array $names): bool
+    {
+        return $this->keyedReceiver()->isSomeAnd(static fn (self $receiver): bool => $receiver->is('IdentifierName') && in_array($receiver->name, $names, true));
+    }
+
+    /**
+     * The names this function declares for its own use — its parameters, and every local its body
+     * declares.
+     *
+     * @return list<string>
+     */
+    public function ownNames(): array
+    {
+        $declarations = array_filter(
+            [...$this->children, ...$this->descendants()],
+            static fn (self $node): bool => $node->is('Parameter', 'VariableDeclarator', 'SingleVariableDesignation'),
+        );
+
+        return array_values(array_filter(array_map(static fn (self $declaration): ?string => $declaration->name, $declarations)));
+    }
+
+    /**
+     * Is $type — or null where the compiler resolved none — a dictionary keyed by strings, or a JSON object?
+     */
+    private static function isStringKeyed(?string $type): bool
+    {
+        return $type !== null && (
+            in_array($type, self::JSON_OBJECTS, true)
+            || array_any(self::DICTIONARIES, static fn (string $dictionary): bool => str_starts_with($type, $dictionary . 'global::System.String,'))
+        );
     }
 
     /**

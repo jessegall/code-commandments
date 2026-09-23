@@ -36,7 +36,7 @@ Every syntax node, nested as Roslyn nests them. Tokens and trivia (comments, whi
 | `forgivesNull` | a null-forgiving `!` whose operand is declared nullable (a `T?` field, property, local, parameter or return) | `true` |
 | `constant` | expressions with a compile-time value | `true` — a literal, an enum member, a `const`, or arithmetic on them, as the compiler folds it |
 | `target` | invocations and object creations it resolved | `{ "type", "name", "parameters" }` — the method called, its containing type and parameter types |
-| `symbol` | member declarations | the declared member, fully qualified |
+| `symbol` | member declarations | the declared member, fully qualified with its containing type and its parameters' types (`global::Shop.Rows.Read(global::System.String)`) — as a call's `target` names it |
 | `inherited` | members that override or implement another | `true` |
 
 A fact the compiler could not resolve is absent — never guessed, never `null`.

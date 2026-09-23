@@ -19,6 +19,11 @@ use JesseGall\CodeCommandments\Support\Path;
 final class Codebase implements ModuleCodebase
 {
     /**
+     * @var array<string, list<int>>|null  each method's declared symbol => the positions of the parameters it reads a dictionary by
+     */
+    private ?array $keyParameters = null;
+
+    /**
      * @param  list<ModuleFile>  $modules
      */
     private function __construct(private readonly array $modules) {}
@@ -178,6 +183,52 @@ final class Codebase implements ModuleCodebase
         }
 
         return $pairs;
+    }
+
+    /**
+     * Does $call hand a string written in the source to a parameter the method it calls reads a
+     * dictionary by — a lookup helper handed the key, which reads the record by name just the same?
+     */
+    public function passesLiteralKey(Node $call): bool
+    {
+        if ($call->target === null) {
+            return false;
+        }
+
+        $positions = $this->keyParameters()[$call->target->symbol()] ?? [];
+        $arguments = $call->arguments();
+
+        return array_any($positions, static fn (int $position): bool => ($arguments[$position] ?? null)?->isConstant() === true && $arguments[$position]->type?->name === 'global::System.String');
+    }
+
+    /**
+     * @return array<string, list<int>>
+     */
+    private function keyParameters(): array
+    {
+        if ($this->keyParameters !== null) {
+            return $this->keyParameters;
+        }
+
+        $this->keyParameters = [];
+
+        foreach ($this->whereMethodDeclaration()->get() as $method) {
+            $list = array_values(array_filter($method->node->children(), static fn (Node $child): bool => $child->is('ParameterList')))[0] ?? null;
+            $names = array_map(static fn (Node $parameter): ?string => $parameter->name, $list?->children() ?? []);
+            $keys = array_filter(
+                array_merge([], ...array_map(static fn (Node $expression): array => $expression->flatten(), $method->node->outermostExpressions())),
+                static fn (Node $read): bool => $read->isKeyedRead()
+                    && ($read->arguments()[0] ?? null)?->is('IdentifierName') === true
+                    && $read->readsDictionaryNamed($names),
+            );
+            $positions = array_values(array_unique(array_filter(array_map(static fn (Node $read): int|false => array_search($read->arguments()[0]->name, $names, true), $keys), static fn (int|false $position): bool => $position !== false)));
+
+            if ($method->node->symbol !== null && $positions !== []) {
+                $this->keyParameters[$method->node->symbol] = $positions;
+            }
+        }
+
+        return $this->keyParameters;
     }
 
     /**

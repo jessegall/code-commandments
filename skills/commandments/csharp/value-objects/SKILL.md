@@ -50,6 +50,47 @@ A tuple returned and taken apart by position is the same thing unnamed.
 - The dictionary a serializer or a framework hands you right before you convert it, and options
   forwarded unchanged.
 
+## Rules
+
+- [ ] Give a record a type — an immutable `record` — instead of a dictionary read by string keys.
+      _Declare the keys as members of a record, build it where the data enters (`JsonSerializer.Deserialize<T>` or a static `From` factory), and take that type from there on._
+
+## Worked example
+
+### csharp-dictionary-bag
+
+A string-keyed dictionary or JSON object read by keys written in the source — `row["sku"]`, `json.GetProperty("name")` — a record nobody declared
+
+```cs
+----------[ Bad ]----------
+
+public int Units(IReadOnlyDictionary<string, string> row)
+{
+    return int.Parse(row["units"]) * 2;
+}
+
+----------[ Good ]----------
+
+// in ImportRows.cs
+public int UnitsOf(ImportRow row) => row.Units * 2;
+
+// in ImportRows.cs
+public sealed record ImportRow(string Sku, int Units)
+{
+    public static ImportRow From(IReadOnlyDictionary<string, string> row) => new(row["sku"], int.Parse(row["units"]));
+}
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/value-objects` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-dictionary-bag`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/value-objects`](../../backend/value-objects/SKILL.md) — the same discipline on the PHP backend, with Spatie `Data`.
