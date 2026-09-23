@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Py;
 
 use JesseGall\CodeCommandments\Located;
+use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
 use JesseGall\CodeCommandments\Py\Expr\LiteralType;
 use JesseGall\CodeCommandments\Py\Node\AnnAssign;
+use JesseGall\CodeCommandments\Py\Node\Assign;
 use JesseGall\CodeCommandments\Py\Node\Block;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
+use JesseGall\CodeCommandments\Py\Node\ExceptHandler;
 use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\IfStmt;
 use JesseGall\CodeCommandments\Py\Node\Node;
 use JesseGall\CodeCommandments\Py\Node\Param;
+use JesseGall\CodeCommandments\Py\Node\Raise;
 use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
@@ -164,6 +168,57 @@ class NodeMatch implements Located
         [$block, $loop] = [...$this->module->ancestorsOf($this->node), null, null];
 
         return ($loop instanceof ForLoop || $loop instanceof WhileLoop) && $loop->body === $block && count($block->body) === 1;
+    }
+
+    /**
+     * Is this a `raise` of a new exception inside an `except` block with no `from` — the failure it
+     * handles left as an implicit context instead of named as the cause? `raise` bare, `raise e` of the
+     * caught one, and `from None` all say what they mean and are not this.
+     */
+    public function isRaiseWithoutCause(): bool
+    {
+        if (! $this->node instanceof Raise || $this->node->exception === null || $this->node->cause !== null) {
+            return false;
+        }
+
+        $raised = $this->node->exception->dottedName();
+
+        return $this->enclosingHandler()->isSomeAnd(fn (ExceptHandler $handler): bool => ($handler->name === null || $raised !== $handler->name)
+            && ! $this->setsCauseOf($handler, $raised));
+    }
+
+    /**
+     * Does $handler assign `$raised.__cause__` by hand — the chaining `from` spells, written longhand?
+     */
+    private function setsCauseOf(ExceptHandler $handler, string $raised): bool
+    {
+        $assigns = array_filter($this->module->nodes(), fn (Node $node): bool => $node instanceof Assign && in_array($handler, $this->module->ancestorsOf($node), true));
+
+        return $raised !== '' && array_any($assigns, static fn (Assign $assign): bool => array_any(
+            $assign->targets,
+            static fn (Expr $target): bool => $target->dottedName() === "{$raised}.__cause__",
+        ));
+    }
+
+    /**
+     * The `except` block this node is written in, within its own function — none outside one, and none
+     * across a `def` or a `class` written inside the handler.
+     *
+     * @return Option<ExceptHandler>
+     */
+    private function enclosingHandler(): Option
+    {
+        foreach ($this->module->ancestorsOf($this->node) as $around) {
+            if ($around->isScope()) {
+                return Option::none();
+            }
+
+            if ($around instanceof ExceptHandler) {
+                return Option::some($around);
+            }
+        }
+
+        return Option::none();
     }
 
     /**

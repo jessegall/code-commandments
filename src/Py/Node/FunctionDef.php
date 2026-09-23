@@ -45,6 +45,11 @@ final class FunctionDef extends Node
         return [...$this->params, $this->body];
     }
 
+    public function isScope(): bool
+    {
+        return true;
+    }
+
     public function expressions(): array
     {
         return $this->decorators;

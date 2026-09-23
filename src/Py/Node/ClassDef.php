@@ -27,6 +27,11 @@ final class ClassDef extends Node
         return [$this->body];
     }
 
+    public function isScope(): bool
+    {
+        return true;
+    }
+
     public function expressions(): array
     {
         return [...$this->decorators, ...$this->bases];

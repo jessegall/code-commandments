@@ -29,6 +29,34 @@ def current_basket(context):
     return context.session.basket
 ```
 
+### python-raise-without-cause
+
+`raise Other(...)` inside an `except` block with no `from` — the failure being handled left as an implicit context, never named as the cause
+
+```py
+----------[ Bad ]----------
+
+def price(self, sku: str, refresh) -> int:
+    try:
+        return self.prices[sku]
+    except KeyError as missing:
+        self.prices = refresh(self.supplier)
+        if sku not in self.prices:
+            raise UnknownSku.at(self.supplier, sku)
+        return self.prices[sku]
+
+----------[ Good ]----------
+
+def price_of(self, sku: str, refresh) -> int:
+    try:
+        return self.prices[sku]
+    except KeyError as missing:
+        self.prices = refresh(self.supplier)
+        if sku not in self.prices:
+            raise UnknownSku.at(self.supplier, sku) from missing
+        return self.prices[sku]
+```
+
 ### python-swallowed-exception
 
 A bare `except:` or `except Exception` whose body only passes, continues or returns nothing — every failure, expected or not, made to vanish

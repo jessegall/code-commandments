@@ -87,6 +87,15 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * Is this a scope of its own — a `def` or a `class` — so what is written inside it belongs to
+     * it rather than to the statements around it?
+     */
+    public function isScope(): bool
+    {
+        return false;
+    }
+
+    /**
      * @return Option<Expr>
      */
     public function returnedValue(): Option
