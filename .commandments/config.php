@@ -237,6 +237,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\AssembledTemplate::class,
         // Sins\Python\BareStatePredicate::class,
         // Sins\Python\BlankStringDefault::class,
+        // Sins\Python\BloatedDocblock::class,
         // Sins\Python\CancelledFallback::class,
         // Sins\Python\CoalescedLoopSubject::class,
         // Sins\Python\ConditionalSpread::class,

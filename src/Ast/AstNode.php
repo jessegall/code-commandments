@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Ast;
 use JesseGall\PhpTypes\Option;
 
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Support\Prose;
 
 use JesseGall\CodeCommandments\Ast\Support\Calls;
 use JesseGall\CodeCommandments\Ast\Support\ClassLayoutOrder;
@@ -3516,22 +3517,9 @@ class AstNode
             return false;
         }
 
-        $paragraphs = 0;
-        $inParagraph = false;
+        $lines = array_map(static fn (string $line) => trim(ltrim(trim($line), '/*')), preg_split('/\R/', $doc->getText()) ?: []);
 
-        foreach (preg_split('/\R/', $doc->getText()) ?: [] as $line) {
-            $line = trim(ltrim(trim($line), '/*'));
-            $isProse = $line !== '' && ! str_starts_with($line, '@');
-
-            if ($isProse && ! $inParagraph) {
-                $paragraphs++;
-                $inParagraph = true;
-            } elseif ($line === '') {
-                $inParagraph = false;
-            }
-        }
-
-        return $paragraphs >= 2;
+        return Prose::paragraphs($lines, static fn (string $line): bool => ! str_starts_with($line, '@')) >= 2;
     }
 
     /**

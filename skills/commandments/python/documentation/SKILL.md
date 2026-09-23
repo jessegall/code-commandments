@@ -42,6 +42,8 @@ self-evident and write nothing.
 
 - [ ] Say what the code IS now; the history lives in git, not in a comment or a docstring.
       _Delete the history. If a reason still matters, state it in the present tense._
+- [ ] Keep a class docstring to one tight paragraph; sections for attributes and examples are fine, an essay is not.
+      _Cut the docstring to what the class IS; if it takes an essay, split the class._
 
 ## Worked example
 
@@ -62,14 +64,17 @@ def next_invoice_number(last: int, prefix: str) -> str:
     return f"{prefix}-{last + 1:06d}"
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/documentation` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-archaeology-comment`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-archaeology-comment`, `python-bloated-docblock`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

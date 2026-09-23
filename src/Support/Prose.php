@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use Closure;
+
 /**
  * English prose reduced to the words that CARRY meaning — the one home for turning a comment into
  * comparable tokens, so an analysis can ask "does this sentence say anything the code doesn't?". Two
@@ -118,5 +120,33 @@ final class Prose
     public static function narratesHistory(string $text): bool
     {
         return preg_match(self::HISTORY, $text) === 1;
+    }
+
+    /**
+     * How many paragraphs of prose $lines hold — runs of lines $isProse accepts, a blank line ending one. A
+     * line that is neither prose nor blank (a tag, an example) leaves the paragraph as it is.
+     *
+     * @param  list<string>  $lines
+     * @param  Closure(string): bool  $isProse
+     */
+    public static function paragraphs(array $lines, Closure $isProse): int
+    {
+        $paragraphs = 0;
+        $inParagraph = false;
+
+        foreach ($lines as $line) {
+            if (trim($line) === '') {
+                $inParagraph = false;
+
+                continue;
+            }
+
+            if ($isProse($line) && ! $inParagraph) {
+                $paragraphs++;
+                $inParagraph = true;
+            }
+        }
+
+        return $paragraphs;
     }
 }

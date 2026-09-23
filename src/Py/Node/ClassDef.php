@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py\Node;
 
+use JesseGall\CodeCommandments\Py\Docstring;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
 use JesseGall\PhpTypes\Option;
@@ -145,5 +146,14 @@ final class ClassDef extends Node
     public function docstring(): Option
     {
         return $this->body->docstring();
+    }
+
+    /**
+     * Does this class open with a docstring of two or more paragraphs of prose? An essay on a class is the
+     * class asking to be split.
+     */
+    public function hasMultiParagraphDocstring(): bool
+    {
+        return $this->docstring()->isSomeAnd(static fn (string $docstring): bool => Docstring::proseParagraphs($docstring) >= 2);
     }
 }
