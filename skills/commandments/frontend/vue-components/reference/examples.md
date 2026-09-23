@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### compound-inline-component
 
-A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component
+A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component.
 
 ```vue
 ----------[ Bad ]----------
@@ -67,7 +67,7 @@ A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a
 
 ### deep-data-reach
 
-A CLUSTER of elements in a sizeable template all reaching deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop
+A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop.
 
 ```vue
 ----------[ Bad ]----------
@@ -317,7 +317,7 @@ Markup with one skeleton repeated 2+ times — the same tags, attributes and nes
 
 ### prop-drilling
 
-A prop forwarded through a chain of 2+ components, none of which read it — piped from parent to leaf through dead conduits
+A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further.
 
 ```vue
 ----------[ Bad ]----------
@@ -335,7 +335,7 @@ A prop forwarded through a chain of 2+ components, none of which read it — pip
 
 ### prop-mutation
 
-A prop is WRITTEN — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op)
+A prop is written to — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op).
 
 ```vue
 ----------[ Bad ]----------

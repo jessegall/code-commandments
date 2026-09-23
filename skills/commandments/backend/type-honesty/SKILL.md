@@ -46,8 +46,8 @@ field, or a value object, and delete the defence.
 - [ ] Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here.
       _drop the `: Type` — `repent` does this for you_
 - [ ] Pass a per-call value as a parameter; don't save-and-restore one of your own fields as scratch state.
-- [ ] A required slot means the caller has the value. Filling it to satisfy the signature makes the envelope lie in a way no type can catch.
-      _Fetch the real value, or split a narrower envelope that only promises what this answer knows._
+- [ ] A required slot means the caller has the value. Filling it just to satisfy the type signature hides a missing value in a way no type check can catch.
+      _Fetch the real value, or split off a narrower type that only promises the fields you actually have._
 - [ ] A property hook must EARN its hook: a `get` body that references no `$this` (and no `parent::`) computes nothing from the object — it yields the same value however the instance is configured, so it is a plain property in disguise. This usually happens when an interface declares `{ get; }` and the implementer mimics the syntax; a plain property satisfies a hooked interface property just as well.
       _Make it a stored property: a constant body becomes a property default (`public ?Transition $t = null;`); a constructed value (`get => Transition::make(...)`) is assigned ONCE in the constructor. Keep the hook only when the body genuinely derives from `$this` state._
 
@@ -55,7 +55,7 @@ field, or a value object, and delete the defence.
 
 ### masked-invariant
 
-Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible "not set yet"
+Masked invariant — an own field read as `?->… ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible "not set yet".
 
 ```php
 ----------[ Bad ]----------

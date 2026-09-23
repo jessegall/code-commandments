@@ -24,7 +24,7 @@ def book_tracked(self, parcel: str, tracking: str | None = None) -> str:
 
 ### python-cancelled-fallback
 
-`(x or "") != ""` — a value defaulted to a blank only to be compared against that same blank, so absent and empty take one branch unnamed
+`(x or "") != ""` — a value defaulted to a blank only to be compared against that same blank, so a missing value and an empty one are treated the same without saying so.
 
 ```py
 ----------[ Bad ]----------
@@ -48,7 +48,7 @@ def stock_counted(rows: list, stock) -> None:
 
 ### python-conditional-spread
 
-`**({"k": v} if v else {})` / `*([x] if x else [])` — an entry spread in only when present, the absence decided in a conditional into an empty collection
+`**({"k": v} if v else {})` / `*([x] if x else [])` — an entry is spread in only when present, using a conditional that turns absence into an empty collection.
 
 ```py
 ----------[ Bad ]----------
@@ -89,7 +89,7 @@ def mail_receipt(order, mailer) -> None:
 
 ### python-nullable-callback
 
-`cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op wearing a disguise
+`cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op treated as if it might be missing.
 
 ```py
 ----------[ Bad ]----------

@@ -14,7 +14,7 @@ final class DataClump extends Sin
         parent::__construct(
             name: 'csharp-data-clump',
             skill: ValueObjects::class,
-            description: 'The same three or more string, number, date or id parameters threaded through methods of two or more types — a value that travels together, waiting for a name',
+            description: 'The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own.',
             rule: 'Bundle values that always travel together into one type — a record — instead of threading them side by side.',
             suggestion: 'Name the clump as a record (a `readonly record struct` when it is small), build it once where the values meet, and pass that instead of the separate parameters.',
         );

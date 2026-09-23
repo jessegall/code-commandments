@@ -21,7 +21,7 @@ final class InjectedServiceNotHidden extends Sin implements RequiresComposerPack
             skill: PageObjects::class,
             description: "A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type",
             rule: "Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.",
-            suggestion: "Add `#[Hidden]` above the injection attribute — LaravelData's `#[Hidden]`, which keeps it off the wire. So one attribute ALSO keeps it out of the generated TypeScript, wire the scaffolded hidden-aware transformer into your typescript-transformer config; otherwise LaravelData's `#[Hidden]` alone still leaks the property into the TS type."
+            suggestion: 'Add `#[Hidden]` above the injection attribute to keep it off the wire. To also keep it out of the generated TypeScript, wire the scaffolded hidden-aware transformer into your typescript-transformer config — otherwise LaravelData\'s `#[Hidden]` alone still leaks the property into the TS type.'
         );
     }
 

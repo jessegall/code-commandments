@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### computed-boolean-argument
 
-a bool-only chooser whose callers all compute the flag off the same object (take the object and ask it)
+A parameter that's just true/false, computed by every caller from the same object it could be given instead.
 
 ```php
 ----------[ Bad ]----------
@@ -39,7 +39,7 @@ public function inZenMode(): bool
 
 ### converted-argument
 
-A parameter declared in the wrong currency — call site after call site wraps the same argument in the same conversion (`Raises::of(ClassAlias::of($interaction), …)`) because the callee asks for the converted form instead of the value
+A parameter typed as the already-converted form instead of the raw value, so every call site repeats the same conversion before calling it (e.g. `Raises::of(ClassAlias::of($interaction), …)`).
 
 ```php
 ----------[ Bad ]----------
@@ -92,7 +92,7 @@ public static function raiseFor(string $signal, string $target): self
 
 ### derived-argument
 
-Handing one subject to a call TWICE over — whole and again flattened (`persist($request, $request->shopId())`), or flattened several ways (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive every piece from the subject itself
+Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object.
 
 ```php
 ----------[ Bad ]----------
@@ -127,7 +127,7 @@ public function bookWaybill(Waybill $waybill): string
 
 ### param-resolved-from-param
 
-Unpacking the target out of a container param — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)`, then works on the target while the container is only packaging
+Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly.
 
 ```php
 ----------[ Bad ]----------

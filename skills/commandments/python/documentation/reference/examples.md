@@ -102,7 +102,7 @@ def manifest_lines(parcels: list) -> str:
 
 ### python-negative-space-comment
 
-a comment or docstring defending the code against a reading nobody made — what it is not, rather than what it is
+a comment or docstring defending the code against a misunderstanding nobody actually had — what it is not, rather than what it is.
 
 ```py
 ----------[ Bad ]----------

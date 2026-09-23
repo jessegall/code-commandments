@@ -4,7 +4,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 
 - **`const-class-enum`** — A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum — `ConstClassEnumDetector`
 - **`enum-case-or-chain`** — `$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test — `EnumCaseOrChainDetector`
-- **`enum-value-match`** — `match`/`switch` over an enum's `->value` at a call site (homeless method) — `EnumValueMatchDetector`
+- **`enum-value-match`** — A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead. — `EnumValueMatchDetector`
 - **`in-array-mirrors-enum`** — `in_array($x, [literals])` whose literals mirror an existing enum's cases — `InArrayMirrorsEnumDetector`
 - **`match-default-returns-null`** — `match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing — `MatchDefaultReturnsNullDetector`
 - **`string-match-mirrors-enum`** — `match`/`switch` over string/int literals that mirror an existing backed enum's case values — `StringMatchMirrorsEnumDetector`

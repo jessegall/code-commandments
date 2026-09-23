@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### csharp-data-clump
 
-The same three or more string, number, date or id parameters threaded through methods of two or more types — a value that travels together, waiting for a name
+The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own.
 
 ```cs
 ----------[ Bad ]----------

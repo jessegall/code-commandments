@@ -63,9 +63,9 @@ the parameter to the resolved type.
 
 - [ ] Take the SUBJECT and ask it — never a bool every caller derives from that same object.
       _swap the flags for the object the callers already hold: `CornerInset::for($editor)`_
-- [ ] Declare the parameter in the currency callers actually hold, and convert inside — one rule about the conversion, in one place.
+- [ ] Declare the parameter in the form callers already have, and do the conversion inside the callee — so the conversion rule lives in one place.
       _Move the wrapper into the callee and widen the parameter to the type being wrapped; every call site then passes the value it means, and a site that forgets the conversion stops compiling._
-- [ ] Pass the subject, not projections of it — a callee reaching the same value twice should take it once and derive the rest.
+- [ ] Pass the object itself, not values derived from it — if a callee needs several pieces off one object, give it the object once and let it work out the rest.
       _Give the parameter the subject's type and move the derivations inside the callee; the call site then says what it means instead of spelling out the pieces._
 - [ ] Demand the resolved object you need; don't take a container + key and unpack the target yourself — the caller resolves once and passes it.
       _Take the resolved object as the param; resolve once in the caller._
@@ -74,7 +74,7 @@ the parameter to the resolved type.
 
 ### computed-boolean-argument
 
-a bool-only chooser whose callers all compute the flag off the same object (take the object and ask it)
+A parameter that's just true/false, computed by every caller from the same object it could be given instead.
 
 ```php
 ----------[ Bad ]----------

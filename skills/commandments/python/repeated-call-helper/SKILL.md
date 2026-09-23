@@ -71,7 +71,7 @@ declared once and every site asks for it by name.
 
 ### python-repeated-guard
 
-the SAME compound `and` condition recurs in 2+ places — reordered or read through a local still counts — a question with no name
+the same compound `and` condition recurs in 2+ places — it still counts even when reordered, or read through a local variable — and nobody has named it.
 
 ```py
 ----------[ Bad ]----------

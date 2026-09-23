@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### python-constant-property
 
-an `@property` whose body never reads `self` — `return "box"` — a stored value dressed as a computed one
+an `@property` whose body never reads `self` — `return "box"` — a stored value made to look like a computed one.
 
 ```py
 ----------[ Bad ]----------

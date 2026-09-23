@@ -32,7 +32,7 @@ public static function lined(string $heading, ?string $strapline = null): string
 
 ### blank-string-on-the-wire
 
-a total `string` field whose TypeScript reader — holding this very type — asks it `=== ''`: the blank means "missing", and only the far side says so
+A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean "missing" — only that reader knows the blank stands for absence.
 
 ```php
 ----------[ Bad ]----------
@@ -85,7 +85,7 @@ public function hasSessionStated(?string $sessionId): bool
 
 ### conditional-array-spread
 
-An array is built by spreading a conditional element — `...($x ? ['k' => $x] : [])` / `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise that hides 'include when present'
+An array built by spreading a conditional element — `...($x ? ['k' => $x] : [])` or `array_merge($base, $cond ? [...] : [])` — a ternary-and-empty-array trick that really just means "include this when the value is present."
 
 ```php
 ----------[ Bad ]----------
@@ -123,7 +123,7 @@ public static function of(mixed ...$values): array
 
 ### de-nulled-finder
 
-Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it)
+A finder that returns `null` for both "missing" and "broken" instead of throwing — the kind of `?T` finder whose callers all end up de-nulling it.
 
 ```php
 ----------[ Bad ]----------
@@ -225,7 +225,7 @@ public function runWith(Closure $work, Invokable $onRetry = new NoOp): mixed
 
 ### option-as-nullable
 
-`Option<T>` used as a nullable costume — `?Option`, `Option | null`, `unwrapOr(null)`
+`Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)`
 
 ```php
 ----------[ Bad ]----------

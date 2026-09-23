@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### defended-certain-field
 
-An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, which reads as doubt the design does not have
+An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out.
 
 ```ts
 ----------[ Bad ]----------

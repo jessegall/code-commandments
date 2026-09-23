@@ -34,7 +34,7 @@ The element reads as one thing (content + styling), the `<template>` as another
 ## Rules
 
 - [ ] Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag.
-- [ ] Key a `v-for` by a STABLE identity (`:key="item.id"`), never the loop index.
+- [ ] Key a `v-for` by a stable identity (`:key="item.id"`), never the loop index.
 - [ ] Never put `v-if` on a `v-for` element; filter in a computed, or wrap the `v-for` in a `<template>` and put the `v-if` on the child.
 - [ ] Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject.
       _the `<SwitchCase :value>` component: `commandments scaffold --sin=switch-case`._

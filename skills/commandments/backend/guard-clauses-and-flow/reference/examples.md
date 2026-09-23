@@ -187,7 +187,7 @@ private function bandMatched(int $score): string
 
 ### non-counting-for
 
-a `for` whose step assigns the next thing instead of advancing a counter — a walk wearing a counted loop's clothes
+A `for` loop that looks like it's counting, but its step actually assigns the next item instead of incrementing a counter.
 
 ```php
 ----------[ Bad ]----------

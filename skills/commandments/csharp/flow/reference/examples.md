@@ -127,7 +127,7 @@ public Money ChargeFlat(Order order, string currency)
 
 ### csharp-subject-ladder
 
-An `if`/`else if` chain of four or more rungs that each compare ONE subject with a constant — a dispatch written as a ladder
+An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder.
 
 ```cs
 ----------[ Bad ]----------

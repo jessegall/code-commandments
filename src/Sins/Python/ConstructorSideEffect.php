@@ -14,8 +14,8 @@ final class ConstructorSideEffect extends Sin
         parent::__construct(
             name: 'python-constructor-side-effect',
             skill: FixAtTheSource::class,
-            description: 'an `__init__` that tells a collaborator to act and throws the answer away — merely building the object changes the world',
-            rule: 'Let `__init__` establish what the object IS; never let building one change anything outside it.',
+            description: 'an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it.',
+            rule: 'Let `__init__` establish what the object is; never let building one change anything outside it.',
             suggestion: 'Keep the collaborator as a field and act on it from the method that someone actually calls.',
         );
     }

@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### python-coupled-fields
 
-a class whose own fields always travel together — assembled into one value again and again, guarded together, or one mirroring a sibling's — one concept held as several fields
+a class whose own fields always travel together — assembled into one value again and again, guarded together, or one copying a sibling field's value — one concept held as several fields.
 
 ```py
 ----------[ Bad ]----------
@@ -35,7 +35,7 @@ class OpenWeekday:
 
 ### python-data-clump
 
-The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept wearing no name
+The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept with no type of its own.
 
 ```py
 ----------[ Bad ]----------

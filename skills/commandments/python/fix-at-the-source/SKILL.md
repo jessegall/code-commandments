@@ -8,8 +8,8 @@ description: "Writing an `__init__` that calls out to something it was handed, a
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
 > A wrong value is almost always wrong where it was born. The call site that trips over it is only
-> where it surfaced; patching there adds a check, the next caller trips again, and the origin never
-> learns. In Python the same move applies to objects and state: build an object without changing the
+> where it surfaced; patching there adds a check, the next caller trips on the same problem, and the root cause
+> is never fixed. In Python the same move applies to objects and state: build an object without changing the
 > world, and keep changing state on an instance someone owns, so every effect has a place you can see.
 
 ## The principle
@@ -37,10 +37,10 @@ signature where a reader can see it.
 
 ## Rules
 
-- [ ] Let `__init__` establish what the object IS; never let building one change anything outside it.
+- [ ] Let `__init__` establish what the object is; never let building one change anything outside it.
       _Keep the collaborator as a field and act on it from the method that someone actually calls._
-- [ ] Funnel a shared behaviour through one path. Where two places do the same job, the step that must happen everywhere cannot be left to each of them to remember.
-      _Route the poorer path through the richer one, so the step cannot be forgotten again._
+- [ ] Put shared behaviour in one place, so a step that must always happen can't be forgotten in a copy.
+      _Make the shorter function call the longer one, or have both call one shared function._
 - [ ] Hold changing state on an instance someone owns and passes; never write a `global` or a class attribute from a function.
       _Move the state onto an object, and hand that object to the code that reads and changes it._
 
@@ -48,7 +48,7 @@ signature where a reader can see it.
 
 ### python-constructor-side-effect
 
-an `__init__` that tells a collaborator to act and throws the answer away — merely building the object changes the world
+an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it.
 
 ```py
 ----------[ Bad ]----------

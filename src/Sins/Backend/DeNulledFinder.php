@@ -14,8 +14,8 @@ final class DeNulledFinder extends Sin
         parent::__construct(
             name: 'de-nulled-finder',
             skill: Absence::class,
-            description: "Missing = broken state returned as `?T`/null instead of throwing (a `?T` finder whose callers de-null it)",
-            rule: "Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.",
+            description: 'A finder that returns `null` for both "missing" and "broken" instead of throwing — the kind of `?T` finder whose callers all end up de-nulling it.',
+            rule: 'Decide absence where the value is found — if every caller ends up de-nulling a `?T` finder, make it return a definite type instead (throw, `Option`, or empty).',
             suggestion: "Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`."
         );
     }

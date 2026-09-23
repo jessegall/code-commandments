@@ -14,7 +14,7 @@ final class PropMutation extends Sin
         parent::__construct(
             name: 'prop-mutation',
             skill: VueComponents::class,
-            description: "A prop is WRITTEN — `v-model` bound to it, or `@event=\"prop = …\"` — but props are read-only (a build error or a silent no-op)",
+            description: 'A prop is written to — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op).',
             rule: "Never write a prop. For two-way state use `defineModel`; otherwise emit an `update:` event and let the parent own the value."
         );
     }

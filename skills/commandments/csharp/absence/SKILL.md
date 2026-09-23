@@ -49,11 +49,15 @@ place it lands.
 
 ## Rules
 
+<<<<<<< HEAD
 - [ ] If a value can be missing, say so in its type with `string?`; don't default it to `""` and then check for the blank.
       _Make it `string? note = null` and check `note is null`, so nobody has to know that `""` means "not given"._
 - [ ] Never fill a value with an invented `""`, `0` or `false` on absence — handle the missing case, or make the value certain where it is born.
+=======
+- [ ] Never fill a value with an invented `""`, `0` or `false` on absence — handle the missing case, or make the value certain at the point it is created.
+>>>>>>> origin/main
       _Decide at the source: throw when the value must be there, or pass the absence on to a parameter typed to admit it (`T?`, `TryGetValue`). A real default (`?? "EUR"`) is a choice, not an invention._
-- [ ] Never hush a nullable warning with `!` — decide the missing case where the value is born, or handle it here.
+- [ ] Never silence a nullable warning with `!` — decide the missing case where the value is created, or handle it here.
       _Make the value non-nullable at its source, throw a named exception where it must exist, handle the null branch, or narrow it honestly (`OfType<T>()`, a pattern, `TryGetValue`)._
 
 ## Worked example

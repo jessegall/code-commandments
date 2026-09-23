@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### python-repeated-guard
 
-the SAME compound `and` condition recurs in 2+ places — reordered or read through a local still counts — a question with no name
+the same compound `and` condition recurs in 2+ places — it still counts even when reordered, or read through a local variable — and nobody has named it.
 
 ```py
 ----------[ Bad ]----------
@@ -63,7 +63,7 @@ class Account:
 
 ### python-repeated-named-call
 
-the same `**changes` function is called with the same keyword, built the same way, at 2+ sites — an operation the type never named
+the same `**changes` call is built the same way with the same keyword at 2+ sites — an operation that has no name on the type it belongs to.
 
 ```py
 ----------[ Bad ]----------
@@ -101,7 +101,7 @@ class RoutedTicket:
 
 ### python-repeated-type-guard
 
-the SAME multi-`isinstance` narrowing (`isinstance(x, A) and isinstance(x.y, B)`) is written in 2+ places — a check on a shape with no name
+the same multi-`isinstance` narrowing (`isinstance(x, A) and isinstance(x.y, B)`) is written in 2+ places — a check on a shape that nobody has named.
 
 ```py
 ----------[ Bad ]----------

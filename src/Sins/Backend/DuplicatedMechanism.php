@@ -19,7 +19,7 @@ final class DuplicatedMechanism extends Sin implements Unpublished
             name: 'duplicated-mechanism',
             skill: FixAtTheSource::class,
             description: "Two or more classes in different files assemble the SAME rare set of collaborators — the same mechanism written twice in different words, so the decision behind it is made differently in each",
-            rule: "Before writing a mechanism, look for it: search the CONCEPT, not the spelling you had in mind. Where it already exists twice, the job is to MERGE them into one home every caller can name — not to add a third.",
+            rule: 'Before writing a mechanism, search for the concept, not the exact name you had in mind. If it already exists twice, merge the two copies into one class every caller can use, instead of adding a third.',
             suggestion: "Extract the shared mechanism into one class the callers depend on, and delete the copies.",
         );
     }

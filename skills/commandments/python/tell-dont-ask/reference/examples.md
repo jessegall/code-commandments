@@ -52,7 +52,7 @@ def heading_of(self, aisle: Aisle) -> str:
 
 ### python-type-switch
 
-an `isinstance` ladder over classes the codebase owns — the value asked what it IS so the caller can decide what to do
+an `isinstance` ladder over classes the codebase owns — the value is asked what it is so the caller can decide what to do.
 
 ```py
 ----------[ Bad ]----------

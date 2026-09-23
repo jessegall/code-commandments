@@ -14,9 +14,9 @@ final class CancelledFallback extends Sin
         parent::__construct(
             name: 'python-cancelled-fallback',
             skill: Absence::class,
-            description: '`(x or "") != ""` — a value defaulted to a blank only to be compared against that same blank, so absent and empty take one branch unnamed',
+            description: '`(x or "") != ""` — a value defaulted to a blank only to be compared against that same blank, so a missing value and an empty one are treated the same without saying so.',
             rule: 'Ask about absence directly (`x is not None`); never default a value only to compare it against that same default.',
-            suggestion: 'Say both halves out loud — `x is not None and x != ""` — or make the value non-optional where it is born so only one question is left.',
+            suggestion: 'Write both checks explicitly — `x is not None and x != ""` — or make the value non-optional at its source so only one question is left.',
         );
     }
 }

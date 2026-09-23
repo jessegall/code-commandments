@@ -38,7 +38,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### loop-with-condition
 
-`v-for` and `v-if`/`v-else-if` on the SAME element — the condition is re-evaluated every iteration
+`v-for` and `v-if`/`v-else-if` on the same element — the condition is re-evaluated every iteration.
 
 ```vue
 ----------[ Bad ]----------

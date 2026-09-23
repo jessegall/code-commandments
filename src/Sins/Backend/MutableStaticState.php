@@ -14,7 +14,7 @@ final class MutableStaticState extends Sin
         parent::__construct(
             name: 'mutable-static-state',
             skill: FixAtTheSource::class,
-            description: "a write to a static property — a global wearing a namespace, where whoever writes last wins and execution order becomes load-bearing",
+            description: 'A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.',
             rule: "Hold changing state on an INSTANCE someone owns and passes; never write a static property.",
             suggestion: "Constructor-inject the state as a collaborator, so who holds it (and who may change it) is written down.",
         );

@@ -31,8 +31,9 @@ final class DependencyDirection extends Skill
 
     public function intro(): string
     {
-        return "A package is a claim about what depends on what. One import going the wrong way and two packages are a single
-tangled unit wearing two names, so the direction is declared once and every import is judged against it.";
+        return "A package is a claim about what depends on what. One import going the wrong way makes the two
+        packages really just one package split across two names, so the direction is declared once and every
+        import is checked against it.";
     }
 
     public function summary(): string

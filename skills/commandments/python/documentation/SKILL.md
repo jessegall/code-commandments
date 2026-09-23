@@ -31,7 +31,7 @@ that repeats the line below it (`# add the rate` above `total += rate`) is noise
 ### Never the past
 
 `# formerly lived in checkout`, `# refactored to use the cache`, `# no longer a dict` describe a version of the
-code nobody is reading. Git holds the history. When you replace code, replace it; don't annotate the grave.
+code nobody is reading. Git holds the history. When you replace code, just replace it — don't leave a comment explaining what it used to be.
 
 ### Never a strawman
 
@@ -40,15 +40,15 @@ self-evident and write nothing.
 
 ## Rules
 
-- [ ] Say what the code IS now; the history lives in git, not in a comment or a docstring.
+- [ ] Say what the code is now; the history lives in git, not in a comment or a docstring.
       _Delete the history. If a reason still matters, state it in the present tense._
 - [ ] Keep a class docstring to one tight paragraph; sections for attributes and examples are fine, an essay is not.
-      _Cut the docstring to what the class IS; if it takes an essay, split the class._
+      _Cut the docstring to what the class is; if it takes an essay, split the class._
 - [ ] A docstring must add meaning beyond the signature; drop entries that only repeat an annotation.
       _Delete the docstring, or write the sentence that says what the function does and describe only what a type cannot._
 - [ ] A cross-reference must resolve: point it at the name that exists now, or delete it.
       _Repoint the reference at the current module or class, or remove it._
-- [ ] State what the code IS; a comment defending it against a strawman means the code should make itself plain.
+- [ ] State what the code is; a comment defending it against an objection nobody raised means the code should make itself plain.
       _Delete the defence. If the code needs it, make the code say what it is._
 - [ ] A comment must say something the code does not; one whose every word is in the line below is noise.
       _Delete the comment, or replace it with the reason the code cannot state._

@@ -17,9 +17,9 @@ final class DivergentTwin extends Sin
         parent::__construct(
             name: 'divergent-twin',
             skill: FixAtTheSource::class,
-            description: "Two methods do one job — the same rare verbs, in different words — and one of them does strictly less of it, which is what a change looks like when it landed in only one of the two places that should have been one",
-            rule: "Funnel a shared behaviour through ONE path. Where two places do the same job, the one that must happen everywhere cannot be left to each of them to remember.",
-            suggestion: "Route the poorer path through the richer one, so the step cannot be forgotten again.",
+            description: 'Two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other.',
+            rule: 'Put shared behaviour in one place, so a step that must always happen can\'t be forgotten in a copy.',
+            suggestion: 'Make the shorter function call the longer one, or have both call one shared function.',
         );
     }
 }

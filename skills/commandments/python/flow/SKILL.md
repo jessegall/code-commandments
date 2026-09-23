@@ -70,7 +70,7 @@ iteration, or extract the inner block into a function named for what it decides.
 
 - [ ] State an absent collection at the top as a guard; don't bury `or []` or `.get(k, [])` in a `for` header.
       _Return early when the collection is absent — or make the caller always hand one over — so the loop walks something that is there._
-- [ ] Choose an action with `if`/`else`; a conditional expression chooses a VALUE, so never write one whose value nothing reads.
+- [ ] Choose an action with `if`/`else`; a conditional expression chooses a value, so never write one whose value nothing reads.
       _An `if x:` with each side as its own body — and no `else` at all when one side was `None`._
 - [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a function.
       _Guard the outer levels away (`return`/`continue` past what does not apply), let a comprehension do the inner iteration, or extract the inner block into a function named for what it decides._

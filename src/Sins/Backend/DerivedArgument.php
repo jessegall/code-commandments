@@ -14,8 +14,8 @@ final class DerivedArgument extends Sin
         parent::__construct(
             name: 'derived-argument',
             skill: PassTheObject::class,
-            description: "Handing one subject to a call TWICE over — whole and again flattened (`persist(\$request, \$request->shopId())`), or flattened several ways (`new AgentTurn(\$r->output(), \$r->failed(), \$r->errorOutput())`) — when the callee could derive every piece from the subject itself",
-            rule: "Pass the subject, not projections of it — a callee reaching the same value twice should take it once and derive the rest.",
+            description: 'Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object.',
+            rule: 'Pass the object itself, not values derived from it — if a callee needs several pieces off one object, give it the object once and let it work out the rest.',
             suggestion: "Give the parameter the subject's type and move the derivations inside the callee; the call site then says what it means instead of spelling out the pieces."
         );
     }

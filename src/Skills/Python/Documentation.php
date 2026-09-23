@@ -62,7 +62,7 @@ that repeats the line below it (`# add the rate` above `total += rate`) is noise
 ### Never the past
 
 `# formerly lived in checkout`, `# refactored to use the cache`, `# no longer a dict` describe a version of the
-code nobody is reading. Git holds the history. When you replace code, replace it; don't annotate the grave.
+code nobody is reading. Git holds the history. When you replace code, just replace it — don't leave a comment explaining what it used to be.
 
 ### Never a strawman
 

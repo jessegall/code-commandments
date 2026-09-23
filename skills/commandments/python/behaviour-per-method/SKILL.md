@@ -54,7 +54,7 @@ its own. If both have an obvious name, they are already two functions — give t
 
 ## Rules
 
-- [ ] Split a function whose body is one branch on a flag into two NAMED functions — never make a call say `True`, and never widen a required parameter to `X | None = None` so that leaving it out means 'all of them'.
+- [ ] Split a function whose body is one branch on a flag into two named functions — never make a call say `True`, and never widen a required parameter to `X | None = None` so that leaving it out means 'all of them'.
       _Name each half for what it does (`render_compact()` / `render_full()`), with any shared middle as a private function both call._
 
 ## Worked example

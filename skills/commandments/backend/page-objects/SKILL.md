@@ -127,7 +127,7 @@ page object — the composed thing on the wire — is exactly where they earn th
 - [ ] Project each self-contained page-object slot in a `#[Computed]` get-hook, not an imperative constructor assignment.
       _Replace `$this->x = expr;` with `#[Computed] public T $x { get => expr; }`. Pin a deliberately-eager slot (one that must capture request-scoped state at build time) with `#[Eager]` — the scaffolded escape hatch._
 - [ ] Every injected collaborator on a page object carries `#[Hidden]`, so the service never serializes or reaches the frontend type.
-      _Add `#[Hidden]` above the injection attribute — LaravelData's `#[Hidden]`, which keeps it off the wire. So one attribute ALSO keeps it out of the generated TypeScript, wire the scaffolded hidden-aware transformer into your typescript-transformer config; otherwise LaravelData's `#[Hidden]` alone still leaks the property into the TS type._
+      _Add `#[Hidden]` above the injection attribute to keep it off the wire. To also keep it out of the generated TypeScript, wire the scaffolded hidden-aware transformer into your typescript-transformer config — otherwise LaravelData's `#[Hidden]` alone still leaks the property into the TS type._
 - [ ] Shape a property's wire output with a `#[WithTransformer]` (+ a matching `#[TypeScriptType]`), never a computed getter that hand-builds the reshaped array.
       _Keep the real value-object type and add `#[WithTransformer(SomeTransformer::class)]` — plus `#[TypeScriptType(...)]` so the generated TypeScript matches the transformed shape._
 - [ ] Annotate every page object `#[TypeScript]` so it generates a frontend type the page binds against — a response-bound Data with no annotation is a type-safety hole.

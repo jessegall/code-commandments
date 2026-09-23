@@ -53,7 +53,7 @@ waiting to be named. Give them one type and pass that.
 ## Rules
 
 - [ ] Fields that move as a unit are one type: hold the value object, not its parts; never keep a second copy of what a sibling field already holds.
-      _Fold the fields into one frozen dataclass (name the existing one when the clump already is it) and drop a field that mirrors a sibling's attribute._
+      _Fold the fields into one frozen dataclass (reuse one that already matches, if one exists) and drop a field that just mirrors a sibling's attribute._
 - [ ] Give values that always travel together one type, and pass that instead of the loose values.
       _Declare a frozen dataclass with those fields and take it as one parameter wherever the loose values travelled together._
 - [ ] Give a record a type — a frozen dataclass — instead of a dict read by string keys.
@@ -73,7 +73,7 @@ waiting to be named. Give them one type and pass that.
 
 ### python-coupled-fields
 
-a class whose own fields always travel together — assembled into one value again and again, guarded together, or one mirroring a sibling's — one concept held as several fields
+a class whose own fields always travel together — assembled into one value again and again, guarded together, or one copying a sibling field's value — one concept held as several fields.
 
 ```py
 ----------[ Bad ]----------

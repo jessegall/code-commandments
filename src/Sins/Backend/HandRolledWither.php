@@ -14,8 +14,8 @@ final class HandRolledWither extends Sin
         parent::__construct(
             name: 'hand-rolled-wither',
             skill: ValueObjects::class,
-            description: 'A wither rebuilds its object by re-spelling every constructor field, so each new field must be threaded through N of them',
-            rule: 'A wither changes ONE thing: say only what changes. `clone($this, [\'x\' => $x])` states the intent; re-listing every field states the constructor again, N times over.',
+            description: 'A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class.',
+            rule: 'A wither should only say what changes: `clone($this, [\'x\' => $x])` states the intent, while re-listing every field just repeats the constructor in every wither.',
             suggestion: 'Replace `new self($this->a, $this->b, $changed)` with `clone($this, [\'c\' => $changed])` — `repent` does it for you.'
         );
     }

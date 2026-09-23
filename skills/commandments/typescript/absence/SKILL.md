@@ -43,7 +43,7 @@ which is why this is its own skill rather than a translation of the PHP one.
 
 ## Rules
 
-- [ ] Reach for `?.` only where the type admits absence; on a field declared total it is noise that teaches the next reader to doubt it.
+- [ ] Reach for `?.` only where the type admits absence; on a field declared total, it is noise that makes the next reader wonder if it can be missing.
       _A plain `.` — the declaration already guarantees it._
 - [ ] Do not declare a field optional when it always has a value: drop the `?` and the `| null`, and the defences downstream go with them.
       _Declare it as its plain type — the initialiser already proves it is total._
@@ -52,7 +52,7 @@ which is why this is its own skill rather than a translation of the PHP one.
 
 ### defended-certain-field
 
-An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, which reads as doubt the design does not have
+An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out.
 
 ```ts
 ----------[ Bad ]----------
