@@ -58,6 +58,82 @@ declared once and every site asks for it by name.
 - **A simple check.** A single `if x is None:` or one `isinstance` is not a compound condition; repeating
   it names nothing new.
 
+## Rules
+
+- [ ] Name a compound condition you write twice — a property or method on the type it asks about — and ask it by name at every site.
+      _Move the condition onto the type as `is_…` / `can_…` and replace every copy with the call._
+
+## Worked example
+
+### python-repeated-guard
+
+the SAME compound `and` condition recurs in 2+ places — reordered or read through a local still counts — a question with no name
+
+```py
+----------[ Bad ]----------
+
+# in loyalty_points.py
+def redeem(member: Member, cost: int) -> int:
+    if member.points >= cost and not member.frozen:
+        return member.points - cost
+    raise ValueError(cost)
+
+# in loyalty_points.py
+def preview(member: Member, cost: int) -> str:
+    enough = member.points >= cost
+    return "redeemable" if not member.frozen and enough else "locked"
+
+# in events.py
+def on_event(self, event) -> None:
+    if event.kind == "order" and event.action in ("created", "updated"):
+        self.handle(event)
+        event.acknowledge(self.__class__.__name__)
+
+# in events.py
+def on_event(self, event) -> None:
+    if event.kind == "order" and event.action in ("created", "updated"):
+        self.handle(event)
+        event.acknowledge(self.__class__.__name__)
+
+# in dispatch_desk.py
+def outgoing(self) -> list[Parcel]:
+    return [parcel for parcel in self.parcels if parcel.labelled and parcel.weight_grams > 0]
+
+# in dispatch_desk.py
+def may_leave(self, parcel: Parcel) -> bool:
+    return parcel.labelled and parcel.weight_grams > 0
+
+# in courier_pickups.py
+def load(van: list[Parcel], parcel: Parcel) -> None:
+    if parcel.labelled and parcel.weight_grams > 0:
+        van.append(parcel)
+
+----------[ Good ]----------
+
+class Account:
+    def __init__(self, points: int, frozen: bool) -> None:
+        self.points = points
+        self.frozen = frozen
+
+    def can_redeem(self, cost: int) -> bool:
+        return self.points >= cost and not self.frozen
+
+    def redeem(self, cost: int) -> int:
+        if self.can_redeem(cost):
+            return self.points - cost
+        raise ValueError(cost)
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/repeated-call-helper` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-repeated-guard`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/repeated-call-helper`](../../backend/repeated-call-helper/SKILL.md) — the same discipline over PHP.

@@ -10,6 +10,7 @@ class Listener:
 class ReceiptMailer(Listener):
     # @sin DuplicateFunction
     def on_event(self, event) -> None:
+        # @sin RepeatedGuard
         if event.kind == "order" and event.action in ("created", "updated"):
             self.handle(event)
             event.acknowledge(self.__class__.__name__)
@@ -18,6 +19,7 @@ class ReceiptMailer(Listener):
 class StockSync(Listener):
     # @sin DuplicateFunction
     def on_event(self, event) -> None:
+        # @sin RepeatedGuard
         if event.kind == "order" and event.action in ("created", "updated"):
             self.handle(event)
             event.acknowledge(self.__class__.__name__)

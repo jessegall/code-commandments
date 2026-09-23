@@ -719,6 +719,42 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this an `and`?
+     */
+    public function isAnd(): bool
+    {
+        return $this->kind === ExprKind::Binary && $this->get('op') === 'and';
+    }
+
+    /**
+     * The conditions this `and` joins, however it nests — `a`, `b`, `c` from `a and b and c`; itself for
+     * anything else.
+     *
+     * @return list<self>
+     */
+    public function conjuncts(): array
+    {
+        return $this->isAnd() ? [...$this->get('left')->conjuncts(), ...$this->get('right')->conjuncts()] : [$this];
+    }
+
+    /**
+     * Is this an `isinstance(...)` check?
+     */
+    public function isInstanceCheck(): bool
+    {
+        return $this->isCall() && $this->get('callee')->dottedName() === 'isinstance';
+    }
+
+    /**
+     * How many attribute reaches this holds — one in `order.paid`, two in `order.owner.name` — the substance
+     * a condition carries.
+     */
+    public function reachCount(): int
+    {
+        return count(array_filter($this->flatten(), static fn (self $part): bool => $part->kind === ExprKind::Attribute));
+    }
+
+    /**
      * Is this an `and` or an `or` — an operator that may leave its right side unrun?
      */
     public function isShortCircuit(): bool

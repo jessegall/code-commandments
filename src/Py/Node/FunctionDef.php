@@ -181,6 +181,32 @@ final class FunctionDef extends Node
     }
 
     /**
+     * The locals this function assigns exactly once, from a plain `name = value` — name → value. A local
+     * written twice has no single meaning, so it is left out.
+     *
+     * @return array<string, Expr>
+     */
+    public function soleAssignments(): array
+    {
+        $values = [];
+        $writes = [];
+
+        foreach ($this->body->descendants() as $node) {
+            foreach ($node->writtenTargets() as $target) {
+                $writes[] = $target->dottedName();
+            }
+
+            if ($node instanceof Assign && count($node->targets) === 1 && $node->targets[0]->is(ExprKind::Name)) {
+                $values[(string) $node->targets[0]->get('name')] = $node->value;
+            }
+        }
+
+        $counts = array_count_values($writes);
+
+        return array_filter($values, static fn (string $name): bool => $counts[$name] === 1, ARRAY_FILTER_USE_KEY);
+    }
+
+    /**
      * Is this function's whole body one two-way branch on one of its own parameters — an `if`/`else` on a
      * `bool`, or on whether an optional one was given? Then the parameter selects which of two functions
      * the caller wanted.

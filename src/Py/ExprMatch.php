@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Py;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Node\AnnAssign;
+use JesseGall\CodeCommandments\Py\Node\Assign;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
@@ -192,6 +194,14 @@ class ExprMatch implements Located
     }
 
     /**
+     * Is this the whole value an assignment stores — `obj = info and info.weakref()`?
+     */
+    public function isAssignedValue(): bool
+    {
+        return $this->module->ownerOf($this->expr)->isSomeAnd(fn (Node $owner): bool => ($owner instanceof Assign || $owner instanceof AnnAssign) && $owner->value === $this->expr);
+    }
+
+    /**
      * Is this dict display the wire shape of one object that already has a type — every value read off
      * `self`, or off one parameter of its function?
      */
@@ -285,5 +295,49 @@ class ExprMatch implements Located
         $names = array_map(static fn (Param $param): string => $param->name, $function->params);
 
         return $this->module->isMethod($function) && ! $function->isStatic() ? array_slice($names, 1) : $names;
+    }
+
+    /**
+     * Is this the outermost `and` of a condition with substance — one at least of its conditions more than a
+     * bare `isinstance` (a pure type check is the type-guard rule's), and two or more attribute reaches
+     * between them, counted through the locals it reads? `x and y` asks nothing worth a name.
+     */
+    public function isSubstantiveGuard(): bool
+    {
+        if (! $this->expr->isAnd() || $this->module->wrapperOf($this->expr)->isSomeAnd(static fn (Expr $around): bool => $around->isAnd())) {
+            return false;
+        }
+
+        $conjuncts = $this->resolvedConjuncts();
+
+        return ! array_all($conjuncts, static fn (Expr $conjunct): bool => $conjunct->isInstanceCheck())
+            && array_sum(array_map(static fn (Expr $conjunct): int => $conjunct->reachCount(), $conjuncts)) >= 2;
+    }
+
+    /**
+     * This condition's fingerprint, blind to the ORDER of its conditions and to a local standing in for one
+     * — `o.paid and o.lines` and `o.lines and paid` (with `paid = o.paid`) are one question.
+     */
+    public function guardFingerprint(): string
+    {
+        $hashes = array_map(static fn (Expr $conjunct): string => StructuralHash::ofExpression($conjunct), $this->resolvedConjuncts());
+        sort($hashes);
+
+        return sha1(implode('|', $hashes));
+    }
+
+    /**
+     * The conditions this `and` joins, a local assigned once read as the value it was assigned.
+     *
+     * @return list<Expr>
+     */
+    private function resolvedConjuncts(): array
+    {
+        $aliases = $this->module->functionOf($this->expr)->map(static fn (FunctionDef $function): array => $function->soleAssignments())->unwrapOr([]);
+
+        return array_map(
+            static fn (Expr $conjunct): Expr => $conjunct->is(ExprKind::Name) && isset($aliases[$conjunct->get('name')]) ? $aliases[$conjunct->get('name')] : $conjunct,
+            $this->expr->conjuncts(),
+        );
     }
 }
