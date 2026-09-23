@@ -54,6 +54,11 @@ final class Codebase implements ModuleCodebase
 
     private ?ResourceReach $resourceReach = null;
 
+    /**
+     * @var array<int, true>|null  the classes a `getattr` reaches by a runtime name, by object id
+     */
+    private ?array $dispatched = null;
+
     private ?PackageGraph $packageGraph = null;
 
     /**
@@ -218,6 +223,90 @@ final class Codebase implements ModuleCodebase
         $parts = explode('.', $dotted);
 
         return Option::fromNullable($this->classNames[end($parts)] ?? null);
+    }
+
+    /**
+     * Is $class built from stored data — does it, or a base this codebase declares, have a named
+     * constructor (a classmethod returning `cls(...)`) that turns loose data into it? Its fields then hold
+     * what the data holds.
+     */
+    public function isBuiltFromData(ClassDef $class): bool
+    {
+        return array_any($this->ancestry($class), static fn (ClassDef $type): bool => array_any(
+            $type->body->body,
+            static fn (Node $member): bool => $member instanceof FunctionDef && $member->isNamedConstructor(),
+        ));
+    }
+
+    /**
+     * Are $class's methods reached by a name known only at run time — `getattr(controller, verb)` on it, or
+     * on a base this codebase declares? Its public methods are then called from outside the code, by a
+     * command line or a dispatcher, and take what that boundary hands them.
+     */
+    public function isDispatchedByName(ClassDef $class): bool
+    {
+        $this->dispatched ??= $this->classesDispatchedByName();
+
+        return array_any($this->ancestry($class), fn (ClassDef $type): bool => isset($this->dispatched[spl_object_id($type)]));
+    }
+
+    /**
+     * $class and every base of it this codebase declares, nearest first.
+     *
+     * @return list<ClassDef>
+     */
+    public function ancestry(ClassDef $class): array
+    {
+        $line = [];
+        $pending = [$class];
+
+        while ($pending !== []) {
+            $type = array_shift($pending);
+
+            if (in_array($type, $line, true)) {
+                continue;
+            }
+
+            $line[] = $type;
+
+            foreach ($type->bases as $base) {
+                $this->classNamed($base->dottedName())->inspect(static function (ClassDef $parent) use (&$pending): void {
+                    $pending[] = $parent;
+                });
+            }
+        }
+
+        return $line;
+    }
+
+    /**
+     * The classes a `getattr` with a non-literal name reads from — `self` in one of its methods, or an
+     * object mypy types as it — by object id.
+     *
+     * @return array<int, true>
+     */
+    private function classesDispatchedByName(): array
+    {
+        $dispatched = [];
+
+        foreach ($this->whereCall()->get() as $call) {
+            $arguments = $call->expr->get('arguments');
+
+            if ($call->expr->get('callee')->dottedName() !== 'getattr' || count($arguments) < 2 || $arguments[1]->literalType() !== null) {
+                continue;
+            }
+
+            $receiver = $arguments[0];
+            $class = $receiver->dottedName() === 'self'
+                ? $call->module->classOf($call->expr)
+                : $this->types()->at($call->module->file, $receiver->start, $receiver->end)->andThen(static fn (Type $type) => $type->className())->andThen(fn (string $name) => $this->classNamed($name));
+
+            $class->inspect(static function (ClassDef $type) use (&$dispatched): void {
+                $dispatched[spl_object_id($type)] = true;
+            });
+        }
+
+        return $dispatched;
     }
 
     /**
