@@ -64,6 +64,30 @@ final class FreezeFrontendTest extends TestCase
         $this->assertTrue(Scope::everything()->includes($file));
     }
 
+    public function test_a_frozen_python_module_is_stamped_below_its_shebang_and_out_of_scope(): void
+    {
+        $file = $this->write('orders.py', "#!/usr/bin/env python3\ntotal = 1\n");
+
+        $this->assertSame(0, new Freeze()->run(Input::of('freeze', [$file])));
+
+        $lines = explode("\n", (string) file_get_contents($file));
+        $this->assertSame('#!/usr/bin/env python3', $lines[0]);
+        $this->assertStringStartsWith('# ' . Frozen::FILE_MARKER, $lines[1]);
+        $this->assertFalse(Scope::everything()->includes($file));
+    }
+
+    public function test_unfreezing_a_python_module_restores_it(): void
+    {
+        $original = "total = 1\n";
+        $file = $this->write('orders.py', $original);
+
+        new Freeze()->run(Input::of('freeze', [$file]));
+        $this->assertStringStartsWith('# ' . Frozen::FILE_MARKER, (string) file_get_contents($file));
+        new Freeze()->run(Input::of('unfreeze', [$file]));
+
+        $this->assertSame($original, file_get_contents($file));
+    }
+
     public function test_a_frozen_tag_written_by_hand_in_a_module_freezes_it(): void
     {
         $this->assertTrue(Frozen::isFrozen("/** @frozen */\nexport const total = 1\n", Language::TypeScript));

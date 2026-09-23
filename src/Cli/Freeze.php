@@ -86,14 +86,16 @@ final class Freeze implements Command
 
     /**
      * Insert the freeze stamp on its own line in the file's own comment syntax: right after the opening
-     * `<?php` line of a PHP file (legal even before a `declare`), at the very top of anything else.
+     * `<?php` line of a PHP file (legal even before a `declare`) or a script's `#!` line, at the very top
+     * of anything else.
      */
     private function stamped(string $source, Language $language): string
     {
         $stamp = $language->comment(Frozen::FILE_MARKER . ' — deliberately immutable; excluded from code-commandments '
             . 'judging & repent (run `commandments unfreeze` to lift).');
 
-        if ($language !== Language::Php) {
+        // A PHP file's opening tag and any script's `#!` line must stay first; the stamp follows them.
+        if ($language !== Language::Php && ! str_starts_with($source, '#!')) {
             return $stamp . "\n" . $source;
         }
 
