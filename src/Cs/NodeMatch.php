@@ -262,6 +262,67 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this call a constructor telling a collaborator it was handed to act — a method called on one of
+     * its parameters, or on a field it filled from one, with the answer thrown away? Keeping an answer, a
+     * static guard, the class's own helper and a call tried in a `try` that handles its failure are not.
+     */
+    public function isConstructorSideEffect(): bool
+    {
+        $callee = $this->node->is('InvocationExpression') ? $this->node->children[0] : null;
+
+        if ($callee === null || ! $callee->is('SimpleMemberAccessExpression') || ! $this->module->parentOf($this->node)->isSomeAnd(static fn (Node $parent): bool => $parent->is('ExpressionStatement'))) {
+            return false;
+        }
+
+        $scope = null;
+
+        foreach ($this->module->ancestorsOf($this->node) as $ancestor) {
+            if ($ancestor->is('TryStatement') && array_any($ancestor->children, static fn (Node $part): bool => $part->is('CatchClause'))) {
+                return false;
+            }
+
+            if ($ancestor->isFunction()) {
+                $scope = $ancestor;
+
+                break;
+            }
+        }
+
+        return $scope?->is('ConstructorDeclaration') === true && in_array(self::heldName($callee->children[0]), $this->collaboratorsOf($scope), true);
+    }
+
+    /**
+     * The names in $constructor that stand for something it was handed: its parameters, and the fields it
+     * fills from them.
+     *
+     * @return list<string>
+     */
+    private function collaboratorsOf(Node $constructor): array
+    {
+        $parameters = array_values(array_filter(array_map(
+            static fn (Node $parameter): ?string => $parameter->name,
+            array_filter(array_merge([], ...array_map(static fn (Node $list): array => $list->children, array_filter($constructor->children, static fn (Node $child): bool => $child->is('ParameterList')))), static fn (Node $node): bool => $node->is('Parameter')),
+        )));
+        $fields = array_filter(array_merge([], ...array_map(static fn (Node $expression): array => $expression->flatten(), $constructor->outermostExpressions())), static fn (Node $assignment): bool => $assignment->is('SimpleAssignmentExpression')
+            && $assignment->children[1]->is('IdentifierName')
+            && in_array($assignment->children[1]->name, $parameters, true));
+
+        return [...$parameters, ...array_values(array_filter(array_map(static fn (Node $assignment) => self::heldName($assignment->children[0]), $fields)))];
+    }
+
+    /**
+     * The name $expression reads — `printer` for `printer` and for `this.printer` — or empty.
+     */
+    private static function heldName(Node $expression): string
+    {
+        return match (true) {
+            $expression->is('IdentifierName') => (string) $expression->name,
+            $expression->is('SimpleMemberAccessExpression') && $expression->children[0]->is('ThisExpression') => (string) $expression->children[1]->name,
+            default => '',
+        };
+    }
+
+    /**
      * Does this member answer a lookup miss with an invented empty value? Every value it returns — each
      * arm of a conditional counted on its own — is either `""`/`0`/`false`, or what a dictionary lookup
      * found: the lookup itself, or the `out` variable a `TryGetValue` in this member filled.

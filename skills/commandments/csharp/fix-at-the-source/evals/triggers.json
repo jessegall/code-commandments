@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my C# constructor calls cache.Warm() on the cache it was given — is that OK?",
+        "I keep a static List<string> of seen ids that my methods add to in C#",
+        "judge flagged csharp-constructor-side-effect, what does it want me to do"
+    ],
+    "not": [
+        "how do I format a DateTime in C#"
+    ]
+}

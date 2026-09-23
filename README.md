@@ -509,7 +509,7 @@ The teaching layer: one discipline each, the doc an agent reads to fix a sin.
 Every `SKILL.md` is generated from its class (`composer sins`).
 
 <!-- BEGIN: skills (auto-generated, run `composer readme`) -->
-_52 skills. Full table in [README.skills.md](README.skills.md)._
+_53 skills. Full table in [README.skills.md](README.skills.md)._
 <!-- END: skills -->
 
 ## Sins & detectors
@@ -518,7 +518,7 @@ Every sin (the `--sin=` key) and what it flags. Each sin has one detector that
 finds it, named `<Sin>Detector` (e.g. `SwallowCatch` → `SwallowCatchDetector`).
 
 <!-- BEGIN: detectors (auto-generated, run `composer readme`) -->
-_217 sins across 52 skills. Full tables in [README.sins.md](README.sins.md)._
+_218 sins across 53 skills. Full tables in [README.sins.md](README.sins.md)._
 <!-- END: detectors -->
 
 ## Auto-fixing

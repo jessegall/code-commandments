@@ -1787,6 +1787,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-constructor-side-effect": {
+            "title": "ConstructorSideEffect",
+            "help": "A constructor that tells a collaborator it was handed to act and ignores the answer — the C# twin of the Python constructor-side-effect rule.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/fix-at-the-source",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-loop-wrapped-in-if": {
             "title": "LoopWrappedInIf",
             "help": "A loop whose whole body is one `if` around real work — the C# twin of the backend's and Python's loop-wrapped-in-if rules.",

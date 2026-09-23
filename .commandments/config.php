@@ -86,6 +86,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\CSharp\Duplication::class,
         // Skills\CSharp\Enums::class,
         // Skills\CSharp\Exceptions::class,
+        // Skills\CSharp\FixAtTheSource::class,
         // Skills\CSharp\Flow::class,
         // Skills\CSharp\ValueObjects::class,
     );
@@ -305,6 +306,8 @@ $disabledSins = function (Config $config): void {
 
         // ----------[ C# ]----------
         // Sins\CSharp\BlankStringDefault::class,
+        // Sins\CSharp\CancelledCoalesce::class,
+        // Sins\CSharp\ConstructorSideEffect::class,
         // Sins\CSharp\DataClump::class,
         // Sins\CSharp\DeepNesting::class,
         // Sins\CSharp\DictionaryBag::class,
@@ -318,6 +321,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\StringMirrorsEnum::class,
         // Sins\CSharp\SubjectLadder::class,
         // Sins\CSharp\SwallowedException::class,
+        // Sins\CSharp\WrappingWithoutCause::class,
     );
 };
 
