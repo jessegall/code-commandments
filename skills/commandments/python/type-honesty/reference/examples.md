@@ -26,6 +26,22 @@ class ShopSession:
         return started + self.LIFETIME_SECONDS
 ```
 
+### python-masked-invariant
+
+a literal answering for the object's own scratch state — `self.period.includes(day) if self.period else False` — where the field is only unset because an operation sets it part-way
+
+```py
+----------[ Bad ]----------
+
+def reduced(self, sku: str) -> bool:
+    return self.markdown.applies_to(sku) if self.markdown else False
+
+----------[ Good ]----------
+
+def run(self, markdown: Markdown, skus: list[str]) -> list[str]:
+    return [sku for sku in skus if markdown.applies_to(sku)]
+```
+
 ### python-phantom-nullable
 
 a field annotated `X | None` that every read assumes is there and none guards — a `None` the design never has

@@ -124,13 +124,30 @@ final class ClassDef extends Node
      */
     public function resetsToNone(string $name): bool
     {
+        return array_any($this->writesOutsideInit($name), static fn (Node $write): bool => $write instanceof Assign && $write->value->literalType() === LiteralType::None);
+    }
+
+    /**
+     * Does a method other than `__init__` set the field $name — per-call scratch state the class keeps
+     * between one operation's steps?
+     */
+    public function setsOutsideInit(string $name): bool
+    {
+        return $this->writesOutsideInit($name) !== [];
+    }
+
+    /**
+     * Every statement in a method other than `__init__` that writes the field $name on `self`.
+     *
+     * @return list<Node>
+     */
+    private function writesOutsideInit(string $name): array
+    {
         $methods = array_filter($this->body->body, static fn (Node $member): bool => $member instanceof FunctionDef && $member->name !== '__init__');
 
-        return array_any($methods, static fn (FunctionDef $method): bool => array_any(
-            $method->body->descendants(),
-            static fn (Node $statement): bool => $statement instanceof Assign
-                && $statement->value->literalType() === LiteralType::None
-                && array_any($statement->targets, static fn (Expr $target): bool => $target->selfAttribute() === $name),
+        return array_values(array_filter(
+            array_merge([], ...array_map(static fn (FunctionDef $method): array => $method->body->descendants(), $methods)),
+            static fn (Node $statement): bool => array_any($statement->writtenTargets(), static fn (Expr $target): bool => $target->selfAttribute() === $name),
         ));
     }
 
