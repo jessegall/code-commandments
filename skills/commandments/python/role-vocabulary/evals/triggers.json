@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I have a Python class holding a dict of handlers by name with register() and get() — should get return None when it's missing?",
+        "what should a class called PluginRegistry in Python look like",
+        "judge flagged python-nullable-registry-lookup on my registry, what does it want"
+    ],
+    "not": [
+        "how do I sort a list of dicts by a key in Python"
+    ]
+}
