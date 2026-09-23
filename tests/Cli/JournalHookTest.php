@@ -63,17 +63,13 @@ final class JournalHookTest extends TestCase
         ]));
     }
 
-    public function test_a_dispatch_without_a_model_is_whispered_to_the_agent(): void
+    public function test_a_dispatch_the_journal_names_without_its_input_is_not_reminded_of_a_model(): void
     {
-        $answer = $this->answer([
+        $this->assertSame([], $this->answer([
             'event' => 'hook.PreToolUse',
             'agent' => ['session' => 'claude-1', 'cwd' => $this->root],
             'tool' => ['name' => 'Agent', 'command' => ''],
-        ]);
-
-        $this->assertArrayHasKey('whisper', $answer);
-        $this->assertStringContainsString('names no model', $answer['whisper']);
-        $this->assertArrayNotHasKey('refuse', $answer, 'a reminder never stops the call');
+        ]));
     }
 
     public function test_advice_waits_for_the_advising_run_and_gates_answer_alone(): void
@@ -81,12 +77,12 @@ final class JournalHookTest extends TestCase
         $moment = [
             'event' => 'hook.PreToolUse',
             'agent' => ['session' => 'claude-1', 'cwd' => $this->root],
-            'tool' => ['name' => 'Agent', 'command' => ''],
+            'tool' => ['name' => 'Edit', 'file' => $this->root . '/tests/OrderTest.php'],
         ];
         $hook = new JournalHook(new CapturingHookIO(new FakeGit($this->root, 'sha1', 'feature/x'), $moment));
 
-        $this->assertSame('{}', $hook->gateAnswerFor($moment)->toJson(), 'the model reminder advises, so the gate-only answer holds nothing');
-        $this->assertStringContainsString('names no model', (string) $hook->adviceFor($moment)->whisper);
+        $this->assertSame('{}', $hook->gateAnswerFor($moment)->toJson(), 'the source reminder advises, so the gate-only answer holds nothing');
+        $this->assertNotSame('', (string) $hook->adviceFor($moment)->whisper);
     }
 
     public function test_a_hook_the_plugin_settings_keep_quiet_does_not_run(): void

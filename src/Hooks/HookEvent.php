@@ -333,6 +333,16 @@ final class HookEvent
     }
 
     /**
+     * Does this payload carry the dispatch's own input — the prompt an agent is sent with — so that what it
+     * leaves out, like a model, can be read as left out? The journal's moments name the tool without its
+     * input, and what a payload cannot see it must not report as missing.
+     */
+    public function seesDispatch(): bool
+    {
+        return isset($this->payload['tool_input']['prompt']);
+    }
+
+    /**
      * A boolean flag on the payload (e.g. `stop_hook_active`), false when absent.
      */
     public function flag(string $key): bool

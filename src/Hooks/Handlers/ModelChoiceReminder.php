@@ -39,7 +39,7 @@ final class ModelChoiceReminder extends Hook
      */
     protected function onPreToolUse(HookEvent $event): int
     {
-        if ($event->modelRequested() !== '') {
+        if (! $event->seesDispatch() || $event->modelRequested() !== '') {
             return $this->pass();
         }
 

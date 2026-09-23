@@ -73,9 +73,14 @@ final class JournalServeTest extends TestCase
 
     public function test_a_moment_a_handler_answers_comes_back_as_the_command_would_print_it(): void
     {
-        $answer = json_decode($this->ask(['event' => 'hook.PreToolUse', 'agent' => ['session' => 's', 'cwd' => $this->root], 'tool' => ['name' => 'Agent', 'command' => '']]), true);
+        $answer = json_decode($this->ask(['event' => 'hook.PreToolUse', 'agent' => ['session' => 's', 'cwd' => $this->root], 'tool' => ['name' => 'Edit', 'file' => $this->root . '/tests/OrderTest.php']]), true);
 
-        $this->assertStringContainsString('names no model', $answer['whisper']);
+        $this->assertArrayHasKey('whisper', $answer);
+    }
+
+    public function test_a_dispatch_the_journal_names_without_its_input_draws_no_model_reminder(): void
+    {
+        $this->assertSame('{}', $this->ask(['event' => 'hook.PreToolUse', 'agent' => ['session' => 's', 'cwd' => $this->root], 'tool' => ['name' => 'Agent', 'command' => '']]));
     }
 
     public function test_a_line_it_cannot_read_is_answered_and_the_next_one_still_is(): void
