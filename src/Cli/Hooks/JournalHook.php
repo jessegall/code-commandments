@@ -15,6 +15,7 @@ use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\CodeCommandments\Hooks\HookResponse;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
+use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -113,6 +114,7 @@ final class JournalHook implements Command
 
         $payload = $moment->hookPayload();
         $event = new HookEvent($payload, $this->io->projectRoot());
+        Workspace::at($event->root)->relocateSessions();
         $recorder = new RecordingHookIO($payload, $this->io->git(), $this->io->parses());
 
         $quiet = $this->quiet();
