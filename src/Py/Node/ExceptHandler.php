@@ -65,13 +65,6 @@ final class ExceptHandler extends Node
             return false;
         }
 
-        $only = $this->body->body[0];
-
-        return match (true) {
-            $only instanceof Return_ => $only->returnedValue()->isNoneOr(static fn (Expr $value): bool => $value->isAbsenceValue()),
-            $only instanceof Jump => $only->keyword === 'continue',
-            $only instanceof Simple, $only instanceof ExprStmt => $only->isPlaceholder(),
-            default => false,
-        };
+        return $this->body->body[0]->isNoOp();
     }
 }

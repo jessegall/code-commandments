@@ -17,7 +17,7 @@ _170 sins across 40 skills._
 | `DeNulledFinder` | Detects a nullable finder whose result is de-nulled at every call site (≥2 sites); absence should be decided at the source, not re-checked everywhere. |
 | `ErasedNullObject` | A `new X` whose `__toString` renders `''`, written where the declared type is `string` — a default or a return. |
 | `NullableCallback` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
-| `OptionAsNullable` | Detects `?Option`, `Option \| null`, and `unwrapOr(null)` collapsing absence; exempt in argument position, flagged only in return/assignment. / |
+| `OptionAsNullable` | Detects `?Option`, `Option \| null`, and `unwrapOr(null)` collapsing absence; exempt in argument position, flagged only in return/assignment. |
 
 #### `backend/behaviour-per-method`
 
@@ -49,7 +49,7 @@ _170 sins across 40 skills._
 | `DanglingDocReference` | A docblock cross-reference (`…` / `{@link …}`) that points at a FIRST-PARTY class the codebase does not declare — a name that was renamed or removed, its documentation left dangling. |
 | `InlineDocblock` | Detects a docblock crammed onto its delimiters — the whole thing on one line, or a block that opens or closes beside its text. |
 | `NegativeSpaceComment` | Detects comments that defend code against strawmen — a negation paired with a word like "random", "magic", or "coincidence", where the code should simply state what it IS. |
-| `RestatedComment` | Detects an inline comment that only narrates the statement it sits on: reduce the comment to its content words and the annotated statement's head to the words it spells (AstNode::codeWords()), and flag when EVERY comment word is already one of them — a comment carrying a why brings a word the code lacks, so it survives. |
+| `RestatedComment` | Detects an inline comment that only narrates the statement it sits on: reduce the comment to its content words and the annotated statement's head to the words it spells (codeWords()), and flag when EVERY comment word is already one of them — a comment carrying a why brings a word the code lacks, so it survives. |
 | `StackedDocblock` | Detects a declaration wearing several docblocks. |
 
 #### `backend/enums-with-behaviour`
@@ -91,7 +91,7 @@ _170 sins across 40 skills._
 | `CoalescedLoopSubject` | A `foreach` that decides in its own header whether it was HANDED anything to iterate — `foreach ($below[$id] ?? [] as $child)`, `$below` being a parameter. |
 | `DeepNesting` | An `if` nested three-deep — a pyramid of conditions. |
 | `IfElseLadder` | An `if`/`elseif` ladder of four-plus branches — a chain of conditions doing the job of a `match`, a method on the type, or polymorphic dispatch. |
-| `InlineThrow` | Detects `?? throw` buried in a call arg or dereference, not bare return statements. / |
+| `InlineThrow` | Detects `?? throw` buried in a call arg or dereference, not bare return statements. |
 | `LoopInvertedGuard` | A loop whose entire body is wrapped in one `if` — the iteration's real work pushed a level deep behind a condition. |
 | `NestedTernary` | A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap. |
 | `NonCountingFor` | A `for` that is not counting — its step ASSIGNS the next thing rather than advancing a counter, as in `for ($one = $r; $one !== null; $one = $one instanceof Traceable ? $one->getAbove() : null)`. |
@@ -113,7 +113,7 @@ _170 sins across 40 skills._
 | `ComputedBooleanArgument` | A chooser taking only bool(s) that every caller computes off the SAME object — `CornerInset::of($editor->inZenMode() \|\| $editor->hasPanelOpen())`. |
 | `ConvertedArgument` | Flags a parameter declared in the wrong currency: the caller holds a value, converts it into the form the callee wants, and passes the conversion — `Raises::of(ClassAlias::of($interaction), …)`. |
 | `DerivedArgument` | Flags a call site that hands over a PROJECTION of a value rather than the value itself, where the callee could have derived it — `persist($request, $request->getShopChannelId())` wanted only `$request`. |
-| `ParamResolvedFromParam` | Detects methods unpacking a target from a container parameter; pass the resolved object, not the container plus a key. / |
+| `ParamResolvedFromParam` | Detects methods unpacking a target from a container parameter; pass the resolved object, not the container plus a key. |
 
 #### `backend/repeated-call-helper`
 
@@ -195,10 +195,10 @@ _170 sins across 40 skills._
 | Sin | What it flags |
 |---|---|
 | `ConstructorOrchestration` | A page object imperatively filling a public slot in its constructor. |
-| `InjectedServiceNotHidden` | Detects injected services in public properties without #[Hidden] on page objects; non-public properties are exempt. / |
-| `ManualOutputTransform` | Flags a `Data` slot that hand-flattens one value object into a wire array — a getter hook, a `#[Computed]` method, or a constructor assignment — where a `#[WithTransformer]` should own the shape. / |
+| `InjectedServiceNotHidden` | Detects injected services in public properties without #[Hidden] on page objects; non-public properties are exempt. |
+| `ManualOutputTransform` | Flags a `Data` slot that hand-flattens one value object into a wire array — a getter hook, a `#[Computed]` method, or a constructor assignment — where a `#[WithTransformer]` should own the shape. |
 | `PageObjectMissingTypeScript` | Flags a page object — a `Data` that composes multiple nested `Data` AND travels back in a response — carrying no `#[TypeScript]`. |
-| `ServiceLocationInPageObject` | Detects page objects using service location (`app()`, `resolve()`) instead of injecting via `#[FromContainer]` attributes. / |
+| `ServiceLocationInPageObject` | Detects page objects using service location (`app()`, `resolve()`) instead of injecting via `#[FromContainer]` attributes. |
 | `TransformerWithoutTsType` | Flags a custom `#[WithTransformer]` on a `Data` property with no paired `#[TypeScriptType]` / `#[LiteralTypeScriptType]`, so the generated TS keeps the PHP type while the wire carries the transformed shape. |
 
 #### `backend/route-actions`
@@ -221,7 +221,7 @@ _170 sins across 40 skills._
 | `DataMethodHintCollision` | A Spatie `Data` class with a `@method` docblock tag that re-declares a method the class ACTUALLY has, colliding with it (`@method static static fromCredential(...)` over a real `fromCredential()`). |
 | `HookMissingComputed` | Flags a get-only property hook on a `Data` class that lacks `#[Computed]`. |
 | `ManualHydrationLoop` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback. |
-| `ManualInputCast` | Flags a `Data` value-object property that is hand-built at EVERY `::from()` site (via the whole-program DataConstructions index), where a `#[WithCast]` / `Castable` should own the mapping once. / |
+| `ManualInputCast` | Flags a `Data` value-object property that is hand-built at EVERY `::from()` site (via the whole-program DataConstructions index), where a `#[WithCast]` / `Castable` should own the mapping once. |
 | `NestedTypeMissingTypeScript` | Flags a property on a `#[TypeScript]` Data whose nested Data/backed-enum type itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated frontend contract. |
 | `NewDataObject` | Detects `new Data(...)` instead of `::from(...)` — skips casts, name maps, nested hydration, and factories. |
 | `NonFinalData` | Detects non-final Spatie Data classes (DTOs are values, not bases). |
@@ -247,7 +247,7 @@ _170 sins across 40 skills._
 | Sin | What it flags |
 |---|---|
 | `InventedDefault` | A missing value papered over with an invented `""`, `0` or `false` — the C# twin of Python's invented-default rule, in its hardened shape. |
-| `NullForgiven` | The null-forgiving `!` applied to what is declared nullable — a `T?` field, property, local, parameter or return, as the compiler resolves it. `= null!` initialises a member a framework fills, and names nothing nullable; test code may let a null fail the test. |
+| `NullForgiven` | The null-forgiving `!` applied to what is declared nullable — a `T?` field, property, local, parameter or return, as the compiler resolves it. |
 
 #### `csharp/duplication`
 
@@ -293,11 +293,11 @@ _170 sins across 40 skills._
 |---|---|
 | `CompoundInlineComponent` | Detects compound UI primitives assembled inline (component root with ≥2 descendants sharing a prefix tag). |
 | `DeepDataReach` | Detects clusters of deep data reaches (e.g., `order.customer.name`, `order.customer.email`) sharing one nested object. |
-| `DeepNested` | A template nested far too deep; identifies the natural extraction boundary by climbing from the deep element up the single-child wrapper stack for a coherent unit. / |
+| `DeepNested` | A template nested far too deep; identifies the natural extraction boundary by climbing from the deep element up the single-child wrapper stack for a coherent unit. |
 | `DuplicateElement` | Detects identical template blocks (structural comparison, blind to formatting); only substantial blocks and the largest duplicate are flagged. |
 | `NearDuplicateElement` | Template blocks with one SKELETON that bind different data — the same tags, attribute names and nesting, with the values and text left out — within a template, across components, or as two components' whole templates. |
 | `PropDrilling` | Detects a prop threaded through ≥2 components unused. |
-| `PropMutation` | Detects component writing its own props (v-model or assignment); only bare prop writes are flagged, not shadowed locals. / |
+| `PropMutation` | Detects component writing its own props (v-model or assignment); only bare prop writes are flagged, not shadowed locals. |
 
 #### `frontend/vue-control-flow`
 
@@ -312,7 +312,7 @@ _170 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `MirroredServerType` | Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. / |
+| `MirroredServerType` | Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. |
 
 ### Python
 
@@ -322,7 +322,7 @@ _170 sins across 40 skills._
 |---|---|
 | `BlankStringDefault` | A `str` parameter or field defaulting to the blank whose own scope then asks whether it is blank — the twin of the backend's BlankStringDefaultDetector. |
 | `CancelledFallback` | A default compared against itself — the twin of the backend's CancelledCoalesceDetector. |
-| `ConditionalSpread` | A conditional spread into an empty collection — the twin of the backend's ConditionalArraySpreadDetector. / |
+| `ConditionalSpread` | A conditional spread into an empty collection — the twin of the backend's ConditionalArraySpreadDetector. |
 | `InventedDefault` | `f(x or "")` — an empty scalar invented to fill an argument on absence. |
 | `NullableCallback` | A function taking a `None`-defaulted callable it then asks about — the twin of the backend's NullableCallbackDetector. |
 
@@ -337,15 +337,15 @@ _170 sins across 40 skills._
 
 | Sin | What it flags |
 |---|---|
-| `MessageStringRaise` | A builtin that names no failure raised with its description written at the raise — the Python twin of the backend's GenericExceptionDetector and MessageAtThrowDetector together. / |
-| `RaiseWithoutCause` | A new exception raised from an `except` block without `from` — the twin of the backend's WrappingWithoutCauseDetector. / |
+| `MessageStringRaise` | A builtin that names no failure raised with its description written at the raise — the Python twin of the backend's GenericExceptionDetector and MessageAtThrowDetector together. |
+| `RaiseWithoutCause` | A new exception raised from an `except` block without `from` — the twin of the backend's WrappingWithoutCauseDetector. |
 | `SwallowedException` | A handler that catches everything and makes it vanish — the Python twin of the backend's SwallowCatchDetector. |
 
 #### `python/fix-at-the-source`
 
 | Sin | What it flags |
 |---|---|
-| `ConstructorSideEffect` | A class whose `__init__` acts on a collaborator and discards the result — the twin of the backend's ConstructorSideEffectDetector. / |
+| `ConstructorSideEffect` | A class whose `__init__` acts on a collaborator and discards the result — the twin of the backend's ConstructorSideEffectDetector. |
 | `MutableStaticState` | A write to state no instance owns — the twin of the backend's MutableStaticStateDetector. |
 
 #### `python/flow`
@@ -353,13 +353,13 @@ _170 sins across 40 skills._
 | Sin | What it flags |
 |---|---|
 | `CoalescedLoopSubject` | A `for` that decides in its own header whether it was handed anything to walk — the twin of the backend's CoalescedLoopSubjectDetector. |
-| `ConditionalStatement` | A conditional expression standing as a whole statement, its value read by nothing — the twin of the backend's TernaryStatementDetector. / |
+| `ConditionalStatement` | A conditional expression standing as a whole statement, its value read by nothing — the twin of the backend's TernaryStatementDetector. |
 | `DeepNesting` | An `if`, loop or `match` that opens a fourth level of choices inside one function — the arrow the backend's DeepNestingDetector finds, counted over every kind of choice Python writes. |
-| `LoopWrappedInIf` | A loop whose whole body is one `if` around real work — the twin of the backend's LoopInvertedGuardDetector. / |
-| `NestedConditional` | A conditional expression nested in another's branch, flagged once at its outermost — the twin of the backend's NestedTernaryDetector. / |
+| `LoopWrappedInIf` | A loop whose whole body is one `if` around real work — the twin of the backend's LoopInvertedGuardDetector. |
+| `NestedConditional` | A conditional expression nested in another's branch, flagged once at its outermost — the twin of the backend's NestedTernaryDetector. |
 | `RedundantElse` | An `else:` after an `if` branch that already left — the twin of the backend's RedundantElseDetector. |
-| `ShortCircuitStatement` | An `and`/`or` standing as a whole statement, its value read by nothing — the twin of the backend's ShortCircuitStatementDetector. / |
-| `SubjectLadder` | An `if`/`elif` chain testing one subject against constant after constant — the Python twin of the Vue SwitchCaseDetector, at the backend ladder's length: fewer rungs are an ordinary decision, not a dispatch. / |
+| `ShortCircuitStatement` | An `and`/`or` standing as a whole statement, its value read by nothing — the twin of the backend's ShortCircuitStatementDetector. |
+| `SubjectLadder` | An `if`/`elif` chain testing one subject against constant after constant — the Python twin of the Vue SwitchCaseDetector, at the backend ladder's length: fewer rungs are an ordinary decision, not a dispatch. |
 
 #### `python/value-objects`
 

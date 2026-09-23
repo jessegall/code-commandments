@@ -51,4 +51,9 @@ final class Simple extends Node
 
         return array_values(array_map(static fn (Expr $name): string => (string) $name->get('name'), $named));
     }
+
+    public function isNoOp(): bool
+    {
+        return $this->isPlaceholder();
+    }
 }

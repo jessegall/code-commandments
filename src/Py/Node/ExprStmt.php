@@ -36,4 +36,9 @@ final class ExprStmt extends Node
     {
         return $this->value->literalType()?->isText() === true;
     }
+
+    public function isNoOp(): bool
+    {
+        return $this->isPlaceholder();
+    }
 }

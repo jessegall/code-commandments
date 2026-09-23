@@ -45,6 +45,11 @@ final class HookRegistry
     private const array LEGACY_SUBCOMMANDS = ['remind', 'judge-reminder', 'plan-reminder'];
 
     /**
+     * The plugin folder the agent journal installs this package into.
+     */
+    private const string JOURNAL_PLUGIN = 'code-commandments';
+
+    /**
      * The hooks that ship with the package; a consumer adds its own via `$config->hook(...)`.
      *
      * @var list<class-string<Hook>>
@@ -74,6 +79,15 @@ final class HookRegistry
     }
 
     /**
+     * Whether the agent journal owns this project's hooks: its plugin folder is installed and the journal
+     * is set up beside it.
+     */
+    public static function journalDriven(string $root): bool
+    {
+        return is_file("{$root}/.journal/plugins/" . self::JOURNAL_PLUGIN . '/.journal-plugin/plugin.json');
+    }
+
+    /**
      * Wire $hookClasses into the project at $root. Returns true when its settings actually changed.
      *
      * A settings file that exists but does not READ as JSON is left alone and reported. It used to
@@ -83,17 +97,6 @@ final class HookRegistry
      *
      * @param  list<class-string<Hook>>  $hookClasses
      */
-    public const JOURNAL_PLUGIN = 'code-commandments';
-
-    /**
-     * Whether the agent journal owns this project's hooks: its plugin folder is installed and the journal
-     * is set up beside it.
-     */
-    public static function journalDriven(string $root): bool
-    {
-        return is_file("{$root}/.journal/plugins/" . self::JOURNAL_PLUGIN . '/.journal-plugin/plugin.json');
-    }
-
     public static function wire(string $root): bool
     {
         // The set is DERIVED from the project, not asked for: every caller held the root and handed

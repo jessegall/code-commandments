@@ -85,6 +85,10 @@ final class JournalConfig implements Command
      */
     private static function folders(array $chosen, string $key): array
     {
-        return array_values(array_filter(array_map('trim', explode("\n", (string) ($chosen[$key] ?? '')))));
+        if (! isset($chosen[$key])) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', explode("\n", (string) $chosen[$key]))));
     }
 }

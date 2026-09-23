@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.26.1",
+    "version": "1.27.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.119.0",
@@ -203,7 +203,7 @@
         },
         "sin_option-as-nullable": {
             "title": "OptionAsNullable",
-            "help": "Detects `?Option`, `Option | null`, and `unwrapOr(null)` collapsing absence; exempt in argument position, flagged only in return/assignment. /",
+            "help": "Detects `?Option`, `Option | null`, and `unwrapOr(null)` collapsing absence; exempt in argument position, flagged only in return/assignment.",
             "type": "flag",
             "default": "true",
             "group": "backend/absence",
@@ -372,7 +372,7 @@
         },
         "sin_restated-comment": {
             "title": "RestatedComment",
-            "help": "Detects an inline comment that only narrates the statement it sits on: reduce the comment to its content words and the annotated statement's head to the words it spells (AstNode::codeWords()), and flag when EVERY comment word is already one of them — a comment carrying a why brings a word the code lacks, so it survives.",
+            "help": "Detects an inline comment that only narrates the statement it sits on: reduce the comment to its content words and the annotated statement's head to the words it spells (codeWords()), and flag when EVERY comment word is already one of them — a comment carrying a why brings a word the code lacks, so it survives.",
             "type": "flag",
             "default": "true",
             "group": "backend/documentation",
@@ -658,7 +658,7 @@
         },
         "sin_inline-throw": {
             "title": "InlineThrow",
-            "help": "Detects `?? throw` buried in a call arg or dereference, not bare return statements. /",
+            "help": "Detects `?? throw` buried in a call arg or dereference, not bare return statements.",
             "type": "flag",
             "default": "true",
             "group": "backend/guard-clauses-and-flow",
@@ -931,7 +931,7 @@
         },
         "sin_injected-service-not-hidden": {
             "title": "InjectedServiceNotHidden",
-            "help": "Detects injected services in public properties without #[Hidden] on page objects; non-public properties are exempt. /",
+            "help": "Detects injected services in public properties without #[Hidden] on page objects; non-public properties are exempt.",
             "type": "flag",
             "default": "true",
             "group": "backend/page-objects",
@@ -944,7 +944,7 @@
         },
         "sin_manual-output-transform": {
             "title": "ManualOutputTransform",
-            "help": "Flags a `Data` slot that hand-flattens one value object into a wire array — a getter hook, a `#[Computed]` method, or a constructor assignment — where a `#[WithTransformer]` should own the shape. /",
+            "help": "Flags a `Data` slot that hand-flattens one value object into a wire array — a getter hook, a `#[Computed]` method, or a constructor assignment — where a `#[WithTransformer]` should own the shape.",
             "type": "flag",
             "default": "true",
             "group": "backend/page-objects",
@@ -970,7 +970,7 @@
         },
         "sin_service-location-in-page-object": {
             "title": "ServiceLocationInPageObject",
-            "help": "Detects page objects using service location (`app()`, `resolve()`) instead of injecting via `#[FromContainer]` attributes. /",
+            "help": "Detects page objects using service location (`app()`, `resolve()`) instead of injecting via `#[FromContainer]` attributes.",
             "type": "flag",
             "default": "true",
             "group": "backend/page-objects",
@@ -1035,7 +1035,7 @@
         },
         "sin_param-resolved-from-param": {
             "title": "ParamResolvedFromParam",
-            "help": "Detects methods unpacking a target from a container parameter; pass the resolved object, not the container plus a key. /",
+            "help": "Detects methods unpacking a target from a container parameter; pass the resolved object, not the container plus a key.",
             "type": "flag",
             "default": "true",
             "group": "backend/pass-the-object",
@@ -1243,7 +1243,7 @@
         },
         "sin_manual-input-cast": {
             "title": "ManualInputCast",
-            "help": "Flags a `Data` value-object property that is hand-built at EVERY `::from()` site (via the whole-program DataConstructions index), where a `#[WithCast]` / `Castable` should own the mapping once. /",
+            "help": "Flags a `Data` value-object property that is hand-built at EVERY `::from()` site (via the whole-program DataConstructions index), where a `#[WithCast]` / `Castable` should own the mapping once.",
             "type": "flag",
             "default": "true",
             "group": "backend/spatie-data",
@@ -1672,7 +1672,7 @@
         },
         "sin_csharp-null-forgiven": {
             "title": "NullForgiven",
-            "help": "The null-forgiving `!` applied to what is declared nullable — a `T?` field, property, local, parameter or return, as the compiler resolves it. `= null!` initialises a member a framework fills, and names nothing nullable; test code may let a null fail the test.",
+            "help": "The null-forgiving `!` applied to what is declared nullable — a `T?` field, property, local, parameter or return, as the compiler resolves it.",
             "type": "flag",
             "default": "true",
             "group": "csharp/absence",
@@ -1828,7 +1828,7 @@
         },
         "sin_mirrored-server-type": {
             "title": "MirroredServerType",
-            "help": "Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. /",
+            "help": "Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it.",
             "type": "flag",
             "default": "true",
             "group": "frontend/mirrored-server-type",
@@ -1870,7 +1870,7 @@
         },
         "sin_deep-nested": {
             "title": "DeepNested",
-            "help": "A template nested far too deep; identifies the natural extraction boundary by climbing from the deep element up the single-child wrapper stack for a coherent unit. /",
+            "help": "A template nested far too deep; identifies the natural extraction boundary by climbing from the deep element up the single-child wrapper stack for a coherent unit.",
             "type": "flag",
             "default": "true",
             "group": "frontend/vue-components",
@@ -1922,7 +1922,7 @@
         },
         "sin_prop-mutation": {
             "title": "PropMutation",
-            "help": "Detects component writing its own props (v-model or assignment); only bare prop writes are flagged, not shadowed locals. /",
+            "help": "Detects component writing its own props (v-model or assignment); only bare prop writes are flagged, not shadowed locals.",
             "type": "flag",
             "default": "true",
             "group": "frontend/vue-components",
@@ -1985,9 +1985,61 @@
             ],
             "detail": true
         },
+        "sin_python-blank-string-default": {
+            "title": "BlankStringDefault",
+            "help": "A `str` parameter or field defaulting to the blank whose own scope then asks whether it is blank — the twin of the backend's BlankStringDefaultDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/absence",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-cancelled-fallback": {
+            "title": "CancelledFallback",
+            "help": "A default compared against itself — the twin of the backend's CancelledCoalesceDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/absence",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-conditional-spread": {
+            "title": "ConditionalSpread",
+            "help": "A conditional spread into an empty collection — the twin of the backend's ConditionalArraySpreadDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/absence",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-invented-default": {
             "title": "InventedDefault",
             "help": "`f(x or \"\")` — an empty scalar invented to fill an argument on absence.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/absence",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-nullable-callback": {
+            "title": "NullableCallback",
+            "help": "A function taking a `None`-defaulted callable it then asks about — the twin of the backend's NullableCallbackDetector.",
             "type": "flag",
             "default": "true",
             "group": "python/absence",
@@ -2026,7 +2078,20 @@
         },
         "sin_python-message-string-raise": {
             "title": "MessageStringRaise",
-            "help": "A builtin that names no failure raised with its description written at the raise — the Python twin of the backend's GenericExceptionDetector and MessageAtThrowDetector together. /",
+            "help": "A builtin that names no failure raised with its description written at the raise — the Python twin of the backend's GenericExceptionDetector and MessageAtThrowDetector together.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/exceptions",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-raise-without-cause": {
+            "title": "RaiseWithoutCause",
+            "help": "A new exception raised from an `except` block without `from` — the twin of the backend's WrappingWithoutCauseDetector.",
             "type": "flag",
             "default": "true",
             "group": "python/exceptions",
@@ -2043,6 +2108,32 @@
             "type": "flag",
             "default": "true",
             "group": "python/exceptions",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-constructor-side-effect": {
+            "title": "ConstructorSideEffect",
+            "help": "A class whose `__init__` acts on a collaborator and discards the result — the twin of the backend's ConstructorSideEffectDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/fix-at-the-source",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-mutable-static-state": {
+            "title": "MutableStaticState",
+            "help": "A write to state no instance owns — the twin of the backend's MutableStaticStateDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/fix-at-the-source",
             "when": [
                 {
                     "language_py": true
@@ -2076,9 +2167,22 @@
             ],
             "detail": true
         },
+        "sin_python-conditional-statement": {
+            "title": "ConditionalStatement",
+            "help": "A conditional expression standing as a whole statement, its value read by nothing — the twin of the backend's TernaryStatementDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/flow",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-loop-wrapped-in-if": {
             "title": "LoopWrappedInIf",
-            "help": "A loop whose whole body is one `if` around real work — the twin of the backend's LoopInvertedGuardDetector. /",
+            "help": "A loop whose whole body is one `if` around real work — the twin of the backend's LoopInvertedGuardDetector.",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -2091,7 +2195,20 @@
         },
         "sin_python-nested-conditional": {
             "title": "NestedConditional",
-            "help": "A conditional expression nested in another's branch, flagged once at its outermost — the twin of the backend's NestedTernaryDetector. /",
+            "help": "A conditional expression nested in another's branch, flagged once at its outermost — the twin of the backend's NestedTernaryDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/flow",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-short-circuit-statement": {
+            "title": "ShortCircuitStatement",
+            "help": "An `and`/`or` standing as a whole statement, its value read by nothing — the twin of the backend's ShortCircuitStatementDetector.",
             "type": "flag",
             "default": "true",
             "group": "python/flow",
@@ -2104,7 +2221,7 @@
         },
         "sin_python-subject-ladder": {
             "title": "SubjectLadder",
-            "help": "An `if`/`elif` chain testing one subject against constant after constant — the Python twin of the Vue SwitchCaseDetector, at the backend ladder's length: fewer rungs are an ordinary decision, not a dispatch. /",
+            "help": "An `if`/`elif` chain testing one subject against constant after constant — the Python twin of the Vue SwitchCaseDetector, at the backend ladder's length: fewer rungs are an ordinary decision, not a dispatch.",
             "type": "flag",
             "default": "true",
             "group": "python/flow",

@@ -87,6 +87,15 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * Does this statement do nothing with what came before it — `pass`, `...`, a string left alone,
+     * `continue`, or a `return` of nothing or of an empty value?
+     */
+    public function isNoOp(): bool
+    {
+        return false;
+    }
+
+    /**
      * The targets this statement assigns — none for a statement that assigns nothing.
      *
      * @return list<Expr>

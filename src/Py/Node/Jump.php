@@ -20,4 +20,9 @@ final class Jump extends Node
     {
         return true;
     }
+
+    public function isNoOp(): bool
+    {
+        return $this->keyword === 'continue';
+    }
 }
