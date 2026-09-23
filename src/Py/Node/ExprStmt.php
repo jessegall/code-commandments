@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Py\Node;
+
+use JesseGall\CodeCommandments\Py\Expr\Expr;
+
+/**
+ * An expression standing as a statement — a call made for its effect, a docstring.
+ */
+final class ExprStmt extends Node
+{
+    public function __construct(public readonly Expr $value) {}
+
+    public function expressions(): array
+    {
+        return [$this->value];
+    }
+}

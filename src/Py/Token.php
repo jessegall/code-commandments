@@ -30,6 +30,19 @@ final readonly class Token
     }
 
 
+    /**
+     * How this token moves a bracket depth: +1 for an opener, -1 for a closer, 0 for anything else.
+     */
+    public function groupDepthChange(): int
+    {
+        return match (true) {
+            $this->kind !== TokenKind::Op => 0,
+            in_array($this->value, ['(', '[', '{'], true) => 1,
+            in_array($this->value, [')', ']', '}'], true) => -1,
+            default => 0,
+        };
+    }
+
     public function isOp(string $value): bool
     {
         return $this->is(TokenKind::Op, $value);

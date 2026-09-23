@@ -87,6 +87,38 @@ final class Cursor
     }
 
     /**
+     * Does a `.name` follow — an attribute, a dotted module path — rather than a `.` cut off?
+     */
+    public function atDottedName(): bool
+    {
+        return $this->atOp('.') && $this->at(1)->isName();
+    }
+
+    /**
+     * Is the cursor still inside a group that $closer ends — before it, and not past the last token?
+     */
+    public function isBefore(string $closer): bool
+    {
+        return ! $this->atOp($closer) && ! $this->atEnd();
+    }
+
+    /**
+     * Step past the bracket group that opens under the cursor, nested groups and all.
+     */
+    public function skipGroup(): void
+    {
+        $depth = 0;
+
+        while (! $this->atEnd()) {
+            $depth += $this->advance()->groupDepthChange();
+
+            if ($depth <= 0) {
+                return;
+            }
+        }
+    }
+
+    /**
      * Where the token under the cursor begins, in the file.
      */
     public function offset(): int

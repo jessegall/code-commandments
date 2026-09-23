@@ -67,6 +67,23 @@ final class Parser
     }
 
     /**
+     * One target — what a `with … as` binds, a single name or attribute or a parenthesised tuple.
+     */
+    public function target(): Expr
+    {
+        return $this->starredTarget();
+    }
+
+    /**
+     * A `case` pattern — read below the conditional expression, so the `if` after it is left for the
+     * case's guard: `case Move(x, y) if x > 0:`.
+     */
+    public function patternList(): Expr
+    {
+        return $this->commaList($this->orTest(...));
+    }
+
+    /**
      * One $element, or several separated by commas — a tuple then, a trailing comma allowed.
      *
      * @param  callable(): Expr  $element
@@ -345,24 +362,27 @@ final class Parser
         $start = $this->cursor->offset();
         $node = $this->atom();
 
-        while (true) {
+        while ($this->isAtTrailer()) {
             $node = match (true) {
-                $this->cursor->atOp('.') && $this->cursor->at(1)->isName() => $this->attribute($node, $start),
+                $this->cursor->atDottedName() => $this->attribute($node, $start),
                 $this->cursor->atOp('[') => $this->subscript($node, $start),
-                $this->cursor->atOp('(') => $this->call($node, $start),
-                default => null,
-            } ?? $node;
-
-            if (! $this->cursor->atOp('.') && ! $this->cursor->atOp('[') && ! $this->cursor->atOp('(')) {
-                return $node;
-            }
-
-            if ($this->cursor->atOp('.') && ! $this->cursor->at(1)->isName()) {
-                $this->cursor->advance(); // `rows[0].` cut off mid-trailer
-
-                return $node;
-            }
+                default => $this->call($node, $start),
+            };
         }
+
+        if ($this->cursor->atOp('.')) {
+            $this->cursor->advance(); // `rows[0].` cut off mid-trailer
+        }
+
+        return $node;
+    }
+
+    /**
+     * Does a trailer follow — `.name`, `[index]` or `(arguments)`?
+     */
+    private function isAtTrailer(): bool
+    {
+        return $this->cursor->atDottedName() || $this->cursor->atOp('[') || $this->cursor->atOp('(');
     }
 
     private function attribute(Expr $object, int $start): Expr
@@ -412,7 +432,7 @@ final class Parser
      */
     private function isAnotherElementBefore(string $closer): bool
     {
-        return $this->cursor->advanceIfOp(',') && ! $this->cursor->atOp($closer) && ! $this->cursor->atEnd();
+        return $this->cursor->advanceIfOp(',') && $this->cursor->isBefore($closer);
     }
 
     private function precededByComma(): bool
@@ -427,10 +447,20 @@ final class Parser
 
     private function call(Expr $callee, int $start): Expr
     {
+        return $this->located(ExprKind::Call, ['callee' => $callee, 'arguments' => $this->callArguments()], $start);
+    }
+
+    /**
+     * The arguments in the parentheses under the cursor — a call's, or a class's bases.
+     *
+     * @return list<Expr>
+     */
+    public function callArguments(): array
+    {
         $this->cursor->advance(); // `(`
         $arguments = [];
 
-        while (! $this->cursor->atOp(')') && ! $this->cursor->atEnd()) {
+        while ($this->cursor->isBefore(')')) {
             $arguments[] = $this->argument();
 
             if (! $this->cursor->advanceIfOp(',')) {
@@ -440,7 +470,7 @@ final class Parser
 
         $this->cursor->advanceIfOp(')');
 
-        return $this->located(ExprKind::Call, ['callee' => $callee, 'arguments' => $arguments], $start);
+        return $arguments;
     }
 
     /**
