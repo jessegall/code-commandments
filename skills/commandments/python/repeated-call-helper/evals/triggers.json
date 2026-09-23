@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I call `dataclasses.replace(order, status=\"shipped\")` in four different places — should that be something else?",
+        "the same `if order.paid and not order.cancelled and order.lines:` check appears in two of my Python modules, is that a problem?",
+        "judge flagged python-repeated-type-guard on `isinstance(node, Call) and isinstance(node.func, Attribute)`, how do I fix it"
+    ],
+    "not": [
+        "how do I parse command-line arguments in Python"
+    ]
+}

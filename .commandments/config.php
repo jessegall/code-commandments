@@ -71,6 +71,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\Python\FixAtTheSource::class,
         // Skills\Python\Flow::class,
         // Skills\Python\MethodMood::class,
+        // Skills\Python\RepeatedCallHelper::class,
         // Skills\Python\TypeHonesty::class,
         // Skills\Python\ValueObjects::class,
 

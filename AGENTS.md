@@ -119,6 +119,7 @@ most:**
 - **`commandments-python-type-honesty`** — a type must not lie: don't fake optionality with `| None` a value never is, or keep per-call scratch state on `self`.
 - **`commandments-python-class-layout`** — state at the top — constants, class attributes and fields above `__init__`, methods after.
 - **`commandments-python-method-mood`** — commands are imperatives (`hide()`), state predicates are questions (`is_hidden()`).
+- **`commandments-python-repeated-call-helper`** — a keyword call, a guard or a type check written the same way at 2+ sites belongs as one named method on the type it is about.
 
 **ON CONTACT — load the moment the work touches the subject:**
 
