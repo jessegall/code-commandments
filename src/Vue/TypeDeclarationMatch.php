@@ -43,6 +43,11 @@ class TypeDeclarationMatch implements Located
         return $this->declaration->file . ':' . $this->declaration->line;
     }
 
+    public function line(): int
+    {
+        return $this->declaration->line;
+    }
+
     /**
      * A short context for the report — the type this sin sits on.
      */

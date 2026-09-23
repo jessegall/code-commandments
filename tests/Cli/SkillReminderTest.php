@@ -20,6 +20,21 @@ use PHPUnit\Framework\TestCase;
  */
 final class SkillReminderTest extends TestCase
 {
+    private const string HISTORY = <<<'PHP'
+        <?php
+
+        final class Importer
+        {
+            public function run(): void
+            {
+                // formerly lived inline in the controller; was extracted here
+                $this->go();
+            }
+
+            private function go(): void {}
+        }
+        PHP;
+
     use TemporaryProject;
 
     protected function setUp(): void
@@ -54,6 +69,27 @@ final class SkillReminderTest extends TestCase
         $this->assertStringContainsString('archaeology-comment', $context);
         $this->assertStringContainsString('commandments-backend-documentation', $context);
         $this->assertStringContainsString('SOURCE', $context, 'and it points at the source, not the symptom');
+    }
+
+    public function test_a_finding_already_named_is_not_named_again(): void
+    {
+        $this->write('src/Importer.php', self::HISTORY);
+
+        $this->assertNotSame([], $this->editing('Edit', 'src/Importer.php'));
+        $this->assertSame([], $this->editing('Edit', 'src/Importer.php'), 'the same finding, on the same line, is said once');
+    }
+
+    public function test_only_the_lines_changed_since_the_last_commit_are_held_to_the_rules(): void
+    {
+        $this->write('src/Importer.php', self::HISTORY);
+        $git = 'git -C ' . escapeshellarg($this->root);
+        shell_exec("{$git} init -q && {$git} add -A && {$git} -c user.name=t -c user.email=t@t commit -qm base 2>&1");
+
+        $this->write('src/Importer.php', str_replace('private function go(): void {}', "private function go(): void {}\n\n    private function stop(): void {}", self::HISTORY));
+        $this->assertSame([], $this->editing('Edit', 'src/Importer.php'), 'the committed history comment is judge\'s, not this edit\'s');
+
+        $this->write('src/Importer.php', str_replace('$this->go();', "// formerly ran stop() first; was extracted here\n        \$this->go();", self::HISTORY));
+        $this->assertStringContainsString('archaeology-comment', $this->context($this->editing('Edit', 'src/Importer.php')));
     }
 
     public function test_clean_code_is_silent(): void

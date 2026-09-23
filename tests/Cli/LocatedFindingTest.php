@@ -45,6 +45,11 @@ final class LocatedFindingTest extends TestCase
                         return '/app/Screen.php:12';
                     }
 
+                    public function line(): int
+                    {
+                        return 12;
+                    }
+
                     public function scope(): string
                     {
                         return 'Screen::rows';
