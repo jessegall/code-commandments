@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my C# controller action starts with if (request != null) { and then the whole method is indented under it — how should I structure it",
+        "I have if (status == OrderStatus.Open) ... else if (status == OrderStatus.Closed) ... else if (status == OrderStatus.Stale) ... in three services, is that fine",
+        "judge flagged an else after a return in my C# method, why does that matter"
+    ],
+    "not": [
+        "how do I share the same mapping method between two C# classes without copying it"
+    ]
+}

@@ -110,6 +110,7 @@ most:**
 - **`commandments-backend-route-actions`** — route actions are thin, single entry points — no controller wrapping another, no duplicate actions, no two routes to one action.
 - **`commandments-backend-repeated-call-helper`** — a repeated `with`-style call passing the same named argument belongs as a named method on the receiver's type.
 - **`commandments-python-flow`** — check preconditions at the top and leave (`return`/`raise`/`continue`), keep the body flat, no `else` after an exit, dispatch instead of an `elif` ladder over one subject.
+- **`commandments-csharp-flow`** — check preconditions at the top and leave (`return`/`throw`/`continue`), keep the body flat, no `else` after an exit, a `switch` expression or polymorphism instead of an `else if` ladder over one subject.
 - **`commandments-python-absence`** — decide absence where the value is born — raise, return an empty collection, or a Null Object — instead of an `X | None` every caller re-checks; never `or ""` a required value.
 - **`commandments-python-value-objects`** — give related data a type — a frozen dataclass — instead of a dict with string keys passed around, or values that always travel together.
 
