@@ -1,17 +1,41 @@
+using System.Text.Json;
 using CodeCommandments.Bridge;
 
-// roslyn-bridge <path>... — parses every C# file under the given roots (or the files named), compiles
+// roslyn-bridge <path>...  — parses every C# file under the given roots (or the files named), compiles
 // them together without building the project, and writes the trees and what the compiler knows about
-// them to stdout as one JSON document. Paths that do not exist are skipped; nothing is ever written.
-var paths = args.Where(arg => !arg.StartsWith("--")).ToList();
+// them to stdout as one JSON document.
+//
+// roslyn-bridge --serve    — the same, kept warm: one request per line on stdin, {"paths": [...]}, and
+// one JSON document per line on stdout, reusing loaded references and unchanged trees between requests.
+// "write": [...] limits the document to those files; the rest are still compiled, for their types.
+var workspace = new Workspace();
 
-if (paths.Count == 0)
+if (args.Contains("--serve"))
 {
-    Console.Error.WriteLine("usage: roslyn-bridge <path>...");
+    using var output = Console.OpenStandardOutput();
+
+    while (Console.In.ReadLine() is { } line)
+    {
+        var request = JsonDocument.Parse(line).RootElement;
+        var paths = request.GetProperty("paths").EnumerateArray().Select(path => path.GetString()!).ToList();
+        var written = request.TryGetProperty("write", out var write) ? write.EnumerateArray().Select(path => Path.GetFullPath(path.GetString()!)).ToHashSet() : [];
+        new TreeWriter(workspace.Read(paths), written).Write(output);
+        output.WriteByte((byte)'\n');
+        output.Flush();
+    }
+
+    return 0;
+}
+
+var roots = args.Where(arg => !arg.StartsWith("--")).ToList();
+
+if (roots.Count == 0)
+{
+    Console.Error.WriteLine("usage: roslyn-bridge <path>... | roslyn-bridge --serve");
     return 2;
 }
 
-var project = Project.Read(Sources.Under(paths), paths.Select(Path.GetFullPath).ToList());
+var project = workspace.Read(roots);
 
 // --diagnose: the compiler's most common errors, on stderr — why a call did not resolve.
 if (args.Contains("--diagnose"))
@@ -25,7 +49,10 @@ if (args.Contains("--diagnose"))
         Console.Error.WriteLine($"{group.Count(),6}  {group.Key}");
     }
 }
-using var output = Console.OpenStandardOutput();
-new TreeWriter(project).Write(output);
+
+using (var output = Console.OpenStandardOutput())
+{
+    new TreeWriter(project).Write(output);
+}
 
 return 0;

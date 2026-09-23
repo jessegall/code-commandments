@@ -11,7 +11,7 @@ use JesseGall\PhpTypes\Option;
  * run over C# files to read their trees. It needs the `dotnet` SDK; where there is none, there is no
  * bridge, and C# is not judged rather than failing the run.
  */
-final readonly class Bridge
+final class Bridge
 {
     /**
      * The bridge's output format this engine reads — {@see self::read} refuses any other.
@@ -20,9 +20,16 @@ final readonly class Bridge
 
     private const string SOURCE = __DIR__ . '/../../bridge/roslyn';
 
+
+    /**
+     * The bridge this instance keeps running — started on the first read, reused by every read after,
+     * so whoever holds the instance (the journal's hook service) reads warm.
+     */
+    private ?BridgeProcess $running = null;
+
     private function __construct(
-        private string $dotnet,
-        private string $assembly,
+        private readonly string $dotnet,
+        private readonly string $assembly,
     ) {}
 
     /**
@@ -50,34 +57,40 @@ final readonly class Bridge
     }
 
     /**
-     * The trees of every C# file under $paths, as the bridge wrote them.
+     * The trees of the C# files under $paths, as the bridge wrote them — every file, or only those in
+     * $written while the rest still inform the types. The project is compiled whole either way.
      *
      * @param  list<string>  $paths
+     * @param  list<string>  $written
      * @return array<string, mixed>
      */
-    public function read(array $paths): array
+    public function read(array $paths, array $written = []): array
     {
-        $command = [$this->dotnet, $this->assembly, ...$paths];
-        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
-
-        if (! is_resource($process)) {
-            throw BridgeFailed::toStart();
-        }
-
-        $output = (string) stream_get_contents($pipes[1]);
-        $errors = (string) stream_get_contents($pipes[2]);
-        $code = proc_close($process);
-        $read = json_decode($output, true);
-
-        if ($code !== 0 || ! is_array($read)) {
-            throw BridgeFailed::withOutput($code, $errors);
-        }
+        $read = $this->process()->read(array_map(self::resolved(...), $paths), array_map(self::resolved(...), $written));
 
         if (($read['version'] ?? null) !== self::VERSION) {
             throw BridgeFailed::onVersion($read['version'] ?? null);
         }
 
         return $read;
+    }
+
+    /**
+     * $path with its symbolic links resolved, as the bridge names the files it writes — so a root and a
+     * file asked for through a link (`/var` for `/private/var`) still name the same file.
+     */
+    private static function resolved(string $path): string
+    {
+        return realpath($path) ?: $path;
+    }
+
+    private function process(): BridgeProcess
+    {
+        if ($this->running === null || ! $this->running->isRunning()) {
+            $this->running = BridgeProcess::start($this->dotnet, $this->assembly);
+        }
+
+        return $this->running;
     }
 
     /**

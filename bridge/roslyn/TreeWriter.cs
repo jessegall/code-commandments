@@ -10,7 +10,7 @@ namespace CodeCommandments.Bridge;
 /// each — an expression's type, an invocation's target, whether a member overrides one. A fact the
 /// compiler could not resolve is left out, never guessed.
 /// </summary>
-public sealed class TreeWriter(Project project)
+public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = null)
 {
     private int calls;
 
@@ -31,7 +31,7 @@ public sealed class TreeWriter(Project project)
         json.WriteNumber("version", Version);
         json.WriteStartArray("files");
 
-        foreach (var tree in project.Trees)
+        foreach (var tree in project.Trees.Where(tree => written is null || written.Count == 0 || written.Contains(tree.FilePath)))
         {
             var model = project.Compilation.GetSemanticModel(tree);
 

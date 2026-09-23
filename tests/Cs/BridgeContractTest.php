@@ -39,6 +39,11 @@ final class BridgeContractTest extends TestCase
      */
     private static array $read = [];
 
+    /**
+     * @var array<string, mixed>
+     */
+    private static array $board = [];
+
     public static function setUpBeforeClass(): void
     {
         $bridge = Bridge::located();
@@ -50,7 +55,9 @@ final class BridgeContractTest extends TestCase
         $dir = sys_get_temp_dir() . '/cc-bridge-' . uniqid();
         mkdir($dir);
         file_put_contents("{$dir}/Shapes.cs", self::SOURCE);
-        self::$read = $bridge->unwrap()->read([$dir]);
+        file_put_contents("{$dir}/Board.cs", "namespace Shop;\n\npublic sealed class Board\n{\n    public double Covered(Square tile) => tile.Area();\n}\n");
+        self::$read = $bridge->unwrap()->read([$dir], [realpath("{$dir}/Shapes.cs")]);
+        self::$board = $bridge->unwrap()->read([$dir], [realpath("{$dir}/Board.cs")]);
         exec('rm -rf ' . escapeshellarg($dir));
     }
 
@@ -69,6 +76,15 @@ final class BridgeContractTest extends TestCase
         $this->assertSame(0, self::$read['files'][0]['errors']);
         $this->assertSame('CompilationUnit', self::$read['files'][0]['root']['kind']);
         $this->assertSame(['calls' => 1, 'resolved' => 1], self::$read['resolution'], 'the run says how much of it the compiler resolved');
+    }
+
+    public function test_a_request_for_one_file_still_types_it_against_the_rest(): void
+    {
+        $this->assertCount(1, self::$board['files']);
+        $this->assertStringEndsWith('/Board.cs', self::$board['files'][0]['path']);
+
+        $call = array_values(array_filter(self::walk(self::$board['files'][0]['root']), static fn (array $node): bool => $node['kind'] === 'InvocationExpression'))[0];
+        $this->assertSame('global::Shop.Square', $call['target']['type'], 'the call into another file resolves, though only this one is written');
     }
 
     public function test_a_declaration_carries_its_name_modifiers_and_whether_it_is_inherited(): void
