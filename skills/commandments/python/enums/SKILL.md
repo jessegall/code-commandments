@@ -54,6 +54,8 @@ passes the enum, never the string.
       _A property on the enum — `def is_open(self) -> bool: return self in (Status.PENDING, Status.LATE)` — and `s.is_open` at the call site._
 - [ ] Put a mapping over an enum's cases on the enum, matching its members; never match its raw `.value` at a call site.
       _A method on the enum — `def badge(self) -> str: match self: case Status.PAID: …` — and `status.badge()` at the call site._
+- [ ] Test membership in an enum's group through the enum; never re-list its values as literals in an `in` test.
+      _A property on the enum naming the group — `Status(x).is_open` — or `x in (Status.PENDING, Status.LATE)` when the value is already the enum._
 
 ## Worked example
 
@@ -75,17 +77,17 @@ class CarrierCode(StrEnum):
     DHL = "DHL"
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/enums` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-class-enum`, `python-enum-case-or-chain`, `python-enum-value-match`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-class-enum`, `python-enum-case-or-chain`, `python-enum-value-match`, `python-in-literals-mirrors-enum`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

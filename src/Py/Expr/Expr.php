@@ -204,6 +204,27 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * The literals an `in` or `not in` test checks against — `('paid', 'late')` in
+     * `x in ('paid', 'late')` — as literal keys: empty unless the right side is a tuple, list or set of
+     * two or more strings and nothing else. Numbers are left out: a handful of small integers is a
+     * count or an index as often as it is an enum's values, and coincides with one by chance.
+     *
+     * @return list<string>
+     */
+    public function membershipLiteralKeys(): array
+    {
+        if ($this->kind !== ExprKind::Compare || ! in_array($this->get('operators'), [['in'], ['not in']], true)) {
+            return [];
+        }
+
+        $set = $this->get('operands')[1];
+        $elements = $set->kind->isDisplay() && $set->kind !== ExprKind::Dict ? $set->subExpressions() : [];
+        $strings = array_all($elements, static fn (self $element): bool => $element->literalType() === LiteralType::String);
+
+        return count($elements) >= 2 && $strings ? array_map(static fn (self $element): string => $element->literalKey(), $elements) : [];
+    }
+
+    /**
      * The alternatives of a `case` pattern — `'a' | 'b'` as its two sides, any other pattern as itself.
      *
      * @return list<self>

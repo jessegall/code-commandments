@@ -2115,6 +2115,19 @@
             ],
             "detail": true
         },
+        "sin_python-in-literals-mirrors-enum": {
+            "title": "InLiteralsMirrorsEnum",
+            "help": "An `in` test against literals that are all one declared enum's values — the twin of the backend's InArrayMirrorsEnumDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/enums",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-message-string-raise": {
             "title": "MessageStringRaise",
             "help": "A builtin that names no failure raised with its description written at the raise — the Python twin of the backend's GenericExceptionDetector and MessageAtThrowDetector together.",

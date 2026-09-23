@@ -55,3 +55,21 @@ def refund_days(order) -> int:
 def refund_window(order) -> int:
     return order.channel.refund_days
 ```
+
+### python-in-literals-mirrors-enum
+
+`x in ("pending", "late")` whose literals are an existing enum's values — a group of its members spelled as raw strings at the call site
+
+```py
+----------[ Bad ]----------
+
+def route(self, ticket) -> None:
+    if ticket.priority not in ["low", "normal"]:
+        self.oncall.page(ticket.number)
+
+----------[ Good ]----------
+
+def route_by_priority(self, ticket) -> None:
+    if not Priority(ticket.priority).can_wait:
+        self.oncall.page(ticket.number)
+```
