@@ -51,6 +51,34 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this a value that says "nothing" — `None`, `False`, or an empty string, list, tuple, dict or
+     * set? Named as the backend names it: what a swallowed failure hands back instead of itself.
+     */
+    public function isAbsenceValue(): bool
+    {
+        if ($this->kind === ExprKind::Literal) {
+            return $this->get('type')->isAbsence((string) $this->get('value'));
+        }
+
+        return $this->kind->isDisplay() && count($this->flatten()) === 1;
+    }
+
+    /**
+     * The dotted name this expression reads — `Exception`, `errors.Refused` — or empty when it is not a
+     * plain name or attribute chain.
+     */
+    public function dottedName(): string
+    {
+        if ($this->kind === ExprKind::Name) {
+            return (string) $this->get('name');
+        }
+
+        $object = $this->kind === ExprKind::Attribute ? $this->get('object')->dottedName() : '';
+
+        return $object === '' ? '' : "{$object}.{$this->get('name')}";
+    }
+
+    /**
      * Any literal — an f-string is its own kind, as it computes its fields.
      */
     public function isConstant(): bool

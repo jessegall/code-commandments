@@ -42,4 +42,17 @@ enum LiteralType: string
             self::Number, self::Bool, self::None, self::Ellipsis, self::Format => false,
         };
     }
+
+    /**
+     * Does a literal of this type holding $value say "nothing" — `None`, `False`, or empty text?
+     */
+    public function isAbsence(string $value): bool
+    {
+        return match ($this) {
+            self::None => true,
+            self::Bool => $value === 'False',
+            self::String, self::Bytes => $value === '',
+            self::Number, self::Ellipsis, self::Format => false,
+        };
+    }
 }

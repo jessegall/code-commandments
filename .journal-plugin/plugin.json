@@ -1834,6 +1834,19 @@
             ],
             "detail": true
         },
+        "sin_python-swallowed-exception": {
+            "title": "SwallowedException",
+            "help": "A handler that catches everything and makes it vanish — the Python twin of the backend's SwallowCatchDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/exceptions",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_deep-python-nesting": {
             "title": "DeepNesting",
             "help": "An `if`, loop or `match` that opens a fourth level of choices inside one function — the arrow the backend's DeepNestingDetector finds, counted over every kind of choice Python writes.",

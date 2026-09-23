@@ -70,4 +70,18 @@ enum ExprKind: string
     case Yield = 'yield';
 
     case Unknown = 'unknown';
+
+    /**
+     * Is an expression of this kind a display — a list, tuple, set or dict written out element by
+     * element?
+     */
+    public function isDisplay(): bool
+    {
+        return match ($this) {
+            self::Tuple, self::List, self::Set, self::Dict => true,
+            self::Name, self::Literal, self::FString, self::Attribute, self::Subscript, self::Slice, self::Call,
+            self::Keyword, self::Starred, self::Lambda, self::Conditional, self::Binary, self::Unary, self::Compare,
+            self::Walrus, self::Comprehension, self::ComprehensionFor, self::Yield, self::Unknown => false,
+        };
+    }
 }

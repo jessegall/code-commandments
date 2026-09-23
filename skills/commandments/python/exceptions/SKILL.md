@@ -55,6 +55,52 @@ boundary** allowed to absorb them — a request handler, a worker loop, a decode
 input — and even there absorbing is **observable**: it logs, counts or reports, never silently
 continues.
 
+## Rules
+
+- [ ] Never swallow every failure: catch the one you expect and act on it, or let it propagate to a boundary that records it.
+      _Name the exception you expect (`except ValueError:`) and do what its meaning calls for; anything else propagates. At a real boundary, log or report before moving on._
+
+## Worked example
+
+### python-swallowed-exception
+
+A bare `except:` or `except Exception` whose body only passes, continues or returns nothing — every failure, expected or not, made to vanish
+
+```py
+----------[ Bad ]----------
+
+def load_catalog(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return {}
+
+----------[ Good ]----------
+
+# in catalog_file.py
+class CatalogUnreadable(Exception):
+    @classmethod
+    def at(cls, path: Path) -> "CatalogUnreadable":
+        return cls(f"the catalog at {path} is not valid JSON")
+
+# in catalog_file.py
+def read_catalog(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError as error:
+        raise CatalogUnreadable.at(path) from error
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/exceptions` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-swallowed-exception`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/exceptions`](../../backend/exceptions/SKILL.md) — the same discipline on the PHP backend, with `::for()` factories.
