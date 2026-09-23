@@ -1683,6 +1683,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-generic-throw": {
+            "title": "GenericThrow",
+            "help": "An exception that names no failure thrown with its description written at the throw — the C# twin of the backend's generic-exception and message-at-throw rules and Python's message-string raise.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/exceptions",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-swallowed-exception": {
             "title": "SwallowedException",
             "help": "A `catch` that catches everything and makes it vanish — the C# twin of the backend's and Python's swallowed-exception rules.",

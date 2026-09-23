@@ -32,6 +32,7 @@ final class ModuleFile implements ParsedModule
         public readonly string $source,
         public readonly Node $root,
         public readonly int $errors,
+        private readonly bool $test,
     ) {}
 
     /**
@@ -39,7 +40,7 @@ final class ModuleFile implements ParsedModule
      */
     public static function fromBridge(WrittenFile $written, string $file): self
     {
-        return new self($file, (string) file_get_contents($file), $written->root, $written->errors);
+        return new self($file, (string) file_get_contents($file), $written->root, $written->errors, $written->test);
     }
 
     /**
@@ -53,21 +54,14 @@ final class ModuleFile implements ParsedModule
     }
 
     /**
-     * Every expression in the file, each sub-expression included.
+     * Every expression in the file, each once — the file's outermost expressions, and everything each one
+     * holds, however many nodes sit between.
      *
      * @return list<Node>
      */
     public function expressions(): array
     {
-        $expressions = [];
-
-        foreach ([$this->root, ...$this->nodes()] as $node) {
-            foreach ($node->expressions() as $expression) {
-                $expressions = [...$expressions, ...$expression->flatten()];
-            }
-        }
-
-        return $expressions;
+        return array_merge([], ...array_map(static fn (Node $outermost): array => $outermost->flatten(), $this->root->outermostExpressions()));
     }
 
     /**
@@ -98,6 +92,14 @@ final class ModuleFile implements ParsedModule
         }
 
         return $ancestors;
+    }
+
+    /**
+     * Does this file belong to a test project — code that exercises the product rather than being it?
+     */
+    public function isTest(): bool
+    {
+        return $this->test;
     }
 
     public function language(): Language

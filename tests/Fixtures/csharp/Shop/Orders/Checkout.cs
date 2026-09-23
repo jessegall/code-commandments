@@ -9,7 +9,7 @@ public sealed class Checkout
         // @sin RedundantElse
         if (order.Lines.Count == 0)
         {
-            throw new InvalidOperationException($"Order {order.Reference} has nothing to charge.");
+            throw EmptyOrder.For(order);
         }
         else
         {
@@ -24,7 +24,7 @@ public sealed class Checkout
     {
         if (order.Lines.Count == 0)
         {
-            throw new InvalidOperationException($"Order {order.Reference} has nothing to charge.");
+            throw EmptyOrder.For(order);
         }
 
         var total = order.Total(currency);
@@ -48,4 +48,11 @@ public sealed class Checkout
 
         return text;
     }
+}
+
+public sealed class EmptyOrder : InvalidOperationException
+{
+    private EmptyOrder(string message) : base(message) {}
+
+    public static EmptyOrder For(Order order) => new($"Order {order.Reference} has nothing to charge.");
 }

@@ -30,6 +30,11 @@ final class Node implements SyntaxNode, SyntaxExpression
     ];
 
     /**
+     * The exceptions that name no failure a caller could catch by meaning.
+     */
+    private const array GENERIC_EXCEPTIONS = ['global::System.Exception', 'global::System.SystemException', 'global::System.ApplicationException', 'global::System.InvalidOperationException'];
+
+    /**
      * What an expression is made of, by name — what the shared readings walk. A call names what it calls
      * (`callee`) and a member access the member it reads (`member`, by name), so both survive where a
      * reading blanks the names a body chose for itself.
@@ -152,6 +157,24 @@ final class Node implements SyntaxNode, SyntaxExpression
             $this->isCall() => $this->target?->name === 'Empty' && in_array($this->target->type, ['global::System.Array', 'global::System.Linq.Enumerable'], true),
             default => false,
         };
+    }
+
+    /**
+     * Does this `throw` build an exception that names no failure — `Exception`, `SystemException`,
+     * `ApplicationException`, `InvalidOperationException` — and describe it in a message written at the
+     * throw? The type is the constructor the compiler resolved, never the spelling.
+     */
+    public function isGenericThrowWithMessage(): bool
+    {
+        $created = $this->is('ThrowStatement', 'ThrowExpression') ? ($this->expressions()[0] ?? null) : null;
+
+        if ($created === null || ! $created->is('ObjectCreationExpression', 'ImplicitObjectCreationExpression')) {
+            return false;
+        }
+
+        $arguments = array_values(array_filter($created->children, static fn (self $child): bool => $child->is('ArgumentList')))[0] ?? null;
+
+        return in_array($created->target?->type, self::GENERIC_EXCEPTIONS, true) && ($arguments?->children ?? []) !== [];
     }
 
     /**
@@ -370,7 +393,7 @@ final class Node implements SyntaxNode, SyntaxExpression
         $all = [$this];
 
         foreach ($this->children as $child) {
-            $all = [...$all, ...($child->isExpression() ? $child->flatten() : array_merge([], ...array_map(static fn (self $inner): array => $inner->flatten(), $child->expressionsWithin())))];
+            $all = [...$all, ...($child->isExpression() ? $child->flatten() : array_merge([], ...array_map(static fn (self $inner): array => $inner->flatten(), $child->outermostExpressions())))];
         }
 
         return $all;
@@ -397,12 +420,12 @@ final class Node implements SyntaxNode, SyntaxExpression
      *
      * @return list<self>
      */
-    private function expressionsWithin(): array
+    public function outermostExpressions(): array
     {
         $found = [];
 
         foreach ($this->children as $child) {
-            $found = [...$found, ...($child->isExpression() ? [$child] : $child->expressionsWithin())];
+            $found = [...$found, ...($child->isExpression() ? [$child] : $child->outermostExpressions())];
         }
 
         return $found;

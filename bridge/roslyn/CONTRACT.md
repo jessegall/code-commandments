@@ -10,7 +10,8 @@ at a time however large the project. Version 2:
 ```
 
 The first line names the version; then one line per file; the `resolution` line closes the answer.
-`errors` counts the file's syntax errors — a file the parser could not read whole. `resolution` says how
+`errors` counts the file's syntax errors — a file the parser could not read whole. `test: true` marks a
+file of a test project (`IsTestProject`, as the test SDK sets it). `resolution` says how
 many calls and object creations the run saw and how many the compiler could resolve with the references
 it found (frameworks from the installed reference packs, packages from `obj/project.assets.json` or the
 NuGet cache — never a build). `--serve` answers each request on stdin with the same lines.

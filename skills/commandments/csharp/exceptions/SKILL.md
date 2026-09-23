@@ -67,53 +67,63 @@ reports, never silently continues.
 
 ## Rules
 
+- [ ] Throw a named exception built by a static factory, never a bare `Exception` or `InvalidOperationException` with a message written at the throw.
+      _Give the failure a class of its own with a static factory that takes the values and writes the message once — `throw UnknownCarrier.Named(name);` — so a caller can catch it by name._
 - [ ] Never swallow every failure: catch the one you expect and act on it, or let it propagate to a boundary that records it.
       _Name the exception you expect (`catch (FileNotFoundException)`), or filter it with `when`, and do what its meaning calls for; anything else propagates. At a real boundary, log or report before moving on._
 
 ## Worked example
 
-### csharp-swallowed-exception
+### csharp-generic-throw
 
-A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish
+`throw new Exception/InvalidOperationException("…")` — a failure that names nothing, described in prose at the throw site
 
 ```cs
 ----------[ Bad ]----------
 
-public Dictionary<string, int>? Load()
+public string Account(string carrier)
 {
-    try
+    if (!accounts.TryGetValue(carrier, out var account))
     {
-        return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
+        throw new Exception($"No carrier is registered as '{carrier}'.");
     }
-    catch (Exception)
-    {
-        return null;
-    }
+
+    return account;
 }
 
 ----------[ Good ]----------
 
-public Dictionary<string, int> LoadOrEmpty()
+// in CarrierDirectory.cs
+public string AccountOf(string carrier)
 {
-    try
+    if (!accounts.TryGetValue(carrier, out var account))
     {
-        return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json"))) ?? [];
+        throw UnknownCarrier.Named(carrier);
     }
-    catch (FileNotFoundException)
-    {
-        return [];
-    }
+
+    return account;
+}
+
+// in CarrierDirectory.cs
+public sealed class UnknownCarrier : InvalidOperationException
+{
+    private UnknownCarrier(string message) : base(message) {}
+
+    public static UnknownCarrier Named(string carrier) => new($"No carrier is registered as '{carrier}'.");
 }
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/exceptions` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-swallowed-exception`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-generic-throw`, `csharp-swallowed-exception`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

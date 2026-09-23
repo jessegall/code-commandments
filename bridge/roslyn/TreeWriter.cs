@@ -44,6 +44,11 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
             {
                 json.WriteString("path", tree.FilePath);
                 json.WriteNumber("errors", tree.GetDiagnostics().Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+
+                if (project.IsTest(tree))
+                {
+                    json.WriteBoolean("test", true);
+                }
                 json.WritePropertyName("root");
                 WriteNode(json, tree.GetRoot(), model);
             });

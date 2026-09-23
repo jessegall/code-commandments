@@ -100,7 +100,7 @@ public Money Charge(Order order, string currency)
 {
     if (order.Lines.Count == 0)
     {
-        throw new InvalidOperationException($"Order {order.Reference} has nothing to charge.");
+        throw EmptyOrder.For(order);
     }
     else
     {
@@ -116,7 +116,7 @@ public Money ChargeFlat(Order order, string currency)
 {
     if (order.Lines.Count == 0)
     {
-        throw new InvalidOperationException($"Order {order.Reference} has nothing to charge.");
+        throw EmptyOrder.For(order);
     }
 
     var total = order.Total(currency);

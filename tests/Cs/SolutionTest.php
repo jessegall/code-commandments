@@ -55,6 +55,24 @@ final class SolutionTest extends TestCase
         $this->assertSame(['global::Domain.Order'], $this->callTargets());
     }
 
+    public function test_a_file_of_a_test_project_says_so(): void
+    {
+        $this->write('Shop/Shop.csproj', "<Project Sdk=\"Microsoft.NET.Sdk\" />\n");
+        $this->write('Shop/Order.cs', "public class Order { }\n");
+        $this->write('Shop.Tests/Shop.Tests.csproj', "<Project Sdk=\"Microsoft.NET.Sdk\">\n  <ItemGroup>\n    <PackageReference Include=\"Microsoft.NET.Test.Sdk\" Version=\"17.11.0\" />\n  </ItemGroup>\n</Project>\n");
+        $this->write('Shop.Tests/OrderTests.cs', "public class OrderTests { }\n");
+
+        $tested = [];
+
+        foreach (Codebase::scan($this->root)->modules() as $module) {
+            $tested[basename($module->file)] = $module->isTest();
+        }
+
+        ksort($tested);
+
+        $this->assertSame(['Order.cs' => false, 'OrderTests.cs' => true], $tested);
+    }
+
     /**
      * The type each call in the solution resolves into, in order.
      *

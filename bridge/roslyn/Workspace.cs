@@ -33,6 +33,7 @@ public sealed class Workspace
         }
 
         var byTree = new Dictionary<SyntaxTree, CSharpCompilation>();
+        var tests = new HashSet<SyntaxTree>();
 
         foreach (var (owner, ownedTrees) in owned)
         {
@@ -43,10 +44,15 @@ public sealed class Workspace
             foreach (var tree in ownedTrees)
             {
                 byTree[tree] = compilation;
+
+                if (owner != "" && solution.Projects[owner].IsTestProject())
+                {
+                    tests.Add(tree);
+                }
             }
         }
 
-        return new Project(asked.Select(Tree).ToList(), byTree);
+        return new Project(asked.Select(Tree).ToList(), byTree, tests);
     }
 
     /// <summary>

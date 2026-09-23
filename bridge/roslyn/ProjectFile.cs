@@ -50,6 +50,14 @@ public sealed class ProjectFile
             .Select(element => element.Value.Trim())
             .FirstOrDefault() is "enable" or "true";
 
+    /// <summary>
+    /// Is this a test project — <c>IsTestProject</c> set, as the test SDK sets it, or the test SDK
+    /// referenced?
+    /// </summary>
+    public bool IsTestProject() =>
+        documents.SelectMany(document => document.Descendants()).Any(element => element.Name.LocalName == "IsTestProject" && element.Value.Trim() == "true")
+        || Included("PackageReference").Any(reference => reference.Id.Equals("Microsoft.NET.Test.Sdk", StringComparison.OrdinalIgnoreCase));
+
     /// <summary>The namespaces the project adds as global usings with <c>&lt;Using Include&gt;</c>.</summary>
     public IEnumerable<string> Usings() => Included("Using").Select(reference => reference.Id);
 

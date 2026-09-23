@@ -80,6 +80,18 @@ final class CodebaseTest extends TestCase
         $this->assertSame('global::System.Linq.Enumerable', array_values(array_filter($sum, static fn (NodeMatch $call): bool => $call->node->target->type !== 'global::Shop.Cart'))[0]->node->target->type);
     }
 
+    /**
+     * An expression nested inside an argument — here a call in a lambda handed to another call — is one
+     * expression, found once.
+     */
+    public function test_an_expression_inside_an_argument_is_found_once(): void
+    {
+        $codebase = Codebase::fromString("using System;\n\npublic class Runner\n{\n    public void Run(Func<int, int> step) => Console.WriteLine(step(1));\n\n    public void Go() => Run(x => Math.Abs(x));\n}\n", 'Runner.cs');
+        $abs = array_filter($codebase->whereCall()->get(), static fn (NodeMatch $call): bool => $call->node->target?->name === 'Abs');
+
+        $this->assertCount(1, $abs);
+    }
+
     public function test_a_span_points_at_the_bytes_of_its_node(): void
     {
         $if = self::$codebase->whereStatement()->kindIs('IfStatement')->get()[0];
