@@ -36,4 +36,9 @@ final class Raise extends Node
 
         return $raised->is(ExprKind::Name) && $raised->get('name') === 'NotImplementedError';
     }
+
+    public function isBailOut(): bool
+    {
+        return true;
+    }
 }

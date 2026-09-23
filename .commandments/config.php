@@ -215,6 +215,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\DeepNesting::class,
         // Sins\Python\DuplicateFunction::class,
         // Sins\Python\NearDuplicateFunction::class,
+        // Sins\Python\RedundantElse::class,
     );
 };
 

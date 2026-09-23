@@ -31,4 +31,9 @@ final class Return_ extends Node
     {
         return Option::fromNullable($this->value);
     }
+
+    public function isBailOut(): bool
+    {
+        return true;
+    }
 }

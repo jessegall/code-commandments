@@ -91,7 +91,8 @@ iteration, or extract the inner block into a function named for what it decides.
 
 ### What is NOT this sin
 
-- An `if`/`else` where both branches are real work of equal weight — a decision, not a guard.
+- An `if`/`else` where neither branch leaves and both are real work of equal weight — a decision,
+  not a guard.
 - A `try`/`except` or a `with` that the work genuinely runs inside; that nesting is the resource
   or the failure boundary, not a buried condition.
 - A comprehension's `if` clause — the filter belongs there.

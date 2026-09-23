@@ -69,6 +69,15 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * Does this statement leave its block for good — a `return`, a `raise`, a `continue` or a `break`?
+     * Named as the backend names it: whatever follows it in the block is not an alternative.
+     */
+    public function isBailOut(): bool
+    {
+        return false;
+    }
+
+    /**
      * Does this statement CHOOSE — an `if`, a loop, a `match` — so what sits inside it runs
      * conditionally? Named as the backend names it.
      */

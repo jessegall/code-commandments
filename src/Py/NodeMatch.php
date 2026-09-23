@@ -94,6 +94,22 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this an `if` whose branch already left — it ends in a `return`, `raise`, `continue` or `break` —
+     * yet carries an `else:`? The `else` says nothing the exit did not, and indents the rest for it. An
+     * `if` with `elif` rungs is a chain, not a guard, and is left to the ladder rule.
+     */
+    public function hasRedundantElse(): bool
+    {
+        if (! $this->node instanceof IfStmt || ! $this->node->else instanceof Block || $this->isElif()) {
+            return false;
+        }
+
+        $body = $this->node->body->body;
+
+        return $body !== [] && end($body)->isBailOut();
+    }
+
+    /**
      * Is this an `elif` — an `if` standing as another `if`'s else, one rung of its chain?
      */
     public function isElif(): bool

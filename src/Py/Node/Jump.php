@@ -15,4 +15,9 @@ final class Jump extends Node
     {
         return $this->keyword;
     }
+
+    public function isBailOut(): bool
+    {
+        return true;
+    }
 }
