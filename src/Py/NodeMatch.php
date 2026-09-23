@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Py\Node\ExceptHandler;
 use JesseGall\CodeCommandments\Py\Node\ExprStmt;
 use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
+use JesseGall\CodeCommandments\Py\Node\MatchStmt;
 use JesseGall\CodeCommandments\Py\Node\IfStmt;
 use JesseGall\CodeCommandments\Py\Node\Node;
 use JesseGall\CodeCommandments\Py\Node\Param;
@@ -170,6 +171,23 @@ class NodeMatch implements Located
         [$block, $loop] = [...$this->module->ancestorsOf($this->node), null, null];
 
         return ($loop instanceof ForLoop || $loop instanceof WhileLoop) && $loop->body === $block && count($block->body) === 1;
+    }
+
+    /**
+     * Is this a `match` on `x.value` whose cases are literals — every one a value of one enum the
+     * codebase declares — outside that enum? The raw values re-state the enum at a call site; the
+     * mapping belongs on the enum, matching its members.
+     */
+    public function isMatchOnEnumValue(Enums $enums): bool
+    {
+        if (! $this->node instanceof MatchStmt) {
+            return false;
+        }
+
+        $subject = $this->node->subject;
+
+        return $subject->is(ExprKind::Attribute) && $subject->get('name') === 'value' && $subject->rootName() !== 'self'
+            && $enums->holdAll($this->node->literalCaseKeys());
     }
 
     /**

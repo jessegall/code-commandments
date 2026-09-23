@@ -24,6 +24,11 @@ final class Enums
      */
     private array $names = [];
 
+    /**
+     * @var array<string, list<string>>  each enum's member values, as literal keys
+     */
+    private array $values = [];
+
     public function __construct(Codebase $codebase)
     {
         $classes = array_merge([], ...array_map(
@@ -40,11 +45,27 @@ final class Enums
                 }
             }
         } while (count($this->names) !== $known);
+
+        foreach ($classes as $class) {
+            if ($this->isEnum($class->name)) {
+                $this->values[$class->name] = $class->memberValueKeys();
+            }
+        }
     }
 
     public function isEnum(string $name): bool
     {
         return isset($this->names[$name]);
+    }
+
+    /**
+     * Do all of $keys — literal keys — name members of one enum?
+     *
+     * @param  list<string>  $keys
+     */
+    public function holdAll(array $keys): bool
+    {
+        return $keys !== [] && array_any($this->values, static fn (array $values): bool => array_diff($keys, $values) === []);
     }
 
     private function isBaseAnEnum(Expr $base): bool

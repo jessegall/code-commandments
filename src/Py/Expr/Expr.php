@@ -194,6 +194,28 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * This literal as a comparable key — its type and its value — or empty when it is not a literal.
+     */
+    public function literalKey(): string
+    {
+        $type = $this->literalType();
+
+        return $type === null ? '' : "{$type->value}:{$this->get('value')}";
+    }
+
+    /**
+     * The alternatives of a `case` pattern — `'a' | 'b'` as its two sides, any other pattern as itself.
+     *
+     * @return list<self>
+     */
+    public function alternatives(): array
+    {
+        return $this->kind === ExprKind::Binary && $this->get('op') === '|'
+            ? [...$this->get('left')->alternatives(), ...$this->get('right')->alternatives()]
+            : [$this];
+    }
+
+    /**
      * Is this the blank string written out — `''` or `""`?
      */
     public function isBlankString(): bool

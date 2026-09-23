@@ -33,4 +33,19 @@ final class MatchStmt extends Node
     {
         return true;
     }
+
+    /**
+     * The literal every `case` tests for, as comparable keys — empty unless every case other than the
+     * `_` wildcard is literals alone.
+     *
+     * @return list<string>
+     */
+    public function literalCaseKeys(): array
+    {
+        $alternatives = array_merge([], ...array_map(static fn (MatchCase $case): array => $case->pattern->alternatives(), $this->cases));
+        $tested = array_filter($alternatives, static fn (Expr $pattern): bool => $pattern->dottedName() !== '_');
+        $keys = array_map(static fn (Expr $pattern): string => $pattern->literalKey(), array_values($tested));
+
+        return in_array('', $keys, true) ? [] : $keys;
+    }
 }

@@ -35,3 +35,23 @@ def needs_reminder(invoice) -> bool:
 def owes_money(invoice) -> bool:
     return invoice.status.is_unpaid
 ```
+
+### python-enum-value-match
+
+`match status.value: case "paid": …` at a call site — the enum's raw values matched again where the enum could answer
+
+```py
+----------[ Bad ]----------
+
+def refund_days(order) -> int:
+    match order.channel.value:
+        case "web" | "phone":
+            return 30
+        case "shop":
+            return 14
+
+----------[ Good ]----------
+
+def refund_window(order) -> int:
+    return order.channel.refund_days
+```

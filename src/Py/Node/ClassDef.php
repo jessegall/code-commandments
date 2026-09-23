@@ -41,4 +41,16 @@ final class ClassDef extends Node
     {
         return [$this->name];
     }
+
+    /**
+     * The literal values the class body gives its names — `PAID = "paid"` — as literal keys.
+     *
+     * @return list<string>
+     */
+    public function memberValueKeys(): array
+    {
+        $members = array_filter($this->body->body, static fn (Node $statement): bool => $statement instanceof Assign && count($statement->targets) === 1);
+
+        return array_values(array_filter(array_map(static fn (Assign $member): string => $member->value->literalKey(), $members)));
+    }
 }
