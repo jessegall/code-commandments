@@ -41,7 +41,7 @@ final class HookDispatch implements Command
     {
         $payload = $this->io->payload();
         $event = new HookEvent($payload, $this->io->projectRoot());
-        $recorder = new RecordingHookIO($payload, $this->io->git());
+        $recorder = new RecordingHookIO($payload, $this->io->git(), $this->io->parses());
 
         foreach (HookRegistry::forProject($event->root) as $class) {
             if (is_subclass_of($class, Hook::class)) {

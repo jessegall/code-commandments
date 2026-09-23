@@ -73,6 +73,24 @@ final class SkillReminderTest extends TestCase
         $this->assertSame([], $this->editing('Edit', 'src/Clean.php'));
     }
 
+    public function test_a_file_in_a_language_the_project_turned_off_is_never_read(): void
+    {
+        file_put_contents($this->root . '/.commandments/config.php', "<?php\n\nreturn function (\$config): void {\n    \$config->paths('src');\n    \$config->disable(\\JesseGall\\CodeCommandments\\Language::Php);\n};\n");
+        $this->write('src/Importer.php', <<<'PHP'
+            <?php
+
+            final class Importer
+            {
+                public function run(): void
+                {
+                    // formerly lived inline in the controller; was extracted here
+                }
+            }
+            PHP);
+
+        $this->assertSame([], $this->editing('Edit', 'src/Importer.php'));
+    }
+
     public function test_a_file_judge_does_not_scan_is_left_alone(): void
     {
         $this->write('tests/ImporterTest.php', <<<'PHP'

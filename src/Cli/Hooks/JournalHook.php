@@ -65,7 +65,7 @@ final class JournalHook implements Command
 
         $payload = $moment->hookPayload();
         $event = new HookEvent($payload, $this->io->projectRoot());
-        $recorder = new RecordingHookIO($payload, $this->io->git());
+        $recorder = new RecordingHookIO($payload, $this->io->git(), $this->io->parses());
 
         $quiet = $this->quiet();
 

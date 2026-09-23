@@ -82,10 +82,12 @@ final class SkillReminder extends Hook implements Discipline
         $rules = $configured->all();
 
         $single = Catalog::singleFile(CrossFileSet::forProject($event->workspace(), $rules), $rules);
+        $languages = Languages::from($config);
         $sins = [];
 
-        foreach ($files as $file) {
-            $sins = array_merge_recursive($sins, $this->sinsIn($file, Languages::from($config), $single));
+        // A language the project turned off is never parsed: its engine is not started, warmed or asked.
+        foreach (array_filter($files, static fn (string $file): bool => $languages->writes(Language::ofFile($file))) as $file) {
+            $sins = array_merge_recursive($sins, $this->sinsIn($file, $languages, $single));
         }
 
         foreach (array_merge(...array_values($sins)) as $found) {
@@ -170,7 +172,7 @@ final class SkillReminder extends Hook implements Discipline
     private function sinsIn(string $file, Languages $languages, array $rules): array
     {
         $engine = Language::ofFile($file)->engine();
-        $codebase = $engine->scan($file, $languages);
+        $codebase = $this->io->parses()->of($file, $languages);
         $found = [];
 
         foreach ($rules as $detector) {

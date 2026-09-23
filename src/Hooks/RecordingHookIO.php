@@ -26,9 +26,9 @@ final class RecordingHookIO extends HookIO
     /**
      * @param  array<string, mixed>  $payload  the payload read once by the dispatcher
      */
-    public function __construct(private readonly array $payload, GitFiles $git)
+    public function __construct(private readonly array $payload, GitFiles $git, Parses $parses = new Parses())
     {
-        parent::__construct($git);
+        parent::__construct($git, $parses);
     }
 
     public function payload(): array

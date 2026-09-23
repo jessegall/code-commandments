@@ -29,7 +29,10 @@ class HookIO
         'PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'PostToolBatch', 'Stop', 'SubagentStop',
     ];
 
-    public function __construct(private readonly GitFiles $git = new GitFiles) {}
+    public function __construct(
+        private readonly GitFiles $git = new GitFiles,
+        private readonly Parses $parses = new Parses(),
+    ) {}
 
     /**
      * The hook payload the harness pipes on STDIN, or an empty array for a manual CLI run (a TTY,
@@ -71,6 +74,14 @@ class HookIO
     public function git(): GitFiles
     {
         return $this->git;
+    }
+
+    /**
+     * The parses this process keeps — warm for as long as the process lives.
+     */
+    public function parses(): Parses
+    {
+        return $this->parses;
     }
 
     /**

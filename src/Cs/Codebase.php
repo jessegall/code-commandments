@@ -34,12 +34,12 @@ final class Codebase implements ModuleCodebase
     private function __construct(private readonly array $modules) {}
 
     /**
-     * Every C# file under $path, read by a bridge located for the scan — none when `dotnet` is missing,
-     * and no bridge sought at all when there is no C# to read.
+     * Every C# file under $path, read by the bridge $held keeps (one sought for this scan by default) —
+     * none when `dotnet` is missing, and no bridge sought at all when there is no C# to read.
      *
      * @param  string|list<string>  $path
      */
-    public static function scan(string|array $path, ExcludedPaths $excluded = new ExcludedPaths()): self
+    public static function scan(string|array $path, ExcludedPaths $excluded = new ExcludedPaths(), HeldBridge $held = new HeldBridge()): self
     {
         $files = self::filesUnder((array) $path, $excluded);
 
@@ -47,7 +47,7 @@ final class Codebase implements ModuleCodebase
             return new self([]);
         }
 
-        return Bridge::located()->mapOr(new self([]), static fn (Bridge $bridge): self => self::read($bridge, (array) $path, $files));
+        return $held->bridge()->mapOr(new self([]), static fn (Bridge $bridge): self => self::read($bridge, (array) $path, $files));
     }
 
     /**

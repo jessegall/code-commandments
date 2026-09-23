@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments;
 
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use JesseGall\CodeCommandments\CSharp\Detector as CSharpDetector;
+use JesseGall\CodeCommandments\Cs\HeldBridge;
 use JesseGall\CodeCommandments\Python\Detector as PythonDetector;
 use JesseGall\CodeCommandments\Testing\BackendFixture;
 use JesseGall\CodeCommandments\Testing\EngineFixture;
@@ -141,13 +142,13 @@ enum Engine: string
      *
      * @param  string|list<string>  $path
      */
-    public function scan(string|array $path, Languages $languages = new Languages(), ExcludedPaths $excluded = new ExcludedPaths()): Codebase
+    public function scan(string|array $path, Languages $languages = new Languages(), ExcludedPaths $excluded = new ExcludedPaths(), HeldBridge $bridge = new HeldBridge()): Codebase
     {
         return match ($this) {
             self::Backend => \JesseGall\CodeCommandments\Ast\Codebase::scan($path),
             self::Frontend => \JesseGall\CodeCommandments\Vue\Codebase::scan($path, languages: $languages),
             self::Python => \JesseGall\CodeCommandments\Py\Codebase::scan($path, excluded: $excluded),
-            self::CSharp => \JesseGall\CodeCommandments\Cs\Codebase::scan($path, $excluded),
+            self::CSharp => \JesseGall\CodeCommandments\Cs\Codebase::scan($path, $excluded, $bridge),
         };
     }
 
