@@ -113,6 +113,7 @@ most:**
 - **`commandments-backend-type-honesty`** — a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`.
 - **`commandments-backend-route-actions`** — route actions are thin, single entry points — no controller wrapping another, no duplicate actions, no two routes to one action.
 - **`commandments-backend-repeated-call-helper`** — a repeated `with`-style call passing the same named argument belongs as a named method on the receiver's type.
+- **`commandments-python-flow`** — check preconditions at the top and leave (`return`/`raise`/`continue`), keep the body flat, no `else` after an exit, dispatch instead of an `elif` ladder over one subject.
 
 **ON CONTACT — load the moment the work touches the subject:**
 

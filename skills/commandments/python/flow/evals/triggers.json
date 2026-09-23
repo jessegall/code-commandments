@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my Python handler starts with if request is not None: and then the whole function is indented under it — how should I structure it",
+        "in agent code I have if status == 'open': ... elif status == 'closed': ... elif status == 'stale': ... in three places, is that fine",
+        "judge flagged an else after a return in my Python function, why does that matter"
+    ],
+    "not": [
+        "how do I copy the same helper function between two Python modules without duplicating it"
+    ]
+}

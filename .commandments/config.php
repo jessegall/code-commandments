@@ -63,6 +63,7 @@ $disabledSkills = function (Config $config): void {
 
         // ----------[ Python ]----------
         // Skills\Python\Duplication::class,
+        // Skills\Python\Flow::class,
     );
 };
 
