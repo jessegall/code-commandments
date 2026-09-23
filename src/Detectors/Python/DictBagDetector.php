@@ -14,7 +14,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
 /**
  * A dict-typed parameter or local read by string keys — the Python twin of the backend's
  * {@see \JesseGall\CodeCommandments\Detectors\Backend\ArrayBagDetector}. A named constructor (a
- * `@classmethod` returning `cls(...)`) is where loose data becomes the type, and is left alone.
+ * `@classmethod` returning `cls(...)`) is where loose data becomes the type, and is left alone. A call
+ * handing a helper a string key it reads a dict by — `text_of(row, "title")` — is the same read one
+ * call deeper, and is found at the call.
  */
 final class DictBagDetector implements Detector
 {
@@ -25,10 +27,18 @@ final class DictBagDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        return $codebase
+        $direct = $codebase
             ->whereExpression(static fn (Expr $expression): bool => $expression->stringKeyBase()->isSome())
             ->where(static fn (ExprMatch $match): bool => $match->isDictKeyRead())
             ->reject(static fn (ExprMatch $match): bool => $match->isWithinNamedConstructor())
             ->get();
+
+        $throughHelper = $codebase
+            ->whereCall()
+            ->where(static fn (ExprMatch $match): bool => $codebase->index()->passesLiteralKey($match->expr))
+            ->reject(static fn (ExprMatch $match): bool => $match->isWithinNamedConstructor())
+            ->get();
+
+        return [...$direct, ...$throughHelper];
     }
 }

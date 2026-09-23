@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Detectors\Python;
 
 use JesseGall\CodeCommandments\Detectors\Python\InventedDefaultDetector;
 use JesseGall\CodeCommandments\Py\Codebase;
-use JesseGall\CodeCommandments\Py\ExprMatch;
+use JesseGall\CodeCommandments\Located;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -21,6 +21,9 @@ final class InventedDefaultDetectorTest extends TestCase
         yield 'a zero, keyword' => ["charge(amount=order.total or 0)\n"];
         yield 'False' => ["flag(order.paid or False)\n"];
         yield 'inside a conversion' => ["label = str(row.get('name') or '')\n"];
+        yield 'written longhand' => ["send(order.email if order.email else '')\n"];
+        yield 'longhand against None' => ["charge(amount=order.total if order.total is not None else 0)\n"];
+        yield 'returned by a lookup helper on a miss' => ["def text_of(raw, key):\n    value = raw.get(key)\n    if value is None:\n        return ''\n    return str(value)\n"];
     }
 
     #[DataProvider('invented')]
@@ -40,6 +43,8 @@ final class InventedDefaultDetectorTest extends TestCase
         yield 'not an argument' => ["email = order.email or ''\n"];
         yield 'the old conditional' => ["mode(reading and 'r' or '')\n"];
         yield 'the callee itself' => ["(handler or '')()\n"];
+        yield 'a longhand conditional on something else' => ["send(order.email if order.verified else '')\n"];
+        yield 'an empty return from a function that reads no parameter by key' => ["def title(order):\n    if order.draft:\n        return ''\n    return order.title\n"];
     }
 
     #[DataProvider('notThisSin')]
@@ -49,7 +54,7 @@ final class InventedDefaultDetectorTest extends TestCase
     }
 
     /**
-     * @return list<ExprMatch>
+     * @return list<Located>
      */
     private function findIn(string $source): array
     {

@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Import;
 use JesseGall\CodeCommandments\Py\Node\Node;
+use JesseGall\CodeCommandments\Py\Node\Param;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -28,9 +29,19 @@ final class CallIndex
     private ?array $callers = null;
 
     /**
+     * @var array<int, FunctionDef>  the `def` each resolved call reaches, by the call's object id
+     */
+    private array $targets = [];
+
+    /**
      * @var array<int, ModuleFile>|null  the module each class is declared in, by the class's object id
      */
     private ?array $homes = null;
+
+    /**
+     * @var array<int, true>|null  the object ids of every `def` bound to an instance or class when called
+     */
+    private ?array $bound = null;
 
     /**
      * @var array<string, array{modules: array<string, ModuleFile>, members: array<string, Node>}>
@@ -49,6 +60,50 @@ final class CallIndex
         $this->callers ??= $this->graph();
 
         return $this->callers[spl_object_id($function)] ?? [];
+    }
+
+    /**
+     * The `def` $call reaches — none when it cannot be resolved.
+     *
+     * @return Option<FunctionDef>
+     */
+    public function targetOf(Expr $call): Option
+    {
+        $this->callers ??= $this->graph();
+
+        return Option::fromNullable($this->targets[spl_object_id($call)] ?? null);
+    }
+
+    /**
+     * Does $call hand a string literal to a parameter its target uses as a key into another — the
+     * `"title"` in `text_of(row, "title")` — and so read a dict by a string key one call deeper?
+     */
+    public function passesLiteralKey(Expr $call): bool
+    {
+        return $this->targetOf($call)->isSomeAnd(function (FunctionDef $target) use ($call): bool {
+            $keys = $target->keyParameters();
+
+            if ($keys === []) {
+                return false;
+            }
+
+            $params = array_slice($target->params, isset($this->bound()[spl_object_id($target)]) && $call->get('callee')->is(ExprKind::Attribute) ? 1 : 0);
+            $variadic = array_values(array_filter($params, static fn (Param $param): bool => $param->kind === '*'))[0] ?? null;
+            $position = 0;
+
+            foreach ($call->get('arguments') as $argument) {
+                $isKeyword = $argument->is(ExprKind::Keyword);
+                $name = $isKeyword ? (string) $argument->get('name') : ($params[$position] ?? $variadic)?->name;
+                $value = $isKeyword ? $argument->get('value') : $argument;
+                $position += $isKeyword ? 0 : 1;
+
+                if (in_array($name, $keys, true) && $value->literalType()?->isText() === true) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
     }
 
     /**
@@ -84,6 +139,7 @@ final class CallIndex
 
                         if ($target->isSome()) {
                             $callers[spl_object_id($target->unwrap())][] = new ExprMatch($call, $module);
+                            $this->targets[spl_object_id($call)] = $target->unwrap();
                         }
                     }
                 }
@@ -289,5 +345,27 @@ final class CallIndex
         }
 
         return $this->homes;
+    }
+
+    /**
+     * @return array<int, true>
+     */
+    private function bound(): array
+    {
+        if ($this->bound !== null) {
+            return $this->bound;
+        }
+
+        $this->bound = [];
+
+        foreach ($this->codebase->modules() as $module) {
+            foreach ($module->nodes() as $node) {
+                if ($node instanceof FunctionDef && $module->isMethod($node) && ! $node->isStatic()) {
+                    $this->bound[spl_object_id($node)] = true;
+                }
+            }
+        }
+
+        return $this->bound;
     }
 }

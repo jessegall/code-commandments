@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.22.1",
+    "version": "1.23.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.119.0",

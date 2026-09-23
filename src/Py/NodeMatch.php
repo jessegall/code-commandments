@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\PhpTypes\Option;
 
 /**
  * A Python node a query selected, together with the module it sits in — so it knows its `file:line`.
@@ -187,6 +188,18 @@ class NodeMatch implements Located
     public function isOverride(Codebase $codebase): bool
     {
         return $this->node instanceof FunctionDef && $codebase->index()->isOverride($this->node, $this->module);
+    }
+
+    /**
+     * The `def` this node is written in — none at a module's or a class's top level.
+     *
+     * @return Option<FunctionDef>
+     */
+    public function enclosingFunction(): Option
+    {
+        $around = array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node instanceof FunctionDef);
+
+        return Option::fromNullable(array_values($around)[0] ?? null);
     }
 
     /**

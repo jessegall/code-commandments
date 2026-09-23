@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Py\Expr;
 
 use JesseGall\CodeCommandments\ExpressionTree;
 use JesseGall\CodeCommandments\Positioned;
+use JesseGall\CodeCommandments\Py\StructuralHash;
 use JesseGall\CodeCommandments\SyntaxExpression;
 use JesseGall\PhpTypes\Option;
 
@@ -120,6 +121,60 @@ final class Expr implements SyntaxExpression
         $readsKey = $callee?->is(ExprKind::Attribute) === true && $callee->get('name') === 'get' && $key?->literalType()?->isText() === true;
 
         return $readsKey ? Option::some($callee->get('object')) : Option::none();
+    }
+
+    /**
+     * Is this $other itself, or the same expression written again?
+     */
+    public function isSame(self $other): bool
+    {
+        return $this === $other || StructuralHash::ofExpression($this) === StructuralHash::ofExpression($other);
+    }
+
+    /**
+     * The key this reads one of $names by — `key` in `raw.get(key)` or `raw[key]` when `raw` is one of
+     * them. None for any other expression.
+     *
+     * @param  list<string>  $names
+     * @return Option<self>
+     */
+    public function keyReadOf(array $names): Option
+    {
+        if ($this->kind === ExprKind::Subscript && in_array($this->get('object')->dottedName(), $names, true)) {
+            return Option::some($this->get('index'));
+        }
+
+        $callee = $this->isCall() ? $this->get('callee') : null;
+        $reads = $callee?->is(ExprKind::Attribute) === true && $callee->get('name') === 'get' && in_array($callee->get('object')->dottedName(), $names, true);
+
+        return $reads ? Option::fromNullable($this->get('arguments')[0] ?? null) : Option::none();
+    }
+
+    /**
+     * The value this falls back to when its subject is missing — `d` in `x or d`, `x if x else d` and
+     * `x if x is not None else d`. None for any other expression, and for `c and a or b`, which is a
+     * conditional written the old way rather than a default.
+     *
+     * @return Option<self>
+     */
+    public function fallback(): Option
+    {
+        if ($this->kind === ExprKind::Binary && $this->get('op') === 'or') {
+            $left = $this->get('left');
+
+            return $left->is(ExprKind::Binary) && $left->get('op') === 'and' ? Option::none() : Option::some($this->get('right'));
+        }
+
+        if ($this->kind !== ExprKind::Conditional) {
+            return Option::none();
+        }
+
+        $test = $this->get('test');
+        $subject = $this->get('then');
+        $isNotNone = $test->is(ExprKind::Compare) && $test->get('operators') === ['is not']
+            && $test->get('operands')[0]->isSame($subject) && $test->get('operands')[1]->literalType() === LiteralType::None;
+
+        return $test->isSame($subject) || $isNotNone ? Option::some($this->get('else')) : Option::none();
     }
 
     /**

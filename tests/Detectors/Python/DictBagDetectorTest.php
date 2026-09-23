@@ -46,6 +46,21 @@ final class DictBagDetectorTest extends TestCase
         $this->assertSame([], $this->findIn($source));
     }
 
+    public function test_a_string_key_handed_to_a_helper_that_reads_by_it_is_the_same_read(): void
+    {
+        $helpers = "def text_of(raw: dict, *keys) -> str:\n    for key in keys:\n        value = raw.get(key)\n        if value:\n            return str(value)\n    return ''\n\n\ndef mapping_of(raw, key):\n    return raw[key]\n\n\n";
+        $source = $helpers . "def label(row):\n    return text_of(row, 'title', 'name') + str(mapping_of(row, key='meta'))\n";
+
+        $this->assertSame([14, 14], array_map(static fn (ExprMatch $match): int => $match->line(), $this->findIn($source)));
+    }
+
+    public function test_a_helper_handed_a_key_that_is_data_is_left_alone(): void
+    {
+        $source = "def level(stock, sku):\n    return stock[sku]\n\n\ndef report(stock, sku):\n    return level(stock, sku)\n";
+
+        $this->assertSame([], $this->findIn($source));
+    }
+
     /**
      * @return list<ExprMatch>
      */
