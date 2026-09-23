@@ -112,6 +112,47 @@ class NodeMatch implements Located
         return Option::fromNullable($throw?->expressions()[0] ?? null);
     }
 
+    /**
+     * Is this an `else if` — an `if` standing as another `if`'s `else`, one rung of its ladder?
+     */
+    public function isElseIf(): bool
+    {
+        return $this->node->is('IfStatement') && $this->module->parentOf($this->node)->isSomeAnd(static fn (Node $parent): bool => $parent->is('ElseClause'));
+    }
+
+    /**
+     * How many choices this node sits inside, within the function it belongs to: each `if`, loop or
+     * `switch` whose body holds it — an `else if` a rung of the ladder it continues, not a level of its
+     * own.
+     */
+    public function branchingDepth(): int
+    {
+        $depth = 0;
+        $child = $this->node;
+
+        foreach ($this->module->ancestorsOf($this->node) as $parent) {
+            if ($parent->isFunction()) {
+                break;
+            }
+
+            if ($parent->isBranchingConstruct() && ! self::continuesTheLadder($child)) {
+                $depth++;
+            }
+
+            $child = $parent;
+        }
+
+        return $depth;
+    }
+
+    /**
+     * Is $child the `else` of an `if` that holds only the next `if` — a rung, not a body?
+     */
+    private static function continuesTheLadder(Node $child): bool
+    {
+        return $child->is('ElseClause') && ($child->children()[0] ?? null)?->is('IfStatement') === true;
+    }
+
     protected static function syntaxHash(): string
     {
         return StructuralHash::class;

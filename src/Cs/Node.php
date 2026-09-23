@@ -90,6 +90,23 @@ final class Node implements SyntaxNode, SyntaxExpression
         return $this->role === 'expression';
     }
 
+    /**
+     * Does this statement open a choice the reader holds open — an `if`, a loop, a `switch`? A `try`, a
+     * `using` or a `lock` is a boundary, not a choice.
+     */
+    public function isBranchingConstruct(): bool
+    {
+        return $this->is('IfStatement', 'ForStatement', 'ForEachStatement', 'ForEachVariableStatement', 'WhileStatement', 'DoStatement', 'SwitchStatement');
+    }
+
+    /**
+     * Does this node run a body of its own — a member, an accessor, a local function, a lambda?
+     */
+    public function isFunction(): bool
+    {
+        return $this->is(...self::FUNCTIONS);
+    }
+
     public function hasModifier(string $modifier): bool
     {
         return in_array($modifier, $this->modifiers, true);

@@ -1683,6 +1683,19 @@
             ],
             "detail": true
         },
+        "sin_deep-csharp-nesting": {
+            "title": "DeepNesting",
+            "help": "An `if`, loop or `switch` that opens a fourth level of choices inside one C# method — the arrow the backend's and Python's nesting rules find, counted over every kind of choice C# writes.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/flow",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_mirrored-server-type": {
             "title": "MirroredServerType",
             "help": "Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. /",

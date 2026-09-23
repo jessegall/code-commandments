@@ -74,6 +74,66 @@ or extract the inner block into a method named for what it decides.
 - A `switch` on a type or a pattern — `shape switch { Circle c => …, Square s => … }` — which is
   already the dispatch this skill asks for.
 
+## Rules
+
+- [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a method.
+      _Guard the outer levels away (`return`/`continue` past what does not apply), let LINQ do the inner iteration, or extract the inner block into a method named for what it decides._
+
+## Worked example
+
+### deep-csharp-nesting
+
+An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops
+
+```cs
+----------[ Bad ]----------
+
+public IReadOnlyList<string> Reorders()
+{
+    var reorders = new List<string>();
+
+    foreach (var (warehouse, shelves) in warehouses)
+    {
+        foreach (var shelf in shelves)
+        {
+            if (shelf.OnHand < shelf.Minimum)
+            {
+                if (shelf.Supplier is not null)
+                {
+                    reorders.Add($"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}");
+                }
+            }
+        }
+    }
+
+    return reorders;
+}
+
+----------[ Good ]----------
+
+// in Restock.cs
+public IReadOnlyList<string> ReordersFlat() =>
+    warehouses
+        .SelectMany(warehouse => warehouse.Value.Select(shelf => (Warehouse: warehouse.Key, Shelf: shelf)))
+        .Where(entry => entry.Shelf.OnHand < entry.Shelf.Minimum && entry.Shelf.Supplier is not null)
+        .Select(entry => Reorder(entry.Warehouse, entry.Shelf))
+        .ToList();
+
+// in Restock.cs
+private static string Reorder(string warehouse, Shelf shelf) =>
+    $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/flow` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-csharp-nesting`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/guard-clauses-and-flow`](../../backend/guard-clauses-and-flow/SKILL.md) — the same discipline on the PHP backend.
