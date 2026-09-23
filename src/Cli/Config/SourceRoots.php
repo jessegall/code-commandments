@@ -25,7 +25,7 @@ final class SourceRoots
     /**
      * What a build, an installer or a framework writes — never the code under review.
      */
-    private const array BUILT = ['vendor', 'node_modules', 'dist', 'build', 'coverage', 'storage', 'bootstrap/cache', 'public/build', '.next', '.nuxt'];
+    private const array BUILT = ['vendor', 'node_modules', 'dist', 'build', 'coverage', 'storage', 'bootstrap/cache', 'public/build', '.next', '.nuxt', 'venv', '.venv', '__pycache__', 'site-packages'];
 
     /**
      * The absolute source roots to scan under $root: an explicit path as given, else the config's

@@ -22,9 +22,20 @@ final class FileTree
 {
     /**
      * Directories no walk descends: a dependency tree is not the project's source, and its size is
-     * what exhausts a scan started at a project root.
+     * what exhausts a scan started at a project root. For Python that is an installed package tree and
+     * the interpreter's bytecode cache — names the interpreter itself writes.
      */
-    private const array SKIP_DIRS = ['vendor', 'node_modules'];
+    private const array SKIP_DIRS = ['vendor', 'node_modules', 'site-packages', '__pycache__'];
+
+    /**
+     * The file every Python virtual environment carries at its root, whatever the folder is named.
+     */
+    private const string VIRTUAL_ENVIRONMENT = 'pyvenv.cfg';
+
+    /**
+     * The endings of directories a package build writes beside the source — `shop.egg-info`.
+     */
+    private const array SKIP_SUFFIXES = ['.egg-info'];
 
     /**
      * Every file under $path carrying $extension. A $path that IS a file answers for itself, held to
@@ -75,6 +86,8 @@ final class FileTree
         return ! $directory->isLink()
             && ! str_starts_with($directory->getFilename(), '.')
             && ! in_array($directory->getFilename(), self::SKIP_DIRS, true)
+            && ! array_any(self::SKIP_SUFFIXES, static fn (string $suffix): bool => str_ends_with($directory->getFilename(), $suffix))
+            && ! is_file($directory->getPathname() . '/' . self::VIRTUAL_ENVIRONMENT)
             && ! $excluded->covers($directory->getPathname());
     }
 }
