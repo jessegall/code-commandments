@@ -42,6 +42,31 @@ enum Language: string
     }
 
     /**
+     * $text as a comment of this language on a line of its own — how a stamp is written into a file.
+     */
+    public function comment(string $text): string
+    {
+        return match ($this) {
+            self::Php, self::TypeScript => "// {$text}",
+            self::Vue => "<!-- {$text} -->",
+        };
+    }
+
+    /**
+     * Does $line carry a comment of this language — a line a declaration in a comment can be read
+     * from? Read off the delimiter the line opens with, never its words.
+     */
+    public function isCommentLine(string $line): bool
+    {
+        $opened = ltrim($line);
+
+        return match ($this) {
+            self::Php, self::TypeScript => str_starts_with($opened, '//') || str_starts_with($opened, '/*') || str_starts_with($opened, '*'),
+            self::Vue => str_starts_with($opened, '<!--'),
+        };
+    }
+
+    /**
      * How a reader is told which language an example is in, when a skill shows more than one.
      */
     public function label(): string

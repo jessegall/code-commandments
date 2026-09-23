@@ -4,18 +4,13 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ast\Support;
 
+use JesseGall\CodeCommandments\Language;
+
 /**
- * Is a file FROZEN — declared intentionally immutable? A frozen file is still SCANNED (the call graph and
- * provenance engine need it) but is never a TARGET: never flagged, never rewritten. Freezing is file-level
- * via any of four interchangeable markers: a `#[Frozen]` attribute, an `@frozen` docblock tag, the
- * {@see FILE_MARKER} stamp `commandments freeze <path>` writes, or the {@see GENERATED_MARKER} a generator
- * stamps on the files it owns — a generated file is immutable in the only sense that matters, since the
- * next regeneration overwrites whatever a human fixed in it.
- *
- * A marker counts only where it is DECLARED — in a comment, or as the attribute itself. Code that merely
- * SPELLS one, like a help text explaining the feature or a test asserting on the stamp, is talking about
- * freezing rather than asking for it, and treating that as a freeze hides every finding in the file
- * without saying so (#405). The language's own tokenizer draws the line.
+ * Is a file FROZEN — declared intentionally immutable? It is still scanned, but never a target. Any of
+ * four markers freezes it — `#[Frozen]`, an `@frozen` tag, the {@see FILE_MARKER} stamp `commandments
+ * freeze` writes, or the {@see GENERATED_MARKER} a generator stamps — and only where it is DECLARED, as
+ * the attribute or in a comment of the file's own language: code that merely spells one is not asking (#405).
  */
 final class Frozen
 {
@@ -34,11 +29,15 @@ final class Frozen
      */
     private const string ATTRIBUTE = 'Frozen';
 
-    public static function isFrozen(string $source): bool
+    public static function isFrozen(string $source, Language $language = Language::Php): bool
     {
         if (! self::mentionsAMarker($source)) {
             return false; // Nothing to weigh. Every ordinary file takes this path, so the tokenizer
             // below runs only for the handful that say something about freezing at all.
+        }
+
+        if ($language !== Language::Php) {
+            return self::commentDeclaresFreeze($source, $language);
         }
 
         $tokens = token_get_all($source);
@@ -53,6 +52,21 @@ final class Frozen
             }
 
             if ($token[0] === T_ATTRIBUTE && self::namesTheAttribute($tokens, $index)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Does a comment line of $language declare the freeze? The PHP tokenizer reads only PHP, so every
+     * other language is read by its own comment delimiter.
+     */
+    private static function commentDeclaresFreeze(string $source, Language $language): bool
+    {
+        foreach (explode("\n", $source) as $line) {
+            if ($language->isCommentLine($line) && self::declaresFreeze($line)) {
                 return true;
             }
         }

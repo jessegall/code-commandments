@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cli;
 use JesseGall\CodeCommandments\Ast\Support\Frozen;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
+use JesseGall\CodeCommandments\Language;
 
 /**
  * `commandments freeze <path>` / `unfreeze <path>` — stamp a file as intentionally immutable, or lift the
@@ -56,7 +57,7 @@ final class Freeze implements Command
             return 0;
         }
 
-        file_put_contents($path, $this->stamped($source));
+        file_put_contents($path, $this->stamped($source, Language::ofFile($path)));
         fwrite(STDOUT, "\033[32m✓ Frozen {$path}\033[0m — scanned for resolution, but never flagged or repented.\n");
 
         return 0;
@@ -84,13 +85,17 @@ final class Freeze implements Command
     }
 
     /**
-     * Insert the freeze stamp on its own line right after the opening `<?php` line (a comment is legal
-     * there, even before a `declare`).
+     * Insert the freeze stamp on its own line in the file's own comment syntax: right after the opening
+     * `<?php` line of a PHP file (legal even before a `declare`), at the very top of anything else.
      */
-    private function stamped(string $source): string
+    private function stamped(string $source, Language $language): string
     {
-        $stamp = '// ' . Frozen::FILE_MARKER . ' — deliberately immutable; excluded from code-commandments '
-            . 'judging & repent (run `commandments unfreeze` to lift).';
+        $stamp = $language->comment(Frozen::FILE_MARKER . ' — deliberately immutable; excluded from code-commandments '
+            . 'judging & repent (run `commandments unfreeze` to lift).');
+
+        if ($language !== Language::Php) {
+            return $stamp . "\n" . $source;
+        }
 
         $firstLineEnd = strpos($source, "\n");
 
