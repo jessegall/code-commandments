@@ -21,8 +21,9 @@ description: "Modelling a value that might not be there in Python — a return t
 2. **Does "nothing" have a natural empty form?** A search with no hits is `[]`; a mapping with no
    entries is `{}`; a behaviour with nothing to do is a Null Object — an instance whose methods do
    nothing. Return that, and every caller loops or calls with no special case.
-3. **Is it a genuine "look for it; it may miss" that more than one caller handles?** Then
-   `X | None` is honest — but the check belongs at each caller *because* each one decides
+3. **Is it a genuine "look for it; it may miss" that more than one caller handles?** Then an
+   annotated `X | None` is honest — it is Python's `Option`: a type checker makes every caller
+   handle the missing case, and the check belongs at each caller *because* each one decides
    something different. If every caller writes the same `if result is None: raise …` or `or
    default`, the decision was the producer's: move it there.
 
