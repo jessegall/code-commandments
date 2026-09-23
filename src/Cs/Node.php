@@ -72,6 +72,7 @@ final class Node implements SyntaxNode, SyntaxExpression
         public readonly ?string $symbol,
         public readonly bool $inherited,
         public readonly bool $constant,
+        public readonly bool $forgivesNull,
     ) {}
 
     /**
@@ -94,6 +95,7 @@ final class Node implements SyntaxNode, SyntaxExpression
             symbol: $written['symbol'] ?? null,
             inherited: array_key_exists('inherited', $written),
             constant: array_key_exists('constant', $written),
+            forgivesNull: array_key_exists('forgivesNull', $written),
         )->locatedAt((int) $written['start'], (int) $written['end']);
     }
 

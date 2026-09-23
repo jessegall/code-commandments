@@ -238,23 +238,49 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
         || model.GetSymbolInfo(expression).Symbol is IFieldSymbol { HasConstantValue: true }
         || (expression is TypeOfExpressionSyntax typeOf && model.GetTypeInfo(typeOf.Type).Type is not (null or ITypeParameterSymbol or IErrorTypeSymbol));
 
+    /// <summary>
+    /// Does what <paramref name="operand"/> names — a field, property, local, parameter, or a method's
+    /// return — declare a type that admits null? What a <c>!</c> on it silences, read from the
+    /// declaration, since the operand of a <c>!</c> reports the state after it.
+    /// </summary>
+    private static bool IsDeclaredNullable(ExpressionSyntax operand, SemanticModel model)
+    {
+        var declared = model.GetSymbolInfo(operand).Symbol switch
+        {
+            IFieldSymbol field => field.Type,
+            IPropertySymbol property => property.Type,
+            ILocalSymbol local => local.Type,
+            IParameterSymbol parameter => parameter.Type,
+            IMethodSymbol method => method.ReturnType,
+            _ => null,
+        };
+
+        return declared is { NullableAnnotation: NullableAnnotation.Annotated } || declared is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T };
+    }
+
     private void WriteFacts(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
     {
         if (node is ExpressionSyntax expression && !SyntaxFacts.IsInTypeOnlyContext(expression))
         {
-            var type = model.GetTypeInfo(expression).Type;
+            var info = model.GetTypeInfo(expression);
 
-            if (type is not null and not IErrorTypeSymbol)
+            if (info.Type is not null and not IErrorTypeSymbol)
             {
-                json.WriteString("type", type.ToDisplayString(Qualified));
-                json.WriteBoolean("nullable", type.NullableAnnotation == NullableAnnotation.Annotated);
+                json.WriteString("type", info.Type.ToDisplayString(Qualified));
+                json.WriteBoolean("nullable", info.Type.NullableAnnotation == NullableAnnotation.Annotated);
             }
+
         }
 
         if (node is CatchDeclarationSyntax caught && model.GetTypeInfo(caught.Type).Type is { } exception and not IErrorTypeSymbol)
         {
             json.WriteString("type", exception.ToDisplayString(Qualified));
             json.WriteBoolean("nullable", false);
+        }
+
+        if (node is PostfixUnaryExpressionSyntax { RawKind: (int)SyntaxKind.SuppressNullableWarningExpression } forgiven && IsDeclaredNullable(forgiven.Operand, model))
+        {
+            json.WriteBoolean("forgivesNull", true);
         }
 
         if (node is ExpressionSyntax value && IsConstant(value, model))

@@ -1670,6 +1670,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-null-forgiven": {
+            "title": "NullForgiven",
+            "help": "The null-forgiving `!` applied to what is declared nullable — a `T?` field, property, local, parameter or return, as the compiler resolves it. `= null!` initialises a member a framework fills, and names nothing nullable; test code may let a null fail the test.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/absence",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-csharp-method": {
             "title": "DuplicateMethod",
             "help": "Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",
