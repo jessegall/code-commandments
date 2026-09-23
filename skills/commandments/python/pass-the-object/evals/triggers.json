@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my Python function takes `workflow` and `node_id` and starts with `node = workflow.graph.node(node_id)` — is that fine?",
+        "every caller of my function passes `is_paid=order.status == 'paid'`; should the signature change?",
+        "judge flagged python-param-resolved-from-param on my service function, what does it want me to do"
+    ],
+    "not": [
+        "how do I parse a date string in Python"
+    ]
+}
