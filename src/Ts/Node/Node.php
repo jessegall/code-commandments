@@ -116,6 +116,24 @@ abstract class Node implements SyntaxNode
         return null;
     }
 
+    public function isReturn(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @return Option<Expr>
+     */
+    public function returnedValue(): Option
+    {
+        return Option::none();
+    }
+
+    public function isExpressionStatement(): bool
+    {
+        return false;
+    }
+
     /**
      * The names this node DECLARES into the module scope — empty for a node that declares none.
      *

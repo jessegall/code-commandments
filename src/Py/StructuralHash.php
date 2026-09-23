@@ -32,7 +32,7 @@ final class StructuralHash extends SyntaxHash
         return 'lit:' . $type->value . ':' . ($normalize && $type->isData() ? '_' : (string) $literal->get('value'));
     }
 
-    protected static function children(SyntaxNode $node): array
+    public static function counted(SyntaxNode $node): array
     {
         return array_values(array_filter(
             $node->children(),

@@ -43,6 +43,14 @@ final class CallExpr extends Node
     }
 
     /**
+     * A top-level macro call stands as a statement of its own.
+     */
+    public function isExpressionStatement(): bool
+    {
+        return true;
+    }
+
+    /**
      * The call's first TYPE argument — the `T` of `defineProps<T>()`. None when it has none, which
      * is the ordinary case for a call that is not a typed macro.
      *

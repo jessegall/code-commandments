@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ts\Node;
 
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
+use JesseGall\PhpTypes\Option;
 
 /**
  * A `return`, with the value it hands back — null for a bare `return;`.
@@ -21,6 +22,14 @@ final class ReturnStmt extends Stmt
     public function isReturn(): bool
     {
         return true;
+    }
+
+    /**
+     * @return Option<Expr>
+     */
+    public function returnedValue(): Option
+    {
+        return Option::fromNullable($this->value);
     }
 
     /**

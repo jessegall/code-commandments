@@ -25,6 +25,11 @@ interface SyntaxExpression
     public function isCall(): bool;
 
     /**
+     * Is this a constant written in the source — a literal, with nothing computed inside it?
+     */
+    public function isConstant(): bool;
+
+    /**
      * @return list<static>
      */
     public function flatten(): array;

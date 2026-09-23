@@ -31,6 +31,14 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Any literal — an f-string is its own kind, as it computes its fields.
+     */
+    public function isConstant(): bool
+    {
+        return $this->kind === ExprKind::Literal;
+    }
+
+    /**
      * What this literal holds — null for an expression that is no literal.
      */
     public function literalType(): ?LiteralType

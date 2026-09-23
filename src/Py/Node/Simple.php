@@ -29,4 +29,9 @@ final class Simple extends Node
     {
         return $this->keyword;
     }
+
+    public function isPlaceholder(): bool
+    {
+        return $this->keyword === 'pass';
+    }
 }

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py;
 
-use JesseGall\CodeCommandments\HashesFunctionBody;
 use JesseGall\CodeCommandments\Located;
+use JesseGall\CodeCommandments\Py\Node\Block;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Node;
+use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Support\ClassName;
 
@@ -17,7 +18,7 @@ use JesseGall\CodeCommandments\Support\ClassName;
  */
 class NodeMatch implements Located
 {
-    use HashesFunctionBody;
+    use ReadsFunctionBody;
 
     public function __construct(
         public readonly Node $node,
@@ -68,6 +69,26 @@ class NodeMatch implements Located
     public function isMethod(): bool
     {
         return $this->node instanceof FunctionDef && $this->module->isMethod($this->node);
+    }
+
+    /**
+     * Is this a class's `__init__` — structure every class declares for itself, which two classes cannot
+     * share however alike they read?
+     */
+    public function isConstructorDeclaration(): bool
+    {
+        return $this->node instanceof FunctionDef && $this->node->name === '__init__' && $this->isMethod();
+    }
+
+    /**
+     * Is the function body only placeholders — an abstract or protocol method, an overload, a hook left
+     * for subclasses? Every stub reads alike, and none holds logic to share.
+     */
+    public function isStub(): bool
+    {
+        return $this->node->functionBody()->isSomeAnd(
+            static fn (Block $body): bool => array_all($body->children(), static fn (Node $statement): bool => $statement->isPlaceholder()),
+        );
     }
 
     protected static function syntaxHash(): string

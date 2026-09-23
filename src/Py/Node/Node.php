@@ -63,6 +63,33 @@ abstract class Node implements SyntaxNode
         return '';
     }
 
+    public function isReturn(): bool
+    {
+        return false;
+    }
+
+    /**
+     * @return Option<Expr>
+     */
+    public function returnedValue(): Option
+    {
+        return Option::none();
+    }
+
+    public function isExpressionStatement(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Does this statement stand in for a body without doing anything — `pass`, `...`, a docstring, or
+     * `raise NotImplementedError`?
+     */
+    public function isPlaceholder(): bool
+    {
+        return false;
+    }
+
     /**
      * The names this node declares — a function's, a class's, a parameter's.
      *

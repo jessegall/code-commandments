@@ -60,7 +60,7 @@ abstract class SyntaxHash
      *
      * @return list<SyntaxNode>
      */
-    protected static function children(SyntaxNode $node): array
+    public static function counted(SyntaxNode $node): array
     {
         return $node->children();
     }
@@ -72,7 +72,7 @@ abstract class SyntaxHash
      */
     protected static function nested(SyntaxNode $node): array
     {
-        return static::children($node);
+        return static::counted($node);
     }
 
     /**
@@ -103,7 +103,7 @@ abstract class SyntaxHash
             $parts[] = self::expression($expression, $normalize);
         }
 
-        foreach (static::children($node) as $child) {
+        foreach (static::counted($node) as $child) {
             $parts[] = self::node($child, $normalize);
         }
 

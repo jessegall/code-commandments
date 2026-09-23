@@ -26,11 +26,6 @@ abstract class Stmt extends Node
         return false;
     }
 
-    public function isReturn(): bool
-    {
-        return false;
-    }
-
     public function isLoop(): bool
     {
         return false;

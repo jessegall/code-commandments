@@ -19,6 +19,11 @@ final class ExprStmt extends Stmt
         return [$this->expr];
     }
 
+    public function isExpressionStatement(): bool
+    {
+        return true;
+    }
+
     public function render(): string
     {
         return $this->expr->source() . ';';

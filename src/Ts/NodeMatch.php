@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ts;
 
-use JesseGall\CodeCommandments\HashesFunctionBody;
 use JesseGall\CodeCommandments\Located;
+use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
-use JesseGall\CodeCommandments\Ts\Node\BlockStmt;
-use JesseGall\CodeCommandments\Ts\Node\CallExpr;
-use JesseGall\CodeCommandments\Ts\Node\ExprStmt;
 use JesseGall\CodeCommandments\Ts\Node\MethodDecl;
 use JesseGall\CodeCommandments\Ts\Node\Node;
-use JesseGall\CodeCommandments\Ts\Node\ReturnStmt;
-use JesseGall\PhpTypes\Option;
 
 /**
  * A matched TypeScript {@see Node} that knows WHERE it is — the module-space twin of
@@ -23,7 +18,7 @@ use JesseGall\PhpTypes\Option;
  */
 class NodeMatch implements Located
 {
-    use HashesFunctionBody;
+    use ReadsFunctionBody;
 
     public function __construct(
         public readonly Node $node,
@@ -72,62 +67,6 @@ class NodeMatch implements Located
     public function isConstructorDeclaration(): bool
     {
         return $this->node instanceof MethodDecl && $this->node->isConstructor();
-    }
-
-    /**
-     * Is the function body exactly `return <expr>;` — a descriptor or a one-line delegate, with no
-     * control flow to hoist?
-     */
-    public function isSoleReturnExpression(): bool
-    {
-        return $this->soleStatement()->isSomeAnd(static fn (Node $statement): bool => $statement instanceof ReturnStmt && $statement->value !== null);
-    }
-
-    /**
-     * The void twin of {@see isSoleReturnExpression}: a body that is exactly one expression statement —
-     * a call handed on, an assignment made.
-     */
-    public function isSoleExpressionStatement(): bool
-    {
-        return $this->soleStatement()->isSomeAnd(static fn (Node $statement): bool => $statement instanceof ExprStmt || $statement instanceof CallExpr);
-    }
-
-    /**
-     * Is the function body a LOOKUP TABLE written as code — it calls nothing, and every answer it returns
-     * is a constant (`case 'paid': return 'green'`)? Two of them that differ are two tables of data,
-     * not one procedure written twice: hoisting either merely moves the data.
-     */
-    public function isLiteralLookup(): bool
-    {
-        return $this->node->functionBody()->isSomeAnd(static function (BlockStmt $body): bool {
-            $returns = [];
-
-            foreach ($body->descendants() as $node) {
-                foreach ($node->expressions() as $expression) {
-                    if (array_any($expression->flatten(), static fn (Expr $part): bool => $part->isCall())) {
-                        return false;
-                    }
-                }
-
-                if ($node instanceof ReturnStmt) {
-                    $returns[] = $node;
-                }
-            }
-
-            return $returns !== [] && array_all($returns, static fn (ReturnStmt $return): bool => $return->value?->isConstant() ?? false);
-        });
-    }
-
-    /**
-     * The one statement the function body holds — none for a body of any other length, or no body.
-     *
-     * @return Option<Node>
-     */
-    private function soleStatement(): Option
-    {
-        return $this->node->functionBody()
-            ->filter(static fn (BlockStmt $body): bool => count($body->body) === 1)
-            ->map(static fn (BlockStmt $body): Node => $body->body[0]);
     }
 
     public function file(): string
