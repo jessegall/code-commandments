@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "in my Python loader I wrapped the json.load in try/except Exception and return {} if it fails, is that ok?",
+        "should I raise ValueError('carrier not found: ' + name) here or something else",
+        "judge flagged a swallowed exception in my handlers.py except block that just logs and passes — what should it do instead"
+    ],
+    "not": [
+        "how do I flatten this Python function that has an if inside a for inside another if"
+    ]
+}

@@ -132,6 +132,7 @@ most:**
 - **`commandments-typescript-absence`** — model absence honestly — one spelling for missing, no `??` that invents a value, no `?.` on something always set.
 - **`commandments-typescript-duplication`** — a function body written twice becomes one shared function or composable, parameterised by what differs.
 - **`commandments-python-duplication`** — a function body written twice becomes one shared function, parameterised by what differs.
+- **`commandments-python-exceptions`** — raise named exceptions built by a classmethod factory, never swallow a failure, and keep the cause with `raise … from`.
 
 **Finding and fixing sins — the checklist workflow.** Run
 `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the
