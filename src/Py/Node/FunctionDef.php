@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py\Node;
 
+use Closure;
 use JesseGall\CodeCommandments\Py\Docstring;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
@@ -183,6 +184,17 @@ final class FunctionDef extends Node
     public function isStatic(): bool
     {
         return array_any($this->decorators, static fn (Expr $decorator): bool => $decorator->dottedName() === 'staticmethod');
+    }
+
+    /**
+     * The names of the parameters $accepts keeps, in order.
+     *
+     * @param  Closure(Param): bool  $accepts
+     * @return list<string>
+     */
+    public function parameterNamesWhere(Closure $accepts): array
+    {
+        return array_values(array_map(static fn (Param $param): string => $param->name, array_filter($this->params, $accepts)));
     }
 
     /**

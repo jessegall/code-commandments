@@ -88,3 +88,26 @@ def finish(session: KioskSession) -> str:
 def receipt_of(session: KioskSession) -> str:
     return f"{session.items()} items, {session.total} ({'card' if session.paid_by_card() else 'cash'})"
 ```
+
+### python-param-resolved-from-param
+
+a function that takes a container and a key and first resolves one against the other — `def rename(workflow, node_id)` doing `workflow.graph.node(node_id)` — when it only wanted what the key names
+
+```py
+----------[ Bad ]----------
+
+def book(seat_map: SeatMap, number: int, guest: str) -> bool:
+    seat = seat_map.seats[number]
+    if seat.taken:
+        return False
+    seat.taken, seat.guest = True, guest
+    return True
+
+----------[ Good ]----------
+
+def book_seat(seat: Seat, guest: str) -> bool:
+    if seat.taken:
+        return False
+    seat.taken, seat.guest = True, guest
+    return True
+```

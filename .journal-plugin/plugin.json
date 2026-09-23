@@ -2531,6 +2531,19 @@
             ],
             "detail": true
         },
+        "sin_python-param-resolved-from-param": {
+            "title": "ParamResolvedFromParam",
+            "help": "A function that unpacks its target from a container parameter — the twin of the backend's ParamResolvedFromParamDetector: it should take the resolved object, not the container plus a key.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/pass-the-object",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-repeated-guard": {
             "title": "RepeatedGuard",
             "help": "One compound condition written in two places — the twin of the backend's RepeatedGuardDetector.",
