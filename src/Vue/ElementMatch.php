@@ -55,6 +55,11 @@ class ElementMatch extends Element implements Located
         return $this->sfc->path . ':' . $this->line;
     }
 
+    public function line(): int
+    {
+        return $this->line;
+    }
+
     /**
      * A short context for the report — the element the sin sits on.
      */

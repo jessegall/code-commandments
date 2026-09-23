@@ -30,6 +30,11 @@ class FileMatch implements Located
         return "{$this->path}:1";
     }
 
+    public function line(): int
+    {
+        return 1;
+    }
+
     public function scope(): string
     {
         return $this->name();

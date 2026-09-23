@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
+use JesseGall\CodeCommandments\Cli\Scope\ChangedLines;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
@@ -13,9 +14,11 @@ use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
+use JesseGall\CodeCommandments\Hooks\ReportedFindings;
 use JesseGall\CodeCommandments\Hooks\TouchedSources;
 use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Languages;
+use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Skills\Skill;
 use Throwable;
 
@@ -83,15 +86,19 @@ final class SkillReminder extends Hook implements Discipline
 
         $single = Catalog::singleFile(CrossFileSet::forProject($event->workspace(), $rules), $rules);
         $languages = Languages::from($config);
+        $reported = new ReportedFindings($event->workspace());
         $sins = [];
 
         // A language the project turned off is never parsed: its engine is not started, warmed or asked.
         foreach (array_filter($files, static fn (string $file): bool => $languages->writes(Language::ofFile($file))) as $file) {
-            $sins = array_merge_recursive($sins, $this->sinsIn($file, $languages, $single));
-        }
+            $found = $this->sinsIn($file, $languages, $single, $this->git()->changedLines($event->root, $file));
 
-        foreach (array_merge(...array_values($sins)) as $found) {
-            $this->io->activity(str_replace(rtrim($event->root, '/') . '/', '', $found));
+            // The activity is what the file holds now, every time: a sin gone from it is news too.
+            foreach (array_merge([], ...array_values($found)) as $sin) {
+                $this->io->activity(str_replace(rtrim($event->root, '/') . '/', '', $sin));
+            }
+
+            $sins = array_merge_recursive($sins, $reported->unseen($file, $found));
         }
 
         return $sins === [] ? $this->pass() : $this->inject($event, $this->nudge($event, $files, $sins));
@@ -162,14 +169,15 @@ final class SkillReminder extends Hook implements Discipline
     }
 
     /**
-     * Every one of $rules that fires in $file, as "sin name at line" keyed by the skill that teaches
-     * the fix. A rule that throws on one file in isolation is a rule that could not answer, which is
-     * silence — this is a nudge, and a nudge is never worth a broken tool call.
+     * Every one of $rules that fires in $file on a line in $changed, as "sin name at line" keyed by the
+     * skill that teaches the fix — the code just written, not the file's older sins, which are `judge`'s.
+     * A rule that throws on one file in isolation is a rule that could not answer, which is silence —
+     * this is a nudge, and a nudge is never worth a broken tool call.
      *
      * @param  list<Detector>  $rules  the single-file rules this project runs
      * @return array<string, list<string>>  skill slug => the sins found
      */
-    private function sinsIn(string $file, Languages $languages, array $rules): array
+    private function sinsIn(string $file, Languages $languages, array $rules, ChangedLines $changed): array
     {
         $engine = Language::ofFile($file)->engine();
         $codebase = $this->io->parses()->of($file, $languages);
@@ -186,7 +194,7 @@ final class SkillReminder extends Hook implements Discipline
                 continue;
             }
 
-            foreach ($matches as $match) {
+            foreach (array_filter($matches, static fn (Located $match): bool => $changed->covers($match->line())) as $match) {
                 $found[$detector->sin()->slug()][] = $detector->sin()->name() . ' at ' . $match->location();
             }
         }

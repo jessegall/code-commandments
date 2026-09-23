@@ -239,6 +239,21 @@ class GitFiles
     }
 
     /**
+     * The lines of $file that differ from HEAD — every line of a file git does not track, or of a tree
+     * that is no repository at all.
+     */
+    public function changedLines(string $root, string $file): ChangedLines
+    {
+        $tracked = trim((string) @shell_exec('git -C ' . escapeshellarg($root) . ' ls-files -- ' . escapeshellarg($file) . ' 2>/dev/null'));
+
+        if ($tracked === '') {
+            return ChangedLines::everywhere();
+        }
+
+        return ChangedLines::fromDiff((string) @shell_exec('git -C ' . escapeshellarg($root) . ' diff -U0 HEAD -- ' . escapeshellarg($file) . ' 2>/dev/null'));
+    }
+
+    /**
      * Files new or changed on the current branch vs $base — everything that differs
      * from the merge-base down to the working tree (committed AND uncommitted) plus
      * untracked files. Uses the merge-base, so it needs no separate worktree.

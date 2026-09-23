@@ -8,7 +8,8 @@ use JesseGall\PhpTypes\Option;
 
 /**
  * The file the journal hands a plugin for commands it runs later, one per line, as the plugin — how advice
- * found after a tool call was answered still reaches the agent, as a plain message in the chat.
+ * found after a tool call was answered still reaches the agent, as a nudge: told to it, and shown in the
+ * chat as a mark rather than a message the user reads as the agent's own.
  */
 final readonly class JournalQueue
 {
@@ -34,12 +35,12 @@ final readonly class JournalQueue
     }
 
     /**
-     * Tell the agent what $advice says — each thing it says, a message of its own.
+     * Tell the agent what $advice says — each thing it says, a nudge of its own.
      */
     public function tell(JournalAnswer $advice): void
     {
         $lines = array_map(
-            static fn (array $said): string => 'message create ' . escapeshellarg(self::title($said[0])) . ' --brief ' . escapeshellarg(self::oneLine($said[1])) . "\n",
+            static fn (array $said): string => 'nudge create ' . escapeshellarg(self::title($said[0])) . ' --brief ' . escapeshellarg(self::oneLine($said[1])) . "\n",
             $advice->said(),
         );
 
@@ -49,7 +50,7 @@ final readonly class JournalQueue
     }
 
     /**
-     * $text fit to be a message title — its first line, no colon, at most {@see TITLE} characters.
+     * $text fit to be a nudge title — its first line, no colon, at most {@see TITLE} characters.
      */
     private static function title(string $text): string
     {

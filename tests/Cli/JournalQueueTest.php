@@ -25,7 +25,7 @@ final class JournalQueueTest extends TestCase
         @unlink($this->queue);
     }
 
-    public function test_advice_becomes_one_message_command_per_thing_it_says(): void
+    public function test_advice_becomes_one_nudge_per_thing_it_says(): void
     {
         JournalQueue::fromEnvironment()->unwrap()->tell(new JournalAnswer(
             whisper: "Code Commandments — before you commit: judge what you changed.\nRun it once.",
@@ -33,8 +33,8 @@ final class JournalQueueTest extends TestCase
         ));
 
         $this->assertSame([
-            ['message', 'create', 'Code Commandments — before you commit — judge what you changed.', '--brief', "Code Commandments — before you commit: judge what you changed. · Run it once."],
-            ['message', 'create', 'Code Commandments — a sin in the file you changed', '--brief', "app/Order.php:12 ArrayBag · app/Order.php:30 FeatureEnvy"],
+            ['nudge', 'create', 'Code Commandments — before you commit — judge what you changed.', '--brief', "Code Commandments — before you commit: judge what you changed. · Run it once."],
+            ['nudge', 'create', 'Code Commandments — a sin in the file you changed', '--brief', "app/Order.php:12 ArrayBag · app/Order.php:30 FeatureEnvy"],
         ], $this->queued());
     }
 
