@@ -21,4 +21,9 @@ final class AnnAssign extends Node
     {
         return self::present([$this->target, $this->value]);
     }
+
+    public function writtenTargets(): array
+    {
+        return $this->value === null ? [] : [$this->target];
+    }
 }

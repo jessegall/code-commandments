@@ -87,6 +87,16 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * The targets this statement assigns — none for a statement that assigns nothing.
+     *
+     * @return list<Expr>
+     */
+    public function writtenTargets(): array
+    {
+        return [];
+    }
+
+    /**
      * Is this a scope of its own — a `def` or a `class` — so what is written inside it belongs to
      * it rather than to the statements around it?
      */

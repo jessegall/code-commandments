@@ -23,4 +23,9 @@ final class Assign extends Node
     {
         return [...$this->targets, $this->value];
     }
+
+    public function writtenTargets(): array
+    {
+        return $this->targets;
+    }
 }

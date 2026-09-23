@@ -19,6 +19,7 @@ use JesseGall\CodeCommandments\Py\Node\IfStmt;
 use JesseGall\CodeCommandments\Py\Node\Node;
 use JesseGall\CodeCommandments\Py\Node\Param;
 use JesseGall\CodeCommandments\Py\Node\Raise;
+use JesseGall\CodeCommandments\Py\Node\Simple;
 use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
@@ -168,6 +169,92 @@ class NodeMatch implements Located
         [$block, $loop] = [...$this->module->ancestorsOf($this->node), null, null];
 
         return ($loop instanceof ForLoop || $loop instanceof WhileLoop) && $loop->body === $block && count($block->body) === 1;
+    }
+
+    /**
+     * Is this a write to state no instance owns — a name its function declared `global`, or an
+     * attribute of the class itself set from a method, through `cls`, the class's own name or
+     * `type(self)`? Whoever writes last wins, and nothing in any signature says who does.
+     */
+    public function isStaticStateWrite(): bool
+    {
+        return $this->enclosingFunction()->isSomeAnd(fn (FunctionDef $function): bool => array_any(
+            $this->node->writtenTargets(),
+            fn (Expr $target) => $this->writesStatic($target, $function),
+        ));
+    }
+
+    /**
+     * Does assigning $target inside $function write static state?
+     */
+    private function writesStatic(Expr $target, FunctionDef $function): bool
+    {
+        if ($target->is(ExprKind::Name)) {
+            return in_array($target->get('name'), $this->globalsOf($function), true) && ! $this->isMemoFill($target->get('name'));
+        }
+
+        if (! $target->is(ExprKind::Attribute)) {
+            return false;
+        }
+
+        $owner = $target->get('object');
+
+        return ($owner->isCall() && $owner->get('callee')->dottedName() === 'type')
+            || ($owner->is(ExprKind::Name) && in_array($owner->get('name'), $this->classNamesFor($function), true));
+    }
+
+    /**
+     * Is this write the one-time fill of a memo — inside `if x is None:`, `if not x:` or
+     * `if len(x) == 0:` asking about the very name it writes? It adds nothing a caller can observe but speed.
+     */
+    private function isMemoFill(string $name): bool
+    {
+        [$block, $if] = [...$this->module->ancestorsOf($this->node), null, null];
+
+        return $if instanceof IfStmt && $if->body === $block && ($if->test->testsNoneOf($name) || $if->test->testsBlanknessOf($name) || $if->test->testsEmptinessOf($name));
+    }
+
+    /**
+     * The names $function declares `global`.
+     *
+     * @return list<string>
+     */
+    private function globalsOf(FunctionDef $function): array
+    {
+        $declarations = array_filter($this->module->nodes(), fn (Node $node): bool => $node instanceof Simple
+            && $this->functionHolding($node)->isSomeAnd(static fn (FunctionDef $holder): bool => $holder === $function));
+
+        return array_merge([], ...array_map(static fn (Simple $declaration): array => $declaration->globalNames(), array_values($declarations)));
+    }
+
+    /**
+     * The `def` $node is written in, innermost — none at a module's or a class's top level.
+     *
+     * @return Option<FunctionDef>
+     */
+    private function functionHolding(Node $node): Option
+    {
+        $around = array_filter($this->module->ancestorsOf($node), static fn (Node $ancestor): bool => $ancestor instanceof FunctionDef);
+
+        return Option::fromNullable(array_values($around)[0] ?? null);
+    }
+
+    /**
+     * The names a method reaches its own class by — the class's name, and the first parameter of a
+     * `@classmethod`. None for a function outside a class.
+     *
+     * @return list<string>
+     */
+    private function classNamesFor(FunctionDef $function): array
+    {
+        if (! $this->module->isMethod($function)) {
+            return [];
+        }
+
+        $class = array_values(array_filter($this->module->ancestorsOf($function), static fn (Node $around): bool => $around instanceof ClassDef))[0];
+        $bound = array_any($function->decorators, static fn (Expr $decorator): bool => $decorator->dottedName() === 'classmethod');
+
+        return $bound && $function->params !== [] ? [$class->name, $function->params[0]->name] : [$class->name];
     }
 
     /**
@@ -375,9 +462,7 @@ class NodeMatch implements Located
      */
     public function enclosingFunction(): Option
     {
-        $around = array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node instanceof FunctionDef);
-
-        return Option::fromNullable(array_values($around)[0] ?? null);
+        return $this->functionHolding($this->node);
     }
 
     /**

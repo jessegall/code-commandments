@@ -269,6 +269,22 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Does this ask whether $dotted holds nothing — `len(x) == 0`?
+     */
+    public function testsEmptinessOf(string $dotted): bool
+    {
+        if ($this->kind !== ExprKind::Compare || $this->get('operators') !== ['==']) {
+            return false;
+        }
+
+        [$measured, $zero] = $this->get('operands');
+        $arguments = $measured->isCall() ? $measured->get('arguments') : [];
+
+        return $measured->isCall() && $measured->get('callee')->dottedName() === 'len' && count($arguments) === 1
+            && $arguments[0]->dottedName() === $dotted && $zero->literalType() === LiteralType::Number && $zero->get('value') === '0';
+    }
+
+    /**
      * Does this ask whether $dotted is `None` — `x is None`, `x is not None`?
      */
     public function testsNoneOf(string $dotted): bool

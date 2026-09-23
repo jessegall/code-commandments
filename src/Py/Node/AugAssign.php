@@ -26,4 +26,9 @@ final class AugAssign extends Node
     {
         return $this->operator;
     }
+
+    public function writtenTargets(): array
+    {
+        return [$this->target];
+    }
 }
