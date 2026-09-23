@@ -752,6 +752,41 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this `"\n".join(...)` — lines put together into one text?
+     */
+    public function isNewlineJoin(): bool
+    {
+        if (! $this->isCall() || ! $this->get('callee')->is(ExprKind::Attribute) || $this->get('callee')->get('name') !== 'join') {
+            return false;
+        }
+
+        $separator = $this->get('callee')->get('object');
+
+        return $separator->literalType() === LiteralType::String && $separator->get('value') === '\n';
+    }
+
+    /**
+     * The lines this join is handed written out — the elements of a list or tuple literal passed to it — none
+     * when what it joins is computed.
+     *
+     * @return list<self>
+     */
+    public function joinedLines(): array
+    {
+        $joined = $this->isCall() ? ($this->get('arguments')[0] ?? null) : null;
+
+        return $joined !== null && in_array($joined->kind, [ExprKind::List, ExprKind::Tuple], true) ? $joined->get('elements') : [];
+    }
+
+    /**
+     * Is this text written into the source — a string or an f-string — rather than a value computed?
+     */
+    public function isFixedText(): bool
+    {
+        return $this->literalType() === LiteralType::String || $this->kind === ExprKind::FString;
+    }
+
+    /**
      * Is this an `and`?
      */
     public function isAnd(): bool

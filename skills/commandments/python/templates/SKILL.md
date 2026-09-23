@@ -52,6 +52,48 @@ The fixed shape is visible, and the computed part is one hole in it.
 For a ONE-line string with holes, `f"{name} ({count})"` states the shape where `name + " (" + str(count) +
 ")"` assembles it. The principle is the same: the literal in one piece, the values sitting in it.
 
+## Rules
+
+- [ ] Write a multi-line string as one triple-quoted f-string (dedented) that shows its output, never a list of line fragments joined with a newline.
+      _Replace the list and the join with `dedent(f"""…""")`, the varying parts as `{placeholders}` where they land._
+
+## Worked example
+
+### python-assembled-template
+
+a multi-line string built as a list of line fragments and `"\n".join(...)`-ed, instead of a triple-quoted f-string that shows its output
+
+```py
+----------[ Bad ]----------
+
+def slip(order_ref: str, carrier: str, weight_grams: int) -> str:
+    return "\n".join([
+        "PACKING SLIP",
+        f"order:   {order_ref}",
+        f"carrier: {carrier}",
+        f"weight:  {weight_grams} g",
+    ])
+
+----------[ Good ]----------
+
+def slip_shown(order_ref: str, carrier: str, weight_grams: int) -> str:
+    return dedent(f"""\
+        PACKING SLIP
+        order:   {order_ref}
+        carrier: {carrier}
+        weight:  {weight_grams} g""")
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/templates` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-assembled-template`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/templates`](../../backend/templates/SKILL.md) — the same discipline with PHP heredocs.
