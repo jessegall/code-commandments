@@ -2154,6 +2154,19 @@
             ],
             "detail": true
         },
+        "sin_python-restated-comment": {
+            "title": "RestatedComment",
+            "help": "A comment that says nothing its statement does not — the twin of the backend's RestatedCommentDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/documentation",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-python-function": {
             "title": "DuplicateFunction",
             "help": "Two-or-more Python functions with one body — module functions and methods alike — compared by a formatting-blind fingerprint of the body alone, docstrings aside, so the copy that was renamed is caught with the one that was not.",

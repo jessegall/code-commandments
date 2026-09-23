@@ -129,6 +129,15 @@ final class DeclarationMarkers
     }
 
     /**
+     * Is $text, a comment's words, one fixture marker and nothing else — `@sin Name`, `@fixed Name` or
+     * `@righteous Name`? A marker is the fixture's metadata, never prose about the code beneath it.
+     */
+    public static function isMarkerComment(string $text): bool
+    {
+        return preg_match('/^@(?:sin|fixed|righteous)\s+\w+$/', trim($text)) === 1;
+    }
+
+    /**
      * The names in a run of `@{$tag} Name` comments immediately above line $at (1-based)
      * — walking up over consecutive comment lines, stopping at the first line that is
      * neither blank nor a comment, exactly as a template marker binds to the next element.

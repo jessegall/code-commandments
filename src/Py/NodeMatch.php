@@ -26,7 +26,9 @@ use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Support\Prose;
 use JesseGall\CodeCommandments\Support\VerbMood;
+use JesseGall\CodeCommandments\Testing\DeclarationMarkers;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -863,9 +865,46 @@ class NodeMatch implements Located
      */
     public function prose(): array
     {
-        $comments = $this->module->commentsAbove($this->node);
+        $comments = $this->proseComments();
         $above = $comments === [] ? [] : [implode("\n", array_map(static fn (Comment $comment) => $comment->body, $comments))];
 
         return [...$above, ...$this->node->docstring()->mapOr([], static fn (string $docstring) => [$docstring])];
+    }
+
+    /**
+     * The content words of the run of comments above this statement, stemmed and de-duplicated — none when
+     * any of those lines is commented-out code, which is no narration of the statement.
+     *
+     * @return list<string>
+     */
+    public function commentWords(): array
+    {
+        $comments = $this->proseComments();
+
+        if (array_any($comments, static fn (Comment $comment) => CommentedCode::isCode($comment->body))) {
+            return [];
+        }
+
+        return array_values(array_unique(Prose::words(implode(' ', array_map(static fn (Comment $comment) => $comment->text, $comments)))));
+    }
+
+    /**
+     * The words this statement's own head spells, stemmed — {@see CodeWords}.
+     *
+     * @return list<string>
+     */
+    public function codeWords(): array
+    {
+        return CodeWords::of($this->node);
+    }
+
+    /**
+     * The run of comments above this statement, fixture markers set aside.
+     *
+     * @return list<Comment>
+     */
+    private function proseComments(): array
+    {
+        return array_values(array_filter($this->module->commentsAbove($this->node), static fn (Comment $comment): bool => ! DeclarationMarkers::isMarkerComment($comment->text)));
     }
 }

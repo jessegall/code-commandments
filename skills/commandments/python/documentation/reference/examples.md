@@ -115,3 +115,23 @@ def backoff(attempt: int) -> int:
 def retry_delay(attempt: int) -> int:
     return min(2 ** attempt, 60)
 ```
+
+### python-restated-comment
+
+a `#` comment that only narrates the statement below it — every word of it already spelled by the code
+
+```py
+----------[ Bad ]----------
+
+def amount(self) -> int:
+    # set the total to the lines sum
+    total = sum(self.lines)
+    return round(total * self.rate)
+
+----------[ Good ]----------
+
+def rounded_amount(self) -> int:
+    # the tax office rounds each invoice once, never per line
+    subtotal = sum(self.lines)
+    return round(subtotal * self.rate)
+```
