@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "in my Python code order.status is a string and I check == 'paid' or == 'refunded' in several modules, is that ok",
+        "should I use module-level constants PENDING = 'pending' or something else for statuses",
+        "judge flagged string dispatch on kind in three of my Python files — what's the fix"
+    ],
+    "not": [
+        "should create_shipment take street, city and postcode separately or an object"
+    ]
+}

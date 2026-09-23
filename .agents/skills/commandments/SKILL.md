@@ -135,6 +135,7 @@ most:**
 - **`commandments-typescript-duplication`** — a function body written twice becomes one shared function or composable, parameterised by what differs.
 - **`commandments-python-duplication`** — a function body written twice becomes one shared function, parameterised by what differs.
 - **`commandments-python-exceptions`** — raise named exceptions built by a classmethod factory, never swallow a failure, and keep the cause with `raise … from`.
+- **`commandments-python-enums`** — a closed set of values is an `Enum` or `StrEnum` carrying the per-case knowledge as methods, not string constants compared at every call site.
 
 **Finding and fixing sins — the checklist workflow.** Run
 `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the

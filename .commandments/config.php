@@ -64,6 +64,7 @@ $disabledSkills = function (Config $config): void {
         // ----------[ Python ]----------
         // Skills\Python\Absence::class,
         // Skills\Python\Duplication::class,
+        // Skills\Python\Enums::class,
         // Skills\Python\Exceptions::class,
         // Skills\Python\Flow::class,
         // Skills\Python\ValueObjects::class,
