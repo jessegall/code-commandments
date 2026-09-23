@@ -121,6 +121,29 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this an `if` whose branch already left — it ends in a `return`, `throw`, `continue`, `break` or
+     * `yield break` — yet carries an `else`? The `else` says nothing the exit did not, and indents the
+     * rest for it. An `if` whose `else` is the next rung is a ladder, not a guard, and is left to the
+     * ladder rule.
+     */
+    public function hasRedundantElse(): bool
+    {
+        if (! $this->node->is('IfStatement') || $this->isElseIf()) {
+            return false;
+        }
+
+        [$branch, $else] = [$this->node->children()[0], $this->node->children()[1] ?? null];
+
+        if ($else === null || $else->children()[0]->is('IfStatement')) {
+            return false;
+        }
+
+        $statements = $branch->is('Block') ? $branch->children() : [$branch];
+
+        return $statements !== [] && end($statements)->isBailOut();
+    }
+
+    /**
      * How many choices this node sits inside, within the function it belongs to: each `if`, loop or
      * `switch` whose body holds it — an `else if` a rung of the ladder it continues, not a level of its
      * own.

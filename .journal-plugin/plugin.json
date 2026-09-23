@@ -1696,6 +1696,19 @@
             ],
             "detail": true
         },
+        "sin_redundant-csharp-else": {
+            "title": "RedundantElse",
+            "help": "An `else` after an `if` branch that already left — the twin of the backend's and Python's redundant-else rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/flow",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_mirrored-server-type": {
             "title": "MirroredServerType",
             "help": "Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. /",

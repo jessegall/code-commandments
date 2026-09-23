@@ -100,6 +100,14 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
+     */
+    public function isBailOut(): bool
+    {
+        return $this->is('ReturnStatement', 'ThrowStatement', 'ContinueStatement', 'BreakStatement', 'YieldBreakStatement');
+    }
+
+    /**
      * Does this node run a body of its own — a member, an accessor, a local function, a lambda?
      */
     public function isFunction(): bool
