@@ -219,6 +219,21 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this a `*` or `**` spread of a conditional between an empty collection and one written out —
+     * `**({'k': v} if v else {})` — an entry built and included only when a condition holds?
+     */
+    public function isConditionalSpread(): bool
+    {
+        if ($this->kind !== ExprKind::Starred || ! $this->get('value')->is(ExprKind::Conditional)) {
+            return false;
+        }
+
+        [$then, $else] = [$this->get('value')->get('then'), $this->get('value')->get('else')];
+
+        return ($then->isEmptyCollection() && $else->kind->isDisplay()) || ($else->isEmptyCollection() && $then->kind->isDisplay());
+    }
+
+    /**
      * Is this an `and` or an `or` — an operator that may leave its right side unrun?
      */
     public function isShortCircuit(): bool

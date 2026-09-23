@@ -46,6 +46,22 @@ def stock_counted(rows: list, stock) -> None:
         stock.add(row["sku"], row["qty"])
 ```
 
+### python-conditional-spread
+
+`**({"k": v} if v else {})` / `*([x] if x else [])` — an entry spread in only when present, the absence decided in a conditional into an empty collection
+
+```py
+----------[ Bad ]----------
+
+def notify(transport, to: str, body: str, cc: str | None = None) -> None:
+    transport.send(to, body, **({"cc": cc} if cc else {}))
+
+----------[ Good ]----------
+
+def notify_all(transport, to: str, body: str, cc: str | None = None) -> None:
+    transport.send(to, body, cc=cc)
+```
+
 ### python-invented-default
 
 `f(x or "")` — an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data
