@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Sins;
 
 use Composer\InstalledVersions;
+use JesseGall\CodeCommandments\Support\FileTree;
 
 /**
  * A package ecosystem a sin may require a package from, and how each one tells whether the project
@@ -16,6 +17,7 @@ enum Ecosystem: string
     case Composer = 'composer';
     case Npm = 'npm';
     case Pip = 'pip';
+    case NuGet = 'nuget';
 
     /**
      * Does the project at $root depend on $package, named as this ecosystem names it?
@@ -26,6 +28,7 @@ enum Ecosystem: string
             self::Composer => ! class_exists(InstalledVersions::class) || InstalledVersions::isInstalled($package),
             self::Npm => self::inPackageJson($package, "{$root}/package.json"),
             self::Pip => self::inPythonManifests($package, $root),
+            self::NuGet => self::inProjectFiles($package, $root),
         };
     }
 
@@ -38,6 +41,36 @@ enum Ecosystem: string
         $json = (array) json_decode((string) file_get_contents($manifest), true);
 
         return array_key_exists($package, [...(array) ($json['dependencies'] ?? []), ...(array) ($json['devDependencies'] ?? [])]);
+    }
+
+    /**
+     * $package among the `<PackageReference>`s of every project file under $root and of the `.props`
+     * files MSBuild imports into them — read as XML whatever namespace an old-style project declares,
+     * and compared case-blind, as NuGet compares ids.
+     */
+    private static function inProjectFiles(string $package, string $root): bool
+    {
+        $projects = [...FileTree::filesIn($root, 'csproj'), ...FileTree::filesIn($root, 'props')];
+
+        if ($projects === []) {
+            return true;
+        }
+
+        $references = [];
+
+        foreach ($projects as $project) {
+            $xml = simplexml_load_file($project, options: LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING);
+
+            if ($xml === false) {
+                return true;
+            }
+
+            foreach ($xml->xpath('//*[local-name()="PackageReference"]/@Include') ?: [] as $include) {
+                $references[] = strtolower((string) $include);
+            }
+        }
+
+        return in_array(strtolower($package), $references, true);
     }
 
     /**
