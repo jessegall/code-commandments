@@ -20,7 +20,7 @@ final class FileTreeTest extends TestCase
     {
         $this->root = sys_get_temp_dir() . '/cc-file-tree-' . uniqid('', true);
 
-        foreach (['shop', 'shop/env', 'venv/lib', 'python-3.12/lib', 'shop/__pycache__', 'lib/site-packages/requests', 'shop.egg-info', '.venv/lib'] as $dir) {
+        foreach (['shop', 'shop/env', 'venv/lib', 'python-3.12/lib', 'shop/__pycache__', 'lib/site-packages/requests', 'shop.egg-info', '.venv/lib', '.journal/plugins/shop'] as $dir) {
             mkdir("{$this->root}/{$dir}", 0777, true);
             file_put_contents("{$this->root}/{$dir}/module.py", "x = 1\n");
         }
@@ -35,6 +35,11 @@ final class FileTreeTest extends TestCase
         exec('rm -rf ' . escapeshellarg($this->root));
     }
 
+    /**
+     * `.journal/plugins/shop` stands for a tool's installed COPY of the project, like the ~580 gitignored
+     * duplicates beside agent-journal's 438 sources: a hidden folder is tooling, never walked, so a scan
+     * reads exactly what git tracks (measured on agent-journal: the walk reads nothing git ignores).
+     */
     public function test_a_python_walk_reads_only_first_party_sources(): void
     {
         $found = array_map(fn (string $path): string => substr($path, strlen($this->root) + 1), iterator_to_array(FileTree::filesIn($this->root, 'py'), false));
