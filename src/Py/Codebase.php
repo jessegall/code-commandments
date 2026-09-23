@@ -18,6 +18,7 @@ use JesseGall\CodeCommandments\Py\Node\MatchCase;
 use JesseGall\CodeCommandments\Py\Node\Node;
 use JesseGall\CodeCommandments\Py\Node\Param;
 use JesseGall\CodeCommandments\Support\FileTree;
+use JesseGall\CodeCommandments\Support\HeldTool;
 use JesseGall\CodeCommandments\Support\Path;
 use JesseGall\CodeCommandments\WorkingCopy;
 
@@ -46,17 +47,25 @@ final class Codebase implements ModuleCodebase
      */
     private ?array $classNames = null;
 
+    private ?Types $types = null;
+
     /**
      * @param  array<string, string>  $sources  path => source
+     * @param  list<string>  $roots  what was scanned — the whole project mypy types, though only $sources are judged
+     * @param  HeldTool<TypeBridge>  $bridge  the mypy bridge, sought only when a rule first asks for a type
      */
-    public function __construct(private readonly array $sources) {}
+    public function __construct(
+        private readonly array $sources,
+        private readonly array $roots = [],
+        private readonly HeldTool $bridge = new HeldTool(TypeBridge::class),
+    ) {}
 
     /**
      * Every `.py` file under $path, read through $overlay's pending edits.
      *
      * @param  string|list<string>  $path
      */
-    public static function scan(string|array $path, WorkingCopy $overlay = new WorkingCopy(), ExcludedPaths $excluded = new ExcludedPaths()): self
+    public static function scan(string|array $path, WorkingCopy $overlay = new WorkingCopy(), ExcludedPaths $excluded = new ExcludedPaths(), HeldTool $types = new HeldTool(TypeBridge::class)): self
     {
         $files = [];
 
@@ -76,7 +85,7 @@ final class Codebase implements ModuleCodebase
             }
         }
 
-        return new self($sources);
+        return new self($sources, (array) $path, $types);
     }
 
     public static function fromString(string $source, string $path = 'module.py'): self
@@ -88,7 +97,7 @@ final class Codebase implements ModuleCodebase
     {
         $wanted = Path::setOf($paths);
 
-        return new self(array_filter($this->sources, static fn (string $file): bool => isset($wanted[Path::resolved($file)]), ARRAY_FILTER_USE_KEY));
+        return new self(array_filter($this->sources, static fn (string $file): bool => isset($wanted[Path::resolved($file)]), ARRAY_FILTER_USE_KEY), $this->roots, $this->bridge);
     }
 
     public function fileCount(): int
@@ -110,6 +119,20 @@ final class Codebase implements ModuleCodebase
     public function index(): CallIndex
     {
         return $this->index ??= new CallIndex($this);
+    }
+
+    /**
+     * The types mypy resolves in this codebase, read once and kept — every module under the scanned roots
+     * informs them, and only the judged files are written. Empty for a codebase built from strings, and
+     * wherever there is no bridge.
+     */
+    public function types(): Types
+    {
+        if ($this->roots === []) {
+            return $this->types ??= new Types();
+        }
+
+        return $this->types ??= $this->bridge->tool()->mapOr(new Types(), fn (TypeBridge $bridge) => $bridge->read($this->roots, array_keys($this->sources)));
     }
 
     /**

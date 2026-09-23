@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cs;
 
+use JesseGall\CodeCommandments\Support\HeldTool;
+
 use Closure;
 use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\Files\FileQuery;
@@ -39,7 +41,7 @@ final class Codebase implements ModuleCodebase
      *
      * @param  string|list<string>  $path
      */
-    public static function scan(string|array $path, ExcludedPaths $excluded = new ExcludedPaths(), HeldBridge $held = new HeldBridge()): self
+    public static function scan(string|array $path, ExcludedPaths $excluded = new ExcludedPaths(), HeldTool $held = new HeldTool(Bridge::class)): self
     {
         $files = self::filesUnder((array) $path, $excluded);
 
@@ -47,7 +49,7 @@ final class Codebase implements ModuleCodebase
             return new self([]);
         }
 
-        return $held->bridge()->mapOr(new self([]), static fn (Bridge $bridge): self => self::read($bridge, (array) $path, $files));
+        return $held->tool()->mapOr(new self([]), static fn (Bridge $bridge): self => self::read($bridge, (array) $path, $files));
     }
 
     /**

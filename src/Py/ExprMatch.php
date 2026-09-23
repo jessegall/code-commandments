@@ -204,6 +204,17 @@ class ExprMatch implements Located
     }
 
     /**
+     * The type mypy resolved for this expression in $codebase — none where it resolved nothing, or no
+     * bridge ran.
+     *
+     * @return Option<Type>
+     */
+    public function typeIn(Codebase $codebase): Option
+    {
+        return $codebase->types()->at($this->module->file, $this->expr->start, $this->expr->end);
+    }
+
+    /**
      * Is this the whole value an assignment stores — `obj = info and info.weakref()`?
      */
     public function isAssignedValue(): bool

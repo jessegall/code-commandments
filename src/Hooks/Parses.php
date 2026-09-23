@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks;
 
 use JesseGall\CodeCommandments\Codebase;
-use JesseGall\CodeCommandments\Cs\HeldBridge;
+use JesseGall\CodeCommandments\Bridges;
 use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Languages;
 
@@ -22,7 +22,7 @@ final class Parses
      */
     private array $trees = [];
 
-    public function __construct(private readonly HeldBridge $bridge = new HeldBridge()) {}
+    public function __construct(private readonly Bridges $bridges = new Bridges()) {}
 
     /**
      * $file parsed by its own engine — the parse already held while the file has not changed since.
@@ -36,7 +36,7 @@ final class Parses
             return $this->trees[$file][1];
         }
 
-        $parse = Language::ofFile($file)->engine()->scan($file, $languages, bridge: $this->bridge);
+        $parse = Language::ofFile($file)->engine()->scan($file, $languages, bridges: $this->bridges);
         $this->trees[$file] = [$stamp, $parse];
 
         return $parse;
