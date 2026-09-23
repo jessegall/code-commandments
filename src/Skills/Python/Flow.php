@@ -83,8 +83,11 @@ dispatch). The ladder re-tests the subject on every rung and grows a rung per ca
 
 ### Depth is the symptom
 
-Three blocks deep means a decision is buried inside another decision. Guard the outer one away,
-or extract the inner block into a function named for what it decides.
+Every `if`, loop and `match` is one more choice the reader holds open; an `elif` is a rung of the
+same choice, and a `try` or a `with` is a boundary, not a choice. Four choices deep — a loop in a
+loop in an `if` in a loop — means a decision is buried inside another decision. Guard the outer
+one away (`continue` past what does not apply), let a comprehension or a lookup do the inner
+iteration, or extract the inner block into a function named for what it decides.
 
 ### What is NOT this sin
 

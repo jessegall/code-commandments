@@ -49,7 +49,8 @@ final class MarkedExamples
     /**
      * The declarations and statements of $modules marked `@{$marker} Name`, grouped by the Name — a marker
      * names the outermost node its line opens, shown dedented and headed with the file it is in, in the
-     * module's own comment syntax.
+     * module's own comment syntax. A statement is shown as the function it sits in, since the sin is
+     * rarely legible without the rest of it, and a function marked twice is shown once.
      *
      * @param  iterable<ParsedModule>  $modules
      * @return array<string, list<array{file: string, heading: string, source: string}>>
@@ -62,6 +63,8 @@ final class MarkedExamples
             $lines = explode("\n", $module->source);
             $shown = [];
 
+            $functions = $module->functionSpans();
+
             foreach ($module->nodeSpans() as [$start, $end]) {
                 $line = $module->lineAt($start);
 
@@ -72,19 +75,46 @@ final class MarkedExamples
                 }
 
                 $shown[$line] = true;
-                $indent = substr($lines[$line - 1], 0, strspn($lines[$line - 1], " \t"));
+                [$from, $to] = self::enclosingFunction($functions, $start, $end);
+                $opens = $module->lineAt($from);
+                $indent = substr($lines[$opens - 1], 0, strspn($lines[$opens - 1], " \t"));
 
                 foreach (DeclarationMarkers::markersAbove($lines, $line, $marker) as $name) {
-                    $sources[$name][] = [
+                    $sources[$name]["{$module->file}:{$from}"] = [
                         'file' => $module->file,
                         'heading' => $module->language()->comment('in ' . self::name($module->file)),
-                        'source' => ExampleText::dedent(explode("\n", $indent . $module->spanAt($start, $end)->text())),
+                        'source' => ExampleText::dedent(array_values(array_filter(
+                            explode("\n", $indent . $module->spanAt($from, $to)->text()),
+                            static fn (string $line): bool => ! DeclarationMarkers::isMarkerLine($line, $module->language()),
+                        ))),
                     ];
                 }
             }
         }
 
-        return $sources;
+        return array_map(array_values(...), $sources);
+    }
+
+    /**
+     * The innermost of $functions holding `[$start, $end)` — the span itself when no function does.
+     *
+     * @param  list<array{0: int, 1: int}>  $functions
+     * @return array{0: int, 1: int}
+     */
+    private static function enclosingFunction(array $functions, int $start, int $end): array
+    {
+        $innermost = [$start, $end];
+
+        foreach ($functions as [$from, $to]) {
+            $holds = $from <= $start && $end <= $to;
+            $inside = $innermost === [$start, $end] || $from >= $innermost[0];
+
+            if ($holds && $inside) {
+                $innermost = [$from, $to];
+            }
+        }
+
+        return $innermost;
     }
 
     /**

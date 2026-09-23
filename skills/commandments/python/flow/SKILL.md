@@ -52,8 +52,11 @@ dispatch). The ladder re-tests the subject on every rung and grows a rung per ca
 
 ### Depth is the symptom
 
-Three blocks deep means a decision is buried inside another decision. Guard the outer one away,
-or extract the inner block into a function named for what it decides.
+Every `if`, loop and `match` is one more choice the reader holds open; an `elif` is a rung of the
+same choice, and a `try` or a `with` is a boundary, not a choice. Four choices deep — a loop in a
+loop in an `if` in a loop — means a decision is buried inside another decision. Guard the outer
+one away (`continue` past what does not apply), let a comprehension or a lookup do the inner
+iteration, or extract the inner block into a function named for what it decides.
 
 ### What is NOT this sin
 
@@ -61,6 +64,50 @@ or extract the inner block into a function named for what it decides.
 - A `try`/`except` or a `with` that the work genuinely runs inside; that nesting is the resource
   or the failure boundary, not a buried condition.
 - A comprehension's `if` clause — the filter belongs there.
+
+## Rules
+
+- [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a function.
+      _Guard the outer levels away (`return`/`continue` past what does not apply), let a comprehension do the inner iteration, or extract the inner block into a function named for what it decides._
+
+## Worked example
+
+### deep-python-nesting
+
+An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops
+
+```py
+----------[ Bad ]----------
+
+def usable_coupon(coupons, customer, today):
+    for coupon in coupons:
+        if coupon.customer == customer.id:
+            if coupon.starts <= today <= coupon.ends:
+                if coupon.uses_left > 0:
+                    if not coupon.revoked:
+                        return coupon
+    return None
+
+----------[ Good ]----------
+
+def first_usable_coupon(coupons, customer, today):
+    for coupon in coupons:
+        if coupon.customer != customer.id or coupon.revoked:
+            continue
+        if coupon.starts <= today <= coupon.ends and coupon.uses_left > 0:
+            return coupon
+    return None
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/flow` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-python-nesting`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
 

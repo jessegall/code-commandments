@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Py;
 
 use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\NodeSpans;
 use JesseGall\CodeCommandments\ParsedModule;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
@@ -12,6 +13,7 @@ use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Module;
 use JesseGall\CodeCommandments\Py\Node\Node;
 use JesseGall\CodeCommandments\Span;
+use JesseGall\PhpTypes\Option;
 
 /**
  * One parsed Python file: its module tree, its path and source — so a node can say which line it is on
@@ -19,6 +21,8 @@ use JesseGall\CodeCommandments\Span;
  */
 final class ModuleFile implements ParsedModule
 {
+    use NodeSpans;
+
     /**
      * @var list<Node>|null
      */
@@ -28,6 +32,11 @@ final class ModuleFile implements ParsedModule
      * @var array<int, true>|null  the object ids of every `def` written directly in a class body
      */
     private ?array $methods = null;
+
+    /**
+     * @var array<int, Node>|null  each node's parent, by the child's object id
+     */
+    private ?array $parents = null;
 
     private function __construct(
         public readonly Module $module,
@@ -78,15 +87,41 @@ final class ModuleFile implements ParsedModule
         return isset($this->methods[spl_object_id($function)]);
     }
 
+    /**
+     * The node $node sits directly inside — none for the module itself.
+     *
+     * @return Option<Node>
+     */
+    public function parentOf(Node $node): Option
+    {
+        $this->parents ??= $this->parentIds($this->module);
+
+        return Option::fromNullable($this->parents[spl_object_id($node)] ?? null);
+    }
+
+    /**
+     * The nodes $node sits inside, innermost first, out to the module.
+     *
+     * @return list<Node>
+     */
+    public function ancestorsOf(Node $node): array
+    {
+        $this->parents ??= $this->parentIds($this->module);
+        $ancestors = [];
+
+        while (isset($this->parents[spl_object_id($node)])) {
+            $node = $this->parents[spl_object_id($node)];
+            $ancestors[] = $node;
+        }
+
+        return $ancestors;
+    }
+
     public function language(): Language
     {
         return Language::Python;
     }
 
-    public function nodeSpans(): array
-    {
-        return array_map(static fn (Node $node) => [$node->start, $node->end], $this->nodes());
-    }
 
     public function lineAt(int $offset): int
     {
@@ -118,5 +153,20 @@ final class ModuleFile implements ParsedModule
         }
 
         return $ids;
+    }
+
+    /**
+     * @return array<int, Node>
+     */
+    private function parentIds(Node $parent): array
+    {
+        $parents = [];
+
+        foreach ($parent->children() as $child) {
+            $parents[spl_object_id($child)] = $parent;
+            $parents += $this->parentIds($child);
+        }
+
+        return $parents;
     }
 }

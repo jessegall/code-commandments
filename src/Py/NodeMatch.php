@@ -6,7 +6,9 @@ namespace JesseGall\CodeCommandments\Py;
 
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Node\Block;
+use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
+use JesseGall\CodeCommandments\Py\Node\IfStmt;
 use JesseGall\CodeCommandments\Py\Node\Node;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
@@ -72,6 +74,34 @@ class NodeMatch implements Located
     }
 
     /**
+     * How many choices this node sits inside within its own function or class body — each block an `if`,
+     * a loop or a `match` owns is one level, so an `elif` adds none and a `try` or a `with` never counts.
+     */
+    public function branchingDepth(): int
+    {
+        $depth = 0;
+        $child = $this->node;
+
+        foreach ($this->enclosing() as $parent) {
+            if ($child instanceof Block && $parent->isBranchingConstruct()) {
+                $depth++;
+            }
+
+            $child = $parent;
+        }
+
+        return $depth;
+    }
+
+    /**
+     * Is this an `elif` — an `if` standing as another `if`'s else, one rung of its chain?
+     */
+    public function isElif(): bool
+    {
+        return $this->node instanceof IfStmt && $this->module->parentOf($this->node)->isSomeAnd(static fn (Node $parent): bool => $parent instanceof IfStmt);
+    }
+
+    /**
      * Is this a class's `__init__` — structure every class declares for itself, which two classes cannot
      * share however alike they read?
      */
@@ -94,5 +124,25 @@ class NodeMatch implements Located
     protected static function syntaxHash(): string
     {
         return StructuralHash::class;
+    }
+
+    /**
+     * The nodes around this one, innermost first, up to the `def` or `class` it belongs to.
+     *
+     * @return list<Node>
+     */
+    private function enclosing(): array
+    {
+        $enclosing = [];
+
+        foreach ($this->module->ancestorsOf($this->node) as $ancestor) {
+            if ($ancestor instanceof FunctionDef || $ancestor instanceof ClassDef) {
+                break;
+            }
+
+            $enclosing[] = $ancestor;
+        }
+
+        return $enclosing;
     }
 }

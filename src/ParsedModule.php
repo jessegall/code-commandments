@@ -24,6 +24,14 @@ interface ParsedModule
      */
     public function nodeSpans(): array;
 
+    /**
+     * The `[start, end)` span of every node that runs as a function — a `def`, a method, a `function`, a
+     * `const` bound to an arrow.
+     *
+     * @return list<array{0: int, 1: int}>
+     */
+    public function functionSpans(): array;
+
     public function lineAt(int $offset): int;
 
     public function spanAt(int $start, int $end): Span;

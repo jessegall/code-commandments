@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Ts;
 
 use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\NodeSpans;
 use JesseGall\CodeCommandments\ParsedModule;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
@@ -20,6 +21,8 @@ use JesseGall\CodeCommandments\Ts\Parser;
  */
 final class ModuleFile implements ParsedModule
 {
+    use NodeSpans;
+
     /**
      * @var list<Node>|null
      */
@@ -162,10 +165,6 @@ final class ModuleFile implements ParsedModule
         return Language::TypeScript;
     }
 
-    public function nodeSpans(): array
-    {
-        return array_map(static fn (Node $node) => [$node->start, $node->end], $this->nodes());
-    }
 
     public function lineAt(int $offset): int
     {

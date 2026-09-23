@@ -36,4 +36,9 @@ final class ForLoop extends Node
     {
         return [$this->target, $this->iterable];
     }
+
+    public function isBranchingConstruct(): bool
+    {
+        return true;
+    }
 }

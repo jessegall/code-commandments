@@ -1834,6 +1834,19 @@
             ],
             "detail": true
         },
+        "sin_deep-python-nesting": {
+            "title": "DeepNesting",
+            "help": "An `if`, loop or `match` that opens a fourth level of choices inside one function — the arrow the backend's DeepNestingDetector finds, counted over every kind of choice Python writes.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/flow",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_defended-certain-field": {
             "title": "DefendedCertainField",
             "help": "An `?.` on one of the enclosing class's OWN fields, where that field is declared total — a guard against a case the type rules out.",

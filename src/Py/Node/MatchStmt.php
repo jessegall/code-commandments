@@ -28,4 +28,9 @@ final class MatchStmt extends Node
     {
         return [$this->subject];
     }
+
+    public function isBranchingConstruct(): bool
+    {
+        return true;
+    }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Testing;
 
+use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Py\Codebase as PythonCodebase;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Element;
@@ -15,6 +16,11 @@ use JesseGall\CodeCommandments\Vue\Element;
  */
 final class DeclarationMarkers
 {
+    /**
+     * A marker as it reads inside any comment syntax: `@tag Name`.
+     */
+    private const string MARKER = '/@(\w+)\s+(\w+)/';
+
     /**
      * The `file:line` of every declaration marked `@{$tag} Name`, grouped by Name.
      *
@@ -114,6 +120,15 @@ final class DeclarationMarkers
     }
 
     /**
+     * Is $line a fixture marker — a comment in $language holding `@tag Name` and nothing the reader of
+     * an example needs?
+     */
+    public static function isMarkerLine(string $line, Language $language): bool
+    {
+        return $language->isCommentLine($line) && preg_match(self::MARKER, trim($line)) === 1;
+    }
+
+    /**
      * The names in a run of `@{$tag} Name` comments immediately above line $at (1-based)
      * — walking up over consecutive comment lines, stopping at the first line that is
      * neither blank nor a comment, exactly as a template marker binds to the next element.
@@ -139,7 +154,7 @@ final class DeclarationMarkers
             // reading `@righteous` here must not hide the `@fixed` above it. Anything that is not
             // marker-shaped still ends it, so prose above a declaration keeps a marker from binding
             // across it.
-            if (preg_match('/@(\w+)\s+(\w+)/', $text, $match) !== 1) {
+            if (preg_match(self::MARKER, $text, $match) !== 1) {
                 break;
             }
 

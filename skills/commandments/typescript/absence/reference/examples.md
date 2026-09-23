@@ -9,7 +9,9 @@ An `?.` on a field the class declares as always present — a defence against a 
 ```ts
 ----------[ Bad ]----------
 
-return this.customer?.name
+customerName(): string {
+    return this.customer?.name
+}
 
 ----------[ Good ]----------
 
@@ -17,7 +19,9 @@ return this.customer?.name
 private shipment?: Shipment
 
 // in order-tracker.ts
-return this.shipment?.trackingCode ?? 'pending'
+trackingCode(): string {
+    return this.shipment?.trackingCode ?? 'pending'
+}
 ```
 
 ### falsely-optional-field

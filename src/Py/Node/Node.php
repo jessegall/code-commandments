@@ -69,6 +69,15 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * Does this statement CHOOSE — an `if`, a loop, a `match` — so what sits inside it runs
+     * conditionally? Named as the backend names it.
+     */
+    public function isBranchingConstruct(): bool
+    {
+        return false;
+    }
+
+    /**
      * @return Option<Expr>
      */
     public function returnedValue(): Option

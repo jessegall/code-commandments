@@ -12,6 +12,10 @@ use JesseGall\PhpTypes\Option;
  */
 interface SyntaxNode
 {
+    public int $start { get; }
+
+    public int $end { get; }
+
     /**
      * @return list<SyntaxNode>
      */

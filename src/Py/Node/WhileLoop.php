@@ -26,4 +26,9 @@ final class WhileLoop extends Node
     {
         return [$this->test];
     }
+
+    public function isBranchingConstruct(): bool
+    {
+        return true;
+    }
 }
