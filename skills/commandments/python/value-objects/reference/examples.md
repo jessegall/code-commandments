@@ -171,3 +171,30 @@ class NamedScanner:
         prefix, _, serial = code.partition("-")
         return Scan(prefix, serial, self.catalog.sku_for(prefix))
 ```
+
+### python-raw-decoded-return
+
+`return json.loads(…)` — decoded text from outside handed on as bare dicts and lists, its shape known to no type
+
+```py
+----------[ Bad ]----------
+
+def fetch_prices(client, supplier: str):
+    return json.loads(client.get(f"/suppliers/{supplier}/prices"))
+
+----------[ Good ]----------
+
+# in supplier_feed.py
+@dataclass(frozen=True)
+class SupplierPrice:
+    sku: str
+    cents: int
+
+    @classmethod
+    def from_json(cls, raw: dict) -> "SupplierPrice":
+        return cls(sku=raw["sku"], cents=int(raw["cents"]))
+
+# in supplier_feed.py
+def fetch_supplier_prices(client, supplier: str) -> list:
+    return [SupplierPrice.from_json(raw) for raw in json.loads(client.get(f"/suppliers/{supplier}/prices"))]
+```

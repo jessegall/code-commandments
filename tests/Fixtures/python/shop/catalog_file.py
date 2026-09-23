@@ -3,7 +3,14 @@
 # one failure that is expected is named, raised with its cause, and everything else propagates.
 
 import json
+from dataclasses import dataclass
 from pathlib import Path
+
+
+# @fixed SwallowedException
+@dataclass(frozen=True)
+class Catalog:
+    products: dict
 
 
 # @fixed SwallowedException
@@ -13,17 +20,17 @@ class CatalogUnreadable(Exception):
         return cls(f"the catalog at {path} is not valid JSON")
 
 
-def load_catalog(path: Path) -> dict:
+def load_catalog(path: Path):
     try:
-        return json.loads(path.read_text())
+        return Catalog(json.loads(path.read_text()))
     # @sin SwallowedException
     except Exception:
         return {}
 
 
 # @fixed SwallowedException
-def read_catalog(path: Path) -> dict:
+def read_catalog(path: Path) -> Catalog:
     try:
-        return json.loads(path.read_text())
+        return Catalog(json.loads(path.read_text()))
     except json.JSONDecodeError as error:
         raise CatalogUnreadable.at(path) from error

@@ -64,6 +64,8 @@ waiting to be named. Give them one type and pass that.
       _`@dataclass(frozen=True)` and `return replace(self, amount=…)` from the method that changed it._
 - [ ] Return a named result — a frozen dataclass or a NamedTuple — not a tuple of different things the caller unpacks by position.
       _A small `@dataclass(frozen=True)` (or `NamedTuple`) whose fields name each slot._
+- [ ] Parse decoded data into a typed value at the boundary; never hand back a raw `json.loads(...)` result.
+      _Build the dataclass (or a TypedDict-typed value) from the decoded data where it arrives — `Settings.from_json(json.loads(text))`._
 
 ## Worked example
 
@@ -107,17 +109,17 @@ def schedule_delivery(address: Address, carrier) -> str:
     return carrier.book(address.line())
 ```
 
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/value-objects` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-data-clump`, `python-dict-bag`, `python-dict-return-bag`, `python-hand-rolled-replace`, `python-mutable-value-object`, `python-positional-tuple-return`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-data-clump`, `python-dict-bag`, `python-dict-return-bag`, `python-hand-rolled-replace`, `python-mutable-value-object`, `python-positional-tuple-return`, `python-raw-decoded-return`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

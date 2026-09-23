@@ -64,13 +64,18 @@ A bare `except:` or `except Exception` whose body only passes, continues or retu
 ```py
 ----------[ Bad ]----------
 
-def load_catalog(path: Path) -> dict:
+def load_catalog(path: Path):
     try:
-        return json.loads(path.read_text())
+        return Catalog(json.loads(path.read_text()))
     except Exception:
         return {}
 
 ----------[ Good ]----------
+
+# in catalog_file.py
+@dataclass(frozen=True)
+class Catalog:
+    products: dict
 
 # in catalog_file.py
 class CatalogUnreadable(Exception):
@@ -79,9 +84,9 @@ class CatalogUnreadable(Exception):
         return cls(f"the catalog at {path} is not valid JSON")
 
 # in catalog_file.py
-def read_catalog(path: Path) -> dict:
+def read_catalog(path: Path) -> Catalog:
     try:
-        return json.loads(path.read_text())
+        return Catalog(json.loads(path.read_text()))
     except json.JSONDecodeError as error:
         raise CatalogUnreadable.at(path) from error
 ```

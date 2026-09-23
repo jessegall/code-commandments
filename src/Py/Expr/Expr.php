@@ -447,6 +447,25 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this `json.loads(…)` or `json.load(…)` — text from outside decoded into bare dicts and lists?
+     */
+    public function isJsonDecode(): bool
+    {
+        return $this->isCall() && in_array($this->get('callee')->dottedName(), ['json.loads', 'json.load'], true);
+    }
+
+    /**
+     * Does this decode what it has just encoded — `json.loads(json.dumps(x))` — our own value round-tripped,
+     * with nothing crossing a boundary?
+     */
+    public function decodesItsOwnEncoding(): bool
+    {
+        $arguments = $this->isJsonDecode() ? $this->get('arguments') : [];
+
+        return $arguments !== [] && $arguments[0]->isCall() && $arguments[0]->get('callee')->dottedName() === 'json.dumps';
+    }
+
+    /**
      * Is this a tuple of three or more elements read from at least two different names — a bundle whose
      * slots mean different things and are known only by their position?
      */
