@@ -191,6 +191,14 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * @return list<static>
+     */
+    public function answers(): array
+    {
+        return [$this];
+    }
+
+    /**
      * What this literal holds — null for an expression that is no literal.
      */
     public function literalType(): ?LiteralType

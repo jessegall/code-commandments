@@ -29,6 +29,14 @@ interface SyntaxExpression
     public function isConstant(): bool;
 
     /**
+     * The values this expression can come out as — the arms of a switch or conditional expression that
+     * picks one, or the expression itself.
+     *
+     * @return list<static>
+     */
+    public function answers(): array;
+
+    /**
      * @return list<static>
      */
     public function flatten(): array;

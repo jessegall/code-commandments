@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Cs;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
+use JesseGall\PhpTypes\Option;
 
 /**
  * A C# node a query found, with the file it is in — a statement, a member or an expression alike.
@@ -56,6 +57,48 @@ class NodeMatch implements Located
     public function scope(): string
     {
         return $this->name() === '' ? $this->node->kind : "{$this->node->kind} {$this->name()}";
+    }
+
+    public function isConstructorDeclaration(): bool
+    {
+        return $this->node->is('ConstructorDeclaration');
+    }
+
+    /**
+     * A body that only says it is not written yet — `throw new NotImplementedException()`, as a block or
+     * an expression body. (A member with no body at all — abstract, on an interface, a partial's
+     * declaring half — is no function to begin with.)
+     */
+    public function isStub(): bool
+    {
+        return $this->node->functionBody()->isSomeAnd(
+            static fn (Node $body): bool => self::thrown($body)->isSomeAnd(static fn (Node $exception): bool => $exception->type?->name === 'global::System.NotImplementedException'),
+        );
+    }
+
+    /**
+     * Does this member override a base member or implement an interface's, as the compiler resolved it?
+     * Its shape is the contract's before it is its own.
+     */
+    public function isOverride(): bool
+    {
+        return $this->node->inherited;
+    }
+
+    /**
+     * What $body throws when throwing is all it does — `{ throw …; }` or `=> throw …`.
+     *
+     * @return Option<Node>
+     */
+    private static function thrown(Node $body): Option
+    {
+        $throw = match (true) {
+            $body->is('Block') && count($body->children()) === 1 && $body->children()[0]->is('ThrowStatement') => $body->children()[0],
+            $body->is('ArrowExpressionClause') && $body->expressions()[0]->is('ThrowExpression') => $body->expressions()[0],
+            default => null,
+        };
+
+        return Option::fromNullable($throw?->expressions()[0] ?? null);
     }
 
     protected static function syntaxHash(): string

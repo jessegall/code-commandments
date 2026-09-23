@@ -81,7 +81,7 @@ trait ReadsFunctionBody
         return $this->node->functionBody()->isSomeAnd(static function (SyntaxNode $body): bool {
             $returns = [];
 
-            foreach ($body->descendants() as $node) {
+            foreach ([$body, ...$body->descendants()] as $node) {
                 foreach ($node->expressions() as $expression) {
                     if (array_any($expression->flatten(), static fn (SyntaxExpression $part): bool => $part->isCall())) {
                         return false;
@@ -93,12 +93,15 @@ trait ReadsFunctionBody
                 }
             }
 
-            return $returns !== [] && array_all($returns, static fn (SyntaxNode $return): bool => $return->returnedValue()->isSomeAnd(static fn (SyntaxExpression $value): bool => $value->isConstant()));
+            return $returns !== [] && array_all($returns, static fn (SyntaxNode $return): bool => $return->returnedValue()->isSomeAnd(
+                static fn (SyntaxExpression $value): bool => array_all($value->answers(), static fn (SyntaxExpression $answer): bool => $answer->isConstant()),
+            ));
         });
     }
 
     /**
-     * The one statement that counts in the function body — none for a body of any other length, or no body.
+     * The one statement that counts in the function body — the body itself when it IS one statement (an
+     * expression body), none for a body of any other length, or no body.
      *
      * @return Option<SyntaxNode>
      */
@@ -107,7 +110,7 @@ trait ReadsFunctionBody
         $hash = static::syntaxHash();
 
         return $this->node->functionBody()
-            ->filter(static fn (SyntaxNode $body): bool => count($hash::counted($body)) === 1)
-            ->map(static fn (SyntaxNode $body): SyntaxNode => $hash::counted($body)[0]);
+            ->filter(static fn (SyntaxNode $body): bool => $body->isReturn() || $body->isExpressionStatement() || count($hash::counted($body)) === 1)
+            ->map(static fn (SyntaxNode $body): SyntaxNode => $body->isReturn() || $body->isExpressionStatement() ? $body : $hash::counted($body)[0]);
     }
 }

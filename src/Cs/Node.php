@@ -169,9 +169,12 @@ final class Node implements SyntaxNode, SyntaxExpression
         return Option::none();
     }
 
+    /**
+     * A `return`, or an expression body (`=> value`) that hands its value back.
+     */
     public function isReturn(): bool
     {
-        return $this->kind === 'ReturnStatement';
+        return $this->kind === 'ReturnStatement' || ($this->is('ArrowExpressionClause') && ! $this->isVoid());
     }
 
     /**
@@ -182,9 +185,20 @@ final class Node implements SyntaxNode, SyntaxExpression
         return $this->isReturn() ? Option::fromNullable($this->expressions()[0] ?? null) : Option::none();
     }
 
+    /**
+     * An expression run for its effect — a statement, or the expression body of a `void` member.
+     */
     public function isExpressionStatement(): bool
     {
-        return $this->kind === 'ExpressionStatement';
+        return $this->kind === 'ExpressionStatement' || ($this->is('ArrowExpressionClause') && $this->isVoid());
+    }
+
+    /**
+     * Is this an expression body whose call returns nothing?
+     */
+    private function isVoid(): bool
+    {
+        return $this->expressions()[0]->type?->name === 'global::System.Void';
     }
 
     public function kindName(): string
@@ -203,6 +217,21 @@ final class Node implements SyntaxNode, SyntaxExpression
     public function isConstant(): bool
     {
         return str_ends_with($this->kind, 'LiteralExpression');
+    }
+
+    /**
+     * A switch expression answers with each arm's value, a conditional with either branch — each read
+     * the same way, since an arm can itself pick.
+     *
+     * @return list<self>
+     */
+    public function answers(): array
+    {
+        return match ($this->kind) {
+            'SwitchExpression' => array_merge(...array_map(static fn (self $arm): array => $arm->expressions()[array_key_last($arm->expressions())]->answers(), array_values(array_filter($this->children, static fn (self $child): bool => $child->is('SwitchExpressionArm'))))),
+            'ConditionalExpression' => [...$this->expressions()[1]->answers(), ...$this->expressions()[2]->answers()],
+            default => [$this],
+        };
     }
 
     /**

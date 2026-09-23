@@ -73,6 +73,14 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * @return list<static>
+     */
+    public function answers(): array
+    {
+        return [$this];
+    }
+
+    /**
      * `a ?? b` — the absence fallback. Named as the backend names it.
      */
     public function isCoalesce(): bool
