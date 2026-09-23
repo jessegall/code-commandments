@@ -138,7 +138,7 @@ most:**
 scan: judge runs EVERY engine over whatever you point it at, so a path holding
 frontend sources (`judge resources/js`) is judged as the frontend
 — **Vue components and plain TypeScript alike** — a path holding Python is judged as
-Python, and any subdirectory of your
+Python, one holding C# as C#, and any subdirectory of your
 own tree scopes to that subtree. (Also `--skill=NAME` to scope to one group; `--branch`
 for files new/changed vs `main`; `--changes` for uncommitted changes.) A full scan
 is slow, so it writes the findings to a checklist — your session's

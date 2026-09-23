@@ -16,7 +16,7 @@ use JesseGall\CodeCommandments\Engine;
 final class SkillExamples
 {
     /**
-     * $fixtures holds one folder per engine, named as the engine is (`backend`, `frontend`, `python`).
+     * $fixtures holds one folder per engine, named as the engine is (`backend`, `frontend`, `python`, `csharp`).
      *
      * @return array<class-string<Detector>, list<Example>>
      */

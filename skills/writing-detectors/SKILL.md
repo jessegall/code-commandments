@@ -194,6 +194,7 @@ auto-fix is worse than no auto-fix.
 | `commandments make <Name>` | scaffold a backend (PHP) commandment and register it |
 | `commandments make <Name> --engine=frontend` | scaffold a frontend (Vue) one instead |
 | `commandments make <Name> --engine=python` | scaffold a Python one instead |
+| `commandments make <Name> --engine=csharp` | scaffold a C# one instead |
 | `commandments make <Name> --skill=NAME` | point the sin at an EXISTING skill (shipped or your own) instead of writing a new one |
 
 <!-- END: commands:make -->

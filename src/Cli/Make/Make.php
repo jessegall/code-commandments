@@ -37,6 +37,7 @@ final class Make implements Command
             ->form('make <Name>', 'scaffold a backend (PHP) commandment and register it')
             ->form('make <Name> --engine=frontend', 'scaffold a frontend (Vue) one instead')
             ->form('make <Name> --engine=python', 'scaffold a Python one instead')
+            ->form('make <Name> --engine=csharp', 'scaffold a C# one instead')
             ->form('make <Name> --skill=NAME', 'point the sin at an EXISTING skill (shipped or your own) instead of writing a new one')
             ->option('--engine=backend|frontend|python|csharp', 'which parse engine the detector reads (default: backend)')
             ->option('--skill=NAME', 'the skill that teaches the fix — a lenient name/slug match against the existing skills, or a new slug to create one')
@@ -64,7 +65,9 @@ final class Make implements Command
         $parsed = $engine->mapOr(Engine::Backend, Engine::parse(...));
 
         if ($parsed === null) {
-            return HelpScreen::usage($this, "unknown --engine={$engine->unwrap()} — it is `backend`, `frontend` or `python`.");
+            $engines = implode(', ', array_map(static fn (Engine $known): string => "`{$known->value}`", Engine::cases()));
+
+            return HelpScreen::usage($this, "unknown --engine={$engine->unwrap()} — it is one of {$engines}.");
         }
 
         $root = getcwd();

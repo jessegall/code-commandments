@@ -13,8 +13,8 @@ use JesseGall\CodeCommandments\Testing\FrontendFixture;
 use JesseGall\CodeCommandments\Testing\ModuleFixture;
 
 /**
- * Which parse engine a detector reads — the PHP AST, the Vue components and TypeScript modules, or
- * Python modules. It is the ONE thing that genuinely differs between one commandment and another, so it
+ * Which parse engine a detector reads — the PHP AST, the Vue components and TypeScript modules, Python
+ * modules, or C# read through the Roslyn bridge. It is the ONE thing that genuinely differs between one commandment and another, so it
  * is stated once, as a type, and everything downstream (the base interface a stub implements, the
  * codebase it queries, the fixture the guidance points at) is projected from it.
  */
