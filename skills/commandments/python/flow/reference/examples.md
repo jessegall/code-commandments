@@ -90,6 +90,28 @@ def invoice_delivered(orders, ledger) -> int:
     return sent
 ```
 
+### python-nested-conditional
+
+`a if x else b if y else c` — a conditional expression inside another's branch, a branching decision folded into one line
+
+```py
+----------[ Bad ]----------
+
+def badge(order) -> str:
+    return "green" if order.status == "paid" else "amber" if order.status == "pending" else "red"
+
+----------[ Good ]----------
+
+def badge_for(order) -> str:
+    match order.status:
+        case "paid":
+            return "green"
+        case "pending":
+            return "amber"
+        case _:
+            return "red"
+```
+
 ### redundant-python-else
 
 An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing

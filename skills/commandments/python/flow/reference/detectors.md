@@ -5,5 +5,6 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`python-coalesced-loop-subject`** — `for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard — `CoalescedLoopSubjectDetector`
 - **`deep-python-nesting`** — An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops — `DeepNestingDetector`
 - **`python-loop-wrapped-in-if`** — A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition — `LoopWrappedInIfDetector`
+- **`python-nested-conditional`** — `a if x else b if y else c` — a conditional expression inside another's branch, a branching decision folded into one line — `NestedConditionalDetector`
 - **`redundant-python-else`** — An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing — `RedundantElseDetector`
 - **`python-subject-ladder`** — An `if`/`elif` chain of four or more rungs that each test ONE subject for equality with a constant — a dispatch written as a ladder — `SubjectLadderDetector`

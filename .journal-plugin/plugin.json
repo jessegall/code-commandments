@@ -2063,9 +2063,35 @@
             ],
             "detail": true
         },
+        "sin_python-coalesced-loop-subject": {
+            "title": "CoalescedLoopSubject",
+            "help": "A `for` that decides in its own header whether it was handed anything to walk — the twin of the backend's CoalescedLoopSubjectDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/flow",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-loop-wrapped-in-if": {
             "title": "LoopWrappedInIf",
             "help": "A loop whose whole body is one `if` around real work — the twin of the backend's LoopInvertedGuardDetector. /",
+            "type": "flag",
+            "default": "true",
+            "group": "python/flow",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-nested-conditional": {
+            "title": "NestedConditional",
+            "help": "A conditional expression nested in another's branch, flagged once at its outermost — the twin of the backend's NestedTernaryDetector. /",
             "type": "flag",
             "default": "true",
             "group": "python/flow",

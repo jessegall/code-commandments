@@ -138,6 +138,23 @@ class ExprMatch implements Located
     }
 
     /**
+     * Is this the outermost of a conditional expression nested in another's branch — the one finding a
+     * chain of them yields?
+     */
+    public function isOutermostNestedConditional(): bool
+    {
+        return $this->expr->nestsConditional() && ! $this->isInsideConditional();
+    }
+
+    /**
+     * Does any expression this one sits in — out to its statement — read as a conditional?
+     */
+    private function isInsideConditional(): bool
+    {
+        return array_any($this->module->wrappersOf($this->expr), static fn (Expr $around): bool => $around->is(ExprKind::Conditional));
+    }
+
+    /**
      * The names of the parameters a caller of $function supplies — every one but a bound method's first.
      *
      * @return list<string>

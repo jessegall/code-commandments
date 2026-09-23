@@ -233,6 +233,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\LoopWrappedInIf::class,
         // Sins\Python\MessageStringRaise::class,
         // Sins\Python\NearDuplicateFunction::class,
+        // Sins\Python\NestedConditional::class,
         // Sins\Python\RedundantElse::class,
         // Sins\Python\SubjectLadder::class,
         // Sins\Python\SwallowedException::class,

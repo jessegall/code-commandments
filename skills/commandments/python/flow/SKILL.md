@@ -74,6 +74,8 @@ iteration, or extract the inner block into a function named for what it decides.
       _Guard the outer levels away (`return`/`continue` past what does not apply), let a comprehension do the inner iteration, or extract the inner block into a function named for what it decides._
 - [ ] Invert a loop body wrapped in one `if` into a `continue` guard so the work sits at the loop's own level.
       _Write `if not <condition>: continue` as the first line of the loop and dedent the body under it._
+- [ ] Unfold a conditional expression nested in another's branch into a `match`, a lookup or guard clauses; don't chain `… if … else … if … else …`.
+      _A `match` over the subject, a dict lookup for a table of values, or a small function whose guards return early._
 - [ ] Drop the `else:` after a branch that returns, raises, continues or breaks — let the rest run at the function's own level.
       _Delete the `else:` line and dedent its block; the exit above it already says the rest only runs when the condition was false._
 - [ ] Dispatch on a value with an `Enum` that answers per case, a dict keyed by the value, or a `match` — never a ladder of `==` tests on one subject.
@@ -113,17 +115,17 @@ def descendants_of(below: defaultdict, parent: str) -> list:
     return found
 ```
 
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/flow` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `deep-python-nesting`, `python-loop-wrapped-in-if`, `redundant-python-else`, `python-subject-ladder`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `deep-python-nesting`, `python-loop-wrapped-in-if`, `python-nested-conditional`, `redundant-python-else`, `python-subject-ladder`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

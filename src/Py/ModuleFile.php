@@ -122,6 +122,16 @@ final class ModuleFile implements ParsedModule
     }
 
     /**
+     * The expressions $expression sits inside, innermost first, out to the one its statement holds.
+     *
+     * @return list<Expr>
+     */
+    public function wrappersOf(Expr $expression): array
+    {
+        return $this->wrapperOf($expression)->mapOr([], fn (Expr $around) => [$around, ...$this->wrappersOf($around)]);
+    }
+
+    /**
      * The node that holds $expression — the statement it is part of.
      *
      * @return Option<Node>

@@ -179,6 +179,21 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this a conditional expression that holds another in a branch — `a if x else b if y else c`,
+     * `(a if y else b) if x else c` — at any depth, a call or a collection in between included?
+     */
+    public function nestsConditional(): bool
+    {
+        if ($this->kind !== ExprKind::Conditional) {
+            return false;
+        }
+
+        $branches = [...$this->get('then')->flatten(), ...$this->get('else')->flatten()];
+
+        return array_any($branches, static fn (self $branch): bool => $branch->is(ExprKind::Conditional));
+    }
+
+    /**
      * An empty list, tuple, dict or set written out — "no items", as a value.
      */
     public function isEmptyCollection(): bool
