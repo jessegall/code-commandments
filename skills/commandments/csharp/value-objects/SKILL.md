@@ -61,7 +61,7 @@ A tuple returned and taken apart by position is the same thing unnamed.
 
 ### csharp-data-clump
 
-The same three or more string, number, date or id parameters threaded through methods of two or more types — a value that travels together, waiting for a name
+The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own.
 
 ```cs
 ----------[ Bad ]----------

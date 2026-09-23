@@ -45,11 +45,11 @@ So the signature demands what it uses — `def rename(node: Node, title: str)` �
 
 ## Rules
 
-- [ ] Hand the method the object its callers keep asking, and let it ask; a bool every caller computes the same way is a decision living in the wrong place.
+- [ ] Hand the method the object that its callers keep asking about, and let the method ask it directly; a bool every caller computes the same way is a decision made in the wrong place.
       _Take the object (`text(order)`) and read `order.status`/`order.total` inside, so the rule lives once._
 - [ ] Declare the parameter in the type callers actually hold and convert inside — one rule about the conversion, in one place.
       _Move the conversion into the function and take what the callers had (`receipt_for(order)` or `receipt_for(order_id: int)`); a caller that forgets the conversion can no longer pass the wrong thing._
-- [ ] Pass the object once and let the function read what it needs from it; a value derived from an argument already handed over is the function's to derive.
+- [ ] Pass the object once and let the function read what it needs from it; if a value can be derived from an argument already passed in, the function should derive it itself.
       _Drop the projected parameter and read it inside (`persist(request)` reading `request.channel_id`), or take the object in place of its pieces._
 - [ ] Take the object the function works on, not an id plus the container it lives in; the caller resolves it once and owns the not-found failure.
       _Change the signature to take the resolved object (`def rename(node: Node, title: str)`) and resolve at the caller, where the id was born._

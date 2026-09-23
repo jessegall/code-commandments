@@ -51,7 +51,7 @@ not solve a crowded inventory by scattering the inventory.
 
 ### member-after-method
 
-A trait use, constant, property, property hook or enum case declared BELOW a method — state a reader only meets after the behaviour that uses it
+A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it.
 
 ```php
 ----------[ Bad ]----------

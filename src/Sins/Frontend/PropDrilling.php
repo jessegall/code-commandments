@@ -14,7 +14,7 @@ final class PropDrilling extends Sin
         parent::__construct(
             name: 'prop-drilling',
             skill: VueComponents::class,
-            description: "A prop forwarded through a chain of 2+ components, none of which read it — piped from parent to leaf through dead conduits",
+            description: 'A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further.',
             rule: "Don't thread a prop through a component that doesn't use it; provide/inject it, or give the child the data directly."
         );
     }

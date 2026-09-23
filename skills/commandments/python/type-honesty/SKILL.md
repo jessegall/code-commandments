@@ -53,7 +53,7 @@ move the value into the signature, a required attribute or a value object, and d
 
 ### python-constant-property
 
-an `@property` whose body never reads `self` — `return "box"` — a stored value dressed as a computed one
+an `@property` whose body never reads `self` — `return "box"` — a stored value made to look like a computed one.
 
 ```py
 ----------[ Bad ]----------

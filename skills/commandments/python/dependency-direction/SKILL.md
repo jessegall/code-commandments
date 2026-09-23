@@ -7,8 +7,9 @@ description: "Adding an import between two of the project's own Python packages.
 
 > 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
 
-> A package is a claim about what depends on what. One import going the wrong way and two packages are a single
-> tangled unit wearing two names, so the direction is declared once and every import is judged against it.
+> A package is a claim about what depends on what. One import going the wrong way makes the two
+>         packages really just one package split across two names, so the direction is declared once and every
+>         import is checked against it.
 
 ## The principle
 
@@ -67,7 +68,7 @@ still there.
 
 ### python-namespace-cycle
 
-two of the project's packages import each other — a cycle that makes them one package wearing two names
+two of the project's packages import each other — a cycle that makes them one package split under two names.
 
 ```py
 ----------[ Bad ]----------

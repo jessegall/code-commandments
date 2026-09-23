@@ -15,8 +15,8 @@ final class PlaceholderFilledData extends Sin
             name: 'placeholder-filled-data',
             skill: TypeHonesty::class,
             description: "A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none",
-            rule: 'A required slot means the caller has the value. Filling it to satisfy the signature makes the envelope lie in a way no type can catch.',
-            suggestion: 'Fetch the real value, or split a narrower envelope that only promises what this answer knows.'
+            rule: 'A required slot means the caller has the value. Filling it just to satisfy the type signature hides a missing value in a way no type check can catch.',
+            suggestion: 'Fetch the real value, or split off a narrower type that only promises the fields you actually have.'
         );
     }
 }

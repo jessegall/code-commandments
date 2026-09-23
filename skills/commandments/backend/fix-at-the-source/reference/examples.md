@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### constructor-side-effect
 
-a constructor that performs a SIDE EFFECT on a collaborator — the result thrown away, so merely building the object changes the world
+A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it.
 
 ```php
 ----------[ Bad ]----------
@@ -43,7 +43,7 @@ final class LazyLedgerExport
 
 ### divergent-twin
 
-Two methods do one job — the same rare verbs, in different words — and one of them does strictly less of it, which is what a change looks like when it landed in only one of the two places that should have been one
+Two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other.
 
 ```php
 ----------[ Bad ]----------
@@ -241,7 +241,7 @@ public function markImported(): void
 
 ### mutable-static-state
 
-a write to a static property — a global wearing a namespace, where whoever writes last wins and execution order becomes load-bearing
+A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result.
 
 ```php
 ----------[ Bad ]----------

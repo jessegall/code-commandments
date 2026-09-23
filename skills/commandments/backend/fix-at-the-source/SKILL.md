@@ -107,8 +107,8 @@ is born, and every `Command` that exists is real.
 
 - [ ] Let a constructor establish what the object IS; never let building one change anything outside it.
       _Keep the collaborator as a field and act on it from the method that someone actually calls._
-- [ ] Funnel a shared behaviour through ONE path. Where two places do the same job, the one that must happen everywhere cannot be left to each of them to remember.
-      _Route the poorer path through the richer one, so the step cannot be forgotten again._
+- [ ] Put shared behaviour in one place, so a step that must always happen can't be forgotten in a copy.
+      _Make the shorter function call the longer one, or have both call one shared function._
 - [ ] Extract copy-pasted code — two functions with an identical AST must become one.
 - [ ] Fix an absent value at its source; never fill a required slot with a manufactured `?? ''`/`?? 0`/`?? []`.
       _Throw a named exception at the boundary, or bake a real default into the signature._
@@ -120,7 +120,7 @@ is born, and every `Command` that exists is real.
 
 ### constructor-side-effect
 
-a constructor that performs a SIDE EFFECT on a collaborator — the result thrown away, so merely building the object changes the world
+A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it.
 
 ```php
 ----------[ Bad ]----------

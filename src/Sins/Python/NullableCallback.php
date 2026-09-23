@@ -14,7 +14,7 @@ final class NullableCallback extends Sin
         parent::__construct(
             name: 'python-nullable-callback',
             skill: Absence::class,
-            description: '`cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op wearing a disguise',
+            description: '`cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op treated as if it might be missing.',
             rule: 'Default an optional callback to a no-op in the signature; don\'t take `None` and normalise it in the body.',
             suggestion: 'Default the parameter to a named no-op — `def ignore(*_): pass`, then `on_retry: Callable[[int], None] = ignore` — and call it unconditionally.',
         );

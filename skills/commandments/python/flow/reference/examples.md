@@ -36,7 +36,7 @@ def descendants_of(below: defaultdict, parent: str) -> list:
 
 ### python-conditional-statement
 
-a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an ACTION, not a value
+a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an action, not a value.
 
 ```py
 ----------[ Bad ]----------
@@ -157,7 +157,7 @@ def price_of(line: Line) -> int:
 
 ### python-short-circuit-statement
 
-a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is an `if` in disguise
+a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is really acting as an `if`.
 
 ```py
 ----------[ Bad ]----------
@@ -176,7 +176,7 @@ def ensure_warm(self, key: str) -> None:
 
 ### python-subject-ladder
 
-An `if`/`elif` chain of four or more rungs that each test ONE subject for equality with a constant — a dispatch written as a ladder
+An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant — a dispatch written as a ladder.
 
 ```py
 ----------[ Bad ]----------

@@ -15,7 +15,7 @@ final class ComputedBooleanArgument extends Sin
             name: 'python-computed-boolean-argument',
             skill: PassTheObject::class,
             description: 'a method taking only bools that every caller computes from the same object — the decision re-derived at each call site',
-            rule: 'Hand the method the object its callers keep asking, and let it ask; a bool every caller computes the same way is a decision living in the wrong place.',
+            rule: 'Hand the method the object that its callers keep asking about, and let the method ask it directly; a bool every caller computes the same way is a decision made in the wrong place.',
             suggestion: 'Take the object (`text(order)`) and read `order.status`/`order.total` inside, so the rule lives once.',
         );
     }

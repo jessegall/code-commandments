@@ -8,7 +8,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`inline-throw`** — `?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression) — `InlineThrowDetector`
 - **`loop-inverted-guard`** — Loop body (multi-statement) wrapped in an `if` instead of `continue` guard — `LoopInvertedGuardDetector`
 - **`nested-ternary`** — Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) — `NestedTernaryDetector`
-- **`non-counting-for`** — a `for` whose step assigns the next thing instead of advancing a counter — a walk wearing a counted loop's clothes — `NonCountingForDetector`
+- **`non-counting-for`** — A `for` loop that looks like it's counting, but its step actually assigns the next item instead of incrementing a counter. — `NonCountingForDetector`
 - **`redundant-else`** — `else` after an `if` branch that already returns/throws (redundant) — `RedundantElseDetector`
 - **`short-circuit-statement`** — a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise — `ShortCircuitStatementDetector`
 - **`ternary-statement`** — a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value — `TernaryStatementDetector`

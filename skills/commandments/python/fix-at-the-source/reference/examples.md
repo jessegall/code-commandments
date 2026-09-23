@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### python-constructor-side-effect
 
-an `__init__` that tells a collaborator to act and throws the answer away — merely building the object changes the world
+an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it.
 
 ```py
 ----------[ Bad ]----------
@@ -36,7 +36,7 @@ def install_card_payments(registry, fee: float) -> CardPayments:
 
 ### python-divergent-twin
 
-two functions do one job — the same rare outside calls, in different words — and one does strictly less of it, which is what a change looks like when it landed in only one of the two places that should have been one
+two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other.
 
 ```py
 ----------[ Bad ]----------

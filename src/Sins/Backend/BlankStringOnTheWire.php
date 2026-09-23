@@ -14,7 +14,7 @@ final class BlankStringOnTheWire extends Sin
         parent::__construct(
             name: 'blank-string-on-the-wire',
             skill: Absence::class,
-            description: "a total `string` field whose TypeScript reader — holding this very type — asks it `=== ''`: the blank means \"missing\", and only the far side says so",
+            description: 'A `string` field sent over the wire whose TypeScript reader has to check `=== \'\'` to mean "missing" — only that reader knows the blank stands for absence.',
             rule: "A field that crosses the wire says absence in its TYPE; never ship a blank for the far side to decode as missing.",
             suggestion: "`?string \$x = null` on the shape, and the reader asks `x == null` — one spelling of absence, agreed by both sides.",
         );

@@ -44,9 +44,9 @@ layer and becomes a knot you cannot pull apart.";
     {
         return <<<'PRINCIPLE'
 A namespace is a claim about **what depends on what**. `App\Ui\Elements` says "these
-are the primitives"; `App\Ui\Shared` says "these are built FROM the primitives". The
-claim is worth exactly as much as its arrows: one `use App\Ui\Shared\…` inside
-`Elements` and the two namespaces are a single tangled unit wearing two names.
+are the primitives"; `App\Ui\Shared` says "these are built FROM the primitives". The claim only holds if the
+references actually point that way: one `use App\Ui\Shared\…` inside `Elements` and the two namespaces are
+really just one unit split across two names.
 
 Nothing about the arrow is visible at the moment you write it. An import is one line,
 it compiles, the tests pass. The cost lands later — you cannot extract, reuse, test in

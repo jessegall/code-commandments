@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### python-namespace-cycle
 
-two of the project's packages import each other — a cycle that makes them one package wearing two names
+two of the project's packages import each other — a cycle that makes them one package split under two names.
 
 ```py
 ----------[ Bad ]----------

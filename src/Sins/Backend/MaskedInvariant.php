@@ -14,7 +14,7 @@ final class MaskedInvariant extends Sin
         parent::__construct(
             name: 'masked-invariant',
             skill: TypeHonesty::class,
-            description: "Masked invariant — a transient own nullable read through `?->… ?? <fake literal>`, the field set inside the operation so the default answers an impossible \"not set yet\"",
+            description: 'Masked invariant — an own field read as `?->… ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible "not set yet".',
             rule: "Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`."
         );
     }

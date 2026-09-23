@@ -45,7 +45,7 @@ place it lands.
 - [ ] Say a value may be missing in its type; never default a `str` to `""` and read that blank back as "missing".
       _`x: str | None = None`, asked `x is None` — so the blank is not a value every reader has to decode._
 - [ ] Ask about absence directly (`x is not None`); never default a value only to compare it against that same default.
-      _Say both halves out loud — `x is not None and x != ""` — or make the value non-optional where it is born so only one question is left._
+      _Write both checks explicitly — `x is not None and x != ""` — or make the value non-optional at its source so only one question is left._
 - [ ] Don't spread a conditional into an empty collection to include an entry; give the target a factory that drops what is absent, and pass the value by name.
       _A `@classmethod` factory — `Payload.of(note=note)` — whose body drops `None` keyword arguments, so an absent value simply vanishes with no conditional._
 - [ ] Never fill an argument with an invented `""`, `0` or `False` on absence — handle the missing case, or make the value certain where it is born.

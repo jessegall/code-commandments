@@ -72,7 +72,7 @@ Ask these **in order** and stop at the first yes.
    `'0'`, `0`, `[]` — becomes `none`), so you never hand-write a `$x === '' ? null : $x` guard first;
    consume with `unwrapOr()` / `match()` / `map()` — branching on an Option is normal, that's how you use one.
 
-   **Option vs. a bare null — decide on *blast radius* (how far the value travels).** If the maybe-missing
+   **Option vs. a bare null — decide based on how far the value travels.** If the maybe-missing
    value flows through more than one consumer, it is an **`Option`**: the absence rides *in the type* and
    every consumer is forced to handle it — you can't thread a raw null outward and forget one site. If it
    is a single **local lookup checked right where it's produced** (one caller, one `=== null`, done), a
@@ -106,7 +106,7 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 - `?? ''` / `?? 0` / `?? []` to fill a **required** non-nullable slot. → A manufactured fake value that
   drops the absence signal. Throw, or make the slot honestly optional. (See `fix-at-the-source`.)
 - An **`Option` used as a nullable**: `Option | null`, `?Option`, `unwrapOr(null)`, or an Option whose
-  every return is `some()` (never `none()`). → That's a null wearing an Option costume; pick one model.
+  every return is `some()` (never `none()`). → That's really just null, dressed up as an Option; pick one model.
 PRINCIPLE;
     }
 

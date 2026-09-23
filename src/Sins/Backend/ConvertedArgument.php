@@ -14,8 +14,8 @@ final class ConvertedArgument extends Sin
         parent::__construct(
             name: 'converted-argument',
             skill: PassTheObject::class,
-            description: "A parameter declared in the wrong currency — call site after call site wraps the same argument in the same conversion (`Raises::of(ClassAlias::of(\$interaction), …)`) because the callee asks for the converted form instead of the value",
-            rule: "Declare the parameter in the currency callers actually hold, and convert inside — one rule about the conversion, in one place.",
+            description: 'A parameter typed as the already-converted form instead of the raw value, so every call site repeats the same conversion before calling it (e.g. `Raises::of(ClassAlias::of($interaction), …)`).',
+            rule: 'Declare the parameter in the form callers already have, and do the conversion inside the callee — so the conversion rule lives in one place.',
             suggestion: "Move the wrapper into the callee and widen the parameter to the type being wrapped; every call site then passes the value it means, and a site that forgets the conversion stops compiling."
         );
     }

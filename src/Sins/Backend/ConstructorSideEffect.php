@@ -14,7 +14,7 @@ final class ConstructorSideEffect extends Sin
         parent::__construct(
             name: 'constructor-side-effect',
             skill: FixAtTheSource::class,
-            description: "a constructor that performs a SIDE EFFECT on a collaborator — the result thrown away, so merely building the object changes the world",
+            description: 'A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it.',
             rule: "Let a constructor establish what the object IS; never let building one change anything outside it.",
             suggestion: "Keep the collaborator as a field and act on it from the method that someone actually calls.",
         );

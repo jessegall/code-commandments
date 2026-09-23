@@ -4,7 +4,7 @@ One bad → good per rule this skill teaches, taken from the fixture that proves
 
 ### array-bag
 
-String-indexing (`$arr['key']`) a structured array param (an unborn type)
+String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined.
 
 ```php
 ----------[ Bad ]----------
@@ -97,7 +97,7 @@ final class DailyReport
 
 ### coupled-fields
 
-A class's own fields always travel together — one concept masquerading as several fields, guards, and reaches — and should be a single value object
+A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object.
 
 ```php
 ----------[ Bad ]----------
@@ -186,7 +186,7 @@ final class AccessContext
 
 ### hand-rolled-wither
 
-A wither rebuilds its object by re-spelling every constructor field, so each new field must be threaded through N of them
+A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class.
 
 ```php
 ----------[ Bad ]----------
@@ -209,7 +209,7 @@ public function withOrder(int $order): self
 
 ### mutable-value-object
 
-a value type that writes its own field after construction — two holders of the same value, and one of them can change it under the other
+A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing.
 
 ```php
 ----------[ Bad ]----------
@@ -380,7 +380,7 @@ final class RateTable
 
 ### flat-field-cluster
 
-A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of NESTING the existing `Wire{type, label}` — width instead of depth
+A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`.
 
 ```php
 ----------[ Bad ]----------

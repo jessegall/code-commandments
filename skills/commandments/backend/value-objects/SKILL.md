@@ -17,16 +17,15 @@ of values is passed around, returned, or reached into by string keys, it wants a
 IS the documentation, the validation, and the contract, all enforced by the compiler instead of by every
 reader's memory.
 
-Reach for a type the moment you are about to: pass or return an `array<string, mixed>` keyed bag (its keys
-are an undocumented contract — make them a type); thread three-or-more values that always travel together —
-a *data clump* wearing separate parameter slots; reach into a structured array by string key
-(`$entry['title']`) — a typed object that hasn't been born yet; grow an already-crowded signature (group
-the related arguments into one object instead of adding the fourth); or pass a bare primitive that is really
-a concept — a `string $email`, a `string $currency` + `int $amount`, a `string $key` with format rules → a
-value object that owns its own validation.
+Reach for a type when you: pass or return an `array<string, mixed>` bag whose keys are an undocumented
+contract; pass three or more values that always travel together (a data clump); reach into a structured array
+by string key (`$entry['title']`) instead of a typed object; keep adding parameters to an already-crowded
+signature instead of grouping them; or pass a bare primitive that is really a concept — a `string $email`, a
+`string $currency` + `int $amount`, a `string $key` with format rules — that wants a value object owning its
+own validation.
 
-Introduce the type **where the data is born** — at the boundary that first receives it, the method that
-first assembles it — not three frames downstream after it has been threaded around as a bag. A value object
+Introduce the type at the boundary that first receives the data, or the method that first assembles it — not
+several steps later, after it has been passed around as a loose array. A value object
 introduced late just relabels data everyone already mishandled. This is fix-at-the-source applied to shape.
 
 ## Rules
@@ -35,11 +34,11 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
       _A Spatie `Data` object built via `::from($array)`._
 - [ ] Return a typed value object, not a multi-field string-keyed array literal.
       _Return a Spatie `Data` object via `::from(...)`._
-- [ ] Fields that move as a unit are one type: extract the clump into a value object and hold THAT; never mirror a datum that already lives on a nested object.
+- [ ] Fields that always change together are really one type — extract them into a value object and use it directly; don't keep a field that just duplicates a nested object's property.
       _Fold the co-moving fields into one value object (name the existing type when the clump already is one); drop a field that duplicates a nested object's property._
 - [ ] Bundle values that always travel together into one object; don't thread 3+ of them as separate params.
       _A value object the params fold into (`Money::of()`, `NodePosition`)._
-- [ ] A wither changes ONE thing: say only what changes. `clone($this, ['x' => $x])` states the intent; re-listing every field states the constructor again, N times over.
+- [ ] A wither should only say what changes: `clone($this, ['x' => $x])` states the intent, while re-listing every field just repeats the constructor in every wither.
       _Replace `new self($this->a, $this->b, $changed)` with `clone($this, ['c' => $changed])` — `repent` does it for you._
 - [ ] Make a value immutable: build it complete and derive a NEW one to change it; never write its fields after construction.
       _`readonly` on the class, and a `with…()`/named derivation that returns a new instance (PHP 8.5's `clone with`)._
@@ -54,7 +53,7 @@ introduced late just relabels data everyone already mishandled. This is fix-at-t
 
 ### array-bag
 
-String-indexing (`$arr['key']`) a structured array param (an unborn type)
+String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined.
 
 ```php
 ----------[ Bad ]----------

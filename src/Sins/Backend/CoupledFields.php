@@ -19,8 +19,8 @@ final class CoupledFields extends Sin
         parent::__construct(
             name: 'coupled-fields',
             skill: ValueObjects::class,
-            description: "A class's own fields always travel together — one concept masquerading as several fields, guards, and reaches — and should be a single value object",
-            rule: "Fields that move as a unit are one type: extract the clump into a value object and hold THAT; never mirror a datum that already lives on a nested object.",
+            description: 'A class\'s own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object.',
+            rule: 'Fields that always change together are really one type — extract them into a value object and use it directly; don\'t keep a field that just duplicates a nested object\'s property.',
             suggestion: "Fold the co-moving fields into one value object (name the existing type when the clump already is one); drop a field that duplicates a nested object's property.",
         );
     }

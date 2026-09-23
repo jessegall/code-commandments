@@ -45,7 +45,7 @@ unit out, props in.
 
 ### compound-inline-component
 
-A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled INLINE with a substantial body — extract it into its own named component
+A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component.
 
 ```vue
 ----------[ Bad ]----------

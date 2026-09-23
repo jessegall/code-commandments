@@ -42,7 +42,7 @@ Ask these **in order** and stop at the first yes.
    `'0'`, `0`, `[]` — becomes `none`), so you never hand-write a `$x === '' ? null : $x` guard first;
    consume with `unwrapOr()` / `match()` / `map()` — branching on an Option is normal, that's how you use one.
 
-   **Option vs. a bare null — decide on *blast radius* (how far the value travels).** If the maybe-missing
+   **Option vs. a bare null — decide based on how far the value travels.** If the maybe-missing
    value flows through more than one consumer, it is an **`Option`**: the absence rides *in the type* and
    every consumer is forced to handle it — you can't thread a raw null outward and forget one site. If it
    is a single **local lookup checked right where it's produced** (one caller, one `=== null`, done), a
@@ -76,7 +76,7 @@ If you can't point at one of those, you do **not** have an honest null — go ba
 - `?? ''` / `?? 0` / `?? []` to fill a **required** non-nullable slot. → A manufactured fake value that
   drops the absence signal. Throw, or make the slot honestly optional. (See `fix-at-the-source`.)
 - An **`Option` used as a nullable**: `Option | null`, `?Option`, `unwrapOr(null)`, or an Option whose
-  every return is `some()` (never `none()`). → That's a null wearing an Option costume; pick one model.
+  every return is `some()` (never `none()`). → That's really just null, dressed up as an Option; pick one model.
 
 ## Rules
 
@@ -88,7 +88,7 @@ If you can't point at one of those, you do **not** have an honest null — go ba
       _Say both halves out loud — `$x !== null && $x !== ''` — or make the value non-nullable at its source so only one question is left._
 - [ ] Don't spread a `cond ? [...] : []` to conditionally include a key. Give the target a null-dropping variadic factory (`::of(mixed ...$values)` that filters out nulls) and pass the value as a named arg — an absent one vanishes with no ternary.
       _Replace `[...$base, ...($x !== null ? ['k' => $x] : [])]` with a `::of(k: $x, …)` factory that drops null-valued arguments._
-- [ ] Decide absence at the source — a finder whose callers all de-null it should return a total type (throw/Option/empty), not a travelling `?T`.
+- [ ] Decide absence where the value is found — if every caller ends up de-nulling a `?T` finder, make it return a definite type instead (throw, `Option`, or empty).
       _Add a resolve-or-throw `get()` beside `find()`, or return `Option<T>`._
 - [ ] A Null Object only models absence while the TYPE admits it; never hand one to a `string`-typed slot, which coerces it to `''` and erases it.
       _Widen the type to carry the object (`Stringable`, or the class itself) where the Null Object is the point; otherwise drop the wrapper — and where the blank meant "missing", say that in the type with `?string` or an `Option<string>`._
