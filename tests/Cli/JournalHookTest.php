@@ -7,8 +7,10 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalHook;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
+use LogicException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -35,6 +37,21 @@ final class JournalHookTest extends TestCase
         $given = json_decode($printed, true);
 
         return is_array($given) ? $given : [];
+    }
+
+    public function test_a_moment_naming_no_event_runs_no_handler(): void
+    {
+        $io = new CapturingHookIO(new class extends GitFiles {
+            public function root(string $path): ?string
+            {
+                throw new LogicException('a moment with no event must not read git');
+            }
+        }, ['tool' => 'Bash', 'input' => ['command' => 'ls']]);
+
+        ob_start();
+        new JournalHook($io)->run(Input::of('journal-hook'));
+
+        $this->assertSame('{}', trim((string) ob_get_clean()));
     }
 
     public function test_a_moment_no_handler_cares_about_answers_with_nothing(): void
