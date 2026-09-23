@@ -2323,6 +2323,19 @@
             ],
             "detail": true
         },
+        "sin_python-constant-property": {
+            "title": "ConstantProperty",
+            "help": "A `@property` that never reads the object — the twin of the backend's UselessPropertyHookDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/type-honesty",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-placeholder-filled-data": {
             "title": "PlaceholderFilledData",
             "help": "A dataclass built with `\"\"` in a field it requires as text — the twin of the backend's PlaceholderFilledDataDetector.",

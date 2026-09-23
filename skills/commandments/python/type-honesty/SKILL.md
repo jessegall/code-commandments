@@ -38,6 +38,8 @@ move the value into the signature, a required attribute or a value object, and d
 
 ## Rules
 
+- [ ] A `@property` must derive from the object; a value it never reads `self` for is a class attribute.
+      _`kind = "box"` on the class — or a `ClassVar` — and the property goes._
 - [ ] A required field means the caller has the value; never fill one with `""` to satisfy the signature.
       _Fetch the real value — or split a narrower dataclass that only promises what this caller knows._
 - [ ] Pass a per-call value as a parameter; don't save and restore one of your own attributes around the call.
@@ -45,40 +47,41 @@ move the value into the signature, a required attribute or a value object, and d
 
 ## Worked example
 
-### python-placeholder-filled-data
+### python-constant-property
 
-`Card(title=…, body="")` — a dataclass field required as `str` handed the blank to satisfy the signature, a value the type cannot catch
+an `@property` whose body never reads `self` — `return "box"` — a stored value dressed as a computed one
 
 ```py
 ----------[ Bad ]----------
 
-def teaser(product) -> Teaser:
-    return Teaser(product.name, "")
+@property
+def lifetime_seconds(self) -> int:
+    """How long a session stays valid."""
+    return 60 * 60 * 8
 
 ----------[ Good ]----------
 
-# in product_teasers.py
-@dataclass(frozen=True)
-class ProductTeaser:
-    name: str
-    subtitle: str | None = None
+class ShopSession:
+    LIFETIME_SECONDS: ClassVar[int] = 60 * 60 * 8
 
-# in product_teasers.py
-def product_teaser(product) -> ProductTeaser:
-    return ProductTeaser(product.name)
+    def __init__(self, user: str) -> None:
+        self.user = user
+
+    def expires_after(self, started: int) -> int:
+        return started + self.LIFETIME_SECONDS
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/type-honesty` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-placeholder-filled-data`, `python-scratch-state-restore`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-property`, `python-placeholder-filled-data`, `python-scratch-state-restore`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

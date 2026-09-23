@@ -121,6 +121,36 @@ final class CallIndex
     }
 
     /**
+     * Does $method's class name a base this codebase does not declare — a contract from outside, which
+     * any of its methods may be keeping?
+     */
+    public function extendsOutside(FunctionDef $method, ModuleFile $module): bool
+    {
+        $class = $module->ancestorsOf($method)[1] ?? null;
+
+        return $class instanceof ClassDef && array_any(
+            $class->bases,
+            fn (Expr $base): bool => ! $base->is(ExprKind::Keyword) && $base->dottedName() !== 'object' && $this->classNamed($base, $module)->isNone(),
+        );
+    }
+
+    /**
+     * Does a class of this codebase that names $method's class as a base declare a method of the same
+     * name — overriding it?
+     */
+    public function isOverridden(FunctionDef $method, ModuleFile $module): bool
+    {
+        $class = $module->ancestorsOf($method)[1] ?? null;
+
+        return $class instanceof ClassDef && array_any($this->codebase->modules(), fn (ModuleFile $other): bool => array_any(
+            $other->nodes(),
+            fn (Node $node): bool => $node instanceof ClassDef
+                && $this->methodOf($node, $method->name)->isSome()
+                && array_any($node->bases, fn (Expr $base): bool => $this->classNamed($base, $other)->isSomeAnd(static fn (ClassDef $parent): bool => $parent === $class)),
+        ));
+    }
+
+    /**
      * @return array<int, list<ExprMatch>>
      */
     private function graph(): array

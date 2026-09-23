@@ -150,6 +150,22 @@ final class FunctionDef extends Node
     }
 
     /**
+     * Is this a `@property` getter, computed on every read?
+     */
+    public function isPropertyGetter(): bool
+    {
+        return array_any($this->decorators, static fn (Expr $decorator): bool => $decorator->dottedName() === 'property');
+    }
+
+    /**
+     * Is this a setter or deleter of another property — `@kind.setter`?
+     */
+    public function isPropertyAccessorOf(string $name): bool
+    {
+        return array_any($this->decorators, static fn (Expr $decorator): bool => in_array($decorator->dottedName(), ["{$name}.setter", "{$name}.deleter"], true));
+    }
+
+    /**
      * Is this a `@contextmanager` — a function whose declared job is a change it undoes when the block ends?
      */
     public function isContextManager(): bool

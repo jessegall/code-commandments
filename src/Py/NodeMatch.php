@@ -223,6 +223,32 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a `@property` whose whole body returns a value that reads nothing — `return 'box'`,
+     * `return Money(0, 'EUR')` — a constant a class attribute could hold? A value that reads any name
+     * may be live state (`sys.stderr`), so only a literal one counts. An override answering its own constant, the base a subclass
+     * overrides, a class extending a base from outside the codebase (whose contract it may keep), an
+     * abstract or stub getter, and one with a setter are left alone.
+     */
+    public function isConstantProperty(Codebase $codebase): bool
+    {
+        $function = $this->node;
+
+        if (! $function instanceof FunctionDef || ! $function->isPropertyGetter() || $function->params === [] || $this->isStub() || $this->isOverride($codebase) || $codebase->index()->isOverridden($function, $this->module) || $codebase->index()->extendsOutside($function, $this->module)) {
+            return false;
+        }
+
+        $class = $this->module->parentOf($function)->andThen(fn (Node $block): Option => $this->module->parentOf($block));
+        $hasSetter = $class->isSomeAnd(static fn (Node $owner): bool => $owner instanceof ClassDef && array_any(
+            $owner->body->body,
+            static fn (Node $member): bool => $member instanceof FunctionDef && $member->isPropertyAccessorOf($function->name),
+        ));
+
+        $body = $function->body->statementsBeyondText();
+
+        return ! $hasSetter && count($body) === 1 && $body[0]->returnedValue()->isSomeAnd(static fn (Expr $value): bool => $value->dataNames() === []);
+    }
+
+    /**
      * Does this method save one of its own attributes to a local and later restore it from that local
      * — `previous = self.scope … self.scope = previous`? The dance only makes sense for per-call scratch
      * state kept on the object; the value is really an input. The local must hold what it saved — one
@@ -307,7 +333,7 @@ class NodeMatch implements Located
             return false;
         }
 
-        $statements = array_filter($this->node->body->body, static fn (Node $statement): bool => ! ($statement instanceof ExprStmt && $statement->isBareString()));
+        $statements = $this->node->body->statementsBeyondText();
 
         return count($statements) >= 2 && array_all($statements, static fn (Node $statement): bool => $statement instanceof Assign
             && count($statement->targets) === 1

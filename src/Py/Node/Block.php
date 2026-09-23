@@ -19,4 +19,14 @@ final class Block extends Node
     {
         return $this->body;
     }
+
+    /**
+     * The statements of this block, a string left standing on its own — a docstring — aside.
+     *
+     * @return list<Node>
+     */
+    public function statementsBeyondText(): array
+    {
+        return array_values(array_filter($this->body, static fn (Node $statement): bool => ! ($statement instanceof ExprStmt && $statement->isBareString())));
+    }
 }

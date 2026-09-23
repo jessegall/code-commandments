@@ -2,6 +2,30 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### python-constant-property
+
+an `@property` whose body never reads `self` — `return "box"` — a stored value dressed as a computed one
+
+```py
+----------[ Bad ]----------
+
+@property
+def lifetime_seconds(self) -> int:
+    """How long a session stays valid."""
+    return 60 * 60 * 8
+
+----------[ Good ]----------
+
+class ShopSession:
+    LIFETIME_SECONDS: ClassVar[int] = 60 * 60 * 8
+
+    def __init__(self, user: str) -> None:
+        self.user = user
+
+    def expires_after(self, started: int) -> int:
+        return started + self.LIFETIME_SECONDS
+```
+
 ### python-placeholder-filled-data
 
 `Card(title=…, body="")` — a dataclass field required as `str` handed the blank to satisfy the signature, a value the type cannot catch
