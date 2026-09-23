@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "in my C# repository I wrapped the JsonSerializer.Deserialize in try/catch (Exception) and return null if it fails, is that ok?",
+        "should I throw new InvalidOperationException(\"carrier not found: \" + name) here or something else",
+        "judge flagged a swallowed exception in my C# service where the catch block just logs and returns an empty list — what should it do instead"
+    ],
+    "not": [
+        "how do I flatten this C# method that has an if inside a foreach inside another if"
+    ]
+}

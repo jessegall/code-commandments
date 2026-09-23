@@ -133,6 +133,7 @@ most:**
 - **`commandments-python-duplication`** — a function body written twice becomes one shared function, parameterised by what differs.
 - **`commandments-csharp-duplication`** — a method body written twice becomes one shared method, parameterised by what differs.
 - **`commandments-python-exceptions`** — raise named exceptions built by a classmethod factory, never swallow a failure, and keep the cause with `raise … from`.
+- **`commandments-csharp-exceptions`** — throw named exceptions built by a static factory, never swallow a failure, and keep the cause as the inner exception.
 - **`commandments-python-enums`** — a closed set of values is an `Enum` or `StrEnum` carrying the per-case knowledge as methods, not string constants compared at every call site.
 
 **Finding and fixing sins — the checklist workflow.** Run
