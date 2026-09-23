@@ -100,7 +100,7 @@ final readonly class SinsDashboard
 
         return ['type' => 'stack', 'gap' => 16, 'children' => [
             ['type' => 'heading', 'text' => $sin, 'level' => 1],
-            ['type' => 'text', 'body' => $this->explanation($sin)],
+            ...$this->explanation($sin),
             ['type' => 'table', 'columns' => ['File', 'Sins'], 'rows' => $rows],
         ]];
     }
@@ -122,26 +122,37 @@ final readonly class SinsDashboard
         return ['type' => 'stack', 'gap' => 16, 'children' => [
             ['type' => 'heading', 'text' => "{$sin} in {$file}", 'level' => 1],
             ['type' => 'card', 'title' => count($found) === 1 ? 'Where' : count($found) . ' places', 'children' => $places],
-            ['type' => 'text', 'body' => $this->explanation($sin)],
+            ...$this->explanation($sin),
         ]];
     }
 
     /**
-     * What the sin is, why it is one and how it is fixed, in the words the rule itself carries.
+     * What the sin is, why it is one and how it is fixed, in the words the rule itself carries — a card of
+     * facts, and the command that tells the rest.
+     *
+     * @return list<array<string, mixed>>
      */
-    private function explanation(string $sin): string
+    private function explanation(string $sin): array
     {
         $rule = self::rules()[$sin] ?? null;
 
         if ($rule === null) {
-            return "A rule of this project's own — its description lives in `.commandments/custom/`.";
+            return [['type' => 'text', 'body' => "A rule of this project's own — its description lives in `.commandments/custom/`."]];
         }
 
-        $suggestion = $rule->suggestion();
+        $facts = [
+            ['type' => 'fact', 'label' => 'What it is', 'body' => $rule->description()],
+            ['type' => 'fact', 'label' => 'The rule', 'body' => $rule->rule()],
+        ];
 
-        return "**What it is:** {$rule->description()}\n\n**The rule:** {$rule->rule()}"
-            . ($suggestion === null ? '' : "\n\n**How to fix it:** {$suggestion}")
-            . "\n\n**Learn more:** `commandments info {$sin}`";
+        if ($rule->suggestion() !== null) {
+            $facts[] = ['type' => 'fact', 'label' => 'How to fix it', 'body' => $rule->suggestion()];
+        }
+
+        return [
+            ['type' => 'card', 'title' => 'About this rule', 'children' => $facts],
+            ['type' => 'code', 'text' => "commandments info {$sin}"],
+        ];
     }
 
     /**
