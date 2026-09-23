@@ -45,7 +45,13 @@ final class JournalHook implements Command
 
     public function run(Input $input): int
     {
-        echo $this->answerFor($this->io->payload())->toJson() . "\n";
+        $given = $this->io->payload();
+        $advisor = new Advisor($this);
+
+        echo $advisor->answerNow($given)->toJson() . "\n";
+        fflush(STDOUT);
+
+        $advisor->adviseLater($given, (string) getcwd());
 
         return 0;
     }
