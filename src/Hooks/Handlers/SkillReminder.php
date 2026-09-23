@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
-use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\CrossFileSet;
-use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
+use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Hooks\Discipline;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Hooks\TouchedSources;
+use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Skills\Skill;
-use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 use Throwable;
 
 /**
@@ -170,15 +169,13 @@ final class SkillReminder extends Hook implements Discipline
      */
     private function sinsIn(string $file, Languages $languages, array $rules): array
     {
-        $backend = str_ends_with($file, '.php') ? Codebase::scan($file) : null;
-        $frontend = $backend === null ? VueCodebase::scan($file, languages: $languages) : null;
+        $engine = Language::ofFile($file)->engine();
+        $codebase = $engine->scan($file, $languages);
         $found = [];
 
         foreach ($rules as $detector) {
-            $codebase = $this->codebaseFor($detector, $backend, $frontend);
-
-            if ($codebase === null) {
-                continue;
+            if (Engine::of($detector) !== $engine) {
+                continue; // a rule of another engine reads another language
             }
 
             try {
@@ -193,14 +190,6 @@ final class SkillReminder extends Hook implements Discipline
         }
 
         return $found;
-    }
-
-    /**
-     * The codebase this detector reads, or null when the edited file is not its engine's language.
-     */
-    private function codebaseFor(Detector $detector, ?Codebase $backend, ?VueCodebase $frontend): Codebase|VueCodebase|null
-    {
-        return $detector instanceof FrontendDetector ? $frontend : $backend;
     }
 
     /**

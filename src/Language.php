@@ -44,6 +44,19 @@ enum Language: string
     }
 
     /**
+     * The engine that reads a file of this language — PHP the backend's, a component and a TypeScript
+     * module the frontend's, Python its own.
+     */
+    public function engine(): Engine
+    {
+        return match ($this) {
+            self::Php => Engine::Backend,
+            self::Vue, self::TypeScript => Engine::Frontend,
+            self::Python => Engine::Python,
+        };
+    }
+
+    /**
      * $text as a comment of this language on a line of its own — how a stamp is written into a file.
      */
     public function comment(string $text): string

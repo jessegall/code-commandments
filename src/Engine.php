@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments;
 
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
+use JesseGall\CodeCommandments\Python\Detector as PythonDetector;
 use JesseGall\CodeCommandments\Testing\BackendFixture;
 use JesseGall\CodeCommandments\Testing\Fixture;
 use JesseGall\CodeCommandments\Testing\FrontendFixture;
 use JesseGall\CodeCommandments\Testing\PythonFixture;
-use JesseGall\CodeCommandments\Python\Detector as PythonDetector;
 
 /**
  * Which of the two parse engines a detector reads — the PHP AST, or the Vue components.
@@ -101,6 +101,20 @@ enum Engine: string
             self::Backend => new BackendFixture($path, $detectors),
             self::Frontend => new FrontendFixture($path, $detectors),
             self::Python => new PythonFixture($path, $detectors),
+        };
+    }
+
+    /**
+     * The codebase this engine reads at $path — a file or a folder — in the languages the project writes.
+     *
+     * @param  string|list<string>  $path
+     */
+    public function scan(string|array $path, Languages $languages = new Languages()): Codebase
+    {
+        return match ($this) {
+            self::Backend => \JesseGall\CodeCommandments\Ast\Codebase::scan($path),
+            self::Frontend => \JesseGall\CodeCommandments\Vue\Codebase::scan($path, languages: $languages),
+            self::Python => \JesseGall\CodeCommandments\Py\Codebase::scan($path),
         };
     }
 
