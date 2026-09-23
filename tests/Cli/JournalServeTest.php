@@ -26,6 +26,11 @@ final class JournalServeTest extends TestCase
         $this->root = sys_get_temp_dir() . '/cc-serve-' . uniqid();
         mkdir($this->root . '/.commandments', 0777, true);
         $this->socket = sys_get_temp_dir() . '/cc-serve-' . uniqid() . '.sock';
+        $this->start();
+    }
+
+    private function start(): void
+    {
         $binary = dirname(__DIR__, 2) . '/bin/commandments';
         $environment = [...getenv(), 'JOURNAL_PLUGIN_SOCKET' => $this->socket, 'CLAUDE_PROJECT_DIR' => $this->root];
         $this->service = proc_open([PHP_BINARY, $binary, 'journal-serve'], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes, $this->root, $environment);
@@ -37,10 +42,30 @@ final class JournalServeTest extends TestCase
 
     protected function tearDown(): void
     {
+        $this->stop();
+        exec('rm -rf ' . escapeshellarg($this->root));
+    }
+
+    private function stop(): void
+    {
         proc_terminate($this->service);
         proc_close($this->service);
         @unlink($this->socket);
-        exec('rm -rf ' . escapeshellarg($this->root));
+    }
+
+    public function test_it_strips_a_retired_plan_execution_call_before_it_serves(): void
+    {
+        $this->stop();
+        file_put_contents($this->root . '/.commandments/config.php', <<<'PHP'
+            <?php
+
+            return static function (\JesseGall\CodeCommandments\Config $config): void {
+                $config->planExecution(fn ($plan) => $plan);
+            };
+            PHP);
+        $this->start();
+
+        $this->assertStringNotContainsString('planExecution', (string) file_get_contents($this->root . '/.commandments/config.php'));
     }
 
     public function test_a_moment_no_handler_cares_about_is_answered_with_an_empty_object(): void

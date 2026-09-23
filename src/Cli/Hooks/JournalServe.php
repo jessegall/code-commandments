@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Cli\Hooks;
 
 use Composer\Autoload\ClassLoader;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
@@ -17,7 +18,9 @@ use Throwable;
  * `commandments journal-serve` — {@see JournalHook} kept running. The journal starts it as one of the
  * plugin's services and sends each moment over a Unix socket instead of starting PHP for every tool
  * call; the answer is the one the command would print. It exits when the code it runs changes — a
- * package update, the project's config, a rule of its own — and the journal starts it again.
+ * package update, the project's config, a rule of its own — and the journal starts it again. It is
+ * the plugin's one process that loads the project's config, and the plugin never runs `sync`, so it
+ * strips a retired `planExecution()` call first ({@see ConfigScribe::removePlanExecution}).
  */
 final class JournalServe implements Command
 {
@@ -47,6 +50,8 @@ final class JournalServe implements Command
         if ($path === null) {
             return HelpScreen::usage($this, 'The journal names the socket in $' . self::SOCKET . '; there is none to listen on.');
         }
+
+        ConfigScribe::inProject($this->io->projectRoot())->removePlanExecution();
 
         if (file_exists($path)) {
             unlink($path);
