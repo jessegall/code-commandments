@@ -11,7 +11,20 @@ if (paths.Count == 0)
     return 2;
 }
 
-var project = Project.Read(Sources.Under(paths));
+var project = Project.Read(Sources.Under(paths), paths.Select(Path.GetFullPath).ToList());
+
+// --diagnose: the compiler's most common errors, on stderr — why a call did not resolve.
+if (args.Contains("--diagnose"))
+{
+    foreach (var group in project.Compilation.GetDiagnostics()
+                 .Where(diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
+                 .GroupBy(diagnostic => diagnostic.Id + " " + diagnostic.GetMessage())
+                 .OrderByDescending(group => group.Count())
+                 .Take(12))
+    {
+        Console.Error.WriteLine($"{group.Count(),6}  {group.Key}");
+    }
+}
 using var output = Console.OpenStandardOutput();
 new TreeWriter(project).Write(output);
 

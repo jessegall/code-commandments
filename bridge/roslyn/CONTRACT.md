@@ -11,7 +11,10 @@
 }
 ```
 
-`errors` counts the file's syntax errors — a file the parser could not read whole.
+`errors` counts the file's syntax errors — a file the parser could not read whole. After the files,
+`"resolution": { "calls": n, "resolved": m }` says how many calls and object creations the run saw and
+how many the compiler could resolve with the references it found (frameworks from the installed
+reference packs, packages from `obj/project.assets.json` or the NuGet cache — never a build).
 
 ## A node
 

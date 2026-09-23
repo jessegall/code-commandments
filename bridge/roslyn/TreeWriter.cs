@@ -12,6 +12,10 @@ namespace CodeCommandments.Bridge;
 /// </summary>
 public sealed class TreeWriter(Project project)
 {
+    private int calls;
+
+    private int resolved;
+
     public const int Version = 1;
 
     /// <summary>How every type and member is written: fully qualified, `System.String` never `string`, `?` kept.</summary>
@@ -40,10 +44,14 @@ public sealed class TreeWriter(Project project)
         }
 
         json.WriteEndArray();
+        json.WriteStartObject("resolution");
+        json.WriteNumber("calls", calls);
+        json.WriteNumber("resolved", resolved);
+        json.WriteEndObject();
         json.WriteEndObject();
     }
 
-    private static void WriteNode(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
+    private void WriteNode(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
     {
         json.WriteStartObject();
         json.WriteString("kind", node.Kind().ToString());
@@ -151,7 +159,7 @@ public sealed class TreeWriter(Project project)
     }
 
     /// <summary>What the compiler resolved about the node, when it resolved anything.</summary>
-    private static void WriteFacts(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
+    private void WriteFacts(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
     {
         if (node is ExpressionSyntax expression && !SyntaxFacts.IsInTypeOnlyContext(expression))
         {
@@ -166,8 +174,11 @@ public sealed class TreeWriter(Project project)
 
         if (node is InvocationExpressionSyntax or ObjectCreationExpressionSyntax or ImplicitObjectCreationExpressionSyntax)
         {
+            calls++;
+
             if (model.GetSymbolInfo(node).Symbol is IMethodSymbol target)
             {
+                resolved++;
                 json.WriteStartObject("target");
                 json.WriteString("type", target.ContainingType.ToDisplayString(Qualified));
                 json.WriteString("name", target.Name);

@@ -68,6 +68,7 @@ final class BridgeContractTest extends TestCase
         $this->assertStringEndsWith('/Shapes.cs', self::$read['files'][0]['path']);
         $this->assertSame(0, self::$read['files'][0]['errors']);
         $this->assertSame('CompilationUnit', self::$read['files'][0]['root']['kind']);
+        $this->assertSame(['calls' => 1, 'resolved' => 1], self::$read['resolution'], 'the run says how much of it the compiler resolved');
     }
 
     public function test_a_declaration_carries_its_name_modifiers_and_whether_it_is_inherited(): void
