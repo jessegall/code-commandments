@@ -60,6 +60,8 @@ still there.
 
 - [ ] Keep imports between the project's packages pointing one way; two packages that import each other are a cycle.
       _Move what both need into the lower package, pass it in from above, or invert it behind a protocol the lower one owns._
+- [ ] A declared layer may only import the packages it declared in its `mayUse` — down the stack, never back up or sideways.
+      _Move what both need down into the lower layer, pass it in from above, or invert it behind a protocol the lower layer owns — and if the declaration is what is wrong, say so rather than editing it quietly._
 
 ## Worked example
 
@@ -79,14 +81,17 @@ def results_page(query: str) -> str:
 from ..tracking.events import record
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/dependency-direction` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-namespace-cycle`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-namespace-cycle`, `python-namespace-dependency`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

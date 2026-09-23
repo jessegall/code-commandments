@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\Backend\Config;
 
-use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Support\LayerStack;
 
 /**
  * The layer declaration of {@see \JesseGall\CodeCommandments\Detectors\Backend\NamespaceDependencyDetector}
@@ -37,45 +37,17 @@ trait NamespaceDependencyConfig
      */
     public function layer(string $namespace, array $mayUse = []): static
     {
-        $this->layers[trim($namespace, '\\')] = array_values($mayUse);
+        $this->layers[trim($namespace, self::SEPARATOR)] = array_values($mayUse);
 
         return $this;
     }
 
     /**
-     * The declared layer a fully-qualified name falls in, or null when it falls in none (framework,
-     * vendor, undeclared app code). The MOST SPECIFIC layer wins, so declaring both `App\Ui` and
-     * `App\Ui\Elements` puts a Button in `Elements` — the narrower claim is the one you meant.
+     * The declared layers, read in the spelling of the language the detector judges — its SEPARATOR and
+     * whether its names are CASE_SENSITIVE, each a constant of the class using this.
      */
-    private function layerOf(string $fqcn): ?string
+    private function stack(): LayerStack
     {
-        $found = null;
-
-        foreach (array_keys($this->layers) as $layer) {
-            if (ClassName::within($fqcn, $layer) && strlen($layer) > strlen((string) $found)) {
-                $found = $layer;
-            }
-        }
-
-        return $found;
-    }
-
-    /**
-     * May code in $layer reference $target? Its own layer always (a layer contains its nested
-     * namespaces), else one of the namespaces it declared in `mayUse`.
-     */
-    private function mayReference(string $layer, string $target): bool
-    {
-        if (ClassName::within($target, $layer)) {
-            return true;
-        }
-
-        foreach ($this->layers[$layer] as $allowed) {
-            if (ClassName::within($target, trim($allowed, '\\'))) {
-                return true;
-            }
-        }
-
-        return false;
+        return new LayerStack($this->layers, self::SEPARATOR, self::CASE_SENSITIVE);
     }
 }

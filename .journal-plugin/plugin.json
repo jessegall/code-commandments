@@ -2102,6 +2102,19 @@
             ],
             "detail": true
         },
+        "sin_python-namespace-dependency": {
+            "title": "NamespaceDependency",
+            "help": "An import out of a declared layer into a package it may not use — the twin of the backend's NamespaceDependencyDetector, over dotted package names.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/dependency-direction",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-archaeology-comment": {
             "title": "ArchaeologyComment",
             "help": "A comment or docstring about the code's past — the twin of the backend's ArchaeologyCommentDetector, reading the same phrases.",

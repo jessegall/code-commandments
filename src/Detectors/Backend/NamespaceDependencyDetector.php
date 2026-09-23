@@ -25,6 +25,13 @@ final class NamespaceDependencyDetector implements Detector
 {
     use NamespaceDependencyConfig;
 
+    /**
+     * How PHP spells a qualified name: `\\` between the parts, case not counting.
+     */
+    private const string SEPARATOR = '\\';
+
+    private const bool CASE_SENSITIVE = false;
+
     public function sin(): Sin
     {
         return new NamespaceDependency();
@@ -32,7 +39,7 @@ final class NamespaceDependencyDetector implements Detector
 
     public function find(Codebase $codebase): array
     {
-        if ($this->layers === []) {
+        if ($this->stack()->isEmpty()) {
             return [];
         }
 
@@ -83,16 +90,16 @@ final class NamespaceDependencyDetector implements Detector
             return false;
         }
 
-        if ($this->layerOf($target) === null) {
+        if ($this->stack()->layerOf($target) === null) {
             return false;
         }
 
-        $from = $this->layerOf($namespace);
+        $from = $this->stack()->layerOf($namespace);
 
         if ($from === null) {
             return false;
         }
 
-        return ! $this->mayReference($from, $target);
+        return ! $this->stack()->mayReference($from, $target);
     }
 }
