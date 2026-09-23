@@ -33,6 +33,17 @@ enum LiteralType: string
     }
 
     /**
+     * Is this a string or a number — the kinds a value you compare and dispatch on is written in?
+     */
+    public function isScalar(): bool
+    {
+        return match ($this) {
+            self::String, self::Number => true,
+            self::Bytes, self::Bool, self::None, self::Ellipsis, self::Format => false,
+        };
+    }
+
+    /**
      * Is a literal of this type text — a string or bytes?
      */
     public function isText(): bool

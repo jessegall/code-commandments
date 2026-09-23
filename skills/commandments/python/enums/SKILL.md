@@ -46,6 +46,41 @@ A string arriving from JSON, a form or a database becomes the enum where it ente
 `Status(payload["status"])` — and fails there if it is not one of the cases. From then on the code
 passes the enum, never the string.
 
+## Rules
+
+- [ ] Seal a closed set of values as an `Enum` or `StrEnum`, so the set is a type and its cases have a home for behaviour.
+      _`class Status(StrEnum): PENDING = "pending"` — then give the per-case knowledge methods on the enum._
+
+## Worked example
+
+### python-constant-class-enum
+
+a class that is nothing but `PENDING = "pending"` constants — a closed set of values written out by hand instead of an `Enum`
+
+```py
+----------[ Bad ]----------
+
+class Carrier(object):
+    POSTNL = "PNL"
+    DHL = "DHL"
+
+----------[ Good ]----------
+
+class CarrierCode(StrEnum):
+    POSTNL = "PNL"
+    DHL = "DHL"
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/enums` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constant-class-enum`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/enums-with-behaviour`](../../backend/enums-with-behaviour/SKILL.md) — the same discipline on the PHP backend.

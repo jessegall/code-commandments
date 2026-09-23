@@ -184,6 +184,15 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this a string or a number written out on one line — a value you compare and dispatch on, not a
+     * document (a query, a template) that merely happens to be text?
+     */
+    public function isScalarValue(): bool
+    {
+        return $this->literalType()?->isScalar() === true && ! str_contains((string) $this->get('value'), "\n");
+    }
+
+    /**
      * Is this the blank string written out — `''` or `""`?
      */
     public function isBlankString(): bool

@@ -230,6 +230,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\CoalescedLoopSubject::class,
         // Sins\Python\ConditionalSpread::class,
         // Sins\Python\ConditionalStatement::class,
+        // Sins\Python\ConstantClassEnum::class,
         // Sins\Python\ConstructorSideEffect::class,
         // Sins\Python\DataClump::class,
         // Sins\Python\DeepNesting::class,

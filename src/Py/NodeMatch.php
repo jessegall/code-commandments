@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Py\Node\Assign;
 use JesseGall\CodeCommandments\Py\Node\Block;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\ExceptHandler;
+use JesseGall\CodeCommandments\Py\Node\ExprStmt;
 use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\IfStmt;
@@ -169,6 +170,25 @@ class NodeMatch implements Located
         [$block, $loop] = [...$this->module->ancestorsOf($this->node), null, null];
 
         return ($loop instanceof ForLoop || $loop instanceof WhileLoop) && $loop->body === $block && count($block->body) === 1;
+    }
+
+    /**
+     * Is this a class that is nothing but scalar constants — `PENDING = 'pending'`, `PAID = 'paid'` — a
+     * closed set of values written out by hand instead of an `Enum`? A class with a base other than
+     * `object` or a decorator is something else already, and has no enum to become.
+     */
+    public function isScalarConstantClass(): bool
+    {
+        if (! $this->node instanceof ClassDef || $this->node->decorators !== [] || ! array_all($this->node->bases, static fn (Expr $base): bool => $base->dottedName() === 'object')) {
+            return false;
+        }
+
+        $statements = array_filter($this->node->body->body, static fn (Node $statement): bool => ! ($statement instanceof ExprStmt && $statement->isBareString()));
+
+        return count($statements) >= 2 && array_all($statements, static fn (Node $statement): bool => $statement instanceof Assign
+            && count($statement->targets) === 1
+            && $statement->targets[0]->is(ExprKind::Name)
+            && $statement->value->isScalarValue());
     }
 
     /**
