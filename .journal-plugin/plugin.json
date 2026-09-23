@@ -1709,6 +1709,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-string-mirrors-enum": {
+            "title": "StringMirrorsEnum",
+            "help": "A `switch` or an `if` ladder dispatching on two or more strings that all name members of one enum the codebase declares — the C# twin of the backend's string-match-mirrors-enum rule.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/enums",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-generic-throw": {
             "title": "GenericThrow",
             "help": "An exception that names no failure thrown with its description written at the throw — the C# twin of the backend's generic-exception and message-at-throw rules and Python's message-string raise.",

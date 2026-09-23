@@ -165,6 +165,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
             ConstructorDeclarationSyntax constructor => constructor.Identifier.ValueText,
             PropertyDeclarationSyntax property => property.Identifier.ValueText,
             EventDeclarationSyntax @event => @event.Identifier.ValueText,
+            EnumMemberDeclarationSyntax member => member.Identifier.ValueText,
             LocalFunctionStatementSyntax local => local.Identifier.ValueText,
             ParameterSyntax parameter => parameter.Identifier.ValueText,
             VariableDeclaratorSyntax variable => variable.Identifier.ValueText,

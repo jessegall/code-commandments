@@ -50,6 +50,59 @@ A string arriving from JSON, a form or a database becomes the enum where it ente
 converter, or `Enum.Parse<Status>(raw)` — and fails there if it is not one of the cases. From then on
 the code passes the enum, never the string.
 
+## Rules
+
+- [ ] Dispatch on the enum, never on strings that spell its members — parse the string into the enum where it enters.
+      _Parse the string into the enum at the edge (`Enum.Parse<T>` or the JSON converter), switch on the enum, and put the per-case answer beside it._
+
+## Worked example
+
+### csharp-string-mirrors-enum
+
+A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text
+
+```cs
+----------[ Bad ]----------
+
+public void Handle(string reference, string status)
+{
+    switch (status)
+    {
+        case "shipped":
+            notify($"{reference} is on its way");
+            break;
+        case "delivered":
+            notify($"{reference} has arrived");
+            break;
+    }
+}
+
+----------[ Good ]----------
+
+public void HandleParsed(string reference, string status)
+{
+    switch (Enum.Parse<OrderStatus>(status, ignoreCase: true))
+    {
+        case OrderStatus.Shipped:
+            notify($"{reference} is on its way");
+            break;
+        case OrderStatus.Delivered:
+            notify($"{reference} has arrived");
+            break;
+    }
+}
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/enums` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-string-mirrors-enum`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/enums-with-behaviour`](../../backend/enums-with-behaviour/SKILL.md) — the same discipline on the PHP backend, with backed enums.

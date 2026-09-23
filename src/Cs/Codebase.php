@@ -24,6 +24,11 @@ final class Codebase implements ModuleCodebase
     private ?array $keyParameters = null;
 
     /**
+     * @var list<list<string>>|null  each declared enum's member names, lower-cased
+     */
+    private ?array $enumCases = null;
+
+    /**
      * @param  list<ModuleFile>  $modules
      */
     private function __construct(private readonly array $modules) {}
@@ -199,6 +204,30 @@ final class Codebase implements ModuleCodebase
         $arguments = $call->arguments();
 
         return array_any($positions, static fn (int $position): bool => ($arguments[$position] ?? null)?->isConstant() === true && $arguments[$position]->type?->name === 'global::System.String');
+    }
+
+    /**
+     * Do $literals — two or more of them — all name members of one enum this codebase declares, as a
+     * string on the wire would spell them in any case?
+     *
+     * @param  list<string>  $literals
+     */
+    public function enumMirroredBy(array $literals): bool
+    {
+        $names = array_values(array_unique(array_map(strtolower(...), $literals)));
+
+        return count($names) >= 2 && array_any($this->enumCases(), static fn (array $cases): bool => array_diff($names, $cases) === []);
+    }
+
+    /**
+     * @return list<list<string>>
+     */
+    private function enumCases(): array
+    {
+        return $this->enumCases ??= array_map(
+            static fn (NodeMatch $enum): array => array_map(static fn (Node $member): string => strtolower((string) $member->name), array_filter($enum->node->children(), static fn (Node $child): bool => $child->is('EnumMemberDeclaration'))),
+            $this->whereNode(static fn (Node $node): bool => $node->is('EnumDeclaration'))->get(),
+        );
     }
 
     /**

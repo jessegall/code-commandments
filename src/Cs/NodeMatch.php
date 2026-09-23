@@ -356,6 +356,25 @@ class NodeMatch implements Located
     }
 
     /**
+     * The string literals this dispatches a value on — a `switch` statement's case labels, a `switch`
+     * expression's arms, or the rungs of an `if` ladder — and none for anything else.
+     *
+     * @return list<string>
+     */
+    public function comparedLiterals(): array
+    {
+        $compared = match (true) {
+            $this->node->is('SwitchStatement', 'SwitchExpression') => array_filter($this->node->descendants(), static fn (Node $node): bool => $node->is('CaseSwitchLabel', 'ConstantPattern')),
+            $this->node->is('IfStatement') && ! $this->isElseIf() => array_map(static fn (Node $rung): Node => $rung->expressions()[0], self::rungs($this->node)),
+            default => [],
+        };
+        $values = array_merge([], ...array_map(static fn (Node $node): array => $node->is('CaseSwitchLabel', 'ConstantPattern') ? $node->expressions() : [$node], $compared));
+        $literals = array_merge([], ...array_map(static fn (Node $value): array => $value->flatten(), $values));
+
+        return array_values(array_map(static fn (Node $literal): string => (string) $literal->text, array_filter($literals, static fn (Node $node): bool => $node->is('StringLiteralExpression'))));
+    }
+
+    /**
      * How many choices this node sits inside, within the function it belongs to: each `if`, loop or
      * `switch` whose body holds it — an `else if` a rung of the ladder it continues, not a level of its
      * own.
