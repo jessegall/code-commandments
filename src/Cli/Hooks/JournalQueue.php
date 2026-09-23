@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Hooks;
 
+use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -35,7 +36,8 @@ final readonly class JournalQueue
     }
 
     /**
-     * Tell the agent what $advice says — each thing it says, a nudge of its own.
+     * Tell the agent what $advice says — each thing it says, a nudge of its own — and raise the event it
+     * carries on the journal's bus, the same card and activity an answer given at once would raise.
      */
     public function tell(JournalAnswer $advice): void
     {
@@ -43,6 +45,10 @@ final readonly class JournalQueue
             static fn (array $said): string => 'nudge create ' . escapeshellarg(self::title($said[0])) . ' --brief ' . escapeshellarg(self::oneLine($said[1])) . "\n",
             $advice->said(),
         );
+
+        if ($advice->raise !== null) {
+            $lines[] = 'plugin raise ' . HookRegistry::JOURNAL_PLUGIN . ' ' . escapeshellarg($advice->raise->event) . ' ' . escapeshellarg(self::oneLine($advice->raise->brief)) . "\n";
+        }
 
         if ($lines !== []) {
             file_put_contents($this->path, implode('', $lines), FILE_APPEND | LOCK_EX);

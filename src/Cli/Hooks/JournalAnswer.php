@@ -40,16 +40,15 @@ final readonly class JournalAnswer implements JsonSerializable
     }
 
     /**
-     * What this answer tells the agent, as title and text pairs — its refusal or whisper, and the event it
-     * raises. How advice found after the call was answered is handed on as messages.
+     * What this answer tells the agent, as title and text pairs — its refusal or whisper. The event it
+     * raises is not said; it is raised.
      *
      * @return list<array{string, string}>
      */
     public function said(): array
     {
         $told = $this->refuse ?? $this->whisper;
-        $said = $told === null ? [] : [[$told, $told]];
 
-        return $this->raise === null ? $said : [...$said, [$this->raise->headline(), $this->raise->brief]];
+        return $told === null ? [] : [[$told, $told]];
     }
 }

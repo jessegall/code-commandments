@@ -23,12 +23,4 @@ final readonly class JournalRaise implements JsonSerializable
     {
         return ['event' => $this->event, 'brief' => $this->brief];
     }
-
-    /**
-     * What this event says in one line, for a message that carries it.
-     */
-    public function headline(): string
-    {
-        return $this->event === 'sin-resolved' ? 'Code Commandments — a sin in the file you changed is gone' : 'Code Commandments — a sin in the file you changed';
-    }
 }
