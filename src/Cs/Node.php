@@ -102,6 +102,59 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Does this `catch` catch everything — no type, or `Exception` itself — with no `when` filter
+     * saying which failure it means?
+     */
+    public function isBroadCatch(): bool
+    {
+        if (! $this->is('CatchClause') || array_any($this->children, static fn (self $child): bool => $child->is('CatchFilterClause'))) {
+            return false;
+        }
+
+        $declaration = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('CatchDeclaration')))[0] ?? null;
+
+        return $declaration === null || $declaration->type?->name === 'global::System.Exception';
+    }
+
+    /**
+     * Does this `catch` make the failure vanish — an empty body, a `continue`, or a `return` of nothing
+     * or of a value that says "nothing"?
+     */
+    public function swallows(): bool
+    {
+        $body = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('Block')))[0] ?? null;
+        $statements = $body?->children() ?? [];
+
+        if ($body === null || count($statements) > 1) {
+            return false;
+        }
+
+        $only = $statements[0] ?? null;
+
+        return match (true) {
+            $only === null, $only->is('ContinueStatement') => true,
+            $only->is('ReturnStatement') => $only->returnedValue()->isNoneOr(static fn (self $value): bool => $value->isAbsenceValue()),
+            default => false,
+        };
+    }
+
+    /**
+     * Is this a value that says "nothing" — `null`, `default`, `false`, `""`, an empty collection
+     * expression, or `Array.Empty<T>()` / `Enumerable.Empty<T>()`? What a swallowed failure hands back
+     * instead of itself.
+     */
+    public function isAbsenceValue(): bool
+    {
+        return match (true) {
+            $this->is('NullLiteralExpression', 'DefaultLiteralExpression', 'DefaultExpression', 'FalseLiteralExpression') => true,
+            $this->is('StringLiteralExpression') => $this->text === '',
+            $this->is('CollectionExpression') => $this->children === [],
+            $this->isCall() => $this->target?->name === 'Empty' && in_array($this->target->type, ['global::System.Array', 'global::System.Linq.Enumerable'], true),
+            default => false,
+        };
+    }
+
+    /**
      * Is this a loop — `for`, `foreach`, `while`, `do`?
      */
     public function isLoop(): bool

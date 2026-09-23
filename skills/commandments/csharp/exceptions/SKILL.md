@@ -65,6 +65,57 @@ reports, never silently continues.
 - An exception filter — `catch (HttpRequestException error) when (error.StatusCode == NotFound)` —
   catching the one failure that has a meaning here.
 
+## Rules
+
+- [ ] Never swallow every failure: catch the one you expect and act on it, or let it propagate to a boundary that records it.
+      _Name the exception you expect (`catch (FileNotFoundException)`), or filter it with `when`, and do what its meaning calls for; anything else propagates. At a real boundary, log or report before moving on._
+
+## Worked example
+
+### csharp-swallowed-exception
+
+A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish
+
+```cs
+----------[ Bad ]----------
+
+public Dictionary<string, int>? Load()
+{
+    try
+    {
+        return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json")));
+    }
+    catch (Exception)
+    {
+        return null;
+    }
+}
+
+----------[ Good ]----------
+
+public Dictionary<string, int> LoadOrEmpty()
+{
+    try
+    {
+        return JsonSerializer.Deserialize<Dictionary<string, int>>(File.ReadAllText(Path.Combine(folder, "stock.json"))) ?? [];
+    }
+    catch (FileNotFoundException)
+    {
+        return [];
+    }
+}
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/exceptions` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-swallowed-exception`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/exceptions`](../../backend/exceptions/SKILL.md) — the same discipline on the PHP backend, with `::for()` factories.

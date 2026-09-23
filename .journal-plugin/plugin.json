@@ -1683,6 +1683,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-swallowed-exception": {
+            "title": "SwallowedException",
+            "help": "A `catch` that catches everything and makes it vanish — the C# twin of the backend's and Python's swallowed-exception rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/exceptions",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-loop-wrapped-in-if": {
             "title": "LoopWrappedInIf",
             "help": "A loop whose whole body is one `if` around real work — the C# twin of the backend's and Python's loop-wrapped-in-if rules.",

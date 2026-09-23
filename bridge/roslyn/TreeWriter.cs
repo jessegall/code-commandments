@@ -246,6 +246,12 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
             }
         }
 
+        if (node is CatchDeclarationSyntax caught && model.GetTypeInfo(caught.Type).Type is { } exception and not IErrorTypeSymbol)
+        {
+            json.WriteString("type", exception.ToDisplayString(Qualified));
+            json.WriteBoolean("nullable", false);
+        }
+
         if (node is ExpressionSyntax value && IsConstant(value, model))
         {
             json.WriteBoolean("constant", true);

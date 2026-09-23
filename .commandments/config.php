@@ -240,6 +240,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\NearDuplicateMethod::class,
         // Sins\CSharp\RedundantElse::class,
         // Sins\CSharp\SubjectLadder::class,
+        // Sins\CSharp\SwallowedException::class,
     );
 };
 

@@ -31,6 +31,7 @@ Every syntax node, nested as Roslyn nests them. Tokens and trivia (comments, whi
 | `modifiers` | members, local functions, parameters | e.g. `["public", "static", "override"]` |
 | `type` | expressions the compiler typed | the type, fully qualified with `?` for a nullable reference (`global::System.String?`), never a keyword like `string` |
 | `nullable` | with `type` | whether the type is annotated nullable (`string?`) |
+| `type` on a `CatchDeclaration` | when it resolves | the exception type the `catch` catches, fully qualified |
 | `constant` | expressions with a compile-time value | `true` — a literal, an enum member, a `const`, or arithmetic on them, as the compiler folds it |
 | `target` | invocations and object creations it resolved | `{ "type", "name", "parameters" }` — the method called, its containing type and parameter types |
 | `symbol` | member declarations | the declared member, fully qualified |
