@@ -84,6 +84,21 @@ final class ClassDef extends Node
     }
 
     /**
+     * The fields a caller must hand over as text — annotated plain `str`, with no default.
+     *
+     * @return list<string>
+     */
+    public function requiredTextFields(): array
+    {
+        $fields = array_filter($this->body->body, static fn (Node $statement): bool => $statement instanceof AnnAssign
+            && $statement->target->is(ExprKind::Name)
+            && $statement->value === null
+            && $statement->annotation->dottedName() === 'str');
+
+        return array_values(array_map(static fn (AnnAssign $field): string => (string) $field->target->get('name'), $fields));
+    }
+
+    /**
      * The methods written in this class's body, the constructor and its `__post_init__` aside.
      *
      * @return list<FunctionDef>

@@ -266,6 +266,16 @@ class ExprMatch implements Located
     }
 
     /**
+     * Does this call build a dataclass the codebase declares and hand `""` to a field it requires as text?
+     */
+    public function fillsRequiredTextWithBlank(Dataclasses $dataclasses): bool
+    {
+        return $this->expr->isCall() && $dataclasses->named($this->expr->get('callee')->dottedName())->isSomeAnd(
+            fn (ClassDef $class): bool => array_intersect($this->expr->fieldsHandedBlank($class->initFieldNames()), $class->requiredTextFields()) !== [],
+        );
+    }
+
+    /**
      * The names of the parameters a caller of $function supplies — every one but a bound method's first.
      *
      * @return list<string>

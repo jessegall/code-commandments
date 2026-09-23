@@ -2323,6 +2323,19 @@
             ],
             "detail": true
         },
+        "sin_python-placeholder-filled-data": {
+            "title": "PlaceholderFilledData",
+            "help": "A dataclass built with `\"\"` in a field it requires as text — the twin of the backend's PlaceholderFilledDataDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/type-honesty",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-data-clump": {
             "title": "DataClump",
             "help": "The same three-or-more scalar parameters threaded through functions of two or more classes or modules — the Python twin of the backend's DataClumpDetector.",

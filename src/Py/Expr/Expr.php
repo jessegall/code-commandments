@@ -447,6 +447,29 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Which of $fields — a constructor's, in order — this call hands the blank string, each argument
+     * matched to its field by keyword or by position.
+     *
+     * @param  list<string>  $fields
+     * @return list<string>
+     */
+    public function fieldsHandedBlank(array $fields): array
+    {
+        $blank = [];
+        $position = 0;
+
+        foreach ($this->isCall() ? $this->get('arguments') : [] as $argument) {
+            $field = $argument->is(ExprKind::Keyword) ? (string) $argument->get('name') : ($fields[$position++] ?? null);
+
+            if ($field !== null && $argument->argumentValue()->isBlankString()) {
+                $blank[] = $field;
+            }
+        }
+
+        return $blank;
+    }
+
+    /**
      * Is this `json.loads(…)` or `json.load(…)` — text from outside decoded into bare dicts and lists?
      */
     public function isJsonDecode(): bool

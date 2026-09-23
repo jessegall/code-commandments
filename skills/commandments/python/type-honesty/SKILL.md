@@ -36,6 +36,46 @@ your own attribute, a fallback branch that cannot be reached, a `previous = self
 round trip. Ask whether the value is ever actually absent here. If it is not, the annotation is lying —
 move the value into the signature, a required attribute or a value object, and delete the defence.
 
+## Rules
+
+- [ ] A required field means the caller has the value; never fill one with `""` to satisfy the signature.
+      _Fetch the real value — or split a narrower dataclass that only promises what this caller knows._
+
+## Worked example
+
+### python-placeholder-filled-data
+
+`Card(title=…, body="")` — a dataclass field required as `str` handed the blank to satisfy the signature, a value the type cannot catch
+
+```py
+----------[ Bad ]----------
+
+def teaser(product) -> Teaser:
+    return Teaser(product.name, "")
+
+----------[ Good ]----------
+
+# in product_teasers.py
+@dataclass(frozen=True)
+class ProductTeaser:
+    name: str
+    subtitle: str | None = None
+
+# in product_teasers.py
+def product_teaser(product) -> ProductTeaser:
+    return ProductTeaser(product.name)
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/type-honesty` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-placeholder-filled-data`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/type-honesty`](../../backend/type-honesty/SKILL.md) — the same discipline over PHP.

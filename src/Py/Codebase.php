@@ -39,6 +39,8 @@ final class Codebase implements ModuleCodebase
 
     private ?TypedDicts $typedDicts = null;
 
+    private ?Dataclasses $dataclasses = null;
+
     /**
      * @param  array<string, string>  $sources  path => source
      */
@@ -119,6 +121,14 @@ final class Codebase implements ModuleCodebase
     public function typedDicts(): TypedDicts
     {
         return $this->typedDicts ??= new TypedDicts($this);
+    }
+
+    /**
+     * The dataclasses this codebase declares — found once and kept.
+     */
+    public function dataclasses(): Dataclasses
+    {
+        return $this->dataclasses ??= new Dataclasses($this);
     }
 
     public function whereFile(): FileQuery
