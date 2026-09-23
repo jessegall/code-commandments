@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "should my Python function's docstring have an Args: section listing every parameter with its type?",
+        "I left a comment `# formerly lived in checkout.py` above a function I moved — is that useful?",
+        "judge flagged python-restated-comment on `# add the rate` above `total += rate`, how do I fix it"
+    ],
+    "not": [
+        "how do I run pytest with coverage"
+    ]
+}
