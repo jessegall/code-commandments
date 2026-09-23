@@ -270,17 +270,42 @@ class NodeMatch implements Located
      */
     public function isWithinNamedConstructor(): bool
     {
-        $ancestors = $this->module->ancestorsOf($this->node);
-        $member = array_values(array_filter($ancestors, static fn (Node $node): bool => $node->is('ConstructorDeclaration', 'MethodDeclaration')))[0] ?? null;
-        $type = array_values(array_filter($ancestors, static fn (Node $node): bool => $node->is('ClassDeclaration', 'RecordDeclaration', 'StructDeclaration', 'RecordStructDeclaration')))[0] ?? null;
+        $member = array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->is('ConstructorDeclaration', 'MethodDeclaration')))[0] ?? null;
 
-        if ($member === null || $type === null) {
-            return false;
-        }
+        return $member !== null && $this->isNamedConstructorOf($member);
+    }
 
+    /**
+     * Is this member a constructor, or a static factory whose declared return type is the type it sits in?
+     */
+    public function isNamedConstructor(): bool
+    {
+        return $this->isNamedConstructorOf($this->node);
+    }
+
+    /**
+     * What this node belongs to — the type it is declared in, or its file for a top-level function —
+     * named by where it is, so two of them compare.
+     */
+    public function owner(): string
+    {
+        return $this->enclosingType()->mapOr($this->module->file, fn (Node $type): string => "{$this->module->file}::{$type->name}");
+    }
+
+    private function isNamedConstructorOf(Node $member): bool
+    {
         $returns = array_values(array_filter($member->children(), static fn (Node $child): bool => $child->role === 'type'))[0] ?? null;
 
-        return $member->is('ConstructorDeclaration') || ($member->hasModifier('static') && $returns?->name === $type->name);
+        return $member->is('ConstructorDeclaration')
+            || ($member->hasModifier('static') && $this->enclosingType()->isSomeAnd(static fn (Node $type): bool => $returns?->name === $type->name));
+    }
+
+    /**
+     * @return Option<Node>
+     */
+    private function enclosingType(): Option
+    {
+        return Option::fromNullable(array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->is('ClassDeclaration', 'RecordDeclaration', 'StructDeclaration', 'RecordStructDeclaration', 'InterfaceDeclaration')))[0] ?? null);
     }
 
     /**

@@ -236,6 +236,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\SwallowedException::class,
 
         // ----------[ C# ]----------
+        // Sins\CSharp\DataClump::class,
         // Sins\CSharp\DeepNesting::class,
         // Sins\CSharp\DictionaryBag::class,
         // Sins\CSharp\DuplicateMethod::class,

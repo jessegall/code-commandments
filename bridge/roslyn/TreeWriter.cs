@@ -277,6 +277,12 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
         }
 
+        if (node is ParameterSyntax declaration && model.GetDeclaredSymbol(declaration) is IParameterSymbol declaredParameter)
+        {
+            json.WriteString("type", declaredParameter.Type.ToDisplayString(Qualified));
+            json.WriteBoolean("nullable", declaredParameter.Type.NullableAnnotation == NullableAnnotation.Annotated);
+        }
+
         if (node is CatchDeclarationSyntax caught && model.GetTypeInfo(caught.Type).Type is { } exception and not IErrorTypeSymbol)
         {
             json.WriteString("type", exception.ToDisplayString(Qualified));

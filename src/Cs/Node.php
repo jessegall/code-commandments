@@ -45,6 +45,16 @@ final class Node implements SyntaxNode, SyntaxExpression
     private const array JSON_OBJECTS = ['global::System.Text.Json.Nodes.JsonNode', 'global::System.Text.Json.Nodes.JsonObject'];
 
     /**
+     * The value types a clump is made of — what a parameter holds when it carries one datum, not an object.
+     */
+    private const array SCALARS = [
+        'global::System.String', 'global::System.Int16', 'global::System.Int32', 'global::System.Int64', 'global::System.Decimal',
+        'global::System.Double', 'global::System.Single', 'global::System.Boolean', 'global::System.Char', 'global::System.Byte',
+        'global::System.DateTime', 'global::System.DateTimeOffset', 'global::System.DateOnly', 'global::System.TimeOnly',
+        'global::System.TimeSpan', 'global::System.Guid',
+    ];
+
+    /**
      * The exceptions that name no failure a caller could catch by meaning.
      */
     private const array GENERIC_EXCEPTIONS = ['global::System.Exception', 'global::System.SystemException', 'global::System.ApplicationException', 'global::System.InvalidOperationException'];
@@ -314,6 +324,30 @@ final class Node implements SyntaxNode, SyntaxExpression
     public function readsDictionaryNamed(array $names): bool
     {
         return $this->keyedReceiver()->isSomeAnd(static fn (self $receiver): bool => $receiver->is('IdentifierName') && in_array($receiver->name, $names, true));
+    }
+
+    /**
+     * This member's value parameters — each `type name`, sorted — when it takes three or more; none
+     * otherwise. Two members of different types with the same signature thread one clump of data.
+     *
+     * @return list<string>
+     */
+    public function valueParamSignature(): array
+    {
+        $list = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('ParameterList')))[0] ?? null;
+        $fields = [];
+
+        foreach (array_filter($list?->children ?? [], static fn (self $parameter): bool => $parameter->type !== null) as $parameter) {
+            $type = rtrim($parameter->type->name, '?');
+
+            if (in_array($type, self::SCALARS, true)) {
+                $fields[] = "{$type} {$parameter->name}";
+            }
+        }
+
+        sort($fields);
+
+        return count($fields) >= 3 ? $fields : [];
     }
 
     /**

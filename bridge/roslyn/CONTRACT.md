@@ -33,6 +33,7 @@ Every syntax node, nested as Roslyn nests them. Tokens and trivia (comments, whi
 | `type` | expressions the compiler typed | the type, fully qualified with `?` for a nullable reference (`global::System.String?`), never a keyword like `string` |
 | `nullable` | with `type` | whether the type is annotated nullable (`string?`) |
 | `type` on a `CatchDeclaration` | when it resolves | the exception type the `catch` catches, fully qualified |
+| `type` on a `Parameter` | when it resolves | the parameter's declared type, fully qualified |
 | `forgivesNull` | a null-forgiving `!` whose operand is declared nullable (a `T?` field, property, local, parameter or return) | `true` |
 | `constant` | expressions with a compile-time value | `true` — a literal, an enum member, a `const`, or arithmetic on them, as the compiler folds it |
 | `target` | invocations and object creations it resolved | `{ "type", "name", "parameters" }` — the method called, its containing type and parameter types |

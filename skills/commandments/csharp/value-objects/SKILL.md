@@ -52,43 +52,67 @@ A tuple returned and taken apart by position is the same thing unnamed.
 
 ## Rules
 
+- [ ] Bundle values that always travel together into one type — a record — instead of threading them side by side.
+      _Name the clump as a record (a `readonly record struct` when it is small), build it once where the values meet, and pass that instead of the separate parameters._
 - [ ] Give a record a type — an immutable `record` — instead of a dictionary read by string keys.
       _Declare the keys as members of a record, build it where the data enters (`JsonSerializer.Deserialize<T>` or a static `From` factory), and take that type from there on._
 
 ## Worked example
 
-### csharp-dictionary-bag
+### csharp-data-clump
 
-A string-keyed dictionary or JSON object read by keys written in the source — `row["sku"]`, `json.GetProperty("name")` — a record nobody declared
+The same three or more string, number, date or id parameters threaded through methods of two or more types — a value that travels together, waiting for a name
 
 ```cs
 ----------[ Bad ]----------
 
-public int Units(IReadOnlyDictionary<string, string> row)
+// in LabelPrinter.cs
+public string Print(string street, string city, string postcode) => $"{street}\n{postcode} {city}";
+
+// in Quotes.cs
+public decimal Price(string postcode, string city, string street) =>
+    street.Length + city.Length > 40 ? perKilometre * 2 : postcode.StartsWith('1') ? perKilometre : perKilometre * 1.5m;
+
+// in SalesReport.cs
+public long Total(DateTime from, DateTime until, string zone) =>
+    sales.Where(sale => sale.At >= from && sale.At < until && zone.Length > 0).Sum(sale => sale.Cents);
+
+// in SalesReport.cs
+public int Count(string zone, DateTime until, DateTime from) =>
+    returns.Count(entry => entry.At >= from && entry.At < until && zone.Length > 0);
+
+// in Listings.cs
+public IReadOnlyList<string> Page(int page, int size, bool descending) =>
+    (descending ? skus.OrderDescending() : skus.Order()).Skip(page * size).Take(size).ToList();
+
+// in Listings.cs
+public IReadOnlyList<string> Page(int page, int size, bool descending)
 {
-    return int.Parse(row["units"]) * 2;
+    var ordered = descending ? backorders.OrderByDescending(entry => entry.Missing) : backorders.OrderBy(entry => entry.Missing);
+
+    return ordered.Skip(page * size).Take(size).Select(entry => $"{entry.Sku}: {entry.Missing}").ToList();
 }
 
 ----------[ Good ]----------
 
-// in ImportRows.cs
-public int UnitsOf(ImportRow row) => row.Units * 2;
+// in LabelPrinter.cs
+public string PrintFor(Address address) => $"{address.Street}\n{address.Postcode} {address.City}";
 
-// in ImportRows.cs
-public sealed record ImportRow(string Sku, int Units)
-{
-    public static ImportRow From(IReadOnlyDictionary<string, string> row) => new(row["sku"], int.Parse(row["units"]));
-}
+// in LabelPrinter.cs
+public sealed record Address(string Street, string City, string Postcode);
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/value-objects` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-dictionary-bag`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-data-clump`, `csharp-dictionary-bag`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
