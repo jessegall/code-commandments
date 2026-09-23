@@ -1,5 +1,3 @@
-using System.Xml.Linq;
-
 namespace CodeCommandments.Bridge;
 
 /// <summary>
@@ -34,18 +32,17 @@ public static class GlobalUsings
 
     private static string Derived(string csproj)
     {
-        var document = XDocument.Load(csproj);
-        var implicitly = document.Descendants("ImplicitUsings").Any(element => element.Value is "enable" or "true");
-        var web = (document.Root?.Attribute("Sdk")?.Value ?? "").Equals("Microsoft.NET.Sdk.Web", StringComparison.OrdinalIgnoreCase);
+        var project = ProjectFile.Read(csproj);
+        var web = project.Sdk.Equals("Microsoft.NET.Sdk.Web", StringComparison.OrdinalIgnoreCase);
         var namespaces = new List<string>();
 
-        if (implicitly)
+        if (project.ImplicitUsings())
         {
             namespaces.AddRange(Sdk);
             namespaces.AddRange(web ? Web : []);
         }
 
-        namespaces.AddRange(document.Descendants("Using").Select(element => element.Attribute("Include")?.Value).OfType<string>());
+        namespaces.AddRange(project.Usings());
 
         return string.Join("\n", namespaces.Distinct().Select(space => $"global using global::{space};"));
     }

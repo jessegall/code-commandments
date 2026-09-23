@@ -1,6 +1,5 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
 
 namespace CodeCommandments.Bridge;
@@ -106,35 +105,24 @@ public static class References
     /// <summary>What an unrestored project names: its SDK's frameworks, and its direct packages from the NuGet cache.</summary>
     private static IEnumerable<string> FromProjectFile(string csproj)
     {
-        var document = XDocument.Load(csproj);
-        var sdk = document.Root?.Attribute("Sdk")?.Value ?? "";
-        var tfm = document.Descendants("TargetFramework").FirstOrDefault()?.Value
-            ?? document.Descendants("TargetFrameworks").FirstOrDefault()?.Value.Split(';')[0]
-            ?? "";
+        var project = ProjectFile.Read(csproj);
+        var tfm = project.TargetFramework();
         var frameworks = new List<string> { "Microsoft.NETCore.App" };
 
-        if (sdk.Equals("Microsoft.NET.Sdk.Web", StringComparison.OrdinalIgnoreCase))
+        if (project.Sdk.Equals("Microsoft.NET.Sdk.Web", StringComparison.OrdinalIgnoreCase))
         {
             frameworks.Add("Microsoft.AspNetCore.App");
         }
 
-        frameworks.AddRange(document.Descendants("FrameworkReference").Select(reference => reference.Attribute("Include")?.Value).OfType<string>());
+        frameworks.AddRange(project.FrameworkReferences());
 
         foreach (var dll in frameworks.Distinct(StringComparer.OrdinalIgnoreCase).SelectMany(framework => FrameworkPack(framework, tfm)))
         {
             yield return dll;
         }
 
-        foreach (var package in document.Descendants("PackageReference"))
+        foreach (var (id, version) in project.PackageReferences())
         {
-            var id = package.Attribute("Include")?.Value;
-            var version = package.Attribute("Version")?.Value ?? package.Element("Version")?.Value;
-
-            if (id is null || version is null)
-            {
-                continue;
-            }
-
             foreach (var dll in CachedPackage(id, version, tfm))
             {
                 yield return dll;
