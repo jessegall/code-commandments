@@ -319,6 +319,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\LoopWrappedInIf::class,
         // Sins\CSharp\MutableStaticState::class,
         // Sins\CSharp\NearDuplicateMethod::class,
+        // Sins\CSharp\NestedTernary::class,
         // Sins\CSharp\NullForgiven::class,
         // Sins\CSharp\RedundantElse::class,
         // Sins\CSharp\StringMirrorsEnum::class,

@@ -1852,6 +1852,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-nested-ternary": {
+            "title": "NestedTernary",
+            "help": "A conditional expression nested in another's branch — the C# twin of the PHP nested-ternary rule.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/flow",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-subject-ladder": {
             "title": "SubjectLadder",
             "help": "An `if`/`else if` ladder comparing one subject with constant after constant — the C# twin of the backend's and Python's ladder rules.",

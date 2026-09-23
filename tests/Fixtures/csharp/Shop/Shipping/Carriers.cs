@@ -11,6 +11,7 @@ public sealed class PostalCarrier(int grams, bool fragile)
         // @sin DuplicateMethod
         get
         {
+            // @sin NestedTernary
             var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
 
             if (fragile)
@@ -32,6 +33,7 @@ public sealed class CourierCarrier(int grams, bool fragile)
         // @sin DuplicateMethod
         get
         {
+            // @sin NestedTernary
             var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
 
             if (fragile)

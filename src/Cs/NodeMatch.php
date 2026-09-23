@@ -399,6 +399,23 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this expression a branch of a conditional expression — so a chain of them is reported once, at its
+     * outermost?
+     */
+    public function isConditionalBranch(): bool
+    {
+        $inner = $this->node;
+        $parent = $this->module->parentOf($inner);
+
+        while ($parent->isSomeAnd(static fn (Node $around): bool => $around->is('ParenthesizedExpression'))) {
+            $inner = $parent->unwrap();
+            $parent = $this->module->parentOf($inner);
+        }
+
+        return $parent->isSomeAnd(static fn (Node $around): bool => $around->is('ConditionalExpression') && $around->children[0] !== $inner);
+    }
+
+    /**
      * Does this member answer a lookup miss with an invented empty value? Every value it returns — each
      * arm of a conditional counted on its own — is either `""`/`0`/`false`, or what a dictionary lookup
      * found: the lookup itself, or the `out` variable a `TryGetValue` in this member filled.

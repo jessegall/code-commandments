@@ -150,6 +150,25 @@ public long BillFlat(Order order, List<string> journal)
 }
 ```
 
+### csharp-nested-ternary
+
+a `?:` with another `?:` as one of its branches — several decisions packed into one expression
+
+```cs
+----------[ Bad ]----------
+
+public static string Of(int grams) => grams < 500 ? "small" : grams < 5000 ? "medium" : "large";
+
+----------[ Good ]----------
+
+public static string Classed(int grams) => grams switch
+{
+    < 500 => "small",
+    < 5000 => "medium",
+    _ => "large",
+};
+```
+
 ### redundant-csharp-else
 
 An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing

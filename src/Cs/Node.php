@@ -287,6 +287,25 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * This expression with any parentheses around it taken off — `(a ? b : c)` read as `a ? b : c`.
+     */
+    public function withoutParentheses(): self
+    {
+        return $this->is('ParenthesizedExpression') ? $this->children[0]->withoutParentheses() : $this;
+    }
+
+    /**
+     * Is this a conditional expression with another conditional as one of its branches — `a ? b : c ? d : e`?
+     */
+    public function isNestedConditional(): bool
+    {
+        return $this->is('ConditionalExpression') && array_any(
+            array_slice($this->children, 1),
+            static fn (self $branch): bool => $branch->withoutParentheses()->is('ConditionalExpression'),
+        );
+    }
+
+    /**
      * Is this an empty collection written out — `[]`, `Enumerable.Empty<T>()`, `Array.Empty<T>()`, or a
      * `new List<T>()` with nothing in it?
      */

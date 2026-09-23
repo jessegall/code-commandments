@@ -84,6 +84,8 @@ or extract the inner block into a method named for what it decides.
       _Pull it out into its own line first — `var given = name ?? throw new …;` or an `is null` check with a throw — then do the work with the checked value._
 - [ ] Invert a loop body wrapped in one `if` into a `continue` guard so the work sits at the loop's own level.
       _Write `if (!<condition>) { continue; }` as the first statement of the loop and dedent the body under it — or, when the loop only filters, let `Where` say so._
+- [ ] Use one `?:` for one choice; for more, use a `switch` expression or early returns.
+      _Rewrite it as a `switch` expression (`grams switch { < 100 => "small", < 1000 => "medium", _ => "large" }`) or as `if` statements that return._
 - [ ] Drop the `else` after a branch that returns, throws, continues or breaks — let the rest run at the method's own level.
       _Delete the `else` and its braces and dedent its block; the exit above it already says the rest only runs when the condition was false._
 - [ ] Dispatch on a value with a `switch` expression, or put the per-case behaviour on the type — never a ladder of `==` tests on one subject.
@@ -130,17 +132,17 @@ public static List<string> GuardedLines(List<string>? skus)
 }
 ```
 
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/flow` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-coalesced-loop-subject`, `deep-csharp-nesting`, `csharp-inline-throw`, `csharp-loop-wrapped-in-if`, `redundant-csharp-else`, `csharp-subject-ladder`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-coalesced-loop-subject`, `deep-csharp-nesting`, `csharp-inline-throw`, `csharp-loop-wrapped-in-if`, `csharp-nested-ternary`, `redundant-csharp-else`, `csharp-subject-ladder`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
