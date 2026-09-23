@@ -44,6 +44,8 @@ constants — those are data, not procedure. Duplication is a body of real subst
 
 - [ ] Hoist a function body written twice into one shared function, and call it from both places.
       _Move the body to one function in a module both callers import (or a method on the class that owns the data), and replace every copy with a call to it._
+- [ ] Merge two functions that differ only in a literal into one, and pass what differs as a parameter.
+      _Name the literal that differs, make it a parameter of one shared function, and call that from both places._
 
 ## Worked example
 
@@ -113,14 +115,17 @@ def line_items(self, lines: list[Line]) -> list[str]:
     return describe_lines(lines)
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/duplication` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `duplicate-python-function`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `duplicate-python-function`, `near-duplicate-python-function`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

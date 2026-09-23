@@ -10,6 +10,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Codebase as BaseCodebase;
+use JesseGall\CodeCommandments\Detectors\BucketsByGroupKey;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Packages\Exemptions;
@@ -29,6 +30,8 @@ use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
  */
 final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetector, Exemptable
 {
+    use BucketsByGroupKey;
+
     /**
      * Minimum body AST-node count to compare. Higher than the exact detector's
      * floor (12): a fuzzy, name-and-literal-blind match collides by coincidence far
@@ -39,9 +42,7 @@ final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetecto
 
     /**
      * The bucket a finding belongs to — its literal-blind SHAPE, the same fingerprint {@see find}
-     * groups by. Declared rather than inherited from {@see RecurringPattern} because the rule here is
-     * cross-bucket: a member with a byte-identical twin belongs to the exact detector instead, which
-     * no per-bucket loop can express.
+     * groups by before it drops every member with a byte-identical twin.
      */
     public function groupKey(Located $finding, BaseCodebase $codebase): ?string
     {
@@ -60,8 +61,7 @@ final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetecto
 
     public function find(Codebase $codebase): array
     {
-        $byShape = [];
-        $exactCounts = [];
+        $candidates = [];
 
         foreach ($codebase->whereMethodDeclaration()->get() as $match) {
             if ($match->bodyNodeCount() < self::MIN_BODY_NODES) {
@@ -101,27 +101,10 @@ final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetecto
                 continue;
             }
 
-            $byShape[$match->shapeHash()][] = $match;
-            $exactCounts[$match->structuralHash()] = ($exactCounts[$match->structuralHash()] ?? 0) + 1;
+            $candidates[] = $match;
         }
 
-        $findings = [];
-
-        foreach ($byShape as $matches) {
-            if (count($matches) < 2) {
-                continue;
-            }
-
-            // Flag only members WITHOUT a byte-identical twin — exact duplicates are
-            // DuplicateFunctionDetector's job, so the two never report the same line.
-            foreach ($matches as $match) {
-                if (($exactCounts[$match->structuralHash()] ?? 0) === 1) {
-                    $findings[] = $match;
-                }
-            }
-        }
-
-        return $findings;
+        return $this->nearCopies($candidates, $codebase, static fn (NodeMatch $match): string => $match->structuralHash());
     }
 
     private function isContractDeclarationHook(Codebase $codebase, NodeMatch $match): bool

@@ -2,25 +2,24 @@
 
 declare(strict_types=1);
 
-namespace JesseGall\CodeCommandments\Detectors\Frontend\TypeScript;
+namespace JesseGall\CodeCommandments\Detectors\Python;
 
 use JesseGall\CodeCommandments\Codebase as BaseCodebase;
 use JesseGall\CodeCommandments\Detectors\BucketsByGroupKey;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
-use JesseGall\CodeCommandments\Frontend\Detector;
 use JesseGall\CodeCommandments\Located;
-use JesseGall\CodeCommandments\Sins\Frontend\TypeScript\NearDuplicateFunction;
+use JesseGall\CodeCommandments\Py\Codebase;
+use JesseGall\CodeCommandments\Py\NodeMatch;
+use JesseGall\CodeCommandments\Python\Detector;
+use JesseGall\CodeCommandments\Sins\Python\NearDuplicateFunction;
 use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Ts\NodeMatch;
-use JesseGall\CodeCommandments\Vue\Codebase;
 
 /**
- * Two-or-more TypeScript functions with one SHAPE but not one body — the same control flow, differing
- * only in local names or string/number literals (a type-2 clone): each does the same thing to a
- * different endpoint or key, and wants to be one function with a parameter. Members with a
- * byte-identical twin belong to {@see DuplicateFunctionDetector}. A constructor, a body of one
- * statement and a lookup table written as code are left out: none has a skeleton to parameterise. The twin of the backend's
- * {@see \JesseGall\CodeCommandments\Detectors\Backend\NearDuplicateFunctionDetector}.
+ * Two-or-more Python functions with one control-flow skeleton that differ only in their local names or
+ * their string/number literals — a type-2 clone, one function waiting for a parameter. The twin of the
+ * TypeScript {@see \JesseGall\CodeCommandments\Detectors\Frontend\TypeScript\NearDuplicateFunctionDetector}.
+ * Shapes that are alike by construction are left alone: an `__init__`, a one-statement body, a lookup
+ * table and a stub.
  */
 final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetector
 {
@@ -42,17 +41,18 @@ final class NearDuplicateFunctionDetector implements Detector, RecurrenceDetecto
         return $finding instanceof NodeMatch && $finding->shapeHash() !== '' ? $finding->shapeHash() : null;
     }
 
-    public function find(Codebase $components): array
+    public function find(Codebase $codebase): array
     {
-        $candidates = $components
+        $candidates = $codebase
             ->whereFunction()
             ->where(static fn (NodeMatch $match): bool => $match->bodyNodeCount() >= self::MIN_BODY_WEIGHT)
             ->reject(static fn (NodeMatch $match): bool => $match->isConstructorDeclaration())
             ->reject(static fn (NodeMatch $match): bool => $match->isSoleReturnExpression())
             ->reject(static fn (NodeMatch $match): bool => $match->isSoleExpressionStatement())
             ->reject(static fn (NodeMatch $match): bool => $match->isLiteralLookup())
+            ->reject(static fn (NodeMatch $match): bool => $match->isStub())
             ->get();
 
-        return $this->nearCopies($candidates, $components, static fn (NodeMatch $match): string => $match->bodyHash());
+        return $this->nearCopies($candidates, $codebase, static fn (NodeMatch $match): string => $match->bodyHash());
     }
 }

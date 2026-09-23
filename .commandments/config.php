@@ -212,6 +212,7 @@ $disabledSins = function (Config $config): void {
 
         // ----------[ Python ]----------
         // Sins\Python\DuplicateFunction::class,
+        // Sins\Python\NearDuplicateFunction::class,
     );
 };
 

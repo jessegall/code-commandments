@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors;
 
+use Closure;
 use JesseGall\CodeCommandments\Codebase;
 use JesseGall\CodeCommandments\Located;
 
@@ -36,5 +37,32 @@ trait BucketsByGroupKey
         }
 
         return array_values(array_filter($buckets, static fn (array $occurrences) => count($occurrences) >= $minimum));
+    }
+
+    /**
+     * The members of $candidates' recurring buckets that have no byte-identical twin among them — the
+     * near copies. A member with an exact twin is the exact-duplicate rule's finding, so the two never
+     * report the same line.
+     *
+     * @template T of Located
+     *
+     * @param  list<T>  $candidates
+     * @param  Closure(T): string  $exact  the fingerprint two byte-identical members share
+     * @return list<T>
+     */
+    private function nearCopies(array $candidates, Codebase $codebase, Closure $exact): array
+    {
+        $copies = array_count_values(array_map($exact, $candidates));
+        $near = [];
+
+        foreach ($this->recurringBuckets($candidates, $codebase) as $bucket) {
+            foreach ($bucket as $candidate) {
+                if ($copies[$exact($candidate)] === 1) {
+                    $near[] = $candidate;
+                }
+            }
+        }
+
+        return $near;
     }
 }

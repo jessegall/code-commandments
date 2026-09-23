@@ -1821,6 +1821,19 @@
             ],
             "detail": true
         },
+        "sin_near-duplicate-python-function": {
+            "title": "NearDuplicateFunction",
+            "help": "Two-or-more Python functions with one control-flow skeleton that differ only in their local names or their string/number literals — a type-2 clone, one function waiting for a parameter.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/duplication",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_defended-certain-field": {
             "title": "DefendedCertainField",
             "help": "An `?.` on one of the enclosing class's OWN fields, where that field is declared total — a guard against a case the type rules out.",
