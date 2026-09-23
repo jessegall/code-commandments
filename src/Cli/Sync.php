@@ -200,9 +200,9 @@ final class Sync implements Command
      */
     private function readWhichRulesReadBeyondOneFile(string $consumer): void
     {
-        $configured = Config::load($consumer)->apply(Catalog::backend(), Catalog::frontend());
+        $configured = Config::load($consumer)->apply(Catalog::all());
 
-        CrossFileSet::reread(Workspace::at($consumer), [...$configured['backend'], ...$configured['frontend']]);
+        CrossFileSet::reread(Workspace::at($consumer), $configured->all());
     }
 
     /**

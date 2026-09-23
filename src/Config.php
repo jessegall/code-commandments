@@ -406,17 +406,15 @@ final class Config
      * added, and the configurators run. `$installed` decides package availability — defaults to
      * Composer's own installed set; tests inject a fake.
      *
-     * @param  list<Detector>  $backend
-     * @param  list<Detector>  $frontend
+     * @param  list<Detector>  $shipped  every engine's shipped detectors
      * @param  (callable(string, bool): bool)|null  $installed  ($package, $isFrontend) => present?
-     * @return array{backend: list<Detector>, frontend: list<Detector>}
      */
-    public function apply(array $backend, array $frontend, ?callable $installed = null): array
+    public function apply(array $shipped, ?callable $installed = null): EngineDetectors
     {
         $installed ??= self::defaultPackageCheck();
 
         $keep = fn (Detector $d): bool => $this->hasPackage($d, $installed) && ! $this->isDisabled($d);
-        $detectors = array_filter([...$backend, ...$frontend], $keep);
+        $detectors = array_filter($shipped, $keep);
 
         $missing = [];
 
@@ -446,21 +444,7 @@ final class Config
             throw InvalidConfiguration::unknownDetector($class);
         }
 
-        return [
-            'backend' => self::ofEngine($detectors, Engine::Backend),
-            'frontend' => self::ofEngine($detectors, Engine::Frontend),
-        ];
-    }
-
-    /**
-     * The detectors of one engine, in the order they were registered.
-     *
-     * @param  list<Detector>  $detectors
-     * @return list<Detector>
-     */
-    private static function ofEngine(array $detectors, Engine $engine): array
-    {
-        return array_values(array_filter($detectors, static fn (Detector $d): bool => Engine::of($d) === $engine));
+        return new EngineDetectors($detectors);
     }
 
     /**

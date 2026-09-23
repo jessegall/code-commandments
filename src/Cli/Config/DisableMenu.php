@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Config;
 
-use JesseGall\CodeCommandments\Scribes\Edit;
-
-use JesseGall\PhpTypes\Option;
-
-use JesseGall\CodeCommandments\Workspace;
-
+use JesseGall\CodeCommandments\Agents\Catalog as Agents;
 use JesseGall\CodeCommandments\Ast\AstNode;
 use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Agents\Catalog as Agents;
+use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
+use JesseGall\CodeCommandments\Scribes\Edit;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
+use JesseGall\CodeCommandments\Workspace;
+use JesseGall\PhpTypes\Option;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\MethodCall;
@@ -46,9 +44,7 @@ final class DisableMenu
 
     private const string PACKAGE_NS = 'JesseGall\\CodeCommandments\\';
 
-    private const string BACKEND_SEPARATOR = '// ----------[ Backend ]----------';
 
-    private const string FRONTEND_SEPARATOR = '// ----------[ Frontend ]----------';
 
     private const string SUFFIX = '::class,';
 
@@ -165,7 +161,7 @@ final class DisableMenu
             $classes,
         )));
 
-        usort($refs, static fn (string $a, string $b): int => [str_contains($a, '\\Frontend\\'), $a] <=> [str_contains($b, '\\Frontend\\'), $b]);
+        usort($refs, static fn (string $a, string $b): int => [array_search(self::engineOf($a), Engine::cases(), true), $a] <=> [array_search(self::engineOf($b), Engine::cases(), true), $b]);
 
         return $refs;
     }
@@ -248,28 +244,13 @@ final class DisableMenu
             return array_map(static fn (string $ref): string => "// {$ref}::class,", $refs);
         }
 
-        $backend = [];
-        $frontend = [];
+        $lines = [];
 
         foreach ($refs as $ref) {
-            $line = "// {$ref}::class,";
-
-            if (str_contains($ref, '\\Frontend\\')) {
-                $frontend[] = $line;
-            } else {
-                $backend[] = $line;
-            }
+            $lines[$ref] = "// {$ref}::class,";
         }
 
-        $lines = [self::BACKEND_SEPARATOR, ...$backend];
-
-        if ($frontend !== []) {
-            $lines[] = '';
-            $lines[] = self::FRONTEND_SEPARATOR;
-            $lines = [...$lines, ...$frontend];
-        }
-
-        return $lines;
+        return self::sections($lines, '');
     }
 
     /**
@@ -411,31 +392,59 @@ final class DisableMenu
             ));
         }
 
-        $backend = [];
-        $frontend = [];
+        $lines = [];
 
         foreach ($entries as $ref => $commented) {
-            $line = '        ' . ($commented ? '// ' : '') . $ref . self::SUFFIX;
+            $lines[$ref] = '        ' . ($commented ? '// ' : '') . $ref . self::SUFFIX;
+        }
 
-            if (str_contains($ref, '\\Frontend\\')) {
-                $frontend[$ref] = $line;
-            } else {
-                $backend[$ref] = $line;
+        return self::sections($lines, '        ');
+    }
+
+    /**
+     * $lines — each shipped class's line, keyed by the class — grouped under a separator per engine, in
+     * engine order and by class within each. The backend's heading always stands; an engine with no
+     * line has none.
+     *
+     * @param  array<string, string>  $lines
+     * @return list<string>
+     */
+    private static function sections(array $lines, string $indent): array
+    {
+        ksort($lines);
+        $byEngine = array_fill_keys(array_map(static fn (Engine $engine): string => $engine->value, Engine::cases()), []);
+
+        foreach ($lines as $ref => $line) {
+            $byEngine[self::engineOf($ref)->value][] = $line;
+        }
+
+        $out = [];
+
+        foreach (Engine::cases() as $engine) {
+            if ($byEngine[$engine->value] === [] && $engine !== Engine::Backend) {
+                continue;
             }
+
+            if ($out !== []) {
+                $out[] = '';
+            }
+
+            $out = [...$out, $indent . '// ----------[ ' . ucfirst($engine->value) . ' ]----------', ...$byEngine[$engine->value]];
         }
 
-        ksort($backend);
-        ksort($frontend);
+        return $out;
+    }
 
-        $lines = ['        ' . self::BACKEND_SEPARATOR, ...array_values($backend)];
-
-        if ($frontend !== []) {
-            $lines[] = '';
-            $lines[] = '        ' . self::FRONTEND_SEPARATOR;
-            $lines = [...$lines, ...array_values($frontend)];
-        }
-
-        return $lines;
+    /**
+     * The engine a shipped class belongs to — the folder it ships in.
+     */
+    private static function engineOf(string $ref): Engine
+    {
+        return match (true) {
+            str_contains($ref, '\\Frontend\\') => Engine::Frontend,
+            str_contains($ref, '\\Python\\') => Engine::Python,
+            default => Engine::Backend,
+        };
     }
 
     /**

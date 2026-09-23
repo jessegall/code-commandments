@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests;
 use InvalidArgumentException;
 use JesseGall\CodeCommandments\Ast\Codebase as AstCodebase;
 use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
@@ -40,9 +41,9 @@ final class ConfigTest extends TestCase
     {
         $config = new Config()->disable(ConfigTunableDetector::class);
 
-        $result = $config->apply([new ConfigTunableDetector], []);
+        $result = $config->apply([new ConfigTunableDetector]);
 
-        $this->assertSame([], $result['backend']);
+        $this->assertSame([], $result->for(Engine::Backend));
     }
 
     public function test_disable_by_sin_class_drops_every_detector_for_that_sin(): void
@@ -50,9 +51,9 @@ final class ConfigTest extends TestCase
         // ConfigTunableDetector points at the ArrayBag sin — disabling the SIN drops the detector.
         $config = new Config()->disable(ArrayBag::class);
 
-        $result = $config->apply([new ConfigTunableDetector], []);
+        $result = $config->apply([new ConfigTunableDetector]);
 
-        $this->assertSame([], $result['backend']);
+        $this->assertSame([], $result->for(Engine::Backend));
     }
 
     public function test_disable_by_skill_class_drops_every_detector_that_skill_teaches(): void
@@ -61,9 +62,9 @@ final class ConfigTest extends TestCase
         // disabling the SKILL silences the whole discipline, this detector with it.
         $config = new Config()->disable(ValueObjects::class);
 
-        $result = $config->apply([new ConfigTunableDetector], []);
+        $result = $config->apply([new ConfigTunableDetector]);
 
-        $this->assertSame([], $result['backend']);
+        $this->assertSame([], $result->for(Engine::Backend));
     }
 
     public function test_disable_by_hook_class_drops_that_hook(): void
@@ -80,21 +81,21 @@ final class ConfigTest extends TestCase
     {
         $config = new Config()->detector(ConfigTunableDetector::class, ConfigFrontendDetector::class);
 
-        $result = $config->apply([], []);
+        $result = $config->apply([]);
 
-        $this->assertCount(1, $result['backend']);
-        $this->assertInstanceOf(ConfigTunableDetector::class, $result['backend'][0]);
-        $this->assertCount(1, $result['frontend']);
-        $this->assertInstanceOf(ConfigFrontendDetector::class, $result['frontend'][0]);
+        $this->assertCount(1, $result->for(Engine::Backend));
+        $this->assertInstanceOf(ConfigTunableDetector::class, $result->for(Engine::Backend)[0]);
+        $this->assertCount(1, $result->for(Engine::Frontend));
+        $this->assertInstanceOf(ConfigFrontendDetector::class, $result->for(Engine::Frontend)[0]);
     }
 
     public function test_configure_injects_the_detector_by_its_type_hint(): void
     {
         $config = new Config()->configure(fn (ConfigTunableDetector $d) => $d->limit(42));
 
-        $result = $config->apply([new ConfigTunableDetector], []);
+        $result = $config->apply([new ConfigTunableDetector]);
 
-        $this->assertSame(42, $result['backend'][0]->limit);
+        $this->assertSame(42, $result->for(Engine::Backend)[0]->limit);
     }
 
     public function test_configure_a_registered_detector(): void
@@ -103,9 +104,9 @@ final class ConfigTest extends TestCase
             ->detector(ConfigTunableDetector::class)
             ->configure(fn (ConfigTunableDetector $d) => $d->limit(7));
 
-        $result = $config->apply([], []);
+        $result = $config->apply([]);
 
-        $this->assertSame(7, $result['backend'][0]->limit);
+        $this->assertSame(7, $result->for(Engine::Backend)[0]->limit);
     }
 
     public function test_configure_an_unknown_or_disabled_detector_throws(): void
@@ -114,7 +115,7 @@ final class ConfigTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
 
-        $config->apply([], []); // never registered → not in the set
+        $config->apply([]); // never registered → not in the set
     }
 
     public function test_configure_without_a_type_hint_throws(): void
@@ -123,7 +124,7 @@ final class ConfigTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
 
-        $config->apply([new ConfigTunableDetector], []);
+        $config->apply([new ConfigTunableDetector]);
     }
 
     public function test_exclude_accumulates_relative_paths_none_by_default(): void
@@ -142,31 +143,31 @@ final class ConfigTest extends TestCase
             . "return fn (Config \$c) => \$c->disable(ConfigTunableDetector::class);\n"
         );
 
-        $result = Config::load($dir)->apply([new ConfigTunableDetector], []);
+        $result = Config::load($dir)->apply([new ConfigTunableDetector]);
 
-        $this->assertSame([], $result['backend'], 'the file disabled the detector');
+        $this->assertSame([], $result->for(Engine::Backend), 'the file disabled the detector');
     }
 
     public function test_load_without_a_config_file_is_a_no_op(): void
     {
-        $result = Config::load($this->project(null))->apply([new ConfigTunableDetector], []);
+        $result = Config::load($this->project(null))->apply([new ConfigTunableDetector]);
 
-        $this->assertCount(1, $result['backend']);
+        $this->assertCount(1, $result->for(Engine::Backend));
     }
 
     public function test_a_rule_for_an_absent_package_is_filtered_out(): void
     {
         $config = new Config();
 
-        $this->assertSame([], $config->apply([new ConfigPackagedDetector], [], static fn (): bool => false)['backend'], 'package absent → dropped');
-        $this->assertCount(1, $config->apply([new ConfigPackagedDetector], [], static fn (): bool => true)['backend'], 'package present → kept');
+        $this->assertSame([], $config->apply([new ConfigPackagedDetector], static fn (): bool => false)->for(Engine::Backend), 'package absent → dropped');
+        $this->assertCount(1, $config->apply([new ConfigPackagedDetector], static fn (): bool => true)->for(Engine::Backend), 'package present → kept');
     }
 
     public function test_the_installed_check_receives_the_declared_package_name(): void
     {
         $seen = null;
 
-        new Config()->apply([new ConfigPackagedDetector], [], function (string $package) use (&$seen): bool {
+        new Config()->apply([new ConfigPackagedDetector], function (string $package) use (&$seen): bool {
             $seen = $package;
 
             return true;
@@ -178,9 +179,9 @@ final class ConfigTest extends TestCase
     public function test_a_rule_without_a_required_package_is_never_filtered(): void
     {
         // ConfigTunableDetector's sin isn't RequiresPackage — the installed check must be ignored.
-        $result = new Config()->apply([new ConfigTunableDetector], [], static fn (): bool => false);
+        $result = new Config()->apply([new ConfigTunableDetector], static fn (): bool => false);
 
-        $this->assertCount(1, $result['backend']);
+        $this->assertCount(1, $result->for(Engine::Backend));
     }
 
     public function test_a_configured_threshold_changes_real_detection(): void
@@ -193,10 +194,10 @@ final class ConfigTest extends TestCase
             PHP;
         $codebase = AstCodebase::fromString($src);
 
-        $configured = new Config()->configure(fn (DataClumpDetector $d) => $d->minClasses(3))->apply([new DataClumpDetector], []);
+        $configured = new Config()->configure(fn (DataClumpDetector $d) => $d->minClasses(3))->apply([new DataClumpDetector]);
 
         $this->assertNotEmpty(new DataClumpDetector()->find($codebase), 'default (min 2) flags the clump');
-        $this->assertEmpty($configured['backend'][0]->find($codebase), 'raising min to 3 clears it — only 2 classes share it');
+        $this->assertEmpty($configured->for(Engine::Backend)[0]->find($codebase), 'raising min to 3 clears it — only 2 classes share it');
     }
 
     public function test_hooks_register_and_return(): void

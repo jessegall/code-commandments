@@ -4,38 +4,36 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Judge;
 
-use JesseGall\CodeCommandments\Finding;
-
-use JesseGall\CodeCommandments\Support\ClassName;
-
 use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Bridge\Bridge;
 use JesseGall\CodeCommandments\Bridge\ConsumesContracts;
+use JesseGall\CodeCommandments\Cli\Attempt;
+use JesseGall\CodeCommandments\Cli\Benchmark;
+use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
+use JesseGall\CodeCommandments\Cli\Help\Help;
+use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Cli\ProgressBar;
+use JesseGall\CodeCommandments\Cli\Report\SinReport;
+use JesseGall\CodeCommandments\Cli\Report\SkippedRules;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
 use JesseGall\CodeCommandments\Cli\Scope\ScopeUnavailable;
 use JesseGall\CodeCommandments\Config;
-use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Custom;
-use JesseGall\CodeCommandments\ExcludedPaths;
-use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Packages\Exemptions;
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\CrossFileSet;
-use JesseGall\CodeCommandments\Backend\Detector;
-use JesseGall\CodeCommandments\Sins\Commands;
-use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
-
-use JesseGall\CodeCommandments\Cli\Report\SinReport;
-use JesseGall\CodeCommandments\Cli\Report\SkippedRules;
-use JesseGall\CodeCommandments\Cli\Attempt;
-use JesseGall\CodeCommandments\Cli\Command;
-use JesseGall\CodeCommandments\Cli\Help\Help;
-use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Cli\Benchmark;
-use JesseGall\CodeCommandments\Cli\ProgressBar;
+use JesseGall\CodeCommandments\Engine;
+use JesseGall\CodeCommandments\ExcludedPaths;
+use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Hooks\HookIO;
+use JesseGall\CodeCommandments\Languages;
+use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Sins\Commands;
+use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Support\ClassName;
+use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
 
@@ -117,9 +115,9 @@ final class Judge implements Command
         // package-gated rule (Spatie/Laravel/…) is kept even though THIS project doesn't
         // require the package. For cross-project calibration; user `disable()`s still apply.
         $installed = $options->ignorePackages ? static fn () => true : null;
-        $configured = $config->apply(Catalog::backend(), Catalog::frontend(), $installed);
-        $detectors = $this->select($configured['backend'], $options->skill, $options->sin);
-        $frontend = $this->select($configured['frontend'], $options->skill, $options->sin);
+        $configured = $config->apply(Catalog::all(), $installed);
+        $detectors = $this->select($configured->for(Engine::Backend), $options->skill, $options->sin);
+        $frontend = $this->select($configured->for(Engine::Frontend), $options->skill, $options->sin);
 
         if ($detectors === [] && $frontend === []) {
             $named = "--skill={$options->skill->unwrapOr('')} --sin={$options->sin->unwrapOr('')}";
@@ -294,9 +292,9 @@ final class Judge implements Command
         // The detectors that would actually RUN here, not the shipped catalog: the project's
         // config has already dropped what it disabled and added what it registered, so a project's
         // own rules are listed beside the shipped ones and a silenced one is not listed at all.
-        $configured = Config::load()->apply(Catalog::backend(), Catalog::frontend());
+        $configured = Config::load()->apply(Catalog::all());
 
-        foreach ([...$configured['backend'], ...$configured['frontend']] as $detector) {
+        foreach ($configured->all() as $detector) {
             $short = ClassName::short($detector::class);
             // A project's own rule says so, so a reader knows which of the two catalogues it came from.
             $bySkill[$detector->sin()->slug()][] = Custom::owns($detector) ? "{$short} (custom)" : $short;

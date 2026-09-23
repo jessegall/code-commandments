@@ -78,8 +78,8 @@ final class SkillReminder extends Hook implements Discipline
 
         // The rules this project RUNS: its own registered beside the shipped ones, minus what it
         // disabled. A rule it silenced must not nudge, and a rule it wrote itself must.
-        $configured = $config->apply(Catalog::backend(), Catalog::frontend());
-        $rules = [...$configured['backend'], ...$configured['frontend']];
+        $configured = $config->apply(Catalog::all());
+        $rules = $configured->all();
 
         $single = Catalog::singleFile(CrossFileSet::forProject($event->workspace(), $rules), $rules);
         $sins = [];

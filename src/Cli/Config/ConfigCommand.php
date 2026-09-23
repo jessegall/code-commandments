@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Config;
 
-use JesseGall\CodeCommandments\Workspace;
-
-use JesseGall\CodeCommandments\Support\InstalledPackage;
-use JesseGall\CodeCommandments\Config;
-use JesseGall\CodeCommandments\Detectors\Catalog as DetectorCatalog;
-use JesseGall\CodeCommandments\Packages\Catalog as PackageCatalog;
-use JesseGall\CodeCommandments\Skills\Catalog as SkillCatalog;
-
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Help\HelpScreen;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Detectors\Catalog as DetectorCatalog;
+use JesseGall\CodeCommandments\Engine;
+use JesseGall\CodeCommandments\Packages\Catalog as PackageCatalog;
+use JesseGall\CodeCommandments\Skills\Catalog as SkillCatalog;
+use JesseGall\CodeCommandments\Support\InstalledPackage;
+use JesseGall\CodeCommandments\Workspace;
+
 /**
  * Inspects and manages `.commandments/config.php`; `config` shows effective configuration,
  * `reindex` refreshes source roots from composer.json.
@@ -47,7 +47,7 @@ final class ConfigCommand implements Command
     {
         $root = getcwd() ?: '.';
         $config = Config::load($root);
-        $effective = $config->apply(DetectorCatalog::backend(), DetectorCatalog::frontend());
+        $effective = $config->apply(DetectorCatalog::all());
 
         $roots = $config->sourceRoots() !== [] ? $config->sourceRoots() : new SourceRoots()->detect($root);
         $file = Workspace::config($root);
@@ -56,8 +56,9 @@ final class ConfigCommand implements Command
 
         $this->row('Config', is_file($file) ? '.commandments/config.php' : '.commandments/config.php (not yet written)');
         $this->row('Source roots', implode(', ', $roots));
-        $this->row('Backend detectors', count($effective['backend']) . ' running  ·  ' . count(DetectorCatalog::backend()) . ' available');
-        $this->row('Frontend detectors', count($effective['frontend']) . ' running  ·  ' . count(DetectorCatalog::frontend()) . ' available');
+        $this->row('Backend detectors', count($effective->for(Engine::Backend)) . ' running  ·  ' . count(DetectorCatalog::backend()) . ' available');
+        $this->row('Frontend detectors', count($effective->for(Engine::Frontend)) . ' running  ·  ' . count(DetectorCatalog::frontend()) . ' available');
+        $this->row('Python detectors', count($effective->for(Engine::Python)) . ' running  ·  ' . count(DetectorCatalog::python()) . ' available');
         $this->row('Custom detectors', (string) count($config->registeredDetectors()));
         $this->row('Exemption packages', count(PackageCatalog::all()) . ' built-in  ·  ' . count($config->packages()) . ' registered');
         $this->row('Skills', (string) count(SkillCatalog::all()));
