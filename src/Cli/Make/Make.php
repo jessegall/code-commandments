@@ -36,8 +36,9 @@ final class Make implements Command
         return Help::of('Scaffold a commandment of your own — a skill, a sin and a detector in `.commandments/custom/`, registered in your config, with the rest of the process printed for you.')
             ->form('make <Name>', 'scaffold a backend (PHP) commandment and register it')
             ->form('make <Name> --engine=frontend', 'scaffold a frontend (Vue) one instead')
+            ->form('make <Name> --engine=python', 'scaffold a Python one instead')
             ->form('make <Name> --skill=NAME', 'point the sin at an EXISTING skill (shipped or your own) instead of writing a new one')
-            ->option('--engine=backend|frontend', 'which parse engine the detector reads (default: backend)')
+            ->option('--engine=backend|frontend|python', 'which parse engine the detector reads (default: backend)')
             ->option('--skill=NAME', 'the skill that teaches the fix — a lenient name/slug match against the existing skills, or a new slug to create one')
             ->option('--force', 'overwrite files that already exist')
             ->note('The generated classes live in `.commandments/custom/`, beside your config. That folder is not '
@@ -63,7 +64,7 @@ final class Make implements Command
         $parsed = $engine->mapOr(Engine::Backend, Engine::parse(...));
 
         if ($parsed === null) {
-            return HelpScreen::usage($this, "unknown --engine={$engine->unwrap()} — it is `backend` or `frontend`.");
+            return HelpScreen::usage($this, "unknown --engine={$engine->unwrap()} — it is `backend`, `frontend` or `python`.");
         }
 
         $root = getcwd();

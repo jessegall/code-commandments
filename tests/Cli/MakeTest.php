@@ -114,6 +114,20 @@ final class MakeTest extends TestCase
         $this->assertStringContainsString('whereElement()', $detector);
     }
 
+    public function test_a_python_detector_reads_the_python_codebase_and_is_valid_php(): void
+    {
+        $dir = $this->project();
+        $this->make($dir, 'SwallowedError', '--engine=python', '--skill=exceptions');
+
+        $file = "{$dir}/.commandments/custom/SwallowedErrorDetector.php";
+        $detector = (string) file_get_contents($file);
+
+        $this->assertStringContainsString('use JesseGall\\CodeCommandments\\Py\\Codebase;', $detector);
+        $this->assertStringContainsString('use JesseGall\\CodeCommandments\\Python\\Detector;', $detector);
+        $this->assertStringContainsString('whereFunction()', $detector);
+        $this->assertStringContainsString('No syntax errors', (string) shell_exec('php -l ' . escapeshellarg($file)));
+    }
+
     public function test_an_unknown_engine_is_refused(): void
     {
         $this->assertSame(2, $this->make($this->project(), 'Whatever', '--engine=sideways'));

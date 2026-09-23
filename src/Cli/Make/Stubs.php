@@ -146,9 +146,56 @@ final class Stubs
      */
     public static function detector(Blueprint $blueprint): string
     {
-        return $blueprint->engine === Engine::Backend
-            ? self::backendDetector($blueprint)
-            : self::frontendDetector($blueprint);
+        return match ($blueprint->engine) {
+            Engine::Backend => self::backendDetector($blueprint),
+            Engine::Frontend => self::frontendDetector($blueprint),
+            Engine::Python => self::pythonDetector($blueprint),
+        };
+    }
+
+    private static function pythonDetector(Blueprint $blueprint): string
+    {
+        $namespace = Blueprint::NAMESPACE;
+
+        return <<<PHP
+        <?php
+
+        declare(strict_types=1);
+
+        namespace {$namespace};
+
+        use JesseGall\\CodeCommandments\\Py\\Codebase;
+        use JesseGall\\CodeCommandments\\Py\\NodeMatch;
+        use JesseGall\\CodeCommandments\\Python\\Detector;
+        use JesseGall\\CodeCommandments\\Sins\\Sin;
+
+        /**
+         * Finds {@see {$blueprint->sin}} — TODO, one line on the shape it looks for.
+         */
+        final class {$blueprint->detector()} implements Detector
+        {
+            public function sin(): Sin
+            {
+                return new {$blueprint->sin};
+            }
+
+            public function find(Codebase \$codebase): array
+            {
+                // BEFORE you write a line of this: skim what the Python engine already answers —
+                // `whereFunction`, `whereClass`, `whereStatement`, `whereCall`, and the node's own
+                // hooks (children, expressions, descendants, variant). Load the
+                // `commandments-writing-detectors` skill; it lists the arsenal.
+                //
+                // Open with a SELECTOR, then one check per line. Classify by what the tree IS —
+                // never by a function or variable NAME.
+                return \$codebase
+                    ->whereFunction()
+                    ->where(static fn (NodeMatch \$match): bool => false) // TODO — the rule
+                    ->get();
+            }
+        }
+
+        PHP;
     }
 
     private static function backendDetector(Blueprint $blueprint): string
