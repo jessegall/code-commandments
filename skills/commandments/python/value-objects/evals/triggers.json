@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my Python functions pass around dicts like {'sku': ..., 'qty': ..., 'price': ...} everywhere, should they be something else",
+        "I keep reading payload.get('name') and payload.get('email') from the same request dict in five places",
+        "should create_shipment(street, city, postcode, country) take an object instead"
+    ],
+    "not": [
+        "my function returns Order | None and callers check it, what should I do"
+    ]
+}
