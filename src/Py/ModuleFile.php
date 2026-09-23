@@ -59,6 +59,11 @@ final class ModuleFile implements ParsedModule
      */
     private ?array $owners = null;
 
+    /**
+     * @var array<int, Comment>|null  each comment standing on a line of its own, by its line
+     */
+    private ?array $ownLineComments = null;
+
     private function __construct(
         public readonly Module $module,
         public readonly string $file,
@@ -68,6 +73,34 @@ final class ModuleFile implements ParsedModule
     public static function fromFile(string $source, string $file): self
     {
         return new self(Parser::module($source), $file, $source);
+    }
+
+    /**
+     * Every `#` comment in the module, in the order written.
+     *
+     * @return list<Comment>
+     */
+    public function comments(): array
+    {
+        return $this->module->comments;
+    }
+
+    /**
+     * The run of comments standing on lines of their own directly above $node — the last on the line
+     * before it, each earlier one on the line before that. A comment trailing code is not above anything.
+     *
+     * @return list<Comment>
+     */
+    public function commentsAbove(Node $node): array
+    {
+        $this->ownLineComments ??= $this->ownLineComments();
+        $run = [];
+
+        for ($line = $this->lineAt($node->start) - 1; isset($this->ownLineComments[$line]); $line--) {
+            array_unshift($run, $this->ownLineComments[$line]);
+        }
+
+        return $run;
     }
 
     /**
@@ -383,5 +416,23 @@ final class ModuleFile implements ParsedModule
         }
 
         return $owners;
+    }
+
+    /**
+     * @return array<int, Comment>
+     */
+    private function ownLineComments(): array
+    {
+        $byLine = [];
+
+        foreach ($this->comments() as $comment) {
+            $lineStart = (int) strrpos(substr($this->source, 0, $comment->start), "\n");
+
+            if (trim(substr($this->source, $lineStart, $comment->start - $lineStart)) === '') {
+                $byLine[$this->lineAt($comment->start)] = $comment;
+            }
+        }
+
+        return $byLine;
     }
 }

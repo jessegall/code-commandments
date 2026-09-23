@@ -53,10 +53,13 @@ final class Parser
      */
     public static function module(string $source, int $baseOffset = 0): Module
     {
-        $parser = new self(new Cursor(new Lexer()->tokenize($source), $baseOffset));
+        $lexer = new Lexer();
+        $parser = new self(new Cursor($lexer->tokenize($source), $baseOffset));
         $start = $parser->cursor->offset();
+        $body = $parser->statementsUntil(TokenKind::EndMarker);
+        $comments = array_map(static fn (Token $comment) => Comment::fromToken($comment, $baseOffset), $lexer->comments());
 
-        return $parser->located(new Module($parser->statementsUntil(TokenKind::EndMarker)), $start);
+        return $parser->located(new Module($body, $comments), $start);
     }
 
     /**

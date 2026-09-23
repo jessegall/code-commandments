@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Py\Node;
 use Closure;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\StructuralHash;
+use JesseGall\PhpTypes\Option;
 
 /**
  * The statements a compound statement owns — the indented suite after its `:`, or the simple
@@ -32,6 +33,18 @@ final class Block extends Node
     public function statementsBeyondText(): array
     {
         return array_values(array_filter($this->body, static fn (Node $statement): bool => ! ($statement instanceof ExprStmt && $statement->isBareString())));
+    }
+
+    /**
+     * The docstring this block opens with — the text of a string standing alone as its first statement.
+     *
+     * @return Option<string>
+     */
+    public function docstring(): Option
+    {
+        $first = $this->body[0] ?? null;
+
+        return $first instanceof ExprStmt && $first->isBareString() ? Option::some((string) $first->value->get('value')) : Option::none();
     }
 
     /**
