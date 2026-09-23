@@ -38,4 +38,12 @@ abstract class EngineFixture implements Fixture
 
         $this->detectors = $detectors;
     }
+
+    /**
+     * The worked examples its markers carve out of this fixture, per detector — what a skill publishes
+     * as each rule's Bad and Good.
+     *
+     * @return array<class-string<Detector>, list<Example>>
+     */
+    abstract public function examples(): array;
 }

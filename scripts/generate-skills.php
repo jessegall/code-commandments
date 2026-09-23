@@ -12,23 +12,15 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Cli\Doc\CommandBlocks;
-use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use JesseGall\CodeCommandments\Skills\SkillRenderer;
-use JesseGall\CodeCommandments\Testing\FixtureExamples;
-use JesseGall\CodeCommandments\Testing\PythonFixtureExamples;
-use JesseGall\CodeCommandments\Testing\VueFixtureExamples;
-use JesseGall\CodeCommandments\Py\Codebase as PythonCodebase;
-use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
+use JesseGall\CodeCommandments\Testing\SkillExamples;
 
 $root = dirname(__DIR__);
 $check = in_array('--check', $argv, true);
 
-$examples = FixtureExamples::extract(Codebase::scan("{$root}/tests/Fixtures/backend"), Detectors::backend())
-    + VueFixtureExamples::extract(VueCodebase::scan("{$root}/tests/Fixtures/frontend"), Detectors::frontend())
-    + PythonFixtureExamples::extract(PythonCodebase::scan("{$root}/tests/Fixtures/python"), Detectors::python());
+$examples = SkillExamples::from("{$root}/tests/Fixtures");
 
 $renderer = new SkillRenderer();
 $stale = [];

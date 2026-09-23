@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments;
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use JesseGall\CodeCommandments\Python\Detector as PythonDetector;
 use JesseGall\CodeCommandments\Testing\BackendFixture;
-use JesseGall\CodeCommandments\Testing\Fixture;
+use JesseGall\CodeCommandments\Testing\EngineFixture;
 use JesseGall\CodeCommandments\Testing\FrontendFixture;
 use JesseGall\CodeCommandments\Testing\PythonFixture;
 
@@ -95,7 +95,7 @@ enum Engine: string
      *
      * @param  list<Detector>  $detectors
      */
-    public function fixture(string $path, array $detectors): Fixture
+    public function fixture(string $path, array $detectors): EngineFixture
     {
         return match ($this) {
             self::Backend => new BackendFixture($path, $detectors),

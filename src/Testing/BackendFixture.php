@@ -43,6 +43,11 @@ final class BackendFixture extends EngineFixture
         return new RecurrenceSpanResolver()->resolve($this->codebase(), $this->detectors());
     }
 
+    public function examples(): array
+    {
+        return FixtureExamples::extract($this->codebase(), $this->detectors);
+    }
+
     private function codebase(): Codebase
     {
         return $this->scanned ??= Codebase::scan($this->path);

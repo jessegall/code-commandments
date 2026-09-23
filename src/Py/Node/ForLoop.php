@@ -19,6 +19,14 @@ final class ForLoop extends Node
         public readonly bool $async = false,
     ) {}
 
+    /**
+     * `async` or nothing — an async one cannot share a body with its sync twin.
+     */
+    public function variant(): string
+    {
+        return $this->async ? 'async' : '';
+    }
+
     public function children(): array
     {
         return $this->else === null ? [$this->body] : [$this->body, $this->else];

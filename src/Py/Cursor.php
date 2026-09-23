@@ -127,11 +127,18 @@ final class Cursor
     }
 
     /**
-     * Where the last token stepped past ends, in the file.
+     * Where the last code token stepped past ends, in the file — a block closes on the DEDENT that stands
+     * at the next line, and what it spans ends with its last statement, not there.
      */
     public function consumedEnd(): int
     {
-        return $this->base + ($this->pos > 0 ? $this->tokens[$this->pos - 1]->end : 0);
+        $last = $this->pos - 1;
+
+        while ($last > 0 && $this->tokens[$last]->kind->isLayout()) {
+            $last--;
+        }
+
+        return $this->base + ($last >= 0 ? $this->tokens[$last]->end : 0);
     }
 
     /**

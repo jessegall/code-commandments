@@ -209,6 +209,9 @@ $disabledSins = function (Config $config): void {
         // Sins\Frontend\TypeScript\DuplicateFunction::class,
         // Sins\Frontend\TypeScript\FalselyOptionalField::class,
         // Sins\Frontend\TypeScript\NearDuplicateFunction::class,
+
+        // ----------[ Python ]----------
+        // Sins\Python\DuplicateFunction::class,
     );
 };
 

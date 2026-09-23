@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Detectors;
 
 use JesseGall\CodeCommandments\Detector as RootDetector;
 use JesseGall\CodeCommandments\Discovery;
+use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Unpublished;
 use JesseGall\CodeCommandments\WholeTree;
@@ -91,6 +92,20 @@ final class Catalog
     public static function python(): array
     {
         return self::discover('Python');
+    }
+
+    /**
+     * The detectors $engine runs.
+     *
+     * @return list<Detector>
+     */
+    public static function of(Engine $engine): array
+    {
+        return match ($engine) {
+            Engine::Backend => self::backend(),
+            Engine::Frontend => self::frontend(),
+            Engine::Python => self::python(),
+        };
     }
 
     /**

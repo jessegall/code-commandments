@@ -54,6 +54,15 @@ final class ParserTest extends TestCase
         $this->assertInstanceOf(Return_::class, $function->body->body[0]);
     }
 
+    public function test_a_block_ends_with_its_last_statement_not_at_the_next_line(): void
+    {
+        $source = "class Cart:\n    def clear(self):\n        self.lines = []\n\n\n    def total(self):\n        return 0\n\n\nx = 1\n";
+        [$cart] = Parser::module($source)->body;
+
+        $this->assertSame('return 0', substr($source, $cart->end - 8, 8), 'a class ends where its last method does');
+        $this->assertStringEndsWith('self.lines = []', substr($source, 0, $cart->body->body[0]->end), 'a method ends at its last statement, not the blank lines after');
+    }
+
     public function test_a_class_keeps_its_bases_and_methods(): void
     {
         $class = $this->only(<<<'PY'

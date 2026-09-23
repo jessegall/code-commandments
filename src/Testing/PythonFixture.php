@@ -35,6 +35,11 @@ final class PythonFixture extends EngineFixture
         return new RecurrenceSpanResolver()->resolve($this->codebase(), $this->detectors);
     }
 
+    public function examples(): array
+    {
+        return PythonFixtureExamples::extract($this->codebase(), $this->detectors);
+    }
+
     private function codebase(): Codebase
     {
         return $this->scanned ??= Codebase::scan($this->path);

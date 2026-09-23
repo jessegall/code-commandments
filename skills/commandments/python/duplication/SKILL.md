@@ -40,6 +40,89 @@ of two different classes, two stubs (`pass`, `...`, `raise NotImplementedError`)
 leave the body to a subclass, or two lookup tables that call nothing and only return
 constants — those are data, not procedure. Duplication is a body of real substance, twice.
 
+## Rules
+
+- [ ] Hoist a function body written twice into one shared function, and call it from both places.
+      _Move the body to one function in a module both callers import (or a method on the class that owns the data), and replace every copy with a call to it._
+
+## Worked example
+
+### duplicate-python-function
+
+Copy-pasted code — two+ Python functions or methods with an identical body, formatting, comments and docstrings aside
+
+```py
+----------[ Bad ]----------
+
+# in events.py
+def on_event(self, event) -> None:
+    if event.kind == "order" and event.action in ("created", "updated"):
+        self.handle(event)
+        event.acknowledge(self.__class__.__name__)
+
+# in events.py
+def on_event(self, event) -> None:
+    if event.kind == "order" and event.action in ("created", "updated"):
+        self.handle(event)
+        event.acknowledge(self.__class__.__name__)
+
+# in documents.py
+def rows(self, lines: list[Line]) -> list[str]:
+    rows = []
+    for line in lines:
+        if line.quantity <= 0:
+            continue
+        rows.append(f"{line.quantity} x {line.sku}: {line.total() / 100:.2f}")
+    return rows
+
+# in documents.py
+def line_items(self, lines: list[Line]) -> list[str]:
+    rows = []
+    for line in lines:
+        if line.quantity <= 0:
+            continue
+        rows.append(f"{line.quantity} x {line.sku}: {line.total() / 100:.2f}")
+    return rows
+
+# in cli.py
+def load_config(path: Path) -> dict:
+    if not path.is_file():
+        raise SettingsMissing(str(path))
+    settings = json.loads(path.read_text())
+    return {key.lower(): value for key, value in settings.items()}
+
+# in settings.py
+def read_settings(path: Path) -> dict:
+    if not path.is_file():
+        raise SettingsMissing(str(path))
+    settings = json.loads(path.read_text())
+    return {key.lower(): value for key, value in settings.items()}
+
+----------[ Good ]----------
+
+# in layout.py
+def describe_lines(lines: list[Line]) -> list[str]:
+    return [f"{line.quantity} x {line.sku}: {line.total() / 100:.2f}" for line in lines if line.quantity > 0]
+
+# in layout.py
+def rows(self, lines: list[Line]) -> list[str]:
+    return describe_lines(lines)
+
+# in layout.py
+def line_items(self, lines: list[Line]) -> list[str]:
+    return describe_lines(lines)
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/duplication` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `duplicate-python-function`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/fix-at-the-source`](../../backend/fix-at-the-source/SKILL.md) — the root instinct — one decision, made once, where it is born.

@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Py;
 
 use JesseGall\CodeCommandments\Py\Codebase;
 use JesseGall\CodeCommandments\Py\NodeMatch;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -104,6 +105,22 @@ final class StructuralHashTest extends TestCase
         $while = "def a(rows):\n    while rows:\n        handle(rows)\n";
 
         $this->assertNotSame($this->only($for)->shapeHash(), $this->only($while)->shapeHash());
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function syncAndAsyncTwins(): iterable
+    {
+        yield 'for' => ["def a(s):\n    for p in s:\n        yield p\n", "async def a(s):\n    async for p in s:\n        yield p\n"];
+        yield 'with' => ["def a(s):\n    with s:\n        return 1\n", "async def a(s):\n    async with s:\n        return 1\n"];
+        yield 'nested def' => ["def a():\n    def b():\n        return 1\n    return b\n", "def a():\n    async def b():\n        return 1\n    return b\n"];
+    }
+
+    #[DataProvider('syncAndAsyncTwins')]
+    public function test_an_async_statement_is_different_code_from_its_sync_twin(string $sync, string $async): void
+    {
+        $this->assertNotSame($this->only($sync)->bodyHash(), $this->only($async)->bodyHash());
     }
 
     public function test_the_body_weight_counts_statements_and_expressions_but_not_the_docstring(): void
