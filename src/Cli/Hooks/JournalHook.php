@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Hooks;
 
+use Closure;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Hooks\Gate;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Hooks\HookIO;
@@ -57,6 +59,40 @@ final class JournalHook implements Command
      */
     public function answerFor(array $given): JournalAnswer
     {
+        return $this->answerWith($given, static fn (string $hook) => true, reportsSins: true);
+    }
+
+    /**
+     * What the hooks that can stop the call say about it — a {@see Gate} refusing it — asked before the call
+     * runs. The advice waits for {@see adviceFor}.
+     *
+     * @param  array<string, mixed>  $given
+     */
+    public function gateAnswerFor(array $given): JournalAnswer
+    {
+        return $this->answerWith($given, static fn (string $hook) => is_subclass_of($hook, Gate::class), reportsSins: false);
+    }
+
+    /**
+     * What the advising hooks say about the moment, and what its edit did to the sins in its file — asked
+     * after the call was answered, so a scan never holds it up.
+     *
+     * @param  array<string, mixed>  $given
+     */
+    public function adviceFor(array $given): JournalAnswer
+    {
+        return $this->answerWith($given, static fn (string $hook) => ! is_subclass_of($hook, Gate::class), reportsSins: true);
+    }
+
+    /**
+     * The answer the hooks $runs admits give about the moment in $given — raising what an edit did to its
+     * file's sins when $reportsSins, which only a run that asked the advising hooks has seen.
+     *
+     * @param  array<string, mixed>  $given
+     * @param  Closure(class-string): bool  $runs
+     */
+    private function answerWith(array $given, Closure $runs, bool $reportsSins): JournalAnswer
+    {
         $moment = JournalMoment::fromPayload($given);
 
         // The journal names every moment it asks about. One that names none is no hook moment, and must
@@ -76,14 +112,14 @@ final class JournalHook implements Command
         $quiet = $this->quiet();
 
         foreach (HookRegistry::forProject($event->root) as $class) {
-            if (is_subclass_of($class, Hook::class) && ! in_array((new \ReflectionClass($class))->getShortName(), $quiet, true)) {
+            if (is_subclass_of($class, Hook::class) && $runs($class) && ! in_array((new \ReflectionClass($class))->getShortName(), $quiet, true)) {
                 new $class($recorder)->run([]);
             }
         }
 
         $answer = $this->answer(HookResponse::merge($recorder->emitted));
 
-        if (! $moment->isPostToolUse()) {
+        if (! $moment->isPostToolUse() || ! $reportsSins) {
             return $answer;
         }
 

@@ -76,6 +76,19 @@ final class JournalHookTest extends TestCase
         $this->assertArrayNotHasKey('refuse', $answer, 'a reminder never stops the call');
     }
 
+    public function test_advice_waits_for_the_advising_run_and_gates_answer_alone(): void
+    {
+        $moment = [
+            'event' => 'hook.PreToolUse',
+            'agent' => ['session' => 'claude-1', 'cwd' => $this->root],
+            'tool' => ['name' => 'Agent', 'command' => ''],
+        ];
+        $hook = new JournalHook(new CapturingHookIO(new FakeGit($this->root, 'sha1', 'feature/x'), $moment));
+
+        $this->assertSame('{}', $hook->gateAnswerFor($moment)->toJson(), 'the model reminder advises, so the gate-only answer holds nothing');
+        $this->assertStringContainsString('names no model', (string) $hook->adviceFor($moment)->whisper);
+    }
+
     public function test_a_hook_the_plugin_settings_keep_quiet_does_not_run(): void
     {
         putenv(JournalHook::QUIET . '=ModelChoiceReminder, SourceReminder');
