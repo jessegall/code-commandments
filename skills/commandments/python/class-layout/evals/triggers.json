@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I need a RETRIES = 3 constant for the retry loop in Client.send — can I put it right above send() where it's used?",
+        "this dataclass has its fields at the top but I want to add one more at the bottom next to the method that reads it, fine?",
+        "judge flagged python-member-after-method on a class attribute I declared under __init__ — where should it go?"
+    ],
+    "not": [
+        "how do I raise an exception with the original cause in Python"
+    ]
+}
