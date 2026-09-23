@@ -40,6 +40,11 @@ final class PythonFixture extends EngineFixture
         return PythonFixtureExamples::extract($this->codebase(), $this->detectors);
     }
 
+    protected function markedNames(string $tag): array
+    {
+        return array_fill_keys(array_keys(DeclarationMarkers::inPython($this->codebase(), $tag)), true);
+    }
+
     private function codebase(): Codebase
     {
         return $this->scanned ??= Codebase::scan($this->path);

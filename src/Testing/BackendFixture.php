@@ -48,6 +48,11 @@ final class BackendFixture extends EngineFixture
         return FixtureExamples::extract($this->codebase(), $this->detectors);
     }
 
+    protected function markedNames(string $tag): array
+    {
+        return array_fill_keys(array_map(static fn (Marker $marker): string => $marker->detector, SinMarkers::in($this->codebase(), ucfirst($tag))), true);
+    }
+
     private function codebase(): Codebase
     {
         return $this->scanned ??= Codebase::scan($this->path);

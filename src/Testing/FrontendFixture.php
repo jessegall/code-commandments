@@ -52,6 +52,11 @@ final class FrontendFixture extends EngineFixture
         return VueFixtureExamples::extract($this->codebase(), $this->detectors);
     }
 
+    protected function markedNames(string $tag): array
+    {
+        return array_fill_keys(array_keys(DeclarationMarkers::in($this->codebase(), $tag)), true);
+    }
+
     private function codebase(): Codebase
     {
         return $this->scanned ??= Codebase::scan($this->path);

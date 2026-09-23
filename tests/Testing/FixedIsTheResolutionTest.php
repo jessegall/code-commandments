@@ -8,11 +8,8 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Support\ClassName;
-use JesseGall\CodeCommandments\Testing\FixtureExamples;
 use JesseGall\CodeCommandments\Testing\Marker;
-use JesseGall\CodeCommandments\Testing\DeclarationMarkers;
 use JesseGall\CodeCommandments\Testing\SinMarkers;
-use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -23,28 +20,12 @@ use PHPUnit\Framework\TestCase;
  * the sin. A "fix" the detector still flags is not a fix, and shipping one would teach a reader
  * to make the same mistake twice.
  *
- * Coverage is enforced here too: every sin must carry one. A sin without a resolution falls back to
- * its `#[Righteous]` look-alike, which is usually a documented EXEMPTION — so the skill quietly
- * teaches the escape hatch instead of the fix, and nothing fails to say so.
+ * That every sin carries one is proved per engine by {@see \JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage}.
  */
 final class FixedIsTheResolutionTest extends TestCase
 {
     private const string FIXTURE = __DIR__ . '/../Fixtures/backend';
 
-    private const string FRONTEND = __DIR__ . '/../Fixtures/frontend';
-
-    public function test_every_sin_carries_a_resolution(): void
-    {
-        $missing = FixtureExamples::withoutResolution(Codebase::scan(self::FIXTURE), Catalog::backend());
-
-        $this->assertSame(
-            [],
-            array_map(ClassName::short(...), $missing),
-            "These sins have no #[Fixed] twin, so their published 'good' example falls back to a\n"
-            . "righteous look-alike — code that legitimately DODGES the rule rather than obeying it.\n"
-            . 'Add the fix to the fixture; see the `detector-fixtures` skill.',
-        );
-    }
 
     public function test_no_detector_flags_the_code_marked_as_its_own_fix(): void
     {
@@ -68,28 +49,6 @@ final class FixedIsTheResolutionTest extends TestCase
             $violations,
             "A detector flagged code marked as the fix for its own sin — the published 'good' example still IS the sin:\n"
             . implode("\n", $violations),
-        );
-    }
-
-    public function test_every_frontend_sin_carries_a_resolution(): void
-    {
-        $fixed = DeclarationMarkers::in(VueCodebase::scan(self::FRONTEND), 'fixed');
-        $missing = [];
-
-        foreach (Catalog::frontend() as $detector) {
-            $name = (new \ReflectionClass($detector->sin()))->getShortName();
-
-            if (($fixed[$name] ?? []) === []) {
-                $missing[] = $name;
-            }
-        }
-
-        $this->assertSame(
-            [],
-            $missing,
-            "These frontend sins have no <!-- @fixed --> twin, so their published 'good' example falls\n"
-            . "back to a @righteous look-alike — markup that legitimately DODGES the rule rather than\n"
-            . 'obeying it. Add the repair to the .vue fixture; see the `detector-fixtures` skill.',
         );
     }
 

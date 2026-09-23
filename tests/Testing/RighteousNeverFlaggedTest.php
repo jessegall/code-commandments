@@ -18,34 +18,16 @@ use JesseGall\CodeCommandments\Vue\Sfc;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The `#[Righteous]` contract — two guarantees, both over the backend fixture:
- *
- *  1. **Every sin has at least one righteous twin.** Unlike `#[Sinful]` (≥3 diverse),
- *     there is no minimum-diversity or upper bound — just one clean example per sin, so
- *     the generated `SKILL.md` always has a "good" half to show.
- *  2. **No detector ever flags righteous code.** The good example a skill teaches must
- *     itself be clean — a detector flagging a `#[Righteous]` declaration would mean the
- *     skill is publishing a "fix" that is itself a sin (a false positive in the docs).
+ * The `#[Righteous]` contract: no detector ever flags righteous code. The good example a skill teaches
+ * must itself be clean — a detector flagging a `#[Righteous]` declaration would mean the skill is
+ * publishing a "fix" that is itself a sin. That every rule has a righteous twin at all is proved per
+ * engine by {@see \JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage}.
  */
 final class RighteousNeverFlaggedTest extends TestCase
 {
     private const string FIXTURE = __DIR__ . '/../Fixtures/backend';
 
     private const string FRONTEND = __DIR__ . '/../Fixtures/frontend';
-
-    public function test_every_detector_has_at_least_one_righteous_twin(): void
-    {
-        $codebase = Codebase::scan(self::FIXTURE);
-        $righteous = SinMarkers::in($codebase, 'Righteous');
-
-        foreach (Catalog::backend() as $detector) {
-            $this->assertNotSame(
-                [],
-                $this->forDetector($righteous, $detector),
-                $this->shortName($detector) . " has no #[Righteous] twin — add one good example for its sin.",
-            );
-        }
-    }
 
     public function test_no_detector_flags_righteous_code(): void
     {
@@ -65,16 +47,6 @@ final class RighteousNeverFlaggedTest extends TestCase
         }
 
         $this->assertSame([], $violations, "A detector flagged #[Righteous] code — the skill's good example is itself a sin:\n" . implode("\n", $violations));
-    }
-
-    public function test_every_frontend_detector_has_at_least_one_righteous_twin(): void
-    {
-        $righteous = $this->frontendRighteous();
-
-        foreach (Catalog::frontend() as $detector) {
-            $name = (new \ReflectionClass($detector->sin()))->getShortName();
-            $this->assertNotSame([], $righteous[$name] ?? [], "{$name} has no <!-- @righteous --> twin — add one good example for its sin.");
-        }
     }
 
     public function test_no_frontend_detector_flags_righteous_markup(): void

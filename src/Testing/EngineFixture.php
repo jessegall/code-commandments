@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\Detector;
+use JesseGall\CodeCommandments\Support\ClassName;
 
 /**
  * What a fixture is before either engine parses a byte of it: a DIRECTORY, the detectors to prove
@@ -38,6 +39,36 @@ abstract class EngineFixture implements Fixture
 
         $this->detectors = $detectors;
     }
+
+    /**
+     * The detectors this fixture holds no `$tag` marker for — `fixed` (the resolution a skill publishes
+     * as Good) or `righteous` (a look-alike the rule must leave alone) — by short name. A marker names
+     * a detector by its class, its sin's class, or its sin's id, short or whole.
+     *
+     * @return list<string>
+     */
+    public function withoutMarker(string $tag): array
+    {
+        $marked = $this->markedNames($tag);
+        $missing = [];
+
+        foreach ($this->detectors as $detector) {
+            $names = [$detector::class, ClassName::short($detector::class), $detector->sin()::class, ClassName::short($detector->sin()::class), $detector->sin()->name()];
+
+            if (! array_any($names, static fn (string $name): bool => isset($marked[$name]))) {
+                $missing[] = ClassName::short($detector::class);
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
+     * Every name a `$tag` marker in this fixture carries.
+     *
+     * @return array<string, true>
+     */
+    abstract protected function markedNames(string $tag): array;
 
     /**
      * The worked examples its markers carve out of this fixture, per detector — what a skill publishes

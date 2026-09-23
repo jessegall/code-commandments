@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Python;
 
 use JesseGall\CodeCommandments\Detectors\Catalog;
-use JesseGall\CodeCommandments\Testing\Fixture;
+use JesseGall\CodeCommandments\Testing\EngineFixture;
 use JesseGall\CodeCommandments\Testing\FixtureTestCase;
+use JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage;
 use JesseGall\CodeCommandments\Testing\PythonFixture;
 
 /**
@@ -15,6 +16,8 @@ use JesseGall\CodeCommandments\Testing\PythonFixture;
  */
 final class PythonFixtureTest extends FixtureTestCase
 {
+    use ProvesMarkerCoverage;
+
     protected function setUp(): void
     {
         if (Catalog::python() === []) {
@@ -22,7 +25,7 @@ final class PythonFixtureTest extends FixtureTestCase
         }
     }
 
-    protected function fixture(): Fixture
+    protected function fixture(): EngineFixture
     {
         return new PythonFixture(dirname(__DIR__, 2) . '/Fixtures/python', Catalog::python());
     }

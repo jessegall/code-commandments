@@ -6,8 +6,9 @@ namespace JesseGall\CodeCommandments\Tests\Detectors\Backend;
 
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Testing\BackendFixture;
-use JesseGall\CodeCommandments\Testing\Fixture;
+use JesseGall\CodeCommandments\Testing\EngineFixture;
 use JesseGall\CodeCommandments\Testing\FixtureTestCase;
+use JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage;
 
 /**
  * The backend self-checking fixture: every {@see Catalog} detector over the Shop PHP
@@ -16,7 +17,9 @@ use JesseGall\CodeCommandments\Testing\FixtureTestCase;
  */
 final class BackendFixtureTest extends FixtureTestCase
 {
-    protected function fixture(): Fixture
+    use ProvesMarkerCoverage;
+
+    protected function fixture(): EngineFixture
     {
         return new BackendFixture(dirname(__DIR__, 2) . '/Fixtures/backend', Catalog::backend());
     }

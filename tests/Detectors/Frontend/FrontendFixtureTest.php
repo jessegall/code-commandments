@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Frontend;
 
 use JesseGall\CodeCommandments\Detectors\Catalog;
-use JesseGall\CodeCommandments\Testing\Fixture;
+use JesseGall\CodeCommandments\Testing\EngineFixture;
 use JesseGall\CodeCommandments\Testing\FixtureTestCase;
+use JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage;
 use JesseGall\CodeCommandments\Testing\FrontendFixture;
 
 /**
@@ -16,7 +17,9 @@ use JesseGall\CodeCommandments\Testing\FrontendFixture;
  */
 final class FrontendFixtureTest extends FixtureTestCase
 {
-    protected function fixture(): Fixture
+    use ProvesMarkerCoverage;
+
+    protected function fixture(): EngineFixture
     {
         return new FrontendFixture(dirname(__DIR__, 2) . '/Fixtures/frontend', Catalog::frontend());
     }
