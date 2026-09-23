@@ -8,9 +8,11 @@ use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
 use JesseGall\CodeCommandments\Py\Node\Block;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
+use JesseGall\CodeCommandments\Py\Node\ForLoop;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\IfStmt;
 use JesseGall\CodeCommandments\Py\Node\Node;
+use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Support\ClassName;
@@ -135,6 +137,29 @@ class NodeMatch implements Located
         }
 
         return count($subjects) === 1 ? count($chain) : 0;
+    }
+
+    /**
+     * Is this `if` — no `else`, no `elif` — the whole body of a loop, burying real work (two statements
+     * or more) a level deep behind its condition? Named as the backend names it: the loop wants
+     * `if not …: continue`. A one-line filter stays as it is, and so does a search — a body that ends by
+     * leaving the loop picks the one item it wanted.
+     */
+    public function isSoleLoopBodyGuard(): bool
+    {
+        if (! $this->node instanceof IfStmt || $this->node->else !== null || count($this->node->body->body) < 2) {
+            return false;
+        }
+
+        $work = $this->node->body->body;
+
+        if (end($work)->isBailOut()) {
+            return false;
+        }
+
+        [$block, $loop] = [...$this->module->ancestorsOf($this->node), null, null];
+
+        return ($loop instanceof ForLoop || $loop instanceof WhileLoop) && $loop->body === $block && count($block->body) === 1;
     }
 
     /**

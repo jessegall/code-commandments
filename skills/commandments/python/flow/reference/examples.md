@@ -29,6 +29,35 @@ def first_usable_coupon(coupons, customer, today):
     return None
 ```
 
+### python-loop-wrapped-in-if
+
+A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition
+
+```py
+----------[ Bad ]----------
+
+def invoice_all(orders, ledger) -> int:
+    sent = 0
+    for order in orders:
+        if order.delivered:
+            invoice = ledger.draft(order.number, order.total())
+            ledger.send(invoice)
+            sent += 1
+    return sent
+
+----------[ Good ]----------
+
+def invoice_delivered(orders, ledger) -> int:
+    sent = 0
+    for order in orders:
+        if not order.delivered:
+            continue
+        invoice = ledger.draft(order.number, order.total())
+        ledger.send(invoice)
+        sent += 1
+    return sent
+```
+
 ### redundant-python-else
 
 An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing

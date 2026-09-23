@@ -9,6 +9,7 @@ def rebalance(sites, threshold):
             for bin_ in site.bins:
                 # @sin DeepNesting
                 for item in bin_.items:
+                    # @sin LoopWrappedInIf
                     if item.count > threshold:
                         site.transfer(item, item.count - threshold)
                         moved += 1

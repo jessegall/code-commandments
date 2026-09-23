@@ -1847,6 +1847,19 @@
             ],
             "detail": true
         },
+        "sin_python-loop-wrapped-in-if": {
+            "title": "LoopWrappedInIf",
+            "help": "A loop whose whole body is one `if` around real work — the twin of the backend's LoopInvertedGuardDetector. /",
+            "type": "flag",
+            "default": "true",
+            "group": "python/flow",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-subject-ladder": {
             "title": "SubjectLadder",
             "help": "An `if`/`elif` chain testing one subject against constant after constant — the Python twin of the Vue SwitchCaseDetector, at the backend ladder's length: fewer rungs are an ordinary decision, not a dispatch. /",
