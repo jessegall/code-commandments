@@ -182,6 +182,47 @@ class ExprMatch implements Located
     }
 
     /**
+     * Is this what a `return` statement hands back?
+     */
+    public function isReturnedValue(): bool
+    {
+        return $this->module->ownerOf($this->expr)->isSomeAnd(fn (Node $owner): bool => $owner->returnedValue()->isSomeAnd(fn (Expr $value): bool => $value === $this->expr));
+    }
+
+    /**
+     * Is this dict display the wire shape of one object that already has a type — every value read off
+     * `self`, or off one parameter of its function?
+     */
+    public function isProjection(): bool
+    {
+        $name = $this->expr->projectedName();
+
+        return $name !== '' && $this->module->functionOf($this->expr)->isSomeAnd(
+            static fn (FunctionDef $function): bool => in_array($name, array_map(static fn (Param $param): string => $param->name, $function->params), true),
+        );
+    }
+
+    /**
+     * Is this written in a function whose contract is not its own to change — a dunder protocol method,
+     * or one overriding its base?
+     */
+    public function isInContractMethod(Codebase $codebase): bool
+    {
+        return $this->module->functionOf($this->expr)->isSomeAnd(fn (FunctionDef $function): bool => (str_starts_with($function->name, '__') && str_ends_with($function->name, '__'))
+            || $codebase->index()->isOverride($function, $this->module));
+    }
+
+    /**
+     * Is this written in a function annotated to return a `TypedDict` the codebase declares — a shape
+     * already typed, statically checked?
+     */
+    public function isInTypedDictFunction(Codebase $codebase): bool
+    {
+        return $this->module->functionOf($this->expr)->isSomeAnd(static fn (FunctionDef $function): bool => $function->returns !== null
+            && $codebase->typedDicts()->isTypedDict($function->returns->dottedName()));
+    }
+
+    /**
      * The names of the parameters a caller of $function supplies — every one but a bound method's first.
      *
      * @return list<string>

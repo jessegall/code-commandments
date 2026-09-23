@@ -235,6 +235,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\DataClump::class,
         // Sins\Python\DeepNesting::class,
         // Sins\Python\DictBag::class,
+        // Sins\Python\DictReturnBag::class,
         // Sins\Python\DuplicateFunction::class,
         // Sins\Python\EnumCaseOrChain::class,
         // Sins\Python\EnumValueMatch::class,

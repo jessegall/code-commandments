@@ -37,6 +37,8 @@ final class Codebase implements ModuleCodebase
 
     private ?Enums $enums = null;
 
+    private ?TypedDicts $typedDicts = null;
+
     /**
      * @param  array<string, string>  $sources  path => source
      */
@@ -109,6 +111,14 @@ final class Codebase implements ModuleCodebase
     public function enums(): Enums
     {
         return $this->enums ??= new Enums($this);
+    }
+
+    /**
+     * The `TypedDict`s this codebase declares — found once and kept.
+     */
+    public function typedDicts(): TypedDicts
+    {
+        return $this->typedDicts ??= new TypedDicts($this);
     }
 
     public function whereFile(): FileQuery

@@ -2349,6 +2349,19 @@
             ],
             "detail": true
         },
+        "sin_python-dict-return-bag": {
+            "title": "DictReturnBag",
+            "help": "A dict of two or more named fields handed back from a function — the twin of the backend's ArrayReturnBagDetector, with its exemptions: a spread, a nested payload, keys that name external things rather than fields, a JSON schema, a table of one class's members, the projection of one typed object, a `TypedDict` return, and a method whose contract is its base's or the language's.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/value-objects",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_defended-certain-field": {
             "title": "DefendedCertainField",
             "help": "An `?.` on one of the enclosing class's OWN fields, where that field is declared total — a guard against a case the type rules out.",

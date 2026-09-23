@@ -225,6 +225,117 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * How many string-literal keys this dict display names — none for anything but a dict.
+     */
+    public function stringKeyCount(): int
+    {
+        $keys = $this->kind === ExprKind::Dict ? array_filter($this->get('keys')) : [];
+
+        return count(array_filter($keys, static fn (self $key): bool => $key->literalType() === LiteralType::String));
+    }
+
+    /**
+     * Does this dict display spread another mapping in — `{**base, …}` — so its keys are not all its own?
+     */
+    public function spreadsAnother(): bool
+    {
+        return $this->kind === ExprKind::Dict && in_array(null, $this->get('keys'), true);
+    }
+
+    /**
+     * Does a value of this dict display hold a collection of its own — a payload rather than a record?
+     */
+    public function hasNestedCollectionValue(): bool
+    {
+        return $this->kind === ExprKind::Dict && array_any($this->get('values'), static fn (self $value): bool => $value->kind->isDisplay());
+    }
+
+    /**
+     * Is this dict display a JSON schema — naming a `type` beside `properties` or `items`?
+     */
+    public function isJsonSchema(): bool
+    {
+        $keys = $this->kind === ExprKind::Dict ? array_map(static fn (?self $key): string => (string) $key?->get('value'), $this->get('keys')) : [];
+
+        return in_array('type', $keys, true) && (in_array('properties', $keys, true) || in_array('items', $keys, true));
+    }
+
+    /**
+     * Is every value of this dict display a member of one class — `Colour.GREEN`, `Colour.RED` — a
+     * table of interchangeable values keyed by data, with no fields to name?
+     */
+    public function isMemberTable(): bool
+    {
+        if ($this->kind !== ExprKind::Dict) {
+            return false;
+        }
+
+        $values = $this->get('values');
+        $members = array_all($values, static fn (self $value): bool => $value->is(ExprKind::Attribute) && $value->get('object')->is(ExprKind::Name));
+
+        return $members && count(array_unique(array_map(static fn (self $member): string => $member->get('object')->dottedName(), $values))) === 1;
+    }
+
+    /**
+     * The one name every value of this dict display reads its data off — `order` in
+     * `{'id': order.id, 'total': round(order.total, 2)}`, the functions it calls aside — empty when they
+     * read different names, or none.
+     */
+    public function projectedName(): string
+    {
+        $values = $this->kind === ExprKind::Dict ? $this->get('values') : [];
+        $names = array_unique(array_merge([], ...array_map(static fn (self $value): array => $value->dataNames(), $values)));
+
+        return count($names) === 1 ? (string) reset($names) : '';
+    }
+
+    /**
+     * The names this expression reads data from — every name in it but the ones it calls and the ones a
+     * comprehension in it binds for itself.
+     *
+     * @return list<string>
+     */
+    public function dataNames(): array
+    {
+        if ($this->kind === ExprKind::Name) {
+            return [(string) $this->get('name')];
+        }
+
+        $parts = $this->isCall() && $this->get('callee')->is(ExprKind::Name) ? $this->get('arguments') : $this->subExpressions();
+        $read = array_merge([], ...array_map(static fn (self $part): array => $part->dataNames(), $parts));
+
+        return array_values(array_diff($read, $this->boundNames()));
+    }
+
+    /**
+     * The names a comprehension binds for itself — `h` in `[asdict(h) for h in self.lines]` — none for
+     * any other expression.
+     *
+     * @return list<string>
+     */
+    private function boundNames(): array
+    {
+        $clauses = $this->kind === ExprKind::Comprehension ? $this->get('clauses') : [];
+        $targets = array_merge([], ...array_map(static fn (self $clause): array => $clause->get('target')->flatten(), $clauses));
+
+        return array_values(array_map(
+            static fn (self $name): string => (string) $name->get('name'),
+            array_filter($targets, static fn (self $target): bool => $target->is(ExprKind::Name)),
+        ));
+    }
+
+    /**
+     * Is every key of this dict display a string that could name a field — `total`, `tax` — rather than
+     * data from outside, like a header's `Content-Type`?
+     */
+    public function hasFieldNameKeys(): bool
+    {
+        $keys = $this->kind === ExprKind::Dict ? array_filter($this->get('keys')) : [];
+
+        return array_all($keys, static fn (self $key): bool => $key->literalType() === LiteralType::String && preg_match('/^[A-Za-z_]\w*$/', (string) $key->get('value')) === 1);
+    }
+
+    /**
      * The alternatives of a `case` pattern — `'a' | 'b'` as its two sides, any other pattern as itself.
      *
      * @return list<self>

@@ -68,3 +68,26 @@ class Parcel:
     def label(self) -> str:
         return f"{self.recipient}\n{self.street}\n{self.postcode} {self.city}"
 ```
+
+### python-dict-return-bag
+
+`return {"total": …, "tax": …}` — a record of several fields handed back as a dict its callers read by string key
+
+```py
+----------[ Bad ]----------
+
+def progress(self, done: int, failed: int) -> dict:
+    return {"done": done, "failed": failed, "left": len(self.rows) - done - failed}
+
+----------[ Good ]----------
+
+@dataclass(frozen=True)
+class ImportProgress:
+    done: int
+    failed: int
+    total: int
+
+    @property
+    def left(self) -> int:
+        return self.total - self.done - self.failed
+```

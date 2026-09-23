@@ -56,6 +56,8 @@ waiting to be named. Give them one type and pass that.
       _Declare a frozen dataclass with those fields and take it as one parameter wherever the loose values travelled together._
 - [ ] Give a record a type — a frozen dataclass — instead of a dict read by string keys.
       _Declare the keys as fields of a frozen dataclass, build it where the data enters (a `from_payload` classmethod), and take that type as the parameter._
+- [ ] Return a typed value — a frozen dataclass — not a dict of several named fields.
+      _A `@dataclass(frozen=True)` for the result, built where it is returned — or a `TypedDict` when a dict must cross a boundary._
 
 ## Worked example
 
@@ -99,17 +101,17 @@ def schedule_delivery(address: Address, carrier) -> str:
     return carrier.book(address.line())
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/value-objects` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-data-clump`, `python-dict-bag`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-data-clump`, `python-dict-bag`, `python-dict-return-bag`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
