@@ -463,4 +463,39 @@ class ExprMatch implements Located
     {
         return StructuralHash::ofExpression($this->expr->get('arguments')[0]);
     }
+
+    /**
+     * The one class every argument of this call is asked of — `text(order.status == "paid", order.total > 100)`
+     * answers with the order's class, because both arguments are answers the same object gave. None when an
+     * argument asks nothing (a literal, a bare name), when mypy typed no receiver, or when the arguments
+     * disagree about whose answers they carry.
+     *
+     * @return Option<string>
+     */
+    public function argumentSubjectType(Codebase $codebase): Option
+    {
+        $arguments = array_map(static fn (Expr $argument): Expr => $argument->is(ExprKind::Keyword) ? $argument->get('value') : $argument, $this->expr->isCall() ? $this->expr->get('arguments') : []);
+        $types = [];
+
+        foreach ($arguments as $argument) {
+            $asks = array_filter($argument->flatten(), static fn (Expr $part): bool => $part->is(ExprKind::Attribute));
+
+            if ($asks === []) {
+                return Option::none();
+            }
+
+            foreach ($asks as $ask) {
+                $receiver = $ask->get('object');
+                $class = $codebase->types()->at($this->module->file, $receiver->start, $receiver->end)->andThen(static fn (Type $type) => $type->className());
+
+                if ($class->isNone()) {
+                    return Option::none();
+                }
+
+                $types[$class->unwrap()] = true;
+            }
+        }
+
+        return count($types) === 1 ? Option::some(array_key_first($types)) : Option::none();
+    }
 }

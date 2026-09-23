@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\ExprStmt;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\IfStmt;
+use JesseGall\CodeCommandments\Py\Node\MatchStmt;
 use JesseGall\CodeCommandments\Py\Node\Module;
 use JesseGall\CodeCommandments\Py\Node\Node;
 use JesseGall\CodeCommandments\Py\Node\TryStmt;
@@ -234,6 +235,18 @@ final class ModuleFile implements ParsedModule
         $owner = $this->ownerOf($expression)->isSomeAnd(static fn (Node $node): bool => ($node instanceof IfStmt || $node instanceof WhileLoop) && $node->test === $expression);
 
         return $owner || $this->wrapperOf($expression)->isSomeAnd(static fn (Expr $around): bool => $around->is(ExprKind::Conditional) && $around->get('test') === $expression);
+    }
+
+    /**
+     * Does a `match` dispatch on $expression — as its whole subject, or as one element of a tuple subject?
+     */
+    public function isMatchedOn(Expr $expression): bool
+    {
+        $subject = $this->wrapperOf($expression)
+            ->filter(static fn (Expr $around): bool => $around->is(ExprKind::Tuple))
+            ->unwrapOr($expression);
+
+        return $this->ownerOf($subject)->isSomeAnd(static fn (Node $node): bool => $node instanceof MatchStmt && $node->subject === $subject);
     }
 
     /**

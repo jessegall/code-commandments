@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Py\Node;
 
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\PhpTypes\Option;
 
 /**
  * `limit: int = 10` — a target, its annotation, and the value when one is given.
@@ -17,6 +18,19 @@ final class AnnAssign extends Node
         public readonly Expr $annotation,
         public readonly ?Expr $value = null,
     ) {}
+
+    /**
+     * The annotation the first of $statements declares $dotted with — `self.total: int` for `self.total`.
+     *
+     * @param  list<Node>  $statements
+     * @return Option<Expr>
+     */
+    public static function among(array $statements, string $dotted): Option
+    {
+        $declared = array_filter($statements, static fn (Node $statement): bool => $statement instanceof self && $statement->target->dottedName() === $dotted);
+
+        return Option::fromNullable(array_values($declared)[0] ?? null)->map(static fn (self $declaration) => $declaration->annotation);
+    }
 
     public function expressions(): array
     {

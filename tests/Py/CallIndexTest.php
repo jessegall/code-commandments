@@ -65,6 +65,20 @@ final class CallIndexTest extends TestCase
                     Order.lines(order)
                     unknown.rounded(amount)
                 PY,
+            'shop/desk.py' => <<<'PY'
+                from .orders import Order
+
+
+                class Desk:
+                    kept: Order
+
+                    def __init__(self, order: Order, note) -> None:
+                        self.order = order
+                        self.note = note
+
+                    def show(self):
+                        return self.order.lines(), self.kept.lines(), self.note.lines()
+                PY,
         ];
 
         foreach ($files as $path => $source) {
@@ -85,7 +99,15 @@ final class CallIndexTest extends TestCase
     {
         $this->assertSame(
             ['checkout.py:11', 'checkout.py:12', 'orders.py:14', 'orders.py:18', 'orders.py:23'],
-            $this->callersOf('lines'),
+            array_values(array_filter($this->callersOf('lines'), static fn (string $site): bool => ! str_starts_with($site, 'desk.py'))),
+        );
+    }
+
+    public function test_a_method_is_reached_through_an_attribute_of_self_the_class_declares(): void
+    {
+        $this->assertSame(
+            ['desk.py:12', 'desk.py:12'],
+            array_values(array_filter($this->callersOf('lines'), static fn (string $site): bool => str_starts_with($site, 'desk.py'))),
         );
     }
 

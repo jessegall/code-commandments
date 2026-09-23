@@ -2492,6 +2492,19 @@
             ],
             "detail": true
         },
+        "sin_python-computed-boolean-argument": {
+            "title": "ComputedBooleanArgument",
+            "help": "A method of bools every caller derives from one object — the twin of the backend's ComputedBooleanArgumentDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/pass-the-object",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-repeated-guard": {
             "title": "RepeatedGuard",
             "help": "One compound condition written in two places — the twin of the backend's RepeatedGuardDetector.",

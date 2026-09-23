@@ -15,8 +15,9 @@ use JesseGall\PhpTypes\Option;
 
 /**
  * The call graph of a Python codebase: which calls reach which `def`. A call is resolved through the
- * module's imports — absolute and relative, aliased or not — through `self` inside a method, and
- * through a parameter or variable annotated with a class; a method a class does not declare is looked
+ * module's imports — absolute and relative, aliased or not — through `self` inside a method,
+ * through a parameter or variable annotated with a class, and through an attribute of `self` whose class
+ * the class body or `__init__` declares; a method a class does not declare is looked
  * up in its bases. The Python twin of {@see \JesseGall\CodeCommandments\Ast\CodebaseIndex}: a call
  * that cannot be resolved is never guessed, and an import that names more than one module resolves
  * to none.
@@ -311,6 +312,14 @@ final class CallIndex
             $class = $module->ancestorsOf($function)[1] ?? null;
 
             return Option::fromNullable($class instanceof ClassDef ? $class : null);
+        }
+
+        $path = explode('.', $owner);
+
+        if (count($path) === 2 && $path[0] === 'self') {
+            return $this->classOf('self', $node, $module)
+                ->andThen(static fn (ClassDef $class) => $class->attributeAnnotation($path[1]))
+                ->andThen(fn (Expr $annotation) => $this->classNamed($annotation, $module));
         }
 
         $annotation = $function === null ? Option::none() : $function->annotationOf($owner);

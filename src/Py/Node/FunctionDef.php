@@ -81,13 +81,24 @@ final class FunctionDef extends Node
             }
         }
 
-        foreach ($this->body->descendants() as $statement) {
-            if ($statement instanceof AnnAssign && $statement->target->dottedName() === $name) {
-                return Option::some($statement->annotation);
-            }
-        }
+        return AnnAssign::among($this->body->descendants(), $name);
+    }
 
-        return Option::none();
+    /**
+     * The annotation of what this function stores in `self.$attribute` — declared there with one, or
+     * taken from the annotated parameter it assigns.
+     *
+     * @return Option<Expr>
+     */
+    public function storedAnnotation(string $attribute): Option
+    {
+        $stores = array_filter($this->body->descendants(), static fn (Node $statement): bool => $statement instanceof Assign
+            && count($statement->targets) === 1
+            && $statement->targets[0]->dottedName() === "self.{$attribute}"
+            && $statement->value->is(ExprKind::Name));
+
+        return $this->annotationOf("self.{$attribute}")->orElse(fn () => Option::fromNullable(array_values($stores)[0] ?? null)
+            ->andThen(fn (Assign $store) => $this->annotationOf((string) $store->value->get('name'))));
     }
 
     /**

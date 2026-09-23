@@ -578,10 +578,7 @@ class NodeMatch implements Located
      */
     private function constructor(): Option
     {
-        $body = $this->node instanceof ClassDef ? $this->node->body->body : [];
-        $declared = array_filter($body, static fn (Node $statement): bool => $statement instanceof FunctionDef && $statement->name === '__init__');
-
-        return Option::fromNullable(array_values($declared)[0] ?? null);
+        return $this->node instanceof ClassDef ? $this->node->initializer() : Option::none();
     }
 
     /**
@@ -906,5 +903,34 @@ class NodeMatch implements Located
     private function proseComments(): array
     {
         return array_values(array_filter($this->module->commentsAbove($this->node), static fn (Comment $comment): bool => ! DeclarationMarkers::isMarkerComment($comment->text)));
+    }
+
+    /**
+     * Does this method decide on bools alone — every parameter after the receiver a `bool` it tests,
+     * negates or joins with `and`/`or` — so its signature names none of the subject those flags describe?
+     * A constructor is excluded: its parameters are the object's own fields being born.
+     */
+    public function decidesOnBoolsAlone(): bool
+    {
+        $method = $this->node;
+
+        if (! $method instanceof FunctionDef || $method->name === '__init__') {
+            return false;
+        }
+
+        $params = array_slice($method->params, $this->isMethod() && ! $method->isStatic() ? 1 : 0);
+
+        return $params !== [] && array_all($params, fn (Param $param): bool => $param->annotation?->dottedName() === 'bool' && $this->readsAsCondition($method, $param->name));
+    }
+
+    /**
+     * Does $function decide with its parameter $name — test it bare, match on it, negate it, or join it with `and`/`or` —
+     * rather than only store or forward it?
+     */
+    private function readsAsCondition(FunctionDef $function, string $name): bool
+    {
+        return array_any($this->module->expressionsIn($function), fn (Expr $read): bool => $read->is(ExprKind::Name)
+            && $read->get('name') === $name
+            && ($this->module->isTested($read) || $this->module->isMatchedOn($read) || $this->module->wrapperOf($read)->isSomeAnd(static fn (Expr $around): bool => $around->isNegation() || $around->isShortCircuit())));
     }
 }

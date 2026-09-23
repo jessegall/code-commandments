@@ -43,6 +43,44 @@ So the signature demands what it uses — `def rename(node: Node, title: str)` �
   resolved.
 - **A lookup whose contract is "by id"** — `find_by_id(id)` that hands the result straight back.
 
+## Rules
+
+- [ ] Hand the method the object its callers keep asking, and let it ask; a bool every caller computes the same way is a decision living in the wrong place.
+      _Take the object (`text(order)`) and read `order.status`/`order.total` inside, so the rule lives once._
+
+## Worked example
+
+### python-computed-boolean-argument
+
+a method taking only bools that every caller computes from the same object — the decision re-derived at each call site
+
+```py
+----------[ Bad ]----------
+
+def allows(self, expired: bool) -> bool:
+    return not expired
+
+----------[ Good ]----------
+
+# in return_desk.py
+def allows_for(self, purchase: Purchase) -> bool:
+    return purchase.days_since <= 30
+
+# in return_desk.py
+def offers_honestly(self, purchases: list[Purchase]) -> list[Purchase]:
+    return [purchase for purchase in purchases if self.policy.allows_for(purchase)]
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/pass-the-object` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-computed-boolean-argument`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/pass-the-object`](../../backend/pass-the-object/SKILL.md) — the same discipline over PHP methods.

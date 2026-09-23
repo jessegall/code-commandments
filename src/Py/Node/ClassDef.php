@@ -70,6 +70,30 @@ final class ClassDef extends Node
     }
 
     /**
+     * The annotation the instance attribute $name carries — declared in the class body, annotated where
+     * `__init__` sets it, or taken from the annotated parameter `__init__` stores in it.
+     *
+     * @return Option<Expr>
+     */
+    public function attributeAnnotation(string $name): Option
+    {
+        return AnnAssign::among($this->body->body, $name)
+            ->orElse(fn () => $this->initializer()->andThen(static fn (FunctionDef $init) => $init->storedAnnotation($name)));
+    }
+
+    /**
+     * The `__init__` this class declares — none for a class that inherits its own.
+     *
+     * @return Option<FunctionDef>
+     */
+    public function initializer(): Option
+    {
+        $declared = array_filter($this->body->body, static fn (Node $statement): bool => $statement instanceof FunctionDef && $statement->name === '__init__');
+
+        return Option::fromNullable(array_values($declared)[0] ?? null);
+    }
+
+    /**
      * The fields a caller hands this class when building it — the annotated names of its body, less a
      * `ClassVar` and a `field(init=False)`, which the class keeps for itself.
      *
