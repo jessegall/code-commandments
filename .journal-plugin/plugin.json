@@ -95,6 +95,13 @@
             "default": "true",
             "group": "Languages"
         },
+        "language_py": {
+            "title": "Python",
+            "help": "Enables Python sin detection",
+            "type": "flag",
+            "default": "true",
+            "group": "Languages"
+        },
         "sin_blank-string-default": {
             "title": "BlankStringDefault",
             "help": "A declaration typed as a TOTAL `string` defaulting to the blank, whose own scope then asks that name `=== ''` / `empty(...)` — the question is the proof that the blank is absence wearing a total type.",

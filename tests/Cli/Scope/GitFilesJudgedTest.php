@@ -47,6 +47,7 @@ final class GitFilesJudgedTest extends TestCase
         $this->assertTrue(Language::judges('app/Order.php'));
         $this->assertTrue(Language::judges('resources/js/OrderCard.vue'));
         $this->assertTrue(Language::judges('resources/js/orders.ts'));
+        $this->assertTrue(Language::judges('shop/orders.py'));
         $this->assertFalse(Language::judges('README.md'));
         $this->assertFalse(Language::judges('resources/js/orders.tsx.bak'));
     }

@@ -21,6 +21,7 @@ final class ExampleLanguageTest extends TestCase
         $this->assertSame(Language::Vue, Language::ofFile('components/OrderPanel.vue'));
         $this->assertSame(Language::TypeScript, Language::ofFile('types/orders.ts'));
         $this->assertSame(Language::Php, Language::ofFile('app/Orders/Order.php'));
+        $this->assertSame(Language::Python, Language::ofFile('shop/orders.py'));
     }
 
     public function test_an_example_carries_its_language_through_every_transformation(): void
@@ -39,5 +40,13 @@ final class ExampleLanguageTest extends TestCase
         $this->assertSame('PHP', Language::Php->label());
         $this->assertSame('Vue', Language::Vue->label());
         $this->assertSame('TypeScript', Language::TypeScript->label());
+        $this->assertSame('Python', Language::Python->label());
+    }
+
+    public function test_each_language_writes_and_reads_its_own_comment(): void
+    {
+        $this->assertSame('# stamp', Language::Python->comment('stamp'));
+        $this->assertTrue(Language::Python->isCommentLine('    # stamp'));
+        $this->assertFalse(Language::Python->isCommentLine('total = 1  # not a comment line'));
     }
 }

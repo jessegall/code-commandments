@@ -19,6 +19,7 @@ enum Language: string
     case Vue = 'vue';
 
     case TypeScript = 'ts';
+    case Python = 'py';
 
     /**
      * The language of the file at $path — the one place an extension is read as a language.
@@ -28,6 +29,7 @@ enum Language: string
         return match (true) {
             str_ends_with($path, '.vue') => self::Vue,
             str_ends_with($path, '.ts') => self::TypeScript,
+            str_ends_with($path, '.py') => self::Python,
             default => self::Php,
         };
     }
@@ -49,6 +51,7 @@ enum Language: string
         return match ($this) {
             self::Php, self::TypeScript => "// {$text}",
             self::Vue => "<!-- {$text} -->",
+            self::Python => "# {$text}",
         };
     }
 
@@ -63,6 +66,7 @@ enum Language: string
         return match ($this) {
             self::Php, self::TypeScript => str_starts_with($opened, '//') || str_starts_with($opened, '/*') || str_starts_with($opened, '*'),
             self::Vue => str_starts_with($opened, '<!--'),
+            self::Python => str_starts_with($opened, '#'),
         };
     }
 
@@ -75,6 +79,7 @@ enum Language: string
             self::Php => 'PHP',
             self::Vue => 'Vue',
             self::TypeScript => 'TypeScript',
+            self::Python => 'Python',
         };
     }
 
