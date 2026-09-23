@@ -122,6 +122,7 @@ most:**
 - **`commandments-python-fix-at-the-source`** — trace a value, an effect or a piece of state to where it starts, and fix it there.
 - **`commandments-python-type-honesty`** — a type must not lie: don't fake optionality with `| None` a value never is, or keep per-call scratch state on `self`.
 - **`commandments-python-class-layout`** — state at the top — constants, class attributes and fields above `__init__`, methods after.
+- **`commandments-python-method-mood`** — commands are imperatives (`hide()`), state predicates are questions (`is_hidden()`).
 
 **ON CONTACT — load the moment the work touches the subject:**
 

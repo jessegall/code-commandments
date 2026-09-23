@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I have a method `def binds(self) -> bool` that says whether the node is bound — is that a good name?",
+        "what should I call a method that hides the panel — `hides()` or something else?",
+        "judge flagged python-bare-state-predicate on `def spins(self)`, how do I rename it"
+    ],
+    "not": [
+        "how do I read a JSON file into a dataclass in Python"
+    ]
+}
