@@ -43,6 +43,9 @@ Whole-tree PHP rewrites, run on every `repent`:
 | `RedundantNativeCast` | Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site. |
 | `RedundantNestedFrom` | Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`. |
 
+### Csharp
+
+
 ### Frontend
 
 | Sin | The fix `repent` applies |

@@ -240,6 +240,8 @@ _146 sins across 33 skills._
 | `RedundantNativeCast` | Flags `Enum::from($x)` / `new DateTime($x)` / `Carbon::parse($x)` sitting in a `Data::from([...])` slot typed as that enum or a `DateTimeInterface` — the value Spatie auto-casts from the raw scalar, so the construction is ceremony. |
 | `RedundantNestedFrom` | Flags `X::from([array literal])` sitting in a parent `SomeData::from([...])` where the destination slot — a nested `Data` property or a `#[DataCollectionOf(X)]` element — auto-hydrates the array itself, so the wrapper is ceremony. |
 
+### Csharp
+
 ### Frontend
 
 #### `frontend/vue-components`

@@ -134,6 +134,7 @@ most:**
 - **`commandments-typescript-absence`** — model absence honestly — one spelling for missing, no `??` that invents a value, no `?.` on something always set.
 - **`commandments-typescript-duplication`** — a function body written twice becomes one shared function or composable, parameterised by what differs.
 - **`commandments-python-duplication`** — a function body written twice becomes one shared function, parameterised by what differs.
+- **`commandments-csharp-duplication`** — a method body written twice becomes one shared method, parameterised by what differs.
 - **`commandments-python-exceptions`** — raise named exceptions built by a classmethod factory, never swallow a failure, and keep the cause with `raise … from`.
 - **`commandments-python-enums`** — a closed set of values is an `Enum` or `StrEnum` carrying the per-case knowledge as methods, not string constants compared at every call site.
 

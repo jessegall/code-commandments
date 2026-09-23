@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "OrdersHandler.cs needs the same MapToDto method that InvoicesHandler.cs already has — can I just copy it over?",
+        "ExportService and ReportService both have a WriteRows method that's identical except for the file path, should I leave them or merge them",
+        "judge flagged a duplicate C# function on two repository classes that build the query the exact same way — what's the fix"
+    ],
+    "not": [
+        "how do I make a C# method return null safely when the key is missing from the dictionary"
+    ]
+}
