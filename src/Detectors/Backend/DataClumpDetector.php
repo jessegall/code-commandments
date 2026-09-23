@@ -18,7 +18,9 @@ use JesseGall\CodeCommandments\Backend\Detector;
  * it into a value object and pass that. Recurrence across classes is required so
  * an isolated wide signature isn't mistaken for a clump. A constructor or named
  * constructor (`make()`/`from…()` minting `new self(...)`) is exempt — those params
- * are the object's own fields being born, not a clump. Points at value-objects.
+ * are the object's own fields being born, not a clump — and so is a method a parent class or an
+ * interface declares: it repeats that contract's signature, it does not choose one. Points at
+ * value-objects.
  */
 final class DataClumpDetector implements Detector
 {
@@ -38,8 +40,9 @@ final class DataClumpDetector implements Detector
 
             // A constructor — or a named constructor minting `new self(...)` — accepting the
             // fields is how the value object is BUILT; those params ARE its own fields being
-            // born. The smell is threading the loose clump through ordinary collaborator methods.
-            if ($signature === [] || $match->isConstructorDeclaration() || $match->isNamedConstructor()) {
+            // born. A method a parent or an interface declares repeats that contract's signature.
+            // The smell is threading the loose clump through ordinary collaborator methods.
+            if ($signature === [] || $match->isConstructorDeclaration() || $match->isNamedConstructor() || $match->nameIsInherited()) {
                 continue;
             }
 
