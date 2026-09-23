@@ -9,7 +9,8 @@ use JesseGall\CodeCommandments\Py\Expr\LiteralType;
 
 /**
  * One parameter of a function: its name, its annotation and default when written, and its kind — `*`
- * for `*args`, `**` for `**kwargs`, empty for an ordinary one.
+ * for `*args`, `**` for `**kwargs`, empty for an ordinary one — and whether only a keyword can fill it,
+ * as every ordinary one written after `*` or `*args` is.
  */
 final class Param extends Node
 {
@@ -18,6 +19,7 @@ final class Param extends Node
         public readonly string $kind = '',
         public readonly ?Expr $annotation = null,
         public readonly ?Expr $default = null,
+        public readonly bool $keywordOnly = false,
     ) {}
 
     public function expressions(): array

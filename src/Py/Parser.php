@@ -201,8 +201,12 @@ final class Parser
             return $params;
         }
 
+        $keywordOnly = false;
+
         while ($this->cursor->isBefore(')')) {
-            $param = $this->parameter();
+            $starred = $this->cursor->atOp('*');
+            $param = $this->parameter($keywordOnly);
+            $keywordOnly = $keywordOnly || $starred;
 
             if ($param !== null) {
                 $params[] = $param;
@@ -218,7 +222,7 @@ final class Parser
         return $params;
     }
 
-    private function parameter(): ?Param
+    private function parameter(bool $keywordOnly): ?Param
     {
         $start = $this->cursor->offset();
         $kind = $this->cursor->atOp('*') || $this->cursor->atOp('**') ? $this->cursor->advance()->value : '';
@@ -233,7 +237,7 @@ final class Parser
         $annotation = $this->cursor->advanceIfOp(':') ? $this->expressions->test() : null;
         $default = $this->cursor->advanceIfOp('=') ? $this->expressions->test() : null;
 
-        return $this->located(new Param($name, $kind, $annotation, $default), $start);
+        return $this->located(new Param($name, $kind, $annotation, $default, $keywordOnly && $kind === ''), $start);
     }
 
     /**

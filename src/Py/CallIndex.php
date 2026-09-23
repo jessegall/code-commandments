@@ -39,6 +39,12 @@ final class CallIndex
     private ?array $homes = null;
 
     /**
+     * @var array<int, true>  the calls made through a class named outright — `Cart.add(cart, sku)` — by the
+     *                        call's object id, which hand an instance method its `self` themselves
+     */
+    private array $throughClass = [];
+
+    /**
      * @var array<int, ModuleFile>|null  the module each `def` is declared in, by the def's object id
      */
     private ?array $declarations = null;
@@ -114,30 +120,77 @@ final class CallIndex
      */
     public function passesLiteralKey(Expr $call): bool
     {
-        return $this->targetOf($call)->isSomeAnd(function (FunctionDef $target) use ($call): bool {
-            $keys = $target->keyParameters();
+        return $this->targetOf($call)->isSomeAnd(fn (FunctionDef $target): bool => $target->keyParameters() !== [] && $this->argumentsAt($call)->isSomeAnd(
+            static fn (array $bound): bool => array_any(
+                $target->keyParameters(),
+                static fn (string $key): bool => ($bound[$key] ?? null)?->literalType()?->isText() === true,
+            ),
+        ));
+    }
 
-            if ($keys === []) {
-                return false;
+    /**
+     * What each parameter of $call's target receives there — its name to the argument handed to it — with an
+     * instance call's `self` (or a classmethod's `cls`) already bound, and the first extra positional in a
+     * `*rest` parameter. None when the call does not resolve, or unpacks a `*` or `**` argument whose parts
+     * no reading can place.
+     *
+     * @return Option<array<string, Expr>>
+     */
+    public function argumentsAt(Expr $call): Option
+    {
+        return $this->targetOf($call)->andThen(function (FunctionDef $target) use ($call): Option {
+            if (array_any($call->get('arguments'), static fn (Expr $argument): bool => $argument->is(ExprKind::Starred))) {
+                return Option::none();
             }
 
-            $params = array_slice($target->params, isset($this->bound()[spl_object_id($target)]) && $call->get('callee')->is(ExprKind::Attribute) ? 1 : 0);
-            $variadic = array_values(array_filter($params, static fn (Param $param): bool => $param->kind === '*'))[0] ?? null;
+            $params = array_slice($target->params, $this->bindsFirstParameter($call, $target) ? 1 : 0);
+            $positional = array_values(array_filter($params, static fn (Param $param): bool => $param->kind === '' && ! $param->keywordOnly));
+            $rest = array_values(array_filter($params, static fn (Param $param): bool => $param->kind === '*'))[0] ?? null;
+            $bound = [];
             $position = 0;
 
             foreach ($call->get('arguments') as $argument) {
-                $isKeyword = $argument->is(ExprKind::Keyword);
-                $name = $isKeyword ? (string) $argument->get('name') : ($params[$position] ?? $variadic)?->name;
-                $value = $isKeyword ? $argument->get('value') : $argument;
-                $position += $isKeyword ? 0 : 1;
+                if ($argument->is(ExprKind::Keyword)) {
+                    $bound[(string) $argument->get('name')] ??= $argument->get('value');
 
-                if (in_array($name, $keys, true) && $value->literalType()?->isText() === true) {
-                    return true;
+                    continue;
+                }
+
+                $name = ($positional[$position++] ?? $rest)?->name;
+
+                if ($name !== null) {
+                    $bound[$name] ??= $argument;
                 }
             }
 
-            return false;
+            return Option::some($bound);
         });
+    }
+
+    /**
+     * Does $call arrive with its target's first parameter already bound — an instance method called on an
+     * instance, or a classmethod called on anything?
+     */
+    private function bindsFirstParameter(Expr $call, FunctionDef $target): bool
+    {
+        if (! isset($this->bound()[spl_object_id($target)]) || ! $call->get('callee')->is(ExprKind::Attribute)) {
+            return false;
+        }
+
+        return $target->isClassMethod() || ! isset($this->throughClass[spl_object_id($call)]);
+    }
+
+    /**
+     * Note $call as made through a class $module names outright, when it is.
+     */
+    private function noteThroughClass(Expr $call, ModuleFile $module): void
+    {
+        $owner = $call->get('callee');
+        $owner = $owner->is(ExprKind::Attribute) ? $owner->get('object') : null;
+
+        if ($owner !== null && $owner->is(ExprKind::Name) && $this->named((string) $owner->get('name'), $module)->isSomeAnd(static fn (Node $found): bool => $found instanceof ClassDef)) {
+            $this->throughClass[spl_object_id($call)] = true;
+        }
     }
 
     /**
@@ -204,6 +257,7 @@ final class CallIndex
                         if ($target->isSome()) {
                             $callers[spl_object_id($target->unwrap())][] = new ExprMatch($call, $module);
                             $this->targets[spl_object_id($call)] = $target->unwrap();
+                            $this->noteThroughClass($call, $module);
                         }
                     }
                 }
