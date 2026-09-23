@@ -752,6 +752,15 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
     }
 
     /**
+     * Does $node sit in a static method that overrides one its parent declares — a lifecycle hook the
+     * parent's framework calls (PHPUnit's `setUpBeforeClass`), in an order the framework owns?
+     */
+    public function isInStaticOverride(AstNode $node): bool
+    {
+        return $node->isInStaticMethod() && $this->overridesMethod($node->enclosingClassName(), $node->enclosingFunctionName());
+    }
+
+    /**
      * Does `$class::$method` OVERRIDE a method declared by an ancestor (a parent
      * class or an implemented interface) — so its return type is the ancestor's
      * contract, not the author's to change? Resolved via reflection when the class

@@ -15,7 +15,9 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * writes last wins; nothing declares it, so a reader cannot tell which call put it there; and it
  * outlives every instance, so the order things ran in becomes part of the behaviour. The write is
  * reported rather than the declaration, because the write is where the coupling is actually made.
- * A `??=` memo is exempt ({@see AstNode::isStaticStateWrite}) — it adds nothing observable.
+ * A `??=` memo is exempt ({@see AstNode::isStaticStateWrite}) — it adds nothing observable — and so
+ * is a static written in a static method overriding its parent's ({@see Codebase::isInStaticOverride}):
+ * a framework's lifecycle hook, such as PHPUnit's `setUpBeforeClass`, run in an order the framework owns.
  */
 final class MutableStaticStateDetector implements Detector
 {
@@ -28,6 +30,7 @@ final class MutableStaticStateDetector implements Detector
     {
         return $codebase
             ->where(static fn (AstNode $node): bool => $node->isStaticStateWrite())
+            ->reject(static fn (AstNode $node): bool => $codebase->isInStaticOverride($node))
             ->get();
     }
 }

@@ -5579,6 +5579,16 @@ class AstNode
     }
 
     /**
+     * Does this sit in a `static` method — the one that declares it, walked past any closure?
+     */
+    public function isInStaticMethod(): bool
+    {
+        $named = $this->node instanceof ClassMethod ? $this->node : $this->walkUp(static fn (Node $node): bool => $node instanceof ClassMethod || $node instanceof Function_);
+
+        return $named instanceof ClassMethod && $named->isStatic();
+    }
+
+    /**
      * The enclosing method/function name, or null for a closure or file scope.
      */
     public function enclosingFunctionName(): ?string

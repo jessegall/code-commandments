@@ -83,4 +83,34 @@ final class MutableStaticStateDetectorTest extends TestCase
         // `??=` fills a memo; a declaration initialiser is not a write; instance state is not global.
         $this->assertSame([], array_map(static fn ($m): string => $m->scope(), $hits));
     }
+
+    /**
+     * A static a framework's static lifecycle hook writes — PHPUnit's `setUpBeforeClass`, overridden
+     * here from a parent — is set once, in an order the framework owns, before anything reads it. A
+     * static method of the class's own writing one is a global whose last writer wins.
+     */
+    public function test_leaves_a_static_written_in_an_overridden_static_hook(): void
+    {
+        $code = <<<'PHP'
+        <?php
+        abstract class Suite {
+            public static function setUpBeforeClass(): void {}
+        }
+        final class ReportSuite extends Suite {
+            private static ?string $fixture = null;
+
+            public static function setUpBeforeClass(): void {
+                self::$fixture = 'built once';
+            }
+
+            public static function reset(): void {
+                self::$fixture = null;
+            }
+        }
+        PHP;
+
+        $hits = (new MutableStaticStateDetector)->find(Codebase::fromString($code));
+
+        $this->assertSame(['ReportSuite::reset'], array_map(static fn ($m): string => $m->scope(), $hits));
+    }
 }
