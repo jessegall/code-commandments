@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Hooks;
 
+use Closure;
 use Composer\Autoload\ClassLoader;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Config\ConfigScribe;
@@ -82,18 +83,64 @@ final class JournalServe implements Command
     }
 
     /**
-     * Read one moment off $connection, answer it and hang up — from $home, whatever the last moment left
-     * as the working directory, and with `{}` when a handler fails, so one bad moment never stops the rest.
+     * Read one moment off $connection, answer it and hang up — from $home, whatever the last moment left as
+     * the working directory. Where the journal names a queue, only the gates answer now and the advice follows
+     * as messages, so no scan holds up the call; without one, every hook answers here as it always did.
      *
      * @param  resource  $connection
      */
     private function answer($connection, string $home): void
     {
         chdir($home);
+        $given = (array) json_decode((string) fgets($connection), true);
+        $queue = JournalQueue::fromEnvironment();
+
+        $answer = $this->quietly(fn () => $queue->isSome() ? $this->hook->gateAnswerFor($given) : $this->hook->answerFor($given));
+
+        fwrite($connection, $answer->toJson() . "\n");
+        fclose($connection);
+
+        $queue->inspect(fn (JournalQueue $to) => $this->advise($given, $home, $to));
+    }
+
+    /**
+     * Ask the advising hooks about the moment in $given and tell the agent what they say, through $queue — in
+     * a forked child where the platform can fork, so the service is free for the next call at once.
+     *
+     * @param  array<string, mixed>  $given
+     */
+    private function advise(array $given, string $home, JournalQueue $queue): void
+    {
+        $this->reap();
+
+        $child = function_exists('pcntl_fork') ? pcntl_fork() : -1;
+
+        if ($child > 0) {
+            return;
+        }
+
+        chdir($home);
+        $queue->tell($this->quietly(fn () => $this->hook->adviceFor($given)));
+
+        if ($child === 0 && function_exists('posix_kill')) {
+            // The child holds copies of the parent's warm bridge processes. Ending it without running their
+            // destructors keeps it from closing what the parent still reads through.
+            posix_kill(posix_getpid(), SIGKILL);
+        }
+    }
+
+    /**
+     * The answer $ask gives, `{}` when it fails, so one bad moment never stops the rest — and anything a
+     * handler printed goes to the log, never down the socket.
+     *
+     * @param  Closure(): JournalAnswer  $ask
+     */
+    private function quietly(Closure $ask): JournalAnswer
+    {
         ob_start();
 
         try {
-            $answer = $this->hook->answerFor((array) json_decode((string) fgets($connection), true));
+            $answer = $ask();
         } catch (Throwable $failure) {
             fwrite(STDERR, $failure . "\n");
             $answer = new JournalAnswer();
@@ -105,8 +152,17 @@ final class JournalServe implements Command
             fwrite(STDERR, $stray);
         }
 
-        fwrite($connection, $answer->toJson() . "\n");
-        fclose($connection);
+        return $answer;
+    }
+
+    /**
+     * Collect every advice child that has finished, so none lingers as a zombie.
+     */
+    private function reap(): void
+    {
+        while (function_exists('pcntl_waitpid') && pcntl_waitpid(-1, $status, WNOHANG) > 0) {
+            continue;
+        }
     }
 
     /**

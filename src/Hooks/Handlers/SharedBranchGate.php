@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks\Handlers;
 
 use JesseGall\CodeCommandments\Hooks\Discipline;
+use JesseGall\CodeCommandments\Hooks\Gate;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -14,7 +15,7 @@ use JesseGall\CodeCommandments\Hooks\HookEvent;
  * already knows they exist and that is the whole condition. A rebase rewrites the commits they are built
  * on, so each ends up holding commits the branch no longer has, byte-identical and silent until a merge.
  */
-final class SharedBranchGate extends Hook implements Discipline
+final class SharedBranchGate extends Hook implements Discipline, Gate
 {
     /**
      * The rewrite this exists for. A pull that rebases is the one that mints byte-identical duplicates of
