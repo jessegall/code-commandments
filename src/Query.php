@@ -9,7 +9,7 @@ use ReflectionFunction;
 use ReflectionNamedType;
 
 /**
- * The fluent query, shared by both engines — the ONE place `where`/`reject`, the filter loop, and
+ * The fluent query, shared by every engine — the ONE place `where`/`reject`, the filter loop, and
  * the reflection-driven decorator injection live, so the backend ({@see Ast\Query}) and frontend
  * ({@see Vue\Query}) never write that machinery twice. A subclass supplies only the three things
  * that genuinely differ per engine: where the candidate nodes come from ({@see selected}), how a

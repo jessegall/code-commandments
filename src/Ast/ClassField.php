@@ -12,7 +12,7 @@ use PhpParser\Node\AttributeGroup;
 /**
  * One class field — from a promoted constructor parameter or declared property — with its
  * name, type, attributes, visibility, and promotion status. Framework decorators read the
- * attributes to decide policy; the field itself stays generic so both engines can reuse it.
+ * attributes to decide policy; the field itself stays generic, so any rule can read it.
  */
 final class ClassField
 {

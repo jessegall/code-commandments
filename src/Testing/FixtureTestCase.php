@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Detectors\ChainDetector;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Self-checking-fixture test shared by both engines. Backend (#[Sinful]) and frontend (<!-- @sin -->) run the same flow:
+ * Self-checking-fixture test shared by every engine. Backend (#[Sinful]), frontend (<!-- @sin -->) and Python (# @sin) run the same flow:
  * detect exactly marked sins, ≥3 diverse scenarios. Subclass supplies its Fixture; the package proves its catalog.
  */
 abstract class FixtureTestCase extends TestCase

@@ -13,7 +13,7 @@ use SplFileInfo;
 
 /**
  * The ONE walk over a source tree — what counts as a file to read, and what is never descended,
- * decided once for both engines rather than re-spelled at each of them. Written because it WAS
+ * decided once for every engine rather than re-spelled at each of them. Written because it WAS
  * re-spelled: the PHP walk checked the exclusions on a file handed to it directly but not its
  * extension, and the Vue walk checked the extension but not the exclusions, so each let through
  * exactly what the other refused.

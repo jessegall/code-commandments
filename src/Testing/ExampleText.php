@@ -7,7 +7,7 @@ namespace JesseGall\CodeCommandments\Testing;
 /**
  * Text helpers shared by the fixture-example extractors ({@see FixtureExamples}, {@see VueFixtureExamples}):
  * pick the first non-empty source list under a set of candidate keys, and strip the common leading indent
- * off a block of lines. One home so the two engines' example extraction doesn't each keep a copy.
+ * off a block of lines. One home so no engine's example extraction keeps a copy of its own.
  */
 final class ExampleText
 {

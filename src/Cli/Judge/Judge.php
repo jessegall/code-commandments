@@ -174,8 +174,8 @@ final class Judge implements Command
         $parseSeconds = (hrtime(true) - $parseStart) / 1e9;
 
         // The Vue detectors read the SAME roots — `judge` is engine-agnostic, so a path with `.vue`
-        // files is judged by both engines. It is scanned HERE, before either runs, because the
-        // Bridge is what both draw on.
+        // files is judged by every engine. It is scanned HERE, before any runs, because the Bridge
+        // the backend and the frontend draw on is built from it.
         $components = $this->frontendCodebase($roots, $frontend, $detectors, $excluded, Languages::from($config));
 
         // The two engines meet ONCE, and before either judges: each publishes what it owns and every

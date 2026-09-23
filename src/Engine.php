@@ -12,8 +12,8 @@ use JesseGall\CodeCommandments\Testing\FrontendFixture;
 use JesseGall\CodeCommandments\Testing\PythonFixture;
 
 /**
- * Which of the two parse engines a detector reads — the PHP AST, or the Vue components.
- * It is the ONE thing that genuinely differs between a backend and a frontend commandment, so it
+ * Which parse engine a detector reads — the PHP AST, the Vue components and TypeScript modules, or
+ * Python modules. It is the ONE thing that genuinely differs between one commandment and another, so it
  * is stated once, as a type, and everything downstream (the base interface a stub implements, the
  * codebase it queries, the fixture the guidance points at) is projected from it.
  */

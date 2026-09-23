@@ -6,7 +6,7 @@ namespace JesseGall\CodeCommandments;
 
 /**
  * The language a worked example is written in — what fences its code block, and what labels it when
- * one skill teaches a discipline that both engines have.
+ * one skill teaches a discipline more than one language has.
  *
  * A fact about the FIXTURE the example came from, never a guess from the sin that points at it: a
  * frontend rule's example is a template when it was marked in a `.vue` file and a module when it was

@@ -367,7 +367,7 @@ final class SkillRenderer
 
     /**
      * The distinct languages a skill's examples are written in — one for a discipline that lives on
-     * a single engine, several for one both engines have.
+     * a single engine, several for one more than one engine has.
      *
      * @param  list<array{example: Example, sins: list<Sin>}>  $grouped
      * @return list<string>

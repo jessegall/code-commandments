@@ -16,7 +16,7 @@ use JesseGall\CodeCommandments\Vue\Sfc;
  * from the `.vue` fixture — the `<!-- @sin Name -->`-marked element (BAD) and its
  * `<!-- @righteous Name -->` twin (GOOD) — as real, parsed template source. Same shape
  * as the backend extractor (`array<detector-class, list<Example>>`), so the
- * {@see \JesseGall\CodeCommandments\Skills\SkillRenderer} treats both engines identically.
+ * {@see \JesseGall\CodeCommandments\Skills\SkillRenderer} treats every engine identically.
  */
 final class VueFixtureExamples
 {

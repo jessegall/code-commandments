@@ -12,12 +12,13 @@ use JesseGall\CodeCommandments\Detector;
  * against it, and the directory's OWN `.commandments/config.php` — because a fixture directory is a
  * project. A rule inert until the project declares something (a layer map, a threshold) fires only
  * once declared, so the fixture declares it exactly as a consumer would and tunes the detectors
- * here, before anything is verified. The file is never scanned as fixture SOURCE: both engines
- * prune `.`-prefixed directories. A declaration aimed at a detector this fixture omits is ignored,
+ * here, before anything is verified. The file is never scanned as fixture SOURCE: every engine
+ * prunes `.`-prefixed directories. A declaration aimed at a detector this fixture omits is ignored,
  * since a fixture legitimately holds a subset of the catalog.
  *
  * @see BackendFixture the PHP engine's fixture
- * @see FrontendFixture the Vue engine's — same mechanism, both engines
+ * @see FrontendFixture the Vue engine's — same mechanism
+ * @see PythonFixture the Python engine's — same mechanism
  */
 abstract class EngineFixture implements Fixture
 {

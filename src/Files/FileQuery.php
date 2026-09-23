@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Query;
 /**
  * The fluent query over FILES — `whereFile()` on either engine's codebase, narrowed by
  * `where`/`reject` on a {@see FileMatch} and closed by the same terminals as every other query.
- * One implementation for both engines: a file name is not a language, so the machinery that judges
+ * One implementation for every engine: a file name is not a language, so the machinery that judges
  * one must not be written twice.
  */
 final class FileQuery extends Query

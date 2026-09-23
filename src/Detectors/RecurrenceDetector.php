@@ -18,7 +18,7 @@ use JesseGall\CodeCommandments\Located;
  * {@see groupKey}.
  *
  * Engine-agnostic on purpose: recurrence is a SHAPE of rule, not a parse strategy, so it is stated over
- * the base {@see Located}/{@see Codebase} types and both engines answer it — a repeated PHP guard and a
+ * the base {@see Located}/{@see Codebase} types and every engine answers it — a repeated PHP guard and a
  * repeated Vue block are the same kind of sin, and the fixture harness holds both to the same proof. Each
  * engine narrows at ONE seam: backend detectors extend
  * {@see \JesseGall\CodeCommandments\Detectors\Backend\RecurringPattern}, which does the narrowing once and

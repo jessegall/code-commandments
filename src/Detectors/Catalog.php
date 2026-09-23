@@ -19,7 +19,7 @@ use JesseGall\CodeCommandments\WholeTree;
 final class Catalog
 {
     /**
-     * Every detector, both engines — backend then frontend.
+     * Every detector, every engine — backend, frontend, then Python.
      *
      * @return list<Detector>
      */

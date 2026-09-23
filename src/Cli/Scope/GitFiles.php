@@ -261,9 +261,9 @@ class GitFiles
     }
 
     /**
-     * Resolve newline-separated repo-relative paths into a set of absolute paths the
-     * two engines judge (non-judged extensions dropped), so a scoped run narrows to
-     * touched source across BOTH front-ends, not PHP alone.
+     * Resolve newline-separated repo-relative paths into a set of absolute paths some
+     * engine judges (non-judged extensions dropped), so a scoped run narrows to
+     * touched source in every language, not PHP alone.
      *
      * @return array<string, true>
      */

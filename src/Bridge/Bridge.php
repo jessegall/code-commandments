@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Vue\Codebase as FrontendCodebase;
 
 /**
- * The meeting point of the two engines — the ONLY place that holds both codebases at
+ * The meeting point of the backend and the frontend — the ONLY place that holds both codebases at
  * once. It asks every {@see ContractProvider} for the {@see Contract}s its engine
  * publishes and collects them into one {@see Contracts} bag for the consumers
  * ({@see ConsumesContracts}). Neither engine references the other; the Bridge, and
