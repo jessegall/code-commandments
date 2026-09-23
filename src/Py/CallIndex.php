@@ -28,9 +28,9 @@ final class CallIndex
     private ?array $callers = null;
 
     /**
-     * @var array<int, ModuleFile>  the module each class is declared in, by the class's object id
+     * @var array<int, ModuleFile>|null  the module each class is declared in, by the class's object id
      */
-    private array $homes = [];
+    private ?array $homes = null;
 
     /**
      * @var array<string, array{modules: array<string, ModuleFile>, members: array<string, Node>}>
@@ -52,18 +52,24 @@ final class CallIndex
     }
 
     /**
+     * Does $method — a `def` in a class body of $module — override one a base class declares? It then
+     * repeats that method's signature by contract rather than choosing its own.
+     */
+    public function isOverride(FunctionDef $method, ModuleFile $module): bool
+    {
+        $class = $module->ancestorsOf($method)[1] ?? null;
+
+        return $class instanceof ClassDef && array_any(
+            $class->bases,
+            fn (Expr $base): bool => $this->classNamed($base, $module)->andThen(fn (ClassDef $parent) => $this->methodOf($parent, $method->name))->isSome(),
+        );
+    }
+
+    /**
      * @return array<int, list<ExprMatch>>
      */
     private function graph(): array
     {
-        foreach ($this->codebase->modules() as $module) {
-            foreach ($module->nodes() as $node) {
-                if ($node instanceof ClassDef) {
-                    $this->homes[spl_object_id($node)] = $module;
-                }
-            }
-        }
-
         $callers = [];
 
         foreach ($this->codebase->modules() as $module) {
@@ -172,7 +178,7 @@ final class CallIndex
             }
         }
 
-        $home = $this->homes[spl_object_id($class)] ?? null;
+        $home = $this->homes()[spl_object_id($class)] ?? null;
 
         foreach ($home === null ? [] : $class->bases as $base) {
             $inherited = $this->classNamed($base, $home)->andThen(fn (ClassDef $parent) => $this->methodOf($parent, $name));
@@ -261,5 +267,27 @@ final class CallIndex
         }
 
         return count($found) === 1 ? Option::some(array_values($found)[0]) : Option::none();
+    }
+
+    /**
+     * @return array<int, ModuleFile>
+     */
+    private function homes(): array
+    {
+        if ($this->homes !== null) {
+            return $this->homes;
+        }
+
+        $this->homes = [];
+
+        foreach ($this->codebase->modules() as $module) {
+            foreach ($module->nodes() as $node) {
+                if ($node instanceof ClassDef) {
+                    $this->homes[spl_object_id($node)] = $module;
+                }
+            }
+        }
+
+        return $this->homes;
     }
 }

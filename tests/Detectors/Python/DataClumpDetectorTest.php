@@ -34,6 +34,13 @@ final class DataClumpDetectorTest extends TestCase
         $this->assertSame([], $this->scopesIn($source));
     }
 
+    public function test_an_override_repeats_its_parents_signature_and_is_no_clump(): void
+    {
+        $source = "class Controller:\n    def create" . self::SHIP . ":\n        pass\n\n\nclass Todos(Controller):\n    def create" . self::SHIP . ":\n        return super().create(street, city, postcode, weight)\n\n\nclass Works(Controller):\n    def create" . self::SHIP . ":\n        pass\n";
+
+        $this->assertSame([], $this->scopesIn($source));
+    }
+
     /**
      * @return list<string>
      */

@@ -18,7 +18,8 @@ use JesseGall\CodeCommandments\Sins\Sin;
  * The same three-or-more scalar parameters threaded through functions of two or more classes or
  * modules — the Python twin of the backend's
  * {@see \JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector}. An `__init__` or a named
- * constructor taking them is the value being born, not a clump.
+ * constructor taking them is the value being born, and an override repeats its parent's signature by
+ * contract — neither is a new place the values travel.
  */
 final class DataClumpDetector implements Detector, RecurrenceDetector
 {
@@ -48,6 +49,7 @@ final class DataClumpDetector implements Detector, RecurrenceDetector
             ->whereFunction()
             ->where(static fn (NodeMatch $match): bool => $match->node instanceof FunctionDef && $match->node->valueParamSignature() !== [])
             ->reject(static fn (NodeMatch $match): bool => $match->isConstructorDeclaration())
+            ->reject(static fn (NodeMatch $match): bool => $match->isOverride($codebase))
             ->reject(static fn (NodeMatch $match): bool => $match->node instanceof FunctionDef && $match->node->isNamedConstructor())
             ->get();
 

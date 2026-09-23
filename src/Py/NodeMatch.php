@@ -182,6 +182,14 @@ class NodeMatch implements Located
     }
 
     /**
+     * Does this method override one a base class in the codebase declares?
+     */
+    public function isOverride(Codebase $codebase): bool
+    {
+        return $this->node instanceof FunctionDef && $codebase->index()->isOverride($this->node, $this->module);
+    }
+
+    /**
      * Is this a class's `__init__` — structure every class declares for itself, which two classes cannot
      * share however alike they read?
      */
