@@ -12,6 +12,11 @@ use JesseGall\CodeCommandments\Py\Expr\ExprKind;
  */
 final class Raise extends Node
 {
+    /**
+     * The builtins that say only "something failed".
+     */
+    private const array GENERIC = ['Exception', 'BaseException', 'RuntimeError'];
+
     public function __construct(
         public readonly ?Expr $exception = null,
         public readonly ?Expr $cause = null,
@@ -40,5 +45,23 @@ final class Raise extends Node
     public function isBailOut(): bool
     {
         return true;
+    }
+
+    /**
+     * Does this raise a builtin that names no failure — `Exception`, `BaseException`, `RuntimeError` —
+     * with the failure described in a message written at the raise? Python's specific builtins
+     * (`ValueError`, `TypeError`, `KeyError`, …) name a category a caller catches by, and are not this.
+     */
+    public function isGenericWithMessage(): bool
+    {
+        if ($this->exception === null || ! $this->exception->isCall()) {
+            return false;
+        }
+
+        $message = $this->exception->get('arguments')[0] ?? null;
+
+        return in_array($this->exception->get('callee')->dottedName(), self::GENERIC, true)
+            && $message instanceof Expr
+            && ($message->is(ExprKind::FString) || $message->literalType()?->isText() === true);
     }
 }

@@ -57,48 +57,51 @@ continues.
 
 ## Rules
 
+- [ ] Raise a named exception built by a classmethod factory, never a bare `Exception` or `RuntimeError` with a message written at the raise.
+      _Give the failure a class of its own with a classmethod that takes the values and writes the message once — `raise NoActiveRequest.for_(name)` — so a caller can catch it by name._
 - [ ] Never swallow every failure: catch the one you expect and act on it, or let it propagate to a boundary that records it.
       _Name the exception you expect (`except ValueError:`) and do what its meaning calls for; anything else propagates. At a real boundary, log or report before moving on._
 
 ## Worked example
 
-### python-swallowed-exception
+### python-message-string-raise
 
-A bare `except:` or `except Exception` whose body only passes, continues or returns nothing — every failure, expected or not, made to vanish
+`raise Exception/RuntimeError("…")` — a failure that names nothing, described in prose at the raise site
 
 ```py
 ----------[ Bad ]----------
 
-def load_catalog(path: Path) -> dict:
-    try:
-        return json.loads(path.read_text())
-    except Exception:
-        return {}
+def basket(context):
+    if context.session is None:
+        raise RuntimeError("There is no active session in this context.")
+    return context.session.basket
 
 ----------[ Good ]----------
 
-# in catalog_file.py
-class CatalogUnreadable(Exception):
+# in sessions.py
+class NoActiveSession(LookupError):
     @classmethod
-    def at(cls, path: Path) -> "CatalogUnreadable":
-        return cls(f"the catalog at {path} is not valid JSON")
+    def reading(cls, what: str) -> "NoActiveSession":
+        return cls(f"there is no active session to read the {what} from")
 
-# in catalog_file.py
-def read_catalog(path: Path) -> dict:
-    try:
-        return json.loads(path.read_text())
-    except json.JSONDecodeError as error:
-        raise CatalogUnreadable.at(path) from error
+# in sessions.py
+def current_basket(context):
+    if context.session is None:
+        raise NoActiveSession.reading("basket")
+    return context.session.basket
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/exceptions` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-swallowed-exception`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-message-string-raise`, `python-swallowed-exception`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
