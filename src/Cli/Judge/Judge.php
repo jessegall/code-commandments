@@ -8,7 +8,6 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Bridge\Bridge;
 use JesseGall\CodeCommandments\Bridge\ConsumesContracts;
-use JesseGall\CodeCommandments\Cli\Attempt;
 use JesseGall\CodeCommandments\Cli\Benchmark;
 use JesseGall\CodeCommandments\Cli\Command;
 use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
@@ -30,6 +29,7 @@ use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Packages\Exemptions;
+use JesseGall\CodeCommandments\Py\Codebase as PythonCodebase;
 use JesseGall\CodeCommandments\Sins\Commands;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Support\ClassName;
@@ -118,8 +118,9 @@ final class Judge implements Command
         $configured = $config->apply(Catalog::all(), $installed);
         $detectors = $this->select($configured->for(Engine::Backend), $options->skill, $options->sin);
         $frontend = $this->select($configured->for(Engine::Frontend), $options->skill, $options->sin);
+        $python = $this->select($configured->for(Engine::Python), $options->skill, $options->sin);
 
-        if ($detectors === [] && $frontend === []) {
+        if ($detectors === [] && $frontend === [] && $python === []) {
             $named = "--skill={$options->skill->unwrapOr('')} --sin={$options->sin->unwrapOr('')}";
             fwrite(STDERR, "No detector matched {$named}\n");
 
@@ -134,16 +135,17 @@ final class Judge implements Command
             return 2;
         }
 
-        return $this->judge($options, $detectors, $frontend, $scope, $workspace, Commands::repentable(self::REPENT_SCOPE), Commands::scaffoldable());
+        return $this->judge($options, $detectors, $frontend, $python, $scope, $workspace, Commands::repentable(self::REPENT_SCOPE), Commands::scaffoldable());
     }
 
     /**
      * @param  list<Detector>  $detectors  backend (PHP) detectors
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend  Vue detectors
+     * @param  list<\JesseGall\CodeCommandments\Python\Detector>  $python  Python detectors
      * @param  array<string, string>  $fixable  sin name => the `repent` command that fixes it
      * @param  array<string, string>  $scaffoldable  sin name => the `scaffold` command for its helper
      */
-    private function judge(JudgeOptions $options, array $detectors, array $frontend, Scope $scope, Workspace $workspace, array $fixable, array $scaffoldable): int
+    private function judge(JudgeOptions $options, array $detectors, array $frontend, array $python, Scope $scope, Workspace $workspace, array $fixable, array $scaffoldable): int
     {
         $checklist = $options->checklist;
         if ($scope->isEmpty()) {
@@ -185,20 +187,37 @@ final class Judge implements Command
         // WHICH codebase each rule is judged against. A scoped run (`--changes`, `--branch`) reports
         // on a few files but parses the tree, so a rule that reads no further than the file it judges
         // is shown those files alone — its cost tracks the diff, not the tree it came from.
-        $beyond = CrossFileSet::forProject($workspace, [...$detectors, ...$frontend]);
-        $views = Views::of($codebase, $scope, $beyond);
+        $beyond = CrossFileSet::forProject($workspace, [...$detectors, ...$frontend, ...$python]);
+
+        // Python is read only when Python rules run: a project that writes none is never parsed for it.
+        $scripts = $python === [] ? null : PythonCodebase::scan($roots, excluded: $excluded);
+
+        // One group per engine: its rules and the views of its codebase. Every engine is judged by the
+        // same runner, so each gets the parallel workers and the recurrence twins the backend always had.
+        $groups = [[$detectors, Views::of($codebase, $scope, $beyond)]];
+
+        if ($frontend !== [] && $components !== null) {
+            $groups[] = [$frontend, Views::of($components, $scope, $beyond)];
+        }
+
+        if ($scripts !== null) {
+            $groups[] = [$python, Views::of($scripts, $scope, $beyond)];
+        }
 
         if ($options->benchmark) {
             $bench = new Benchmark;
-            $judgement = $bench->run($detectors, $views);
+            $judgement = new Judgement;
+
+            foreach ($groups as [$rules, $views]) {
+                $judgement = $judgement->merge($bench->run($rules, $views));
+            }
+
             $progress->finish();
             fwrite(STDERR, $bench->render($parseSeconds));
         } else {
-            $judgement = new DetectorRunner($options->parallel)->run($detectors, $views, $progress);
+            $judgement = new DetectorRunner($options->parallel)->run($groups, $progress);
             $progress->finish();
         }
-
-        $judgement = $judgement->merge($this->frontendJudgement($components, $frontend, $scope, $beyond));
 
         $judgement = $judgement->withFindings($this->keep($judgement->findings, $options->exclude, $scope));
 
@@ -206,7 +225,7 @@ final class Judge implements Command
 
         if ($judgement->findings === []) {
             $this->deleteChecklist($checklist);
-            $scanned = count($codebase->files()) + count($components?->components() ?? []);
+            $scanned = count($codebase->files()) + count($components?->components() ?? []) + count($scripts?->modules() ?? []);
             $this->line("\033[32m✓ No sins found in {$scanned} " . ($scanned === 1 ? 'file' : 'files') . ".\033[0m");
 
             if ($skipped->isEmpty()) {
@@ -331,43 +350,6 @@ final class Judge implements Command
         }
 
         return VueCodebase::scan($roots, excluded: $excluded, languages: $languages);
-    }
-
-    /**
-     * The Vue detectors' findings, reduced to the same lightweight {@see Finding}s the backend
-     * produces (a Vue {@see ElementMatch} already knows its `file:line` and scope). Each rule reads
-     * the same narrowed view of a scoped run the backend's do ({@see Views}).
-     *
-     * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend
-     */
-    private function frontendJudgement(?VueCodebase $codebase, array $frontend, Scope $scope, CrossFileSet $beyond): Judgement
-    {
-        if ($frontend === [] || $codebase === null) {
-            return new Judgement;
-        }
-
-        $views = Views::of($codebase, $scope, $beyond);
-        $judgement = new Judgement;
-
-        foreach ($frontend as $detector) {
-            $components = $views->for($detector);
-            $sin = $detector->sin();
-            $parts = explode('\\', $detector::class);
-            $short = end($parts);
-
-            $custom = Custom::owns($detector);
-
-            $attempt = Attempt::of($short, $custom, static fn (): array => $detector->find($components));
-            $findings = [];
-
-            foreach ($attempt->work as $match) {
-                $findings[] = new Finding($short, $sin->slug(), $sin->name(), $match->file(), $match->location(), $match->scope(), custom: $custom);
-            }
-
-            $judgement = $judgement->merge(new Judgement($findings, $attempt->skipped === null ? [] : [$attempt->skipped]));
-        }
-
-        return $judgement;
     }
 
     /**

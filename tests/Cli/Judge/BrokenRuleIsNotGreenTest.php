@@ -26,8 +26,7 @@ final class BrokenRuleIsNotGreenTest extends TestCase
     public function test_a_rule_that_breaks_comes_back_named(): void
     {
         $judgement = new DetectorRunner(1)->run(
-            [self::broken(), self::broken()],
-            Views::whole(Codebase::fromString('<?php class A {}')),
+            [[[self::broken(), self::broken()], Views::whole(Codebase::fromString('<?php class A {}'))]],
             new ProgressBar,
         );
 
@@ -38,7 +37,7 @@ final class BrokenRuleIsNotGreenTest extends TestCase
 
     public function test_a_run_where_everything_ran_is_clean(): void
     {
-        $judgement = new DetectorRunner(1)->run([], Views::whole(Codebase::fromString('<?php class A {}')), new ProgressBar);
+        $judgement = new DetectorRunner(1)->run([[[], Views::whole(Codebase::fromString('<?php class A {}'))]], new ProgressBar);
 
         $this->assertTrue($judgement->isClean());
     }

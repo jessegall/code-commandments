@@ -10,9 +10,10 @@ use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use Closure;
-use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Ast\Codebase as PhpCodebase;
+use JesseGall\CodeCommandments\Codebase;
 use JesseGall\CodeCommandments\Concurrency\Fork;
-use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
 
 use JesseGall\CodeCommandments\Cli\Attempt;
@@ -27,22 +28,29 @@ final class DetectorRunner
     public function __construct(private readonly int $parallel, private readonly Fork $fork = new Fork) {}
 
     /**
-     * @param  list<Detector>  $detectors
+     * Judge every engine in one run: each group is an engine's detectors and the views of its codebase,
+     * and every rule of every group runs on the same workers.
+     *
+     * @param  list<array{0: list<Detector>, 1: Views}>  $groups
      */
-    public function run(array $detectors, Views $views, ProgressBar $progress): Judgement
+    public function run(array $groups, ProgressBar $progress): Judgement
     {
-        $tree = $views->wholeTreeFor($detectors);
+        $tasks = [];
 
-        if ($tree instanceof Codebase) {
-            // Build the call graph AND the value-flow graph ONCE in the parent so forked workers
-            // inherit them copy-on-write, instead of each rebuilding them (or each cross-file
-            // detector re-scanning the tree per query). A scoped run that shows no rule the tree
-            // never builds either.
-            $tree->index()->warm();
-            $tree->valueFlow()->warm();
+        foreach ($groups as [$detectors, $views]) {
+            $tree = $views->wholeTreeFor($detectors);
+
+            if ($tree instanceof PhpCodebase) {
+                // Build the call graph AND the value-flow graph ONCE in the parent so forked workers
+                // inherit them copy-on-write, instead of each rebuilding them (or each cross-file
+                // detector re-scanning the tree per query). A scoped run that shows no rule the tree
+                // never builds either.
+                $tree->index()->warm();
+                $tree->valueFlow()->warm();
+            }
+
+            $tasks = [...$tasks, ...$this->tasks($detectors, $views)];
         }
-
-        $tasks = $this->tasks($detectors, $views);
 
         $progress->start(count($tasks));
 
@@ -71,15 +79,6 @@ final class DetectorRunner
         return $judgement;
     }
 
-    /**
-     * One task per detector — the unit of parallel work, each over the codebase {@see Views} says
-     * that rule is judged against. Every task returns a serializable {@see Attempt} of
-     * {@see Finding}s (the AST→Finding reduction happens INSIDE the task, so it runs in the worker
-     * and only strings come back).
-     *
-     * @param  list<Detector>  $detectors
-     * @return list<Closure(): Attempt>
-     */
     private function tasks(array $detectors, Views $views): array
     {
         $tasks = [];
@@ -133,7 +132,7 @@ final class DetectorRunner
      * findings are the same shape, so re-reading {@see RecurrenceDetector::groupKey} here is the honest
      * way to recover the bucket the verdict came from. Every other detector judges a site on its own.
      *
-     * @param  list<\JesseGall\CodeCommandments\Ast\NodeMatch>  $matches
+     * @param  list<\JesseGall\CodeCommandments\Located>  $matches
      * @return array<int, list<string>>  spl_object_id(match) => the locations in its bucket
      */
     private static function buckets(array $matches, Detector $rule, Codebase $codebase): array
