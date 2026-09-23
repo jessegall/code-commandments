@@ -64,6 +64,19 @@ final class StructuralHashTest extends TestCase
 
             public string Shouted() => Upper("hello", 1);
 
+            public int FirstOver(List<int> ids, int limit)
+            {
+                foreach (var id in ids) { if (id > limit) { return id; } }
+                return 0;
+            }
+
+            public int FirstOverUnbraced(List<int> ids, int limit)
+            {
+                foreach (var id in ids)
+                    if (id > limit) return id;
+                return 0;
+            }
+
             public ICollection<int> Listed() => new List<int>();
 
             public ICollection<int> Setted() => new HashSet<int>();
@@ -93,6 +106,11 @@ final class StructuralHashTest extends TestCase
     public function test_formatting_comments_and_attributes_do_not_change_the_body_hash(): void
     {
         $this->assertSame($this->methods['Total']->bodyHash(), $this->methods['Reformatted']->bodyHash());
+    }
+
+    public function test_braces_around_a_single_statement_do_not_change_the_body_hash(): void
+    {
+        $this->assertSame($this->methods['FirstOver']->bodyHash(), $this->methods['FirstOverUnbraced']->bodyHash());
     }
 
     /**

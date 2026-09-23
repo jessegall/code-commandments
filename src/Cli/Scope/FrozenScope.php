@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Scope;
 
 use JesseGall\CodeCommandments\Ast\Support\Frozen;
-use JesseGall\CodeCommandments\Language;
 
 /**
  * The scope of NOT-frozen files — compounded into a run's {@see Scope} so a file declared immutable
@@ -26,6 +25,6 @@ final class FrozenScope implements FileScope
             return true; // no file on disk to carry a marker — nothing to exclude
         }
 
-        return ! ($this->frozen[$real] ??= Frozen::isFrozen((string) @file_get_contents($real), Language::ofFile($real)));
+        return ! ($this->frozen[$real] ??= Frozen::isFrozenFile($real, (string) @file_get_contents($real)));
     }
 }

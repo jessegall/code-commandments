@@ -68,6 +68,9 @@ $disabledSkills = function (Config $config): void {
         // Skills\Python\Exceptions::class,
         // Skills\Python\Flow::class,
         // Skills\Python\ValueObjects::class,
+
+        // ----------[ C# ]----------
+        // Skills\CSharp\Duplication::class,
     );
 };
 
@@ -227,6 +230,9 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\RedundantElse::class,
         // Sins\Python\SubjectLadder::class,
         // Sins\Python\SwallowedException::class,
+
+        // ----------[ C# ]----------
+        // Sins\CSharp\DuplicateMethod::class,
     );
 };
 

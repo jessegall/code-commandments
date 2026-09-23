@@ -12,7 +12,8 @@ use JesseGall\CodeCommandments\SyntaxNode;
  * The {@see SyntaxHash} of a C# subtree. A local name is an identifier outside a type position — the
  * type a body creates or casts to is what it does, so it survives normalising. A string, number or
  * character is data and blanks; `true`, `null` and `default` carry meaning and stay. Attributes decorate
- * code without running, so they never count.
+ * code without running, so they never count, and braces around a single statement are layout: `if (x)
+ * { break; }` is `if (x) break;`.
  */
 final class StructuralHash extends SyntaxHash
 {
@@ -39,6 +40,9 @@ final class StructuralHash extends SyntaxHash
 
     public static function counted(SyntaxNode $node): array
     {
-        return array_values(array_filter($node->children(), static fn (SyntaxNode $child): bool => ! ($child instanceof Node && $child->is('AttributeList'))));
+        return array_values(array_map(
+            static fn (SyntaxNode $child): SyntaxNode => $child instanceof Node && $child->is('Block') && count(self::counted($child)) === 1 ? self::counted($child)[0] : $child,
+            array_filter($node->children(), static fn (SyntaxNode $child): bool => ! ($child instanceof Node && $child->is('AttributeList'))),
+        ));
     }
 }

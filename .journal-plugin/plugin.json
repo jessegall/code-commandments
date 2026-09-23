@@ -103,6 +103,13 @@
             "default": "true",
             "group": "Languages"
         },
+        "language_cs": {
+            "title": "C#",
+            "help": "Enables C# sin detection",
+            "type": "flag",
+            "default": "true",
+            "group": "Languages"
+        },
         "sin_blank-string-default": {
             "title": "BlankStringDefault",
             "help": "A declaration typed as a TOTAL `string` defaulting to the blank, whose own scope then asks that name `=== ''` / `empty(...)` — the question is the proof that the blank is absence wearing a total type.",
@@ -1646,6 +1653,19 @@
             "when": [
                 {
                     "language_php": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_duplicate-csharp-method": {
+            "title": "DuplicateMethod",
+            "help": "Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/duplication",
+            "when": [
+                {
+                    "language_cs": true
                 }
             ],
             "detail": true

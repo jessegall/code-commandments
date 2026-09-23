@@ -23,12 +23,23 @@ class NodeMatch implements Located
     ) {}
 
     /**
-     * The name the node declares or reads — a method's, a class's, an identifier's. Empty for anything
-     * nameless.
+     * The name the node declares or reads — a method's, a class's, an identifier's; an accessor answers
+     * for the property, indexer or event it belongs to, as the compiler names it (`get_Total`). Empty for
+     * anything nameless.
      */
     public function name(): string
     {
-        return $this->node->name ?? '';
+        if ($this->node->name !== null || ! str_ends_with($this->node->kind, 'AccessorDeclaration')) {
+            return $this->node->name ?? '';
+        }
+
+        foreach ($this->module->ancestorsOf($this->node) as $member) {
+            if ($member->is('PropertyDeclaration', 'IndexerDeclaration', 'EventDeclaration') && $member->name !== null) {
+                return $member->name;
+            }
+        }
+
+        return '';
     }
 
     public function line(): int

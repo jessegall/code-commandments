@@ -28,6 +28,19 @@ enum Engine: string
     case CSharp = 'csharp';
 
     /**
+     * The engine's name as a reader writes it.
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::Backend => 'Backend',
+            self::Frontend => 'Frontend',
+            self::Python => 'Python',
+            self::CSharp => 'C#',
+        };
+    }
+
+    /**
      * The engines read module by module — a {@see ModuleCodebase} of parsed files, judged beside the
      * backend and the frontend by the same runner.
      *

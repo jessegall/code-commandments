@@ -50,6 +50,125 @@ Short bodies are alike by coincidence: an expression-bodied one-liner, a propert
 
 Duplication is a body of real substance, twice.
 
+## Rules
+
+- [ ] Hoist a method body written twice into one shared method, and call it from both places.
+      _Move the body to one method on the type that owns the data (or an extension or static helper both callers reference), and replace every copy with a call to it._
+
+## Worked example
+
+### duplicate-csharp-method
+
+Copy-pasted code — two+ C# methods, accessors or local functions with an identical body, formatting, comments and attributes aside
+
+```cs
+----------[ Bad ]----------
+
+// in Invoice.cs
+public IReadOnlyList<string> Lines()
+{
+    var rows = new List<string>();
+
+    foreach (var line in order.Lines)
+    {
+        if (line.Quantity <= 0)
+        {
+            continue;
+        }
+
+        rows.Add($"{line.Quantity} x {line.Sku}: {line.Subtotal.Cents / 100m:0.00}");
+    }
+
+    return rows;
+}
+
+// in PackingSlip.cs
+public IReadOnlyList<string> Rows()
+{
+    var rows = new List<string>();
+
+    foreach (var line in order.Lines)
+    {
+        if (line.Quantity <= 0)
+        {
+            continue;
+        }
+
+        rows.Add($"{line.Quantity} x {line.Sku}: {line.Subtotal.Cents / 100m:0.00}");
+    }
+
+    return rows;
+}
+
+// in Carriers.cs
+get
+{
+    var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
+
+    if (fragile)
+    {
+        cents += cents / 2 + 250;
+    }
+
+    return new Money(cents, "EUR");
+}
+
+// in Carriers.cs
+get
+{
+    var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
+
+    if (fragile)
+    {
+        cents += cents / 2 + 250;
+    }
+
+    return new Money(cents, "EUR");
+}
+
+// in Replenishment.cs
+int Shortfall(string sku)
+{
+    var have = onHand.TryGetValue(sku, out var count) ? count : 0;
+    var missing = minimum - have;
+
+    return missing > 0 ? missing + minimum / 4 : 0;
+}
+
+// in Replenishment.cs
+int Shortfall(string sku)
+{
+    var have = onHand.TryGetValue(sku, out var count) ? count : 0;
+    var missing = minimum - have;
+
+    return missing > 0 ? missing + minimum / 4 : 0;
+}
+
+----------[ Good ]----------
+
+// in Layout.cs
+public static IReadOnlyList<string> Describe(IEnumerable<OrderLine> lines) =>
+    lines.Where(line => line.Quantity > 0)
+        .Select(line => $"{line.Quantity} x {line.Sku}: {line.Subtotal.Cents / 100m:0.00}")
+        .ToList();
+
+// in Layout.cs
+public IReadOnlyList<string> Rows() => LineLayout.Describe(order.Lines);
+
+// in Layout.cs
+public IReadOnlyList<string> Items() => LineLayout.Describe(order.Lines);
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/duplication` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `duplicate-csharp-method`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/fix-at-the-source`](../../backend/fix-at-the-source/SKILL.md) — the root instinct — one decision, made once, where it is born.

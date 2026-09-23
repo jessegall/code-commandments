@@ -429,7 +429,7 @@ final class DisableMenu
                 $out[] = '';
             }
 
-            $out = [...$out, $indent . '// ----------[ ' . ucfirst($engine->value) . ' ]----------', ...$byEngine[$engine->value]];
+            $out = [...$out, $indent . '// ----------[ ' . $engine->label() . ' ]----------', ...$byEngine[$engine->value]];
         }
 
         return $out;
