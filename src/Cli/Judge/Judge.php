@@ -208,7 +208,8 @@ final class Judge implements Command
 
         if ($judgement->findings === []) {
             $this->deleteChecklist($checklist);
-            $this->line("\033[32m✓ No sins found.\033[0m");
+            $scanned = count($codebase->files()) + count($components?->components() ?? []);
+            $this->line("\033[32m✓ No sins found in {$scanned} " . ($scanned === 1 ? 'file' : 'files') . ".\033[0m");
 
             if ($skipped->isEmpty()) {
                 return 0;
