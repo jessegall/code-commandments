@@ -1670,6 +1670,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-cancelled-coalesce": {
+            "title": "CancelledCoalesce",
+            "help": "A fallback compared against the value it falls back to — the C# twin of the PHP cancelled-coalesce and the Python cancelled-fallback rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/absence",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-invented-default": {
             "title": "InventedDefault",
             "help": "A missing value papered over with an invented `\"\"`, `0` or `false` — the C# twin of Python's invented-default rule, in its hardened shape.",

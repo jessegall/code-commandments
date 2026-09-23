@@ -215,6 +215,25 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this fallback expression — `name ?? ""` — compared with `==` or `!=` against the very value it falls
+     * back to, so the fallback only ever cancels itself?
+     */
+    public function isComparedToItsFallback(): bool
+    {
+        $fallback = $this->node->fallback();
+        $compared = $this->node;
+        $parent = $this->module->parentOf($compared);
+
+        while ($parent->isSomeAnd(static fn (Node $around): bool => $around->is('ParenthesizedExpression'))) {
+            $compared = $parent->unwrap();
+            $parent = $this->module->parentOf($compared);
+        }
+
+        return $fallback->isSomeAnd(static fn (Node $value): bool => $parent->isSomeAnd(static fn (Node $comparison): bool => $comparison->is('EqualsExpression', 'NotEqualsExpression')
+            && array_any($comparison->children, static fn (Node $side): bool => $side !== $compared && $side->isSameValueAs($value))));
+    }
+
+    /**
      * Does this member answer a lookup miss with an invented empty value? Every value it returns — each
      * arm of a conditional counted on its own — is either `""`/`0`/`false`, or what a dictionary lookup
      * found: the lookup itself, or the `out` variable a `TryGetValue` in this member filled.

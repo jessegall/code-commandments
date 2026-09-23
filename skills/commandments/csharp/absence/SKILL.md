@@ -51,6 +51,8 @@ place it lands.
 
 - [ ] If a value can be missing, say so in its type with `string?`; don't default it to `""` and then check for the blank.
       _Make it `string? note = null` and check `note is null`, so nobody has to know that `""` means "not given"._
+- [ ] Check for null directly (`name is not null`); don't fall back to a value only to compare against that same value.
+      _Write both checks out — `name is not null && name != ""` — or make the value non-nullable where it comes from, so only one check is left._
 - [ ] Never fill a value with an invented `""`, `0` or `false` on absence — handle the missing case, or make the value certain at the point it is created.
       _Decide at the source: throw when the value must be there, or pass the absence on to a parameter typed to admit it (`T?`, `TryGetValue`). A real default (`?? "EUR"`) is a choice, not an invention._
 - [ ] Never silence a nullable warning with `!` — decide the missing case where the value is created, or handle it here.
@@ -88,17 +90,17 @@ public static string Lined(string heading, string? strapline = null)
 }
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/absence` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-blank-string-default`, `csharp-invented-default`, `csharp-null-forgiven`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-blank-string-default`, `csharp-cancelled-coalesce`, `csharp-invented-default`, `csharp-null-forgiven`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

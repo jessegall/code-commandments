@@ -287,6 +287,19 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this literal the same value as $other — the same literal written again, or two spellings of one
+     * empty value, `""` and `string.Empty`?
+     */
+    public function isSameValueAs(self $other): bool
+    {
+        if ($this->isEmptyScalar() && $other->isEmptyScalar()) {
+            return $this->type?->name === $other->type?->name;
+        }
+
+        return $this->isLiteral() && $this->kind === $other->kind && $this->text === $other->text;
+    }
+
+    /**
      * What this expression falls back to when its value is missing — the right side of `x ?? fallback`,
      * or the branch a null test (`x is null ? fallback : x`, `x != null ? x : fallback`) takes on a miss.
      *

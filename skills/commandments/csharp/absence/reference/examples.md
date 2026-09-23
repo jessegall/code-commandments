@@ -32,6 +32,20 @@ public static string Lined(string heading, string? strapline = null)
 }
 ```
 
+### csharp-cancelled-coalesce
+
+a `??` fallback compared against the same value it falls back to — `(name ?? "") != ""` — so "missing" and "empty" end up in one branch without saying so
+
+```cs
+----------[ Bad ]----------
+
+public static bool HasPostcode(string? postcode) => (postcode ?? "") != "";
+
+----------[ Good ]----------
+
+public static bool IsGiven(string? postcode) => postcode is not null && postcode != "";
+```
+
 ### csharp-invented-default
 
 `F(x ?? "")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data
