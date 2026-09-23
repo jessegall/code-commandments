@@ -247,6 +247,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\InventedDefault::class,
         // Sins\Python\LoopWrappedInIf::class,
         // Sins\Python\MatchWildcardReturnsNone::class,
+        // Sins\Python\MemberAfterMethod::class,
         // Sins\Python\MessageStringRaise::class,
         // Sins\Python\MutableStaticState::class,
         // Sins\Python\MutableValueObject::class,

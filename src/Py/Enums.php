@@ -10,7 +10,8 @@ use JesseGall\CodeCommandments\Py\Node\Node;
 
 /**
  * The classes a codebase declares as enums — a subclass of `Enum`, `StrEnum`, `IntEnum`, `Flag` or
- * `IntFlag`, directly or through another enum it declares — known by name.
+ * `IntFlag`, directly or through another enum it declares, or a class a decorator builds into one from
+ * such a base — known by name.
  */
 final class Enums
 {
@@ -40,7 +41,7 @@ final class Enums
             $known = count($this->names);
 
             foreach ($classes as $class) {
-                if (array_any($class->bases, fn (Expr $base) => $this->isBaseAnEnum($base))) {
+                if (array_any([...$class->bases, ...self::decoratorArguments($class)], fn (Expr $base) => $this->isBaseAnEnum($base))) {
                     $this->names[$class->name] = true;
                 }
             }
@@ -66,6 +67,17 @@ final class Enums
     public function holdAll(array $keys): bool
     {
         return $keys !== [] && array_any($this->values, static fn (array $values): bool => array_diff($keys, $values) === []);
+    }
+
+    /**
+     * What $class's decorators are called with — `IntEnum` in `@_simple_enum(IntEnum)`, a decorator that
+     * builds an enum out of a plain class body.
+     *
+     * @return list<Expr>
+     */
+    private static function decoratorArguments(ClassDef $class): array
+    {
+        return array_merge([], ...array_map(static fn (Expr $decorator): array => $decorator->isCall() ? $decorator->get('arguments') : [], $class->decorators));
     }
 
     private function isBaseAnEnum(Expr $base): bool

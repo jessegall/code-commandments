@@ -223,6 +223,32 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this class-level state — a constant, a class attribute, a field — written below a method of its
+     * class? An assignment that reads one of the methods above it (`size = property(_get_size)`) is built
+     * from them and belongs after them; a dunder bound by assignment (`__hash__ = None`) is behaviour, not
+     * state; and an enum's members follow its own conventions (`_generate_next_value_` must come first).
+     */
+    public function isMemberAfterMethod(Enums $enums): bool
+    {
+        [$block, $class] = [...$this->module->ancestorsOf($this->node), null, null];
+        $targets = $this->node->writtenTargets();
+
+        if (! $class instanceof ClassDef || $class->body !== $block || $targets === [] || $enums->isEnum($class->name)) {
+            return false;
+        }
+
+        if (array_all($targets, static fn (Expr $target): bool => str_starts_with($target->dottedName(), '__') && str_ends_with($target->dottedName(), '__'))) {
+            return false;
+        }
+
+        $above = array_slice($block->body, 0, (int) array_search($this->node, $block->body, true));
+        $methods = array_map(static fn (FunctionDef $method): string => $method->name, array_values(array_filter($above, static fn (Node $member): bool => $member instanceof FunctionDef)));
+        $read = array_merge([], ...array_map(static fn (Expr $expression): array => $expression->dataNames(), $this->node->expressions()));
+
+        return $methods !== [] && array_intersect($read, $methods) === [];
+    }
+
+    /**
      * Is this a `@property` whose whole body returns a value that reads nothing — `return 'box'`,
      * `return Money(0, 'EUR')` — a constant a class attribute could hold? A value that reads any name
      * may be live state (`sys.stderr`), so only a literal one counts. An override answering its own constant, the base a subclass
