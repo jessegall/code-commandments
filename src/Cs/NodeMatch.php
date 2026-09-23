@@ -234,6 +234,34 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a `throw new …` inside a catch that does not hand the caught exception on — so the original
+     * stack trace is lost? A throw in a lambda written inside the catch runs later, outside it, and is
+     * not wrapping anything.
+     */
+    public function isWrappingWithoutCause(): bool
+    {
+        $created = array_values(array_filter($this->node->expressions(), static fn (Node $thrown): bool => $thrown->is('ObjectCreationExpression', 'ImplicitObjectCreationExpression')))[0] ?? null;
+
+        if (! $this->node->is('ThrowStatement', 'ThrowExpression') || $created === null) {
+            return false;
+        }
+
+        foreach ($this->module->ancestorsOf($this->node) as $ancestor) {
+            if ($ancestor->isFunction()) {
+                return false;
+            }
+
+            if ($ancestor->is('CatchClause')) {
+                $caught = array_values(array_filter($ancestor->children, static fn (Node $child): bool => $child->is('CatchDeclaration')))[0]?->name ?? null;
+
+                return $caught === null || ! array_any($created->arguments(), static fn (Node $argument): bool => $argument->is('IdentifierName') && $argument->name === $caught);
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Does this member answer a lookup miss with an invented empty value? Every value it returns — each
      * arm of a conditional counted on its own — is either `""`/`0`/`false`, or what a dictionary lookup
      * found: the lookup itself, or the `out` variable a `TryGetValue` in this member filled.

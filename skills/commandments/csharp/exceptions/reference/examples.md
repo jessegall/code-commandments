@@ -74,3 +74,37 @@ public Dictionary<string, int> LoadOrEmpty()
     }
 }
 ```
+
+### csharp-wrapping-without-cause
+
+a `catch` that throws a new exception without passing the caught one as its inner exception, so the original stack trace is lost
+
+```cs
+----------[ Bad ]----------
+
+public static string Read(string path)
+{
+    try
+    {
+        return File.ReadAllText(path);
+    }
+    catch (IOException e)
+    {
+        throw new StockFileUnreadable($"Could not read the stock file: {e.Message}");
+    }
+}
+
+----------[ Good ]----------
+
+public static string ReadKeepingTheCause(string path)
+{
+    try
+    {
+        return File.ReadAllText(path);
+    }
+    catch (IOException e)
+    {
+        throw new StockFileUnreadable("Could not read the stock file.", e);
+    }
+}
+```

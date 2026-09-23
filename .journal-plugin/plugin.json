@@ -1774,6 +1774,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-wrapping-without-cause": {
+            "title": "WrappingWithoutCause",
+            "help": "A new exception thrown from a catch without the caught one as its inner exception — the C# twin of the PHP and Python wrapping-without-cause rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/exceptions",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-loop-wrapped-in-if": {
             "title": "LoopWrappedInIf",
             "help": "A loop whose whole body is one `if` around real work — the C# twin of the backend's and Python's loop-wrapped-in-if rules.",
