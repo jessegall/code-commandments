@@ -164,6 +164,17 @@ class ExprMatch implements Located
     }
 
     /**
+     * Is this defaulted value compared, `==` or `!=`, to its own fallback — `(x or '') != ''` — so that
+     * absent and empty reach the same branch and nothing records which it was?
+     */
+    public function isComparedToItsFallback(): bool
+    {
+        return $this->expr->fallback()->isSomeAnd(fn (Expr $fallback): bool => $this->module->wrapperOf($this->expr)->isSomeAnd(
+            fn (Expr $around): bool => $around->equatesWith($this->expr, $fallback),
+        ));
+    }
+
+    /**
      * The names of the parameters a caller of $function supplies — every one but a bound method's first.
      *
      * @return list<string>

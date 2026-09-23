@@ -205,6 +205,20 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this one `==` or `!=` between $subject and a value the same as $other, either way round?
+     */
+    public function equatesWith(self $subject, self $other): bool
+    {
+        if ($this->kind !== ExprKind::Compare || ! in_array($this->get('operators'), [['=='], ['!=']], true)) {
+            return false;
+        }
+
+        [$left, $right] = $this->get('operands');
+
+        return ($left === $subject && $right->isSame($other)) || ($right === $subject && $left->isSame($other));
+    }
+
+    /**
      * Is this an `and` or an `or` — an operator that may leave its right side unrun?
      */
     public function isShortCircuit(): bool
