@@ -32,6 +32,11 @@ final class Expr implements SyntaxExpression
         public readonly array $props = [],
     ) {}
 
+    public function kindName(): string
+    {
+        return $this->kind->value;
+    }
+
     public function isCall(): bool
     {
         return $this->kind === ExprKind::Call;

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments;
 
-use BackedEnum;
-use UnitEnum;
 
 /**
  * An expression of a parsed module as its language's kind and the properties that kind carries — the
@@ -13,14 +11,15 @@ use UnitEnum;
  */
 interface SyntaxExpression
 {
-    public BackedEnum $kind { get; }
-
     /**
      * @var array<string, mixed>
      */
     public array $props { get; }
 
-    public function is(UnitEnum $kind): bool;
+    /**
+     * What kind of expression this is, by name — `call`, `InvocationExpression` — as its language names it.
+     */
+    public function kindName(): string;
 
     public function isCall(): bool;
 

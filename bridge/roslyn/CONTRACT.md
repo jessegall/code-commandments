@@ -23,7 +23,8 @@ Every syntax node, nested as Roslyn nests them. Tokens and trivia (comments, whi
 | key | when | what |
 |---|---|---|
 | `kind` | always | Roslyn's `SyntaxKind` name — `MethodDeclaration`, `IfStatement`, `InvocationExpression` |
-| `start`, `end` | always | the node's span in the file, `[start, end)` in UTF-16 code units, trivia excluded |
+| `role` | always | `statement`, `expression`, `member` (a type or member declaration), `type` (a name in a type position) or `other` (a parameter, an argument, a clause) — from Roslyn's own class hierarchy |
+| `start`, `end` | always | the node's span in the file, `[start, end)` in UTF-8 bytes — the offsets a byte-oriented reader such as PHP uses — trivia excluded |
 | `children` | when it has any | its child nodes, in source order |
 | `name` | declarations and names | a type's, member's, parameter's, local's or identifier's name |
 | `text` | literals and interpolated text | the value as written, unescaped |

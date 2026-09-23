@@ -14,6 +14,9 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 {
     private int calls;
 
+    /// <summary>The UTF-8 byte offset of every character position in the file being written.</summary>
+    private int[] bytes = [];
+
     private int resolved;
 
     public const int Version = 1;
@@ -34,6 +37,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
         foreach (var tree in project.Trees.Where(tree => written is null || written.Count == 0 || written.Contains(tree.FilePath)))
         {
             var model = project.Compilation.GetSemanticModel(tree);
+            bytes = ByteOffsets(tree.GetText().ToString());
 
             json.WriteStartObject();
             json.WriteString("path", tree.FilePath);
@@ -55,8 +59,9 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     {
         json.WriteStartObject();
         json.WriteString("kind", node.Kind().ToString());
-        json.WriteNumber("start", node.SpanStart);
-        json.WriteNumber("end", node.Span.End);
+        json.WriteString("role", Role(node));
+        json.WriteNumber("start", bytes[node.SpanStart]);
+        json.WriteNumber("end", bytes[node.Span.End]);
 
         WriteName(json, node);
         WriteText(json, node);
@@ -79,6 +84,39 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
         json.WriteEndObject();
     }
+
+    /// <summary>
+    /// Where each character position of $text falls in its UTF-8 encoding — Roslyn counts UTF-16 units,
+    /// a PHP reader counts bytes, and the two part at the first character outside ASCII.
+    /// </summary>
+    private static int[] ByteOffsets(string text)
+    {
+        var offsets = new int[text.Length + 1];
+        var total = 0;
+
+        for (var i = 0; i < text.Length; i++)
+        {
+            offsets[i] = total;
+            total += char.IsHighSurrogate(text[i]) ? 4 : char.IsLowSurrogate(text[i]) ? 0 : text[i] < 0x80 ? 1 : text[i] < 0x800 ? 2 : 3;
+        }
+
+        offsets[text.Length] = total;
+
+        return offsets;
+    }
+
+    /// <summary>
+    /// What part the node plays — a statement, an expression, a member or type declaration, a type, or
+    /// anything else (a parameter, an argument, a clause) — as Roslyn's own class hierarchy says it.
+    /// </summary>
+    private static string Role(SyntaxNode node) => node switch
+    {
+        StatementSyntax => "statement",
+        MemberDeclarationSyntax => "member",
+        TypeSyntax type when SyntaxFacts.IsInTypeOnlyContext(type) => "type",
+        ExpressionSyntax => "expression",
+        _ => "other",
+    };
 
     /// <summary>The name a declaration or an identifier carries.</summary>
     private static void WriteName(Utf8JsonWriter json, SyntaxNode node)

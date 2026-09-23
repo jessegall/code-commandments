@@ -130,7 +130,7 @@ abstract class SyntaxHash
             return $literal;
         }
 
-        $parts = [$expression->kind->value];
+        $parts = [$expression->kindName()];
 
         foreach ($expression->props as $key => $value) {
             $parts[] = $key . '=' . self::value($value, $normalize, $expression->isCall() && $key === 'callee');
