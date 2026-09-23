@@ -6,7 +6,8 @@ namespace JesseGall\CodeCommandments\Py;
 
 /**
  * A `#` comment in a Python module — the words after the `#`, and the `[start, end)` span of the whole
- * comment in the file.
+ * comment in the file. Its body keeps the indentation after the marker (`#` or Sphinx's `#:`), which is
+ * how a run of comments nests one line under another.
  */
 final readonly class Comment
 {
@@ -14,6 +15,7 @@ final readonly class Comment
         public string $text,
         public int $start,
         public int $end,
+        public string $body = '',
     ) {}
 
     /**
@@ -21,6 +23,8 @@ final readonly class Comment
      */
     public static function fromToken(Token $token, int $base): self
     {
-        return new self(trim(substr($token->value, 1)), $base + $token->start, $base + $token->end);
+        $after = substr($token->value, 1);
+
+        return new self(trim($after), $base + $token->start, $base + $token->end, rtrim((string) preg_replace('/^:? ?/', '', $after)));
     }
 }

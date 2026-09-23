@@ -233,6 +233,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Frontend\TypeScript\NearDuplicateFunction::class,
 
         // ----------[ Python ]----------
+        // Sins\Python\ArchaeologyComment::class,
         // Sins\Python\AssembledTemplate::class,
         // Sins\Python\BareStatePredicate::class,
         // Sins\Python\BlankStringDefault::class,

@@ -854,4 +854,18 @@ class NodeMatch implements Located
 
         return array_map(static fn (Expr $argument): Expr => $argument->is(ExprKind::Keyword) ? $argument->get('value') : $argument, $expression->get('arguments'));
     }
+
+    /**
+     * The prose written for this node — the run of comments above it read as one text, then the docstring
+     * it opens with.
+     *
+     * @return list<string>
+     */
+    public function prose(): array
+    {
+        $comments = $this->module->commentsAbove($this->node);
+        $above = $comments === [] ? [] : [implode("\n", array_map(static fn (Comment $comment) => $comment->body, $comments))];
+
+        return [...$above, ...$this->node->docstring()->mapOr([], static fn (string $docstring) => [$docstring])];
+    }
 }

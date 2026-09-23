@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Py\Node;
 
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\PhpTypes\Option;
 
 /**
  * A `class` with its decorators, bases (keyword arguments such as `metaclass=` among them) and body.
@@ -139,5 +140,10 @@ final class ClassDef extends Node
         }
 
         return array_values(array_unique(array_filter($names, static fn (string $name): bool => $name !== '')));
+    }
+
+    public function docstring(): Option
+    {
+        return $this->body->docstring();
     }
 }

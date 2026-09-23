@@ -38,6 +38,40 @@ code nobody is reading. Git holds the history. When you replace code, replace it
 `# not random`, `# no magic here` defend the code against a reading nobody made. State what it IS, or make it
 self-evident and write nothing.
 
+## Rules
+
+- [ ] Say what the code IS now; the history lives in git, not in a comment or a docstring.
+      _Delete the history. If a reason still matters, state it in the present tense._
+
+## Worked example
+
+### python-archaeology-comment
+
+a comment or docstring narrating the code's history — where it lived, what it replaced, what it no longer is
+
+```py
+----------[ Bad ]----------
+
+def next_number(last: int, prefix: str) -> str:
+    return f"{prefix}-{last + 1:06d}"
+
+----------[ Good ]----------
+
+def next_invoice_number(last: int, prefix: str) -> str:
+    # six digits, because the accounting export pads to a fixed width
+    return f"{prefix}-{last + 1:06d}"
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/documentation` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-archaeology-comment`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/documentation`](../../backend/documentation/SKILL.md) — the same discipline for PHP docblocks.

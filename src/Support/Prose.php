@@ -14,6 +14,25 @@ namespace JesseGall\CodeCommandments\Support;
 final class Prose
 {
     /**
+     * The phrases that narrate a change to the code — what it was, where it moved, what it no longer is —
+     * rather than what it IS. Runtime state ("no longer exists", "previously bound") is not history.
+     */
+    public const string HISTORY = '/'
+        // "a formerly enqueued task" is runtime state; "this was extracted from the request" is too
+        . '(?<!\ba )(?<!\ban )(?<!\bthe )\bformerly\b'
+        . '|\b(?:refactored|renamed from|ported from|is retired)\b'
+        . '|\bwas extracted\b(?!\s+from)'
+        // "is used to hold" / "only used to be" mean "used in order to", not "once was"
+        . '|(?<!\bis )(?<!\bare )(?<!\bbe )(?<!\bonly )\bused to (?:be|live|have|hold|contain|return|exist|sit|post|fire)\b'
+        // "no longer an X" / "no longer <does>" — but NOT runtime state (exists/matches/contains/fits)
+        . '|\bno longer (?:an?|does|reads|runs|fires|handles|unwraps|posts|matters)\b'
+        . '|\bnow lives (?:in|inside)\b'
+        // clause-initial "previously this/every/we/it…" narration — excludes runtime "previously bound"
+        . '|\bpreviously\s+(?:this|every|we|it)\b'
+        . '|\bequivalent of the old\b'
+        . '/i';
+
+    /**
      * Pure grammar — the words a sentence needs to hold together, carrying no information itself.
      *
      * @var list<string>
@@ -91,5 +110,13 @@ final class Prose
     private static function spaceCamelCase(string $text): string
     {
         return (string) preg_replace('/(?<=[a-z0-9])(?=[A-Z])/', ' ', $text);
+    }
+
+    /**
+     * Does $text narrate the code's past instead of its present — any of the {@see HISTORY} phrases?
+     */
+    public static function narratesHistory(string $text): bool
+    {
+        return preg_match(self::HISTORY, $text) === 1;
     }
 }

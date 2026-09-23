@@ -96,6 +96,16 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * The docstring this definition opens with — none for anything but a `def` or a `class`.
+     *
+     * @return Option<string>
+     */
+    public function docstring(): Option
+    {
+        return Option::none();
+    }
+
+    /**
      * Is this statement one two-way choice that $tests accepts, each side doing work of its own? False for
      * every statement but an `if`/`else` and a `return a if … else b`.
      *

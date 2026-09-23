@@ -357,4 +357,9 @@ final class FunctionDef extends Node
 
         return $keys;
     }
+
+    public function docstring(): Option
+    {
+        return $this->body->docstring();
+    }
 }
