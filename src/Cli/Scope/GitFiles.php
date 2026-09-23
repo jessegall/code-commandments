@@ -4,18 +4,15 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Scope;
 
+use JesseGall\CodeCommandments\Language;
+
 /**
- * Reads judged files (`.php`/`.vue`) from git — working-tree changes vs HEAD, or files
+ * Reads judged files (any {@see Language} judge reads) from git — working-tree changes vs HEAD, or files
  * new/changed on the branch vs base. Shared by WorkingTreeChanges, BranchChanges, and
  * HookIO. Not final — a seam for tests to stub the git layer.
  */
 class GitFiles
 {
-    /**
-     * The extensions judge parses — one per engine (`.php` backend, `.vue` frontend).
-     */
-    private const array JUDGED = ['.php', '.vue'];
-
     /**
      * How a worktree's `.git` file names the git directory it belongs to.
      */
@@ -277,7 +274,7 @@ class GitFiles
         foreach (preg_split('/\R/', $lines) ?: [] as $relative) {
             $relative = trim($relative);
 
-            if ($relative === '' || ! $this->isJudged($relative)) {
+            if ($relative === '' || ! Language::judges($relative)) {
                 continue;
             }
 
@@ -291,17 +288,4 @@ class GitFiles
         return $set;
     }
 
-    /**
-     * Does $relative name a file one of the engines judges?
-     */
-    private function isJudged(string $relative): bool
-    {
-        foreach (self::JUDGED as $extension) {
-            if (str_ends_with($relative, $extension)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

@@ -33,6 +33,15 @@ enum Language: string
     }
 
     /**
+     * Is the file at $path written in a language judge reads? Each case's value IS its extension, so
+     * a language added here is judged everywhere a path is filtered — never behind a list of its own.
+     */
+    public static function judges(string $path): bool
+    {
+        return self::tryFrom(pathinfo($path, PATHINFO_EXTENSION)) !== null;
+    }
+
+    /**
      * How a reader is told which language an example is in, when a skill shows more than one.
      */
     public function label(): string

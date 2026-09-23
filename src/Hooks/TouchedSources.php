@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Cli\State\State;
 use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\ExcludedPaths;
+use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -19,11 +20,6 @@ use JesseGall\CodeCommandments\Workspace;
  */
 final class TouchedSources
 {
-    /**
-     * The extensions both engines judge — what a walk collects, so a hook is not handed a lockfile
-     * or a snapshot to parse as source.
-     */
-    private const array JUDGED = ['php', 'vue', 'ts'];
 
     /**
      * The original watcher — the per-edit check. Each watcher keeps its OWN mark, because claiming moves
@@ -133,7 +129,7 @@ final class TouchedSources
                 continue;
             }
 
-            if (in_array(pathinfo($path, PATHINFO_EXTENSION), self::JUDGED, true) && ! $excluded->covers($path)) {
+            if (Language::judges($path) && ! $excluded->covers($path)) {
                 $found[] = $path;
             }
         }
