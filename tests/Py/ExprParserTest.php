@@ -50,6 +50,45 @@ final class ExprParserTest extends TestCase
         $this->assertSame(ExprKind::FString, Parser::parse('f"{x!r}"')->kind);
     }
 
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function fStrings(): iterable
+    {
+        yield 'text, a field, its conversion and spec' => ['f"total: {order.total!r:>10}"', ['literal total: ', 'attribute(name order).total', 'literal !r:>10']];
+        yield 'escaped braces are text' => ['f"{{a}} {x}"', ['literal {a} ', 'name x']];
+        yield 'the other quote inside a field' => ["f\"{d['k']}\"", ['subscript(name d)[literal k]']];
+        yield 'a field inside the spec' => ['f"{value:>{width}}"', ['name value', 'literal :>', 'name width']];
+        yield 'concatenated with a plain string' => ["'a' f\"{b}\"", ['literal a', 'name b']];
+        yield 'a comparison inside a field is not a conversion' => ['f"{a != b}"', ['compare']];
+    }
+
+    /**
+     * @param  list<string>  $parts
+     */
+    #[DataProvider('fStrings')]
+    public function test_an_f_string_holds_its_text_and_its_fields_in_order(string $source, array $parts): void
+    {
+        $this->assertSame($parts, array_map(fn (Expr $part): string => $this->describe($part), Parser::parse($source)->get('parts')));
+    }
+
+    public function test_a_nested_f_string_holds_its_own_parts(): void
+    {
+        $call = Parser::parse("f\"{plural(n, f'unread {kind}')}\"")->get('parts')[0];
+        $inner = $call->get('arguments')[1];
+
+        $this->assertSame(ExprKind::FString, $inner->kind);
+        $this->assertSame(['literal unread ', 'name kind'], array_map(fn (Expr $part): string => $this->describe($part), $inner->get('parts')));
+    }
+
+    public function test_a_field_knows_where_it_is_in_the_file(): void
+    {
+        $source = 'label = f"due {order.total} now"';
+        $field = Parser::parse(substr($source, 8), 8)->get('parts')[1];
+
+        $this->assertSame('order.total', substr($source, $field->start, $field->end - $field->start));
+    }
+
     public function test_trailers_chain_left_to_right(): void
     {
         $this->assertSame('call(attribute(subscript(attribute(name request).rows)[literal 0]).get)(literal id)', $this->shape('request.rows[0].get("id")'));

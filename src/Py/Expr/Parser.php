@@ -541,21 +541,38 @@ final class Parser
     {
         $start = $this->cursor->offset();
         $parts = [];
+        $offsets = [];
 
         while ($this->cursor->peek()->is(TokenKind::String)) {
+            $offsets[] = $this->cursor->offset();
             $parts[] = $this->cursor->advance();
         }
 
         $prefixes = strtolower(implode('', array_map(static fn (Token $part) => self::prefixOf($part->value), $parts)));
 
         if (str_contains($prefixes, 'f')) {
-            return $this->located(ExprKind::FString, ['source' => implode(' ', array_map(static fn (Token $part): string => $part->value, $parts))], $start);
+            return $this->located(ExprKind::FString, ['parts' => array_merge(...array_map($this->stringParts(...), $parts, $offsets))], $start);
         }
 
         return $this->located(ExprKind::Literal, [
             'type' => str_contains($prefixes, 'b') ? 'bytes' : 'string',
             'value' => implode('', array_map(static fn (Token $part) => self::contentOf($part->value), $parts)),
         ], $start);
+    }
+
+    /**
+     * The parts one string of an f-string concatenation contributes — an f-string's text and fields, or
+     * a plain string's content as one text part.
+     *
+     * @return list<Expr>
+     */
+    private function stringParts(Token $string, int $offset): array
+    {
+        if (str_contains(strtolower(self::prefixOf($string->value)), 'f')) {
+            return FStringReader::parts($string->value, $offset);
+        }
+
+        return [new Expr(ExprKind::Literal, ['type' => 'string', 'value' => self::contentOf($string->value)])->locatedAt($offset, $offset + strlen($string->value))];
     }
 
     /**
