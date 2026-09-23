@@ -2583,6 +2583,19 @@
             ],
             "detail": true
         },
+        "sin_python-nullable-registry-lookup": {
+            "title": "NullableRegistryLookup",
+            "help": "A store that returns `None` on a miss instead of raising — the twin of the backend's NullableRegistryLookupDetector: `.get(key)` on one of the object's own dict attributes, returned as it is.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/role-vocabulary",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-feature-envy": {
             "title": "FeatureEnvy",
             "help": "Exiled behaviour — the twin of the backend's FeatureEnvyDetector, decided by FeatureEnvy.",

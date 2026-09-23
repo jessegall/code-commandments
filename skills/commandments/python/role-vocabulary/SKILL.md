@@ -65,6 +65,47 @@ When a role decides "is this one of mine?", it asks the type — a base class, a
 `isinstance` against something the code declares — never a hardcoded list of class names that rots as
 classes are added and renamed.
 
+## Rules
+
+- [ ] A store's lookup returns the item or raises a named exception; where a miss is genuinely expected, callers ask `key in store` first.
+      _Index the dict and turn the `KeyError` into a named exception (`raise UnknownHandler.for_kind(kind) from missing`), and give the class a `__contains__` for the callers that expect misses._
+
+## Worked example
+
+### python-nullable-registry-lookup
+
+a keyed store handing back `None` for a key it lacks — `return self._handlers.get(kind)` — so every caller decides what a miss means
+
+```py
+----------[ Bad ]----------
+
+def get(self, till: str) -> ReceiptPrinter | None:
+    return self._printers.get(till)
+
+----------[ Good ]----------
+
+# in printer_pool.py
+def get(self, till: str) -> ReceiptPrinter:
+    try:
+        return self._printers[till]
+    except KeyError as missing:
+        raise UnknownTill.for_name(till) from missing
+
+# in printer_pool.py
+def __contains__(self, till: str) -> bool:
+    return till in self._printers
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=python/role-vocabulary` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-nullable-registry-lookup`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/role-vocabulary`](../../backend/role-vocabulary/SKILL.md) — the same roles in PHP, with scaffolded bases.
