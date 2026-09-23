@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Testing;
 
+use JesseGall\CodeCommandments\Py\Codebase as PythonCodebase;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Element;
 
@@ -36,15 +37,7 @@ final class DeclarationMarkers
         // to whatever declaration follows it, and a rule about a field inside a class was unmarkable
         // while only top-level `interface`/`type` could carry one.
         foreach ($codebase->modules() as $module) {
-            $lines[$module->file] ??= self::lines($module->file);
-
-            foreach ($module->nodes() as $node) {
-                $line = $module->lineAt($node->start);
-
-                foreach (self::markersAbove($lines[$module->file], $line, $tag) as $name) {
-                    $marked[$name][] = $module->file . ':' . $line;
-                }
-            }
+            self::markLines($module->file, array_map(static fn ($node) => $module->lineAt($node->start), $module->nodes()), $tag, $marked);
         }
 
         foreach ($codebase->components() as $component) {
@@ -52,6 +45,40 @@ final class DeclarationMarkers
         }
 
         return $marked;
+    }
+
+    /**
+     * The `file:line` of every Python declaration or statement marked `# @{$tag} Name`, grouped by Name.
+     *
+     * @return array<string, list<string>>
+     */
+    public static function inPython(PythonCodebase $codebase, string $tag): array
+    {
+        $marked = [];
+
+        foreach ($codebase->modules() as $module) {
+            self::markLines($module->file, array_map(static fn ($node) => $module->lineAt($node->start), $module->nodes()), $tag, $marked);
+        }
+
+        return $marked;
+    }
+
+    /**
+     * Mark every line of $file in $nodeLines that a run of `@{$tag} Name` comments sits above — the one
+     * walk a module of either language is read by, whatever its comments are spelled with.
+     *
+     * @param  list<int>  $nodeLines
+     * @param  array<string, list<string>>  $marked
+     */
+    private static function markLines(string $file, array $nodeLines, string $tag, array &$marked): void
+    {
+        $lines = self::lines($file);
+
+        foreach (array_unique($nodeLines) as $line) {
+            foreach (self::markersAbove($lines, $line, $tag) as $name) {
+                $marked[$name][] = $file . ':' . $line;
+            }
+        }
     }
 
     /**

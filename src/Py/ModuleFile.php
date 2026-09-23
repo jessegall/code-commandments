@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py;
 
+use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\ParsedModule;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
@@ -15,7 +17,7 @@ use JesseGall\CodeCommandments\Span;
  * One parsed Python file: its module tree, its path and source — so a node can say which line it is on
  * — and the flat views a selector filters: every node, every expression, which functions are methods.
  */
-final class ModuleFile
+final class ModuleFile implements ParsedModule
 {
     /**
      * @var list<Node>|null
@@ -74,6 +76,16 @@ final class ModuleFile
         $this->methods ??= $this->methodIds();
 
         return isset($this->methods[spl_object_id($function)]);
+    }
+
+    public function language(): Language
+    {
+        return Language::Python;
+    }
+
+    public function nodeSpans(): array
+    {
+        return array_map(static fn (Node $node) => [$node->start, $node->end], $this->nodes());
     }
 
     public function lineAt(int $offset): int

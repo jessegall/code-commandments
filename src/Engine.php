@@ -8,6 +8,8 @@ use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use JesseGall\CodeCommandments\Testing\BackendFixture;
 use JesseGall\CodeCommandments\Testing\Fixture;
 use JesseGall\CodeCommandments\Testing\FrontendFixture;
+use JesseGall\CodeCommandments\Testing\PythonFixture;
+use JesseGall\CodeCommandments\Python\Detector as PythonDetector;
 
 /**
  * Which of the two parse engines a detector reads — the PHP AST, or the Vue components.
@@ -20,6 +22,7 @@ enum Engine: string
     case Backend = 'backend';
 
     case Frontend = 'frontend';
+    case Python = 'python';
 
     /**
      * The engine a detector belongs to. The ONE place the question is asked: a detector declares its
@@ -28,7 +31,11 @@ enum Engine: string
      */
     public static function of(Detector $detector): self
     {
-        return $detector instanceof FrontendDetector ? self::Frontend : self::Backend;
+        return match (true) {
+            $detector instanceof FrontendDetector => self::Frontend,
+            $detector instanceof PythonDetector => self::Python,
+            default => self::Backend,
+        };
     }
 
     /**
@@ -49,6 +56,7 @@ enum Engine: string
         return match ($this) {
             self::Backend => \JesseGall\CodeCommandments\Backend\Detector::class,
             self::Frontend => FrontendDetector::class,
+            self::Python => PythonDetector::class,
         };
     }
 
@@ -62,6 +70,7 @@ enum Engine: string
         return match ($this) {
             self::Backend => \JesseGall\CodeCommandments\Ast\Codebase::class,
             self::Frontend => \JesseGall\CodeCommandments\Vue\Codebase::class,
+            self::Python => \JesseGall\CodeCommandments\Py\Codebase::class,
         };
     }
 
@@ -76,6 +85,7 @@ enum Engine: string
         return match ($this) {
             self::Backend => \JesseGall\CodeCommandments\Ast\AstNode::class,
             self::Frontend => \JesseGall\CodeCommandments\Vue\ElementMatch::class,
+            self::Python => \JesseGall\CodeCommandments\Py\NodeMatch::class,
         };
     }
 
@@ -90,6 +100,7 @@ enum Engine: string
         return match ($this) {
             self::Backend => new BackendFixture($path, $detectors),
             self::Frontend => new FrontendFixture($path, $detectors),
+            self::Python => new PythonFixture($path, $detectors),
         };
     }
 
@@ -102,6 +113,7 @@ enum Engine: string
         return match ($this) {
             self::Backend => 'src',
             self::Frontend => 'resources/js',
+            self::Python => 'src',
         };
     }
 
@@ -114,6 +126,7 @@ enum Engine: string
         return match ($this) {
             self::Backend => 'php',
             self::Frontend => 'vue',
+            self::Python => 'py',
         };
     }
 }

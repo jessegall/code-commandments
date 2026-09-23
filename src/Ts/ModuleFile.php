@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Ts;
 
+use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\ParsedModule;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
 use JesseGall\CodeCommandments\Ts\Node\ClassDecl;
@@ -16,7 +18,7 @@ use JesseGall\CodeCommandments\Ts\Parser;
  * knows only a string, so turning a node's byte range into a `file:line` is this class's job, and it
  * is where the whole-module walk that a selector draws from lives.
  */
-final class ModuleFile
+final class ModuleFile implements ParsedModule
 {
     /**
      * @var list<Node>|null
@@ -153,6 +155,16 @@ final class ModuleFile
         }
 
         return array_fill_keys($node->declaredNames(), $named[0]);
+    }
+
+    public function language(): Language
+    {
+        return Language::TypeScript;
+    }
+
+    public function nodeSpans(): array
+    {
+        return array_map(static fn (Node $node) => [$node->start, $node->end], $this->nodes());
     }
 
     public function lineAt(int $offset): int
