@@ -269,6 +269,8 @@ _135 sins across 28 skills._
 |---|---|
 | `MirroredServerType` | Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. / |
 
+### Python
+
 ### TypeScript
 
 #### `typescript/absence`

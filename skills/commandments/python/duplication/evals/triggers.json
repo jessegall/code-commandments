@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "src/features/messages/handlers.py needs the same _read_payload helper that src/features/todos/handlers.py already has — can I just copy the function over?",
+        "cli/export.py and cli/report.py both have a write_rows function that's identical except for the output path, should I leave them or merge them",
+        "judge flagged duplicate-python-function on two methods in two different service classes that parse the config the exact same way — what's the fix"
+    ],
+    "not": [
+        "how do I type a function in Python that may return None when the key is missing"
+    ]
+}

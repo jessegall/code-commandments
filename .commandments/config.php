@@ -60,6 +60,9 @@ $disabledSkills = function (Config $config): void {
         // Skills\Frontend\MirroredServerType::class,
         // Skills\Frontend\VueComponents::class,
         // Skills\Frontend\VueControlFlow::class,
+
+        // ----------[ Python ]----------
+        // Skills\Python\Duplication::class,
     );
 };
 

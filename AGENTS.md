@@ -126,6 +126,7 @@ most:**
 - **`commandments-frontend-mirrored-server-type`** — a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one.
 - **`commandments-typescript-absence`** — model absence honestly — one spelling for missing, no `??` that invents a value, no `?.` on something always set.
 - **`commandments-typescript-duplication`** — a function body written twice becomes one shared function or composable, parameterised by what differs.
+- **`commandments-python-duplication`** — a function body written twice becomes one shared function, parameterised by what differs.
 
 **Finding and fixing sins — the checklist workflow.** Run
 `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the
