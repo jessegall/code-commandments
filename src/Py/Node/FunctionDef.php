@@ -14,6 +14,11 @@ use JesseGall\PhpTypes\Option;
 final class FunctionDef extends Node
 {
     /**
+     * The builtin scalar types a loose value is annotated with.
+     */
+    private const array SCALARS = ['str', 'int', 'float', 'bool'];
+
+    /**
      * @param  list<Param>  $params
      * @param  list<Expr>  $decorators
      */
@@ -91,5 +96,29 @@ final class FunctionDef extends Node
                 static fn (Expr $value): bool => $value->isCall() && $value->get('callee')->dottedName() === 'cls',
             ),
         );
+    }
+
+    /**
+     * The scalar-typed parameters this function takes — `str`, `int`, `float`, `bool` — as sorted
+     * `type name` pairs, when there are three or more of them; empty otherwise. Named as the backend
+     * names it: two functions with one signature take the same loose values.
+     *
+     * @return list<string>
+     */
+    public function valueParamSignature(): array
+    {
+        $fields = [];
+
+        foreach ($this->params as $param) {
+            $type = $param->annotation?->dottedName() ?? '';
+
+            if (in_array($type, self::SCALARS, true)) {
+                $fields[] = "{$type} {$param->name}";
+            }
+        }
+
+        sort($fields);
+
+        return count($fields) >= 3 ? $fields : [];
     }
 }

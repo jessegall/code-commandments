@@ -215,6 +215,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Frontend\TypeScript\NearDuplicateFunction::class,
 
         // ----------[ Python ]----------
+        // Sins\Python\DataClump::class,
         // Sins\Python\DeepNesting::class,
         // Sins\Python\DictBag::class,
         // Sins\Python\DuplicateFunction::class,

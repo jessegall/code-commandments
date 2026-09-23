@@ -171,6 +171,17 @@ class NodeMatch implements Located
     }
 
     /**
+     * What this node belongs to — the class a method is declared in, or its module for anything else —
+     * named by where it is, so two of them compare.
+     */
+    public function owner(): string
+    {
+        $class = array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node instanceof ClassDef))[0] ?? null;
+
+        return $class instanceof ClassDef ? "{$this->module->file}::{$class->name}" : $this->module->file;
+    }
+
+    /**
      * Is this a class's `__init__` — structure every class declares for itself, which two classes cannot
      * share however alike they read?
      */

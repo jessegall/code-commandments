@@ -52,46 +52,64 @@ waiting to be named. Give them one type and pass that.
 
 ## Rules
 
+- [ ] Give values that always travel together one type, and pass that instead of the loose values.
+      _Declare a frozen dataclass with those fields and take it as one parameter wherever the loose values travelled together._
 - [ ] Give a record a type — a frozen dataclass — instead of a dict read by string keys.
       _Declare the keys as fields of a frozen dataclass, build it where the data enters (a `from_payload` classmethod), and take that type as the parameter._
 
 ## Worked example
 
-### python-dict-bag
+### python-data-clump
 
-A parameter typed as a dict read by string keys — `row["sku"]`, `row.get("quantity")` — a record nobody declared
+The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept wearing no name
 
 ```py
 ----------[ Bad ]----------
 
-def label(parcel: dict[str, Any]) -> str:
-    return f"{parcel['recipient']}\n{parcel['street']}\n{parcel['postcode']} {parcel['city']}"
+# in delivery.py
+def book_delivery(street: str, city: str, postcode: str, carrier) -> str:
+    return carrier.book(f"{street}, {postcode} {city}")
+
+# in quotes.py
+def quote(postcode: str, street: str, city: str, weight_kg) -> int:
+    return 495 if postcode.startswith("1") else 695
+
+# in customers.py
+def subscribe(self, name: str, email: str, phone: str, opt_in: bool) -> None:
+    self.list.add(email, name)
+
+# in customers.py
+def enrol(self, phone: str, name: str, email: str, opt_in: bool = False) -> None:
+    self.members.add(name, email, phone, opt_in)
 
 ----------[ Good ]----------
 
+# in delivery.py
 @dataclass(frozen=True)
-class Parcel:
-    recipient: str
+class Address:
     street: str
-    postcode: str
     city: str
+    postcode: str
 
-    @classmethod
-    def from_payload(cls, payload: dict[str, Any]) -> "Parcel":
-        return cls(payload["recipient"], payload["street"], payload["postcode"], payload["city"])
+    def line(self) -> str:
+        return f"{self.street}, {self.postcode} {self.city}"
 
-    def label(self) -> str:
-        return f"{self.recipient}\n{self.street}\n{self.postcode} {self.city}"
+# in delivery.py
+def schedule_delivery(address: Address, carrier) -> str:
+    return carrier.book(address.line())
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/value-objects` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-dict-bag`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-data-clump`, `python-dict-bag`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

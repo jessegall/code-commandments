@@ -1925,6 +1925,19 @@
             ],
             "detail": true
         },
+        "sin_python-data-clump": {
+            "title": "DataClump",
+            "help": "The same three-or-more scalar parameters threaded through functions of two or more classes or modules — the Python twin of the backend's DataClumpDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/value-objects",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-dict-bag": {
             "title": "DictBag",
             "help": "A dict-typed parameter or local read by string keys — the Python twin of the backend's ArrayBagDetector.",
