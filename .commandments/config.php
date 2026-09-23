@@ -225,6 +225,7 @@ $disabledSins = function (Config $config): void {
 
         // ----------[ Python ]----------
         // Sins\Python\CoalescedLoopSubject::class,
+        // Sins\Python\ConditionalStatement::class,
         // Sins\Python\DataClump::class,
         // Sins\Python\DeepNesting::class,
         // Sins\Python\DictBag::class,

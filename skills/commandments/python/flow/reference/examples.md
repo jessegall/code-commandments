@@ -34,6 +34,25 @@ def descendants_of(below: defaultdict, parent: str) -> list:
     return found
 ```
 
+### python-conditional-statement
+
+a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an ACTION, not a value
+
+```py
+----------[ Bad ]----------
+
+def back_up(source: Path, target: Path) -> None:
+    shutil.copytree(source, target) if source.is_dir() else shutil.copy2(source, target)
+
+----------[ Good ]----------
+
+def back_up_path(source: Path, target: Path) -> None:
+    if source.is_dir():
+        shutil.copytree(source, target)
+        return
+    shutil.copy2(source, target)
+```
+
 ### deep-python-nesting
 
 An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops
