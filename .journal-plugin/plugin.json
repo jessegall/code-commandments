@@ -2388,6 +2388,19 @@
             ],
             "detail": true
         },
+        "sin_python-positional-tuple-return": {
+            "title": "PositionalTupleReturn",
+            "help": "A tuple of different things handed back by position — the twin of the backend's PositionalTupleReturnDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/value-objects",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_defended-certain-field": {
             "title": "DefendedCertainField",
             "help": "An `?.` on one of the enclosing class's OWN fields, where that field is declared total — a guard against a case the type rules out.",

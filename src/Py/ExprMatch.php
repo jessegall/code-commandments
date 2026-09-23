@@ -258,6 +258,14 @@ class ExprMatch implements Located
     }
 
     /**
+     * Is this written in a function annotated to return a sequence of one kind?
+     */
+    public function isInSequenceFunction(): bool
+    {
+        return $this->module->functionOf($this->expr)->isSomeAnd(static fn (FunctionDef $function): bool => $function->returns?->isSequenceType() === true);
+    }
+
+    /**
      * The names of the parameters a caller of $function supplies — every one but a bound method's first.
      *
      * @return list<string>

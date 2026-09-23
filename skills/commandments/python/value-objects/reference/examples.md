@@ -142,3 +142,32 @@ class ShippingAddress:
     def moved(self, street: str, city: str) -> "ShippingAddress":
         return replace(self, street=street, city=city)
 ```
+
+### python-positional-tuple-return
+
+`return net, vat, currency` — a bundle of different things the caller must unpack by position, where a reordering breaks silently
+
+```py
+----------[ Bad ]----------
+
+def parse(self, code: str):
+    prefix, _, serial = code.partition("-")
+    return (prefix, serial, self.catalog.sku_for(prefix))
+
+----------[ Good ]----------
+
+# in barcode_parsing.py
+class Scan(NamedTuple):
+    prefix: str
+    serial: str
+    sku: str
+
+# in barcode_parsing.py
+class NamedScanner:
+    def __init__(self, catalog) -> None:
+        self.catalog = catalog
+
+    def parse(self, code: str) -> Scan:
+        prefix, _, serial = code.partition("-")
+        return Scan(prefix, serial, self.catalog.sku_for(prefix))
+```

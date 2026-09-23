@@ -447,6 +447,38 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this a tuple of three or more elements read from at least two different names — a bundle whose
+     * slots mean different things and are known only by their position?
+     */
+    public function isPositionalTuple(): bool
+    {
+        $elements = $this->kind === ExprKind::Tuple ? $this->get('elements') : [];
+        $roots = array_filter(array_map(static fn (self $element): string => $element->rootName(), $elements));
+
+        return count($elements) >= 3
+            && ! array_any($elements, static fn (self $element): bool => $element->is(ExprKind::Starred))
+            && count(array_unique($roots)) >= 2;
+    }
+
+    /**
+     * Does this annotation declare a sequence of one kind — `tuple[int, ...]`, `list[str]`,
+     * `Sequence[Order]` — where order is the whole meaning and no position carries a name?
+     */
+    public function isSequenceType(): bool
+    {
+        $named = $this->kind === ExprKind::Subscript ? $this->get('object')->dottedName() : $this->dottedName();
+
+        if (in_array($named, ['tuple', 'Tuple', 'typing.Tuple'], true)) {
+            $index = $this->kind === ExprKind::Subscript ? $this->get('index') : null;
+            $last = $index?->is(ExprKind::Tuple) === true ? array_last($index->get('elements')) : null;
+
+            return $last?->literalType() === LiteralType::Ellipsis;
+        }
+
+        return in_array($named, ['list', 'List', 'typing.List', 'Sequence', 'typing.Sequence', 'collections.abc.Sequence', 'Iterable', 'typing.Iterable', 'collections.abc.Iterable'], true);
+    }
+
+    /**
      * Does this annotation spell a class variable — `ClassVar`, `ClassVar[int]`, through `typing` or bare?
      */
     public function isClassVarType(): bool
