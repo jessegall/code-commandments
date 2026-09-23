@@ -7,4 +7,5 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`python-loop-wrapped-in-if`** — A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition — `LoopWrappedInIfDetector`
 - **`python-nested-conditional`** — `a if x else b if y else c` — a conditional expression inside another's branch, a branching decision folded into one line — `NestedConditionalDetector`
 - **`redundant-python-else`** — An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing — `RedundantElseDetector`
+- **`python-short-circuit-statement`** — a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is an `if` in disguise — `ShortCircuitStatementDetector`
 - **`python-subject-ladder`** — An `if`/`elif` chain of four or more rungs that each test ONE subject for equality with a constant — a dispatch written as a ladder — `SubjectLadderDetector`

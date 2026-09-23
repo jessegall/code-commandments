@@ -136,6 +136,25 @@ def price_of(line: Line) -> int:
     return subtotal - subtotal // 100 if line.quantity >= 100 else subtotal
 ```
 
+### python-short-circuit-statement
+
+a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is an `if` in disguise
+
+```py
+----------[ Bad ]----------
+
+def ensure(self, key: str) -> None:
+    self.store.has(key) or self.store.warm(key)
+    self.store.touch(key)
+
+----------[ Good ]----------
+
+def ensure_warm(self, key: str) -> None:
+    if not self.store.has(key):
+        self.store.warm(key)
+    self.store.touch(key)
+```
+
 ### python-subject-ladder
 
 An `if`/`elif` chain of four or more rungs that each test ONE subject for equality with a constant — a dispatch written as a ladder

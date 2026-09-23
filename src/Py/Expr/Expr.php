@@ -179,6 +179,14 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * Is this an `and` or an `or` — an operator that may leave its right side unrun?
+     */
+    public function isShortCircuit(): bool
+    {
+        return $this->kind === ExprKind::Binary && in_array($this->get('op'), ['and', 'or'], true);
+    }
+
+    /**
      * Is this a conditional expression that holds another in a branch — `a if x else b if y else c`,
      * `(a if y else b) if x else c` — at any depth, a call or a collection in between included?
      */
