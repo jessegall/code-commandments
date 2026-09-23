@@ -64,6 +64,23 @@ abstract class Node
     }
 
     /**
+     * Every node beneath this one, at any depth, parents before their children — the whole subtree a
+     * rule about a body reads, arrow blocks included.
+     *
+     * @return list<self>
+     */
+    final public function descendants(): array
+    {
+        $all = [];
+
+        foreach ($this->nested() as $child) {
+            $all = [...$all, $child, ...$child->descendants()];
+        }
+
+        return $all;
+    }
+
+    /**
      * The expressions this node holds AT ITS OWN LEVEL — a branch's test, a return's value, a
      * declaration's initializer. Not its children's ({@see children} reaches those), so each
      * expression is reported by the one node that owns it.

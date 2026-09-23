@@ -103,6 +103,13 @@ final class StructuralHashTest extends TestCase
         $this->assertNotSame($this->only($formatPrice)->shapeHash(), $this->only($formatDate)->shapeHash());
     }
 
+    public function test_a_literal_in_a_call_initialiser_does_not_reach_the_shape(): void
+    {
+        $orders = 'function a(id: number) { const response = fetch(`/orders/${id}`); return response.then((r) => r.json()); }';
+
+        $this->assertSame($this->only($orders)->shapeHash(), $this->only(str_replace('/orders/', '/customers/', $orders))->shapeHash());
+    }
+
     public function test_break_and_continue_are_different_code(): void
     {
         $break = 'function a(xs: X[]) { for (const x of xs) { if (x.done) { break; } run(x); } }';

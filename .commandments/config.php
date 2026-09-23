@@ -204,6 +204,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Frontend\TypeScript\DefendedCertainField::class,
         // Sins\Frontend\TypeScript\DuplicateFunction::class,
         // Sins\Frontend\TypeScript\FalselyOptionalField::class,
+        // Sins\Frontend\TypeScript\NearDuplicateFunction::class,
     );
 };
 

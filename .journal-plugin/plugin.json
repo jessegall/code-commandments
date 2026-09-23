@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.15.0",
+    "version": "1.16.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.102.0",
@@ -1817,6 +1817,22 @@
         "sin_duplicate-typescript-function": {
             "title": "DuplicateFunction",
             "help": "Two-or-more TypeScript functions with one body — a `function`, a method and a `const` arrow alike, in a `.ts` module or a component's `<script>` — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",
+            "type": "flag",
+            "default": "true",
+            "group": "typescript/duplication",
+            "when": [
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_near-duplicate-typescript-function": {
+            "title": "NearDuplicateFunction",
+            "help": "Two-or-more TypeScript functions with one SHAPE but not one body — the same control flow, differing only in local names or string/number literals (a type-2 clone): each does the same thing to a different endpoint or key, and wants to be one function with a parameter.",
             "type": "flag",
             "default": "true",
             "group": "typescript/duplication",

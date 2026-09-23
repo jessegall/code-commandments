@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
 use JesseGall\CodeCommandments\Ts\Expr\ExprKind;
 use JesseGall\CodeCommandments\Ts\Node\Node;
+use JesseGall\CodeCommandments\Ts\Node\Stmt;
 use JesseGall\CodeCommandments\Ts\Node\TypeNode;
 
 /**
@@ -61,7 +62,7 @@ final class StructuralHash
             $parts[] = implode(',', $node->declaredNames());
         }
 
-        if (self::isLeaf($node) && ! ($normalize && $node->declaredNames() !== [])) {
+        if (self::isLeaf($node)) {
             $parts[] = $node->render();
         }
 
@@ -77,14 +78,14 @@ final class StructuralHash
     }
 
     /**
-     * A node that holds nothing a walk reaches — no children, no expressions — is ALL its rendering:
-     * `break;` and `continue;` differ only there. A rendering is built from the node, never its
-     * source, so it is as formatting-blind as the rest; one that names something is left out when
-     * normalising, since names are what normalising blanks.
+     * A STATEMENT that holds nothing a walk reaches — no children, no expressions — is all its
+     * rendering: `break;` and `continue;` differ only there. Only a statement: other leaves (the call
+     * a declaration keeps beside its initializer) render raw source, literals and all, which the
+     * normalised hash must never see.
      */
     private static function isLeaf(Node $node): bool
     {
-        return $node->children() === [] && $node->expressions() === [];
+        return $node instanceof Stmt && $node->children() === [] && $node->expressions() === [];
     }
 
     private static function expression(Expr $expression, bool $normalize): string

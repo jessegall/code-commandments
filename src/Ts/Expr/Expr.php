@@ -106,6 +106,15 @@ final class Expr
     }
 
     /**
+     * Is this a value fixed in the source — a literal, and a template only when it interpolates
+     * nothing? What a lookup table written as code answers with.
+     */
+    public function isConstant(): bool
+    {
+        return $this->kind === ExprKind::Literal && ! str_contains((string) $this->get('raw'), '${');
+    }
+
+    /**
      * `a ?? b` — the absence fallback. Named as the backend names it.
      */
     public function isCoalesce(): bool
