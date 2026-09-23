@@ -51,3 +51,32 @@ class CourierWindow:
     opens: int
     closes: int
 ```
+
+### python-ceremony-docblock
+
+a docstring with no summary whose every entry restates the annotated signature — `order (Order):`, `:rtype: int`
+
+```py
+----------[ Bad ]----------
+
+def quote(parcel: Parcel, zone: str) -> int:
+    """
+    Args:
+        parcel (Parcel):
+        zone (str):
+
+    Returns:
+        int
+    """
+    return 500 + parcel.weight_grams // 100
+
+----------[ Good ]----------
+
+def quote_cents(parcel: Parcel, zone: str) -> int:
+    """The price of sending the parcel to the zone, in cents.
+
+    Args:
+        zone: a carrier zone code, such as "EU-1".
+    """
+    return 500 + parcel.weight_grams // 100
+```

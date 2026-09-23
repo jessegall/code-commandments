@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py\Node;
 
+use JesseGall\CodeCommandments\Py\Docstring;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
 use JesseGall\CodeCommandments\Py\Expr\LiteralType;
@@ -361,5 +362,16 @@ final class FunctionDef extends Node
     public function docstring(): Option
     {
         return $this->body->docstring();
+    }
+
+    /**
+     * Does this open with a docstring that only restates its annotated signature — no summary, every entry
+     * a type the annotations already give?
+     */
+    public function hasCeremonyDocstring(): bool
+    {
+        $annotated = array_map(static fn (Param $param) => $param->name, array_values(array_filter($this->params, static fn (Param $param): bool => $param->annotation !== null)));
+
+        return $this->docstring()->isSomeAnd(fn (string $docstring) => Docstring::onlyRestates($docstring, $annotated, $this->returns !== null));
     }
 }

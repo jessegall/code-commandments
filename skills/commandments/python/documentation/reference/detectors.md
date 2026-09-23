@@ -4,3 +4,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 
 - **`python-archaeology-comment`** — a comment or docstring narrating the code's history — where it lived, what it replaced, what it no longer is — `ArchaeologyCommentDetector`
 - **`python-bloated-docblock`** — a class docstring of two or more paragraphs of prose — an essay that says the class does too much — `BloatedDocblockDetector`
+- **`python-ceremony-docblock`** — a docstring with no summary whose every entry restates the annotated signature — `order (Order):`, `:rtype: int` — `CeremonyDocblockDetector`

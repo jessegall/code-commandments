@@ -80,4 +80,73 @@ final class Docstring
 
         return $indents === [] ? 0 : min($indents);
     }
+
+    /**
+     * Does $text say nothing but what the signature already says — no summary, and every entry a bare
+     * restatement of a parameter in $annotated or, when $returnAnnotated, of the return? `Args:` entries with
+     * no description, a bare `Returns:` type, NumPy `name : type` lines, Sphinx `:param x:`, `:type x:` and
+     * `:rtype:` fields. A description, a type for an unannotated parameter, or any other section earns its keep.
+     *
+     * @param  list<string>  $annotated
+     */
+    public static function onlyRestates(string $text, array $annotated, bool $returnAnnotated): bool
+    {
+        $lines = array_values(array_filter(array_map(trim(...), explode("\n", $text)), static fn (string $line): bool => $line !== ''));
+        $section = '';
+        $restated = 0;
+
+        foreach ($lines as $at => $line) {
+            $underlined = array_key_exists($at + 1, $lines) && preg_match('/^-{3,}$/', $lines[$at + 1]) === 1;
+
+            if (preg_match('/^-{3,}$/', $line) === 1) {
+                continue;
+            }
+
+            if (preg_match('/^(?:Args|Arguments|Parameters|Params):$/', $line) === 1 || ($underlined && in_array($line, ['Parameters', 'Params'], true))) {
+                $section = 'args';
+
+                continue;
+            }
+
+            if (preg_match('/^Returns?:$/', $line) === 1 || ($underlined && $line === 'Returns')) {
+                $section = 'returns';
+
+                continue;
+            }
+
+            if (! self::restates($line, $section, $annotated, $returnAnnotated)) {
+                return false;
+            }
+
+            $restated++;
+        }
+
+        return $restated > 0;
+    }
+
+    /**
+     * Is $line, read in $section, a bare restatement of an annotated parameter or return?
+     *
+     * @param  list<string>  $annotated
+     */
+    private static function restates(string $line, string $section, array $annotated, bool $returnAnnotated): bool
+    {
+        if (preg_match('/^:(?:param(?:\s+\S+)?\s+(\w+)|type\s+(\w+)):\s*(.*)$/', $line, $field) === 1) {
+            $isParam = $field[1] !== '';
+
+            return in_array($isParam ? $field[1] : $field[2], $annotated, true) && (! $isParam || $field[3] === '');
+        }
+
+        if (preg_match('/^:(?:rtype:\s*\S.*|returns?:\s*)$/', $line) === 1) {
+            return $returnAnnotated;
+        }
+
+        if ($section === 'returns') {
+            return $returnAnnotated && preg_match('/^[\w.\[\], |]+:?$/', $line) === 1;
+        }
+
+        return $section === 'args'
+            && preg_match('/^(\w+)(?:\s*\([^)]*\))?:$|^(\w+) : \S/', $line, $entry) === 1
+            && in_array($entry[1] !== '' ? $entry[1] : $entry[2], $annotated, true);
+    }
 }
