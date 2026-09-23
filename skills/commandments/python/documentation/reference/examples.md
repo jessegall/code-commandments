@@ -99,3 +99,19 @@ def manifest_lines(parcels: list) -> str:
     lines = [f"{index}. {parcel}" for index, parcel in enumerate(parcels, start=1)]
     return "\n".join(lines)
 ```
+
+### python-negative-space-comment
+
+a comment or docstring defending the code against a reading nobody made — what it is not, rather than what it is
+
+```py
+----------[ Bad ]----------
+
+def backoff(attempt: int) -> int:
+    return 2 ** attempt
+
+----------[ Good ]----------
+
+def retry_delay(attempt: int) -> int:
+    return min(2 ** attempt, 60)
+```

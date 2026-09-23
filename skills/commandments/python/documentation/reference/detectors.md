@@ -6,3 +6,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`python-bloated-docblock`** — a class docstring of two or more paragraphs of prose — an essay that says the class does too much — `BloatedDocblockDetector`
 - **`python-ceremony-docblock`** — a docstring with no summary whose every entry restates the annotated signature — `order (Order):`, `:rtype: int` — `CeremonyDocblockDetector`
 - **`python-dangling-doc-reference`** — a Sphinx cross-reference in a docstring (`:class:`shop.cart.Basket``) to a first-party name the codebase no longer declares — `DanglingDocReferenceDetector`
+- **`python-negative-space-comment`** — a comment or docstring defending the code against a reading nobody made — what it is not, rather than what it is — `NegativeSpaceCommentDetector`

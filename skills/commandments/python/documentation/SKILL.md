@@ -48,6 +48,8 @@ self-evident and write nothing.
       _Delete the docstring, or write the sentence that says what the function does and describe only what a type cannot._
 - [ ] A cross-reference must resolve: point it at the name that exists now, or delete it.
       _Repoint the reference at the current module or class, or remove it._
+- [ ] State what the code IS; a comment defending it against a strawman means the code should make itself plain.
+      _Delete the defence. If the code needs it, make the code say what it is._
 
 ## Worked example
 
@@ -68,17 +70,17 @@ def next_invoice_number(last: int, prefix: str) -> str:
     return f"{prefix}-{last + 1:06d}"
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/documentation` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-archaeology-comment`, `python-bloated-docblock`, `python-ceremony-docblock`, `python-dangling-doc-reference`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-archaeology-comment`, `python-bloated-docblock`, `python-ceremony-docblock`, `python-dangling-doc-reference`, `python-negative-space-comment`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

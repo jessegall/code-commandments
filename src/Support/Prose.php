@@ -48,7 +48,7 @@ final class Prose
         // Prepositions a sentence needs and code never spells — "loop OVER the entries", "read it
         // BACK", "pull them THROUGH". Dropping them is what lets a narration line up with its statement.
         'over', 'off', 'about', 'upon', 'across', 'through', 'between', 'during', 'within', 'against',
-        'back', 'than',
+        'back', 'than', 'but',
     ];
 
     /**
@@ -112,6 +112,38 @@ final class Prose
     private static function spaceCamelCase(string $text): string
     {
         return (string) preg_replace('/(?<=[a-z0-9])(?=[A-Z])/', ' ', $text);
+    }
+
+    /**
+     * The pattern of phrases that defend code against a reading nobody made, instead of saying what it IS.
+     * A strawman word counts only where it ends its phrase — what follows is punctuation or grammar — so an
+     * adjective on a content noun ("a system random number generator") is left alone.
+     */
+    public static function strawman(): string
+    {
+        $grammar = implode('|', self::FILLER);
+
+        return '/'
+            // negation + a strawman noun, in one clause, the noun ending its phrase
+            . '\b(?:not|never|no|isn\'?t|aren\'?t|nothing)\b[^.,;:]{0,24}\b(?:random|arbitrary|magic|magical|blanket|coincidence|coincidental|accident|accidental|by chance|typo|mistake|dead code|courtesy|vibes|afterthought|oversight)\b'
+            . "(?=\\s*(?:[^\\w\\s]|$)|\\s+(?:{$grammar})\\b)"
+            // an intent adverb defending a negation or an absence
+            . '|\b(?:intentionally|deliberately)\b[^.]{0,24}\b(?:not|never|no|empty|incomplete|omitted|unused)\b'
+            // a negation excused as deliberate
+            . '|\b(?:not|never)\b[^.]{0,40}\bon purpose\b'
+            // pointing at an absence: a named thing that is not present here, or in this list
+            . '|\b(?:is|are|\'?s|\'?re)\s+not\s+(?:in\s+this\b|here\b)'
+            . '|\bnot\s+(?:stored|listed|included|present|defined|declared|kept|shown)\s+(?:here|in\s+this)\b'
+            . '/i';
+    }
+
+    /**
+     * Does $text defend the code against a strawman instead of stating what it is — one of the
+     * {@see strawman} phrases?
+     */
+    public static function defendsAgainstStrawman(string $text): bool
+    {
+        return preg_match(self::strawman(), $text) === 1;
     }
 
     /**
