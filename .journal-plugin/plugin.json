@@ -2089,6 +2089,45 @@
             ],
             "detail": true
         },
+        "sin_python-archaeology-comment": {
+            "title": "ArchaeologyComment",
+            "help": "A comment or docstring about the code's past — the twin of the backend's ArchaeologyCommentDetector, reading the same phrases.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/documentation",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-bloated-docblock": {
+            "title": "BloatedDocblock",
+            "help": "A class docstring that runs to an essay — the twin of the backend's BloatedDocblockDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/documentation",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-ceremony-docblock": {
+            "title": "CeremonyDocblock",
+            "help": "A docstring that only repeats the annotations — the twin of the backend's CeremonyDocblockDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/documentation",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-python-function": {
             "title": "DuplicateFunction",
             "help": "Two-or-more Python functions with one body — module functions and methods alike — compared by a formatting-blind fingerprint of the body alone, docstrings aside, so the copy that was renamed is caught with the one that was not.",
