@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests;
 
-use JesseGall\CodeCommandments\Cs\Bridge;
 use JesseGall\CodeCommandments\Cs\Codebase as CSharpCodebase;
 use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Py\Codebase as PythonCodebase;
+use JesseGall\CodeCommandments\Tests\Cs\NeedsTheBridge;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
 use PHPUnit\Framework\TestCase;
 
@@ -18,6 +18,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class EngineTest extends TestCase
 {
+    use NeedsTheBridge;
+
     public function test_each_language_is_read_by_its_engine(): void
     {
         $this->assertSame(Engine::Backend, Language::Php->engine());
@@ -45,9 +47,7 @@ final class EngineTest extends TestCase
 
     public function test_the_csharp_engine_scans_through_the_bridge(): void
     {
-        if (Bridge::located()->isNone()) {
-            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
-        }
+        $this->requireTheBridge();
 
         $root = sys_get_temp_dir() . '/cc-engine-scan-' . uniqid();
         mkdir($root);

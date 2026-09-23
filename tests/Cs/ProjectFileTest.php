@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cs;
 
-use JesseGall\CodeCommandments\Cs\Bridge;
 use JesseGall\CodeCommandments\Cs\Codebase;
 use JesseGall\CodeCommandments\Cs\NodeMatch;
 use PHPUnit\Framework\TestCase;
@@ -16,13 +15,13 @@ use PHPUnit\Framework\TestCase;
  */
 final class ProjectFileTest extends TestCase
 {
+    use NeedsTheBridge;
+
     private string $root;
 
     protected function setUp(): void
     {
-        if (Bridge::located()->isNone()) {
-            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
-        }
+        $this->requireTheBridge();
 
         $this->root = sys_get_temp_dir() . '/cc-project-file-' . uniqid();
         mkdir("{$this->root}/src/Shop", 0777, true);

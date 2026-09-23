@@ -54,6 +54,8 @@ Duplication is a body of real substance, twice.
 
 - [ ] Hoist a method body written twice into one shared method, and call it from both places.
       _Move the body to one method on the type that owns the data (or an extension or static helper both callers reference), and replace every copy with a call to it._
+- [ ] Merge two methods that differ only in a literal into one, and pass what differs as a parameter.
+      _Name the literal that differs, make it a parameter of one shared method, and call that from both places._
 
 ## Worked example
 
@@ -159,14 +161,17 @@ public IReadOnlyList<string> Rows() => LineLayout.Describe(order.Lines);
 public IReadOnlyList<string> Items() => LineLayout.Describe(order.Lines);
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/duplication` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `duplicate-csharp-method`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `duplicate-csharp-method`, `near-duplicate-csharp-method`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

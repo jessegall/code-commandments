@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cs;
 
-use JesseGall\CodeCommandments\Cs\Bridge;
 use JesseGall\CodeCommandments\Cs\Codebase;
 use JesseGall\CodeCommandments\Cs\NodeMatch;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -18,6 +17,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class StructuralHashTest extends TestCase
 {
+    use NeedsTheBridge;
+
     private const string SOURCE = <<<'CS'
         using System.Collections.Generic;
 
@@ -94,9 +95,7 @@ final class StructuralHashTest extends TestCase
 
     protected function setUp(): void
     {
-        if (Bridge::located()->isNone()) {
-            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
-        }
+        $this->requireTheBridge();
 
         foreach (Codebase::fromString(self::SOURCE, 'Ledger.cs')->whereMethodDeclaration()->get() as $method) {
             $this->methods[$method->name()] = $method;

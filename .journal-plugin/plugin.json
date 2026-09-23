@@ -1670,6 +1670,19 @@
             ],
             "detail": true
         },
+        "sin_near-duplicate-csharp-method": {
+            "title": "NearDuplicateMethod",
+            "help": "Two-or-more C# members with one control-flow skeleton that differ only in their local names or their string, number and character literals — a type-2 clone, one method waiting for a parameter.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/duplication",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_mirrored-server-type": {
             "title": "MirroredServerType",
             "help": "Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. /",

@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Testing;
 
-use JesseGall\CodeCommandments\CSharp\Detector as CSharpDetector;
-use JesseGall\CodeCommandments\Cs\Bridge;
 use JesseGall\CodeCommandments\Cs\Codebase as CSharpCodebase;
 use JesseGall\CodeCommandments\Cs\NodeMatch as CSharpNodeMatch;
+use JesseGall\CodeCommandments\CSharp\Detector as CSharpDetector;
 use JesseGall\CodeCommandments\Py\Codebase;
 use JesseGall\CodeCommandments\Py\NodeMatch;
 use JesseGall\CodeCommandments\Python\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\FixAtTheSource;
 use JesseGall\CodeCommandments\Testing\ModuleMarkerVerifier;
+use JesseGall\CodeCommandments\Tests\Cs\NeedsTheBridge;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -23,6 +23,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ModuleMarkerVerifierTest extends TestCase
 {
+    use NeedsTheBridge;
+
     private string $root;
 
     protected function setUp(): void
@@ -30,7 +32,7 @@ final class ModuleMarkerVerifierTest extends TestCase
         $this->root = sys_get_temp_dir() . '/cc-py-markers-' . uniqid();
         mkdir($this->root);
         file_put_contents("{$this->root}/shop.py", <<<'PY'
-            # @sin PythonProbe
+            # @sin Probe
             def marked_and_flagged():
                 pass
 
@@ -40,7 +42,7 @@ final class ModuleMarkerVerifierTest extends TestCase
 
 
             class Store:
-                # @sin PythonProbe
+                # @sin Probe
                 limit = 10
             PY);
     }
@@ -60,19 +62,17 @@ final class ModuleMarkerVerifierTest extends TestCase
 
     public function test_csharp_markers_are_verified_the_same_way(): void
     {
-        if (Bridge::located()->isNone()) {
-            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
-        }
+        $this->requireTheBridge();
 
         file_put_contents("{$this->root}/Store.cs", <<<'CS'
             public class Store
             {
-                // @sin CSharpProbe
+                // @sin Probe
                 public void MarkedAndFlagged() {}
 
                 public void FlaggedButUnmarked() {}
 
-                // @sin CSharpProbe
+                // @sin Probe
                 private int limit = 10;
             }
             CS);
@@ -90,13 +90,13 @@ final class ModuleMarkerVerifierTest extends TestCase
 }
 
 /**
- * A detector flagging every function — named, so a `# @sin PythonProbe` marker names its sin.
+ * A detector flagging every function — named, so a `# @sin Probe` marker names its sin.
  */
 final class PythonProbeDetector implements Detector
 {
     public function sin(): Sin
     {
-        return new PythonProbe();
+        return new Probe();
     }
 
     /**
@@ -108,7 +108,7 @@ final class PythonProbeDetector implements Detector
     }
 }
 
-final class PythonProbe extends Sin
+final class Probe extends Sin
 {
     public function __construct()
     {
@@ -117,13 +117,13 @@ final class PythonProbe extends Sin
 }
 
 /**
- * The C# twin of {@see PythonProbeDetector}: every function, named by its `// @sin CSharpProbe` marker.
+ * The C# twin of {@see PythonProbeDetector}: every function, named by its `// @sin Probe` marker.
  */
 final class CSharpProbeDetector implements CSharpDetector
 {
     public function sin(): Sin
     {
-        return new CSharpProbe();
+        return new Probe();
     }
 
     /**
@@ -132,13 +132,5 @@ final class CSharpProbeDetector implements CSharpDetector
     public function find(CSharpCodebase $codebase): array
     {
         return $codebase->whereFunction()->get();
-    }
-}
-
-final class CSharpProbe extends Sin
-{
-    public function __construct()
-    {
-        parent::__construct(name: 'probe', skill: FixAtTheSource::class, description: 'probe', rule: 'probe');
     }
 }

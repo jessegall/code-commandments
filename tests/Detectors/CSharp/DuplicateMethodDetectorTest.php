@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Detectors\CSharp;
 
-use JesseGall\CodeCommandments\Cs\Bridge;
 use JesseGall\CodeCommandments\Cs\Codebase;
 use JesseGall\CodeCommandments\Cs\NodeMatch;
 use JesseGall\CodeCommandments\Detectors\CSharp\DuplicateMethodDetector;
+use JesseGall\CodeCommandments\Tests\Cs\NeedsTheBridge;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -16,6 +16,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class DuplicateMethodDetectorTest extends TestCase
 {
+    use NeedsTheBridge;
+
     private const string LOAD = <<<'CS'
         {
             var found = new List<int>();
@@ -30,9 +32,7 @@ final class DuplicateMethodDetectorTest extends TestCase
 
     protected function setUp(): void
     {
-        if (Bridge::located()->isNone()) {
-            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
-        }
+        $this->requireTheBridge();
     }
 
     public function test_flags_a_copy_renamed_under_another_method(): void

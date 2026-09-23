@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Detectors\CSharp;
 
-use JesseGall\CodeCommandments\Cs\Bridge;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Testing\EngineFixture;
 use JesseGall\CodeCommandments\Testing\FixtureTestCase;
 use JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage;
+use JesseGall\CodeCommandments\Tests\Cs\NeedsTheBridge;
 
 /**
  * The C# self-checking fixture: every C# {@see Catalog} detector over the Shop project, checked against
@@ -17,6 +17,7 @@ use JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage;
  */
 final class CSharpFixtureTest extends FixtureTestCase
 {
+    use NeedsTheBridge;
     use ProvesMarkerCoverage;
 
     protected function setUp(): void
@@ -25,9 +26,7 @@ final class CSharpFixtureTest extends FixtureTestCase
             $this->markTestSkipped('no C# rule ships yet — the first one enrols this fixture');
         }
 
-        if (Bridge::located()->isNone()) {
-            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
-        }
+        $this->requireTheBridge();
     }
 
     protected function fixture(): EngineFixture

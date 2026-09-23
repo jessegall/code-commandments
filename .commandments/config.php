@@ -233,6 +233,7 @@ $disabledSins = function (Config $config): void {
 
         // ----------[ C# ]----------
         // Sins\CSharp\DuplicateMethod::class,
+        // Sins\CSharp\NearDuplicateMethod::class,
     );
 };
 

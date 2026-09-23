@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cs;
 
-use JesseGall\CodeCommandments\Cs\Bridge;
 use JesseGall\CodeCommandments\Cs\Codebase;
 use JesseGall\CodeCommandments\Cs\NodeMatch;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -17,6 +16,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class FunctionBodyTest extends TestCase
 {
+    use NeedsTheBridge;
+
     private const string SOURCE = <<<'CS'
         public enum Color { Red, Green }
 
@@ -89,9 +90,7 @@ final class FunctionBodyTest extends TestCase
 
     protected function setUp(): void
     {
-        if (Bridge::located()->isNone()) {
-            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
-        }
+        $this->requireTheBridge();
 
         foreach (Codebase::fromString(self::SOURCE, 'Square.cs')->whereFunction()->get() as $member) {
             $this->members[$member->name() ?: $member->node->kind] ??= $member;

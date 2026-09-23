@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cs;
 
-use JesseGall\CodeCommandments\Cs\Bridge;
 use JesseGall\CodeCommandments\Cs\Codebase;
 use JesseGall\CodeCommandments\Cs\ModuleFile;
 use JesseGall\CodeCommandments\Cs\Node;
@@ -18,15 +17,19 @@ use PHPUnit\Framework\TestCase;
  */
 final class CorpusTest extends TestCase
 {
+    use NeedsTheBridge;
+
     private const string CORPUS = '/projects/worldwatchmarket/dullahan';
 
     public function test_every_file_reads_whole_and_in_place(): void
     {
         $root = getenv('CS_CORPUS') ?: (string) getenv('HOME') . self::CORPUS;
 
-        if (! is_dir($root) || Bridge::located()->isNone()) {
-            $this->markTestSkipped('needs ~/projects/worldwatchmarket/dullahan and the dotnet SDK');
+        if (! is_dir($root)) {
+            $this->markTestSkipped('needs ~/projects/worldwatchmarket/dullahan');
         }
+
+        $this->requireTheBridge();
 
         $modules = Codebase::scan($root)->modules();
 

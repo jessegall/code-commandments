@@ -9,10 +9,9 @@ use JesseGall\CodeCommandments\Cli\Judge\DetectorRunner;
 use JesseGall\CodeCommandments\Cli\Judge\Views;
 use JesseGall\CodeCommandments\Cli\ProgressBar;
 use JesseGall\CodeCommandments\Cli\Scope\Scope;
-use JesseGall\CodeCommandments\CSharp\Detector as CSharpDetector;
-use JesseGall\CodeCommandments\Cs\Bridge;
 use JesseGall\CodeCommandments\Cs\Codebase as CSharpCodebase;
 use JesseGall\CodeCommandments\Cs\NodeMatch as CSharpNodeMatch;
+use JesseGall\CodeCommandments\CSharp\Detector as CSharpDetector;
 use JesseGall\CodeCommandments\Detectors\Backend\DuplicateFunctionDetector;
 use JesseGall\CodeCommandments\Detectors\CrossFileSet;
 use JesseGall\CodeCommandments\Finding;
@@ -21,6 +20,7 @@ use JesseGall\CodeCommandments\Py\NodeMatch;
 use JesseGall\CodeCommandments\Python\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\FixAtTheSource;
+use JesseGall\CodeCommandments\Tests\Cs\NeedsTheBridge;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -30,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class DetectorRunnerEnginesTest extends TestCase
 {
+    use NeedsTheBridge;
+
     public function test_every_engine_is_judged_in_one_run_whatever_the_parallelism(): void
     {
         $sequential = $this->locations(1);
@@ -41,9 +43,7 @@ final class DetectorRunnerEnginesTest extends TestCase
 
     public function test_a_csharp_rule_is_judged_beside_the_others(): void
     {
-        if (Bridge::located()->isNone()) {
-            $this->markTestSkipped('the .NET SDK is not installed, so there is no bridge to read C# with');
-        }
+        $this->requireTheBridge();
 
         $csharp = CSharpCodebase::fromString("public class Orders\n{\n    public int Total() => 1;\n}\n", 'Orders.cs');
         $group = [[new EveryCSharpFunction()], Views::of($csharp, Scope::everything(), CrossFileSet::unread())];
