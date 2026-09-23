@@ -144,6 +144,45 @@ class NodeMatch implements Located
     }
 
     /**
+     * How many rungs this `if` ladder has when every one compares the SAME subject with a constant —
+     * `if (kind == Kind.Box) … else if (kind == Kind.Pallet) …` — the subjects compared as fingerprinted
+     * expressions. Zero for a ladder whose rungs test anything else, and for an `else if` itself.
+     */
+    public function subjectLadderLength(): int
+    {
+        if (! $this->node->is('IfStatement') || $this->isElseIf()) {
+            return 0;
+        }
+
+        $subjects = [];
+
+        foreach (self::rungs($this->node) as $rung) {
+            $subject = $rung->expressions()[0]->comparisonSubject();
+
+            if ($subject->isNone()) {
+                return 0;
+            }
+
+            $subjects[StructuralHash::ofExpression($subject->unwrap())] = true;
+        }
+
+        return count($subjects) === 1 ? count(self::rungs($this->node)) : 0;
+    }
+
+    /**
+     * The `if` statements of the ladder $if opens — itself, then each `else if` in turn.
+     *
+     * @return list<Node>
+     */
+    private static function rungs(Node $if): array
+    {
+        $else = $if->children()[1] ?? null;
+        $next = $else?->children()[0];
+
+        return [$if, ...($next?->is('IfStatement') === true ? self::rungs($next) : [])];
+    }
+
+    /**
      * How many choices this node sits inside, within the function it belongs to: each `if`, loop or
      * `switch` whose body holds it — an `else if` a rung of the ladder it continues, not a level of its
      * own.

@@ -56,6 +56,7 @@ final class Node implements SyntaxNode, SyntaxExpression
         public readonly ?CallTarget $target,
         public readonly ?string $symbol,
         public readonly bool $inherited,
+        public readonly bool $constant,
     ) {}
 
     /**
@@ -77,6 +78,7 @@ final class Node implements SyntaxNode, SyntaxExpression
             target: is_array($target) ? new CallTarget($target['type'], $target['name'], $target['parameters'] ?? []) : null,
             symbol: $written['symbol'] ?? null,
             inherited: array_key_exists('inherited', $written),
+            constant: array_key_exists('constant', $written),
         )->locatedAt((int) $written['start'], (int) $written['end']);
     }
 
@@ -237,9 +239,47 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
-     * Is this a literal — a string, a number, `true`, `null`, `default` — with nothing computed in it?
+     * Does this expression have a value the compiler fixes — a literal, an enum member, a `const`, or
+     * arithmetic on them? What a lookup table answers with and a ladder compares against.
      */
     public function isConstant(): bool
+    {
+        return $this->constant;
+    }
+
+    /**
+     * What this condition compares with a constant — `status` in `status == Status.Paid` or in
+     * `status is Status.Paid` — and none for a condition that is not such a comparison.
+     *
+     * @return Option<self>
+     */
+    public function comparisonSubject(): Option
+    {
+        if ($this->is('IsPatternExpression') && ($this->children[1] ?? null)?->is('ConstantPattern') === true) {
+            return Option::some($this->children[0]);
+        }
+
+        if ($this->is('IsExpression') && ($this->children[1] ?? null)?->isConstant() === true) {
+            return Option::some($this->children[0]);
+        }
+
+        if (! $this->is('EqualsExpression')) {
+            return Option::none();
+        }
+
+        [$left, $right] = $this->expressions();
+
+        if ($left->isConstant() === $right->isConstant()) {
+            return Option::none();
+        }
+
+        return Option::some($left->isConstant() ? $right : $left);
+    }
+
+    /**
+     * Is this a literal written in the source — a string, a number, a character, `true`, `null`, `default`?
+     */
+    public function isLiteral(): bool
     {
         return str_ends_with($this->kind, 'LiteralExpression');
     }

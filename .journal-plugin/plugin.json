@@ -1683,6 +1683,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-subject-ladder": {
+            "title": "SubjectLadder",
+            "help": "An `if`/`else if` ladder comparing one subject with constant after constant — the C# twin of the backend's and Python's ladder rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/flow",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_deep-csharp-nesting": {
             "title": "DeepNesting",
             "help": "An `if`, loop or `switch` that opens a fourth level of choices inside one C# method — the arrow the backend's and Python's nesting rules find, counted over every kind of choice C# writes.",

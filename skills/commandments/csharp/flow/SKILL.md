@@ -80,6 +80,8 @@ or extract the inner block into a method named for what it decides.
       _Guard the outer levels away (`return`/`continue` past what does not apply), let LINQ do the inner iteration, or extract the inner block into a method named for what it decides._
 - [ ] Drop the `else` after a branch that returns, throws, continues or breaks — let the rest run at the method's own level.
       _Delete the `else` and its braces and dedent its block; the exit above it already says the rest only runs when the condition was false._
+- [ ] Dispatch on a value with a `switch` expression, or put the per-case behaviour on the type — never a ladder of `==` tests on one subject.
+      _Replace the ladder with a `switch` expression over the subject (the compiler checks it covers every case), or move each case's behaviour onto the type it belongs to._
 
 ## Worked example
 
@@ -126,17 +128,17 @@ private static string Reorder(string warehouse, Shelf shelf) =>
     $"{warehouse}: {shelf.Minimum - shelf.OnHand} x {shelf.Sku} from {shelf.Supplier}";
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/flow` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-csharp-nesting`, `redundant-csharp-else`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `deep-csharp-nesting`, `redundant-csharp-else`, `csharp-subject-ladder`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

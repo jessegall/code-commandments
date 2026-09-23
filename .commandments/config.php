@@ -237,6 +237,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\DuplicateMethod::class,
         // Sins\CSharp\NearDuplicateMethod::class,
         // Sins\CSharp\RedundantElse::class,
+        // Sins\CSharp\SubjectLadder::class,
     );
 };
 

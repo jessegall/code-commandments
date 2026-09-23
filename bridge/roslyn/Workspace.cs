@@ -15,7 +15,7 @@ public sealed class Workspace
 
     private static readonly CSharpCompilationOptions Compiled = new(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable);
 
-    private readonly Dictionary<string, IReadOnlyList<MetadataReference>> references = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Reach> reaches = new(StringComparer.Ordinal);
 
     private readonly Dictionary<string, (DateTime Written, long Length, SyntaxTree Tree)> trees = new(StringComparer.Ordinal);
 
@@ -51,8 +51,8 @@ public sealed class Workspace
 
     /// <summary>
     /// The compilation of <paramref name="csproj"/>, its referenced projects compiled first. What a
-    /// referenced project reaches flows on, as MSBuild lets it: the projects it references and the
-    /// packages and frameworks it compiles against are this project's too. A reference back into a
+    /// referenced project reaches flows on, as MSBuild lets it: the projects it references, its packages,
+    /// and its shared frameworks by name — loaded for this project's own target framework. A reference back into a
     /// project still being compiled — a cycle MSBuild would refuse — is left out.
     /// </summary>
     private CSharpCompilation Compile(string csproj, Solution solution, IReadOnlyDictionary<string, List<SyntaxTree>> owned, Dictionary<string, CSharpCompilation> compilations, HashSet<string> compiling)
@@ -66,7 +66,7 @@ public sealed class Workspace
 
         var reached = Reached(csproj, solution, compiling);
         var projects = reached.Select(other => Compile(other, solution, owned, compilations, compiling).ToMetadataReference());
-        var assemblies = new[] { csproj }.Concat(reached).SelectMany(ReferencesOf).DistinctBy(reference => Path.GetFileName(reference.Display), StringComparer.OrdinalIgnoreCase);
+        var assemblies = References.Load(ReachOf(csproj), reached.Select(ReachOf));
         var sources = owned.GetValueOrDefault(csproj) ?? [];
         var usings = CSharpSyntaxTree.ParseText(GlobalUsings.Of(csproj), Options);
 
@@ -99,11 +99,11 @@ public sealed class Workspace
         return reached;
     }
 
-    private IReadOnlyList<MetadataReference> ReferencesOf(string csproj)
+    private Reach ReachOf(string csproj)
     {
-        if (!references.TryGetValue(csproj, out var found))
+        if (!reaches.TryGetValue(csproj, out var found))
         {
-            references[csproj] = found = References.Of(csproj);
+            reaches[csproj] = found = References.Of(csproj);
         }
 
         return found;

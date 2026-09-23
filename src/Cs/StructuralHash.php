@@ -29,7 +29,7 @@ final class StructuralHash extends SyntaxHash
 
     protected static function literal(SyntaxExpression $literal, bool $normalize): ?string
     {
-        if (! $literal instanceof Node || ! ($literal->isConstant() || $literal->is('InterpolatedStringText'))) {
+        if (! $literal instanceof Node || ! ($literal->isLiteral() || $literal->is('InterpolatedStringText'))) {
             return null;
         }
 

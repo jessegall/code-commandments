@@ -5,19 +5,39 @@ using Microsoft.CodeAnalysis;
 namespace CodeCommandments.Bridge;
 
 /// <summary>
-/// The assemblies a run compiles against — found, never built or restored. Each project's frameworks
-/// come from the installed reference packs; its packages from obj/project.assets.json when it has been
-/// restored (transitive ones included), else from the NuGet cache by id and version. Only when no
-/// project says what it targets does the run fall back to the runtime's own assemblies.
+/// What a project reaches — its target framework, the shared frameworks it compiles against by name, and
+/// the package assemblies it references — found, never built or restored. A restored project is read
+/// from its project.assets.json (transitive packages included) for its first framework only; an
+/// unrestored one from its project file and the NuGet cache.
+/// </summary>
+public sealed record Reach(string Tfm, IReadOnlyList<string> Frameworks, IReadOnlyList<string> Packages);
+
+/// <summary>
+/// The assemblies a compilation loads: shared frameworks from the installed reference packs for ONE
+/// target framework, and package assemblies; the runtime's own assemblies only when nothing names
+/// System.Runtime.
 /// </summary>
 public static class References
 {
-    /// <summary>What the project <paramref name="csproj"/> compiles against — the runtime's own assemblies when it says nothing that resolves.</summary>
-    public static IReadOnlyList<MetadataReference> Of(string csproj)
+    public static Reach Of(string csproj)
     {
-        var assets = Path.Combine(ProjectFile.Read(csproj).Intermediate(), "project.assets.json");
+        var project = ProjectFile.Read(csproj);
+        var assets = Path.Combine(project.Intermediate(), "project.assets.json");
 
-        return Load(File.Exists(assets) ? FromAssets(assets) : FromProjectFile(csproj));
+        return File.Exists(assets) ? FromAssets(assets) : FromProjectFile(project);
+    }
+
+    /// <summary>
+    /// What a project whose reach is <paramref name="own"/> compiles against, joined by what the projects
+    /// it references reach: their shared frameworks by name, resolved for this project's framework, and
+    /// their packages. Each assembly is loaded once, the project's own first.
+    /// </summary>
+    public static IReadOnlyList<MetadataReference> Load(Reach own, IEnumerable<Reach> reached)
+    {
+        var all = reached.Prepend(own).ToList();
+        var frameworks = all.SelectMany(reach => reach.Frameworks).Distinct(StringComparer.OrdinalIgnoreCase);
+
+        return Load([..frameworks.SelectMany(framework => FrameworkPack(framework, own.Tfm)), ..all.SelectMany(reach => reach.Packages)]);
     }
 
     /// <summary>What a file that belongs to no project compiles against: the running runtime's assemblies.</summary>
@@ -44,44 +64,45 @@ public static class References
         return dlls.Values.Select(dll => (MetadataReference)MetadataReference.CreateFromFile(dll)).ToList();
     }
 
-    /// <summary>What a restored project compiles against: its frameworks and every package it resolved.</summary>
-    private static IEnumerable<string> FromAssets(string path)
+    /// <summary>
+    /// What a restored project reaches, for the first framework it restored — a runtime-specific target
+    /// (<c>net8.0/linux-x64</c>) and a second framework of a multi-targeting project left aside, so one
+    /// compilation never mixes two frameworks' assemblies.
+    /// </summary>
+    private static Reach FromAssets(string path)
     {
         using var assets = JsonDocument.Parse(File.ReadAllText(path));
         var root = assets.RootElement;
         var folders = root.GetProperty("packageFolders").EnumerateObject().Select(folder => folder.Name).ToList();
         var libraries = root.GetProperty("libraries");
+        var target = root.GetProperty("targets").EnumerateObject().FirstOrDefault(candidate => !candidate.Name.Contains('/'));
 
-        foreach (var target in root.GetProperty("targets").EnumerateObject())
+        if (target.Value.ValueKind != JsonValueKind.Object)
         {
-            var tfm = target.Name.Split('/')[0];
+            return new Reach("", ["Microsoft.NETCore.App"], []);
+        }
 
-            foreach (var framework in Frameworks(root, tfm))
+        var packages = new List<string>();
+
+        foreach (var package in target.Value.EnumerateObject())
+        {
+            if (!package.Value.TryGetProperty("compile", out var compile) || !libraries.TryGetProperty(package.Name, out var library) || !library.TryGetProperty("path", out var folder))
             {
-                foreach (var dll in FrameworkPack(framework, tfm))
-                {
-                    yield return dll;
-                }
+                continue;
             }
 
-            foreach (var package in target.Value.EnumerateObject())
+            foreach (var file in compile.EnumerateObject().Select(entry => entry.Name).Where(name => name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
             {
-                if (!package.Value.TryGetProperty("compile", out var compile) || !libraries.TryGetProperty(package.Name, out var library) || !library.TryGetProperty("path", out var folder))
-                {
-                    continue;
-                }
+                var found = folders.Select(cache => Path.Combine(cache, folder.GetString()!, file)).FirstOrDefault(File.Exists);
 
-                foreach (var file in compile.EnumerateObject().Select(entry => entry.Name).Where(name => name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
+                if (found is not null)
                 {
-                    var found = folders.Select(packages => Path.Combine(packages, folder.GetString()!, file)).FirstOrDefault(File.Exists);
-
-                    if (found is not null)
-                    {
-                        yield return found;
-                    }
+                    packages.Add(found);
                 }
             }
         }
+
+        return new Reach(target.Name, Frameworks(root, target.Name).ToList(), packages);
     }
 
     private static IEnumerable<string> Frameworks(JsonElement root, string tfm)
@@ -99,10 +120,9 @@ public static class References
         return frameworks.Distinct(StringComparer.OrdinalIgnoreCase);
     }
 
-    /// <summary>What an unrestored project names: its SDK's frameworks, and its direct packages from the NuGet cache.</summary>
-    private static IEnumerable<string> FromProjectFile(string csproj)
+    /// <summary>What an unrestored project reaches: its SDK's frameworks, and its direct packages from the NuGet cache.</summary>
+    private static Reach FromProjectFile(ProjectFile project)
     {
-        var project = ProjectFile.Read(csproj);
         var tfm = project.TargetFramework();
         var frameworks = new List<string> { "Microsoft.NETCore.App" };
 
@@ -113,18 +133,7 @@ public static class References
 
         frameworks.AddRange(project.FrameworkReferences());
 
-        foreach (var dll in frameworks.Distinct(StringComparer.OrdinalIgnoreCase).SelectMany(framework => FrameworkPack(framework, tfm)))
-        {
-            yield return dll;
-        }
-
-        foreach (var (id, version) in project.PackageReferences())
-        {
-            foreach (var dll in CachedPackage(id, version, tfm))
-            {
-                yield return dll;
-            }
-        }
+        return new Reach(tfm, frameworks.Distinct(StringComparer.OrdinalIgnoreCase).ToList(), project.PackageReferences().SelectMany(package => CachedPackage(package.Id, package.Version, tfm)).ToList());
     }
 
     /// <summary>A framework's reference assemblies for $tfm, from the installed reference pack.</summary>

@@ -223,6 +223,16 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     }
 
     /// <summary>What the compiler resolved about the node, when it resolved anything.</summary>
+    /// <summary>
+    /// Has <paramref name="expression"/> a value the compiler fixes — folded; a name bound to an enum
+    /// member or a <c>const</c>, as the right side of <c>x is Status.Paid</c> is, though it stands where
+    /// a type could; or <c>typeof</c> a concrete type. <c>typeof(T)</c> over a type parameter varies.
+    /// </summary>
+    private static bool IsConstant(ExpressionSyntax expression, SemanticModel model) =>
+        model.GetConstantValue(expression).HasValue
+        || model.GetSymbolInfo(expression).Symbol is IFieldSymbol { HasConstantValue: true }
+        || (expression is TypeOfExpressionSyntax typeOf && model.GetTypeInfo(typeOf.Type).Type is not (null or ITypeParameterSymbol or IErrorTypeSymbol));
+
     private void WriteFacts(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
     {
         if (node is ExpressionSyntax expression && !SyntaxFacts.IsInTypeOnlyContext(expression))
@@ -234,6 +244,11 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
                 json.WriteString("type", type.ToDisplayString(Qualified));
                 json.WriteBoolean("nullable", type.NullableAnnotation == NullableAnnotation.Annotated);
             }
+        }
+
+        if (node is ExpressionSyntax value && IsConstant(value, model))
+        {
+            json.WriteBoolean("constant", true);
         }
 
         if (node is InvocationExpressionSyntax or ObjectCreationExpressionSyntax or ImplicitObjectCreationExpressionSyntax)
