@@ -35,6 +35,8 @@ final class Codebase implements ModuleCodebase
 
     private ?CallIndex $index = null;
 
+    private ?Enums $enums = null;
+
     /**
      * @param  array<string, string>  $sources  path => source
      */
@@ -99,6 +101,14 @@ final class Codebase implements ModuleCodebase
     public function index(): CallIndex
     {
         return $this->index ??= new CallIndex($this);
+    }
+
+    /**
+     * The enums this codebase declares — found once and kept.
+     */
+    public function enums(): Enums
+    {
+        return $this->enums ??= new Enums($this);
     }
 
     public function whereFile(): FileQuery

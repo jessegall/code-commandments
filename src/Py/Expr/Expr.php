@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Py\Expr;
 
 use JesseGall\CodeCommandments\ExpressionTree;
 use JesseGall\CodeCommandments\Positioned;
+use JesseGall\CodeCommandments\Py\Enums;
 use JesseGall\CodeCommandments\Py\StructuralHash;
 use JesseGall\CodeCommandments\SyntaxExpression;
 use JesseGall\PhpTypes\Option;
@@ -308,6 +309,76 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * The enum whose members an `or` chain tests one subject against — `Status` in
+     * `x == Status.A or x == Status.B` (or with `is`) — when every link is such a test of the same
+     * subject against a member of the same one of $enums, two or more of them.
+     *
+     * @return Option<string>
+     */
+    public function orChainedCaseClass(Enums $enums): Option
+    {
+        $links = $this->orLinks();
+        $tests = array_map(static fn (self $link): ?array => $link->caseTest($enums), $links);
+
+        if (count($links) < 2 || in_array(null, $tests, true)) {
+            return Option::none();
+        }
+
+        [$subject, $class] = $tests[0];
+        $alike = array_all($tests, static fn (array $test): bool => $test[1] === $class && $test[0]->isSame($subject));
+
+        return $alike ? Option::some($class) : Option::none();
+    }
+
+    /**
+     * The operands of an `or` chain, flattened — this one alone when it is not an `or`.
+     *
+     * @return list<self>
+     */
+    private function orLinks(): array
+    {
+        return $this->isOr()
+            ? [...$this->get('left')->orLinks(), ...$this->get('right')->orLinks()]
+            : [$this];
+    }
+
+    /**
+     * A `==` or `is` test of a subject against a member of one of $enums, as the subject and the enum.
+     *
+     * @return array{self, string}|null
+     */
+    private function caseTest(Enums $enums): ?array
+    {
+        if ($this->kind !== ExprKind::Compare || ! in_array($this->get('operators'), [['=='], ['is']], true)) {
+            return null;
+        }
+
+        [$left, $right] = $this->get('operands');
+
+        return match (true) {
+            $right->isMemberOf($enums) => [$left, $right->get('object')->dottedName()],
+            $left->isMemberOf($enums) => [$right, $left->get('object')->dottedName()],
+            default => null,
+        };
+    }
+
+    /**
+     * Is this `Class.MEMBER` of one of $enums?
+     */
+    private function isMemberOf(Enums $enums): bool
+    {
+        return $this->kind === ExprKind::Attribute && $this->get('object')->is(ExprKind::Name) && $enums->isEnum($this->get('object')->dottedName());
+    }
+
+    /**
+     * Is this an `or`?
+     */
+    public function isOr(): bool
+    {
+        return $this->kind === ExprKind::Binary && $this->get('op') === 'or';
+    }
+
+    /**
      * Is this an `and` or an `or` — an operator that may leave its right side unrun?
      */
     public function isShortCircuit(): bool
@@ -373,7 +444,7 @@ final class Expr implements SyntaxExpression
      */
     private function defaulted(): Option
     {
-        if ($this->kind === ExprKind::Binary && $this->get('op') === 'or') {
+        if ($this->isOr()) {
             $left = $this->get('left');
 
             return $left->is(ExprKind::Binary) && $left->get('op') === 'and' ? Option::none() : Option::some([$left, $this->get('right')]);

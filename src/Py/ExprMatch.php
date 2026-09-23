@@ -174,6 +174,14 @@ class ExprMatch implements Located
     }
 
     /**
+     * Is this one link of a larger `or` chain rather than the chain itself?
+     */
+    public function isInsideOr(): bool
+    {
+        return $this->module->wrapperOf($this->expr)->isSomeAnd(static fn (Expr $around): bool => $around->isOr());
+    }
+
+    /**
      * The names of the parameters a caller of $function supplies — every one but a bound method's first.
      *
      * @return list<string>
