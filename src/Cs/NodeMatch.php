@@ -207,6 +207,64 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this expression handed straight to a call as one of its arguments?
+     */
+    public function fillsArgument(): bool
+    {
+        return $this->module->parentOf($this->node)->isSomeAnd(static fn (Node $parent): bool => $parent->is('Argument'));
+    }
+
+    /**
+     * Does this member answer a lookup miss with an invented empty value? Every value it returns — each
+     * arm of a conditional counted on its own — is either `""`/`0`/`false`, or what a dictionary lookup
+     * found: the lookup itself, or the `out` variable a `TryGetValue` in this member filled.
+     */
+    public function isInventingOnMiss(): bool
+    {
+        $body = $this->node->functionBody();
+
+        if ($body->isNone()) {
+            return false;
+        }
+
+        $scope = [$body->unwrap(), ...$body->unwrap()->descendants()];
+        $answers = array_merge([], ...array_map(
+            static fn (Node $return): array => $return->returnedValue()->mapOr([], static fn (Node $value): array => $value->answers()),
+            array_values(array_filter($scope, static fn (Node $node): bool => $node->isReturn())),
+        ));
+        $found = self::lookedUpNames($scope);
+        $invented = array_filter($answers, static fn (Node $answer): bool => $answer->isEmptyScalar());
+        $real = array_filter($answers, static fn (Node $answer): bool => ! $answer->isEmptyScalar());
+
+        return $invented !== [] && $real !== [] && array_all($real, static fn (Node $answer): bool => $answer->isLookup() || ($answer->is('IdentifierName') && in_array($answer->name, $found, true)));
+    }
+
+    /**
+     * The names of the `out` variables a `TryGetValue` among $scope fills.
+     *
+     * @param  list<Node>  $scope
+     * @return list<string>
+     */
+    private static function lookedUpNames(array $scope): array
+    {
+        $names = [];
+
+        foreach ($scope as $node) {
+            foreach ($node->expressions() as $expression) {
+                foreach (array_filter($expression->flatten(), static fn (Node $call): bool => $call->isLookup() && $call->isCall()) as $lookup) {
+                    foreach ($lookup->flatten() as $part) {
+                        if ($part->is('DeclarationExpression')) {
+                            $names = [...$names, ...array_filter(array_map(static fn (Node $designation): ?string => $designation->name, array_filter($part->children, static fn (Node $child): bool => $child->is('SingleVariableDesignation'))))];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $names;
+    }
+
+    /**
      * How many choices this node sits inside, within the function it belongs to: each `if`, loop or
      * `switch` whose body holds it — an `else if` a rung of the ladder it continues, not a level of its
      * own.

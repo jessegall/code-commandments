@@ -1657,6 +1657,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-invented-default": {
+            "title": "InventedDefault",
+            "help": "A missing value papered over with an invented `\"\"`, `0` or `false` — the C# twin of Python's invented-default rule, in its hardened shape.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/absence",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-csharp-method": {
             "title": "DuplicateMethod",
             "help": "Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",

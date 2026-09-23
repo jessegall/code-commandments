@@ -30,6 +30,16 @@ final class Node implements SyntaxNode, SyntaxExpression
     ];
 
     /**
+     * The dictionary types a lookup reads, by the name the compiler gives them without their arguments.
+     */
+    private const array DICTIONARIES = [
+        'global::System.Collections.Generic.Dictionary<', 'global::System.Collections.Generic.IDictionary<',
+        'global::System.Collections.Generic.IReadOnlyDictionary<', 'global::System.Collections.Concurrent.ConcurrentDictionary<',
+        'global::System.Collections.Immutable.ImmutableDictionary<', 'global::System.Collections.Immutable.IImmutableDictionary<',
+        'global::System.Collections.Frozen.FrozenDictionary<',
+    ];
+
+    /**
      * The exceptions that name no failure a caller could catch by meaning.
      */
     private const array GENERIC_EXCEPTIONS = ['global::System.Exception', 'global::System.SystemException', 'global::System.ApplicationException', 'global::System.InvalidOperationException'];
@@ -175,6 +185,85 @@ final class Node implements SyntaxNode, SyntaxExpression
         $arguments = array_values(array_filter($created->children, static fn (self $child): bool => $child->is('ArgumentList')))[0] ?? null;
 
         return in_array($created->target?->type, self::GENERIC_EXCEPTIONS, true) && ($arguments?->children ?? []) !== [];
+    }
+
+    /**
+     * Is this a value that says "nothing" in a slot a type demands — `""`, `string.Empty`, `0`, `false`?
+     * What an invented default fills a missing value with.
+     */
+    public function isEmptyScalar(): bool
+    {
+        return match (true) {
+            $this->is('StringLiteralExpression') => $this->text === '',
+            $this->is('NumericLiteralExpression') => $this->text === '0',
+            $this->is('FalseLiteralExpression') => true,
+            $this->is('SimpleMemberAccessExpression') => $this->type?->name === 'global::System.String' && $this->children[1]->name === 'Empty',
+            default => false,
+        };
+    }
+
+    /**
+     * What this expression falls back to when its value is missing — the right side of `x ?? fallback`,
+     * or the branch a null test (`x is null ? fallback : x`, `x != null ? x : fallback`) takes on a miss.
+     *
+     * @return Option<self>
+     */
+    public function fallback(): Option
+    {
+        if ($this->is('CoalesceExpression')) {
+            return Option::some($this->expressions()[1]);
+        }
+
+        if (! $this->is('ConditionalExpression')) {
+            return Option::none();
+        }
+
+        [$test, $whenTrue, $whenFalse] = $this->expressions();
+
+        return match (true) {
+            $test->isNullTest() => Option::some($whenTrue),
+            $test->isNotNullTest() => Option::some($whenFalse),
+            default => Option::none(),
+        };
+    }
+
+    /**
+     * Does this read a dictionary by key — `TryGetValue`, `GetValueOrDefault`, or its indexer — as the
+     * compiler resolved the receiver?
+     */
+    public function isLookup(): bool
+    {
+        if ($this->is('ElementAccessExpression')) {
+            return self::isDictionary($this->children[0]->type?->name);
+        }
+
+        return $this->isCall() && in_array($this->target?->name, ['TryGetValue', 'GetValueOrDefault'], true) && self::isDictionary($this->target->type);
+    }
+
+    /**
+     * Is this condition `x is null` or `x == null`?
+     */
+    private function isNullTest(): bool
+    {
+        return ($this->is('IsPatternExpression') && ($this->children[1] ?? null)?->is('ConstantPattern') === true && $this->children[1]->children[0]->is('NullLiteralExpression'))
+            || ($this->is('EqualsExpression') && array_any($this->expressions(), static fn (self $side): bool => $side->is('NullLiteralExpression')));
+    }
+
+    /**
+     * Is this condition `x is not null` or `x != null`?
+     */
+    private function isNotNullTest(): bool
+    {
+        return ($this->is('IsPatternExpression') && ($this->children[1] ?? null)?->is('NotPattern') === true)
+            || ($this->is('NotEqualsExpression') && array_any($this->expressions(), static fn (self $side): bool => $side->is('NullLiteralExpression')));
+    }
+
+    /**
+     * Is $type — as the compiler named it, or null where it resolved none — a dictionary type?
+     */
+    private static function isDictionary(?string $type): bool
+    {
+        return $type !== null && array_any(self::DICTIONARIES, static fn (string $dictionary): bool => str_starts_with($type, $dictionary));
     }
 
     /**
