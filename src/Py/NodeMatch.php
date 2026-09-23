@@ -223,6 +223,24 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a constant in the head of a class — above its first method — declared below a field? The
+     * head reads in one fixed order, constants first; an enum's members follow the enum's own.
+     */
+    public function isConstantBelowField(Enums $enums): bool
+    {
+        [$block, $class] = [...$this->module->ancestorsOf($this->node), null, null];
+
+        if (! $class instanceof ClassDef || $class->body !== $block || ! $this->node->declaresConstant() || $enums->isEnum($class->name)) {
+            return false;
+        }
+
+        $above = array_slice($block->body, 0, (int) array_search($this->node, $block->body, true));
+
+        return ! array_any($above, static fn (Node $member): bool => $member instanceof FunctionDef)
+            && array_any($above, static fn (Node $member): bool => $member->isStateDeclaration() && ! $member->declaresConstant());
+    }
+
+    /**
      * Is this class-level state — a constant, a class attribute, a field — written below a method of its
      * class? An assignment that reads one of the methods above it (`size = property(_get_size)`) is built
      * from them and belongs after them; a dunder bound by assignment (`__hash__ = None`) is behaviour, not

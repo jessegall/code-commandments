@@ -41,6 +41,8 @@ crowded inventory by scattering it.
 
 - [ ] Declare a class's state at the top — constants, class attributes and fields above `__init__` and every method.
       _Move the assignment up to the head of the class, with the other state._
+- [ ] Read a class's head in one fixed order: constants (`UPPER_CASE`, `Final`, `ClassVar`) first, then fields.
+      _Move the constant above the first field._
 
 ## Worked example
 
@@ -66,14 +68,17 @@ class PatientSupplierClient:
         return next((response.body for response in responses if response.ok), b"")
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/class-layout` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-member-after-method`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-member-after-method`, `python-member-out-of-order`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

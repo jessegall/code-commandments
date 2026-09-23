@@ -114,6 +114,24 @@ abstract class Node implements SyntaxNode
     }
 
     /**
+     * Does this statement declare a name the class or module holds — an assignment, or an annotated
+     * field with or without a default?
+     */
+    public function isStateDeclaration(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Does this statement declare a constant — an `UPPER_CASE` name, which is how Python spells one, or
+     * a name annotated `Final` or `ClassVar`?
+     */
+    public function declaresConstant(): bool
+    {
+        return false;
+    }
+
+    /**
      * Is this a scope of its own — a `def` or a `class` — so what is written inside it belongs to
      * it rather than to the statements around it?
      */
