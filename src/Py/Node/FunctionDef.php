@@ -150,6 +150,14 @@ final class FunctionDef extends Node
     }
 
     /**
+     * Is this a `@contextmanager` — a function whose declared job is a change it undoes when the block ends?
+     */
+    public function isContextManager(): bool
+    {
+        return array_any($this->decorators, static fn (Expr $decorator): bool => in_array($decorator->dottedName(), ['contextmanager', 'contextlib.contextmanager', 'asynccontextmanager', 'contextlib.asynccontextmanager'], true));
+    }
+
+    /**
      * Is this a `@staticmethod` — called with no instance or class bound to its first parameter?
      */
     public function isStatic(): bool

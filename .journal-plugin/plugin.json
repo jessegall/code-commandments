@@ -2336,6 +2336,19 @@
             ],
             "detail": true
         },
+        "sin_python-scratch-state-restore": {
+            "title": "ScratchStateRestore",
+            "help": "A method saving and restoring its own attribute around the call — the twin of the backend's ScratchStateRestoreDetector.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/type-honesty",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-data-clump": {
             "title": "DataClump",
             "help": "The same three-or-more scalar parameters threaded through functions of two or more classes or modules — the Python twin of the backend's DataClumpDetector.",

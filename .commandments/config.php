@@ -256,6 +256,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\RaiseWithoutCause::class,
         // Sins\Python\RawDecodedReturn::class,
         // Sins\Python\RedundantElse::class,
+        // Sins\Python\ScratchStateRestore::class,
         // Sins\Python\ShortCircuitStatement::class,
         // Sins\Python\StringMatchMirrorsEnum::class,
         // Sins\Python\SubjectLadder::class,

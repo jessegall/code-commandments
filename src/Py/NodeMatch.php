@@ -223,6 +223,47 @@ class NodeMatch implements Located
     }
 
     /**
+     * Does this method save one of its own attributes to a local and later restore it from that local
+     * — `previous = self.scope … self.scope = previous`? The dance only makes sense for per-call scratch
+     * state kept on the object; the value is really an input. The local must hold what it saved — one
+     * reassigned in between is a read-modify-write, and a parameter already held a value — and a `@contextmanager` is exempt: its declared job
+     * is a change it undoes.
+     */
+    public function hasOwnStateSaveAndRestore(): bool
+    {
+        if (! $this->node instanceof FunctionDef || $this->node->isContextManager()) {
+            return false;
+        }
+
+        $writes = array_filter($this->module->nodes(), fn (Node $node): bool => $node->writtenTargets() !== [] && in_array($this->node, $this->module->ancestorsOf($node), true));
+        $locals = array_count_values(array_merge([], ...array_map(
+            static fn (Node $write): array => array_map(static fn (Expr $target): string => $target->dottedName(), $write->writtenTargets()),
+            array_values($writes),
+        )));
+        $parameters = array_map(static fn (Param $param): string => $param->name, $this->node->params);
+        $saved = [];
+
+        foreach (array_filter($writes, static fn (Node $write): bool => $write instanceof Assign) as $assign) {
+            $local = $assign->targets[0]->is(ExprKind::Name) ? (string) $assign->targets[0]->get('name') : '';
+
+            if ($local !== '' && self::isOwnState($assign->value) && $locals[$local] === 1 && ! in_array($local, $parameters, true)) {
+                $saved[$local] = $assign->value->dottedName();
+            }
+        }
+
+        return array_any($writes, static fn (Node $write): bool => $write instanceof Assign && $write->value->is(ExprKind::Name)
+            && ($saved[(string) $write->value->get('name')] ?? null) === $write->targets[0]->dottedName());
+    }
+
+    /**
+     * Is $expression a read of the object's own state — `self.scope`, `self.ctx.user`?
+     */
+    private static function isOwnState(Expr $expression): bool
+    {
+        return $expression->is(ExprKind::Attribute) && $expression->rootName() === 'self' && $expression->dottedName() !== '';
+    }
+
+    /**
      * Is this a dataclass whose own methods write one of the fields it was built from — `self.amount
      * += …`, or `object.__setattr__(self, 'amount', …)` past `frozen` — after construction? Equality,
      * sharing and caching all rest on the value staying what it is.

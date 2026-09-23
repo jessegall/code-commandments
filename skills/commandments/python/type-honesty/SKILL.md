@@ -40,6 +40,8 @@ move the value into the signature, a required attribute or a value object, and d
 
 - [ ] A required field means the caller has the value; never fill one with `""` to satisfy the signature.
       _Fetch the real value — or split a narrower dataclass that only promises what this caller knows._
+- [ ] Pass a per-call value as a parameter; don't save and restore one of your own attributes around the call.
+      _Hand the value down as an argument — or a small per-call object — and the attribute, its save and its restore disappear._
 
 ## Worked example
 
@@ -66,14 +68,17 @@ def product_teaser(product) -> ProductTeaser:
     return ProductTeaser(product.name)
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/type-honesty` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-placeholder-filled-data`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-placeholder-filled-data`, `python-scratch-state-restore`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
