@@ -29,7 +29,6 @@ use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Languages;
 use JesseGall\CodeCommandments\Packages\Exemptions;
-use JesseGall\CodeCommandments\Py\Codebase as PythonCodebase;
 use JesseGall\CodeCommandments\Sins\Commands;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Support\ClassName;
@@ -118,9 +117,12 @@ final class Judge implements Command
         $configured = $config->apply(Catalog::all(), $installed);
         $detectors = $this->select($configured->for(Engine::Backend), $options->skill, $options->sin);
         $frontend = $this->select($configured->for(Engine::Frontend), $options->skill, $options->sin);
-        $python = $this->select($configured->for(Engine::Python), $options->skill, $options->sin);
+        $modules = [];
+        foreach (Engine::modular() as $engine) {
+            $modules[$engine->value] = $this->select($configured->for($engine), $options->skill, $options->sin);
+        }
 
-        if ($detectors === [] && $frontend === [] && $python === []) {
+        if ($detectors === [] && $frontend === [] && array_merge(...array_values($modules)) === []) {
             $named = "--skill={$options->skill->unwrapOr('')} --sin={$options->sin->unwrapOr('')}";
             fwrite(STDERR, "No detector matched {$named}\n");
 
@@ -135,17 +137,17 @@ final class Judge implements Command
             return 2;
         }
 
-        return $this->judge($options, $detectors, $frontend, $python, $scope, $workspace, Commands::repentable(self::REPENT_SCOPE), Commands::scaffoldable());
+        return $this->judge($options, $detectors, $frontend, $modules, $scope, $workspace, Commands::repentable(self::REPENT_SCOPE), Commands::scaffoldable());
     }
 
     /**
      * @param  list<Detector>  $detectors  backend (PHP) detectors
      * @param  list<\JesseGall\CodeCommandments\Frontend\Detector>  $frontend  Vue detectors
-     * @param  list<\JesseGall\CodeCommandments\Python\Detector>  $python  Python detectors
+     * @param  array<string, list<Detector>>  $modules  engine value => the detectors of an engine read module by module (Python, C#)
      * @param  array<string, string>  $fixable  sin name => the `repent` command that fixes it
      * @param  array<string, string>  $scaffoldable  sin name => the `scaffold` command for its helper
      */
-    private function judge(JudgeOptions $options, array $detectors, array $frontend, array $python, Scope $scope, Workspace $workspace, array $fixable, array $scaffoldable): int
+    private function judge(JudgeOptions $options, array $detectors, array $frontend, array $modules, Scope $scope, Workspace $workspace, array $fixable, array $scaffoldable): int
     {
         $checklist = $options->checklist;
         if ($scope->isEmpty()) {
@@ -187,10 +189,7 @@ final class Judge implements Command
         // WHICH codebase each rule is judged against. A scoped run (`--changes`, `--branch`) reports
         // on a few files but parses the tree, so a rule that reads no further than the file it judges
         // is shown those files alone — its cost tracks the diff, not the tree it came from.
-        $beyond = CrossFileSet::forProject($workspace, [...$detectors, ...$frontend, ...$python]);
-
-        // Python is read only when Python rules run: a project that writes none is never parsed for it.
-        $scripts = $python === [] ? null : PythonCodebase::scan($roots, excluded: $excluded);
+        $beyond = CrossFileSet::forProject($workspace, [...$detectors, ...$frontend, ...array_merge(...array_values($modules))]);
 
         // One group per engine: its rules and the views of its codebase. Every engine is judged by the
         // same runner, so each gets the parallel workers and the recurrence twins the backend always had.
@@ -200,8 +199,12 @@ final class Judge implements Command
             $groups[] = [$frontend, Views::of($components, $scope, $beyond)];
         }
 
-        if ($scripts !== null) {
-            $groups[] = [$python, Views::of($scripts, $scope, $beyond)];
+        // An engine read module by module is scanned only when its rules run: a project that writes
+        // no Python is never parsed for it, and one with no C# never starts the Roslyn bridge.
+        foreach ($modules as $engine => $rules) {
+            if ($rules !== []) {
+                $groups[] = [$rules, Views::of(Engine::from($engine)->scan($roots, excluded: $excluded), $scope, $beyond)];
+            }
         }
 
         if ($options->benchmark) {

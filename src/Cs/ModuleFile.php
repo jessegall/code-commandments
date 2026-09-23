@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cs;
 
+use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\NodeSpans;
+use JesseGall\CodeCommandments\ParsedModule;
 use JesseGall\CodeCommandments\Span;
 use JesseGall\PhpTypes\Option;
 
 /**
  * One C# file as the Roslyn bridge read it: its source, its tree, and the way up from any node.
  */
-final class ModuleFile
+final class ModuleFile implements ParsedModule
 {
     use NodeSpans;
 
@@ -97,6 +99,11 @@ final class ModuleFile
         }
 
         return $ancestors;
+    }
+
+    public function language(): Language
+    {
+        return Language::CSharp;
     }
 
     public function lineAt(int $offset): int

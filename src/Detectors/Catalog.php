@@ -20,13 +20,13 @@ use JesseGall\CodeCommandments\WholeTree;
 final class Catalog
 {
     /**
-     * Every detector, every engine — backend, frontend, then Python.
+     * Every detector, every engine — backend, frontend, then Python and C#.
      *
      * @return list<Detector>
      */
     public static function all(): array
     {
-        return [...self::backend(), ...self::frontend(), ...self::python()];
+        return [...self::backend(), ...self::frontend(), ...self::python(), ...self::csharp()];
     }
 
     /**
@@ -95,6 +95,16 @@ final class Catalog
     }
 
     /**
+     * The C# detectors — run over a {@see \JesseGall\CodeCommandments\Cs\Codebase}.
+     *
+     * @return list<Detector>
+     */
+    public static function csharp(): array
+    {
+        return self::discover('CSharp');
+    }
+
+    /**
      * The detectors $engine runs.
      *
      * @return list<Detector>
@@ -105,6 +115,7 @@ final class Catalog
             Engine::Backend => self::backend(),
             Engine::Frontend => self::frontend(),
             Engine::Python => self::python(),
+            Engine::CSharp => self::csharp(),
         };
     }
 

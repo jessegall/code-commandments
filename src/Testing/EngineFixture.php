@@ -19,7 +19,7 @@ use JesseGall\CodeCommandments\Support\ClassName;
  *
  * @see BackendFixture the PHP engine's fixture
  * @see FrontendFixture the Vue engine's — same mechanism
- * @see PythonFixture the Python engine's — same mechanism
+ * @see ModuleFixture the Python and C# engines' — same mechanism
  */
 abstract class EngineFixture implements Fixture
 {

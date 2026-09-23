@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cs;
 
 use Closure;
-use JesseGall\CodeCommandments\Codebase as BaseCodebase;
+use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\Files\FileQuery;
+use JesseGall\CodeCommandments\ModuleCodebase;
+use JesseGall\CodeCommandments\Support\FileTree;
 use JesseGall\CodeCommandments\Support\Path;
 
 /**
@@ -14,7 +16,7 @@ use JesseGall\CodeCommandments\Support\Path;
  * answer. Without the `dotnet` SDK there is no bridge and so no C#: the codebase is empty, and C# is
  * not judged rather than failing the run.
  */
-final class Codebase implements BaseCodebase
+final class Codebase implements ModuleCodebase
 {
     /**
      * @param  list<ModuleFile>  $modules
@@ -26,19 +28,27 @@ final class Codebase implements BaseCodebase
      *
      * @param  string|list<string>  $path
      */
-    public static function scan(string|array $path): self
+    public static function scan(string|array $path, ExcludedPaths $excluded = new ExcludedPaths()): self
     {
-        return Bridge::located()->mapOr(new self([]), static fn (Bridge $bridge): self => self::readBy($bridge, $path));
+        return Bridge::located()->mapOr(new self([]), static fn (Bridge $bridge): self => self::readBy($bridge, $path, $excluded));
     }
 
     /**
-     * Every C# file under $path, read by $bridge — a bridge its holder keeps warm across reads.
+     * Every C# file under $path, read by $bridge — a bridge its holder keeps warm across reads. The
+     * bridge compiles the whole project so every type resolves, and writes back only the files the
+     * walk every engine shares let through.
      *
      * @param  string|list<string>  $path
      */
-    public static function readBy(Bridge $bridge, string|array $path): self
+    public static function readBy(Bridge $bridge, string|array $path, ExcludedPaths $excluded = new ExcludedPaths()): self
     {
-        return new self(array_map(ModuleFile::fromBridge(...), $bridge->read((array) $path)['files']));
+        $files = array_merge(...array_map(static fn (string $root): array => iterator_to_array(FileTree::filesIn($root, 'cs', $excluded), false), (array) $path));
+
+        if ($files === []) {
+            return new self([]);
+        }
+
+        return new self(array_map(ModuleFile::fromBridge(...), $bridge->read((array) $path, $files)['files']));
     }
 
     /**

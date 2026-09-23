@@ -150,6 +150,7 @@ final class Stubs
             Engine::Backend => self::backendDetector($blueprint),
             Engine::Frontend => self::frontendDetector($blueprint),
             Engine::Python => self::pythonDetector($blueprint),
+            Engine::CSharp => self::csharpDetector($blueprint),
         };
     }
 
@@ -184,6 +185,52 @@ final class Stubs
                 // BEFORE you write a line of this: skim what the Python engine already answers —
                 // `whereFunction`, `whereClass`, `whereStatement`, `whereCall`, and the node's own
                 // hooks (children, expressions, descendants, variant). Load the
+                // `commandments-writing-detectors` skill; it lists the arsenal.
+                //
+                // Open with a SELECTOR, then one check per line. Classify by what the tree IS —
+                // never by a function or variable NAME.
+                return \$codebase
+                    ->whereFunction()
+                    ->where(static fn (NodeMatch \$match): bool => false) // TODO — the rule
+                    ->get();
+            }
+        }
+
+        PHP;
+    }
+
+    private static function csharpDetector(Blueprint $blueprint): string
+    {
+        $namespace = Blueprint::NAMESPACE;
+
+        return <<<PHP
+        <?php
+
+        declare(strict_types=1);
+
+        namespace {$namespace};
+
+        use JesseGall\\CodeCommandments\\Cs\\Codebase;
+        use JesseGall\\CodeCommandments\\Cs\\NodeMatch;
+        use JesseGall\\CodeCommandments\\CSharp\\Detector;
+        use JesseGall\\CodeCommandments\\Sins\\Sin;
+
+        /**
+         * Finds {@see {$blueprint->sin}} — TODO, one line on the shape it looks for.
+         */
+        final class {$blueprint->detector()} implements Detector
+        {
+            public function sin(): Sin
+            {
+                return new {$blueprint->sin};
+            }
+
+            public function find(Codebase \$codebase): array
+            {
+                // BEFORE you write a line of this: skim what the C# engine already answers —
+                // `whereType`, `whereFunction`, `whereMethodDeclaration`, `whereStatement`, `whereCall`,
+                // and the node's own hooks (children, expressions, descendants, variant) — every type
+                // resolved by Roslyn. Load the
                 // `commandments-writing-detectors` skill; it lists the arsenal.
                 //
                 // Open with a SELECTOR, then one check per line. Classify by what the tree IS —

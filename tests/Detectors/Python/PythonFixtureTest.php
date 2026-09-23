@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Detectors\Python;
 
 use JesseGall\CodeCommandments\Detectors\Catalog;
+use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Testing\EngineFixture;
 use JesseGall\CodeCommandments\Testing\FixtureTestCase;
 use JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage;
-use JesseGall\CodeCommandments\Testing\PythonFixture;
 
 /**
  * The Python self-checking fixture: every Python {@see Catalog} detector over the Shop's `.py` sources,
@@ -27,6 +27,6 @@ final class PythonFixtureTest extends FixtureTestCase
 
     protected function fixture(): EngineFixture
     {
-        return new PythonFixture(dirname(__DIR__, 2) . '/Fixtures/python', Catalog::python());
+        return Engine::Python->fixture(dirname(__DIR__, 2) . '/Fixtures/python', Catalog::python());
     }
 }

@@ -59,6 +59,7 @@ final class ConfigCommand implements Command
         $this->row('Backend detectors', count($effective->for(Engine::Backend)) . ' running  ·  ' . count(DetectorCatalog::backend()) . ' available');
         $this->row('Frontend detectors', count($effective->for(Engine::Frontend)) . ' running  ·  ' . count(DetectorCatalog::frontend()) . ' available');
         $this->row('Python detectors', count($effective->for(Engine::Python)) . ' running  ·  ' . count(DetectorCatalog::python()) . ' available');
+        $this->row('C# detectors', count($effective->for(Engine::CSharp)) . ' running  ·  ' . count(DetectorCatalog::csharp()) . ' available');
         $this->row('Custom detectors', (string) count($config->registeredDetectors()));
         $this->row('Exemption packages', count(PackageCatalog::all()) . ' built-in  ·  ' . count($config->packages()) . ' registered');
         $this->row('Skills', (string) count(SkillCatalog::all()));

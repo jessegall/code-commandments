@@ -66,6 +66,16 @@ final class Catalog
     }
 
     /**
+     * The C# skills — the disciplines as C# writes them.
+     *
+     * @return list<Skill>
+     */
+    public static function csharp(): array
+    {
+        return self::discover('CSharp');
+    }
+
+    /**
      * Every skill in force for $project — every engine and the project's own — in briefing order.
      * $project is the consumer root the custom folder is read from; null resolves the current one.
      *
@@ -73,7 +83,7 @@ final class Catalog
      */
     public static function all(?string $project = null, ?Languages $languages = null): array
     {
-        $skills = [...self::backend(), ...self::frontend(), ...self::typescript(), ...self::python(), ...Custom::skills($project)];
+        $skills = [...self::backend(), ...self::frontend(), ...self::typescript(), ...self::python(), ...self::csharp(), ...Custom::skills($project)];
 
         usort($skills, static fn (Skill $a, Skill $b): int => $a->order <=> $b->order);
 

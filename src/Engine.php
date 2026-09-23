@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments;
 
 use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
+use JesseGall\CodeCommandments\CSharp\Detector as CSharpDetector;
 use JesseGall\CodeCommandments\Python\Detector as PythonDetector;
 use JesseGall\CodeCommandments\Testing\BackendFixture;
 use JesseGall\CodeCommandments\Testing\EngineFixture;
 use JesseGall\CodeCommandments\Testing\FrontendFixture;
-use JesseGall\CodeCommandments\Testing\PythonFixture;
+use JesseGall\CodeCommandments\Testing\ModuleFixture;
 
 /**
  * Which parse engine a detector reads — the PHP AST, the Vue components and TypeScript modules, or
@@ -24,6 +25,19 @@ enum Engine: string
     case Frontend = 'frontend';
     case Python = 'python';
 
+    case CSharp = 'csharp';
+
+    /**
+     * The engines read module by module — a {@see ModuleCodebase} of parsed files, judged beside the
+     * backend and the frontend by the same runner.
+     *
+     * @return list<self>
+     */
+    public static function modular(): array
+    {
+        return [self::Python, self::CSharp];
+    }
+
     /**
      * The engine a detector belongs to. The ONE place the question is asked: a detector declares its
      * engine by the `Detector` interface it implements, and the frontend's is the only one that has
@@ -34,6 +48,7 @@ enum Engine: string
         return match (true) {
             $detector instanceof FrontendDetector => self::Frontend,
             $detector instanceof PythonDetector => self::Python,
+            $detector instanceof CSharpDetector => self::CSharp,
             default => self::Backend,
         };
     }
@@ -57,6 +72,7 @@ enum Engine: string
             self::Backend => \JesseGall\CodeCommandments\Backend\Detector::class,
             self::Frontend => FrontendDetector::class,
             self::Python => PythonDetector::class,
+            self::CSharp => CSharpDetector::class,
         };
     }
 
@@ -71,6 +87,7 @@ enum Engine: string
             self::Backend => \JesseGall\CodeCommandments\Ast\Codebase::class,
             self::Frontend => \JesseGall\CodeCommandments\Vue\Codebase::class,
             self::Python => \JesseGall\CodeCommandments\Py\Codebase::class,
+            self::CSharp => \JesseGall\CodeCommandments\Cs\Codebase::class,
         };
     }
 
@@ -86,6 +103,7 @@ enum Engine: string
             self::Backend => \JesseGall\CodeCommandments\Ast\AstNode::class,
             self::Frontend => \JesseGall\CodeCommandments\Vue\ElementMatch::class,
             self::Python => \JesseGall\CodeCommandments\Py\NodeMatch::class,
+            self::CSharp => \JesseGall\CodeCommandments\Cs\NodeMatch::class,
         };
     }
 
@@ -100,7 +118,8 @@ enum Engine: string
         return match ($this) {
             self::Backend => new BackendFixture($path, $detectors),
             self::Frontend => new FrontendFixture($path, $detectors),
-            self::Python => new PythonFixture($path, $detectors),
+            self::Python => new ModuleFixture($path, $detectors, static fn (string $root) => \JesseGall\CodeCommandments\Py\Codebase::scan($root), Language::Python),
+            self::CSharp => new ModuleFixture($path, $detectors, static fn (string $root) => \JesseGall\CodeCommandments\Cs\Codebase::scan($root), Language::CSharp),
         };
     }
 
@@ -109,12 +128,13 @@ enum Engine: string
      *
      * @param  string|list<string>  $path
      */
-    public function scan(string|array $path, Languages $languages = new Languages()): Codebase
+    public function scan(string|array $path, Languages $languages = new Languages(), ExcludedPaths $excluded = new ExcludedPaths()): Codebase
     {
         return match ($this) {
             self::Backend => \JesseGall\CodeCommandments\Ast\Codebase::scan($path),
             self::Frontend => \JesseGall\CodeCommandments\Vue\Codebase::scan($path, languages: $languages),
-            self::Python => \JesseGall\CodeCommandments\Py\Codebase::scan($path),
+            self::Python => \JesseGall\CodeCommandments\Py\Codebase::scan($path, excluded: $excluded),
+            self::CSharp => \JesseGall\CodeCommandments\Cs\Codebase::scan($path, $excluded),
         };
     }
 
@@ -128,6 +148,7 @@ enum Engine: string
             self::Backend => 'src',
             self::Frontend => 'resources/js',
             self::Python => 'src',
+            self::CSharp => 'src',
         };
     }
 
@@ -141,6 +162,7 @@ enum Engine: string
             self::Backend => 'php',
             self::Frontend => 'vue',
             self::Python => 'py',
+            self::CSharp => 'cs',
         };
     }
 }

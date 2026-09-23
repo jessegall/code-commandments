@@ -443,6 +443,7 @@ final class DisableMenu
         return match (true) {
             str_contains($ref, '\\Frontend\\') => Engine::Frontend,
             str_contains($ref, '\\Python\\') => Engine::Python,
+            str_contains($ref, '\\CSharp\\') => Engine::CSharp,
             default => Engine::Backend,
         };
     }

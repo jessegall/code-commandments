@@ -20,6 +20,7 @@ enum Language: string
 
     case TypeScript = 'ts';
     case Python = 'py';
+    case CSharp = 'cs';
 
     /**
      * The language of the file at $path — the one place an extension is read as a language.
@@ -30,6 +31,7 @@ enum Language: string
             str_ends_with($path, '.vue') => self::Vue,
             str_ends_with($path, '.ts') => self::TypeScript,
             str_ends_with($path, '.py') => self::Python,
+            str_ends_with($path, '.cs') => self::CSharp,
             default => self::Php,
         };
     }
@@ -45,7 +47,7 @@ enum Language: string
 
     /**
      * The engine that reads a file of this language — PHP the backend's, a component and a TypeScript
-     * module the frontend's, Python its own.
+     * module the frontend's, Python and C# each their own.
      */
     public function engine(): Engine
     {
@@ -53,6 +55,7 @@ enum Language: string
             self::Php => Engine::Backend,
             self::Vue, self::TypeScript => Engine::Frontend,
             self::Python => Engine::Python,
+            self::CSharp => Engine::CSharp,
         };
     }
 
@@ -62,7 +65,7 @@ enum Language: string
     public function comment(string $text): string
     {
         return match ($this) {
-            self::Php, self::TypeScript => "// {$text}",
+            self::Php, self::TypeScript, self::CSharp => "// {$text}",
             self::Vue => "<!-- {$text} -->",
             self::Python => "# {$text}",
         };
@@ -77,7 +80,7 @@ enum Language: string
         $opened = ltrim($line);
 
         return match ($this) {
-            self::Php, self::TypeScript => str_starts_with($opened, '//') || str_starts_with($opened, '/*') || str_starts_with($opened, '*'),
+            self::Php, self::TypeScript, self::CSharp => str_starts_with($opened, '//') || str_starts_with($opened, '/*') || str_starts_with($opened, '*'),
             self::Vue => str_starts_with($opened, '<!--'),
             self::Python => str_starts_with($opened, '#'),
         };
@@ -93,6 +96,7 @@ enum Language: string
             self::Vue => 'Vue',
             self::TypeScript => 'TypeScript',
             self::Python => 'Python',
+            self::CSharp => 'C#',
         };
     }
 

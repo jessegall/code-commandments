@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Py;
 
 use Closure;
-use JesseGall\CodeCommandments\Codebase as BaseCodebase;
+use JesseGall\CodeCommandments\ModuleCodebase;
 use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\Files\FileQuery;
 use JesseGall\CodeCommandments\Py\Expr\Expr;
@@ -26,7 +26,7 @@ use JesseGall\CodeCommandments\WorkingCopy;
  * PHP and TypeScript engines name theirs, so a rule about a function, a class or a call reads the same
  * whichever language it judges. Files are parsed on first use.
  */
-final class Codebase implements BaseCodebase
+final class Codebase implements ModuleCodebase
 {
     /**
      * @var list<ModuleFile>|null

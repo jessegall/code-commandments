@@ -9,14 +9,14 @@ use JesseGall\CodeCommandments\Py\NodeMatch;
 use JesseGall\CodeCommandments\Python\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\FixAtTheSource;
-use JesseGall\CodeCommandments\Testing\PythonMarkerVerifier;
+use JesseGall\CodeCommandments\Testing\ModuleMarkerVerifier;
 use PHPUnit\Framework\TestCase;
 
 /**
  * The Python fixture's markers are the spec: a `# @sin Name` comment above a declaration says the rule
  * must flag it. A mark the rule does not flag is a hole; a flag nothing marks is a false positive.
  */
-final class PythonMarkerVerifierTest extends TestCase
+final class ModuleMarkerVerifierTest extends TestCase
 {
     private string $root;
 
@@ -47,7 +47,7 @@ final class PythonMarkerVerifierTest extends TestCase
 
     public function test_a_hole_and_a_false_positive_are_both_reported(): void
     {
-        [$result] = new PythonMarkerVerifier()->verify(Codebase::scan($this->root), [$this->probe()]);
+        [$result] = new ModuleMarkerVerifier()->verify(Codebase::scan($this->root), [$this->probe()]);
 
         $this->assertSame(["{$this->root}/shop.py:12"], $result->missed);
         $this->assertSame(["{$this->root}/shop.py:6"], $result->unexpected);

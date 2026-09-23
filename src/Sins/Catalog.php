@@ -8,7 +8,7 @@ use JesseGall\CodeCommandments\Discovery;
 use JesseGall\CodeCommandments\Unpublished;
 
 /**
- * Every sin that ships, discovered from the `Backend/`, `Frontend/` and `Python/` folders — the
+ * Every sin that ships, discovered from the `Backend/`, `Frontend/`, `Python/` and `CSharp/` folders — the
  * sin twin of {@see \JesseGall\CodeCommandments\Detectors\Catalog}. A sin counts the
  * moment its file exists; a consumer's own `Sins/` class auto-enrols the same way. The
  * generated `SKILL.md` "when it fires" rows are projected from this registry.
@@ -46,13 +46,23 @@ final class Catalog
     }
 
     /**
+     * The C# sins.
+     *
+     * @return list<Sin>
+     */
+    public static function csharp(): array
+    {
+        return self::discover('CSharp');
+    }
+
+    /**
      * Every sin, every engine.
      *
      * @return list<Sin>
      */
     public static function every(): array
     {
-        return [...self::all(), ...self::frontend(), ...self::python()];
+        return [...self::all(), ...self::frontend(), ...self::python(), ...self::csharp()];
     }
 
     /**

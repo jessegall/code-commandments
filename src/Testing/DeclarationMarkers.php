@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Testing;
 
 use JesseGall\CodeCommandments\Language;
-use JesseGall\CodeCommandments\Py\Codebase as PythonCodebase;
+use JesseGall\CodeCommandments\ModuleCodebase;
 use JesseGall\CodeCommandments\Vue\Codebase;
 use JesseGall\CodeCommandments\Vue\Element;
 
@@ -54,16 +54,16 @@ final class DeclarationMarkers
     }
 
     /**
-     * The `file:line` of every Python declaration or statement marked `# @{$tag} Name`, grouped by Name.
+     * The `file:line` of every node marked `@{$tag} Name` in a codebase read as modules, in each module's own comment syntax, grouped by Name.
      *
      * @return array<string, list<string>>
      */
-    public static function inPython(PythonCodebase $codebase, string $tag): array
+    public static function inModules(ModuleCodebase $codebase, string $tag): array
     {
         $marked = [];
 
         foreach ($codebase->modules() as $module) {
-            self::markLines($module->file, array_map(static fn ($node) => $module->lineAt($node->start), $module->nodes()), $tag, $marked);
+            self::markLines($module->file, array_map(static fn (array $span): int => $module->lineAt($span[0]), $module->nodeSpans()), $tag, $marked);
         }
 
         return $marked;

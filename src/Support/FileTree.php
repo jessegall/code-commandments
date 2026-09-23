@@ -38,6 +38,12 @@ final class FileTree
     private const array SKIP_SUFFIXES = ['.egg-info'];
 
     /**
+     * The folders `dotnet build` writes beside a project file — skipped only there, since a `bin` of
+     * any other project is source.
+     */
+    private const array BUILD_OUTPUTS = ['bin', 'obj'];
+
+    /**
      * Every file under $path carrying $extension. A $path that IS a file answers for itself, held to
      * the same two questions as one the walk reaches.
      *
@@ -88,6 +94,13 @@ final class FileTree
             && ! in_array($directory->getFilename(), self::SKIP_DIRS, true)
             && ! array_any(self::SKIP_SUFFIXES, static fn (string $suffix): bool => str_ends_with($directory->getFilename(), $suffix))
             && ! is_file($directory->getPathname() . '/' . self::VIRTUAL_ENVIRONMENT)
+            && ! self::isBuildOutput($directory)
             && ! $excluded->covers($directory->getPathname());
+    }
+
+    private static function isBuildOutput(SplFileInfo $directory): bool
+    {
+        return in_array($directory->getFilename(), self::BUILD_OUTPUTS, true)
+            && glob($directory->getPath() . '/*.csproj') !== [];
     }
 }

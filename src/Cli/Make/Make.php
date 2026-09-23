@@ -38,7 +38,7 @@ final class Make implements Command
             ->form('make <Name> --engine=frontend', 'scaffold a frontend (Vue) one instead')
             ->form('make <Name> --engine=python', 'scaffold a Python one instead')
             ->form('make <Name> --skill=NAME', 'point the sin at an EXISTING skill (shipped or your own) instead of writing a new one')
-            ->option('--engine=backend|frontend|python', 'which parse engine the detector reads (default: backend)')
+            ->option('--engine=backend|frontend|python|csharp', 'which parse engine the detector reads (default: backend)')
             ->option('--skill=NAME', 'the skill that teaches the fix — a lenient name/slug match against the existing skills, or a new slug to create one')
             ->option('--force', 'overwrite files that already exist')
             ->note('The generated classes live in `.commandments/custom/`, beside your config. That folder is not '
