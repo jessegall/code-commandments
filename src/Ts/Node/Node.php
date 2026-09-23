@@ -81,6 +81,15 @@ abstract class Node
     }
 
     /**
+     * What tells this node from another of its kind beyond its children and expressions — a loop's
+     * `for-of` or `while`, a jump's `break` or `continue`. Empty for a kind with nothing more to say.
+     */
+    public function variant(): string
+    {
+        return '';
+    }
+
+    /**
      * The expressions this node holds AT ITS OWN LEVEL — a branch's test, a return's value, a
      * declaration's initializer. Not its children's ({@see children} reaches those), so each
      * expression is reported by the one node that owns it.

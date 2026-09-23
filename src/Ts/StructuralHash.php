@@ -8,15 +8,14 @@ use JesseGall\CodeCommandments\Support\ClassName;
 use JesseGall\CodeCommandments\Ts\Expr\Expr;
 use JesseGall\CodeCommandments\Ts\Expr\ExprKind;
 use JesseGall\CodeCommandments\Ts\Node\Node;
-use JesseGall\CodeCommandments\Ts\Node\Stmt;
 use JesseGall\CodeCommandments\Ts\Node\TypeNode;
 
 /**
  * A formatting-blind fingerprint of a TypeScript subtree, read through the walk hooks every node
- * already answers — its kind, the names it declares, its expressions and its children — never its
- * source text, so spacing, comments and quote style do not count. Type annotations are left out,
- * as the expression parser erases an `as` cast: what runs is the same with or without them.
- * {@see normalized} also blanks local names and string/number literals for type-2 clone detection,
+ * already answers — its kind and variant, the names it declares, its expressions and its children —
+ * never its source text, so spacing, comments and quote style do not count. Type annotations are left
+ * out, as the expression parser erases an `as` cast: what runs is the same with or without them.
+ * {@see self::normalized} also blanks local names and string/number literals for type-2 clone detection,
  * keeping what is called and which members are read: the backend's
  * {@see \JesseGall\CodeCommandments\Ast\Support\StructuralHash} drawn over the other language.
  */
@@ -62,9 +61,7 @@ final class StructuralHash
             $parts[] = implode(',', $node->declaredNames());
         }
 
-        if (self::isLeaf($node)) {
-            $parts[] = $node->render();
-        }
+        $parts[] = $node->variant();
 
         foreach ($node->expressions() as $expression) {
             $parts[] = self::expression($expression, $normalize);
@@ -75,17 +72,6 @@ final class StructuralHash
         }
 
         return '(' . implode('|', $parts) . ')';
-    }
-
-    /**
-     * A STATEMENT that holds nothing a walk reaches — no children, no expressions — is all its
-     * rendering: `break;` and `continue;` differ only there. Only a statement: other leaves (the call
-     * a declaration keeps beside its initializer) render raw source, literals and all, which the
-     * normalised hash must never see.
-     */
-    private static function isLeaf(Node $node): bool
-    {
-        return $node instanceof Stmt && $node->children() === [] && $node->expressions() === [];
     }
 
     private static function expression(Expr $expression, bool $normalize): string

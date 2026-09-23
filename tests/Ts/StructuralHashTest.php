@@ -118,6 +118,20 @@ final class StructuralHashTest extends TestCase
         $this->assertNotSame($this->only($break)->shapeHash(), $this->only(str_replace('break', 'continue', $break))->shapeHash());
     }
 
+    public function test_for_of_and_for_in_are_different_code(): void
+    {
+        $of = 'function a(xs: X[]) { for (const x of xs) { run(x); } }';
+
+        $this->assertNotSame($this->only($of)->bodyHash(), $this->only(str_replace(' of ', ' in ', $of))->bodyHash());
+    }
+
+    public function test_bodies_that_differ_only_inside_a_labelled_loop_are_different_code(): void
+    {
+        $labelled = 'function a(rows: R[][]) { outer: for (const row of rows) { for (const cell of row) { if (cell.stop) { break outer; } first(cell); } } }';
+
+        $this->assertNotSame($this->only($labelled)->bodyHash(), $this->only(str_replace('first(cell)', 'second(cell)', $labelled))->bodyHash());
+    }
+
     public function test_the_body_weight_counts_statements_and_expressions(): void
     {
         $this->assertGreaterThan($this->only('function a() { return 1; }')->bodyNodeCount(), $this->only(self::TOTAL)->bodyNodeCount());

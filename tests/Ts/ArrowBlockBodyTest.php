@@ -99,6 +99,20 @@ final class ArrowBlockBodyTest extends TestCase
         $this->assertSame(ExprKind::Conditional, $this->initializerOf('const x = ready ? (a) : b;')->kind);
     }
 
+    public function test_a_for_of_loop_says_so_and_ranges_over_its_iterable(): void
+    {
+        $loop = \JesseGall\CodeCommandments\Ts\Parser::block('for await (const { id } of orders.value) { seen(id); }')->body[0];
+
+        $this->assertInstanceOf(\JesseGall\CodeCommandments\Ts\Node\LoopStmt::class, $loop);
+        $this->assertSame('for-of', $loop->keyword);
+        $this->assertSame('orders.value', $loop->head[0]->source());
+    }
+
+    public function test_a_for_in_loop_says_so(): void
+    {
+        $this->assertSame('for-in', \JesseGall\CodeCommandments\Ts\Parser::block('for (const key in totals) { add(key); }')->body[0]->keyword);
+    }
+
     private function initializerOf(string $source): Expr
     {
         $declaration = ModuleFile::fromFile($source, 'a.ts')->nodes()[0];

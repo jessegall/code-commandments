@@ -33,6 +33,7 @@ use JesseGall\CodeCommandments\Ts\Node\ImportDecl;
 use JesseGall\CodeCommandments\Ts\Node\IndexedAccessType;
 use JesseGall\CodeCommandments\Ts\Node\InterfaceDecl;
 use JesseGall\CodeCommandments\Ts\Node\JumpStmt;
+use JesseGall\CodeCommandments\Ts\Node\LabelledStmt;
 use JesseGall\CodeCommandments\Ts\Node\KeywordType;
 use JesseGall\CodeCommandments\Ts\Node\LiteralType;
 use JesseGall\CodeCommandments\Ts\Node\Member;
@@ -216,6 +217,7 @@ final class Parser
             $this->atId(Keyword::THROW) => $this->parseThrow(),
             $this->atId(Keyword::FOR), $this->atId(Keyword::WHILE), $this->atId(Keyword::DO) => $this->parseLoop(),
             $this->atId(Keyword::BREAK), $this->atId(Keyword::CONTINUE) => $this->parseJump(),
+            $this->atLabel() => $this->parseLabelled(),
             $this->atId(Keyword::CONST), $this->atId(Keyword::LET), $this->atId(Keyword::VAR) => $this->parseVariable(),
             $this->atId(Keyword::CLASS_), $this->atId('abstract') && $this->at(1)->isIdentifier(Keyword::CLASS_) => $this->parseClass(),
             $this->atId(Keyword::FUNCTION), $this->atId(Keyword::ASYNC) && $this->at(1)->isIdentifier(Keyword::FUNCTION) => $this->parseFunction(),
@@ -963,6 +965,29 @@ final class Parser
     // ---- statements -----------------------------------------------------------
 
     /**
+     * Does a label open the statement here — a name and a `:`, where a `case`/`default` is not?
+     */
+    private function atLabel(): bool
+    {
+        return $this->peek()->isIdentifier()
+            && ! $this->atId(Keyword::CASE)
+            && ! $this->atId(Keyword::DEFAULT)
+            && $this->at(1)->isPunct(Token::COLON);
+    }
+
+    /**
+     * `label: statement` — the name, then the statement it names.
+     */
+    private function parseLabelled(): ?Node
+    {
+        $label = $this->advance()->value;
+        $this->advance(); // `:`
+        $body = $this->parseStatement();
+
+        return $body === null ? null : new LabelledStmt($label, $body);
+    }
+
+    /**
      * `break` / `continue`, with the label it names if any.
      */
     private function parseJump(): JumpStmt
@@ -1096,7 +1121,45 @@ final class Parser
             return new LoopStmt($keyword, $head, $body);
         }
 
+        $each = $keyword === Keyword::FOR ? $this->eachLoopHead() : null;
+
+        if ($each !== null) {
+            return new LoopStmt($each[0], [$each[1]], $this->statementBody());
+        }
+
         return new LoopStmt($keyword, $this->loopHead(), $this->statementBody());
+    }
+
+    /**
+     * The head of a `for … of` / `for … in` — which of the two it is, and the iterable it ranges over —
+     * or null for a counting `for (;;)`. The binding it declares is stepped over: the body's reads of
+     * it are what a rule sees.
+     *
+     * @return ?array{0: string, 1: Expr}
+     */
+    private function eachLoopHead(): ?array
+    {
+        return $this->speculate(function (): array {
+            $this->advanceIfId(Keyword::AWAIT);
+            $this->expectPunct(Token::PAREN_OPEN);
+            if ($this->atId(Keyword::CONST) || $this->atId(Keyword::LET) || $this->atId(Keyword::VAR)) {
+                $this->advance();
+            }
+
+            $this->parsePattern();
+
+            $kind = match (true) {
+                $this->atId(Keyword::OF) => 'for-of',
+                $this->atId(Keyword::IN) => 'for-in',
+                default => throw new Unparsed(),
+            };
+
+            $this->advance();
+            $iterable = $this->expressionUntil([Token::PAREN_CLOSE]);
+            $this->advanceIfPunct(Token::PAREN_CLOSE);
+
+            return [$kind, $iterable];
+        });
     }
 
     /**

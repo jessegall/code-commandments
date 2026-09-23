@@ -34,6 +34,11 @@ final class LoopStmt extends Stmt
         return [$this->body];
     }
 
+    public function variant(): string
+    {
+        return $this->keyword;
+    }
+
     public function isLoop(): bool
     {
         return true;

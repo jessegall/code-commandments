@@ -14,6 +14,11 @@ final class JumpStmt extends Stmt
         public readonly ?string $label = null,
     ) {}
 
+    public function variant(): string
+    {
+        return trim("{$this->keyword} {$this->label}");
+    }
+
     public function render(): string
     {
         return $this->label === null ? "{$this->keyword};" : "{$this->keyword} {$this->label};";
