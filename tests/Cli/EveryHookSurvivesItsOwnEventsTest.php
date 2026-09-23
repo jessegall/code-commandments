@@ -16,18 +16,10 @@ use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every wired handler, run against every moment it binds. A hook is reached by the harness rather than by
- * a caller in this tree, so nothing else fails when one of them cannot run: the dispatcher catches
- * nothing, the harness treats the crash as non-blocking, and the discipline simply stops arriving.
- *
- * That is the failure this exists for. A handler once called a method that had never shipped, and the
- * only symptom in a live session was a stack trace where a reminder should have been — no test named it,
- * because every other test drove one handler it already knew about.
- *
- * The session is ARRANGED to be as reachable as a real one: orchestrating under a profile that has a
- * routine, holding a board with work in every stage, and carrying a journal with an open span. A smoke
- * test over an empty session is the vacuous kind — most handlers would return at their first guard and
- * the run would prove only that constructors work.
+ * Every wired handler, run against every moment it binds, in a session arranged to be as reachable as a
+ * real one — a profile with a routine, a board with work in every stage, a journal with an open span — so
+ * a handler that cannot run fails here instead of going silent in a live session, where the harness
+ * treats its crash as non-blocking.
  */
 final class EveryHookSurvivesItsOwnEventsTest extends TestCase
 {

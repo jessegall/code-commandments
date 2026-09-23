@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Sins;
 
 use JesseGall\CodeCommandments\Sins\Ecosystem;
 use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -29,36 +30,44 @@ final class EcosystemTest extends TestCase
         $this->assertFalse(Ecosystem::Pip->hasInstalled('flask', $this->root));
     }
 
-    public function test_pip_reads_a_pep_621_pyproject(): void
+    /**
+     * @return array<string, array{string, list<string>, string}>
+     */
+    public static function pyprojects(): array
     {
-        file_put_contents("{$this->root}/pyproject.toml", <<<'TOML'
-            [project]
-            name = "shop"
-            dependencies = [
-                "pydantic>=2",
-                "Typing_Extensions",
-            ]
-            TOML);
+        return [
+            'a PEP 621 project' => [<<<'TOML'
+                [project]
+                name = "shop"
+                dependencies = [
+                    "pydantic>=2",
+                    "Typing_Extensions",
+                ]
+                TOML, ['pydantic', 'typing-extensions'], 'shop'],
+            'poetry, main and dev groups' => [<<<'TOML'
+                [tool.poetry.dependencies]
+                python = "^3.12"
+                fastapi = "^0.110"
 
-        $this->assertTrue(Ecosystem::Pip->hasInstalled('pydantic', $this->root));
-        $this->assertTrue(Ecosystem::Pip->hasInstalled('typing-extensions', $this->root));
-        $this->assertFalse(Ecosystem::Pip->hasInstalled('shop', $this->root));
+                [tool.poetry.group.dev.dependencies]
+                ruff = "*"
+                TOML, ['fastapi', 'ruff'], 'django'],
+        ];
     }
 
-    public function test_pip_reads_poetry_dependencies(): void
+    /**
+     * @param  list<string>  $declared
+     */
+    #[DataProvider('pyprojects')]
+    public function test_pip_reads_the_dependencies_a_pyproject_declares(string $pyproject, array $declared, string $absent): void
     {
-        file_put_contents("{$this->root}/pyproject.toml", <<<'TOML'
-            [tool.poetry.dependencies]
-            python = "^3.12"
-            fastapi = "^0.110"
+        file_put_contents("{$this->root}/pyproject.toml", $pyproject);
 
-            [tool.poetry.group.dev.dependencies]
-            ruff = "*"
-            TOML);
+        foreach ($declared as $package) {
+            $this->assertTrue(Ecosystem::Pip->hasInstalled($package, $this->root), $package);
+        }
 
-        $this->assertTrue(Ecosystem::Pip->hasInstalled('fastapi', $this->root));
-        $this->assertTrue(Ecosystem::Pip->hasInstalled('ruff', $this->root));
-        $this->assertFalse(Ecosystem::Pip->hasInstalled('django', $this->root));
+        $this->assertFalse(Ecosystem::Pip->hasInstalled($absent, $this->root));
     }
 
     public function test_without_a_manifest_every_package_counts_as_present(): void

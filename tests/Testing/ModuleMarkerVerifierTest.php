@@ -11,8 +11,8 @@ use JesseGall\CodeCommandments\Py\Codebase;
 use JesseGall\CodeCommandments\Py\NodeMatch;
 use JesseGall\CodeCommandments\Python\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
-use JesseGall\CodeCommandments\Skills\Backend\FixAtTheSource;
 use JesseGall\CodeCommandments\Testing\ModuleMarkerVerifier;
+use JesseGall\CodeCommandments\Tests\Concerns\Probe;
 use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use JesseGall\CodeCommandments\Tests\Cs\NeedsTheBridge;
 use PHPUnit\Framework\TestCase;
@@ -99,14 +99,6 @@ final class PythonProbeDetector implements Detector
     public function find(Codebase $codebase): array
     {
         return $codebase->whereFunction()->get();
-    }
-}
-
-final class Probe extends Sin
-{
-    public function __construct()
-    {
-        parent::__construct(name: 'probe', skill: FixAtTheSource::class, description: 'probe', rule: 'probe');
     }
 }
 

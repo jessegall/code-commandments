@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Python\Detector;
 use JesseGall\CodeCommandments\Sins\Catalog as Sins;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
-use JesseGall\CodeCommandments\Skills\Backend\FixAtTheSource;
+use JesseGall\CodeCommandments\Tests\Concerns\Probe;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -25,12 +25,7 @@ final class DetectorContractTest extends TestCase
         $detector = new class implements Detector {
             public function sin(): Sin
             {
-                return new class extends Sin {
-                    public function __construct()
-                    {
-                        parent::__construct(name: 'probe', skill: FixAtTheSource::class, description: 'probe', rule: 'probe');
-                    }
-                };
+                return new Probe();
             }
 
             public function find(Codebase $codebase): array
@@ -46,8 +41,8 @@ final class DetectorContractTest extends TestCase
 
     public function test_every_catalog_includes_the_python_engine(): void
     {
-        $this->assertEquals([...Detectors::backend(), ...Detectors::frontend(), ...Detectors::python()], Detectors::all());
-        $this->assertEquals([...Sins::all(), ...Sins::frontend(), ...Sins::python()], Sins::every());
+        $this->assertEquals([...Detectors::backend(), ...Detectors::frontend(), ...Detectors::python(), ...Detectors::csharp()], Detectors::all());
+        $this->assertEquals([...Sins::all(), ...Sins::frontend(), ...Sins::python(), ...Sins::csharp()], Sins::every());
         $this->assertContainsOnlyInstancesOf(\JesseGall\CodeCommandments\Skills\Skill::class, Skills::python());
     }
 }

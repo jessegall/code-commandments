@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\CustomFile;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -32,9 +33,24 @@ final class CustomFileTest extends TestCase
         return CustomFile::at($path, Codebase::scan($this->root)->declarations());
     }
 
-    public function test_an_ordinary_file_loads(): void
+    /**
+     * A class whose parent this process cannot see is not judged either — there is nothing to compare
+     * against, and refusing on a guess would withhold a file that loads perfectly well.
+     *
+     * @return array<string, array{string, string}>
+     */
+    public static function faultlessFiles(): array
     {
-        $path = $this->write('Fine.php', 'final class Fine {}');
+        return [
+            'an ordinary file' => ['Fine.php', 'final class Fine {}'],
+            'a class with a parent this process cannot see' => ['Foreign.php', 'final class Foreign extends \\Some\\Vendor\\Thing {}'],
+        ];
+    }
+
+    #[DataProvider('faultlessFiles')]
+    public function test_a_file_with_nothing_wrong_loads(string $name, string $declaration): void
+    {
+        $path = $this->write($name, $declaration);
 
         $this->assertTrue($this->fileAt($path)->fault()->isNone());
     }
@@ -123,17 +139,6 @@ final class CustomFileTest extends TestCase
                 }
             }
             PHP);
-
-        $this->assertTrue($this->fileAt($path)->fault()->isNone());
-    }
-
-    /**
-     * A class whose parent this process cannot see is not judged — there is nothing to compare against,
-     * and refusing on a guess would withhold a file that loads perfectly well.
-     */
-    public function test_an_unknown_parent_is_not_judged(): void
-    {
-        $path = $this->write('Foreign.php', 'final class Foreign extends \Some\Vendor\Thing {}');
 
         $this->assertTrue($this->fileAt($path)->fault()->isNone());
     }

@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
 use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use JesseGall\CodeCommandments\Workspace;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -48,22 +49,22 @@ final class SessionResetTest extends TestCase
         $this->assertFileDoesNotExist(Workspace::at($this->root)->path('.cardinal-remind-count'));
     }
 
-    public function test_compaction_leaves_the_counters_intact(): void
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function continuations(): array
     {
-        $this->arm();
-
-        $this->fire('compact');
-
-        $this->assertFileExists(Workspace::at($this->root)->path('.cardinal-remind-count'), 'a compaction continues a live session');
+        return ['a compaction' => ['compact'], 'a resume' => ['resume']];
     }
 
-    public function test_resume_leaves_the_counters_intact(): void
+    #[DataProvider('continuations')]
+    public function test_a_start_that_continues_a_live_session_leaves_the_counters_intact(string $source): void
     {
         $this->arm();
 
-        $this->fire('resume');
+        $this->fire($source);
 
-        $this->assertFileExists(Workspace::at($this->root)->path('.cardinal-remind-count'), 'resuming continues a live session');
+        $this->assertFileExists(Workspace::at($this->root)->path('.cardinal-remind-count'));
     }
 
     public function test_the_wipe_is_scoped_to_the_payload_session_only(): void

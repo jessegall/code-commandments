@@ -6,30 +6,35 @@ namespace JesseGall\CodeCommandments\Tests\Support;
 
 use JesseGall\CodeCommandments\Support\Binary;
 use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Where a project's `commandments` executable is, for every command we write into that project — a
- * hook, a plan check, an instruction. It used to be the literal `vendor/bin/commandments` everywhere,
- * which is right for a consumer and wrong for the one project that must judge itself: composer never
- * shims a package's own bin into its own vendor, so every wired hook here failed on each tool call.
+ * hook, a plan check, an instruction: composer's shim in a consumer, and the checkout's own `bin/` in
+ * the package itself, since composer never shims a package's own bin into its own vendor.
  */
 final class BinaryTest extends TestCase
 {
     use TemporaryFolder;
 
-    public function test_a_consumer_gets_composers_shim(): void
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function installedExecutables(): array
     {
-        $this->give('vendor/bin/commandments');
-
-        $this->assertSame('vendor/bin/commandments', Binary::in($this->root));
+        return [
+            'a consumer gets composer\'s shim' => ['vendor/bin/commandments'],
+            'a checkout that carries its own executable gets that one' => ['bin/commandments'],
+        ];
     }
 
-    public function test_a_checkout_that_carries_its_own_executable_gets_that_one(): void
+    #[DataProvider('installedExecutables')]
+    public function test_the_one_executable_a_project_has_is_the_one_named(string $executable): void
     {
-        $this->give('bin/commandments');
+        $this->give($executable);
 
-        $this->assertSame('bin/commandments', Binary::in($this->root));
+        $this->assertSame($executable, Binary::in($this->root));
     }
 
     public function test_the_shim_wins_when_a_project_has_both(): void

@@ -14,6 +14,7 @@ use JesseGall\CodeCommandments\Cli\Report\SkippedRules;
 use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
 use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Tests\Concerns\ReadsSinReports;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -23,6 +24,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class BrokenRuleIsNotGreenTest extends TestCase
 {
+    use ReadsSinReports;
+
     public function test_a_rule_that_breaks_comes_back_named(): void
     {
         $judgement = new DetectorRunner(1)->run(
@@ -60,13 +63,7 @@ final class BrokenRuleIsNotGreenTest extends TestCase
 
     public function test_a_run_with_nothing_skipped_says_nothing_about_skips(): void
     {
-        $report = new SinReport(
-            '/app',
-            [new Finding('Rule', 'backend/absence', 'array-bag', '/app/A.php', '/app/A.php:1', 'A::m')],
-        );
-
-        $this->assertStringNotContainsString('could not run', $report->console());
-        $this->assertStringNotContainsString('could not run', $report->checklist());
+        $this->assertReportNeverSays('could not run', new Finding('Rule', 'backend/absence', 'array-bag', '/app/A.php', '/app/A.php:1', 'A::m'));
     }
 
     private static function broken(): Detector
@@ -80,7 +77,7 @@ final class BrokenRuleIsNotGreenTest extends TestCase
 
             public function find(Codebase $codebase): array
             {
-                throw new \RuntimeException('Call to undefined method AstNode::assignsThisProperty');
+                return $codebase->assignsThisProperty(); // a method the engine never shipped
             }
         };
     }

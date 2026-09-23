@@ -30,7 +30,14 @@ final class StateMigrationTest extends TestCase
      */
     private function legacy(string $file, string ...$lines): void
     {
-        file_put_contents($this->session . '/' . $file, implode("\n", [...$lines, '-----', 'old explanation', '']));
+        $values = implode("\n", $lines);
+
+        file_put_contents($this->session . '/' . $file, <<<MARKER
+            {$values}
+            -----
+            old explanation
+
+            MARKER);
     }
 
     private function migrate(): array

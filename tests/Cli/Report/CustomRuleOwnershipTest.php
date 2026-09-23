@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Detectors\Backend\ArrayBagDetector;
 use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Tests\Cli\CapturingHookIO;
 use JesseGall\CodeCommandments\Tests\Cli\FakeGit;
+use JesseGall\CodeCommandments\Tests\Concerns\ReadsSinReports;
 use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use PHPUnit\Framework\TestCase;
 
@@ -24,6 +25,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class CustomRuleOwnershipTest extends TestCase
 {
+    use ReadsSinReports;
     use TemporaryProject;
 
     public function test_the_console_report_and_checklist_name_a_custom_rule_as_custom(): void
@@ -46,12 +48,7 @@ final class CustomRuleOwnershipTest extends TestCase
 
     public function test_a_group_of_shipped_findings_says_nothing_about_custom_rules(): void
     {
-        $report = new SinReport('/app', [
-            new Finding('ArrayBagDetector', 'backend/house-style', 'array-bag', '/app/Screen.php', '/app/Screen.php:90', 'Screen::rows'),
-        ]);
-
-        $this->assertStringNotContainsString('custom', $report->console());
-        $this->assertStringNotContainsString('custom', $report->checklist());
+        $this->assertReportNeverSays('custom', new Finding('ArrayBagDetector', 'backend/house-style', 'array-bag', '/app/Screen.php', '/app/Screen.php:90', 'Screen::rows'));
     }
 
     public function test_the_folder_is_the_whole_ownership_test(): void
