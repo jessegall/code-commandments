@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Hooks\Handlers\SourceReminder;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
@@ -16,21 +17,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class SourceReminderTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-source-' . uniqid('', true);
-        @mkdir($this->root . '/.commandments', 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        @unlink(Workspace::at($this->root)->path('.source-remind-count'));
-        @unlink($this->root . '/.commandments/config.php');
-        @rmdir($this->root . '/.commandments');
-        @rmdir($this->root);
-    }
+    use TemporaryProject;
 
     public function test_editing_a_test_file_nudges_toward_the_source(): void
     {
@@ -118,13 +105,5 @@ final class SourceReminderTest extends TestCase
     private function context(array $emitted): string
     {
         return $emitted[0]->context->unwrapOr('');
-    }
-
-    private function writeConfig(string $body): void
-    {
-        file_put_contents(
-            $this->root . '/.commandments/config.php',
-            "<?php\nuse JesseGall\\CodeCommandments\\Config;\nreturn function (Config \$config): void {\n    {$body}\n};\n",
-        );
     }
 }

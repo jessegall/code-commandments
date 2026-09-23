@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests;
 
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\ExcludedPaths;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -14,21 +15,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class ExcludedPathsTest extends TestCase
 {
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-excluded-' . uniqid('', true);
-
         foreach (['platform/src', 'platform/public/build', 'mobile/src', 'mobile/dist', 'shared/dist'] as $dir) {
             @mkdir("{$this->root}/{$dir}", 0777, true);
             file_put_contents("{$this->root}/{$dir}/Thing.php", "<?php\nnamespace T;\nclass Thing {}\n");
         }
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_a_plain_entry_covers_the_folder_and_everything_under_it(): void

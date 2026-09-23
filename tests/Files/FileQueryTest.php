@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Files;
 
 use JesseGall\CodeCommandments\Ast\Codebase as BackendCodebase;
 use JesseGall\CodeCommandments\Files\FileMatch;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use JesseGall\CodeCommandments\Vue\Codebase as FrontendCodebase;
 use PHPUnit\Framework\TestCase;
 
@@ -16,22 +17,16 @@ use PHPUnit\Framework\TestCase;
  */
 final class FileQueryTest extends TestCase
 {
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-files-' . uniqid('', true);
         mkdir($this->root . '/resources/js/scene', 0777, true);
         mkdir($this->root . '/src/Orders', 0777, true);
 
         file_put_contents($this->root . '/resources/js/scene/standing.ts', 'export type Node = { id: string }');
         file_put_contents($this->root . '/resources/js/scene/OrderCard.vue', '<template><div /></template>');
         file_put_contents($this->root . '/src/Orders/PaymentData.php', '<?php namespace App; class PaymentData {}');
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_the_backend_judges_the_names_of_its_files(): void

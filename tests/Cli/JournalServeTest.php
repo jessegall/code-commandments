@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -12,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class JournalServeTest extends TestCase
 {
-    private string $root;
+    use TemporaryProject;
 
     private string $socket;
 
@@ -23,8 +24,6 @@ final class JournalServeTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-serve-' . uniqid();
-        mkdir($this->root . '/.commandments', 0777, true);
         $this->socket = sys_get_temp_dir() . '/cc-serve-' . uniqid() . '.sock';
         $this->start();
     }
@@ -43,7 +42,6 @@ final class JournalServeTest extends TestCase
     protected function tearDown(): void
     {
         $this->stop();
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     private function stop(): void

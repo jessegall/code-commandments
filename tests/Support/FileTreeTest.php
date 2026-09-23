@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Support;
 
 use JesseGall\CodeCommandments\Support\FileTree;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,12 +16,10 @@ use PHPUnit\Framework\TestCase;
  */
 final class FileTreeTest extends TestCase
 {
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-file-tree-' . uniqid('', true);
-
         foreach (['shop', 'shop/env', 'venv/lib', 'python-3.12/lib', 'shop/__pycache__', 'lib/site-packages/requests', 'shop.egg-info', '.venv/lib', '.journal/plugins/shop'] as $dir) {
             mkdir("{$this->root}/{$dir}", 0777, true);
             file_put_contents("{$this->root}/{$dir}/module.py", "x = 1\n");
@@ -29,11 +28,6 @@ final class FileTreeTest extends TestCase
         foreach (['venv', 'python-3.12'] as $environment) {
             file_put_contents("{$this->root}/{$environment}/pyvenv.cfg", "home = /usr/bin\n");
         }
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     /**

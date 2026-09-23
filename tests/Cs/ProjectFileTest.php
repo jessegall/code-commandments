@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cs;
 
 use JesseGall\CodeCommandments\Cs\Codebase;
 use JesseGall\CodeCommandments\Cs\NodeMatch;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -16,14 +17,12 @@ use PHPUnit\Framework\TestCase;
 final class ProjectFileTest extends TestCase
 {
     use NeedsTheBridge;
-
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
         $this->requireTheBridge();
 
-        $this->root = sys_get_temp_dir() . '/cc-project-file-' . uniqid();
         mkdir("{$this->root}/src/Shop", 0777, true);
         file_put_contents("{$this->root}/Directory.Build.props", <<<'XML'
             <Project>
@@ -44,11 +43,6 @@ final class ProjectFileTest extends TestCase
                 public void Add(int price) => prices.Add(price);
             }
             CS);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_an_implicit_using_set_in_directory_build_props_resolves_the_call(): void

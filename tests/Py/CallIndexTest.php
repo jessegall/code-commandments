@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Py\Codebase;
 use JesseGall\CodeCommandments\Py\ExprMatch;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\NodeMatch;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -17,11 +18,10 @@ use PHPUnit\Framework\TestCase;
  */
 final class CallIndexTest extends TestCase
 {
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-py-index-' . uniqid();
         $files = [
             'shop/__init__.py' => '',
             'shop/money.py' => "def rounded(amount):\n    return round(amount, 2)\n",
@@ -71,11 +71,6 @@ final class CallIndexTest extends TestCase
             @mkdir(dirname("{$this->root}/{$path}"), 0777, true);
             file_put_contents("{$this->root}/{$path}", $source);
         }
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_a_function_is_reached_through_every_spelling_of_its_import(): void

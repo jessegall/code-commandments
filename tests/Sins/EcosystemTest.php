@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Sins;
 
 use JesseGall\CodeCommandments\Sins\Ecosystem;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,18 +16,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class EcosystemTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-ecosystem-' . uniqid();
-        mkdir($this->root);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryFolder;
 
     public function test_pip_reads_requirements_files(): void
     {

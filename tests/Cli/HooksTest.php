@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,20 +16,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class HooksTest extends TestCase
 {
-    private string $root;
+    use TemporaryFolder;
 
     private string $path;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-hook-' . uniqid('', true);
         $this->path = "{$this->root}/.claude/settings.json";
         @mkdir(dirname($this->path), 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_it_wires_one_dispatcher_per_moment(): void
@@ -169,13 +164,17 @@ final class HooksTest extends TestCase
         $this->assertSame(1, $this->dispatchers('Notification'), 'and wiring still completes');
     }
 
-    /** @param array<string, mixed> $settings */
+    /**
+     * @param array<string, mixed> $settings
+     */
     private function write(array $settings): void
     {
         file_put_contents($this->path, json_encode($settings));
     }
 
-    /** How many stamped dispatcher (`commandments hooks`) entries are wired under $event. */
+    /**
+     * How many stamped dispatcher (`commandments hooks`) entries are wired under $event.
+     */
     private function dispatchers(string $event): int
     {
         return count(array_filter(
@@ -184,7 +183,9 @@ final class HooksTest extends TestCase
         ));
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     private function commands(string $event): array
     {
         $settings = (array) json_decode((string) file_get_contents($this->path), true);

@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Layers\LayersCommand;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,15 +16,13 @@ use PHPUnit\Framework\TestCase;
  */
 final class LayersCommandTest extends TestCase
 {
-    private string $root;
+    use TemporaryProject;
 
     private string $config;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-layers-' . uniqid('', true);
         $this->config = $this->root . '/.commandments/config.php';
-        mkdir($this->root . '/.commandments', 0777, true);
         chdir($this->root);
 
         file_put_contents($this->config, <<<'PHP_SOURCE'
@@ -48,7 +47,6 @@ final class LayersCommandTest extends TestCase
     protected function tearDown(): void
     {
         chdir(dirname(__DIR__, 2));
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     private function exec(string ...$args): int

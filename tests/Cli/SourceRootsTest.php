@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Config\SourceRoots;
 use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,18 +16,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class SourceRootsTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/roots_' . uniqid();
-        mkdir($this->root, 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryFolder;
 
     public function test_detects_from_psr4_skipping_scaffolding_and_writes_config(): void
     {

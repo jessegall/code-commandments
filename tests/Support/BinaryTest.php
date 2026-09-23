@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Support;
 
 use JesseGall\CodeCommandments\Support\Binary;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,18 +16,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class BinaryTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-binary-' . uniqid('', true);
-        @mkdir($this->root, 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryFolder;
 
     public function test_a_consumer_gets_composers_shim(): void
     {

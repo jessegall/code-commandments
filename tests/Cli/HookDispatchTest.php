@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,24 +16,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class HookDispatchTest extends TestCase
 {
-    private string $root;
-
-    private string|false $priorProjectDir;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-dispatch-' . uniqid('', true);
-        mkdir($this->root . '/.commandments', 0777, true);
-        // Scope the hook counters to this test's root so they're deterministic across runs.
-        $this->priorProjectDir = getenv('CLAUDE_PROJECT_DIR');
-        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
-    }
-
-    protected function tearDown(): void
-    {
-        putenv($this->priorProjectDir === false ? 'CLAUDE_PROJECT_DIR' : 'CLAUDE_PROJECT_DIR=' . $this->priorProjectDir);
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryProject;
 
     /**
      * @param  array<string, mixed>  $payload
@@ -44,14 +28,6 @@ final class HookDispatchTest extends TestCase
         new HookDispatch($io)->run(Input::of('hooks'));
 
         return $io->emitted;
-    }
-
-    private function writeConfig(string $body): void
-    {
-        file_put_contents(
-            $this->root . '/.commandments/config.php',
-            "<?php\nuse JesseGall\\CodeCommandments\\Config;\nreturn function (Config \$config): void {\n    {$body}\n};\n",
-        );
     }
 
     public function test_a_moment_no_handler_cares_about_is_silent(): void

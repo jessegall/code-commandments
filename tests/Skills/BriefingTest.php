@@ -5,25 +5,15 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Skills;
 
 use JesseGall\CodeCommandments\Custom;
-use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use JesseGall\CodeCommandments\Skills\Briefing;
+use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use JesseGall\CodeCommandments\Skills\Tier;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use PHPUnit\Framework\TestCase;
 
 final class BriefingTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-briefing-' . uniqid('', true);
-        mkdir($this->root . '/.commandments/custom', 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryProject;
 
     public function test_renders_a_marked_block_listing_every_skill_in_its_tier(): void
     {

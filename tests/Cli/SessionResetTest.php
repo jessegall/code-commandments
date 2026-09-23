@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
-use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
 use JesseGall\CodeCommandments\Hooks\Counter;
+use JesseGall\CodeCommandments\Hooks\Handlers\SessionReset;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
@@ -16,18 +17,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class SessionResetTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-session-' . uniqid('', true);
-        mkdir($this->root . '/.commandments', 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryProject;
 
     private function arm(): void
     {

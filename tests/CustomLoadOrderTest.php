@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests;
 
 use JesseGall\CodeCommandments\Custom;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,17 +16,11 @@ use PHPUnit\Framework\TestCase;
  */
 final class CustomLoadOrderTest extends TestCase
 {
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-order-' . uniqid('', true);
         mkdir($this->root . '/.commandments/custom/Naming', 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_a_rule_loads_though_its_trait_sorts_after_it(): void

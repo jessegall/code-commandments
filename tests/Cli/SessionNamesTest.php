@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Cli\Console;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\SessionCommand;
 use JesseGall\CodeCommandments\Cli\State\SessionNames;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
 use PHPUnit\Framework\TestCase;
@@ -20,28 +21,11 @@ use PHPUnit\Framework\TestCase;
  */
 final class SessionNamesTest extends TestCase
 {
-    private string $root;
-
-    private string|false $priorProjectDir;
-
-    private string|false $priorSession;
+    use TemporaryProject;
 
     protected function setUp(): void
     {
-        // Resolved, because a worktree's `.git` file names its repository by an absolute path and the
-        // walk that reads it resolves too — an unresolved `/var` against a resolved `/private/var` is a
-        // fixture that passes for the wrong reason.
-        $this->root = realpath(sys_get_temp_dir()) . '/cc-names-' . uniqid('', true);
         mkdir($this->root . '/.commandments/sessions', 0777, true);
-        $this->priorProjectDir = getenv('CLAUDE_PROJECT_DIR');
-        $this->priorSession = getenv('CLAUDE_CODE_SESSION_ID');
-    }
-
-    protected function tearDown(): void
-    {
-        putenv($this->priorProjectDir === false ? 'CLAUDE_PROJECT_DIR' : 'CLAUDE_PROJECT_DIR=' . $this->priorProjectDir);
-        putenv($this->priorSession === false ? 'CLAUDE_CODE_SESSION_ID' : 'CLAUDE_CODE_SESSION_ID=' . $this->priorSession);
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     private function names(): SessionNames

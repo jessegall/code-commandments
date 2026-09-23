@@ -8,9 +8,10 @@ use JesseGall\CodeCommandments\Cli\Hooks\HookDispatch;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Hooks\Counter;
 use JesseGall\CodeCommandments\Hooks\Hook;
-use JesseGall\CodeCommandments\Support\File;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
+use JesseGall\CodeCommandments\Support\File;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
@@ -30,9 +31,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class EveryHookSurvivesItsOwnEventsTest extends TestCase
 {
-    private string $root;
-
-    private string|false $priorProjectDir;
+    use TemporaryProject;
 
     /**
      * Payload fields a handler may read for any moment. Given for every event rather than per event: a
@@ -59,18 +58,9 @@ final class EveryHookSurvivesItsOwnEventsTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-smoke-' . uniqid('', true);
-        mkdir($this->root . '/.commandments', 0777, true);
-        $this->priorProjectDir = getenv('CLAUDE_PROJECT_DIR');
         putenv('CLAUDE_PROJECT_DIR=' . $this->root);
 
         $this->arrangeALiveSession();
-    }
-
-    protected function tearDown(): void
-    {
-        putenv($this->priorProjectDir === false ? 'CLAUDE_PROJECT_DIR' : 'CLAUDE_PROJECT_DIR=' . $this->priorProjectDir);
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     /**

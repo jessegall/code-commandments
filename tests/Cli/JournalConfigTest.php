@@ -11,6 +11,7 @@ use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Detectors\Catalog as Detectors;
 use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Sins\Catalog;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,12 +20,10 @@ use PHPUnit\Framework\TestCase;
  */
 final class JournalConfigTest extends TestCase
 {
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-journal-config-' . uniqid('', true);
-        mkdir($this->root, 0777, true);
         putenv(JournalConfig::PROJECT . '=' . $this->root);
     }
 
@@ -32,7 +31,6 @@ final class JournalConfigTest extends TestCase
     {
         putenv(JournalConfig::PROJECT);
         putenv(JournalConfig::SETTINGS);
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     /**

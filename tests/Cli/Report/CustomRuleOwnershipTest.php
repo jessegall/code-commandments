@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli\Report;
 
 use JesseGall\CodeCommandments\Cli\Input;
-use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Cli\Report\GitHubIssue;
 use JesseGall\CodeCommandments\Cli\Report\Report;
 use JesseGall\CodeCommandments\Cli\Report\SinReport;
 use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Detectors\Backend\ArrayBagDetector;
+use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Tests\Cli\CapturingHookIO;
 use JesseGall\CodeCommandments\Tests\Cli\FakeGit;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -23,18 +24,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class CustomRuleOwnershipTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-own-' . uniqid('', true);
-        mkdir($this->root . '/.commandments/custom', 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryProject;
 
     public function test_the_console_report_and_checklist_name_a_custom_rule_as_custom(): void
     {

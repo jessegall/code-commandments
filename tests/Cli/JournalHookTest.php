@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalHook;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -17,23 +18,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class JournalHookTest extends TestCase
 {
-    private string $root;
-
-    private string|false $priorProjectDir;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-journal-' . uniqid('', true);
-        mkdir($this->root . '/.commandments', 0777, true);
-        $this->priorProjectDir = getenv('CLAUDE_PROJECT_DIR');
-        putenv('CLAUDE_PROJECT_DIR=' . $this->root);
-    }
-
-    protected function tearDown(): void
-    {
-        putenv($this->priorProjectDir === false ? 'CLAUDE_PROJECT_DIR' : 'CLAUDE_PROJECT_DIR=' . $this->priorProjectDir);
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryProject;
 
     /**
      * @param  array<string, mixed>  $payload

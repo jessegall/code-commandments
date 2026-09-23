@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cs;
 
 use JesseGall\CodeCommandments\Cs\Codebase;
 use JesseGall\CodeCommandments\Cs\NodeMatch;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -16,20 +17,13 @@ use PHPUnit\Framework\TestCase;
 final class SolutionTest extends TestCase
 {
     use NeedsTheBridge;
-
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
         $this->requireTheBridge();
 
-        $this->root = sys_get_temp_dir() . '/cc-solution-' . uniqid();
         $this->write('Directory.Build.props', "<Project>\n  <PropertyGroup>\n    <TargetFramework>net8.0</TargetFramework>\n  </PropertyGroup>\n</Project>\n");
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_two_projects_declaring_one_name_each_resolve_their_own(): void

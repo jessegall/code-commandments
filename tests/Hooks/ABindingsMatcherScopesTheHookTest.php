@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests\Hooks;
 use JesseGall\CodeCommandments\Hooks\Handlers\ModelChoiceReminder;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
 use JesseGall\CodeCommandments\Tests\Cli\FakeGit;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -17,18 +18,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class ABindingsMatcherScopesTheHookTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-match-' . uniqid('', true);
-        mkdir($this->root . '/.commandments', 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryProject;
 
     /**
      * @param  array<string, mixed>  $payload

@@ -13,6 +13,7 @@ use JesseGall\CodeCommandments\Python\Detector;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\FixAtTheSource;
 use JesseGall\CodeCommandments\Testing\ModuleMarkerVerifier;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use JesseGall\CodeCommandments\Tests\Cs\NeedsTheBridge;
 use PHPUnit\Framework\TestCase;
 
@@ -25,12 +26,10 @@ final class ModuleMarkerVerifierTest extends TestCase
 {
     use NeedsTheBridge;
 
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-py-markers-' . uniqid();
-        mkdir($this->root);
         file_put_contents("{$this->root}/shop.py", <<<'PY'
             # @sin Probe
             def marked_and_flagged():
@@ -45,11 +44,6 @@ final class ModuleMarkerVerifierTest extends TestCase
                 # @sin Probe
                 limit = 10
             PY);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_a_hole_and_a_false_positive_are_both_reported(): void

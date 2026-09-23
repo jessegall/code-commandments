@@ -7,9 +7,10 @@ namespace JesseGall\CodeCommandments\Tests\Cli;
 use JesseGall\CodeCommandments\Detector;
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Detectors\CrossFileSet;
-use JesseGall\CodeCommandments\Workspace;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
 use JesseGall\CodeCommandments\WholeTree;
+use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -19,20 +20,13 @@ use PHPUnit\Framework\TestCase;
  */
 final class SkillReminderTest extends TestCase
 {
-    private string $root;
+    use TemporaryProject;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-skill-' . uniqid('', true);
         @mkdir($this->root . '/src', 0777, true);
         @mkdir($this->root . '/tests', 0777, true);
-        @mkdir($this->root . '/.commandments', 0777, true);
         file_put_contents($this->root . '/.commandments/config.php', "<?php\n\nreturn function (\$config): void {\n    \$config->paths('src');\n};\n");
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_an_edit_that_breaks_a_rule_names_the_skill_that_fixes_it(): void

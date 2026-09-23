@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Tests;
 use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\CustomFile;
 use JesseGall\CodeCommandments\Hooks\Hook;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -16,18 +17,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class CustomFileTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-customfile-' . uniqid('', true);
-        mkdir($this->root, 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryFolder;
 
     private function write(string $name, string $php): string
     {

@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Cli\Task\Task;
 use JesseGall\CodeCommandments\Cli\Task\TaskId;
 use JesseGall\CodeCommandments\Cli\Task\Tasks;
 use JesseGall\CodeCommandments\Cli\Task\TaskState;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -17,17 +18,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class TaskTest extends TestCase
 {
-    private string $root;
-
-    protected function setUp(): void
-    {
-        $this->root = sys_get_temp_dir() . '/cc-tasks-' . uniqid('', true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
-    }
+    use TemporaryFolder;
 
     private function tasks(): Tasks
     {

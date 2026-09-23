@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Migration;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use JesseGall\CodeCommandments\Workspace;
 use PHPUnit\Framework\TestCase;
 
@@ -14,20 +15,14 @@ use PHPUnit\Framework\TestCase;
  */
 final class StateMigrationTest extends TestCase
 {
-    private string $root;
+    use TemporaryFolder;
 
     private string $session;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/cc-migrate-' . uniqid('', true);
         $this->session = $this->root . '/.commandments/sessions/abcde';
         mkdir($this->session, 0777, true);
-    }
-
-    protected function tearDown(): void
-    {
-        exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     /**

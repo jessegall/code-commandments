@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Tests\Cli\Scope;
 
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\Tests\Concerns\TemporaryFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -15,19 +16,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class GitFilesJudgedTest extends TestCase
 {
-    private string $root;
+    use TemporaryFolder;
 
     protected function setUp(): void
     {
-        $this->root = sys_get_temp_dir() . '/git-files-judged-' . uniqid();
-        mkdir($this->root);
         $this->git('init -q');
         $this->git('-c user.email=t@t -c user.name=t commit -q --allow-empty -m init');
-    }
-
-    protected function tearDown(): void
-    {
-        shell_exec('rm -rf ' . escapeshellarg($this->root));
     }
 
     public function test_a_changed_file_of_every_judged_language_is_in_scope(): void
