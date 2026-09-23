@@ -60,6 +60,11 @@ final class ModuleFile implements ParsedModule
     private ?array $owners = null;
 
     /**
+     * @var array<string, true>|null  every name the module binds at its top level
+     */
+    private ?array $bound = null;
+
+    /**
      * @var array<int, Comment>|null  each comment standing on a line of its own, by its line
      */
     private ?array $ownLineComments = null;
@@ -73,6 +78,29 @@ final class ModuleFile implements ParsedModule
     public static function fromFile(string $source, string $file): self
     {
         return new self(Parser::module($source), $file, $source);
+    }
+
+    /**
+     * Does this module bind $name at its top level — a `def`, a `class`, an import or an assignment, however
+     * deep inside an `if` or a `try` it sits, so long as no function or class holds it?
+     */
+    public function binds(string $name): bool
+    {
+        if ($this->bound === null) {
+            $this->bound = [];
+
+            foreach ($this->nodes() as $node) {
+                if (array_any($this->ancestorsOf($node), static fn (Node $around): bool => $around instanceof FunctionDef || $around instanceof ClassDef)) {
+                    continue;
+                }
+
+                foreach ([...$node->declaredNames(), ...array_map(static fn (Expr $target) => $target->dottedName(), $node->writtenTargets())] as $bound) {
+                    $this->bound[$bound] = true;
+                }
+            }
+        }
+
+        return isset($this->bound[$name]);
     }
 
     /**

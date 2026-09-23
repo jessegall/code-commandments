@@ -177,6 +177,42 @@ final class Codebase implements ModuleCodebase
     }
 
     /**
+     * Does this codebase hold the top-level module or package $name — `shop` for `shop/__init__.py` or
+     * `shop.py` in a folder that is no package itself? A `flask/logging.py` is `flask.logging`, not the
+     * standard library's `logging`.
+     */
+    public function ownsPackage(string $name): bool
+    {
+        $packages = array_fill_keys(array_map(static fn (ModuleFile $module): string => dirname($module->file), array_filter($this->modules(), static fn (ModuleFile $module): bool => basename($module->file) === '__init__.py')), true);
+
+        return array_any($this->modules(), static function (ModuleFile $module) use ($name, $packages): bool {
+            $home = basename($module->file) === '__init__.py' ? dirname($module->file, 2) : dirname($module->file);
+
+            return $module->isNamed($name) && ! isset($packages[$home]);
+        });
+    }
+
+    /**
+     * Does $dotted name something this codebase holds — a module, or a name bound at the top of the deepest
+     * module its prefix names? What follows that name (a method, an attribute) is not checked.
+     */
+    public function resolves(string $dotted): bool
+    {
+        $parts = explode('.', $dotted);
+
+        for ($depth = count($parts); $depth >= 1; $depth--) {
+            $named = implode('.', array_slice($parts, 0, $depth));
+            $module = array_values(array_filter($this->modules(), static fn (ModuleFile $module): bool => $module->isNamed($named)))[0] ?? null;
+
+            if ($module !== null) {
+                return $depth === count($parts) || $module->binds($parts[$depth]);
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * The dataclasses this codebase declares — found once and kept.
      */
     public function dataclasses(): Dataclasses

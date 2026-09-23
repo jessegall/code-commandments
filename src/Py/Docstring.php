@@ -149,4 +149,18 @@ final class Docstring
             && preg_match('/^(\w+)(?:\s*\([^)]*\))?:$|^(\w+) : \S/', $line, $entry) === 1
             && in_array($entry[1] !== '' ? $entry[1] : $entry[2], $annotated, true);
     }
+
+    /**
+     * The dotted names $text's Sphinx cross-references point at — `shop.cart.Cart` from
+     * ``:class:`~shop.cart.Cart` `` or ``:func:`total <shop.cart.total>` `` — leaving out a bare name, which
+     * resolves against wherever Sphinx is told to look.
+     *
+     * @return list<string>
+     */
+    public static function references(string $text): array
+    {
+        preg_match_all('/:(?:py:)?(?:class|func|meth|attr|mod|obj|exc|data|const):`(?:[^`<]*<)?[~!.]?([\w.]+)>?`/', $text, $found);
+
+        return array_values(array_unique(array_filter($found[1], static fn (string $name): bool => str_contains($name, '.'))));
+    }
 }

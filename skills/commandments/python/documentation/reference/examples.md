@@ -80,3 +80,22 @@ def quote_cents(parcel: Parcel, zone: str) -> int:
     """
     return 500 + parcel.weight_grams // 100
 ```
+
+### python-dangling-doc-reference
+
+a Sphinx cross-reference in a docstring (`:class:`shop.cart.Basket``) to a first-party name the codebase no longer declares
+
+```py
+----------[ Bad ]----------
+
+def manifest(parcels: list) -> str:
+    """One line per :class:`shop.dispatch_desk.Package` handed to the courier."""
+    return "\n".join(str(parcel) for parcel in parcels)
+
+----------[ Good ]----------
+
+def manifest_lines(parcels: list) -> str:
+    """One line per :class:`shop.dispatch_desk.Parcel` handed to the courier."""
+    lines = [f"{index}. {parcel}" for index, parcel in enumerate(parcels, start=1)]
+    return "\n".join(lines)
+```

@@ -246,6 +246,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\ConstantClassEnum::class,
         // Sins\Python\ConstantProperty::class,
         // Sins\Python\ConstructorSideEffect::class,
+        // Sins\Python\DanglingDocReference::class,
         // Sins\Python\DataClump::class,
         // Sins\Python\DeepNesting::class,
         // Sins\Python\DictBag::class,
