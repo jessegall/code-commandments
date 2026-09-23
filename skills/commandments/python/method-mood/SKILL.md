@@ -43,6 +43,8 @@ never mistaken for narration.
 
 - [ ] Name a `bool` about the object itself as a question: `is_bound()`, `has_parent()`, `can_retry()`.
       _Make it a question: `is_…`, `has_…`, `can_…`, `awaits_…`._
+- [ ] Name a command in the imperative: `hide()`, `lock_for_night()`, `open_for(user)` — never the third-person `hides()`.
+      _Drop the -s: the call site is giving the order, not narrating it._
 
 ## Worked example
 
@@ -67,14 +69,17 @@ class LockerHatch:
         return self.bolted
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=python/method-mood` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-bare-state-predicate`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-bare-state-predicate`, `python-narrated-command`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

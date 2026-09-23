@@ -254,6 +254,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\MessageStringRaise::class,
         // Sins\Python\MutableStaticState::class,
         // Sins\Python\MutableValueObject::class,
+        // Sins\Python\NarratedCommand::class,
         // Sins\Python\NearDuplicateFunction::class,
         // Sins\Python\NestedConditional::class,
         // Sins\Python\NullableCallback::class,

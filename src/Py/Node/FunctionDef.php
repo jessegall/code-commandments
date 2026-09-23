@@ -6,6 +6,7 @@ namespace JesseGall\CodeCommandments\Py\Node;
 
 use JesseGall\CodeCommandments\Py\Expr\Expr;
 use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Expr\LiteralType;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -94,9 +95,7 @@ final class FunctionDef extends Node
      */
     public function isNamedConstructor(): bool
     {
-        $classmethod = array_any($this->decorators, static fn (Expr $decorator): bool => $decorator->dottedName() === 'classmethod');
-
-        return $classmethod && array_any(
+        return $this->isClassMethod() && array_any(
             $this->body->descendants(),
             static fn (Node $node): bool => $node->returnedValue()->isSomeAnd(
                 static fn (Expr $value): bool => $value->isCall() && $value->get('callee')->dottedName() === 'cls',
@@ -179,6 +178,31 @@ final class FunctionDef extends Node
     public function isStatic(): bool
     {
         return array_any($this->decorators, static fn (Expr $decorator): bool => $decorator->dottedName() === 'staticmethod');
+    }
+
+    /**
+     * Is this a `@classmethod` — called with the class, not an instance, bound to its first parameter?
+     */
+    public function isClassMethod(): bool
+    {
+        return array_any($this->decorators, static fn (Expr $decorator): bool => $decorator->dottedName() === 'classmethod');
+    }
+
+    /**
+     * Does this declare it hands nothing back — `-> None`, `-> NoReturn`, `-> Never`?
+     */
+    public function returnsNothing(): bool
+    {
+        return $this->returns?->literalType() === LiteralType::None
+            || in_array($this->returns?->dottedName(), ['NoReturn', 'typing.NoReturn', 'Never', 'typing.Never'], true);
+    }
+
+    /**
+     * Does this declare it hands back an instance of $class — `-> Self`, `-> $class`, `-> "$class"`?
+     */
+    public function returnsInstanceOf(string $class): bool
+    {
+        return in_array($this->returns?->spelledType(), ['Self', 'typing.Self', 'typing_extensions.Self', $class], true);
     }
 
     /**

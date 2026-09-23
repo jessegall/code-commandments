@@ -97,6 +97,15 @@ final class Expr implements SyntaxExpression
     }
 
     /**
+     * The type this annotation names — `Query` from `Query` and from the forward reference `"Query"`,
+     * `typing.Self` — or empty when it names no single type.
+     */
+    public function spelledType(): string
+    {
+        return $this->literalType() === LiteralType::String ? (string) $this->get('value') : $this->dottedName();
+    }
+
+    /**
      * Is this an empty scalar written out — `""`, `0`, `False` — a value that stands in for data rather
      * than being any? An empty collection is not one: "no items" is a real answer.
      */

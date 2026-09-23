@@ -236,9 +236,57 @@ class NodeMatch implements Located
             && $this->isMethod()
             && count($method->params) === 1
             && $method->returns?->dottedName() === 'bool'
-            && ! (str_starts_with($method->name, '__') && str_ends_with($method->name, '__'))
             && ! VerbMood::readsAsQuestion($method->name)
             && VerbMood::isThirdPerson($method->name)
+            && $this->ownsItsName($codebase);
+    }
+
+    /**
+     * Is this an order named as a narration — `def hides(self) -> None` where `hide` belongs? A method
+     * that hands nothing back, or hands back its own instance to chain, is a command, and the caller is
+     * giving it. A fluent relation — `starts_with(prefix) -> Self` — states a constraint, and the third
+     * person is correct English for that.
+     */
+    public function isNarratedCommand(Codebase $codebase): bool
+    {
+        $method = $this->node;
+
+        if (! $method instanceof FunctionDef || ! $this->isMethod() || ! VerbMood::isThirdPerson($method->name)) {
+            return false;
+        }
+
+        if (! $method->returnsNothing() && ! $this->isFluent($method)) {
+            return false;
+        }
+
+        return $this->ownsItsName($codebase);
+    }
+
+    /**
+     * Does $method hand its own instance back to chain on, as an order rather than a relation? A static
+     * or class method returning the class is a factory named for what it builds.
+     */
+    private function isFluent(FunctionDef $method): bool
+    {
+        $class = $this->module->ancestorsOf($method)[1] ?? null;
+
+        return $class instanceof ClassDef
+            && ! $method->isStatic()
+            && ! $method->isClassMethod()
+            && $method->returnsInstanceOf($class->name)
+            && ! VerbMood::isRelationalCompound($method->name);
+    }
+
+    /**
+     * Is this method's name its own to choose? A dunder is the language's, and an override, an overridden
+     * method or one on a class extending an outside base spells a contract.
+     */
+    private function ownsItsName(Codebase $codebase): bool
+    {
+        $method = $this->node;
+
+        return $method instanceof FunctionDef
+            && ! (str_starts_with($method->name, '__') && str_ends_with($method->name, '__'))
             && ! $this->isOverride($codebase)
             && ! $codebase->index()->isOverridden($method, $this->module)
             && ! $codebase->index()->extendsOutside($method, $this->module);
@@ -250,16 +298,14 @@ class NodeMatch implements Located
      */
     public function isConstantBelowField(Enums $enums): bool
     {
-        [$block, $class] = [...$this->module->ancestorsOf($this->node), null, null];
-
-        if (! $class instanceof ClassDef || $class->body !== $block || ! $this->node->declaresConstant() || $enums->isEnum($class->name)) {
+        if (! $this->node->declaresConstant()) {
             return false;
         }
 
-        $above = array_slice($block->body, 0, (int) array_search($this->node, $block->body, true));
-
-        return ! array_any($above, static fn (Node $member): bool => $member instanceof FunctionDef)
-            && array_any($above, static fn (Node $member): bool => $member->isStateDeclaration() && ! $member->declaresConstant());
+        return $this->membersAbove($enums)->isSomeAnd(
+            static fn (array $above): bool => ! array_any($above, static fn (Node $member): bool => $member instanceof FunctionDef)
+                && array_any($above, static fn (Node $member): bool => $member->isStateDeclaration() && ! $member->declaresConstant()),
+        );
     }
 
     /**
@@ -270,22 +316,36 @@ class NodeMatch implements Located
      */
     public function isMemberAfterMethod(Enums $enums): bool
     {
-        [$block, $class] = [...$this->module->ancestorsOf($this->node), null, null];
         $targets = $this->node->writtenTargets();
 
-        if (! $class instanceof ClassDef || $class->body !== $block || $targets === [] || $enums->isEnum($class->name)) {
+        if ($targets === [] || array_all($targets, static fn (Expr $target): bool => str_starts_with($target->dottedName(), '__') && str_ends_with($target->dottedName(), '__'))) {
             return false;
         }
 
-        if (array_all($targets, static fn (Expr $target): bool => str_starts_with($target->dottedName(), '__') && str_ends_with($target->dottedName(), '__'))) {
-            return false;
-        }
-
-        $above = array_slice($block->body, 0, (int) array_search($this->node, $block->body, true));
-        $methods = array_map(static fn (FunctionDef $method): string => $method->name, array_values(array_filter($above, static fn (Node $member): bool => $member instanceof FunctionDef)));
         $read = array_merge([], ...array_map(static fn (Expr $expression): array => $expression->dataNames(), $this->node->expressions()));
 
-        return $methods !== [] && array_intersect($read, $methods) === [];
+        return $this->membersAbove($enums)->isSomeAnd(static function (array $above) use ($read): bool {
+            $methods = array_map(static fn (FunctionDef $method): string => $method->name, array_values(array_filter($above, static fn (Node $member): bool => $member instanceof FunctionDef)));
+
+            return $methods !== [] && array_intersect($read, $methods) === [];
+        });
+    }
+
+    /**
+     * The members of its class written above this one — none when this is no member of a class body, or
+     * the class is an enum, whose members follow the enum's own order.
+     *
+     * @return Option<list<Node>>
+     */
+    private function membersAbove(Enums $enums): Option
+    {
+        [$block, $class] = [...$this->module->ancestorsOf($this->node), null, null];
+
+        if (! $class instanceof ClassDef || $class->body !== $block || $enums->isEnum($class->name)) {
+            return Option::none();
+        }
+
+        return Option::some(array_slice($block->body, 0, (int) array_search($this->node, $block->body, true)));
     }
 
     /**
