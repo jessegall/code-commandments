@@ -399,6 +399,21 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this the whole of a group test — the outermost `||` of a chain, or an `or` pattern a value is
+     * tested against with `is` (never a switch arm's, where the switch is the per-case place)?
+     */
+    public function isGroupTestRoot(): bool
+    {
+        $parent = $this->module->parentOf($this->node);
+
+        return match (true) {
+            $this->node->is('LogicalOrExpression') => ! $parent->isSomeAnd(static fn (Node $around): bool => $around->is('LogicalOrExpression')),
+            $this->node->is('OrPattern') => $parent->isSomeAnd(static fn (Node $around): bool => $around->is('IsPatternExpression')),
+            default => false,
+        };
+    }
+
+    /**
      * Is this expression a branch of a conditional expression — so a chain of them is reported once, at its
      * outermost?
      */

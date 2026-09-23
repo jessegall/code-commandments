@@ -36,6 +36,11 @@ final class Codebase implements ModuleCodebase
     private ?array $casedClasses = null;
 
     /**
+     * @var list<string>|null  every enum this codebase declares, by symbol
+     */
+    private ?array $enums = null;
+
+    /**
      * @param  list<ModuleFile>  $modules
      */
     private function __construct(private readonly array $modules) {}
@@ -256,6 +261,14 @@ final class Codebase implements ModuleCodebase
         }
 
         return array_values(array_unique($classes));
+    }
+
+    /**
+     * Does this codebase declare the enum $symbol?
+     */
+    public function declaresEnum(string $symbol): bool
+    {
+        return in_array($symbol, $this->enums ??= array_map(static fn (NodeMatch $enum): string => (string) $enum->node->symbol, $this->whereNode(static fn (Node $node): bool => $node->is('EnumDeclaration'))->get()), true);
     }
 
     /**

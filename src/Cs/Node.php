@@ -613,6 +613,63 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The enums this `||` chain or `or` pattern tests two or more different cases of — `Status` in
+     * `s == Status.Paid || s == Status.Refunded` and in `s is Status.Paid or Status.Refunded`.
+     *
+     * @return list<string>
+     */
+    public function enumsTestedAsAGroup(): array
+    {
+        $cases = array_merge([], ...array_map(static fn (self $operand): array => $operand->testedEnumCase(), $this->orOperands()));
+        $casesByEnum = [];
+
+        foreach ($cases as $case) {
+            $casesByEnum[(string) $case->type?->name][(string) $case->children[1]->name] = true;
+        }
+
+        return array_keys(array_filter($casesByEnum, static fn (array $names): bool => count($names) >= 2));
+    }
+
+    /**
+     * The sides of this `||` chain or `or` pattern, the nested ones of the same kind unrolled.
+     *
+     * @return list<self>
+     */
+    private function orOperands(): array
+    {
+        $kind = $this->kind;
+
+        return array_merge([], ...array_map(static fn (self $side): array => $side->kind === $kind ? $side->orOperands() : [$side], $this->children));
+    }
+
+    /**
+     * The enum case this operand tests for — the member in `s == Status.Paid` or in the pattern
+     * `Status.Paid` — none for anything else.
+     *
+     * @return list<self>
+     */
+    private function testedEnumCase(): array
+    {
+        $sides = match (true) {
+            $this->is('EqualsExpression', 'ConstantPattern') => $this->children,
+            default => [],
+        };
+
+        return array_values(array_filter($sides, static fn (self $side): bool => $side->isEnumCase()));
+    }
+
+    /**
+     * Is this an enum case named through its enum — `Status.Paid`, a constant of the very type it is read from?
+     */
+    public function isEnumCase(): bool
+    {
+        return $this->is('SimpleMemberAccessExpression')
+            && $this->constant
+            && $this->type !== null
+            && $this->type->name === $this->children[0]->type?->name;
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool
