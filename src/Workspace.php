@@ -25,6 +25,11 @@ final class Workspace
     private const string DIR = '.commandments';
 
     /**
+     * The folder the agent journal installs this package into as a plugin, and names its data folder after.
+     */
+    public const string JOURNAL_PLUGIN = 'code-commandments';
+
+    /**
      * The folder holding one directory per session. Public because a session's own PLAN is tracked while
      * the rest of its folder is not, so the ignore rules have to name it.
      */
@@ -241,7 +246,63 @@ final class Workspace
     }
 
     /**
-     * This session's folder: `<root>/.commandments/sessions/<key>`.
+     * Whether the agent journal owns this project's hooks: its plugin folder is installed beside the journal.
+     */
+    public function isJournalDriven(): bool
+    {
+        return is_file("{$this->root}/.journal/plugins/" . self::JOURNAL_PLUGIN . '/.journal-plugin/plugin.json');
+    }
+
+    /**
+     * Where the state this package generates lives — sessions, worklists, caches, stamps. Under the agent
+     * journal that is the plugin's own data folder, which outlives an upgrade and keeps the project clean;
+     * otherwise the durable tier. Decided from the project, not the process, so a `judge` the agent runs
+     * and the hooks the journal runs agree on where a worklist is.
+     */
+    public function stateDir(): string
+    {
+        return $this->isJournalDriven() ? "{$this->root}/.journal/plugin-data/" . self::JOURNAL_PLUGIN : $this->dir();
+    }
+
+    /**
+     * A generated file shared by every session — a cache or a stamp — in the {@see stateDir}.
+     */
+    public function cache(string $file): string
+    {
+        return $this->stateDir() . '/' . $file;
+    }
+
+    /**
+     * Move the session folders left in the durable tier into the {@see stateDir}, when the two differ — state
+     * written before the agent journal took over the hooks. A folder already in place wins. How many moved.
+     */
+    public function relocateSessions(): int
+    {
+        $old = $this->dir() . '/' . self::SESSIONS;
+        $new = $this->sessionsDir();
+
+        if ($old === $new || ! is_dir($old)) {
+            return 0;
+        }
+
+        @mkdir($new, 0775, true);
+        $moved = 0;
+
+        foreach (glob("{$old}/*", GLOB_ONLYDIR) ?: [] as $session) {
+            $target = $new . '/' . basename($session);
+
+            if (! file_exists($target) && @rename($session, $target)) {
+                $moved++;
+            }
+        }
+
+        @rmdir($old);
+
+        return $moved;
+    }
+
+    /**
+     * This session's folder: `<state>/sessions/<key>`.
      */
     public function sessionDir(): string
     {
@@ -260,15 +321,15 @@ final class Workspace
     }
 
     /**
-     * The folder holding one directory per session: `<root>/.commandments/sessions`.
+     * The folder holding one directory per session: `<state>/sessions`.
      */
     public function sessionsDir(): string
     {
-        return $this->dir() . '/' . self::SESSIONS;
+        return $this->stateDir() . '/' . self::SESSIONS;
     }
 
     /**
-     * A session-scoped state file: `<root>/.commandments/sessions/<key>/<file>`.
+     * A session-scoped state file: `<state>/sessions/<key>/<file>`.
      */
     public function path(string $file): string
     {
@@ -331,12 +392,12 @@ final class Workspace
     }
 
     /**
-     * The session-scoped path WITHOUT the root — `.commandments/sessions/<key>/<file>` — for display
-     * strings and cwd-relative consumers.
+     * The session-scoped path WITHOUT the root — `.commandments/sessions/<key>/<file>`, or the plugin data
+     * folder's under the agent journal — for display strings and cwd-relative consumers.
      */
     public function relative(string $file): string
     {
-        return self::DIR . '/' . self::SESSIONS . '/' . $this->sessionKey() . '/' . $file;
+        return substr($this->path($file), strlen(rtrim($this->root, '/')) + 1);
     }
 
     /**

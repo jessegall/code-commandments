@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Hooks;
 
-use JesseGall\CodeCommandments\Hooks\HookRegistry;
+use JesseGall\CodeCommandments\Workspace;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -47,7 +47,7 @@ final readonly class JournalQueue
         );
 
         if ($advice->raise !== null) {
-            $lines[] = 'plugin raise ' . HookRegistry::JOURNAL_PLUGIN . ' ' . escapeshellarg($advice->raise->event) . ' ' . escapeshellarg(self::oneLine($advice->raise->brief)) . "\n";
+            $lines[] = 'plugin raise ' . Workspace::JOURNAL_PLUGIN . ' ' . escapeshellarg($advice->raise->event) . ' ' . escapeshellarg(self::oneLine($advice->raise->brief)) . "\n";
         }
 
         if ($lines !== []) {

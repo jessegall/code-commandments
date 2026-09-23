@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Hooks\Handlers\ModelChoiceReminder;
 use JesseGall\CodeCommandments\Cli\Install;
 use JesseGall\CodeCommandments\Cli\Sync;
 use JesseGall\CodeCommandments\Support\Binary;
+use JesseGall\CodeCommandments\Workspace;
 /**
  * Wires code-commandments' Claude Code hooks into `.claude/settings.json` — one stamped entry per
  * distinct MOMENT, each running the {@see HookDispatch} entry point that fans out to the handler
@@ -43,11 +44,6 @@ final class HookRegistry
      * fail rather than being left to error on every tool use.
      */
     private const array LEGACY_SUBCOMMANDS = ['remind', 'judge-reminder', 'plan-reminder'];
-
-    /**
-     * The plugin folder the agent journal installs this package into.
-     */
-    public const string JOURNAL_PLUGIN = 'code-commandments';
 
     /**
      * The hooks that ship with the package; a consumer adds its own via `$config->hook(...)`.
@@ -84,7 +80,7 @@ final class HookRegistry
      */
     public static function journalDriven(string $root): bool
     {
-        return is_file("{$root}/.journal/plugins/" . self::JOURNAL_PLUGIN . '/.journal-plugin/plugin.json');
+        return new Workspace($root)->isJournalDriven();
     }
 
     /**
