@@ -117,6 +117,7 @@ most:**
 - **`commandments-csharp-flow`** — check preconditions at the top and leave (`return`/`throw`/`continue`), keep the body flat, no `else` after an exit, a `switch` expression or polymorphism instead of an `else if` ladder over one subject.
 - **`commandments-python-absence`** — decide absence where the value is born — raise, return an empty collection, or a Null Object — instead of an `X | None` every caller re-checks; never `or ""` a required value.
 - **`commandments-python-value-objects`** — give related data a type — a frozen dataclass — instead of a dict with string keys passed around, or values that always travel together.
+- **`commandments-csharp-absence`** — decide absence where the value is born — throw, return an empty collection, or a Null Object — with nullable reference types saying honestly what may be missing; never `?? ""` a required value, never `!` to silence the compiler.
 
 **ON CONTACT — load the moment the work touches the subject:**
 

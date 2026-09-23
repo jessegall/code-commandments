@@ -70,6 +70,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\Python\ValueObjects::class,
 
         // ----------[ C# ]----------
+        // Skills\CSharp\Absence::class,
         // Skills\CSharp\Duplication::class,
         // Skills\CSharp\Exceptions::class,
         // Skills\CSharp\Flow::class,

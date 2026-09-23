@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my FindOrder method returns Order? and every caller does if (order is null) throw new NotFoundException() — is there a better way",
+        "is it ok to write var title = row.Title ?? \"\"; in C# when the title is required",
+        "the compiler warns the customer may be null so I added customer!.Name — is that fine"
+    ],
+    "not": [
+        "judge flagged a catch (Exception) { } in my C# loader, what's the fix"
+    ]
+}

@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace JesseGall\CodeCommandments\Skills\CSharp;
+
+use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\Skills\Skill;
+use JesseGall\CodeCommandments\Skills\Tier;
+
+final class Absence extends Skill
+{
+    public function __construct()
+    {
+        parent::__construct(
+            slug: 'csharp/absence',
+            tier: Tier::Mandatory,
+            order: 32,
+        );
+    }
+
+    public function title(): string
+    {
+        return 'C# absence — decide "missing" where the value is born';
+    }
+
+    public function trigger(): string
+    {
+        return "Modelling a value that might not be there in C# — a return typed `T?`, a `return null` for \"not found\", an `is null` check or a `?? default` at a call site, a `FirstOrDefault()`, a `TryGetValue`, the null-forgiving `!`, or deciding between throwing, returning an empty collection and returning `null`. Read this BEFORE writing any of them.";
+    }
+
+    public function intro(): string
+    {
+        return "`null` is not a way to model absence. It is the *absence of a decision* about absence.
+Decide where the value is born — throw, hand back an empty form, or say honestly with `T?` that it
+may miss — and every caller downstream stops guessing.";
+    }
+
+    public function summary(): string
+    {
+        return 'decide absence where the value is born — throw, return an empty collection, or a Null Object — with nullable reference types saying honestly what may be missing; never `?? ""` a required value, never `!` to silence the compiler.';
+    }
+
+    public function principle(): string
+    {
+        return <<<'PRINCIPLE'
+### Ask in order, stop at the first yes
+
+1. **Can it actually be missing, or is "missing" a broken state?** A setting the program cannot run
+   without, a record a caller just created, a key the code itself wrote — absence there is a
+   failure. **Throw a named exception.** Do not return `null` for it.
+2. **Does "nothing" have a natural empty form?** A search with no hits is an empty list; a lookup
+   table with no entries is an empty dictionary; a behaviour with nothing to do is a Null Object —
+   an instance whose members do nothing. Return that, and every caller loops or calls with no
+   special case.
+3. **Is it a genuine "look for it; it may miss" that more than one caller handles?** Then `T?`
+   under nullable reference types is honest — the compiler makes every caller handle the missing
+   case, and the check belongs at each caller *because* each one decides something different.
+   `TryGetValue(key, out var value)` says the same for a lookup. If every caller writes the same
+   `?? throw …` or `?? default`, the decision was the producer's: move it there.
+
+### `?? default` answers the wrong question
+
+`var name = user.Name ?? "";` fills a required slot with a value nobody chose, and loses the
+question: was the name missing, or genuinely empty? If the value can be missing, handle that case;
+if it cannot, the type should say so — make it non-nullable where it is born.
+
+### `!` silences the compiler instead of deciding
+
+The null-forgiving operator — `order.Customer!.Name` — tells the compiler "trust me" about a value
+it has just told you may be null. Nothing checks the promise; the `NullReferenceException` simply
+moves to wherever it turns out to be wrong. Either the value cannot be null — then give it a type
+that says so — or it can, and the missing case needs handling, not hushing.
+
+### The one honest `null`
+
+A single local lookup checked right where it is produced — one caller, one `is null`, done — needs
+no ceremony. The smell is a `null` that **travels**: returned, passed on, and re-checked at every
+place it lands.
+PRINCIPLE;
+    }
+
+    public function related(): array
+    {
+        return [
+            \JesseGall\CodeCommandments\Skills\Backend\Absence::class => 'the same decision on the PHP backend, with `Option`.',
+            \JesseGall\CodeCommandments\Skills\Python\Absence::class => 'the same decision in Python.',
+            \JesseGall\CodeCommandments\Skills\CSharp\Exceptions::class => 'when "missing" is a broken state, the named exception to throw.',
+        ];
+    }
+
+    public function languages(): array
+    {
+        return [Language::CSharp];
+    }
+}
