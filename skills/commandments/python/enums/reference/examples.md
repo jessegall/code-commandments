@@ -123,3 +123,19 @@ def handle_event(event: PaymentEvent, payment_id: str, ledger) -> None:
         case PaymentEvent.FAILED:
             ledger.flag(payment_id)
 ```
+
+### python-unnamed-vocabulary-literal
+
+a raw string handed to a parameter the codebase elsewhere fills from a named constant — `expect("{")` beside `expect(Token.COLON)`, where `Token.BRACE_OPEN` already names it
+
+```py
+----------[ Bad ]----------
+
+def field_end(self) -> None:
+    self.expect(",")
+
+----------[ Good ]----------
+
+def quoted_end(self) -> None:
+    self.expect(Punctuation.QUOTE)
+```

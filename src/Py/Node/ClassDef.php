@@ -59,6 +59,29 @@ final class ClassDef extends Node
     }
 
     /**
+     * The string constants the class publishes — `COLON = ":"` — as value → name. A name starting with `_`
+     * is the class's own shorthand, and an empty or numeric value belongs to every default and index test,
+     * so neither is vocabulary another module was meant to reach for.
+     *
+     * @return array<string, string>
+     */
+    public function stringConstants(): array
+    {
+        $constants = [];
+
+        foreach ($this->body->body as $statement) {
+            $name = $statement instanceof Assign && count($statement->targets) === 1 && $statement->targets[0]->is(ExprKind::Name) ? (string) $statement->targets[0]->get('name') : '';
+            $value = $name !== '' && $statement->value->literalType() === LiteralType::String ? (string) $statement->value->get('value') : '';
+
+            if ($value !== '' && ! is_numeric($value) && ! str_starts_with($name, '_')) {
+                $constants[$value] ??= $name;
+            }
+        }
+
+        return $constants;
+    }
+
+    /**
      * Is this class a dataclass — decorated `@dataclass`, bare or called?
      */
     public function isDataclass(): bool
