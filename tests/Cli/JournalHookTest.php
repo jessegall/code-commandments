@@ -145,6 +145,18 @@ final class JournalHookTest extends TestCase
         $this->assertSame('sin-resolved', $answer['raise']['event'] ?? null, 'the edit that clears a file says so');
     }
 
+    public function test_a_moment_moves_session_folders_left_in_the_project_into_the_plugins_data_folder(): void
+    {
+        mkdir("{$this->root}/.commandments/sessions/old01", 0777, true);
+        file_put_contents("{$this->root}/.commandments/sessions/old01/note", 'kept');
+        mkdir("{$this->root}/.journal/plugins/code-commandments/.journal-plugin", 0777, true);
+        file_put_contents("{$this->root}/.journal/plugins/code-commandments/.journal-plugin/plugin.json", '{}');
+
+        $this->answer(['event' => 'hook.PreToolUse', 'agent' => ['session' => 'claude-1', 'cwd' => $this->root], 'tool' => ['name' => 'Read']]);
+
+        $this->assertSame('kept', file_get_contents("{$this->root}/.journal/plugin-data/code-commandments/sessions/old01/note"));
+    }
+
     public function test_the_journal_owns_the_hooks_once_the_plugin_is_installed(): void
     {
         $this->assertFalse(HookRegistry::journalDriven($this->root), 'a project without the plugin wires its own hooks');
