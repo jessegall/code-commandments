@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Backend\PhpTypes;
 
+use JesseGall\CodeCommandments\Sins\Ecosystem;
 use JesseGall\CodeCommandments\Sins\RequiresComposerPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\Absence;
@@ -26,8 +27,8 @@ final class OptionAsNullable extends Sin implements RequiresComposerPackage
         return 'jessegall/php-types';
     }
 
-    public function ecosystem(): string
+    public function ecosystem(): Ecosystem
     {
-        return 'composer';
+        return Ecosystem::Composer;
     }
 }

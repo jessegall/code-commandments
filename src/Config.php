@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments;
 
 use Closure;
-use Composer\InstalledVersions;
+use JesseGall\CodeCommandments\Sins\Ecosystem;
 use JesseGall\CodeCommandments\Sins\RequiresPackage;
 use ReflectionFunction;
 use ReflectionNamedType;
@@ -407,7 +407,7 @@ final class Config
      * Composer's own installed set; tests inject a fake.
      *
      * @param  list<Detector>  $shipped  every engine's shipped detectors
-     * @param  (callable(string, bool): bool)|null  $installed  ($package, $isFrontend) => present?
+     * @param  (callable(string, Ecosystem): bool)|null  $installed  ($package, $ecosystem) => present?
      */
     public function apply(array $shipped, ?callable $installed = null): EngineDetectors
     {
@@ -466,7 +466,7 @@ final class Config
      * reports its package in that ecosystem. The ecosystem is stated by the interface, not the
      * rule's engine — a frontend sin may require a Composer package.
      *
-     * @param  callable(string, string): bool  $installed  ($package, $ecosystem) => present?
+     * @param  callable(string, Ecosystem): bool  $installed  ($package, $ecosystem) => present?
      */
     private function hasPackage(Detector $detector, callable $installed): bool
     {
@@ -478,35 +478,13 @@ final class Config
     }
 
     /**
-     * The default package check — Composer's installed set for a Composer requirement, the
-     * project's `package.json` for an npm one. Both fall back to "present" when the manifest
-     * can't be read, so an unknown environment never over-filters.
+     * The default package check — each ecosystem asked of the project in the working directory.
      *
-     * @return callable(string, string): bool
+     * @return callable(string, Ecosystem): bool
      */
     private static function defaultPackageCheck(): callable
     {
-        return static fn (string $package, string $ecosystem): bool =>
-            $ecosystem === 'npm' ? self::inPackageJson($package) : self::inComposer($package);
-    }
-
-    private static function inComposer(string $package): bool
-    {
-        return ! class_exists(InstalledVersions::class) || InstalledVersions::isInstalled($package);
-    }
-
-    private static function inPackageJson(string $package): bool
-    {
-        $manifest = getcwd() . '/package.json';
-
-        if (! is_file($manifest)) {
-            return true;
-        }
-
-        $json = (array) json_decode((string) file_get_contents($manifest), true);
-        $dependencies = [...(array) ($json['dependencies'] ?? []), ...(array) ($json['devDependencies'] ?? [])];
-
-        return array_key_exists($package, $dependencies);
+        return static fn (string $package, Ecosystem $ecosystem): bool => $ecosystem->hasInstalled($package, (string) getcwd());
     }
 
     /**

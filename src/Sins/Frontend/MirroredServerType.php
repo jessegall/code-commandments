@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Frontend;
 
+use JesseGall\CodeCommandments\Sins\Ecosystem;
 use JesseGall\CodeCommandments\Sins\RequiresComposerPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Frontend\MirroredServerType as MirroredServerTypeSkill;
@@ -30,8 +31,8 @@ final class MirroredServerType extends Sin implements RequiresComposerPackage
         return 'spatie/laravel-typescript-transformer';
     }
 
-    public function ecosystem(): string
+    public function ecosystem(): Ecosystem
     {
-        return 'composer';
+        return Ecosystem::Composer;
     }
 }

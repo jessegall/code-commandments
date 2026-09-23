@@ -6,19 +6,20 @@ namespace JesseGall\CodeCommandments\Tests;
 
 use InvalidArgumentException;
 use JesseGall\CodeCommandments\Ast\Codebase as AstCodebase;
+use JesseGall\CodeCommandments\Backend\Detector as BackendDetector;
 use JesseGall\CodeCommandments\Config;
-use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
+use JesseGall\CodeCommandments\Engine;
+use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder;
 use JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder;
-use JesseGall\CodeCommandments\Backend\Detector as BackendDetector;
 use JesseGall\CodeCommandments\Sins\Backend\ArrayBag;
+use JesseGall\CodeCommandments\Sins\Ecosystem;
 use JesseGall\CodeCommandments\Sins\Frontend\PropDrilling;
 use JesseGall\CodeCommandments\Sins\RequiresComposerPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
 use JesseGall\CodeCommandments\Vue\Codebase as VueCodebase;
-use JesseGall\CodeCommandments\Frontend\Detector as FrontendDetector;
 use PHPUnit\Framework\TestCase;
 
 final class ConfigTest extends TestCase
@@ -277,9 +278,9 @@ final class ConfigPackagedSin extends Sin implements RequiresComposerPackage
         return 'acme/widgets';
     }
 
-    public function ecosystem(): string
+    public function ecosystem(): Ecosystem
     {
-        return 'composer';
+        return Ecosystem::Composer;
     }
 }
 

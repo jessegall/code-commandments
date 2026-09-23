@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Backend\Concurrent;
 
+use JesseGall\CodeCommandments\Sins\Ecosystem;
 use JesseGall\CodeCommandments\Sins\RequiresComposerPackage;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Skills\Backend\Concurrent\ConcurrentState;
@@ -26,8 +27,8 @@ final class ConcurrentSubclass extends Sin implements RequiresComposerPackage
         return 'jessegall/concurrent';
     }
 
-    public function ecosystem(): string
+    public function ecosystem(): Ecosystem
     {
-        return 'composer';
+        return Ecosystem::Composer;
     }
 }

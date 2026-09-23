@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Sins\Backend\Laravel;
 
+use JesseGall\CodeCommandments\Sins\Ecosystem;
+
 /**
  * Shared {@see \JesseGall\CodeCommandments\Sins\RequiresComposerPackage} answer for the laravel-idioms
  * sins: facades, Eloquent mutation, the `config()`/`app()` helpers and typed requests come from
@@ -18,8 +20,8 @@ trait RequiresLaravel
         return 'illuminate/support';
     }
 
-    public function ecosystem(): string
+    public function ecosystem(): Ecosystem
     {
-        return 'composer';
+        return Ecosystem::Composer;
     }
 }

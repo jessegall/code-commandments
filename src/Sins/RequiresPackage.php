@@ -26,10 +26,10 @@ interface RequiresPackage
     public function requiredPackage(): string;
 
     /**
-     * WHICH ecosystem's manifest answers that — `composer` or `npm`. Asked of the sin rather than
+     * WHICH ecosystem's manifest answers that — Composer, npm or pip. Asked of the sin rather than
      * read off its type, and never inferred from the rule's engine: a FRONTEND sin may require a
      * Composer package, because it is `spatie/laravel-typescript-transformer` that makes the fix
      * possible even though the sin is in a `.vue` file.
      */
-    public function ecosystem(): string;
+    public function ecosystem(): Ecosystem;
 }
