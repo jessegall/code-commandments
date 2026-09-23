@@ -70,7 +70,8 @@ final class Library
     }
 
     /**
-     * Publish every skill and record what was published. Returns the ids, in the order an agent
+     * Publish every skill of a language the project writes, withdraw the rest, and record what was
+     * published. Returns the ids, in the order an agent
      * should be pointed at them.
      *
      * @return list<string>
@@ -87,7 +88,7 @@ final class Library
             $ids[] = Router::ID;
         }
 
-        foreach (Catalog::all() as $skill) {
+        foreach (Catalog::all(languages: $this->languages) as $skill) {
             $source = "{$packageRoot}/skills/commandments/{$skill->slug}";
 
             if (is_dir($source) && Directory::copy($source, $this->path($skill->id()))) {
