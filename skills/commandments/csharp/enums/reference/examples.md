@@ -96,6 +96,32 @@ public static class OrderStatusRules
 public static bool Settled(PaymentCallback callback) => Enum.TryParse(callback.Status, ignoreCase: true, out OrderStatus status) && status.IsSettled();
 ```
 
+### csharp-match-default-returns-null
+
+a `switch` that names every member of an enum, then answers `null`, `default` or `false` in its `_` arm — the one value that arm can see is a bug, and it is answered as if it were fine
+
+```cs
+----------[ Bad ]----------
+
+public static string? LogoFor(Courier courier) => courier switch
+{
+    Courier.Postal => "postal.svg",
+    Courier.Express => "express.svg",
+    Courier.Freight => "freight.svg",
+    _ => null,
+};
+
+----------[ Good ]----------
+
+public static string Logo(Courier courier) => courier switch
+{
+    Courier.Postal => "postal.svg",
+    Courier.Express => "express.svg",
+    Courier.Freight => "freight.svg",
+    _ => throw new ArgumentOutOfRangeException(nameof(courier), courier, null),
+};
+```
+
 ### csharp-string-mirrors-enum
 
 A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text

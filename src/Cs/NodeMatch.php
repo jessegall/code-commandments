@@ -535,6 +535,18 @@ class NodeMatch implements Located
     }
 
     /**
+     * Does this sit in a method that reports failure through its answer — one that answers `bool` and hands
+     * its results back through an `out` parameter, the `TryParse` shape, where `false` IS the failure?
+     */
+    public function isWithinTryMethod(): bool
+    {
+        $method = array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->is('MethodDeclaration', 'LocalFunctionStatement')))[0] ?? null;
+        $parameters = array_filter($method?->children ?? [], static fn (Node $child): bool => $child->is('ParameterList'));
+
+        return array_any(array_merge([], ...array_map(static fn (Node $list): array => $list->children, $parameters)), static fn (Node $parameter): bool => $parameter->hasModifier('out'));
+    }
+
+    /**
      * @return Option<Node>
      */
     private function enclosingType(): Option

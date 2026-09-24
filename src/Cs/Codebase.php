@@ -36,7 +36,7 @@ final class Codebase implements ModuleCodebase
     private ?array $casedClasses = null;
 
     /**
-     * @var list<string>|null  every enum this codebase declares, by symbol
+     * @var array<string, list<string>>|null  every enum this codebase declares, by symbol => its member names
      */
     private ?array $enums = null;
 
@@ -268,7 +268,46 @@ final class Codebase implements ModuleCodebase
      */
     public function declaresEnum(string $symbol): bool
     {
-        return in_array($symbol, $this->enums ??= array_map(static fn (NodeMatch $enum): string => (string) $enum->node->symbol, $this->whereNode(static fn (Node $node): bool => $node->is('EnumDeclaration'))->get()), true);
+        return array_key_exists($symbol, $this->enums());
+    }
+
+    /**
+     * The member names of the enum $symbol this codebase declares — none for any other type.
+     *
+     * @return list<string>
+     */
+    public function enumMembers(string $symbol): array
+    {
+        return $this->enums()[$symbol] ?? [];
+    }
+
+    /**
+     * Does $switch name every member of the enum it switches over, one this codebase declares?
+     */
+    public function namesEveryMember(Node $switch): bool
+    {
+        $members = $this->enumMembers((string) $switch->children[0]->type?->name);
+
+        return $members !== [] && array_diff($members, $switch->namedCases()) === [];
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private function enums(): array
+    {
+        if ($this->enums !== null) {
+            return $this->enums;
+        }
+
+        $this->enums = [];
+
+        foreach ($this->whereNode(static fn (Node $node): bool => $node->is('EnumDeclaration'))->get() as $enum) {
+            $members = array_filter($enum->node->children, static fn (Node $child): bool => $child->is('EnumMemberDeclaration'));
+            $this->enums[(string) $enum->node->symbol] = array_values(array_map(static fn (Node $member): string => (string) $member->name, $members));
+        }
+
+        return $this->enums;
     }
 
     /**

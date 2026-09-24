@@ -706,6 +706,52 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The enum members this switch names in its cases — arms and labels guarded by `when` left out, since
+     * they do not match every time.
+     *
+     * @return list<string>
+     */
+    public function namedCases(): array
+    {
+        $tests = match (true) {
+            $this->is('SwitchExpression') => array_map(static fn (self $arm): self => $arm->children[0], array_filter(array_slice($this->children, 1), static fn (self $arm): bool => ! $arm->isGuarded())),
+            $this->is('SwitchStatement') => array_filter(array_merge([], ...array_map(static fn (self $section): array => $section->children, array_slice($this->children, 1))), static fn (self $child): bool => $child->is('CaseSwitchLabel', 'CasePatternSwitchLabel') && ! $child->isGuarded()),
+            default => [],
+        };
+        $values = array_merge([], ...array_map(static fn (self $test): array => $test->outermostExpressions(), $tests));
+        $cases = array_filter(array_merge([], ...array_map(static fn (self $value): array => $value->flatten(), $values)), static fn (self $node): bool => $node->isEnumCase());
+
+        return array_values(array_unique(array_map(static fn (self $case): string => (string) $case->children[1]->name, $cases)));
+    }
+
+    /**
+     * Is this a case test that only matches when its `when` clause holds — a guarded arm, or a guarded
+     * `case` label?
+     */
+    private function isGuarded(): bool
+    {
+        return array_any($this->children, static fn (self $child): bool => $child->is('WhenClause'));
+    }
+
+    /**
+     * What this switch hands back when no case matches — the value of its `_` arm, or what the `default:`
+     * section returns — none when it has neither.
+     *
+     * @return Option<self>
+     */
+    public function fallbackValue(): Option
+    {
+        $fallback = match (true) {
+            $this->is('SwitchExpression') => array_values(array_filter(array_slice($this->children, 1), static fn (self $arm): bool => $arm->children[0]->is('DiscardPattern')))[0] ?? null,
+            $this->is('SwitchStatement') => array_values(array_filter(array_slice($this->children, 1), static fn (self $section): bool => array_any($section->children, static fn (self $label): bool => $label->is('DefaultSwitchLabel'))))[0] ?? null,
+            default => null,
+        };
+        $answer = array_values(array_filter($fallback?->children ?? [], static fn (self $child): bool => $child->isExpression() || $child->is('ReturnStatement')))[0] ?? null;
+
+        return Option::fromNullable($answer?->is('ReturnStatement') === true ? ($answer->children[0] ?? null) : $answer);
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool
