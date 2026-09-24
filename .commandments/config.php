@@ -321,6 +321,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\DictionaryBag::class,
         // Sins\CSharp\DuplicateMethod::class,
         // Sins\CSharp\EnumCaseOrChain::class,
+        // Sins\CSharp\FlagArgument::class,
         // Sins\CSharp\GenericThrow::class,
         // Sins\CSharp\InArrayMirrorsEnum::class,
         // Sins\CSharp\InlineThrow::class,

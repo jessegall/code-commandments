@@ -52,6 +52,51 @@ The whole body is `if (flag) { … } else { … }`, a `flag ? A() : B()`, or `if
 parameter that used to be required. Ask what you would call each half on its own. If both have an obvious
 name, they are already two methods — give them their names.
 
+## Rules
+
+- [ ] Split a method a parameter chooses between into two methods, each named for what it does.
+      _`Render(order, bool compact)` becomes `RenderCompact(order)` and `RenderFull(order)`, with anything they share in a private method both call._
+
+## Worked example
+
+### csharp-flag-argument
+
+a method whose whole body branches on a `bool` parameter — `if (compact) … else …` — two methods sharing one name
+
+```cs
+----------[ Bad ]----------
+
+public static string Line(string orderId, int cents, bool forCustomer)
+{
+    if (forCustomer)
+    {
+        return $"Order {orderId}: {cents / 100m:C}";
+    }
+    else
+    {
+        return $"{orderId};{cents}";
+    }
+}
+
+----------[ Good ]----------
+
+// in Summaries.cs
+public static string CustomerLine(string orderId, int cents) => $"Order {orderId}: {cents / 100m:C}";
+
+// in Summaries.cs
+public static string LedgerLine(string orderId, int cents) => $"{orderId};{cents}";
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/behaviour-per-method` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-flag-argument`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/behaviour-per-method`](../../backend/behaviour-per-method/SKILL.md) — the same discipline in PHP.

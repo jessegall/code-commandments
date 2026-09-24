@@ -1709,6 +1709,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-flag-argument": {
+            "title": "FlagArgument",
+            "help": "A method whose whole body is a two-way branch on one of its `bool` parameters — the C# twin of the PHP and Python flag-argument rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/behaviour-per-method",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-member-after-method": {
             "title": "MemberAfterMethod",
             "help": "State declared below a constructor or a method — the C# twin of the PHP and Python member-after-method rules.",

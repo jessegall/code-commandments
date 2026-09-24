@@ -957,6 +957,71 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this method's whole body a two-way branch on one of its own `bool` parameters — `if (flag) … else …`
+     * or a returned `flag ? … : …`? Two methods sharing one name, the flag choosing between them. A choice that
+     * only picks a constant is a lookup of the flag's value, not two jobs.
+     */
+    public function switchesOnAFlag(): bool
+    {
+        $parameters = array_merge([], ...array_map(static fn (self $list): array => $list->children, array_filter($this->children, static fn (self $child): bool => $child->is('ParameterList'))));
+        $flags = array_filter($parameters, static fn (self $parameter): bool => $parameter->type?->name === 'global::System.Boolean');
+
+        return $this->functionBody()->isSomeAnd(static fn (self $body): bool => $body->soleReturnedValue()?->withoutParentheses()->isValueChoice() !== true
+            && $body->twoWayCondition()->isSomeAnd(static fn (self $condition): bool => array_any($flags, static fn (self $flag): bool => $condition->decidesOn((string) $flag->name))));
+    }
+
+    /**
+     * Is this a conditional expression that only picks a constant — `member ? 5 : 0`, `!refused ? Pass :
+     * blocking ? Block : Warn` — a lookup of what its condition says, rather than a choice between two jobs?
+     */
+    private function isValueChoice(): bool
+    {
+        return $this->is('ConditionalExpression')
+            && array_all([$this->children[1], $this->children[2]], static fn (self $side): bool => $side->withoutParentheses()->isConstant() || $side->withoutParentheses()->isValueChoice());
+    }
+
+    /**
+     * The condition this body is nothing but a branch on — an `if` with an `else` as its one statement, or a
+     * conditional expression it returns — none for any other body.
+     *
+     * @return Option<self>
+     */
+    private function twoWayCondition(): Option
+    {
+        $only = $this->is('Block') && count($this->children) === 1 ? $this->children[0] : null;
+
+        if ($only?->is('IfStatement') === true && array_any($only->children, static fn (self $part): bool => $part->is('ElseClause'))) {
+            return Option::some($only->children[0]);
+        }
+
+        $returned = $this->soleReturnedValue()?->withoutParentheses();
+
+        return Option::fromNullable($returned?->is('ConditionalExpression') === true ? $returned->children[0] : null);
+    }
+
+    /**
+     * The value this body hands back as its only statement — an expression body, or a lone `return`.
+     */
+    private function soleReturnedValue(): ?self
+    {
+        return match (true) {
+            $this->is('ArrowExpressionClause') => $this->children[0],
+            $this->is('Block') && count($this->children) === 1 && $this->children[0]->is('ReturnStatement') => $this->children[0]->children[0] ?? null,
+            default => null,
+        };
+    }
+
+    /**
+     * Does this condition decide on $name alone — the value itself, or its negation?
+     */
+    private function decidesOn(string $name): bool
+    {
+        $test = $this->withoutParentheses();
+
+        return $test->names($name) || ($test->is('LogicalNotExpression') && $test->children[0]->withoutParentheses()->names($name));
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool
