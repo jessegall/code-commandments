@@ -1787,6 +1787,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-dangling-doc-reference": {
+            "title": "DanglingDocReference",
+            "help": "A doc comment naming, in a `cref`, a type or member the project does not declare — the C# twin of the PHP and Python dangling-doc-reference rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/documentation",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-csharp-method": {
             "title": "DuplicateMethod",
             "help": "Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",

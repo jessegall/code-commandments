@@ -20,7 +20,11 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
     private int resolved;
 
-    public const int Version = 3;
+    private bool? blindGlobally;
+
+    private readonly Dictionary<SyntaxTree, bool> blindFiles = [];
+
+    public const int Version = 4;
 
     /// <summary>How every type and member is written: fully qualified, `System.String` never `string`, `?` kept.</summary>
     private static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
@@ -69,6 +73,56 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
         });
     }
 
+    /// <summary>
+    /// Are the names in scope of <paramref name="model"/>'s file blind — the compiler finding a type or namespace
+    /// missing there (CS0246, CS0234), or a global `using` anywhere in the project resolving to nothing — so a
+    /// name may live in a reference the compilation lacks?
+    /// </summary>
+    private bool IsBlind(SemanticModel model)
+    {
+        blindGlobally ??= project.Trees.Any(tree => UnresolvedUsings(tree.GetRoot(), project.Model(tree)).Any(directive => directive.GlobalKeyword.IsKind(SyntaxKind.GlobalKeyword)));
+
+        if (!blindFiles.TryGetValue(model.SyntaxTree, out var blind))
+        {
+            blind = model.GetDiagnostics().Any(diagnostic => diagnostic.Id is "CS0246" or "CS0234");
+            blindFiles[model.SyntaxTree] = blind;
+        }
+
+        return blindGlobally.Value || blind;
+    }
+
+    /// <summary>The longest qualifier of <paramref name="cref"/> that resolves — <c>Shop.Orders</c> of <c>Shop.Orders.Gone</c>.</summary>
+    private static ISymbol? Owner(CrefSyntax cref, SemanticModel model)
+    {
+        var container = cref switch
+        {
+            QualifiedCrefSyntax qualified => qualified.Container,
+            TypeCrefSyntax { Type: QualifiedNameSyntax name } => name.Left,
+            NameMemberCrefSyntax { Name: QualifiedNameSyntax name } => name.Left,
+            _ => null,
+        };
+
+        while (container is not null)
+        {
+            var info = model.GetSymbolInfo(container);
+
+            if ((info.Symbol ?? info.CandidateSymbols.FirstOrDefault()) is { } found)
+            {
+                return found;
+            }
+
+            container = (container as QualifiedNameSyntax)?.Left;
+        }
+
+        return null;
+    }
+
+    /// <summary>The `using` directives written in <paramref name="root"/> whose namespace or type resolves to nothing.</summary>
+    private static IEnumerable<UsingDirectiveSyntax> UnresolvedUsings(SyntaxNode root, SemanticModel model) => root
+        .DescendantNodes(node => node is CompilationUnitSyntax or BaseNamespaceDeclarationSyntax)
+        .OfType<UsingDirectiveSyntax>()
+        .Where(directive => directive.NamespaceOrType is { } target && model.GetSymbolInfo(target).Symbol is null);
+
     /// <summary>One JSON object on a line of its own, its members written by <paramref name="members"/>.</summary>
     private static void Line(Stream output, Action<Utf8JsonWriter> members)
     {
@@ -107,10 +161,22 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
                     json.WriteStartObject();
                     json.WriteString("text", cref.ToString());
 
-                    if (model.GetSymbolInfo(cref).Symbol is { } symbol)
+                    var info = model.GetSymbolInfo(cref);
+                    var symbol = info.Symbol ?? info.CandidateSymbols.FirstOrDefault();
+                    var owner = symbol is null ? Owner(cref, model) : null;
+
+                    if (symbol is not null)
                     {
                         json.WriteString("symbol", symbol.ToDisplayString(Declared));
                     }
+
+                    if (owner is not null)
+                    {
+                        json.WriteString("owner", owner.ToDisplayString(Qualified));
+                    }
+
+                    json.WriteBoolean("ownedHere", owner?.Locations.Any(location => location.IsInSource) == true);
+                    json.WriteBoolean("blind", symbol is null && IsBlind(model));
 
                     json.WriteEndObject();
                 }

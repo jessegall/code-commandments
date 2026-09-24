@@ -62,3 +62,23 @@ public int QueueFor(string invoiceNumber, int copies)
     return queued.Count;
 }
 ```
+
+### csharp-dangling-doc-reference
+
+a `<see cref>` that resolves to nothing from where it is written — a name the project no longer declares, or one spelled so it does not reach it
+
+```cs
+----------[ Bad ]----------
+
+public sealed class WrapStation
+{
+    public IReadOnlyList<string> Wrappable(IEnumerable<string> skus) => skus.Where(sku => !sku.StartsWith("DIG-")).ToList();
+}
+
+----------[ Good ]----------
+
+public sealed class WrapCounter
+{
+    public int Count(IEnumerable<string> skus) => skus.Count(sku => !sku.StartsWith("DIG-"));
+}
+```
