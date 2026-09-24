@@ -1,3 +1,4 @@
+<!-- @example DuplicateFunction bad -->
 <script setup lang="ts">
 // Two handlers in one component with one body: subscribing and re-subscribing post the same
 // form and recover from the same failure, so the second is a copy of the first.

@@ -148,11 +148,12 @@ A page object fills a public slot imperatively in the constructor (`$this->x = $
 
 public function __construct(
     #[Hidden]
-    #[FromContainer(FacetBuilder::class)]
-    public readonly FacetBuilder $builder,
+    #[FromContainer(SalesReporter::class)]
+    public readonly SalesReporter $sales,
 ) {
-    $this->headline = $this->builder->headline();
-    $this->cards = $this->builder->cards();
+    $this->primary = $this->sales->primaryLink();
+    $this->secondary = $this->sales->secondaryLink();
+    $this->featured = $this->sales->featuredLine();
 }
 
 ----------[ Good ]----------

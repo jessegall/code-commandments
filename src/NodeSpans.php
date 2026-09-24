@@ -33,4 +33,15 @@ trait NodeSpans
             array_filter($this->nodes(), static fn (SyntaxNode $node): bool => $node->functionBody()->isSome()),
         ));
     }
+
+    /**
+     * @return list<array{0: int, 1: int}>
+     */
+    public function typeSpans(): array
+    {
+        return array_values(array_map(
+            static fn (SyntaxNode $node) => [$node->start, $node->end],
+            array_filter($this->nodes(), static fn (SyntaxNode $node): bool => $node->isTypeDeclaration()),
+        ));
+    }
 }

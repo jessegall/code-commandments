@@ -25,6 +25,9 @@ final class ReportExportController
 {
     public function __construct(private readonly ReportBuilder $builder) {}
 
+    /**
+     * One of two doors onto `ReportBuilder::build` — `AnalyticsExportController::build` is the other.
+     */
     #[Sinful(DuplicateRouteAction::class)]
     public function build(ReportExportRequest $request): string
     {
@@ -66,6 +69,9 @@ final class AnalyticsExportController
 {
     public function __construct(private readonly ReportBuilder $builder) {}
 
+    /**
+     * The second door onto `ReportBuilder::build` — the same operation `ReportExportController::build` serves.
+     */
     #[Sinful(DuplicateRouteAction::class)]
     public function build(ReportExportRequest $request): string
     {

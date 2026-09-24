@@ -62,6 +62,7 @@ a comment or docstring narrating the code's history — where it lived, what it 
 ```py
 ----------[ Bad ]----------
 
+# formerly lived in the checkout module, before invoices had their own
 def next_number(last: int, prefix: str) -> str:
     return f"{prefix}-{last + 1:06d}"
 

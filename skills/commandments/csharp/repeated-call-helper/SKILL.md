@@ -72,17 +72,6 @@ the same compound condition — `order.Paid && !order.Cancelled` — written at 
 ```cs
 ----------[ Bad ]----------
 
-// in LabelFooters.cs
-public static string Footer(Uri link)
-{
-    if (link.Scheme != Uri.UriSchemeHttp && link.Scheme != Uri.UriSchemeHttps)
-    {
-        return "";
-    }
-
-    return link.ToString();
-}
-
 // in Promises.cs
 public static bool CanPromiseToday(Dispatchable order) => !order.OnHold && order.Paid && order.Lines > 0;
 
@@ -95,12 +84,6 @@ public static string Status(Dispatchable order)
     }
 
     return "wait";
-}
-
-// in TrackingLinks.cs
-public static bool IsShowable(Uri link)
-{
-    return link.Scheme != Uri.UriSchemeHttp && link.Scheme != Uri.UriSchemeHttps ? false : link.Host.Length > 0;
 }
 
 ----------[ Good ]----------

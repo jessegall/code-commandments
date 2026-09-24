@@ -21,12 +21,12 @@ class SearchProductRequest extends FormRequest
     }
 
     #[Fixed(RawRequestInput::class)]
+    #[Fixed(RequestAccessorRecast::class)]
     public function term(): string
     {
         return $this->string('q')->toString();
     }
 
-    #[Fixed(RequestAccessorRecast::class)]
     public function category(): string
     {
         return $this->string('category')->toString();

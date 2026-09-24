@@ -50,6 +50,11 @@ interface SyntaxNode
     public function isReturn(): bool;
 
     /**
+     * Is this the declaration of a type — a class, and whatever else the language declares types with?
+     */
+    public function isTypeDeclaration(): bool;
+
+    /**
      * The value a `return` hands back; none for a bare `return`, and for a node that is no return.
      *
      * @return Option<SyntaxExpression>

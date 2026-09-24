@@ -69,10 +69,12 @@ a comment that tells the code's past — `// formerly lived in CheckoutService`,
 ```cs
 ----------[ Bad ]----------
 
+// formerly lived in the checkout service, and was extracted here
 public static int Days(bool member) => member ? 60 : 30;
 
 ----------[ Good ]----------
 
+/// <summary>Members get longer to decide, since they return far less often.</summary>
 public static int DaysFor(bool member) => member ? 60 : 30;
 ```
 

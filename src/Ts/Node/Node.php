@@ -134,6 +134,11 @@ abstract class Node implements SyntaxNode
         return false;
     }
 
+    public function isTypeDeclaration(): bool
+    {
+        return false;
+    }
+
     /**
      * The names this node DECLARES into the module scope — empty for a node that declares none.
      *

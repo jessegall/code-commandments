@@ -90,11 +90,12 @@ An array built by spreading a conditional element — `...($x ? ['k' => $x] : []
 ```php
 ----------[ Bad ]----------
 
-public function lines(): array
+public function toArray(): array
 {
     return [
-        'number' => $this->number,
-        ...($this->coupon === null ? [] : ['discount' => ['coupon' => $this->coupon, 'applied' => true]]),
+        'key' => $this->key,
+        ...($this->label !== null ? ['label' => $this->label] : []),
+        ...($this->icon === null ? [] : ['icon' => $this->icon]),
     ];
 }
 

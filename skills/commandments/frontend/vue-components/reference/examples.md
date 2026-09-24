@@ -164,44 +164,6 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
   <p class="review-body">Exactly as described, shipped fast.</p>
 </article>
 
-<!-- in FilterSidebar.vue -->
-<fieldset class="filter-group">
-  <legend class="filter-legend">Brand</legend>
-  <label class="filter-option"><input type="checkbox" /> Any brand</label>
-</fieldset>
-
-<!-- in FilterSidebar.vue -->
-<fieldset class="filter-group">
-  <legend class="filter-legend">Brand</legend>
-  <label class="filter-option"><input type="checkbox" /> Any brand</label>
-</fieldset>
-
-<!-- in CheckoutPromoBanner.vue -->
-<div class="promo-strip">
-  <span class="promo-icon">%</span>
-  <strong class="promo-headline">Free shipping this week</strong>
-  <small class="promo-terms">On orders over 50.</small>
-</div>
-
-<!-- in BasketPromoBanner.vue -->
-<div class="promo-strip">
-  <span class="promo-icon">%</span>
-  <strong class="promo-headline">Free shipping this week</strong>
-  <small class="promo-terms">On orders over 50.</small>
-</div>
-
-<!-- in OrderLineItems.vue -->
-<tr class="line-item">
-  <td class="line-item__name">Sample product</td>
-  <td class="line-item__qty">1</td>
-</tr>
-
-<!-- in OrderLineItems.vue -->
-<tr class="line-item">
-  <td class="line-item__name">Sample product</td>
-  <td class="line-item__qty">1</td>
-</tr>
-
 ----------[ Good ]----------
 
 <template v-for="review in reviews" :key="review.id">
@@ -234,32 +196,6 @@ Markup with one skeleton repeated 2+ times — the same tags, attributes and nes
     </form>
 </section>
 
-<!-- in StockTables.vue -->
-<tbody>
-    <tr class="loading-row">
-        <td colspan="4">
-            <div role="status" class="loading">
-                <span class="spinner" />
-                <span class="sr-only">Loading stock</span>
-                <small class="loading-hint">Counting the shelves</small>
-            </div>
-        </td>
-    </tr>
-</tbody>
-
-<!-- in StockTables.vue -->
-<tbody>
-    <tr class="loading-row">
-        <td colspan="6">
-            <div role="status" class="loading">
-                <span class="spinner" />
-                <span class="sr-only">Loading orders</span>
-                <small class="loading-hint">Fetching this week's orders</small>
-            </div>
-        </td>
-    </tr>
-</tbody>
-
 <!-- in BillingAddressPage.vue -->
 <section class="address-page billing">
     <header class="address-head">
@@ -271,28 +207,6 @@ Markup with one skeleton repeated 2+ times — the same tags, attributes and nes
         <label class="address-field">Town<input v-model="billing.city" name="billing-town" /></label>
     </form>
 </section>
-
-<!-- in DeliverySlots.vue -->
-<article class="slot">
-    <h3>Standard</h3>
-    <strong class="slot-price">{{ standard.price }}</strong>
-    <ul class="slot-perks">
-        <li>{{ standard.days }} working days</li>
-        <li>Tracked parcel</li>
-    </ul>
-    <button type="button" @click="emit('choose', 'standard')">Choose standard</button>
-</article>
-
-<!-- in DeliverySlots.vue -->
-<article class="slot slot-express">
-    <h3>Express</h3>
-    <strong class="slot-price">{{ express.price }}</strong>
-    <ul class="slot-perks">
-        <li>{{ express.days }} working day</li>
-        <li>Signed for on delivery</li>
-    </ul>
-    <button type="button" @click="emit('choose', 'express')">Choose express</button>
-</article>
 
 ----------[ Good ]----------
 

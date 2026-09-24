@@ -15,7 +15,6 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * unknown flag, masking a typo as a disabled feature.
  */
 #[Sinful(InlineDocblock::class)]
-#[Sinful(RedundantArrowReturnType::class)]
 final class FeatureGate
 {
     /** @var array<string, bool> */
@@ -35,6 +34,7 @@ final class FeatureGate
     /**
      * A construction spells the class it builds; the annotation repeats it.
      */
+    #[Sinful(RedundantArrowReturnType::class)]
     public function factory(): callable
     {
         return fn (): FeatureGate => new FeatureGate($this->environment);

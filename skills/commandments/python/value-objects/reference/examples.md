@@ -48,14 +48,6 @@ def book_delivery(street: str, city: str, postcode: str, carrier) -> str:
 def quote(postcode: str, street: str, city: str, weight_kg) -> int:
     return 495 if postcode.startswith("1") else 695
 
-# in customers.py
-def subscribe(self, name: str, email: str, phone: str, opt_in: bool) -> None:
-    self.list.add(email, name)
-
-# in customers.py
-def enrol(self, phone: str, name: str, email: str, opt_in: bool = False) -> None:
-    self.members.add(name, email, phone, opt_in)
-
 ----------[ Good ]----------
 
 # in delivery.py

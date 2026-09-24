@@ -13,7 +13,6 @@ use JesseGall\CodeCommandments\Testing\Sinful;
  * call-site sin.
  */
 #[Sinful(MemberOutOfOrder::class)]
-#[Sinful(StackedDocblock::class)]
 final class ReportFile
 {
     public string $name = '';
@@ -28,6 +27,7 @@ final class ReportFile
     /**
      * The second block PHP never hands to a reader.
      */
+    #[Sinful(StackedDocblock::class)]
     public function save(): void
     {
         // write to disk

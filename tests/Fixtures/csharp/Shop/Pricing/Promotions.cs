@@ -3,24 +3,30 @@ namespace Shop.Pricing;
 // A promotion a basket can carry, and what it takes off the price.
 public abstract class Promotion
 {
-    // @fixed TypeSwitch
     public abstract int Discount(int cents);
+
+    // @fixed TypeSwitch
+    public abstract string Label();
 }
 
 public sealed class PercentOff(int percent) : Promotion
 {
     public int Percent { get; } = percent;
 
-    // @fixed TypeSwitch
     public override int Discount(int cents) => cents * Percent / 100;
+
+    // @fixed TypeSwitch
+    public override string Label() => $"{Percent}% off";
 }
 
 public sealed class AmountOff(int amount) : Promotion
 {
     public int Amount { get; } = amount;
 
-    // @fixed TypeSwitch
     public override int Discount(int cents) => Math.Min(Amount, cents);
+
+    // @fixed TypeSwitch
+    public override string Label() => $"{Amount / 100m:C} off";
 }
 
 public static class PromotionLabels
@@ -33,8 +39,10 @@ public static class PromotionLabels
         _ => "",
     };
 
-    // @fixed TypeSwitch
     public static int Pay(Promotion promotion, int cents) => cents - promotion.Discount(cents);
+
+    // @fixed TypeSwitch
+    public static string Describe(Promotion promotion) => promotion.Label();
 }
 
 // The answer a coupon check gives, its cases declared inside it.

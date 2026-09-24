@@ -9,9 +9,9 @@ Masked invariant — an own field read as `?->… ?? <fake literal>`, even thoug
 ```php
 ----------[ Bad ]----------
 
-public function covers(string $date): bool
+public function accepts(string $sku): bool
 {
-    return $this->period?->includes($date) ?? false;
+    return $this->batch?->permits($sku) ?? false;
 }
 
 ----------[ Good ]----------
@@ -47,15 +47,20 @@ Phantom nullable — a field typed `?T` (promoted param or declared property, an
 ```php
 ----------[ Bad ]----------
 
-// The packing slip — carries the delivery address on to the shipment label.
+// An order entering fulfillment. `$shipTo` is typed `?ShippingAddress`, but staging copies it onto the
+// pick list, which copies it onto the packing slip, onto the label, onto the manifest — five records
+// across five files — where it is finally read as present, and no step ever guards the null.
 
-final class PackingSlip
+final class Order
 {
-    public ?ShippingAddress $deliverTo = null;
+    public function __construct(
+        public readonly ?ShippingAddress $shipTo,
+        public readonly string $reference,
+    ) {}
 
-    public function attach(ShipmentLabel $label): void
+    public function stage(PickList $pickList): void
     {
-        $label->deliverTo = $this->deliverTo;
+        $pickList->deliverTo = $this->shipTo;
     }
 }
 
@@ -86,59 +91,11 @@ An arrow function whose return type only repeats what its one expression provabl
 ```php
 ----------[ Bad ]----------
 
-// Decides whether a named feature is on — the default arm answers "false" for an
-// unknown flag, masking a typo as a disabled feature.
+// A construction spells the class it builds; the annotation repeats it.
 
-final class FeatureGate
+public function factory(): callable
 {
-    /** @var array<string, bool> */
-    private array $overrides = [];
-
-    public function __construct(private readonly string $environment) {}
-
-    /**
-     * No argument, so it can only be describing the gate — which is what a question is for.
-     */
-    public function tracks(): bool
-    {
-        return $this->environment !== 'testing';
-    }
-
-    /**
-     * A construction spells the class it builds; the annotation repeats it.
-     */
-    public function factory(): callable
-    {
-        return fn (): FeatureGate => new FeatureGate($this->environment);
-    }
-
-    /**
-     * The FIX: the arrow's one expression already proves the type, so the `: array` comes off —
-     * `fn () => $this->overrides` says everything the annotation did.
-     */
-    public function overridesReader(): callable
-    {
-        return fn () => $this->overrides;
-    }
-
-    public function override(string $flag, bool $on): void
-    {
-        $this->overrides[$flag] = $on;
-    }
-
-    public function isProduction(): bool
-    {
-        return $this->environment === 'production';
-    }
-
-    public function enabled(string $flag): bool
-    {
-        return match ($flag) {
-            'new-checkout' => true,
-            'legacy-import' => false,
-            default => false,
-        };
-    }
+    return fn (): FeatureGate => new FeatureGate($this->environment);
 }
 
 ----------[ Good ]----------
@@ -189,15 +146,9 @@ A required non-nullable `string` slot handed `''` — the type promises a value 
 ```php
 ----------[ Bad ]----------
 
-public function refuse(string $reason, bool $retryable): AiReplyData
+public function activate(string $slug): WorkflowRowData
 {
-    $this->refusals[] = $reason;
-
-    if ($retryable) {
-        return new AiReplyData(message: '', success: false, error: 'retry_later');
-    }
-
-    return new AiReplyData(message: '', success: false, error: $reason);
+    return new WorkflowRowData(slug: $slug, name: $slug, trigger: null, active: true, updatedAt: '');
 }
 
 ----------[ Good ]----------
@@ -240,35 +191,19 @@ A `get` hook that reads nothing from `$this` — a stored property wearing compu
 ```php
 ----------[ Bad ]----------
 
-// Rebuilds the SAME value object on every read — nothing comes from `$this`, so the
-// construction belongs in the constructor (a `new`/static call can't be a property
-// default), not in a per-read hook.
+// Implements the contract by copying the interface's hook syntax — but neither body reads
+// `$this`, so both are stored properties wearing computed syntax: the constant belongs in a
+// property default, the constructed value in the constructor.
 
-final class LabelPrintDefaults
+final class TileAnimation implements AnimatedTile
 {
-    public Weight $maxParcelWeight {
-        get => new Weight(23000);
+    public ?string $enterEffect { get => null; }
+
+    public ?string $leaveEffect {
+        get => implode('+', ['fade', 'morph']);
     }
 
-    public function __construct(
-        private readonly string $printerId,
-        private readonly bool $duplex = false,
-    ) {}
-
-    public function printerId(): string
-    {
-        return $this->printerId;
-    }
-
-    public function copiesFor(int $parcels): int
-    {
-        return $this->duplex ? (int) ceil($parcels / 2) : $parcels;
-    }
-
-    public function describe(): string
-    {
-        return sprintf('%s (%s)', $this->printerId, $this->duplex ? 'duplex' : 'simplex');
-    }
+    public function __construct(private readonly string $tileId) {}
 }
 
 ----------[ Good ]----------

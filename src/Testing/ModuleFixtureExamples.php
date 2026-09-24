@@ -16,10 +16,11 @@ final class ModuleFixtureExamples
 {
     /**
      * @param  list<Detector>  $detectors
+     * @param  array<class-string<Detector>, array<string, array<int, string>>>  $groups  each recurring rule's findings by file and line, with the group each recurs in
      * @return array<class-string<Detector>, list<Example>>
      */
-    public static function extract(ModuleCodebase $codebase, array $detectors, Language $language): array
+    public static function extract(ModuleCodebase $codebase, array $detectors, Language $language, array $groups = []): array
     {
-        return MarkedExamples::extract($detectors, static fn (string $marker) => MarkedExamples::moduleSources($codebase->modules(), $marker), $language);
+        return MarkedExamples::extract($detectors, static fn (string $marker) => MarkedExamples::moduleSources($codebase->modules(), $marker), $language, $groups);
     }
 }

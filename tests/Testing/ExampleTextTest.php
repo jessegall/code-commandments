@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Testing;
 
 use JesseGall\CodeCommandments\Testing\ExampleText;
+use JesseGall\CodeCommandments\Testing\MarkedSource;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -22,10 +23,10 @@ final class ExampleTextTest extends TestCase
         $bad = [self::marked('Fee', 'Fee.php', 'public function price() {}')];
         $good = [self::marked('Fee', 'Fee.php', 'public function priceTold() {}')];
 
-        $resolution = ExampleText::resolution($bad, $good, 'class');
+        $resolution = ExampleText::resolution($bad, $good);
 
         $this->assertCount(1, $resolution);
-        $this->assertSame('public function priceTold() {}', $resolution[0]['source']);
+        $this->assertSame('public function priceTold() {}', $resolution[0]->source);
     }
 
     public function test_the_counterpart_leads_so_the_halves_still_line_up(): void
@@ -36,10 +37,10 @@ final class ExampleTextTest extends TestCase
             self::marked('Fee', 'Fee.php', 'the thinned caller'),
         ];
 
-        $resolution = ExampleText::resolution($bad, $good, 'class');
+        $resolution = ExampleText::resolution($bad, $good);
 
-        $this->assertSame('the thinned caller', $resolution[0]['source']);
-        $this->assertSame('interface PricedFreight {}', $resolution[1]['source']);
+        $this->assertSame('the thinned caller', $resolution[0]->source);
+        $this->assertSame('interface PricedFreight {}', $resolution[1]->source);
     }
 
     public function test_another_scenarios_repair_never_joins_this_one(): void
@@ -54,7 +55,7 @@ final class ExampleTextTest extends TestCase
             self::marked('Roster', 'Roster.php', 'another scenario entirely'),
         ];
 
-        $resolution = ExampleText::resolution($bad, $good, 'class');
+        $resolution = ExampleText::resolution($bad, $good);
 
         $this->assertCount(2, $resolution);
         $this->assertSame(['the thinned caller', 'the collaborator'], array_column($resolution, 'source'));
@@ -71,10 +72,10 @@ final class ExampleTextTest extends TestCase
             self::marked('Roster', 'Roster.php', 'another'),
         ];
 
-        $resolution = ExampleText::resolution($bad, $good, 'class');
+        $resolution = ExampleText::resolution($bad, $good);
 
         $this->assertCount(1, $resolution);
-        $this->assertSame('another', $resolution[0]['source']);
+        $this->assertSame('another', $resolution[0]->source);
     }
 
     public function test_a_shared_collaborator_joins_whichever_scenario_is_shown(): void
@@ -85,7 +86,7 @@ final class ExampleTextTest extends TestCase
             self::marked('Customer', 'Customer.php', 'the named transition'),
         ];
 
-        $resolution = ExampleText::resolution($bad, $good, 'class');
+        $resolution = ExampleText::resolution($bad, $good);
 
         $this->assertSame(['the thinned caller', 'the named transition'], array_column($resolution, 'source'));
     }
@@ -102,14 +103,14 @@ final class ExampleTextTest extends TestCase
             self::marked('AssetPath', 'AssetPath.php', 'the canonical implementation'),
         ];
 
-        $resolution = ExampleText::resolution($bad, $good, 'class');
+        $resolution = ExampleText::resolution($bad, $good);
 
         $this->assertSame(['the fixed roster', 'the canonical implementation'], array_column($resolution, 'source'));
     }
 
     public function test_nothing_marked_as_fixed_resolves_to_nothing(): void
     {
-        $this->assertSame([], ExampleText::resolution([self::marked('Fee', 'Fee.php', 'sinful')], [], 'class'));
+        $this->assertSame([], ExampleText::resolution([self::marked('Fee', 'Fee.php', 'sinful')], []));
     }
 
     public function test_a_pair_still_comes_from_one_scenario(): void
@@ -120,7 +121,7 @@ final class ExampleTextTest extends TestCase
         ];
         $good = [self::marked('Evidence', 'Evidence.php', 'the fixed evidence')];
 
-        $example = ExampleText::pair($bad, $good, 'class');
+        $example = ExampleText::pair($bad, $good);
 
         $this->assertSame('the sinful evidence', $example->bad());
         $this->assertSame('the fixed evidence', $example->good());
@@ -131,7 +132,7 @@ final class ExampleTextTest extends TestCase
         $bad = [self::marked('Roster', 'Roster.php', 'the sinful roster')];
         $good = [self::marked('Evidence', 'Evidence.php', 'the fixed evidence')];
 
-        $example = ExampleText::pair($bad, $good, 'class');
+        $example = ExampleText::pair($bad, $good);
 
         $this->assertSame('the sinful roster', $example->bad());
         $this->assertSame('the fixed evidence', $example->good());
@@ -169,8 +170,22 @@ final class ExampleTextTest extends TestCase
     /**
      * @return array{class: string, file: string, heading: ?string, source: string}
      */
-    private static function marked(string $class, string $file, string $source, ?string $heading = null): array
+    public function test_a_fix_in_another_class_of_the_same_file_answers_that_file_s_sin(): void
     {
-        return ['class' => $class, 'file' => $file, 'heading' => $heading, 'source' => $source];
+        $bad = [
+            self::marked('LedgerWindow', 'LedgerWindow.php', 'public function covers() {}'),
+            self::marked('GradeSelector', 'GradeSelector.php', 'public function accepts() {}'),
+        ];
+        $good = [self::marked('ActiveBatch', 'GradeSelector.php', 'public function accepts(ActiveBatch $batch) {}')];
+
+        $example = ExampleText::pair($bad, $good);
+
+        $this->assertSame('public function accepts() {}', $example->bad());
+        $this->assertSame('public function accepts(ActiveBatch $batch) {}', $example->good());
+    }
+
+    private static function marked(string $class, string $file, string $source, ?string $heading = null): MarkedSource
+    {
+        return new MarkedSource(file: $file, source: $source, heading: $heading, scenario: $class);
     }
 }

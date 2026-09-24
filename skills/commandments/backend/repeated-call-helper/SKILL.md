@@ -72,52 +72,6 @@ The SAME compound guard condition recurs in ≥2 places — the same check spell
 ```php
 ----------[ Bad ]----------
 
-// in Shop\Domain\ReviewQueue
-public function promote(array $items): array
-{
-    $ready = [];
-
-    foreach ($items as $item) {
-        if ($item->published && $item->approved) {
-            $ready[] = $item;
-        }
-    }
-
-    return $ready;
-}
-
-// in Shop\Domain\RangeFilter
-public function inside($value, $bound): bool
-{
-    return $value >= $bound->min && $value <= $bound->max;
-}
-
-// in Shop\Domain\RangeFilter
-public function clamp($value, $bound): mixed
-{
-    if ($value <= $bound->max && $value >= $bound->min) {
-        return $value;
-    }
-
-    return $value < $bound->min ? $bound->min : $bound->max;
-}
-
-// in Shop\Domain\FrameLookup
-public function get(string $node, string $port): mixed
-{
-    if (array_key_exists($node, $this->frames) && array_key_exists($port, $this->frames[$node])) {
-        return $this->frames[$node][$port];
-    }
-
-    return null;
-}
-
-// in Shop\Domain\FrameLookup
-public function has(string $node, string $port): bool
-{
-    return array_key_exists($node, $this->frames) && array_key_exists($port, $this->frames[$node]);
-}
-
 // in Shop\Domain\AccessPolicy
 public function allow($user, $account): bool
 {
@@ -131,12 +85,6 @@ public function audit($user, $account): string
     $ok = $account->verified;
 
     return $live && $ok ? 'granted' : 'denied';
-}
-
-// in Shop\Domain\PublishGate
-public function visible($item): bool
-{
-    return $item->published && $item->approved;
 }
 
 ----------[ Good ]----------

@@ -1,3 +1,4 @@
+# @example NamespaceCycle bad
 # Tracking events, which know every courier and the dispatch step they came from.
 from shop.couriers import dispatch
 from shop.couriers.dispatch import dispatch as sent

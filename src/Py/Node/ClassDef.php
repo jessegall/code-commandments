@@ -273,4 +273,9 @@ final class ClassDef extends Node
     {
         return $this->docstring()->isSomeAnd(static fn (string $docstring): bool => Docstring::proseParagraphs($docstring) >= 2);
     }
+
+    public function isTypeDeclaration(): bool
+    {
+        return true;
+    }
 }

@@ -39,25 +39,6 @@ def ring_up_all(jar: TipJar, entries: list[str]) -> None:
     for typed in entries:
         jar.add(cents=Cents.parse(typed))
 
-# in ledger_posting.py
-def post(self, entry: LedgerEntry) -> None:
-    self.printed.append(ledger_line(str(entry.number), entry.amount))
-
-# in parcel_weighing.py
-def labels(readings: list[ScaleReading]) -> list[str]:
-    return [weight_label(float(reading.display)) for reading in readings]
-
-# in parcel_weighing.py
-def heaviest_label(readings: list[ScaleReading]) -> str:
-    return weight_label(kilos=float(max(readings, key=lambda reading: float(reading.display)).display))
-
-# in ledger_dump.py
-def dump(entries: list[LedgerEntry]) -> str:
-    lines = []
-    for entry in entries:
-        lines.append(ledger_line(reference=str(entry.number), amount=entry.amount))
-    return "\n".join(lines)
-
 ----------[ Good ]----------
 
 # in tip_cents.py

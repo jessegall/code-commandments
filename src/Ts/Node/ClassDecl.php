@@ -70,4 +70,9 @@ final class ClassDecl extends Node
 
         return "{$abstract}class {$this->name}{$this->header} {\n{$body}\n}";
     }
+
+    public function isTypeDeclaration(): bool
+    {
+        return true;
+    }
 }

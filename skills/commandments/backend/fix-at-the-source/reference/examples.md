@@ -68,20 +68,6 @@ public function rows(string $path): array
     return $rows;
 }
 
-// in Shop\Labels\SpoolArchive
-public function store(string $path, string $spool): void
-{
-    if (! is_dir(dirname($path))) {
-        mkdir(dirname($path), 0o755, true);
-    }
-
-    $partial = $path . '.' . getmypid();
-
-    file_put_contents($partial, $spool);
-
-    rename($partial, $path);
-}
-
 // in Shop\Loyalty\MemberRoster
 public function rows(string $path): array
 {
@@ -96,40 +82,6 @@ public function rows(string $path): array
     fclose($handle);
 
     return $rows;
-}
-
-// in Shop\Docs\GuideExport
-public function write(string $path, string $guide): void
-{
-    if (! is_dir(dirname($path))) {
-        mkdir(dirname($path), 0o755, true);
-    }
-
-    file_put_contents($path, $guide);
-}
-
-// in Shop\Docs\AssetPath
-public function relativeTo(string $file, string $root): string
-{
-    $prefix = rtrim(realpath($root) ?: $root, '/') . '/';
-
-    if (! str_starts_with($file, $prefix)) {
-        return basename($file);
-    }
-
-    return substr($file, strlen($prefix));
-}
-
-// in Shop\Audit\EvidencePath
-public function under(string $file, string $root): string
-{
-    $prefix = rtrim($root, '/') . '/';
-
-    if (! str_starts_with($file, $prefix)) {
-        return basename($file);
-    }
-
-    return substr($file, strlen($prefix));
 }
 
 ----------[ Good ]----------
@@ -246,13 +198,9 @@ A write to a static property — really a global variable with a namespace attac
 ```php
 ----------[ Bad ]----------
 
-public static function record(string $at, string $message): void
+public static function load(array $rates): void
 {
-    self::$entries[] = "[{$at}] {$message}";
-
-    if (count(self::$entries) > self::KEEP) {
-        self::$entries = array_slice(self::$entries, -self::KEEP);
-    }
+    self::$table = $rates;
 }
 
 ----------[ Good ]----------

@@ -52,7 +52,17 @@ a field, constant or stored property declared below a constructor or a method â€
 ```cs
 ----------[ Bad ]----------
 
-private const string Prefix = "INV";
+// Hands out invoice numbers in a yearly series.
+public sealed class InvoiceNumbers(int year)
+{
+    private int issued;
+
+    public string Next() => $"{year}-{++issued:D5}";
+
+    private const string Prefix = "INV";
+
+    public string Formatted() => $"{Prefix}/{Next()}";
+}
 
 ----------[ Good ]----------
 

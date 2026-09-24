@@ -58,20 +58,6 @@ public function bind(string $node): WireMessage
     return WireMessage::raise(SignalAlias::of(PointerReleased::class), $node);
 }
 
-// in Shop\Shelving\ShelfImporter
-public function import(string $heading, int $bay): void
-{
-    $this->index->reserve(SlugText::of($heading), $bay);
-}
-
-// in Shop\Shelving\ShelfPlanner
-public function plan(array $aisles): void
-{
-    foreach ($aisles as $bay => $name) {
-        $this->index->reserve(SlugText::of($name), $bay);
-    }
-}
-
 ----------[ Good ]----------
 
 // in Shop\Wire\HotkeyBinding

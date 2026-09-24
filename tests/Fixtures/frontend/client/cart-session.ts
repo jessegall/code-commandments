@@ -17,7 +17,6 @@ export class CartSession {
     // @sin FalselyOptionalField
     private currency?: string = 'EUR'
 
-    // @fixed FalselyOptionalField
     // @righteous FalselyOptionalField
     private coupon?: Coupon
 
@@ -30,5 +29,15 @@ export class CartSession {
 
     couponCode(): string {
         return this.coupon?.code ?? 'none'
+    }
+}
+
+// The FIX: a field initialised where it is declared is never absent, so it is declared without the `?`.
+export class SavedCart {
+    // @fixed FalselyOptionalField
+    private items: Item[] = []
+
+    size(): number {
+        return this.items.length
     }
 }

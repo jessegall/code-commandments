@@ -49,11 +49,23 @@ a field annotated `X | None` that every read assumes is there and none guards â€
 ```py
 ----------[ Bad ]----------
 
-promotion: str | None = None
+@dataclass(frozen=True)
+class PriceTag:
+    cents: int
+    promotion: str | None = None
+
+    def banner(self) -> str:
+        return self.promotion.upper()
 
 ----------[ Good ]----------
 
-promotion: str
+@dataclass(frozen=True)
+class PromotedTag:
+    cents: int
+    promotion: str
+
+    def banner(self) -> str:
+        return self.promotion.upper()
 ```
 
 ### python-placeholder-filled-data

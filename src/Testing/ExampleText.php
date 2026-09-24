@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Testing;
 
+use Closure;
+
 /**
  * Text helpers shared by the fixture-example extractors ({@see FixtureExamples}, {@see VueFixtureExamples}):
  * pick the first non-empty source list under a set of candidate keys, and strip the common leading indent
@@ -30,18 +32,67 @@ final class ExampleText
     }
 
     /**
-     * The first bad/good example sharing the same $key (e.g. `class` or `file`), so a detector's before/
-     * after pair comes from ONE scenario; falls back to the first of each when none share a key.
+     * The first bad/good example from ONE scenario, so a detector's before/after is one piece of code
+     * repaired; falls back to the first of each when no two share one.
      *
-     * @param  list<array<string, mixed>>  $bad
-     * @param  list<array<string, mixed>>  $good
+     * @param  list<MarkedSource>  $bad
+     * @param  list<MarkedSource>  $good
      */
-    public static function pair(array $bad, array $good, string $key): Example
+    public static function pair(array $bad, array $good): Example
     {
-        $resolution = self::counterpart($bad, $good, $key);
-        $sinful = self::answered($bad, $resolution, $key);
+        $resolution = self::counterpart($bad, $good);
+        $sinful = self::answered($bad, $resolution);
 
-        return new Example(new Comparison($sinful['source'] ?? null, $resolution['source'] ?? null));
+        return new Example(new Comparison($sinful?->source, $resolution?->source));
+    }
+
+    /**
+     * The sinful source the example is anchored on — the one the resolution answers, else the first.
+     *
+     * @param  list<MarkedSource>  $bad
+     * @param  list<MarkedSource>  $good
+     */
+    public static function anchor(array $bad, array $good): ?MarkedSource
+    {
+        return self::answered($bad, self::counterpart($bad, $good));
+    }
+
+    /**
+     * The $sources in the one recurring group $anchor belongs to — a recurrence rule's Bad is a group, and
+     * every OTHER group the fixture marks is another scenario its Good does not answer. $groups is each
+     * finding's group, by file and line; a source is in the group of a finding inside the lines it shows.
+     *
+     * @param  list<MarkedSource>  $sources
+     * @param  array<string, array<int, string>>  $groups
+     * @return list<MarkedSource>
+     */
+    public static function recurring(array $sources, MarkedSource $anchor, array $groups): array
+    {
+        $group = self::groupOf($anchor, $groups);
+
+        if ($group === null) {
+            return $sources;
+        }
+
+        return array_values(array_filter($sources, static fn (MarkedSource $source): bool => self::groupOf($source, $groups) === $group));
+    }
+
+    /**
+     * @param  array<string, array<int, string>>  $groups
+     */
+    private static function groupOf(MarkedSource $source, array $groups): ?string
+    {
+        if (! isset($groups[$source->file])) {
+            return null;
+        }
+
+        foreach ($groups[$source->file] as $line => $group) {
+            if ($source->shows($source->file, $line)) {
+                return $group;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -61,48 +112,43 @@ final class ExampleText
      * The sinful marker is what anchors a scenario to a file, which is what keeps a sin fixed three
      * separate times (`DivergentTwin`) from publishing all three repairs as one.
      *
-     * @param  list<array<string, mixed>>  $bad
-     * @param  list<array<string, mixed>>  $good
-     * @return list<array<string, mixed>>
+     * @param  list<MarkedSource>  $bad
+     * @param  list<MarkedSource>  $good
+     * @return list<MarkedSource>
      */
-    public static function resolution(array $bad, array $good, string $key): array
+    public static function resolution(array $bad, array $good): array
     {
-        $counterpart = self::counterpart($bad, $good, $key);
+        $counterpart = self::counterpart($bad, $good);
 
         if ($counterpart === null) {
             return [];
         }
 
-        $anchored = array_column($bad, 'file');
-        $collaborators = [];
+        $collaborators = array_filter(
+            $good,
+            static fn (MarkedSource $one): bool => $one !== $counterpart
+                && ($one->sharesFileWith($counterpart) || ! array_any($bad, static fn (MarkedSource $sinful): bool => $sinful->sharesFileWith($one))),
+        );
 
-        foreach ($good as $one) {
-            if ($one === $counterpart) {
-                continue;
-            }
-
-            if ($one['file'] === $counterpart['file'] || ! in_array($one['file'], $anchored, true)) {
-                $collaborators[] = $one;
-            }
-        }
-
-        return [$counterpart, ...$collaborators];
+        return [$counterpart, ...array_values($collaborators)];
     }
 
     /**
      * The resolution that answers one of the $bad — the first found scanning the sinful in order, so the
-     * pair is one coherent before/after — falling back to the first resolution of all.
+     * pair is one coherent before/after. A resolution in the same scenario answers first, then one in the
+     * same file, since a fixture file holds one scenario per rule; only then the first of all.
      *
-     * @param  list<array<string, mixed>>  $bad
-     * @param  list<array<string, mixed>>  $good
-     * @return ?array<string, mixed>
+     * @param  list<MarkedSource>  $bad
+     * @param  list<MarkedSource>  $good
      */
-    private static function counterpart(array $bad, array $good, string $key): ?array
+    private static function counterpart(array $bad, array $good): ?MarkedSource
     {
-        foreach ($bad as $one) {
-            foreach ($good as $other) {
-                if ($one[$key] === $other[$key]) {
-                    return $other;
+        foreach (self::sharing() as $shared) {
+            foreach ($bad as $one) {
+                foreach ($good as $other) {
+                    if ($shared($one, $other)) {
+                        return $other;
+                    }
                 }
             }
         }
@@ -111,22 +157,35 @@ final class ExampleText
     }
 
     /**
-     * The sinful declaration the given resolution repairs — the one sharing its $key — falling back to
-     * the first marked of all.
+     * The sinful source the given resolution repairs — the one in its scenario, else its file — falling
+     * back to the first marked of all.
      *
-     * @param  list<array<string, mixed>>  $bad
-     * @param  ?array<string, mixed>  $resolution
-     * @return ?array<string, mixed>
+     * @param  list<MarkedSource>  $bad
      */
-    private static function answered(array $bad, ?array $resolution, string $key): ?array
+    private static function answered(array $bad, ?MarkedSource $resolution): ?MarkedSource
     {
-        foreach ($resolution === null ? [] : $bad as $one) {
-            if ($one[$key] === $resolution[$key]) {
-                return $one;
+        foreach ($resolution === null ? [] : self::sharing() as $shared) {
+            foreach ($bad as $one) {
+                if ($shared($one, $resolution)) {
+                    return $one;
+                }
             }
         }
 
         return $bad[0] ?? null;
+    }
+
+    /**
+     * What makes a Bad and a Good one before/after, strongest first: the same scenario, then the same file.
+     *
+     * @return list<Closure(MarkedSource, MarkedSource): bool>
+     */
+    private static function sharing(): array
+    {
+        return [
+            static fn (MarkedSource $one, MarkedSource $other) => $one->sharesScenarioWith($other),
+            static fn (MarkedSource $one, MarkedSource $other) => $one->sharesFileWith($other),
+        ];
     }
 
     /**
@@ -183,20 +242,37 @@ final class ExampleText
      * Each block wears the `heading` its extractor wrote — a finished comment line in that block's own
      * language, so a group mixing a template with the module beside it is commented correctly either
      * way. A `null` heading prints the block bare: a marked class or interface opens by naming itself,
-     * and a line saying so above it is the same word twice.
+     * and a line saying so above it is the same word twice. A block another block already shows whole —
+     * a marked method of a marked class — is not shown twice.
      *
-     * @param  list<array{source: string, heading: ?string, ...}>  $occurrences
+     * @param  list<MarkedSource>  $sources
      */
-    public static function group(array $occurrences, bool $lift): string
+    public static function group(array $sources, bool $lift): string
     {
         $blocks = [];
+        $flat = array_map(static fn (MarkedSource $source) => self::flattened($source->source), $sources);
 
-        foreach ($occurrences as $occurrence) {
-            $source = $lift ? self::lifted($occurrence['source']) : $occurrence['source'];
-            $blocks[] = $occurrence['heading'] === null ? $source : "{$occurrence['heading']}\n{$source}";
+        foreach ($sources as $source) {
+            $mine = self::flattened($source->source);
+
+            if (array_any($flat, static fn (string $other): bool => $other !== $mine && str_contains($other, $mine))) {
+                continue;
+            }
+
+            $text = $lift ? self::lifted($source->source) : $source->source;
+            $blocks[] = $source->heading === null ? $text : "{$source->heading}\n{$text}";
         }
 
         return implode("\n\n", $blocks);
+    }
+
+    /**
+     * $source with every run of whitespace as one space — what two blocks are compared by, so a method
+     * reads the same dedented alone as indented inside its class.
+     */
+    private static function flattened(string $source): string
+    {
+        return (string) preg_replace('/\s+/', ' ', trim($source));
     }
 
     /**

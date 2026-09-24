@@ -26,6 +26,10 @@ class PriceListReader:
         # @sin UnnamedVocabularyLiteral
         self.expect(",")
 
-    # @fixed UnnamedVocabularyLiteral
     def quoted_end(self) -> None:
         self.expect(Punctuation.QUOTE)
+
+    # The FIX: the comma is the vocabulary's `COMMA`, so the reader finds it where every token is named.
+    # @fixed UnnamedVocabularyLiteral
+    def cell_end(self) -> None:
+        self.expect(Punctuation.COMMA)

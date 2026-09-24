@@ -9,6 +9,7 @@ a comment or docstring narrating the code's history — where it lived, what it 
 ```py
 ----------[ Bad ]----------
 
+# formerly lived in the checkout module, before invoices had their own
 def next_number(last: int, prefix: str) -> str:
     return f"{prefix}-{last + 1:06d}"
 
@@ -107,11 +108,13 @@ a comment or docstring defending the code against a misunderstanding nobody actu
 ```py
 ----------[ Bad ]----------
 
+# the delay is not random, it follows the attempt count
 def backoff(attempt: int) -> int:
     return 2 ** attempt
 
 ----------[ Good ]----------
 
+# the delay doubles with every attempt
 def retry_delay(attempt: int) -> int:
     return min(2 ** attempt, 60)
 ```

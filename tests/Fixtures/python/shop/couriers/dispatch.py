@@ -1,3 +1,4 @@
+# @example NamespaceCycle bad
 # A courier dispatch that imports the tracking events module outright, while tracking imports the couriers.
 # Beside it, a one-way import into a package that never imports back.
 # @sin NamespaceCycle

@@ -63,12 +63,9 @@ customerName(): string {
 
 ----------[ Good ]----------
 
-// in order-tracker.ts
-private shipment?: Shipment
-
-// in order-tracker.ts
-trackingCode(): string {
-    return this.shipment?.trackingCode ?? 'pending'
+// The FIX: `customer` is always set, so it is read plainly.
+displayName(): string {
+    return this.customer.name
 }
 ```
 

@@ -102,50 +102,6 @@ public IReadOnlyList<string> Rows()
     return rows;
 }
 
-// in Carriers.cs
-get
-{
-    var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
-
-    if (fragile)
-    {
-        cents += cents / 2 + 250;
-    }
-
-    return new Money(cents, "EUR");
-}
-
-// in Carriers.cs
-get
-{
-    var cents = grams > 20_000 ? 1_500 : grams > 5_000 ? 700 : 0;
-
-    if (fragile)
-    {
-        cents += cents / 2 + 250;
-    }
-
-    return new Money(cents, "EUR");
-}
-
-// in Replenishment.cs
-int Shortfall(string sku)
-{
-    var have = onHand.TryGetValue(sku, out var count) ? count : 0;
-    var missing = minimum - have;
-
-    return missing > 0 ? missing + minimum / 4 : 0;
-}
-
-// in Replenishment.cs
-int Shortfall(string sku)
-{
-    var have = onHand.TryGetValue(sku, out var count) ? count : 0;
-    var missing = minimum - have;
-
-    return missing > 0 ? missing + minimum / 4 : 0;
-}
-
 ----------[ Good ]----------
 
 // in Layout.cs

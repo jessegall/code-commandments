@@ -40,58 +40,18 @@ Multi-paragraph class docblock (class too big)
 ----------[ Bad ]----------
 
 /**
- * This class is responsible for importing legacy orders from the old system.
- * It was originally extracted from the monolith during the 2023 migration and
- * has been refactored several times since. It reads the legacy CSV export, maps
- * each row to a customer, and creates the order. Previously this logic lived in
- * the OrderController but was moved here to keep controllers thin.
+ * Builds the monthly sales report. It pulls orders, groups them by customer and
+ * region, applies the tax tables, and renders a spreadsheet that finance imports
+ * by hand every month.
  *
- * TODO: remove once the legacy importer is fully decommissioned.
+ * The grouping logic is shared with the dashboard widgets, so any change here
+ * must be mirrored there until the two are unified.
  */
-final class LegacyOrderImporter
+final class LegacyReportBuilder
 {
-    // previously this returned an array, now it returns a Customer or null
-    public function findCustomer(string $email): ?Customer
+    public function build(int $month): string
     {
-        // loop over all customers and find the matching one
-        return Customer::query()->where('email', $email)->first();
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $rows
-     */
-    public function import(array $rows): void
-    {
-        foreach ($rows as $row) {
-            $customer = $this->findCustomer($row['email'] ?? '');
-
-            // changed from update() to direct assignment in v2
-            if ($customer !== null) {
-                $customer->imported = true;
-                $customer->save();
-            }
-        }
-    }
-
-    /**
-     * The FIX: a row with no email is an absence at the SOURCE, so the boundary names the failure and
-     * throws. The `?? ''` version looked up "the customer whose email is the empty string" and carried
-     * that fake all the way to the import — the throw stops the row here, where the truth is known.
-     *
-     * @param  array<int, array<string, mixed>>  $rows
-     */
-    public function importStrictly(array $rows): void
-    {
-        foreach ($rows as $row) {
-            $email = $row['email'] ?? throw new MissingImportEmail();
-
-            $this->findCustomer($email)?->markImported();
-        }
-    }
-
-    public function emailKnown(string $email): bool
-    {
-        return $this->findCustomer($email)?->exists ?? false;
+        return "report-{$month}.xlsx";
     }
 }
 
@@ -285,37 +245,14 @@ Two or more docblocks stacked on one declaration — PHP reads only the last, so
 ----------[ Bad ]----------
 
 /**
- * A plain on-disk report file — NOT an Eloquent model, even though it has a
- * save(). Mutating-then-saving one is just building a file, not the model-at-the-
- * call-site sin.
+ * Writes the report where the export job expects it.
  */
-final class ReportFile
+/**
+ * The second block PHP never hands to a reader.
+ */
+public function save(): void
 {
-    public string $name = '';
-
-    public string $contents = '';
-
-    private const string EXTENSION = '.csv';
-
-    /**
-     * Writes the report where the export job expects it.
-     */
-    /**
-     * The second block PHP never hands to a reader.
-     */
-    public function save(): void
-    {
-        // write to disk
-    }
-
-    /**
-     * Writes the report where the export job expects it — the second block folded in, so the one
-     * block PHP hands a reader says everything both used to.
-     */
-    public function archive(): void
-    {
-        $this->save();
-    }
+    // write to disk
 }
 
 ----------[ Good ]----------

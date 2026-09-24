@@ -48,17 +48,17 @@ final class ModuleFixture extends EngineFixture
         return new RecurrenceSpanResolver()->resolve($this->codebase(), $this->detectors);
     }
 
-    public function examples(): array
+    protected function carvedExamples(): array
     {
-        return ModuleFixtureExamples::extract($this->codebase(), $this->detectors, $this->language);
+        return ModuleFixtureExamples::extract($this->codebase(), $this->detectors, $this->language, $this->recurringGroups());
     }
 
-    protected function markedNames(string $tag): array
+    protected function marked(string $tag): array
     {
-        return array_fill_keys(array_keys(DeclarationMarkers::inModules($this->codebase(), $tag)), true);
+        return DeclarationMarkers::inModules($this->codebase(), $tag);
     }
 
-    private function codebase(): ModuleCodebase
+    protected function codebase(): ModuleCodebase
     {
         return $this->scanned ??= ($this->scan)($this->path);
     }

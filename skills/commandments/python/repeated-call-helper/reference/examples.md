@@ -20,31 +20,6 @@ def preview(member: Member, cost: int) -> str:
     enough = member.points >= cost
     return "redeemable" if not member.frozen and enough else "locked"
 
-# in events.py
-def on_event(self, event) -> None:
-    if event.kind == "order" and event.action in ("created", "updated"):
-        self.handle(event)
-        event.acknowledge(self.__class__.__name__)
-
-# in events.py
-def on_event(self, event) -> None:
-    if event.kind == "order" and event.action in ("created", "updated"):
-        self.handle(event)
-        event.acknowledge(self.__class__.__name__)
-
-# in dispatch_desk.py
-def outgoing(self) -> list[Parcel]:
-    return [parcel for parcel in self.parcels if parcel.labelled and parcel.weight_grams > 0]
-
-# in dispatch_desk.py
-def may_leave(self, parcel: Parcel) -> bool:
-    return parcel.labelled and parcel.weight_grams > 0
-
-# in courier_pickups.py
-def load(van: list[Parcel], parcel: Parcel) -> None:
-    if parcel.labelled and parcel.weight_grams > 0:
-        van.append(parcel)
-
 ----------[ Good ]----------
 
 class Account:
@@ -72,14 +47,6 @@ the same `**changes` call is built the same way with the same keyword at 2+ site
 def escalate(self, ticket: Ticket) -> Ticket:
     self.pager.append(ticket.subject)
     return ticket.evolve(meta=TicketMeta.of(3).to_dict())
-
-# in cart_lines.py
-def mark_gift(line: CartLine) -> CartLine:
-    return line.amend(flags={"gift": True, "wrap": "paper"})
-
-# in cart_lines.py
-def mark_sample(line: CartLine) -> CartLine:
-    return line.amend(flags={"sample": True})
 
 # in support_desk.py
 def raise_level(ticket: Ticket, level: int) -> Ticket:
@@ -111,16 +78,6 @@ def refund_cents(event: object, limit_cents: int) -> int:
     if isinstance(event, CardPayment) and isinstance(event.step, Challenge):
         return 0
     return limit_cents
-
-# in report_cells.py
-def render(self, cell: object) -> str:
-    if isinstance(cell, Cell) and isinstance(cell.content, Table):
-        return f"<table rows={len(cell.content.rows)}>"
-    return str(cell)
-
-# in report_cells.py
-def export(self, cells: list) -> list:
-    return [cell.content.rows for cell in cells if isinstance(cell, Cell) and isinstance(cell.content, Table)]
 
 # in payment_events.py
 def challenge_url(event: object) -> str:

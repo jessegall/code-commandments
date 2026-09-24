@@ -224,6 +224,11 @@ abstract class Node implements SyntaxNode
         return false;
     }
 
+    public function isTypeDeclaration(): bool
+    {
+        return false;
+    }
+
     /**
      * Does this statement stand in for a body without doing anything — `pass`, `...`, a docstring, or
      * `raise NotImplementedError`?

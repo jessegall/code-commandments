@@ -102,31 +102,28 @@ A class's own fields always change and get checked together — one concept spli
 ```php
 ----------[ Bad ]----------
 
-final class ShelfPlan
+/*
+ * Pattern: coupled optionals. `floor`/`ceil` are one price range — they are null-guarded as a PAIR and
+ * then assembled together, so the illegal half-present state (floor set, ceil absent) is representable and
+ * the guard only exists to reject it. They should be one `Range|null`.
+ */
+final class PriceBand
 {
     public function __construct(
-        public readonly Bay $anchor,
-        public readonly Fixture $neighbour,
+        public readonly ?int $floor = null,
+        public readonly ?int $ceil = null,
+        public readonly string $currency = 'EUR',
     ) {}
 
-    public function run(): array
+    public function window(): array
     {
-        return [$this->anchor, $this->neighbour->slot];
-    }
-
-    public function labelled(): string
-    {
-        return $this->describe($this->anchor, $this->neighbour->slot);
-    }
-
-    private function describe(Bay $from, Bay $to): string
-    {
-        return "{$from->aisle}-{$to->aisle}";
+        return $this->floor !== null && $this->ceil !== null ? [$this->floor, $this->ceil] : [];
     }
 }
 
 ----------[ Good ]----------
 
+/* The clump extracted: the two halves that only ever moved together ARE the range. */
 final readonly class PriceRange
 {
     public function __construct(
@@ -214,38 +211,36 @@ A value type that mutates its own field after construction, so two things holdin
 ```php
 ----------[ Bad ]----------
 
-// A postal address that relocates itself. Whatever recorded "the address this parcel was quoted
-// for" now holds a different address, and nothing near the quote did that.
+// A reading with its own scale, taken once and then re-scaled in place. The field is not promoted
+// but the constructor still takes it, so it is what the caller ASKED for — and converting rewrites
+// it, leaving anything that already recorded this reading describing a temperature nobody measured.
 
-final class PostalAddress
+final class Temperature
 {
-    public function __construct(
-        private string $line,
-        private string $postcode,
-        private string $city,
-        private string $country,
-    ) {}
+    private float $degrees;
 
-    public function relocate(string $line, string $postcode, string $city): void
+    private string $scale;
+
+    public function __construct(float $degrees, string $scale)
     {
-        $this->line = $line;
-        $this->postcode = $postcode;
-        $this->city = $city;
+        $this->degrees = $degrees;
+        $this->scale = $scale;
     }
 
-    public function oneLine(): string
+    public function convertToCelsius(): void
     {
-        return "{$this->line}, {$this->postcode} {$this->city}, {$this->country}";
+        $this->degrees = ($this->degrees - 32) * 5 / 9;
+        $this->scale = 'C';
     }
 
-    public function isDomestic(): bool
+    public function reading(): string
     {
-        return $this->country === 'NL';
+        return round($this->degrees, 1) . '°' . $this->scale;
     }
 
-    public function label(): array
+    public function belowFreezing(): bool
     {
-        return [$this->line, "{$this->postcode} {$this->city}", strtoupper($this->country)];
+        return $this->scale === 'C' ? $this->degrees < 0 : $this->degrees < 32;
     }
 }
 
@@ -304,6 +299,7 @@ public function parse(string $reference): CheckoutReference
     );
 }
 
+/* The tuple named: the four values that were positional now answer to what they are. */
 final readonly class CheckoutReference
 {
     /**
@@ -385,6 +381,10 @@ A `#[TypeScript]` `Data` class spreads a value object it already models flat acr
 ```php
 ----------[ Bad ]----------
 
+/*
+ * PortView restates the existing Wire value object FLAT as wire{Type,Socket,Label} instead of nesting a
+ * single `wire: Wire`. The flat trio travels to the frontend and should be one depth-nested sub-object.
+ */
 #[TypeScript]
 final class PortView extends Data
 {
@@ -434,6 +434,7 @@ final class NestedPortView extends Data
     ) {}
 }
 
+/* The Wire value object: a port's wiring identity, {type, socket, label}. */
 #[TypeScript]
 final class Wire extends Data
 {

@@ -34,4 +34,9 @@ final class InterfaceDecl extends Node
 
         return "interface {$this->name}{$this->header} {\n{$body}\n}";
     }
+
+    public function isTypeDeclaration(): bool
+    {
+        return true;
+    }
 }

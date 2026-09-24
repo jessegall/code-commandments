@@ -78,16 +78,6 @@ lineItems(lines: Line[]): string[] {
     return rows
 }
 
-// in stock-lookup.ts
-export async function loadStockLevels(sku: string): Promise<number[]> {
-    const response = await fetch(`/api/stock/${sku}`)
-    if (!response.ok) {
-        throw new Error(response.statusText)
-    }
-    const levels: StockLevel[] = await response.json()
-    return levels.map((level) => level.available)
-}
-
 ----------[ Good ]----------
 
 // in order-lines.ts

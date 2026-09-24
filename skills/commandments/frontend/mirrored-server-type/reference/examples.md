@@ -18,6 +18,8 @@ export interface OrderData {
 
 ----------[ Good ]----------
 
+// The FIX: the server owns the shape, so the frontend takes the GENERATED type rather than
+// restating it. Mark the Data class `#[TypeScript]`, generate, and import what came out.
 export type { OrderData } from '@/types/generated'
 ```
 
@@ -28,6 +30,10 @@ A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two
 ```vue
 ----------[ Bad ]----------
 
+<!-- in components/CustomerProfileCard.vue -->
+<script setup lang="ts">
+// This restates the server `CustomerData` payload in snake_case — the same contract,
+// hand-maintained. Generate it from the `Data` class instead.
 interface CustomerData {
   first_name: string
   last_name: string
@@ -35,12 +41,31 @@ interface CustomerData {
   phone_number: string
 }
 
+defineProps<{ customer: CustomerData }>()
+</script>
+
+<template>
+  <article class="profile-card">
+    <h2 class="profile-card__name">{{ customer.first_name }} {{ customer.last_name }}</h2>
+    <a class="profile-card__email" :href="`mailto:${customer.email_address}`">{{ customer.email_address }}</a>
+    <a class="profile-card__phone" :href="`tel:${customer.phone_number}`">{{ customer.phone_number }}</a>
+  </article>
+</template>
+
 ----------[ Good ]----------
 
-interface TableColumn {
-  key: string
-  label: string
-  sortable: boolean
-  width: number
-}
+<!-- in components/CustomerContactCard.vue -->
+<script setup lang="ts">
+// The FIX: the server owns the `CustomerData` shape, so the card imports the type generated from
+// its `Data` class instead of restating it.
+import type { CustomerData } from '@/types/generated'
+
+defineProps<{ customer: CustomerData }>()
+</script>
+
+<template>
+  <address class="contact-card">
+    <a :href="`mailto:${customer.emailAddress}`">{{ customer.emailAddress }}</a>
+  </address>
+</template>
 ```

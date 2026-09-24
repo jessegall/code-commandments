@@ -71,48 +71,6 @@ public string Top(Parcel parcel) => barcodes.Encode(parcel.Id.ToString());
 public IEnumerable<string> All(IEnumerable<Parcel> parcels) =>
     parcels.Select(parcel => barcodes.Encode(parcel.Id.ToString()));
 
-// in CreditNotes.cs
-public static CreditNote For(IReadOnlyList<ReturnedLine> lines)
-{
-    var note = new CreditNote();
-
-    foreach (var line in lines)
-    {
-        note.Credit((decimal) line.Refunded);
-    }
-
-    return note;
-}
-
-// in CreditNotes.cs
-public static CreditNote Single(ReturnedLine line)
-{
-    var note = new CreditNote();
-    note.Credit((decimal) line.Refunded);
-
-    return note;
-}
-
-// in CreditSummaries.cs
-public decimal Credited(IEnumerable<ReturnedLine> lines, CreditNote note)
-{
-    foreach (var line in lines.Where(line => line.Refunded > 0))
-    {
-        note.Credit((decimal) line.Refunded);
-    }
-
-    return note.Total;
-}
-
-// in BinImports.cs
-public int Load(IEnumerable<BinRow> rows)
-{
-    return rows.Count(row => rack.Claim(int.Parse(row.Aisle), int.Parse(row.Level)));
-}
-
-// in BinImports.cs
-public bool Reload(BinRow row) => rack.Claim(int.Parse(row.Aisle), int.Parse(row.Level));
-
 ----------[ Good ]----------
 
 public string Encode(Guid parcelId) => $"*{parcelId.ToString("N").ToUpperInvariant()}*";

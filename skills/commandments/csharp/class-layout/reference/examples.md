@@ -9,7 +9,17 @@ a field, constant or stored property declared below a constructor or a method â€
 ```cs
 ----------[ Bad ]----------
 
-private const string Prefix = "INV";
+// Hands out invoice numbers in a yearly series.
+public sealed class InvoiceNumbers(int year)
+{
+    private int issued;
+
+    public string Next() => $"{year}-{++issued:D5}";
+
+    private const string Prefix = "INV";
+
+    public string Formatted() => $"{Prefix}/{Next()}";
+}
 
 ----------[ Good ]----------
 
@@ -30,7 +40,17 @@ a `const` or `static readonly` value declared below a field or a stored property
 ```cs
 ----------[ Bad ]----------
 
-private const string Base = "EUR";
+// The exchange rates the shop converts foreign prices with, refreshed once a day.
+public sealed class ExchangeRates(IReadOnlyDictionary<string, decimal> rates)
+{
+    private DateOnly fetchedOn = DateOnly.MinValue;
+
+    private const string Base = "EUR";
+
+    public decimal ToBase(string currency, decimal amount) => currency == Base ? amount : amount / rates[currency];
+
+    public bool IsStale(DateOnly today) => fetchedOn < today;
+}
 
 ----------[ Good ]----------
 

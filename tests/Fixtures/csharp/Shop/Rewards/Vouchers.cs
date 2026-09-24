@@ -1,3 +1,4 @@
+// @example NamespaceCycle bad
 namespace Shop.Rewards;
 
 public sealed record Voucher(string Code, int Cost);

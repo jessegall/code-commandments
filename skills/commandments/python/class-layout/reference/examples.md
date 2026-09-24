@@ -9,7 +9,18 @@ a constant, class attribute or field declared below a method — the class's sta
 ```py
 ----------[ Bad ]----------
 
-RETRIES = 3
+class SupplierClient:
+    def __init__(self, http) -> None:
+        self.http = http
+
+    def fetch(self, path: str) -> bytes:
+        for _ in range(self.RETRIES):
+            response = self.http.get(path)
+            if response.ok:
+                return response.body
+        return b""
+
+    RETRIES = 3
 
 ----------[ Good ]----------
 
@@ -31,7 +42,14 @@ a constant declared below a field in the head of a class — the inventory read 
 ```py
 ----------[ Bad ]----------
 
-LIMIT: ClassVar[int] = 25
+@dataclass
+class Basket:
+    owner: str
+    lines: list = field(default_factory=list)
+    LIMIT: ClassVar[int] = 25
+
+    def full(self) -> bool:
+        return len(self.lines) >= self.LIMIT
 
 ----------[ Good ]----------
 

@@ -11,11 +11,12 @@ A page object fills a public slot imperatively in the constructor (`$this->x = $
 
 public function __construct(
     #[Hidden]
-    #[FromContainer(FacetBuilder::class)]
-    public readonly FacetBuilder $builder,
+    #[FromContainer(SalesReporter::class)]
+    public readonly SalesReporter $sales,
 ) {
-    $this->headline = $this->builder->headline();
-    $this->cards = $this->builder->cards();
+    $this->primary = $this->sales->primaryLink();
+    $this->secondary = $this->sales->secondaryLink();
+    $this->featured = $this->sales->featuredLine();
 }
 
 ----------[ Good ]----------
@@ -131,13 +132,41 @@ A `Data` computed slot hand-flattens a value object into a wire array, instead o
 ```php
 ----------[ Bad ]----------
 
-#[Computed]
-public function marker(): array
+// A getter hook hand-flattens a `Money` value object into its wire array — the honest `Money` type is
+// lost and the shape is re-authored per page. A `#[WithTransformer(MoneyTransformer::class)]` on a real
+// `Money` slot (plus a `#[TypeScriptType]`) should own the serialized shape.
+
+final class PricingPage extends Data
 {
-    return ['lat' => $this->origin->lat, 'lng' => $this->origin->lng, 'origin' => $this->origin->label()];
+    #[Computed]
+    public array $priceInEuro { get => ['amount' => $this->money->cents, 'currency' => $this->money->code]; }
+
+    #[Computed]
+    public string $tier {
+        get => match (true) {
+            $this->quantity >= 100 => 'wholesale',
+            $this->quantity >= 12 => 'bulk',
+            default => 'retail',
+        };
+    }
+
+    public function __construct(
+        public readonly Money $money,
+        public readonly string $sku,
+        public readonly int $quantity,
+    ) {}
+
 }
 
 ----------[ Good ]----------
+
+// in Shop\Http\Pages\TransformedPricingPage
+public function __construct(
+    #[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
+    public readonly Money $priceInEuro,
+    public readonly string $sku,
+    public readonly int $quantity,
+) {}
 
 // Tiny custom output transformers — each reshapes a value object into a different wire type, so the
 // generated TypeScript must be told the new shape with a `#[TypeScriptType]`. The generator cannot infer
@@ -159,42 +188,33 @@ A page object travels back in a response but carries no `#[TypeScript]` — the 
 ```php
 ----------[ Bad ]----------
 
-// Slots including a typed collection, all filled straight from the injected builder in the
-// constructor — each a self-contained projection that a `#[Computed]` hook would carry.
+// Two direct stat slots; one container-injected reporter left PUBLIC and un-hidden — it serializes
+// and leaks into the frontend `DashboardPage` type.
 
-final class MetricsPage extends Data
+final class DashboardPage extends Data
 {
-    public readonly StatCard $headline;
+    public readonly StatCard $revenue;
 
-    /**
-     * @var list<StatCard>
-     */
-    #[DataCollectionOf(StatCard::class)]
-    public readonly array $cards;
+    public readonly StatCard $orders;
 
     public function __construct(
-        #[Hidden]
-        #[FromContainer(FacetBuilder::class)]
-        public readonly FacetBuilder $builder,
-    ) {
-        $this->headline = $this->builder->headline();
-        $this->cards = $this->builder->cards();
+        #[FromContainer(SalesReporter::class)]
+        public readonly SalesReporter $sales,
+    ) {}
+
+    public function headline(): string
+    {
+        return $this->revenue->label;
     }
 
-    public function caption(): string
+    public function ordersValue(): string
     {
-        return sprintf('%s across %d metrics', $this->headline->label, count($this->cards));
+        return $this->orders->value;
     }
 
-    public function labels(): string
+    public function summary(): string
     {
-        $names = [];
-
-        foreach ($this->cards as $card) {
-            $names[] = strtoupper($card->label);
-        }
-
-        return implode(', ', $names);
+        return $this->headline() . ' | ' . $this->ordersValue();
     }
 }
 
@@ -231,9 +251,9 @@ A page object reaches into the container with `app()`/`resolve()` instead of inj
 ```php
 ----------[ Bad ]----------
 
-public function aiEnabled(): bool
+public function isHealthy(): bool
 {
-    return app(AiService::class)->isEnabled();
+    return app(ContainersService::class)->healthy();
 }
 
 ----------[ Good ]----------

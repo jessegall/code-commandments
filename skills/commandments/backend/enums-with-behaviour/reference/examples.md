@@ -9,29 +9,24 @@ A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as c
 ```php
 ----------[ Bad ]----------
 
-// Payment states as loose string constants — a closed set that should be a backed enum.
+// VAT rates kept as floating-point constants instead of a typed TaxBand enum.
 
-final class PaymentStatuses
+final class TaxBands
 {
     /**
-     * Authorisation requested, awaiting the gateway.
+     * The default rate applied to most goods.
      */
-    const PENDING = 'pending';
+    const STANDARD = 0.21;
 
     /**
-     * Funds held but not yet taken.
+     * Food, books, and other reduced-rate categories.
      */
-    const AUTHORISED = 'authorised';
+    const REDUCED = 0.09;
 
     /**
-     * Money moved; the order can ship.
+     * Exports and exempt supplies.
      */
-    const CAPTURED = 'captured';
-
-    /**
-     * Reversed after capture.
-     */
-    const REFUNDED = 'refunded';
+    const ZERO = 0.0;
 }
 
 ----------[ Good ]----------

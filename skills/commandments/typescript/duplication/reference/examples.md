@@ -33,16 +33,6 @@ lineItems(lines: Line[]): string[] {
     return rows
 }
 
-// in stock-lookup.ts
-export async function loadStockLevels(sku: string): Promise<number[]> {
-    const response = await fetch(`/api/stock/${sku}`)
-    if (!response.ok) {
-        throw new Error(response.statusText)
-    }
-    const levels: StockLevel[] = await response.json()
-    return levels.map((level) => level.available)
-}
-
 ----------[ Good ]----------
 
 // in order-lines.ts
@@ -70,7 +60,15 @@ Copy-pasted code — two+ TypeScript functions (a `function`, a method, a `const
 ```vue
 ----------[ Bad ]----------
 
-// in NewsletterSignup.vue
+<!-- in components/NewsletterSignup.vue -->
+<script setup lang="ts">
+// Two handlers in one component with one body: subscribing and re-subscribing post the same
+// form and recover from the same failure, so the second is a copy of the first.
+import { ref } from 'vue'
+
+const email = ref('')
+const failed = ref(false)
+
 async function subscribe(): Promise<void> {
     failed.value = false
     try {
@@ -80,7 +78,6 @@ async function subscribe(): Promise<void> {
     }
 }
 
-// in NewsletterSignup.vue
 async function resubscribe(): Promise<void> {
     failed.value = false
     try {
@@ -89,22 +86,38 @@ async function resubscribe(): Promise<void> {
         failed.value = true
     }
 }
+</script>
 
-// in RestockNotice.vue
-const fetchAvailability = async (sku: string): Promise<number[]> => {
-    const response = await fetch(`/api/stock/${sku}`)
-    if (!response.ok) {
-        throw new Error(response.statusText)
-    }
-    const levels: StockLevel[] = await response.json()
-    return levels.map((level) => level.available)
-}
+<template>
+    <form @submit.prevent="subscribe">
+        <input v-model="email" type="email" />
+        <button type="button" @click="resubscribe">Subscribe again</button>
+    </form>
+</template>
 
 ----------[ Good ]----------
 
-function isSoldOut(levels: number[]): boolean {
-    return levels.length === 0
+<!-- in components/NewsletterForm.vue -->
+<script setup lang="ts">
+// The FIX: subscribing again is the same request, so there is one function and both buttons call it.
+import { ref } from 'vue'
+
+const address = ref('')
+const rejected = ref(false)
+
+async function subscribe(): Promise<void> {
+    rejected.value = false
+    await fetch('/api/newsletter', { method: 'POST', body: JSON.stringify({ email: address.value }) })
+        .catch(() => { rejected.value = true })
 }
+</script>
+
+<template>
+    <form @submit.prevent="subscribe">
+        <input v-model="address" type="email" />
+        <button type="button" @click="subscribe">Subscribe again</button>
+    </form>
+</template>
 ```
 
 ### near-duplicate-typescript-function — in TypeScript
@@ -125,28 +138,15 @@ export async function loadReviews(productId: number): Promise<number[]> {
     return shown.map((review) => review.id)
 }
 
-// in carrier-rates.ts
-quote(parcel: Parcel): number {
-    let cents = 695 + Math.ceil(parcel.kilos) * 120
-    if (parcel.oversized) {
-        cents += 450
+// in QuestionFeed.vue
+const loadQuestions = async (productId: number): Promise<number[]> => {
+    const result = await fetch(`/api/products/${productId}/questions`)
+    if (!result.ok) {
+        throw new Error(result.statusText)
     }
-    if (parcel.kilos > 20) {
-        cents = Math.round(cents * 1.15)
-    }
-    return cents
-}
-
-// in carrier-rates.ts
-quote(parcel: Parcel): number {
-    let price = 950 + Math.ceil(parcel.kilos) * 85
-    if (parcel.oversized) {
-        price += 700
-    }
-    if (parcel.kilos > 30) {
-        price = Math.round(price * 1.1)
-    }
-    return price
+    const questions: Entry[] = await result.json()
+    const answered = questions.filter((question) => question.published)
+    return answered.map((question) => question.id)
 }
 
 ----------[ Good ]----------
@@ -176,6 +176,17 @@ A near-copy — two+ TypeScript functions with one control-flow skeleton that di
 ```vue
 ----------[ Bad ]----------
 
+// in review-feed.ts
+export async function loadReviews(productId: number): Promise<number[]> {
+    const response = await fetch(`/api/products/${productId}/reviews`)
+    if (!response.ok) {
+        throw new Error(response.statusText)
+    }
+    const reviews: Entry[] = await response.json()
+    const shown = reviews.filter((review) => review.published)
+    return shown.map((review) => review.id)
+}
+
 // in QuestionFeed.vue
 const loadQuestions = async (productId: number): Promise<number[]> => {
     const result = await fetch(`/api/products/${productId}/questions`)
@@ -185,28 +196,6 @@ const loadQuestions = async (productId: number): Promise<number[]> => {
     const questions: Entry[] = await result.json()
     const answered = questions.filter((question) => question.published)
     return answered.map((question) => question.id)
-}
-
-// in PickListActions.vue
-async function release(): Promise<void> {
-    if (props.pickListId === null) {
-        return
-    }
-    const response = await fetch(`/api/pick-lists/${props.pickListId}/release`, { method: 'POST' })
-    if (response.ok) {
-        emit('close')
-    }
-}
-
-// in PickListActions.vue
-async function pause(): Promise<void> {
-    if (props.pickListId === null) {
-        return
-    }
-    const response = await fetch(`/api/pick-lists/${props.pickListId}/pause`, { method: 'POST' })
-    if (response.ok) {
-        emit('close')
-    }
 }
 
 ----------[ Good ]----------

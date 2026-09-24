@@ -51,6 +51,8 @@ export interface OrderData {
 
 ----------[ Good ]----------
 
+// The FIX: the server owns the shape, so the frontend takes the GENERATED type rather than
+// restating it. Mark the Data class `#[TypeScript]`, generate, and import what came out.
 export type { OrderData } from '@/types/generated'
 ```
 

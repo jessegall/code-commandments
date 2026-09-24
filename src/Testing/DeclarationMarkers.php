@@ -129,12 +129,13 @@ final class DeclarationMarkers
     }
 
     /**
-     * Is $text, a comment's words, one fixture marker and nothing else — `@sin Name`, `@fixed Name` or
-     * `@righteous Name`? A marker is the fixture's metadata, never prose about the code beneath it.
+     * Is $text, a comment's words, one fixture marker and nothing else — `@sin Name`, `@fixed Name`,
+     * `@righteous Name` or `@example Name bad|good`? A marker is the fixture's metadata, never prose about
+     * the code beneath it.
      */
     public static function isMarkerComment(string $text): bool
     {
-        return preg_match('/^@(?:sin|fixed|righteous)\s+\w+$/', trim($text)) === 1;
+        return preg_match('/^@(?:(?:sin|fixed|righteous)\s+\w+|example\s+\w+\s+(?:bad|good))$/', trim($text)) === 1;
     }
 
     /**

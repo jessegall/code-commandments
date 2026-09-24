@@ -117,6 +117,8 @@ Two route actions in different controllers thinly delegate to the SAME operation
 ```php
 ----------[ Bad ]----------
 
+// One of two doors onto `ReportBuilder::build` — `AnalyticsExportController::build` is the other.
+
 public function build(ReportExportRequest $request): string
 {
     return $this->builder->build($request);

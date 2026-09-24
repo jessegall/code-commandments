@@ -22,17 +22,18 @@ final class VueFixtureExamples
 {
     /**
      * @param  list<Detector>  $detectors
+     * @param  array<class-string<Detector>, array<string, array<int, string>>>  $groups  each recurring rule's findings by file and line, with the group each recurs in
      * @return array<class-string<Detector>, list<Example>>
      */
-    public static function extract(Codebase $codebase, array $detectors): array
+    public static function extract(Codebase $codebase, array $detectors, array $groups = []): array
     {
-        return MarkedExamples::extract($detectors, static fn (string $marker) => self::sourcesByMarker($codebase, $marker), Language::Vue);
+        return MarkedExamples::extract($detectors, static fn (string $marker) => self::sourcesByMarker($codebase, $marker), Language::Vue, $groups);
     }
 
     /**
      * Every element marked by a `@{$marker} Name` comment, grouped by the Name.
      *
-     * @return array<string, list<array{file: string, source: string}>>
+     * @return array<string, list<MarkedSource>>
      */
     private static function sourcesByMarker(Codebase $codebase, string $marker): array
     {
@@ -46,7 +47,7 @@ final class VueFixtureExamples
     }
 
     /**
-     * @param  array<string, list<array{file: string, source: string}>>  $sources
+     * @param  array<string, list<MarkedSource>>  $sources
      */
     private static function collect(Element $node, Sfc $component, string $marker, array &$sources): void
     {
@@ -63,11 +64,13 @@ final class VueFixtureExamples
 
             if ($child->isElement()) {
                 foreach ($pending as $name) {
-                    $sources[$name][] = [
-                        'file' => $component->path,
-                        'heading' => Language::Vue->comment('in ' . MarkedExamples::name($component->path)),
-                        'source' => self::source($child, $component),
-                    ];
+                    $sources[$name][] = new MarkedSource(
+                        file: $component->path,
+                        source: self::source($child, $component),
+                        heading: Language::Vue->comment('in ' . MarkedExamples::name($component->path)),
+                        firstLine: 1 + substr_count($component->source, "\n", 0, $child->start),
+                        lastLine: 1 + substr_count($component->source, "\n", 0, $child->end),
+                    );
                 }
 
                 $pending = [];

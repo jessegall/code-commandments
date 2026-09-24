@@ -31,15 +31,28 @@ a `static` field that methods write to — state no instance owns, changed by wh
 ```cs
 ----------[ Bad ]----------
 
-public int Next()
-{
-    placed++;
+// in Shop/Orders/OrderCounter.cs
+namespace Shop.Orders;
 
-    return placed;
+// Numbers each order placed at the till.
+public sealed class OrderNumbering
+{
+    private static int placed;
+
+    public int Next()
+    {
+        placed++;
+
+        return placed;
+    }
 }
 
 ----------[ Good ]----------
 
+// in Shop/Orders/TillCounter.cs
+namespace Shop.Orders;
+
+// Numbers each order placed at one till: the count is the instance's own, so two tills never share it.
 public sealed class TillCounter
 {
     private int placed;

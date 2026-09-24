@@ -73,13 +73,33 @@ two of the project's packages import each other — a cycle that makes them one 
 ```py
 ----------[ Bad ]----------
 
-def results_page(query: str) -> str:
-    from shop.search import engine
-    return engine.render(query)
+# in shop/couriers/dispatch.py
+# A courier dispatch that imports the tracking events module outright, while tracking imports the couriers.
+# Beside it, a one-way import into a package that never imports back.
+import shop.tracking.events
+from ..pricing.rates import rate_for
+
+def dispatch(parcel: str) -> str:
+    shop.tracking.events.record(parcel)
+    return f"{parcel} at {rate_for(parcel)}"
+
+# in shop/tracking/events.py
+# Tracking events, which know every courier and the dispatch step they came from.
+from shop.couriers import dispatch
+from shop.couriers.dispatch import dispatch as sent
+
+def record(parcel: str) -> list[str]:
+    return [parcel, dispatch.__name__, sent.__name__]
 
 ----------[ Good ]----------
 
+# in shop/returns/desk.py
+# The FIX for a cycle between returns and tracking: the returns desk imports tracking one way, and everything
+# tracking needs about a return is declared in tracking.
 from ..tracking.events import record
+
+def book_return(parcel: str) -> list[str]:
+    return record(f"return {parcel}")
 ```
 
 The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).

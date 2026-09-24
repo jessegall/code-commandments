@@ -68,38 +68,6 @@ def on_event(self, event) -> None:
         self.handle(event)
         event.acknowledge(self.__class__.__name__)
 
-# in documents.py
-def rows(self, lines: list[Line]) -> list[str]:
-    rows = []
-    for line in lines:
-        if line.quantity <= 0:
-            continue
-        rows.append(f"{line.quantity} x {line.sku}: {line.total() / 100:.2f}")
-    return rows
-
-# in documents.py
-def line_items(self, lines: list[Line]) -> list[str]:
-    rows = []
-    for line in lines:
-        if line.quantity <= 0:
-            continue
-        rows.append(f"{line.quantity} x {line.sku}: {line.total() / 100:.2f}")
-    return rows
-
-# in cli.py
-def load_config(path: Path) -> dict:
-    if not path.is_file():
-        raise SettingsMissing(str(path))
-    settings = json.loads(path.read_text())
-    return {key.lower(): value for key, value in settings.items()}
-
-# in settings.py
-def read_settings(path: Path) -> dict:
-    if not path.is_file():
-        raise SettingsMissing(str(path))
-    settings = json.loads(path.read_text())
-    return {key.lower(): value for key, value in settings.items()}
-
 ----------[ Good ]----------
 
 # in layout.py

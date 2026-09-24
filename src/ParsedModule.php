@@ -32,6 +32,13 @@ interface ParsedModule
      */
     public function functionSpans(): array;
 
+    /**
+     * The `[start, end)` span of every node that declares a type — a class, an interface, a record.
+     *
+     * @return list<array{0: int, 1: int}>
+     */
+    public function typeSpans(): array;
+
     public function lineAt(int $offset): int;
 
     public function spanAt(int $start, int $end): Span;

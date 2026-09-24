@@ -43,17 +43,23 @@ final class BackendFixture extends EngineFixture
         return new RecurrenceSpanResolver()->resolve($this->codebase(), $this->detectors());
     }
 
-    public function examples(): array
+    protected function carvedExamples(): array
     {
-        return FixtureExamples::extract($this->codebase(), $this->detectors);
+        return FixtureExamples::extract($this->codebase(), $this->detectors, $this->recurringGroups());
     }
 
-    protected function markedNames(string $tag): array
+    protected function marked(string $tag): array
     {
-        return array_fill_keys(array_map(static fn (Marker $marker): string => $marker->detector, SinMarkers::in($this->codebase(), ucfirst($tag))), true);
+        $marked = [];
+
+        foreach (SinMarkers::in($this->codebase(), $tag === 'sin' ? 'Sinful' : ucfirst($tag)) as $marker) {
+            $marked[$marker->detector][] = $marker->location;
+        }
+
+        return $marked;
     }
 
-    private function codebase(): Codebase
+    protected function codebase(): Codebase
     {
         return $this->scanned ??= Codebase::scan($this->path);
     }

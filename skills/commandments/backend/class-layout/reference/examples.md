@@ -9,6 +9,9 @@ A trait use, constant, property, property hook, or enum case declared below a me
 ```php
 ----------[ Bad ]----------
 
+// The ways an order can ship — with `case Pickup` stranded below the behaviour, where a reader scanning
+// the head of the enum for its inventory never sees it.
+
 enum ShippingMethod: string
 {
     case Standard = 'standard';
@@ -57,33 +60,26 @@ A declaration in the head of a class that arrives after something belonging belo
 ```php
 ----------[ Bad ]----------
 
-/** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
-final class LogLine
+final class Itinerary
 {
-    public string $level = 'info';
+    /**
+     * How each leg is carried, in order.
+     */
+    /**
+     * @var list<string>
+     */
+    public array $legModes = [];
 
-    private int $depth = 0;
+    public string $reference = '';
+
+    public static int $planned = 0;
 
     /**
-     * @var list<LogLine>
+     * The relational twin `covers($leg)` would be fine; with nothing to compare, this is a question.
      */
-    public array $children = [];
-
-    /**
-     * A bool about the line itself, named as a claim instead of a question.
-     */
-    public function reports(): bool
+    public function covers(): bool
     {
-        return $this->level === 'error';
-    }
-
-    /**
-     * The FIX is the NAME: same body, same class, asked as a question. `if ($line->isErrored())`
-     * reads as English at the call site, where `if ($line->reports())` reads as a claim.
-     */
-    public function isErrored(): bool
-    {
-        return $this->level === 'error';
+        return $this->legModes !== [];
     }
 }
 

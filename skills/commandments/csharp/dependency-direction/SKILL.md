@@ -72,22 +72,50 @@ two of the project's namespaces that each use the other — a cycle that makes t
 ```cs
 ----------[ Bad ]----------
 
-public int Total(Promotion promotion)
+// in Shop/Loyalty/Members.cs
+namespace Shop.Loyalty;
+
+using Shop.Rewards;
+
+// A loyalty member spends points on rewards; rewards reaches back for the member below.
+public sealed class Member(string id, int points)
 {
-    switch (promotion)
-    {
-        case PercentOff percent:
-            return subtotal - subtotal * percent.Percent / 100;
-        case AmountOff amount:
-            return subtotal - Math.Min(amount.Amount, subtotal);
-        default:
-            return subtotal;
-    }
+    public string Id => id;
+
+    public int Points => points;
+
+    public Voucher Redeem(VoucherCatalog catalog) => catalog.Cheapest(points);
+
+    public IEnumerable<Voucher> Affordable(VoucherCatalog catalog) => catalog.All.Where(voucher => voucher.Cost <= points);
+
+    public bool CanRedeem(Voucher voucher) => voucher.Cost <= points;
+}
+
+// in Shop/Rewards/Vouchers.cs
+namespace Shop.Rewards;
+
+public sealed record Voucher(string Code, int Cost);
+
+public sealed class VoucherCatalog(IReadOnlyList<Voucher> all)
+{
+    public IReadOnlyList<Voucher> All => all;
+
+    public Voucher Cheapest(int budget) => all.Where(voucher => voucher.Cost <= budget).OrderBy(voucher => voucher.Cost).First();
+
+    public string IssueTo(Shop.Loyalty.Member member) => $"{member.Id}:{Cheapest(member.Points).Code}";
 }
 
 ----------[ Good ]----------
 
-public bool Covers(Shop.Rewards.Voucher voucher) => balance >= voucher.Cost;
+// in Shop/Rewards/Issuing.cs
+namespace Shop.Rewards;
+
+// Rewards issues a voucher from what it is handed — a member's id and points — and names nothing in
+// Loyalty, so the one arrow left between the two runs Loyalty → Rewards.
+public sealed class VoucherIssuer(VoucherCatalog catalog)
+{
+    public string IssueTo(string memberId, int points) => $"{memberId}:{catalog.Cheapest(points).Code}";
+}
 ```
 
 The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).

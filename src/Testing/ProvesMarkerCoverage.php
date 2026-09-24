@@ -24,6 +24,11 @@ trait ProvesMarkerCoverage
         );
     }
 
+    public function test_every_example_file_is_proven(): void
+    {
+        $this->assertSame([], $this->fixture()->unprovenExamples(), 'An @example file is published as the rule\'s own Bad or Good, so the fixture must prove it.');
+    }
+
     public function test_every_detector_has_a_righteous_twin(): void
     {
         $this->assertSame([], $this->fixture()->withoutMarker('righteous'), 'These rules have no @righteous twin — add one good example of what they must leave alone.');

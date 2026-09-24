@@ -5,10 +5,14 @@ public sealed record Basket(string ShopperId)
 {
     // @sin MutableValueObject
     public int Items { get; set; }
+}
+
+// A basket held for a shopper: a value, so a change is a new one.
+public sealed record HeldBasket(string ShopperId)
+{
+    // @fixed MutableValueObject
+    public int Items { get; init; }
 
     // @fixed MutableValueObject
-    public int Count { get; init; }
-
-    // @fixed MutableValueObject
-    public Basket WithOneMore() => this with { Count = Count + 1 };
+    public HeldBasket WithOneMore() => this with { Items = Items + 1 };
 }

@@ -8,6 +8,7 @@ use JesseGall\CodeCommandments\Ast\Codebase;
 use JesseGall\CodeCommandments\Ast\NodeMatch;
 use JesseGall\CodeCommandments\Backend\Detector;
 use JesseGall\CodeCommandments\Detectors\RecurrenceDetector;
+use PhpParser\Node;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
@@ -24,9 +25,10 @@ final class FixtureExamples
 {
     /**
      * @param  list<Detector>  $detectors
+     * @param  array<class-string<Detector>, array<string, array<int, string>>>  $groups  each recurring rule's findings by file and line, with the group each recurs in
      * @return array<class-string<Detector>, list<Example>>
      */
-    public static function extract(Codebase $fixture, array $detectors): array
+    public static function extract(Codebase $fixture, array $detectors, array $groups = []): array
     {
         $sinful = self::sourcesByDetector($fixture, 'Sinful');
         $fixed = self::sourcesByDetector($fixture, 'Fixed');
@@ -43,10 +45,10 @@ final class FixtureExamples
             // Only a RESOLUTION spans declarations. A righteous look-alike falls back one at a time:
             // it is one documented exemption, and two of them in a file are two exemptions rather
             // than one repair told in two places.
-            $resolution = ExampleText::resolution($bad, ExampleText::forKeys($fixed, $keys), 'class');
+            $resolution = ExampleText::resolution($bad, ExampleText::forKeys($fixed, $keys));
             $good = $resolution ?: ExampleText::forKeys($righteous, $keys);
 
-            $example = ExampleText::pair($bad, $good, 'class')->lifted($lift);
+            $example = ExampleText::pair($bad, $good)->lifted($lift);
 
             // A fix that MOVES behaviour is not in one declaration: the caller that got thinner and
             // the type that received the method are both the fix, and showing only the first teaches
@@ -56,9 +58,14 @@ final class FixtureExamples
             }
 
             // A RECURRENCE sin is a relationship, not a property: its example is the whole GROUP, or
-            // it shows a duplicate with nothing to be a duplicate of.
-            $examples[$detector::class] = [$detector instanceof RecurrenceDetector && count($bad) > 1
-                ? $example->withBad(ExampleText::group($bad, $lift))
+            // it shows a duplicate with nothing to be a duplicate of — and only the group the example is
+            // anchored on, since every other marked group is a scenario its Good leaves alone.
+            $recurring = $detector instanceof RecurrenceDetector && $bad !== []
+                ? ExampleText::recurring($bad, ExampleText::anchor($bad, $good) ?? $bad[0], $groups[$detector::class] ?? [])
+                : [];
+
+            $examples[$detector::class] = [count($recurring) > 1
+                ? $example->withBad(ExampleText::group($recurring, $lift))
                 : $example];
         }
 
@@ -90,23 +97,9 @@ final class FixtureExamples
     }
 
     /**
-     * Pick the bad/good pair — preferring a Sinful and Righteous from the SAME class
-     * (one coherent before/after), else the first of each.
+     * Every declaration marked with $attribute, grouped by the detector identifier the marker names.
      *
-     * @param  list<array{class: string, source: string}>  $bad
-     * @param  list<array{class: string, source: string}>  $good
-     * @return array{bad: ?string, good: ?string}
-     *
-     * Every marked declaration under any of the given detector keys.
-     *
-     * @param  array<string, list<array{class: string, source: string}>>  $sources
-     * @param  list<string>  $keys
-     * @return list<array{class: string, source: string}>
-     *
-     * Every marked declaration's class + source, grouped by the detector identifier the
-     * marker names.
-     *
-     * @return array<string, list<array{class: string, source: string}>>
+     * @return array<string, list<MarkedSource>>
      */
     private static function sourcesByDetector(Codebase $fixture, string $attribute): array
     {
@@ -116,12 +109,15 @@ final class FixtureExamples
             $detector = self::detector($match);
 
             if ($detector !== null) {
-                $sources[$detector][] = [
-                    'class' => $match->enclosingClassName() ?? $match->file->path,
-                    'file' => $match->file->path,
-                    'heading' => self::heading($match),
-                    'source' => self::declarationSource($match),
-                ];
+                $shown = self::shownNode($match);
+                $sources[$detector][] = new MarkedSource(
+                    file: $match->file->path,
+                    source: self::declarationSource($match),
+                    heading: self::heading($match),
+                    scenario: $match->enclosingClassName() ?? $match->file->path,
+                    firstLine: $shown->getStartLine(),
+                    lastLine: $shown->getEndLine(),
+                );
             }
         }
 
@@ -143,21 +139,26 @@ final class FixtureExamples
         return $match->enclosingFunction() === null || $class === null ? null : "// in {$class}";
     }
 
+    private static function shownNode(NodeMatch $match): Node
+    {
+        return $match->enclosingFunction() ?? $match->enclosingClass() ?? $match->node;
+    }
+
     /**
      * The source of the declaration the attribute decorates — the tightest one (the
      * method if it's on a method, else the class) — dedented, with the marker attribute
      * lines removed so only the example code shows.
      *
-     * The slice starts at the DOCBLOCK, not the declaration. A node's start line excludes its doc
-     * comment, and for a whole family of sins the docblock IS the subject: cut it away and
-     * `ceremony-docblock` published a bad and a good example that differed only in the method's
-     * name, with the thing being taught deleted from both.
+     * The slice starts at the first COMMENT above the declaration, not the declaration. A node's start
+     * line excludes its comments, and for a whole family of sins they ARE the subject: cut them away and
+     * `ceremony-docblock` published a bad and a good example that differed only in the method's name,
+     * and a stacked docblock showed only the one block PHP reads.
      */
     private static function declarationSource(NodeMatch $match): string
     {
-        $node = $match->enclosingFunction() ?? $match->enclosingClass() ?? $match->node;
+        $node = self::shownNode($match);
         $lines = file($match->file->path) ?: [];
-        $start = min($node->getDocComment()?->getStartLine() ?? $node->getStartLine(), $node->getStartLine());
+        $start = min([$node->getStartLine(), ...array_map(static fn ($comment): int => $comment->getStartLine(), $node->getComments())]);
         $slice = array_slice($lines, $start - 1, $node->getEndLine() - $start + 1);
 
         $kept = array_filter(
@@ -169,13 +170,6 @@ final class FixtureExamples
 
         return ExampleText::dedent(array_values($kept));
     }
-
-    /**
-     * Strip the common leading indentation from a block (so a fixture method reads as a
-     * top-level snippet).
-     *
-     * @param  list<string>  $lines
-     */
 
     private static function detector(NodeMatch $match): ?string
     {

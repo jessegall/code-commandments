@@ -14,7 +14,6 @@ export class OrderTracker {
 
     private readonly reference: string = ''
 
-    // @fixed DefendedCertainField
     private shipment?: Shipment
 
     customerName(): string {
@@ -28,12 +27,13 @@ export class OrderTracker {
     }
 
     trackingCode(): string {
-        // @fixed DefendedCertainField
         // @righteous DefendedCertainField
         return this.shipment?.trackingCode ?? 'pending'
     }
 
+    // The FIX: `customer` is always set, so it is read plainly.
     displayName(): string {
+        // @fixed DefendedCertainField
         // @righteous DefendedCertainField
         return this.customer.name
     }

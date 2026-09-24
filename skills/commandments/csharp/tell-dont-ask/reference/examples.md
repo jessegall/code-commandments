@@ -43,14 +43,20 @@ public static string Label(Promotion promotion) => promotion switch
 ----------[ Good ]----------
 
 // in Promotions.cs
-public abstract int Discount(int cents);
+// A promotion a basket can carry, and what it takes off the price.
+public abstract class Promotion
+{
+    public abstract int Discount(int cents);
+
+    public abstract string Label();
+}
 
 // in Promotions.cs
-public override int Discount(int cents) => cents * Percent / 100;
+public override string Label() => $"{Percent}% off";
 
 // in Promotions.cs
-public override int Discount(int cents) => Math.Min(Amount, cents);
+public override string Label() => $"{Amount / 100m:C} off";
 
 // in Promotions.cs
-public static int Pay(Promotion promotion, int cents) => cents - promotion.Discount(cents);
+public static string Describe(Promotion promotion) => promotion.Label();
 ```

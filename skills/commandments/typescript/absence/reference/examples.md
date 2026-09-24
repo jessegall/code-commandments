@@ -15,12 +15,9 @@ customerName(): string {
 
 ----------[ Good ]----------
 
-// in order-tracker.ts
-private shipment?: Shipment
-
-// in order-tracker.ts
-trackingCode(): string {
-    return this.shipment?.trackingCode ?? 'pending'
+// The FIX: `customer` is always set, so it is read plainly.
+displayName(): string {
+    return this.customer.name
 }
 ```
 
@@ -31,9 +28,32 @@ A field declared optional (`x?: T`, `T | null`) that is initialised where it is 
 ```ts
 ----------[ Bad ]----------
 
-private items?: Item[] = []
+export class CartSession {
+    private items?: Item[] = []
+
+    private currency?: string = 'EUR'
+
+    private coupon?: Coupon
+
+    private readonly openedAt: string = '1970-01-01'
+
+    count(): number {
+        return this.items.length
+    }
+
+    couponCode(): string {
+        return this.coupon?.code ?? 'none'
+    }
+}
 
 ----------[ Good ]----------
 
-private coupon?: Coupon
+// The FIX: a field initialised where it is declared is never absent, so it is declared without the `?`.
+export class SavedCart {
+    private items: Item[] = []
+
+    size(): number {
+        return this.items.length
+    }
+}
 ```

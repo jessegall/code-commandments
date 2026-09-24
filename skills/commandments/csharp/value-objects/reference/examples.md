@@ -65,26 +65,6 @@ public string Print(string street, string city, string postcode) => $"{street}\n
 public decimal Price(string postcode, string city, string street) =>
     street.Length + city.Length > 40 ? perKilometre * 2 : postcode.StartsWith('1') ? perKilometre : perKilometre * 1.5m;
 
-// in SalesReport.cs
-public long Total(DateTime from, DateTime until, string zone) =>
-    sales.Where(sale => sale.At >= from && sale.At < until && zone.Length > 0).Sum(sale => sale.Cents);
-
-// in SalesReport.cs
-public int Count(string zone, DateTime until, DateTime from) =>
-    returns.Count(entry => entry.At >= from && entry.At < until && zone.Length > 0);
-
-// in Listings.cs
-public IReadOnlyList<string> Page(int page, int size, bool descending) =>
-    (descending ? skus.OrderDescending() : skus.Order()).Skip(page * size).Take(size).ToList();
-
-// in Listings.cs
-public IReadOnlyList<string> Page(int page, int size, bool descending)
-{
-    var ordered = descending ? backorders.OrderByDescending(entry => entry.Missing) : backorders.OrderBy(entry => entry.Missing);
-
-    return ordered.Skip(page * size).Take(size).Select(entry => $"{entry.Sku}: {entry.Missing}").ToList();
-}
-
 ----------[ Good ]----------
 
 // in LabelPrinter.cs
@@ -125,15 +105,22 @@ a record that can change after it is built — a `set` accessor, or a method tha
 ```cs
 ----------[ Bad ]----------
 
-public int Items { get; set; }
+// What a shopper has put aside, before checkout.
+public sealed record Basket(string ShopperId)
+{
+    public int Items { get; set; }
+}
 
 ----------[ Good ]----------
 
 // in Baskets.cs
-public int Count { get; init; }
+// A basket held for a shopper: a value, so a change is a new one.
+public sealed record HeldBasket(string ShopperId)
+{
+    public int Items { get; init; }
 
-// in Baskets.cs
-public Basket WithOneMore() => this with { Count = Count + 1 };
+    public HeldBasket WithOneMore() => this with { Items = Items + 1 };
+}
 ```
 
 ### csharp-positional-tuple-return

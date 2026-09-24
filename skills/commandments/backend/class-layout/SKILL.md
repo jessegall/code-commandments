@@ -56,6 +56,9 @@ A trait use, constant, property, property hook, or enum case declared below a me
 ```php
 ----------[ Bad ]----------
 
+// The ways an order can ship — with `case Pickup` stranded below the behaviour, where a reader scanning
+// the head of the enum for its inventory never sees it.
+
 enum ShippingMethod: string
 {
     case Standard = 'standard';

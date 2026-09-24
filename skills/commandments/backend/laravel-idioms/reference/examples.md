@@ -83,16 +83,56 @@ A config key nothing reads — dead surface left behind by a deleted feature, wh
 ```php
 ----------[ Bad ]----------
 
-static fn (): null => null;
+// in config/relay.php
+/*
+ * The relay agent's settings. `heartbeat_seconds` is read by KioskSettings; the two below it were
+ * left behind when the in-house builder was deleted, and nothing has read them since — but a new
+ * author would reasonably assume they are wired to something.
+ */
+
+return [
+
+    'heartbeat_seconds' => 30,
+
+    'builder_url' => 'http://agent-builder:8080',
+
+    'build_cache_retention_days' => 30,
+
+];
 
 ----------[ Good ]----------
 
-public function register(): void
+// in app/Providers/SettingsServiceProvider.php
+namespace Shop\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+/**
+ * The live readers. A provider is the composition root, so reading `config()` here is the idiom — and
+ * every key named here stays alive. The keys NO reader names are the sin, over in `config/`.
+ */
+class SettingsServiceProvider extends ServiceProvider
 {
-    $this->app->singleton('shop.kiosk.timeout', static fn (): int => (int) config('kiosk.idle_timeout'));
-    $this->app->singleton('shop.relay.heartbeat', static fn (): int => (int) config('relay.heartbeat_seconds'));
-    $this->app->singleton('shop.stocktake.cycle', static fn (): int => (int) config('stocktake.cycle_days'));
+    public function register(): void
+    {
+        $this->app->singleton('shop.kiosk.timeout', static fn (): int => (int) config('kiosk.idle_timeout'));
+        $this->app->singleton('shop.relay.heartbeat', static fn (): int => (int) config('relay.heartbeat_seconds'));
+        $this->app->singleton('shop.courier.cutoff', static fn (): int => (int) config('courier.pickup_cutoff_hour'));
+        $this->app->singleton('shop.stocktake.cycle', static fn (): int => (int) config('stocktake.cycle_days'));
+    }
 }
+
+// in config/courier.php
+/*
+ * The courier settings, holding only what something reads: the pickup cutoff is bound in the settings
+ * provider, and a key whose reader is deleted is deleted with it.
+ */
+
+return [
+
+    'pickup_cutoff_hour' => 16,
+
+];
 ```
 
 ### dead-event-wiring
@@ -374,8 +414,8 @@ public function searchNamed(SearchProductRequest $request): array
 }
 
 // in Shop\Http\Requests\SearchProductRequest
-public function category(): string
+public function term(): string
 {
-    return $this->string('category')->toString();
+    return $this->string('q')->toString();
 }
 ```

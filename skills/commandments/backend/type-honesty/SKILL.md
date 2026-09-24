@@ -60,9 +60,9 @@ Masked invariant — an own field read as `?->… ?? <fake literal>`, even thoug
 ```php
 ----------[ Bad ]----------
 
-public function covers(string $date): bool
+public function accepts(string $sku): bool
 {
-    return $this->period?->includes($date) ?? false;
+    return $this->batch?->permits($sku) ?? false;
 }
 
 ----------[ Good ]----------

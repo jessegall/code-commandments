@@ -53,7 +53,18 @@ a constant, class attribute or field declared below a method — the class's sta
 ```py
 ----------[ Bad ]----------
 
-RETRIES = 3
+class SupplierClient:
+    def __init__(self, http) -> None:
+        self.http = http
+
+    def fetch(self, path: str) -> bytes:
+        for _ in range(self.RETRIES):
+            response = self.http.get(path)
+            if response.ok:
+                return response.body
+        return b""
+
+    RETRIES = 3
 
 ----------[ Good ]----------
 

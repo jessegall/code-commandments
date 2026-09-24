@@ -1,5 +1,7 @@
 <?php
 
+// @example DeadConfigKey good
+
 namespace Shop\Providers;
 
 use Illuminate\Support\ServiceProvider;
@@ -19,6 +21,7 @@ class SettingsServiceProvider extends ServiceProvider
     {
         $this->app->singleton('shop.kiosk.timeout', static fn (): int => (int) config('kiosk.idle_timeout'));
         $this->app->singleton('shop.relay.heartbeat', static fn (): int => (int) config('relay.heartbeat_seconds'));
+        $this->app->singleton('shop.courier.cutoff', static fn (): int => (int) config('courier.pickup_cutoff_hour'));
         $this->app->singleton('shop.stocktake.cycle', static fn (): int => (int) config('stocktake.cycle_days'));
     }
 }

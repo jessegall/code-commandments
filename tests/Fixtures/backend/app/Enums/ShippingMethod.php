@@ -8,6 +8,10 @@ use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Shipping\ShippingRateRegistry;
 
+/**
+ * The ways an order can ship — with `case Pickup` stranded below the behaviour, where a reader scanning
+ * the head of the enum for its inventory never sees it.
+ */
 #[Sinful(MemberAfterMethod::class)]
 enum ShippingMethod: string
 {

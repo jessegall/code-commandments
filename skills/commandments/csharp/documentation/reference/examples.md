@@ -9,10 +9,12 @@ a comment that tells the code's past — `// formerly lived in CheckoutService`,
 ```cs
 ----------[ Bad ]----------
 
+// formerly lived in the checkout service, and was extracted here
 public static int Days(bool member) => member ? 60 : 30;
 
 ----------[ Good ]----------
 
+/// <summary>Members get longer to decide, since they return far less often.</summary>
 public static int DaysFor(bool member) => member ? 60 : 30;
 ```
 
@@ -23,6 +25,12 @@ a type whose doc comment runs to two or more paragraphs — usually a sign the t
 ```cs
 ----------[ Bad ]----------
 
+/// <summary>
+/// Takes a basket through payment.
+///
+/// It also reserves the stock, books the courier, sends the confirmation email and records the sale in the
+/// ledger, retrying each step that fails.
+/// </summary>
 public sealed class Checkout
 {
     public int Steps => 5;
@@ -30,6 +38,7 @@ public sealed class Checkout
 
 ----------[ Good ]----------
 
+/// <summary>Takes a basket through payment.</summary>
 public sealed class PaymentStep
 {
     public int Attempts => 3;
@@ -43,6 +52,12 @@ a doc comment whose every tag is empty or only repeats the signature — `<param
 ```cs
 ----------[ Bad ]----------
 
+/// <summary>
+///
+/// </summary>
+/// <param name="invoiceNumber"></param>
+/// <param name="copies"></param>
+/// <returns></returns>
 public int Queue(string invoiceNumber, int copies)
 {
     for (var copy = 0; copy < copies; copy++)
@@ -55,6 +70,8 @@ public int Queue(string invoiceNumber, int copies)
 
 ----------[ Good ]----------
 
+/// <summary>Queues a copy for each page the customer asked to see again, and says how many now wait.</summary>
+/// <param name="copies">How many copies the customer asked for; zero queues nothing.</param>
 public int QueueFor(string invoiceNumber, int copies)
 {
     queued.AddRange(Enumerable.Repeat(invoiceNumber, copies));
@@ -70,6 +87,7 @@ a `<see cref>` that resolves to nothing from where it is written — a name the 
 ```cs
 ----------[ Bad ]----------
 
+/// <summary>Splits a <see cref="ShoppingCart"/> into the parcels that need wrapping.</summary>
 public sealed class WrapStation
 {
     public IReadOnlyList<string> Wrappable(IEnumerable<string> skus) => skus.Where(sku => !sku.StartsWith("DIG-")).ToList();
@@ -77,6 +95,7 @@ public sealed class WrapStation
 
 ----------[ Good ]----------
 
+/// <summary>Splits a <see cref="Basket"/> into the parcels that need wrapping.</summary>
 public sealed class WrapCounter
 {
     public int Count(IEnumerable<string> skus) => skus.Count(sku => !sku.StartsWith("DIG-"));

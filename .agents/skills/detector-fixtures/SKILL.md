@@ -116,6 +116,29 @@ Rules of thumb:
 - A resolution must also go unflagged, so `#[Fixed]` implies `#[Righteous]`, never
   the reverse. `FixedIsTheResolutionTest` fails if a detector flags its own fix.
 
+## `@example Name bad|good` — when the sin is not inside one declaration
+
+The generated example shows the declaration a marker binds to. That is wrong whenever the sin lives
+somewhere else: an import that crosses a layer (the Bad shows a method that merely uses the type), a
+cycle two files tell between them, a class header, or a Bad and Good that come from different scenarios.
+A reader then studies code the rule is not about.
+
+Mark the FILE instead. A comment `@example Name bad` or `@example Name good`, in the file's own comment
+syntax (`// …`, `# …`, `<!-- … -->`), publishes that whole file as that half of the rule's example,
+replacing what the declaration markers carve out for that language. Several files may share a half; each
+is headed with its path. Markers, the imports that bring them in and PHP's `<?php`/`declare` are left out.
+
+```cs
+// @example NamespaceCycle bad
+namespace Shop.Rewards;
+…
+```
+
+Keep example files small and about one thing — the whole file is what the reader sees, so a file
+holding other rules' scenarios is the wrong one to point at; write a dedicated file. The fixture proves
+each half (`test_every_example_file_is_proven`): some Bad file holds the rule's sin marker, no Good file
+does, and some Good file holds its `@fixed` or `@righteous`.
+
 ## Diagnostics
 
 A quick per-detector diversity/FP probe: scan the fixture (or workflows) with

@@ -62,6 +62,10 @@ Every field of a `Data` object is `T|Optional` — the type promises nothing is 
 ```php
 ----------[ Bad ]----------
 
+/*
+ * Scenario 1 — a layout box where every dimension is Optional. A grid with no columns is not a grid; the
+ * optionality belongs on the parent's `GridBox|Optional $grid`, and these leaves want concrete defaults.
+ */
 final class GridBox extends Data
 {
     public function __construct(
@@ -144,6 +148,9 @@ A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Col
 ```php
 ----------[ Bad ]----------
 
+/*
+ * Scenario 1 — a season roster typed `DataCollection`. Should be `array` + `#[DataCollectionOf]`.
+ */
 final class RosterPage extends Data
 {
     /**
@@ -199,22 +206,24 @@ final class SquadPage extends Data
 ```php
 ----------[ Bad ]----------
 
-// A discount coupon with public (non-promoted) properties and validation rules.
-// Here the `@method` collides with the real static `rules()` — the collision sin
-// is not specific to factories or to promoted-constructor classes.
+// Typed invoice view, built from an order.
 
-final class CouponData extends Data
+final class InvoiceData extends Data
 {
-    public string $code;
+    public function __construct(
+        public readonly int $orderId,
+        public readonly int $totalCents,
+        public readonly string $reference,
+    ) {}
 
-    public int $percentOff;
-
-    public static function rules(): array
+    // The `@method` tag re-declares THIS visible method — IDE "already defined".
+    public static function fromOrder(Order $order): self
     {
-        return [
-            'code' => ['required', 'string'],
-            'percentOff' => ['required', 'integer', 'min:1', 'max:100'],
-        ];
+        return self::from([
+            'orderId' => $order->id,
+            'totalCents' => $order->total_cents,
+            'reference' => 'INV-' . $order->id,
+        ]);
     }
 }
 
@@ -250,6 +259,10 @@ A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads 
 ```php
 ----------[ Bad ]----------
 
+/*
+ * Scenario 1 — a get-only hook projecting a collaborator's list, no `#[Computed]`. Spatie reads `docks`
+ * as a hydration input and expects it in `::from()`, which a get-only hook cannot receive.
+ */
 final class DockShell extends Data
 {
     public array $docks { get => $this->dockSet->all(); }
@@ -384,39 +397,35 @@ A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself
 ```php
 ----------[ Bad ]----------
 
+/*
+ * A COLLECTION-shaped scenario, unlike the nullable-object gauges — a roster board whose seats are a
+ * `#[DataCollectionOf]` list of a nested `Seat` Data that lacks `#[TypeScript]`. The transformer emits the
+ * element as `undefined`, so the whole `seats` array is malformed on the frontend.
+ */
 #[TypeScript]
-final class WirePanel extends Data
+final class RosterBoard extends Data
 {
     /**
-     * @param array<string, string> $tokens
+     * @var list<Seat>
      */
+    #[DataCollectionOf(Seat::class)]
+    public readonly array $seats;
+
     public function __construct(
-        public readonly PanelHeader|null $header = null,
-        public readonly string $variant = 'plain',
-        public readonly bool $bordered = true,
-        public readonly array $tokens = [],
-    ) {}
-
-    public function classAttribute(): string
-    {
-        $classes = ['insp-panel', "insp-{$this->variant}"];
-
-        if ($this->bordered) {
-            $classes[] = 'insp-bordered';
-        }
-
-        return implode(' ', $classes);
+        public readonly string $title,
+        array $seats = [],
+    ) {
+        $this->seats = $seats;
     }
 
-    public function styleVars(): string
+    public function occupied(): int
     {
-        $pairs = [];
+        return count(array_filter($this->seats, static fn (Seat $seat): bool => $seat->taken));
+    }
 
-        foreach ($this->tokens as $name => $value) {
-            $pairs[] = "--{$name}: {$value}";
-        }
-
-        return implode('; ', $pairs);
+    public function isFull(): bool
+    {
+        return $this->seats !== [] && $this->occupied() === count($this->seats);
     }
 }
 
@@ -503,33 +512,34 @@ Data class not `final` / props not `readonly` promoted
 ```php
 ----------[ Bad ]----------
 
-// Stock level transfer object, left non-final.
+// A customer profile DTO that forgot to seal itself.
 
-class StockLevelData extends Data
+class OpenProfileData extends Data
 {
     public function __construct(
-        public readonly string $sku,
-        public readonly int $onHand,
-        public readonly int $reserved,
+        public readonly string $displayName,
+        public readonly string $locale,
+        public readonly bool $marketingOptIn,
     ) {}
 
-    public function available(): int
+    public function greeting(): string
     {
-        return max(0, $this->onHand - $this->reserved);
+        return "Hi {$this->displayName}";
     }
 
-    public function isLow(): bool
+    public function speaksDutch(): bool
     {
-        return $this->available() < 5;
+        return str_starts_with($this->locale, 'nl');
     }
 
-    public function status(): string
+    public function initials(): string
     {
-        return match (true) {
-            $this->available() === 0 => 'out-of-stock',
-            $this->isLow() => 'low',
-            default => 'ok',
-        };
+        return strtoupper(substr($this->displayName, 0, 1));
+    }
+
+    public function canEmail(): bool
+    {
+        return $this->marketingOptIn;
     }
 }
 
@@ -576,6 +586,13 @@ public function requestedPosition(): OptCoords|Optional
     return OptCoords::optionalOrMissing($this->rawPosition);
 }
 
+/*
+ * Righteous twin: the shared `optionalOrMissing()` home ITSELF — the ONE named factory the rule tells
+ * producers to create (the scaffolded trait). Its whole job is the null→Optional map, so the map living
+ * here is correct, not a sin. The tell that separates it from a producer is `static::from` — it hydrates
+ * its OWN type from a generic payload, where a producer names a concrete OTHER type or coalesces a value.
+ * Must NOT flag.
+ */
 trait OptionalOrMissing
 {
     public static function optionalOrMissing(mixed $payload): static|Optional
@@ -592,6 +609,10 @@ A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null
 ```php
 ----------[ Bad ]----------
 
+/*
+ * Scenario 2 — a frontend-bound gauge. Its optional threshold band is a nullable ENUM, mapped to a colour
+ * ramp; a bounded-arithmetic shape distinct from the trail, panel, and metric scenarios.
+ */
 #[TypeScript]
 final class WireNode extends Data
 {

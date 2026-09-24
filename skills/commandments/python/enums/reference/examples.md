@@ -136,6 +136,7 @@ def field_end(self) -> None:
 
 ----------[ Good ]----------
 
-def quoted_end(self) -> None:
-    self.expect(Punctuation.QUOTE)
+# The FIX: the comma is the vocabulary's `COMMA`, so the reader finds it where every token is named.
+def cell_end(self) -> None:
+    self.expect(Punctuation.COMMA)
 ```
