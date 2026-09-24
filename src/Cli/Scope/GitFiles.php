@@ -19,6 +19,16 @@ class GitFiles
     private const string GITDIR = 'gitdir:';
 
     /**
+     * The status header that names the commit HEAD stands on.
+     */
+    private const string HEAD_HEADER = '# branch.oid ';
+
+    /**
+     * What that header says in a repository with no commit yet.
+     */
+    private const string NO_COMMIT = '(initial)';
+
+    /**
      * The folder a repository keeps its LINKED worktrees' git directories in — what tells one from a
      * submodule, whose `.git` file names `modules/<name>` in the same shape.
      */
@@ -232,10 +242,44 @@ class GitFiles
      */
     public function changedVsHead(string $root): array
     {
-        $tracked = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' diff --name-only --diff-filter=d HEAD 2>/dev/null');
-        $untracked = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' ls-files --others --exclude-standard 2>/dev/null');
+        return $this->workingTree($root)->changed;
+    }
 
-        return $this->pathSet($root, $tracked . "\n" . $untracked);
+    /**
+     * HEAD and the files changed on top of it, from ONE `git status` — a hook that needs both pays for a
+     * single process, not one per question. Renames read as the path they now have.
+     */
+    public function workingTree(string $root): WorkingTree
+    {
+        $status = (string) @shell_exec('git -C ' . escapeshellarg($root) . ' status --porcelain=v2 --branch --no-ahead-behind --no-renames --untracked-files=all -z 2>/dev/null');
+        $head = '';
+        $paths = [];
+
+        foreach (explode("\0", $status) as $entry) {
+            if (str_starts_with($entry, self::HEAD_HEADER)) {
+                $head = substr($entry, strlen(self::HEAD_HEADER));
+
+                continue;
+            }
+
+            $paths[] = self::statusPath($entry);
+        }
+
+        return new WorkingTree($head === self::NO_COMMIT ? '' : $head, $this->pathSet($root, implode("\n", $paths)));
+    }
+
+    /**
+     * The path one porcelain-v2 status entry is about: a changed entry spells it after its eight fields, a
+     * conflicted one after ten, an untracked one after its mark. A header names no path.
+     */
+    private static function statusPath(string $entry): string
+    {
+        return match ($entry[0] ?? '') {
+            '1' => explode(' ', $entry, 9)[8],
+            'u' => explode(' ', $entry, 11)[10],
+            '?' => substr($entry, 2),
+            default => '',
+        };
     }
 
     /**

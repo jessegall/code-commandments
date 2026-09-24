@@ -97,23 +97,21 @@ final class JudgeReminder extends Hook implements Discipline
         }
 
         // The batch is what changed on top of HEAD — work committed long ago on this branch is not in it.
-        $files = array_keys($this->git()->changedVsHead($root));
+        $tree = $this->git()->workingTree($root);
 
-        if ($files === []) {
+        if ($tree->changed === []) {
             $this->forget($ws); // Clean tree — the next batch starts fresh.
 
             return null;
         }
 
-        $head = $this->git()->head($root);
-
-        if ($this->stored($ws) === $head) {
+        if ($this->stored($ws) === $tree->head) {
             return null; // This batch was reminded; a new file does not make it a new batch.
         }
 
-        $this->remember($ws, $head);
+        $this->remember($ws, $tree->head);
 
-        return $this->reason(count($files), $lead);
+        return $this->reason(count($tree->changed), $lead);
     }
 
     /**

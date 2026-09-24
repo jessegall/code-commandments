@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
+use JesseGall\CodeCommandments\Cli\Scope\WorkingTree;
 
 /**
  * A {@see GitFiles} whose worktree root, HEAD, branch and linked worktrees are fixed — so a hook or a
@@ -35,6 +36,11 @@ final class FakeGit extends GitFiles
     public function head(string $root): string
     {
         return $this->head;
+    }
+
+    public function workingTree(string $root): WorkingTree
+    {
+        return new WorkingTree($this->head, parent::workingTree($root)->changed);
     }
 
     public function currentBranch(string $root): string
