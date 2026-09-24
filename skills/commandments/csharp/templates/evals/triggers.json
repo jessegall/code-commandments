@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I'm generating a C# class as text by adding strings to a List<string> and joining with newlines — is there a better way?",
+        "how should I write a multi-line email body my C# service builds with StringBuilder.AppendLine?",
+        "judge flagged csharp-assembled-template on my string.Join(\"\\n\", ...), how do I fix it"
+    ],
+    "not": [
+        "how do I read an appsettings.json value in C#"
+    ]
+}
