@@ -1761,6 +1761,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-in-array-mirrors-enum": {
+            "title": "InArrayMirrorsEnum",
+            "help": "A membership test against strings written right there — `Contains` over an inline list, or an `is … or …` pattern — that all name members of one enum the codebase declares: the C# twin of the PHP in-array-mirrors-enum rule.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/enums",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-string-mirrors-enum": {
             "title": "StringMirrorsEnum",
             "help": "A `switch` or an `if` ladder dispatching on two or more strings that all name members of one enum the codebase declares — the C# twin of the backend's string-match-mirrors-enum rule.",

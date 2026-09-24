@@ -670,6 +670,42 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The strings this tests a value's membership in, when it tests it against nothing but strings written
+     * right there — `"paid"` and `"late"` in `new[] { "paid", "late" }.Contains(status)` and in
+     * `status is "paid" or "late"`; none for anything else.
+     *
+     * @return list<string>
+     */
+    public function membershipLiterals(): array
+    {
+        $elements = match (true) {
+            $this->is('IsPatternExpression') && $this->children[1]->is('OrPattern') => array_map(static fn (self $operand): self => $operand->is('ConstantPattern') ? $operand->children[0] : $operand, $this->children[1]->orOperands()),
+            $this->isCall() && $this->target?->name === 'Contains' && $this->children[0]->is('SimpleMemberAccessExpression') => $this->children[0]->children[0]->withoutParentheses()->writtenElements(),
+            default => [],
+        };
+
+        return array_all($elements, static fn (self $element): bool => $element->is('StringLiteralExpression'))
+            ? array_map(static fn (self $element): string => (string) $element->text, $elements)
+            : [];
+    }
+
+    /**
+     * The elements of the collection this writes out — an array, a collection initializer or a collection
+     * expression, through a cast — none for anything else.
+     *
+     * @return list<self>
+     */
+    private function writtenElements(): array
+    {
+        return match (true) {
+            $this->is('CollectionExpression') => array_map(static fn (self $element): self => $element->children[0], $this->children),
+            $this->is('CastExpression') => array_last($this->children)->withoutParentheses()->writtenElements(),
+            $this->is('ArrayCreationExpression', 'ImplicitArrayCreationExpression', 'ObjectCreationExpression') => array_values(array_filter($this->children, static fn (self $child): bool => str_ends_with($child->kind, 'InitializerExpression')))[0]->children ?? [],
+            default => [],
+        };
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

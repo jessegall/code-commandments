@@ -56,6 +56,8 @@ the code passes the enum, never the string.
       _Declare `public enum Status { Pending, Paid }`, and serialise it by name with `JsonStringEnumConverter` where it must still read as its string._
 - [ ] Give a group of enum cases a name on the enum — an extension method with a `switch` — instead of listing the cases wherever the group is needed.
       _Add `public static bool IsSettled(this Status status) => status switch { Status.Paid or Status.Refunded => true, _ => false };` beside the enum, and call `s.IsSettled()`._
+- [ ] Parse the string into the enum once and test the enum; don't test it against a list of strings that repeats the enum's members.
+      _Read it with `Enum.TryParse<Status>(value, ignoreCase: true, out var status)` where it comes in, then ask the enum (`status.IsSettled()`)._
 - [ ] Dispatch on the enum, never on strings that spell its members — parse the string into the enum where it enters.
       _Parse the string into the enum at the edge (`Enum.Parse<T>` or the JSON converter), switch on the enum, and put the per-case answer beside it._
 
@@ -97,17 +99,17 @@ public static class PaymentStatusRules
 }
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/enums` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-const-class-enum`, `csharp-enum-case-or-chain`, `csharp-string-mirrors-enum`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-const-class-enum`, `csharp-enum-case-or-chain`, `csharp-in-array-mirrors-enum`, `csharp-string-mirrors-enum`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

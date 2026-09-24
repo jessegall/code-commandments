@@ -71,6 +71,31 @@ public static class DeliveryStageRules
 public static string Noted(DeliveryStage stage) => stage.HasLeftTheWarehouse() ? "on its way" : "still here";
 ```
 
+### csharp-in-array-mirrors-enum
+
+`new[] { "paid", "refunded" }.Contains(status)` or `status is "paid" or "refunded"` — a list of strings that repeats the members of an enum the code already has
+
+```cs
+----------[ Bad ]----------
+
+public static bool Settles(PaymentCallback callback) => new[] { "paid", "shipped" }.Contains(callback.Status);
+
+----------[ Good ]----------
+
+// in PaymentWebhooks.cs
+public static class OrderStatusRules
+{
+    public static bool IsSettled(this OrderStatus status) => status switch
+    {
+        OrderStatus.Paid or OrderStatus.Shipped => true,
+        _ => false,
+    };
+}
+
+// in PaymentWebhooks.cs
+public static bool Settled(PaymentCallback callback) => Enum.TryParse(callback.Status, ignoreCase: true, out OrderStatus status) && status.IsSettled();
+```
+
 ### csharp-string-mirrors-enum
 
 A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text
