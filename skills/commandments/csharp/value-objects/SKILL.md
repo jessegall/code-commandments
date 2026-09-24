@@ -52,6 +52,8 @@ A tuple returned and taken apart by position is the same thing unnamed.
 
 ## Rules
 
+- [ ] Return a `record` with those fields, not a dictionary built with fixed string keys.
+      _Declare `public sealed record StockLine(string Sku, int Qty);` and return `new StockLine(sku, qty)`._
 - [ ] Bundle values that always travel together into one type — a record — instead of threading them side by side.
       _Name the clump as a record (a `readonly record struct` when it is small), build it once where the values meet, and pass that instead of the separate parameters._
 - [ ] Give a record a type — an immutable `record` — instead of a dictionary read by string keys.
@@ -59,60 +61,40 @@ A tuple returned and taken apart by position is the same thing unnamed.
 
 ## Worked example
 
-### csharp-data-clump
+### csharp-array-return-bag
 
-The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own.
+a method that returns `new Dictionary<string, object> { ["sku"] = …, ["qty"] = … }` — a record with fixed fields, handed back as a dictionary
 
 ```cs
 ----------[ Bad ]----------
 
-// in LabelPrinter.cs
-public string Print(string street, string city, string postcode) => $"{street}\n{postcode} {city}";
-
-// in Quotes.cs
-public decimal Price(string postcode, string city, string street) =>
-    street.Length + city.Length > 40 ? perKilometre * 2 : postcode.StartsWith('1') ? perKilometre : perKilometre * 1.5m;
-
-// in SalesReport.cs
-public long Total(DateTime from, DateTime until, string zone) =>
-    sales.Where(sale => sale.At >= from && sale.At < until && zone.Length > 0).Sum(sale => sale.Cents);
-
-// in SalesReport.cs
-public int Count(string zone, DateTime until, DateTime from) =>
-    returns.Count(entry => entry.At >= from && entry.At < until && zone.Length > 0);
-
-// in Listings.cs
-public IReadOnlyList<string> Page(int page, int size, bool descending) =>
-    (descending ? skus.OrderDescending() : skus.Order()).Skip(page * size).Take(size).ToList();
-
-// in Listings.cs
-public IReadOnlyList<string> Page(int page, int size, bool descending)
+public static Dictionary<string, object> Footer(string orderId, int totalCents, DateOnly paidOn) => new()
 {
-    var ordered = descending ? backorders.OrderByDescending(entry => entry.Missing) : backorders.OrderBy(entry => entry.Missing);
-
-    return ordered.Skip(page * size).Take(size).Select(entry => $"{entry.Sku}: {entry.Missing}").ToList();
-}
+    ["order"] = orderId,
+    ["total"] = totalCents,
+    ["paid"] = paidOn,
+};
 
 ----------[ Good ]----------
 
-// in LabelPrinter.cs
-public string PrintFor(Address address) => $"{address.Street}\n{address.Postcode} {address.City}";
+// in Receipts.cs
+public sealed record ReceiptFooter(string OrderId, int TotalCents, DateOnly PaidOn);
 
-// in LabelPrinter.cs
-public sealed record Address(string Street, string City, string Postcode);
+// in Receipts.cs
+public static ReceiptFooter PaidToday(string orderId, int totalCents) => new(orderId, totalCents, DateOnly.FromDateTime(DateTime.Today));
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/value-objects` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-data-clump`, `csharp-dictionary-bag`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-array-return-bag`, `csharp-data-clump`, `csharp-dictionary-bag`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

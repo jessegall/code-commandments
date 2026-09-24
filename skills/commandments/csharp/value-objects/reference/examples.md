@@ -2,6 +2,29 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### csharp-array-return-bag
+
+a method that returns `new Dictionary<string, object> { ["sku"] = …, ["qty"] = … }` — a record with fixed fields, handed back as a dictionary
+
+```cs
+----------[ Bad ]----------
+
+public static Dictionary<string, object> Footer(string orderId, int totalCents, DateOnly paidOn) => new()
+{
+    ["order"] = orderId,
+    ["total"] = totalCents,
+    ["paid"] = paidOn,
+};
+
+----------[ Good ]----------
+
+// in Receipts.cs
+public sealed record ReceiptFooter(string OrderId, int TotalCents, DateOnly PaidOn);
+
+// in Receipts.cs
+public static ReceiptFooter PaidToday(string orderId, int totalCents) => new(orderId, totalCents, DateOnly.FromDateTime(DateTime.Today));
+```
+
 ### csharp-data-clump
 
 The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own.

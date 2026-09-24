@@ -414,20 +414,36 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this expression what its member hands back — the value of a `return`, or of an expression body?
+     */
+    public function isReturned(): bool
+    {
+        return $this->module->parentOf($this->outermostParentheses())->isSomeAnd(static fn (Node $around): bool => $around->is('ReturnStatement', 'ArrowExpressionClause'));
+    }
+
+    /**
+     * This expression as its surroundings see it — wrapped in every pair of parentheses around it.
+     */
+    private function outermostParentheses(): Node
+    {
+        $inner = $this->node;
+
+        while ($this->module->parentOf($inner)->isSomeAnd(static fn (Node $around): bool => $around->is('ParenthesizedExpression'))) {
+            $inner = $this->module->parentOf($inner)->unwrap();
+        }
+
+        return $inner;
+    }
+
+    /**
      * Is this expression a branch of a conditional expression — so a chain of them is reported once, at its
      * outermost?
      */
     public function isConditionalBranch(): bool
     {
-        $inner = $this->node;
-        $parent = $this->module->parentOf($inner);
+        $inner = $this->outermostParentheses();
 
-        while ($parent->isSomeAnd(static fn (Node $around): bool => $around->is('ParenthesizedExpression'))) {
-            $inner = $parent->unwrap();
-            $parent = $this->module->parentOf($inner);
-        }
-
-        return $parent->isSomeAnd(static fn (Node $around): bool => $around->is('ConditionalExpression') && $around->children[0] !== $inner);
+        return $this->module->parentOf($inner)->isSomeAnd(static fn (Node $around): bool => $around->is('ConditionalExpression') && $around->children[0] !== $inner);
     }
 
     /**

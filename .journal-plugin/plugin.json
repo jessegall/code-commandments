@@ -1969,6 +1969,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-array-return-bag": {
+            "title": "ArrayReturnBag",
+            "help": "A dictionary built with two or more fixed string keys, handed back by a member — the C# twin of the PHP array-return-bag rule.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/value-objects",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-data-clump": {
             "title": "DataClump",
             "help": "The same three or more value parameters — by type and name — declared by members of two or more types: one clump of data threaded through the code instead of named.",

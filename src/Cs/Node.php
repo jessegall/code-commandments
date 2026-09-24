@@ -752,6 +752,41 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The keys this dictionary is built with, when every one is a string written in the source — `sku` and
+     * `qty` in `new Dictionary<string, object> { ["sku"] = …, ["qty"] = … }` — none for anything else.
+     *
+     * @return list<string>
+     */
+    public function literalKeys(): array
+    {
+        if (! $this->is('ObjectCreationExpression', 'ImplicitObjectCreationExpression') || ! self::isDictionary($this->type?->name)) {
+            return [];
+        }
+
+        $initializers = array_filter($this->children, static fn (self $child): bool => $child->is('ObjectInitializerExpression', 'CollectionInitializerExpression'));
+        $entries = array_merge([], ...array_map(static fn (self $initializer): array => $initializer->children, $initializers));
+        $keys = array_merge([], ...array_map(static fn (self $entry): array => $entry->entryKey(), $entries));
+
+        return $entries !== [] && count($keys) === count($entries) && array_all($keys, static fn (self $key): bool => $key->is('StringLiteralExpression'))
+            ? array_map(static fn (self $key): string => (string) $key->text, $keys)
+            : [];
+    }
+
+    /**
+     * The key of this dictionary initializer entry — `"sku"` in `["sku"] = …` and in `{ "sku", … }`.
+     *
+     * @return list<self>
+     */
+    private function entryKey(): array
+    {
+        return match (true) {
+            $this->is('SimpleAssignmentExpression') && $this->children[0]->is('ImplicitElementAccess') => array_slice($this->children[0]->arguments(), 0, 1),
+            $this->is('ComplexElementInitializerExpression') => array_slice($this->children, 0, 1),
+            default => [],
+        };
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool
