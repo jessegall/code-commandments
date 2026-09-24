@@ -1748,6 +1748,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-archaeology-comment": {
+            "title": "ArchaeologyComment",
+            "help": "A comment narrating the code's history — the C# twin of the PHP and Python archaeology-comment rules, read by the one shared reading of prose, narratesHistory.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/documentation",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-csharp-method": {
             "title": "DuplicateMethod",
             "help": "Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",

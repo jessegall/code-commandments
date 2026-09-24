@@ -313,6 +313,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Python\UnnamedVocabularyLiteral::class,
 
         // ----------[ C# ]----------
+        // Sins\CSharp\ArchaeologyComment::class,
         // Sins\CSharp\ArrayReturnBag::class,
         // Sins\CSharp\AssembledTemplate::class,
         // Sins\CSharp\BareStatePredicate::class,

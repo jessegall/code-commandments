@@ -45,6 +45,37 @@ leave a comment explaining what it used to be.
 `// not random`, `// no magic here` defend the code against a reading nobody made. Say what it IS, or make it
 obvious and write nothing.
 
+## Rules
+
+- [ ] Say what the code is now, never what it was; git keeps the history.
+      _Delete the history. If something about the present needs saying, say that instead._
+
+## Worked example
+
+### csharp-archaeology-comment
+
+a comment that tells the code's past — `// formerly lived in CheckoutService`, `// refactored to use the cache` — describing a version nobody is reading
+
+```cs
+----------[ Bad ]----------
+
+public static int Days(bool member) => member ? 60 : 30;
+
+----------[ Good ]----------
+
+public static int DaysFor(bool member) => member ? 60 : 30;
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/documentation` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-archaeology-comment`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/documentation`](../../backend/documentation/SKILL.md) — the same discipline for PHP docblocks.

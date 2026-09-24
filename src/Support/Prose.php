@@ -147,11 +147,45 @@ final class Prose
     }
 
     /**
-     * Does $text narrate the code's past instead of its present — any of the {@see HISTORY} phrases?
+     * Does $text narrate the code's past instead of its present — any of the {@see HISTORY} phrases, outside a
+     * clause opened by a condition or a place, which describes what happens at runtime?
      */
     public static function narratesHistory(string $text): bool
     {
-        return preg_match(self::HISTORY, $text) === 1;
+        preg_match_all(self::HISTORY, $text, $matches, PREG_OFFSET_CAPTURE);
+
+        return array_any($matches[0], static fn (array $match): bool => ! self::isInConditionalClause($text, $match[1]) && ! self::statesAPurpose($text, $match));
+    }
+
+    /**
+     * Does this match open its clause with a purpose — the phrase before an action verb (fire, hold, return,
+     * contain, post), saying what a thing is for? Before a verb of state the same opening names a past state.
+     *
+     * @param  array{0: string, 1: int}  $match
+     */
+    private static function statesAPurpose(string $text, array $match): bool
+    {
+        return preg_match('/^used to (?:fire|hold|return|contain|post)\b/i', $match[0]) === 1 && trim(self::clauseBefore($text, $match[1])) === '';
+    }
+
+    /**
+     * The part of the clause holding $offset that comes before it — the text since the last sentence or clause
+     * break.
+     */
+    private static function clauseBefore(string $text, int $offset): string
+    {
+        return (string) preg_replace('/^.*[.;:!?]/s', '', substr($text, 0, $offset));
+    }
+
+    /**
+     * Does the clause holding the text at $offset open a condition or a question about a place — an `if`,
+     * `whether`, `when`, `unless` or `where` since the last sentence or clause break?
+     */
+    private static function isInConditionalClause(string $text, int $offset): bool
+    {
+        $clause = self::clauseBefore($text, $offset);
+
+        return preg_match('/\b(?:if|whether|when|unless|where)\b/i', $clause) === 1;
     }
 
     /**
