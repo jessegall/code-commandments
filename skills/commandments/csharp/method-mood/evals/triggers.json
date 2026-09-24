@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I have a C# method `public bool Binds()` that says whether the node is bound — is that a good name?",
+        "what should I call a C# method that hides the panel — `Hides()` or something else?",
+        "judge flagged csharp-bare-state-predicate on `public bool Spins()`, how do I rename it"
+    ],
+    "not": [
+        "how do I parse a date string in C#"
+    ]
+}

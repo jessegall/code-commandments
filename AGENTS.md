@@ -122,6 +122,7 @@ most:**
 - **`commandments-csharp-type-honesty`** — a type must not lie: no `T?` a value never is, no `!` to silence the compiler, no per-call scratch state kept on the instance.
 - **`commandments-python-method-mood`** — commands are imperatives (`hide()`), state predicates are questions (`is_hidden()`).
 - **`commandments-csharp-class-layout`** — state at the top — constants, fields and stored properties above the constructor, methods after.
+- **`commandments-csharp-method-mood`** — commands are orders (`Hide()`), state checks are questions (`IsHidden`, `HasParent`).
 - **`commandments-python-repeated-call-helper`** — a keyword call, a guard or a type check written the same way at 2+ sites belongs as one named method on the type it is about.
 - **`commandments-python-documentation`** — concise, present-tense docstrings; rare comments; never narrate the past.
 
