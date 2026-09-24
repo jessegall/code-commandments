@@ -149,6 +149,7 @@ most:**
 - **`commandments-python-enums`** — a closed set of values is an `Enum` or `StrEnum` carrying the per-case knowledge as methods, not string constants compared at every call site.
 - **`commandments-csharp-enums`** — a closed set of values is an `enum`, its per-case knowledge in one exhaustive `switch` expression beside it — not string constants compared at every call site.
 - **`commandments-python-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two functions share one name — split them and let the call say which it wants, instead of passing a bare `True`.
+- **`commandments-csharp-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two methods share one name — split them and let the call say which it wants, instead of passing a bare `true`.
 - **`commandments-python-templates`** — a multi-line string is a triple-quoted f-string that SHOWS its output, never a list of line fragments joined.
 - **`commandments-python-tell-dont-ask`** — behaviour belongs with its data: move a loop over one object's collection onto that object, and replace an `isinstance` ladder with a method each type answers.
 - **`commandments-python-dependency-direction`** — a declared layer may only import the layers it declared it may use — down the stack, never back up, never sideways, and never in a cycle.

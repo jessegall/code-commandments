@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "should I add a `bool compact = false` parameter to my C# Render(order) method to switch between two layouts?",
+        "my C# method's whole body is `if (dryRun) { ... } else { ... }` — is that fine or should it be split?",
+        "I made `Fields(string? kind = null)` in C# so calling it with no kind returns all of them — good idea?"
+    ],
+    "not": [
+        "how do I sort a List<T> by a property in C#"
+    ]
+}
