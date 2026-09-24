@@ -452,6 +452,23 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this the whole of a `&&` chain — not one side of a larger one, parentheses aside?
+     */
+    public function isOutermostAnd(): bool
+    {
+        return $this->node->is('LogicalAndExpression')
+            && ! $this->module->parentOf($this->outermostParentheses())->isSomeAnd(static fn (Node $around): bool => $around->is('LogicalAndExpression'));
+    }
+
+    /**
+     * Is this expression the value a variable is given or assigned — stored rather than asked?
+     */
+    public function isStoredValue(): bool
+    {
+        return $this->module->parentOf($this->outermostParentheses())->isSomeAnd(static fn (Node $around): bool => $around->is('EqualsValueClause', 'SimpleAssignmentExpression'));
+    }
+
+    /**
      * Is this expression what its member hands back — the value of a `return`, or of an expression body?
      */
     public function isReturned(): bool

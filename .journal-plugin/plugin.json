@@ -2021,6 +2021,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-repeated-guard": {
+            "title": "RepeatedGuard",
+            "help": "The same compound condition about an object's data asked at two or more sites — the C# twin of the PHP and Python repeated-guard rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/repeated-call-helper",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-placeholder-filled-data": {
             "title": "PlaceholderFilledData",
             "help": "A record the codebase declares, built with a blank string in a required `string` slot — the C# twin of the PHP and Python placeholder-filled-data rules.",

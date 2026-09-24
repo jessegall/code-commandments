@@ -54,6 +54,70 @@ and every site asks for it by name.
 - **A simple check.** A single `if (x is null)` or one `is` test is not a compound condition; repeating it
   names nothing new.
 
+## Rules
+
+- [ ] Name a compound condition asked in more than one place once, on the type it is about, and ask it by that name.
+      _Add `public bool IsShippable => Paid && !Cancelled;` to the type and write `if (order.IsShippable)` at every site._
+
+## Worked example
+
+### csharp-repeated-guard
+
+the same compound condition — `order.Paid && !order.Cancelled` — written at two or more sites, a question with no name
+
+```cs
+----------[ Bad ]----------
+
+// in LabelFooters.cs
+public static string Footer(Uri link)
+{
+    if (link.Scheme != Uri.UriSchemeHttp && link.Scheme != Uri.UriSchemeHttps)
+    {
+        return "";
+    }
+
+    return link.ToString();
+}
+
+// in Promises.cs
+public static bool CanPromiseToday(Dispatchable order) => !order.OnHold && order.Paid && order.Lines > 0;
+
+// in Dispatch.cs
+public static string Status(Dispatchable order)
+{
+    if (order.Paid && !order.OnHold && order.Lines > 0)
+    {
+        return "pick";
+    }
+
+    return "wait";
+}
+
+// in TrackingLinks.cs
+public static bool IsShowable(Uri link)
+{
+    return link.Scheme != Uri.UriSchemeHttp && link.Scheme != Uri.UriSchemeHttps ? false : link.Host.Length > 0;
+}
+
+----------[ Good ]----------
+
+// in Dispatch.cs
+public bool IsReady => Paid && !OnHold && Lines > 0;
+
+// in Dispatch.cs
+public static string Label(Dispatchable order) => order.IsReady ? "pick" : "wait";
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/repeated-call-helper` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-repeated-guard`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/repeated-call-helper`](../../backend/repeated-call-helper/SKILL.md) — the same discipline in PHP.

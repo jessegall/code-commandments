@@ -1022,6 +1022,46 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The conditions this `&&` chain joins, the nested ones unrolled and parentheses stripped — none for
+     * anything but a `&&`.
+     *
+     * @return list<self>
+     */
+    public function conjuncts(): array
+    {
+        if (! $this->is('LogicalAndExpression')) {
+            return [$this];
+        }
+
+        return array_merge([], ...array_map(static fn (self $side): array => $side->withoutParentheses()->conjuncts(), $this->children));
+    }
+
+    /**
+     * Is this a compound condition about data — a `&&` chain that reaches into members two or more times, and
+     * is not only a run of type checks?
+     */
+    public function isSubstantiveGuard(): bool
+    {
+        $conjuncts = $this->conjuncts();
+        $reaches = array_sum(array_map(static fn (self $conjunct): int => count(array_filter($conjunct->flatten(), static fn (self $node): bool => $node->is('SimpleMemberAccessExpression'))), $conjuncts));
+
+        return $this->is('LogicalAndExpression')
+            && $reaches >= 2
+            && ! array_all($conjuncts, static fn (self $conjunct): bool => $conjunct->is('IsPatternExpression', 'IsExpression'));
+    }
+
+    /**
+     * What this compound condition asks, whatever order its conditions are written in.
+     */
+    public function guardFingerprint(): string
+    {
+        $hashes = array_map(static fn (self $conjunct): string => StructuralHash::ofExpression($conjunct), $this->conjuncts());
+        sort($hashes);
+
+        return sha1(implode('|', $hashes));
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool
