@@ -8,19 +8,22 @@ use JsonSerializable;
 
 /**
  * What the plugin answers the journal for one moment: a reason to `refuse` the call, a `whisper` for
- * the agent alone, and an event to `raise` — each only when there is one.
+ * the agent alone, and the events to `raise` — each only when there is one.
  */
 final readonly class JournalAnswer implements JsonSerializable
 {
     public function __construct(
         public ?string $refuse = null,
         public ?string $whisper = null,
-        public ?JournalRaise $raise = null,
+        /**
+         * @var list<JournalRaise>
+         */
+        public array $raises = [],
     ) {}
 
-    public function raising(JournalRaise $raise): self
+    public function raising(JournalRaise ...$raises): self
     {
-        return clone($this, ['raise' => $raise]);
+        return clone($this, ['raises' => [...$this->raises, ...array_values($raises)]]);
     }
 
     /**
@@ -28,20 +31,20 @@ final readonly class JournalAnswer implements JsonSerializable
      */
     public function toJson(): string
     {
-        return json_encode($this, JSON_FORCE_OBJECT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        return json_encode($this, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     /**
-     * @return array<string, mixed>
+     * An object always, `raise` a list the journal takes whole.
      */
-    public function jsonSerialize(): array
+    public function jsonSerialize(): object
     {
-        return array_filter(['refuse' => $this->refuse, 'whisper' => $this->whisper, 'raise' => $this->raise], static fn (mixed $value): bool => $value !== null);
+        return (object) array_filter(['refuse' => $this->refuse, 'whisper' => $this->whisper, 'raise' => $this->raises], static fn (mixed $value): bool => $value !== null && $value !== []);
     }
 
     /**
-     * What this answer tells the agent, as title and text pairs — its refusal or whisper. The event it
-     * raises is not said; it is raised.
+     * What this answer tells the agent, as title and text pairs — its refusal or whisper. The events it
+     * raises are not said; they are raised.
      *
      * @return list<array{string, string}>
      */

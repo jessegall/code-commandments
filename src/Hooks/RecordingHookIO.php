@@ -19,7 +19,7 @@ final class RecordingHookIO extends HookIO
     public array $emitted = [];
 
     /**
-     * @var list<string>  every activity line a handler wrote, in order
+     * @var list<SinMark>  every sin a handler reported, in order
      */
     public array $activity = [];
 
@@ -41,8 +41,8 @@ final class RecordingHookIO extends HookIO
         $this->emitted[] = $response;
     }
 
-    public function activity(string $line): void
+    public function activity(SinMark $mark): void
     {
-        $this->activity[] = $line;
+        $this->activity[] = $mark;
     }
 }

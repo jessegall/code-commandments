@@ -15,8 +15,8 @@ use JesseGall\CodeCommandments\Hooks\HookIO;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\CodeCommandments\Hooks\HookResponse;
 use JesseGall\CodeCommandments\Hooks\RecordingHookIO;
+use JesseGall\CodeCommandments\Hooks\SinMark;
 use JesseGall\CodeCommandments\Workspace;
-use JesseGall\PhpTypes\Option;
 
 /**
  * `commandments journal-hook` — the entry point the agent journal's plugin calls. The journal owns the
@@ -131,36 +131,22 @@ final class JournalHook implements Command
             return $answer;
         }
 
-        return $this->raised($moment, $event->root, $recorder->activity)->mapOr($answer, $answer->raising(...));
+        return $answer->raising(...$this->raised($moment, $event->root, $recorder->activity));
     }
 
     /**
-     * The sin-found event for what this edit broke; sin-resolved when an edit clears a file that had some.
-     * The sins each file had last time are kept in the plugin's data folder.
+     * The sin-found and sin-resolved events this moment raises, settled against what was announced before —
+     * kept in the plugin's data folder when the journal names one.
      *
-     * @param  list<string>  $found
-     * @return Option<JournalRaise>
+     * @param  list<SinMark>  $marks
+     * @return list<JournalRaise>
      */
-    private function raised(JournalMoment $moment, string $root, array $found): Option
+    private function raised(JournalMoment $moment, string $root, array $marks): array
     {
-        $data = getenv(self::DATA) ?: null;
+        $data = getenv(self::DATA) ?: '';
+        $announced = $data === '' ? AnnouncedSins::forgotten() : AnnouncedSins::keptIn($data);
 
-        if ($moment->file === null || $data === null) {
-            return $found === [] ? Option::none() : Option::some(new JournalRaise('sin-found', implode("\n", $found)));
-        }
-
-        $kept = "{$data}/sins.json";
-        $file = str_replace(rtrim($root, '/') . '/', '', $moment->file);
-        $known = is_file($kept) ? (array) json_decode((string) file_get_contents($kept), true) : [];
-        $before = (array) ($known[$file] ?? []);
-        $known[$file] = $found;
-        file_put_contents($kept, json_encode(array_filter($known), JSON_UNESCAPED_SLASHES));
-
-        if ($found !== [] && $found !== $before) {
-            return Option::some(new JournalRaise('sin-found', implode("\n", $found)));
-        }
-
-        return $found === [] && $before !== [] ? Option::some(new JournalRaise('sin-resolved', implode("\n", $before))) : Option::none();
+        return $announced->settle($root, $moment->file, $marks);
     }
 
     /**

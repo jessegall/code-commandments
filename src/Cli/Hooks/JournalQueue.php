@@ -36,22 +36,19 @@ final readonly class JournalQueue
     }
 
     /**
-     * Tell the agent what $advice says — each thing it says, a nudge of its own — and raise the event it
-     * carries on the journal's bus, the same card and activity an answer given at once would raise.
+     * Tell the agent what $advice about $moment says — each thing it says, a nudge of its own — and raise
+     * the events it carries on the journal's bus, the same card and activity an answer given at once would
+     * raise, all in the environment $moment came from.
      */
-    public function tell(JournalAnswer $advice): void
+    public function tell(JournalAnswer $advice, JournalMoment $moment): void
     {
-        $lines = array_map(
-            static fn (array $said): string => 'nudge create ' . escapeshellarg(self::title($said[0])) . ' --brief ' . escapeshellarg(self::oneLine($said[1])) . "\n",
-            $advice->said(),
-        );
+        $commands = [
+            ...array_map(static fn (array $said): string => 'nudge create ' . escapeshellarg(self::title($said[0])) . ' --brief ' . escapeshellarg(self::oneLine($said[1])), $advice->said()),
+            ...array_map(static fn (JournalRaise $raise): string => 'plugin raise ' . Workspace::JOURNAL_PLUGIN . ' ' . escapeshellarg($raise->event) . ' ' . escapeshellarg(self::oneLine($raise->brief)), $advice->raises),
+        ];
 
-        if ($advice->raise !== null) {
-            $lines[] = 'plugin raise ' . Workspace::JOURNAL_PLUGIN . ' ' . escapeshellarg($advice->raise->event) . ' ' . escapeshellarg(self::oneLine($advice->raise->brief)) . "\n";
-        }
-
-        if ($lines !== []) {
-            file_put_contents($this->path, implode('', $lines), FILE_APPEND | LOCK_EX);
+        if ($commands !== []) {
+            file_put_contents($this->path, implode('', array_map(static fn (string $command): string => $moment->addressed($command) . "\n", $commands)), FILE_APPEND | LOCK_EX);
         }
     }
 

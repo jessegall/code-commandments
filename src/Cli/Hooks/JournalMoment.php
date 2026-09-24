@@ -17,10 +17,11 @@ final readonly class JournalMoment
         public ?string $tool = null,
         public ?string $command = null,
         public ?string $file = null,
+        public ?string $env = null,
     ) {}
 
     /**
-     * @param  array<string, mixed>  $given  the journal's payload: `event`, `tool`, `data`, `agent`, `project`
+     * @param  array<string, mixed>  $given  the journal's payload: `event`, `env`, `tool`, `data`, `agent`, `project`
      */
     public static function fromPayload(array $given): self
     {
@@ -36,7 +37,17 @@ final readonly class JournalMoment
             tool: $tool['name'] ?? $data['tool'] ?? null,
             command: $tool['command'] ?? $data['command'] ?? null,
             file: $tool['file'] ?? $data['file'] ?? null,
+            env: $given['env'] ?? null,
         );
+    }
+
+    /**
+     * $command as a line of the journal's queue, run in the environment this moment came from — the queue
+     * otherwise drains into the project's default, which need not be the agent's.
+     */
+    public function addressed(string $command): string
+    {
+        return $this->env === null ? $command : '--env ' . escapeshellarg($this->env) . ' ' . $command;
     }
 
     public function isPostToolUse(): bool

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Hooks\JournalAnswer;
+use JesseGall\CodeCommandments\Cli\Hooks\JournalMoment;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalQueue;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalRaise;
 use PHPUnit\Framework\TestCase;
@@ -29,18 +30,36 @@ final class JournalQueueTest extends TestCase
     {
         JournalQueue::fromEnvironment()->unwrap()->tell(new JournalAnswer(
             whisper: "Code Commandments — before you commit: judge what you changed.\nRun it once.",
-            raise: new JournalRaise('sin-found', "app/Order.php:12 ArrayBag\napp/Order.php:30 FeatureEnvy"),
-        ));
+            raises: [new JournalRaise('sin-found', "app/Order.php:12 ArrayBag\napp/Order.php:30 FeatureEnvy"), new JournalRaise('sin-resolved', 'app/Cart.php:8 InlineThrow')],
+        ), JournalMoment::fromPayload(['event' => 'hook.PostToolUse']));
 
         $this->assertSame([
             ['nudge', 'create', 'Code Commandments — before you commit — judge what you changed.', '--brief', "Code Commandments — before you commit: judge what you changed. · Run it once."],
             ['plugin', 'raise', 'code-commandments', 'sin-found', "app/Order.php:12 ArrayBag · app/Order.php:30 FeatureEnvy"],
+            ['plugin', 'raise', 'code-commandments', 'sin-resolved', 'app/Cart.php:8 InlineThrow'],
+        ], $this->queued());
+    }
+
+    /**
+     * The queue drains into the project's default environment unless a line names its own; advice about a
+     * moment belongs to the environment that moment came from.
+     */
+    public function test_every_line_is_addressed_to_the_environment_the_moment_came_from(): void
+    {
+        JournalQueue::fromEnvironment()->unwrap()->tell(new JournalAnswer(
+            whisper: 'judge what you changed',
+            raises: [new JournalRaise('sin-found', 'app/Order.php:12 ArrayBag')],
+        ), JournalMoment::fromPayload(['event' => 'hook.PostToolUse', 'env' => 'main']));
+
+        $this->assertSame([
+            ['--env', 'main', 'nudge', 'create', 'judge what you changed', '--brief', 'judge what you changed'],
+            ['--env', 'main', 'plugin', 'raise', 'code-commandments', 'sin-found', 'app/Order.php:12 ArrayBag'],
         ], $this->queued());
     }
 
     public function test_nothing_to_say_writes_nothing(): void
     {
-        JournalQueue::fromEnvironment()->unwrap()->tell(new JournalAnswer());
+        JournalQueue::fromEnvironment()->unwrap()->tell(new JournalAnswer(), JournalMoment::fromPayload(['event' => 'hook.PostToolUse', 'env' => 'main']));
 
         $this->assertFileDoesNotExist($this->queue);
     }

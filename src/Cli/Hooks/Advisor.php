@@ -52,7 +52,7 @@ final readonly class Advisor
             }
 
             chdir($home);
-            $queue->tell(self::quietly(fn () => $this->hook->adviceFor($given)));
+            $queue->tell(self::quietly(fn () => $this->hook->adviceFor($given)), JournalMoment::fromPayload($given));
 
             if ($child === 0 && function_exists('posix_kill')) {
                 // The child holds copies of the parent's warm bridge processes. Ending it without running

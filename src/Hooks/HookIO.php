@@ -93,9 +93,9 @@ class HookIO
     }
 
     /**
-     * A line for the host's activity list, when the host keeps one; Claude Code has none.
+     * A sin for the host's activity list, when the host keeps one; Claude Code has none.
      */
-    public function activity(string $line): void {}
+    public function activity(SinMark $mark): void {}
 
     /**
      * A non-blocking context injection: the tool/turn proceeds; Claude reads $context as context.

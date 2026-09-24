@@ -131,8 +131,8 @@ final class JournalHookTest extends TestCase
         ];
         $answer = $this->answer($edited);
 
-        $this->assertSame('sin-found', $answer['raise']['event'] ?? null);
-        $this->assertStringContainsString('src/Thing.vue:3', $answer['raise']['brief']);
+        $this->assertSame('sin-found', $answer['raise'][0]['event'] ?? null);
+        $this->assertStringContainsString('src/Thing.vue:3', $answer['raise'][0]['brief']);
 
         putenv(JournalHook::DATA . '=' . $this->root);
         $this->answer($edited);
@@ -142,7 +142,34 @@ final class JournalHookTest extends TestCase
         $answer = $this->answer($edited);
         putenv(JournalHook::DATA);
 
-        $this->assertSame('sin-resolved', $answer['raise']['event'] ?? null, 'the edit that clears a file says so');
+        $this->assertSame('sin-resolved', $answer['raise'][0]['event'] ?? null, 'the edit that clears a file says so');
+    }
+
+    public function test_a_sin_is_repented_only_when_its_file_edited_again_no_longer_holds_it(): void
+    {
+        mkdir($this->root . '/src', 0777, true);
+        $sinful = "        <span v-for=\"item in items\" :key=\"item\" :class=\"{on: item}\">{{ item }}</span>\n";
+        file_put_contents($this->root . '/src/Thing.vue', "<template>\n    <div>\n{$sinful}    </div>\n</template>\n");
+        file_put_contents($this->root . '/src/Other.vue', "<template>\n    <p>other</p>\n</template>\n");
+        ConfigFile::inProject($this->root)->scaffoldIfMissing();
+        putenv(JournalHook::DATA . '=' . $this->root);
+
+        $editing = fn (string $file): array => [
+            'event' => 'hook.PostToolUse',
+            'agent' => ['session' => 'claude-1', 'cwd' => $this->root],
+            'data' => ['hook' => 'PostToolUse', 'tool' => 'Edit', 'file' => "{$this->root}/src/{$file}"],
+        ];
+
+        try {
+            $this->assertSame('sin-found', $this->answer($editing('Thing.vue'))['raise'][0]['event'] ?? null);
+
+            file_put_contents($this->root . '/src/Thing.vue', "<template>\n    <div>\n        <h1>moved down</h1>\n{$sinful}    </div>\n</template>\n");
+            $this->assertArrayNotHasKey('raise', $this->answer($editing('Thing.vue')), 'a sin whose line moved is the same sin, neither found again nor repented');
+
+            $this->assertArrayNotHasKey('raise', $this->answer($editing('Other.vue')), 'editing another file proves nothing about this one');
+        } finally {
+            putenv(JournalHook::DATA);
+        }
     }
 
     public function test_a_moment_moves_session_folders_left_in_the_project_into_the_plugins_data_folder(): void

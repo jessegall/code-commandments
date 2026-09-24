@@ -15,10 +15,10 @@ use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookBinding;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
 use JesseGall\CodeCommandments\Hooks\ReportedFindings;
+use JesseGall\CodeCommandments\Hooks\SinMark;
 use JesseGall\CodeCommandments\Hooks\TouchedSources;
 use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\Languages;
-use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Skills\Skill;
 use Throwable;
 
@@ -91,14 +91,15 @@ final class SkillReminder extends Hook implements Discipline
 
         // A language the project turned off is never parsed: its engine is not started, warmed or asked.
         foreach (array_filter($files, static fn (string $file): bool => $languages->writes(Language::ofFile($file))) as $file) {
-            $found = $this->sinsIn($file, $languages, $single, $this->git()->changedLines($event->root, $file));
+            $marks = $this->sinsIn($file, $languages, $single, $this->git()->changedLines($event->root, $file));
 
-            // The activity is what the file holds now, every time: a sin gone from it is news too.
-            foreach (array_merge([], ...array_values($found)) as $sin) {
-                $this->io->activity(str_replace(rtrim($event->root, '/') . '/', '', $sin));
+            // The activity is every sin the whole file holds now, so a sin counts as gone only once the file no
+            // longer has it anywhere — not because it left the lines the working tree changed.
+            foreach ($marks as $mark) {
+                $this->io->activity($mark);
             }
 
-            $sins = array_merge_recursive($sins, $reported->unseen($file, $found));
+            $sins = array_merge_recursive($sins, $reported->unseen($file, self::bySkill(array_filter($marks, static fn (SinMark $mark): bool => $mark->touched))));
         }
 
         return $sins === [] ? $this->pass() : $this->inject($event, $this->nudge($event, $files, $sins));
@@ -169,19 +170,16 @@ final class SkillReminder extends Hook implements Discipline
     }
 
     /**
-     * Every one of $rules that fires in $file on a line in $changed, as "sin name at line" keyed by the
-     * skill that teaches the fix — the code just written, not the file's older sins, which are `judge`'s.
-     * A rule that throws on one file in isolation is a rule that could not answer, which is silence —
-     * this is a nudge, and a nudge is never worth a broken tool call.
+     * Every sin $rules find in $file, each marked with whether it lies on a line in $changed.
      *
-     * @param  list<Detector>  $rules  the single-file rules this project runs
-     * @return array<string, list<string>>  skill slug => the sins found
+     * @param  list<Detector>  $rules
+     * @return list<SinMark>
      */
     private function sinsIn(string $file, Languages $languages, array $rules, ChangedLines $changed): array
     {
         $engine = Language::ofFile($file)->engine();
         $codebase = $this->io->parses()->of($file, $languages);
-        $found = [];
+        $marks = [];
 
         foreach ($rules as $detector) {
             if (Engine::of($detector) !== $engine) {
@@ -194,9 +192,26 @@ final class SkillReminder extends Hook implements Discipline
                 continue;
             }
 
-            foreach (array_filter($matches, static fn (Located $match): bool => $changed->covers($match->line())) as $match) {
-                $found[$detector->sin()->slug()][] = $detector->sin()->name() . ' at ' . $match->location();
+            foreach ($matches as $match) {
+                $marks[] = SinMark::of($detector->sin(), $match, $changed);
             }
+        }
+
+        return $marks;
+    }
+
+    /**
+     * $marks as the nudge names them, under the skill that teaches each fix.
+     *
+     * @param  array<SinMark>  $marks
+     * @return array<string, list<string>>  skill slug => the sins found
+     */
+    private static function bySkill(array $marks): array
+    {
+        $found = [];
+
+        foreach ($marks as $mark) {
+            $found[$mark->sin->slug()][] = $mark->found();
         }
 
         return $found;
