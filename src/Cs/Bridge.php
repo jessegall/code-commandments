@@ -81,12 +81,14 @@ final class Bridge implements LocatedTool
     }
 
     /**
-     * Build the bridge into $into with `dotnet build`.
+     * Build the bridge into $into with `dotnet build`, starting no build server: a compiler server or
+     * MSBuild node outlives the build by minutes and inherits every descriptor the caller left open, so
+     * whatever reads the caller's output through a pipe would wait for it long after the build is done.
      */
     private static function build(string $dotnet, string $into): bool
     {
         $project = realpath(self::SOURCE . '/Roslyn.Bridge.csproj');
-        exec(escapeshellarg($dotnet) . ' build ' . escapeshellarg((string) $project) . ' -c Release --nologo -v quiet -o ' . escapeshellarg($into) . ' 2>&1', $output, $code);
+        exec(escapeshellarg($dotnet) . ' build ' . escapeshellarg((string) $project) . ' -c Release --nologo -v quiet --disable-build-servers -o ' . escapeshellarg($into) . ' 2>&1', $output, $code);
 
         return $code === 0;
     }

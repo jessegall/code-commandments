@@ -107,7 +107,7 @@ final class ChecklistTest extends TestCase
 
     private function writeLive(string $body): void
     {
-        mkdir(Workspace::at($this->dir)->checklistDir(), 0777, true);
+        @mkdir(Workspace::at($this->dir)->checklistDir(), 0777, true);
         file_put_contents($this->live(), $body);
     }
 }
