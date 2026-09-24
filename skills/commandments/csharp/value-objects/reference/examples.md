@@ -91,3 +91,21 @@ public sealed record ImportRow(string Sku, int Units)
     public static ImportRow From(IReadOnlyDictionary<string, string> row) => new(row["sku"], int.Parse(row["units"]));
 }
 ```
+
+### csharp-mutable-value-object
+
+a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things
+
+```cs
+----------[ Bad ]----------
+
+public int Items { get; set; }
+
+----------[ Good ]----------
+
+// in Baskets.cs
+public int Count { get; init; }
+
+// in Baskets.cs
+public Basket WithOneMore() => this with { Count = Count + 1 };
+```

@@ -787,6 +787,48 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Does this expression write the target it names first — an assignment of any kind, or a step up or down?
+     */
+    public function isWrite(): bool
+    {
+        return str_ends_with($this->kind, 'AssignmentExpression') || $this->is('PostIncrementExpression', 'PostDecrementExpression', 'PreIncrementExpression', 'PreDecrementExpression');
+    }
+
+    /**
+     * Is this a record — a class or a struct declared as a value?
+     */
+    public function isRecord(): bool
+    {
+        return $this->is('RecordDeclaration', 'RecordStructDeclaration');
+    }
+
+    /**
+     * The names this type keeps its state under — its primary constructor's parameters, its properties and
+     * its instance fields.
+     *
+     * @return list<string>
+     */
+    public function stateNames(): array
+    {
+        $parameters = array_merge([], ...array_map(static fn (self $list): array => $list->children, array_filter($this->children, static fn (self $child): bool => $child->is('ParameterList'))));
+        $properties = array_filter($this->children, static fn (self $child): bool => $child->is('PropertyDeclaration'));
+        $fields = array_filter($this->children, static fn (self $child): bool => $child->is('FieldDeclaration') && ! $child->hasModifier('static') && ! $child->hasModifier('const'));
+        $declarators = array_filter(array_merge([], ...array_map(static fn (self $field): array => $field->descendants(), $fields)), static fn (self $node): bool => $node->is('VariableDeclarator'));
+
+        return array_values(array_filter(array_map(static fn (self $member): ?string => $member->name, [...$parameters, ...$properties, ...$declarators])));
+    }
+
+    /**
+     * Is this a plain read of one of $names — the bare name, or `this.` it?
+     *
+     * @param  list<string>  $names
+     */
+    public function readsMember(array $names): bool
+    {
+        return array_any($names, fn (string $name) => $this->names($name));
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

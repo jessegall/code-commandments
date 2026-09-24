@@ -329,10 +329,9 @@ class NodeMatch implements Located
      */
     public function isWritingStaticState(): bool
     {
-        $writes = str_ends_with($this->node->kind, 'AssignmentExpression') || $this->node->is('PostIncrementExpression', 'PostDecrementExpression', 'PreIncrementExpression', 'PreDecrementExpression');
         $scope = array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->isFunction()))[0] ?? null;
 
-        if (! $writes || $scope === null || ($scope->is('ConstructorDeclaration') && $scope->hasModifier('static'))) {
+        if (! $this->node->isWrite() || $scope === null || ($scope->is('ConstructorDeclaration') && $scope->hasModifier('static'))) {
             return false;
         }
 
@@ -411,6 +410,32 @@ class NodeMatch implements Located
             $this->node->is('OrPattern') => $parent->isSomeAnd(static fn (Node $around): bool => $around->is('IsPatternExpression')),
             default => false,
         };
+    }
+
+    /**
+     * Is this a write to the record it sits in — one of its members or instance fields assigned, added to
+     * or stepped by a method, an accessor or an operator, after construction? A write in a constructor, an
+     * `init` accessor or an initializer (`this with { … }`, `new R { … }`) builds a record rather than
+     * changing one, and `??=` only fills a cache nobody has read yet.
+     */
+    public function isWritingRecordState(): bool
+    {
+        $scope = array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->isFunction()))[0] ?? null;
+        $initializing = $this->module->parentOf($this->node)->isSomeAnd(static fn (Node $parent): bool => str_ends_with($parent->kind, 'InitializerExpression'));
+
+        if (! $this->node->isWrite() || $this->node->is('CoalesceAssignmentExpression') || $initializing || $scope === null || $scope->is('ConstructorDeclaration', 'InitAccessorDeclaration')) {
+            return false;
+        }
+
+        return $this->enclosingType()->isSomeAnd(fn (Node $type) => $type->isRecord() && $this->node->children[0]->readsMember(array_diff($type->stateNames(), $scope->ownNames())));
+    }
+
+    /**
+     * Is this a `set` accessor on a property of a record — a door left open to change it after construction?
+     */
+    public function isRecordSetter(): bool
+    {
+        return $this->node->is('SetAccessorDeclaration') && $this->enclosingType()->isSomeAnd(static fn (Node $type) => $type->isRecord());
     }
 
     /**

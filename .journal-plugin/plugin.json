@@ -2008,6 +2008,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-mutable-value-object": {
+            "title": "MutableValueObject",
+            "help": "A record that changes after construction — a `set` accessor on it, or a write to its own state outside a constructor — the C# twin of the PHP mutable-value-object rule.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/value-objects",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_mirrored-server-type": {
             "title": "MirroredServerType",
             "help": "Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it.",
