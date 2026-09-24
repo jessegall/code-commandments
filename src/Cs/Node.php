@@ -1233,6 +1233,91 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The own member this reference names — `cents` for a bare `cents` or for `this.cents` — empty for anything
+     * else, `other.cents` included.
+     */
+    public function memberName(): string
+    {
+        return match (true) {
+            $this->is('IdentifierName') => (string) $this->name,
+            $this->is('SimpleMemberAccessExpression') && $this->children[0]->is('ThisExpression') => (string) $this->children[1]->name,
+            default => '',
+        };
+    }
+
+    /**
+     * Is this bare name one $member declares a local or parameter of its own under, so it does not name the
+     * type's field? `this.x` always names the field.
+     */
+    public function isShadowedIn(self $member): bool
+    {
+        return $this->is('IdentifierName') && in_array($this->name, $member->ownNames(), true);
+    }
+
+    /**
+     * The places in this expression that name one of $own — bare, or through `this.` — never the member side of
+     * `other.x`, nor the member an object initializer sets on the object it builds.
+     *
+     * @param  list<string>  $own
+     * @return list<self>
+     */
+    public function ownStateReferences(array $own): array
+    {
+        if ($this->is('SimpleMemberAccessExpression')) {
+            return $this->children[0]->is('ThisExpression') && in_array($this->children[1]->name, $own, true) ? [$this] : $this->children[0]->ownStateReferences($own);
+        }
+
+        if ($this->is('IdentifierName')) {
+            return $this->role === 'expression' && in_array($this->name, $own, true) ? [$this] : [];
+        }
+
+        $initializing = str_ends_with($this->kind, 'InitializerExpression');
+        $parts = array_map(static fn (self $child): self => $initializing && $child->is('SimpleAssignmentExpression') ? $child->children[1] : $child, $this->children);
+
+        return array_merge([], ...array_map(static fn (self $part): array => $part->ownStateReferences($own), $parts));
+    }
+
+    /**
+     * Is this field or property declared with a type that admits `null` — `Batch?`, `int?`?
+     */
+    public function declaresNullableState(): bool
+    {
+        $type = $this->is('FieldDeclaration') ? ($this->children[0]->children[0] ?? null) : (array_values(array_filter($this->children, static fn (self $child): bool => $child->role === 'type'))[0] ?? null);
+
+        return $type?->is('NullableType') === true;
+    }
+
+    /**
+     * The names this field or property holds state under.
+     *
+     * @return list<string>
+     */
+    public function heldStateNames(): array
+    {
+        $declarators = $this->is('FieldDeclaration') ? array_filter($this->descendants(), static fn (self $node): bool => $node->is('VariableDeclarator')) : [$this];
+
+        return array_values(array_filter(array_map(static fn (self $declarator): ?string => $declarator->name, $declarators)));
+    }
+
+    /**
+     * The value this field or property declaration starts $name with, where it gives one.
+     *
+     * @return list<self>
+     */
+    public function initialValuesOf(string $name): array
+    {
+        $holders = match (true) {
+            $this->is('FieldDeclaration') => array_filter($this->descendants(), static fn (self $node): bool => $node->is('VariableDeclarator')),
+            $this->is('PropertyDeclaration') => [$this],
+            default => [],
+        };
+        $named = array_filter($holders, static fn (self $holder): bool => $holder->name === $name);
+        $clauses = array_merge([], ...array_map(static fn (self $holder): array => array_filter($holder->children, static fn (self $child): bool => $child->is('EqualsValueClause')), $named));
+
+        return array_values(array_map(static fn (self $clause): self => $clause->children[0], $clauses));
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool
