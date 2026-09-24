@@ -1774,6 +1774,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-ceremony-docblock": {
+            "title": "CeremonyDocblock",
+            "help": "A doc comment that only repeats the signature it sits on — the C# twin of the PHP and Python ceremony-docblock rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/documentation",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-csharp-method": {
             "title": "DuplicateMethod",
             "help": "Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",

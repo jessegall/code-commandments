@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cs;
 
+use DOMDocument;
+use DOMElement;
+use DOMText;
 use JesseGall\CodeCommandments\Support\Prose;
 
 /**
@@ -54,23 +57,57 @@ final readonly class Comment
     }
 
     /**
-     * The `<summary>` and `<remarks>` elements of this doc comment, as written — the whole comment when it does
-     * not read as XML.
+     * The `<summary>` and `<remarks>` elements of this doc comment, and any prose outside a tag, as written.
      *
      * @return list<string>
      */
     private function describingSections(): array
     {
-        $body = implode("\n", array_map(static fn (string $line): string => ltrim(trim($line), '/'), explode("\n", $this->text)));
-        $document = simplexml_load_string("<doc>{$body}</doc>", options: LIBXML_NOERROR | LIBXML_NOWARNING);
+        return array_values(array_map(static fn (DocTag $tag): string => $tag->xml, array_filter($this->tags(), static fn (DocTag $tag): bool => $tag->isDescription())));
+    }
 
-        if ($document === false) {
-            return [$body];
+    /**
+     * The top-level parts of this doc comment, in order — each tag, and each run of prose outside one; the
+     * whole comment as one run of prose when it does not read as XML.
+     *
+     * @return list<DocTag>
+     */
+    public function tags(): array
+    {
+        $body = implode("\n", array_map(static fn (string $line): string => ltrim(trim($line), '/'), explode("\n", $this->text)));
+        $document = new DOMDocument();
+
+        if (! $document->loadXML("<doc>{$body}</doc>", LIBXML_NOERROR | LIBXML_NOWARNING)) {
+            return [new DocTag(DocTag::PROSE, $body)];
         }
 
-        $elements = [...$document->xpath('summary') ?: [], ...$document->xpath('remarks') ?: []];
+        $tags = [];
 
-        return array_map(static fn (\SimpleXMLElement $element): string => (string) $element->asXML(), $elements);
+        foreach ($document->documentElement->childNodes ?? [] as $part) {
+            if ($part instanceof DOMElement) {
+                $tags[] = new DocTag($part->tagName, (string) $document->saveXML($part));
+            }
+
+            if ($part instanceof DOMText && trim($part->data) !== '') {
+                $tags[] = new DocTag(DocTag::PROSE, $part->data);
+            }
+        }
+
+        return $tags;
+    }
+
+    /**
+     * Does this doc comment describe the signature and say nothing beyond $words — at least one tag for a
+     * part of it, and every tag empty or made only of those words?
+     *
+     * @param  list<string>  $words
+     */
+    public function restatesOnly(array $words): bool
+    {
+        $tags = $this->tags();
+
+        return array_any($tags, static fn (DocTag $tag): bool => ! $tag->isDescription() && $tag->isAboutTheSignature())
+            && array_all($tags, static fn (DocTag $tag): bool => $tag->isAboutTheSignature() && $tag->saysNothingBeyond($words));
     }
 
     /**

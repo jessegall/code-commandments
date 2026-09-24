@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cs;
 
 use JesseGall\CodeCommandments\Positioned;
+use JesseGall\CodeCommandments\Support\Prose;
 use JesseGall\CodeCommandments\SyntaxExpression;
 use JesseGall\CodeCommandments\SyntaxNode;
 use JesseGall\PhpTypes\Option;
@@ -1323,6 +1324,20 @@ final class Node implements SyntaxNode, SyntaxExpression
     public function isTypeDeclaration(): bool
     {
         return $this->role === 'member' && $this->is('ClassDeclaration', 'RecordDeclaration', 'RecordStructDeclaration', 'StructDeclaration', 'InterfaceDeclaration', 'EnumDeclaration');
+    }
+
+    /**
+     * The words this member's signature already says — its name, its parameters' and type parameters' names,
+     * and the names of the types it takes and returns — what a doc comment repeating it would say.
+     *
+     * @return list<string>
+     */
+    public function signatureWords(): array
+    {
+        $signature = array_filter($this->children, static fn (self $child): bool => ! $child->is('Block', 'ArrowExpressionClause', 'AttributeList') && $child->role !== 'member');
+        $parts = array_merge($signature, ...array_map(static fn (self $child): array => $child->descendants(), array_values($signature)));
+
+        return Prose::words(implode(' ', array_filter([$this->name, ...array_map(static fn (self $part): ?string => $part->name, $parts)])));
     }
 
     /**

@@ -35,3 +35,30 @@ public sealed class PaymentStep
     public int Attempts => 3;
 }
 ```
+
+### csharp-ceremony-docblock
+
+a doc comment whose every tag is empty or only repeats the signature — `<param name="order">The order.</param>`, an empty `<returns>`
+
+```cs
+----------[ Bad ]----------
+
+public int Queue(string invoiceNumber, int copies)
+{
+    for (var copy = 0; copy < copies; copy++)
+    {
+        queued.Add(invoiceNumber);
+    }
+
+    return queued.Count;
+}
+
+----------[ Good ]----------
+
+public int QueueFor(string invoiceNumber, int copies)
+{
+    queued.AddRange(Enumerable.Repeat(invoiceNumber, copies));
+
+    return queued.Count;
+}
+```

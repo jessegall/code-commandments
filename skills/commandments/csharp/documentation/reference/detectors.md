@@ -4,3 +4,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 
 - **`csharp-archaeology-comment`** — a comment that tells the code's past — `// formerly lived in CheckoutService`, `// refactored to use the cache` — describing a version nobody is reading — `ArchaeologyCommentDetector`
 - **`csharp-bloated-docblock`** — a type whose doc comment runs to two or more paragraphs — usually a sign the type does too much — `BloatedDocblockDetector`
+- **`csharp-ceremony-docblock`** — a doc comment whose every tag is empty or only repeats the signature — `<param name="order">The order.</param>`, an empty `<returns>` — `CeremonyDocblockDetector`

@@ -320,6 +320,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\BlankStringDefault::class,
         // Sins\CSharp\BloatedDocblock::class,
         // Sins\CSharp\CancelledCoalesce::class,
+        // Sins\CSharp\CeremonyDocblock::class,
         // Sins\CSharp\CoalescedLoopSubject::class,
         // Sins\CSharp\ConstClassEnum::class,
         // Sins\CSharp\ConstructorSideEffect::class,

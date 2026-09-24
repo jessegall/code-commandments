@@ -51,6 +51,8 @@ obvious and write nothing.
       _Delete the history. If something about the present needs saying, say that instead._
 - [ ] Keep a type's doc comment to one short paragraph; if it needs more, the type is doing too much.
       _Cut the comment to one sentence about what the type is, and split the type if the rest describes a second job._
+- [ ] A doc comment must say something the signature does not; drop tags that only repeat a name or a type.
+      _Delete the comment, or write the sentence that says what the member does and describe only what a name and a type cannot._
 
 ## Worked example
 
@@ -68,17 +70,17 @@ public static int Days(bool member) => member ? 60 : 30;
 public static int DaysFor(bool member) => member ? 60 : 30;
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/documentation` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-archaeology-comment`, `csharp-bloated-docblock`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-archaeology-comment`, `csharp-bloated-docblock`, `csharp-ceremony-docblock`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
