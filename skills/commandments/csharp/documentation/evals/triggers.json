@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "should every C# method have a /// <param> tag for each parameter, even when it just repeats the name?",
+        "I left `// formerly lived in CheckoutService` above a C# method I moved — is that useful?",
+        "judge flagged csharp-restated-comment on `// add the rate` above `total += rate;`, how do I fix it"
+    ],
+    "not": [
+        "how do I run dotnet test with a filter"
+    ]
+}

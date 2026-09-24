@@ -126,6 +126,7 @@ most:**
 - **`commandments-python-repeated-call-helper`** — a keyword call, a guard or a type check written the same way at 2+ sites belongs as one named method on the type it is about.
 - **`commandments-csharp-repeated-call-helper`** — a call, a guard or a type check written the same way at 2+ sites belongs as one named member on the type it is about.
 - **`commandments-python-documentation`** — concise, present-tense docstrings; rare comments; never narrate the past.
+- **`commandments-csharp-documentation`** — short, present-tense doc comments; rare comments; never narrate the past.
 
 **ON CONTACT — load the moment the work touches the subject:**
 
