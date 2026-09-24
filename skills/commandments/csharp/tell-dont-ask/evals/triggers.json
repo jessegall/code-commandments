@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I have a C# helper `static decimal Total(Order order)` that sums over order.Lines — should it live somewhere else?",
+        "my C# code has a `switch (shape) { case Circle c: … case Square s: … }` to compute the area, is that okay?",
+        "judge flagged csharp-type-switch on my C# switch, how do I fix it"
+    ],
+    "not": [
+        "how do I configure logging in an ASP.NET Core app"
+    ]
+}
