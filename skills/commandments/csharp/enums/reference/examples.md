@@ -157,3 +157,17 @@ public void HandleParsed(string reference, string status)
     }
 }
 ```
+
+### csharp-unnamed-vocabulary-literal
+
+a raw string handed to a parameter the codebase elsewhere fills from a named constant — `Expect("{")` beside `Expect(Token.Colon)`, where `Token.BraceOpen` already names it
+
+```cs
+----------[ Bad ]----------
+
+public int EndOfMonth() => runner.Run("monthly");
+
+----------[ Good ]----------
+
+public int Close() => runner.Run(ReportKind.Monthly);
+```

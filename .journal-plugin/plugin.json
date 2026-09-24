@@ -1956,6 +1956,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-unnamed-vocabulary-literal": {
+            "title": "UnnamedVocabularyLiteral",
+            "help": "A raw string where the codebase elsewhere spells the same parameter by name — the twin of the backend's and Python's unnamed-vocabulary-literal rules, decided by constantNaming.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/enums",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-generic-throw": {
             "title": "GenericThrow",
             "help": "An exception that names no failure thrown with its description written at the throw — the C# twin of the backend's generic-exception and message-at-throw rules and Python's message-string raise.",

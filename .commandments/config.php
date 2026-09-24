@@ -367,6 +367,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\SubjectLadder::class,
         // Sins\CSharp\SwallowedException::class,
         // Sins\CSharp\TypeSwitch::class,
+        // Sins\CSharp\UnnamedVocabularyLiteral::class,
         // Sins\CSharp\WrappingWithoutCause::class,
     );
 };

@@ -46,6 +46,11 @@ final class Codebase implements ModuleCodebase
     private ?array $callers = null;
 
     /**
+     * @var array<string, list<Node>>|null  each parameter (`method#position`) => the types whose string constants some call fills it with
+     */
+    private ?array $vocabularies = null;
+
+    /**
      * @var list<list<string>>|null  each declared enum's member names, lower-cased
      */
     private ?array $enumCases = null;
@@ -207,6 +212,57 @@ final class Codebase implements ModuleCodebase
         }
 
         return Option::fromNullable($call->target === null ? null : $this->declarations[$call->target->symbol()] ?? null);
+    }
+
+    /**
+     * The constant that already names $value in the parameter $call fills at $position — `Token.BraceOpen` for `"{"`
+     * handed where another call hands `Token.Colon` — none when that parameter is never spelled by name, which is
+     * the answer for almost every string.
+     *
+     * @return Option<string>
+     */
+    public function constantNaming(Node $call, int $position, string $value): Option
+    {
+        $this->vocabularies ??= $this->vocabularies();
+
+        foreach ($this->vocabularies["{$call->target?->symbol()}#{$position}"] ?? [] as $type) {
+            $name = $type->stringConstants()[$value] ?? null;
+
+            if ($name !== null) {
+                return Option::some("{$type->name}.{$name}");
+            }
+        }
+
+        return Option::none();
+    }
+
+    /**
+     * Every parameter of the codebase's own methods some call fills with a string constant of one of its types, with
+     * those types. A library method's parameter takes values from every vocabulary at once, so it is no slot one
+     * vocabulary owns.
+     *
+     * @return array<string, list<Node>>
+     */
+    private function vocabularies(): array
+    {
+        $vocabularies = [];
+
+        foreach ($this->whereCall()->get() as $call) {
+            if ($call->node->target === null || ! $call->node->passesByPosition() || $this->declarationOf($call->node)->isNone()) {
+                continue;
+            }
+
+            foreach ($call->node->arguments() as $position => $argument) {
+                $owner = $argument->is('SimpleMemberAccessExpression') ? $this->typeDeclared(rtrim((string) $argument->children[0]->type?->name, '?')) : Option::none();
+                $slot = "{$call->node->target->symbol()}#{$position}";
+
+                if ($owner->isSomeAnd(static fn (Node $type): bool => in_array($argument->children[1]->name, $type->stringConstants(), true) && ! in_array($type, $vocabularies[$slot] ?? [], true))) {
+                    $vocabularies[$slot][] = $owner->unwrap();
+                }
+            }
+        }
+
+        return $vocabularies;
     }
 
     /**

@@ -591,6 +591,14 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this a `const` field — a value fixed when the program is compiled?
+     */
+    public function isConstField(): bool
+    {
+        return $this->is('FieldDeclaration') && $this->hasModifier('const');
+    }
+
+    /**
      * Is this a class of two or more `const` fields, each a one-line string or number written in the
      * source, and nothing else — a closed set spelled out as constants? A multi-line string is a document
      * kept on a shelf, not a case anything dispatches on.
@@ -602,7 +610,7 @@ final class Node implements SyntaxNode, SyntaxExpression
 
         return $this->is('ClassDeclaration')
             && $members !== []
-            && array_all($members, static fn (self $member): bool => $member->is('FieldDeclaration') && $member->hasModifier('const'))
+            && array_all($members, static fn (self $member): bool => $member->isConstField())
             && count($values) >= 2
             && array_all($values, static fn (self $value): bool => $value->isCaseLiteral());
     }
@@ -1657,6 +1665,30 @@ final class Node implements SyntaxNode, SyntaxExpression
         }
 
         return array_all(array_slice($statements, 1, -1), static fn (self $guard): bool => $guard->isGuardThatOnlyThrows());
+    }
+
+    /**
+     * The string constants this type declares — `public const string Colon = ":"` — each value with the name that
+     * holds it.
+     *
+     * @return array<string, string>
+     */
+    public function stringConstants(): array
+    {
+        $constants = [];
+
+        foreach (array_filter($this->children, static fn (self $member): bool => $member->isConstField()) as $field) {
+            foreach (array_filter($field->descendants(), static fn (self $node): bool => $node->is('VariableDeclarator')) as $declarator) {
+                $initializer = array_values(array_filter($declarator->children, static fn (self $part): bool => $part->is('EqualsValueClause')))[0] ?? null;
+                $value = ($initializer?->expressions()[0] ?? null)?->withoutParentheses();
+
+                if ($value?->is('StringLiteralExpression') === true && $value->text !== null) {
+                    $constants[$value->text] ??= (string) $declarator->name;
+                }
+            }
+        }
+
+        return $constants;
     }
 
     /**
