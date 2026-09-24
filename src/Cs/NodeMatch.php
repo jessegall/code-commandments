@@ -439,6 +439,19 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this the instance a type keeps of itself as its Null Object — the initial value of one of its own
+     * `static` fields or properties, `public static Profile None { get; } = new() { … }`?
+     */
+    public function isNullObjectOfItsType(): bool
+    {
+        $member = array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $node): bool => $node->role === 'member'))[0] ?? null;
+
+        return $member?->is('FieldDeclaration', 'PropertyDeclaration') === true
+            && $member->hasModifier('static')
+            && $this->enclosingType()->isSomeAnd(fn (Node $type) => $type->symbol === $this->node->type?->name);
+    }
+
+    /**
      * Is this expression what its member hands back — the value of a `return`, or of an expression body?
      */
     public function isReturned(): bool

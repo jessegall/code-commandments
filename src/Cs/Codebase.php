@@ -41,6 +41,11 @@ final class Codebase implements ModuleCodebase
     private ?array $enums = null;
 
     /**
+     * @var array<string, Node>|null  every record this codebase declares, by symbol
+     */
+    private ?array $records = null;
+
+    /**
      * @param  list<ModuleFile>  $modules
      */
     private function __construct(private readonly array $modules) {}
@@ -289,6 +294,36 @@ final class Codebase implements ModuleCodebase
         $members = $this->enumMembers((string) $switch->children[0]->type?->name);
 
         return $members !== [] && array_diff($members, $switch->namedCases()) === [];
+    }
+
+    /**
+     * Does $creation build a record this codebase declares with a blank string in one of its required `string`
+     * slots — by position, into a `string` parameter, or by name in its initializer?
+     */
+    public function fillsRecordWithBlank(Node $creation): bool
+    {
+        $record = $this->records()[(string) $creation->type?->name] ?? null;
+
+        if ($record === null) {
+            return false;
+        }
+
+        $parameters = $creation->target->parameters ?? [];
+        $byPosition = array_any($creation->blankArgumentPositions(), static fn (int $position): bool => ($parameters[$position] ?? null) === 'global::System.String');
+
+        return $byPosition || array_intersect($creation->membersInitializedBlank(), $record->requiredTextNames()) !== [];
+    }
+
+    /**
+     * @return array<string, Node>
+     */
+    private function records(): array
+    {
+        return $this->records ??= array_column(
+            array_map(static fn (NodeMatch $record) => [(string) $record->node->symbol, $record->node], $this->whereNode(static fn (Node $node): bool => $node->isRecord())->get()),
+            1,
+            0,
+        );
     }
 
     /**

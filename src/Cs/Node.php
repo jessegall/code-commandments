@@ -266,7 +266,7 @@ final class Node implements SyntaxNode, SyntaxExpression
     /**
      * Is this the blank string — `""` or `string.Empty`?
      */
-    private function isBlankString(): bool
+    public function isBlankString(): bool
     {
         return $this->type?->name === self::STRING && $this->isEmptyScalar();
     }
@@ -851,6 +851,59 @@ final class Node implements SyntaxNode, SyntaxExpression
         $types = array_map(static fn (self $element): string => StructuralHash::ofExpression($element->children[0]), $awaited->children);
 
         return count(array_unique($types)) < count($types);
+    }
+
+    /**
+     * The positions of the arguments this call or creation hands a blank string, counted up to its first named
+     * argument, after which a position no longer says which parameter it fills.
+     *
+     * @return list<int>
+     */
+    public function blankArgumentPositions(): array
+    {
+        $list = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('ArgumentList')))[0] ?? null;
+        $positions = [];
+
+        foreach ($list?->children ?? [] as $position => $argument) {
+            if (array_any($argument->children, static fn (self $part): bool => $part->is('NameColon'))) {
+                break;
+            }
+
+            if (($argument->expressions()[0] ?? null)?->isBlankString() === true) {
+                $positions[] = $position;
+            }
+        }
+
+        return $positions;
+    }
+
+    /**
+     * The members this creation's initializer sets to a blank string — `Body` in `new Note { Body = "" }`.
+     *
+     * @return list<string>
+     */
+    public function membersInitializedBlank(): array
+    {
+        $initializers = array_filter($this->children, static fn (self $child): bool => $child->is('ObjectInitializerExpression'));
+        $entries = array_merge([], ...array_map(static fn (self $initializer): array => $initializer->children, $initializers));
+        $blank = array_filter($entries, static fn (self $entry): bool => $entry->is('SimpleAssignmentExpression') && $entry->children[0]->is('IdentifierName') && $entry->children[1]->isBlankString());
+
+        return array_values(array_map(static fn (self $entry): string => (string) $entry->children[0]->name, $blank));
+    }
+
+    /**
+     * The names this type keeps a required `string` under — a primary constructor parameter or a property
+     * typed `string`, not `string?`.
+     *
+     * @return list<string>
+     */
+    public function requiredTextNames(): array
+    {
+        $parameters = array_merge([], ...array_map(static fn (self $list): array => $list->children, array_filter($this->children, static fn (self $child): bool => $child->is('ParameterList'))));
+        $properties = array_filter($this->children, static fn (self $child): bool => $child->is('PropertyDeclaration'));
+        $text = array_filter([...$parameters, ...$properties], static fn (self $member): bool => array_any($member->children, static fn (self $type): bool => $type->is('PredefinedType') && $type->name === 'string'));
+
+        return array_values(array_filter(array_map(static fn (self $member): ?string => $member->name, $text)));
     }
 
     /**

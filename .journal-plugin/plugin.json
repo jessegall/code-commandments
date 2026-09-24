@@ -1969,6 +1969,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-placeholder-filled-data": {
+            "title": "PlaceholderFilledData",
+            "help": "A record the codebase declares, built with a blank string in a required `string` slot — the C# twin of the PHP and Python placeholder-filled-data rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/type-honesty",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-array-return-bag": {
             "title": "ArrayReturnBag",
             "help": "A dictionary built with two or more fixed string keys, handed back by a member — the C# twin of the PHP array-return-bag rule.",
