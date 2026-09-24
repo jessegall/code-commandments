@@ -111,7 +111,7 @@ final class Node implements SyntaxNode, SyntaxExpression
             text: $written['text'] ?? null,
             operator: $vocabulary->maybe($written['operator'] ?? null),
             modifiers: $vocabulary->words($written['modifiers'] ?? []),
-            type: isset($written['type']) ? $vocabulary->type($written['type'], $written['nullable']) : null,
+            type: isset($written['type']) ? $vocabulary->type($written['type'], $written['nullable'], $written['inner'] ?? []) : null,
             target: is_array($target) ? $vocabulary->target($target['type'], $target['name'], $target['parameters'] ?? []) : null,
             symbol: $vocabulary->maybe($written['symbol'] ?? null),
             inherited: array_key_exists('inherited', $written),

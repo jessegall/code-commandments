@@ -9,8 +9,22 @@ namespace JesseGall\CodeCommandments\Cs;
  */
 final readonly class ResolvedType
 {
+    /**
+     * @param  list<string>  $inner  the named types inside a generic or an array, however deep
+     */
     public function __construct(
         public string $name,
         public bool $nullable,
+        public array $inner = [],
     ) {}
+
+    /**
+     * Every named type this type is made of — itself, nullability aside, and the types inside it.
+     *
+     * @return list<string>
+     */
+    public function namedTypes(): array
+    {
+        return [rtrim($this->name, '?'), ...$this->inner];
+    }
 }

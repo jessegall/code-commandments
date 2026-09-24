@@ -321,6 +321,54 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
         return declared is { NullableAnnotation: NullableAnnotation.Annotated } || declared is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T };
     }
 
+    /// <summary>
+    /// A type as the compiler resolved it: its name, whether it is annotated nullable, and — for a generic or an
+    /// array — the named types inside it, however deep, so a reader never takes the name apart.
+    /// </summary>
+    private static void WriteType(Utf8JsonWriter json, ITypeSymbol type, bool nullable)
+    {
+        json.WriteString("type", type.ToDisplayString(Qualified));
+        json.WriteBoolean("nullable", nullable);
+
+        var inner = InnerTypes(type).Select(named => named.ToDisplayString(Qualified)).Distinct().ToList();
+
+        if (inner.Count > 0)
+        {
+            json.WriteStartArray("inner");
+
+            foreach (var name in inner)
+            {
+                json.WriteStringValue(name);
+            }
+
+            json.WriteEndArray();
+        }
+    }
+
+    /// <summary>The named types inside <paramref name="type"/> — its type arguments and element types, at every depth.</summary>
+    private static IEnumerable<INamedTypeSymbol> InnerTypes(ITypeSymbol type)
+    {
+        var parts = type switch
+        {
+            INamedTypeSymbol named => named.TypeArguments,
+            IArrayTypeSymbol array => [array.ElementType],
+            _ => [],
+        };
+
+        foreach (var part in parts)
+        {
+            if (part is INamedTypeSymbol namedPart)
+            {
+                yield return namedPart.WithNullableAnnotation(NullableAnnotation.NotAnnotated) as INamedTypeSymbol ?? namedPart;
+            }
+
+            foreach (var deeper in InnerTypes(part))
+            {
+                yield return deeper;
+            }
+        }
+    }
+
     private void WriteFacts(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
     {
         if (node is ExpressionSyntax expression && !SyntaxFacts.IsInTypeOnlyContext(expression))
@@ -329,22 +377,19 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
             if (info.Type is not null and not IErrorTypeSymbol)
             {
-                json.WriteString("type", info.Type.ToDisplayString(Qualified));
-                json.WriteBoolean("nullable", info.Type.NullableAnnotation == NullableAnnotation.Annotated);
+                WriteType(json, info.Type, info.Type.NullableAnnotation == NullableAnnotation.Annotated);
             }
 
         }
 
-        if (node is TypeSyntax tested && tested.Parent is DeclarationPatternSyntax or TypePatternSyntax or RecursivePatternSyntax && model.GetTypeInfo(tested).Type is { } testedType and not IErrorTypeSymbol)
+        if (node is TypeSyntax named && SyntaxFacts.IsInTypeOnlyContext(named) && named.Parent is not TypeSyntax && model.GetTypeInfo(named).Type is { } namedType and not IErrorTypeSymbol)
         {
-            json.WriteString("type", testedType.ToDisplayString(Qualified));
-            json.WriteBoolean("nullable", false);
+            WriteType(json, namedType, namedType.NullableAnnotation == NullableAnnotation.Annotated);
         }
 
         if (node is ParameterSyntax declaration && model.GetDeclaredSymbol(declaration) is IParameterSymbol declaredParameter)
         {
-            json.WriteString("type", declaredParameter.Type.ToDisplayString(Qualified));
-            json.WriteBoolean("nullable", declaredParameter.Type.NullableAnnotation == NullableAnnotation.Annotated);
+            WriteType(json, declaredParameter.Type, declaredParameter.Type.NullableAnnotation == NullableAnnotation.Annotated);
         }
 
         if (node is CatchDeclarationSyntax caught && model.GetTypeInfo(caught.Type).Type is { } exception and not IErrorTypeSymbol)

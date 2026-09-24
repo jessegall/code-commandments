@@ -46,9 +46,12 @@ final class Vocabulary
         return array_map($this->word(...), $words);
     }
 
-    public function type(string $name, bool $nullable): ResolvedType
+    /**
+     * @param  list<string>  $inner
+     */
+    public function type(string $name, bool $nullable, array $inner = []): ResolvedType
     {
-        return $this->types[($nullable ? '?' : '') . $name] ??= new ResolvedType($this->word($name), $nullable);
+        return $this->types[($nullable ? '?' : '') . $name] ??= new ResolvedType($this->word($name), $nullable, $this->words($inner));
     }
 
     /**
