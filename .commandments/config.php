@@ -342,6 +342,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\MemberOutOfOrder::class,
         // Sins\CSharp\MutableStaticState::class,
         // Sins\CSharp\MutableValueObject::class,
+        // Sins\CSharp\NamespaceCycle::class,
         // Sins\CSharp\NearDuplicateMethod::class,
         // Sins\CSharp\NegativeSpaceComment::class,
         // Sins\CSharp\NestedTernary::class,

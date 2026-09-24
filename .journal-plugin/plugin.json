@@ -1748,6 +1748,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-namespace-cycle": {
+            "title": "NamespaceCycle",
+            "help": "Two of the project's namespaces that each use the other, found on the thinner direction — the twin of the backend's and Python's namespace-cycle rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/dependency-direction",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-archaeology-comment": {
             "title": "ArchaeologyComment",
             "help": "A comment narrating the code's history — the C# twin of the PHP and Python archaeology-comment rules, read by the one shared reading of prose, narratesHistory.",

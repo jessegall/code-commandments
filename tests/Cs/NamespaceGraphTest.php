@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cs;
 
 use JesseGall\CodeCommandments\Cs\Codebase;
-use JesseGall\CodeCommandments\Cs\NamespaceArrow;
 use JesseGall\CodeCommandments\Cs\NamespaceGraph;
+use JesseGall\CodeCommandments\DependencyArrow;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -52,16 +52,16 @@ final class NamespaceGraphTest extends TestCase
 
     public function test_reads_which_namespace_references_which(): void
     {
-        $this->assertSame(['global::Shop.Orders' => ['global::Shop.Pricing']], $this->graph()->references());
+        $this->assertSame(['global::Shop.Orders' => ['global::Shop.Pricing']], $this->graph()->arrows()->references());
     }
 
     public function test_every_arrow_is_named_where_it_is_written(): void
     {
-        $arrows = $this->graph()->arrows();
+        $arrows = $this->graph()->arrows()->all;
 
         $this->assertNotEmpty($arrows);
-        $this->assertTrue(array_all($arrows, static fn (NamespaceArrow $arrow): bool => $arrow->from === 'global::Shop.Orders' && $arrow->to === 'global::Shop.Pricing'));
-        $this->assertContains(18, array_map(static fn (NamespaceArrow $arrow): int => $arrow->at->line(), $arrows));
+        $this->assertTrue(array_all($arrows, static fn (DependencyArrow $arrow): bool => $arrow->from === 'global::Shop.Orders' && $arrow->to === 'global::Shop.Pricing'));
+        $this->assertContains(18, array_map(static fn (DependencyArrow $arrow): int => $arrow->at->line(), $arrows));
     }
 
     private function graph(): NamespaceGraph

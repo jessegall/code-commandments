@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Py;
 
+use JesseGall\CodeCommandments\DependencyArrow;
+use JesseGall\CodeCommandments\DependencyArrows;
+use JesseGall\CodeCommandments\Located;
+
 /**
  * Which of a codebase's packages import which — each package a folder holding an `__init__.py`, each arrow
  * an import from a module in one package reaching a module in another. The Python twin of the backend's
@@ -12,12 +16,13 @@ namespace JesseGall\CodeCommandments\Py;
 final class PackageGraph
 {
     /**
-     * @var list<array{NodeMatch, string, string}>  each import, the package it is written in, the package it reaches
+     * Each import between two packages — where it is written, its package, the package it reaches.
      */
-    private array $arrows = [];
+    private DependencyArrows $arrows;
 
     public function __construct(Codebase $codebase)
     {
+        $arrows = [];
         $packages = array_fill_keys(array_map(static fn (ModuleFile $module): string => dirname($module->file), array_filter($codebase->modules(), static fn (ModuleFile $module): bool => basename($module->file) === '__init__.py')), true);
 
         foreach ($codebase->modules() as $module) {
@@ -31,10 +36,12 @@ final class PackageGraph
                 $to = dirname($reached->file);
 
                 if ($to !== $from && isset($packages[$to])) {
-                    $this->arrows[] = [new NodeMatch($import, $module), $from, $to];
+                    $arrows[] = new DependencyArrow(new NodeMatch($import, $module), $from, $to);
                 }
             }
         }
+
+        $this->arrows = new DependencyArrows($arrows);
     }
 
     /**
@@ -46,34 +53,16 @@ final class PackageGraph
         $from = dirname($referrer->file);
         $to = dirname($target->file);
 
-        return $from !== $to && array_any($this->arrows, static fn (array $arrow): bool => $arrow[1] === $to && $arrow[2] === $from);
+        return $from !== $to && $this->arrows->has($to, $from);
     }
 
     /**
-     * The imports of the direction worth cutting in every mutual pair — the thinner of the two, the one with
-     * fewer imports, ties broken on the name so a codebase always yields the same answer. One per module and
-     * package it reaches, each named where it is written.
+     * The imports of the direction worth cutting in every mutual pair of packages — {@see DependencyArrows::closingAMutualPair}.
      *
-     * @return list<NodeMatch>
+     * @return list<Located>
      */
     public function arrowsClosingAMutualPair(): array
     {
-        $count = [];
-
-        foreach ($this->arrows as [, $from, $to]) {
-            $count["{$from}\0{$to}"] = ($count["{$from}\0{$to}"] ?? 0) + 1;
-        }
-
-        $closing = [];
-
-        foreach ($this->arrows as [$import, $from, $to]) {
-            $back = $count["{$to}\0{$from}"] ?? 0;
-
-            if ($back > 0 && ([$count["{$from}\0{$to}"], $from] <=> [$back, $to]) <= 0) {
-                $closing[$import->file() . "\0" . $to] ??= $import;
-            }
-        }
-
-        return array_values($closing);
+        return $this->arrows->closingAMutualPair();
     }
 }

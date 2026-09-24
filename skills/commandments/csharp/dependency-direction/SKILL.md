@@ -56,6 +56,48 @@ reasoning. Never quietly edit the declaration to make a finding go away.
 Move the thing both sides need down into the lower layer, pass it in from above, or invert the dependency
 behind an interface the lower layer owns and the upper layer implements.
 
+## Rules
+
+- [ ] Keep references between the project's namespaces pointing one way; two namespaces that use each other are a cycle.
+      _Cut the thinner direction: move what both need into the lower namespace, pass it in from above, or invert it behind an interface the lower one owns._
+
+## Worked example
+
+### csharp-namespace-cycle
+
+two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names
+
+```cs
+----------[ Bad ]----------
+
+public int Total(Promotion promotion)
+{
+    switch (promotion)
+    {
+        case PercentOff percent:
+            return subtotal - subtotal * percent.Percent / 100;
+        case AmountOff amount:
+            return subtotal - Math.Min(amount.Amount, subtotal);
+        default:
+            return subtotal;
+    }
+}
+
+----------[ Good ]----------
+
+public bool Covers(Shop.Rewards.Voucher voucher) => balance >= voucher.Cost;
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/dependency-direction` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-namespace-cycle`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/dependency-direction`](../../backend/dependency-direction/SKILL.md) — the same discipline over PHP namespaces.

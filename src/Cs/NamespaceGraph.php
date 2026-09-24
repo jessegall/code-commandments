@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cs;
 
+use JesseGall\CodeCommandments\DependencyArrow;
+use JesseGall\CodeCommandments\DependencyArrows;
+
 /**
  * Which namespace references which in a C# codebase, read from what the compiler resolved — a type named in a
  * declaration, a value's type, a call's target, and the type arguments inside any of them. Only types the
@@ -17,7 +20,7 @@ final class NamespaceGraph
     private array $homes = [];
 
     /**
-     * @var list<NamespaceArrow>
+     * @var list<DependencyArrow>
      */
     private array $arrows = [];
 
@@ -34,28 +37,27 @@ final class NamespaceGraph
 
     /**
      * Every reference across namespaces, in the order the files are written.
-     *
-     * @return list<NamespaceArrow>
      */
-    public function arrows(): array
+    public function arrows(): DependencyArrows
     {
-        return $this->arrows;
+        return new DependencyArrows($this->arrows);
     }
 
     /**
-     * Each namespace the codebase references another from, with the namespaces it references.
-     *
-     * @return array<string, list<string>>
+     * The references between independent namespaces — neither nested in the other. A namespace nested in
+     * another is part of it, so for which way the dependencies point the two are one.
      */
-    public function references(): array
+    public function independentArrows(): DependencyArrows
     {
-        $references = [];
+        return new DependencyArrows(array_values(array_filter($this->arrows, static fn (DependencyArrow $arrow): bool => ! self::nests($arrow->from, $arrow->to) && ! self::nests($arrow->to, $arrow->from))));
+    }
 
-        foreach ($this->arrows as $arrow) {
-            $references[$arrow->from][$arrow->to] = true;
-        }
-
-        return array_map(static fn (array $targets): array => array_keys($targets), $references);
+    /**
+     * Is $inner nested in $outer — `Shop.Orders.Lines` in `Shop.Orders`?
+     */
+    private static function nests(string $outer, string $inner): bool
+    {
+        return str_starts_with($inner, "{$outer}.");
     }
 
     /**
@@ -67,7 +69,7 @@ final class NamespaceGraph
 
         foreach ($here === '' ? [] : $this->reachedFrom($node) as $home) {
             if ($home !== $here) {
-                $this->arrows[] = new NamespaceArrow(new NodeMatch($node, $module), $here, $home);
+                $this->arrows[] = new DependencyArrow(new NodeMatch($node, $module), $here, $home);
             }
         }
 
