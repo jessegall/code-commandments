@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "my C# service has a `Batch? batch` field that Load() always sets, and every method does batch?.X ?? default — is that fine?",
+        "I added = null! to a required property so my C# class compiles, what's the right fix",
+        "judge flagged csharp-masked-invariant on my C# code, what does it want"
+    ],
+    "not": [
+        "how do I read an environment variable in C#"
+    ]
+}
