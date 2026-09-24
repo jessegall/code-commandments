@@ -53,6 +53,19 @@ final class NamespaceGraph
     }
 
     /**
+     * Would code in $referrer's namespace, reaching into $target's, close a cycle — does $target's namespace
+     * already reference $referrer's? Both are the symbols of types the codebase declares; a type it does not
+     * declare closes nothing.
+     */
+    public function wouldCloseACycle(string $referrer, string $target): bool
+    {
+        $from = $this->homes[$referrer] ?? null;
+        $to = $this->homes[$target] ?? null;
+
+        return $from !== null && $to !== null && $from !== $to && $this->independentArrows()->has($to, $from);
+    }
+
+    /**
      * Is $inner nested in $outer — `Shop.Orders.Lines` in `Shop.Orders`?
      */
     private static function nests(string $outer, string $inner): bool

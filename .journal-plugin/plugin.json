@@ -2138,6 +2138,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-derived-argument": {
+            "title": "DerivedArgument",
+            "help": "A call that hands over a projection of a value beside the value itself, or the value in pieces — the twin of the backend's and Python's derived-argument rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/pass-the-object",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-repeated-guard": {
             "title": "RepeatedGuard",
             "help": "The same compound condition about an object's data asked at two or more sites — the C# twin of the PHP and Python repeated-guard rules.",

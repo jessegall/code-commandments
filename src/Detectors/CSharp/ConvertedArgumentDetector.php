@@ -6,7 +6,6 @@ namespace JesseGall\CodeCommandments\Detectors\CSharp;
 
 use JesseGall\CodeCommandments\Codebase as BaseCodebase;
 use JesseGall\CodeCommandments\Cs\Codebase;
-use JesseGall\CodeCommandments\Cs\Node;
 use JesseGall\CodeCommandments\Cs\NodeMatch;
 use JesseGall\CodeCommandments\CSharp\Detector;
 use JesseGall\CodeCommandments\Detectors\BucketsByGroupKey;
@@ -42,7 +41,7 @@ final class ConvertedArgumentDetector implements Detector, RecurrenceDetector, W
      */
     public function groupKey(Located $finding, BaseCodebase $codebase): ?string
     {
-        if (! $finding instanceof NodeMatch || ! $codebase instanceof Codebase || ! $this->reachesOwnSignature($finding, $codebase)) {
+        if (! $finding instanceof NodeMatch || ! $codebase instanceof Codebase || ! $codebase->reachesOwnSignature($finding->node)) {
             return null;
         }
 
@@ -61,15 +60,6 @@ final class ConvertedArgumentDetector implements Detector, RecurrenceDetector, W
         $dominant = array_filter($buckets, fn (array $bucket): bool => count($bucket) / $supplied[explode('=', (string) $this->groupKey($bucket[0], $codebase))[0]] >= self::DOMINANT);
 
         return array_merge([], ...array_values($dominant));
-    }
-
-    /**
-     * Does $call reach a method this codebase declares and may change the signature of — its own, and not one
-     * an interface or a base class dictates?
-     */
-    private function reachesOwnSignature(NodeMatch $call, Codebase $codebase): bool
-    {
-        return $codebase->declarationOf($call->node)->isSomeAnd(static fn (Node $method): bool => ! $method->inherited);
     }
 
     /**

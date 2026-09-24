@@ -1360,16 +1360,92 @@ final class Node implements SyntaxNode, SyntaxExpression
      */
     public function scalarConversions(): array
     {
-        $list = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('ArgumentList')))[0] ?? null;
-
-        if ($this->target === null || $list === null || array_any($list->children, static fn (self $argument): bool => array_any($argument->children, static fn (self $part): bool => $part->is('NameColon')))) {
+        if ($this->target === null || ! $this->passesByPosition()) {
             return [];
         }
 
-        $parameters = $this->target->parameters;
-        $scalar = array_filter($this->arguments(), static fn (self $argument, int $position): bool => in_array($parameters[$position] ?? null, self::SCALARS, true), ARRAY_FILTER_USE_BOTH);
+        $scalar = array_filter($this->arguments(), fn (self $argument, int $position) => $this->fillsScalarAt($position), ARRAY_FILTER_USE_BOTH);
 
         return array_filter(array_map(static fn (self $argument): ?string => $argument->conversion(), $scalar), static fn (?string $conversion): bool => $conversion !== null);
+    }
+
+    /**
+     * Does this call pass every argument by position — no `name:` — so argument $n fills parameter $n?
+     */
+    public function passesByPosition(): bool
+    {
+        $list = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('ArgumentList')))[0] ?? null;
+
+        return $list !== null && ! array_any($list->children, static fn (self $argument): bool => array_any($argument->children, static fn (self $part): bool => $part->is('NameColon')));
+    }
+
+    /**
+     * Is the parameter at $position of the method this call reaches a scalar — text, a number, a date, a flag?
+     */
+    public function fillsScalarAt(int $position): bool
+    {
+        return in_array($this->target?->parameters[$position] ?? null, self::SCALARS, true);
+    }
+
+    /**
+     * The name a member chain hangs off — `request` in `request.ChannelId` or `order.Customer.Name` — null for
+     * anything that is not a chain of member reads rooted at a name.
+     */
+    public function projectionRoot(): ?self
+    {
+        return match (true) {
+            ! $this->is('SimpleMemberAccessExpression') => null,
+            $this->children[0]->is('IdentifierName') => $this->children[0],
+            default => $this->children[0]->projectionRoot(),
+        };
+    }
+
+    /**
+     * The name this call is made on — `store` for `store.Persist(…)` — null for a call made on nothing named.
+     */
+    public function receiverName(): ?string
+    {
+        $callee = $this->children[0] ?? null;
+
+        if ($callee === null || ! $callee->is('SimpleMemberAccessExpression')) {
+            return null;
+        }
+
+        return $callee->children[0]->is('IdentifierName') ? $callee->children[0]->name : $callee->children[0]->projectionRoot()?->name;
+    }
+
+    /**
+     * The member path a projection reads off its root — `.Customer.Name` for `order.Customer.Name` — empty for
+     * anything that is not a projection.
+     */
+    public function projectionPath(): string
+    {
+        return match (true) {
+            ! $this->is('SimpleMemberAccessExpression') => '',
+            $this->children[0]->is('IdentifierName') => ".{$this->children[1]->name}",
+            default => $this->children[0]->projectionPath() . ".{$this->children[1]->name}",
+        };
+    }
+
+    /**
+     * The name of the member this call calls — `Persist` for `store.Persist(…)` and `Persist(…)` alike.
+     */
+    public function calledName(): ?string
+    {
+        return ($this->children[0] ?? null)?->referencedName();
+    }
+
+    /**
+     * The name this reference ends in — `Persist` for `Persist` and for `store.Persist` alike; null for anything
+     * that is not a name or a member read.
+     */
+    public function referencedName(): ?string
+    {
+        return match (true) {
+            $this->is('IdentifierName') => $this->name,
+            $this->is('SimpleMemberAccessExpression') => $this->children[1]->name,
+            default => null,
+        };
     }
 
     /**

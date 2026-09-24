@@ -31,6 +31,11 @@ final class Codebase implements ModuleCodebase
     private ?array $declarations = null;
 
     /**
+     * @var array<string, true>|null  the names of the methods handed out as delegates somewhere in the codebase
+     */
+    private ?array $handedOut = null;
+
+    /**
      * @var list<list<string>>|null  each declared enum's member names, lower-cased
      */
     private ?array $enumCases = null;
@@ -192,6 +197,33 @@ final class Codebase implements ModuleCodebase
         }
 
         return Option::fromNullable($call->target === null ? null : $this->declarations[$call->target->symbol()] ?? null);
+    }
+
+    /**
+     * Does $call reach a method this codebase declares and may change the signature of — its own, and not one an
+     * interface or a base class dictates?
+     */
+    public function reachesOwnSignature(Node $call): bool
+    {
+        return $this->declarationOf($call)->isSomeAnd(static fn (Node $method): bool => ! $method->inherited);
+    }
+
+    /**
+     * Is a method named $name handed out as a delegate somewhere — named without being called (`MapPut("/items",
+     * UpdateItem)`, `=> store.Persist`) — so it has callers no call site shows?
+     */
+    public function isHandedOut(string $name): bool
+    {
+        if ($this->handedOut === null) {
+            $callees = array_map(static fn (NodeMatch $call): Node => $call->node->children[0], $this->whereCall()->get());
+            $memberNames = array_map(static fn (NodeMatch $read): Node => $read->node->children[1], $this->whereExpression(static fn (Node $node): bool => $node->is('SimpleMemberAccessExpression'))->get());
+            $named = array_flip(array_map(spl_object_id(...), [...$callees, ...$memberNames]));
+            $groups = $this->whereExpression(static fn (Node $node): bool => $node->type === null && $node->is('IdentifierName', 'SimpleMemberAccessExpression') && ! isset($named[spl_object_id($node)]))->get();
+
+            $this->handedOut = array_fill_keys(array_map(static fn (NodeMatch $group): string => (string) $group->node->referencedName(), $groups), true);
+        }
+
+        return isset($this->handedOut[$name]);
     }
 
     /**
