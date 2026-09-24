@@ -164,6 +164,7 @@ most:**
 - **`commandments-python-pass-the-object`** — demand the resolved object you need, not an id plus its container — the caller resolves once and passes the object (and owns the not-found failure).
 - **`commandments-csharp-dependency-direction`** — a declared layer may only use the layers it declared it may use — down the stack, never back up, never sideways, and never in a cycle.
 - **`commandments-python-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver` and honour the contract — a registry `get` raises on a miss.
+- **`commandments-csharp-pass-the-object`** — demand the resolved object you need, not an id plus its container — the caller resolves once and passes the object (and owns the not-found failure).
 
 **Finding and fixing sins — the checklist workflow.** Run
 `vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the

@@ -93,6 +93,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\CSharp\FixAtTheSource::class,
         // Skills\CSharp\Flow::class,
         // Skills\CSharp\MethodMood::class,
+        // Skills\CSharp\PassTheObject::class,
         // Skills\CSharp\RepeatedCallHelper::class,
         // Skills\CSharp\TellDontAsk::class,
         // Skills\CSharp\Templates::class,
