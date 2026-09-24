@@ -639,6 +639,15 @@ final class Codebase implements ClassAncestry, \JesseGall\CodeCommandments\Codeb
     }
 
     /**
+     * The call graph and the value-flow graph, both whole-program and both costly, built once.
+     */
+    public function warm(): void
+    {
+        $this->index()->warm();
+        $this->valueFlow()->warm();
+    }
+
+    /**
      * The parsed files the queries run over.
      *
      * @return list<ParsedFile>

@@ -89,16 +89,21 @@ final class Views
     }
 
     /**
-     * The whole tree, when any of $detectors will be shown it — null when none will, so a caller can
-     * skip building whole-program work no rule in this run is going to read.
+     * Every view $detectors will be shown, each once — what a caller warms before it forks, so a scoped
+     * run never pays for whole-program work that no rule in it is going to read.
      *
      * @param  list<Detector>  $detectors
-     * @return T|null
+     * @return list<T>
      */
-    public function wholeTreeFor(array $detectors): ?Codebase
+    public function seenBy(array $detectors): array
     {
-        return array_any($detectors, fn (Detector $detector): bool => $this->for($detector) === $this->whole)
-            ? $this->whole
-            : null;
+        $seen = [];
+
+        foreach ($detectors as $detector) {
+            $view = $this->for($detector);
+            $seen[spl_object_id($view)] = $view;
+        }
+
+        return array_values($seen);
     }
 }

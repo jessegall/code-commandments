@@ -10,7 +10,6 @@ use JesseGall\CodeCommandments\Custom;
 use JesseGall\CodeCommandments\Support\ClassName;
 
 use Closure;
-use JesseGall\CodeCommandments\Ast\Codebase as PhpCodebase;
 use JesseGall\CodeCommandments\Codebase;
 use JesseGall\CodeCommandments\Concurrency\Fork;
 use JesseGall\CodeCommandments\Detector;
@@ -38,15 +37,10 @@ final class DetectorRunner
         $tasks = [];
 
         foreach ($groups as [$detectors, $views]) {
-            $tree = $views->wholeTreeFor($detectors);
-
-            if ($tree instanceof PhpCodebase) {
-                // Build the call graph AND the value-flow graph ONCE in the parent so forked workers
-                // inherit them copy-on-write, instead of each rebuilding them (or each cross-file
-                // detector re-scanning the tree per query). A scoped run that shows no rule the tree
-                // never builds either.
-                $tree->index()->warm();
-                $tree->valueFlow()->warm();
+            // Built once here, the whole-program readings reach every forked worker copy-on-write,
+            // instead of each worker building its own.
+            foreach ($views->seenBy($detectors) as $view) {
+                $view->warm();
             }
 
             $tasks = [...$tasks, ...$this->tasks($detectors, $views)];

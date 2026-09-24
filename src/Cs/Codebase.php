@@ -139,6 +139,11 @@ final class Codebase implements ModuleCodebase
     }
 
     /**
+     * Nothing to prepare: the compiler's readings arrive with the parse.
+     */
+    public function warm(): void {}
+
+    /**
      * @return list<ModuleFile>
      */
     public function modules(): array

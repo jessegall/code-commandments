@@ -441,6 +441,11 @@ final class Codebase implements \JesseGall\CodeCommandments\Codebase
     }
 
     /**
+     * Nothing to prepare: every reading of a component is made from the component itself.
+     */
+    public function warm(): void {}
+
+    /**
      * Every parsed module — a standalone `.ts` file, and every component's `<script>` block.
      *
      * @return list<ModuleFile>

@@ -28,4 +28,11 @@ interface Codebase
      * How many files the parse holds — what a clean run says it judged.
      */
     public function fileCount(): int;
+
+    /**
+     * Build, now and in this process, the whole-program readings a rule would otherwise build on first use — so a
+     * run that forks its workers after this hands every worker the readings copy-on-write, instead of each worker
+     * building them again. A codebase with nothing costly to prepare does nothing.
+     */
+    public function warm(): void;
 }

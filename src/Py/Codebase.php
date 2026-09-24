@@ -123,6 +123,15 @@ final class Codebase implements ModuleCodebase
     }
 
     /**
+     * The types mypy gives every expression, read once — each worker starting its own type bridge would pay for
+     * the whole read again.
+     */
+    public function warm(): void
+    {
+        $this->types();
+    }
+
+    /**
      * @return list<ModuleFile>
      */
     public function modules(): array

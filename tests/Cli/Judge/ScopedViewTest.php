@@ -144,8 +144,11 @@ final class ScopedViewTest extends TestCase
 
         // What the caller asks before building the call and value-flow graphs: whole-program work
         // nothing in this run will read is work a scoped run must not pay for.
-        $this->assertNull($views->wholeTreeFor([$this->rule('LocalRule')]));
-        $this->assertNotNull($views->wholeTreeFor([$this->rule('LocalRule'), $this->rule('WorldRule')]));
+        $whole = $views->for($this->rule('WorldRule'));
+        $focused = $views->for($this->rule('LocalRule'));
+
+        $this->assertSame([$focused], $views->seenBy([$this->rule('LocalRule'), $this->rule('LocalRule')]));
+        $this->assertSame([$focused, $whole], $views->seenBy([$this->rule('LocalRule'), $this->rule('WorldRule')]));
     }
 
     public function test_the_frontend_narrows_through_the_same_base_type(): void
