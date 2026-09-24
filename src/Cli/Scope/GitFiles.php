@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Cli\Scope;
 
 use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\Support\FileTree;
 
 /**
  * Reads judged files (any {@see Language} judge reads) from git — working-tree changes vs HEAD, or files
@@ -322,12 +323,14 @@ class GitFiles
     /**
      * Resolve newline-separated repo-relative paths into a set of absolute paths some
      * engine judges (non-judged extensions dropped), so a scoped run narrows to
-     * touched source in every language, not PHP alone.
+     * touched source in every language, not PHP alone. A file no scan would reach — under
+     * a hidden folder, a dependency tree, build output — is not source, whatever git says.
      *
      * @return array<string, true>
      */
     private function pathSet(string $root, string $lines): array
     {
+        $top = (string) realpath($root);
         $set = [];
 
         foreach (preg_split('/\R/', $lines) ?: [] as $relative) {
@@ -339,7 +342,7 @@ class GitFiles
 
             $absolute = realpath($root . '/' . $relative);
 
-            if ($absolute !== false) {
+            if ($absolute !== false && FileTree::reaches($top, $absolute)) {
                 $set[$absolute] = true;
             }
         }

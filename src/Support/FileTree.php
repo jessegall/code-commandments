@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Support;
 
+use Closure;
 use FilesystemIterator;
 use JesseGall\CodeCommandments\ExcludedPaths;
+use JesseGall\CodeCommandments\Language;
 use RecursiveCallbackFilterIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -51,8 +53,27 @@ final class FileTree
      */
     public static function filesIn(string $path, string $extension, ExcludedPaths $excluded = new ExcludedPaths()): iterable
     {
+        return self::walk($path, $excluded, static fn (SplFileInfo $file): bool => $file->getExtension() === $extension);
+    }
+
+    /**
+     * Every file under $path in a language judge reads — the sources of every engine in one walk.
+     *
+     * @return iterable<string>
+     */
+    public static function sourcesIn(string $path, ExcludedPaths $excluded = new ExcludedPaths()): iterable
+    {
+        return self::walk($path, $excluded, static fn (SplFileInfo $file): bool => Language::judges($file->getPathname()));
+    }
+
+    /**
+     * @param  Closure(SplFileInfo): bool  $wanted
+     * @return iterable<string>
+     */
+    private static function walk(string $path, ExcludedPaths $excluded, Closure $wanted): iterable
+    {
         if (is_file($path)) {
-            if (self::isWanted(new SplFileInfo($path), $extension) && ! $excluded->covers($path)) {
+            if ($wanted(new SplFileInfo($path)) && ! $excluded->covers($path)) {
                 yield $path;
             }
 
@@ -69,15 +90,29 @@ final class FileTree
         );
 
         foreach (new RecursiveIteratorIterator($pruned) as $file) {
-            if ($file instanceof SplFileInfo && self::isWanted($file, $extension)) {
+            if ($file instanceof SplFileInfo && $file->isFile() && $wanted($file)) {
                 yield $file->getPathname();
             }
         }
     }
 
-    private static function isWanted(SplFileInfo $file, string $extension): bool
+    /**
+     * Would a walk from $root reach $file — is every directory between them one the walk descends? What a
+     * list of files from elsewhere (git's) is held to, so it names only files a scan would read.
+     */
+    public static function reaches(string $root, string $file, ExcludedPaths $excluded = new ExcludedPaths()): bool
     {
-        return $file->isFile() && $file->getExtension() === $extension;
+        $directory = dirname($file);
+
+        while (str_starts_with($directory, $root . '/')) {
+            if (! self::descends(new SplFileInfo($directory), $excluded)) {
+                return false;
+            }
+
+            $directory = dirname($directory);
+        }
+
+        return true;
     }
 
     /**

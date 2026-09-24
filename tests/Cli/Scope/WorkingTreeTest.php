@@ -54,6 +54,20 @@ final class WorkingTreeTest extends TestCase
         $this->assertCount(1, $tree->changed);
     }
 
+    public function test_a_change_no_scan_would_reach_is_not_source(): void
+    {
+        $this->git('init -q');
+
+        foreach (['app/Order.php', '.journal/hook.py', 'vendor/acme/Lib.php'] as $file) {
+            @mkdir(dirname("{$this->root}/{$file}"), 0777, true);
+            file_put_contents("{$this->root}/{$file}", '<?php');
+        }
+
+        $changed = array_map('basename', array_keys(new GitFiles()->workingTree($this->root)->changed));
+
+        $this->assertSame(['Order.php'], $changed);
+    }
+
     private function git(string $command): void
     {
         shell_exec('git -C ' . escapeshellarg($this->root) . ' ' . $command . ' 2>/dev/null');

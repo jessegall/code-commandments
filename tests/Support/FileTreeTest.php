@@ -63,4 +63,35 @@ final class FileTreeTest extends TestCase
 
         $this->assertSame(['Api/Code.cs', 'tools/bin/Code.cs'], $found);
     }
+
+    /**
+     * The walk that gathers every judged language at once prunes exactly as each engine's own walk does —
+     * a hook looking for touched sources reads what a scan reads, never a dependency tree.
+     */
+    public function test_a_sources_walk_reads_every_judged_language_and_prunes_like_the_rest(): void
+    {
+        foreach (['shop/Order.php', 'app/Card.vue', 'vendor/acme/Lib.php', 'node_modules/kit/index.ts', '.journal/hook.py', 'notes/readme.md'] as $file) {
+            @mkdir(dirname("{$this->root}/{$file}"), 0777, true);
+            file_put_contents("{$this->root}/{$file}", "x\n");
+        }
+
+        $found = array_map(fn (string $path): string => substr($path, strlen($this->root) + 1), iterator_to_array(FileTree::sourcesIn($this->root), false));
+
+        sort($found);
+
+        $this->assertSame(['app/Card.vue', 'shop/Order.php', 'shop/env/module.py', 'shop/module.py'], $found);
+    }
+
+    /**
+     * A file named from elsewhere — git's list of changes — is asked the walk's own question: would a scan
+     * from the root have reached it?
+     */
+    public function test_a_file_is_reached_only_through_folders_the_walk_descends(): void
+    {
+        $this->assertTrue(FileTree::reaches($this->root, "{$this->root}/shop/env/module.py"));
+        $this->assertTrue(FileTree::reaches($this->root, "{$this->root}/Top.php"));
+        $this->assertFalse(FileTree::reaches($this->root, "{$this->root}/.journal/plugins/shop/module.py"));
+        $this->assertFalse(FileTree::reaches($this->root, "{$this->root}/venv/lib/module.py"));
+        $this->assertFalse(FileTree::reaches($this->root, "{$this->root}/lib/site-packages/requests/module.py"));
+    }
 }

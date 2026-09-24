@@ -9,7 +9,7 @@ use JesseGall\CodeCommandments\Cli\State\State;
 use JesseGall\CodeCommandments\Cli\State\StateFile;
 use JesseGall\CodeCommandments\Config;
 use JesseGall\CodeCommandments\ExcludedPaths;
-use JesseGall\CodeCommandments\Language;
+use JesseGall\CodeCommandments\Support\FileTree;
 use JesseGall\CodeCommandments\Workspace;
 
 /**
@@ -87,7 +87,7 @@ final class TouchedSources
         foreach ($this->config->sourceRoots() as $relative) {
             $dir = $relative === '.' ? $home : $home . '/' . trim($relative, '/');
 
-            foreach ($this->walk($dir, $excluded) as $path) {
+            foreach (FileTree::sourcesIn($dir, $excluded) as $path) {
                 $mtime = (int) @filemtime($path);
 
                 // At or after, never strictly after: an mtime has one-second resolution, so a file
@@ -100,41 +100,6 @@ final class TouchedSources
         }
 
         return $touched;
-    }
-
-    /**
-     * Every judged file under $dir, pruning what the project excluded and every dot-directory (a
-     * `.git` is not source, and walking one costs more than the whole of the rest).
-     *
-     * @return list<string>
-     */
-    private function walk(string $dir, ExcludedPaths $excluded): array
-    {
-        if (! is_dir($dir) || $excluded->covers($dir)) {
-            return [];
-        }
-
-        $found = [];
-
-        foreach (scandir($dir) ?: [] as $entry) {
-            $path = $dir . '/' . $entry;
-
-            if ($entry === '.' || $entry === '..' || str_starts_with($entry, '.') || is_link($path)) {
-                continue;
-            }
-
-            if (is_dir($path)) {
-                $found = [...$found, ...$this->walk($path, $excluded)];
-
-                continue;
-            }
-
-            if (Language::judges($path) && ! $excluded->covers($path)) {
-                $found[] = $path;
-            }
-        }
-
-        return $found;
     }
 
     private function markAt(StateFile $file, int $when): void
