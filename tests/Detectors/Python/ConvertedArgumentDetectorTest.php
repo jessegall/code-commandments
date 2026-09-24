@@ -7,19 +7,19 @@ namespace JesseGall\CodeCommandments\Tests\Detectors\Python;
 use JesseGall\CodeCommandments\Detectors\Python\ConvertedArgumentDetector;
 use JesseGall\CodeCommandments\Py\Codebase;
 use JesseGall\CodeCommandments\Py\ExprMatch;
-use JesseGall\CodeCommandments\Py\TypeBridge;
 use JesseGall\CodeCommandments\Support\Directory;
+use JesseGall\CodeCommandments\Tests\Py\NeedsTheTypeBridge;
 use PHPUnit\Framework\TestCase;
 
 final class ConvertedArgumentDetectorTest extends TestCase
 {
+    use NeedsTheTypeBridge;
+
     private string $root;
 
     protected function setUp(): void
     {
-        if (TypeBridge::located()->isNone()) {
-            $this->markTestSkipped('there is no python3, so there is no mypy bridge to type Python with');
-        }
+        $this->requireTheTypeBridge();
 
         $this->root = sys_get_temp_dir() . '/converted-arg-' . bin2hex(random_bytes(4));
         mkdir("{$this->root}/shop", 0777, true);

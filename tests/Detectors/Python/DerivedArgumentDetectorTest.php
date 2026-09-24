@@ -7,12 +7,14 @@ namespace JesseGall\CodeCommandments\Tests\Detectors\Python;
 use JesseGall\CodeCommandments\Detectors\Python\DerivedArgumentDetector;
 use JesseGall\CodeCommandments\Py\Codebase;
 use JesseGall\CodeCommandments\Py\ExprMatch;
-use JesseGall\CodeCommandments\Py\TypeBridge;
 use JesseGall\CodeCommandments\Support\Directory;
+use JesseGall\CodeCommandments\Tests\Py\NeedsTheTypeBridge;
 use PHPUnit\Framework\TestCase;
 
 final class DerivedArgumentDetectorTest extends TestCase
 {
+    use NeedsTheTypeBridge;
+
     public function test_flags_every_call_that_hands_over_an_object_and_a_projection_of_it(): void
     {
         $this->assertSame([10, 14], $this->lines(<<<'PY'
@@ -103,9 +105,7 @@ final class DerivedArgumentDetectorTest extends TestCase
      */
     private function scanned(array $files): array
     {
-        if (TypeBridge::located()->isNone()) {
-            $this->markTestSkipped('there is no python3, so there is no mypy bridge to type Python with');
-        }
+        $this->requireTheTypeBridge();
 
         $root = sys_get_temp_dir() . '/derived-arg-' . bin2hex(random_bytes(4));
 

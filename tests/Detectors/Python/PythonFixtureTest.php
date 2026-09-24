@@ -9,6 +9,7 @@ use JesseGall\CodeCommandments\Engine;
 use JesseGall\CodeCommandments\Testing\EngineFixture;
 use JesseGall\CodeCommandments\Testing\FixtureTestCase;
 use JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage;
+use JesseGall\CodeCommandments\Tests\Py\NeedsTheTypeBridge;
 
 /**
  * The Python self-checking fixture: every Python {@see Catalog} detector over the Shop's `.py` sources,
@@ -16,10 +17,13 @@ use JesseGall\CodeCommandments\Testing\ProvesMarkerCoverage;
  */
 final class PythonFixtureTest extends FixtureTestCase
 {
+    use NeedsTheTypeBridge;
     use ProvesMarkerCoverage;
 
     protected function setUp(): void
     {
+        $this->requireTheTypeBridge();
+
         if (Catalog::python() === []) {
             $this->markTestSkipped('no Python rule ships yet — the first one enrols this fixture');
         }
