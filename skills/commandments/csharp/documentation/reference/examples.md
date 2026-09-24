@@ -82,3 +82,29 @@ public sealed class WrapCounter
     public int Count(IEnumerable<string> skus) => skus.Count(sku => !sku.StartsWith("DIG-"));
 }
 ```
+
+### csharp-negative-space-comment
+
+a comment defending the code against a reading nobody made — `// not magic, just a day`, `// deliberately not sorted` — saying what it is not instead of what it is
+
+```cs
+----------[ Bad ]----------
+
+public string Winner(int week)
+{
+    // seeded by the week, not random
+    var pick = new Random(week).Next(entrants.Count);
+
+    return entrants[pick];
+}
+
+----------[ Good ]----------
+
+public string RunnerUp(int week)
+{
+    // the same week always draws the same entrant, so a customer can check the result
+    var pick = new Random(week * 31).Next(entrants.Count);
+
+    return entrants[pick];
+}
+```

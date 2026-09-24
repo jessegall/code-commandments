@@ -1800,6 +1800,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-negative-space-comment": {
+            "title": "NegativeSpaceComment",
+            "help": "A comment defending the code against a strawman — the C# twin of the PHP and Python negative-space-comment rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/documentation",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-csharp-method": {
             "title": "DuplicateMethod",
             "help": "Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",

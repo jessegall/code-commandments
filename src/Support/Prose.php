@@ -125,15 +125,16 @@ final class Prose
 
         return '/'
             // negation + a strawman noun, in one clause, the noun ending its phrase
-            . '\b(?:not|never|no|isn\'?t|aren\'?t|nothing)\b[^.,;:]{0,24}\b(?:random|arbitrary|magic|magical|blanket|coincidence|coincidental|accident|accidental|by chance|typo|mistake|dead code|courtesy|vibes|afterthought|oversight)\b'
+            . '\b(?:not|never|no|isn\'?t|aren\'?t|nothing)\b(?:(?!—)[^.,;:]){0,24}\b(?:random|arbitrary|magic|magical|blanket|coincidence|coincidental|accident|accidental|by chance|typo|(?<!\\bnot |\\bnever |\\bcan |\\bcould |\\bmay |\\bmight |\\bmust |\\bwill |\\bwould |\\bshould |\\bto |\\bdo |\\bdoes |\\bdid )mistake|dead code|courtesy|vibes|afterthought|oversight)\b'
             . "(?=\\s*(?:[^\\w\\s]|$)|\\s+(?:{$grammar})\\b)"
             // an intent adverb defending a negation or an absence
             . '|\b(?:intentionally|deliberately)\b[^.]{0,24}\b(?:not|never|no|empty|incomplete|omitted|unused)\b'
             // a negation excused as deliberate
             . '|\b(?:not|never)\b[^.]{0,40}\bon purpose\b'
-            // pointing at an absence: a named thing that is not present here, or in this list
-            . '|\b(?:is|are|\'?s|\'?re)\s+not\s+(?:in\s+this\b|here\b)'
-            . '|\bnot\s+(?:stored|listed|included|present|defined|declared|kept|shown)\s+(?:here|in\s+this)\b'
+            // pointing at an absence: a named thing that is not present here, or in this list — not in another
+            // thing's contents ("this source's map")
+            . '|\b(?:is|are|\'?s|\'?re)\s+not\s+(?:in\s+this\b(?!\s+\w+\'s)|here\b)'
+            . '|\bnot\s+(?:stored|listed|included|present|defined|declared|kept|shown)\s+(?:here\b|in\s+this\b(?!\s+\w+\'s))'
             . '/i';
     }
 
@@ -143,7 +144,18 @@ final class Prose
      */
     public static function defendsAgainstStrawman(string $text): bool
     {
-        return preg_match(self::strawman(), $text) === 1;
+        preg_match_all(self::strawman(), $text, $matches, PREG_OFFSET_CAPTURE);
+
+        return array_any($matches[0], static fn (array $match): bool => ! self::isInConditionalClause($text, $match[1]) && ! self::isInPurposeClause($text, $match[1]));
+    }
+
+    /**
+     * Does the clause holding the text at $offset say what the code makes sure of — a `so` since the last
+     * sentence or clause break, as in "so a test cannot pass by coincidence"?
+     */
+    private static function isInPurposeClause(string $text, int $offset): bool
+    {
+        return preg_match('/\bso\b/i', self::clauseBefore($text, $offset)) === 1;
     }
 
     /**
@@ -174,18 +186,18 @@ final class Prose
      */
     private static function clauseBefore(string $text, int $offset): string
     {
-        return (string) preg_replace('/^.*[.;:!?]/s', '', substr($text, 0, $offset));
+        return (string) preg_replace('/^.*(?:[.;:!?]|—)/s', '', substr($text, 0, $offset));
     }
 
     /**
-     * Does the clause holding the text at $offset open a condition or a question about a place — an `if`,
-     * `whether`, `when`, `unless` or `where` since the last sentence or clause break?
+     * Does the clause holding the text at $offset open a condition, a place, an owner or a reason — an `if`,
+     * `whether`, `when`, `unless`, `where`, `whose` or `because` since the last sentence or clause break?
      */
     private static function isInConditionalClause(string $text, int $offset): bool
     {
         $clause = self::clauseBefore($text, $offset);
 
-        return preg_match('/\b(?:if|whether|when|unless|where)\b/i', $clause) === 1;
+        return preg_match('/\b(?:if|whether|when|unless|where|whose|because)\b/i', $clause) === 1;
     }
 
     /**
