@@ -20,7 +20,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
     private int resolved;
 
-    public const int Version = 2;
+    public const int Version = 3;
 
     /// <summary>How every type and member is written: fully qualified, `System.String` never `string`, `?` kept.</summary>
     private static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
@@ -54,6 +54,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
                 {
                     json.WriteBoolean("test", true);
                 }
+                WriteComments(json, tree.GetRoot(), model);
                 json.WritePropertyName("root");
                 WriteNode(json, tree.GetRoot(), model);
             });
@@ -80,6 +81,60 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
         output.WriteByte((byte)'\n');
     }
+
+    /// <summary>
+    /// Every comment in the file, in order: its kind (a line, a block, or a documentation comment), its text and
+    /// its span — and for a documentation comment, each `cref` it names with the symbol it resolved to.
+    /// </summary>
+    private void WriteComments(Utf8JsonWriter json, SyntaxNode root, SemanticModel model)
+    {
+        json.WriteStartArray("comments");
+
+        foreach (var trivia in root.DescendantTrivia(descendIntoTrivia: false).Where(IsComment))
+        {
+            json.WriteStartObject();
+            json.WriteString("kind", CommentKind(trivia));
+            json.WriteString("text", trivia.ToFullString());
+            json.WriteNumber("start", bytes[trivia.FullSpan.Start]);
+            json.WriteNumber("end", bytes[trivia.FullSpan.End]);
+
+            if (trivia.GetStructure() is DocumentationCommentTriviaSyntax documentation)
+            {
+                json.WriteStartArray("crefs");
+
+                foreach (var cref in documentation.DescendantNodes().OfType<CrefSyntax>().Where(cref => cref.Parent is not CrefSyntax))
+                {
+                    json.WriteStartObject();
+                    json.WriteString("text", cref.ToString());
+
+                    if (model.GetSymbolInfo(cref).Symbol is { } symbol)
+                    {
+                        json.WriteString("symbol", symbol.ToDisplayString(Declared));
+                    }
+
+                    json.WriteEndObject();
+                }
+
+                json.WriteEndArray();
+            }
+
+            json.WriteEndObject();
+        }
+
+        json.WriteEndArray();
+    }
+
+    private static bool IsComment(SyntaxTrivia trivia) => trivia.Kind() is SyntaxKind.SingleLineCommentTrivia
+        or SyntaxKind.MultiLineCommentTrivia
+        or SyntaxKind.SingleLineDocumentationCommentTrivia
+        or SyntaxKind.MultiLineDocumentationCommentTrivia;
+
+    private static string CommentKind(SyntaxTrivia trivia) => trivia.Kind() switch
+    {
+        SyntaxKind.SingleLineCommentTrivia => "line",
+        SyntaxKind.MultiLineCommentTrivia => "block",
+        _ => "doc",
+    };
 
     private void WriteNode(Utf8JsonWriter json, SyntaxNode node, SemanticModel model)
     {

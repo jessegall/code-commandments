@@ -27,12 +27,16 @@ final class ModuleFile implements ParsedModule
      */
     private ?array $parents = null;
 
+    /**
+     * @param  list<Comment>  $comments
+     */
     private function __construct(
         public readonly string $file,
         public readonly string $source,
         public readonly Node $root,
         public readonly int $errors,
         private readonly bool $test,
+        private readonly array $comments,
     ) {}
 
     /**
@@ -40,7 +44,17 @@ final class ModuleFile implements ParsedModule
      */
     public static function fromBridge(WrittenFile $written, string $file): self
     {
-        return new self($file, (string) file_get_contents($file), $written->root, $written->errors, $written->test);
+        return new self($file, (string) file_get_contents($file), $written->root, $written->errors, $written->test, $written->comments);
+    }
+
+    /**
+     * Every comment in the file, in the order it is written.
+     *
+     * @return list<Comment>
+     */
+    public function comments(): array
+    {
+        return $this->comments;
     }
 
     /**

@@ -6,15 +6,19 @@ namespace JesseGall\CodeCommandments\Cs;
 
 /**
  * One file the bridge wrote: its path with links resolved, how many syntax errors the compiler found in
- * it, whether its project is a test project, and its tree.
+ * it, whether its project is a test project, its tree, and its comments.
  */
 final readonly class WrittenFile
 {
+    /**
+     * @param  list<Comment>  $comments
+     */
     public function __construct(
         public string $path,
         public int $errors,
         public bool $test,
         public Node $root,
+        public array $comments,
     ) {}
 
     /**
@@ -22,6 +26,12 @@ final readonly class WrittenFile
      */
     public static function fromContract(array $written, Vocabulary $vocabulary): self
     {
-        return new self((string) $written['path'], (int) $written['errors'], array_key_exists('test', $written), Node::fromBridge($written['root'], $vocabulary));
+        return new self(
+            (string) $written['path'],
+            (int) $written['errors'],
+            array_key_exists('test', $written),
+            Node::fromBridge($written['root'], $vocabulary),
+            array_map(Comment::fromContract(...), $written['comments'] ?? []),
+        );
     }
 }
