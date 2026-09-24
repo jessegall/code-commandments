@@ -60,6 +60,8 @@ and every site asks for it by name.
       _Add `public bool IsShippable => Paid && !Cancelled;` to the type and write `if (order.IsShippable)` at every site._
 - [ ] Name a copy written the same way at several sites as a method on the record, and call it by that name.
       _Add `public Order Shipped() => this with { Status = OrderStatus.Shipped };` to the record and write `order.Shipped()` at every site._
+- [ ] Name a shape checked the same way in more than one place once, as a member of the type, and ask for it by name.
+      _Add a method or property that answers the check — `node.IsMemberCall(out var call)` — and use it at every site._
 
 ## Worked example
 
@@ -110,17 +112,17 @@ public bool IsReady => Paid && !OnHold && Lines > 0;
 public static string Label(Dispatchable order) => order.IsReady ? "pick" : "wait";
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/repeated-call-helper` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-repeated-guard`, `csharp-repeated-named-call`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-repeated-guard`, `csharp-repeated-named-call`, `csharp-repeated-type-guard`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

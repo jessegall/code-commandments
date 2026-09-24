@@ -1051,6 +1051,28 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this a check of a value's type — `x is Box`, `x is Box b`, `x is Box { Lid: not null }`? A bare
+     * `x is { } bound` names no type: it only checks for `null`.
+     */
+    public function isTypeCheck(): bool
+    {
+        $pattern = $this->is('IsPatternExpression') ? $this->children[1] : null;
+
+        return $this->is('IsExpression')
+            || $pattern?->is('DeclarationPattern', 'TypePattern') === true
+            || ($pattern?->is('RecursivePattern') === true && array_any($pattern->children, static fn (self $part): bool => $part->role === 'type'));
+    }
+
+    /**
+     * Is this a `&&` chain that narrows a value through two or more type checks —
+     * `node is Invocation call && call.Target is MemberAccess`?
+     */
+    public function isTypeNarrowingGuard(): bool
+    {
+        return $this->is('LogicalAndExpression') && count(array_filter($this->conjuncts(), static fn (self $conjunct): bool => $conjunct->isTypeCheck())) >= 2;
+    }
+
+    /**
      * What this compound condition asks, whatever order its conditions are written in.
      */
     public function guardFingerprint(): string

@@ -90,3 +90,52 @@ public StagedOrder Shipped() => this with { Stage = Stage.Shipped, Note = "on it
 // in OrderStages.cs
 public static StagedOrder Send(StagedOrder order) => order.Shipped();
 ```
+
+### csharp-repeated-type-guard
+
+the same chain of type checks — `node is Invocation call && call.Target is MemberAccess` — written at two or more sites, a shape with no name
+
+```cs
+----------[ Bad ]----------
+
+// in Damage.cs
+public static int ToInspect(IEnumerable<Package> arrived, int alreadyChecked)
+{
+    var total = 0;
+
+    foreach (var package in arrived)
+    {
+        total += package is Crate crate && crate.Lid is ScrewLid ? 1 : 0;
+    }
+
+    return total - alreadyChecked;
+}
+
+// in Crates.cs
+public static string Instructions(Package package)
+{
+    if (package is Crate crate && crate.Lid is ScrewLid)
+    {
+        return "use the drill";
+    }
+
+    return "lift by hand";
+}
+
+// in Palletising.cs
+public int SlotsFor(Package package)
+{
+    var needsRoom = package is Crate crate && crate.Lid is ScrewLid;
+    var slots = needsRoom ? 2 : 1;
+
+    return Math.Min(slots, slotsFree);
+}
+
+----------[ Good ]----------
+
+// in Crates.cs
+public bool IsScrewedCrate => this is Crate crate && crate.Lid is ScrewLid;
+
+// in Crates.cs
+public static string Handling(Package package) => package.IsScrewedCrate ? "use the drill" : "lift by hand";
+```
