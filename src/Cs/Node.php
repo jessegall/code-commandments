@@ -385,7 +385,16 @@ final class Node implements SyntaxNode, SyntaxExpression
             return self::isDictionary($this->children[0]->type?->name);
         }
 
-        return $this->isCall() && in_array($this->target?->name, ['TryGetValue', 'GetValueOrDefault'], true) && self::isDictionary($this->target->type);
+        return $this->isCall() && in_array($this->target?->name, ['TryGetValue', 'GetValueOrDefault'], true) && self::isDictionary($this->mapReceiverType());
+    }
+
+    /**
+     * The type of the map this call is made on — the receiver's, since `GetValueOrDefault` is an extension method
+     * whose own type is the static class declaring it — or, for a call on nothing named, the method's own type.
+     */
+    private function mapReceiverType(): ?string
+    {
+        return $this->children[0]->is('SimpleMemberAccessExpression') ? $this->children[0]->children[0]->type?->name : $this->target?->type;
     }
 
     /**
@@ -425,7 +434,7 @@ final class Node implements SyntaxNode, SyntaxExpression
         return match (true) {
             $this->is('ElementAccessExpression') => self::isStringKeyed($this->children[0]->type?->name),
             $this->isCall() && $this->target?->name === 'GetProperty' => $this->target->type === 'global::System.Text.Json.JsonElement',
-            $this->isCall() && in_array($this->target?->name, ['TryGetValue', 'GetValueOrDefault'], true) => self::isStringKeyed($this->target->type),
+            $this->isCall() && in_array($this->target?->name, ['TryGetValue', 'GetValueOrDefault'], true) => self::isStringKeyed($this->mapReceiverType()),
             default => false,
         };
     }
