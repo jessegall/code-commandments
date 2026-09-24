@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I need a private const int Retries = 3 for the retry loop in my C# Client.Send — can I put it right above Send()?",
+        "my C# record has its properties at the top but I want to add one more at the bottom next to the method that reads it, fine?",
+        "judge flagged csharp-member-after-method on a field I declared under the constructor — where should it go?"
+    ],
+    "not": [
+        "how do I await several tasks at once in C#"
+    ]
+}
