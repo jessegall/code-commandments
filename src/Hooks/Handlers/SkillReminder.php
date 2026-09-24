@@ -193,7 +193,7 @@ final class SkillReminder extends Hook implements Discipline
             }
 
             foreach ($matches as $match) {
-                $marks[] = SinMark::of($detector->sin(), $match, $changed);
+                $marks[] = SinMark::of($detector, $match, $changed);
             }
         }
 
@@ -211,7 +211,7 @@ final class SkillReminder extends Hook implements Discipline
         $found = [];
 
         foreach ($marks as $mark) {
-            $found[$mark->sin->slug()][] = $mark->found();
+            $found[$mark->sin()->slug()][] = $mark->found();
         }
 
         return $found;

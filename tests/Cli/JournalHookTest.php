@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Tests\Cli;
 
 use JesseGall\CodeCommandments\Cli\Config\ConfigFile;
+use JesseGall\CodeCommandments\Cli\Dashboard\SinsDashboard;
 use JesseGall\CodeCommandments\Cli\Hooks\JournalHook;
 use JesseGall\CodeCommandments\Cli\Input;
 use JesseGall\CodeCommandments\Cli\Scope\GitFiles;
 use JesseGall\CodeCommandments\Hooks\HookRegistry;
 use JesseGall\CodeCommandments\Tests\Concerns\TemporaryProject;
+use JesseGall\CodeCommandments\Workspace;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 
@@ -162,6 +164,9 @@ final class JournalHookTest extends TestCase
 
         try {
             $this->assertSame('sin-found', $this->answer($editing('Thing.vue'))['raise'][0]['event'] ?? null);
+
+            $dashboard = (array) json_decode((string) file_get_contents(Workspace::at($this->root)->cache(SinsDashboard::FILE)), true);
+            $this->assertNotSame([], array_filter(array_keys($dashboard['pages']), static fn (string $page): bool => str_ends_with($page, '/src/Thing.vue')), 'the sin the hook found has its page on the Sins dashboard');
 
             file_put_contents($this->root . '/src/Thing.vue', "<template>\n    <div>\n        <h1>moved down</h1>\n{$sinful}    </div>\n</template>\n");
             $this->assertArrayNotHasKey('raise', $this->answer($editing('Thing.vue')), 'a sin whose line moved is the same sin, neither found again nor repented');

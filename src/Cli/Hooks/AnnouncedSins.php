@@ -45,14 +45,13 @@ final class AnnouncedSins
     }
 
     /**
-     * The events this moment raises: sin-found for sins on changed lines not announced before, and
-     * sin-resolved for sins announced in $edited — the file the moment's tool wrote, judged whole — that it
-     * no longer holds. Any other file keeps what was announced for it.
+     * What this moment changes: found are the sins on changed lines not announced before, resolved the sins
+     * announced in $edited — the file the moment's tool wrote, judged whole — that it no longer holds. Any
+     * other file keeps what was announced for it.
      *
      * @param  list<SinMark>  $marks  every sin the judged files hold now
-     * @return list<JournalRaise>
      */
-    public function settle(string $root, ?string $edited, array $marks): array
+    public function settle(string $root, ?string $edited, array $marks): Settlement
     {
         $now = [];
 
@@ -70,17 +69,14 @@ final class AnnouncedSins
             $news = array_filter($holds, static fn (SinMark $mark, string $id): bool => $mark->touched && ! isset($before[$id]), ARRAY_FILTER_USE_BOTH);
             $kept = isset($judged[$file]) ? array_intersect_key($before, $holds) : $before;
 
-            $found = [...$found, ...array_values(array_map(static fn (SinMark $mark): string => $mark->shownFrom($root), $news))];
-            $resolved = [...$resolved, ...array_values(array_diff_key($before, $kept))];
+            $found = [...$found, ...array_values($news)];
+            $resolved += array_diff_key($before, $kept);
             $this->announced[$file] = $kept + array_map(static fn (SinMark $mark): string => $mark->shownFrom($root), $news);
         }
 
         ($this->keep)($this->announced);
 
-        return array_values(array_filter([
-            $found === [] ? null : new JournalRaise('sin-found', implode("\n", $found)),
-            $resolved === [] ? null : new JournalRaise('sin-resolved', implode("\n", $resolved)),
-        ]));
+        return new Settlement($found, $resolved);
     }
 
     /**

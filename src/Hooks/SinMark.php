@@ -5,24 +5,41 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Hooks;
 
 use JesseGall\CodeCommandments\Cli\Scope\ChangedLines;
+use JesseGall\CodeCommandments\Custom;
+use JesseGall\CodeCommandments\Detector;
+use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\Sins\Sin;
+use JesseGall\CodeCommandments\Support\ClassName;
 
 /**
- * One sin a file holds now, as a hook saw it: the rule, where it is, and whether it lies on a line the
- * working tree changed.
+ * One sin a file holds now, as a hook saw it: the rule that found it, where it is, and whether it lies on a
+ * line the working tree changed.
  */
 final readonly class SinMark
 {
     private function __construct(
-        public Sin $sin,
+        public Detector $rule,
         public Located $match,
         public bool $touched,
     ) {}
 
-    public static function of(Sin $sin, Located $match, ChangedLines $changed): self
+    public static function of(Detector $rule, Located $match, ChangedLines $changed): self
     {
-        return new self($sin, $match, $changed->covers($match->line()));
+        return new self($rule, $match, $changed->covers($match->line()));
+    }
+
+    public function sin(): Sin
+    {
+        return $this->rule->sin();
+    }
+
+    /**
+     * The sin as a run's finding — what the findings store, and the dashboard drawn from it, keep.
+     */
+    public function finding(): Finding
+    {
+        return new Finding(ClassName::short($this->rule::class), $this->sin()->slug(), $this->sin()->name(), $this->match->file(), $this->match->location(), $this->match->scope(), custom: Custom::owns($this->rule));
     }
 
     /**
@@ -30,7 +47,7 @@ final readonly class SinMark
      */
     public function id(): string
     {
-        return sha1($this->sin->name() . "\0" . $this->match->file() . "\0" . $this->flaggedText());
+        return sha1($this->sin()->name() . "\0" . $this->match->file() . "\0" . $this->flaggedText());
     }
 
     /**
@@ -38,7 +55,7 @@ final readonly class SinMark
      */
     public function found(): string
     {
-        return $this->sin->name() . ' at ' . $this->match->location();
+        return $this->sin()->name() . ' at ' . $this->match->location();
     }
 
     /**
@@ -49,7 +66,10 @@ final readonly class SinMark
         return str_replace(rtrim($root, '/') . '/', '', $this->found());
     }
 
-    private function flaggedText(): string
+    /**
+     * The flagged line as the file has it now, without its indentation.
+     */
+    public function flaggedText(): string
     {
         return trim(implode('', array_slice(file($this->match->file()) ?: [], $this->match->line() - 1, 1)));
     }

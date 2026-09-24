@@ -6,8 +6,10 @@ namespace JesseGall\CodeCommandments\Cli\Hooks;
 
 use Closure;
 use JesseGall\CodeCommandments\Cli\Command;
+use JesseGall\CodeCommandments\Cli\Dashboard\FindingsStore;
 use JesseGall\CodeCommandments\Cli\Help\Help;
 use JesseGall\CodeCommandments\Cli\Input;
+use JesseGall\CodeCommandments\Finding;
 use JesseGall\CodeCommandments\Hooks\Gate;
 use JesseGall\CodeCommandments\Hooks\Hook;
 use JesseGall\CodeCommandments\Hooks\HookEvent;
@@ -136,7 +138,8 @@ final class JournalHook implements Command
 
     /**
      * The sin-found and sin-resolved events this moment raises, settled against what was announced before —
-     * kept in the plugin's data folder when the journal names one.
+     * kept in the plugin's data folder when the journal names one, where the files judged also update the
+     * findings the Sins dashboard is drawn from.
      *
      * @param  list<SinMark>  $marks
      * @return list<JournalRaise>
@@ -144,9 +147,28 @@ final class JournalHook implements Command
     private function raised(JournalMoment $moment, string $root, array $marks): array
     {
         $data = getenv(self::DATA) ?: '';
-        $announced = $data === '' ? AnnouncedSins::forgotten() : AnnouncedSins::keptIn($data);
 
-        return $announced->settle($root, $moment->file, $marks);
+        if ($data === '') {
+            return AnnouncedSins::forgotten()->settle($root, $moment->file, $marks)->raises($root);
+        }
+
+        new FindingsStore(Workspace::at($root))->record(array_map(static fn (SinMark $mark): Finding => $mark->finding(), $marks), self::judged($moment, $marks));
+
+        return AnnouncedSins::keptIn($data)->settle($root, $moment->file, $marks)->raises($root);
+    }
+
+    /**
+     * The files this moment judged whole, by real path: the file its tool wrote, and every file a sin was
+     * found in.
+     *
+     * @param  list<SinMark>  $marks
+     * @return array<string, true>
+     */
+    private static function judged(JournalMoment $moment, array $marks): array
+    {
+        $files = array_filter([$moment->file, ...array_map(static fn (SinMark $mark): string => $mark->match->file(), $marks)]);
+
+        return array_fill_keys(array_map(static fn (string $file): string => realpath($file) ?: $file, $files), true);
     }
 
     /**
