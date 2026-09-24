@@ -1761,6 +1761,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-namespace-dependency": {
+            "title": "NamespaceDependency",
+            "help": "A reference out of a declared layer into a namespace it did not declare it may use — the twin of the backend's and Python's namespace-dependency rules, over the namespaces the compiler resolved.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/dependency-direction",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-archaeology-comment": {
             "title": "ArchaeologyComment",
             "help": "A comment narrating the code's history — the C# twin of the PHP and Python archaeology-comment rules, read by the one shared reading of prose, narratesHistory.",

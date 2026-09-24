@@ -52,7 +52,7 @@ final class NamespaceGraphTest extends TestCase
 
     public function test_reads_which_namespace_references_which(): void
     {
-        $this->assertSame(['global::Shop.Orders' => ['global::Shop.Pricing']], $this->graph()->arrows()->references());
+        $this->assertSame(['Shop.Orders' => ['Shop.Pricing']], $this->graph()->arrows()->references());
     }
 
     public function test_every_arrow_is_named_where_it_is_written(): void
@@ -60,7 +60,7 @@ final class NamespaceGraphTest extends TestCase
         $arrows = $this->graph()->arrows()->all;
 
         $this->assertNotEmpty($arrows);
-        $this->assertTrue(array_all($arrows, static fn (DependencyArrow $arrow): bool => $arrow->from === 'global::Shop.Orders' && $arrow->to === 'global::Shop.Pricing'));
+        $this->assertTrue(array_all($arrows, static fn (DependencyArrow $arrow): bool => $arrow->from === 'Shop.Orders' && $arrow->to === 'Shop.Pricing'));
         $this->assertContains(18, array_map(static fn (DependencyArrow $arrow): int => $arrow->at->line(), $arrows));
     }
 

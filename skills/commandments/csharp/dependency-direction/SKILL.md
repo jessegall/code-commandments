@@ -60,6 +60,8 @@ behind an interface the lower layer owns and the upper layer implements.
 
 - [ ] Keep references between the project's namespaces pointing one way; two namespaces that use each other are a cycle.
       _Cut the thinner direction: move what both need into the lower namespace, pass it in from above, or invert it behind an interface the lower one owns._
+- [ ] A declared layer may only use the namespaces it declared in its `mayUse` — down the stack, never back up or sideways.
+      _Move what both need down into the lower layer, pass it in from above, or invert it behind an interface the lower layer owns — and if the declaration is what is wrong, say so rather than editing it quietly._
 
 ## Worked example
 
@@ -88,14 +90,17 @@ public int Total(Promotion promotion)
 public bool Covers(Shop.Rewards.Voucher voucher) => balance >= voucher.Cost;
 ```
 
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/dependency-direction` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-namespace-cycle`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-namespace-cycle`, `csharp-namespace-dependency`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -1341,6 +1341,17 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The name of the namespace this declares, as C# code writes it — `Shop.Orders`, without the compiler's
+     * `global::` qualifier.
+     */
+    public function namespaceName(): string
+    {
+        $symbol = (string) $this->symbol;
+
+        return str_starts_with($symbol, 'global::') ? substr($symbol, strlen('global::')) : $symbol;
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

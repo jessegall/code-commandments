@@ -65,7 +65,7 @@ final class NamespaceGraph
      */
     private function walk(Node $node, string $namespace, ModuleFile $module): void
     {
-        $here = $node->is('NamespaceDeclaration', 'FileScopedNamespaceDeclaration') ? (string) $node->symbol : $namespace;
+        $here = $node->is('NamespaceDeclaration', 'FileScopedNamespaceDeclaration') ? $node->namespaceName() : $namespace;
 
         foreach ($here === '' ? [] : $this->reachedFrom($node) as $home) {
             if ($home !== $here) {
@@ -98,6 +98,6 @@ final class NamespaceGraph
     {
         $declaration = array_values(array_filter($type->module->ancestorsOf($type->node), static fn (Node $node): bool => $node->is('NamespaceDeclaration', 'FileScopedNamespaceDeclaration')))[0] ?? null;
 
-        return (string) $declaration?->symbol;
+        return (string) $declaration?->namespaceName();
     }
 }
