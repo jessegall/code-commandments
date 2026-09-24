@@ -349,6 +349,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\StringMirrorsEnum::class,
         // Sins\CSharp\SubjectLadder::class,
         // Sins\CSharp\SwallowedException::class,
+        // Sins\CSharp\TypeSwitch::class,
         // Sins\CSharp\WrappingWithoutCause::class,
     );
 };

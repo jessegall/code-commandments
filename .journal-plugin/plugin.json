@@ -2060,6 +2060,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-type-switch": {
+            "title": "TypeSwitch",
+            "help": "A switch whose cases ask which of two or more of the codebase's own types a value is — the C# twin of the PHP and Python type-switch rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/tell-dont-ask",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-assembled-template": {
             "title": "AssembledTemplate",
             "help": "Three or more lines written right there, two of them fixed text, joined with a newline — or written one `AppendLine` at a time on one builder, C#'s own way of taking a template apart: the C# twin of the PHP and Python assembled-template rules.",

@@ -46,6 +46,11 @@ final class Codebase implements ModuleCodebase
     private ?array $records = null;
 
     /**
+     * @var array<string, int>|null  every type this codebase declares, by symbol
+     */
+    private ?array $types = null;
+
+    /**
      * @param  list<ModuleFile>  $modules
      */
     private function __construct(private readonly array $modules) {}
@@ -324,6 +329,16 @@ final class Codebase implements ModuleCodebase
             1,
             0,
         );
+    }
+
+    /**
+     * Does this codebase declare the type $symbol — a class, record, struct, interface or enum of its own?
+     */
+    public function declaresType(string $symbol): bool
+    {
+        $this->types ??= array_flip(array_map(static fn (NodeMatch $type): string => (string) $type->node->symbol, $this->whereType()->get()));
+
+        return isset($this->types[$symbol]);
     }
 
     /**

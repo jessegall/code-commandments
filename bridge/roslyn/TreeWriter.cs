@@ -280,6 +280,12 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
         }
 
+        if (node is TypeSyntax tested && tested.Parent is DeclarationPatternSyntax or TypePatternSyntax or RecursivePatternSyntax && model.GetTypeInfo(tested).Type is { } testedType and not IErrorTypeSymbol)
+        {
+            json.WriteString("type", testedType.ToDisplayString(Qualified));
+            json.WriteBoolean("nullable", false);
+        }
+
         if (node is ParameterSyntax declaration && model.GetDeclaredSymbol(declaration) is IParameterSymbol declaredParameter)
         {
             json.WriteString("type", declaredParameter.Type.ToDisplayString(Qualified));

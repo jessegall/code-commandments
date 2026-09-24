@@ -1170,6 +1170,69 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The types this `switch` asks its subject to be, one per case that tests a type — `Circle` and `Square` in
+     * `shape switch { Circle c => …, Square s => … }` — as the compiler resolved them.
+     *
+     * @return list<string>
+     */
+    public function switchedTypes(): array
+    {
+        $patterns = match (true) {
+            $this->is('SwitchExpression') => array_map(static fn (self $arm): self => $arm->children[0], array_slice($this->children, 1)),
+            $this->is('SwitchStatement') => array_map(
+                static fn (self $label): self => $label->children[0],
+                array_filter(array_merge([], ...array_map(static fn (self $section): array => $section->children, array_slice($this->children, 1))), static fn (self $child): bool => $child->is('CasePatternSwitchLabel', 'CaseSwitchLabel')),
+            ),
+            default => [],
+        };
+        $tested = array_filter($patterns, static fn (self $pattern): bool => $pattern->is('DeclarationPattern', 'TypePattern', 'RecursivePattern'));
+        $types = array_merge([], ...array_map(static fn (self $pattern): array => array_filter($pattern->children, static fn (self $part): bool => $part->role === 'type' && $part->type !== null), $tested));
+        $named = array_filter($patterns, static fn (self $label): bool => $label->isTypeName());
+
+        return array_values(array_map(static fn (self $type): string => (string) $type->type?->name, [...$types, ...$named]));
+    }
+
+    /**
+     * The type of the value this `switch` decides on, as the compiler resolved it, nullability aside.
+     */
+    public function switchedSubjectType(): string
+    {
+        return rtrim((string) $this->children[0]->type?->name, '?');
+    }
+
+    /**
+     * Is every type this switch tests declared inside the type it switches on — `ListingResult.Corrected`,
+     * `ListingResult.Skipped` — a closed union written as one type, which is meant to be consumed by switching
+     * over its cases, as an enum is?
+     */
+    public function isSwitchOverOwnCases(): bool
+    {
+        $subject = $this->switchedSubjectType();
+
+        return $this->switchedTypes() !== [] && array_all($this->switchedTypes(), static fn (string $case): bool => str_starts_with($case, $subject . '.'));
+    }
+
+    /**
+     * Does every arm of this switch expression build a new object — a mapper turning each type into another,
+     * which belongs with the code that owns the type it builds, not on the types it reads?
+     */
+    public function isTranslatingEveryArm(): bool
+    {
+        $answers = array_map(static fn (self $arm): self => array_last($arm->children)->withoutParentheses(), array_filter(array_slice($this->children, 1), static fn (self $arm): bool => ! $arm->children[0]->is('DiscardPattern')));
+
+        return $this->is('SwitchExpression') && $answers !== [] && array_all($answers, static fn (self $answer): bool => $answer->is('ObjectCreationExpression', 'ImplicitObjectCreationExpression'));
+    }
+
+    /**
+     * Is this a `case` label's value that names a type — `Circle` in `case Circle:`? A label's value must be a
+     * constant, so a name there that is none can only be a type.
+     */
+    private function isTypeName(): bool
+    {
+        return $this->is('IdentifierName', 'QualifiedName') && ! $this->constant && $this->type !== null;
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool
