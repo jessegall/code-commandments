@@ -690,6 +690,69 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The lines this `string.Join` puts on separate lines — its elements, written right there as an array, a
+     * collection expression or its `params`, when the separator is a newline (`"\n"`, `"\r\n"`,
+     * `Environment.NewLine`); none for any other call.
+     *
+     * @return list<self>
+     */
+    public function joinedLines(): array
+    {
+        $arguments = $this->arguments();
+
+        if (! $this->isCall() || $this->target?->type !== self::STRING || $this->target->name !== 'Join' || ! ($arguments[0] ?? null)?->isNewline()) {
+            return [];
+        }
+
+        return count($arguments) === 2 ? $arguments[1]->withoutParentheses()->writtenElements() : array_slice($arguments, 1);
+    }
+
+    /**
+     * Is this a line break — `"\n"`, `"\r\n"`, or `Environment.NewLine`?
+     */
+    private function isNewline(): bool
+    {
+        return ($this->is('StringLiteralExpression') && in_array($this->text, ["\n", "\r\n"], true))
+            || ($this->is('SimpleMemberAccessExpression') && $this->children[1]->name === 'NewLine' && $this->type?->name === self::STRING);
+    }
+
+    /**
+     * Is this statement `builder.AppendLine(…)` on a `StringBuilder` — one line of a text written line by line?
+     */
+    public function isAppendLine(): bool
+    {
+        $call = $this->is('ExpressionStatement') ? $this->children[0] : null;
+
+        return $call?->isCall() === true && $call->target?->name === 'AppendLine' && $call->target->type === 'global::System.Text.StringBuilder';
+    }
+
+    /**
+     * The builder this `AppendLine` statement writes to, as a fingerprint — so a run on one builder is told from
+     * a run that switches to another.
+     */
+    public function appendReceiver(): string
+    {
+        return StructuralHash::ofExpression($this->children[0]->children[0]->children[0]);
+    }
+
+    /**
+     * Is the line this `AppendLine` statement writes text written into the source?
+     */
+    public function isAppendingFixedText(): bool
+    {
+        return ($this->children[0]->arguments()[0] ?? null)?->isFixedText() === true;
+    }
+
+    /**
+     * Is this text written into the source — a string literal, or an interpolated string — rather than a value
+     * worked out?
+     */
+    public function isFixedText(): bool
+    {
+        return $this->is('StringLiteralExpression', 'InterpolatedStringExpression');
+    }
+
+    /**
      * The elements of the collection this writes out — an array, a collection initializer or a collection
      * expression, through a cast — none for anything else.
      *

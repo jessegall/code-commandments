@@ -469,6 +469,35 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this the first statement of a run of $lines or more `AppendLine` statements on one builder, $fixed of
+     * them writing text written into the source — a template taken apart and written one line at a time?
+     */
+    public function startsAppendLineRun(int $lines, int $fixed): bool
+    {
+        if (! $this->node->isAppendLine()) {
+            return false;
+        }
+
+        return $this->module->parentOf($this->node)->isSomeAnd(function (Node $block) use ($lines, $fixed): bool {
+            $at = (int) array_search($this->node, $block->children, true);
+            $receiver = $this->node->appendReceiver();
+            $onSame = static fn (?Node $statement): bool => $statement?->isAppendLine() === true && $statement->appendReceiver() === $receiver;
+
+            if ($onSame($block->children[$at - 1] ?? null)) {
+                return false;
+            }
+
+            $run = [];
+
+            for ($i = $at; $onSame($block->children[$i] ?? null); $i++) {
+                $run[] = $block->children[$i];
+            }
+
+            return count($run) >= $lines && count(array_filter($run, static fn (Node $statement): bool => $statement->isAppendingFixedText())) >= $fixed;
+        });
+    }
+
+    /**
      * Is this expression what its member hands back — the value of a `return`, or of an expression body?
      */
     public function isReturned(): bool

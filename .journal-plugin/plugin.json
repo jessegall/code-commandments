@@ -2060,6 +2060,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-assembled-template": {
+            "title": "AssembledTemplate",
+            "help": "Three or more lines written right there, two of them fixed text, joined with a newline — or written one `AppendLine` at a time on one builder, C#'s own way of taking a template apart: the C# twin of the PHP and Python assembled-template rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/templates",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-placeholder-filled-data": {
             "title": "PlaceholderFilledData",
             "help": "A record the codebase declares, built with a blank string in a required `string` slot — the C# twin of the PHP and Python placeholder-filled-data rules.",

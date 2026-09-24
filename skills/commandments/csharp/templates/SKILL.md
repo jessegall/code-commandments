@@ -54,6 +54,52 @@ The fixed shape is visible, and the computed part is one hole in it.
 For a one-line string with holes, `$"{name} ({count})"` shows the shape where `name + " (" + count + ")"`
 assembles it. The principle is the same: the literal in one piece, the values sitting in it.
 
+## Rules
+
+- [ ] Write a multi-line text as a raw string literal that shows its output, not as lines joined with a newline.
+      _Replace the join with `$"""` … `"""`, the lines written as they will appear and the values in `{placeholders}`._
+
+## Worked example
+
+### csharp-assembled-template
+
+`string.Join("\n", new[] { "public class X", "{", "}" })` or `sb.AppendLine("…")` line after line — a multi-line text built from line fragments, so its shape cannot be seen in the source
+
+```cs
+----------[ Bad ]----------
+
+public static string Body(string name, string tracking)
+{
+    var body = new StringBuilder();
+
+    body.AppendLine($"Hi {name},");
+    body.AppendLine();
+    body.AppendLine("Your order is on its way.");
+    body.AppendLine($"Track it with code {tracking}.");
+
+    return body.ToString();
+}
+
+----------[ Good ]----------
+
+public static string Written(string name, string tracking) => $"""
+    Hi {name},
+
+    Your order is on its way.
+    Track it with code {tracking}.
+    """;
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/templates` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-assembled-template`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/templates`](../../backend/templates/SKILL.md) — the same discipline with PHP heredocs.
