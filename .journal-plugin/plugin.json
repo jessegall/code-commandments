@@ -3,14 +3,15 @@
     "version": "1.41.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
-    "journal": "2.119.0",
+    "journal": "2.122.0",
     "events": {
         "sin-found": {
             "title": "Sin found",
             "tone": "warn",
             "card": {
                 "label": "Sin found",
-                "icon": "warn"
+                "icon": "warn",
+                "collapsed": true
             }
         },
         "sin-resolved": {
@@ -18,7 +19,8 @@
             "tone": "good",
             "card": {
                 "label": "Sin repented",
-                "icon": "check"
+                "icon": "check",
+                "collapsed": true
             }
         }
     },

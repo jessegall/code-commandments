@@ -265,4 +265,12 @@ Use the most specific available agent type whose declared purpose matches the as
 
 Everything a tool returns stays in the context for good and is paid for on every turn after it. Search before you read, read the range you need, and cap output with grep, head or tail. Read a whole file only when you need all of it.
 
+**L4 — Follow-up work goes back to the subagent that did the first part; never start a fresh one on work another already holds.**
+
+A subagent that drew a design, wrote the code or ran the research keeps what it learned. When the user asks for a change to its work, continue that subagent with a message rather than dispatching a new one that has to rediscover everything; start fresh only when the earlier one is gone or the new work is unrelated.
+
+**L5 — Every subagent dispatch names the agent: a human name, a little quirky, that fits its role.**
+
+A name is how the user and the chat tell subagents apart and how they are messaged later; an id or a task line is not a name. Start the dispatch's description with the name, a colon, then the task, such as "Dr. Einstein: profile the slow hooks" or "Coco Rams: draw the plan card". A designer can borrow from famous designers, a researcher from famous scientists, mixed up for fun.
+
 <!-- END: agent-journal law -->
