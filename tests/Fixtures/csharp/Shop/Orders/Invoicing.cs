@@ -4,6 +4,7 @@ namespace Shop.Orders;
 // in that condition, so the billing sits a level deeper than the loop needs.
 public sealed class Invoicing
 {
+    // @sin FeatureEnvy
     public long Bill(Order order, List<string> journal)
     {
         long billed = 0;
@@ -22,6 +23,7 @@ public sealed class Invoicing
     }
 
     // @fixed LoopWrappedInIf
+    // @sin FeatureEnvy
     public long BillFlat(Order order, List<string> journal)
     {
         long billed = 0;
@@ -41,6 +43,7 @@ public sealed class Invoicing
     }
 
     // @righteous LoopWrappedInIf
+    // @sin FeatureEnvy
     public string? FirstBackordered(Order order)
     {
         string? found = null;

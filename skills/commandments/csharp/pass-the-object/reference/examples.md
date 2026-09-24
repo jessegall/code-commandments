@@ -92,5 +92,5 @@ public void Reserve(FloorPlan plan, string aisleCode, int slots)
 
 ----------[ Good ]----------
 
-public void ReserveIn(StorageAisle aisle, int slots) => aisle.FreeSlots -= slots;
+public void ReserveIn(StorageAisle aisle, int slots) => aisle.Reserve(slots);
 ```

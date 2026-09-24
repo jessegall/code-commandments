@@ -5,6 +5,8 @@ public sealed class StorageAisle
     public string Code { get; init; } = "";
 
     public int FreeSlots { get; set; }
+
+    public void Reserve(int slots) => FreeSlots -= slots;
 }
 
 public sealed class FloorPlan
@@ -37,5 +39,5 @@ public sealed class Slotting
     }
 
     // @fixed ParamResolvedFromParam
-    public void ReserveIn(StorageAisle aisle, int slots) => aisle.FreeSlots -= slots;
+    public void ReserveIn(StorageAisle aisle, int slots) => aisle.Reserve(slots);
 }

@@ -36,5 +36,6 @@ public static class Approvals
     }
 
     // @fixed NonCountingFor
+    // @sin FeatureEnvy
     public static List<string> Signed(Approval first) => first.Chain().Select(step => step.Approver).ToList();
 }

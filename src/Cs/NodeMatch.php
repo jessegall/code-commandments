@@ -883,4 +883,73 @@ class NodeMatch implements Located
             && ! $body->isResolverReturning($local)
             && $this->module->isOnlyReadThrough($root, $reads);
     }
+
+    /**
+     * The parameter this method envies — the one other object it loops the collection of or writes the members
+     * of, reaching into it more than into its own state — none when it envies nothing. A type that may fill a
+     * contract is a polymorphic component meant to act on other types, a method that builds anything is a
+     * mapper, a parameter of the method's own type is its own business, and a loop handing each element to one
+     * of the method's own collaborators is orchestration.
+     *
+     * @return Option<string>
+     */
+    public function enviedParameter(Codebase $codebase): Option
+    {
+        $host = $this->enclosingType();
+
+        if ($host->isNoneOr(static fn (Node $type): bool => $type->mayFillAContract()) || $this->constructs()) {
+            return Option::none();
+        }
+
+        $own = $host->unwrap()->stateNames();
+        $hostType = (string) $host->unwrap()->symbol;
+        $owned = array_map(static fn (Node $parameter): string => (string) $parameter->name, array_filter($this->node->parameters(), static fn (Node $parameter): bool => $parameter->type !== null
+            && ! $parameter->type->isValueType
+            && rtrim($parameter->type->name, '?') !== $hostType
+            && $codebase->declaresType(rtrim($parameter->type->name, '?'))));
+        $reaches = $this->node->memberReachesOn($owned);
+        $ownReaches = array_sum(array_map(static fn (Node $expression): int => count($expression->ownStateReferences($own)), $this->node->outermostExpressions()));
+
+        if (count($reaches) !== 1 || reset($reaches) <= $ownReaches) {
+            return Option::none(); // two envied objects is orchestration; no more reaches than its own is not envy
+        }
+
+        $envied = (string) array_key_first($reaches);
+        $loops = $this->node->loopsOver($envied);
+        $mutates = $this->node->writesMemberOf($envied);
+        $iterates = $loops !== [] || $this->node->queriesCollectionOf($envied);
+
+        if ($iterates && ! $mutates && $loops !== [] && array_all($loops, fn (Node $loop) => $this->handsElementOn($loop, $own))) {
+            return Option::none();
+        }
+
+        return $iterates || $mutates ? Option::some($envied) : Option::none();
+    }
+
+    /**
+     * Does this build anything — `new` of any type, named or anonymous? Construction is a mapper's or a factory's
+     * work, whose job is to read another object; the PHP twin reads it the same way.
+     */
+    private function constructs(): bool
+    {
+        $parts = array_merge([], ...array_map(static fn (Node $expression): array => $expression->flatten(), $this->node->outermostExpressions()));
+
+        return array_any($parts, static fn (Node $node): bool => $node->is('ObjectCreationExpression', 'ImplicitObjectCreationExpression', 'AnonymousObjectCreationExpression'));
+    }
+
+    /**
+     * Does $loop hand its element to one of the collaborators this type holds under $own — `printer.Print(line)` —
+     * the orchestrator doing its own job? Calling this method again is recursion, which belongs with the collection.
+     *
+     * @param  list<string>  $own
+     */
+    private function handsElementOn(Node $loop, array $own): bool
+    {
+        $calls = array_filter(array_merge([], ...array_map(static fn (Node $expression): array => $expression->flatten(), $loop->outermostExpressions())), static fn (Node $node): bool => $node->isCall());
+
+        return array_any($calls, fn (Node $call): bool => $call->children[0]->is('SimpleMemberAccessExpression')
+            && in_array($call->children[0]->children[0]->memberName(), $own, true)
+            && $call->calledName() !== $this->node->name
+            && array_any($call->arguments(), static fn (Node $argument): bool => $argument->is('IdentifierName') && $argument->name === $loop->name));
+    }
 }

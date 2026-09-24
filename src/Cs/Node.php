@@ -1564,6 +1564,71 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * May this type fill a contract — does it name a base class or an interface, is it `partial` (another part,
+     * perhaps generated, may name one), or does one of its members implement or override one? Then it is a
+     * polymorphic component, a pipe or a handler or a strategy, whose behaviour is meant to act on other types.
+     */
+    public function mayFillAContract(): bool
+    {
+        return $this->hasModifier('partial')
+            || array_any($this->children, static fn (self $child): bool => $child->is('BaseList') || ($child->role === 'member' && $child->inherited));
+    }
+
+    /**
+     * Every `foreach` in this code over a collection $name holds — `foreach (var line in order.Lines)`.
+     *
+     * @return list<self>
+     */
+    public function loopsOver(string $name): array
+    {
+        return array_values(array_filter($this->descendants(), static fn (self $node): bool => $node->is('ForEachStatement') && ($node->expressions()[0] ?? null)?->chainRoot()?->name === $name));
+    }
+
+    /**
+     * Does this code query a collection $name holds from outside — a LINQ call such as `order.Lines.Sum(…)` on it?
+     */
+    public function queriesCollectionOf(string $name): bool
+    {
+        return array_any($this->expressionParts(), static fn (self $call): bool => $call->isCall()
+            && $call->target?->type === 'global::System.Linq.Enumerable'
+            && $call->children[0]->is('SimpleMemberAccessExpression')
+            && $call->children[0]->children[0]->chainRoot()?->name === $name);
+    }
+
+    /**
+     * Does this code write one of $name's members — `order.Status = …`, `order.Total += …`, `order.Strikes++`?
+     */
+    public function writesMemberOf(string $name): bool
+    {
+        return array_any($this->expressionParts(), static fn (self $write): bool => $write->isWrite()
+            && $write->children[0]->is('SimpleMemberAccessExpression')
+            && $write->children[0]->chainRoot()?->name === $name);
+    }
+
+    /**
+     * How often this code reads a member of each of $names — `order.Lines` counts once for `order`.
+     *
+     * @param  list<string>  $names
+     * @return array<string, int>
+     */
+    public function memberReachesOn(array $names): array
+    {
+        $reached = array_filter($this->expressionParts(), static fn (self $read): bool => $read->is('SimpleMemberAccessExpression') && $read->children[0]->is('IdentifierName') && in_array($read->children[0]->name, $names, true));
+
+        return array_count_values(array_map(static fn (self $read): string => (string) $read->children[0]->name, $reached));
+    }
+
+    /**
+     * Every expression in this code, however deep — its statements' expressions and theirs.
+     *
+     * @return list<self>
+     */
+    private function expressionParts(): array
+    {
+        return array_merge([], ...array_map(static fn (self $expression): array => $expression->flatten(), $this->outermostExpressions()));
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

@@ -60,48 +60,48 @@ Tell instead: give the base type an abstract member — `shape.Area()` — and l
 
 ## Rules
 
+- [ ] Move the behaviour onto the object whose data it works on; ask it (`order.HeaviestLine()`), don't reach through it.
+      _Move the method onto the envied type and call it there; keep only the orchestration here._
 - [ ] Give the base type a member each type answers, and call it; don't switch on which type a value is.
       _Declare `public abstract double Area();` on `Shape`, implement it on `Circle` and `Square`, and write `shape.Area()`._
 
 ## Worked example
 
-### csharp-type-switch
+### csharp-feature-envy
 
-`shape switch { Circle c => …, Square s => … }` — asking which of your own types a value is, to decide what to do with it
+a method that loops another object's collection or writes its members, reaching into it more than into its own state — behaviour exiled from the object it works on
 
 ```cs
 ----------[ Bad ]----------
 
-public static string Label(Promotion promotion) => promotion switch
+public int Weigh(Tote tote)
 {
-    PercentOff p => $"{p.Percent}% off",
-    AmountOff a => $"{a.Amount / 100m:C} off",
-    _ => "",
-};
+    var grams = 0;
+
+    foreach (var item in tote.Items)
+    {
+        grams += item.Grams;
+    }
+
+    return grams;
+}
 
 ----------[ Good ]----------
 
-// in Promotions.cs
-public abstract int Discount(int cents);
-
-// in Promotions.cs
-public override int Discount(int cents) => cents * Percent / 100;
-
-// in Promotions.cs
-public override int Discount(int cents) => Math.Min(Amount, cents);
-
-// in Promotions.cs
-public static int Pay(Promotion promotion, int cents) => cents - promotion.Discount(cents);
+public int TotalGrams() => Items.Sum(item => item.Grams);
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/tell-dont-ask` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-type-switch`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-feature-envy`, `csharp-type-switch`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -6,6 +6,7 @@ public enum RefundReason { Damaged, Late, Changed }
 // deciding each one — the per-line rule sits four levels down.
 public sealed class Refunds
 {
+    // @sin FeatureEnvy
     public long Amount(Order order, bool paid, RefundReason reason)
     {
         long cents = 0;

@@ -2203,6 +2203,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-feature-envy": {
+            "title": "FeatureEnvy",
+            "help": "Exiled behaviour — the twin of the backend's and Python's feature-envy rules, decided by enviedParameter.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/tell-dont-ask",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-type-switch": {
             "title": "TypeSwitch",
             "help": "A switch whose cases ask which of two or more of the codebase's own types a value is — the C# twin of the PHP and Python type-switch rules.",
