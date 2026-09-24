@@ -131,7 +131,7 @@ final class Codebase implements ModuleCodebase
      */
     public function whereType(): Query
     {
-        return $this->whereNode(static fn (Node $node): bool => $node->role === 'member' && str_ends_with($node->kind, 'Declaration') && self::isTypeKind($node->kind));
+        return $this->whereNode(static fn (Node $node): bool => $node->isTypeDeclaration());
     }
 
     /**
@@ -178,11 +178,6 @@ final class Codebase implements ModuleCodebase
     public function whereExpression(Closure $select): Query
     {
         return new Query($this->expressionPairs(...), $select);
-    }
-
-    private static function isTypeKind(string $kind): bool
-    {
-        return in_array($kind, ['ClassDeclaration', 'RecordDeclaration', 'RecordStructDeclaration', 'StructDeclaration', 'InterfaceDeclaration', 'EnumDeclaration'], true);
     }
 
     /**

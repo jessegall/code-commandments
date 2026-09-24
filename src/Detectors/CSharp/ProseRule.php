@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Detectors\CSharp;
 
 use JesseGall\CodeCommandments\Cs\Codebase;
-use JesseGall\CodeCommandments\Cs\Comment;
 use JesseGall\CodeCommandments\Cs\CommentMatch;
 use JesseGall\CodeCommandments\CSharp\Detector;
 
@@ -16,9 +15,9 @@ use JesseGall\CodeCommandments\CSharp\Detector;
 abstract class ProseRule implements Detector
 {
     /**
-     * Does $comment commit the sin this rule is about?
+     * Does $found — a comment, and the code it documents — commit the sin this rule is about?
      */
-    abstract protected function isSinful(Comment $comment): bool;
+    abstract protected function isSinful(CommentMatch $found): bool;
 
     public function find(Codebase $codebase): array
     {
@@ -26,8 +25,10 @@ abstract class ProseRule implements Detector
 
         foreach ($codebase->modules() as $module) {
             foreach ($module->comments() as $comment) {
-                if ($this->isSinful($comment)) {
-                    $found[] = new CommentMatch($comment, $module);
+                $match = new CommentMatch($comment, $module);
+
+                if ($this->isSinful($match)) {
+                    $found[] = $match;
                 }
             }
         }

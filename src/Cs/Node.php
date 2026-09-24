@@ -1318,6 +1318,14 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this the declaration of a type — a class, record, struct, interface or enum?
+     */
+    public function isTypeDeclaration(): bool
+    {
+        return $this->role === 'member' && $this->is('ClassDeclaration', 'RecordDeclaration', 'RecordStructDeclaration', 'StructDeclaration', 'InterfaceDeclaration', 'EnumDeclaration');
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

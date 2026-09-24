@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Detectors\CSharp;
 
-use JesseGall\CodeCommandments\Cs\Comment;
+use JesseGall\CodeCommandments\Cs\CommentMatch;
 use JesseGall\CodeCommandments\Sins\CSharp\ArchaeologyComment;
 use JesseGall\CodeCommandments\Sins\Sin;
 use JesseGall\CodeCommandments\Support\Prose;
@@ -20,8 +20,8 @@ final class ArchaeologyCommentDetector extends ProseRule
         return new ArchaeologyComment();
     }
 
-    protected function isSinful(Comment $comment): bool
+    protected function isSinful(CommentMatch $found): bool
     {
-        return Prose::narratesHistory($comment->prose());
+        return Prose::narratesHistory($found->comment->prose());
     }
 }
