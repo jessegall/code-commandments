@@ -16,8 +16,8 @@ final class VocabularyTest extends TestCase
     {
         $vocabulary = new Vocabulary();
 
-        $this->assertSame($vocabulary->type('global::System.String', true), $vocabulary->type('global::System.String', true));
-        $this->assertNotSame($vocabulary->type('global::System.String', true), $vocabulary->type('global::System.String', false));
+        $this->assertSame($vocabulary->type('global::System.String', true, false), $vocabulary->type('global::System.String', true, false));
+        $this->assertNotSame($vocabulary->type('global::System.String', true, false), $vocabulary->type('global::System.String', false, false));
     }
 
     public function test_a_target_called_twice_is_one_instance(): void

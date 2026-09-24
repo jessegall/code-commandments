@@ -49,9 +49,9 @@ final class Vocabulary
     /**
      * @param  list<string>  $inner
      */
-    public function type(string $name, bool $nullable, array $inner = []): ResolvedType
+    public function type(string $name, bool $nullable, bool $valueType, array $inner = []): ResolvedType
     {
-        return $this->types[($nullable ? '?' : '') . $name] ??= new ResolvedType($this->word($name), $nullable, $this->words($inner));
+        return $this->types[($nullable ? '?' : '') . $name] ??= new ResolvedType($this->word($name), $nullable, $valueType, $this->words($inner));
     }
 
     /**

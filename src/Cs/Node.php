@@ -112,7 +112,7 @@ final class Node implements SyntaxNode, SyntaxExpression
             text: $written['text'] ?? null,
             operator: $vocabulary->maybe($written['operator'] ?? null),
             modifiers: $vocabulary->words($written['modifiers'] ?? []),
-            type: isset($written['type']) ? $vocabulary->type($written['type'], $written['nullable'], $written['inner'] ?? []) : null,
+            type: isset($written['type']) ? $vocabulary->type($written['type'], $written['nullable'], array_key_exists('value', $written), $written['inner'] ?? []) : null,
             target: is_array($target) ? $vocabulary->target($target['type'], $target['name'], $target['parameters'] ?? []) : null,
             symbol: $vocabulary->maybe($written['symbol'] ?? null),
             inherited: array_key_exists('inherited', $written),
@@ -1349,6 +1349,68 @@ final class Node implements SyntaxNode, SyntaxExpression
         $symbol = (string) $this->symbol;
 
         return str_starts_with($symbol, 'global::') ? substr($symbol, strlen('global::')) : $symbol;
+    }
+
+    /**
+     * The conversion this call hands each scalar parameter of the method it calls, by position — a cast to a
+     * scalar type, `X.Parse(…)`, `Convert.ToX(…)` or `.ToString()` written as the whole argument. None for a
+     * call that names its arguments, whose positions are not the parameters'.
+     *
+     * @return array<int, string>
+     */
+    public function scalarConversions(): array
+    {
+        $list = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('ArgumentList')))[0] ?? null;
+
+        if ($this->target === null || $list === null || array_any($list->children, static fn (self $argument): bool => array_any($argument->children, static fn (self $part): bool => $part->is('NameColon')))) {
+            return [];
+        }
+
+        $parameters = $this->target->parameters;
+        $scalar = array_filter($this->arguments(), static fn (self $argument, int $position): bool => in_array($parameters[$position] ?? null, self::SCALARS, true), ARRAY_FILTER_USE_BOTH);
+
+        return array_filter(array_map(static fn (self $argument): ?string => $argument->conversion(), $scalar), static fn (?string $conversion): bool => $conversion !== null);
+    }
+
+    /**
+     * The conversion this expression is, when it is one — a cast to a scalar type, `X.Parse(…)` on a scalar
+     * type, `Convert.ToX(…)`, or a value's `.ToString()` — null when it is none, or when what it converts is a
+     * constant: a literal written in another type is spelled, not held.
+     */
+    private function conversion(): ?string
+    {
+        $expression = $this->withoutParentheses();
+        $called = $expression->isCall() ? $expression->target : null;
+        $converted = $expression->converted();
+
+        if ($converted === null || $converted->isConstant()) {
+            return null;
+        }
+
+        return match (true) {
+            $expression->is('CastExpression') && in_array($expression->type?->name, self::SCALARS, true) => "({$expression->type->name})",
+            $called?->name === 'ToString' && $converted->type?->isValueType === true => 'ToString()',
+            $called?->name === 'Parse' && in_array($called->type, self::SCALARS, true) => "{$called->type}.Parse",
+            $called?->type === 'global::System.Convert' => "Convert.{$called->name}",
+            default => null,
+        };
+    }
+
+    /**
+     * What this cast or call converts — the operand of a cast, the receiver of a `.ToString()` taking no
+     * arguments, or the one argument of any other call; null for anything else.
+     */
+    private function converted(): ?self
+    {
+        $arguments = $this->arguments();
+
+        return match (true) {
+            $this->is('CastExpression') => $this->expressions()[0] ?? null,
+            ! $this->isCall() => null,
+            $this->target?->name === 'ToString' && $arguments === [] && $this->children[0]->is('SimpleMemberAccessExpression') => $this->children[0]->children[0],
+            count($arguments) >= 1 => $arguments[0],
+            default => null,
+        };
     }
 
     /**

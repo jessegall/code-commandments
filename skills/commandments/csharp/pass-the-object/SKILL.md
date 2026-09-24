@@ -46,6 +46,84 @@ resolves once.
   where they are resolved.
 - **A lookup whose contract is "by id"** — `FindById(id)` that hands the result straight back.
 
+## Rules
+
+- [ ] Declare the parameter in the type callers actually hold and convert inside — one rule about the conversion, in one place.
+      _Move the conversion into the method and take what the callers had (`ReceiptFor(Order order)` or `ReceiptFor(int orderId)`); a caller that forgets the conversion can no longer pass the wrong thing._
+
+## Worked example
+
+### csharp-converted-argument
+
+a scalar parameter its callers keep filling with the same conversion — `ReceiptFor(order.Id.ToString())` call after call — because it asks for the converted form instead of the value
+
+```cs
+----------[ Bad ]----------
+
+// in Barcodes.cs
+public string Top(Parcel parcel) => barcodes.Encode(parcel.Id.ToString());
+
+// in Barcodes.cs
+public IEnumerable<string> All(IEnumerable<Parcel> parcels) =>
+    parcels.Select(parcel => barcodes.Encode(parcel.Id.ToString()));
+
+// in CreditNotes.cs
+public static CreditNote For(IReadOnlyList<ReturnedLine> lines)
+{
+    var note = new CreditNote();
+
+    foreach (var line in lines)
+    {
+        note.Credit((decimal) line.Refunded);
+    }
+
+    return note;
+}
+
+// in CreditNotes.cs
+public static CreditNote Single(ReturnedLine line)
+{
+    var note = new CreditNote();
+    note.Credit((decimal) line.Refunded);
+
+    return note;
+}
+
+// in CreditSummaries.cs
+public decimal Credited(IEnumerable<ReturnedLine> lines, CreditNote note)
+{
+    foreach (var line in lines.Where(line => line.Refunded > 0))
+    {
+        note.Credit((decimal) line.Refunded);
+    }
+
+    return note.Total;
+}
+
+// in BinImports.cs
+public int Load(IEnumerable<BinRow> rows)
+{
+    return rows.Count(row => rack.Claim(int.Parse(row.Aisle), int.Parse(row.Level)));
+}
+
+// in BinImports.cs
+public bool Reload(BinRow row) => rack.Claim(int.Parse(row.Aisle), int.Parse(row.Level));
+
+----------[ Good ]----------
+
+public string Encode(Guid parcelId) => $"*{parcelId.ToString("N").ToUpperInvariant()}*";
+```
+
+## Commands
+
+- `vendor/bin/commandments judge --skill=csharp/pass-the-object` — find every one of these in the codebase.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-converted-argument`.
+- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
 ## Related skills
 
 - [`backend/pass-the-object`](../../backend/pass-the-object/SKILL.md) — the same discipline over PHP methods.

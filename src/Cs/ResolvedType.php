@@ -10,11 +10,13 @@ namespace JesseGall\CodeCommandments\Cs;
 final readonly class ResolvedType
 {
     /**
+     * @param  bool  $isValueType  a struct, an enum or a primitive — a value copied, not an object referred to
      * @param  list<string>  $inner  the named types inside a generic or an array, however deep
      */
     public function __construct(
         public string $name,
         public bool $nullable,
+        public bool $isValueType,
         public array $inner = [],
     ) {}
 

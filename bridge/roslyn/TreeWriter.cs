@@ -24,7 +24,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
     private readonly Dictionary<SyntaxTree, bool> blindFiles = [];
 
-    public const int Version = 5;
+    public const int Version = 6;
 
     /// <summary>How every type and member is written: fully qualified, `System.String` never `string`, `?` kept.</summary>
     private static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
@@ -424,6 +424,11 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     {
         json.WriteString("type", type.ToDisplayString(Qualified));
         json.WriteBoolean("nullable", nullable);
+
+        if (type.IsValueType)
+        {
+            json.WriteBoolean("value", true);
+        }
 
         var inner = InnerTypes(type).Select(named => named.ToDisplayString(Qualified)).Distinct().ToList();
 

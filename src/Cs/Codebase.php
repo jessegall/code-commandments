@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cs;
 
-use JesseGall\CodeCommandments\Support\HeldTool;
-
 use Closure;
 use JesseGall\CodeCommandments\ExcludedPaths;
 use JesseGall\CodeCommandments\Files\FileQuery;
 use JesseGall\CodeCommandments\ModuleCodebase;
 use JesseGall\CodeCommandments\Support\FileTree;
+use JesseGall\CodeCommandments\Support\HeldTool;
 use JesseGall\CodeCommandments\Support\Path;
+use JesseGall\PhpTypes\Option;
 
 /**
  * The C# files of a project as the Roslyn bridge read them, behind the same selectors the other engines
@@ -24,6 +24,11 @@ final class Codebase implements ModuleCodebase
      * @var array<string, list<int>>|null  each method's declared symbol => the positions of the parameters it reads a dictionary by
      */
     private ?array $keyParameters = null;
+
+    /**
+     * @var array<string, Node>|null  each declared method's symbol => its declaration
+     */
+    private ?array $declarations = null;
 
     /**
      * @var list<list<string>>|null  each declared enum's member names, lower-cased
@@ -168,6 +173,25 @@ final class Codebase implements ModuleCodebase
     public function whereCall(): Query
     {
         return $this->whereExpression(static fn (Node $node): bool => $node->isCall());
+    }
+
+    /**
+     * The method $call reaches, when this codebase declares it — none for a library's method, or a call the
+     * compiler did not resolve.
+     *
+     * @return Option<Node>
+     */
+    public function declarationOf(Node $call): Option
+    {
+        if ($this->declarations === null) {
+            $this->declarations = [];
+
+            foreach ($this->whereMethodDeclaration()->get() as $method) {
+                $this->declarations[(string) $method->node->symbol] = $method->node;
+            }
+        }
+
+        return Option::fromNullable($call->target === null ? null : $this->declarations[$call->target->symbol()] ?? null);
     }
 
     /**

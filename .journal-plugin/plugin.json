@@ -2125,6 +2125,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-converted-argument": {
+            "title": "ConvertedArgument",
+            "help": "A scalar parameter declared in the wrong currency — the twin of the backend's and Python's converted-argument rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/pass-the-object",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-repeated-guard": {
             "title": "RepeatedGuard",
             "help": "The same compound condition about an object's data asked at two or more sites — the C# twin of the PHP and Python repeated-guard rules.",
