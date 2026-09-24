@@ -324,6 +324,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\InventedDefault::class,
         // Sins\CSharp\LoopWrappedInIf::class,
         // Sins\CSharp\MatchDefaultReturnsNull::class,
+        // Sins\CSharp\MemberAfterMethod::class,
         // Sins\CSharp\MutableStaticState::class,
         // Sins\CSharp\MutableValueObject::class,
         // Sins\CSharp\NearDuplicateMethod::class,

@@ -907,6 +907,27 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this a member that holds state — a field, a constant, or a stored property (an auto-property, or one
+     * given a starting value)? An abstract property holds nothing; it asks a subclass to.
+     */
+    public function isStateMember(): bool
+    {
+        return $this->is('FieldDeclaration') || ($this->is('PropertyDeclaration') && ! $this->hasModifier('abstract') && $this->isStoredProperty());
+    }
+
+    /**
+     * Is this property stored rather than computed — given a starting value, or an auto-property whose
+     * accessors have no bodies?
+     */
+    private function isStoredProperty(): bool
+    {
+        $accessors = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('AccessorList')))[0]->children ?? [];
+
+        return array_any($this->children, static fn (self $child): bool => $child->is('EqualsValueClause'))
+            || ($accessors !== [] && array_all($accessors, static fn (self $accessor): bool => $accessor->children === []));
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

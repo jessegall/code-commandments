@@ -22,6 +22,12 @@ public sealed class BackorderListing(IReadOnlyList<(string Sku, int Missing)> ba
 
 public sealed class Warehouse
 {
+    public int Page { get; }
+
+    public int Size { get; }
+
+    public bool Descending { get; }
+
     // @righteous DataClump
     public Warehouse(int page, int size, bool descending)
     {
@@ -29,16 +35,16 @@ public sealed class Warehouse
         Size = size;
         Descending = descending;
     }
+}
 
+public sealed class Depot
+{
     public int Page { get; }
 
     public int Size { get; }
 
     public bool Descending { get; }
-}
 
-public sealed class Depot
-{
     // @righteous DataClump
     public Depot(int page, int size, bool descending)
     {
@@ -46,10 +52,4 @@ public sealed class Depot
         Size = size;
         Descending = descending;
     }
-
-    public int Page { get; }
-
-    public int Size { get; }
-
-    public bool Descending { get; }
 }

@@ -601,6 +601,27 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a state member — a field, a constant, a stored property — declared below one of its type's
+     * constructors or methods? An interface declares a contract, not state, so its members have no place to be.
+     */
+    public function isMemberAfterMethod(): bool
+    {
+        if (! $this->node->isStateMember()) {
+            return false;
+        }
+
+        return $this->module->parentOf($this->node)->isSomeAnd(function (Node $type): bool {
+            if ($type->is('InterfaceDeclaration')) {
+                return false;
+            }
+
+            $before = array_slice($type->children, 0, (int) array_search($this->node, $type->children, true));
+
+            return array_any($before, static fn (Node $member): bool => $member->is('MethodDeclaration', 'ConstructorDeclaration'));
+        });
+    }
+
+    /**
      * @return Option<Node>
      */
     private function enclosingType(): Option
