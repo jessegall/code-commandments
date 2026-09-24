@@ -36,6 +36,11 @@ final class Codebase implements ModuleCodebase
     private ?array $handedOut = null;
 
     /**
+     * @var array<string, Node>|null  each type the codebase declares, by symbol
+     */
+    private ?array $typeDeclarations = null;
+
+    /**
      * @var list<list<string>>|null  each declared enum's member names, lower-cased
      */
     private ?array $enumCases = null;
@@ -368,6 +373,26 @@ final class Codebase implements ModuleCodebase
         $byPosition = array_any($creation->blankArgumentPositions(), static fn (int $position): bool => ($parameters[$position] ?? null) === 'global::System.String');
 
         return $byPosition || array_intersect($creation->membersInitializedBlank(), $record->requiredTextNames()) !== [];
+    }
+
+    /**
+     * The declaration of the type this codebase names $symbol — none for a type it does not declare.
+     *
+     * @return Option<Node>
+     */
+    public function typeDeclared(string $symbol): Option
+    {
+        $this->typeDeclarations ??= array_column(array_map(static fn (NodeMatch $type) => [(string) $type->node->symbol, $type->node], $this->whereType()->get()), 1, 0);
+
+        return Option::fromNullable($this->typeDeclarations[$symbol] ?? null);
+    }
+
+    /**
+     * Is $symbol a record this codebase declares — a value, compared by what it holds?
+     */
+    public function declaresRecord(string $symbol): bool
+    {
+        return isset($this->records()[$symbol]);
     }
 
     /**

@@ -881,7 +881,7 @@ class NodeMatch implements Located
             && in_array($root->name, $owners, true)
             && $local !== null
             && ! $body->isResolverReturning($local)
-            && $this->module->isOnlyReadThrough((string) $root->name, $reads);
+            && $this->module->isOnlyReadThrough($root, $reads);
     }
 
     /**
@@ -951,5 +951,117 @@ class NodeMatch implements Located
             && in_array($call->children[0]->children[0]->memberName(), $own, true)
             && $call->calledName() !== $this->node->name
             && array_any($call->arguments(), static fn (Node $argument): bool => $argument->is('IdentifierName') && $argument->name === $loop->name));
+    }
+
+    /**
+     * Does this type hold one value as several of its own fields — two or more value fields (scalars, enums,
+     * records, structs; never collaborators) assembled into one value together again and again or null-checked
+     * together, a proper subset of the fields; or a field mirroring what a sibling field already holds
+     * (`WorkflowId` beside a `Workflow` with an `Id` of the same type)?
+     */
+    public function holdsCoupledFields(Codebase $codebase): bool
+    {
+        if (! $this->node->isTypeDeclaration() || $this->node->is('InterfaceDeclaration', 'EnumDeclaration')) {
+            return false;
+        }
+
+        $state = $this->node->stateTypes();
+        $values = array_map(strval(...), array_keys(array_filter($state, static fn (?ResolvedType $type): bool => $type !== null && ($type->isValueType || rtrim($type->name, '?') === 'global::System.String' || $codebase->declaresRecord(rtrim($type->name, '?'))))));
+
+        return count($state) >= 2 && ($this->assemblesValuesTogether($values, count($state), $codebase) || $this->mirrorsASibling($state, $codebase));
+    }
+
+    /**
+     * Are two or more of $values — a proper subset of this type's $fieldCount fields — assembled into one value
+     * together in two places, or with at least half of them null-checked together?
+     *
+     * @param  list<string>  $values
+     */
+    private function assemblesValuesTogether(array $values, int $fieldCount, Codebase $codebase): bool
+    {
+        $tested = array_flip($this->node->ownMembersTestedForNull($values));
+        $occurrences = [];
+
+        foreach ($this->assembledGroups($values, $codebase) as $group) {
+            if (count($group) < 2 || count($group) >= $fieldCount) {
+                continue;
+            }
+
+            $guarded = array_filter($group, static fn (string $name): bool => isset($tested[$name]));
+
+            if (count($guarded) >= 2 && count($guarded) * 2 >= count($group)) {
+                return true;
+            }
+
+            sort($group);
+            $key = implode(',', $group);
+
+            if (($occurrences[$key] = ($occurrences[$key] ?? 0) + 1) >= 2) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Every group of two or more of $own handed, as they are, to one tuple, collection or type of the codebase's
+     * being built. A plain call passing them along is forwarding, not assembling one thing; a value rebuilding
+     * itself with a change is copying itself.
+     *
+     * @param  list<string>  $own
+     * @return list<list<string>>
+     */
+    private function assembledGroups(array $own, Codebase $codebase): array
+    {
+        $groups = [];
+
+        foreach (array_merge([], ...array_map(static fn (Node $expression): array => $expression->flatten(), $this->node->outermostExpressions())) as $built) {
+            $parts = match (true) {
+                $built->is('TupleExpression', 'CollectionExpression') => array_merge([], ...array_map(static fn (Node $element): array => array_slice($element->expressions(), 0, 1), $built->children)),
+                $built->is('ObjectCreationExpression', 'ImplicitObjectCreationExpression') && $this->buildsAnotherOwnType($built, $codebase) => $built->arguments(),
+                default => [],
+            };
+            $fields = array_values(array_unique(array_filter(array_map(static fn (Node $part): string => $part->withoutNullableUnwrap()->memberName(), $parts), static fn (string $name): bool => in_array($name, $own, true))));
+
+            if (count($fields) >= 2) {
+                $groups[] = $fields;
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
+     * Does $creation build a type the codebase declares, other than this one?
+     */
+    private function buildsAnotherOwnType(Node $creation, Codebase $codebase): bool
+    {
+        $built = rtrim((string) $creation->type?->name, '?');
+
+        return $built !== (string) $this->node->symbol && $codebase->declaresType($built);
+    }
+
+    /**
+     * Does a field mirror a value a sibling field already holds — `WorkflowId` beside a `Workflow` whose type has
+     * an `Id` of the same type? The datum then lives in two places.
+     *
+     * @param  array<string, ?ResolvedType>  $state
+     */
+    private function mirrorsASibling(array $state, Codebase $codebase): bool
+    {
+        foreach ($state as $object => $type) {
+            $inner = $codebase->typeDeclared(rtrim((string) $type?->name, '?'))->mapOr([], static fn (Node $declaration): array => $declaration->stateTypes());
+
+            foreach ($inner as $name => $innerType) {
+                $mirror = $state[$object . ucfirst((string) $name)] ?? null;
+
+                if ($mirror !== null && $innerType !== null && rtrim($mirror->name, '?') === rtrim($innerType->name, '?')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

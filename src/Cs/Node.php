@@ -290,6 +290,21 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * This expression with any unwrapping of a nullable taken off — `start!.Value`, `start!` and `start.Value` read
+     * as `start` — and parentheses with it.
+     */
+    public function withoutNullableUnwrap(): self
+    {
+        $inner = $this->withoutParentheses();
+
+        return match (true) {
+            $inner->is('SuppressNullableWarningExpression') => $inner->children[0]->withoutNullableUnwrap(),
+            $inner->is('SimpleMemberAccessExpression') && $inner->children[1]->name === 'Value' && ($inner->children[0]->type?->nullable === true || str_ends_with((string) $inner->children[0]->type?->name, '?')) => $inner->children[0]->withoutNullableUnwrap(),
+            default => $inner,
+        };
+    }
+
+    /**
      * This expression with any parentheses around it taken off — `(a ? b : c)` read as `a ? b : c`.
      */
     public function withoutParentheses(): self
@@ -874,12 +889,85 @@ final class Node implements SyntaxNode, SyntaxExpression
      */
     public function stateNames(): array
     {
+        return array_map(strval(...), array_keys($this->stateTypes()));
+    }
+
+    /**
+     * The state this type keeps, each name with the type it holds — its primary constructor's parameters, its
+     * properties and its instance fields; null where the compiler resolved no type.
+     *
+     * @return array<string, ?ResolvedType>
+     */
+    public function stateTypes(): array
+    {
         $parameters = array_merge([], ...array_map(static fn (self $list): array => $list->children, array_filter($this->children, static fn (self $child): bool => $child->is('ParameterList'))));
         $properties = array_filter($this->children, static fn (self $child): bool => $child->is('PropertyDeclaration'));
         $fields = array_filter($this->children, static fn (self $child): bool => $child->is('FieldDeclaration') && ! $child->hasModifier('static') && ! $child->hasModifier('const'));
-        $declarators = array_filter(array_merge([], ...array_map(static fn (self $field): array => $field->descendants(), $fields)), static fn (self $node): bool => $node->is('VariableDeclarator'));
+        $state = [];
 
-        return array_values(array_filter(array_map(static fn (self $member): ?string => $member->name, [...$parameters, ...$properties, ...$declarators])));
+        foreach ([...$parameters, ...$properties] as $member) {
+            $state[(string) $member->name] = $member->type ?? $member->declaredTypeNode()?->type;
+        }
+
+        foreach ($fields as $field) {
+            foreach (array_filter($field->descendants(), static fn (self $node): bool => $node->is('VariableDeclaration')) as $declaration) {
+                foreach (array_filter($declaration->children, static fn (self $node): bool => $node->is('VariableDeclarator')) as $declarator) {
+                    $state[(string) $declarator->name] = $declaration->declaredTypeNode()?->type;
+                }
+            }
+        }
+
+        return array_filter($state, static fn (?ResolvedType $type, string $name): bool => $name !== '', ARRAY_FILTER_USE_BOTH);
+    }
+
+    /**
+     * The type node this declaration names — a property's, a field declaration's — null for one that names none.
+     */
+    private function declaredTypeNode(): ?self
+    {
+        return array_values(array_filter($this->children, static fn (self $child): bool => $child->role === 'type'))[0] ?? null;
+    }
+
+    /**
+     * Is this the pattern `null` or `not null`?
+     */
+    private function isNullPattern(): bool
+    {
+        return match (true) {
+            $this->is('ConstantPattern') => ($this->children[0] ?? null)?->is('NullLiteralExpression') === true,
+            $this->is('NotPattern') => ($this->children[0] ?? null)?->isNullPattern() === true,
+            default => false,
+        };
+    }
+
+    /**
+     * Which of $own this type's code tests for null — `start is null`, `end != null`, `this.start == null`.
+     *
+     * @param  list<string>  $own
+     * @return list<string>
+     */
+    public function ownMembersTestedForNull(array $own): array
+    {
+        $parts = array_merge([], ...array_map(static fn (self $expression): array => $expression->flatten(), $this->outermostExpressions()));
+        $tested = [];
+
+        foreach ($parts as $test) {
+            $sides = match (true) {
+                $test->is('IsPatternExpression') && ($test->children[1] ?? null)?->isNullPattern() === true => [$test->children[0]],
+                $test->is('EqualsExpression', 'NotEqualsExpression') && array_any($test->children, static fn (self $side): bool => $side->is('NullLiteralExpression')) => $test->children,
+                default => [],
+            };
+
+            foreach ($sides as $side) {
+                $name = $side->withoutParentheses()->memberName();
+
+                if (in_array($name, $own, true)) {
+                    $tested[$name] = true;
+                }
+            }
+        }
+
+        return array_keys($tested);
     }
 
     /**

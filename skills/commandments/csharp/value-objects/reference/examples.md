@@ -25,6 +25,32 @@ public sealed record ReceiptFooter(string OrderId, int TotalCents, DateOnly Paid
 public static ReceiptFooter PaidToday(string orderId, int totalCents) => new(orderId, totalCents, DateOnly.FromDateTime(DateTime.Today));
 ```
 
+### csharp-coupled-fields
+
+a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields
+
+```cs
+----------[ Bad ]----------
+
+public sealed class DeliverySlot(DateTime from, DateTime until, string driver)
+{
+    public string Driver => driver;
+
+    public bool Clashes(DeliverySlot other) => new TimeRange(from, until).Overlaps(other.Window());
+
+    public TimeRange Window() => new TimeRange(from, until);
+}
+
+----------[ Good ]----------
+
+public sealed class BookedSlot(TimeRange window, string driver)
+{
+    public string Driver => driver;
+
+    public bool Clashes(BookedSlot other) => window.Overlaps(other.window);
+}
+```
+
 ### csharp-data-clump
 
 The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own.

@@ -327,6 +327,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\ConstClassEnum::class,
         // Sins\CSharp\ConstructorSideEffect::class,
         // Sins\CSharp\ConvertedArgument::class,
+        // Sins\CSharp\CoupledFields::class,
         // Sins\CSharp\DanglingDocReference::class,
         // Sins\CSharp\DataClump::class,
         // Sins\CSharp\DeepNesting::class,

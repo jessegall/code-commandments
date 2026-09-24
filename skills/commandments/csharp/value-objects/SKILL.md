@@ -54,6 +54,8 @@ A tuple returned and taken apart by position is the same thing unnamed.
 
 - [ ] Return a `record` with those fields, not a dictionary built with fixed string keys.
       _Declare `public sealed record StockLine(string Sku, int Qty);` and return `new StockLine(sku, qty)`._
+- [ ] Fields that move as a unit are one type: hold the value object, not its parts; never keep a second copy of what a sibling field already holds.
+      _Fold the fields into one record (reuse one that already matches, if one exists) and drop a field that only mirrors a sibling's member._
 - [ ] Bundle values that always travel together into one type — a record — instead of threading them side by side.
       _Name the clump as a record (a `readonly record struct` when it is small), build it once where the values meet, and pass that instead of the separate parameters._
 - [ ] Give a record a type — an immutable `record` — instead of a dictionary read by string keys.
@@ -88,17 +90,17 @@ public sealed record ReceiptFooter(string OrderId, int TotalCents, DateOnly Paid
 public static ReceiptFooter PaidToday(string orderId, int totalCents) => new(orderId, totalCents, DateOnly.FromDateTime(DateTime.Today));
 ```
 
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/value-objects` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-array-return-bag`, `csharp-data-clump`, `csharp-dictionary-bag`, `csharp-mutable-value-object`, `csharp-positional-tuple-return`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-array-return-bag`, `csharp-coupled-fields`, `csharp-data-clump`, `csharp-dictionary-bag`, `csharp-mutable-value-object`, `csharp-positional-tuple-return`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

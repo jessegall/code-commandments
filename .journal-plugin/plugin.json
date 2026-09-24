@@ -2268,6 +2268,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-coupled-fields": {
+            "title": "CoupledFields",
+            "help": "A type whose own value fields are really one object — the twin of the backend's and Python's coupled-fields rules, decided by holdsCoupledFields.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/value-objects",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-data-clump": {
             "title": "DataClump",
             "help": "The same three or more value parameters — by type and name — declared by members of two or more types: one clump of data threaded through the code instead of named.",
