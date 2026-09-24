@@ -57,6 +57,8 @@ obvious and write nothing.
       _Point the `cref` at what the name became, qualified or imported so it resolves here (the compiler warns CS1574 until it does); if nothing replaced it, drop the reference._
 - [ ] Say what the code is; a comment answering an objection nobody raised means the code should make itself plain.
       _Name the thing so it explains itself (a named constant, a well-named method) and delete the comment, or say what it is instead._
+- [ ] A comment must say something the code does not; if every word of it is already in the code below, delete it.
+      _Delete the comment. If the statement is unclear, name it better (extract a well-named method or variable); keep a comment only for a reason the code cannot state._
 
 ## Worked example
 
@@ -74,17 +76,17 @@ public static int Days(bool member) => member ? 60 : 30;
 public static int DaysFor(bool member) => member ? 60 : 30;
 ```
 
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/documentation` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-archaeology-comment`, `csharp-bloated-docblock`, `csharp-ceremony-docblock`, `csharp-dangling-doc-reference`, `csharp-negative-space-comment`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-archaeology-comment`, `csharp-bloated-docblock`, `csharp-ceremony-docblock`, `csharp-dangling-doc-reference`, `csharp-negative-space-comment`, `csharp-restated-comment`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

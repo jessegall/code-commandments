@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JesseGall\CodeCommandments\Py;
 
 use Closure;
+use JesseGall\CodeCommandments\CommentRuns;
 use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\NodeSpans;
 use JesseGall\CodeCommandments\ParsedModule;
@@ -29,6 +30,7 @@ use JesseGall\PhpTypes\Option;
  */
 final class ModuleFile implements ParsedModule
 {
+    use CommentRuns;
     use NodeSpans;
 
     /**
@@ -65,11 +67,6 @@ final class ModuleFile implements ParsedModule
      * @var array<string, true>|null  every name the module binds at its top level
      */
     private ?array $bound = null;
-
-    /**
-     * @var array<int, Comment>|null  each comment standing on a line of its own, by its line
-     */
-    private ?array $ownLineComments = null;
 
     /**
      * @var array<string, string>|null  each imported name's dotted meaning
@@ -132,24 +129,6 @@ final class ModuleFile implements ParsedModule
     public function comments(): array
     {
         return $this->module->comments;
-    }
-
-    /**
-     * The run of comments standing on lines of their own directly above $node — the last on the line
-     * before it, each earlier one on the line before that. A comment trailing code is not above anything.
-     *
-     * @return list<Comment>
-     */
-    public function commentsAbove(Node $node): array
-    {
-        $this->ownLineComments ??= $this->ownLineComments();
-        $run = [];
-
-        for ($line = $this->lineAt($node->start) - 1; isset($this->ownLineComments[$line]); $line--) {
-            array_unshift($run, $this->ownLineComments[$line]);
-        }
-
-        return $run;
     }
 
     /**
@@ -517,23 +496,5 @@ final class ModuleFile implements ParsedModule
         }
 
         return $owners;
-    }
-
-    /**
-     * @return array<int, Comment>
-     */
-    private function ownLineComments(): array
-    {
-        $byLine = [];
-
-        foreach ($this->comments() as $comment) {
-            $lineStart = (int) strrpos(substr($this->source, 0, $comment->start), "\n");
-
-            if (trim(substr($this->source, $lineStart, $comment->start - $lineStart)) === '') {
-                $byLine[$this->lineAt($comment->start)] = $comment;
-            }
-        }
-
-        return $byLine;
     }
 }

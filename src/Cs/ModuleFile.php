@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cs;
 
+use JesseGall\CodeCommandments\CommentRuns;
 use JesseGall\CodeCommandments\Language;
 use JesseGall\CodeCommandments\NodeSpans;
 use JesseGall\CodeCommandments\ParsedModule;
@@ -15,6 +16,7 @@ use JesseGall\PhpTypes\Option;
  */
 final class ModuleFile implements ParsedModule
 {
+    use CommentRuns;
     use NodeSpans;
 
     /**

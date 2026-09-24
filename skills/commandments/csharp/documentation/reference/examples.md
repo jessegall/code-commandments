@@ -108,3 +108,28 @@ public string RunnerUp(int week)
     return entrants[pick];
 }
 ```
+
+### csharp-restated-comment
+
+a comment above a statement whose every word the statement already spells — `// set the total to the order total` over `var total = order.Total;`
+
+```cs
+----------[ Bad ]----------
+
+public decimal On(decimal subtotal)
+{
+    // set the tip from the subtotal and the percent
+    var tip = subtotal * percent / 100;
+
+    return Math.Round(tip, 2);
+}
+
+----------[ Good ]----------
+
+public string Offered(decimal subtotal)
+{
+    var suggested = subtotal * percent / 100;
+
+    return suggested.ToString("0.00");
+}
+```

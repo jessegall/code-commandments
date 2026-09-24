@@ -7,6 +7,8 @@ namespace JesseGall\CodeCommandments\Cs;
 use JesseGall\CodeCommandments\Located;
 use JesseGall\CodeCommandments\ReadsFunctionBody;
 use JesseGall\CodeCommandments\Span;
+use JesseGall\CodeCommandments\Support\Prose;
+use JesseGall\CodeCommandments\Testing\DeclarationMarkers;
 use JesseGall\PhpTypes\Option;
 
 /**
@@ -794,5 +796,44 @@ class NodeMatch implements Located
     protected static function syntaxHash(): string
     {
         return StructuralHash::class;
+    }
+
+    /**
+     * The run of line and block comments standing directly above this statement, fixture markers set aside.
+     *
+     * @return list<Comment>
+     */
+    public function commentsAbove(): array
+    {
+        return array_values(array_filter(
+            $this->module->commentsAbove($this->node),
+            static fn (Comment $comment): bool => $comment->kind !== CommentKind::Documentation && ! DeclarationMarkers::isMarkerComment($comment->prose()),
+        ));
+    }
+
+    /**
+     * The content words the comments above this statement say, stemmed — none when one of them holds code.
+     *
+     * @return list<string>
+     */
+    public function commentWords(): array
+    {
+        $comments = $this->commentsAbove();
+
+        if (array_any($comments, static fn (Comment $comment): bool => $comment->code)) {
+            return [];
+        }
+
+        return array_values(array_unique(Prose::words(implode(' ', array_map(static fn (Comment $comment): string => $comment->prose(), $comments)))));
+    }
+
+    /**
+     * The words this statement's own head spells, stemmed — {@see CodeWords}.
+     *
+     * @return list<string>
+     */
+    public function codeWords(): array
+    {
+        return CodeWords::of($this->node);
     }
 }

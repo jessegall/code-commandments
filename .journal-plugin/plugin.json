@@ -1813,6 +1813,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-restated-comment": {
+            "title": "RestatedComment",
+            "help": "A comment narrating the statement below it — every word of it already spelled by the code.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/documentation",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-csharp-method": {
             "title": "DuplicateMethod",
             "help": "Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",

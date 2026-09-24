@@ -11,7 +11,7 @@ use JesseGall\CodeCommandments\Support\Prose;
 
 /**
  * A comment in a C# file — a `//` line, a delimited block, or a `///` documentation comment — with its text,
- * its span, and for a documentation comment, the `cref`s it names.
+ * its span, whether it holds C# rather than prose, and for a documentation comment, the `cref`s it names.
  */
 final readonly class Comment
 {
@@ -23,6 +23,7 @@ final readonly class Comment
         public string $text,
         public int $start,
         public int $end,
+        public bool $code,
         public array $crefs,
     ) {}
 
@@ -128,6 +129,7 @@ final readonly class Comment
             (string) $written['text'],
             (int) $written['start'],
             (int) $written['end'],
+            (bool) $written['code'],
             array_map(Cref::fromContract(...), $written['crefs'] ?? []),
         );
     }

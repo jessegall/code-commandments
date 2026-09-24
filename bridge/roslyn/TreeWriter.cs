@@ -24,7 +24,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
     private readonly Dictionary<SyntaxTree, bool> blindFiles = [];
 
-    public const int Version = 4;
+    public const int Version = 5;
 
     /// <summary>How every type and member is written: fully qualified, `System.String` never `string`, `?` kept.</summary>
     private static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
@@ -151,6 +151,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
             json.WriteString("text", trivia.ToFullString());
             json.WriteNumber("start", bytes[trivia.FullSpan.Start]);
             json.WriteNumber("end", bytes[trivia.FullSpan.End]);
+            json.WriteBoolean("code", IsCode(trivia));
 
             if (trivia.GetStructure() is DocumentationCommentTriviaSyntax documentation)
             {
@@ -194,6 +195,34 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
         or SyntaxKind.MultiLineCommentTrivia
         or SyntaxKind.SingleLineDocumentationCommentTrivia
         or SyntaxKind.MultiLineDocumentationCommentTrivia;
+
+    /// <summary>
+    /// Does this `//` or `/* */` comment hold C# rather than prose — one statement from end to end, with the
+    /// punctuation code has (<c>total += rate</c>, <c>return order.Total()</c>)? Words alone parse as a
+    /// declaration (<c>flush buffers</c>), and read as prose.
+    /// </summary>
+    private static bool IsCode(SyntaxTrivia trivia)
+    {
+        var text = trivia.ToFullString();
+        var body = trivia.Kind() switch
+        {
+            SyntaxKind.MultiLineCommentTrivia => text[2..^2].Trim(),
+            SyntaxKind.SingleLineCommentTrivia => text[2..].Trim(),
+            _ => "",
+        };
+
+        if (body.Length == 0)
+        {
+            return false;
+        }
+
+        var written = body.EndsWith(';') || body.EndsWith('}') ? body : body + ";";
+        var statement = SyntaxFactory.ParseStatement(written);
+
+        return !statement.ContainsDiagnostics
+            && statement.FullSpan.End >= written.Length
+            && statement.DescendantTokens().Any(token => token.IsKind(SyntaxKind.DotToken) || token.IsKind(SyntaxKind.OpenParenToken) || token.IsKind(SyntaxKind.OpenBracketToken) || SyntaxFacts.IsAssignmentExpressionOperatorToken(token.Kind()) || SyntaxFacts.IsBinaryExpressionOperatorToken(token.Kind()));
+    }
 
     private static string CommentKind(SyntaxTrivia trivia) => trivia.Kind() switch
     {

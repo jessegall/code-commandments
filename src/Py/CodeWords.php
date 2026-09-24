@@ -22,6 +22,7 @@ use JesseGall\CodeCommandments\Py\Node\Return_;
 use JesseGall\CodeCommandments\Py\Node\TryStmt;
 use JesseGall\CodeCommandments\Py\Node\WhileLoop;
 use JesseGall\CodeCommandments\Py\Node\With;
+use JesseGall\CodeCommandments\Support\Construct;
 use JesseGall\CodeCommandments\Support\Prose;
 
 /**
@@ -32,26 +33,26 @@ use JesseGall\CodeCommandments\Support\Prose;
 final class CodeWords
 {
     /**
-     * What each construct says in English, so "loop over the orders" measures against a `for` and "fail when
-     * empty" against a `raise`.
+     * The construct each statement is, and the keywords Python spells it with — so "loop over the orders"
+     * measures against a `for` and "fail when empty" against a `raise`.
      *
-     * @var array<class-string<Node>, list<string>>
+     * @var array<class-string<Node>, array{Construct, list<string>}>
      */
-    private const array KEYWORDS = [
-        ForLoop::class => ['for', 'loop', 'iterate', 'every', 'each'],
-        WhileLoop::class => ['while', 'loop', 'until', 'repeat'],
-        IfStmt::class => ['if', 'when', 'check', 'whether', 'otherwise'],
-        Return_::class => ['return', 'give', 'result'],
-        Raise::class => ['raise', 'throw', 'fail', 'error'],
-        TryStmt::class => ['try', 'catch', 'handle'],
-        MatchStmt::class => ['match', 'case', 'branch'],
-        With::class => ['with', 'open'],
-        Import::class => ['import'],
-        ClassDef::class => ['class'],
-        FunctionDef::class => ['function', 'method'],
-        Assign::class => ['set', 'assign', 'store'],
-        AnnAssign::class => ['set', 'assign', 'store'],
-        AugAssign::class => ['add', 'increase', 'update'],
+    private const array CONSTRUCTS = [
+        ForLoop::class => [Construct::Loop, ['for']],
+        WhileLoop::class => [Construct::ConditionalLoop, ['while']],
+        IfStmt::class => [Construct::Condition, ['if']],
+        Return_::class => [Construct::Return, ['return']],
+        Raise::class => [Construct::Failure, ['raise']],
+        TryStmt::class => [Construct::Attempt, ['try']],
+        MatchStmt::class => [Construct::Branch, ['match']],
+        With::class => [Construct::Scope, ['with']],
+        Import::class => [Construct::Import, ['import']],
+        ClassDef::class => [Construct::Type, ['class']],
+        FunctionDef::class => [Construct::Method, ['def']],
+        Assign::class => [Construct::Assignment, []],
+        AnnAssign::class => [Construct::Assignment, []],
+        AugAssign::class => [Construct::Accumulation, []],
     ];
 
     /**
@@ -59,7 +60,7 @@ final class CodeWords
      */
     public static function of(Node $node): array
     {
-        $spelled = self::KEYWORDS[$node::class] ?? [];
+        $spelled = Construct::wordsOf(self::CONSTRUCTS, $node::class);
 
         foreach ($node->expressions() as $expression) {
             foreach ($expression->flatten() as $part) {
