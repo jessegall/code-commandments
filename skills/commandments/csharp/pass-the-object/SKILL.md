@@ -52,6 +52,8 @@ resolves once.
       _Move the conversion into the method and take what the callers had (`ReceiptFor(Order order)` or `ReceiptFor(int orderId)`); a caller that forgets the conversion can no longer pass the wrong thing._
 - [ ] Pass the object once and let the method read what it needs from it; a value the method can derive from an argument it already gets is one it should derive itself.
       _Drop the projected parameter and read it inside (`Persist(request)` reading `request.ChannelId`), or take the object in place of its pieces._
+- [ ] Take the object the method works on, not an id plus the container it lives in; the caller resolves it once and owns the not-found failure.
+      _Change the signature to take the resolved object (`Rename(Node node, string title)`) and resolve at the caller, where the id was born._
 
 ## Worked example
 
@@ -116,17 +118,17 @@ public bool Reload(BinRow row) => rack.Claim(int.Parse(row.Aisle), int.Parse(row
 public string Encode(Guid parcelId) => $"*{parcelId.ToString("N").ToUpperInvariant()}*";
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=csharp/pass-the-object` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-converted-argument`, `csharp-derived-argument`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-converted-argument`, `csharp-derived-argument`, `csharp-param-resolved-from-param`.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

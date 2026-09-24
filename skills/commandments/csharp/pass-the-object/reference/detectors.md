@@ -4,3 +4,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 
 - **`csharp-converted-argument`** — a scalar parameter its callers keep filling with the same conversion — `ReceiptFor(order.Id.ToString())` call after call — because it asks for the converted form instead of the value — `ConvertedArgumentDetector`
 - **`csharp-derived-argument`** — a call that hands over an object and a projection of it — `Persist(request, request.ChannelId)` — or an object in three pieces, where the method could read them itself — `DerivedArgumentDetector`
+- **`csharp-param-resolved-from-param`** — a method that takes a container and a key and first resolves one against the other — `Rename(Workflow workflow, string nodeId)` doing `workflow.Graph.Node(nodeId)` — when it only wanted what the key names — `ParamResolvedFromParamDetector`

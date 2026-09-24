@@ -19,6 +19,11 @@ class NodeMatch implements Located
 {
     use ReadsFunctionBody;
 
+    /**
+     * The types that read as a lookup KEY — an identity, not a collaborator.
+     */
+    private const array KEY_TYPES = ['global::System.String', 'global::System.Int32', 'global::System.Int64', 'global::System.Guid'];
+
     public function __construct(
         public readonly Node $node,
         public readonly ModuleFile $module,
@@ -835,5 +840,47 @@ class NodeMatch implements Located
     public function codeWords(): array
     {
         return CodeWords::of($this->node);
+    }
+
+    /**
+     * Does this method look its target up in a container parameter by a key parameter — `Rename(Workflow workflow,
+     * string nodeId)` doing `var node = workflow.Graph.Node(nodeId)` — keep what it found in a local, and use the
+     * container for nothing but reading its properties, while being more than the resolver? Only a container the
+     * codebase declares counts: a library's type (an `Assembly`, a `Regex`) answers its own questions.
+     */
+    public function unpacksTargetFromContainerParam(Codebase $codebase): bool
+    {
+        $body = $this->node->functionBody();
+
+        if (! $this->node->is('MethodDeclaration') || $body->isNone()) {
+            return false;
+        }
+
+        $parameters = $this->node->parameters();
+        $owners = array_map(static fn (Node $parameter): string => (string) $parameter->name, array_filter($parameters, static fn (Node $parameter): bool => $parameter->type !== null && ! $parameter->type->isValueType && $codebase->declaresType(rtrim($parameter->type->name, '?'))));
+        $keys = array_map(static fn (Node $parameter): string => (string) $parameter->name, array_filter($parameters, static fn (Node $parameter): bool => in_array(rtrim((string) $parameter->type?->name, '?'), self::KEY_TYPES, true)));
+        $reads = array_merge([], ...array_map(static fn (Node $expression): array => $expression->flatten(), $body->unwrap()->outermostExpressions()));
+
+        return $owners !== [] && $keys !== [] && array_any($reads, fn (Node $lookup) => $this->unpacksFrom($lookup, $owners, $keys, $reads, $body->unwrap()));
+    }
+
+    /**
+     * Is $lookup the unpacking — keyed by one of $keys on one of $owners, kept in a local that is more than the
+     * resolved value handed back, the owner otherwise only read through?
+     *
+     * @param  list<string>  $owners
+     * @param  list<string>  $keys
+     * @param  list<Node>  $reads
+     */
+    private function unpacksFrom(Node $lookup, array $owners, array $keys, array $reads, Node $body): bool
+    {
+        $root = $lookup->lookupRootKeyedBy($keys);
+        $local = $root === null ? null : $this->module->capturedLocal($lookup);
+
+        return $root !== null
+            && in_array($root->name, $owners, true)
+            && $local !== null
+            && ! $body->isResolverReturning($local)
+            && $this->module->isOnlyReadThrough($root, $reads);
     }
 }

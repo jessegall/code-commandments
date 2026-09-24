@@ -2151,6 +2151,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-param-resolved-from-param": {
+            "title": "ParamResolvedFromParam",
+            "help": "A method that unpacks its target from a container parameter — the twin of the backend's and Python's param-resolved-from-param rules: it should take the resolved object, not the container plus a key.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/pass-the-object",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-repeated-guard": {
             "title": "RepeatedGuard",
             "help": "The same compound condition about an object's data asked at two or more sites — the C# twin of the PHP and Python repeated-guard rules.",

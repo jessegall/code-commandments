@@ -352,6 +352,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\NestedTernary::class,
         // Sins\CSharp\NonCountingFor::class,
         // Sins\CSharp\NullForgiven::class,
+        // Sins\CSharp\ParamResolvedFromParam::class,
         // Sins\CSharp\PlaceholderFilledData::class,
         // Sins\CSharp\PositionalTupleReturn::class,
         // Sins\CSharp\RedundantElse::class,

@@ -1490,6 +1490,80 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The parameters this member, local function or lambda declares, in order.
+     *
+     * @return list<self>
+     */
+    public function parameters(): array
+    {
+        return array_merge([], ...array_map(static fn (self $list): array => $list->children, array_values(array_filter($this->children, static fn (self $child): bool => $child->is('ParameterList')))));
+    }
+
+    /**
+     * The name a chain of reads and calls hangs off — `workflow` in `workflow.Graph.Node(id)` or
+     * `workflow.Graph.Nodes[id]` — null for a chain that starts anywhere but a name.
+     */
+    public function chainRoot(): ?self
+    {
+        return match (true) {
+            $this->is('IdentifierName') => $this,
+            $this->is('SimpleMemberAccessExpression', 'InvocationExpression', 'ElementAccessExpression', 'SuppressNullableWarningExpression') => $this->children[0]->chainRoot(),
+            default => null,
+        };
+    }
+
+    /**
+     * Is this an `if` with no `else` whose every statement throws — a guard that refuses and nothing more?
+     */
+    public function isGuardThatOnlyThrows(): bool
+    {
+        $statements = array_values(array_filter($this->children(), static fn (self $child): bool => ! $child->is('ElseClause')));
+        $branch = $statements[0] ?? null;
+        $thrown = $branch?->is('Block') === true ? $branch->children() : array_filter([$branch]);
+
+        return $this->is('IfStatement')
+            && ! array_any($this->children, static fn (self $child): bool => $child->is('ElseClause'))
+            && $thrown !== []
+            && array_all($thrown, static fn (self $statement): bool => $statement->is('ThrowStatement'));
+    }
+
+    /**
+     * The name this lookup is made on, when it is keyed solely by one of $keys — `workflow` for
+     * `workflow.Graph.Node(nodeId)` and `workflow.Graph.Nodes[nodeId]` — null for anything that is not such a
+     * lookup.
+     *
+     * @param  list<string>  $keys
+     */
+    public function lookupRootKeyedBy(array $keys): ?self
+    {
+        $arguments = $this->arguments();
+        $keyed = count($arguments) === 1 && $arguments[0]->is('IdentifierName') && in_array($arguments[0]->name, $keys, true);
+
+        return match (true) {
+            ! $keyed => null,
+            $this->is('ElementAccessExpression') => $this->children[0]->chainRoot(),
+            $this->is('InvocationExpression') && $this->children[0]->is('SimpleMemberAccessExpression') => $this->children[0]->children[0]->chainRoot(),
+            default => null,
+        };
+    }
+
+    /**
+     * Is this body the resolver of $local — the lookup kept in it, guards that only throw, and $local returned?
+     * That is the one place a resolution and its refusal belong.
+     */
+    public function isResolverReturning(string $local): bool
+    {
+        $statements = $this->children();
+        $last = end($statements);
+
+        if (count($statements) < 2 || $last === false || ! $last->is('ReturnStatement') || ($last->expressions()[0] ?? null)?->name !== $local) {
+            return false;
+        }
+
+        return array_all(array_slice($statements, 1, -1), static fn (self $guard): bool => $guard->isGuardThatOnlyThrows());
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

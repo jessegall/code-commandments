@@ -158,4 +158,47 @@ final class ModuleFile implements ParsedModule
 
         return $parents;
     }
+
+    /**
+     * The local $expression's result is kept in — `var node = …`, `node = …`, through a `!`, parentheses or the
+     * left of a `??` — null when the result goes anywhere else.
+     */
+    public function capturedLocal(Node $expression): ?string
+    {
+        $ancestors = $this->ancestorsOf($expression);
+        $node = $expression;
+
+        foreach ($ancestors as $at => $parent) {
+            if ($parent->is('SuppressNullableWarningExpression', 'ParenthesizedExpression') || ($parent->is('CoalesceExpression') && $parent->children[0] === $node)) {
+                $node = $parent;
+
+                continue;
+            }
+
+            return match (true) {
+                $parent->is('EqualsValueClause') => ($ancestors[$at + 1] ?? null)?->name,
+                $parent->is('SimpleAssignmentExpression') && $parent->children[1] === $node && $parent->children[0]->is('IdentifierName') => $parent->children[0]->name,
+                default => null,
+            };
+        }
+
+        return null;
+    }
+
+    /**
+     * Is the name $root reads used, among $reads, only to read properties off it — never handed on whole, never
+     * called a method on?
+     *
+     * @param  list<Node>  $reads
+     */
+    public function isOnlyReadThrough(Node $root, array $reads): bool
+    {
+        $uses = array_filter($reads, static fn (Node $read): bool => $read !== $root && $read->is('IdentifierName') && $read->name === $root->name);
+
+        return array_all($uses, fn (Node $use): bool => $this->parentOf($use)->isSomeAnd(
+            fn (Node $around): bool => $around->is('SimpleMemberAccessExpression')
+                && $around->children[0] === $use
+                && ! $this->parentOf($around)->isSomeAnd(static fn (Node $call): bool => $call->is('InvocationExpression') && $call->children[0] === $around),
+        ));
+    }
 }
