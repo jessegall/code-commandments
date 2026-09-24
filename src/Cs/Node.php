@@ -916,6 +916,22 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Is this a constant — a `const` field, or a `static readonly` one: a fact about the type, not per object?
+     */
+    public function isConstantMember(): bool
+    {
+        return $this->is('FieldDeclaration') && ($this->hasModifier('const') || ($this->hasModifier('static') && $this->hasModifier('readonly')));
+    }
+
+    /**
+     * Is this a member that holds per-object state — an instance field or a stored instance property?
+     */
+    public function isInstanceStateMember(): bool
+    {
+        return $this->isStateMember() && ! $this->hasModifier('static') && ! $this->hasModifier('const');
+    }
+
+    /**
      * Is this property stored rather than computed — given a starting value, or an auto-property whose
      * accessors have no bodies?
      */

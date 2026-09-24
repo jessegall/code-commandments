@@ -1722,6 +1722,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-member-out-of-order": {
+            "title": "MemberOutOfOrder",
+            "help": "A constant declared below a type's per-object state — the C# twin of the PHP and Python member-out-of-order rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/class-layout",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_duplicate-csharp-method": {
             "title": "DuplicateMethod",
             "help": "Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not.",

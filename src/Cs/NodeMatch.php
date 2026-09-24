@@ -622,6 +622,23 @@ class NodeMatch implements Located
     }
 
     /**
+     * Is this a constant declared below one of its type's instance fields or stored properties — the top of the
+     * type read out of order?
+     */
+    public function isMemberOutOfOrder(): bool
+    {
+        if (! $this->node->isConstantMember()) {
+            return false;
+        }
+
+        return $this->module->parentOf($this->node)->isSomeAnd(function (Node $type): bool {
+            $before = array_slice($type->children, 0, (int) array_search($this->node, $type->children, true));
+
+            return array_any($before, static fn (Node $member): bool => $member->isInstanceStateMember());
+        });
+    }
+
+    /**
      * @return Option<Node>
      */
     private function enclosingType(): Option
