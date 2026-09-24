@@ -1683,6 +1683,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-de-nulled-finder": {
+            "title": "DeNulledFinder",
+            "help": "A finder returning a nullable object whose every caller, two at least, asserts it is there — the twin of the backend's de-nulled-finder rule.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/absence",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-invented-default": {
             "title": "InventedDefault",
             "help": "A missing value papered over with an invented `\"\"`, `0` or `false` — the C# twin of Python's invented-default rule, in its hardened shape.",

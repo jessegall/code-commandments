@@ -46,6 +46,20 @@ public static bool HasPostcode(string? postcode) => (postcode ?? "") != "";
 public static bool IsGiven(string? postcode) => postcode is not null && postcode != "";
 ```
 
+### csharp-de-nulled-finder
+
+a finder returning a nullable object whose every caller asserts it is there — `Find(id)!`, `Find(id) ?? throw …` — a miss the finder should have refused itself
+
+```cs
+----------[ Bad ]----------
+
+public CouponCode? Find(string code) => byCode.GetValueOrDefault(code);
+
+----------[ Good ]----------
+
+public CouponCode Get(string code) => byCode.TryGetValue(code, out var coupon) ? coupon : throw new KeyNotFoundException(code);
+```
+
 ### csharp-invented-default
 
 `F(x ?? "")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data

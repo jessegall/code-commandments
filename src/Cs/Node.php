@@ -921,6 +921,14 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * The type this member declares — a method's return type, a property's type — null where none was resolved.
+     */
+    public function declaredType(): ?ResolvedType
+    {
+        return $this->declaredTypeNode()?->type;
+    }
+
+    /**
      * The type node this declaration names — a property's, a field declaration's — null for one that names none.
      */
     private function declaredTypeNode(): ?self

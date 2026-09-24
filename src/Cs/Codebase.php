@@ -41,6 +41,11 @@ final class Codebase implements ModuleCodebase
     private ?array $typeDeclarations = null;
 
     /**
+     * @var array<string, list<NodeMatch>>|null  each method's declared symbol => the calls the compiler resolved to it
+     */
+    private ?array $callers = null;
+
+    /**
      * @var list<list<string>>|null  each declared enum's member names, lower-cased
      */
     private ?array $enumCases = null;
@@ -202,6 +207,26 @@ final class Codebase implements ModuleCodebase
         }
 
         return Option::fromNullable($call->target === null ? null : $this->declarations[$call->target->symbol()] ?? null);
+    }
+
+    /**
+     * Every call the compiler resolved to $method, a declared member — none when nothing calls it.
+     *
+     * @return list<NodeMatch>
+     */
+    public function callersOf(Node $method): array
+    {
+        if ($this->callers === null) {
+            $this->callers = [];
+
+            foreach ($this->whereCall()->get() as $call) {
+                if ($call->node->target !== null) {
+                    $this->callers[$call->node->target->symbol()][] = $call;
+                }
+            }
+        }
+
+        return $this->callers[(string) $method->symbol] ?? [];
     }
 
     /**

@@ -330,6 +330,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\CoupledFields::class,
         // Sins\CSharp\DanglingDocReference::class,
         // Sins\CSharp\DataClump::class,
+        // Sins\CSharp\DeNulledFinder::class,
         // Sins\CSharp\DeepNesting::class,
         // Sins\CSharp\DerivedArgument::class,
         // Sins\CSharp\DictionaryBag::class,

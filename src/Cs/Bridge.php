@@ -18,7 +18,7 @@ final class Bridge implements LocatedTool
     /**
      * The bridge's output format this engine reads — {@see self::read} refuses any other.
      */
-    public const int VERSION = 6;
+    public const int VERSION = 7;
 
     private const string SOURCE = __DIR__ . '/../../bridge/roslyn';
 

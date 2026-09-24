@@ -1064,4 +1064,49 @@ class NodeMatch implements Located
 
         return false;
     }
+
+    /**
+     * Does the caller assert this call's result is there — force it with `!`, `?? throw`, or guard it with a null
+     * test that only throws — right there, or on the local it keeps the result in? A caller that branches on the
+     * absence is handling a genuine maybe; one that asserts is saying the absence is impossible.
+     */
+    public function resultIsAssertedPresent(): bool
+    {
+        $result = $this->node;
+
+        foreach ($this->module->ancestorsOf($this->node) as $around) {
+            if (! $around->is('ParenthesizedExpression', 'AwaitExpression')) {
+                break;
+            }
+
+            $result = $around;
+        }
+
+        if ($this->isAssertedAt($result)) {
+            return true;
+        }
+
+        $local = $this->module->capturedLocal($result);
+        $function = array_values(array_filter($this->module->ancestorsOf($this->node), static fn (Node $around): bool => $around->isFunction()))[0] ?? null;
+        $reads = $local === null || $function === null ? [] : array_filter(
+            array_merge([], ...array_map(static fn (Node $expression): array => $expression->flatten(), $function->outermostExpressions())),
+            static fn (Node $read): bool => $read->is('IdentifierName') && $read->name === $local,
+        );
+
+        return array_any($reads, fn (Node $read) => $this->isAssertedAt($read));
+    }
+
+    /**
+     * Is the value $read yields asserted present where it stands — the operand of `!`, the left of `?? throw`, or
+     * the subject of a null test in an `if` that only throws?
+     */
+    private function isAssertedAt(Node $read): bool
+    {
+        $parent = $this->module->parentOf($read);
+
+        return $parent->isSomeAnd(static fn (Node $around): bool => $around->is('SuppressNullableWarningExpression')
+            || ($around->is('CoalesceExpression') && $around->children[0] === $read && $around->children[1]->withoutParentheses()->is('ThrowExpression')))
+            || $parent->isSomeAnd(fn (Node $test): bool => (($test->is('IsPatternExpression') && $test->children[0] === $read) || ($test->is('EqualsExpression') && array_any($test->children, static fn (Node $side): bool => $side->is('NullLiteralExpression'))))
+                && $this->module->parentOf($test)->isSomeAnd(static fn (Node $statement): bool => $statement->is('IfStatement') && $statement->isGuardThatOnlyThrows()));
+    }
 }

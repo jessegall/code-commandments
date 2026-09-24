@@ -24,7 +24,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
     private readonly Dictionary<SyntaxTree, bool> blindFiles = [];
 
-    public const int Version = 6;
+    public const int Version = 7;
 
     /// <summary>How every type and member is written: fully qualified, `System.String` never `string`, `?` kept.</summary>
     private static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
@@ -484,7 +484,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
 
         if (node is TypeSyntax named && SyntaxFacts.IsInTypeOnlyContext(named) && named.Parent is not TypeSyntax && model.GetTypeInfo(named).Type is { } namedType and not IErrorTypeSymbol)
         {
-            WriteType(json, namedType, namedType.NullableAnnotation == NullableAnnotation.Annotated);
+            WriteType(json, namedType, named is NullableTypeSyntax || namedType.NullableAnnotation == NullableAnnotation.Annotated);
         }
 
         if (node is ParameterSyntax declaration && model.GetDeclaredSymbol(declaration) is IParameterSymbol declaredParameter)
