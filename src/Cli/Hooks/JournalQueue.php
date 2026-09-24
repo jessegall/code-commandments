@@ -44,12 +44,22 @@ final readonly class JournalQueue
     {
         $commands = [
             ...array_map(static fn (array $said): string => 'nudge create ' . escapeshellarg(self::title($said[0])) . ' --brief ' . escapeshellarg(self::oneLine($said[1])), $advice->said()),
-            ...array_map(static fn (JournalRaise $raise): string => 'plugin raise ' . Workspace::JOURNAL_PLUGIN . ' ' . escapeshellarg($raise->event) . ' ' . escapeshellarg(self::oneLine($raise->brief)), $advice->raises),
+            ...array_map(self::raising(...), $advice->raises),
         ];
 
         if ($commands !== []) {
             file_put_contents($this->path, implode('', array_map(static fn (string $command): string => $moment->addressed($command) . "\n", $commands)), FILE_APPEND | LOCK_EX);
         }
+    }
+
+    /**
+     * The queued command that raises $raise, opening its page when it has one.
+     */
+    private static function raising(JournalRaise $raise): string
+    {
+        $command = 'plugin raise ' . Workspace::JOURNAL_PLUGIN . ' ' . escapeshellarg($raise->event) . ' ' . escapeshellarg(self::oneLine($raise->brief));
+
+        return $raise->open === null ? $command : $command . ' --open ' . escapeshellarg($raise->open);
     }
 
     /**

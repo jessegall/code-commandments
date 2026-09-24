@@ -163,9 +163,14 @@ final class JournalHookTest extends TestCase
         ];
 
         try {
-            $this->assertSame('sin-found', $this->answer($editing('Thing.vue'))['raise'][0]['event'] ?? null);
+            $found = $this->answer($editing('Thing.vue'))['raise'][0] ?? [];
+            $this->assertSame('sin-found', $found['event'] ?? null);
+            $this->assertStringStartsWith(SinsDashboard::NAME . '/sin/', $found['open'] ?? '', 'the mark opens the Sins dashboard');
+            $this->assertStringEndsWith('/src/Thing.vue', $found['open'] ?? '', 'at the page for that rule in that file');
 
+            $opens = $this->answer($editing('Thing.vue'));
             $dashboard = (array) json_decode((string) file_get_contents(Workspace::at($this->root)->cache(SinsDashboard::FILE)), true);
+            $this->assertArrayNotHasKey('raise', $opens, 'announced once');
             $this->assertNotSame([], array_filter(array_keys($dashboard['pages']), static fn (string $page): bool => str_ends_with($page, '/src/Thing.vue')), 'the sin the hook found has its page on the Sins dashboard');
 
             file_put_contents($this->root . '/src/Thing.vue', "<template>\n    <div>\n        <h1>moved down</h1>\n{$sinful}    </div>\n</template>\n");

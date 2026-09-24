@@ -15,9 +15,14 @@ use JesseGall\CodeCommandments\Sins\Sin;
 final readonly class SinsDashboard
 {
     /**
+     * The dashboard's name in the plugin's manifest.
+     */
+    public const string NAME = 'sins';
+
+    /**
      * Where the journal reads the dashboard, inside the plugin's data folder.
      */
-    public const string FILE = 'dashboards/sins.json';
+    public const string FILE = 'dashboards/' . self::NAME . '.json';
 
     /**
      * How many sins the overview's bars show.
@@ -44,7 +49,7 @@ final readonly class SinsDashboard
             $pages["sin/{$sin}"] = ['title' => $sin, 'view' => $this->sinPage((string) $sin, $files)];
 
             foreach ($files as $file => $found) {
-                $pages["sin/{$sin}/{$file}"] = ['title' => "{$sin} in " . basename((string) $file), 'view' => $this->filePage((string) $sin, (string) $file, $found)];
+                $pages[self::fileOf((string) $sin, (string) $file)] = ['title' => "{$sin} in " . basename((string) $file), 'view' => $this->filePage((string) $sin, (string) $file, $found)];
             }
         }
 
@@ -95,7 +100,7 @@ final readonly class SinsDashboard
         uasort($files, static fn (array $one, array $other): int => count($other) <=> count($one));
         $rows = array_map(static fn (string $file, array $found) => [
             'cells' => [$file, (string) count($found)],
-            'open' => "sin/{$sin}/{$file}",
+            'open' => self::fileOf($sin, $file),
         ], array_keys($files), array_values($files));
 
         return ['type' => 'stack', 'gap' => 16, 'children' => [
@@ -173,5 +178,21 @@ final readonly class SinsDashboard
         static $rules = null;
 
         return $rules ??= array_column(array_map(static fn (Sin $sin) => [$sin->name(), $sin], Catalog::every()), 1, 0);
+    }
+
+    /**
+     * Where a chat mark for $finding opens: the dashboard and its page for that rule in that file.
+     */
+    public static function opening(StoredFinding $finding): string
+    {
+        return self::NAME . '/' . self::fileOf($finding->sin, $finding->file);
+    }
+
+    /**
+     * The page for $sin in $file — every place the rule fires there, explained.
+     */
+    private static function fileOf(string $sin, string $file): string
+    {
+        return "sin/{$sin}/{$file}";
     }
 }

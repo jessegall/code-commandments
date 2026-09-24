@@ -48,12 +48,12 @@ final class JournalQueueTest extends TestCase
     {
         JournalQueue::fromEnvironment()->unwrap()->tell(new JournalAnswer(
             whisper: 'judge what you changed',
-            raises: [new JournalRaise('sin-found', 'app/Order.php:12 ArrayBag')],
+            raises: [new JournalRaise('sin-found', 'app/Order.php:12 ArrayBag', 'sins/sin/array-bag/app/Order.php')],
         ), JournalMoment::fromPayload(['event' => 'hook.PostToolUse', 'env' => 'main']));
 
         $this->assertSame([
             ['--env', 'main', 'nudge', 'create', 'judge what you changed', '--brief', 'judge what you changed'],
-            ['--env', 'main', 'plugin', 'raise', 'code-commandments', 'sin-found', 'app/Order.php:12 ArrayBag'],
+            ['--env', 'main', 'plugin', 'raise', 'code-commandments', 'sin-found', 'app/Order.php:12 ArrayBag', '--open', 'sins/sin/array-bag/app/Order.php'],
         ], $this->queued());
     }
 

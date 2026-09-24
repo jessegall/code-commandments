@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cli\Hooks;
 
+use JesseGall\CodeCommandments\Cli\Dashboard\SinsDashboard;
+use JesseGall\CodeCommandments\Cli\Dashboard\StoredFinding;
 use JesseGall\CodeCommandments\Hooks\SinMark;
 
 /**
@@ -21,15 +23,15 @@ final readonly class Settlement
     ) {}
 
     /**
-     * The events the journal shows for it: sin-found and sin-resolved, each only when there is one.
+     * The events the journal shows for it: a sin-found for each sin found, its mark opening the Sins
+     * dashboard's page for that rule in that file, and one sin-resolved for the sins repented.
      *
      * @return list<JournalRaise>
      */
     public function raises(string $root): array
     {
-        return array_values(array_filter([
-            $this->found === [] ? null : new JournalRaise('sin-found', implode("\n", array_map(static fn (SinMark $mark): string => $mark->shownFrom($root), $this->found))),
-            $this->resolved === [] ? null : new JournalRaise('sin-resolved', implode("\n", $this->resolved)),
-        ]));
+        $found = array_map(static fn (SinMark $mark) => new JournalRaise('sin-found', $mark->shownFrom($root), SinsDashboard::opening(StoredFinding::of($mark->finding(), $root))), $this->found);
+
+        return $this->resolved === [] ? $found : [...$found, new JournalRaise('sin-resolved', implode("\n", $this->resolved))];
     }
 }
