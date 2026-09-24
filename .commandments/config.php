@@ -341,6 +341,7 @@ $disabledSins = function (Config $config): void {
         // Sins\CSharp\PositionalTupleReturn::class,
         // Sins\CSharp\RedundantElse::class,
         // Sins\CSharp\RepeatedGuard::class,
+        // Sins\CSharp\RepeatedNamedCall::class,
         // Sins\CSharp\StringMirrorsEnum::class,
         // Sins\CSharp\SubjectLadder::class,
         // Sins\CSharp\SwallowedException::class,

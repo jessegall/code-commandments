@@ -1062,6 +1062,29 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * What this `with` copy changes, when every change is a constant — `Status=Status.Shipped` for
+     * `order with { Status = Status.Shipped }` — sorted, so the order they are written in does not matter;
+     * none for a change worked out at the site, for a copy of `this` (the record naming the operation
+     * itself), or for anything but a `with`.
+     *
+     * @return list<string>
+     */
+    public function constantChanges(): array
+    {
+        $initializer = $this->is('WithExpression') && ! $this->children[0]->is('ThisExpression') ? ($this->children[1] ?? null) : null;
+        $changes = array_filter($initializer?->children ?? [], static fn (self $entry): bool => $entry->is('SimpleAssignmentExpression'));
+
+        if ($changes === [] || ! array_all($changes, static fn (self $change): bool => $change->children[1]->isConstant())) {
+            return [];
+        }
+
+        $slots = array_map(static fn (self $change): string => $change->children[0]->name . '=' . StructuralHash::ofExpression($change->children[1]), $changes);
+        sort($slots);
+
+        return $slots;
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

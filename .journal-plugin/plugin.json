@@ -2034,6 +2034,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-repeated-named-call": {
+            "title": "RepeatedNamedCall",
+            "help": "The same `with` copy of one record — the same members set to the same constants — at two or more sites: the C# twin of the PHP and Python repeated-named-call rules, whose copy-with-changes call C# writes as `with`.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/repeated-call-helper",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-placeholder-filled-data": {
             "title": "PlaceholderFilledData",
             "help": "A record the codebase declares, built with a blank string in a required `string` slot — the C# twin of the PHP and Python placeholder-filled-data rules.",
