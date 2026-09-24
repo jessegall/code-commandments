@@ -944,6 +944,19 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Does this method or property answer a `bool` about the object alone — a property, or a method that takes
+     * nothing to compare against?
+     */
+    public function isStatePredicate(): bool
+    {
+        $declared = array_values(array_filter($this->children, static fn (self $child): bool => $child->role === 'type'))[0] ?? null;
+        $parameters = array_values(array_filter($this->children, static fn (self $child): bool => $child->is('ParameterList')))[0] ?? null;
+
+        return $declared?->is('PredefinedType') === true && $declared->name === 'bool'
+            && ($this->is('PropertyDeclaration') || ($this->is('MethodDeclaration') && $parameters?->children === []));
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

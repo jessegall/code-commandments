@@ -1995,6 +1995,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-bare-state-predicate": {
+            "title": "BareStatePredicate",
+            "help": "A `bool` about the object alone, named as a third-person claim — the C# twin of the PHP and Python bare-state-predicate rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/method-mood",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-placeholder-filled-data": {
             "title": "PlaceholderFilledData",
             "help": "A record the codebase declares, built with a blank string in a required `string` slot — the C# twin of the PHP and Python placeholder-filled-data rules.",

@@ -103,14 +103,23 @@ final class VerbMood
     }
 
     /**
-     * The imperative $name should have worn — `hides` → `hide`, `entersTestMode` → `enterTestMode`.
+     * The imperative $name should have worn — `hides` → `hide`, `entersTestMode` → `enterTestMode`,
+     * `hides_panel` → `hide_panel`, `Hides` → `Hide`.
      * Returns $name unchanged when its first word is not a narration this lexicon knows.
      */
     public static function imperative(string $name): string
     {
         $stem = self::stemOf($name);
 
-        return $stem === null ? $name : $stem . substr($name, strlen(CamelCase::leadingToken($name)));
+        if ($stem === null) {
+            return $name;
+        }
+
+        $bare = ltrim($name, '_');
+        $prefix = substr($name, 0, strlen($name) - strlen($bare));
+        $rest = substr($bare, strlen(self::leadingWord($name)));
+
+        return $prefix . (ctype_upper($bare[0]) ? ucfirst($stem) : $stem) . $rest;
     }
 
     /**
@@ -153,12 +162,12 @@ final class VerbMood
     }
 
     /**
-     * The first word of $name in either convention — `hides` in `hidesPanel` and in `hides_panel` —
-     * leading underscores aside, so a private `_binds` is read as `binds`.
+     * The first word of $name in any convention — `hides` in `hidesPanel`, `hides_panel` and C#'s
+     * `HidesPanel` — leading underscores aside, so a private `_binds` is read as `binds`.
      */
     private static function leadingWord(string $name): string
     {
-        return CamelCase::leadingToken((string) strtok(ltrim($name, '_'), '_'));
+        return CamelCase::leadingToken(lcfirst((string) strtok(ltrim($name, '_'), '_')));
     }
 
     /**
@@ -168,7 +177,7 @@ final class VerbMood
     {
         $bare = ltrim($name, '_');
 
-        return str_contains($bare, '_') ? substr($bare, (int) strpos($bare, '_') + 1) : CamelCase::afterLeadingToken($bare);
+        return str_contains($bare, '_') ? substr($bare, (int) strpos($bare, '_') + 1) : CamelCase::afterLeadingToken(lcfirst($bare));
     }
 
     /**

@@ -309,6 +309,7 @@ $disabledSins = function (Config $config): void {
 
         // ----------[ C# ]----------
         // Sins\CSharp\ArrayReturnBag::class,
+        // Sins\CSharp\BareStatePredicate::class,
         // Sins\CSharp\BlankStringDefault::class,
         // Sins\CSharp\CancelledCoalesce::class,
         // Sins\CSharp\CoalescedLoopSubject::class,
