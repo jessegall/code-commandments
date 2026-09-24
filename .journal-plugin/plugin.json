@@ -2021,6 +2021,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-positional-tuple-return": {
+            "title": "PositionalTupleReturn",
+            "help": "A member whose declared result is a tuple with unnamed slots — the C# twin of the PHP and Python positional-tuple-return rules.",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/value-objects",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_mirrored-server-type": {
             "title": "MirroredServerType",
             "help": "Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it.",

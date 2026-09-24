@@ -173,6 +173,8 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
             ForEachStatementSyntax loop => loop.Identifier.ValueText,
             CatchDeclarationSyntax @catch => @catch.Identifier.ValueText,
             SingleVariableDesignationSyntax designation => designation.Identifier.ValueText,
+            TupleElementSyntax element => element.Identifier.ValueText,
+            PredefinedTypeSyntax predefined => predefined.Keyword.ValueText,
             _ => null,
         };
 

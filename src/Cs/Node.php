@@ -829,6 +829,31 @@ final class Node implements SyntaxNode, SyntaxExpression
     }
 
     /**
+     * Does this member declare its result as a tuple whose slots have no names and two of them share a type —
+     * `(decimal, decimal, string)`, nullable or awaited (`Task<(int, int)>` on an `async` member)? Those two
+     * slots can be swapped and nothing notices; slots of different types cannot be mixed up unseen.
+     */
+    public function returnsPositionalTuple(): bool
+    {
+        if (! $this->is('MethodDeclaration', 'LocalFunctionStatement', 'PropertyDeclaration')) {
+            return false;
+        }
+
+        $declared = array_values(array_filter($this->children, static fn (self $child): bool => $child->role === 'type'))[0] ?? null;
+        $result = $declared?->is('NullableType') === true ? $declared->children[0] : $declared;
+        $generic = $result?->is('QualifiedName') === true ? array_last($result->children) : $result;
+        $awaited = $this->hasModifier('async') && $generic?->is('GenericName') === true ? ($generic->children[0]->children[0] ?? null) : $result;
+
+        if ($awaited?->is('TupleType') !== true || array_any($awaited->children, static fn (self $element): bool => $element->name !== null)) {
+            return false;
+        }
+
+        $types = array_map(static fn (self $element): string => StructuralHash::ofExpression($element->children[0]), $awaited->children);
+
+        return count(array_unique($types)) < count($types);
+    }
+
+    /**
      * Does this statement leave where it stands — `return`, `throw`, `continue`, `break`, `yield break`?
      */
     public function isBailOut(): bool

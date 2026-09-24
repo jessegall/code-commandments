@@ -109,3 +109,21 @@ public int Count { get; init; }
 // in Baskets.cs
 public Basket WithOneMore() => this with { Count = Count + 1 };
 ```
+
+### csharp-positional-tuple-return
+
+a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices
+
+```cs
+----------[ Bad ]----------
+
+public static (decimal, decimal, string) Split(decimal gross, decimal rate, string currency) => (gross / (1 + rate), gross - gross / (1 + rate), currency);
+
+----------[ Good ]----------
+
+// in VatSplits.cs
+public static VatSplit Divided(decimal gross, decimal rate) => new(gross / (1 + rate), gross - gross / (1 + rate));
+
+// in VatSplits.cs
+public sealed record VatSplit(decimal Net, decimal Vat);
+```
