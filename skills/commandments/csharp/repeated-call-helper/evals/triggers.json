@@ -1,0 +1,10 @@
+{
+    "triggers": [
+        "I write `order with { Status = OrderStatus.Shipped }` in four different C# handlers — is that fine?",
+        "the same `if (order.IsPaid && !order.IsCancelled)` check appears in two C# services, should I leave it?",
+        "judge flagged csharp-repeated-guard on my C# code, what does it want"
+    ],
+    "not": [
+        "how do I read a file line by line in C#"
+    ]
+}
