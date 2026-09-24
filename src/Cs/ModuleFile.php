@@ -186,14 +186,14 @@ final class ModuleFile implements ParsedModule
     }
 
     /**
-     * Is the name $root reads used, among $reads, only to read properties off it — never handed on whole, never
-     * called a method on?
+     * Is $name used, among $reads, only to read properties off it — never handed on whole, never called a method
+     * on?
      *
      * @param  list<Node>  $reads
      */
-    public function isOnlyReadThrough(Node $root, array $reads): bool
+    public function isOnlyReadThrough(string $name, array $reads): bool
     {
-        $uses = array_filter($reads, static fn (Node $read): bool => $read !== $root && $read->is('IdentifierName') && $read->name === $root->name);
+        $uses = array_filter($reads, static fn (Node $read): bool => $read->is('IdentifierName') && $read->name === $name);
 
         return array_all($uses, fn (Node $use): bool => $this->parentOf($use)->isSomeAnd(
             fn (Node $around): bool => $around->is('SimpleMemberAccessExpression')

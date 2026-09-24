@@ -881,7 +881,7 @@ class NodeMatch implements Located
             && in_array($root->name, $owners, true)
             && $local !== null
             && ! $body->isResolverReturning($local)
-            && $this->module->isOnlyReadThrough($root, $reads);
+            && $this->module->isOnlyReadThrough((string) $root->name, $reads);
     }
 
     /**
