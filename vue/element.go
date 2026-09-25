@@ -4,9 +4,11 @@ package vue
 
 import (
 	"slices"
+	"strings"
 	"unicode"
 
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/typescript"
 )
 
 // Element is a template element: a Match whose kind is Element.
@@ -146,4 +148,84 @@ func (e Element) Binding(prop string) Directive {
 	}
 
 	return Directive{}
+}
+
+// Depth is how many elements deep the element sits, itself counted: a top-level element is 1.
+func (e Element) Depth() int {
+	depth := 0
+	for at := e; at.Exists(); at = at.Parent() {
+		depth++
+	}
+
+	return depth
+}
+
+// Height is how many element levels its subtree holds: a leaf is 1, a parent one more than its tallest child.
+func (e Element) Height() int {
+	tallest := 0
+	for _, child := range e.Elements() {
+		tallest = max(tallest, child.Height())
+	}
+
+	return tallest + 1
+}
+
+// Size is how many elements its subtree holds, itself included.
+func (e Element) Size() int {
+	size := 1
+	for _, child := range e.Elements() {
+		size += child.Size()
+	}
+
+	return size
+}
+
+// Expressions is the data the element itself reads: every directive's value but a v-for's and a slot's,
+// and each interpolation among its children. A statement-bodied handler is each of its statements.
+func (e Element) Expressions() []typescript.Node {
+	var expressions []typescript.Node
+	for _, child := range e.Children() {
+		switch child.Kind() {
+		case "Directive":
+			if name := (Directive{child}).Name(); name == For || name == Slot {
+				continue
+			}
+			fallthrough
+		case "Interpolation":
+			for _, value := range child.ChildrenIn("value") {
+				expressions = append(expressions, typescript.Of(value))
+			}
+		}
+	}
+
+	return expressions
+}
+
+// DescendantElements is every element below it, in pre-order.
+func (e Element) DescendantElements() []Element {
+	var below []Element
+	for _, child := range e.Elements() {
+		below = append(below, child)
+		below = append(below, child.DescendantElements()...)
+	}
+
+	return below
+}
+
+// CompoundParts is the components below it whose tag is its own plus a suffix, DialogContent and
+// DialogTitle under Dialog: the parts of a library compound, read from the tags themselves.
+func (e Element) CompoundParts() []Element {
+	var parts []Element
+	for _, element := range e.DescendantElements() {
+		if element.IsComponent() && element.Tag() != e.Tag() && strings.HasPrefix(element.Tag(), e.Tag()) {
+			parts = append(parts, element)
+		}
+	}
+
+	return parts
+}
+
+// IsTemplateRoot says whether the element is the template's only top-level element.
+func (e Element) IsTemplateRoot() bool {
+	return e.Depth() == 1 && len(e.Siblings()) == 1
 }

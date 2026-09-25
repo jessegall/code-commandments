@@ -1,6 +1,8 @@
 package vue
 
 import (
+	"strings"
+
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/typescript"
@@ -112,4 +114,35 @@ func unwrapped(t *contract.Type) *contract.Type {
 	}
 
 	return t
+}
+
+// Template is the component's <template> block; no node when it has none.
+func (c Component) Template() engine.Match {
+	for _, block := range c.ChildrenIn("blocks") {
+		if block.Name() == "template" {
+			return block
+		}
+	}
+
+	return engine.Match{}
+}
+
+// TemplateLines is how many lines the component's template spans.
+func (c Component) TemplateLines() int {
+	span, err := c.Template().Span()
+	if err != nil {
+		return 0
+	}
+
+	return strings.Count(span.Text(), "\n") + 1
+}
+
+// LocalNames is every name the component's script declares at its top: variables, functions, classes.
+func (c Component) LocalNames() []string {
+	var names []string
+	for _, statement := range c.Statements() {
+		names = append(names, statement.DeclaredNames()...)
+	}
+
+	return names
 }

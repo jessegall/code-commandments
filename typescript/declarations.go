@@ -27,17 +27,6 @@ func (n Node) Binds(name string) Node {
 	return Node{}
 }
 
-// Descendants is every node below this one, in pre-order.
-func (n Node) Descendants() []engine.Match {
-	var below []engine.Match
-	for _, child := range n.Children() {
-		below = append(below, child)
-		below = append(below, Node{child}.Descendants()...)
-	}
-
-	return below
-}
-
 // Members is what a written type declares as members: a type literal's own, or those of the interface or
 // type alias a type reference names, followed to its declaration anywhere in the codebase.
 func (n Node) Members(codebase *engine.Codebase) []Node {
@@ -71,4 +60,39 @@ func (n Node) members(codebase *engine.Codebase, depth int) []Node {
 	}
 
 	return nil
+}
+
+// DeclaredNames is every name a top-level statement declares: each variable, destructured ones included,
+// and a function's or class's own name.
+func (n Node) DeclaredNames() []string {
+	switch n.Kind() {
+	case "VariableStatement":
+		var names []string
+		for _, declaration := range n.Child("declarationList").ChildrenIn("declarations") {
+			names = append(names, Node{declaration.Child("name")}.boundNames()...)
+		}
+
+		return names
+	case "FunctionDeclaration", "ClassDeclaration":
+		if n.Name() != "" {
+			return []string{n.Name()}
+		}
+	}
+
+	return nil
+}
+
+// boundNames is every name a binding pattern binds: x, or a and b in { a, b: [b] }.
+func (n Node) boundNames() []string {
+	if n.Kind() == "Identifier" {
+		return []string{n.Name()}
+	}
+	var names []string
+	for _, element := range n.Children() {
+		if element.Kind() == "BindingElement" {
+			names = append(names, Node{element.Child("name")}.boundNames()...)
+		}
+	}
+
+	return names
 }

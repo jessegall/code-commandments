@@ -194,6 +194,17 @@ func (m Match) ChildrenIn(field string) []Match {
 	return children
 }
 
+// Descendants is every node below this one, in pre-order.
+func (m Match) Descendants() []Match {
+	var below []Match
+	for _, child := range m.Children() {
+		below = append(below, child)
+		below = append(below, child.Descendants()...)
+	}
+
+	return below
+}
+
 // Root is the root node of the match's file; no node for no match.
 func (m Match) Root() Match {
 	if m.file == nil {
