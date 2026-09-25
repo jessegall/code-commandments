@@ -1,6 +1,8 @@
 package python
 
 import (
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -61,13 +63,14 @@ func conversionKey(program *py.Program, call py.Node) (string, bool) {
 	return "", false
 }
 
-// orderedArguments is the call's scalar arguments in the order the target declares its parameters.
+// orderedArguments is the call's scalar arguments in the order the call writes them.
 func orderedArguments(program *py.Program, call py.Node) func(func(string, py.Node) bool) {
 	return func(yield func(string, py.Node) bool) {
-		target, _ := program.TargetOf(call)
 		bound := scalarArguments(program, call)
-		for _, parameter := range target.Parameters() {
-			if argument, ok := bound[parameter.Name()]; ok && !yield(parameter.Name(), argument) {
+		names := slices.Collect(maps.Keys(bound))
+		slices.SortFunc(names, func(a, b string) int { return bound[a].Node().Span.Start - bound[b].Node().Span.Start })
+		for _, name := range names {
+			if !yield(name, bound[name]) {
 				return
 			}
 		}
