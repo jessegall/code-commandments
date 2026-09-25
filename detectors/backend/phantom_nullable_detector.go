@@ -59,11 +59,11 @@ func nullableFields(class engine.Match) []engine.Match {
 			fields = append(fields, param)
 		}
 	}
-	for _, member := range (php.Node{Match: class}).In("stmts") {
+	for _, member := range (php.Node{Match: class}).ChildrenIn("stmts") {
 		if member.Kind() != "Stmt_Property" || !php.Written(member.Node().Declared).IsNullable() {
 			continue
 		}
-		fields = append(fields, (php.Node{Match: member}).In("props")...)
+		fields = append(fields, (php.Node{Match: member}).ChildrenIn("props")...)
 	}
 
 	return fields

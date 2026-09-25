@@ -21,12 +21,12 @@ var vocabularies = Memoised(func(codebase *engine.Codebase) Vocabulary {
 		if owner == "" {
 			continue
 		}
-		for _, member := range (Node{Match: declaration}).In("stmts") {
+		for _, member := range (Node{Match: declaration}).ChildrenIn("stmts") {
 			modifiers := member.Node().Modifiers
 			if member.Kind() != "Stmt_ClassConst" || slices.Contains(modifiers, "private") || slices.Contains(modifiers, "protected") {
 				continue
 			}
-			for _, constant := range (Node{Match: member}).In("consts") {
+			for _, constant := range (Node{Match: member}).ChildrenIn("consts") {
 				value, ok := constant.Child("value").Text()
 				if constant.Child("value").Kind() != "Scalar_String" || !ok || value == "" || isNumeric(value) {
 					continue

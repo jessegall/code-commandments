@@ -21,7 +21,7 @@ func (n Node) EnclosingClassLike() Node {
 // IsBelowAMethodInItsClass says whether a method comes before the node among its class's members.
 func (n Node) IsBelowAMethodInItsClass() bool {
 	seenMethod := false
-	for _, member := range n.EnclosingClassLike().In("stmts") {
+	for _, member := range n.EnclosingClassLike().ChildrenIn("stmts") {
 		if member.Node() == n.Node() {
 			return seenMethod
 		}
@@ -53,7 +53,7 @@ func (n Node) BreaksClassLayoutOrder() bool {
 // classHead is a class's members above its first method.
 func classHead(class Node) []engine.Match {
 	var head []engine.Match
-	for _, member := range class.In("stmts") {
+	for _, member := range class.ChildrenIn("stmts") {
 		if member.Kind() == "Stmt_ClassMethod" {
 			return head
 		}
@@ -82,7 +82,7 @@ func layoutRank(member engine.Match) int {
 			return 3
 		}
 		base := 4
-		if len(Node{Match: member}.In("hooks")) > 0 {
+		if len(Node{Match: member}.ChildrenIn("hooks")) > 0 {
 			base = 7
 		}
 		switch {
@@ -188,7 +188,7 @@ func (n Node) IsNewlineSeparator() bool {
 // LiteralItems is the value of every item of an array literal that is a plain string.
 func (n Node) LiteralItems() []string {
 	var literals []string
-	for _, item := range n.In("items") {
+	for _, item := range n.ChildrenIn("items") {
 		if value := item.Child("value"); item.Kind() == "ArrayItem" && value.Kind() == "Scalar_String" {
 			text, _ := value.Text()
 			literals = append(literals, text)
@@ -247,7 +247,7 @@ func (n Node) SwitchesEntirelyOnAnAbsentParam() bool {
 // bodyIsTwoWayBranchOn says whether the node's only statement is an if/else or a two-arm match on the variable, each
 // side doing work of its own.
 func (n Node) bodyIsTwoWayBranchOn(name string, tests func(engine.Match, string) bool) bool {
-	body := n.In("stmts")
+	body := n.ChildrenIn("stmts")
 	if !n.IsFunctionDeclaration() || len(body) != 1 {
 		return false
 	}
@@ -255,14 +255,14 @@ func (n Node) bodyIsTwoWayBranchOn(name string, tests func(engine.Match, string)
 	if only.Kind() == "Stmt_If" {
 		otherwise := Node{Match: only.Child("else")}
 
-		return len(only.In("elseifs")) == 0 && otherwise.Exists() && armDoesWork(only.In("stmts")) &&
-			armDoesWork(otherwise.In("stmts")) && tests(only.Child("cond"), name)
+		return len(only.ChildrenIn("elseifs")) == 0 && otherwise.Exists() && armDoesWork(only.ChildrenIn("stmts")) &&
+			armDoesWork(otherwise.ChildrenIn("stmts")) && tests(only.Child("cond"), name)
 	}
 	if only.Kind() != "Stmt_Return" && only.Kind() != "Stmt_Expression" {
 		return false
 	}
 	match := Node{Match: only.Child("expr")}
-	arms := match.In("arms")
+	arms := match.ChildrenIn("arms")
 
 	return match.Kind() == "Expr_Match" && len(arms) == 2 &&
 		!slices.ContainsFunc(arms, func(arm engine.Match) bool { return isBareValue(arm.Child("body")) }) &&

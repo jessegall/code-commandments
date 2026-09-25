@@ -128,7 +128,7 @@ func (n Node) IsDeeplyNestedIf() bool {
 
 // IsIfElseLadder says whether the node is an if with two or more elseifs.
 func (n Node) IsIfElseLadder() bool {
-	return n.Kind() == "Stmt_If" && len(n.In("elseifs")) >= 2
+	return n.Kind() == "Stmt_If" && len(n.ChildrenIn("elseifs")) >= 2
 }
 
 // IsCallArgument says whether the node is the value an argument passes.
@@ -144,16 +144,16 @@ func (n Node) IsCallReceiver() bool {
 // IsSoleLoopBodyGuard says whether the node is an if with no else that is the only statement of a loop's body and
 // guards two or more statements of its own.
 func (n Node) IsSoleLoopBodyGuard() bool {
-	if n.Kind() != "Stmt_If" || n.Child("else").Exists() || len(n.In("elseifs")) > 0 {
+	if n.Kind() != "Stmt_If" || n.Child("else").Exists() || len(n.ChildrenIn("elseifs")) > 0 {
 		return false
 	}
 	loop := n.Up()
 	if !slices.Contains([]string{"Stmt_Foreach", "Stmt_For", "Stmt_While"}, loop.Kind()) {
 		return false
 	}
-	body := loop.In("stmts")
+	body := loop.ChildrenIn("stmts")
 
-	return len(body) == 1 && body[0].Node() == n.Node() && len(n.In("stmts")) >= 2
+	return len(body) == 1 && body[0].Node() == n.Node() && len(n.ChildrenIn("stmts")) >= 2
 }
 
 // IsOutermostNestedTernary says whether the node is a ternary with a ternary in a branch, and no ternary around it
@@ -183,7 +183,7 @@ var counterSteps = []string{"Expr_PostInc", "Expr_PreInc", "Expr_PostDec", "Expr
 
 // IsNonCountingFor says whether the node is a for loop with steps, none of which advances a counter.
 func (n Node) IsNonCountingFor() bool {
-	steps := n.In("loop")
+	steps := n.ChildrenIn("loop")
 	if n.Kind() != "Stmt_For" || len(steps) == 0 {
 		return false
 	}
@@ -193,10 +193,10 @@ func (n Node) IsNonCountingFor() bool {
 
 // HasRedundantElse says whether the node is an if with an else and no elseif whose own body ends by leaving.
 func (n Node) HasRedundantElse() bool {
-	if n.Kind() != "Stmt_If" || !n.Child("else").Exists() || len(n.In("elseifs")) > 0 {
+	if n.Kind() != "Stmt_If" || !n.Child("else").Exists() || len(n.ChildrenIn("elseifs")) > 0 {
 		return false
 	}
-	body := n.In("stmts")
+	body := n.ChildrenIn("stmts")
 
 	return len(body) > 0 && Node{Match: body[len(body)-1]}.IsBailOut()
 }
@@ -221,18 +221,6 @@ func (n Node) IsShortCircuit() bool {
 // ResultIsDiscarded says whether the node is an expression statement's whole expression, its value thrown away.
 func (n Node) ResultIsDiscarded() bool {
 	return n.Exists() && n.Parent().Kind() == "Stmt_Expression" && n.Node().Field == "expr"
-}
-
-// In is every child the node holds in one field, in order: an if's elseifs, a loop's statements.
-func (n Node) In(field string) []engine.Match {
-	var held []engine.Match
-	for _, child := range n.Children() {
-		if child.Node().Field == field {
-			held = append(held, child)
-		}
-	}
-
-	return held
 }
 
 func isPropertyRead(node engine.Match) bool {

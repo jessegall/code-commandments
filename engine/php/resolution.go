@@ -19,7 +19,7 @@ func (n Node) UnpacksTargetFromContainerParam() bool {
 	if len(owners) == 0 || len(keys) == 0 {
 		return false
 	}
-	for _, statement := range n.In("stmts") {
+	for _, statement := range n.ChildrenIn("stmts") {
 		for _, call := range withDescendants(statement) {
 			if call.Kind() != "Expr_MethodCall" || !keyedSolelyBy(call, keys) || !slices.Contains(owners, variableName(chainRoot(call.Child("var")))) {
 				continue
@@ -111,16 +111,18 @@ func capturedLocal(call engine.Match) string {
 
 // isTheResolver says whether the method only guards and then returns the local: it is the lookup itself.
 func (n Node) isTheResolver(local string) bool {
-	body := n.In("stmts")
+	body := n.ChildrenIn("stmts")
 	if len(body) < 2 || body[len(body)-1].Kind() != "Stmt_Return" || variableName(body[len(body)-1].Child("expr")) != local {
 		return false
 	}
 	for _, between := range body[1 : len(body)-1] {
 		guard := Node{Match: between}
-		if between.Kind() != "Stmt_If" || guard.Child("else").Exists() || len(guard.In("elseifs")) > 0 {
+		if between.Kind() != "Stmt_If" || guard.Child("else").Exists() || len(guard.ChildrenIn("elseifs")) > 0 {
 			return false
 		}
-		if slices.ContainsFunc(guard.In("stmts"), func(statement engine.Match) bool { return !(Node{Match: statement}).IsBailOut() || statement.Kind() != "Stmt_Expression" }) {
+		if slices.ContainsFunc(guard.ChildrenIn("stmts"), func(statement engine.Match) bool {
+			return !(Node{Match: statement}).IsBailOut() || statement.Kind() != "Stmt_Expression"
+		}) {
 			return false
 		}
 	}
@@ -131,7 +133,7 @@ func (n Node) isTheResolver(local string) bool {
 // ownerIsPureEncapsulator says whether every other use of the object parameter in the method reads a property of it.
 func (n Node) ownerIsPureEncapsulator(root engine.Match) bool {
 	owner := root.Name()
-	for _, statement := range n.In("stmts") {
+	for _, statement := range n.ChildrenIn("stmts") {
 		for _, variable := range withDescendants(statement) {
 			if variable.Kind() != "Expr_Variable" || variable.Name() != owner || variable.Node() == root.Node() {
 				continue

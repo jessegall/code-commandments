@@ -32,7 +32,7 @@ func (n Node) CallName() string {
 // IsPositionalTuple says whether the node is an array literal of three or more unkeyed items reading from two or
 // more different variables.
 func (n Node) IsPositionalTuple() bool {
-	items := n.In("items")
+	items := n.ChildrenIn("items")
 	if n.Kind() != "Expr_Array" || len(items) < 3 {
 		return false
 	}
@@ -115,7 +115,7 @@ func (n Node) HandRolledWither() Node {
 	if !n.IsSoleReturnExpression() {
 		return Node{}
 	}
-	built := Node{Match: n.In("stmts")[0].Child("expr")}
+	built := Node{Match: n.ChildrenIn("stmts")[0].Child("expr")}
 	if built.Kind() != "Expr_New" || !isName(built.Child("class")) || !n.namesOwnType(built.Child("class")) {
 		return Node{}
 	}
@@ -142,7 +142,7 @@ func (n Node) HandRolledWither() Node {
 
 // IsSoleReturnExpression says whether the node declares a function whose only statement returns a value.
 func (n Node) IsSoleReturnExpression() bool {
-	body := n.In("stmts")
+	body := n.ChildrenIn("stmts")
 
 	return n.IsFunctionDeclaration() && len(body) == 1 && body[0].Kind() == "Stmt_Return" && body[0].Child("expr").Exists()
 }
@@ -174,7 +174,7 @@ func (n Node) ConstructorIsPromotionOnly() bool {
 			continue
 		}
 		params := Params(method)
-		if len(params) == 0 || len(Node{Match: method}.In("stmts")) > 0 {
+		if len(params) == 0 || len(Node{Match: method}.ChildrenIn("stmts")) > 0 {
 			return false
 		}
 
@@ -308,7 +308,7 @@ func (n Node) IsNamedConstructor() bool {
 		return false
 	}
 	short := ShortName(EnclosingClassName(n.Match))
-	for _, statement := range n.In("stmts") {
+	for _, statement := range n.ChildrenIn("stmts") {
 		for _, node := range append([]engine.Match{statement}, descendantsOf(statement)...) {
 			class := node.Child("class")
 			if node.Kind() != "Expr_New" || !isName(class) {
@@ -389,7 +389,7 @@ func (n Node) StringKeys() []string {
 	if n.Kind() != "Expr_Array" {
 		return nil
 	}
-	for _, item := range n.In("items") {
+	for _, item := range n.ChildrenIn("items") {
 		if key := item.Child("key"); item.Kind() == "ArrayItem" && key.Kind() == "Scalar_String" {
 			text, _ := key.Text()
 			keys = append(keys, text)
@@ -401,14 +401,14 @@ func (n Node) StringKeys() []string {
 
 // HasNestedArrayValue says whether an item of the array literal holds another array literal.
 func (n Node) HasNestedArrayValue() bool {
-	return n.Kind() == "Expr_Array" && slices.ContainsFunc(n.In("items"), func(item engine.Match) bool {
+	return n.Kind() == "Expr_Array" && slices.ContainsFunc(n.ChildrenIn("items"), func(item engine.Match) bool {
 		return item.Kind() == "ArrayItem" && item.Child("value").Kind() == "Expr_Array"
 	})
 }
 
 // SpreadsAnotherArray says whether an item of the array literal spreads another array into it.
 func (n Node) SpreadsAnotherArray() bool {
-	return n.Kind() == "Expr_Array" && slices.ContainsFunc(n.In("items"), func(item engine.Match) bool {
+	return n.Kind() == "Expr_Array" && slices.ContainsFunc(n.ChildrenIn("items"), func(item engine.Match) bool {
 		return item.Kind() == "ArrayItem" && slices.Contains(item.Node().Flags, "spread")
 	})
 }
@@ -438,7 +438,7 @@ func (n Node) LooksLikeJsonSchema() bool {
 
 // literalForKey is the string an array literal writes under the key, when it writes one.
 func (n Node) literalForKey(key string) (string, bool) {
-	for _, item := range n.In("items") {
+	for _, item := range n.ChildrenIn("items") {
 		written, value := item.Child("key"), item.Child("value")
 		if text, ok := written.Text(); item.Kind() == "ArrayItem" && written.Kind() == "Scalar_String" && ok && text == key && value.Kind() == "Scalar_String" {
 			return value.Text()
@@ -450,7 +450,7 @@ func (n Node) literalForKey(key string) (string, bool) {
 
 // IsHomogeneousLookupTable says whether every item of the array literal is a constant of one and the same class.
 func (n Node) IsHomogeneousLookupTable() bool {
-	items := n.In("items")
+	items := n.ChildrenIn("items")
 	if n.Kind() != "Expr_Array" || len(items) < 2 {
 		return false
 	}
@@ -508,7 +508,7 @@ func (n Node) ProjectsTypedObject() bool {
 // arrayProjectionSource is the one variable a keyed array literal's values all read whole fields of; empty when
 // there is no such one variable.
 func (n Node) arrayProjectionSource() string {
-	items := n.In("items")
+	items := n.ChildrenIn("items")
 	if n.Kind() != "Expr_Array" || len(items) == 0 {
 		return ""
 	}

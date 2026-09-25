@@ -37,5 +37,5 @@ func (AssembledTemplateDetector) Find(codebase *engine.Codebase) []engine.Match 
 func statesATemplate(join php.Node) bool {
 	lines := join.ArgumentArrayLiteral(1)
 
-	return lines.Exists() && len(lines.In("items")) >= minTemplateLines && len(lines.LiteralItems()) >= minLiteralLines
+	return lines.Exists() && len(lines.ChildrenIn("items")) >= minTemplateLines && len(lines.LiteralItems()) >= minLiteralLines
 }

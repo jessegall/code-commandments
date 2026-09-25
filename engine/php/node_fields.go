@@ -34,7 +34,7 @@ func directArgumentValues(node engine.Match) []engine.Match {
 	var values []engine.Match
 	switch node.Kind() {
 	case "Expr_Array":
-		for _, item := range (Node{Match: node}).In("items") {
+		for _, item := range (Node{Match: node}).ChildrenIn("items") {
 			values = append(values, item.Child("value"))
 		}
 	case "Expr_New", "Expr_MethodCall", "Expr_StaticCall", "Expr_FuncCall":

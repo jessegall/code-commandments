@@ -158,7 +158,7 @@ func (n Node) IsEmptyLiteral() bool {
 	case "Scalar_String":
 		return n.IsEmptyString()
 	case "Expr_Array":
-		return len(n.In("items")) == 0
+		return len(n.ChildrenIn("items")) == 0
 	case "Scalar_Int", "Scalar_Float":
 		text, _ := n.Text()
 		number, err := strconv.ParseFloat(text, 64)
@@ -197,7 +197,7 @@ func (n Node) IsConditionalArraySpread() bool {
 	if !n.IsTernary() || !chosen.Exists() || chosen.Kind() != "Expr_Array" || otherwise.Kind() != "Expr_Array" {
 		return false
 	}
-	if (len(Node{Match: chosen}.In("items")) == 0) == (len(Node{Match: otherwise}.In("items")) == 0) {
+	if (len(Node{Match: chosen}.ChildrenIn("items")) == 0) == (len(Node{Match: otherwise}.ChildrenIn("items")) == 0) {
 		return false
 	}
 	parent := n.Parent()
@@ -371,7 +371,7 @@ func RenderingOf(codebase *engine.Codebase, class string) (string, bool) {
 	found := rendering{}
 	if declaration, declared := ProgramOf(codebase).Class(class); declared {
 		for _, method := range Methods(declaration) {
-			body := Node{Match: method}.In("stmts")
+			body := Node{Match: method}.ChildrenIn("stmts")
 			if strings.EqualFold(method.Name(), "__toString") && len(body) == 1 && body[0].Kind() == "Stmt_Return" {
 				found.text, found.ok = body[0].Child("expr").Text()
 				found.ok = found.ok && body[0].Child("expr").Kind() == "Scalar_String"

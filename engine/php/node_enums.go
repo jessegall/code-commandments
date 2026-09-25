@@ -32,11 +32,11 @@ func (n Node) IsScalarConstClass() bool {
 		return false
 	}
 	constants := 0
-	for _, member := range n.In("stmts") {
+	for _, member := range n.ChildrenIn("stmts") {
 		if member.Kind() != "Stmt_ClassConst" {
 			return false
 		}
-		for _, constant := range (Node{Match: member}).In("consts") {
+		for _, constant := range (Node{Match: member}).ChildrenIn("consts") {
 			value := Node{Match: constant.Child("value")}
 			if !value.IsScalarLiteral() || value.IsDocumentLiteral() {
 				return false
@@ -146,7 +146,7 @@ func (n Node) ArgumentArrayLiterals(position int) []string {
 		return nil
 	}
 	var literals []string
-	for _, item := range array.In("items") {
+	for _, item := range array.ChildrenIn("items") {
 		if literal, ok := scalarLiteral(item.Child("value")); item.Kind() == "ArrayItem" && ok {
 			literals = append(literals, literal)
 		}
@@ -160,15 +160,15 @@ func (n Node) ArmConditionLiterals() []string {
 	var literals []string
 	switch n.Kind() {
 	case "Expr_Match":
-		for _, arm := range n.In("arms") {
-			for _, condition := range (Node{Match: arm}).In("conds") {
+		for _, arm := range n.ChildrenIn("arms") {
+			for _, condition := range (Node{Match: arm}).ChildrenIn("conds") {
 				if literal, ok := scalarLiteral(condition); ok {
 					literals = append(literals, literal)
 				}
 			}
 		}
 	case "Stmt_Switch":
-		for _, branch := range n.In("cases") {
+		for _, branch := range n.ChildrenIn("cases") {
 			if literal, ok := scalarLiteral(branch.Child("cond")); ok {
 				literals = append(literals, literal)
 			}
@@ -180,8 +180,8 @@ func (n Node) ArmConditionLiterals() []string {
 
 // defaultArm is a match's default arm; no node when it has none.
 func (n Node) defaultArm() Node {
-	for _, arm := range n.In("arms") {
-		if len((Node{Match: arm}).In("conds")) == 0 {
+	for _, arm := range n.ChildrenIn("arms") {
+		if len((Node{Match: arm}).ChildrenIn("conds")) == 0 {
 			return Node{Match: arm}
 		}
 	}
@@ -210,8 +210,8 @@ func (n Node) MatchHandledArmsAdmitNull() bool {
 	if n.Kind() != "Expr_Match" || !arm.Exists() || !(Node{Match: arm.Child("body")}).IsNull() || n.matchSubjectIsEnum() {
 		return false
 	}
-	for _, handled := range n.In("arms") {
-		if len((Node{Match: handled}).In("conds")) > 0 && n.declaredReturnAdmitsNull(handled.Child("body")) {
+	for _, handled := range n.ChildrenIn("arms") {
+		if len((Node{Match: handled}).ChildrenIn("conds")) > 0 && n.declaredReturnAdmitsNull(handled.Child("body")) {
 			return true
 		}
 	}
@@ -278,7 +278,7 @@ var enums = Memoised(func(codebase *engine.Codebase) Enums {
 			name = declaration.Name()
 		}
 		var values []string
-		for _, member := range (Node{Match: declaration}).In("stmts") {
+		for _, member := range (Node{Match: declaration}).ChildrenIn("stmts") {
 			if literal, ok := scalarLiteral(member.Child("expr")); member.Kind() == "Stmt_EnumCase" && ok {
 				values = append(values, literal)
 			}

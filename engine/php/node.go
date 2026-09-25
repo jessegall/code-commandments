@@ -55,7 +55,7 @@ func (n Node) IsSwallowedCatch() bool {
 	if n.Kind() != "Stmt_Catch" {
 		return false
 	}
-	body := n.In("stmts")
+	body := n.ChildrenIn("stmts")
 	if len(body) == 0 {
 		return true
 	}

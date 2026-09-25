@@ -86,11 +86,11 @@ func declaredPropertyType(codebase *engine.Codebase, class, field string) string
 	if !declared {
 		return ""
 	}
-	for _, member := range (Node{Match: declaration}).In("stmts") {
+	for _, member := range (Node{Match: declaration}).ChildrenIn("stmts") {
 		if member.Kind() != "Stmt_Property" {
 			continue
 		}
-		for _, item := range (Node{Match: member}).In("props") {
+		for _, item := range (Node{Match: member}).ChildrenIn("props") {
 			if item.Name() == field && member.Node().Declared != nil {
 				return Written(member.Node().Declared).Render()
 			}
@@ -139,7 +139,7 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 	}
 	savedInto := map[string]string{}
 	restoredFrom := map[string][]string{}
-	for _, statement := range n.In("stmts") {
+	for _, statement := range n.ChildrenIn("stmts") {
 		for _, assign := range withDescendants(statement) {
 			if assign.Kind() != "Expr_Assign" {
 				continue
@@ -195,7 +195,7 @@ func (n Node) IsAbstractHook() bool {
 
 // HookedPropertyHasSetter says whether the property the hook belongs to also has a set hook.
 func (n Node) HookedPropertyHasSetter() bool {
-	return slices.ContainsFunc(n.Up().In("hooks"), func(hook engine.Match) bool { return hook.Name() == "set" })
+	return slices.ContainsFunc(n.Up().ChildrenIn("hooks"), func(hook engine.Match) bool { return hook.Name() == "set" })
 }
 
 // ReferencesThis says whether anything under the node reads $this or reaches self, static or parent statically.
@@ -276,9 +276,9 @@ var transientNullables = Memoised(func(codebase *engine.Codebase) map[string]map
 			continue
 		}
 		nullable := map[string]bool{}
-		for _, member := range (Node{Match: class}).In("stmts") {
+		for _, member := range (Node{Match: class}).ChildrenIn("stmts") {
 			if member.Kind() == "Stmt_Property" && slices.Contains(member.Node().Modifiers, "private") && Written(member.Node().Declared).IsNullable() {
-				for _, item := range (Node{Match: member}).In("props") {
+				for _, item := range (Node{Match: member}).ChildrenIn("props") {
 					nullable[item.Name()] = true
 				}
 			}
@@ -288,7 +288,7 @@ var transientNullables = Memoised(func(codebase *engine.Codebase) map[string]map
 			if strings.EqualFold(method.Name(), "__construct") {
 				continue
 			}
-			for _, statement := range (Node{Match: method}).In("stmts") {
+			for _, statement := range (Node{Match: method}).ChildrenIn("stmts") {
 				for _, assign := range withDescendants(statement) {
 					if property := ownProperty(assign.Child("var")); assign.Kind() == "Expr_Assign" && nullable[property] {
 						transient[property] = true
