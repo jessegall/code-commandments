@@ -103,3 +103,26 @@ foreach ($codebase->whereCall()->get() as $call) {
 }
 
 $write('call-sites', $sites);
+
+// Each class's fields, and how the code reads each one: reads that assume it is there, reads that guard it.
+$flow = $codebase->attributeFlow();
+$fields = [];
+
+foreach ($codebase->modules() as $module) {
+    foreach ($module->nodes() as $node) {
+        if (! $node instanceof ClassDef) {
+            continue;
+        }
+
+        $verdicts = [];
+
+        foreach ($node->fieldNames() as $field) {
+            $verdict = $flow->verdict($node, $field);
+            $verdicts[$field] = [$verdict->assume, $verdict->guard];
+        }
+
+        $fields[$symbol($node, $module) . '@' . $place($module, $node->start)] = (object) $verdicts;
+    }
+}
+
+$write('attribute-flow', $fields);

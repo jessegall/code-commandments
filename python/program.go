@@ -20,6 +20,7 @@ type Program struct {
 	bound   sync.Map
 	classes classes
 	calls   callGraph
+	flow    attributeFlow
 }
 
 // Module is one Python file and the dotted name Python imports it by.
