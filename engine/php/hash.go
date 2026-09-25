@@ -7,8 +7,8 @@ import (
 )
 
 // hashRules is how PHP code is fingerprinted, as the PHP engine's StructuralHash reads it: every node counts and
-// weighs one, a variable is the local name normalising blanks, a function-like's own name is left out when
-// normalising, and a string or a number is data.
+// weighs one, a variable is the local name normalising blanks, a function-like's and a parameter's own name are
+// left out when normalising, and a string or a number is data.
 type hashRules struct{}
 
 // Hashing is the PHP engine's rules for the shared syntax fingerprint.
@@ -23,7 +23,9 @@ func (hashRules) IsName(node engine.Match) bool {
 }
 
 func (hashRules) Declares(node engine.Match) bool {
-	return (Node{Match: node}).IsFunctionLike()
+	named := Node{Match: node}
+
+	return named.IsFunctionLike() || node.Kind() == "Param" || node.Node().Field == "name" && named.Up().IsFunctionLike()
 }
 
 func (hashRules) IsCallee(engine.Match) bool { return false }
