@@ -8,6 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
+	pydetectors "github.com/jessegall/code-commandments/detectors/python"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
 	_ "github.com/jessegall/code-commandments/registry"
@@ -28,8 +29,26 @@ func shop(t *testing.T) *engine.Codebase {
 	return engine.Load(stream)
 }
 
+// configured is the Python detectors as tests/Fixtures/python/.commandments/config.php configures them: the shop
+// declares its layers.
+func configured() []detectors.Detector {
+	var configured []detectors.Detector
+	for _, detector := range detectors.Of(catalog.Python) {
+		if _, ok := detector.(pydetectors.NamespaceDependencyDetector); ok {
+			detector = pydetectors.NamespaceDependencyDetector{}.
+				Layer("shop.layout").
+				Layer("shop.widgets", "shop.layout").
+				Layer("shop.screens", "shop.widgets", "shop.layout").
+				Layer("shop.menus", "shop.layout")
+		}
+		configured = append(configured, detector)
+	}
+
+	return configured
+}
+
 func TestEveryPythonDetectorFlagsExactlyWhatTheFixtureMarks(t *testing.T) {
-	fixture.Fixture{Codebase: shop(t), Detectors: detectors.Of(catalog.Python), Resolver: fixture.FileScenarios}.Prove(t)
+	fixture.Fixture{Codebase: shop(t), Detectors: configured(), Known: detectors.Of(catalog.Python), Resolver: fixture.FileScenarios}.Prove(t)
 }
 
 func TestEverySinTheFixtureMarksHasADetector(t *testing.T) {
