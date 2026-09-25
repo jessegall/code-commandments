@@ -47,7 +47,11 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 	for _, detector := range detectors.Of(rules) {
 		sin := strings.TrimSuffix(catalog.Name(detector), "Detector")
 		for _, finding := range detector.Find(codebase) {
-			if at := strings.TrimPrefix(finding.File(), root+"/") + ":" + strconv.Itoa(finding.Line()) + " " + sin; !slices.Contains(found, at) {
+			file := strings.TrimPrefix(finding.File(), root+"/")
+			if !walked(file) {
+				continue
+			}
+			if at := file + ":" + strconv.Itoa(finding.Line()) + " " + sin; !slices.Contains(found, at) {
 				found = append(found, at)
 			}
 		}
@@ -123,4 +127,11 @@ func writeKept(path string, found []byte) error {
 	}
 
 	return os.WriteFile(path, zipped.Bytes(), 0o644)
+}
+
+// walked says whether the walk that picks the files a judge reads lets the file through: never one in a hidden
+// folder, which holds tooling, not source. The PHP tool hands its bridge only the files its walk lets through,
+// and judge's walk leaves the same out.
+func walked(file string) bool {
+	return !slices.ContainsFunc(strings.Split(file, "/"), func(part string) bool { return strings.HasPrefix(part, ".") })
 }

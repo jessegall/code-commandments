@@ -247,13 +247,13 @@ func (n Node) CommentWords() []string {
 	return words
 }
 
-// WhereComment is the code documented by every comment the check keeps, each where the comment is reported: a
-// comment that documents nothing is reported nowhere.
+// WhereComment is every comment the check keeps, each reported where the PHP engine reports it: on the line of the
+// code it documents, or on its own where it documents nothing.
 func (c *Codebase) WhereComment(check func(Comment) bool) []engine.Match {
 	var found []engine.Match
 	for _, comment := range c.Comments() {
-		if documented := comment.Documented(); documented.Exists() && check(comment) {
-			found = append(found, documented.Match)
+		if check(comment) {
+			found = append(found, comment.File.CommentMatch(comment.Comment, comment.Line()))
 		}
 	}
 

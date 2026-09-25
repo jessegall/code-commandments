@@ -178,6 +178,19 @@ func (f *File) Match(id int) Match {
 	return Match{node: node, file: f}
 }
 
+// CommentKind is the kind a comment's match wears: a comment is no node of the tree, yet a rule about what a comment
+// says finds the comment itself.
+const CommentKind = "Comment"
+
+// CommentMatch is the comment as a finding, reported on the line given: the line of the code it is about, or its own
+// where it is about nothing. It sits in no node, and its name is the comment's kind.
+func (f *File) CommentMatch(comment contract.Comment, line int) Match {
+	span := comment.Span
+	span.Line = line
+
+	return Match{node: &contract.Node{ID: -1, Kind: CommentKind, Role: "other", Span: span, Name: comment.Kind}, file: f}
+}
+
 // Comments is every comment attached to the node.
 func (f *File) Comments(node *contract.Node) []contract.Comment {
 	var attached []contract.Comment
