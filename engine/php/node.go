@@ -55,7 +55,7 @@ func (n Node) IsSwallowedCatch() bool {
 	if n.Kind() != "Stmt_Catch" {
 		return false
 	}
-	body := statements(n.Match)
+	body := n.In("stmts")
 	if len(body) == 0 {
 		return true
 	}
@@ -121,16 +121,4 @@ func (n Node) IsFalse() bool {
 // IsEmptyArrayLiteral says whether the node is an array literal with no items.
 func (n Node) IsEmptyArrayLiteral() bool {
 	return n.Kind() == "Expr_Array" && len(n.Children()) == 0
-}
-
-// statements is every statement a node's body holds, in order.
-func statements(node engine.Match) []engine.Match {
-	var body []engine.Match
-	for _, child := range node.Children() {
-		if child.Node().Field == "stmts" {
-			body = append(body, child)
-		}
-	}
-
-	return body
 }
