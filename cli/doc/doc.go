@@ -4,6 +4,10 @@ package doc
 
 import (
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -63,6 +67,27 @@ func commandNamed(kernel *cli.Kernel, verb string) (cli.Command, bool) {
 	}
 
 	return nil, false
+}
+
+// DocumentsIn are the paths of every Markdown document under the directory, sorted.
+func DocumentsIn(directory string) ([]string, error) {
+	var documents []string
+
+	err := filepath.WalkDir(directory, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() && filepath.Ext(path) == ".md" {
+			documents = append(documents, path)
+		}
+
+		return nil
+	})
+
+	slices.Sort(documents)
+
+	return documents, err
 }
 
 // Refresh renders every `commands:` block the document embeds from the commands' help.

@@ -3,13 +3,20 @@ package doc
 import (
 	"errors"
 	"os"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/commands"
 )
 
 func TestTheSkillsCommandBlocksAreWhatTheGoHelpProjects(t *testing.T) {
-	for _, path := range []string{"../../skills/writing-detectors/SKILL.md"} {
+	documents, err := DocumentsIn("../../skills")
+	if err != nil || len(documents) == 0 {
+		t.Fatalf("no skill documents: %v", err)
+	}
+
+	for _, path := range documents {
 		raw, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
@@ -38,8 +45,12 @@ func TestAMarkerThatCannotBeTrustedIsRefused(t *testing.T) {
 	}
 }
 
-// overviewPending names what the README's command table still waits on from the Go binary.
-const overviewPending = "ticket 8's repent and hints, ticket 10's sync, install and hook commands"
+// awaited are the verbs the README's table lists that ticket 10 brings to the Go binary: sync, install and
+// the hook commands.
+var awaited = []string{
+	"sync", "install", "judge-reminder", "hooks", "journal-hook", "journal-serve", "journal-config",
+	"journal-scan", "journal-skills", "hook",
+}
 
 func TestTheReadmeCommandTableIsWhatTheGoHelpProjects(t *testing.T) {
 	raw, err := os.ReadFile("../../README.md")
@@ -47,14 +58,35 @@ func TestTheReadmeCommandTableIsWhatTheGoHelpProjects(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	projected, found, err := Replace(string(raw), "commands-table", "\n"+Overview(commands.Kernel("dev"))+"\n")
+	overview := Overview(commands.Kernel("dev"))
+
+	for _, verb := range awaited {
+		if strings.Contains(overview, "| `commandments "+verb+"`") || strings.Contains(overview, "| `commandments "+verb+" ") {
+			t.Errorf("the Go binary documents %s now: drop it from awaited", verb)
+		}
+	}
+
+	projected, found, err := Replace(withoutAwaited(string(raw)), "commands-table", "\n"+overview)
 	if err != nil || !found {
 		t.Fatalf("no commands-table block: %v", err)
 	}
 
-	if projected == string(raw) {
-		t.Fatalf("the README table matches the Go help now: drop overviewPending (%s)", overviewPending)
+	if projected != withoutAwaited(string(raw)) {
+		t.Error("the README's command table differs from the Go help's, beyond ticket 10's verbs")
+	}
+}
+
+// withoutAwaited is the document less the table rows of the verbs ticket 10 brings.
+func withoutAwaited(document string) string {
+	var kept []string
+
+	for _, line := range strings.Split(document, "\n") {
+		if !slices.ContainsFunc(awaited, func(verb string) bool {
+			return strings.HasPrefix(line, "| `commandments "+verb+"`") || strings.HasPrefix(line, "| `commandments "+verb+" ")
+		}) {
+			kept = append(kept, line)
+		}
 	}
 
-	t.Skipf("pending: %s", overviewPending)
+	return strings.Join(kept, "\n")
 }
