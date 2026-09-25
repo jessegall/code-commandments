@@ -24,7 +24,7 @@ import (
 // the findings script, and fails for every finding only one of them makes. It skips the test without a project: a
 // real project is the parity check, not the suite. $COMMANDMENTS_PARITY_FINDINGS names a file the PHP findings are
 // kept in, read back on the next run, since the PHP half of a large project takes the longest.
-func Compare(t *testing.T, rules catalog.Engine, findings string, command func(testing.TB) []string) {
+func Compare(t *testing.T, rules catalog.Engine, findings string, command func(testing.TB, ...string) []string) {
 	t.Helper()
 	project := os.Getenv("COMMANDMENTS_PARITY")
 	if project == "" {
@@ -38,7 +38,7 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 	if err != nil {
 		t.Fatalf("the PHP engine failed: %v", err)
 	}
-	stream, err := bridge.Once(command(t), root)
+	stream, err := bridge.Once(command(t, root), root)
 	if err != nil {
 		t.Fatal(err)
 	}

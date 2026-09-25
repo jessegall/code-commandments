@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -12,59 +11,102 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace CodeCommandments.Bridge;
 
 /// <summary>
-/// Writes a run as the generic tree (contract/CONTRACT.md): a header, a line per file, the outside
-/// declarations the files reach, and a trailer. It reads the compiler exactly as <see cref="TreeWriter"/>
-/// does; only the shape differs.
+/// Writes a run as the generic tree (contract/CONTRACT.md): a header, a line per file, the outside declarations the
+/// files reach, and a trailer. It reads the compiler exactly as <see cref="TreeWriter"/> does; only the shape differs.
+/// It streams: one project at a time, each node written straight through as it is read, nothing of a project kept
+/// once its files are written but the plain text of the outside declarations it reached.
 /// </summary>
-public sealed class ContractWriter(Project project, IReadOnlyList<string> roots, IReadOnlySet<string>? written = null)
+public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<string>? written = null)
 {
     public const int Version = 2;
 
-    /// <summary>How a line is written: as deep as the version-7 writer's <see cref="Utf8JsonWriter"/> goes, since a long chain of expressions nests past the serializer's own 64.</summary>
-    private static readonly JsonSerializerOptions Json = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 1000 };
+    /// <summary>How a line is written: as deep as the version-7 writer goes, since a long chain of expressions nests past 64.</summary>
+    private static readonly JsonWriterOptions Json = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 1000 };
 
-    private readonly Project project = project;
-
-    private readonly TreeWriter readings = new(project);
-
-    private readonly Dictionary<string, INamedTypeSymbol> outside = new(StringComparer.Ordinal);
+    /// <summary>The outside declarations the files reach, as the program line writes them.</summary>
+    private readonly SortedDictionary<string, OutsideSymbol> outside = new(StringComparer.Ordinal);
 
     private int calls;
 
     private int resolved;
 
-    public void Write(Stream output)
+    private int files;
+
+    public void Write(Stream output, Workspace workspace)
     {
-        Line(output, "header", new JsonObject
+        Line(output, json =>
         {
-            ["contract"] = "tree",
-            ["version"] = Version,
-            ["language"] = "csharp",
-            ["bridge"] = new JsonObject { ["name"] = "roslyn-bridge", ["version"] = TreeWriter.Version.ToString() },
-            ["roots"] = new JsonArray(roots.Select(root => (JsonNode)Real(root)).ToArray()),
+            json.WriteStartObject("header");
+            json.WriteString("contract", "tree");
+            json.WriteNumber("version", Version);
+            json.WriteString("language", "csharp");
+            json.WriteStartObject("bridge");
+            json.WriteString("name", "roslyn-bridge");
+            json.WriteString("version", TreeWriter.Version.ToString());
+            json.WriteEndObject();
+            json.WriteStartArray("roots");
+
+            foreach (var root in roots)
+            {
+                json.WriteStringValue(Real(root));
+            }
+
+            json.WriteEndArray();
+            json.WriteEndObject();
         });
 
-        var files = 0;
+        workspace.Stream(roots, project => WriteProject(output, project));
+
+        Line(output, json =>
+        {
+            json.WriteStartObject("program");
+            json.WriteStartArray("symbols");
+
+            foreach (var symbol in outside.Values)
+            {
+                symbol.Write(json);
+            }
+
+            json.WriteEndArray();
+            json.WriteEndObject();
+        });
+        Line(output, json =>
+        {
+            json.WriteStartObject("trailer");
+            json.WriteNumber("files", files);
+            json.WriteStartObject("resolution");
+            json.WriteNumber("calls", calls);
+            json.WriteNumber("resolved", resolved);
+            json.WriteEndObject();
+            json.WriteEndObject();
+        });
+    }
+
+    /// <summary>A line for each of the project's files that exists.</summary>
+    private void WriteProject(Stream output, Project project)
+    {
+        var readings = new TreeWriter(project);
 
         foreach (var tree in project.Trees.Where(tree => File.Exists(tree.FilePath)))
         {
             var context = written is { Count: > 0 } && !written.Contains(tree.FilePath);
-            Line(output, "file", new FileWriter(this, tree, project.Model(tree)).File(context));
+            var writer = new FileWriter(this, readings, project, tree, project.Model(tree));
+            Line(output, json => writer.Write(json, context));
             files++;
         }
-
-        Line(output, "program", new JsonObject { ["symbols"] = OutsideSymbols() });
-        Line(output, "trailer", new JsonObject
-        {
-            ["files"] = files,
-            ["resolution"] = new JsonObject { ["calls"] = calls, ["resolved"] = resolved },
-        });
     }
 
-    private static void Line(Stream output, string key, JsonObject value)
+    /// <summary>One JSON object on a line of its own, its members written by <paramref name="members"/>.</summary>
+    private static void Line(Stream output, Action<Utf8JsonWriter> members)
     {
-        var line = new JsonObject { [key] = value }.ToJsonString(Json);
-        output.Write(Encoding.UTF8.GetBytes(line + "\n"));
+        using (var json = new Utf8JsonWriter(output, Json))
+        {
+            json.WriteStartObject();
+            members(json);
+            json.WriteEndObject();
+        }
+
+        output.WriteByte((byte)'\n');
     }
 
     /// <summary><paramref name="path"/> absolute, with symbolic links resolved.</summary>
@@ -77,7 +119,7 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
         return target?.FullName ?? full;
     }
 
-    /// <summary>Keep <paramref name="type"/> and its ancestors for the program line when they are declared outside the scan.</summary>
+    /// <summary>Keeps <paramref name="type"/> and its ancestors for the program line when they are declared outside the scan, as the text it is written as.</summary>
     private void Remember(INamedTypeSymbol type)
     {
         var original = type.OriginalDefinition;
@@ -87,10 +129,19 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             return;
         }
 
-        if (!outside.TryAdd(original.ToDisplayString(TreeWriter.Qualified), original))
+        var id = original.ToDisplayString(TreeWriter.Qualified);
+
+        if (outside.ContainsKey(id))
         {
             return;
         }
+
+        outside[id] = new OutsideSymbol(
+            id,
+            original.TypeKind switch { TypeKind.Interface => "interface", TypeKind.Enum => "enum", TypeKind.Struct => "struct", _ => "class" },
+            original.Name,
+            original.BaseType?.OriginalDefinition.ToDisplayString(TreeWriter.Qualified),
+            original.Interfaces.Select(face => face.OriginalDefinition.ToDisplayString(TreeWriter.Qualified)).ToList());
 
         if (original.BaseType is { } parent)
         {
@@ -103,38 +154,44 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
         }
     }
 
-    private JsonArray OutsideSymbols()
+    /// <summary>A declaration outside the scan, as the program line writes it.</summary>
+    private sealed record OutsideSymbol(string Symbol, string Kind, string Name, string? Extends, IReadOnlyList<string> Implements)
     {
-        var symbols = new JsonArray();
-
-        foreach (var (id, type) in outside.OrderBy(entry => entry.Key, StringComparer.Ordinal))
+        public void Write(Utf8JsonWriter json)
         {
-            var symbol = new JsonObject
-            {
-                ["symbol"] = id,
-                ["kind"] = type.TypeKind switch { TypeKind.Interface => "interface", TypeKind.Enum => "enum", TypeKind.Struct => "struct", _ => "class" },
-                ["name"] = type.Name,
-            };
+            json.WriteStartObject();
+            json.WriteString("symbol", Symbol);
+            json.WriteString("kind", Kind);
+            json.WriteString("name", Name);
 
-            if (type.BaseType is { } parent)
+            if (Extends is not null)
             {
-                symbol["extends"] = new JsonArray(parent.OriginalDefinition.ToDisplayString(TreeWriter.Qualified));
+                json.WriteStartArray("extends");
+                json.WriteStringValue(Extends);
+                json.WriteEndArray();
             }
 
-            if (type.Interfaces.Length > 0)
+            if (Implements.Count > 0)
             {
-                symbol["implements"] = new JsonArray(type.Interfaces.Select(face => (JsonNode)face.OriginalDefinition.ToDisplayString(TreeWriter.Qualified)).ToArray());
+                json.WriteStartArray("implements");
+
+                foreach (var face in Implements)
+                {
+                    json.WriteStringValue(face);
+                }
+
+                json.WriteEndArray();
             }
 
-            symbols.Add(symbol);
+            json.WriteEndObject();
         }
-
-        return symbols;
     }
 
     /// <summary>One file's line: its nodes numbered in pre-order, then its comments attached to them.</summary>
-    private sealed class FileWriter(ContractWriter run, SyntaxTree tree, SemanticModel model)
+    private sealed class FileWriter(ContractWriter run, TreeWriter readings, Project project, SyntaxTree tree, SemanticModel model)
     {
+        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> Properties = new();
+
         private readonly string text = tree.GetText().ToString();
 
         private readonly int[] bytes = TreeWriter.ByteOffsets(tree.GetText().ToString(), TreeWriter.MarkLength(tree.FilePath));
@@ -148,65 +205,92 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
         private int next;
 
-        public JsonObject File(bool context)
+        public void Write(Utf8JsonWriter json, bool context)
         {
-            var file = new JsonObject
-            {
-                ["path"] = Real(tree.FilePath),
-                ["language"] = "csharp",
-                ["errors"] = tree.GetDiagnostics().Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error),
-            };
+            json.WriteStartObject("file");
+            json.WriteString("path", Real(tree.FilePath));
+            json.WriteString("language", "csharp");
+            json.WriteNumber("errors", tree.GetDiagnostics().Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
 
             if (context)
             {
-                file["context"] = true;
+                json.WriteBoolean("context", true);
             }
 
-            if (run.project.IsTest(tree))
+            if (project.IsTest(tree))
             {
-                file["test"] = true;
+                json.WriteBoolean("test", true);
             }
 
-            file["resolver"] = new JsonObject { ["tool"] = "roslyn", ["ran"] = true };
-            file["root"] = Node(tree.GetRoot(), null);
-            file["comments"] = Comments();
-
-            return file;
+            json.WriteStartObject("resolver");
+            json.WriteString("tool", "roslyn");
+            json.WriteBoolean("ran", true);
+            json.WriteEndObject();
+            json.WritePropertyName("root");
+            Node(json, tree.GetRoot(), null);
+            WriteComments(json);
+            json.WriteEndObject();
         }
 
-        private JsonObject Node(SyntaxNode node, string? field)
+        private void Node(Utf8JsonWriter json, SyntaxNode node, string? field)
         {
             var id = next++;
             var (start, end) = (bytes[node.SpanStart], bytes[node.Span.End]);
             spans.Add((start, end, id));
             startingAt.TryAdd(start, id);
 
-            var written = new JsonObject { ["id"] = id, ["kind"] = node.Kind().ToString(), ["role"] = Role(node) };
-            var neutral = Neutral(node);
-
-            if (neutral.Count > 0)
-            {
-                written["is"] = new JsonArray(neutral.Select(value => (JsonNode)value).ToArray());
-            }
-
-            written["span"] = new JsonArray(start, end, tree.GetLineSpan(node.Span).StartLinePosition.Line + 1);
+            json.WriteStartObject();
+            json.WriteNumber("id", id);
+            json.WriteString("kind", node.Kind().ToString());
+            json.WriteString("role", Role(node));
+            Strings(json, "is", Neutral(node));
+            json.WriteStartArray("span");
+            json.WriteNumberValue(start);
+            json.WriteNumberValue(end);
+            json.WriteNumberValue(tree.GetLineSpan(node.Span).StartLinePosition.Line + 1);
+            json.WriteEndArray();
 
             if (field is not null)
             {
-                written["field"] = field;
+                json.WriteString("field", field);
             }
 
-            Facts(node, written);
+            Facts(json, node);
 
-            var fields = FieldsOf(node);
-            var children = node.ChildNodes().Select(child => (JsonNode)Node(child, fields[child])).ToArray();
+            var children = node.ChildNodes().ToList();
 
-            if (children.Length > 0)
+            if (children.Count > 0)
             {
-                written["children"] = new JsonArray(children);
+                var fields = FieldsOf(node);
+                json.WriteStartArray("children");
+
+                foreach (var child in children)
+                {
+                    Node(json, child, fields[child]);
+                }
+
+                json.WriteEndArray();
             }
 
-            return written;
+            json.WriteEndObject();
+        }
+
+        /// <summary>A list of strings under <paramref name="key"/>, left out when empty.</summary>
+        private static void Strings(Utf8JsonWriter json, string key, IReadOnlyCollection<string> values)
+        {
+            if (values.Count == 0)
+            {
+                return;
+            }
+
+            json.WriteStartArray(key);
+
+            foreach (var value in values)
+            {
+                json.WriteStringValue(value);
+            }
+
+            json.WriteEndArray();
         }
 
         /// <summary>The contract's role: a namespace is neither a member nor a statement, and a pattern is its own.</summary>
@@ -278,8 +362,6 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             return fields;
         }
 
-        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> Properties = new();
-
         /// <summary>The properties of a syntax class that can hold a child, in declaration order, read once per class.</summary>
         private static PropertyInfo[] PropertiesOf(Type syntax) => Properties.GetOrAdd(syntax, type => type
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -287,14 +369,14 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             .Where(property => typeof(SyntaxNode).IsAssignableFrom(property.PropertyType) || (property.PropertyType.IsGenericType && property.PropertyType.Name.Contains("SyntaxList")))
             .ToArray());
 
-        private void Facts(SyntaxNode node, JsonObject written)
+        private void Facts(Utf8JsonWriter json, SyntaxNode node)
         {
             if (Name(node) is { Length: > 0 } name)
             {
-                written["name"] = name;
+                json.WriteString("name", name);
             }
 
-            Literal(node, written);
+            Literal(json, node);
 
             var op = node switch
             {
@@ -307,7 +389,7 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
             if (op is not null)
             {
-                written["operator"] = op;
+                json.WriteString("operator", op);
             }
 
             var modifiers = node switch
@@ -318,26 +400,20 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
                 _ => default,
             };
 
-            if (modifiers.Count > 0)
-            {
-                written["modifiers"] = new JsonArray(modifiers.Select(token => (JsonNode)token.Text).ToArray());
-            }
-
-            var flags = Flags(node);
-
-            if (flags.Count > 0)
-            {
-                written["flags"] = new JsonArray(flags.Select(flag => (JsonNode)flag).ToArray());
-            }
-
-            Declared(node, written);
-            Resolved(node, written);
-            Target(node, written);
-            Refers(node, written);
+            Strings(json, "modifiers", modifiers.Select(token => token.Text).ToList());
+            Strings(json, "flags", Flags(node));
+            Declared(json, node);
+            Resolved(json, node);
+            Target(json, node);
+            Refers(json, node);
 
             if (node is PostfixUnaryExpressionSyntax { RawKind: (int)SyntaxKind.SuppressNullableWarningExpression } forgiven && TreeWriter.IsDeclaredNullable(forgiven.Operand, model))
             {
-                written["extras"] = new JsonObject { ["csharp"] = new JsonObject { ["forgivesNull"] = true } };
+                json.WriteStartObject("extras");
+                json.WriteStartObject("csharp");
+                json.WriteBoolean("forgivesNull", true);
+                json.WriteEndObject();
+                json.WriteEndObject();
             }
         }
 
@@ -364,31 +440,31 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             _ => null,
         };
 
-        private static void Literal(SyntaxNode node, JsonObject written)
+        private static void Literal(Utf8JsonWriter json, SyntaxNode node)
         {
             switch (node)
             {
                 case InterpolatedStringExpressionSyntax:
-                    written["literal"] = "interpolated";
+                    json.WriteString("literal", "interpolated");
                     break;
                 case InterpolatedStringTextSyntax part:
-                    written["value"] = part.TextToken.ValueText;
+                    json.WriteString("value", part.TextToken.ValueText);
                     break;
                 case LiteralExpressionSyntax literal when literal.IsKind(SyntaxKind.StringLiteralExpression) || literal.IsKind(SyntaxKind.Utf8StringLiteralExpression) || literal.IsKind(SyntaxKind.CharacterLiteralExpression):
-                    written["literal"] = "string";
-                    written["value"] = literal.Token.ValueText;
+                    json.WriteString("literal", "string");
+                    json.WriteString("value", literal.Token.ValueText);
                     break;
                 case LiteralExpressionSyntax literal when literal.IsKind(SyntaxKind.TrueLiteralExpression) || literal.IsKind(SyntaxKind.FalseLiteralExpression):
-                    written["literal"] = "bool";
-                    written["value"] = literal.IsKind(SyntaxKind.TrueLiteralExpression);
+                    json.WriteString("literal", "bool");
+                    json.WriteBoolean("value", literal.IsKind(SyntaxKind.TrueLiteralExpression));
                     break;
                 case LiteralExpressionSyntax literal when literal.IsKind(SyntaxKind.NullLiteralExpression) || literal.IsKind(SyntaxKind.DefaultLiteralExpression):
-                    written["literal"] = "null";
-                    written["value"] = null;
+                    json.WriteString("literal", "null");
+                    json.WriteNull("value");
                     break;
                 case LiteralExpressionSyntax literal when literal.IsKind(SyntaxKind.NumericLiteralExpression):
-                    written["literal"] = literal.Token.Value is double or float or decimal ? "float" : "int";
-                    written["value"] = Convert.ToString(literal.Token.Value, System.Globalization.CultureInfo.InvariantCulture);
+                    json.WriteString("literal", literal.Token.Value is double or float or decimal ? "float" : "int");
+                    json.WriteString("value", Convert.ToString(literal.Token.Value, System.Globalization.CultureInfo.InvariantCulture));
                     break;
             }
         }
@@ -431,17 +507,17 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
         }
 
         /// <summary>A declaration's symbol, whether it overrides or implements, and the type and return type it declares.</summary>
-        private void Declared(SyntaxNode node, JsonObject written)
+        private void Declared(Utf8JsonWriter json, SyntaxNode node)
         {
             var declared = node is BaseNamespaceDeclarationSyntax or CompilationUnitSyntax ? null : model.GetDeclaredSymbol(node);
 
             if (declared is not null)
             {
-                written["symbol"] = declared.OriginalDefinition.ToDisplayString(TreeWriter.Declared);
+                json.WriteString("symbol", declared.OriginalDefinition.ToDisplayString(TreeWriter.Declared));
 
                 if (node is MemberDeclarationSyntax && (declared.IsOverride || TreeWriter.ImplementsInterfaceMember(declared)))
                 {
-                    written["inherited"] = true;
+                    json.WriteBoolean("inherited", true);
                 }
             }
 
@@ -462,17 +538,17 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
             if (type is not null and not IErrorTypeSymbol)
             {
-                SetType(written, "declared", type, "written");
+                Type(json, "declared", type, "written");
             }
 
             if (declared is IMethodSymbol { MethodKind: MethodKind.Ordinary or MethodKind.LocalFunction, ReturnsVoid: false } method)
             {
-                SetType(written, "returns", method.ReturnType, "written");
+                Type(json, "returns", method.ReturnType, "written");
             }
         }
 
         /// <summary>The type the compiler gives an expression, and whether its value is fixed at compile time.</summary>
-        private void Resolved(SyntaxNode node, JsonObject written)
+        private void Resolved(Utf8JsonWriter json, SyntaxNode node)
         {
             if (node is not ExpressionSyntax expression || SyntaxFacts.IsInTypeOnlyContext(expression))
             {
@@ -481,17 +557,17 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
             if (model.GetTypeInfo(expression).Type is { } type and not IErrorTypeSymbol)
             {
-                SetType(written, "resolved", type, "compiler");
+                Type(json, "resolved", type, "compiler");
             }
 
             if (TreeWriter.IsConstant(expression, model))
             {
-                written["constant"] = true;
+                json.WriteBoolean("constant", true);
             }
         }
 
         /// <summary>The declaration a call or construction reaches, as its original definition.</summary>
-        private void Target(SyntaxNode node, JsonObject written)
+        private void Target(Utf8JsonWriter json, SyntaxNode node)
         {
             if (node is not (InvocationExpressionSyntax or BaseObjectCreationExpressionSyntax))
             {
@@ -507,17 +583,16 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
             run.resolved++;
             var original = (method.ReducedFrom ?? method).OriginalDefinition;
-            written["target"] = new JsonObject
-            {
-                ["symbol"] = original.ToDisplayString(TreeWriter.Declared),
-                ["type"] = original.ContainingType.ToDisplayString(TreeWriter.Qualified),
-                ["name"] = original.Name,
-            };
+            json.WriteStartObject("target");
+            json.WriteString("symbol", original.ToDisplayString(TreeWriter.Declared));
+            json.WriteString("type", original.ContainingType.ToDisplayString(TreeWriter.Qualified));
+            json.WriteString("name", original.Name);
+            json.WriteEndObject();
             run.Remember(original.ContainingType);
         }
 
         /// <summary>The type a name in a type position names.</summary>
-        private void Refers(SyntaxNode node, JsonObject written)
+        private void Refers(Utf8JsonWriter json, SyntaxNode node)
         {
             if (node is not (SimpleNameSyntax or QualifiedNameSyntax) || !SyntaxFacts.IsInTypeOnlyContext((TypeSyntax)node))
             {
@@ -526,104 +601,106 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
             if (model.GetSymbolInfo(node).Symbol is INamedTypeSymbol named)
             {
-                written["refers"] = named.OriginalDefinition.ToDisplayString(TreeWriter.Qualified);
+                json.WriteString("refers", named.OriginalDefinition.ToDisplayString(TreeWriter.Qualified));
                 run.Remember(named);
             }
         }
 
-        /// <summary>Writes <paramref name="type"/> under <paramref name="key"/>, when it can be spelled.</summary>
-        private void SetType(JsonObject node, string key, ITypeSymbol type, string origin)
+        /// <summary>
+        /// Writes <paramref name="type"/> under <paramref name="key"/> as the contract writes a type; left out when any part of
+        /// it has no spelling at all, as an element the compiler could not type leaves a tuple: absent, never guessed.
+        /// </summary>
+        private void Type(Utf8JsonWriter json, string key, ITypeSymbol type, string origin)
         {
-            if (Type(type, origin) is { } written)
+            if (!IsSpelled(type))
             {
-                node[key] = written;
+                return;
             }
+
+            json.WritePropertyName(key);
+            Type(json, type, origin);
         }
 
-        /// <summary>
-        /// The type as the contract writes it; none when any part of it has no spelling at all, as an element the
-        /// compiler could not type leaves a tuple — absent, never guessed.
-        /// </summary>
-        private JsonObject? Type(ITypeSymbol type, string origin)
+        /// <summary>Does <paramref name="type"/> have a spelling, and every part of it?</summary>
+        private static bool IsSpelled(ITypeSymbol type) => type.ToDisplayString(TreeWriter.Qualified).Length > 0 && type switch
         {
-            var text = type.ToDisplayString(TreeWriter.Qualified);
+            IErrorTypeSymbol => true,
+            IArrayTypeSymbol array => IsSpelled(array.ElementType),
+            INamedTypeSymbol { IsTupleType: true } tuple => tuple.TupleElements.All(element => IsSpelled(element.Type)),
+            INamedTypeSymbol named => named.TypeArguments.All(IsSpelled),
+            _ => true,
+        };
 
-            if (text.Length == 0)
-            {
-                return null;
-            }
-
-            var written = new JsonObject { ["text"] = text };
+        private void Type(Utf8JsonWriter json, ITypeSymbol type, string origin)
+        {
+            json.WriteStartObject();
+            json.WriteString("text", type.ToDisplayString(TreeWriter.Qualified));
 
             switch (type)
             {
                 case IErrorTypeSymbol:
-                    written["kind"] = "opaque";
+                    json.WriteString("kind", "opaque");
                     break;
                 case IArrayTypeSymbol array:
-                    written["kind"] = "array";
-                    if (Type(array.ElementType, origin) is not { } element)
-                    {
-                        return null;
-                    }
-
-                    written["args"] = new JsonArray(element);
+                    json.WriteString("kind", "array");
+                    json.WriteStartArray("args");
+                    Type(json, array.ElementType, origin);
+                    json.WriteEndArray();
                     break;
                 case ITypeParameterSymbol parameter:
-                    written["kind"] = "parameter";
-                    written["name"] = parameter.Name;
+                    json.WriteString("kind", "parameter");
+                    json.WriteString("name", parameter.Name);
                     break;
                 case INamedTypeSymbol { IsTupleType: true } tuple:
-                    written["kind"] = "tuple";
-                    var members = tuple.TupleElements.Select(element => Type(element.Type, origin)).ToList();
+                    json.WriteString("kind", "tuple");
+                    json.WriteStartArray("members");
 
-                    if (members.Contains(null))
+                    foreach (var element in tuple.TupleElements)
                     {
-                        return null;
+                        Type(json, element.Type, origin);
                     }
 
-                    written["members"] = new JsonArray(members.Select(member => (JsonNode)member!).ToArray());
+                    json.WriteEndArray();
                     break;
                 case INamedTypeSymbol named:
-                    written["kind"] = "named";
-                    written["name"] = named.OriginalDefinition.ToDisplayString(TreeWriter.Qualified.WithGenericsOptions(SymbolDisplayGenericsOptions.None));
+                    json.WriteString("kind", "named");
+                    json.WriteString("name", named.OriginalDefinition.ToDisplayString(TreeWriter.Qualified.WithGenericsOptions(SymbolDisplayGenericsOptions.None)));
 
                     if (named.TypeArguments.Length > 0)
                     {
-                        var arguments = named.TypeArguments.Select(argument => Type(argument, origin)).ToList();
+                        json.WriteStartArray("args");
 
-                        if (arguments.Contains(null))
+                        foreach (var argument in named.TypeArguments)
                         {
-                            return null;
+                            Type(json, argument, origin);
                         }
 
-                        written["args"] = new JsonArray(arguments.Select(argument => (JsonNode)argument!).ToArray());
+                        json.WriteEndArray();
                     }
 
                     run.Remember(named);
                     break;
                 default:
-                    written["kind"] = "opaque";
+                    json.WriteString("kind", "opaque");
                     break;
             }
 
             if (type.NullableAnnotation == NullableAnnotation.Annotated || type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T })
             {
-                written["nullable"] = true;
+                json.WriteBoolean("nullable", true);
             }
 
             if (type.IsValueType && type is not ITypeParameterSymbol)
             {
-                written["valueType"] = true;
+                json.WriteBoolean("valueType", true);
             }
 
-            written["origin"] = origin;
-
-            return written;
+            json.WriteString("origin", origin);
+            json.WriteEndObject();
         }
 
         /// <summary>Every comment in the file, in order, attached to the node it leads or trails.</summary>
-        private JsonArray Comments()
+        private void WriteComments(Utf8JsonWriter json)
         {
             var found = tree.GetRoot().DescendantTrivia(descendIntoTrivia: false).Where(TreeWriter.IsComment).ToList();
             var commentEnds = new Dictionary<int, int>();
@@ -632,40 +709,42 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             {
                 commentEnds.TryAdd(bytes[trivia.FullSpan.Start], bytes[Trimmed(trivia)]);
             }
-            var comments = new JsonArray();
 
-            foreach (var trivia in found)
+            json.WriteStartArray("comments");
+
+            for (var id = 0; id < found.Count; id++)
             {
+                var trivia = found[id];
                 var (start, end) = (bytes[trivia.FullSpan.Start], bytes[Trimmed(trivia)]);
-                var comment = new JsonObject
-                {
-                    ["id"] = comments.Count,
-                    ["kind"] = TreeWriter.CommentKind(trivia),
-                    ["text"] = text[trivia.FullSpan.Start..Trimmed(trivia)],
-                    ["span"] = new JsonArray(start, end, tree.GetLineSpan(trivia.Span).StartLinePosition.Line + 1),
-                };
-
-                Attach(comment, start, end, commentEnds);
+                json.WriteStartObject();
+                json.WriteNumber("id", id);
+                json.WriteString("kind", TreeWriter.CommentKind(trivia));
+                json.WriteString("text", text[trivia.FullSpan.Start..Trimmed(trivia)]);
+                json.WriteStartArray("span");
+                json.WriteNumberValue(start);
+                json.WriteNumberValue(end);
+                json.WriteNumberValue(tree.GetLineSpan(trivia.Span).StartLinePosition.Line + 1);
+                json.WriteEndArray();
+                Attach(json, start, end, commentEnds);
 
                 if (trivia.GetStructure() is DocumentationCommentTriviaSyntax documentation)
                 {
-                    var refs = Refs(documentation);
-
-                    if (refs.Count > 0)
-                    {
-                        comment["refs"] = refs;
-                    }
+                    WriteRefs(json, documentation);
                 }
 
                 if (TreeWriter.IsCode(trivia))
                 {
-                    comment["extras"] = new JsonObject { ["csharp"] = new JsonObject { ["code"] = true } };
+                    json.WriteStartObject("extras");
+                    json.WriteStartObject("csharp");
+                    json.WriteBoolean("code", true);
+                    json.WriteEndObject();
+                    json.WriteEndObject();
                 }
 
-                comments.Add(comment);
+                json.WriteEndObject();
             }
 
-            return comments;
+            json.WriteEndArray();
         }
 
         /// <summary>Where a comment's text ends: a documentation comment's trailing line break is not its own.</summary>
@@ -682,48 +761,56 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
         }
 
         /// <summary>Each <c>cref</c> as written, what it resolves to, and when it does not, the longest qualifier that does.</summary>
-        private JsonArray Refs(DocumentationCommentTriviaSyntax documentation)
+        private void WriteRefs(Utf8JsonWriter json, DocumentationCommentTriviaSyntax documentation)
         {
-            var refs = new JsonArray();
+            var crefs = documentation.DescendantNodes().OfType<CrefSyntax>().Where(cref => cref.Parent is not CrefSyntax).ToList();
 
-            foreach (var cref in documentation.DescendantNodes().OfType<CrefSyntax>().Where(cref => cref.Parent is not CrefSyntax))
+            if (crefs.Count == 0)
             {
-                var reference = new JsonObject { ["text"] = cref.ToString() };
+                return;
+            }
+
+            json.WriteStartArray("refs");
+
+            foreach (var cref in crefs)
+            {
                 var info = model.GetSymbolInfo(cref);
                 var symbol = info.Symbol ?? info.CandidateSymbols.FirstOrDefault();
                 var owner = symbol is null ? TreeWriter.Owner(cref, model) : null;
+                json.WriteStartObject();
+                json.WriteString("text", cref.ToString());
 
                 if (symbol is not null)
                 {
-                    reference["symbol"] = symbol.ToDisplayString(TreeWriter.Declared);
+                    json.WriteString("symbol", symbol.ToDisplayString(TreeWriter.Declared));
                 }
 
                 if (owner is not null)
                 {
-                    reference["owner"] = owner.ToDisplayString(TreeWriter.Qualified);
+                    json.WriteString("owner", owner.ToDisplayString(TreeWriter.Qualified));
                 }
 
                 if (owner?.Locations.Any(location => location.IsInSource) == true)
                 {
-                    reference["ownedHere"] = true;
+                    json.WriteBoolean("ownedHere", true);
                 }
 
-                if (symbol is null && run.readings.IsBlind(model))
+                if (symbol is null && readings.IsBlind(model))
                 {
-                    reference["blind"] = true;
+                    json.WriteBoolean("blind", true);
                 }
 
-                refs.Add(reference);
+                json.WriteEndObject();
             }
 
-            return refs;
+            json.WriteEndArray();
         }
 
         /// <summary>
         /// A trailing comment belongs to the outermost node ending on its line before it; a leading one to the
         /// outermost node starting at the first token after it, other comments skipped.
         /// </summary>
-        private void Attach(JsonObject comment, int start, int end, Dictionary<int, int> commentEnds)
+        private void Attach(Utf8JsonWriter json, int start, int end, Dictionary<int, int> commentEnds)
         {
             var source = this.source ??= Encoding.UTF8.GetBytes(text);
             var mark = bytes[0];
@@ -736,10 +823,10 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
                 if (owner != default)
                 {
-                    comment["attached"] = owner.Id;
+                    json.WriteNumber("attached", owner.Id);
                 }
 
-                comment["trailing"] = true;
+                json.WriteBoolean("trailing", true);
 
                 return;
             }
@@ -763,7 +850,7 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
             if (startingAt.TryGetValue(after, out var next))
             {
-                comment["attached"] = next;
+                json.WriteNumber("attached", next);
             }
         }
     }

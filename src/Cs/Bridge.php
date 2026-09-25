@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace JesseGall\CodeCommandments\Cs;
 
-use JesseGall\CodeCommandments\Support\BuiltTool;
 use JesseGall\CodeCommandments\Support\LocatedTool;
 use JesseGall\PhpTypes\Option;
 
 /**
- * The Roslyn bridge this package carries in `bridge/roslyn`, built once per version of its sources and
- * run over C# files to read their trees. It needs the `dotnet` SDK; where there is none, there is no
- * bridge, and C# is not judged rather than failing the run.
+ * The Roslyn bridge this package carries in `bridge/roslyn`, a prebuilt image run over C# files to read their trees.
+ * .NET never runs on the host, and the bridge is never built on demand: every run goes through
+ * `bridge/roslyn/roslyn-in-docker.sh`, a memory-capped container of the image `bridge/roslyn/IMAGE` names. Where there
+ * is no Docker or no image, there is no bridge, and C# is not judged rather than failing the run.
  */
 final class Bridge implements LocatedTool
 {
@@ -22,74 +22,65 @@ final class Bridge implements LocatedTool
 
     private const string SOURCE = __DIR__ . '/../../bridge/roslyn';
 
-
     /**
-     * The bridge this instance keeps running — started on the first read, reused by every read after,
-     * so whoever holds the instance (the journal's hook service) reads warm.
+     * The bridge this instance keeps running — started on the first read, reused by every read after, so whoever
+     * holds the instance (the journal's hook service) reads warm.
      */
     private ?BridgeProcess $running = null;
 
-    private function __construct(
-        private readonly string $dotnet,
-        private readonly string $assembly,
-    ) {}
+    /**
+     * The folders the running bridge's container can read.
+     *
+     * @var list<string>
+     */
+    private array $mounted = [];
+
+    private function __construct() {}
 
     /**
-     * The bridge, built if this version of it has not been yet — none when `dotnet` is not installed
-     * or the build fails.
+     * The bridge — none when Docker is not running or its image is not installed.
+     *
+     * @return Option<self>
      */
     public static function located(): Option
     {
-        $dotnet = trim((string) shell_exec('command -v dotnet 2>/dev/null'));
-        $tool = new BuiltTool('roslyn-bridge', [...glob(self::SOURCE . '/*.cs') ?: [], ...glob(self::SOURCE . '/*.csproj') ?: []], 'roslyn-bridge.dll');
+        $image = trim((string) file_get_contents(self::SOURCE . '/IMAGE'));
+        exec('docker image inspect ' . escapeshellarg($image) . ' > /dev/null 2>&1', $output, $code);
 
-        if ($dotnet === '' || ! $tool->isBuiltBy(static fn (string $into) => self::build($dotnet, $into))) {
-            return Option::none();
-        }
-
-        return Option::some(new self($dotnet, "{$tool->folder()}/roslyn-bridge.dll"));
+        return $code === 0 ? Option::some(new self()) : Option::none();
     }
 
     /**
-     * The trees of the C# files under $paths, as the bridge wrote them — every file, or only those in
-     * $written while the rest still inform the types. The project is compiled whole either way.
-     *
      * @param  list<string>  $paths
      * @param  list<string>  $written
      */
     public function read(array $paths, array $written = []): BridgeRead
     {
-        return $this->process()->read(array_map(self::resolved(...), $paths), array_map(self::resolved(...), $written));
+        $paths = array_map(self::resolved(...), $paths);
+
+        return $this->process($paths)->read($paths, array_map(self::resolved(...), $written));
     }
 
-    /**
-     * $path with its symbolic links resolved, as the bridge names the files it writes — so a root and a
-     * file asked for through a link (`/var` for `/private/var`) still name the same file.
-     */
     private static function resolved(string $path): string
     {
         return realpath($path) ?: $path;
     }
 
-    private function process(): BridgeProcess
+    /**
+     * The running bridge, restarted with the folders $paths are in mounted when its container cannot read one.
+     *
+     * @param  list<string>  $paths
+     */
+    private function process(array $paths): BridgeProcess
     {
-        if ($this->running === null || ! $this->running->isRunning()) {
-            $this->running = BridgeProcess::start($this->dotnet, $this->assembly);
+        $folders = array_map(static fn (string $path): string => is_dir($path) ? $path : dirname($path), $paths);
+        $unread = array_filter($folders, fn (string $folder): bool => ! array_any($this->mounted, static fn (string $mount): bool => $folder === $mount || str_starts_with($folder, "{$mount}/")));
+
+        if ($this->running === null || ! $this->running->isRunning() || $unread !== []) {
+            $this->mounted = array_values(array_unique([...$this->mounted, ...$folders]));
+            $this->running = BridgeProcess::start(['bash', (string) realpath(self::SOURCE . '/roslyn-in-docker.sh'), ...array_map(static fn (string $folder): string => "{$folder}:ro", $this->mounted), '--', '--serve']);
         }
 
         return $this->running;
-    }
-
-    /**
-     * Build the bridge into $into with `dotnet build`, starting no build server: a compiler server or
-     * MSBuild node outlives the build by minutes and inherits every descriptor the caller left open, so
-     * whatever reads the caller's output through a pipe would wait for it long after the build is done.
-     */
-    private static function build(string $dotnet, string $into): bool
-    {
-        $project = realpath(self::SOURCE . '/Roslyn.Bridge.csproj');
-        exec(escapeshellarg($dotnet) . ' build ' . escapeshellarg((string) $project) . ' -c Release --nologo -v quiet --disable-build-servers -o ' . escapeshellarg($into) . ' 2>&1', $output, $code);
-
-        return $code === 0;
     }
 }

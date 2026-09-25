@@ -15,8 +15,8 @@ use JesseGall\PhpTypes\Option;
 
 /**
  * The C# files of a project as the Roslyn bridge read them, behind the same selectors the other engines
- * answer. Without the `dotnet` SDK there is no bridge and so no C#: the codebase is empty, and C# is
- * not judged rather than failing the run.
+ * answer. The bridge runs only in its Docker container; without Docker there is no bridge and so no C#: the
+ * codebase is empty, and C# is not judged rather than failing the run.
  */
 final class Codebase implements ModuleCodebase
 {
@@ -82,7 +82,7 @@ final class Codebase implements ModuleCodebase
 
     /**
      * Every C# file under $path, read by the bridge $held keeps (one sought for this scan by default) —
-     * none when `dotnet` is missing, and no bridge sought at all when there is no C# to read.
+     * none when Docker is missing, and no bridge sought at all when there is no C# to read.
      *
      * @param  string|list<string>  $path
      */

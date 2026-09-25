@@ -15,9 +15,12 @@ final class BridgeProcess
 {
     private function __construct(private readonly LineProcess $process) {}
 
-    public static function start(string $dotnet, string $assembly): self
+    /**
+     * @param  list<string>  $command  the command that runs the bridge with `--serve`
+     */
+    public static function start(array $command): self
     {
-        return new self(LineProcess::start('Roslyn bridge', [$dotnet, $assembly, '--serve']));
+        return new self(LineProcess::start('Roslyn bridge', $command));
     }
 
     public function isRunning(): bool

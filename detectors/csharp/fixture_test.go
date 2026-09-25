@@ -21,7 +21,7 @@ func shop(t *testing.T) *engine.Codebase {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stream, err := bridge.Once(bridge.TestRoslyn(t), root)
+	stream, err := bridge.Once(bridge.TestRoslyn(t, root), root)
 	if err != nil {
 		t.Fatal(err)
 	}

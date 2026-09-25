@@ -24,16 +24,19 @@ var fixture struct {
 	err      error
 }
 
-// shop is the C# fixture's codebase, or the test skipped when there is no dotnet.
+// shop is the C# fixture's codebase, or the test skipped when there is no Docker to run the bridge in.
 func shop(t *testing.T) *engine.Codebase {
 	t.Helper()
-	command := bridge.TestRoslyn(t)
+	root, err := filepath.Abs("../../tests/Fixtures/csharp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := bridge.TestRoslyn(t, root)
 	fixture.once.Do(func() {
-		fixture.root, fixture.err = filepath.Abs("../../tests/Fixtures/csharp")
+		fixture.root, fixture.err = filepath.EvalSymlinks(root)
 		if fixture.err != nil {
 			return
 		}
-		fixture.root, fixture.err = filepath.EvalSymlinks(fixture.root)
 		stream, err := bridge.Once(command, fixture.root)
 		if err != nil {
 			fixture.err = err

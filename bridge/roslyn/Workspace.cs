@@ -56,6 +56,95 @@ public sealed class Workspace
     }
 
     /// <summary>
+    /// The run as a stream, one project at a time, holding nothing between runs: each project is parsed and compiled
+    /// when it is reached, dependencies first, its asked files handed to <paramref name="write"/>, and its compilation
+    /// let go once no project still to be written reaches it. Files outside every project come last, compiled alone.
+    /// </summary>
+    public void Stream(IReadOnlyList<string> paths, Action<Project> write)
+    {
+        var roots = paths.Select(Path.GetFullPath).ToList();
+        var asked = Sources.Under(roots).ToHashSet(StringComparer.Ordinal);
+        var solution = Solution.Around(roots);
+        var owned = solution.Files().Concat(asked).Distinct().GroupBy(file => solution.Owner(file) ?? "").ToDictionary(group => group.Key, group => group.ToList());
+        var order = new List<string>();
+        var reach = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+
+        foreach (var csproj in solution.Projects.Keys)
+        {
+            Order(csproj, solution, reach, order, []);
+        }
+
+        var readers = order.SelectMany(csproj => reach[csproj]).GroupBy(other => other).ToDictionary(group => group.Key, group => group.Count());
+        var compilations = new Dictionary<string, CSharpCompilation>(StringComparer.Ordinal);
+
+        foreach (var csproj in order)
+        {
+            var sources = (owned.GetValueOrDefault(csproj) ?? []).Select(Parse).ToList();
+            var usings = CSharpSyntaxTree.ParseText(GlobalUsings.Of(csproj), Options);
+            var projects = reach[csproj].Where(compilations.ContainsKey).Select(other => compilations[other].ToMetadataReference());
+            var assemblies = References.Load(References.Of(csproj), reach[csproj].Select(References.Of));
+            var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, usings], [..assemblies, ..projects], Compiled);
+            compilations[csproj] = compilation;
+            WriteAsked(sources, compilation, asked, solution.Projects[csproj].IsTestProject(), write);
+
+            foreach (var other in reach[csproj].Where(readers.ContainsKey))
+            {
+                if (--readers[other] == 0)
+                {
+                    compilations.Remove(other);
+                }
+            }
+
+            if (!readers.ContainsKey(csproj))
+            {
+                compilations.Remove(csproj);
+            }
+        }
+
+        if (owned.TryGetValue("", out var loose))
+        {
+            var sources = loose.Select(Parse).ToList();
+            WriteAsked(sources, CSharpCompilation.Create("loose", sources, References.Loose(), Compiled), asked, false, write);
+        }
+    }
+
+    /// <summary>Hands the asked files among <paramref name="sources"/> to <paramref name="write"/>, as one project read in <paramref name="compilation"/>.</summary>
+    private static void WriteAsked(List<SyntaxTree> sources, CSharpCompilation compilation, HashSet<string> asked, bool test, Action<Project> write)
+    {
+        var trees = sources.Where(tree => asked.Contains(tree.FilePath)).ToList();
+
+        if (trees.Count == 0)
+        {
+            return;
+        }
+
+        write(new Project(trees, trees.ToDictionary(tree => tree, _ => compilation), test ? trees.ToHashSet() : []));
+    }
+
+    /// <summary>Puts <paramref name="csproj"/> in <paramref name="order"/> after every project it reaches, and keeps what it reaches in <paramref name="reach"/>.</summary>
+    private static void Order(string csproj, Solution solution, Dictionary<string, List<string>> reach, List<string> order, HashSet<string> visiting)
+    {
+        if (reach.ContainsKey(csproj) || !visiting.Add(csproj))
+        {
+            return;
+        }
+
+        var reached = Reached(csproj, solution, visiting);
+
+        foreach (var other in reached)
+        {
+            Order(other, solution, reach, order, visiting);
+        }
+
+        visiting.Remove(csproj);
+        reach[csproj] = reached;
+        order.Add(csproj);
+    }
+
+    /// <summary><paramref name="file"/> parsed, never kept: a streamed run holds nothing between runs.</summary>
+    private static SyntaxTree Parse(string file) => CSharpSyntaxTree.ParseText(File.ReadAllText(file), Options, path: file);
+
+    /// <summary>
     /// The compilation of <paramref name="csproj"/>, its referenced projects compiled first. What a
     /// referenced project reaches flows on, as MSBuild lets it: the projects it references, its packages,
     /// and its shared frameworks by name — loaded for this project's own target framework. A reference back into a

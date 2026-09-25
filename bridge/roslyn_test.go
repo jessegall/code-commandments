@@ -1,8 +1,11 @@
 package bridge
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -14,7 +17,7 @@ func TestTheRoslynBridgeWritesAValidTreeOfTheCSharpFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stream, err := Once(TestRoslyn(t), root)
+	stream, err := Once(TestRoslyn(t, root), root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +49,7 @@ func TestAServedRoslynBridgeMarksTheFilesItWasNotAskedToWriteAsContext(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	server, err := Serve(TestRoslyn(t))
+	server, err := Serve(TestRoslyn(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +76,7 @@ func TestTheRoslynBridgeWritesAnExpressionNestedDeeperThanTheSerializersDefault(
 	if err := os.WriteFile(filepath.Join(root, "Banner.cs"), []byte(source), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	stream, err := Once(TestRoslyn(t), root)
+	stream, err := Once(TestRoslyn(t, root), root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +91,31 @@ func TestTheRoslynBridgeWritesATypeItCouldNotResolveInsideAnotherAsOpaque(t *tes
 	if err := os.WriteFile(filepath.Join(root, "Shelf.cs"), []byte(source), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Once(TestRoslyn(t), root); err != nil {
+	if _, err := Once(TestRoslyn(t, root), root); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestTheImageNameIsTheOneTheBridgesSourcesAreBuiltAs(t *testing.T) {
+	files, err := filepath.Glob("roslyn/*.cs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	files = append(files, "roslyn/Dockerfile", "roslyn/Roslyn.Bridge.csproj")
+	for at := range files {
+		files[at] = filepath.Base(files[at])
+	}
+	sort.Strings(files)
+	hash := sha1.New()
+	for _, file := range files {
+		source, err := os.ReadFile(filepath.Join("roslyn", file))
+		if err != nil {
+			t.Fatal(err)
+		}
+		hash.Write([]byte(file + "\n"))
+		hash.Write(source)
+	}
+	if want := "code-commandments/roslyn-bridge:" + hex.EncodeToString(hash.Sum(nil))[:16]; RoslynImage() != want {
+		t.Errorf("bridge/roslyn/IMAGE names %s, but the sources are built as %s: write the new name there", RoslynImage(), want)
 	}
 }

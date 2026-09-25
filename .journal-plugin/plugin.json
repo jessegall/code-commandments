@@ -3443,6 +3443,10 @@
         "hooks": {
             "run": "bin/commandments journal-serve",
             "restart": "always"
+        },
+        "roslyn": {
+            "run": "bridge/roslyn/roslyn-service.sh",
+            "restart": "always"
         }
     },
     "dashboards": [

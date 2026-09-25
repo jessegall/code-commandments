@@ -1,11 +1,11 @@
 """Writes the C# sample stream with the Roslyn bridge's --tree mode, spelling each path as the sample shows it.
 
-Usage: python3 csharp.py <roslyn-bridge.dll> <project-folder> (<file> <path-in-stream>)...
-The whole folder is compiled, so types and targets resolve across it; only the files named are written. From
-the repository root, with the bridge built (`go test ./bridge/ -run Roslyn` builds it into the cache):
+Usage: python3 csharp.py <project-folder> (<file> <path-in-stream>)...
+The whole folder is compiled, so types and targets resolve across it; only the files named are written. The bridge
+runs in a memory-capped container of its prebuilt image through bridge/roslyn/roslyn-in-docker.sh, never on the
+host. From the repository root:
 
-    python3 contract/samples/emit/csharp.py ~/.cache/code-commandments/roslyn-tree/*/out/roslyn-bridge.dll \
-        tests/Fixtures/csharp \
+    python3 contract/samples/emit/csharp.py tests/Fixtures/csharp \
         tests/Fixtures/csharp/Shop/Orders/GiftWrapping.cs /fixtures/csharp/Shop/Orders/GiftWrapping.cs \
         tests/Fixtures/csharp/Shop/Shipping/Tracking.cs /fixtures/csharp/Shop/Shipping/Tracking.cs \
         tests/Fixtures/csharp/Shop/Stock/Audits.cs /fixtures/csharp/Shop/Stock/Audits.cs \
@@ -20,10 +20,11 @@ import sys
 
 
 def main(argv: list[str]) -> int:
-    bridge, folder, pairs = argv[0], argv[1], argv[2:]
+    folder, pairs = argv[0], argv[1:]
     shown = {os.path.realpath(pairs[at]): pairs[at + 1] for at in range(0, len(pairs), 2)}
     request = json.dumps({"paths": [os.path.realpath(folder)], "write": list(shown)})
-    answer = subprocess.run(["dotnet", bridge, "--tree", "--serve"], input=request + "\n", capture_output=True, text=True, check=True)
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "bridge", "roslyn", "roslyn-in-docker.sh")
+    answer = subprocess.run(["bash", script, os.path.realpath(folder) + ":ro", "--", "--tree", "--serve"], input=request + "\n", capture_output=True, text=True, check=True)
     files = []
     for line in answer.stdout.splitlines():
         entry = json.loads(line)
