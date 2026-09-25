@@ -208,7 +208,9 @@ canonical `text`, because detectors match that text directly (a C#
 
 `?T` is the type `T` with `nullable: true`; the node's `nullable-sugar` flag says it was written that
 way. `opaque` is for a type the bridge does not model: a conditional, mapped or template-literal type,
-or `keyof`. It keeps `text` exactly as written and nothing else, so the type is never lost or misread.
+or `keyof`, or a resolved type with no single class. It keeps `text` exactly as written and no
+structure (`name`, `args`, `members`, `fields`, `parameters`, `returns`, `value`, `element`), but the facts the
+resolver knows about it stay: `nullable`, `valueType`, `constructs`. So the type is never lost or misread.
 
 ## Symbols
 

@@ -323,20 +323,42 @@ func checkCombined(root, schema map[string]any, value any, at string) error {
 	}
 	if options, ok := schema["oneOf"].([]any); ok {
 		matched := 0
-		var last error
+		var closest error
 		for _, sub := range options {
-			if err := check(root, sub.(map[string]any), value, at); err != nil {
-				last = err
+			err := check(root, sub.(map[string]any), value, at)
+			if err == nil {
+				matched++
 				continue
 			}
-			matched++
+			if closest == nil || claims(sub.(map[string]any), value) {
+				closest = err
+			}
 		}
-		if matched != 1 {
-			return fmt.Errorf("%s: matches %d of the shapes a line may take, not exactly one (%v)", location(at), matched, last)
+		if matched == 0 {
+			return closest
+		}
+		if matched > 1 {
+			return fmt.Errorf("%s: matches %d of the shapes it may take, not exactly one", location(at), matched)
 		}
 	}
 
 	return nil
+}
+
+// claims says whether value holds every key the schema requires, so its error is the one worth reporting.
+func claims(schema map[string]any, value any) bool {
+	object, ok := value.(map[string]any)
+	if !ok {
+		return false
+	}
+	required, _ := schema["required"].([]any)
+	for _, name := range required {
+		if _, present := object[name.(string)]; !present {
+			return false
+		}
+	}
+
+	return len(required) > 0
 }
 
 func count(schema map[string]any, keyword string) (int, bool) {

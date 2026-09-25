@@ -1,5 +1,5 @@
-// Writes one TypeScript or Vue file as a generic tree stream (contract/CONTRACT.md), the way the frontend bridge will.
-// Usage: NODE_PATH=<node_modules> node frontend.mjs ts|vue <file> <path-in-stream>
+// Writes TypeScript or Vue files as one generic tree stream (contract/CONTRACT.md), the way the frontend bridge will.
+// Usage: NODE_PATH=<node_modules> node frontend.mjs ts|vue (<file> <path-in-stream>)...
 import { createRequire } from 'node:module'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -8,8 +8,8 @@ const require = createRequire(process.env.NODE_PATH + '/')
 const ts = require('typescript')
 const dom = require('@vue/compiler-dom')
 
-const [mode, file, shown] = process.argv.slice(2)
-const source = readFileSync(file, 'utf8')
+const [mode, ...paths] = process.argv.slice(2)
+let file, shown, source, bytes
 
 const KINDS = {}
 for (const [name, value] of Object.entries(ts.SyntaxKind)) {
@@ -35,7 +35,6 @@ function byteTable(text) {
     return table
 }
 
-const bytes = byteTable(source)
 const lineAt = (offset) => source.slice(0, offset).split('\n').length
 
 class Tree {
@@ -434,15 +433,16 @@ function markupArg(tree, arg) {
     return { id: tree.number(start, end), kind: 'Identifier', role: 'other', span: [bytes[start], bytes[end], lineAt(start)], field: 'arg', name: arg.content }
 }
 
-/** A template expression, parsed as TypeScript, its spans pointing into the .vue file. */
+/** A template expression, parsed as TypeScript, its spans pointing into the .vue file; no checker types it, so it carries no resolved facts. */
 function expression(tree, simple, field) {
     const start = simple.loc.start.offset
     const wrapped = ts.createSourceFile('expression.ts', `(${simple.loc.source})`, ts.ScriptTarget.ESNext, true)
     const parenthesized = wrapped.statements[0].expression
     const { checker } = program('expression.ts', `(${simple.loc.source})`)
     const writer = new TypeScriptWriter(tree, wrapped, checker, start - 1)
+    const seen = [tree.calls, tree.resolved]
     const node = writer.node(parenthesized.expression, field)
-    for (const typed of [node]) delete typed.resolved
+    ;[tree.calls, tree.resolved] = seen
 
     return stripResolved(node)
 }
@@ -455,9 +455,18 @@ function stripResolved(node) {
     return node
 }
 
-const { tree, root, found } = mode === 'vue' ? vueFile() : typescriptFile()
 const emit = (line) => console.log(JSON.stringify(line))
 const language = mode === 'vue' ? 'vue' : 'typescript'
-emit({ header: { contract: 'tree', version: 1, language, bridge: { name: 'contract/samples/emit/frontend.mjs', version: '1' }, roots: [shown] } })
-emit({ file: { path: shown, language, errors: 0, resolver: { tool: 'tsc', ran: true }, root, comments: comments(tree, found) } })
-emit({ trailer: { files: 1, resolution: { calls: tree.calls, resolved: tree.resolved } } })
+const pairs = []
+for (let index = 0; index < paths.length; index += 2) pairs.push([paths[index], paths[index + 1]])
+let [calls, resolved] = [0, 0]
+emit({ header: { contract: 'tree', version: 1, language, bridge: { name: 'contract/samples/emit/frontend.mjs', version: '1' }, roots: pairs.map((pair) => pair[1]) } })
+for ([file, shown] of pairs) {
+    source = readFileSync(file, 'utf8')
+    bytes = byteTable(source)
+    const { tree, root, found } = mode === 'vue' ? vueFile() : typescriptFile()
+    emit({ file: { path: shown, language, errors: 0, resolver: { tool: 'tsc', ran: true }, root, comments: comments(tree, found) } })
+    calls += tree.calls
+    resolved += tree.resolved
+}
+emit({ trailer: { files: pairs.length, resolution: { calls, resolved } } })

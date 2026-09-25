@@ -1,6 +1,7 @@
-"""Writes one Python file as a generic tree stream (contract/CONTRACT.md), the way a Python bridge will.
+"""Writes Python files as one generic tree stream (contract/CONTRACT.md), the way a Python bridge will.
 
-Usage: python python.py <file> <path-in-stream> <module> <package-in-stream>
+Usage: python python.py ([--context] <file> <path-in-stream> <module>)...
+A file after --context informs the types and is written with context: true, never judged.
 Types come from bridge/mypy/bridge.py, run with the same interpreter, joined to nodes by exact span.
 """
 
@@ -297,38 +298,61 @@ class TreeWriter:
         return None
 
 
-def mypy_types(path: str) -> tuple[dict[tuple[int, int], dict], dict]:
+def mypy_types(paths: list[str]) -> tuple[dict[str, dict[tuple[int, int], dict]], dict]:
     bridge = os.path.join(os.path.dirname(__file__), "../../../bridge/mypy/bridge.py")
-    output = subprocess.run([sys.executable, bridge, path], capture_output=True, text=True, check=True).stdout
-    types: dict[tuple[int, int], dict] = {}
+    output = subprocess.run([sys.executable, bridge, *paths], capture_output=True, text=True, check=True).stdout
+    types: dict[str, dict[tuple[int, int], dict]] = {}
     resolution: dict = {}
     for line in output.splitlines():
         record = json.loads(line)
-        if os.path.realpath(record.get("path", "")) == os.path.realpath(path):
-            types = {(entry["start"], entry["end"]): entry for entry in record["types"]}
+        if "path" in record:
+            types[os.path.realpath(record["path"])] = {(entry["start"], entry["end"]): entry for entry in record["types"]}
         resolution = record.get("resolution", resolution)
     return types, resolution
 
 
+def packages(source_path: str, shown: str) -> list[str]:
+    """Every folder holding an __init__.py from the file's own up, spelled as the stream spells paths."""
+    found = []
+    real, named = os.path.dirname(source_path), os.path.dirname(shown)
+    while os.path.isfile(os.path.join(real, "__init__.py")):
+        found.append(named)
+        real, named = os.path.dirname(real), os.path.dirname(named)
+    return found
+
+
 def main(argv: list[str]) -> int:
-    source_path, shown, module, package = argv
-    source = open(source_path, "rb").read()
-    types, resolution = mypy_types(source_path)
-    writer = TreeWriter(source, module, types)
-    root = writer.node(ast.parse(source), None, [])
-    comments = writer.comments()
-    unjoined = sum(1 for span in types if span not in writer.joined)
+    triples, informing, rest = [], set(), list(argv)
+    while rest:
+        if rest[0] == "--context":
+            rest.pop(0)
+            informing.add(rest[1])
+        triples.append(rest[:3])
+        rest = rest[3:]
+    types, resolution = mypy_types([source_path for source_path, _, _ in triples])
 
     def emit(record: dict) -> None:
         print(json.dumps(record, ensure_ascii=False, separators=(",", ":")))
 
     emit({"header": {"contract": "tree", "version": 1, "language": "python",
-                     "bridge": {"name": "contract/samples/emit/python.py", "version": "1"}, "roots": [shown]}})
-    emit({"file": {"path": shown, "language": "python", "errors": 0, "module": module,
-                   "resolver": {"tool": "mypy", "ran": True}, "root": root, "comments": comments}})
-    emit({"program": {"packages": [package]}})
-    emit({"trailer": {"files": 1, "resolution": {"expressions": resolution.get("expressions", 0),
-                                                 "typed": resolution.get("typed", 0), "unjoined": unjoined}}})
+                     "bridge": {"name": "contract/samples/emit/python.py", "version": "1"}, "roots": [shown for _, shown, _ in triples]}})
+    unjoined = 0
+    folders: list[str] = []
+    for source_path, shown, module in triples:
+        source = open(source_path, "rb").read()
+        typed = types.get(os.path.realpath(source_path), {})
+        writer = TreeWriter(source, module, typed)
+        root = writer.node(ast.parse(source), None, [])
+        line = {"path": shown, "language": "python", "errors": 0}
+        if shown in informing:
+            line["context"] = True
+        line.update({"module": module, "resolver": {"tool": "mypy", "ran": True}, "root": root, "comments": writer.comments()})
+        emit({"file": line})
+        unjoined += sum(1 for span in typed if span not in writer.joined)
+        folders += [folder for folder in packages(source_path, shown) if folder not in folders]
+    emit({"program": {"packages": sorted(folders)}})
+    emit({"trailer": {"files": len(triples), "resolution": {"expressions": resolution.get("expressions", 0),
+                                                            "typed": resolution.get("typed", 0), "unjoined": unjoined}}})
     return 0
 
 

@@ -1,39 +1,37 @@
 <?php
 
 /**
- * Writes one PHP file as a generic tree stream (contract/CONTRACT.md), the way a PHP bridge will.
+ * Writes PHP files as one generic tree stream (contract/CONTRACT.md), the way a PHP bridge will.
  *
- * Usage: php php.php <file> <path-in-stream>
+ * Usage: php php.php (<file> <path-in-stream>)...
  */
 
 declare(strict_types=1);
 
 require __DIR__ . '/../../../vendor/autoload.php';
 
-use PhpParser\Comment;
 use PhpParser\Modifiers;
 use PhpParser\Node;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\ParserFactory;
 
-[, $source, $shown] = $argv;
-$code = file_get_contents($source);
-$parser = (new ParserFactory())->createForNewestSupportedVersion();
-$statements = $parser->parse($code);
-$traverser = new NodeTraverser(new NameResolver());
-$statements = $traverser->traverse($statements);
-
-$writer = new TreeWriter($code);
-$root = $writer->root($statements);
-$comments = $writer->comments($parser->getTokens());
-
+$pairs = array_chunk(array_slice($argv, 1), 2);
 $line = static fn (array $object): string => json_encode($object, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n";
 
-echo $line(['header' => ['contract' => 'tree', 'version' => 1, 'language' => 'php', 'bridge' => ['name' => 'contract/samples/emit/php.php', 'version' => '1'], 'roots' => [$shown]]]);
-echo $line(['file' => ['path' => $shown, 'language' => 'php', 'errors' => 0, 'root' => $root, 'comments' => $comments]]);
-echo $line(['program' => ['symbols' => (new OutsideSymbols($writer->referenced))->all()]]);
-echo $line(['trailer' => ['files' => 1]]);
+echo $line(['header' => ['contract' => 'tree', 'version' => 1, 'language' => 'php', 'bridge' => ['name' => 'contract/samples/emit/php.php', 'version' => '1'], 'roots' => array_column($pairs, 1)]]);
+$referenced = [];
+foreach ($pairs as [$source, $shown]) {
+    $code = file_get_contents($source);
+    $parser = (new ParserFactory())->createForNewestSupportedVersion();
+    $statements = (new NodeTraverser(new NameResolver()))->traverse($parser->parse($code));
+    $writer = new TreeWriter($code);
+    $root = $writer->root($statements);
+    echo $line(['file' => ['path' => $shown, 'language' => 'php', 'errors' => 0, 'root' => $root, 'comments' => $writer->comments($parser->getTokens())]]);
+    $referenced += $writer->referenced;
+}
+echo $line(['program' => ['symbols' => (new OutsideSymbols($referenced))->all()]]);
+echo $line(['trailer' => ['files' => count($pairs)]]);
 
 final class TreeWriter
 {
@@ -225,6 +223,13 @@ final class TreeWriter
         return match (true) {
             $node instanceof Node\Expr\BinaryOp => $node->getOperatorSigil(),
             $node instanceof Node\Expr\Assign => '=',
+            $node instanceof Node\Expr\AssignOp => [
+                'Plus' => '+', 'Minus' => '-', 'Mul' => '*', 'Div' => '/', 'Concat' => '.', 'Mod' => '%', 'Pow' => '**', 'Coalesce' => '??',
+                'BitwiseAnd' => '&', 'BitwiseOr' => '|', 'BitwiseXor' => '^', 'ShiftLeft' => '<<', 'ShiftRight' => '>>',
+            ][substr($node->getType(), strlen('Expr_AssignOp_'))] . '=',
+            $node instanceof Node\Expr\PreInc, $node instanceof Node\Expr\PostInc => '++',
+            $node instanceof Node\Expr\PreDec, $node instanceof Node\Expr\PostDec => '--',
+            $node instanceof Node\Expr\UnaryMinus => '-',
             $node instanceof Node\Expr\BooleanNot => '!',
             $node instanceof Node\Expr\Instanceof_ => 'instanceof',
             default => null,

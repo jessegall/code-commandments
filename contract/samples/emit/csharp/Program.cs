@@ -1,5 +1,5 @@
-// Writes one C# file as a generic tree stream (contract/CONTRACT.md), the way a C# bridge will.
-// Usage: emit-csharp <file> <path-in-stream> <project-folder>
+// Writes C# files as one generic tree stream (contract/CONTRACT.md), the way a C# bridge will.
+// Usage: emit-csharp <project-folder> (<file> <path-in-stream>)...
 using System.Collections;
 using System.Reflection;
 using System.Text;
@@ -9,7 +9,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-var (file, shown, folder) = (Path.GetFullPath(args[0]), args[1], args[2]);
+var folder = args[0];
+var pairs = args.Skip(1).Chunk(2).Select(pair => (File: Path.GetFullPath(pair[0]), Shown: pair[1])).ToList();
 var options = new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.Diagnose);
 var globalUsings = CSharpSyntaxTree.ParseText(
     "global using System; global using System.Collections.Generic; global using System.IO; global using System.Linq; global using System.Threading; global using System.Threading.Tasks;",
@@ -23,10 +24,8 @@ var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Sp
     .Select(path => MetadataReference.CreateFromFile(path));
 var compilation = CSharpCompilation.Create("Shop", trees, references,
     new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, nullableContextOptions: NullableContextOptions.Enable));
-var tree = trees.Single(candidate => candidate.FilePath == file);
-var writer = new TreeWriter(tree, compilation.GetSemanticModel(tree));
-var root = writer.Node(tree.GetRoot(), null);
-var comments = writer.Comments();
+var outside = new Dictionary<string, INamedTypeSymbol>();
+var (calls, resolved) = (0, 0);
 
 Emit(new JsonObject
 {
@@ -34,32 +33,39 @@ Emit(new JsonObject
     {
         ["contract"] = "tree", ["version"] = 1, ["language"] = "csharp",
         ["bridge"] = new JsonObject { ["name"] = "contract/samples/emit/csharp", ["version"] = "1" },
-        ["roots"] = new JsonArray(shown),
+        ["roots"] = new JsonArray(pairs.Select(pair => (JsonNode)pair.Shown!).ToArray()),
     },
 });
-Emit(new JsonObject
+foreach (var (file, shown) in pairs)
 {
-    ["file"] = new JsonObject
+    var tree = trees.Single(candidate => candidate.FilePath == file);
+    var writer = new TreeWriter(tree, compilation.GetSemanticModel(tree), outside);
+    var root = writer.Node(tree.GetRoot(), null);
+    Emit(new JsonObject
     {
-        ["path"] = shown, ["language"] = "csharp", ["errors"] = tree.GetDiagnostics().Count(d => d.Severity == DiagnosticSeverity.Error),
-        ["resolver"] = new JsonObject { ["tool"] = "roslyn", ["ran"] = true },
-        ["root"] = root, ["comments"] = comments,
-    },
-});
-Emit(new JsonObject { ["program"] = new JsonObject { ["symbols"] = writer.OutsideSymbols() } });
+        ["file"] = new JsonObject
+        {
+            ["path"] = shown, ["language"] = "csharp", ["errors"] = tree.GetDiagnostics().Count(d => d.Severity == DiagnosticSeverity.Error),
+            ["resolver"] = new JsonObject { ["tool"] = "roslyn", ["ran"] = true },
+            ["root"] = root, ["comments"] = writer.Comments(),
+        },
+    });
+    (calls, resolved) = (calls + writer.Calls, resolved + writer.Resolved);
+}
+Emit(new JsonObject { ["program"] = new JsonObject { ["symbols"] = TreeWriter.OutsideSymbols(outside) } });
 Emit(new JsonObject
 {
     ["trailer"] = new JsonObject
     {
-        ["files"] = 1,
-        ["resolution"] = new JsonObject { ["calls"] = writer.Calls, ["resolved"] = writer.Resolved },
+        ["files"] = pairs.Count,
+        ["resolution"] = new JsonObject { ["calls"] = calls, ["resolved"] = resolved },
     },
 });
 
 static void Emit(JsonObject line) =>
     Console.WriteLine(line.ToJsonString(new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
 
-sealed class TreeWriter(SyntaxTree tree, SemanticModel model)
+sealed class TreeWriter(SyntaxTree tree, SemanticModel model, Dictionary<string, INamedTypeSymbol> outside)
 {
     private static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
         .RemoveMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.UseSpecialTypes)
@@ -72,7 +78,6 @@ sealed class TreeWriter(SyntaxTree tree, SemanticModel model)
     private readonly string text = tree.GetText().ToString();
     private readonly int[] bytes = ByteOffsets(tree.GetText().ToString());
     private readonly List<(int Start, int End, int Id)> spans = [];
-    private readonly Dictionary<string, INamedTypeSymbol> outside = [];
     private int next;
     private List<(int Start, int End)> commentSpans = [];
 
@@ -188,6 +193,8 @@ sealed class TreeWriter(SyntaxTree tree, SemanticModel model)
             var constant = model.GetConstantValue(node);
             if (constant.HasValue) out_["constant"] = true;
         }
+        if (node.IsKind(SyntaxKind.SuppressNullableWarningExpression) && IsDeclaredNullable(((PostfixUnaryExpressionSyntax)node).Operand))
+            out_["extras"] = new JsonObject { ["csharp"] = new JsonObject { ["forgivesNull"] = true } };
         if (node is InvocationExpressionSyntax or BaseObjectCreationExpressionSyntax)
         {
             Calls++;
@@ -235,6 +242,17 @@ sealed class TreeWriter(SyntaxTree tree, SemanticModel model)
         if (declared is IMethodSymbol { MethodKind: MethodKind.Ordinary or MethodKind.LocalFunction, ReturnsVoid: false } method)
             out_["returns"] = Type(method.ReturnType, "written");
     }
+
+    /// <summary>Whether the operand's own declaration is nullable — a `T?` field, property, local, parameter or return.</summary>
+    private bool IsDeclaredNullable(ExpressionSyntax operand) => model.GetSymbolInfo(operand).Symbol switch
+    {
+        IFieldSymbol field => field.NullableAnnotation == NullableAnnotation.Annotated,
+        IPropertySymbol property => property.NullableAnnotation == NullableAnnotation.Annotated,
+        ILocalSymbol local => local.NullableAnnotation == NullableAnnotation.Annotated,
+        IParameterSymbol parameter => parameter.NullableAnnotation == NullableAnnotation.Annotated,
+        IMethodSymbol method => method.ReturnNullableAnnotation == NullableAnnotation.Annotated,
+        _ => false,
+    };
 
     private static bool ImplementsInterfaceMember(ISymbol symbol) =>
         symbol.ContainingType is { } type && type.AllInterfaces
@@ -335,7 +353,7 @@ sealed class TreeWriter(SyntaxTree tree, SemanticModel model)
         foreach (var face in original.Interfaces) Remember(face);
     }
 
-    public JsonArray OutsideSymbols()
+    public static JsonArray OutsideSymbols(Dictionary<string, INamedTypeSymbol> outside)
     {
         var symbols = new JsonArray();
         foreach (var (id, type) in outside.OrderBy(entry => entry.Key, StringComparer.Ordinal))

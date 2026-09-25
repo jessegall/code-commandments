@@ -131,7 +131,7 @@
         {"if": {"properties": {"kind": {"enum": ["named", "keyword", "parameter"]}}}, "then": {"required": ["name"]}},
         {"if": {"properties": {"kind": {"enum": ["union", "intersection", "tuple"]}}}, "then": {"required": ["members"]}},
         {"if": {"properties": {"kind": {"const": "literal"}}}, "then": {"required": ["value"]}},
-        {"if": {"properties": {"kind": {"const": "opaque"}}}, "then": {"maxProperties": 3}}
+        {"if": {"properties": {"kind": {"const": "opaque"}}}, "then": {"properties": {"text": {}, "kind": {}, "origin": {}, "nullable": {}, "valueType": {}, "constructs": {}}, "additionalProperties": false}}
       ]
     },
 

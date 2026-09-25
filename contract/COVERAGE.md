@@ -10,8 +10,9 @@ carries it, who fills it, and the sample that shows it. The sources are the must
   fixture a sample was drawn from has no such construct; the schema and `reader_test.go` still cover
   the field.
 
-`go test ./...` in this folder reads every sample through the strict reader, validates each line
-against the schema, and checks every span, line and comment against the fixture's own bytes.
+`go test ./contract/...` from the repository root reads every sample through the strict reader, validates
+each line against the schema, and checks every span, line and comment against the fixture's own bytes.
+`TestEverySampleShowsWhatCoverageSaysItShows` holds the samples to the facts this table says they show.
 
 ## Shared by every language
 
@@ -41,21 +42,21 @@ against the schema, and checks every span, line and comment against the fixture'
 | class / interface / trait / enum, enum case and its backing literal | `kind` `Stmt_Class` …, `Stmt_EnumCase` + `expr` child `literal`/`value` | bridge | php (`Stmt_Class`) |
 | function / method / closure / arrow function, with params | `kind`, `is: function`, `Param` children | bridge | php (`Stmt_ClassMethod`, `Param`) |
 | param name, type, default, promoted, variadic, by-ref, visibility | `name`, `declared`, `default` child, `flags` (`promoted`, `variadic`, `by-ref`), `modifiers` | bridge | php (`promoted`, `public readonly`) |
-| properties and hooks, constants, trait use | `Stmt_Property`/`PropertyItem`/`PropertyHook`, `Stmt_ClassConst`, `Stmt_TraitUse` | bridge | — |
-| assignments, compound assignments, inc/dec | `kind`, `operator`, `is: assignment` | bridge | — |
-| comparison / logical / coalesce operators | `kind` `Expr_BinaryOp_*`, `operator`, `is: comparison` | bridge | — |
-| ternary (full and short), match + arms, switch + case, if/elseif/else | `kind`, `is: branch`, `flags: short-ternary` | bridge | — |
-| loops with step, value and key vars | `kind`, `field` (`loop`, `valueVar`, `keyVar`), `flags: step` | bridge | — |
-| try / catch with caught types, throw | `Stmt_Catch` `declared` (a union for several), `is: catch`, `is: throw` | bridge | — |
+| properties and hooks, constants, trait use | `Stmt_Property`/`PropertyItem`/`PropertyHook`, `Stmt_ClassConst`, `Stmt_TraitUse` | bridge | php (the `get =>` hook in `LabelPrintDefaults`, `SEPARATOR` in `AccessAuditor`, `use OptionalOrMissing` in `OptCoords`) |
+| assignments, compound assignments, inc/dec | `kind`, `operator`, `is: assignment` | bridge | php (`$sum = 0`, `$sum += $amount` in `BasketTotaller`) |
+| comparison / logical / coalesce operators | `kind` `Expr_BinaryOp_*`, `operator`, `is: comparison` | bridge | php (`!==`, `&&` in `SlackNotifier`) |
+| ternary (full and short), match + arms, switch + case, if/elseif/else | `kind`, `is: branch`, `flags: short-ternary` | bridge | php (ternaries and `match (true)` in `GradeCalculator`, `if`/`elseif` in `DiscountTier`, `switch` in `CarrierPicker`) |
+| loops with step, value and key vars | `kind`, `field` (`loop`, `valueVar`, `keyVar`), `flags: step` | bridge | php (`foreach` in `SlackNotifier` and `BasketTotaller`) |
+| try / catch with caught types, throw | `Stmt_Catch` `declared` (a union for several), `is: catch`, `is: throw` | bridge | php (`catch (\Throwable $e)` in `SlackNotifier`) |
 | calls (method, static, function, nullsafe) with positional / named / unpacked args | `kind`, `is: call`/`null-safe`, `Arg` `flags` (`named`, `spread`) | bridge | php (`Expr_MethodCall`) |
 | `new`, property / array-dim / class-const / const fetch, variable | `kind`, `is: construction`/`member-access`/`identifier`/`self-reference` | bridge | php (`Expr_PropertyFetch`, `$this`) |
-| literals verbatim | `literal`, `value` (numbers as decimal strings) | bridge | — |
+| literals verbatim | `literal`, `value` (numbers as decimal strings) | bridge | php (`'#ops'`, `0`) |
 | attributes and their args | `AttributeGroup`/`Attribute`/`Arg` children, `refers` on the name | bridge | php (`#[Sinful(...)]`) |
 | modifiers final, abstract, readonly, static, visibility | `modifiers` | bridge | php (`final`, `public readonly`) |
 | `?T` vs `T\|null` | `declared.nullable` + node `flags: nullable-sugar` | bridge | php (`?GiftCard`) |
 | type as written: nullable, union, intersection, name | `role: type` children, `declared`/`returns` (`kind`, `members`, `nullable`) | bridge | php |
 | names resolved at parse time (FQCN) | `refers` on `Name_FullyQualified`, `declared.name` | bridge | php |
-| `self` / `static` / `parent` kept apart from a class name | `Name` `name` (`self`), no `refers` | bridge | — |
+| `self` / `static` / `parent` kept apart from a class name | `Name` `name` (`self`), no `refers` | bridge | php (`self::SEPARATOR` in `AccessAuditor`) |
 | declared type rendered, union members, single class of a union | `declared`/`returns` `text`, `members`, `name` | bridge | php |
 | docblock `@var`/`@param`/`@return`/`@see` types and refs, resolved through the file's `use` nodes | `comment.text` + `Stmt_Use` `refers`; `refs` | engine | php (docblock on `Checkout`) |
 | local variable flow, closure capture, typed foreach, receiver type | `children`, `declared`, `refers`, parents | engine | — |
@@ -87,9 +88,9 @@ against the schema, and checks every span, line and comment against the fixture'
 | raw text, interpolation bodies | `Text` span; `Interpolation` with its expression in field `value` | bridge | vue (`{{ customer.emailAddress }}`) |
 | comment text and span (`<!-- @sin -->` markers) | `file.comments[]` `kind: markup`, `attached` | bridge | vue (`@example` marker) |
 | SFC blocks in order, with their attributes (`setup`, `lang`, `scoped`, `generic`, `src`) | `Block` children in field `blocks`, `Attribute` children | bridge | vue (`<script setup lang="ts">`, `<template>`) |
-| `v-for` aliases and iterable, destructuring kept | `Directive` children in fields `alias` and `iterable` | bridge | — |
+| `v-for` aliases and iterable, destructuring kept | `Directive` children in fields `alias` and `iterable` | bridge | vue (`perk in option.perks` in `DeliveryOptionCard`) |
 | parsed binding and interpolation expressions | TypeScript nodes under `value` | bridge | vue |
-| `v-if`/`v-else-if`/`v-else` chains | sibling order in `children` | engine | — |
+| `v-if`/`v-else-if`/`v-else` chains | sibling order in `children` | engine | vue (the three `<span>`s in `StockIndicator`) |
 | component-ness of a tag | `Element.name` | engine | vue |
 | which file a component tag resolves to | the script's import `resolves` + `program.aliases` | bridge | — |
 | prop types down and up the render tree, cross-file types | `defineProps` type argument, imports' `resolves`, `resolved` | engine | vue (`defineProps<{ customer: CustomerData }>()`) |
@@ -107,7 +108,7 @@ against the schema, and checks every span, line and comment against the fixture'
 | modifiers, TS's implicit `public` | `modifiers` (implicit ones not written) | bridge | typescript (`export`, `async`) |
 | operators | `operator` | bridge | typescript (`===`) |
 | comments and JSDoc | `file.comments[]` `kind` `line`/`block`/`doc`, `attached` | bridge | typescript |
-| field and parameter optionality (`?` and a type admitting `undefined`) | `flags: optional`, `declared.nullable` | bridge | — |
+| field and parameter optionality (`?` and a type admitting `undefined`) | `flags: optional`, `declared.nullable` | bridge | typescript (`queue?`, `lastError?` in `label-printer`) |
 | own field of the enclosing class for a `this.x?.y` chain | `self-reference` + `member-access` + parents | engine | — |
 | sound literal and expression types | `resolved` (`origin: compiler`) | bridge | typescript |
 | per-function structural and shape hashes | `kind`, `field`, `name`, `value` | engine | typescript |
@@ -121,19 +122,19 @@ against the schema, and checks every span, line and comment against the fixture'
 | fact | field | who | shown in |
 |---|---|---|---|
 | byte spans on every node, and on comments | `span` | bridge | python |
-| mypy's type per expression, joined by exact span | `resolved` (`text`, `name`, `nullable`, `constructs`), `trailer.resolution.unjoined` | bridge | python (10 of 10 typed, 0 unjoined) |
+| mypy's type per expression, joined by exact span | `resolved` (`text`, `name`, `nullable`, `constructs`), `trailer.resolution.unjoined` | bridge | python (68 of 113 expressions typed; the 1 unjoined is mypy's own f-string piece `{code` in `voucher_guards`, a span `ast` has no node for) |
 | `def`: name, params, body, return annotation, decorators, async | `FunctionDef`, `name`, `arguments` child, `returns`, `decorator_list` children, `flags: async` | bridge | python |
 | class: name, bases (incl. keyword bases), body, decorators | `ClassDef`, `bases`/`keywords`/`decorator_list` children | bridge | python |
 | param: name, `*`/`**`, annotation, default, keyword-only | `arg` `name`, `declared`, the `arguments` fields `vararg`/`kwarg`/`kwonlyargs`/`defaults` | bridge | python (`discount: int`) |
 | assign / annotated assign / augmented assign | `Assign`/`AnnAssign`/`AugAssign`, `operator`, `declared` | bridge | python (`self.lines = lines`) |
-| imports: names, aliases, module, relative level | `Import`/`ImportFrom`, `alias` children, `extras.python.level` | bridge | — |
-| if / for / while / try / except (+ `except*`) / with / match / case | `kind`, `field`, `flags: group` | bridge | — |
-| return / raise with cause / break / continue / pass / assert / del / global / type alias | `kind`, `is: bail-out` | bridge | python (`Return`) |
+| imports: names, aliases, module, relative level | `Import`/`ImportFrom`, `alias` children, `extras.python.level` | bridge | python (`import json`, `from pathlib import Path`, a level-2 relative import in `billing/invoice`) |
+| if / for / while / try / except (+ `except*`) / with / match / case | `kind`, `field`, `flags: group` | bridge | python (`if` in `cli`; `while`, `for`, `match`/`case` in `packing`) |
+| return / raise with cause / break / continue / pass / assert / del / global / type alias | `kind`, `is: bail-out` | bridge | python (`Return`, `raise SettingsMissing(...)`) |
 | every expression kind and its props | `kind` (ast class), `field` (ast field) | bridge | python (`BinOp`, `Call`, `Attribute`) |
 | literal type and value | `literal` (`string`, `bytes`, `int`, `float`, `bool`, `null`, `ellipsis`, `interpolated`), `value` | bridge | python (the docstring) |
 | operators, and a chained comparison's operator list | `operator`, `extras.python.operators` | bridge | python (`-`) |
-| f-string parts (text, format spec, fields) | `JoinedStr` / `FormattedValue` children | bridge | — |
-| decorators as expressions | `decorator_list` children | bridge | — |
+| f-string parts (text, format spec, fields) | `JoinedStr` / `FormattedValue` children | bridge | python (`f"voucher {code} is refused"` in `voucher_guards`) |
+| decorators as expressions | `decorator_list` children | bridge | python (`@classmethod` in `voucher_guards`) |
 | docstrings | a `doc` comment `attached` to its def or class; the string statement stays in the tree | bridge | python |
 | `#` comments, with Sphinx `#:` bodies | `file.comments[]` `kind: line`, `text` | bridge | python (`# @sin CeremonyDocblock`) |
 | module name, package layout | `file.module`, `program.packages` | bridge | python |
@@ -141,7 +142,7 @@ against the schema, and checks every span, line and comment against the fixture'
 | import targets | `resolves` | engine | — |
 | class ancestry, enums, dataclasses, TypedDicts | `bases` children + `decorator_list`, resolved names | engine | python |
 | attribute-flow tallies, resource reach, constant vocabulary | `children`, `resolved.name`, `resolved.constructs`, `target` | engine | python |
-| which files are judged vs only inform | `file.context` | bridge | — |
+| which files are judged vs only inform | `file.context` | bridge | python (`shop/settings.py`, which `cli` imports from) |
 
 ## C#
 
@@ -150,17 +151,17 @@ against the schema, and checks every span, line and comment against the fixture'
 | `SyntaxKind` name, role, span, ordered children | `kind`, `role`, `span`, `children` | bridge | csharp |
 | the slot a child fills | `field` (Roslyn's property name) | bridge | csharp |
 | name, text of literals, operator, modifiers | `name`, `literal`/`value`, `operator`, `modifiers` | bridge | csharp (`public sealed`) |
-| a `for` loop's step expressions | `flags: step` | bridge | — |
+| a `for` loop's step expressions | `flags: step` | bridge | csharp (`page = source.After(page)` in `PageReader`) |
 | comments `line`/`block`/`doc` with text and span | `file.comments[]` | bridge | csharp |
 | a comment that reads as code | `comment.extras.csharp.code` | bridge | — |
 | doc `cref`s: as written, resolved symbol, longest resolving owner, owned here, blind | `comment.refs[]` (`text`, `symbol`, `owner`, `ownedHere`, `blind`) | bridge | csharp (`Basket` resolved, `ShoppingCart` dangling) |
-| a base list, written | `BaseList` child | bridge | — |
+| a base list, written | `BaseList` child | bridge | csharp (`: IAuditFailure` in `Audits`) |
 | resolved type of expressions, parameters, catch declarations | `resolved`, `declared` (`text` `global::…`, `nullable`, `valueType`, `args`) | bridge | csharp |
 | types nested in a generic or array | `Type.args`, recursively | bridge | csharp (`IEnumerable<string>`) |
 | compile-time constants | `constant` | bridge | csharp (`"DIG-"`) |
-| `!` over a declared-nullable operand | `extras.csharp.forgivesNull` | bridge | — |
+| `!` over a declared-nullable operand | `extras.csharp.forgivesNull` | bridge | csharp (`lastScan!` in `Tracking`; the `null!` beside it carries none) |
 | call and creation targets, joinable to declarations | `target` (original definition) and `symbol` | bridge | csharp (5 of 5 resolved) |
-| members that override or implement | `inherited` | bridge | — |
+| members that override or implement | `inherited` | bridge | csharp (`CountMismatch.Details`, implementing `IAuditFailure`) |
 | test project files | `file.test` | bridge | — |
 | referenced-assembly types and their hierarchy | `program.symbols` | bridge | csharp |
 | namespace graph, state flow | `resolved`, `target`, `symbol`, `children` | engine | csharp |
