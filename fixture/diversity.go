@@ -88,7 +88,7 @@ func LargestDiverseGroup(scenarios []Scenario) int {
 	for i := 0; i < count; i++ {
 		for j := i + 1; j < count; j++ {
 			apart := scenarios[i].File != scenarios[j].File &&
-				Similarity(scenarios[i].Source, scenarios[j].Source) < MaxSimilarity
+				Likeness(scenarios[i].Source, scenarios[j].Source) < MaxSimilarity
 			diverse[i][j], diverse[j][i] = apart, apart
 		}
 	}
@@ -114,6 +114,13 @@ func growClique(candidates []int, size int, diverse [][]bool) int {
 	}
 
 	return best
+}
+
+// Likeness is how alike two pieces of code are whichever is read first: the lower of Similarity's two readings, since
+// PHP's similar_text answers differently for the two orders, and the order findings come in is no part of whether
+// they are copies.
+func Likeness(a, b string) float64 {
+	return min(Similarity(a, b), Similarity(b, a))
 }
 
 // Similarity is how alike two pieces of code are, in percent, whitespace runs folded: PHP's similar_text.
