@@ -828,6 +828,13 @@ func (p *typeParser) advanceIfThreeDots() bool {
 
 // parsePattern reads a destructured parameter, printed: `{ a, b: c, ...rest }`, `[a, , b]`.
 func (p *typeParser) parsePattern() string {
+	printed, _ := p.readPattern()
+
+	return printed
+}
+
+// readPattern reads a destructuring pattern: printed, and the names it binds, each local then the rest.
+func (p *typeParser) readPattern() (string, []string) {
 	if p.atPunct("{") {
 		p.advance()
 		var locals []string
@@ -861,14 +868,21 @@ func (p *typeParser) parsePattern() string {
 				parts = append(parts, keys[local]+": "+local)
 			}
 		}
+		names := slices.Clone(locals)
 		if rest != "" {
 			parts = append(parts, "..."+rest)
+			names = append(names, rest)
 		}
 
-		return "{ " + strings.Join(parts, ", ") + " }"
+		return "{ " + strings.Join(parts, ", ") + " }", names
+	}
+	if !p.atPunct("[") {
+		name := p.advance().value
+
+		return name, []string{name}
 	}
 	p.advance()
-	var elements []string
+	var elements, names []string
 	for p.inside("]") {
 		if p.atPunct(",") {
 			elements = append(elements, "")
@@ -877,7 +891,9 @@ func (p *typeParser) parsePattern() string {
 			continue
 		}
 		p.advanceIfThreeDots()
-		elements = append(elements, p.advance().value)
+		element := p.advance().value
+		elements = append(elements, element)
+		names = append(names, element)
 		p.skipDefaultValue()
 		if p.atPunct(",") {
 			p.advance()
@@ -885,7 +901,7 @@ func (p *typeParser) parsePattern() string {
 	}
 	p.advanceIfPunct("]")
 
-	return "[" + strings.Join(elements, ", ") + "]"
+	return "[" + strings.Join(elements, ", ") + "]", names
 }
 
 func (p *typeParser) skipDefaultValue() {
@@ -964,4 +980,33 @@ func completesType(token lexeme) bool {
 	}
 
 	return token.is(stringToken, "") || token.is(numberToken, "") || token.isPunct("]") || token.isPunct(">") || token.isPunct(")")
+}
+
+// Lexeme is one token of TypeScript source, cut as the PHP tool's lexer cuts it.
+type Lexeme struct {
+	Kind  string
+	Value string
+	Start int
+	End   int
+}
+
+// Lexemes is the source's tokens: identifiers, strings, numbers and punctuation, whitespace and comments dropped.
+func Lexemes(source string) []Lexeme {
+	tokens := lex(source)
+	lexemes := make([]Lexeme, 0, len(tokens))
+	for _, token := range tokens {
+		lexemes = append(lexemes, Lexeme{Kind: token.kind, Value: token.value, Start: token.start, End: token.end})
+	}
+
+	return lexemes
+}
+
+// Pairs is every member and its type, in order.
+func (f Fields) Pairs() [][2]string {
+	pairs := make([][2]string, 0, len(f.Names))
+	for _, name := range f.Names {
+		pairs = append(pairs, [2]string{name, f.Types[name]})
+	}
+
+	return pairs
 }
