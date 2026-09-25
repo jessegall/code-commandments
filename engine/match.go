@@ -182,6 +182,27 @@ func (m Match) Child(field string) Match {
 	return Match{}
 }
 
+// ChildrenIn is every child filling the field, in order: the items of a list slot such as "args" or "members".
+func (m Match) ChildrenIn(field string) []Match {
+	var children []Match
+	for _, child := range m.Children() {
+		if child.node.Field == field {
+			children = append(children, child)
+		}
+	}
+
+	return children
+}
+
+// Root is the root node of the match's file; no node for no match.
+func (m Match) Root() Match {
+	if m.file == nil {
+		return Match{}
+	}
+
+	return m.file.Match(0)
+}
+
 // Closest is the nearest ancestor that answers the neutral kind; no node when none does.
 func (m Match) Closest(neutral Neutral) Match {
 	for ancestor := m.Parent(); ancestor.Exists(); ancestor = ancestor.Parent() {

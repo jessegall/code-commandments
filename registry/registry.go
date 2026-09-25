@@ -3,4 +3,10 @@
 // Package registry enrols every shipped rule: importing it registers each sin, skill and detector.
 package registry
 
-import ()
+import (
+	_ "github.com/jessegall/code-commandments/detectors/frontend"
+	_ "github.com/jessegall/code-commandments/sins/frontend"
+	_ "github.com/jessegall/code-commandments/sins/typescript"
+	_ "github.com/jessegall/code-commandments/skill/frontend"
+	_ "github.com/jessegall/code-commandments/skill/typescript"
+)

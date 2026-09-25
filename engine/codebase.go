@@ -5,6 +5,7 @@ package engine
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 
@@ -13,8 +14,10 @@ import (
 
 // Codebase is every file the bridges wrote, each language's stream side by side.
 type Codebase struct {
-	streams []*contract.Stream
-	files   []*File
+	streams      []*contract.Stream
+	files        []*File
+	indexed      sync.Once
+	declarations map[string][]Match
 }
 
 // File is one source file of a stream, with its bytes read on first need.
@@ -66,21 +69,39 @@ func (c *Codebase) Files() []*File {
 	return c.files
 }
 
-// Of is the part of the codebase one language's stream holds.
-func (c *Codebase) Of(language contract.Language) *Codebase {
+// Of is the part of the codebase written in these languages: each file by its own language, so the
+// TypeScript a Vue stream carries is TypeScript, and each stream by the language its bridge wrote.
+func (c *Codebase) Of(languages ...contract.Language) *Codebase {
 	part := &Codebase{}
 	for _, stream := range c.streams {
-		if stream.Header.Language == language {
+		if slices.Contains(languages, stream.Header.Language) {
 			part.streams = append(part.streams, stream)
 		}
 	}
 	for _, file := range c.files {
-		if file.stream.Header.Language == language {
+		if slices.Contains(languages, file.Language()) {
 			part.files = append(part.files, file)
 		}
 	}
 
 	return part
+}
+
+// Declarations is every declaration the symbol id names: one, or several for a TypeScript overload set,
+// a merged declaration or a C# partial class.
+func (c *Codebase) Declarations(symbol string) []Match {
+	c.indexed.Do(func() {
+		c.declarations = map[string][]Match{}
+		for _, file := range c.files {
+			for _, node := range file.Nodes() {
+				if node.Symbol != "" {
+					c.declarations[node.Symbol] = append(c.declarations[node.Symbol], Match{node: node, file: file})
+				}
+			}
+		}
+	})
+
+	return c.declarations[symbol]
 }
 
 // Program is the facts about the whole program one language's bridge wrote, if it wrote any.
@@ -103,9 +124,9 @@ func (f *File) Source() ([]byte, error) {
 	return f.source, f.err
 }
 
-// Language is the language of the stream that holds the file.
+// Language is the language the file's root is written in: a stream's own, or TypeScript inside a Vue stream.
 func (f *File) Language() contract.Language {
-	return f.stream.Header.Language
+	return f.File.Language
 }
 
 // Match is the file's node with the id, such as the node a comment is attached to; no node when the file holds none.

@@ -56,6 +56,21 @@ func ScopeScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]S
 	return scenarios, nil
 }
 
+// FileScenarios reads each finding as its whole file: the frontend's scenario is a component or a module,
+// so two findings in one file are one scenario.
+func FileScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]Scenario, error) {
+	var scenarios []Scenario
+	for _, finding := range detector.Find(codebase) {
+		source, err := finding.Source().Source()
+		if err != nil {
+			return nil, err
+		}
+		scenarios = append(scenarios, Scenario{File: finding.File(), Source: string(source)})
+	}
+
+	return scenarios, nil
+}
+
 // LargestDiverseGroup is the size of the largest group of scenarios that are pairwise diverse: in
 // different files and under MaxSimilarity percent alike.
 func LargestDiverseGroup(scenarios []Scenario) int {
