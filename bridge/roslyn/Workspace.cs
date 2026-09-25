@@ -19,6 +19,9 @@ public sealed class Workspace
 
     private readonly Dictionary<string, (DateTime Written, long Length, SyntaxTree Tree)> trees = new(StringComparer.Ordinal);
 
+    /// <summary>Every assembly a streamed run has loaded, by its path, shared by every later run of this workspace.</summary>
+    private readonly Dictionary<string, MetadataReference> loaded = new(StringComparer.Ordinal);
+
     public Project Read(IReadOnlyList<string> paths)
     {
         var roots = paths.Select(Path.GetFullPath).ToList();
@@ -56,10 +59,10 @@ public sealed class Workspace
     }
 
     /// <summary>
-    /// The run as a stream, one project at a time, holding nothing between runs: each project is parsed and compiled
+    /// The run as a stream, one project at a time, holding no source between runs: each project is parsed and compiled
     /// when it is reached, dependencies first, its asked files handed to <paramref name="write"/>, and its compilation
-    /// let go once no project still to be written reaches it. An assembly is loaded once for the run and shared by
-    /// every project that reaches it. Files outside every project come last, compiled alone.
+    /// let go once no project still to be written reaches it. An assembly is loaded once for the workspace and shared
+    /// by every project and every run that reaches it. Files outside every project come last, compiled alone.
     /// </summary>
     public void Stream(IReadOnlyList<string> paths, Action<Project> write)
     {
@@ -77,7 +80,6 @@ public sealed class Workspace
 
         var readers = order.SelectMany(csproj => reach[csproj]).GroupBy(other => other).ToDictionary(group => group.Key, group => group.Count());
         var compilations = new Dictionary<string, CSharpCompilation>(StringComparer.Ordinal);
-        var loaded = new Dictionary<string, MetadataReference>(StringComparer.Ordinal);
 
         foreach (var csproj in order)
         {

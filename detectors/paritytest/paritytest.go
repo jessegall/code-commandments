@@ -28,7 +28,8 @@ import (
 // real project is the parity check, not the suite. $COMMANDMENTS_PARITY_FINDINGS names a file the PHP findings are
 // kept in, read back on the next run, since the PHP half of a large project takes the longest.
 // $COMMANDMENTS_PARITY_EACH compares a solution project by project, one held at a time, so a solution too large to
-// hold whole is still compared; each tool then reads each project alone.
+// hold whole is still compared; each tool then reads each project alone. The Go half asks one bridge, kept running for
+// every part, so its start-up and what it loads are paid once.
 func Compare(t *testing.T, rules catalog.Engine, findings string, command func(testing.TB, ...string) []string) {
 	t.Helper()
 	project := os.Getenv("COMMANDMENTS_PARITY")
@@ -47,9 +48,14 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 	if err != nil {
 		t.Fatalf("the PHP engine failed: %v", err)
 	}
+	server, err := bridge.Serve(command(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.Close()
 	found := map[string]bool{}
 	for _, part := range parts {
-		for _, finding := range goFindings(t, rules, command, root, part) {
+		for _, finding := range goFindings(t, rules, server, root, part) {
 			found[finding] = true
 		}
 		runtime.GC()
@@ -74,10 +80,11 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 	t.Logf("%d findings in PHP, %d in Go, over %d part(s)", len(expected), len(found), len(parts))
 }
 
-// goFindings is every finding the engine's Go detectors make in the part, each as `path:line Sin` under the root.
-func goFindings(t *testing.T, rules catalog.Engine, command func(testing.TB, ...string) []string, root, part string) []string {
+// goFindings is every finding the engine's Go detectors make in the part, read by the server, each as `path:line Sin`
+// under the root.
+func goFindings(t *testing.T, rules catalog.Engine, server *bridge.Server, root, part string) []string {
 	t.Helper()
-	stream, err := bridge.Once(command(t, part), part)
+	stream, err := server.Ask(bridge.Request{Paths: []string{part}})
 	if err != nil {
 		t.Fatal(err)
 	}

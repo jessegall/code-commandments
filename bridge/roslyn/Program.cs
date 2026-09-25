@@ -12,7 +12,7 @@ using CodeCommandments.Bridge;
 // roslyn-bridge --listen <port> — --serve over a TCP socket, one connection at a time: the service a session keeps up.
 //
 // --tree                   — any of the above, written as the generic tree (contract/CONTRACT.md) instead, as a
-// stream: one project at a time, its compilation let go once written, nothing kept between requests; files outside
+// stream: one project at a time, its compilation let go once written, only loaded references kept between requests; files outside
 // "write" are written too, marked as context.
 var workspace = new Workspace();
 var contract = args.Contains("--tree");
@@ -88,7 +88,7 @@ static void Serve(TextReader input, Stream output, bool contract, Workspace work
 
         if (contract)
         {
-            new ContractWriter(paths, written).Write(output, new Workspace());
+            new ContractWriter(paths, written).Write(output, workspace);
         }
         else
         {
