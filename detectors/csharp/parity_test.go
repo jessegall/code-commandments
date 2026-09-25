@@ -1,4 +1,4 @@
-package python_test
+package csharp_test
 
 import (
 	"testing"
@@ -8,8 +8,8 @@ import (
 	"github.com/jessegall/code-commandments/detectors/paritytest"
 )
 
-// TestTheGoDetectorsFindWhatThePHPOnesFind runs both engines' Python detectors over the project $COMMANDMENTS_PARITY
+// TestTheGoDetectorsFindWhatThePHPOnesFind runs both engines' C# detectors over the solution $COMMANDMENTS_PARITY
 // names and fails for every finding only one of them makes.
 func TestTheGoDetectorsFindWhatThePHPOnesFind(t *testing.T) {
-	paritytest.Compare(t, catalog.Python, "../../engine/python/testdata/findings.php", bridge.TestMypy)
+	paritytest.Compare(t, catalog.CSharp, "../../engine/csharp/testdata/findings.php", bridge.TestRoslyn)
 }
