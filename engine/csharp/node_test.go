@@ -59,7 +59,7 @@ func TestADeclarationNamesTheTypeItsWrittenTypeStandsFor(t *testing.T) {
 	codebase := csharptest.FromSource(t, map[string]string{"Shop/Cart.cs": cart})
 	field := csharptest.First(t, codebase, "Shop/Cart.cs", "FieldDeclaration")
 	declared := field.Children()[0].DeclaredType()
-	if declared.Name() != "global::System.Collections.Generic.List<global::System.String>?" || !declared.IsNullable() {
+	if declared.Name() != "global::System.Collections.Generic.List<global::System.String>" || !declared.IsNullable() {
 		t.Errorf("the field declares %q", declared.Name())
 	}
 	if inner := declared.Inner(); len(inner) != 1 || inner[0] != "global::System.String" {

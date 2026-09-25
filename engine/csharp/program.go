@@ -268,7 +268,7 @@ func (p *Program) FillsRecordWithBlank(creation Node) bool {
 	if !declared {
 		return false
 	}
-	parameters := creation.Target().Parameters()
+	parameters := p.ParametersOf(creation)
 	for _, position := range creation.BlankArgumentPositions() {
 		if position < len(parameters) && parameters[position] == stringType {
 			return true
@@ -296,4 +296,24 @@ func (p *Program) DeclaresType(symbol string) bool {
 	_, declared := p.types[symbol]
 
 	return declared
+}
+
+// ParametersOf is the types of the parameters the call fills, by position: the declaration's, when the codebase
+// declares the method, less the `this` an extension method called on a receiver fills with it; the method's own as
+// its symbol spells them otherwise.
+func (p *Program) ParametersOf(call Node) []string {
+	method := p.DeclarationOf(call)
+	if !method.Exists() {
+		return call.Target().Parameters()
+	}
+	parameters := method.Parameters()
+	if len(parameters) > 0 && parameters[0].HasModifier("this") && call.At(0).Is("SimpleMemberAccessExpression", "MemberBindingExpression") {
+		parameters = parameters[1:]
+	}
+	types := []string{}
+	for _, parameter := range parameters {
+		types = append(types, parameter.Type().Name())
+	}
+
+	return types
 }

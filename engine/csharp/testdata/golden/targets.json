@@ -1,0 +1,2813 @@
+{
+    "Shop/Addresses/CountryCodes.cs@229:InvocationExpression": {
+        "type": "global::Shop.Addresses.CountryCodes",
+        "name": "Normalise",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Addresses/CountryCodes.cs@256:ObjectCreationExpression": {
+        "type": "global::Shop.Addresses.AddressIncomplete",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Addresses/CountryCodes.cs@422:ObjectCreationExpression": {
+        "type": "global::Shop.Addresses.AddressIncomplete",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Addresses/CountryCodes.cs@472:InvocationExpression": {
+        "type": "global::Shop.Addresses.CountryCodes",
+        "name": "Normalise",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Addresses/CountryCodes.cs@552:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Trim",
+        "parameters": []
+    },
+    "Shop/Addresses/Quotes.cs@265:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "StartsWith",
+        "parameters": [
+            "global::System.Char"
+        ]
+    },
+    "Shop/Checkout/Carts.cs@247:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/Barcodes.cs@168:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Replace",
+        "parameters": [
+            "global::System.String",
+            "global::System.String?"
+        ]
+    },
+    "Shop/Documents/Barcodes.cs@349:InvocationExpression": {
+        "type": "global::Shop.Documents.BarcodeSheet",
+        "name": "Encode",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/Barcodes.cs@365:InvocationExpression": {
+        "type": "global::System.Guid",
+        "name": "ToString",
+        "parameters": []
+    },
+    "Shop/Documents/Barcodes.cs@498:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Select",
+        "parameters": [
+            "global::System.Func<global::Shop.Documents.Parcel, global::System.String>"
+        ]
+    },
+    "Shop/Documents/Barcodes.cs@523:InvocationExpression": {
+        "type": "global::Shop.Documents.BarcodeSheet",
+        "name": "Encode",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/Barcodes.cs@539:InvocationExpression": {
+        "type": "global::System.Guid",
+        "name": "ToString",
+        "parameters": []
+    },
+    "Shop/Documents/Barcodes.cs@682:InvocationExpression": {
+        "type": "global::System.Guid",
+        "name": "ToString",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Documents/Barcodes.cs@769:InvocationExpression": {
+        "type": "global::Shop.Documents.ParcelBarcodes",
+        "name": "Encode",
+        "parameters": [
+            "global::System.Guid"
+        ]
+    },
+    "Shop/Documents/Emails.cs@220:ObjectCreationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Documents/Emails.cs@284:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Documents/Emails.cs@324:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": []
+    },
+    "Shop/Documents/Emails.cs@351:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Documents/Emails.cs@405:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Documents/Emails.cs@473:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "ToString",
+        "parameters": []
+    },
+    "Shop/Documents/Emails.cs@804:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Join",
+        "parameters": [
+            "global::System.String?",
+            "global::System.Collections.Generic.IEnumerable<global::System.String?>"
+        ]
+    },
+    "Shop/Documents/Emails.cs@822:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Select",
+        "parameters": [
+            "global::System.Func<global::System.String, global::System.String>"
+        ]
+    },
+    "Shop/Documents/Headings.cs@769:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Join",
+        "parameters": [
+            "global::System.String?",
+            "global::System.String?[]"
+        ]
+    },
+    "Shop/Documents/Invoice.cs@404:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Documents/Invoice.cs@580:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/InvoiceArchive.cs@253:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/InvoiceArchive.cs@263:InvocationExpression": {
+        "type": "global::System.IO.Path",
+        "name": "GetFileNameWithoutExtension",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Documents/InvoiceArchive.cs@419:ObjectCreationExpression": {
+        "type": "global::System.ArgumentException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?",
+            "global::System.String?"
+        ]
+    },
+    "Shop/Documents/InvoiceArchive.cs@616:InvocationExpression": {
+        "type": "global::System.IO.File",
+        "name": "ReadAllText",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/LabelFooters.cs@344:InvocationExpression": {
+        "type": "global::System.Uri",
+        "name": "ToString",
+        "parameters": []
+    },
+    "Shop/Documents/LabelTemplates.cs@273:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::Shop.Documents.LabelTemplate>",
+        "name": "Find",
+        "parameters": [
+            "global::System.Predicate<global::Shop.Documents.LabelTemplate>"
+        ]
+    },
+    "Shop/Documents/LabelTemplates.cs@397:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "MaxBy",
+        "parameters": [
+            "global::System.Func<global::Shop.Documents.LabelTemplate, global::System.Int32>"
+        ]
+    },
+    "Shop/Documents/LabelTemplates.cs@584:InvocationExpression": {
+        "type": "global::Shop.Documents.TemplateShelf",
+        "name": "Named",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/LabelTemplates.cs@611:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.KeyNotFoundException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Documents/LabelTemplates.cs@715:InvocationExpression": {
+        "type": "global::Shop.Documents.TemplateShelf",
+        "name": "Named",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/LabelTemplates.cs@742:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.KeyNotFoundException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Documents/LabelTemplates.cs@866:InvocationExpression": {
+        "type": "global::Shop.Documents.TemplateShelf",
+        "name": "Largest",
+        "parameters": []
+    },
+    "Shop/Documents/LabelTemplates.cs@928:InvocationExpression": {
+        "type": "global::Shop.Documents.TemplateShelf",
+        "name": "Largest",
+        "parameters": []
+    },
+    "Shop/Documents/Layout.cs@368:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::Shop.Orders.OrderLine, global::System.Boolean>"
+        ]
+    },
+    "Shop/Documents/Layout.cs@650:InvocationExpression": {
+        "type": "global::Shop.Documents.LineLayout",
+        "name": "Describe",
+        "parameters": [
+            "global::System.Collections.Generic.IEnumerable<global::Shop.Orders.OrderLine>"
+        ]
+    },
+    "Shop/Documents/Layout.cs@807:InvocationExpression": {
+        "type": "global::Shop.Documents.LineLayout",
+        "name": "Describe",
+        "parameters": [
+            "global::System.Collections.Generic.IEnumerable<global::Shop.Orders.OrderLine>"
+        ]
+    },
+    "Shop/Documents/PackingSlip.cs@239:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Documents/PackingSlip.cs@415:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/Reprints.cs@1160:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Remove",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/Reprints.cs@1218:ObjectCreationExpression": {
+        "type": "global::System.ArgumentException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Documents/Reprints.cs@424:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Documents/Reprints.cs@815:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "AddRange",
+        "parameters": [
+            "global::System.Collections.Generic.IEnumerable<global::System.String>"
+        ]
+    },
+    "Shop/Documents/Reprints.cs@831:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Repeat",
+        "parameters": [
+            "global::System.String",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Loyalty/Members.cs@367:InvocationExpression": {
+        "type": "global::Shop.Rewards.VoucherCatalog",
+        "name": "Cheapest",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Loyalty/Members.cs@464:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::Shop.Rewards.Voucher, global::System.Boolean>"
+        ]
+    },
+    "Shop/Notifications/Broadcasts.cs@436:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Count",
+        "parameters": [
+            "global::System.Func<global::System.String, global::System.Boolean>"
+        ]
+    },
+    "Shop/Notifications/Broadcasts.cs@493:InvocationExpression": {
+        "type": "global::System.Object",
+        "name": "ToString",
+        "parameters": []
+    },
+    "Shop/Notifications/Broadcasts.cs@672:InvocationExpression": {
+        "type": "global::System.Console",
+        "name": "WriteLine",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Notifications/Campaigns.cs@272:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "First",
+        "parameters": [
+            "global::System.Func<global::Shop.Notifications.CampaignSegment, global::System.Boolean>"
+        ]
+    },
+    "Shop/Notifications/Campaigns.cs@499:InvocationExpression": {
+        "type": "global::Shop.Notifications.CampaignPlan",
+        "name": "Segment",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Campaigns.cs@542:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Count",
+        "parameters": [
+            "global::System.Func<global::System.String, global::System.Boolean>"
+        ]
+    },
+    "Shop/Notifications/Campaigns.cs@572:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Contains",
+        "parameters": [
+            "global::System.Char"
+        ]
+    },
+    "Shop/Notifications/ChannelNames.cs@293:InvocationExpression": {
+        "type": "global::System.Collections.Generic.HashSet<global::System.String>",
+        "name": "Contains",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/ChannelNames.cs@437:InvocationExpression": {
+        "type": "global::Shop.Notifications.NotifyRouter",
+        "name": "Allows",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/ChannelNames.cs@607:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::System.String, global::System.Boolean>"
+        ]
+    },
+    "Shop/Notifications/ChannelNames.cs@635:InvocationExpression": {
+        "type": "global::Shop.Notifications.NotifyRouter",
+        "name": "Allows",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/DeliveredMail.cs@275:ObjectCreationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Notifications/DeliveredMail.cs@304:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Notifications/DeliveredMail.cs@351:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Notifications/DeliveredMail.cs@481:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Notifications/DeliveredMail.cs@552:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Notifications/DeliveredMail.cs@609:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "ToString",
+        "parameters": []
+    },
+    "Shop/Notifications/Digests.cs@340:ObjectCreationExpression": {
+        "type": "global::Shop.Notifications.Digest",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String",
+            "global::System.String",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Notifications/InvoiceMailers.cs@276:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/InvoiceMailers.cs@488:InvocationExpression": {
+        "type": "global::Shop.Notifications.Mailbox",
+        "name": "Send",
+        "parameters": [
+            "global::System.String",
+            "global::System.String",
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Notifications/InvoiceMailers.cs@727:InvocationExpression": {
+        "type": "global::Shop.Notifications.Mailbox",
+        "name": "Send",
+        "parameters": [
+            "global::System.String",
+            "global::System.String",
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Notifications/Mailer.cs@420:ObjectCreationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Notifications/Mailer.cs@449:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Notifications/Mailer.cs@496:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Notifications/Mailer.cs@623:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Notifications/Mailer.cs@694:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Notifications/Mailer.cs@736:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "ToString",
+        "parameters": []
+    },
+    "Shop/Notifications/Mailer.cs@836:InvocationExpression": {
+        "type": "global::Shop.Notifications.OrderMailer",
+        "name": "Compose",
+        "parameters": [
+            "global::Shop.Orders.Order",
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Mailer.cs@981:InvocationExpression": {
+        "type": "global::Shop.Notifications.OrderMailer",
+        "name": "Compose",
+        "parameters": [
+            "global::Shop.Orders.Order",
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Mailing.cs@382:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::Shop.Orders.Customer, global::System.Boolean>"
+        ]
+    },
+    "Shop/Notifications/Mailing.cs@556:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Select",
+        "parameters": [
+            "global::System.Func<global::Shop.Orders.Customer, global::System.String?>"
+        ]
+    },
+    "Shop/Notifications/Outbox.cs@325:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Queue<global::System.String>",
+        "name": "TryDequeue",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Outbox.cs@415:InvocationExpression": {
+        "type": "global::System.Action<global::System.String>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Outbox.cs@721:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Queue<global::System.String>",
+        "name": "TryDequeue",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Outbox.cs@811:InvocationExpression": {
+        "type": "global::System.Action<global::System.String>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Outbox.cs@972:InvocationExpression": {
+        "type": "global::System.IO.TextWriter",
+        "name": "WriteLine",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Notifications/QuietHours.cs@475:InvocationExpression": {
+        "type": "global::Shop.Notifications.HourSpan",
+        "name": "Contains",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Notifications/QuietHours.cs@475:ObjectCreationExpression": {
+        "type": "global::Shop.Notifications.HourSpan",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.Int32",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Notifications/Receipts.cs@332:InvocationExpression": {
+        "type": "global::System.Action<global::System.String, global::System.String>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Receipts.cs@540:InvocationExpression": {
+        "type": "global::System.Action<global::System.String, global::System.String>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Receipts.cs@672:InvocationExpression": {
+        "type": "global::System.Action<global::System.String, global::System.String>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/ShippedMail.cs@399:ObjectCreationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Notifications/ShippedMail.cs@428:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Notifications/ShippedMail.cs@475:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Notifications/ShippedMail.cs@603:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.Text.StringBuilder.AppendInterpolatedStringHandler"
+        ]
+    },
+    "Shop/Notifications/ShippedMail.cs@674:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "AppendLine",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Notifications/ShippedMail.cs@742:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "ToString",
+        "parameters": []
+    },
+    "Shop/Notifications/SmsAlerts.cs@357:InvocationExpression": {
+        "type": "global::Shop.Notifications.SmsGateway",
+        "name": "Push",
+        "parameters": [
+            "global::Shop.Notifications.Alert",
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/SmsAlerts.cs@428:InvocationExpression": {
+        "type": "global::Shop.Notifications.SmsGateway",
+        "name": "Push",
+        "parameters": [
+            "global::Shop.Notifications.Alert",
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/SmsSettings.cs@308:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "IsNullOrWhiteSpace",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Notifications/Subscriptions.cs@154:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Subscriptions.cs@518:InvocationExpression": {
+        "type": "global::Shop.Notifications.MailingList",
+        "name": "Join",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Subscriptions.cs@722:InvocationExpression": {
+        "type": "global::Shop.Notifications.MailingList",
+        "name": "Join",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Notifications/Throttles.cs@256:InvocationExpression": {
+        "type": "global::System.TimeSpan",
+        "name": "FromHours",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Orders/Approvals.cs@600:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Orders/Approvals.cs@743:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Approvals.cs@919:InvocationExpression": {
+        "type": "global::Shop.Orders.Approval",
+        "name": "Chain",
+        "parameters": []
+    },
+    "Shop/Orders/Checkout.cs@1344:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Orders.EmptyOrder",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Checkout.cs@338:InvocationExpression": {
+        "type": "global::Shop.Orders.EmptyOrder",
+        "name": "For",
+        "parameters": [
+            "global::Shop.Orders.Order"
+        ]
+    },
+    "Shop/Orders/Checkout.cs@418:InvocationExpression": {
+        "type": "global::Shop.Orders.Order",
+        "name": "Total",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Checkout.cs@676:InvocationExpression": {
+        "type": "global::Shop.Orders.EmptyOrder",
+        "name": "For",
+        "parameters": [
+            "global::Shop.Orders.Order"
+        ]
+    },
+    "Shop/Orders/Checkout.cs@730:InvocationExpression": {
+        "type": "global::Shop.Orders.Order",
+        "name": "Total",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/CouponRedeem.cs@160:ImplicitObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Orders/CouponRedeem.cs@280:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Trim",
+        "parameters": []
+    },
+    "Shop/Orders/CouponRedeem.cs@296:ObjectCreationExpression": {
+        "type": "global::Shop.Orders.CouponMissing",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Orders/CouponRedeem.cs@360:InvocationExpression": {
+        "type": "global::System.Collections.Generic.CollectionExtensions",
+        "name": "GetValueOrDefault",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/CouponRedeem.cs@515:ObjectCreationExpression": {
+        "type": "global::Shop.Orders.CouponMissing",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Orders/CurrencyMismatch.cs@231:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Orders.CurrencyMismatch",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Customers.cs@394:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "FirstOrDefault",
+        "parameters": [
+            "global::System.Func<global::Shop.Orders.Customer, global::System.Boolean>"
+        ]
+    },
+    "Shop/Orders/Customers.cs@589:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "FirstOrDefault",
+        "parameters": [
+            "global::System.Func<global::Shop.Orders.Customer, global::System.Boolean>"
+        ]
+    },
+    "Shop/Orders/Customers.cs@652:InvocationExpression": {
+        "type": "global::Shop.Orders.UnknownCustomer",
+        "name": "Named",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Customers.cs@893:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Orders.UnknownCustomer",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Discounting.cs@457:InvocationExpression": {
+        "type": "global::System.Math",
+        "name": "Min",
+        "parameters": [
+            "global::System.Int32",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Orders/Fulfilment.cs@789:InvocationExpression": {
+        "type": "global::Shop.Orders.DeliveryStageRules",
+        "name": "HasLeftTheWarehouse",
+        "parameters": []
+    },
+    "Shop/Orders/GiftWrapping.cs@255:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::System.String, global::System.Boolean>"
+        ]
+    },
+    "Shop/Orders/GiftWrapping.cs@274:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "StartsWith",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/GiftWrapping.cs@516:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Count",
+        "parameters": [
+            "global::System.Func<global::System.String, global::System.Boolean>"
+        ]
+    },
+    "Shop/Orders/GiftWrapping.cs@535:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "StartsWith",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Gratuities.cs@267:InvocationExpression": {
+        "type": "global::System.Math",
+        "name": "Round",
+        "parameters": [
+            "global::System.Decimal",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Orders/Gratuities.cs@498:InvocationExpression": {
+        "type": "global::System.Math",
+        "name": "Round",
+        "parameters": [
+            "global::System.Decimal",
+            "global::System.MidpointRounding"
+        ]
+    },
+    "Shop/Orders/Gratuities.cs@748:InvocationExpression": {
+        "type": "global::System.Decimal",
+        "name": "ToString",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Orders/InvoiceNumbers.cs@345:InvocationExpression": {
+        "type": "global::Shop.Orders.InvoiceNumbers",
+        "name": "Next",
+        "parameters": []
+    },
+    "Shop/Orders/Invoicing.cs@1001:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Invoicing.cs@551:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Lifecycle.cs@395:ObjectCreationExpression": {
+        "type": "global::System.InvalidOperationException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Orders/Lifecycle.cs@668:ObjectCreationExpression": {
+        "type": "global::System.InvalidOperationException",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Orders/Money.cs@255:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Orders.Money",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.Int64",
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Money.cs@383:InvocationExpression": {
+        "type": "global::Shop.Orders.CurrencyMismatch",
+        "name": "For",
+        "parameters": [
+            "global::Shop.Orders.Money",
+            "global::Shop.Orders.Money"
+        ]
+    },
+    "Shop/Orders/Order.cs@265:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Aggregate",
+        "parameters": [
+            "global::Shop.Orders.Money",
+            "global::System.Func<global::Shop.Orders.Money, global::Shop.Orders.OrderLine, global::Shop.Orders.Money>"
+        ]
+    },
+    "Shop/Orders/Order.cs@281:InvocationExpression": {
+        "type": "global::Shop.Orders.Money",
+        "name": "Zero",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Order.cs@327:InvocationExpression": {
+        "type": "global::Shop.Orders.Money",
+        "name": "Plus",
+        "parameters": [
+            "global::Shop.Orders.Money"
+        ]
+    },
+    "Shop/Orders/OrderNotes.cs@400:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Empty",
+        "parameters": []
+    },
+    "Shop/Orders/OrderStages.cs@618:InvocationExpression": {
+        "type": "global::Shop.Orders.StagedOrder",
+        "name": "Shipped",
+        "parameters": []
+    },
+    "Shop/Orders/PaymentWebhooks.cs@536:InvocationExpression": {
+        "type": "global::System.MemoryExtensions",
+        "name": "Contains",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/PaymentWebhooks.cs@685:InvocationExpression": {
+        "type": "global::System.Enum",
+        "name": "TryParse",
+        "parameters": [
+            "global::System.String?",
+            "global::System.Boolean",
+            "global::Shop.Orders.OrderStatus"
+        ]
+    },
+    "Shop/Orders/PaymentWebhooks.cs@761:InvocationExpression": {
+        "type": "global::Shop.Orders.OrderStatusRules",
+        "name": "IsSettled",
+        "parameters": []
+    },
+    "Shop/Orders/PaymentWebhooks.cs@872:InvocationExpression": {
+        "type": "global::System.MemoryExtensions",
+        "name": "Contains",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Payouts.cs@400:ObjectCreationExpression": {
+        "type": "global::Shop.Orders.Payout",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String",
+            "global::System.Int32",
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Payouts.cs@539:ObjectCreationExpression": {
+        "type": "global::Shop.Orders.PendingPayout",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Orders/Receipts.cs@233:ImplicitObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Object>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Orders/Receipts.cs@596:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Orders.ReceiptFooter",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String",
+            "global::System.Int32",
+            "global::System.DateOnly"
+        ]
+    },
+    "Shop/Orders/Receipts.cs@621:InvocationExpression": {
+        "type": "global::System.DateOnly",
+        "name": "FromDateTime",
+        "parameters": [
+            "global::System.DateTime"
+        ]
+    },
+    "Shop/Orders/Refunds.cs@907:InvocationExpression": {
+        "type": "global::Shop.Orders.Order",
+        "name": "Total",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Returns.cs@204:InvocationExpression": {
+        "type": "global::System.DateOnly",
+        "name": "AddDays",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Orders/StatusBadge.cs@1130:ObjectCreationExpression": {
+        "type": "global::System.ArgumentOutOfRangeException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Orders/StatusFeed.cs@452:InvocationExpression": {
+        "type": "global::System.Action<global::System.String>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/StatusFeed.cs@559:InvocationExpression": {
+        "type": "global::System.Action<global::System.String>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/StatusFeed.cs@755:InvocationExpression": {
+        "type": "global::System.Enum",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String",
+            "global::System.Boolean"
+        ]
+    },
+    "Shop/Orders/StatusFeed.cs@870:InvocationExpression": {
+        "type": "global::System.Action<global::System.String>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/StatusFeed.cs@987:InvocationExpression": {
+        "type": "global::System.Action<global::System.String>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Statuses.cs@389:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Orders/Statuses.cs@463:ObjectCreationExpression": {
+        "type": "global::System.IO.StreamReader",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Statuses.cs@520:InvocationExpression": {
+        "type": "global::System.IO.StreamReader",
+        "name": "ReadToEnd",
+        "parameters": []
+    },
+    "Shop/Orders/Statuses.cs@603:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Split",
+        "parameters": [
+            "global::System.Char",
+            "global::System.StringSplitOptions"
+        ]
+    },
+    "Shop/Orders/Statuses.cs@723:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Statuses.cs@857:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Orders/Statuses.cs@997:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/CouponBooks.cs@182:ImplicitObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::Shop.Pricing.CouponCode>",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.Collections.Generic.IEqualityComparer<global::System.String>?"
+        ]
+    },
+    "Shop/Pricing/CouponBooks.cs@293:InvocationExpression": {
+        "type": "global::System.Collections.Generic.CollectionExtensions",
+        "name": "GetValueOrDefault",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/CouponBooks.cs@397:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::Shop.Pricing.CouponCode>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::Shop.Pricing.CouponCode"
+        ]
+    },
+    "Shop/Pricing/CouponBooks.cs@455:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.KeyNotFoundException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Pricing/CouponBooks.cs@610:InvocationExpression": {
+        "type": "global::Shop.Pricing.CouponBook",
+        "name": "Find",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/CouponBooks.cs@719:InvocationExpression": {
+        "type": "global::Shop.Pricing.CouponBook",
+        "name": "Find",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/CreditNotes.cs@202:InvocationExpression": {
+        "type": "global::System.Math",
+        "name": "Round",
+        "parameters": [
+            "global::System.Decimal",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Pricing/CreditNotes.cs@397:ObjectCreationExpression": {
+        "type": "global::Shop.Pricing.CreditNote",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Pricing/CreditNotes.cs@512:InvocationExpression": {
+        "type": "global::Shop.Pricing.CreditNote",
+        "name": "Credit",
+        "parameters": [
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Pricing/CreditNotes.cs@669:ObjectCreationExpression": {
+        "type": "global::Shop.Pricing.CreditNote",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Pricing/CreditNotes.cs@729:InvocationExpression": {
+        "type": "global::Shop.Pricing.CreditNote",
+        "name": "Credit",
+        "parameters": [
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Pricing/Currencies.cs@361:InvocationExpression": {
+        "type": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Decimal>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Pricing/Currencies.cs@475:ObjectCreationExpression": {
+        "type": "global::System.InvalidOperationException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Pricing/ExchangeRates.cs@732:InvocationExpression": {
+        "type": "global::System.Collections.Generic.CollectionExtensions",
+        "name": "GetValueOrDefault",
+        "parameters": [
+            "global::System.String",
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Pricing/Labels.cs@327:InvocationExpression": {
+        "type": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/Labels.cs@457:InvocationExpression": {
+        "type": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/Labels.cs@512:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.KeyNotFoundException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Pricing/PriceBoard.cs@508:InvocationExpression": {
+        "type": "global::Shop.Pricing.Display",
+        "name": "Show",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/PriceBooks.cs@172:ImplicitObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.Int32, global::System.Decimal>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Pricing/PriceList.cs@308:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int64>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Pricing/PriceList.cs@462:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "StartsWith",
+        "parameters": [
+            "global::System.Char"
+        ]
+    },
+    "Shop/Pricing/PriceList.cs@533:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Split",
+        "parameters": [
+            "global::System.Char",
+            "global::System.StringSplitOptions"
+        ]
+    },
+    "Shop/Pricing/PriceList.cs@580:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Trim",
+        "parameters": []
+    },
+    "Shop/Pricing/PriceList.cs@599:InvocationExpression": {
+        "type": "global::System.Int64",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/PriceList.cs@846:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "StartsWith",
+        "parameters": [
+            "global::System.Char"
+        ]
+    },
+    "Shop/Pricing/PrizeDraws.cs@228:InvocationExpression": {
+        "type": "global::System.Random",
+        "name": "Next",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Pricing/PrizeDraws.cs@228:ObjectCreationExpression": {
+        "type": "global::System.Random",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Pricing/PrizeDraws.cs@498:InvocationExpression": {
+        "type": "global::System.Random",
+        "name": "Next",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Pricing/PrizeDraws.cs@498:ObjectCreationExpression": {
+        "type": "global::System.Random",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Pricing/Promotions.cs@1087:InvocationExpression": {
+        "type": "global::Shop.Pricing.Promotion",
+        "name": "Discount",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Pricing/Promotions.cs@1198:InvocationExpression": {
+        "type": "global::Shop.Pricing.Promotion",
+        "name": "Label",
+        "parameters": []
+    },
+    "Shop/Pricing/Promotions.cs@640:InvocationExpression": {
+        "type": "global::System.Math",
+        "name": "Min",
+        "parameters": [
+            "global::System.Int32",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Pricing/RateCache.cs@362:InvocationExpression": {
+        "type": "global::System.IO.File",
+        "name": "WriteAllLines",
+        "parameters": [
+            "global::System.String",
+            "global::System.Collections.Generic.IEnumerable<global::System.String>"
+        ]
+    },
+    "Shop/Pricing/RateCache.cs@387:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Select",
+        "parameters": [
+            "global::System.Func<global::System.Collections.Generic.KeyValuePair<global::System.String, global::System.Decimal>, global::System.String>"
+        ]
+    },
+    "Shop/Pricing/RateFeed.cs@261:InvocationExpression": {
+        "type": "global::System.Decimal",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/RateFeed.cs@498:ObjectCreationExpression": {
+        "type": "global::System.TimeoutException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Pricing/RateFeed.cs@584:ObjectCreationExpression": {
+        "type": "global::System.IO.InvalidDataException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?",
+            "global::System.Exception?"
+        ]
+    },
+    "Shop/Pricing/Surcharges.cs@363:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.String>",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.Collections.Generic.IEnumerable<global::System.Collections.Generic.KeyValuePair<global::System.String, global::System.String>>"
+        ]
+    },
+    "Shop/Pricing/Surcharges.cs@451:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.String>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/Surcharges.cs@493:InvocationExpression": {
+        "type": "global::System.Decimal",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Pricing/TaxTable.cs@261:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Pricing/TierImport.cs@333:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "ToLowerInvariant",
+        "parameters": []
+    },
+    "Shop/Pricing/Units.cs@860:ObjectCreationExpression": {
+        "type": "global::System.NotSupportedException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Pricing/VatSplits.cs@429:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Pricing.VatSplit",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.Decimal",
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Pricing/VatSplits.cs@602:InvocationExpression": {
+        "type": "global::Shop.Pricing.VatSplits",
+        "name": "Divided",
+        "parameters": [
+            "global::System.Decimal",
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Reports/Backfills.cs@345:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::Shop.Orders.StagedOrder, global::System.Boolean>"
+        ]
+    },
+    "Shop/Reports/Backfills.cs@397:InvocationExpression": {
+        "type": "global::System.DateOnly",
+        "name": "AddDays",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Reports/Backfills.cs@488:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Select",
+        "parameters": [
+            "global::System.Func<global::Shop.Orders.StagedOrder, global::Shop.Orders.StagedOrder>"
+        ]
+    },
+    "Shop/Reports/Closures.cs@290:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Count",
+        "parameters": [
+            "global::System.Func<global::Shop.Reports.ExportRow, global::System.Boolean>"
+        ]
+    },
+    "Shop/Reports/CreditSummaries.cs@195:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::Shop.Pricing.ReturnedLine, global::System.Boolean>"
+        ]
+    },
+    "Shop/Reports/CreditSummaries.cs@295:InvocationExpression": {
+        "type": "global::Shop.Pricing.CreditNote",
+        "name": "Credit",
+        "parameters": [
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Reports/DailySummary.cs@223:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Join",
+        "parameters": [
+            "global::System.String?",
+            "global::System.ReadOnlySpan<global::System.String?>"
+        ]
+    },
+    "Shop/Reports/PageReader.cs@408:InvocationExpression": {
+        "type": "global::Shop.Reports.IPageSource",
+        "name": "First",
+        "parameters": []
+    },
+    "Shop/Reports/PageReader.cs@433:InvocationExpression": {
+        "type": "global::Shop.Reports.IPageSource",
+        "name": "After",
+        "parameters": [
+            "global::Shop.Reports.Page"
+        ]
+    },
+    "Shop/Reports/ReportKinds.cs@319:InvocationExpression": {
+        "type": "global::Shop.Reports.ReportRunner",
+        "name": "Run",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Reports/ReportKinds.cs@418:InvocationExpression": {
+        "type": "global::Shop.Reports.ReportRunner",
+        "name": "Run",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Reports/ReportKinds.cs@507:InvocationExpression": {
+        "type": "global::Shop.Reports.ReportRunner",
+        "name": "Run",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Reports/Rounding.cs@225:InvocationExpression": {
+        "type": "global::System.Math",
+        "name": "Round",
+        "parameters": [
+            "global::System.Decimal",
+            "global::System.Int32",
+            "global::System.MidpointRounding"
+        ]
+    },
+    "Shop/Reports/Rounding.cs@364:InvocationExpression": {
+        "type": "global::Shop.Reports.ReportRounding",
+        "name": "Cents",
+        "parameters": [
+            "global::System.Decimal"
+        ]
+    },
+    "Shop/Reports/SalesReport.cs@407:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<(global::System.DateTime At, global::System.Int64 Cents), global::System.Boolean>"
+        ]
+    },
+    "Shop/Reports/SalesReport.cs@694:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Count",
+        "parameters": [
+            "global::System.Func<(global::System.DateTime At, global::System.String Sku), global::System.Boolean>"
+        ]
+    },
+    "Shop/Reports/Snapshots.cs@270:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Returns/Claims.cs@242:InvocationExpression": {
+        "type": "global::Shop.Warranty.WarrantyPolicy",
+        "name": "Covers",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Returns/Claims.cs@281:InvocationExpression": {
+        "type": "global::System.DateOnly",
+        "name": "AddMonths",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Returns/ReturnInspections.cs@316:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Any",
+        "parameters": [
+            "global::System.Func<global::Shop.Returns.InspectedItem, global::System.Boolean>"
+        ]
+    },
+    "Shop/Rewards/Issuing.cs@399:InvocationExpression": {
+        "type": "global::Shop.Rewards.VoucherCatalog",
+        "name": "Cheapest",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Rewards/Vouchers.cs@265:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::Shop.Rewards.Voucher, global::System.Boolean>"
+        ]
+    },
+    "Shop/Rewards/Vouchers.cs@452:InvocationExpression": {
+        "type": "global::Shop.Rewards.VoucherCatalog",
+        "name": "Cheapest",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Search/Indexes.cs@301:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::Shop.Catalog.Product, global::System.Boolean>"
+        ]
+    },
+    "Shop/Search/Indexes.cs@327:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Contains",
+        "parameters": [
+            "global::System.String",
+            "global::System.StringComparison"
+        ]
+    },
+    "Shop/Search/Indexes.cs@515:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Select",
+        "parameters": [
+            "global::System.Func<global::Shop.Storefront.ProductPage, global::System.String>"
+        ]
+    },
+    "Shop/Shipping/CarrierConfig.cs@212:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Join",
+        "parameters": [
+            "global::System.String?",
+            "global::System.String?[]"
+        ]
+    },
+    "Shop/Shipping/CarrierDirectory.cs@1074:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Trim",
+        "parameters": []
+    },
+    "Shop/Shipping/CarrierDirectory.cs@1327:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Shipping.UnknownCarrier",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/CarrierDirectory.cs@357:InvocationExpression": {
+        "type": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/CarrierDirectory.cs@466:ObjectCreationExpression": {
+        "type": "global::System.Exception",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Shipping/CarrierDirectory.cs@631:InvocationExpression": {
+        "type": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/CarrierDirectory.cs@742:InvocationExpression": {
+        "type": "global::Shop.Shipping.UnknownCarrier",
+        "name": "Named",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/CarrierDirectory.cs@878:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "IsNullOrWhiteSpace",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Shipping/CarrierDirectory.cs@981:ObjectCreationExpression": {
+        "type": "global::System.ArgumentException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?",
+            "global::System.String?"
+        ]
+    },
+    "Shop/Shipping/CarrierLogos.cs@679:ObjectCreationExpression": {
+        "type": "global::System.ArgumentOutOfRangeException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?",
+            "global::System.Object?",
+            "global::System.String?"
+        ]
+    },
+    "Shop/Shipping/CarrierPick.cs@258:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/CarrierPick.cs@285:InvocationExpression": {
+        "type": "global::Shop.Shipping.CarrierPick",
+        "name": "Label",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/CarrierPick.cs@308:ObjectCreationExpression": {
+        "type": "global::Shop.Shipping.CarrierNotChosen",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/CarrierPick.cs@441:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "ToUpperInvariant",
+        "parameters": []
+    },
+    "Shop/Shipping/Carriers.cs@1038:ObjectCreationExpression": {
+        "type": "global::Shop.Orders.Money",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.Int64",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/Carriers.cs@583:ObjectCreationExpression": {
+        "type": "global::Shop.Orders.Money",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.Int64",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/ColdChain.cs@325:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<(global::System.String Sku, global::System.Int32 Celsius), global::System.Boolean>"
+        ]
+    },
+    "Shop/Shipping/ColdChain.cs@733:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Count",
+        "parameters": [
+            "global::System.Func<(global::System.String Sku, global::System.Int32 Celsius), global::System.Boolean>"
+        ]
+    },
+    "Shop/Shipping/Consignments.cs@234:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Sum",
+        "parameters": []
+    },
+    "Shop/Shipping/CourierBookings.cs@436:InvocationExpression": {
+        "type": "global::Shop.Shipping.CourierDesk",
+        "name": "Book",
+        "parameters": [
+            "global::Shop.Shipping.Booking",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/CourierBookings.cs@593:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Select",
+        "parameters": [
+            "global::System.Func<global::Shop.Shipping.Booking, global::System.String>"
+        ]
+    },
+    "Shop/Shipping/CourierBookings.cs@620:InvocationExpression": {
+        "type": "global::Shop.Shipping.CourierDesk",
+        "name": "Book",
+        "parameters": [
+            "global::Shop.Shipping.Booking",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/DeliverySlots.cs@367:InvocationExpression": {
+        "type": "global::Shop.Shipping.TimeRange",
+        "name": "Overlaps",
+        "parameters": [
+            "global::Shop.Shipping.TimeRange"
+        ]
+    },
+    "Shop/Shipping/DeliverySlots.cs@367:ObjectCreationExpression": {
+        "type": "global::Shop.Shipping.TimeRange",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.DateTime",
+            "global::System.DateTime"
+        ]
+    },
+    "Shop/Shipping/DeliverySlots.cs@403:InvocationExpression": {
+        "type": "global::Shop.Shipping.DeliverySlot",
+        "name": "Window",
+        "parameters": []
+    },
+    "Shop/Shipping/DeliverySlots.cs@454:ObjectCreationExpression": {
+        "type": "global::Shop.Shipping.TimeRange",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.DateTime",
+            "global::System.DateTime"
+        ]
+    },
+    "Shop/Shipping/Dispatch.cs@424:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Queue<global::Shop.Shipping.Parcel>",
+        "name": "Dequeue",
+        "parameters": []
+    },
+    "Shop/Shipping/Dispatch.cs@647:InvocationExpression": {
+        "type": "global::System.Func<global::Shop.Shipping.Parcel, global::System.Int32, global::System.Boolean>",
+        "name": "Invoke",
+        "parameters": [
+            "global::Shop.Shipping.Parcel",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Shipping/FreightZones.cs@122:ImplicitObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Shipping/FreightZones.cs@342:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Shipping/FreightZones.cs@406:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.KeyNotFoundException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Shipping/FreightZones.cs@620:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": "ContainsKey",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/Handover.cs@260:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/Handover.cs@478:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "RemoveAt",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Shipping/Manifests.cs@244:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Contains",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/ParcelLabels.cs@257:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.HashSet<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Shipping/ParcelLabels.cs@288:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Collections.Generic.List<global::System.String>>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.Collections.Generic.List<global::System.String>"
+        ]
+    },
+    "Shop/Shipping/ParcelLabels.cs@409:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Shipping/ParcelLabels.cs@451:InvocationExpression": {
+        "type": "global::System.Collections.Generic.HashSet<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/ParcelLabels.cs@461:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "ToUpperInvariant",
+        "parameters": []
+    },
+    "Shop/Shipping/Parcels.cs@447:ObjectCreationExpression": {
+        "type": "global::System.ArgumentOutOfRangeException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?",
+            "global::System.String?"
+        ]
+    },
+    "Shop/Shipping/Parcels.cs@900:ObjectCreationExpression": {
+        "type": "global::System.ArgumentOutOfRangeException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?",
+            "global::System.String?"
+        ]
+    },
+    "Shop/Shipping/Pickups.cs@330:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Shipping.Pickup",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Shipping/Pickups.cs@513:ObjectCreationExpression": {
+        "type": "global::Shop.Shipping.Pickup",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Shipping/Tracking.cs@430:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Split",
+        "parameters": [
+            "global::System.Char",
+            "global::System.StringSplitOptions"
+        ]
+    },
+    "Shop/Shipping/Webhooks.cs@434:InvocationExpression": {
+        "type": "global::System.Text.Json.JsonElement",
+        "name": "GetProperty",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/Webhooks.cs@485:ObjectCreationExpression": {
+        "type": "global::System.Text.Json.JsonException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Shipping/Webhooks.cs@675:InvocationExpression": {
+        "type": "global::Shop.Shipping.Webhooks",
+        "name": "Field",
+        "parameters": [
+            "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/Webhooks.cs@823:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Shipping.CarrierEvent",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/Webhooks.cs@827:InvocationExpression": {
+        "type": "global::Shop.Shipping.Webhooks",
+        "name": "Field",
+        "parameters": [
+            "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/Webhooks.cs@852:InvocationExpression": {
+        "type": "global::Shop.Shipping.Webhooks",
+        "name": "Field",
+        "parameters": [
+            "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>",
+            "global::System.String"
+        ]
+    },
+    "Shop/Shipping/Webhooks.cs@971:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Trim",
+        "parameters": []
+    },
+    "Shop/Stock/Aisles.cs@298:ImplicitObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::Shop.Stock.StorageAisle>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Aisles.cs@529:InvocationExpression": {
+        "type": "global::Shop.Stock.FloorPlan",
+        "name": "Find",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Aisles.cs@725:InvocationExpression": {
+        "type": "global::Shop.Stock.FloorPlan",
+        "name": "Find",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Aisles.cs@806:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.KeyNotFoundException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Stock/Aisles.cs@980:InvocationExpression": {
+        "type": "global::Shop.Stock.StorageAisle",
+        "name": "Reserve",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/Arrivals.cs@372:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Queue<(global::System.String Sku, global::System.Int32 Units)>",
+        "name": "TryDequeue",
+        "parameters": [
+            "(global::System.String Sku, global::System.Int32 Units)"
+        ]
+    },
+    "Shop/Stock/Arrivals.cs@529:InvocationExpression": {
+        "type": "global::System.Collections.Generic.CollectionExtensions",
+        "name": "GetValueOrDefault",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Audits.cs@376:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Object>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Audits.cs@612:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Batches.cs@345:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::Shop.Stock.Batch, global::System.Boolean>"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@224:InvocationExpression": {
+        "type": "global::System.Collections.Generic.HashSet<(global::System.Int32 Aisle, global::System.Int32 Level)>",
+        "name": "Add",
+        "parameters": [
+            "(global::System.Int32 Aisle, global::System.Int32 Level)"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@401:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Count",
+        "parameters": [
+            "global::System.Func<global::Shop.Stock.BinRow, global::System.Boolean>"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@419:InvocationExpression": {
+        "type": "global::Shop.Stock.RackMap",
+        "name": "Claim",
+        "parameters": [
+            "global::System.Int32",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@430:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@452:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@551:InvocationExpression": {
+        "type": "global::Shop.Stock.RackMap",
+        "name": "Claim",
+        "parameters": [
+            "global::System.Int32",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@562:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@584:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@672:InvocationExpression": {
+        "type": "global::Shop.Stock.RackMap",
+        "name": "Claim",
+        "parameters": [
+            "global::System.Int32",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/BinImports.cs@683:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/BinResolvers.cs@300:InvocationExpression": {
+        "type": "global::Shop.Stock.IBinResolver",
+        "name": "Resolve",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/BinResolvers.cs@374:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.KeyNotFoundException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Stock/BinResolvers.cs@528:InvocationExpression": {
+        "type": "global::Shop.Stock.IBinResolver",
+        "name": "Resolve",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/BinResolvers.cs@602:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.KeyNotFoundException",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Stock/BinSweeps.cs@149:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/BinSweeps.cs@379:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/CategoryPaths.cs@271:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Stack<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/CategoryPaths.cs@430:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Stack<global::System.String>",
+        "name": "Push",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/CategoryPaths.cs@483:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Join",
+        "parameters": [
+            "global::System.String?",
+            "global::System.Collections.Generic.IEnumerable<global::System.String?>"
+        ]
+    },
+    "Shop/Stock/CategoryPaths.cs@618:ObjectCreationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/CategoryPaths.cs@714:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "Append",
+        "parameters": [
+            "global::System.String?"
+        ]
+    },
+    "Shop/Stock/CategoryPaths.cs@759:InvocationExpression": {
+        "type": "global::System.Text.StringBuilder",
+        "name": "ToString",
+        "parameters": []
+    },
+    "Shop/Stock/Counts.cs@268:InvocationExpression": {
+        "type": "global::System.Threading.Tasks.Task",
+        "name": "Yield",
+        "parameters": []
+    },
+    "Shop/Stock/Counts.cs@299:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Sum",
+        "parameters": []
+    },
+    "Shop/Stock/Holds.cs@240:InvocationExpression": {
+        "type": "global::System.Collections.Generic.HashSet<global::System.String>",
+        "name": "Contains",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Holds.cs@240:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.HashSet<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/ImportRows.cs@357:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/ImportRows.cs@587:InvocationExpression": {
+        "type": "global::System.Collections.Generic.CollectionExtensions",
+        "name": "GetValueOrDefault",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/ImportRows.cs@777:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Stock.ImportRow",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/ImportRows.cs@793:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Ledgers.cs@1079:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Split",
+        "parameters": [
+            "global::System.Char",
+            "global::System.StringSplitOptions"
+        ]
+    },
+    "Shop/Stock/Ledgers.cs@1130:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Ledgers.cs@1242:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Ledgers.cs@356:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Ledgers.cs@442:InvocationExpression": {
+        "type": "global::System.IO.File",
+        "name": "ReadAllLines",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Ledgers.cs@460:InvocationExpression": {
+        "type": "global::System.IO.Path",
+        "name": "Combine",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Ledgers.cs@539:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "Split",
+        "parameters": [
+            "global::System.Char",
+            "global::System.StringSplitOptions"
+        ]
+    },
+    "Shop/Stock/Ledgers.cs@589:InvocationExpression": {
+        "type": "global::System.Int32",
+        "name": "Parse",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Ledgers.cs@701:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Ledgers.cs@888:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Ledgers.cs@976:InvocationExpression": {
+        "type": "global::System.IO.File",
+        "name": "ReadAllLines",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Ledgers.cs@994:InvocationExpression": {
+        "type": "global::System.IO.Path",
+        "name": "Combine",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Listings.cs@382:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Skip",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/Listings.cs@396:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "OrderDescending",
+        "parameters": []
+    },
+    "Shop/Stock/Listings.cs@421:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Order",
+        "parameters": []
+    },
+    "Shop/Stock/Listings.cs@707:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "OrderByDescending",
+        "parameters": [
+            "global::System.Func<(global::System.String Sku, global::System.Int32 Missing), global::System.Int32>"
+        ]
+    },
+    "Shop/Stock/Listings.cs@762:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "OrderBy",
+        "parameters": [
+            "global::System.Func<(global::System.String Sku, global::System.Int32 Missing), global::System.Int32>"
+        ]
+    },
+    "Shop/Stock/Listings.cs@822:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Skip",
+        "parameters": [
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/Palletising.cs@380:InvocationExpression": {
+        "type": "global::System.Math",
+        "name": "Min",
+        "parameters": [
+            "global::System.Int32",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/PickLists.cs@194:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/PickLists.cs@314:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/PickLists.cs@574:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/PickLists.cs@651:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Picking.cs@303:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Picking.cs@540:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Picking.cs@586:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Sort",
+        "parameters": [
+            "global::System.Collections.Generic.IComparer<global::System.String>?"
+        ]
+    },
+    "Shop/Stock/Reorders.cs@531:InvocationExpression": {
+        "type": "global::System.Math",
+        "name": "Max",
+        "parameters": [
+            "global::System.Int32",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/Reorders.cs@635:InvocationExpression": {
+        "type": "global::Shop.Stock.ReorderPoint",
+        "name": "Level",
+        "parameters": []
+    },
+    "Shop/Stock/Replenishment.cs@1006:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Sum",
+        "parameters": [
+            "global::System.Func<global::System.String, global::System.Int32>"
+        ]
+    },
+    "Shop/Stock/Replenishment.cs@437:InvocationExpression": {
+        "type": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Int32>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/Replenishment.cs@618:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<global::System.String, global::System.Boolean>"
+        ]
+    },
+    "Shop/Stock/Replenishment.cs@636:InvocationExpression": {
+        "type": "global::Shop.Stock.Replenishment",
+        "name": "Shortfall",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Replenishment.cs@825:InvocationExpression": {
+        "type": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Int32>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/Reservations.cs@351:InvocationExpression": {
+        "type": "global::System.Action<global::System.String, global::System.Int32>",
+        "name": "Invoke",
+        "parameters": [
+            "global::System.String",
+            "global::System.Int32"
+        ]
+    },
+    "Shop/Stock/Restock.cs@1073:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "SelectMany",
+        "parameters": [
+            "global::System.Func<global::System.Collections.Generic.KeyValuePair<global::System.String, global::System.Collections.Generic.IReadOnlyList<global::Shop.Stock.Shelf>>, global::System.Collections.Generic.IEnumerable<(global::System.String Warehouse, global::Shop.Stock.Shelf Shelf)>>"
+        ]
+    },
+    "Shop/Stock/Restock.cs@1121:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Select",
+        "parameters": [
+            "global::System.Func<global::Shop.Stock.Shelf, (global::System.String Warehouse, global::Shop.Stock.Shelf Shelf)>"
+        ]
+    },
+    "Shop/Stock/Restock.cs@1331:InvocationExpression": {
+        "type": "global::Shop.Stock.Restock",
+        "name": "Reorder",
+        "parameters": [
+            "global::System.String",
+            "global::Shop.Stock.Shelf"
+        ]
+    },
+    "Shop/Stock/Restock.cs@442:ObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Restock.cs@793:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/ShelfAudits.cs@177:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Sum",
+        "parameters": [
+            "global::System.Func<(global::System.String Bin, global::System.Int32 Counted), global::System.Int32>"
+        ]
+    },
+    "Shop/Stock/ShelfAudits.cs@478:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Where",
+        "parameters": [
+            "global::System.Func<(global::System.String Bin, global::System.Int32 Counted), global::System.Boolean>"
+        ]
+    },
+    "Shop/Stock/ShelfSensors.cs@146:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/ShelfSensors.cs@210:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Contains",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/ShelfSensors.cs@534:InvocationExpression": {
+        "type": "global::Shop.Stock.SensorHub",
+        "name": "Register",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/ShelfSensors.cs@618:InvocationExpression": {
+        "type": "global::Shop.Stock.SensorHub",
+        "name": "Reading",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Snapshots.cs@1005:InvocationExpression": {
+        "type": "global::System.Text.Json.JsonSerializer",
+        "name": "Deserialize",
+        "parameters": [
+            "global::System.String",
+            "global::System.Text.Json.JsonSerializerOptions?"
+        ]
+    },
+    "Shop/Stock/Snapshots.cs@1057:InvocationExpression": {
+        "type": "global::System.IO.File",
+        "name": "ReadAllText",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Snapshots.cs@1074:InvocationExpression": {
+        "type": "global::System.IO.Path",
+        "name": "Combine",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Snapshots.cs@331:InvocationExpression": {
+        "type": "global::System.Text.Json.JsonSerializer",
+        "name": "Deserialize",
+        "parameters": [
+            "global::System.String",
+            "global::System.Text.Json.JsonSerializerOptions?"
+        ]
+    },
+    "Shop/Stock/Snapshots.cs@383:InvocationExpression": {
+        "type": "global::System.IO.File",
+        "name": "ReadAllText",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Snapshots.cs@400:InvocationExpression": {
+        "type": "global::System.IO.Path",
+        "name": "Combine",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Snapshots.cs@657:InvocationExpression": {
+        "type": "global::System.Text.Json.JsonSerializer",
+        "name": "Deserialize",
+        "parameters": [
+            "global::System.String",
+            "global::System.Text.Json.JsonSerializerOptions?"
+        ]
+    },
+    "Shop/Stock/Snapshots.cs@709:InvocationExpression": {
+        "type": "global::System.IO.File",
+        "name": "ReadAllText",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Snapshots.cs@726:InvocationExpression": {
+        "type": "global::System.IO.Path",
+        "name": "Combine",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockImport.cs@209:InvocationExpression": {
+        "type": "global::System.IO.File",
+        "name": "ReadAllText",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockImport.cs@342:ObjectCreationExpression": {
+        "type": "global::Shop.Stock.StockFileUnreadable",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockImport.cs@571:InvocationExpression": {
+        "type": "global::System.IO.File",
+        "name": "ReadAllText",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockImport.cs@663:ObjectCreationExpression": {
+        "type": "global::Shop.Stock.StockFileUnreadable",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String",
+            "global::System.Exception"
+        ]
+    },
+    "Shop/Stock/StockMoves.cs@243:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockMoves.cs@387:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockMoves.cs@571:InvocationExpression": {
+        "type": "global::Shop.Stock.MoveLog",
+        "name": "Record",
+        "parameters": [
+            "global::Shop.Stock.StockMove",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockMoves.cs@760:InvocationExpression": {
+        "type": "global::Shop.Stock.MoveLog",
+        "name": "Record",
+        "parameters": [
+            "global::Shop.Stock.StockMove",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockZones.cs@231:ImplicitObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Collections.Generic.List<global::System.String>>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/StockZones.cs@305:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Collections.Generic.List<global::System.String>>",
+        "name": "TryGetValue",
+        "parameters": [
+            "global::System.String",
+            "global::System.Collections.Generic.List<global::System.String>"
+        ]
+    },
+    "Shop/Stock/StockZones.cs@438:InvocationExpression": {
+        "type": "global::System.Collections.Generic.List<global::System.String>",
+        "name": "Add",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockZones.cs@544:InvocationExpression": {
+        "type": "global::Shop.Stock.ZoneMap",
+        "name": "Place",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockZones.cs@665:InvocationExpression": {
+        "type": "global::Shop.Stock.ZoneMap",
+        "name": "Place",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/StockZones.cs@778:InvocationExpression": {
+        "type": "global::Shop.Stock.ZoneMap",
+        "name": "Place",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Stock/Totes.cs@210:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Sum",
+        "parameters": [
+            "global::System.Func<global::Shop.Stock.ToteItem, global::System.Int32>"
+        ]
+    },
+    "Shop/Stock/Totes.cs@678:InvocationExpression": {
+        "type": "global::Shop.Stock.LabelQueue",
+        "name": "Enqueue",
+        "parameters": [
+            "global::Shop.Stock.ToteItem"
+        ]
+    },
+    "Shop/Stock/Totes.cs@798:ImplicitObjectCreationExpression": {
+        "type": "global::System.Collections.Generic.Queue<global::Shop.Stock.ToteItem>",
+        "name": ".ctor",
+        "parameters": []
+    },
+    "Shop/Stock/Totes.cs@848:InvocationExpression": {
+        "type": "global::System.Collections.Generic.Queue<global::Shop.Stock.ToteItem>",
+        "name": "Enqueue",
+        "parameters": [
+            "global::Shop.Stock.ToteItem"
+        ]
+    },
+    "Shop/Storefront/PageSlugs.cs@345:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Select",
+        "parameters": [
+            "global::System.Func<global::Shop.Storefront.ProductPage, global::System.String>"
+        ]
+    },
+    "Shop/Storefront/ProductPages.cs@205:ImplicitObjectCreationExpression": {
+        "type": "global::Shop.Storefront.ProductPage",
+        "name": ".ctor",
+        "parameters": [
+            "global::System.String",
+            "global::System.String"
+        ]
+    },
+    "Shop/Storefront/ProductPages.cs@209:InvocationExpression": {
+        "type": "global::System.String",
+        "name": "ToLowerInvariant",
+        "parameters": []
+    },
+    "Shop/Warranty/Policies.cs@152:InvocationExpression": {
+        "type": "global::System.Collections.Generic.IReadOnlySet<global::System.String>",
+        "name": "Contains",
+        "parameters": [
+            "global::System.String"
+        ]
+    },
+    "Shop/Warranty/Policies.cs@280:InvocationExpression": {
+        "type": "global::System.Linq.Enumerable",
+        "name": "Count",
+        "parameters": [
+            "global::System.Func<global::Shop.Returns.Claim, global::System.Boolean>"
+        ]
+    },
+    "Shop/Warranty/Policies.cs@302:InvocationExpression": {
+        "type": "global::Shop.Warranty.WarrantyPolicy",
+        "name": "Covers",
+        "parameters": [
+            "global::System.String"
+        ]
+    }
+}

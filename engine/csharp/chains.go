@@ -7,13 +7,14 @@ import (
 // ScalarConversions is the conversion the call hands each scalar parameter of the method it calls, by position: a
 // cast to a scalar type, `X.Parse(…)`, `Convert.ToX(…)` or `.ToString()` written as the whole argument. None for a
 // call that names its arguments, whose positions are not the parameters'.
-func (n Node) ScalarConversions() map[int]string {
+func (n Node) ScalarConversions(program *Program) map[int]string {
 	conversions := map[int]string{}
 	if !n.Target().Exists() || !n.PassesByPosition() {
 		return conversions
 	}
+	parameters := program.ParametersOf(n)
 	for position, argument := range n.Arguments() {
-		if !n.FillsScalarAt(position) {
+		if position >= len(parameters) || !slices.Contains(scalars, parameters[position]) {
 			continue
 		}
 		if conversion := argument.conversion(); conversion != "" {
@@ -32,10 +33,9 @@ func (n Node) PassesByPosition() bool {
 	return list.Exists() && !slices.ContainsFunc(list.All(), func(argument Node) bool { return argument.firstChild("NameColon").Exists() })
 }
 
-// FillsScalarAt says whether the parameter at the position of the method the call reaches is a scalar: text, a
-// number, a date, a flag.
-func (n Node) FillsScalarAt(position int) bool {
-	parameters := n.Target().Parameters()
+// FillsScalarAt says whether the parameter the call fills at the position is a scalar: text, a number, a date, a flag.
+func (n Node) FillsScalarAt(program *Program, position int) bool {
+	parameters := program.ParametersOf(n)
 
 	return position < len(parameters) && slices.Contains(scalars, parameters[position])
 }

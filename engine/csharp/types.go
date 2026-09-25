@@ -44,7 +44,7 @@ func typeOf(written *contract.Type) Type {
 func namedInside(written *contract.Type) []string {
 	var named []string
 	for _, part := range append(append([]*contract.Type{}, written.Args...), written.Members...) {
-		if part.Kind == "named" {
+		if part.Kind == "named" || part.Kind == "tuple" {
 			named = append(named, strings.TrimSuffix(part.Text, "?"))
 		}
 		named = append(named, namedInside(part)...)
@@ -63,7 +63,7 @@ func (t Type) Name() string {
 	return t.name
 }
 
-// IsNullable says whether the type is annotated nullable.
+// IsNullable says whether the type admits absence: a reference annotated nullable, or a `Nullable<T>`.
 func (t Type) IsNullable() bool {
 	return t.nullable
 }
@@ -133,10 +133,24 @@ func (n Node) Type() Type {
 	case n.Is("Parameter", "CatchDeclaration"):
 		return typeOf(node.Declared)
 	case n.IsTypeNode() && !n.Parent().IsTypeNode():
-		return n.writtenType()
+		return n.writtenType().asWritten(n)
 	}
 
 	return Type{}
+}
+
+// asWritten is the type as the written type spells it: `var` stands for the type inferred, annotation and all; a
+// type written out is the type itself, nullable when written `T?`.
+func (t Type) asWritten(written Node) Type {
+	if written.Is("IdentifierName") && written.Name() == "var" {
+		return t
+	}
+	if !t.isValueType {
+		t.name = strings.TrimSuffix(t.name, "?")
+	}
+	t.nullable = written.Is("NullableType")
+
+	return t
 }
 
 // DeclaredType is the type a declaration names through its written type: a property's, a field's, a method's
@@ -154,12 +168,30 @@ func (n Node) DeclaredType() Type {
 // writtenType is the type a written type stands for: the one the declaration it types declares, else the one
 // its own syntax names.
 func (n Node) writtenType() Type {
+	written := n.declaringType()
+	var inner []string
+	for _, part := range written.inner {
+		if !slices.Contains(inner, part) {
+			inner = append(inner, part)
+		}
+	}
+	written.inner = inner
+
+	return written
+}
+
+// declaringType is the type the declaration a written type types declares, else the one its syntax names.
+func (n Node) declaringType() Type {
 	parent := n.Parent()
 	switch {
-	case parent.Is("PropertyDeclaration", "IndexerDeclaration", "EventDeclaration", "Parameter", "CatchDeclaration") && parent.Node().Declared != nil:
+	case parent.Is("PropertyDeclaration", "IndexerDeclaration", "EventDeclaration", "Parameter", "CatchDeclaration", "ForEachStatement") && parent.Node().Declared != nil:
 		return typeOf(parent.Node().Declared)
 	case parent.Is("MethodDeclaration", "LocalFunctionStatement") && parent.Node().Returns != nil && n.Node().Field == "ReturnType":
 		return typeOf(parent.Node().Returns)
+	case parent.Is("DeclarationExpression", "DeclarationPattern") && parent.Child("Designation").Node().Declared != nil:
+		return typeOf(parent.Child("Designation").Node().Declared)
+	case parent.Is("DeclarationExpression") && parent.Node().Resolved != nil:
+		return typeOf(parent.Node().Resolved)
 	case parent.Is("VariableDeclaration"):
 		for _, declarator := range parent.ChildrenIn("Variables") {
 			if declarator.Node().Declared != nil {
@@ -191,6 +223,19 @@ func (n Node) syntacticType() Type {
 		}
 
 		return Type{name: name, isValueType: name != "global::System.String" && name != "global::System.Object"}
+	case n.Is("TupleType"):
+		var elements, inner []string
+		for _, element := range n.ChildrenIn("Elements") {
+			written := element.At(0).syntacticType()
+			spelled := written.name
+			if element.Name() != "" {
+				spelled += " " + element.Name()
+			}
+			elements = append(elements, spelled)
+			inner = append(inner, written.NamedTypes()...)
+		}
+
+		return Type{name: "(" + strings.Join(elements, ", ") + ")", isValueType: true, inner: inner}
 	case n.Is("ArrayType"):
 		element := n.At(0).syntacticType()
 		if !element.Exists() {
@@ -214,10 +259,45 @@ func (n Node) syntacticType() Type {
 			}
 		}
 
-		return Type{name: name, inner: inner}
+		return Type{name: name, isValueType: n.namesAValue(), inner: inner}
+	case n.Is("IdentifierName") && n.isTypeParameter():
+		return Type{name: n.Name()}
 	}
 
 	return Type{}
+}
+
+// isTypeParameter says whether the name is a type parameter a declaration around it declares: `T` in `Box<T>`.
+func (n Node) isTypeParameter() bool {
+	for _, around := range n.Ancestors() {
+		for _, parameter := range around.Child("TypeParameterList").All() {
+			if parameter.Name() == n.Name() {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// namesAValue says whether the type the name refers to is a value type: a struct or an enum, declared in the scan
+// or outside it.
+func (n Node) namesAValue() bool {
+	symbol := n.Node().Refers
+	if declared := Of(n.Codebase()).TypeDeclared(symbol); declared.Exists() {
+		return declared.Is("StructDeclaration", "RecordStructDeclaration", "EnumDeclaration")
+	}
+	program, ok := n.Codebase().Program(contract.CSharp)
+	if !ok {
+		return false
+	}
+	for _, outside := range program.Symbols {
+		if outside.Symbol == symbol {
+			return outside.Kind == "struct" || outside.Kind == "enum"
+		}
+	}
+
+	return false
 }
 
 // Parameters is the types of the method's parameters, in order, as its symbol spells them.
