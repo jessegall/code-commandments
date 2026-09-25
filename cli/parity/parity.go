@@ -7,6 +7,7 @@ package parity
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -51,6 +52,10 @@ type Case struct {
 
 	// Stdin is fed to the tool.
 	Stdin string `json:"stdin,omitempty"`
+
+	// Digest are folders, under the project, whose files a golden records by their hash rather than their
+	// contents: what a run publishes by the hundred is held just as exactly, in a golden a reviewer can read.
+	Digest []string `json:"digest,omitempty"`
 
 	// Pending names what the Go side still waits on. A pending case is skipped while it differs, and fails
 	// the moment it matches, so the mark cannot outlive the gap.
@@ -156,7 +161,7 @@ func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 
 	result.Stdout = normalise(stdout.String(), repo, project)
 	result.Stderr = normalise(stderr.String(), repo, project)
-	result.Files = normalise(written(before, snapshot(project)), repo, project)
+	result.Files = normalise(written(before, digested(snapshot(project), c.Digest)), repo, project)
 
 	return result, nil
 }
@@ -186,6 +191,19 @@ func snapshot(project string) map[string]string {
 
 		return nil
 	})
+
+	return files
+}
+
+// digested is the snapshot with every file under a digest folder standing as its hash.
+func digested(files map[string]string, folders []string) map[string]string {
+	for path, contents := range files {
+		for _, folder := range folders {
+			if strings.HasPrefix(path, strings.TrimSuffix(folder, "/")+"/") {
+				files[path] = fmt.Sprintf("sha256 %x", sha256.Sum256([]byte(contents)))
+			}
+		}
+	}
 
 	return files
 }

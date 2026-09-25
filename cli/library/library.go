@@ -80,7 +80,7 @@ func (l Library) Publish() ([]string, error) {
 		}
 	}
 
-	l.reconcile(ids)
+	l.Reconcile(l.Dir(), ids)
 
 	return ids, writeManifest(l.root, ids)
 }
@@ -99,12 +99,12 @@ func (l Library) keepWrittenLanguages(file string) {
 	atomic.Write(file, KeepSections(string(text), l.project))
 }
 
-// reconcile removes every skill the last sync published that this one did not: renamed, retired, or a
-// project's own that is gone. A folder the tool never put there is left where it is.
-func (l Library) reconcile(current []string) {
+// Reconcile removes from dir every skill the last sync published that this one did not: renamed, retired,
+// or a project's own that is gone. A folder the tool never put there is left where it is.
+func (l Library) Reconcile(dir string, current []string) {
 	for _, stale := range l.previous {
 		if !slices.Contains(current, stale) {
-			os.RemoveAll(l.Path(stale))
+			os.RemoveAll(filepath.Join(dir, stale))
 		}
 	}
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/report"
 	"github.com/jessegall/code-commandments/cli/scaffold"
 	"github.com/jessegall/code-commandments/cli/session"
+	"github.com/jessegall/code-commandments/cli/sync"
 	"github.com/jessegall/code-commandments/cli/task"
 	"github.com/jessegall/code-commandments/cli/triggers"
 	_ "github.com/jessegall/code-commandments/registry"
@@ -32,6 +33,7 @@ func Kernel(version string) *cli.Kernel {
 		report.Command{},
 		report.FeatureRequest{},
 		freeze.Command{},
+		sync.Command{},
 		session.Command{},
 		task.Command{},
 		config.Toggle{},

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/atomic"
-	"github.com/jessegall/code-commandments/cli/doc"
+	"github.com/jessegall/code-commandments/cli/block"
 )
 
 // bom is the byte-order mark a file may open with; it is kept where it was found.
@@ -41,11 +41,11 @@ func (i Instructions) Inject(name, body string) error {
 		return &Refused{i.path + " resolves outside this project — left alone."}
 	}
 
-	block := doc.Begin(name, "composer update") + "\n" + strings.TrimSpace(body) + "\n" + doc.End(name)
+	wrapped := block.Begin(name, "composer update") + "\n" + strings.TrimSpace(body) + "\n" + block.End(name)
 
 	original, err := os.ReadFile(i.path)
 	if errors.Is(err, os.ErrNotExist) {
-		return i.save(nil, "# "+strings.TrimSuffix(filepath.Base(i.path), ".md")+"\n\n"+block+"\n")
+		return i.save(nil, "# "+strings.TrimSuffix(filepath.Base(i.path), ".md")+"\n\n"+wrapped+"\n")
 	}
 
 	document := strings.TrimPrefix(string(original), bom)
@@ -56,13 +56,13 @@ func (i Instructions) Inject(name, body string) error {
 
 	normalised := strings.ReplaceAll(document, "\r\n", "\n")
 
-	updated, found, err := doc.Replace(normalised, name, "\n"+strings.TrimSpace(body)+"\n")
+	updated, found, err := block.Replace(normalised, name, "\n"+strings.TrimSpace(body)+"\n")
 	if err != nil {
 		return &Refused{i.path + ": " + err.Error()}
 	}
 
 	if !found {
-		updated = strings.TrimRight(normalised, "\n") + "\n\n" + block + "\n"
+		updated = strings.TrimRight(normalised, "\n") + "\n\n" + wrapped + "\n"
 	}
 
 	if eol != "\n" {

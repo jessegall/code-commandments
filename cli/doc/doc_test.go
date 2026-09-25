@@ -2,6 +2,7 @@ package doc
 
 import (
 	"errors"
+	"github.com/jessegall/code-commandments/cli/block"
 	"os"
 	"slices"
 	"strings"
@@ -36,19 +37,19 @@ func TestAMarkerThatCannotBeTrustedIsRefused(t *testing.T) {
 		"<!-- BEGIN: commands:x (a) -->\n":                           "it has a BEGIN marker with no END",
 		"<!-- END: commands:x -->\n<!-- BEGIN: commands:x (a) -->\n": "its END marker stands above its BEGIN",
 	} {
-		_, _, err := Replace(document, "commands:x", "y")
+		_, _, err := block.Replace(document, "commands:x", "y")
 
-		var malformed *Malformed
+		var malformed *block.Malformed
 		if !errors.As(err, &malformed) || malformed.Reason != reason {
 			t.Errorf("%q: %v", document, err)
 		}
 	}
 }
 
-// awaited are the verbs the README's table lists that ticket 10 brings to the Go binary: sync, install and
+// awaited are the verbs the README's table lists that ticket 10 brings to the Go binary: install and
 // the hook commands.
 var awaited = []string{
-	"sync", "install", "judge-reminder", "hooks", "journal-hook", "journal-serve", "journal-config",
+	"install", "judge-reminder", "hooks", "journal-hook", "journal-serve", "journal-config",
 	"journal-scan", "journal-skills", "hook",
 }
 
@@ -66,7 +67,7 @@ func TestTheReadmeCommandTableIsWhatTheGoHelpProjects(t *testing.T) {
 		}
 	}
 
-	projected, found, err := Replace(withoutAwaited(string(raw)), "commands-table", "\n"+overview)
+	projected, found, err := block.Replace(withoutAwaited(string(raw)), "commands-table", "\n"+overview)
 	if err != nil || !found {
 		t.Fatalf("no commands-table block: %v", err)
 	}

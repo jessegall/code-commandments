@@ -14,12 +14,14 @@ import (
 const (
 	phpConfig  = ".commandments/config.php"
 	jsonConfig = ".commandments/config.json"
+	schemaFile = ".commandments/config.schema.json"
 )
 
 // EquateConfigs makes a golden's config.php and the Go run's config.json one entry when both runs wrote
 // them the same way and they declare the same settings, so a case differs only where the settings do. The
 // run's words name the one file as the golden does, and a layer declaration it shows in config.json's form
-// is the golden's config.php one when both declare the same layers.
+// is the golden's config.php one when both declare the same layers. The schema written beside a config.json
+// and the ignore rule that keeps it tracked are the rest of its form.
 func EquateConfigs(want, got Result, scratch string) (Result, Result) {
 	for _, name := range []string{jsonConfig, "config.json already declares"} {
 		got.Stdout = strings.ReplaceAll(got.Stdout, name, strings.Replace(name, "json", "php", 1))
@@ -38,6 +40,12 @@ func EquateConfigs(want, got Result, scratch string) (Result, Result) {
 	same := "=== " + php.verb + " .commandments/config (the same settings)\n"
 	want.Files = strings.Replace(want.Files, php.text, same, 1)
 	got.Files = strings.Replace(got.Files, json.text, same, 1)
+
+	if schema, wrote := entry(got.Files, schemaFile); wrote {
+		got.Files = strings.Replace(got.Files, schema.text, "", 1)
+	}
+
+	got.Files = strings.Replace(got.Files, "!config.php\n!config.json\n", "!config.php\n", 1)
 
 	return want, got
 }
