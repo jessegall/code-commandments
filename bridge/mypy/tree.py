@@ -89,7 +89,7 @@ class TreeWriter:
         out["span"] = [start, end, self.line_of(start)]
         if field is not None:
             out["field"] = field
-        out.update(self.facts(node, scope, (start, end)))
+        out.update(self.facts(node, field, scope, (start, end)))
         if children:
             out["children"] = children
         docstring = ast.get_docstring(node, clean=False) if isinstance(node, (*DEFINITIONS, ast.Module)) else None
@@ -153,7 +153,7 @@ class TreeWriter:
         }
         return [name for name, yes in answers.items() if yes]
 
-    def facts(self, node: ast.AST, scope: list[str], span: tuple[int, int]) -> dict:
+    def facts(self, node: ast.AST, field: str | None, scope: list[str], span: tuple[int, int]) -> dict:
         facts: dict = {}
         name = self.name_of(node)
         if name is not None:
@@ -162,7 +162,7 @@ class TreeWriter:
         operator = self.operator(node)
         if operator is not None:
             facts["operator"] = operator
-        flags = self.flags(node)
+        flags = self.flags(node, field, span[0])
         if flags:
             facts["flags"] = flags
         if isinstance(node, ast.arg) and node.annotation is not None:
@@ -232,10 +232,16 @@ class TreeWriter:
             return OPERATORS[type(node.ops[0])]
         if isinstance(node, ast.Assign):
             return "="
+        if isinstance(node, ast.FormattedValue) and node.conversion != -1:
+            return "!" + chr(node.conversion)
         return None
 
-    def flags(self, node: ast.AST) -> list[str]:
+    def flags(self, node: ast.AST, field: str | None, start: int) -> list[str]:
         flags = []
+        if isinstance(node, ast.arg) and field in ("vararg", "kwarg", "kwonlyargs"):
+            flags.append({"vararg": "variadic", "kwarg": "keywords", "kwonlyargs": "keyword-only"}[field])
+        if isinstance(node, ast.If) and field == "orelse" and self.source.startswith(b"elif", start):
+            flags.append("elif")
         if isinstance(node, (ast.AsyncFunctionDef, ast.AsyncFor, ast.AsyncWith)):
             flags.append("async")
         if isinstance(node, ast.comprehension) and node.is_async:

@@ -4,7 +4,7 @@ Every language bridge — PHP, Vue, TypeScript, Python, C# — answers in this o
 reads only this shape. A bridge is a small parser: it parses its language, and it writes what only that
 language's own compiler or checker can know. Everything else the engine derives itself, into the same
 fields, once it has read the stream. *Who fills it* says which is which. Version 2; a version 1 stream is the same contract without the Python
-extras `as`, `names` and `code`, and a reader of version 2 reads it too.
+extras `as`, `names` and `code` and the flag `elif`, and a reader of version 2 reads it too.
 
 What the engine must be able to read is listed per engine in [`inventory/`](inventory/). The mapping
 from each of those facts to a field here is in [`COVERAGE.md`](COVERAGE.md). The machine-checked form
@@ -183,6 +183,7 @@ A list drawn from this closed set. Each appears only where the language has the 
 | `nullable-sugar` | a type written `?T` rather than `T\|null` |
 | `group` | a Python `except*` |
 | `step` | an expression in a `for` loop's step list |
+| `elif` | a Python `if` written as the `elif` of the one before it, rather than an `if` inside an `else` |
 
 ## Types
 
@@ -324,7 +325,7 @@ its own parser's vocabulary, so a bridge never translates:
 **Python.** A node whose `ast` class holds one name as a plain string writes it as `name`: a `FunctionDef`'s
 or `ClassDef`'s own, an `arg`, a `Name`, an `Attribute`'s attribute, a named `keyword`, an `alias`'s imported
 name, an `ImportFrom`'s module as written (none for `from . import x`), the name an `ExceptHandler` binds, a
-`MatchAs` or `MatchStar` capture, and a `MatchMapping`'s `**rest`.
+`MatchAs` or `MatchStar` capture, and a `MatchMapping`'s `**rest`. A `FormattedValue`'s conversion is its `operator`: `!r` in `f"{x!r}"`.
 
 **Vue.** A `Block` is a top-level `<template>`, `<script>`, `<style>` or custom block; its own
 attributes (`setup`, `lang`, `generic`, `src`, `scoped`) are its `Attribute` children, and a

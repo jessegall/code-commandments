@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Py\FieldClumps;
 use JesseGall\CodeCommandments\Py\LookupEnvy;
 use JesseGall\CodeCommandments\Py\ModuleFile;
 use JesseGall\CodeCommandments\Py\OwnStateMask;
+use JesseGall\CodeCommandments\Py\StructuralHash;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Node;
@@ -217,3 +218,17 @@ foreach ($codebase->modules() as $module) {
 
 sort($masked);
 $write('fields', ['coupled' => $coupled, 'masked' => $masked]);
+
+// Each def's body fingerprints and weight. The fingerprints differ between the engines; which bodies share one
+// must not, so the test compares the groups they make.
+$hashes = [];
+
+foreach ($defs as [$def, $module]) {
+    $hashes[$symbol($def, $module) . '@' . $place($module, $def->start)] = [
+        'of' => StructuralHash::of($def->body),
+        'normalized' => StructuralHash::normalized($def->body),
+        'weight' => StructuralHash::weight($def->body),
+    ];
+}
+
+$write('hashes', $hashes);
