@@ -5,6 +5,7 @@ package commands
 import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/exemptions"
 	"github.com/jessegall/code-commandments/cli/freeze"
 	"github.com/jessegall/code-commandments/cli/hints"
 	"github.com/jessegall/code-commandments/cli/info"
@@ -36,6 +37,7 @@ func Kernel(version string) *cli.Kernel {
 		config.Toggle{},
 		config.Command{Version: version},
 		layers.Command{},
+		exemptions.Command{},
 		info.Command{Scaffoldable: scaffold.Scaffoldable()},
 		triggers.Command{},
 	)

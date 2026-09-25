@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+No sin or detector matches "zz-nothing". Run `commandments judge --list` to see them.
+
+--- files

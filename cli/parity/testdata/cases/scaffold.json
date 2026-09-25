@@ -5,5 +5,5 @@
   {"name": "scaffold-switch-case-dry-run", "args": ["scaffold", "--sin=switch", "--dry-run"], "setup": ["printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"src/\"}}}' > composer.json"]},
   {"name": "scaffold-switch-case-exists-elsewhere", "args": ["scaffold", "--sin=switch-case"], "setup": ["printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"app/\"}}}' > composer.json", "mkdir -p resources/js/ui/deep", "printf '<template/>\\n' > resources/js/ui/deep/SwitchCase.vue"]},
   {"name": "scaffold-no-such-sin", "args": ["scaffold", "--sin=zz-nothing"], "setup": ["printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"app/\"}}}' > composer.json"]},
-  {"name": "scaffold-every-sin", "args": ["scaffold"], "setup": ["printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"app/\"}}}' > composer.json"], "pending": "ticket 4: the PHP sins' helpers"}
+  {"name": "scaffold-every-sin", "args": ["scaffold"], "setup": ["printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"app/\"}}}' > composer.json"]}
 ]

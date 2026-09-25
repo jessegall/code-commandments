@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/detectors"
 )
 
@@ -15,7 +16,7 @@ func Detectors(query string) []detectors.Detector {
 	needle := normalise(query)
 	var found []detectors.Detector
 
-	for _, detector := range detectors.All() {
+	for _, detector := range config.InClassOrder(config.Detector, detectors.All()) {
 		if detector.Sin().Definition().Matches(query) || strings.Contains(normalise(catalog.Name(detector)), needle) {
 			found = append(found, detector)
 		}

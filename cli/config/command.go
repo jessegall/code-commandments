@@ -10,6 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/skill"
 )
 
@@ -86,7 +87,7 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 	}
 
 	row(console, "Custom detectors", strconv.Itoa(len(project.Detectors)))
-	row(console, "Exemption packages", "0 built-in  ·  "+strconv.Itoa(len(project.Packages))+" registered")
+	row(console, "Exemption packages", strconv.Itoa(len(packages.Shipped))+" built-in  ·  "+strconv.Itoa(len(project.Packages))+" registered")
 	row(console, "Skills", strconv.Itoa(len(skill.All())))
 	console.Write("\n  \033[2mRun `commandments config reindex` to re-detect the source roots.\033[0m\n\n")
 

@@ -2,6 +2,7 @@ package config
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -48,4 +49,16 @@ func indexOfKind(folders []string) int {
 	}
 
 	return len(folders) - 1
+}
+
+// InClassOrder is the rules in the order the PHP tool's catalogs list them: by their full class name, so a
+// package folder's rules follow the engine's own.
+func InClassOrder[R any](kind Kind, rules []R) []R {
+	ordered := slices.Clone(rules)
+
+	slices.SortStableFunc(ordered, func(a, b R) int {
+		return strings.Compare(ClassOf(kind, a), ClassOf(kind, b))
+	})
+
+	return ordered
 }

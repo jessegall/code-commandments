@@ -1,0 +1,12 @@
+exit: 0
+--- stdout
+commandments exemptions — List the exemption tags — what a package registers to quiet a general rule on its own boundary types.
+
+Usage:
+  commandments exemptions           every registered tag, with the package that owns it
+  commandments exemptions <sin|detector>
+                                    the exemptions ONE detector honours
+
+--- stderr
+
+--- files

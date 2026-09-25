@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/sins"
 )
@@ -67,7 +68,7 @@ func (Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	var created, skipped []string
 
-	for _, sin := range sins.All() {
+	for _, sin := range config.InClassOrder(config.Sin, sins.All()) {
 		scaffolding, scaffolds := sin.(sins.Scaffolding)
 
 		if !scaffolds || filtered && !sin.Definition().Matches(query) {

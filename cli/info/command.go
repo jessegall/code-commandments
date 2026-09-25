@@ -11,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/layout"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/skill"
 )
 
@@ -125,6 +126,10 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 
 	if _, scaffolds := c.Scaffoldable[sin.Name]; scaffolds {
 		row(console, "Scaffold", "commandments scaffold --sin="+sin.Name)
+	}
+
+	if exemptable, honours := detector.(packages.Exemptable); honours && len(exemptable.Exemptions()) > 0 {
+		row(console, "Exempts", "commandments exemptions "+sin.Name)
 	}
 
 	row(console, "Find it", "commandments judge --sin="+sin.Name)
