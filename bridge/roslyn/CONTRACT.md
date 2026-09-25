@@ -1,8 +1,10 @@
 # The Roslyn bridge's output
 
-This shape is on its way out. The target every bridge moves to is the generic tree contract in
-[`contract/CONTRACT.md`](../../contract/CONTRACT.md): one tree, one stream framing, one set of type, symbol and
-comment fields for every language. Until this bridge writes it, this document is what it writes.
+The bridge writes two shapes. `--tree` writes the generic tree contract in
+[`contract/CONTRACT.md`](../../contract/CONTRACT.md), the one the Go engine reads: one tree, one stream framing, one
+set of type, symbol and comment fields for every language (`roslyn-bridge --tree <path>...`, or `--tree --serve`, where
+files outside `write` are written with `context: true`). Without it, the bridge writes the version-7 shape this
+document describes, which the PHP engine reads (`src/Cs/Bridge.php`) until the switch to Go.
 
 `roslyn-bridge <path>...` writes JSON lines to stdout — one object per line, so a reader holds one file
 at a time however large the project. Version 7:
