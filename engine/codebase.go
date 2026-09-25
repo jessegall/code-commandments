@@ -13,8 +13,29 @@ import (
 
 // Codebase is every file the bridges wrote, each language's stream side by side.
 type Codebase struct {
-	streams []*contract.Stream
-	files   []*File
+	streams  []*contract.Stream
+	files    []*File
+	analyses sync.Map
+}
+
+// Filler fills the facts the engine owns for one language, once every file of the codebase has been read.
+type Filler func(*Codebase)
+
+var fillers = map[contract.Language]Filler{}
+
+// Fills enrols the filler of one language's engine-owned facts, from that language's own package.
+func Fills(language contract.Language, fill Filler) {
+	fillers[language] = fill
+}
+
+// Analysis is one whole-program analysis of the codebase, built by build on first use and kept.
+func Analysis[T any](c *Codebase, key string, build func(*Codebase) T) T {
+	if held, ok := c.analyses.Load(key); ok {
+		return held.(T)
+	}
+	held, _ := c.analyses.LoadOrStore(key, build(c))
+
+	return held.(T)
 }
 
 // File is one source file of a stream, with its bytes read on first need.
@@ -38,6 +59,13 @@ func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *C
 	for _, stream := range streams {
 		for _, file := range stream.Files {
 			codebase.files = append(codebase.files, &File{File: file, stream: stream, read: read})
+		}
+	}
+	filled := map[contract.Language]bool{}
+	for _, stream := range streams {
+		if fill, ok := fillers[stream.Header.Language]; ok && !filled[stream.Header.Language] {
+			filled[stream.Header.Language] = true
+			fill(codebase)
 		}
 	}
 

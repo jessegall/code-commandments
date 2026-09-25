@@ -1,40 +1,11 @@
 package bridge
 
 import (
-	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
 	"github.com/jessegall/code-commandments/contract"
 )
-
-// withMypy points the bridge at an interpreter that already has mypy: $COMMANDMENTS_MYPY_PYTHON, else the one
-// the PHP tool built, so a test never installs anything.
-func withMypy(t *testing.T) []string {
-	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
-	if python == "" {
-		home, _ := os.UserHomeDir()
-		built, _ := filepath.Glob(filepath.Join(home, ".cache/code-commandments/mypy-bridge/*/venv/bin/python"))
-		for _, candidate := range built {
-			if exec.Command(candidate, "-c", "import mypy").Run() == nil {
-				python = candidate
-				break
-			}
-		}
-	}
-	if python == "" {
-		t.Skip("no Python with mypy: set COMMANDMENTS_MYPY_PYTHON")
-	}
-	t.Setenv("COMMANDMENTS_MYPY_PYTHON", python)
-	t.Setenv("XDG_CACHE_HOME", t.TempDir())
-	command, err := Mypy()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return command
-}
 
 func fixture(t *testing.T, path string) string {
 	absolute, err := filepath.Abs(filepath.Join("../tests/Fixtures/python", path))
@@ -46,7 +17,7 @@ func fixture(t *testing.T, path string) string {
 }
 
 func TestTheMypyBridgeWritesAValidTreeOfThePythonFixture(t *testing.T) {
-	stream, err := Once(withMypy(t), fixture(t, ""))
+	stream, err := Once(TestMypy(t), fixture(t, ""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +52,7 @@ func inSourceOrder(t *testing.T, file *contract.File) {
 }
 
 func TestAServedBridgeAnswersEachRequestWithAWholeStream(t *testing.T) {
-	server, err := Serve(withMypy(t))
+	server, err := Serve(TestMypy(t))
 	if err != nil {
 		t.Fatal(err)
 	}

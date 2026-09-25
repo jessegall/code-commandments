@@ -182,6 +182,29 @@ func (m Match) Child(field string) Match {
 	return Match{}
 }
 
+// Descendants is every node below this one, in pre-order: children before their own children's siblings.
+func (m Match) Descendants() []Match {
+	var below []Match
+	for _, child := range m.Children() {
+		below = append(below, child)
+		below = append(below, child.Descendants()...)
+	}
+
+	return below
+}
+
+// ChildrenIn is every child filling the field, in source order, such as a class's "bases" or a body's statements.
+func (m Match) ChildrenIn(field string) []Match {
+	var filling []Match
+	for _, child := range m.Children() {
+		if child.node.Field == field {
+			filling = append(filling, child)
+		}
+	}
+
+	return filling
+}
+
 // Closest is the nearest ancestor that answers the neutral kind; no node when none does.
 func (m Match) Closest(neutral Neutral) Match {
 	for ancestor := m.Parent(); ancestor.Exists(); ancestor = ancestor.Parent() {
