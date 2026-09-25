@@ -12,8 +12,10 @@ declare(strict_types=1);
 use JesseGall\CodeCommandments\Py\Codebase;
 use JesseGall\CodeCommandments\Py\ExprMatch;
 use JesseGall\CodeCommandments\Py\FeatureEnvy;
+use JesseGall\CodeCommandments\Py\FieldClumps;
 use JesseGall\CodeCommandments\Py\LookupEnvy;
 use JesseGall\CodeCommandments\Py\ModuleFile;
+use JesseGall\CodeCommandments\Py\OwnStateMask;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Node;
@@ -192,3 +194,26 @@ foreach ($defs as [$def, $module]) {
 }
 
 $write('envy', $envy);
+
+// Which classes hold a clump of value fields, and every expression that masks its own scratch state with a literal.
+$clumps = new FieldClumps($codebase);
+$masks = new OwnStateMask();
+$coupled = [];
+$masked = [];
+
+foreach ($codebase->modules() as $module) {
+    foreach ($module->nodes() as $node) {
+        if ($node instanceof ClassDef) {
+            $coupled[$symbol($node, $module) . '@' . $place($module, $node->start)] = $clumps->isCoupled($node);
+        }
+    }
+
+    foreach ($module->expressions() as $expression) {
+        if ($masks->masksOwnState($expression, $module)) {
+            $masked[] = substr($module->file, strlen($root) + 1) . '@' . $expression->start . '-' . $expression->end;
+        }
+    }
+}
+
+sort($masked);
+$write('fields', ['coupled' => $coupled, 'masked' => $masked]);

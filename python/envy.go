@@ -169,12 +169,12 @@ func (n Node) ExpressionsIn() []Node {
 	return n.evaluatedIn()
 }
 
-// ExpressionsWithin is every expression the def's parameters and body evaluate, nested defs included, its own
-// decorators aside.
+// ExpressionsWithin is every expression a def's parameters and body, or a class's body, evaluate, nested
+// definitions included, the node's own head aside: its decorators, and a class's bases and keywords.
 func (n Node) ExpressionsWithin() []Node {
 	var within []Node
 	for _, child := range n.Children() {
-		if child.Node().Field != "decorator_list" {
+		if !slices.Contains([]string{"decorator_list", "bases", "keywords"}, child.Node().Field) {
 			within = append(within, child.evaluatedIn()...)
 		}
 	}
