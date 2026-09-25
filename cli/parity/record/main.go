@@ -24,7 +24,7 @@ func record(only []string) error {
 		return err
 	}
 
-	cases, err := parity.Cases(filepath.Join(repo, parity.CasesFile))
+	cases, err := parity.Cases(filepath.Join(repo, parity.CasesDir))
 	if err != nil {
 		return err
 	}

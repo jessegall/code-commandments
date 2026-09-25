@@ -18,8 +18,9 @@ import (
 	"strings"
 )
 
-// CasesFile is where the cases live, relative to the repository.
-const CasesFile = "cli/parity/testdata/cases.json"
+// CasesDir is where the cases live, relative to the repository: one file per command family, so work on
+// two commands never edits the same file.
+const CasesDir = "cli/parity/testdata/cases"
 
 // GoldenFile is where a case's recorded result lives, relative to the repository.
 func GoldenFile(c Case) string {
@@ -59,17 +60,38 @@ type Result struct {
 	Stderr string
 }
 
-// Cases reads every case from file.
-func Cases(file string) ([]Case, error) {
-	raw, err := os.ReadFile(file)
+// Cases reads every case from every file in dir. A name two files share is refused, since both would
+// write one golden.
+func Cases(dir string) ([]Case, error) {
+	files, err := filepath.Glob(filepath.Join(dir, "*.json"))
 	if err != nil {
 		return nil, err
 	}
 
 	var cases []Case
+	named := map[string]string{}
 
-	if err := json.Unmarshal(raw, &cases); err != nil {
-		return nil, fmt.Errorf("%s: %w", file, err)
+	for _, file := range files {
+		raw, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
+
+		var some []Case
+
+		if err := json.Unmarshal(raw, &some); err != nil {
+			return nil, fmt.Errorf("%s: %w", file, err)
+		}
+
+		for _, c := range some {
+			if other, taken := named[c.Name]; taken {
+				return nil, fmt.Errorf("case %q is named in both %s and %s", c.Name, other, file)
+			}
+
+			named[c.Name] = file
+		}
+
+		cases = append(cases, some...)
 	}
 
 	return cases, nil

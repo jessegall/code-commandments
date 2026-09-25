@@ -21,7 +21,7 @@ func TestTheGoBinaryAnswersEveryCaseAsThePhpToolDid(t *testing.T) {
 		t.Fatalf("build: %v\n%s", err, out)
 	}
 
-	cases, err := Cases(filepath.Join(repo, CasesFile))
+	cases, err := Cases(filepath.Join(repo, CasesDir))
 	if err != nil {
 		t.Fatal(err)
 	}
