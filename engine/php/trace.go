@@ -96,7 +96,7 @@ func isDeNulled(node engine.Match) bool {
 		other = parent.Child("right")
 	}
 
-	return other.Kind() == "Expr_ConstFetch" && isNullConstant(other)
+	return other.Kind() == "Expr_ConstFetch" && IsNullConstant(other)
 }
 
 func isAssignmentTarget(node engine.Match) bool {

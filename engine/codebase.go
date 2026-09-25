@@ -20,11 +20,12 @@ type Codebase struct {
 // File is one source file of a stream, with its bytes read on first need.
 type File struct {
 	*contract.File
-	stream *contract.Stream
-	read   func(path string) ([]byte, error)
-	once   sync.Once
-	source []byte
-	err    error
+	codebase *Codebase
+	stream   *contract.Stream
+	read     func(path string) ([]byte, error)
+	once     sync.Once
+	source   []byte
+	err      error
 }
 
 // Load is the codebase the streams describe, its sources read from disk.
@@ -37,7 +38,7 @@ func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *C
 	codebase := &Codebase{streams: streams}
 	for _, stream := range streams {
 		for _, file := range stream.Files {
-			codebase.files = append(codebase.files, &File{File: file, stream: stream, read: read})
+			codebase.files = append(codebase.files, &File{File: file, codebase: codebase, stream: stream, read: read})
 		}
 	}
 
@@ -101,6 +102,11 @@ func (f *File) Source() ([]byte, error) {
 	})
 
 	return f.source, f.err
+}
+
+// Codebase is the codebase the file was read into.
+func (f *File) Codebase() *Codebase {
+	return f.codebase
 }
 
 // Language is the language of the stream that holds the file.

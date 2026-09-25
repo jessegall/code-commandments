@@ -18,7 +18,7 @@ func ReceiverTypeOf(call engine.Match) string {
 	receiver := call.Child("var")
 	switch {
 	case receiver.Kind() == "Expr_Variable" && receiver.Name() == "this":
-		return enclosingClassName(call)
+		return EnclosingClassName(call)
 	case receiver.Kind() == "Expr_Variable":
 		return receiverParamType(call, receiver.Name())
 	case receiver.Kind() == "Expr_PropertyFetch" && receiver.Child("var").Kind() == "Expr_Variable" &&
@@ -94,7 +94,7 @@ func (t *Types) Callee(call engine.Match) (owner, method string) {
 		if isName(class) {
 			receiver = class.Name()
 			if receiver == "self" || receiver == "static" {
-				receiver = enclosingClassName(call)
+				receiver = EnclosingClassName(call)
 			}
 		}
 		if name.Kind() == "Identifier" {

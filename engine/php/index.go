@@ -72,7 +72,7 @@ func staticCallClass(call engine.Match) string {
 		return ""
 	}
 	if slices.Contains([]string{"self", "static"}, class.Name()) {
-		return enclosingClassName(call)
+		return EnclosingClassName(call)
 	}
 
 	return class.Name()

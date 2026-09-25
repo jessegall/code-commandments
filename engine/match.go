@@ -56,6 +56,15 @@ func (m Match) Exists() bool {
 	return m.node != nil
 }
 
+// Codebase is the codebase the match's file was read into; none for no node.
+func (m Match) Codebase() *Codebase {
+	if m.file == nil {
+		return nil
+	}
+
+	return m.file.codebase
+}
+
 // Node is the generic tree node the match holds.
 func (m Match) Node() *contract.Node {
 	return m.node

@@ -182,7 +182,7 @@ func (t *Types) TypeOf(expr engine.Match) string {
 		return ""
 	}
 
-	return t.typeIn(expr, function, enclosingClassName(expr))
+	return t.typeIn(expr, function, EnclosingClassName(expr))
 }
 
 // typeIn is the class the expression holds, read in the function as though it sat in the class.
@@ -484,11 +484,11 @@ func acceptsNull(param engine.Match) bool {
 
 	return declared.written == nil || declared.isSugared() ||
 		(declared.written.Kind == "keyword" && strings.ToLower(declared.written.Name) == "mixed") ||
-		declared.isNullableUnion() || isNullConstant(param.Child("default"))
+		declared.isNullableUnion() || IsNullConstant(param.Child("default"))
 }
 
-// isNullConstant says whether the node is the constant null.
-func isNullConstant(node engine.Match) bool {
+// IsNullConstant says whether the node is the constant null.
+func IsNullConstant(node engine.Match) bool {
 	return node.Exists() && node.Node().Literal == "null"
 }
 
@@ -506,6 +506,18 @@ func set[V any](index map[string]map[string]V, class, member string, value V) {
 		index[class] = map[string]V{}
 	}
 	index[class][member] = value
+}
+
+// Arguments is each argument a call passes, in order; a `...` placeholder passes none.
+func Arguments(call engine.Match) []engine.Match {
+	var arguments []engine.Match
+	for _, argument := range call.Children() {
+		if argument.Node().Field == "args" && argument.Kind() == "Arg" {
+			arguments = append(arguments, argument)
+		}
+	}
+
+	return arguments
 }
 
 // params is each parameter a function-like declares, in order.
@@ -531,9 +543,9 @@ func enclosingFunction(node engine.Match) engine.Match {
 	return engine.Match{}
 }
 
-// enclosingClassName is the name of the nearest class-like around the node, or of the node itself; empty inside an
+// EnclosingClassName is the name of the nearest class-like around the node, or of the node itself; empty inside an
 // anonymous class.
-func enclosingClassName(node engine.Match) string {
+func EnclosingClassName(node engine.Match) string {
 	for at := node; at.Exists(); at = at.Parent() {
 		if slices.Contains(classLikes, at.Kind()) {
 			return at.Node().Symbol
