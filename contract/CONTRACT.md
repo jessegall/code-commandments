@@ -44,7 +44,9 @@ mirrors a PHP Data class, joins the two streams in the engine by what both trees
 class's `#[TypeScript]` attribute and the fields each side declares.
 
 `--serve` keeps the bridge running: it answers each request on stdin, one JSON line (`{"paths": [...],
-"write": [...]}`, as the mypy bridge takes it today), with a full stream, header to trailer. A bridge
+"write": [...]}`, as the mypy bridge takes it today), with a full stream, header to trailer. A request
+may carry `"contents"`, absolute paths to the text a rewrite has drafted for them, and the bridge reads
+those in place of the disk, a file under a requested folder that exists only there included. A bridge
 that fails as a whole exits non-zero and writes why to stderr. A file it could only partly parse is
 still written, with `errors` counting what it could not read.
 

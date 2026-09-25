@@ -1,4 +1,4 @@
-import { lstatSync, readdirSync, realpathSync } from 'node:fs'
+import { existsSync, lstatSync, readdirSync, realpathSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import ts from 'typescript'
@@ -13,12 +13,16 @@ const VERSION = '1'
 const SKIPPED_FOLDERS = new Set(['vendor', 'node_modules', 'site-packages', '__pycache__'])
 const LANGUAGES = { '.vue': 'vue', '.ts': 'typescript' }
 
-/** The stream for one request: `paths` are scanned, `write` are judged (every other file is context), `renames` rewrite paths. */
-export function stream({ paths, write = [], renames = [] }, emit) {
+/**
+ * The stream for one request: `paths` are scanned, `write` are judged (every other file is context), `renames` rewrite paths,
+ * and `contents` is the text drafted for a file, read in place of the disk's; a drafted file under a folder is read too.
+ */
+export function stream({ paths, write = [], renames = [], contents = {} }, emit) {
     const roots = paths.map((path) => realpathSync(resolve(path)))
     const judged = write.map((path) => realpathSync(resolve(path)))
-    const files = [...new Set(roots.flatMap(filesIn))].sort()
-    const sources = new Map(files.map((path) => [path, Source.read(path)]))
+    const drafted = Object.keys(contents).filter((path) => languageOf(path) && !existsSync(path) && roots.some((root) => path.startsWith(root + '/')))
+    const files = [...new Set([...roots.flatMap(filesIn), ...drafted])].sort()
+    const sources = new Map(files.map((path) => [path, Object.hasOwn(contents, path) ? new Source(path, contents[path]) : Source.read(path)]))
     const sfcs = new Map(files.filter((path) => path.endsWith('.vue')).map((path) => [path, new Sfc(sources.get(path))]))
     const program = new Program(sources, new Map([...sfcs].map(([path, sfc]) => [path, sfc.checkedText()])), renames)
     const language = sfcs.size ? 'vue' : 'typescript'
@@ -104,7 +108,7 @@ function main() {
     lines.on('line', (line) => {
         if (!line.trim()) return
         const asked = JSON.parse(line)
-        stream({ paths: asked.paths ?? [], write: asked.write ?? [], renames: request.renames }, write)
+        stream({ paths: asked.paths ?? [], write: asked.write ?? [], renames: request.renames, contents: asked.contents ?? {} }, write)
     })
 }
 

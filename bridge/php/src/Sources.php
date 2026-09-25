@@ -14,9 +14,10 @@ final class Sources
 {
     /**
      * @param  list<string>  $paths
+     * @param  array<string, string>  $contents  a file here that is under a folder and not on disk is read too
      * @return list<string>
      */
-    public static function in(array $paths): array
+    public static function in(array $paths, array $contents = []): array
     {
         $files = [];
         foreach ($paths as $path) {
@@ -32,6 +33,11 @@ final class Sources
             foreach (new RecursiveIteratorIterator($folders) as $entry) {
                 if ($entry->isFile() && $entry->getExtension() === 'php') {
                     $files[realpath($entry->getPathname())] = true;
+                }
+            }
+            foreach (array_keys($contents) as $file) {
+                if (str_ends_with($file, '.php') && str_starts_with($file, rtrim($path, '/') . '/') && ! is_file($file)) {
+                    $files[$file] = true;
                 }
             }
         }

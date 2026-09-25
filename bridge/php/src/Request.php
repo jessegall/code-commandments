@@ -13,6 +13,7 @@ final readonly class Request
      * @param  list<string>  $paths
      * @param  list<string>  $write
      * @param  array<string, string>  $renames
+     * @param  array<string, string>  $contents  absolute path => the text to read in place of the disk's
      */
     public function __construct(
         public array $paths,
@@ -20,6 +21,7 @@ final readonly class Request
         public ?string $autoload,
         public array $renames,
         public bool $serve,
+        public array $contents = [],
     ) {}
 
     /** @param  list<string>  $arguments */
@@ -47,7 +49,7 @@ final readonly class Request
         return new self($paths, $write, $autoload, $renames, $serve);
     }
 
-    /** @param  array{paths?: list<string>, write?: list<string>}  $request */
+    /** @param  array{paths?: list<string>, write?: list<string>, contents?: array<string, string>}  $request */
     public function answering(array $request): self
     {
         if (($request['paths'] ?? []) === []) {
@@ -60,6 +62,7 @@ final readonly class Request
             $this->autoload,
             $this->renames,
             false,
+            $request['contents'] ?? [],
         );
     }
 

@@ -65,6 +65,18 @@ func Load(streams ...*contract.Stream) *Codebase {
 	return New(os.ReadFile, streams...)
 }
 
+// ReadThrough reads a path's drafted text where contents holds one, and the disk's otherwise: the sources a
+// codebase re-read over a rewrite's drafts is read through.
+func ReadThrough(contents map[string]string) func(path string) ([]byte, error) {
+	return func(path string) ([]byte, error) {
+		if drafted, ok := contents[path]; ok {
+			return []byte(drafted), nil
+		}
+
+		return os.ReadFile(path)
+	}
+}
+
 // New is the codebase the streams describe, its sources read through read.
 func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
 	codebase := &Codebase{streams: streams, read: read}
