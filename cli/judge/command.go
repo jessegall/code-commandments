@@ -21,7 +21,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -153,9 +152,11 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	progress.Status("parsing")
 	parsing := time.Now()
 
-	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded)).Only(languagesFor(selected, judged)...)
+	languages := languagesFor(selected, judged)
+	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded)).Only(languages...)
+	whole, byProject := wholeAndByProject(selected)
 
-	codebase, err := sources.Load()
+	codebase, err := sources.Only(slices.DeleteFunc(slices.Clone(languages), func(language source.Language) bool { return language == source.CSharp })...).Load()
 	parseSeconds := time.Since(parsing).Seconds()
 	if err != nil {
 		progress.Finish()
@@ -163,13 +164,26 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		return 0, err
 	}
 
-	tasks := make([]Task, len(selected))
+	tasks := make([]Task, len(whole))
 
-	for i, detector := range selected {
+	for i, detector := range whole {
 		tasks[i] = Task{detector, codebase}
 	}
 
 	judgement := c.run(tasks, options, progress, parseSeconds, console)
+	csharpFiles := 0
+
+	if len(byProject) > 0 {
+		projects, files, err := c.judgeUnits(sources, byProject, options, cli.NewProgress(console.Err), console)
+		if err != nil {
+			return 0, err
+		}
+
+		judgement.Findings = append(judgement.Findings, projects.Findings...)
+		judgement.Skipped = joined(judgement.Skipped, projects.Skipped...)
+		csharpFiles = files
+	}
+
 	judgement.Findings = keep(asWalked(judgement.Findings, sources.GivenOf()), options.exclude, targets)
 
 	if space.IsJournalDriven() {
@@ -183,7 +197,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	if len(judgement.Findings) == 0 {
 		deleteChecklist(options.checklist)
 
-		scanned := judgedFiles(sources, codebase, scannedLanguages(selected))
+		scanned := judgedFiles(sources, csharpFiles, scannedLanguages(selected))
 		files := "files"
 		if scanned == 1 {
 			files = "file"
@@ -301,23 +315,33 @@ func scannedLanguages(selected []detectors.Detector) []source.Language {
 
 // judgedFiles is how many of the languages' files the run judged: C#'s are the files its bridge wrote, since
 // without the bridge none is read, and every other language's are the files the walk found.
-func judgedFiles(sources scan.Sources, codebase *engine.Codebase, languages []source.Language) int {
+func judgedFiles(sources scan.Sources, csharpFiles int, languages []source.Language) int {
 	judged := 0
 
 	for _, language := range languages {
-		if language != source.CSharp {
-			judged += sources.Count(language)
+		if language == source.CSharp {
+			judged += csharpFiles
 
 			continue
 		}
-		for _, file := range codebase.Files() {
-			if file.Language() == contract.CSharp {
-				judged++
-			}
-		}
+		judged += sources.Count(language)
 	}
 
 	return judged
+}
+
+// wholeAndByProject splits the rules into those judged over the whole codebase at once and the C# rules, which judge
+// a solution a project at a time.
+func wholeAndByProject(rules []detectors.Detector) (whole, byProject []detectors.Detector) {
+	for _, rule := range rules {
+		if judges, _ := detectors.EngineOf(rule); judges == catalog.CSharp {
+			byProject = append(byProject, rule)
+		} else {
+			whole = append(whole, rule)
+		}
+	}
+
+	return whole, byProject
 }
 
 // sourceRoots are what the run scans: the path it was given, or the roots the config declares.

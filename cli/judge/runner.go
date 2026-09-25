@@ -120,7 +120,15 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 			}
 		}
 
+		group := ""
+		if grouped, isGrouped := detector.(detectors.Grouped); isGrouped {
+			if key, keyed := grouped.GroupKey(match); keyed {
+				group = key
+			}
+		}
+
 		found = append(found, engine.Finding{
+			Group:    group,
 			Detector: catalog.Name(detector),
 			Skill:    sin.Slug(),
 			Sin:      sin.Name,
@@ -133,6 +141,31 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 	}
 
 	return found
+}
+
+// Twinned is the findings, each naming as its twins every other finding of its rule in its group: across the parts
+// of a program judged a part at a time, which each named only the twins in its own part.
+func Twinned(findings []engine.Finding) []engine.Finding {
+	type group struct{ detector, key string }
+	members := map[group][]string{}
+	for _, finding := range findings {
+		if finding.Group != "" {
+			members[group{finding.Detector, finding.Group}] = append(members[group{finding.Detector, finding.Group}], finding.Location)
+		}
+	}
+	for at, finding := range findings {
+		if finding.Group == "" {
+			continue
+		}
+		findings[at].Twins = nil
+		for _, member := range members[group{finding.Detector, finding.Group}] {
+			if member != finding.Location {
+				findings[at].Twins = append(findings[at].Twins, member)
+			}
+		}
+	}
+
+	return findings
 }
 
 // groupsOf is, for each match, the locations of every match sharing its group key, itself included.
