@@ -15,6 +15,7 @@ import (
 type Codebase struct {
 	streams []*contract.Stream
 	files   []*File
+	read    func(path string) ([]byte, error)
 }
 
 // File is one source file of a stream, with its bytes read on first need.
@@ -35,7 +36,7 @@ func Load(streams ...*contract.Stream) *Codebase {
 
 // New is the codebase the streams describe, its sources read through read.
 func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
-	codebase := &Codebase{streams: streams}
+	codebase := &Codebase{streams: streams, read: read}
 	for _, stream := range streams {
 		for _, file := range stream.Files {
 			codebase.files = append(codebase.files, &File{File: file, codebase: codebase, stream: stream, read: read})
@@ -62,6 +63,11 @@ func FromString(stream string, sources map[string]string) (*Codebase, error) {
 	}, read), nil
 }
 
+// Read is a file of the project, one beside the sources such as a manifest, read as the sources are.
+func (c *Codebase) Read(path string) ([]byte, error) {
+	return c.read(path)
+}
+
 // Files is every file, in the order the streams wrote them.
 func (c *Codebase) Files() []*File {
 	return c.files
@@ -69,7 +75,7 @@ func (c *Codebase) Files() []*File {
 
 // Of is the part of the codebase one language's stream holds.
 func (c *Codebase) Of(language contract.Language) *Codebase {
-	part := &Codebase{}
+	part := &Codebase{read: c.read}
 	for _, stream := range c.streams {
 		if stream.Header.Language == language {
 			part.streams = append(part.streams, stream)
