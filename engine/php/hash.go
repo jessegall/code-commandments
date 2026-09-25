@@ -62,3 +62,30 @@ func StructuralHash(node engine.Match) string {
 func NormalizedHash(node engine.Match) string {
 	return engine.SyntaxHash([]engine.Match{node}, Hashing, true)
 }
+
+// canonicalRules fingerprint a local assigned once as the expression it was assigned, so a guard reads alike
+// whether it tests the expression or a variable holding it.
+type canonicalRules struct {
+	hashRules
+	aliases  map[string]engine.Match
+	inlining map[string]bool
+}
+
+func (r canonicalRules) Leaf(node engine.Match) (string, bool) {
+	name := node.Name()
+	alias, aliased := r.aliases[name]
+	if node.Kind() != "Expr_Variable" || name == "" || !aliased || r.inlining[name] {
+		return "", false
+	}
+	inlining := map[string]bool{name: true}
+	for each := range r.inlining {
+		inlining[each] = true
+	}
+
+	return engine.SyntaxFingerprint(alias, canonicalRules{aliases: r.aliases, inlining: inlining}, false), true
+}
+
+// CanonicalHash is the node's fingerprint with every local that is assigned once read as what it was assigned.
+func CanonicalHash(node engine.Match, aliases map[string]engine.Match) string {
+	return engine.SyntaxHash([]engine.Match{node}, canonicalRules{aliases: aliases}, false)
+}
