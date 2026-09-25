@@ -142,7 +142,7 @@ func (e Element) IsTransitionChild() bool {
 // Binding is the element's v-bind of one prop, `:key` or `v-bind:key`; no node when it binds none.
 func (e Element) Binding(prop string) Directive {
 	for _, directive := range e.Directives() {
-		if directive.Named(Bind) && directive.Argument().Name() == prop {
+		if directive.Named(Bind) && directive.Target() == prop {
 			return directive
 		}
 	}
@@ -228,4 +228,25 @@ func (e Element) CompoundParts() []Element {
 // IsTemplateRoot says whether the element is the template's only top-level element.
 func (e Element) IsTemplateRoot() bool {
 	return e.Depth() == 1 && len(e.Siblings()) == 1
+}
+
+// Resolves is the file the element's tag names through the script's imports; empty for a tag no import names.
+func (e Element) Resolves() string {
+	if e.Node() == nil {
+		return ""
+	}
+
+	return e.Node().Resolves
+}
+
+// Bindings is every prop the element binds with v-bind, :customer="order.customer", by the prop's name as written.
+func (e Element) Bindings() map[string]Directive {
+	bindings := map[string]Directive{}
+	for _, directive := range e.Directives() {
+		if directive.Named(Bind) && directive.Target() != "" {
+			bindings[directive.Target()] = directive
+		}
+	}
+
+	return bindings
 }

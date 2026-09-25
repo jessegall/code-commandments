@@ -1,6 +1,10 @@
 package typescript
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/jessegall/code-commandments/engine"
+)
 
 // unwrap is the expression a parenthesised or non-null-asserted one holds: (a.b) and a.b! read as a.b.
 func (n Node) unwrap() Node {
@@ -87,7 +91,7 @@ func (n Node) MemberDepth(transparent ...string) int {
 	case "TypeOfExpression", "AwaitExpression", "VoidExpression", "DeleteExpression":
 		return child("expression")
 	case "BinaryExpression":
-		if n.Is("assignment") {
+		if n.Is(engine.Assignment) {
 			return 0
 		}
 
@@ -123,7 +127,7 @@ func (n Node) Roots() []string {
 	var roots []string
 	switch n.Kind() {
 	case "Identifier":
-		if n.Is("identifier") {
+		if n.Is(engine.Identifier) {
 			roots = []string{n.Name()}
 		}
 	case "PropertyAccessExpression":

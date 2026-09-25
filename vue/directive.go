@@ -62,3 +62,13 @@ func (d Directive) Iterable() engine.Match {
 func (d Directive) Aliases() []engine.Match {
 	return d.ChildrenIn("alias")
 }
+
+// Target is the directive's static argument, href in :href; empty for none, or a dynamic :[key].
+func (d Directive) Target() string {
+	argument := d.Argument()
+	if !argument.Exists() || argument.Node().Role != "other" {
+		return ""
+	}
+
+	return argument.Name()
+}

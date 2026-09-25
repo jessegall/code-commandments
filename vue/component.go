@@ -1,6 +1,7 @@
 package vue
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -145,4 +146,32 @@ func (c Component) LocalNames() []string {
 	}
 
 	return names
+}
+
+// PropsVariable is the name the script holds its props under, props in `const props = defineProps(...)`;
+// empty when it holds them under none.
+func (c Component) PropsVariable() string {
+	call := c.DefineProps()
+	for _, statement := range c.Statements() {
+		for _, declaration := range statement.Child("declarationList").ChildrenIn("declarations") {
+			if slices.ContainsFunc(declaration.Descendants(), func(node engine.Match) bool { return node.Node() == call.Node() }) {
+				return declaration.Child("name").Name()
+			}
+		}
+	}
+
+	return ""
+}
+
+// ReadsMember says whether the script reads the member off the name anywhere: props.customer.
+func (c Component) ReadsMember(name, member string) bool {
+	for _, statement := range c.Statements() {
+		for _, node := range statement.Descendants() {
+			if node.Kind() == "PropertyAccessExpression" && node.Name() == member && node.Child("expression").Name() == name {
+				return true
+			}
+		}
+	}
+
+	return false
 }

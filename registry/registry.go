@@ -5,6 +5,7 @@ package registry
 
 import (
 	_ "github.com/jessegall/code-commandments/detectors/frontend"
+	_ "github.com/jessegall/code-commandments/detectors/typescript"
 	_ "github.com/jessegall/code-commandments/sins/frontend"
 	_ "github.com/jessegall/code-commandments/sins/typescript"
 	_ "github.com/jessegall/code-commandments/skill/frontend"
