@@ -101,6 +101,11 @@ func Config(dir string) string {
 	return At(dir, "").Shared("config.php")
 }
 
+// JSONConfig is the path of the project config the binary reads without PHP, under dir.
+func JSONConfig(dir string) string {
+	return At(dir, "").Shared("config.json")
+}
+
 // CustomDir is the folder of the project's own commandments under dir.
 func CustomDir(dir string) string {
 	return At(dir, "").Shared(Custom)

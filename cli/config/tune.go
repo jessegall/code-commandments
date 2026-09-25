@@ -75,13 +75,13 @@ func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.
 		at := indexOf(tuned, configurator.Target)
 
 		if at < 0 {
-			return nil, &cli.InvalidConfiguration{Reason: "configure(" + configurator.Target + "): that detector is not registered, or was disabled."}
+			return nil, &cli.InvalidConfiguration{Reason: "configure(" + configurator.Target.ID() + "): that detector is not registered, or was disabled."}
 		}
 
 		for _, call := range configurator.Calls {
 			detector, err := apply(tuned[at], call)
 			if err != nil {
-				return nil, &cli.InvalidConfiguration{Reason: "configure(" + configurator.Target + "): " + err.Error()}
+				return nil, &cli.InvalidConfiguration{Reason: "configure(" + configurator.Target.ID() + "): " + err.Error()}
 			}
 
 			tuned[at] = detector
@@ -91,13 +91,11 @@ func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.
 	return tuned, nil
 }
 
-func indexOf(list []detectors.Detector, class string) int {
-	rule, shipped := RuleOf(class)
-
+func indexOf(list []detectors.Detector, rule Rule) int {
 	for i, detector := range list {
 		engine, _ := detectors.EngineOf(detector)
 
-		if shipped && rule.Kind == Detector && rule.Engine == engine && rule.Name == catalog.Name(detector) {
+		if rule.Kind == Detector && rule.Engine == engine && rule.Name == catalog.Name(detector) {
 			return i
 		}
 	}
