@@ -7,6 +7,25 @@ import "os"
 // candidates are where the executable lives: a consumer's composer shim, else a checkout's own bin/.
 var candidates = []string{"vendor/bin/commandments", "bin/commandments"}
 
+// Name is the executable as a project with no PHP runs it: from the PATH it was installed on.
+const Name = "commandments"
+
+// ThroughPHP says whether the project at root runs the tool through PHP: it has a composer.json, or one of
+// the PHP entry points is already there.
+func ThroughPHP(root string) bool {
+	if info, err := os.Stat(root + "/composer.json"); err == nil && info.Mode().IsRegular() {
+		return true
+	}
+
+	for _, candidate := range candidates {
+		if info, err := os.Stat(root + "/" + candidate); err == nil && info.Mode().IsRegular() {
+			return true
+		}
+	}
+
+	return false
+}
+
 // In is the executable of the project at root, relative to it: the first candidate present, else the shim
 // a project will have once it installs, so wiring it before then still writes the command that works.
 func In(root string) string {

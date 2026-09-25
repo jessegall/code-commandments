@@ -99,8 +99,13 @@ func Wire(root string) (bool, error) {
 	return true, jsonfile.Write(path, file)
 }
 
-// Command is the command every wired hook runs: the project's executable, dispatching the moment.
+// Command is the command every wired hook runs: the project's executable, dispatching the moment — through
+// PHP where the project installs the tool with composer, else the binary on the PATH.
 func Command(root string) string {
+	if !binary.ThroughPHP(root) {
+		return binary.Name + " hooks " + Stamp
+	}
+
 	return `php "$CLAUDE_PROJECT_DIR/` + binary.In(root) + `" hooks ` + Stamp
 }
 

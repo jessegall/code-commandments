@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -30,6 +31,7 @@ func TestHooksAreWiredAsThePHPToolWiresThem(t *testing.T) {
 			for _, root := range []string{php, golang} {
 				must(t, os.MkdirAll(filepath.Join(root, ".commandments"), 0o755))
 				must(t, os.WriteFile(filepath.Join(root, ".commandments", "config.php"), []byte(withoutCodex), 0o644))
+				must(t, os.WriteFile(filepath.Join(root, "composer.json"), []byte("{}"), 0o644))
 
 				if settings != nil {
 					must(t, os.MkdirAll(filepath.Join(root, ".claude"), 0o755))
@@ -72,6 +74,19 @@ echo \JesseGall\CodeCommandments\Hooks\HookRegistry::wire($argv[1]) ? 'wired' : 
 				t.Errorf("wrote\n%s\nthe PHP tool wrote\n%s", goFile, phpFile)
 			}
 		})
+	}
+}
+
+func TestAProjectWithNoPHPRunsItsHooksThroughTheBinary(t *testing.T) {
+	root := t.TempDir()
+
+	if wired, err := Wire(root); !wired || err != nil {
+		t.Fatalf("%v %v", wired, err)
+	}
+
+	settings, _ := os.ReadFile(filepath.Join(root, ".claude", "settings.json"))
+	if !strings.Contains(string(settings), `"command": "commandments hooks # @code-commandments-managed"`) || strings.Contains(string(settings), "php") {
+		t.Errorf("wired\n%s", settings)
 	}
 }
 
