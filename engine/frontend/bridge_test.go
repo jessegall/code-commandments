@@ -73,6 +73,32 @@ func TestAFileOutsideWriteOnlyInforms(t *testing.T) {
 	}
 }
 
+// TestTheBridgeShipsVuesDeclarations checks that each Vue package typing a ref is beside the bundle and tracked by git,
+// so a project with no vue installed, this checkout's own tests included, still reads a ref's value type.
+func TestTheBridgeShipsVuesDeclarations(t *testing.T) {
+	shipped := filepath.Join(filepath.Dir(Here().Script), "types", "node_modules")
+	for _, name := range []string{"vue", "@vue/runtime-dom", "@vue/runtime-core", "@vue/reactivity", "@vue/shared"} {
+		manifest := filepath.Join(shipped, name, "package.json")
+		text, err := os.ReadFile(manifest)
+		if err != nil {
+			t.Errorf("the bridge ships no %s; run npm run build in bridge/frontend: %v", name, err)
+			continue
+		}
+		var declared struct {
+			Types string `json:"types"`
+		}
+		if err := json.Unmarshal(text, &declared); err != nil {
+			t.Fatalf("%s: %v", manifest, err)
+		}
+		if _, err := os.Stat(filepath.Join(shipped, name, declared.Types)); err != nil {
+			t.Errorf("%s names %s as its types, and the bridge does not ship it", name, declared.Types)
+		}
+		if exec.Command("git", "check-ignore", "-q", "--no-index", manifest).Run() == nil {
+			t.Errorf("git ignores the shipped %s, so a fresh checkout has none", name)
+		}
+	}
+}
+
 // TestARealAppKeepsTheContract runs the bridge over the app COMMANDMENTS_VUE_APP names, when it names one.
 func TestARealAppKeepsTheContract(t *testing.T) {
 	app := os.Getenv("COMMANDMENTS_VUE_APP")
