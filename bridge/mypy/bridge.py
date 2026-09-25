@@ -127,6 +127,22 @@ def states(graph: dict[str, State], wanted: set[str]) -> dict[str, State]:
     return {os.path.realpath(state.path): state for state in graph.values() if state.path and os.path.realpath(state.path) in wanted}
 
 
+def spans(path: str, state: State, types: dict[Expression, Type]) -> tuple[int, dict[tuple[int, int], dict[str, object]]]:
+    """How many of the module's expressions mypy typed, and what each typed one resolved to by its `[start, end)`
+    byte span; the first expression at a span wins."""
+    written = [e for e in get_subexpressions(state.tree) if e in types] if state.tree is not None else []
+    starts = line_starts(open(path, "rb").read())
+    found: dict[tuple[int, int], dict[str, object]] = {}
+    for expression in written:
+        if expression.line < 1 or expression.end_line is None or expression.end_column is None or expression.end_line > len(starts):
+            continue
+        span = (starts[expression.line - 1] + expression.column, starts[expression.end_line - 1] + expression.end_column)
+        fact = described(types[expression])
+        if fact is not None and span not in found:
+            found[span] = fact
+    return len(written), found
+
+
 def typed(session: Session, paths: list[str], write: list[str], python: str | None) -> Iterator[dict[str, object]]:
     """The contract's lines for the modules under $paths: the version, one line per file, the resolution."""
     yield {"version": VERSION}
@@ -134,19 +150,10 @@ def typed(session: Session, paths: list[str], write: list[str], python: str | No
     wanted = {os.path.realpath(p) for p in write} if write else {os.path.realpath(s.path) for s in found if s.path}
     seen = resolved = 0
     for path, state in states(graph, wanted).items():
-        written = [e for e in get_subexpressions(state.tree) if e in types] if state.tree is not None else []
-        starts = line_starts(open(path, "rb").read())
-        spans: dict[tuple[int, int], dict[str, object]] = {}
-        for expression in written:
-            seen += 1
-            if expression.line < 1 or expression.end_line is None or expression.end_column is None or expression.end_line > len(starts):
-                continue
-            span = (starts[expression.line - 1] + expression.column, starts[expression.end_line - 1] + expression.end_column)
-            fact = described(types[expression])
-            if fact is not None and span not in spans:
-                spans[span] = fact
-        resolved += len(spans)
-        yield {"path": path, "types": [{"start": start, "end": end, **fact} for (start, end), fact in sorted(spans.items())]}
+        count, typed_spans = spans(path, state, types)
+        seen += count
+        resolved += len(typed_spans)
+        yield {"path": path, "types": [{"start": start, "end": end, **fact} for (start, end), fact in sorted(typed_spans.items())]}
     yield {"resolution": {"expressions": seen, "typed": resolved}}
 
 
