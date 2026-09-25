@@ -126,3 +126,52 @@ func scanners(t *testing.T) (*scribes.Scanner, *scribes.Scanner) {
 
 	return backend, vue
 }
+
+func TestTheWholeChainRewritesEachFixtureAsThePHPToolDoes(t *testing.T) {
+	answered := answers(t)
+	for _, fixture := range []string{"backend", "frontend"} {
+		t.Run(fixture, func(t *testing.T) {
+			root, err := filepath.EvalSymlinks(filepath.Join(shop.Repository(), "tests", "Fixtures", fixture))
+			if err != nil {
+				t.Fatal(err)
+			}
+			backend, vue := scanners(t)
+			chain := repent.Chain(backend, vue, detectors.All())
+			ported := map[string]bool{}
+			for _, step := range chain.Steps() {
+				ported[step.Name()] = true
+			}
+			var missing []string
+			for step := range answered[fixture] {
+				if step != "*" && !ported[step] {
+					missing = append(missing, step)
+				}
+			}
+			if len(missing) > 0 {
+				t.Skipf("PHP's chain runs steps not ported yet: %v", missing)
+			}
+
+			converged := scribes.Converge(chain, []string{root}, everywhere{}, scribes.Frozens{backend, vue})
+			if !converged.Settled || len(converged.Skipped) > 0 {
+				t.Fatalf("settled %v, skipped %v", converged.Settled, converged.Skipped)
+			}
+			want := answered[fixture]["*"]
+			got := converged.Files.Contents()
+			for path, answer := range want {
+				if answer.Skipped != "" {
+					t.Errorf("PHP skipped %s", answer.Skipped)
+
+					continue
+				}
+				if got[root+"/"+path] != answer.Content {
+					t.Errorf("%s differs from PHP's:\n--- go\n%s\n--- php\n%s", path, got[root+"/"+path], answer.Content)
+				}
+			}
+			for path := range got {
+				if _, ok := want[strings.TrimPrefix(path, root+"/")]; !ok {
+					t.Errorf("%s is rewritten here, and not by PHP", path)
+				}
+			}
+		})
+	}
+}
