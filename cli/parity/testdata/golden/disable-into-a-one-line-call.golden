@@ -1,0 +1,17 @@
+exit: 0
+--- stdout
+[32m✓ disabled `duplicate-element`.[0m
+
+--- stderr
+
+--- files
+=== changed .commandments/config.php
+<?php
+
+return function ($config) {
+    $config->disable(
+        \JesseGall\CodeCommandments\Language::Python,
+        \JesseGall\CodeCommandments\Sins\Frontend\DuplicateElement::class,
+    );
+};
+

@@ -26,6 +26,7 @@ func Kernel() *cli.Kernel {
 		judge.Command{},
 		session.Command{},
 		task.Command{},
+		config.Toggle{},
 		config.Command{Version: version},
 	)
 }

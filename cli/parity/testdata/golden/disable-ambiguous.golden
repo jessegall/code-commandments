@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+"python-dict" matches more than one: python-dict-bag, python-dict-return-bag. Name the one you mean.
+
+--- files

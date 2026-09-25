@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+[2m`duplicate-element` already disabled — nothing to do.[0m
+
+--- stderr
+
+--- files

@@ -1,0 +1,16 @@
+exit: 0
+--- stdout
+commandments disable — Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched.
+Also answers to: enable
+
+Usage:
+  commandments disable <sin|skill>  turn a rule off — a skill silences every detector it teaches
+                                    the fix for
+  commandments enable <sin|skill>   turn it back on
+
+  The argument is a sin id OR a skill slug (the --sin= / --skill= keys), matched leniently. Run
+  `commandments judge --list` to see them all.
+
+--- stderr
+
+--- files
