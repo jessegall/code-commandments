@@ -6,7 +6,7 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/typescript"
+	"github.com/jessegall/code-commandments/engine/typescript"
 )
 
 // refs are Vue's reactive wrappers a template reads through: a ref named in a template is its value.

@@ -96,7 +96,8 @@ func (n Node) BodyShape() string {
 }
 
 // BodyWeight is how much code the function's body holds: its statements, blocks, catch clauses and
-// expressions, member and declaration names not counted.
+// expressions, member and declaration names not counted. A construction counts twice, for the object it builds
+// and the constructor it calls: the duplicate thresholds were set on a count that reads `new X()` as both.
 func (n Node) BodyWeight() int {
 	body := n.Body()
 	if !body.Exists() {
@@ -107,6 +108,9 @@ func (n Node) BodyWeight() int {
 		role := node.Node().Role
 		counted := role == "statement" || role == "expression" || node.Is(engine.Block) || node.Is(engine.Catch)
 		if counted && !(node.Kind() == "Identifier" && node.Node().Field == "name") {
+			weight++
+		}
+		if node.Is(engine.Construction) {
 			weight++
 		}
 	}

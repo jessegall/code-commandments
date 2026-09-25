@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
-	"github.com/jessegall/code-commandments/typescript"
+	"github.com/jessegall/code-commandments/engine/typescript"
 )
 
 func TestAnExpressionKnowsItsChainsAndHowDeepItReaches(t *testing.T) {

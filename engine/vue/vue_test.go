@@ -1,13 +1,14 @@
 package vue_test
 
 import (
+	"maps"
 	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
-	"github.com/jessegall/code-commandments/typescript"
-	"github.com/jessegall/code-commandments/vue"
+	"github.com/jessegall/code-commandments/engine/typescript"
+	"github.com/jessegall/code-commandments/engine/vue"
 )
 
 func TestAnElementKnowsItsDirectivesAndBindings(t *testing.T) {
@@ -130,5 +131,49 @@ function reset() {}
 	}
 	if !slices.Contains(component.LocalNames(), "reset") || !slices.Contains(component.LocalNames(), "count") {
 		t.Errorf("the script's top-level names are %v", component.LocalNames())
+	}
+}
+
+func TestAComponentKnowsWhatItReadsAndWhatItOnlyHandsOn(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{
+		"Row.vue": `<script setup lang="ts">defineProps<{ order: object }>()</script><template><b>{{ order }}</b></template>`,
+		"Page.vue": `<script setup lang="ts">
+import Row from './Row.vue'
+defineProps<{ order: object; title: string; lines: string[] }>()
+</script>
+<template>
+  <section>
+    <input v-model="form.email" />
+    <h1>{{ title }}</h1>
+    <Row :order="order" :title-text="title" />
+    <p v-for="line in lines">{{ customer.address.city }} {{ customer.address.street }}</p>
+  </section>
+</template>`,
+	})
+	page := vue.ComponentOf(frontendtest.Named(t, codebase, "Element", "section"))
+	if !slices.Equal(page.ModelRoots(), []string{"form"}) {
+		t.Errorf("the v-model roots are %v", page.ModelRoots())
+	}
+	passed := page.PassThroughProps(codebase)
+	if _, ok := passed["order"]; !ok || len(passed) != 1 {
+		t.Errorf("only order is handed on unread, but %v are", slices.Collect(maps.Keys(passed)))
+	}
+	if passed["order"][0].As != "order" || passed["order"][0].Element.Tag() != "Row" {
+		t.Error("the forward names the wrong child or prop")
+	}
+	paragraph := vue.Of(frontendtest.Named(t, codebase, "Element", "p"))
+	if roots := paragraph.ReadRoots(); !slices.Contains(roots, "lines") || !slices.Contains(roots, "customer") {
+		t.Errorf("the paragraph reads from %v; its v-for's iterable counts", roots)
+	}
+	if len(paragraph.Chains()) != 2 {
+		t.Errorf("the paragraph reads the chains %v", paragraph.Chains())
+	}
+	input := vue.Of(frontendtest.Named(t, codebase, "Element", "input"))
+	heading := vue.Of(frontendtest.Named(t, codebase, "Element", "h1"))
+	if common := vue.CommonAncestor([]vue.Element{input, heading, paragraph}); common.Tag() != "section" {
+		t.Errorf("the elements' deepest common ancestor is %q", common.Tag())
+	}
+	if vue.CommonAncestor([]vue.Element{input}).Tag() != "input" {
+		t.Error("a lone element is not its own common ancestor")
 	}
 }

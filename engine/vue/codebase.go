@@ -20,3 +20,14 @@ func In(codebase *engine.Codebase) *Codebase {
 func (c *Codebase) WhereElement() *engine.Query {
 	return c.WhereKind("Element")
 }
+
+// Component is the component a .vue file of the codebase holds; false for a path it holds none at.
+func (c *Codebase) Component(path string) (Component, bool) {
+	for _, file := range c.Files() {
+		if file.Path == path {
+			return ComponentOf(file.Match(0)), true
+		}
+	}
+
+	return Component{}, false
+}

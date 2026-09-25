@@ -4,10 +4,10 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/typescript"
+	"github.com/jessegall/code-commandments/engine/vue"
 	"github.com/jessegall/code-commandments/sins"
 	frontend "github.com/jessegall/code-commandments/sins/frontend"
-	"github.com/jessegall/code-commandments/typescript"
-	"github.com/jessegall/code-commandments/vue"
 )
 
 func init() {

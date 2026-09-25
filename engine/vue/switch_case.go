@@ -1,6 +1,6 @@
 package vue
 
-import "github.com/jessegall/code-commandments/typescript"
+import "github.com/jessegall/code-commandments/engine/typescript"
 
 // switchCases is how many equality branches a chain needs before it is a dispatch on one value.
 const switchCases = 2

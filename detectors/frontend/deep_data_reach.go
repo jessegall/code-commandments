@@ -5,13 +5,12 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/typescript"
+	"github.com/jessegall/code-commandments/engine/vue"
 	"github.com/jessegall/code-commandments/sins"
 	frontend "github.com/jessegall/code-commandments/sins/frontend"
-	"github.com/jessegall/code-commandments/typescript"
-	"github.com/jessegall/code-commandments/vue"
 )
 
 func init() {
@@ -48,7 +47,7 @@ func (DeepDataReachDetector) Find(codebase *engine.Codebase) []engine.Match {
 	var findings []engine.Match
 	for _, component := range byComponent(candidates) {
 		for _, cluster := range clusters(component) {
-			if boundary := commonAncestor(cluster); boundary.Exists() {
+			if boundary := vue.CommonAncestor(cluster); boundary.Exists() {
 				findings = append(findings, boundary.Match)
 			}
 		}
@@ -63,9 +62,7 @@ func inSizeableTemplate(element vue.Element) bool {
 
 // reachesDeep says whether any data the element reads, its v-for's iterable included, reaches deep.
 func reachesDeep(element vue.Element) bool {
-	read := append(element.Expressions(), typescript.Of(element.Directive(vue.For).Iterable()))
-
-	return slices.ContainsFunc(read, func(expression typescript.Node) bool {
+	return slices.ContainsFunc(element.Reads(), func(expression typescript.Node) bool {
 		return expression.MemberDepth(transparent...) >= reachDepth
 	})
 }
@@ -90,7 +87,7 @@ func byComponent(elements []engine.Match) [][]vue.Element {
 // clusters is each nested object a component's elements read two or more fields of, as the elements that
 // read it. A chain rooted in a v-model's data is the form's own state, not a reach.
 func clusters(elements []vue.Element) [][]vue.Element {
-	reactive := reactiveRoots(vue.ComponentOf(elements[0].Match))
+	reactive := vue.ComponentOf(elements[0].Match).ModelRoots()
 	type object struct {
 		fields   map[string]bool
 		elements []vue.Element
@@ -98,7 +95,7 @@ func clusters(elements []vue.Element) [][]vue.Element {
 	objects := map[string]*object{}
 	var order []string
 	for _, element := range elements {
-		for _, chain := range chainsOf(element) {
+		for _, chain := range element.Chains() {
 			chain = slices.DeleteFunc(chain, func(segment string) bool { return slices.Contains(transparent, segment) })
 			if len(chain) <= reachDepth || slices.Contains(reactive, chain[0]) {
 				continue
@@ -122,60 +119,4 @@ func clusters(elements []vue.Element) [][]vue.Element {
 	}
 
 	return found
-}
-
-// chainsOf is every member chain the element reads, its v-for's iterable included.
-func chainsOf(element vue.Element) [][]string {
-	var chains [][]string
-	for _, expression := range element.Expressions() {
-		chains = append(chains, expression.Chains()...)
-	}
-
-	return append(chains, typescript.Of(element.Directive(vue.For).Iterable()).Chains()...)
-}
-
-// reactiveRoots is every name a v-model in the component binds from.
-func reactiveRoots(component vue.Component) []string {
-	var roots []string
-	for _, node := range component.Template().Descendants() {
-		if directive := (vue.Directive{Match: node}); directive.Named(vue.Model) {
-			roots = append(roots, typescript.Of(directive.Value()).Roots()...)
-		}
-	}
-
-	return roots
-}
-
-// commonAncestor is the deepest element holding every one of them; no node when only the template does.
-func commonAncestor(elements []vue.Element) vue.Element {
-	common := ancestry(elements[0])
-	for _, element := range elements[1:] {
-		spine := ancestry(element)
-		common = slices.DeleteFunc(common, func(node *contract.Node) bool { return !slices.Contains(spine, node) })
-	}
-	for _, element := range ancestryElements(elements[0]) {
-		if len(common) > 0 && element.Node() == common[0] {
-			return element
-		}
-	}
-
-	return vue.Element{}
-}
-
-func ancestry(element vue.Element) []*contract.Node {
-	var spine []*contract.Node
-	for _, each := range ancestryElements(element) {
-		spine = append(spine, each.Node())
-	}
-
-	return spine
-}
-
-func ancestryElements(element vue.Element) []vue.Element {
-	var spine []vue.Element
-	for at := element; at.Exists(); at = at.Parent() {
-		spine = append(spine, at)
-	}
-
-	return spine
 }

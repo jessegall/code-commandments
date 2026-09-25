@@ -6,10 +6,10 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/typescript"
 	"github.com/jessegall/code-commandments/published"
 	"github.com/jessegall/code-commandments/sins"
 	frontend "github.com/jessegall/code-commandments/sins/frontend"
-	"github.com/jessegall/code-commandments/typescript"
 )
 
 func init() {

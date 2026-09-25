@@ -8,7 +8,7 @@ import (
 	"unicode"
 
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/typescript"
+	"github.com/jessegall/code-commandments/engine/typescript"
 )
 
 // Element is a template element: a Match whose kind is Element.
