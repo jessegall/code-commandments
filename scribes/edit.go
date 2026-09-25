@@ -3,6 +3,8 @@
 // drafts through it.
 package scribes
 
+import "slices"
+
 // Edit replaces the half-open byte range [Start, End) of a source with Text; a pure insertion has
 // Start == End.
 type Edit struct {
@@ -29,4 +31,15 @@ func lastFirst(a, b Edit) int {
 	}
 
 	return b.End - a.End
+}
+
+// ApplyEdits is the source with every edit applied, right to left, none skipped.
+func ApplyEdits(source string, edits []Edit) string {
+	ordered := slices.Clone(edits)
+	slices.SortStableFunc(ordered, lastFirst)
+	for _, edit := range ordered {
+		source = edit.AppliedTo(source)
+	}
+
+	return source
 }

@@ -31,6 +31,7 @@ type answer struct {
 type everywhere struct{}
 
 func (everywhere) Includes(string) bool { return true }
+func (everywhere) IsScoped() bool       { return false }
 
 // answers is the PHP tool's rewrites, keyed by fixture, then step, then path.
 func answers(t *testing.T) map[string]map[string]map[string]answer {

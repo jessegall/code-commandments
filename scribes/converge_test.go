@@ -11,6 +11,7 @@ import (
 type everywhere struct{}
 
 func (everywhere) Includes(string) bool { return true }
+func (everywhere) IsScoped() bool       { return false }
 
 type frozenSet map[string]bool
 

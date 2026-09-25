@@ -30,9 +30,10 @@ func (p Pass) Fixes(path string) bool {
 	return p.Scope.Includes(path) && !p.Frozen.IsFrozen(path)
 }
 
-// Scope says which files a run may fix.
+// Scope says which files a run may fix, and whether it is narrowed to a set of files rather than the whole tree.
 type Scope interface {
 	Includes(path string) bool
+	IsScoped() bool
 }
 
 // Chain is the steps repent runs, in order.

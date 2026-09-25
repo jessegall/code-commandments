@@ -290,3 +290,16 @@ func replaceSubmatches(pattern *regexp.Regexp, text string, replace func([]strin
 func isWordByte(c byte) bool {
 	return c == '_' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
 }
+
+// DocblockWithoutTag is a docblock's lines with every line of the tag taken out, the rest as they stand.
+func DocblockWithoutTag(text, tag string) []string {
+	tagLine := regexp.MustCompile(`^\s*\*?\s*@` + regexp.QuoteMeta(tag) + `\b`)
+	var kept []string
+	for _, line := range prose.Lines(text) {
+		if !tagLine.MatchString(line) {
+			kept = append(kept, line)
+		}
+	}
+
+	return kept
+}
