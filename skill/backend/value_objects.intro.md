@@ -1,0 +1,2 @@
+Data that travels together is a **thing**, not a loose pile of arrays and primitives. The moment a
+cluster of values is passed around, returned, or reached into by string keys, it wants a name and a type.

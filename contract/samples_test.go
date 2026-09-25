@@ -102,6 +102,14 @@ var shows = map[string]map[string]func(*Node) bool{
 		"a mypy-resolved type": func(n *Node) bool { return n.Resolved != nil && n.Resolved.Origin == "compiler" },
 		"an f-string":          func(n *Node) bool { return n.Kind == "JoinedStr" && n.Literal == "interpolated" },
 		"a decorator":          func(n *Node) bool { return n.Field == "decorator_list" },
+		"an import alias": func(n *Node) bool {
+			return n.Kind == "alias" && n.Extras != nil && n.Extras.Python != nil && n.Extras.Python.As != ""
+		},
+		"a global": func(n *Node) bool {
+			return n.Kind == "Global" && n.Extras != nil && n.Extras.Python != nil && len(n.Extras.Python.Names) > 0
+		},
+		"a named except":       func(n *Node) bool { return n.Kind == "ExceptHandler" && n.Name != "" },
+		"a from-import module": func(n *Node) bool { return n.Kind == "ImportFrom" && n.Name != "" },
 	},
 	"csharp.jsonl": {
 		"a forgiven nullable":     func(n *Node) bool { return n.Extras != nil && n.Extras.CSharp != nil && n.Extras.CSharp.ForgivesNull },

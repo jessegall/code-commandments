@@ -1,0 +1,108 @@
+A **page object** is the single composed `Data` a controller returns for one page to render. It is not a
+leaf DTO: it *composes several nested Data slots* (a canvas, a list of rows, a set of menus) and it
+*travels back in the response*. Those two facts are what make it a page object — and what make its
+discipline different from an ordinary [`spatie-data`](../spatie-data/SKILL.md) value. A leaf DTO should
+avoid `Lazy` and output transformers; a page object earns them. Same library, higher-order shape.
+
+### Let it build itself from a seed
+
+Give it a tiny named constructor — `EditorShell::for($workflowId)` → `::from(['workflowId' => $workflowId])` —
+and let the framework pipeline assemble the rest. The controller stays a one-liner: it returns the page
+object (a `Data` is `Responsable`) or hands it to the renderer. The *page* knows how to build the page.
+
+### Inject collaborators from the container — hidden, always
+
+A page object needs services to project its slots — a repository, a normaliser, a fleet of projectors, the
+current request. Pull each from the container with **`#[FromContainer(SomeService::class)]`** on a promoted
+property; never reach *out* with `app()`, `resolve()`, `App::make()`, or a facade inside the object. The
+container injection is declarative, testable, and visible in the signature; a `app(X::class)` buried in a
+getter is service location — the thing the container exists to remove.
+
+**Every injected collaborator MUST carry `#[Hidden]`.** Miss it, and your `NodeCardProjector` becomes a
+field on the frontend `EditorShell` type — a leak that is invisible until you read the generated `.d.ts`.
+Inject hidden, or the service ships to the browser.
+
+**Mind the TWO `#[Hidden]`s.** There are two unrelated attributes of that name:
+`Spatie\LaravelData\Attributes\Hidden` drops a property from the **serialized payload**;
+`Spatie\TypeScriptTransformer\Attributes\Hidden` drops it from the **generated TypeScript type**. LaravelData's
+`#[Hidden]` alone keeps the service off the wire but the transformer *still generates it* into the `.d.ts`.
+Rather than stamp both attributes on every injected service, run `commandments scaffold
+--sin=injected-service-not-hidden` — it publishes a hidden-aware transformer that treats LaravelData's
+`#[Hidden]` as TS-hidden too. WHICH one it writes follows the `spatie/typescript-transformer` major you
+have installed: on 3 a `HiddenAwareAttributedClassTransformer` composing a class-property processor, on 2
+a `HiddenAwareDataTypeScriptTransformer` overriding `resolveProperties` — the two majors declare different
+classes, and the wrong one is a fatal rather than a fix. Register whichever it wrote in your
+typescript-transformer config's `transformers` list, and one `#[Hidden]` covers both surfaces.
+
+### Computed slots, not a fat constructor
+
+The wrong shape is a constructor that imperatively fills every field:
+
+```
+$this->topBarCenter = $this->topBar->center();
+$this->docks        = $this->dockProjector->project();
+```
+
+The right shape makes each slot a **computed property hook** that projects itself on demand:
+
+```
+#[Computed]
+public array $topBarCenter { get => $this->topBar->center(); }
+```
+
+Now the class is self-describing: each field declares *what it is*, next to *how it is projected*, with no
+assembly-line constructor to read top to bottom. Two mechanics to get right:
+
+- A get-only hook is **re-evaluated on every read**. For a slot whose projection is expensive or must be
+  stable, memoise it — `get => $this->rows ??= $this->resolveRows();` — so it computes **once**. That
+  `??=` form is the default for a real projection; a pure, cheap derivation can stay un-memoised.
+- Computed slots are **excluded from the input payload** (the framework computes them), so they never
+  belong to construction — only injected seeds (the id, the `#[Hidden]` services) do.
+
+**What legitimately STAYS in the constructor** — a slot the hook form would break:
+
+- a **`Lazy` / deferred** slot (`Lazy::closure(...)`, an Inertia `DeferProp`/`MergeProp`): converting it to
+  an eager `get` destroys the deferral the page relies on for partial reloads.
+- a **local unwrapped once for reuse**: when several slots need the same intermediate (`$menus` built once,
+  then read by both `topBarEnd` and `menus`), compute it once in the constructor rather than re-run the
+  projector inside two hooks. A construction step that *feeds* the slots is not orchestration to hoist.
+
+### Seed computed slots from the request
+
+The clean way to make a page react to query/state: inject the request **hidden**, then let computed slots
+read it. `#[Hidden] #[FromContainer(WarehouseShowRequest::class)] public WarehouseShowRequest $request` in
+the signature, and `#[Computed] public string $movementWindow { get => $this->request->getMovementWindow(); }`
+as a slot. The request is a seed; the slots are projections of it. No `request()` helper, no facade.
+
+### Shape output with a transformer, not a hand-rolled getter
+
+When a property's *serialized shape* must differ from its PHP type — a value object rendered as a string, a
+domain type flattened for the wire — reach for **`#[WithTransformer(SomeTransformer::class)]`** on that
+property. The wrong move is a computed getter that hand-builds the reshaped array:
+
+```
+// Wrong — an Order's fields hand-flattened into a wire array; the honest type is lost, and the same
+// shape is copy-pasted onto every page that carries a price.
+public array $priceInEuro { get => ['amount' => $this->order->priceInCents, 'currency' => $this->order->currency]; }
+
+// Right — a real Money slot; a transformer owns the wire shape, and the TS type is declared to match it.
+#[WithTransformer(MoneyTransformer::class), TypeScriptType('string')]
+public readonly Money $priceInEuro;
+```
+
+A transformer is a tiny class implementing Spatie's `Transformer` —
+`transform(DataProperty $property, mixed $value, TransformationContext $context): mixed` — returning the
+serialized form (`$value->cents . ' ' . $value->code`, an array, whatever the frontend needs). Applied
+per-property with `#[WithTransformer(X::class, ...args)]`, or registered as a global transformer in
+`config/data.php` for a whole type (a `Money`, a `Carbon`). Keeping the transform in a transformer means
+the property's PHP type stays honest and the same shaping is reusable across every page that carries a `Money`.
+
+**A transformer changes the wire shape, but NOT the generated TypeScript.** The typescript-transformer
+derives a property's TS type from its PHP type hint (`Money`), not from the transformer's output — so pair
+the transformer with **`#[TypeScriptType('string')]`** (PHP-type syntax) or **`#[LiteralTypeScriptType(...)]`**
+(raw TS, e.g. a reference to another generated type) declaring the transformed shape. Without it the frontend
+type silently stays `Money` while the wire carries a string. (A built-in like `Carbon`→`string` is already
+known to the generator; a custom value object is not — you must state it.)
+
+(For a *leaf* DTO the [`spatie-data`](../spatie-data/SKILL.md) skill says to avoid output transformers; a
+page object — the composed thing on the wire — is exactly where they earn their place.)

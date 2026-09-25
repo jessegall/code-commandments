@@ -161,10 +161,10 @@ func sameRule(t *testing.T, name string, rule any, unpublished bool, expected, g
 	}
 }
 
-func related(php shop.SkillRule) []skill.Related {
-	var related []skill.Related
+func related(php shop.SkillRule) []skill.Relation {
+	var related []skill.Relation
 	for _, each := range php.Related {
-		related = append(related, skill.Related{Slug: each.Skill, Reason: each.Reason})
+		related = append(related, skill.Relation{Slug: each.Skill, Note: each.Reason})
 	}
 
 	return related

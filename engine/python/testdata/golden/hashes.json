@@ -1,0 +1,3582 @@
+{
+    "shop.aisle_signs.Aisle.sign_heading@shop/aisle_signs.py:18": {
+        "of": "54dfd2fbf1df70e2592a45069a6e59a7510b61f4",
+        "normalized": "60215f35461ed5c36104570ecc22e3efa091c431",
+        "weight": 5
+    },
+    "shop.aisle_signs.SignCatalogue.__init__@shop/aisle_signs.py:23": {
+        "of": "2747a293625893c17534b0e22267b122dbdc1277",
+        "normalized": "546474e951d96de0fa50c06ce3b5e7fd900dabf0",
+        "weight": 5
+    },
+    "shop.aisle_signs.SignCatalogue.entry@shop/aisle_signs.py:26": {
+        "of": "2e60b00102e17a2584ea2bacf9520e2fa409c457",
+        "normalized": "d1804ad2cf298cab4371b2bf0b01868dda94b53e",
+        "weight": 6
+    },
+    "shop.aisle_signs.SignPrinter.__init__@shop/aisle_signs.py:31": {
+        "of": "fce198db612803d4412697c711c61a7dcc272654",
+        "normalized": "0ea37765189a1c767eb4fdcc400101f4d9e1d7cc",
+        "weight": 5
+    },
+    "shop.aisle_signs.SignPrinter.heading@shop/aisle_signs.py:35": {
+        "of": "3446a1ce31d5098c2c8b9ea5bdf9b5b1e219aeac",
+        "normalized": "972b332de5e02ea0c0d81962ac81b41915145211",
+        "weight": 9
+    },
+    "shop.aisle_signs.SignPrinter.heading_of@shop/aisle_signs.py:39": {
+        "of": "4358a712d3dcd4c18c0351946c2dfb968b679877",
+        "normalized": "528756c9d54758b4dbbb8721148454fbcd693c4e",
+        "weight": 5
+    },
+    "shop.alerts.register@shop/alerts.py:5": {
+        "of": "8ca8048974bad97e34eafbff0627bdabd5d4cfa2",
+        "normalized": "3868a1f19324e48bfb2f40cc583a4329f63c11c5",
+        "weight": 35
+    },
+    "shop.allergen_labels.DeliCounter.__init__@shop/allergen_labels.py:22": {
+        "of": "457d8ef688c3d4bbc6ee676dcd522075cd83f42b",
+        "normalized": "fc529840ba94a43835d2a50766b56444037f5628",
+        "weight": 5
+    },
+    "shop.allergen_labels.DeliCounter.allergens_of@shop/allergen_labels.py:26": {
+        "of": "dedc8416da6a998c421d888c4455911b00404cb6",
+        "normalized": "4f396d2e2f4f60b49aeaf1c21c6810a8b9bbe233",
+        "weight": 10
+    },
+    "shop.allergen_labels.DeliCounter.is_nut_free@shop/allergen_labels.py:33": {
+        "of": "d4b72a577eb87d3a815c83f66457b7f63cb50a36",
+        "normalized": "1cab1e425a7df67741a1d4b6adf08d6d6af0da1a",
+        "weight": 10
+    },
+    "shop.allergen_labels.DeliCounter.warning_for@shop/allergen_labels.py:29": {
+        "of": "d675067eac8a0cf29fe9a58890e1b1fcd6d13af7",
+        "normalized": "384907f6e86e46b5123d30758d159bc0cfb00646",
+        "weight": 6
+    },
+    "shop.allergen_labels.DeliItem.allergens@shop/allergen_labels.py:17": {
+        "of": "3239fdf06b8fa7de1786ffd4093236d3fe7eaeed",
+        "normalized": "11868f53b50773508504a9a80ef227a2fbd450ff",
+        "weight": 7
+    },
+    "shop.attachments.Mailer.__init__@shop/attachments.py:6": {
+        "of": "6532d13abc337eefa8ac8a06a9e0c15f13a72299",
+        "normalized": "bc9236598c419f83e3c4df3aeb47d628e65a2be7",
+        "weight": 5
+    },
+    "shop.attachments.Mailer.send@shop/attachments.py:9": {
+        "of": "94141e748e14c574f7b6748d9ac410aab517c072",
+        "normalized": "df236713950a98e2eb31d0094c1de026a7964695",
+        "weight": 26
+    },
+    "shop.attachments.Mailer.send_with@shop/attachments.py:17": {
+        "of": "9ce7d4a5b5c69f1eac7bf6c09f7f4607fdbfaad8",
+        "normalized": "96018d2921c2d4ba0f261383ec3704fe9f59a4e5",
+        "weight": 24
+    },
+    "shop.audit.audit@shop/audit.py:6": {
+        "of": "3c07c2c82ccef860d64bdfac7d0e5d017ee937b5",
+        "normalized": "0276ee2440cc1de6b54f23f354c44ca6ad765e19",
+        "weight": 15
+    },
+    "shop.audit.audit_event@shop/audit.py:13": {
+        "of": "d6a7d7449505340f9741b8d2a2528e7604999d1a",
+        "normalized": "fcb73058157db8ed45da293eb6eb3d4f4fb1e649",
+        "weight": 15
+    },
+    "shop.audit.audit_level@shop/audit.py:20": {
+        "of": "f3c59cc97651798d66e8924d030907f3e4bd1b80",
+        "normalized": "37407b87c31b9881df96a78d0eff7e6200af0bda",
+        "weight": 9
+    },
+    "shop.backups.back_up@shop/backups.py:7": {
+        "of": "d43a322929883c4146c54bc7c769843bd8061c0a",
+        "normalized": "84d1d49f73780fa9d2c1bc245bb001f96701e801",
+        "weight": 16
+    },
+    "shop.backups.back_up_path@shop/backups.py:13": {
+        "of": "373d67c6b43ca04ce4df6e8bd40578fdbe00e5f5",
+        "normalized": "53ea38406d6a4a63a3ddf267dcb00bc25b64b7c0",
+        "weight": 19
+    },
+    "shop.badge_codes.badge_text@shop/badge_codes.py:4": {
+        "of": "7b055974f139cfd4c2739676f82839053bb2710a",
+        "normalized": "c6c383dc2e4bb748f876d5ab057f6bd44c790b96",
+        "weight": 8
+    },
+    "shop.badge_codes.front_desk@shop/badge_codes.py:8": {
+        "of": "a562d8ad765ff59e51eb4b514b1176cb66e33a97",
+        "normalized": "4644b2619cee0d81f8d5adce6dc2f9c58f5f8e86",
+        "weight": 5
+    },
+    "shop.badge_codes.visitor@shop/badge_codes.py:16": {
+        "of": "f35d8745cbd41d064d888fb88aa794f92f7b9e0f",
+        "normalized": "12fa03d9c67167ff6b06affe0b4842ed3ec0c7d8",
+        "weight": 7
+    },
+    "shop.badge_codes.warehouse@shop/badge_codes.py:12": {
+        "of": "498fcafbf1a1dbc932c909070c2a7881047c2ac8",
+        "normalized": "61f971713b5362d64b76aa82b8abb6122911f6ed",
+        "weight": 7
+    },
+    "shop.badge_colours.PaymentStatus.colour@shop/badge_colours.py:11": {
+        "of": "35279f95f56c82b9db8952879f3261bae3e84d55",
+        "normalized": "13b1a378b417d9c24b45ead60790674dbbc90950",
+        "weight": 21
+    },
+    "shop.badge_colours.badge@shop/badge_colours.py:21": {
+        "of": "08dd54038e000386e1e6e0551ca0e0e0430e59ce",
+        "normalized": "333c0617686a4472fd99a2fd86433ba95b36c034",
+        "weight": 20
+    },
+    "shop.badge_colours.badge_for@shop/badge_colours.py:33": {
+        "of": "e02b80fc4a0f296a30892bd0206cb9a6fe61267d",
+        "normalized": "4bfcf5864c5536c13765c2018662612d3cc878e8",
+        "weight": 6
+    },
+    "shop.badges.Badge.__init__@shop/badges.py:30": {
+        "of": "1fa0913ef5d430466b1d0b8bd8f2a627b5126650",
+        "normalized": "33367137f4644f2b4422dffdafb489a372bf0b29",
+        "weight": 21
+    },
+    "shop.badges.Badge.render@shop/badges.py:38": {
+        "of": "8f769319269a6615a1eace3559f24c68396b98e8",
+        "normalized": "14a236b0c8aac243b4c25a5cbad3c26a40ecab3d",
+        "weight": 21
+    },
+    "shop.badges.Ribbon.__init__@shop/badges.py:45": {
+        "of": "4b3f888eb37103a72fca5e68f95b468cc3aa5d94",
+        "normalized": "33367137f4644f2b4422dffdafb489a372bf0b29",
+        "weight": 21
+    },
+    "shop.badges.Ribbon.render@shop/badges.py:53": {
+        "of": "69d2bf020ed510d4604f8dcb5161eece0506790b",
+        "normalized": "14a236b0c8aac243b4c25a5cbad3c26a40ecab3d",
+        "weight": 21
+    },
+    "shop.badges.status_colour@shop/badges.py:7": {
+        "of": "27da67760c30f587b5886075b262e2f4fdedf837",
+        "normalized": "ed547de4593b9672e75a0f34649f0b55935f8f6e",
+        "weight": 24
+    },
+    "shop.badges.status_icon@shop/badges.py:18": {
+        "of": "ab70fc498a3fec0d327266ac5375649e6a0a66c5",
+        "normalized": "ed547de4593b9672e75a0f34649f0b55935f8f6e",
+        "weight": 24
+    },
+    "shop.barcode_parsing.NamedScanner.__init__@shop/barcode_parsing.py:25": {
+        "of": "43af9fb11b6d748d267c789115a6bcf67cac1701",
+        "normalized": "367204267c20e075dab899b9e2e52db3bfdc4a7f",
+        "weight": 5
+    },
+    "shop.barcode_parsing.NamedScanner.parse@shop/barcode_parsing.py:28": {
+        "of": "0de280f8ecf3e3b7f1d49b4caef3e5f34773d726",
+        "normalized": "8669c9da8e31816ac3d17e0e3f423a68a65c9824",
+        "weight": 20
+    },
+    "shop.barcode_parsing.Scanner.__init__@shop/barcode_parsing.py:7": {
+        "of": "43af9fb11b6d748d267c789115a6bcf67cac1701",
+        "normalized": "367204267c20e075dab899b9e2e52db3bfdc4a7f",
+        "weight": 5
+    },
+    "shop.barcode_parsing.Scanner.parse@shop/barcode_parsing.py:10": {
+        "of": "95c9e33822d03c5be1e23e45966d5c6290de082a",
+        "normalized": "5f2ff4fb09f63099c4080191e13b8aee87ea6b2e",
+        "weight": 19
+    },
+    "shop.basket_codes.carries_coupon@shop/basket_codes.py:12": {
+        "of": "7a17266278ce538b148ead2c5123a8943d99af5a",
+        "normalized": "02c85b0a8ae6b84b776d47f4676bbcf73ba02639",
+        "weight": 6
+    },
+    "shop.basket_codes.has_coupon@shop/basket_codes.py:6": {
+        "of": "ea1318a89043e9ff36f7f394e4bbb8dade7f196c",
+        "normalized": "2a5e4a9a0c87620b20ec55b3c5672c03cb36118a",
+        "weight": 12
+    },
+    "shop.basket_codes.is_staff_coupon@shop/basket_codes.py:17": {
+        "of": "7294837a9cfb6dc95f09ebf7cd9636da814d0d9b",
+        "normalized": "3fde54e2740ba9facd53f21f9444bdc2f51bf403",
+        "weight": 8
+    },
+    "shop.basket_codes.lacks_referrer@shop/basket_codes.py:22": {
+        "of": "eba75630034e5858b0ca11234e035ad26ec2be80",
+        "normalized": "c5c7c1d7f0f0a0488e323582a1e8afb6a60053c9",
+        "weight": 10
+    },
+    "shop.basket_limits.Basket.full@shop/basket_limits.py:14": {
+        "of": "e6728b7763111c8cbbe1a87e7de4c32178c3bf20",
+        "normalized": "3727360093cacbb8b5189ac5fbdba636b2c24daa",
+        "weight": 9
+    },
+    "shop.basket_limits.Trolley.full@shop/basket_limits.py:26": {
+        "of": "6039755ffc3b144dc06fc35c1b131c6020b78416",
+        "normalized": "ecf88e7d3955c08ecd5496f790a1d5e9986833a2",
+        "weight": 9
+    },
+    "shop.basket_totals.Basket.__init__@shop/basket_totals.py:5": {
+        "of": "c988919ab32e9cdc6be3aad66d5af36321dadde9",
+        "normalized": "caa72c6401367f360c085d11b3d5464e783ee4f4",
+        "weight": 5
+    },
+    "shop.basket_totals.Basket.total@shop/basket_totals.py:9": {
+        "of": "5d5f35f8ee12e177549409c76a43ca14c6dbd7dd",
+        "normalized": "6a3c58d27647d9d5e4c38f62182c676f20277b47",
+        "weight": 8
+    },
+    "shop.billing.invoice.Invoice.__init__@shop/billing/invoice.py:7": {
+        "of": "65f8bfd94e6a06298807c1bfed45ef682fc59693",
+        "normalized": "18ad812a5ec582e94198f4f33edd2306f023c2af",
+        "weight": 5
+    },
+    "shop.billing.invoice.Invoice.lines@shop/billing/invoice.py:10": {
+        "of": "4f848f02214321194e1485578ae87460aa36c7fa",
+        "normalized": "5959630fb3b02adf1b22d01b8f22fb44b3a483b5",
+        "weight": 13
+    },
+    "shop.box_sizes.Packer.__init__@shop/box_sizes.py:17": {
+        "of": "d97e46f1ec388cdf709475abf45f2ee07fb6facb",
+        "normalized": "a93f39b8f32d34b6ec6da2ba90a89ef6549f5200",
+        "weight": 5
+    },
+    "shop.box_sizes.Packer.box_for@shop/box_sizes.py:20": {
+        "of": "9cf9e87c1a4acda69e3c6c37b598b51300461851",
+        "normalized": "1a50d1d86bf26b6e032c03f5a8379a63b60e2f12",
+        "weight": 25
+    },
+    "shop.box_sizes.Packer.pack@shop/box_sizes.py:31": {
+        "of": "70acd5ae9e424d96332c85752d719e7d1147c3e3",
+        "normalized": "11d321dd1cc076bde111497c4b82ff16aed9b94d",
+        "weight": 13
+    },
+    "shop.box_sizes.ParcelSize.box@shop/box_sizes.py:11": {
+        "of": "ed1178efdbe96527d047f0ba709a26aefdb55db7",
+        "normalized": "0a4d5beef600e9e3070b589c0975d27138d8fe82",
+        "weight": 9
+    },
+    "shop.builds.forget@shop/builds.py:5": {
+        "of": "fa016b9582dd1426af15841318f1534b3e21d08e",
+        "normalized": "7851b39e095ed30603f4118f5e3b5b87d229798a",
+        "weight": 13
+    },
+    "shop.builds.forget_stale@shop/builds.py:11": {
+        "of": "69987e6781d92f856cfb3bd2737a406e1ec1e770",
+        "normalized": "12bc177c8d058bd77659edc60f2fcc1abee2c6ab",
+        "weight": 14
+    },
+    "shop.caches.Cache.__init__@shop/caches.py:6": {
+        "of": "1d772dcf0e7cb31f7f0158c29938e1b3764a5577",
+        "normalized": "72797b21688ffb93b9430d772a3c5b5c67c56feb",
+        "weight": 5
+    },
+    "shop.caches.Cache.ensure@shop/caches.py:9": {
+        "of": "8eaf85a5fdc44f3179e12baca3ea69de01f96f7f",
+        "normalized": "4ffc2799336bc5fa4d5edb372895861ac4de8320",
+        "weight": 19
+    },
+    "shop.caches.Cache.ensure_warm@shop/caches.py:15": {
+        "of": "e4b45cff4a47a9c60fb601baf97a039340dfc229",
+        "normalized": "635fff9aba2f3b404c82985488dc71c5c01d0fbb",
+        "weight": 21
+    },
+    "shop.carrier_labels.UnhandledCarrier.of@shop/carrier_labels.py:13": {
+        "of": "f3a31c5ed08ee266c6d89be2d5f684bf1c07a112",
+        "normalized": "3b31ae0a9ccabf8055b6bae77160b377ed8009fc",
+        "weight": 7
+    },
+    "shop.carrier_labels.label_size@shop/carrier_labels.py:18": {
+        "of": "8ce29b1d90889487b217560b80413ecfa9035108",
+        "normalized": "70dfe85a6d7311f69e3700fb61fda95f2ae060c1",
+        "weight": 20
+    },
+    "shop.carrier_labels.label_size_for@shop/carrier_labels.py:30": {
+        "of": "a0df1cb5bbc921a004234638fb4d48c41867ed97",
+        "normalized": "e8db2e0854477404122288150bd780c0fb589c31",
+        "weight": 26
+    },
+    "shop.carrier_profiles.ParcelLimits.fits@shop/carrier_profiles.py:26": {
+        "of": "aa93dd60399247db64d6d303e5677a48d316d243",
+        "normalized": "d05e9cc7ff49f132a87f5b379ec4db4b28f20047",
+        "weight": 11
+    },
+    "shop.carrier_rates.RateCache.__init__@shop/carrier_rates.py:8": {
+        "of": "1d772dcf0e7cb31f7f0158c29938e1b3764a5577",
+        "normalized": "72797b21688ffb93b9430d772a3c5b5c67c56feb",
+        "weight": 5
+    },
+    "shop.carrier_rates.RateCache.rates@shop/carrier_rates.py:11": {
+        "of": "ca216e2ec8ca62d9091705e6fe5bc7a323b7cd18",
+        "normalized": "31bfff9d4d0429fa9bd6bc76549810e7afdc2de6",
+        "weight": 15
+    },
+    "shop.carrier_rates.TypedRateCache.__init__@shop/carrier_rates.py:24": {
+        "of": "1d772dcf0e7cb31f7f0158c29938e1b3764a5577",
+        "normalized": "72797b21688ffb93b9430d772a3c5b5c67c56feb",
+        "weight": 5
+    },
+    "shop.carrier_rates.TypedRateCache.rates@shop/carrier_rates.py:27": {
+        "of": "a901243f4485e9cf420c6fbb633b0a2f3be06889",
+        "normalized": "fc8de983ef4d6a92c614a782f893be10b6e845af",
+        "weight": 12
+    },
+    "shop.carrier_rates.detached@shop/carrier_rates.py:32": {
+        "of": "62e2c1f86161923e50db657697d272f1cf45a92d",
+        "normalized": "080c58a90e4219d92125cb298112e1d5436d4397",
+        "weight": 9
+    },
+    "shop.carriers.Service.carrier@shop/carriers.py:27": {
+        "of": "ed7dd1ae9fabdae3c5d86835b0f565874174fc88",
+        "normalized": "3b4b531e2ba26f02862dfc9bd031390cffbd1165",
+        "weight": 17
+    },
+    "shop.carriers.carrier_for@shop/carriers.py:7": {
+        "of": "73a2443a7ebd03d4fe607b95b6a56c2ed3132695",
+        "normalized": "48c1f19fd328804ea1d6aa30bc8cc69dc9198687",
+        "weight": 33
+    },
+    "shop.cart_lines.CartLine.__init__@shop/cart_lines.py:5": {
+        "of": "9997ff298e86e539726e16c400d2b275d1f1d8e2",
+        "normalized": "e8773f8c6b460340cb7a45e434da72e73c135f80",
+        "weight": 9
+    },
+    "shop.cart_lines.CartLine.amend@shop/cart_lines.py:9": {
+        "of": "de2dfbb111f9a95842197fea87a54d8d3a2ce169",
+        "normalized": "0266e67a5c5bc2005cfba34304fd3782770999eb",
+        "weight": 12
+    },
+    "shop.cart_lines.mark_gift@shop/cart_lines.py:13": {
+        "of": "9b37380c995932db13e938a676028bfd614c7632",
+        "normalized": "81ca6e18a6b2eb4a4ab2500c69dfb120658d847b",
+        "weight": 11
+    },
+    "shop.cart_lines.mark_sample@shop/cart_lines.py:18": {
+        "of": "7e38626c3656d8e40a79dc0935c7ffd4989ff7af",
+        "normalized": "cb8ccf9f12bb3adffbe29b7580517b4b77a552ca",
+        "weight": 9
+    },
+    "shop.cart_lines.rename@shop/cart_lines.py:24": {
+        "of": "ba6c9cb34cb000b9a3a51fdaf2a1dfdbd42abd52",
+        "normalized": "c3ebde81d06c4e3c5fd0606ed1f8e75884ccc222",
+        "weight": 7
+    },
+    "shop.cart_totals.Basket.__init__@shop/cart_totals.py:27": {
+        "of": "173f98ea62ac9393ffee36c0503ffe76dc3b9a4b",
+        "normalized": "43307b8b670383e315114cab787f95f052935240",
+        "weight": 9
+    },
+    "shop.cart_totals.Basket.to_json@shop/cart_totals.py:31": {
+        "of": "7a0b45ad40c576129b4b2d7725954978919c11ec",
+        "normalized": "a8b18c8f2f33c1d46d1e04d23609fbb563b153c2",
+        "weight": 11
+    },
+    "shop.cart_totals.download_headers@shop/cart_totals.py:36": {
+        "of": "ccdf475c6190b2467089aafdb8c5308f8145b2a2",
+        "normalized": "0f92d0e92d7e6fc1c308bacaf1bfeedbb07f47a8",
+        "weight": 9
+    },
+    "shop.cart_totals.parse_basket_line@shop/cart_totals.py:20": {
+        "of": "5038b60ae15feb44c9526bc9b5e4ec4965aab010",
+        "normalized": "351cc7604825198cac2ae9902f5fff1578d0b395",
+        "weight": 21
+    },
+    "shop.cart_totals.parse_line@shop/cart_totals.py:6": {
+        "of": "1e670b8142bbd25ef4dc2e928f9bc62a15024f5b",
+        "normalized": "9757893d9d3f2f7c670728f0b2f1379537ad406a",
+        "weight": 20
+    },
+    "shop.catalog_file.CatalogUnreadable.at@shop/catalog_file.py:18": {
+        "of": "aa63e53fc20797ede19810b128f3a24b632bdfeb",
+        "normalized": "ed8a04ff2ddcff0e5cbf77ec4fe231e9ce2a38eb",
+        "weight": 8
+    },
+    "shop.catalog_file.load_catalog@shop/catalog_file.py:23": {
+        "of": "ae890c9291a9f4b936556099a678c1ff982807cd",
+        "normalized": "c948f4d2bc1aa608c0d8667d6d23bfd4242f96e4",
+        "weight": 17
+    },
+    "shop.catalog_file.read_catalog@shop/catalog_file.py:32": {
+        "of": "39742d73b39b2edef9e0b40e6f04eacc4d0b4d6b",
+        "normalized": "5810e3f99c14be72d8798680ec188fe57a75c26f",
+        "weight": 22
+    },
+    "shop.categories.children_index@shop/categories.py:17": {
+        "of": "4bd23ed35f5c318caa2debe32dbe86e92cc30364",
+        "normalized": "8c33a63368a16876ff1cbaeb6bbc3ddebe848576",
+        "weight": 21
+    },
+    "shop.categories.descendants@shop/categories.py:7": {
+        "of": "e376f6bc242d7c45e3bcd458f5ae37a2c80e0ca8",
+        "normalized": "c52d7ba1e25384b6022485b852c7e4a800cd8289",
+        "weight": 27
+    },
+    "shop.categories.descendants_of@shop/categories.py:25": {
+        "of": "4128c340e4d490e0bf5f5331691ace20de2eb64f",
+        "normalized": "08ecf623b9caab65ffeba8f84bdf84d8cd45a425",
+        "weight": 25
+    },
+    "shop.category_walker.CategoryPaths.__init__@shop/category_walker.py:24": {
+        "of": "9d001a855e1b1565267c21d39bcb0d7c089831af",
+        "normalized": "44dec7d98937ac985f9f62534f042256c26530f7",
+        "weight": 5
+    },
+    "shop.category_walker.CategoryPaths.visit@shop/category_walker.py:27": {
+        "of": "5ae49fda01c521534dd743c111476fa31e363663",
+        "normalized": "62623e1844933048f61201ad0259f640704255ac",
+        "weight": 28
+    },
+    "shop.category_walker.CategoryWalker.__init__@shop/category_walker.py:6": {
+        "of": "9cfb172863b6b75ab2cd62bbafc888a89ddb53c7",
+        "normalized": "3aac271b2b6c58e13fba233a5ec648986ceac34e",
+        "weight": 9
+    },
+    "shop.category_walker.CategoryWalker.visit@shop/category_walker.py:11": {
+        "of": "2519172826db4a5143d41f26ab0fc01559e25be1",
+        "normalized": "2dc06050d23903c05b87a471e70561caa2d81d77",
+        "weight": 40
+    },
+    "shop.charges.charge@shop/charges.py:4": {
+        "of": "1eb3d7c7b7e236f76d8751a6bb1becff06c35bcf",
+        "normalized": "e4ffa567e54ca6825101499abfc62169072053b1",
+        "weight": 12
+    },
+    "shop.checkout.checkout@shop/checkout.py:7": {
+        "of": "4a2e1bae596bbc4fdc4ffb493c614c3dea497abb",
+        "normalized": "d9c866951f8c92ca9abc8f2493c6b6c58b548d55",
+        "weight": 25
+    },
+    "shop.checkout_settings.CartSettings.allows@shop/checkout_settings.py:19": {
+        "of": "31a180539c850627cece043a26e1f031f18f7261",
+        "normalized": "b6b985ef2c638b2be584fe1fb3e27283fc18832d",
+        "weight": 6
+    },
+    "shop.checkout_settings.CheckoutSettings.allows@shop/checkout_settings.py:10": {
+        "of": "31a180539c850627cece043a26e1f031f18f7261",
+        "normalized": "b6b985ef2c638b2be584fe1fb3e27283fc18832d",
+        "weight": 6
+    },
+    "shop.cleanup.nightly@shop/cleanup.py:18": {
+        "of": "409c8f6f2ca5e9b0fe2fc6b4e02c767f4d014865",
+        "normalized": "d54eff9eccaf322320f46e7949b1aab5411b0c9e",
+        "weight": 21
+    },
+    "shop.cleanup.remove_upload@shop/cleanup.py:10": {
+        "of": "84d5aa27528e570f7b28436843b81f2712c5b2ea",
+        "normalized": "e1a7a0005ec488906c55a98b5fbb91b4d019a4dd",
+        "weight": 12
+    },
+    "shop.cli.load_config@shop/cli.py:11": {
+        "of": "4385211fc984a0451e73c3d3b497c445b5e98bcc",
+        "normalized": "5a51bbb2bc16b582f2354f0409c320077850b5b4",
+        "weight": 34
+    },
+    "shop.closing.close_all@shop/closing.py:26": {
+        "of": "d94264cb45b562e15b3319a72a2541f814a5a7ab",
+        "normalized": "cfae369e74ecf23fdd6376c7b26fbcdb8021f0d8",
+        "weight": 10
+    },
+    "shop.closing.close_labelled@shop/closing.py:31": {
+        "of": "3ff0f0ec4223a9c3e792bec0f3d34999223669dd",
+        "normalized": "ae0335a3d50bcb1369d03b7fd6cec309d1dcbdd0",
+        "weight": 15
+    },
+    "shop.closing.close_till@shop/closing.py:11": {
+        "of": "b7cc13fdae42689f39ad62f2dc1c7bd92efebaa7",
+        "normalized": "0e4c2a6410d3934963335f6793785c7aab0577bd",
+        "weight": 14
+    },
+    "shop.closing.close_till_then@shop/closing.py:19": {
+        "of": "150f496332ca078171b5e31987d8d6369f0562d9",
+        "normalized": "c3e67bfecf06a1d8f28a1e62c5a29dfa382dacfd",
+        "weight": 11
+    },
+    "shop.closing.noop@shop/closing.py:6": {
+        "of": "186794f125ec0717f6bc0131725c564254c0dbf8",
+        "normalized": "7837581f9231d59fcd08a80a38e17b61cdcae232",
+        "weight": 2
+    },
+    "shop.contacts.Contact.__init__@shop/contacts.py:7": {
+        "of": "7159674090e7aa9475bc6a2127073274744ebb00",
+        "normalized": "e925fc66586603fc67fd8408cf22f957955084b4",
+        "weight": 17
+    },
+    "shop.contacts.Contact.of@shop/contacts.py:14": {
+        "of": "d91143f89c4a118deefda984770da1498ca8330d",
+        "normalized": "719ad6e8bbc469efa80ed1eae414b3d5f7933d50",
+        "weight": 8
+    },
+    "shop.coupons.first_usable_coupon@shop/coupons.py:18": {
+        "of": "a07d7d911ea3befe7c2a9fbc10c54ed634548e0a",
+        "normalized": "a19ad7a6c34dcb725aadb5aafc644582f7fbdc25",
+        "weight": 33
+    },
+    "shop.coupons.usable_coupon@shop/coupons.py:6": {
+        "of": "480e3e90a62bdc30fcbc89c48fdcd3b393d649ae",
+        "normalized": "3d63402f5c07443fff543c1fb0525c5ec3fc0b5f",
+        "weight": 35
+    },
+    "shop.courier_manifests.manifest@shop/courier_manifests.py:6": {
+        "of": "0d924847fdc63f8dd84f6790f7c26af2d4b465ff",
+        "normalized": "ccc5af40e48adb86d245ce4688c762bd2d2d038e",
+        "weight": 12
+    },
+    "shop.courier_manifests.manifest_lines@shop/courier_manifests.py:12": {
+        "of": "edb085deb92ccee5844768d11d651c3eae85412d",
+        "normalized": "80024c8768beeebf8d7dd39a5486b616210c5161",
+        "weight": 22
+    },
+    "shop.courier_picks.CourierPicker.pick@shop/courier_picks.py:14": {
+        "of": "5eba6a55e707ea61f60017ad7ea0c2dc9a378ab7",
+        "normalized": "0a554e3cc472983c3c563e0e9e7784d62e76bcd9",
+        "weight": 31
+    },
+    "shop.courier_picks.CourierPicker.pick_for@shop/courier_picks.py:26": {
+        "of": "3da0258786f38f8bf6040b92a440a572f084c435",
+        "normalized": "e6ae9f2104b4f1574852cae244d63a00cd27d4e1",
+        "weight": 15
+    },
+    "shop.courier_picks.quote@shop/courier_picks.py:37": {
+        "of": "4199db218a4163e9581394296edfdea8b0214f91",
+        "normalized": "51d6a8bf30173a88593b6ca03130dc3115926267",
+        "weight": 22
+    },
+    "shop.courier_picks.route_all@shop/courier_picks.py:30": {
+        "of": "d8dbe180c267b3bb46a83318d34cc7cec6ab50aa",
+        "normalized": "e00b11b5e98a03935532b6189de86daf936a3c5d",
+        "weight": 28
+    },
+    "shop.courier_pickups.load@shop/courier_pickups.py:6": {
+        "of": "9da94f7a460dfb26bd03ab9de7191ecf2dbb9854",
+        "normalized": "d5e5516f5b72fdf31d2535ab7510cdb2def83382",
+        "weight": 15
+    },
+    "shop.courier_slots.CourierSlot.__init__@shop/courier_slots.py:6": {
+        "of": "ff9a2eb85d40eaedca9830beb4c403057d865636",
+        "normalized": "36de1bc3997b789b11564c873164095a33066ee4",
+        "weight": 9
+    },
+    "shop.courier_slots.CourierSlot.covers@shop/courier_slots.py:16": {
+        "of": "ab32be279ab2dcd7ea6d05a5555757cdcf6a2393",
+        "normalized": "ba63b2156b25a501ad1f56fea72a9bcb251c5dec",
+        "weight": 6
+    },
+    "shop.courier_slots.CourierSlot.ships@shop/courier_slots.py:11": {
+        "of": "14c622f94e73ecc37b8342f66e2087090f9eb4b2",
+        "normalized": "4de5c7db2626d7430b9afe34a68328b077279555",
+        "weight": 6
+    },
+    "shop.courier_zones.Zone.next_day@shop/courier_zones.py:11": {
+        "of": "08abf5401c8a3227b3cfde38ff79e3446f35c933",
+        "normalized": "1d3ce469df2cf01d8f7e40be347c1f00d6246619",
+        "weight": 9
+    },
+    "shop.courier_zones.next_day_for@shop/courier_zones.py:22": {
+        "of": "1efb8b47ee0bad14f4337ec6383feb3e94038b53",
+        "normalized": "00d972e9726f18cd2a6a61123deb7561203f14a0",
+        "weight": 7
+    },
+    "shop.courier_zones.next_day_possible@shop/courier_zones.py:16": {
+        "of": "54014d171f0213606233f70f70123b8e5dceb2b6",
+        "normalized": "92465a6466e9801b33de0cd1b2be1f717aff3cd7",
+        "weight": 8
+    },
+    "shop.couriers.Courier.__init__@shop/couriers.py:6": {
+        "of": "d5e9eebac1e94866d5dab51b5f5c3e13afcc7ec6",
+        "normalized": "0d5fb0b0e816f6af4da34bdc161fba0f3086fe0a",
+        "weight": 5
+    },
+    "shop.couriers.Courier.book@shop/couriers.py:10": {
+        "of": "26f4dc32574b3f79c6ca2a1cf8aa03dbf58e2d1e",
+        "normalized": "442cd0400281087c20e9b5bbdab1045f90e2ee96",
+        "weight": 19
+    },
+    "shop.couriers.Courier.book_tracked@shop/couriers.py:16": {
+        "of": "da6447ec107e9fabeba5c7e2e234164672aa92f9",
+        "normalized": "6c1948fff1c86134d735b15c621d023d9a4e3b94",
+        "weight": 20
+    },
+    "shop.couriers.dispatch.dispatch@shop/couriers/dispatch.py:10": {
+        "of": "ee1b97b592ae0920dbb9d2b91b2169c170a499ac",
+        "normalized": "2be9b867c198be2967949fd195810a1bbed7ff80",
+        "weight": 15
+    },
+    "shop.couriers.manifest@shop/couriers.py:23": {
+        "of": "7e3baa87bd74144b5a6d52c0a27ad4c073b21e8c",
+        "normalized": "1950b523a402a6ed2e4c330df30aa22e9f696096",
+        "weight": 6
+    },
+    "shop.csv_tokens.PriceListReader.__init__@shop/csv_tokens.py:13": {
+        "of": "d174665cca652662e71c5418b572004a803137e2",
+        "normalized": "d1993ec18ba0f901b410eafcd39bd6596e9df34c",
+        "weight": 9
+    },
+    "shop.csv_tokens.PriceListReader.cell_end@shop/csv_tokens.py:34": {
+        "of": "dbd2d0d99c17f8e4cbe0e180340ea195c14d3280",
+        "normalized": "fb5916c84f549335dc8ebd52e789c3777a2e4aca",
+        "weight": 7
+    },
+    "shop.csv_tokens.PriceListReader.expect@shop/csv_tokens.py:17": {
+        "of": "9ce790c00a375d0a6e2d987e50561ea5c6a86c22",
+        "normalized": "5fa6fbfd012abb08b160011cd0531702e6533e81",
+        "weight": 27
+    },
+    "shop.csv_tokens.PriceListReader.field_end@shop/csv_tokens.py:25": {
+        "of": "24f44f0b4880a9849858ce5ee8fda1092bffc4c3",
+        "normalized": "dac4be9ad4665a5e222aae81dbed8f93f4794070",
+        "weight": 6
+    },
+    "shop.csv_tokens.PriceListReader.quoted_end@shop/csv_tokens.py:29": {
+        "of": "5d85836b4463318dde6338b4beeefb5ac84501b5",
+        "normalized": "a57ec147723a9f43279a924bfa264f3cabeb6eef",
+        "weight": 7
+    },
+    "shop.csv_tokens.PriceListReader.row_end@shop/csv_tokens.py:22": {
+        "of": "f686daec38a427a284aa69577c42b0420cde8c38",
+        "normalized": "6fd93a8d83ee37217091af11fbcb802b6fa0db74",
+        "weight": 7
+    },
+    "shop.currencies.format_money@shop/currencies.py:15": {
+        "of": "ced32d312c10011b9804ad0709b4be442dc63764",
+        "normalized": "e5a11b53a87e2b92ad17b7987e2e33d3f4130776",
+        "weight": 9
+    },
+    "shop.currencies.price_label@shop/currencies.py:6": {
+        "of": "ba3d3ec4d793c89113560480481121216045e9e3",
+        "normalized": "8d7c81dce50c9dc4415d0f9518ec6a3e4d73648d",
+        "weight": 8
+    },
+    "shop.currencies.render_lines@shop/currencies.py:11": {
+        "of": "1b4dd1a8dd5a0751775dcacd9fa3e6b8e50966bd",
+        "normalized": "e6c0a0ec7bd38d7db383fcc89c33d9cc781fc79d",
+        "weight": 9
+    },
+    "shop.currency_rounding.CurrencyRounder.__init__@shop/currency_rounding.py:8": {
+        "of": "5ac45ba63c4e81574a0381472ac3918e5ad6014b",
+        "normalized": "3d902c47325b50604657f342080c5db68dcb7de7",
+        "weight": 5
+    },
+    "shop.currency_rounding.CurrencyRounder.round@shop/currency_rounding.py:11": {
+        "of": "2bee04b03a2f5b06903e5062152b5b117be293a9",
+        "normalized": "1a528e0cae871b593fce88eeb292c98056740790",
+        "weight": 7
+    },
+    "shop.customer_profiles.Profile.greeting@shop/customer_profiles.py:13": {
+        "of": "37492e58ccc22788e24cbece13c06a99144dc34f",
+        "normalized": "5cb50e646c261ba4141c93d24e424d9e675d91ba",
+        "weight": 15
+    },
+    "shop.customer_profiles.Profile.reachable_by_sms@shop/customer_profiles.py:17": {
+        "of": "dd432184d2b1040f4f318c09cf7e9f20fa851bfb",
+        "normalized": "39111ccabe16b0e18838648d6c77f225c16e460f",
+        "weight": 7
+    },
+    "shop.customer_profiles.Profile.with_email@shop/customer_profiles.py:20": {
+        "of": "7d8b33ad6b92aa2e38b557cb87381da2ffe96559",
+        "normalized": "507927e8220d1568d0143f3ff08d56a892460920",
+        "weight": 15
+    },
+    "shop.customer_profiles.Profile.with_phone@shop/customer_profiles.py:25": {
+        "of": "63a59348d13040fc58787e258d7419c9e587ea86",
+        "normalized": "6e3105084750b4d6351d8df334672598fb4cd2f1",
+        "weight": 7
+    },
+    "shop.customers.Loyalty.enrol@shop/customers.py:12": {
+        "of": "7860bed2b92d5b457df8e6f0342797a78ecb4adb",
+        "normalized": "e0e7a515954ac75b3d31fc5ff918d315f5cf8ff6",
+        "weight": 10
+    },
+    "shop.customers.Newsletter.subscribe@shop/customers.py:6": {
+        "of": "d0f78d5c3f03eb50be2075946115911765b33d8f",
+        "normalized": "d4f65c19d1d572e340cf0712a81250d6f9020063",
+        "weight": 8
+    },
+    "shop.decisions.route@shop/decisions.py:17": {
+        "of": "ee6193121c1be415dae96c64f255cc55cea2cae3",
+        "normalized": "c96d30b6a6deccb6fd813d42888ef63f60ca7152",
+        "weight": 35
+    },
+    "shop.decisions.size_band@shop/decisions.py:6": {
+        "of": "09cd23e1b3a8d0757ef8aea09dff923d149da51c",
+        "normalized": "248bb0e9c8b3b824b6d82ca8aa0f75febc188e3d",
+        "weight": 27
+    },
+    "shop.delivery.Address.line@shop/delivery.py:19": {
+        "of": "d4b3d95feb27ff8d75366fd875d4340508bbf1e0",
+        "normalized": "20e03a97a01a6844ba041248c976ece3aa13bbe5",
+        "weight": 11
+    },
+    "shop.delivery.book_delivery@shop/delivery.py:8": {
+        "of": "43b9c4875a7736a105221a7897db0bc07c4a5545",
+        "normalized": "f36be5bd55f47be6e310f98b7cd3623dcddb74f4",
+        "weight": 11
+    },
+    "shop.delivery.schedule_delivery@shop/delivery.py:24": {
+        "of": "149b40db649c3b75c941621ebd441b4f006fa152",
+        "normalized": "d61595b0aceeedbb518f4d8c7617cec9a9b2287c",
+        "weight": 8
+    },
+    "shop.delivery_addresses.DeliveryAddress.envelope@shop/delivery_addresses.py:13": {
+        "of": "1ebf8a94c351aca566d022b54f4fe788ec915330",
+        "normalized": "cb8e9cca96d2d5312f75c0476196da70c1873d75",
+        "weight": 13
+    },
+    "shop.delivery_addresses.DeliveryAddress.in_city@shop/delivery_addresses.py:16": {
+        "of": "16486474f716f29e99ffa34640304ef0485651cf",
+        "normalized": "c5358526fb2b4783fdcb202e36eb194f585c1690",
+        "weight": 10
+    },
+    "shop.delivery_addresses.DeliveryAddress.move@shop/delivery_addresses.py:19": {
+        "of": "702beec57a311208fd4c9f3038a6bcaabc8abd19",
+        "normalized": "aaf28b25d35be32c1f6a333604e73a985891831a",
+        "weight": 9
+    },
+    "shop.delivery_addresses.Invoice.pdf@shop/delivery_addresses.py:51": {
+        "of": "e9a662fd1ec9156db0a27ded46602e55703fffc6",
+        "normalized": "6715f5629d10886ec9bc5f9f5307b76f83bff172",
+        "weight": 18
+    },
+    "shop.delivery_addresses.PickRound.pick@shop/delivery_addresses.py:41": {
+        "of": "56ffb76a9efb09bfcb93e58eb4dac1b453f1e9ad",
+        "normalized": "86cecafb5cf566a4e8250d137fab72e5ca9d8206",
+        "weight": 5
+    },
+    "shop.delivery_addresses.ShippingAddress.moved@shop/delivery_addresses.py:31": {
+        "of": "c2a3086d87acad258f21b4e9ced59be214b5f113",
+        "normalized": "111bfa69be04bfbd18c4024f02d3992ec824907e",
+        "weight": 9
+    },
+    "shop.delivery_slots.Slot.fee@shop/delivery_slots.py:10": {
+        "of": "3b6de3c69a04f4e5d6867558bce6a44b7bccdfe1",
+        "normalized": "202adf9dba7084c0192b937f05f1579284c73cb9",
+        "weight": 9
+    },
+    "shop.delivery_slots.slot_fee@shop/delivery_slots.py:15": {
+        "of": "3bf1a14963baa441fbe221ce7a1868dfe23da8cc",
+        "normalized": "265f49515153967cdbc09ba508de60043ea2492a",
+        "weight": 13
+    },
+    "shop.delivery_slots.slot_fee_for@shop/delivery_slots.py:25": {
+        "of": "15a60deef73b4b56b5de6f58e0d76f43e628a985",
+        "normalized": "6359f82872ce139d1ef2c2b851e4f19ac300fa0f",
+        "weight": 4
+    },
+    "shop.delivery_slots.slot_label@shop/delivery_slots.py:30": {
+        "of": "3ebd28816d53993a47c7d305085e37b8c44ec44c",
+        "normalized": "fe70efb7f29f7501c2ad7b75a9f3995be029979f",
+        "weight": 15
+    },
+    "shop.delivery_slots.weekday_index@shop/delivery_slots.py:39": {
+        "of": "955bf79d3b81798e97dd4c2776455e9bb7a9b67d",
+        "normalized": "f26c83b1aff61bc45bbd37521513614f1d92b836",
+        "weight": 15
+    },
+    "shop.digests.register@shop/digests.py:6": {
+        "of": "281a141d35ecaf1b56ade7bc8308b0bf81f63659",
+        "normalized": "3868a1f19324e48bfb2f40cc583a4329f63c11c5",
+        "weight": 35
+    },
+    "shop.discount_rules.Checkout.__init__@shop/discount_rules.py:19": {
+        "of": "ac888983ef220c534be106bf88f2c310de2dd78c",
+        "normalized": "dee848244b31d3e73c7d17a7ad2a3384d3f2adfe",
+        "weight": 5
+    },
+    "shop.discount_rules.Checkout.apply@shop/discount_rules.py:22": {
+        "of": "e0148a2122cc9e835cb67cac6d4f8297e3e175d9",
+        "normalized": "7b477cd103ffbbaf55bce186b417bc992a2d38b8",
+        "weight": 35
+    },
+    "shop.discount_rules.Price.__init__@shop/discount_rules.py:33": {
+        "of": "513dc33b873e42ed35448ba97e6f5cc8829c4c91",
+        "normalized": "cb6b1c2b68c5084eb026fbc5ebf41faa410e4037",
+        "weight": 29
+    },
+    "shop.discount_rules.Rule.__init__@shop/discount_rules.py:6": {
+        "of": "6ea6e08d07f261a8fd7f7f5fbb9ceb61bfcd5b27",
+        "normalized": "adad5f735b3654bd16f0b992f05d07672933011a",
+        "weight": 5
+    },
+    "shop.discounts.discounted@shop/discounts.py:5": {
+        "of": "50fef0d619b6809fb6f97cb25b705a4a4ed9b483",
+        "normalized": "9599b7af97c13eb84541cb0ae5c583627fa1f172",
+        "weight": 27
+    },
+    "shop.dispatch_desk.DispatchDesk.__init__@shop/dispatch_desk.py:13": {
+        "of": "65d6f3c61a01f1efcdf202dcda1f2cd4ad04e6c6",
+        "normalized": "44073abbb7da770dcefbd3a2a96563cdd317548b",
+        "weight": 5
+    },
+    "shop.dispatch_desk.DispatchDesk.may_leave@shop/dispatch_desk.py:20": {
+        "of": "12a683d432c9670b19fab7d0a3100e8a323c6dde",
+        "normalized": "ad6e25b1ff0dbc8ac8b0f7b9c7a838c2abbea698",
+        "weight": 9
+    },
+    "shop.dispatch_desk.DispatchDesk.outgoing@shop/dispatch_desk.py:16": {
+        "of": "08b8c44eabc6024244884ba3dc2f0ca8652fe234",
+        "normalized": "4fc81e367977b965bf9a260140249c20a2a01cbe",
+        "weight": 15
+    },
+    "shop.dispatch_desk.Parcel.__init__@shop/dispatch_desk.py:6": {
+        "of": "6b2091f3e9756d8f57347c6feee7d406b26e62aa",
+        "normalized": "e02ab9528395a6362ec37236e2a208401a511d9e",
+        "weight": 13
+    },
+    "shop.documents.InvoiceSheet.line_items@shop/documents.py:20": {
+        "of": "7628d02cd2ad17919e28853c3da6a626bee479b6",
+        "normalized": "be0e7d08905c2d25f44f560023bde59181eefd8b",
+        "weight": 34
+    },
+    "shop.documents.PackingSlip.rows@shop/documents.py:9": {
+        "of": "7628d02cd2ad17919e28853c3da6a626bee479b6",
+        "normalized": "be0e7d08905c2d25f44f560023bde59181eefd8b",
+        "weight": 34
+    },
+    "shop.drop_slots.DropOff.__init__@shop/drop_slots.py:12": {
+        "of": "cded490a8df5c8b9a0193e27b5dc248f5e49b9b3",
+        "normalized": "1964d7655f0dc0a2e4c8c857d1b21d0a725a9573",
+        "weight": 9
+    },
+    "shop.drop_slots.DropOff.booked@shop/drop_slots.py:16": {
+        "of": "f419e78cd6c72de4065cf6a55c0c84b34de12914",
+        "normalized": "0b68560a308d7d1b92d10436539a453075fce8cb",
+        "weight": 6
+    },
+    "shop.drop_slots.evening_drop@shop/drop_slots.py:25": {
+        "of": "df4a1f884f3f7cb1349e1c6609ba9b2ea32d2e45",
+        "normalized": "bb2813954bd104cba32b19cdf4d11b09f4c03b68",
+        "weight": 7
+    },
+    "shop.drop_slots.morning_drop@shop/drop_slots.py:21": {
+        "of": "4fb352ae9cabf2b5294c063d708e8a5c3647939f",
+        "normalized": "9618368de9d8365ebedc296321ac15b91c2d645b",
+        "weight": 8
+    },
+    "shop.dunning.InvoiceStatus.is_unpaid@shop/dunning.py:11": {
+        "of": "d51fc049c97d4b08700943312356cd269176c459",
+        "normalized": "65d5ff91d59fe8b37dc2b4ec614743e6668922f9",
+        "weight": 9
+    },
+    "shop.dunning.needs_reminder@shop/dunning.py:16": {
+        "of": "eb586e0c1ee343987f534291d8a23e9f17185c3b",
+        "normalized": "cbbcef33613518e598e80c4039fdc0585b2cc4b7",
+        "weight": 13
+    },
+    "shop.dunning.owes_money@shop/dunning.py:22": {
+        "of": "01382ba32cfaf2504967db1943eae9bd32128d03",
+        "normalized": "8baafd333d1bb1e59a207f0ec0c1f1b2bb2088b6",
+        "weight": 5
+    },
+    "shop.encoders.ByteStream.__init__@shop/encoders.py:6": {
+        "of": "0ba2969989b28de5b2589689512b57678de1b1af",
+        "normalized": "0e638caea054a6d2a8dad1c0e00263975d1f0385",
+        "weight": 5
+    },
+    "shop.encoders.encode_html@shop/encoders.py:20": {
+        "of": "92b42bcdfe4b084cfa000ab5ccf3e820effb1639",
+        "normalized": "c891fc9f5f01260d2d3dd2097e93496166f4961c",
+        "weight": 30
+    },
+    "shop.encoders.encode_text@shop/encoders.py:11": {
+        "of": "fad13c79c746f844a16c18236b882c45c57bb185",
+        "normalized": "c891fc9f5f01260d2d3dd2097e93496166f4961c",
+        "weight": 30
+    },
+    "shop.encoding.encode@shop/encoding.py:8": {
+        "of": "373aad7a76c0a500b15591a6a0ba1b3a0d2adf00",
+        "normalized": "d0741cdd3e77dbf2bfe3b0e67c9c591ae8a4efce",
+        "weight": 26
+    },
+    "shop.encoding.encode_html@shop/encoding.py:20": {
+        "of": "42f66b13844ede8532d4c234c0b9b40379509ff3",
+        "normalized": "50ba0e57c10c9be9d15d2f60f8ed3c813c4d0872",
+        "weight": 6
+    },
+    "shop.encoding.encode_text@shop/encoding.py:15": {
+        "of": "db01e77ce8da2cbad8b54d36c8ff80b85ec5bd6c",
+        "normalized": "50ba0e57c10c9be9d15d2f60f8ed3c813c4d0872",
+        "weight": 6
+    },
+    "shop.escalations.EscalationPolicy.__init__@shop/escalations.py:6": {
+        "of": "5ca58a7e4f7c028ee151b5c9942b43b7a5e9e8f6",
+        "normalized": "eaf61af84075a037928bd2e97a3efc38734a4316",
+        "weight": 5
+    },
+    "shop.escalations.EscalationPolicy.escalate@shop/escalations.py:9": {
+        "of": "a6957ecf7849ff773c3a93cc35d96eb27a641751",
+        "normalized": "07fb5879bcc413667078312510f18b1b82e491c4",
+        "weight": 19
+    },
+    "shop.events.Listener.handle@shop/events.py:6": {
+        "of": "186794f125ec0717f6bc0131725c564254c0dbf8",
+        "normalized": "7837581f9231d59fcd08a80a38e17b61cdcae232",
+        "weight": 2
+    },
+    "shop.events.ReceiptMailer.on_event@shop/events.py:12": {
+        "of": "3f54d3c16935434e1cb06f113c2e72d8db19a309",
+        "normalized": "23728fc73ebe30987252e190ec25f21676ed2617",
+        "weight": 26
+    },
+    "shop.events.StockSync.on_event@shop/events.py:21": {
+        "of": "3f54d3c16935434e1cb06f113c2e72d8db19a309",
+        "normalized": "23728fc73ebe30987252e190ec25f21676ed2617",
+        "weight": 26
+    },
+    "shop.export_jobs.ExportJob.__init__@shop/export_jobs.py:7": {
+        "of": "14a004f6c3a8e0343ceadb95def6a02af9769d01",
+        "normalized": "0c2133809721bc91949edf61bd56401a212e8326",
+        "weight": 5
+    },
+    "shop.export_jobs.ExportJob.run@shop/export_jobs.py:13": {
+        "of": "02f587bf742b78429d6b89bc7e7be4a4e2b95132",
+        "normalized": "ec5b8357c6c0852ad3a94dd37ff4326c606fc2d2",
+        "weight": 7
+    },
+    "shop.export_jobs.ExportSlot.__eq__@shop/export_jobs.py:35": {
+        "of": "378d5ff57382b9e8b7e04431160fe9416fc2a3d6",
+        "normalized": "eabb2b0faaaf65e059c84570ccea9edf08bc44a6",
+        "weight": 7
+    },
+    "shop.export_jobs.ExportSlot.__init__@shop/export_jobs.py:29": {
+        "of": "93e40db2ca3adffdbce8f039b135a5973455051a",
+        "normalized": "61088276c351408373a8a2a0d59fe4e4f14bd3a7",
+        "weight": 5
+    },
+    "shop.export_jobs.ExportSlot._get_hour@shop/export_jobs.py:32": {
+        "of": "cb614bff155143ce8b1f180f9498c137909f26e1",
+        "normalized": "6f3b6fc930031ba74da14f278a4b6130df276310",
+        "weight": 4
+    },
+    "shop.export_jobs.ImportJob.__init__@shop/export_jobs.py:21": {
+        "of": "05f4fe49dcda7f7ea9f76318757e0d9fc87a9f40",
+        "normalized": "31250e9b0d0565478bc5bfe718a1e1100ea8ebb1",
+        "weight": 5
+    },
+    "shop.export_jobs.ImportJob.run@shop/export_jobs.py:24": {
+        "of": "22a4b550d95e7fac17ce58d0aca361d733f04ba4",
+        "normalized": "d9097153f7a615ead85fc26d0f3ea06c77231367",
+        "weight": 6
+    },
+    "shop.exports.export_row@shop/exports.py:4": {
+        "of": "c170766279a79eb1be83dfe84536b7be21210b4b",
+        "normalized": "806874c266e70bea50a1da1992a3f25933c2f8fc",
+        "weight": 20
+    },
+    "shop.feature_flags.FeatureFlags.__init__@shop/feature_flags.py:6": {
+        "of": "b0fbc4aff679d31d9d94f25515d1817a0e38154d",
+        "normalized": "51f81add1d7402fee71388e0d1a5d7c912e57e96",
+        "weight": 6
+    },
+    "shop.feature_flags.FeatureFlags.enable@shop/feature_flags.py:9": {
+        "of": "3a99b02dd2b6090d4fe8c2babe68b5a61e1e0da3",
+        "normalized": "5348dba8399d929e55e6b118b395e7d0347c0ba1",
+        "weight": 7
+    },
+    "shop.feature_flags.FeatureFlags.is_on@shop/feature_flags.py:15": {
+        "of": "c948a7def00a654eb8ef9637fbe0d1207b716f1e",
+        "normalized": "e508f09d1b5dde1e358994458d96dac40d8bea3a",
+        "weight": 6
+    },
+    "shop.feed_reader.FeedUnavailable.at@shop/feed_reader.py:7": {
+        "of": "725dd5dfc31d39717dad5890001a384bf631cbe7",
+        "normalized": "ed8a04ff2ddcff0e5cbf77ec4fe231e9ce2a38eb",
+        "weight": 8
+    },
+    "shop.feed_reader.read_chained_by_hand@shop/feed_reader.py:48": {
+        "of": "6a1bdc5c37872179a3668d16e3d5f9e9bc52a02b",
+        "normalized": "681de60ce14ff59f23243343fe32ce6669688a79",
+        "weight": 26
+    },
+    "shop.feed_reader.read_feed@shop/feed_reader.py:12": {
+        "of": "bf4651a9a63e579d15261a534eebf6749d81218f",
+        "normalized": "ab2d9b941c262f25de2042a82d2ecc556546b423",
+        "weight": 23
+    },
+    "shop.feed_reader.read_feed_from@shop/feed_reader.py:22": {
+        "of": "eeb9efdf10ff838386519548df05b3958e2fb7c5",
+        "normalized": "a25b0297a7d8d50d60f9956a4815c19317b5dfcd",
+        "weight": 24
+    },
+    "shop.feed_reader.read_or_reraise@shop/feed_reader.py:31": {
+        "of": "e81ccb05b9f6c9cdacc79304ef51447805d92638",
+        "normalized": "1131339c3d52de6b3bde98016e3dc0fab9265738",
+        "weight": 19
+    },
+    "shop.feed_reader.setting@shop/feed_reader.py:40": {
+        "of": "296bc86cfd435ab41832ef762d1d7128f45379a6",
+        "normalized": "f486d54aff0a2b03e7bc23f5bc04209dfff12cf5",
+        "weight": 15
+    },
+    "shop.floor_plans.FloorPlan.bay@shop/floor_plans.py:15": {
+        "of": "3015868c07f789254008441214ac39187768b1ef",
+        "normalized": "3a6c3268b97205b00e70a87cd3a7839997e2ed9e",
+        "weight": 6
+    },
+    "shop.floor_plans.bay_or_fail@shop/floor_plans.py:31": {
+        "of": "8381da0a0e001eb3d49030adcd0863a2445254d5",
+        "normalized": "0f3549837809af8bb873cbb573a000810d016e69",
+        "weight": 19
+    },
+    "shop.floor_plans.relabel@shop/floor_plans.py:20": {
+        "of": "c0db090dca56f687b1e7734fba45013406a553ab",
+        "normalized": "8bafdb889f62148a32959f95985643fb273da00f",
+        "weight": 13
+    },
+    "shop.floor_plans.relabel_bay@shop/floor_plans.py:26": {
+        "of": "d3c6b08804dff39fd5b05c7a15ba486d79a4473f",
+        "normalized": "97e8f3b920490ae8ab14290340caed9431401de6",
+        "weight": 7
+    },
+    "shop.freight.quote@shop/freight.py:7": {
+        "of": "5c9ba0b54f3ee9489f8a82b0d7bb0063dfc5291a",
+        "normalized": "9ad3cf9e6c616dda09fc851c3e710372bf9087fd",
+        "weight": 23
+    },
+    "shop.freight.quote_banded@shop/freight.py:14": {
+        "of": "e84dbfd9b9aca788826268ae91e08b02e0e43d3e",
+        "normalized": "cfc1ba2aaa0c5a0cadbe0be0a92aef4aef2a9b92",
+        "weight": 27
+    },
+    "shop.frozen_prices.ShelfPrice.discount@shop/frozen_prices.py:12": {
+        "of": "2baa0eda3645287370191c0188e08704f10e77d1",
+        "normalized": "493fa05b8c1919933393714e4d1ef2a21a0883be",
+        "weight": 15
+    },
+    "shop.frozen_prices.ShelfPrice.label@shop/frozen_prices.py:15": {
+        "of": "78d3a6cece1af78b9fcbc175ae171598d85a0af0",
+        "normalized": "4d4ff7ada7fa11c5ec41b5b5360de3723577dc12",
+        "weight": 11
+    },
+    "shop.frozen_prices.TagPrice.discounted@shop/frozen_prices.py:25": {
+        "of": "f9abad181df0cf1bb0c5cad6e3be5dfa4cb24cce",
+        "normalized": "14e6bf1efc19c1f83a80e547b74bc1013e3cf7cf",
+        "weight": 14
+    },
+    "shop.gift_messages.GiftMessage.__init__@shop/gift_messages.py:8": {
+        "of": "ce4173f0993c0e247884c1a884ea949f215e6bfc",
+        "normalized": "16cd837cbbcfc0e9bfe2e47f0bd328fbe3440720",
+        "weight": 9
+    },
+    "shop.gift_messages.GiftMessage.card@shop/gift_messages.py:12": {
+        "of": "7102414986859210596818f3cd9bee1fe0023a4f",
+        "normalized": "34bb90f31566cac93a79b89c0637da42e7d68f9b",
+        "weight": 8
+    },
+    "shop.gift_notes.GiftWrap.card@shop/gift_notes.py:12": {
+        "of": "daa9fb175be585f93b7cb86a8182d41f884c4d39",
+        "normalized": "876a837891a16ac60c28c86f91c0515c0c64ddb0",
+        "weight": 10
+    },
+    "shop.gift_notes.GiftWrap.needs_card@shop/gift_notes.py:15": {
+        "of": "e00b1a6ccaf38f5e340be664d8bf9e4b0ed38705",
+        "normalized": "1bfcf6e21cf75adabdce514717ae0785e85d851b",
+        "weight": 6
+    },
+    "shop.gift_notes.WrappedGift.card@shop/gift_notes.py:25": {
+        "of": "0b5e4dd106191b41d66e972585b720798498bcf7",
+        "normalized": "82ab099dd53cc6ed4359e7f93c98cca22f96841f",
+        "weight": 10
+    },
+    "shop.gift_wrap.Wrapper.paper@shop/gift_wrap.py:18": {
+        "of": "a2bb04aa9a822c7fc0abc79d522813d86308e7ff",
+        "normalized": "53389771562a5c912c0b134798896ddc9bad9d73",
+        "weight": 8
+    },
+    "shop.gift_wrap.rewrap@shop/gift_wrap.py:26": {
+        "of": "839455ebfebb94ecda3539da99043ab350e22913",
+        "normalized": "03a0c3dbfb071faf3950ab72304dcf1d69beca46",
+        "weight": 13
+    },
+    "shop.gift_wrap.wrap@shop/gift_wrap.py:22": {
+        "of": "7cb712b7eb355c6bea6913ec1f50fe0d50789ccc",
+        "normalized": "e88786c85427c1ec4dbb884d582d424ab7c1a300",
+        "weight": 11
+    },
+    "shop.headlines.headline@shop/headlines.py:6": {
+        "of": "84f79b135e74ed04579802e2e26e727477fdb92a",
+        "normalized": "4c28697506fe3d55fd965aa1deb08418126328d2",
+        "weight": 13
+    },
+    "shop.headlines.headline_for@shop/headlines.py:13": {
+        "of": "67248c13aa0a8553359aa9f7af0bd25e209161fd",
+        "normalized": "00dd834c93798d74b82b474e2098d2493dc3b650",
+        "weight": 13
+    },
+    "shop.holds.hold_order@shop/holds.py:9": {
+        "of": "58d174eb48c502d96bb1ce35dd3f0b9a5a69f517",
+        "normalized": "ebf5550ecd1226f7f1379c49e027ba7a06b0114f",
+        "weight": 38
+    },
+    "shop.holds.release_order@shop/holds.py:16": {
+        "of": "79f212dc6906a752c8bbabf303bca3739339d5ae",
+        "normalized": "ebf5550ecd1226f7f1379c49e027ba7a06b0114f",
+        "weight": 38
+    },
+    "shop.import_progress.ImportProgress.left@shop/import_progress.py:22": {
+        "of": "eed03ea05e88918285af5e0fee71fa9fd2d0fb62",
+        "normalized": "3a6bbc8f8acdd11745141a62d2a8badb4193d43b",
+        "weight": 10
+    },
+    "shop.import_progress.StockImport.__init__@shop/import_progress.py:7": {
+        "of": "957bc33e50f38f10fabe2e2388d36ae518df4146",
+        "normalized": "5ecd58452e7a733200f516908d88cddf75553c74",
+        "weight": 5
+    },
+    "shop.import_progress.StockImport.progress@shop/import_progress.py:10": {
+        "of": "63dc8891b9da22d3d471647700771480e2abdf52",
+        "normalized": "dca13834a4023109f95d373473484e622a3d0e5d",
+        "weight": 16
+    },
+    "shop.imports_progress.StockImport.__init__@shop/imports_progress.py:7": {
+        "of": "957bc33e50f38f10fabe2e2388d36ae518df4146",
+        "normalized": "5ecd58452e7a733200f516908d88cddf75553c74",
+        "weight": 5
+    },
+    "shop.imports_progress.StockImport.run@shop/imports_progress.py:11": {
+        "of": "997390181042e56bb093092af1c15d0a7891f3f8",
+        "normalized": "13822854c223fe3f84443955a87da83ebc7833f3",
+        "weight": 28
+    },
+    "shop.imports_progress.StockImport.run_reporting@shop/imports_progress.py:18": {
+        "of": "2b501cfe9e7b5a0c6ab3a81812cee0edd3eebebf",
+        "normalized": "03b9d44755051263ce70a952dd89dc33de75d70d",
+        "weight": 21
+    },
+    "shop.inventory.Inventory.__init__@shop/inventory.py:11": {
+        "of": "165e01c14a70e65eb506264f1f3a92aadd46c57e",
+        "normalized": "18d5f38ac6734d284f5a5a9e549960a867b157be",
+        "weight": 7
+    },
+    "shop.inventory.Inventory.on_hand@shop/inventory.py:14": {
+        "of": "4a1c6d35926b87e8031a70fb3c1829ecb5a0c121",
+        "normalized": "240cbc651c2b49b1b7fe315157fc922e80837b8c",
+        "weight": 8
+    },
+    "shop.inventory.Inventory.reserve@shop/inventory.py:17": {
+        "of": "b49684320ed5517b066f8475f430b81ec80955b6",
+        "normalized": "e1256135e4b6e79db65963cda76e002acc69d4f5",
+        "weight": 21
+    },
+    "shop.inventory.OutOfStock.for_sku@shop/inventory.py:5": {
+        "of": "be679782a3d3b0d1af8688e3dfb3d7f15aa393a7",
+        "normalized": "0234cd8ad0af39f23c046eb74783876453195dca",
+        "weight": 9
+    },
+    "shop.invoice_numbers.next_invoice_number@shop/invoice_numbers.py:12": {
+        "of": "430e96cd21b80ca36e6f227ba7845e24edd4f9aa",
+        "normalized": "3f7d88b986d61fc075b3a9f0a355316939eab92a",
+        "weight": 9
+    },
+    "shop.invoice_numbers.next_number@shop/invoice_numbers.py:7": {
+        "of": "430e96cd21b80ca36e6f227ba7845e24edd4f9aa",
+        "normalized": "3f7d88b986d61fc075b3a9f0a355316939eab92a",
+        "weight": 9
+    },
+    "shop.invoice_render.InvoiceSheet.__init__@shop/invoice_render.py:21": {
+        "of": "021ada854220bb3e081205c9a4fbc6850c63ab71",
+        "normalized": "bb4be9b2cdf4ef2bb473d7ecfbe3b2665035e887",
+        "weight": 9
+    },
+    "shop.invoice_render.InvoiceSheet.render_compact@shop/invoice_render.py:25": {
+        "of": "6c5f5af8e7846e117c9bff8b4963ab40a430c2bf",
+        "normalized": "8b9f0b635fe220ddfa696c8f251c5381c1bc067f",
+        "weight": 11
+    },
+    "shop.invoice_render.InvoiceSheet.render_full@shop/invoice_render.py:28": {
+        "of": "c8c6fbae397097caf22f5b3a4082f75fabff6fb8",
+        "normalized": "8f0898b1bb5c783924f9f0c7e62a93b2cd7ced4a",
+        "weight": 11
+    },
+    "shop.invoice_render.InvoiceView.__init__@shop/invoice_render.py:6": {
+        "of": "021ada854220bb3e081205c9a4fbc6850c63ab71",
+        "normalized": "bb4be9b2cdf4ef2bb473d7ecfbe3b2665035e887",
+        "weight": 9
+    },
+    "shop.invoice_render.InvoiceView.render@shop/invoice_render.py:11": {
+        "of": "61e6c3466cdd8c53f69c7cb3e1e9772b37aae562",
+        "normalized": "5e5ae9737879d5f282cc4825475390a6bd4766e4",
+        "weight": 25
+    },
+    "shop.invoice_split.split_invoice@shop/invoice_split.py:20": {
+        "of": "986898c5b041111fd8864dc25beb81f226022020",
+        "normalized": "cd81f05c49416b11ff42ec8af952d9f44335aad1",
+        "weight": 16
+    },
+    "shop.invoice_split.split_total@shop/invoice_split.py:6": {
+        "of": "4dcb88a205ccf80b5105c3acfb4ed59a578bd688",
+        "normalized": "2e3e721b12e31891c98150465b1b83bbb1ffa9d1",
+        "weight": 12
+    },
+    "shop.invoicing.invoice_all@shop/invoicing.py:5": {
+        "of": "cf398470c106914b293b159ac2b3d10686ed1e6e",
+        "normalized": "0e87d898667cf2133e8a6311748eb77e2edb1e89",
+        "weight": 32
+    },
+    "shop.invoicing.invoice_delivered@shop/invoicing.py:17": {
+        "of": "4a553a942e893676448bdc49e536468ef370adc9",
+        "normalized": "d8de409d37c3af82245d28bbe5ca8d93210c5372",
+        "weight": 34
+    },
+    "shop.kiosk_receipts.KioskSession.items@shop/kiosk_receipts.py:7": {
+        "of": "12bc1de62be7322fe068f1832add7f4211413db9",
+        "normalized": "29cdf3663714b9fee5de0621d174b6000f3d85e2",
+        "weight": 3
+    },
+    "shop.kiosk_receipts.KioskSession.paid_by_card@shop/kiosk_receipts.py:10": {
+        "of": "f80589743ddc96c3f5b590c8dcc8a21f37d7f2f2",
+        "normalized": "1768ca99587a7eef8a83ea37c8649e2422b2f581",
+        "weight": 3
+    },
+    "shop.kiosk_receipts.banner@shop/kiosk_receipts.py:28": {
+        "of": "652b58fbb241b3ea895e1634e17de4d1e57e8f2f",
+        "normalized": "94393a50ec3d4e9ff352fe6f56accd26cd173742",
+        "weight": 6
+    },
+    "shop.kiosk_receipts.finish@shop/kiosk_receipts.py:23": {
+        "of": "af8f96f6de9b4707a12f5aac5db8d6f99c935160",
+        "normalized": "545b71c93fa3e0749cdd71bb854490743a3bf7a6",
+        "weight": 12
+    },
+    "shop.kiosk_receipts.kiosk_banner@shop/kiosk_receipts.py:32": {
+        "of": "7205777bb1da60c40298db94c5e2d9e0765a1d53",
+        "normalized": "5ad2f5df7e47320f850e32c9447b66b26dd85d50",
+        "weight": 13
+    },
+    "shop.kiosk_receipts.receipt@shop/kiosk_receipts.py:14": {
+        "of": "ccc5fab52b17c3dd7c113c983c04f0b59ae0200e",
+        "normalized": "1915b5bb1091155f66d6a78c53385036cee531d7",
+        "weight": 12
+    },
+    "shop.kiosk_receipts.receipt_of@shop/kiosk_receipts.py:19": {
+        "of": "f21da17ba3eccb26373e2ed6967fbcbf22630495",
+        "normalized": "68e0602419fc9dc72a70b331d54c217d09c6e0f2",
+        "weight": 17
+    },
+    "shop.label_queue.LabelQueue.__init__@shop/label_queue.py:6": {
+        "of": "adfe16a1ffeabc7baccc729629db0a256566260d",
+        "normalized": "444c70d3939e634b04d930b054d9b39087225810",
+        "weight": 5
+    },
+    "shop.label_queue.LabelQueue.peek@shop/label_queue.py:17": {
+        "of": "29cfbd1dace6d5ed20f825ab6cd5f4955b26e279",
+        "normalized": "90b2645297c2b7f8e72b8b602b690deb9d2c7e94",
+        "weight": 6
+    },
+    "shop.label_queue.LabelQueue.pop@shop/label_queue.py:9": {
+        "of": "d05f43103cd177c168205b31d85e71fa6f6e0e1c",
+        "normalized": "5456291dc29182c99bc1966a8829da66beadea9e",
+        "weight": 16
+    },
+    "shop.label_sizes.custom_label@shop/label_sizes.py:24": {
+        "of": "9cb7304943ada836e47be8bb3041a828be3cc507",
+        "normalized": "92bb4fcec7d016ca8cf3c945982d01d7a81a81cf",
+        "weight": 7
+    },
+    "shop.label_sizes.price_label@shop/label_sizes.py:15": {
+        "of": "945c4f9d5901817447c8b945204a68bb6975a0ac",
+        "normalized": "85823afbf0f1ad979daeef16cbe6766b06547423",
+        "weight": 12
+    },
+    "shop.label_sizes.print_label@shop/label_sizes.py:11": {
+        "of": "57aca7364c052bba804730765b31e052b8df2507",
+        "normalized": "523ce587939455a3f6772a8fc578a2bf10ad1ca0",
+        "weight": 7
+    },
+    "shop.label_sizes.promo_label@shop/label_sizes.py:19": {
+        "of": "81458f18f72f0e24f7da65ceb1adac80c7d0a174",
+        "normalized": "92bb4fcec7d016ca8cf3c945982d01d7a81a81cf",
+        "weight": 7
+    },
+    "shop.labels.print_labels@shop/labels.py:4": {
+        "of": "e06213fdaf0e56a53e9cbd9e7b2cc43fa5706db1",
+        "normalized": "6c945e5ac0968e80c61091e7b35c5d9f794b72cd",
+        "weight": 32
+    },
+    "shop.layout.DeliveryNote.rows@shop/layout.py:14": {
+        "of": "2ed50c6924ba8b09cc97721789dfc2c657f1b6b9",
+        "normalized": "85df5ed644706a82f417ae948979a6661b63857b",
+        "weight": 5
+    },
+    "shop.layout.ReturnForm.line_items@shop/layout.py:20": {
+        "of": "2ed50c6924ba8b09cc97721789dfc2c657f1b6b9",
+        "normalized": "85df5ed644706a82f417ae948979a6661b63857b",
+        "weight": 5
+    },
+    "shop.layout.describe_lines@shop/layout.py:8": {
+        "of": "7dd1ca1ee74c93313a7617829002f408fdf5e9c2",
+        "normalized": "7bac8e0a4a226bcc6f33acd8f3b7b7a1ebcead56",
+        "weight": 23
+    },
+    "shop.layout.grid.cell@shop/layout/grid.py:7": {
+        "of": "f38a0098520c96a35f99c0f8dab2ccbf71fd52fd",
+        "normalized": "b89e96f3f672999f8bdbacfa54b414cd7e96fd0c",
+        "weight": 8
+    },
+    "shop.layout.row.row@shop/layout/row.py:8": {
+        "of": "def5b53a8a2d65e3443355021a7b9e484337d71e",
+        "normalized": "f8b5a4f6209c72664d528b2a98901db7a0e011cf",
+        "weight": 8
+    },
+    "shop.layout.theme.colour@shop/layout/theme.py:6": {
+        "of": "b282dbc4bebec57af2a3bf7e5756d1ca31773d50",
+        "normalized": "e4826ec1d956328566a04814d8f155d1667c6d4e",
+        "weight": 6
+    },
+    "shop.ledger_dump.dump@shop/ledger_dump.py:6": {
+        "of": "23ed9e3ff43d0672c4a3846759af3c4059884838",
+        "normalized": "32f1e4160a8761b2c840fcedc775e82139071edc",
+        "weight": 27
+    },
+    "shop.ledger_export.LazyLedgerExport.__init__@shop/ledger_export.py:19": {
+        "of": "f75fd96ea26ed09f653592419bc7135225485394",
+        "normalized": "68b250e1905e69a17ede0bf153aec7c54321ba3a",
+        "weight": 9
+    },
+    "shop.ledger_export.LazyLedgerExport.body@shop/ledger_export.py:23": {
+        "of": "3deb7ac75a48cdb92b8a99a11577d261e8a59266",
+        "normalized": "37930373ead43e99a556730d9975b96dc627d366",
+        "weight": 10
+    },
+    "shop.ledger_export.LedgerExport.__init__@shop/ledger_export.py:8": {
+        "of": "a22425445afa4630fd33d14424fff5f96eeea0b4",
+        "normalized": "cbb5a960cd1bb2ed058243b88ea9eb86bc04a635",
+        "weight": 16
+    },
+    "shop.ledger_export.LedgerExport.body@shop/ledger_export.py:13": {
+        "of": "3deb7ac75a48cdb92b8a99a11577d261e8a59266",
+        "normalized": "37930373ead43e99a556730d9975b96dc627d366",
+        "weight": 10
+    },
+    "shop.ledger_lines.ledger_line@shop/ledger_lines.py:12": {
+        "of": "81b3c79e49ed2bdee57fbff6b2a33279c37c33cc",
+        "normalized": "0d147fe74df23efcec78f8661fd4e108ab2dd208",
+        "weight": 10
+    },
+    "shop.ledger_lines.ledger_line_for@shop/ledger_lines.py:17": {
+        "of": "409d81f8ecb35319f4fe187ef3429f050a1ac577",
+        "normalized": "12ee5167a836f0ae92dc3be2ec78bcdf80330abc",
+        "weight": 14
+    },
+    "shop.ledger_posting.Posting.__init__@shop/ledger_posting.py:7": {
+        "of": "675dc9480fbdd67e8d9b73f1cd6f3b6d171cf382",
+        "normalized": "a51d8157f918e42a6e9cd5c9594244711ee8a3b6",
+        "weight": 5
+    },
+    "shop.ledger_posting.Posting.post@shop/ledger_posting.py:10": {
+        "of": "b8650516f1bf5efa6839e74f698ba26d3052c6c6",
+        "normalized": "d168adab2663809f29d3b8600b4a199a4c11833e",
+        "weight": 14
+    },
+    "shop.ledger_posting.Posting.post_honestly@shop/ledger_posting.py:15": {
+        "of": "45dc0e936a062e1dd0cbfc70c44188dee7de8911",
+        "normalized": "8814d708e271f61c2bac8040c2ac42bffaa98c34",
+        "weight": 9
+    },
+    "shop.listeners.Listeners.__init__@shop/listeners.py:8": {
+        "of": "e95808c3162749934c9d92e36387f5bc66a08575",
+        "normalized": "191391c75b2164a7c080c1e6d8b4df9f86d19197",
+        "weight": 5
+    },
+    "shop.listeners.Listeners.notify@shop/listeners.py:12": {
+        "of": "b04fd6ad3635bb050c41e35dfcf256d2afa4455d",
+        "normalized": "59fe5d8ed40f4abdfaa3cc0a4afb9d5843f39aa4",
+        "weight": 14
+    },
+    "shop.listeners.archive@shop/listeners.py:23": {
+        "of": "718a361a8fc9585f3fdf3b0f98aebf729ed2defe",
+        "normalized": "7a11c293d0df0d8a1629b54bdc0ac09ed2219e04",
+        "weight": 21
+    },
+    "shop.listeners.reports@shop/listeners.py:18": {
+        "of": "13d8f68a1ef5f8b23ae6e441c4789dbe698c60b0",
+        "normalized": "9bc01299d5e565e8a61336aead5020f971b59500",
+        "weight": 11
+    },
+    "shop.log_bundles.bundle@shop/log_bundles.py:26": {
+        "of": "bb018425c35d94361f457415e247ab938e881fdb",
+        "normalized": "7e2400484eaeffc0200629e325805a517be82e82",
+        "weight": 12
+    },
+    "shop.log_bundles.bundle_day@shop/log_bundles.py:17": {
+        "of": "9c696a0776a4165bcfbf1d5fd56068748cab4d36",
+        "normalized": "92c0e3e293623e24c161a5b2b0e6f7ca0babb0a8",
+        "weight": 39
+    },
+    "shop.log_bundles.bundle_week@shop/log_bundles.py:8": {
+        "of": "5badee73e47d933c742b9618ecec5a5b656a3b22",
+        "normalized": "b774cb014f4b8f851180d539d948933306c869ea",
+        "weight": 55
+    },
+    "shop.lookups.first_open@shop/lookups.py:15": {
+        "of": "45973d9cb0b5739e7bc1243556a89f03244cf24d",
+        "normalized": "7268bb9049daa07fa57bff94a9c9742819a06374",
+        "weight": 17
+    },
+    "shop.lookups.paid_orders@shop/lookups.py:6": {
+        "of": "49fb3e24996dc3a30428b6e2ad2870914c518085",
+        "normalized": "9b8b856f8529cceeb2ea1f304d46c15a0f55f9d5",
+        "weight": 19
+    },
+    "shop.loyalty_cards.LoyaltyCard.redeemable@shop/loyalty_cards.py:11": {
+        "of": "7dd6135e0ec8d4419eb36b2e5c2511fb56afb7d2",
+        "normalized": "e3a3b170de01b323fde89cba4ff9433cf3f768be",
+        "weight": 7
+    },
+    "shop.loyalty_cards.StampCard.full@shop/loyalty_cards.py:25": {
+        "of": "7440cd4fae24ea51e07a0c7bf0581239565e8e5d",
+        "normalized": "1a8af6184cc135a9c994d2aca36f38ed4f18562f",
+        "weight": 7
+    },
+    "shop.loyalty_points.Account.__init__@shop/loyalty_points.py:28": {
+        "of": "e5ef2f1b833cd622c21807ea406efc4c24b9c41b",
+        "normalized": "fd82e4028dcf92e78d45a26d1d42d17e5f64e345",
+        "weight": 9
+    },
+    "shop.loyalty_points.Account.can_redeem@shop/loyalty_points.py:32": {
+        "of": "637132533f0f66d20d5233128c7826b24450aba0",
+        "normalized": "45e1ba1c7c2e0a9c74badd26685d38de6f75042b",
+        "weight": 10
+    },
+    "shop.loyalty_points.Account.redeem@shop/loyalty_points.py:35": {
+        "of": "ae675e40daa5d34ecb3fd8da31f21d5ec620ef1d",
+        "normalized": "f39ffbd27902ed57bff552c78796ad3e361d0dab",
+        "weight": 16
+    },
+    "shop.loyalty_points.Member.__init__@shop/loyalty_points.py:7": {
+        "of": "78ecc33f4afc99087b9f2bfb0de647d4a005ee91",
+        "normalized": "7cb060b5f06653d6818f4a1051c249118a418e97",
+        "weight": 13
+    },
+    "shop.loyalty_points.preview@shop/loyalty_points.py:20": {
+        "of": "0c2dfc18c0ab556699ec17b2bf63c97ad2f1467d",
+        "normalized": "abaaaeb997178bd2d520d06bac3296cb12dfa93e",
+        "weight": 16
+    },
+    "shop.loyalty_points.redeem@shop/loyalty_points.py:13": {
+        "of": "a3018ba7168cc9d7302ea9a6ba1ec6d027162c71",
+        "normalized": "6874edd7d290438c3eafbbe8da6b3623737600d2",
+        "weight": 20
+    },
+    "shop.loyalty_points.tier_badge@shop/loyalty_points.py:47": {
+        "of": "0b112f1569d355f6b3d4459a1ef01659ffb0855f",
+        "normalized": "b1b7705357a3e80cc55c67dd102afd38a2d1dcfd",
+        "weight": 14
+    },
+    "shop.loyalty_points.tier_label@shop/loyalty_points.py:42": {
+        "of": "62a8c5662383fa84e670e105f9409d8d2b865764",
+        "normalized": "2416416c3a93a5c4d69adbe928547a06fab3e375",
+        "weight": 13
+    },
+    "shop.loyalty_tiers.Tier.earns_points@shop/loyalty_tiers.py:11": {
+        "of": "229aeee71ac2548f4d9e50e80cfc539d52813547",
+        "normalized": "fa2cfd6094f963230e2f40acf2347d5c277786f9",
+        "weight": 9
+    },
+    "shop.loyalty_tiers.is_card_payment@shop/loyalty_tiers.py:36": {
+        "of": "48389d68ead1af8677138d9237e6e714b2480cd5",
+        "normalized": "a683f1abbb23d3bbd5c8a7d9d859eb36c7e2f6d7",
+        "weight": 7
+    },
+    "shop.loyalty_tiers.points_earned@shop/loyalty_tiers.py:24": {
+        "of": "e6f62f21f2ea606dac65d44e2dfb99431c4aaefa",
+        "normalized": "d963afb9ba7133f5ac0985fd89b7d2ee7de7a6be",
+        "weight": 14
+    },
+    "shop.loyalty_tiers.points_for@shop/loyalty_tiers.py:16": {
+        "of": "0ecefc2b2012626e0bf07a07e3ded180d990eb2b",
+        "normalized": "96619e961d4314806b30035a424d8186ba1618b6",
+        "weight": 15
+    },
+    "shop.loyalty_tiers.top_tier@shop/loyalty_tiers.py:31": {
+        "of": "6e4ed2e543869eefc7ef898e62d0cbd8e0190f6b",
+        "normalized": "983d61dbd717be289278c60f23966f544b8d095c",
+        "weight": 10
+    },
+    "shop.mailer_options.headers@shop/mailer_options.py:17": {
+        "of": "46a9674cb3b52e193276f0a5cdb866227ad461af",
+        "normalized": "9c6cdcef49d30dc651e110bc622ec45c94d7f466",
+        "weight": 7
+    },
+    "shop.mailer_options.layout@shop/mailer_options.py:22": {
+        "of": "cd0984f28ed640339da131b3f290617702e9c555",
+        "normalized": "4d7ea8f16997f6657cab910123ec79f6d731d6cc",
+        "weight": 8
+    },
+    "shop.mailer_options.notify@shop/mailer_options.py:6": {
+        "of": "b21be8af334a324ad9ea4542d481c28de2ce5235",
+        "normalized": "dafbee31c901ad4dc09957b0a852416701de6567",
+        "weight": 14
+    },
+    "shop.mailer_options.notify_all@shop/mailer_options.py:12": {
+        "of": "e3b2b82c3691bad482c5cf32f22daf31677924c6",
+        "normalized": "f461fbcebc09a82e3673c2132ea43b84406e0a3b",
+        "weight": 9
+    },
+    "shop.markdown_runs.HonestMarkdownRun.run@shop/markdown_runs.py:24": {
+        "of": "a68d11ae2a778d5cb743e518bb85daf7899611e2",
+        "normalized": "bde5d1980bf026d135122cc4dd41039191ee3924",
+        "weight": 11
+    },
+    "shop.markdown_runs.Markdown.applies_to@shop/markdown_runs.py:5": {
+        "of": "a65d982106ea2f5b144c85f8e2226272f2d1b4bd",
+        "normalized": "d740cce467ac865ee25cdbc471ba2fe5245bee7e",
+        "weight": 6
+    },
+    "shop.markdown_runs.MarkdownRun.__init__@shop/markdown_runs.py:10": {
+        "of": "66b3be428bc212d526d558f5cf2d814d1040efef",
+        "normalized": "8a7769a53e10572a99551dabe219836958cc9f5b",
+        "weight": 5
+    },
+    "shop.markdown_runs.MarkdownRun.reduced@shop/markdown_runs.py:17": {
+        "of": "1b5fc46a2ca359b558738d5a13e16d3a29e18552",
+        "normalized": "f4ddb425a686124315cff7db10540c84a0e66672",
+        "weight": 11
+    },
+    "shop.markdown_runs.MarkdownRun.run@shop/markdown_runs.py:13": {
+        "of": "34b1dcaec52ee6cc7711bfae5a2bae796734bdea",
+        "normalized": "f92fead2d07446622294b3b9d86554a8f514d821",
+        "weight": 15
+    },
+    "shop.menu_boards.BoardPainter.__init__@shop/menu_boards.py:27": {
+        "of": "7d1460570ecf6a9cf11cbc496f2f35c702328fb9",
+        "normalized": "ee364d43d17a94b0075ecef1a353356f261c3868",
+        "weight": 5
+    },
+    "shop.menu_boards.BoardPainter.paint@shop/menu_boards.py:35": {
+        "of": "2d47adf6786550d15190e9551e8799a62381b775",
+        "normalized": "33e84b43a1e0ace1e246f3ebde9143f3f4879a3c",
+        "weight": 12
+    },
+    "shop.menu_boards.BoardPainter.vegan_line@shop/menu_boards.py:31": {
+        "of": "1ae5aa9789d5a8f5561c8204df53b0f49ef24621",
+        "normalized": "f594566f13e4cade249a278c41bd732adec38228",
+        "weight": 14
+    },
+    "shop.menu_boards.Chalk.write@shop/menu_boards.py:22": {
+        "of": "186794f125ec0717f6bc0131725c564254c0dbf8",
+        "normalized": "7837581f9231d59fcd08a80a38e17b61cdcae232",
+        "weight": 2
+    },
+    "shop.menu_boards.MenuBoard.vegan_names@shop/menu_boards.py:17": {
+        "of": "392ae99d41b33edddeb50d022187c55029e469d8",
+        "normalized": "09cf0c92bb414fb21a1cb078ec1b295579acd8b2",
+        "weight": 11
+    },
+    "shop.menus.sidebar.sidebar@shop/menus/sidebar.py:7": {
+        "of": "b0d563ca809889f8c6f3945427241024c3378ee0",
+        "normalized": "9495cc4a00e9aca9c9262fc438d7968568466e34",
+        "weight": 12
+    },
+    "shop.notes.Order.__init__@shop/notes.py:7": {
+        "of": "72fccffeec50eda93e5b61b74d9441c52ae68038",
+        "normalized": "e18d052859e81a3a473b9f2da8c11aae55f39171",
+        "weight": 5
+    },
+    "shop.notes.Order.has_note@shop/notes.py:10": {
+        "of": "d3c15d17297a22192dbc92459035ad0c837770c5",
+        "normalized": "6771df534a657002ccbf3764e6f725c42b1ba1ac",
+        "weight": 8
+    },
+    "shop.notes.Order.is_noted@shop/notes.py:15": {
+        "of": "a1d9f283550c8c9c4a6b482d2b7b0342154468e2",
+        "normalized": "aec64fbb74fdc8ee0b6d6d208cb3ae10c9c02705",
+        "weight": 6
+    },
+    "shop.opening_hours.Hours.covers@shop/opening_hours.py:11": {
+        "of": "8385a0c5fc7acb406d939128d7ae89837e32a2a9",
+        "normalized": "2a19c366ab3b7935bc196aebee93192d2f997c46",
+        "weight": 8
+    },
+    "shop.opening_hours.OpenWeekday.__init__@shop/opening_hours.py:32": {
+        "of": "f6430824986cb98432a077d20e29b37a7ac654fa",
+        "normalized": "1ce35fad808eb9201c2ed18dee171ddbcc371765",
+        "weight": 9
+    },
+    "shop.opening_hours.OpenWeekday.label@shop/opening_hours.py:36": {
+        "of": "3fa6c8c71cc5177c609542a2f9263209b24305fb",
+        "normalized": "4d33e4e6539ba52efbc5e93a1aec89c8a7878fff",
+        "weight": 13
+    },
+    "shop.opening_hours.Weekday.__init__@shop/opening_hours.py:17": {
+        "of": "ddef1706226d3a69052e5ecfa37f471a6cef40f3",
+        "normalized": "e2931dbfceae903d2e059758de4ad19b3da2dcb7",
+        "weight": 13
+    },
+    "shop.opening_hours.Weekday.hours@shop/opening_hours.py:22": {
+        "of": "59e07902d1f6f397144f05354d71641088b4a5a1",
+        "normalized": "c006f061334194ee612bb16643d24381a93ad591",
+        "weight": 8
+    },
+    "shop.opening_hours.Weekday.label@shop/opening_hours.py:25": {
+        "of": "2077eb7b5559fd80fdc03f10181a700111f18215",
+        "normalized": "f91694297395a5f4265bf8cd34f4ea46dd2ae318",
+        "weight": 18
+    },
+    "shop.order_archive.archive@shop/order_archive.py:4": {
+        "of": "c884949449626b2c25866bdd69477178db2f2621",
+        "normalized": "19104faefd1860eff5c3e91804ab1661dd24831c",
+        "weight": 10
+    },
+    "shop.order_cards.card_for@shop/order_cards.py:12": {
+        "of": "1b25cea098d7d0bd0887dd1cb4650336bc3eebaf",
+        "normalized": "6b1f2b7aad2471879c6ee743852f805dadb00b99",
+        "weight": 9
+    },
+    "shop.order_cards.heading_for@shop/order_cards.py:24": {
+        "of": "25ed093fa52854f0c6571187ee1ff0cb37be5938",
+        "normalized": "d31a9a83f0e1a99e41bd8392c8857712e58529aa",
+        "weight": 7
+    },
+    "shop.order_emails.ConfirmationEmail.__init__@shop/order_emails.py:5": {
+        "of": "8b66256ea350281f012b77ce7ee2c64b56833b82",
+        "normalized": "5ee561764810ff6113ada6ec17823f48a88c847d",
+        "weight": 9
+    },
+    "shop.order_emails.ConfirmationEmail.body@shop/order_emails.py:9": {
+        "of": "f6806d6647ebe8e2b2a99bb813483726ae08d06d",
+        "normalized": "4d50f9028ee512e61c3063214caa8ab91eb2a8b0",
+        "weight": 18
+    },
+    "shop.order_exports.OrderExport.__init__@shop/order_exports.py:6": {
+        "of": "c68fee657429fc8e6916ee4898effa7a78b05542",
+        "normalized": "bb1d4f9bd915bf6ce5fdf926e3d778cc5ca20872",
+        "weight": 5
+    },
+    "shop.order_exports.OrderExport.to_csv@shop/order_exports.py:10": {
+        "of": "fdafbf5309269a2a9cda97edcf8d1e35b03b14db",
+        "normalized": "685a9a12b687beede600b622f1b7ff5d7df7b650",
+        "weight": 13
+    },
+    "shop.order_exports.OrderExport.to_json@shop/order_exports.py:15": {
+        "of": "e977cefd2bfaea506a80b7d8ecd1c2b4ab375945",
+        "normalized": "4b53399d321775e144c63b6705006f9122e18440",
+        "weight": 6
+    },
+    "shop.order_numbers.OrderNumberSequence.__init__@shop/order_numbers.py:20": {
+        "of": "b3b81afc6251f178ffea4a35814d86eac233f75f",
+        "normalized": "e80e6403efa2a28a5ab147a83c1a6cce1b5b5fff",
+        "weight": 5
+    },
+    "shop.order_numbers.OrderNumberSequence.next@shop/order_numbers.py:23": {
+        "of": "5e700fb2cfa72070d58b291a9bdfe54b993155f9",
+        "normalized": "de837c0185b4af1492019ca7996915587dd8a5ec",
+        "weight": 11
+    },
+    "shop.order_numbers.OrderNumbers.next@shop/order_numbers.py:12": {
+        "of": "4a6bfe719aa6dee9e9bdc1c12dccf93b633d58a3",
+        "normalized": "de837c0185b4af1492019ca7996915587dd8a5ec",
+        "weight": 11
+    },
+    "shop.order_numbers.sku_pattern@shop/order_numbers.py:29": {
+        "of": "20c324f24c7b7228a61217707b452dab83ef56de",
+        "normalized": "1d9a00998f484d30249bd31775ee892efa68b337",
+        "weight": 16
+    },
+    "shop.orders.Line.total@shop/orders.py:14": {
+        "of": "82db52486152b467b479def6fdcbeed43f25861c",
+        "normalized": "7a868756e3a1dc7f101467a49288c6de39a02378",
+        "weight": 7
+    },
+    "shop.orders.Order.is_empty@shop/orders.py:26": {
+        "of": "5b81b0be3e5834a9d8d3949a2e949b91862e1796",
+        "normalized": "24dd9a66c24f19fb2bcc61e1e528b5fda5e7d1e8",
+        "weight": 5
+    },
+    "shop.orders.Order.total@shop/orders.py:23": {
+        "of": "2e85eef2e7403fe31c50243d6985e5333653f42f",
+        "normalized": "9660c99643a5407273e6eeb9755b484448857a6d",
+        "weight": 12
+    },
+    "shop.packing.pack@shop/packing.py:5": {
+        "of": "e61f55b1675174e203d0f1eee30ec90b17d3c057",
+        "normalized": "0beb4025673051eb14364c4c202362c4eadf4499",
+        "weight": 35
+    },
+    "shop.packing_slips.pick_list@shop/packing_slips.py:26": {
+        "of": "3ab6a6879e1f17dd5e58132a0cc24f846d6cf336",
+        "normalized": "284024a257e93076d9a2dfd521b4144052b68957",
+        "weight": 12
+    },
+    "shop.packing_slips.slip@shop/packing_slips.py:6": {
+        "of": "382c8dbc26413a6a10ca85e715b74c04eeff36af",
+        "normalized": "4993e8627c360e058cedea19d516a17d7be8009a",
+        "weight": 17
+    },
+    "shop.packing_slips.slip_shown@shop/packing_slips.py:17": {
+        "of": "5c92f870799ecec0861a6cf5ff803f785182913c",
+        "normalized": "802c9721f7779c3f8445ddc17e62f5576db726a9",
+        "weight": 12
+    },
+    "shop.pagination.label@shop/pagination.py:6": {
+        "of": "fc213451ec7561e0a0ba072249663c93caf953e0",
+        "normalized": "8fa89d7649e8a3570df342e83e15cba6d1a121f5",
+        "weight": 7
+    },
+    "shop.pagination.mode@shop/pagination.py:16": {
+        "of": "6f83aabec855e9729d6d54cc437cc9e8bf12ce9a",
+        "normalized": "c63cd5dc444c997d3ce13332afaef9440c4480d0",
+        "weight": 9
+    },
+    "shop.pagination.window@shop/pagination.py:11": {
+        "of": "b4fd0dc86c3503cbc9e5bc87ee39b3adae9adda0",
+        "normalized": "cfe7cd9267b61831d01be164a2dbdd81b228dacf",
+        "weight": 15
+    },
+    "shop.pallet_loads.DockPlanner.heaviest_crate@shop/pallet_loads.py:22": {
+        "of": "dd93f369d7f87ecfd31bbdab6a92d4a1176fb8d1",
+        "normalized": "86ce6e19d25b790644687a1287f0bf639884ca78",
+        "weight": 18
+    },
+    "shop.pallet_loads.DockPlanner.heaviest_on@shop/pallet_loads.py:29": {
+        "of": "e397dd5888cb9840ed57ef23c4f33d7e0d70fa3b",
+        "normalized": "256c2f2cf81d4085ac593cbe0f1a05b430392871",
+        "weight": 5
+    },
+    "shop.pallet_loads.Pallet.heaviest@shop/pallet_loads.py:16": {
+        "of": "706e4ebb7559d5d2aca6d8b944140e78921d1491",
+        "normalized": "4ac6fadb315a1863d744442a380621affce324c9",
+        "weight": 13
+    },
+    "shop.parcel_kinds.Envelope.__init__@shop/parcel_kinds.py:6": {
+        "of": "9612734c18d4bf0a71063ccd65066359c1f64da8",
+        "normalized": "770abee6d85dfd9e2742b778917be781b255f1d8",
+        "weight": 5
+    },
+    "shop.parcel_kinds.Envelope.kind@shop/parcel_kinds.py:10": {
+        "of": "e33b9ac0a24c58f5dc31d4352c69301fa4b623c3",
+        "normalized": "49313075f30b8b322493027d90e1ffab4b346ca6",
+        "weight": 3
+    },
+    "shop.parcel_kinds.Letter.__init__@shop/parcel_kinds.py:19": {
+        "of": "9612734c18d4bf0a71063ccd65066359c1f64da8",
+        "normalized": "770abee6d85dfd9e2742b778917be781b255f1d8",
+        "weight": 5
+    },
+    "shop.parcel_labels.express_label@shop/parcel_labels.py:9": {
+        "of": "cd9cc393ddf5da3117c77ed8aa4086bb514fc1c0",
+        "normalized": "ff79ef9c5b89ff61c323b32c7feb06858bdf07a5",
+        "weight": 5
+    },
+    "shop.parcel_labels.label_for@shop/parcel_labels.py:5": {
+        "of": "bae1a9e8af04a8cda9644de769bc018b660c8d97",
+        "normalized": "60cab9c96da59d083546a429bbaf3c53ae40e812",
+        "weight": 11
+    },
+    "shop.parcel_labels.standard_label@shop/parcel_labels.py:13": {
+        "of": "a8d9564080e9e32e46b6ccde2535be9035c23332",
+        "normalized": "6d31836b72729888caa48e9ef43f43ad9c6dd106",
+        "weight": 8
+    },
+    "shop.parcel_locks.LockerDoor.__init__@shop/parcel_locks.py:6": {
+        "of": "1998209afbc7551738ef1ae7851cbb06c9196404",
+        "normalized": "bac1718c760abcc90f7fe821bbc715f2424e7235",
+        "weight": 9
+    },
+    "shop.parcel_locks.LockerDoor.locks@shop/parcel_locks.py:11": {
+        "of": "6d615f7a340b5a9723ce98023e6401b959b32277",
+        "normalized": "36f052f0ea0b705f47abc7ce4dd22c9260183828",
+        "weight": 4
+    },
+    "shop.parcel_locks.LockerHatch.__init__@shop/parcel_locks.py:17": {
+        "of": "1998209afbc7551738ef1ae7851cbb06c9196404",
+        "normalized": "bac1718c760abcc90f7fe821bbc715f2424e7235",
+        "weight": 9
+    },
+    "shop.parcel_locks.LockerHatch.is_locked@shop/parcel_locks.py:21": {
+        "of": "6d615f7a340b5a9723ce98023e6401b959b32277",
+        "normalized": "36f052f0ea0b705f47abc7ce4dd22c9260183828",
+        "weight": 4
+    },
+    "shop.parcel_returns.ParcelState.accepts_return@shop/parcel_returns.py:12": {
+        "of": "bf0debd1d476fcc15c69319e13c866543caf17a1",
+        "normalized": "e5bbaa945c9fd2bfe03b4425cbe0720a88cfbe1e",
+        "weight": 11
+    },
+    "shop.parcel_returns.ReturnsCounter.__init__@shop/parcel_returns.py:17": {
+        "of": "b035c4532db463d3d39d806f7e9c874796de6c4f",
+        "normalized": "d100532563b860c3719e3ecd27d7eebbb15ba43b",
+        "weight": 5
+    },
+    "shop.parcel_returns.ReturnsCounter.open_return@shop/parcel_returns.py:20": {
+        "of": "ede277b5fc39c9cff6770aa65116145c252bb856",
+        "normalized": "e5d35aea84acb1378ffdfeac0b0cded1d265140d",
+        "weight": 27
+    },
+    "shop.parcel_returns.ReturnsCounter.start_return@shop/parcel_returns.py:26": {
+        "of": "5391bb3acee61d84e158e6b8b7ec86feacb09277",
+        "normalized": "84b2c418e215969e6c84e450d87d3b64d39e1db4",
+        "weight": 14
+    },
+    "shop.parcel_routes.ParcelBooking.__init__@shop/parcel_routes.py:14": {
+        "of": "4934682e63b36483352815cdef2bab3952c17e34",
+        "normalized": "63d4c074cd73350a965385d615042eb50be173c7",
+        "weight": 13
+    },
+    "shop.parcel_routes.ParcelBooking.leg@shop/parcel_routes.py:19": {
+        "of": "53b0500949b58dd8127b850e370b5c2328eedb84",
+        "normalized": "6cc799c0869045ab5afe86f8587e846759f68632",
+        "weight": 21
+    },
+    "shop.parcel_routes.RoutedParcel.__init__@shop/parcel_routes.py:27": {
+        "of": "2939e66fa48cba31c91ba5fcfabc525801495d55",
+        "normalized": "17291f8cc824276e6630b64c3f8ad1466e0250be",
+        "weight": 9
+    },
+    "shop.parcel_weighing.heaviest_label@shop/parcel_weighing.py:20": {
+        "of": "40110f5f608574aff977799ef54bbeedfab11b51",
+        "normalized": "855907ba171f7618550df0a2694c7845dd64db40",
+        "weight": 18
+    },
+    "shop.parcel_weighing.labels@shop/parcel_weighing.py:15": {
+        "of": "3157606a74308c21f3cd9a5ba4a6540eaded342c",
+        "normalized": "f5fa847d6e7ad548679650358799d51d99fb7462",
+        "weight": 12
+    },
+    "shop.parcel_weighing.reading_label@shop/parcel_weighing.py:26": {
+        "of": "563a8d0dfdf36b8533e02518b993069aa137d6ea",
+        "normalized": "21c478630c66b87259529707eb10a7ab140e9b77",
+        "weight": 9
+    },
+    "shop.parcel_weighing.weight_label@shop/parcel_weighing.py:11": {
+        "of": "e52cb58cea0bc3119a0b8ea8eaad5dd93c11b743",
+        "normalized": "b009342ba16e587de70216c822dd828727487afd",
+        "weight": 6
+    },
+    "shop.payload_fields.note_for@shop/payload_fields.py:19": {
+        "of": "ba84aee13abc6520657df4a18c0dd50ea0150d92",
+        "normalized": "97a40773d61f71cd9a306dd6b7e24e12bccd12fa",
+        "weight": 11
+    },
+    "shop.payload_fields.summary@shop/payload_fields.py:14": {
+        "of": "6ea1deea1c2d31e063be0e492099703d05f27362",
+        "normalized": "a49bb249782dce5087cd68845d8c60ea9c2173a7",
+        "weight": 13
+    },
+    "shop.payload_fields.text_of@shop/payload_fields.py:5": {
+        "of": "057a8e75c1882c49d7c0aef0c04b8221bbc79138",
+        "normalized": "16740531b0be4c15d4ba050e8c9be0aaba108c99",
+        "weight": 20
+    },
+    "shop.payment_events.CardPayment.__init__@shop/payment_events.py:12": {
+        "of": "7700d791d8fd14486b61de74a313db68ea8f201f",
+        "normalized": "370f28121308d9ad1e1072095ed9aebaf8e6cedd",
+        "weight": 9
+    },
+    "shop.payment_events.CardPayment.is_challenged@shop/payment_events.py:17": {
+        "of": "421984c0d4d01cbc1705d951d58be7259e647e97",
+        "normalized": "b40e72e672cc2e04275cf4d453f894c6888a1765",
+        "weight": 7
+    },
+    "shop.payment_events.Challenge.__init__@shop/payment_events.py:7": {
+        "of": "a0bb95c700e700dabae811630c4f7921f24e2d58",
+        "normalized": "58defd489c5f3c2de5409b5ef39eb5565b15aa9e",
+        "weight": 5
+    },
+    "shop.payment_events.challenge_link@shop/payment_events.py:36": {
+        "of": "2f1722c785f9a0daa5303e61abccfbe6e63247f6",
+        "normalized": "79cb1a76f99b465a1bcbccce601f62a212b31d9a",
+        "weight": 17
+    },
+    "shop.payment_events.challenge_url@shop/payment_events.py:22": {
+        "of": "9669f9bdcd72388ee14932650f23defa7408254f",
+        "normalized": "67c5bdc06025b93ce54c7b32106e652f47b03e04",
+        "weight": 19
+    },
+    "shop.payment_events.is_card@shop/payment_events.py:43": {
+        "of": "ee575d7de5d4196baf1153e7e78b1a2831d2d77a",
+        "normalized": "cbe0fe6df188a65d0c381d1bf2ffd0e4f4ee6390",
+        "weight": 11
+    },
+    "shop.payment_events.notify_customer@shop/payment_events.py:29": {
+        "of": "23b16a9b3b520434ddf4a683014bba7637cbc5f5",
+        "normalized": "9014b21ae895a27396b73604f9ac108f5a7a8d21",
+        "weight": 20
+    },
+    "shop.payment_icons.CheckoutView.shows_card_icon@shop/payment_icons.py:19": {
+        "of": "386058ff87805077aaee032cdc269d095a41c2ff",
+        "normalized": "bbea452239bacfe2350ab2485109605543b3f430",
+        "weight": 17
+    },
+    "shop.payment_icons.CheckoutView.shows_card_icon_for@shop/payment_icons.py:28": {
+        "of": "4dde3003bc925999d4fb69daefc51ac23fcc1d76",
+        "normalized": "7b5f061388567f2ffe282af2c9d3a1397bab2460",
+        "weight": 26
+    },
+    "shop.payment_icons.UnhandledMethod.of@shop/payment_icons.py:13": {
+        "of": "744e66dca9c13bfadd56cee9048917857216c4e1",
+        "normalized": "483cfa4c320d0cd8df666a858f3ffea859752aa3",
+        "weight": 8
+    },
+    "shop.payment_plugins.CardPayments.__init__@shop/payment_plugins.py:17": {
+        "of": "b43afe7a37cb79d678477a7ff7d852f3790f039e",
+        "normalized": "c40cabf1e078efff755519e84e82b6fe55dadade",
+        "weight": 5
+    },
+    "shop.payment_plugins.CardPayments.charge@shop/payment_plugins.py:20": {
+        "of": "67eba5b7f56910950d9cba469905cd89ea4ae823",
+        "normalized": "22b332bbceea61ffadf1520122bc7a87acde2dcf",
+        "weight": 8
+    },
+    "shop.payment_plugins.CardPlugin.__init__@shop/payment_plugins.py:7": {
+        "of": "d0ea662e87308100fd2c029c89143d21a322a35c",
+        "normalized": "c555a4ff4d09402f54a38ea4d01a570e558ac919",
+        "weight": 11
+    },
+    "shop.payment_plugins.CardPlugin.charge@shop/payment_plugins.py:11": {
+        "of": "67eba5b7f56910950d9cba469905cd89ea4ae823",
+        "normalized": "22b332bbceea61ffadf1520122bc7a87acde2dcf",
+        "weight": 8
+    },
+    "shop.payment_plugins.install_card_payments@shop/payment_plugins.py:25": {
+        "of": "2720fd90a0f3b35770ccb21ce468c0c6a54c1d1a",
+        "normalized": "9329cdcc87011cd4de24d4662b301bfadc1cd47d",
+        "weight": 14
+    },
+    "shop.photo_archive.archive_photos@shop/photo_archive.py:9": {
+        "of": "295da78eb5387ef669df0b56bcdc17b0c43aa1a3",
+        "normalized": "74a61b05f99484fe604b79ebdd0c7988b8ae925d",
+        "weight": 62
+    },
+    "shop.photo_archive.archive_thumbnails@shop/photo_archive.py:20": {
+        "of": "39837ae760d04ea49f0d82384f62117f1a2d19e8",
+        "normalized": "b3e2c1635d01a8f5297668a2d59baed7ce311ea1",
+        "weight": 56
+    },
+    "shop.picking.pick_list@shop/picking.py:5": {
+        "of": "ceec5d1b0673985b0e6fea71f4d6c37daeff512d",
+        "normalized": "153713dd6153c129844edcd1e9c826f3b4870202",
+        "weight": 32
+    },
+    "shop.picking_queue.PickingQueue.__init__@shop/picking_queue.py:7": {
+        "of": "d47a2e08efd7c4aa8411a0c9db44b0dbeebc5d62",
+        "normalized": "7ed64c43bfe06f8e63c8d3005caf7721de3ac2dc",
+        "weight": 9
+    },
+    "shop.picking_queue.PickingQueue.sorts@shop/picking_queue.py:12": {
+        "of": "0965791f62a4419858ebe3b87104bdcca2a072af",
+        "normalized": "69fa9d8c0dd7a07079cf5934896a021b4c930c81",
+        "weight": 7
+    },
+    "shop.picking_queue.PickingQueue.starts_in@shop/picking_queue.py:17": {
+        "of": "e3f28e9b62a6ab2a8d017e6bac64c10f6729791b",
+        "normalized": "c245ed2ce09b9e274f05b4efcec92b5b163b7a5d",
+        "weight": 7
+    },
+    "shop.picking_waves.Pallet.__init__@shop/picking_waves.py:23": {
+        "of": "0f774530fc432cdf54f0b2b30b879c7551e67123",
+        "normalized": "1523b7e2bbb676b926d9bb0dee25acf3c41483e4",
+        "weight": 5
+    },
+    "shop.picking_waves.Pallet.described@shop/picking_waves.py:29": {
+        "of": "01e10bc63d0b445cfe920328f68b8bd4c05e9390",
+        "normalized": "e7f66f8570429a098fe5296b1f303759dc61e643",
+        "weight": 9
+    },
+    "shop.picking_waves.Pallet.move@shop/picking_waves.py:26": {
+        "of": "a97e2de76cc784c89c8c5d2008833e6803496339",
+        "normalized": "3a62dc2f4514be9bf69d8474e7f8f7f35bcfda23",
+        "weight": 5
+    },
+    "shop.picking_waves.PickingWave.__init__@shop/picking_waves.py:9": {
+        "of": "08b42ec20db6ecc64052ff8e79ac939b9ca8e892",
+        "normalized": "8f643fc3ee335c4c177124f45b863f36d4b85b70",
+        "weight": 9
+    },
+    "shop.picking_waves.PickingWave.slip@shop/picking_waves.py:16": {
+        "of": "67ed3533722ff2bcde954a508aa5a9ef1721aaee",
+        "normalized": "e8856ae5acb6c2c8d9b061422142632a08bf8f4a",
+        "weight": 17
+    },
+    "shop.picking_waves.PickingWave.start@shop/picking_waves.py:13": {
+        "of": "a97e2de76cc784c89c8c5d2008833e6803496339",
+        "normalized": "3a62dc2f4514be9bf69d8474e7f8f7f35bcfda23",
+        "weight": 5
+    },
+    "shop.plugins.run_plugins@shop/plugins.py:5": {
+        "of": "7bd3b6aa23c0a01d26a36582cbbafc7da8c5f1ab",
+        "normalized": "47ea1d7cbebd13d947997ce58d55e23d69c67212",
+        "weight": 16
+    },
+    "shop.price_export.export_prices@shop/price_export.py:9": {
+        "of": "e563ae4def8085a715a6d4e187133fc9a057b97e",
+        "normalized": "b3378e7dbffde2f855ad676006eed1fb90eb6544",
+        "weight": 47
+    },
+    "shop.price_lists.PriceList.__init__@shop/price_lists.py:12": {
+        "of": "ee72760cf6d837863b32eeefa03611f1b85e4a5a",
+        "normalized": "a077f56a796d4f9c9e0309c70bc4f3768e5e4277",
+        "weight": 9
+    },
+    "shop.price_lists.PriceList.price@shop/price_lists.py:16": {
+        "of": "91af46b7b539447055ce62feb4feef99376bee8f",
+        "normalized": "6581f7e8347eed837a37e5c2c6e6615136d7fe46",
+        "weight": 36
+    },
+    "shop.price_lists.PriceList.price_of@shop/price_lists.py:27": {
+        "of": "f129788a4555e8b1e05feaf5d912ac3ee184e688",
+        "normalized": "7469ccbb9d31c35f50f9bd7fb9f381a06806da7d",
+        "weight": 37
+    },
+    "shop.price_lists.UnknownSku.at@shop/price_lists.py:6": {
+        "of": "209c72d07d83f527fc3c80e2cfa26485fd99b4f4",
+        "normalized": "2d369beda49caaec7fd19962e192ec79a40d1d58",
+        "weight": 8
+    },
+    "shop.price_quotes.price_quote@shop/price_quotes.py:6": {
+        "of": "2bda7199255e8529a4bbc15b6b60c29eaeec6270",
+        "normalized": "e3bf9f1cfc63a9e097da8b627890cc1038f1fd2d",
+        "weight": 14
+    },
+    "shop.price_quotes.quote_for@shop/price_quotes.py:20": {
+        "of": "7455221f7690b711499c538a0eea8ca1a723336f",
+        "normalized": "e56e18f541c0fb8e1f85e88b6427185e58a604a3",
+        "weight": 15
+    },
+    "shop.price_rules.Coupon.__init__@shop/price_rules.py:35": {
+        "of": "a6909e31c9912d6f4d44294fa42a7c848a94ed75",
+        "normalized": "ad875137a413b315190e9bd5bf4e2c5521294d78",
+        "weight": 16
+    },
+    "shop.price_rules.Coupon.used@shop/price_rules.py:38": {
+        "of": "6d055f6266e9905fc388aef3fccc6a862409da7a",
+        "normalized": "7b78f2b52aa020f1480446f3e53634937735462c",
+        "weight": 14
+    },
+    "shop.price_rules.PriceRule.applies_on@shop/price_rules.py:13": {
+        "of": "6c8044e761d914c3b84c5d09a60446bfa2ece1a9",
+        "normalized": "21567c64e830d0ed11520c33871b73f769a299cb",
+        "weight": 8
+    },
+    "shop.price_rules.PriceRule.duplicate@shop/price_rules.py:29": {
+        "of": "864a7d2cf343338a4ec0b6ec09f5c26c54525498",
+        "normalized": "596d1207b0af507b8f7c9003edce74e12fc3b862",
+        "weight": 12
+    },
+    "shop.price_rules.PriceRule.extended@shop/price_rules.py:25": {
+        "of": "d3f4e304e42b49c87ed4dddbd6307717f48f3202",
+        "normalized": "832c6cad61cc57dd93a6ae8b227b8368368dfa24",
+        "weight": 7
+    },
+    "shop.price_rules.PriceRule.price_for@shop/price_rules.py:16": {
+        "of": "ecea93651bef4fe097395f10e544152e4017b3c9",
+        "normalized": "f39a6c329ae43272bdd1fd1784b5dfcdaf8bed34",
+        "weight": 16
+    },
+    "shop.price_rules.PriceRule.rerated@shop/price_rules.py:20": {
+        "of": "f59751d851fc80175c2ab2ea4d882b993b103988",
+        "normalized": "7312a8d6fe111d9feef9970f5e8fe69270241681",
+        "weight": 19
+    },
+    "shop.price_tags.PriceTag.banner@shop/price_tags.py:12": {
+        "of": "211570bf1ac94be81c82ae14c786f9d9d69ee9bd",
+        "normalized": "eead5e738a3c400aee81058a089ff33d10caaf0d",
+        "weight": 6
+    },
+    "shop.price_tags.PromotedTag.banner@shop/price_tags.py:22": {
+        "of": "211570bf1ac94be81c82ae14c786f9d9d69ee9bd",
+        "normalized": "eead5e738a3c400aee81058a089ff33d10caaf0d",
+        "weight": 6
+    },
+    "shop.pricing.Line.__init__@shop/pricing.py:6": {
+        "of": "9fc256f00c08155dba1eff34b56b31ffd265602d",
+        "normalized": "3385fe538aa3f9ca4be78cad34d787ce8c378c72",
+        "weight": 13
+    },
+    "shop.pricing.price@shop/pricing.py:12": {
+        "of": "1068a948e632e18c15332e8574a247f31aabc279",
+        "normalized": "0213ca2a9cfce8c9a0f56377f690275478faf5e6",
+        "weight": 37
+    },
+    "shop.pricing.price_of@shop/pricing.py:22": {
+        "of": "8e6cf29d98a33ef8072c65806a0107b4671694c7",
+        "normalized": "699a1b57ffc4f4443242ebf38bbc523676fb372c",
+        "weight": 36
+    },
+    "shop.pricing.rates.rate_for@shop/pricing/rates.py:4": {
+        "of": "9715e2753e162bc793b881bec901fc1488afa6f2",
+        "normalized": "61f22ad0074b6bb8ce3be41c49a134dcc9829c6a",
+        "weight": 7
+    },
+    "shop.printer_commands.LabelJob.__init__@shop/printer_commands.py:6": {
+        "of": "a02ca9733994f0b05714dae11a549bebc38a68dd",
+        "normalized": "0b5f277227a205104842bc4ceb11b80a219ddab7",
+        "weight": 9
+    },
+    "shop.printer_commands.LabelJob.command@shop/printer_commands.py:10": {
+        "of": "595c4971d4f64e0a8c210dc2cad9df08f3a8cbe7",
+        "normalized": "f83aaacde910389996eee28950a0cfdd2c847ecd",
+        "weight": 19
+    },
+    "shop.printer_commands.LabelJob.command_for@shop/printer_commands.py:15": {
+        "of": "a7c37e85dda16be66485c02a5be9174fddf29b00",
+        "normalized": "13c13496f668b067f102bc52a97aa13dcb117b41",
+        "weight": 15
+    },
+    "shop.printer_commands.LabelJob.flags@shop/printer_commands.py:19": {
+        "of": "633301b628ee47efe94793d25c3add41acc24aea",
+        "normalized": "e038b359b06431f60ac933b261568ea2ab0ddbe9",
+        "weight": 12
+    },
+    "shop.printer_pool.HonestPrinterRegistry.__contains__@shop/printer_pool.py:39": {
+        "of": "5b63ecdcfbcaf3220666f1c6399d3b5c4254e365",
+        "normalized": "5cb95dc9d8253de3a85671e7e73d662cc448b313",
+        "weight": 6
+    },
+    "shop.printer_pool.HonestPrinterRegistry.__init__@shop/printer_pool.py:28": {
+        "of": "fbe194ac01ea74befa62eb284f4cdea74bd21b06",
+        "normalized": "bfa1999b58ef1efc825bb7d9f66dc9de1f7df53f",
+        "weight": 5
+    },
+    "shop.printer_pool.HonestPrinterRegistry.get@shop/printer_pool.py:32": {
+        "of": "4dbcccc9aa0096627559d9e543f1c69d8e81d61d",
+        "normalized": "eb636118ab06528d5c9a86a1bf9126fa8560ce91",
+        "weight": 17
+    },
+    "shop.printer_pool.PrinterRegistry.__init__@shop/printer_pool.py:16": {
+        "of": "fbe194ac01ea74befa62eb284f4cdea74bd21b06",
+        "normalized": "bfa1999b58ef1efc825bb7d9f66dc9de1f7df53f",
+        "weight": 5
+    },
+    "shop.printer_pool.PrinterRegistry.get@shop/printer_pool.py:22": {
+        "of": "0052b43f2acca64e298e8cd28d099c6fd53fd1a8",
+        "normalized": "ebf79f9918f45a74b0c9a7131d32b7e4ad1003a5",
+        "weight": 7
+    },
+    "shop.printer_pool.PrinterRegistry.register@shop/printer_pool.py:19": {
+        "of": "80d5bd4b601217e10ff6eae1f31cabcae9d4417f",
+        "normalized": "d2d79585f6dd509672fe432ade8e39169932d788",
+        "weight": 7
+    },
+    "shop.printer_pool.ReceiptPrinter.print_line@shop/printer_pool.py:5": {
+        "of": "186794f125ec0717f6bc0131725c564254c0dbf8",
+        "normalized": "7837581f9231d59fcd08a80a38e17b61cdcae232",
+        "weight": 2
+    },
+    "shop.printer_pool.UnknownTill.for_name@shop/printer_pool.py:10": {
+        "of": "0916ef082c9de5412a69b9d585a50e8bfe6a72df",
+        "normalized": "7d2b138dbb7d079d86c6d3aa3f2635461fae9f3b",
+        "weight": 8
+    },
+    "shop.product_teasers.fresh_teaser@shop/product_teasers.py:32": {
+        "of": "c997ec4aa80c1bb26c4196cb8a38e8749a46d70d",
+        "normalized": "16e4e85a5d89c2f05c603b8824362531ed486073",
+        "weight": 12
+    },
+    "shop.product_teasers.product_teaser@shop/product_teasers.py:27": {
+        "of": "085d7efa800854729b47fa6cffbf83d256783cd4",
+        "normalized": "b5d27029c9004f4986cb304ab26fe089939fe19a",
+        "weight": 6
+    },
+    "shop.product_teasers.teaser@shop/product_teasers.py:14": {
+        "of": "d92943fdc84c7113da8726553b31de5d081da165",
+        "normalized": "c0beed24e8805a79e65bf5dfe5cf09f4084dff21",
+        "weight": 7
+    },
+    "shop.quantities.MissingQuantity.in_row@shop/quantities.py:6": {
+        "of": "6e527090e694a2b55b77dd5000cef1587befb27f",
+        "normalized": "f83d326355d9e152a12d8f39c0d74539daeb2256",
+        "weight": 11
+    },
+    "shop.quantities.stock_counted@shop/quantities.py:20": {
+        "of": "b6737f6e9e70e7cf05c04a96b97f84e7e1c4d038",
+        "normalized": "9678996a88fd3014619ab82e44ff8f39f9bfd73d",
+        "weight": 33
+    },
+    "shop.quantities.stock_rows@shop/quantities.py:11": {
+        "of": "4ff1ab3c8cd22ded5be773af4fcfe8b794a5ef0b",
+        "normalized": "b796eb7a0e02bc62e1d0af07b5e4d0ad6f287190",
+        "weight": 25
+    },
+    "shop.quantity_parsing.BadQuantity.of@shop/quantity_parsing.py:6": {
+        "of": "74c079464edbc35664f3d26b48977ee7b9268a5a",
+        "normalized": "fecb5c2514a26ccef9b5470dadea67ce97074f43",
+        "weight": 8
+    },
+    "shop.quantity_parsing.quantity@shop/quantity_parsing.py:11": {
+        "of": "9a7d7ae93d4ac1ad728ee5a030a7bf2a8bfb9e9a",
+        "normalized": "e3cbed6a4d389dcee07bd04796de51e62dd28c0e",
+        "weight": 15
+    },
+    "shop.quantity_parsing.quantity_of@shop/quantity_parsing.py:20": {
+        "of": "75a7be9033ec07a0c73363bad5a88c1642d5adaf",
+        "normalized": "3abaa1bb2ac5aa73ad9f9ab9b01608b67c370f10",
+        "weight": 16
+    },
+    "shop.queue_tickets.QueueTicket.__init__@shop/queue_tickets.py:5": {
+        "of": "32f57c4761d3fe32e308a9cd103ea9848b60723f",
+        "normalized": "e75db7df09ca86498e72d7bb028993ab82c5ab27",
+        "weight": 9
+    },
+    "shop.queue_tickets.QueueTicket.called_at@shop/queue_tickets.py:10": {
+        "of": "d666707da2178af4b3c2d8250a74f7041d40dc7d",
+        "normalized": "773bbb59e4492fdc1b8c5b9292248803e2542815",
+        "weight": 10
+    },
+    "shop.queue_tickets.ServedTicket.__init__@shop/queue_tickets.py:15": {
+        "of": "32f57c4761d3fe32e308a9cd103ea9848b60723f",
+        "normalized": "e75db7df09ca86498e72d7bb028993ab82c5ab27",
+        "weight": 9
+    },
+    "shop.queue_tickets.ServedTicket.called_at@shop/queue_tickets.py:20": {
+        "of": "bbe73519e589fb273104283e44433ec5418b6fff",
+        "normalized": "15357d6409a144faccf29c3df705011bce09358b",
+        "weight": 21
+    },
+    "shop.quotes.quote@shop/quotes.py:5": {
+        "of": "e43732d2fe7386aae0217446f8d748a1b369ec27",
+        "normalized": "ae57da7a6b3da7fc3c6484d06f35a88018ee140b",
+        "weight": 9
+    },
+    "shop.receipt_banner.banner@shop/receipt_banner.py:4": {
+        "of": "58087b0bdd46c523bd1eb78af5ab6c7668ed0371",
+        "normalized": "ab85933d3a36d97e8a1cb646733da9143088b610",
+        "weight": 32
+    },
+    "shop.receipt_printers.DeferredReceiptPrinter.__init__@shop/receipt_printers.py:18": {
+        "of": "fea899dad30f55e397652552478cdbd8478dbe17",
+        "normalized": "e5b4fcc61b54d38843a803681249c9058971e0eb",
+        "weight": 5
+    },
+    "shop.receipt_printers.DeferredReceiptPrinter.print@shop/receipt_printers.py:21": {
+        "of": "1f07a07a593abc88da0b73d0d7c524894eb9a633",
+        "normalized": "a519824ac34208a0c92992b1f7564f0a14ad97a0",
+        "weight": 15
+    },
+    "shop.receipt_printers.PriceBoard.__init__@shop/receipt_printers.py:28": {
+        "of": "a460aa9c8262e8520d4fa540a33c35e0c3a3f8bf",
+        "normalized": "ba0594c8e193e4355417c59275e34ea6536f0fdc",
+        "weight": 11
+    },
+    "shop.receipt_printers.PriceBoard._sort@shop/receipt_printers.py:32": {
+        "of": "fd75be6d910a0f9aae88a15edae7c9aace34180e",
+        "normalized": "d3afaa4914224cad8a7d06c3165567d099bb55b9",
+        "weight": 12
+    },
+    "shop.receipt_printers.ReceiptPrinter.__init__@shop/receipt_printers.py:8": {
+        "of": "517974b04800491875db57cd2840e228a903d846",
+        "normalized": "d898461f9eb878bd072464e50093f36ca8ec293c",
+        "weight": 10
+    },
+    "shop.receipt_printers.ReceiptPrinter.print@shop/receipt_printers.py:12": {
+        "of": "c31276a95b5b11f7d1d5434cfc50d3108002b1b4",
+        "normalized": "bfd3e9483e7f5459f4a8242b61c40fcef72c2755",
+        "weight": 10
+    },
+    "shop.receipt_printing.IndentedPrinter.__init__@shop/receipt_printing.py:25": {
+        "of": "d276838719d7849747c01b4a55bab9a506427361",
+        "normalized": "f2300234f8ad27f363ff2468a4e8b5fd50f6cdd0",
+        "weight": 5
+    },
+    "shop.receipt_printing.IndentedPrinter.bundle@shop/receipt_printing.py:31": {
+        "of": "9bee09743f4b792213dc5cd73efeace0ffe76608",
+        "normalized": "830cecdffc522bb995e6714e888f053bd66a110a",
+        "weight": 17
+    },
+    "shop.receipt_printing.IndentedPrinter.line@shop/receipt_printing.py:28": {
+        "of": "5c400df091f05743415b678af2011e0c401733fe",
+        "normalized": "3f341005fa42cc85d3a12cb4a392e33dd84b1fb6",
+        "weight": 11
+    },
+    "shop.receipt_printing.ReceiptPrinter.__init__@shop/receipt_printing.py:6": {
+        "of": "020636808ed21ac8174e0549ff0a942bcaacced5",
+        "normalized": "66720e0b1dab1c835c8eccdae6fe55bd77811288",
+        "weight": 9
+    },
+    "shop.receipt_printing.ReceiptPrinter.bundle@shop/receipt_printing.py:14": {
+        "of": "d54b5c79857e735ec29d623dedfd7de95970ed9f",
+        "normalized": "a2311fc1edf065fb5d58dd63bcc8e4a1d05cd669",
+        "weight": 29
+    },
+    "shop.receipt_printing.ReceiptPrinter.line@shop/receipt_printing.py:10": {
+        "of": "7ff26042b5ba70072bf22c6f43878563f8bfb2f3",
+        "normalized": "78c697a74c50f014b006cb6bb8ce65ab4e1101eb",
+        "weight": 12
+    },
+    "shop.receipt_signing.refund_signature_checks@shop/receipt_signing.py:26": {
+        "of": "3e28ae7d009b6c1c8eb90bf857a5bbba3413f3bf",
+        "normalized": "fad7384fb3cf3d601bee0c6afa6c87fd4fc8f465",
+        "weight": 7
+    },
+    "shop.receipt_signing.refund_signature_matches@shop/receipt_signing.py:18": {
+        "of": "7dccfd41d2e444c99a6b6db815fd900e75576afb",
+        "normalized": "52a1607356aafddb9d88c05eecf550e633d95280",
+        "weight": 38
+    },
+    "shop.receipt_signing.signature_matches@shop/receipt_signing.py:10": {
+        "of": "5f5716178e088119562d0eaa8fd51a4638e51c8b",
+        "normalized": "7221f9edbd176b07c26be33cb4f5044fbfb75507",
+        "weight": 40
+    },
+    "shop.receipts.NoEmail.on@shop/receipts.py:8": {
+        "of": "5cb951d909b86655a815076c4007d99962ed0d50",
+        "normalized": "7a3a9f42d7b72ae1c207cf270e4429035401195a",
+        "weight": 9
+    },
+    "shop.receipts.mail_receipt@shop/receipts.py:19": {
+        "of": "3d126d9c90e7d8b15d8e5d8333d0d1a1316ba83c",
+        "normalized": "8365ff1908e293238a6128a3c278705240e3b4fe",
+        "weight": 23
+    },
+    "shop.receipts.send_receipt@shop/receipts.py:13": {
+        "of": "e2cac6e4974d53e733a64959fd80a2e4ef9ecd56",
+        "normalized": "b841db9e6d7b4c9b8aca8d966725f6923c42601c",
+        "weight": 14
+    },
+    "shop.receiving.receive@shop/receiving.py:6": {
+        "of": "10cd7b8264e70b3a06a17c3769e955125f25b020",
+        "normalized": "e483d03c3d3bb15107723c9ed093fee602a5ad65",
+        "weight": 49
+    },
+    "shop.refund_events.refund_cents@shop/refund_events.py:5": {
+        "of": "0022e6dbc4067dc12aa4f316e41a35be3ff47c3a",
+        "normalized": "43d2aa4d0fe08469f723aa8b382786d14ced819a",
+        "weight": 17
+    },
+    "shop.refund_windows.SalesChannel.refund_days@shop/refund_windows.py:11": {
+        "of": "2fedb56a862fde8835d2f75755f02bfb2bb5cb20",
+        "normalized": "ec9081e65fadf704ce57714ee10e8d5ac7dfe79c",
+        "weight": 14
+    },
+    "shop.refund_windows.refund_days@shop/refund_windows.py:20": {
+        "of": "be5a099c6bb7a8d05fbfa0d31c10c5181f80cece",
+        "normalized": "68ace46e394212d199ee9f5b7c6f19719fced32b",
+        "weight": 17
+    },
+    "shop.refund_windows.refund_window@shop/refund_windows.py:30": {
+        "of": "4b2c81022484118f381b11be58ac1bff9487f218",
+        "normalized": "4a66e2c5a237831a963d1d3f390dde61672b2c7d",
+        "weight": 5
+    },
+    "shop.refund_windows.return_address@shop/refund_windows.py:35": {
+        "of": "0bcfb0664cb29f4c80e60fb692d63ea976c9dda2",
+        "normalized": "a8f2574b74ad3a901fdeb8a00b3d19d952ed164c",
+        "weight": 15
+    },
+    "shop.refunds.refund@shop/refunds.py:9": {
+        "of": "09de63c97ed2c4cdbb429976abc301a843fbceda",
+        "normalized": "9b5f14cbabaef885c5eb3d69dc16d4396438d4ab",
+        "weight": 28
+    },
+    "shop.reminders.send_reminders@shop/reminders.py:4": {
+        "of": "9e7ed15c62712151d4e650d47ec61cdcc117edd7",
+        "normalized": "ccb36d8a3e7f94d6838f8351dedebf891f7be6fd",
+        "weight": 27
+    },
+    "shop.reorder_alerts.ReorderAlert.__init__@shop/reorder_alerts.py:13": {
+        "of": "4763749b80137e653f2a2ca4f479abfc0a02258e",
+        "normalized": "0c0b08b13e67341f0b390105eea0c7c1f1dc6886",
+        "weight": 9
+    },
+    "shop.reorder_alerts.ReorderAlert.is_due@shop/reorder_alerts.py:17": {
+        "of": "9bc813860e44a11112da2700cecac9b7b44ad121",
+        "normalized": "0322de4f6b3159ff162376a07d9002363993b929",
+        "weight": 6
+    },
+    "shop.reorder_levels.ShelfLevel.needs_order@shop/reorder_levels.py:11": {
+        "of": "718a08a739e7168626a6e6f9e82186b6db2b1096",
+        "normalized": "d115fc901fa47e8739a354e180c177dcc5bc6a41",
+        "weight": 9
+    },
+    "shop.reorder_levels.either_empty@shop/reorder_levels.py:34": {
+        "of": "7aa6e4d94665851365a274806f72bb27ee144d70",
+        "normalized": "cd193251ed490609221239f11bd9c6702168379a",
+        "weight": 13
+    },
+    "shop.reorder_levels.reorder@shop/reorder_levels.py:16": {
+        "of": "763fe3f02a042fbbd404422f0954930d262b8d79",
+        "normalized": "01e439ea8c89bea9a601f1104c667df605460c08",
+        "weight": 20
+    },
+    "shop.reorder_levels.reorder_short@shop/reorder_levels.py:23": {
+        "of": "b795effcdf90655f7fc6cc34d20221d338de8ca7",
+        "normalized": "ef587f3ba8102be61775125e8437dbebea55a24d",
+        "weight": 12
+    },
+    "shop.reorder_levels.sold_out@shop/reorder_levels.py:29": {
+        "of": "2a25f4f9e779ef649a3f697ecb6a885c870b3955",
+        "normalized": "ef9ff32e4d6a5cd49db651b1c48a6de36ccbfb7d",
+        "weight": 7
+    },
+    "shop.report_cells.Cell.__init__@shop/report_cells.py:11": {
+        "of": "e161c8dcfaef8934129ea8661eedaa4c1da78870",
+        "normalized": "50e8422f9eac86aa6d74c664114d807a8721ff21",
+        "weight": 5
+    },
+    "shop.report_cells.ReportRenderer.export@shop/report_cells.py:22": {
+        "of": "a62d5a8cccf1b624e5f15972433abdc8776637e8",
+        "normalized": "7e590907cd7c08a832e435224786698bd63257b2",
+        "weight": 19
+    },
+    "shop.report_cells.ReportRenderer.render@shop/report_cells.py:16": {
+        "of": "e92e250e850d2593695f10c7ee9b4dcc6214d77c",
+        "normalized": "86e39ef4c6512ba2fa4cfd98d4c4bdce375fe514",
+        "weight": 26
+    },
+    "shop.report_cells.Table.__init__@shop/report_cells.py:6": {
+        "of": "957bc33e50f38f10fabe2e2388d36ae518df4146",
+        "normalized": "5ecd58452e7a733200f516908d88cddf75553c74",
+        "weight": 5
+    },
+    "shop.report_formats.ConsoleReport.out@shop/report_formats.py:44": {
+        "of": "358aea8625e833309da0478148a98db64ace34f9",
+        "normalized": "fb67e553261881be5b80a7d8ea9ab64f9e6318af",
+        "weight": 4
+    },
+    "shop.report_formats.CsvExport.extension@shop/report_formats.py:37": {
+        "of": "35be527fc85abbde6bad7c4f519b2bf44e7250dd",
+        "normalized": "49313075f30b8b322493027d90e1ffab4b346ca6",
+        "weight": 3
+    },
+    "shop.report_formats.Export.extension@shop/report_formats.py:30": {
+        "of": "6fe337172f7349997ae16da1a6dd19615b1ff5af",
+        "normalized": "49313075f30b8b322493027d90e1ffab4b346ca6",
+        "weight": 3
+    },
+    "shop.report_formats.SalesReport.__init__@shop/report_formats.py:8": {
+        "of": "957bc33e50f38f10fabe2e2388d36ae518df4146",
+        "normalized": "5ecd58452e7a733200f516908d88cddf75553c74",
+        "weight": 5
+    },
+    "shop.report_formats.SalesReport.opening_total@shop/report_formats.py:12": {
+        "of": "7b75a7032baf037da70dbe79f1312edca202d434",
+        "normalized": "4ef3a5e064cd084981e775b425d71229419b4879",
+        "weight": 5
+    },
+    "shop.report_formats.SalesReport.total@shop/report_formats.py:16": {
+        "of": "08ae95608c13d3d4e2e6efc7a0b0872e43c65119",
+        "normalized": "fd84ff874ff15bfd04f99ba213a50e1e913da76d",
+        "weight": 17
+    },
+    "shop.report_formats.StockReport.__init__@shop/report_formats.py:24": {
+        "of": "957bc33e50f38f10fabe2e2388d36ae518df4146",
+        "normalized": "5ecd58452e7a733200f516908d88cddf75553c74",
+        "weight": 5
+    },
+    "shop.restock.rebalance@shop/restock.py:5": {
+        "of": "046017c65f8190e8388d53e10244ca8852eb05fa",
+        "normalized": "4d626efac6fc2a31c4e12e19e621610b3b682fd5",
+        "weight": 42
+    },
+    "shop.retries.ignore@shop/retries.py:16": {
+        "of": "186794f125ec0717f6bc0131725c564254c0dbf8",
+        "normalized": "7837581f9231d59fcd08a80a38e17b61cdcae232",
+        "weight": 2
+    },
+    "shop.retries.retrying@shop/retries.py:21": {
+        "of": "8fa205eeeab7a4eb4869d1320521a58bdd216150",
+        "normalized": "985a03d5e8a92cbe9aed0d85bf07d4d724b58b80",
+        "weight": 19
+    },
+    "shop.retries.with_retries@shop/retries.py:7": {
+        "of": "843ce52c2b69249a5b5830629f0eb98002ec939c",
+        "normalized": "4cbdcb61f4b351923dd3e1fda7609c6b83c06bb6",
+        "weight": 24
+    },
+    "shop.retry_backoff.backoff@shop/retry_backoff.py:7": {
+        "of": "b99eb75d8bf045f112be4f8eb22b39a232ac6226",
+        "normalized": "949f3798f303f359b6bc1e948ec21b4cbc7e0758",
+        "weight": 5
+    },
+    "shop.retry_backoff.retry_delay@shop/retry_backoff.py:13": {
+        "of": "f306c8542718b62f50677ba4262354e54f921a6e",
+        "normalized": "1ee7af63dcb88719b747e9a6fb16f26b3b7f3b05",
+        "weight": 8
+    },
+    "shop.retry_clients.PatientSupplierClient.__init__@shop/retry_clients.py:24": {
+        "of": "415afc7ae92b8d77e49967504c9b62cc81d7f63a",
+        "normalized": "a84bcad27a1bc505f69a0feb71396b5284213489",
+        "weight": 5
+    },
+    "shop.retry_clients.PatientSupplierClient.fetch@shop/retry_clients.py:27": {
+        "of": "3305b05db25e8023ebac8a24dc1a013aa8528ef7",
+        "normalized": "a79fb46f9f2343e55272ecb08df5a9b769e63077",
+        "weight": 27
+    },
+    "shop.retry_clients.SupplierClient.__init__@shop/retry_clients.py:6": {
+        "of": "415afc7ae92b8d77e49967504c9b62cc81d7f63a",
+        "normalized": "a84bcad27a1bc505f69a0feb71396b5284213489",
+        "weight": 5
+    },
+    "shop.retry_clients.SupplierClient.fetch@shop/retry_clients.py:9": {
+        "of": "dbc254ac25f0241ad630389a9380cc5e0fa02389",
+        "normalized": "c5d3ddc1430186d8c3a8348ee73e79165b55a228",
+        "weight": 24
+    },
+    "shop.return_desk.Desk.__init__@shop/return_desk.py:23": {
+        "of": "7814387aff4028f71773bd7e142139da2ff8fee2",
+        "normalized": "9a54f3dc62864556ee296799f70d305852fe4b02",
+        "weight": 5
+    },
+    "shop.return_desk.Desk.accept@shop/return_desk.py:26": {
+        "of": "07a197be013afa9791ee92c4dedc61fe644cdda0",
+        "normalized": "f114782554bcf2977f011ffdc177a438f9177b62",
+        "weight": 10
+    },
+    "shop.return_desk.Portal.__init__@shop/return_desk.py:31": {
+        "of": "7814387aff4028f71773bd7e142139da2ff8fee2",
+        "normalized": "9a54f3dc62864556ee296799f70d305852fe4b02",
+        "weight": 5
+    },
+    "shop.return_desk.Portal.offers@shop/return_desk.py:34": {
+        "of": "49507d12809898137578553057e1968345e54713",
+        "normalized": "0693bd6c657a9f8c6a4bc8b9da18c7a7fc954c4c",
+        "weight": 16
+    },
+    "shop.return_desk.Portal.offers_honestly@shop/return_desk.py:38": {
+        "of": "7284fff41af3ab683d1bd96eabec2f3657ba8e71",
+        "normalized": "4a17d618ff46fae7b624e5741a0e22d3ad3a1a77",
+        "weight": 12
+    },
+    "shop.return_desk.RefundPolicy.allows@shop/return_desk.py:14": {
+        "of": "d4404d7e132d04ad8be0547a731938153d68389d",
+        "normalized": "597df65d6fbc36b403d65c9ec475084372e19064",
+        "weight": 4
+    },
+    "shop.return_desk.RefundPolicy.allows_for@shop/return_desk.py:18": {
+        "of": "d91d140a032cda5c8896fd5f018cc6bf52c268d7",
+        "normalized": "5ca6574a078dc678fb1fee5b506a5a4b1dcdc227",
+        "weight": 6
+    },
+    "shop.return_labels.ReturnLabel.__init__@shop/return_labels.py:8": {
+        "of": "55aaa7aa796725c0e961aebdf6f2e8da8e4cf889",
+        "normalized": "87eb5b4aab53bfd5049f3176449cad39ed63585b",
+        "weight": 5
+    },
+    "shop.return_reasons.ReturnForm.__init__@shop/return_reasons.py:17": {
+        "of": "75b84638a855f5c93175547d36a86133ecb54424",
+        "normalized": "077f1d9e039537f6eeceeca4f603ed58f1b1cf60",
+        "weight": 5
+    },
+    "shop.return_reasons.ReturnForm.is_shipping_refunded@shop/return_reasons.py:20": {
+        "of": "31665fa3e10d3813035c4a5288791728b56b9cd0",
+        "normalized": "88bd0ed56e551518023fa2e74a3fcd9a72f868ab",
+        "weight": 16
+    },
+    "shop.return_reasons.ReturnReason.is_shipping_refunded@shop/return_reasons.py:11": {
+        "of": "2558a14092a6cdff4474e9c219055e19ce5d92b7",
+        "normalized": "636d3c8f2340793b08f9c09ce1479b8a8b6dad63",
+        "weight": 6
+    },
+    "shop.return_reasons.TypedReturnForm.__init__@shop/return_reasons.py:31": {
+        "of": "75b84638a855f5c93175547d36a86133ecb54424",
+        "normalized": "077f1d9e039537f6eeceeca4f603ed58f1b1cf60",
+        "weight": 5
+    },
+    "shop.return_reasons.TypedReturnForm.is_shipping_refunded@shop/return_reasons.py:34": {
+        "of": "857268a92ac70f8b95442591b27fce6579b24563",
+        "normalized": "0f0cf7b683115aba337d7ab652e0c78966d03398",
+        "weight": 5
+    },
+    "shop.returns.desk.book_return@shop/returns/desk.py:8": {
+        "of": "5132dd8a21c180615c51841658f24d39807b4630",
+        "normalized": "69e09a0297b59d195a46ab8eebaaa11bd862a3b0",
+        "weight": 7
+    },
+    "shop.returns_desk.process@shop/returns_desk.py:4": {
+        "of": "5c37b8b7ac66c72b074a0b93fd4f407517b5c834",
+        "normalized": "0dfc1fbaea46b5648c435aee9e647f22e820d47e",
+        "weight": 53
+    },
+    "shop.route_stops.Dispatcher.__init__@shop/route_stops.py:26": {
+        "of": "61f1e7acb861afd7883a2f5984f72494ed26e54b",
+        "normalized": "e2ff65edb411df7c4d987e25738c8cb44f368d35",
+        "weight": 5
+    },
+    "shop.route_stops.Dispatcher.tick@shop/route_stops.py:30": {
+        "of": "7fb710507b64f3557ce783fa709e348df160a587",
+        "normalized": "f79738379b019e33ab464becde14bc760eea5e21",
+        "weight": 16
+    },
+    "shop.route_stops.Dispatcher.tick_stop@shop/route_stops.py:36": {
+        "of": "74b2bdd4875372b322152a33c654a6bb7a61ae5b",
+        "normalized": "a40c88e73bd4f6c3a31e74f246ae744d2b055374",
+        "weight": 9
+    },
+    "shop.route_stops.Schedule.find@shop/route_stops.py:15": {
+        "of": "ef62a0094a42d1143e41b53fc6c039008da0ab9d",
+        "normalized": "b2ee36d7a5541b0942c4b8fff2acc18fb7affa7d",
+        "weight": 6
+    },
+    "shop.scale_readers.CounterScale.grams@shop/scale_readers.py:5": {
+        "of": "12bc1de62be7322fe068f1832add7f4211413db9",
+        "normalized": "29cdf3663714b9fee5de0621d174b6000f3d85e2",
+        "weight": 3
+    },
+    "shop.scale_readers.HonestScaleReader.__init__@shop/scale_readers.py:22": {
+        "of": "ed90d79203bd16403b4dce8e7feab47824f345cc",
+        "normalized": "2e280ddaa103a0bcad1e8a5438bc427619c10a39",
+        "weight": 5
+    },
+    "shop.scale_readers.HonestScaleReader.weigh@shop/scale_readers.py:25": {
+        "of": "4a75bc5ad9f1f276356904ff529317b466e7e642",
+        "normalized": "7c35fffbec99d358be8b575c9f6dc1ca6da7a283",
+        "weight": 6
+    },
+    "shop.scale_readers.ScaleReader.weigh@shop/scale_readers.py:13": {
+        "of": "4a75bc5ad9f1f276356904ff529317b466e7e642",
+        "normalized": "7c35fffbec99d358be8b575c9f6dc1ca6da7a283",
+        "weight": 6
+    },
+    "shop.scale_readers.ScaleReader.weigh_twice@shop/scale_readers.py:16": {
+        "of": "8c3922e0b61e7618217cd4b99362ed7ba1470eff",
+        "normalized": "a6eea741e74b3ad092c2fa1078eaae78a8beec78",
+        "weight": 11
+    },
+    "shop.screens.home.path@shop/screens/home.py:9": {
+        "of": "d0a03b288b01235f34844a161420b194dc4d1c41",
+        "normalized": "0f21e9e6a88eae78927fb3d622a7b510e98b8326",
+        "weight": 9
+    },
+    "shop.search.engine.render@shop/search/engine.py:6": {
+        "of": "3b4cb831f7fbdd5bd43f5f10a48e61ba0b23f884",
+        "normalized": "52dde0b7203cd9f8c8b9240f22015c6a6a9b2b6b",
+        "weight": 8
+    },
+    "shop.search.first_in_stock@shop/search.py:7": {
+        "of": "f87ffc6b124f38cb940650c4528b01eb95c032f6",
+        "normalized": "39c86f79b60635179fb6f28022fa0f2fae30f8c7",
+        "weight": 20
+    },
+    "shop.search.label@shop/search.py:17": {
+        "of": "ffeb6bb27e69e56e8a7ac39beadd79f8422e07ca",
+        "normalized": "395504e92f590db4488d186254bb3ce1f4ae75e4",
+        "weight": 18
+    },
+    "shop.search.note@shop/search.py:27": {
+        "of": "928359d7d571d509ed9fcfb381d7bfad1ef50617",
+        "normalized": "e921e00ba8a362f124818ae475a4d1909193fc7d",
+        "weight": 22
+    },
+    "shop.seat_maps.book@shop/seat_maps.py:19": {
+        "of": "416488b0edc76b09efb5ca09b2602b4ad107d916",
+        "normalized": "8ed4a63de317d5707b32e5554e95b6a7f3310072",
+        "weight": 24
+    },
+    "shop.seat_maps.book_seat@shop/seat_maps.py:28": {
+        "of": "d198852a77cf29a39654dd0cbeb49f11321124ff",
+        "normalized": "612639900d72b00dd0e0dd3d839ec6c893aded60",
+        "weight": 18
+    },
+    "shop.session_limits.Session.__init__@shop/session_limits.py:7": {
+        "of": "3254473635da007c33284e5b407b0a9d7658d467",
+        "normalized": "927d5c34865253eaf2e95e39d44ddfbb5be39b11",
+        "weight": 5
+    },
+    "shop.session_limits.Session.expires_after@shop/session_limits.py:16": {
+        "of": "4912e65ed9621487a590d1be7e4a1a937aed0499",
+        "normalized": "4e86e739ff76ff06ec02f49f09d349147042fc17",
+        "weight": 6
+    },
+    "shop.session_limits.Session.lifetime_seconds@shop/session_limits.py:11": {
+        "of": "de377e7b7c38693bd36119470a05f39370a1b1b2",
+        "normalized": "cba17762e6ea522b0d147cea2b5c0ee16b844118",
+        "weight": 7
+    },
+    "shop.session_limits.ShopSession.__init__@shop/session_limits.py:24": {
+        "of": "3254473635da007c33284e5b407b0a9d7658d467",
+        "normalized": "927d5c34865253eaf2e95e39d44ddfbb5be39b11",
+        "weight": 5
+    },
+    "shop.session_limits.ShopSession.expires_after@shop/session_limits.py:27": {
+        "of": "27f4d509cdf082f89e9ac4bd4c29ce094d6d0a75",
+        "normalized": "9a44ad8b82a7533b26535aaa6d2aa08c37eeb48c",
+        "weight": 6
+    },
+    "shop.sessions.NoActiveSession.reading@shop/sessions.py:8": {
+        "of": "f5e0027fb3c265804595ce9c5da9ae0effb24a77",
+        "normalized": "ed8a04ff2ddcff0e5cbf77ec4fe231e9ce2a38eb",
+        "weight": 8
+    },
+    "shop.sessions.basket@shop/sessions.py:13": {
+        "of": "3b4f3813d79a2d4e92cb524d54150c648a210dac",
+        "normalized": "7182299f14a01c02b6bfefdb21112232ecafe409",
+        "weight": 15
+    },
+    "shop.sessions.current_basket@shop/sessions.py:21": {
+        "of": "79b193c43a101fd32f57effe228fe1574b6094f6",
+        "normalized": "654d095a4267d01efef89f4ae33742aa6bfc09eb",
+        "weight": 16
+    },
+    "shop.settings.read_settings@shop/settings.py:12": {
+        "of": "4385211fc984a0451e73c3d3b497c445b5e98bcc",
+        "normalized": "5a51bbb2bc16b582f2354f0409c320077850b5b4",
+        "weight": 34
+    },
+    "shop.shelf_audits.AuditRow.__init__@shop/shelf_audits.py:30": {
+        "of": "36dc0532890e968554d59c50b5b7affd36fec9c2",
+        "normalized": "df9531eab9b8e5b2874ec98b7ecac87c142f40c2",
+        "weight": 13
+    },
+    "shop.shelf_audits.AuditRow.cells@shop/shelf_audits.py:35": {
+        "of": "7705c5d9de74313ce75ab0b0b4fab3a6389f1756",
+        "normalized": "90960d36ac9f3621f7e11099c439ff7634bf2a5e",
+        "weight": 9
+    },
+    "shop.shelf_audits.AuditRow.csv@shop/shelf_audits.py:38": {
+        "of": "cc110c0284e10c3eae4d5618735f601a60b60b61",
+        "normalized": "66a869bba90b5d7306331a42b3149fed6a9d4c0e",
+        "weight": 15
+    },
+    "shop.shelf_audits.AuditedShelf.__init__@shop/shelf_audits.py:5": {
+        "of": "c48e48098c8d708e939e8b91e62398a793c66a05",
+        "normalized": "e1df0f4ae0ed6a898ede5f896956c11b7e80bb51",
+        "weight": 9
+    },
+    "shop.shelf_audits.HonestAudit.__init__@shop/shelf_audits.py:20": {
+        "of": "275fcd1a5446644055265f1de51b352e3e647b5c",
+        "normalized": "6fee8df245525e90fa8fccd16513360953e0140b",
+        "weight": 9
+    },
+    "shop.shelf_audits.HonestAudit.shelf_code@shop/shelf_audits.py:24": {
+        "of": "6b259f42c479a10ed2ab8f489048cb6ccc087541",
+        "normalized": "e569457f33a3e23bb7452625126df5615c835c60",
+        "weight": 5
+    },
+    "shop.shelf_audits.ShelfAudit.__init__@shop/shelf_audits.py:12": {
+        "of": "9d8cce72caf0cec0023fded377822eaa8a1aa60a",
+        "normalized": "6f961b7566c32b7d11b91c76acb8b0219fab251f",
+        "weight": 13
+    },
+    "shop.shelf_labels.AisleLabel.__init__@shop/shelf_labels.py:19": {
+        "of": "eee18a44319218af74ecb1a01383ca3f8866e194",
+        "normalized": "c00328e803ddcb5b1983f0efe799f41dda6f1dd8",
+        "weight": 13
+    },
+    "shop.shelf_labels.AisleLabel.reload@shop/shelf_labels.py:24": {
+        "of": "7772703c52da16fb8c4d3707b4694cb30baf27cd",
+        "normalized": "2b29f06611335197fc88b49b439aaaac9dbf0556",
+        "weight": 9
+    },
+    "shop.shelf_labels.ShelfLabel.__init__@shop/shelf_labels.py:6": {
+        "of": "eee18a44319218af74ecb1a01383ca3f8866e194",
+        "normalized": "c00328e803ddcb5b1983f0efe799f41dda6f1dd8",
+        "weight": 13
+    },
+    "shop.shelf_labels.ShelfLabel.reloads@shop/shelf_labels.py:12": {
+        "of": "7772703c52da16fb8c4d3707b4694cb30baf27cd",
+        "normalized": "2b29f06611335197fc88b49b439aaaac9dbf0556",
+        "weight": 9
+    },
+    "shop.shift_reports.TillPrinter.closing_line@shop/shift_reports.py:18": {
+        "of": "b9291a92c1698d631b7c3f6046fb2c6248c18fd6",
+        "normalized": "22c326c9cc9f1d484567481c11bc27bf4d657908",
+        "weight": 7
+    },
+    "shop.shift_reports.TillPrinter.closing_line_of@shop/shift_reports.py:22": {
+        "of": "f89ccf657093ffab54552db8aa9bbcb770c3f5c3",
+        "normalized": "29f255e363410711d2f9dda0714b7adada3bedb9",
+        "weight": 9
+    },
+    "shop.shift_reports.close@shop/shift_reports.py:26": {
+        "of": "44c44c87f18e73229db0de0ffb7685ddcf9d4271",
+        "normalized": "81fcf12bcbb81cf26aaa13a972cf3659123dfb8a",
+        "weight": 11
+    },
+    "shop.shipment_records.Shipment.arrived@shop/shipment_records.py:24": {
+        "of": "16df876bd26d0ce9d4c647343566beb76aab73ac",
+        "normalized": "a94282ab8b42c14e9e7f51aaa07985102e0a2923",
+        "weight": 7
+    },
+    "shop.shipment_records.Shipment.delivered@shop/shipment_records.py:19": {
+        "of": "3dc43b49ace9f0c026e8219c301588cd0de08dad",
+        "normalized": "d20d14895d32f27619743fab29bb965df59cfc70",
+        "weight": 11
+    },
+    "shop.shipment_records.Shipment.is_heavy@shop/shipment_records.py:13": {
+        "of": "39d8fc8e3449ff218c2963461f586ed5e3d57a85",
+        "normalized": "efb5f34502531483d33ae7e97522516191f39b34",
+        "weight": 6
+    },
+    "shop.shipment_records.Shipment.tracking_url@shop/shipment_records.py:16": {
+        "of": "168c0ee85ddce6d9acfb52cf1cd58bf8ba6ff29a",
+        "normalized": "560ff801fe42ad8b814c681d7bac48fda08b2c14",
+        "weight": 9
+    },
+    "shop.shipments.pack@shop/shipments.py:7": {
+        "of": "34b5470beec65ad5be00497ee4044d47d6ec31ae",
+        "normalized": "e6bdd13a24b17fe512dcebfa356d5acc9a4564f4",
+        "weight": 29
+    },
+    "shop.shipments.pack_order@shop/shipments.py:24": {
+        "of": "579cc1e8b9295649559866972a06ab5b2df55c9b",
+        "normalized": "0d0523db19b253e2868ace6aa89fd403f6d8a2b1",
+        "weight": 23
+    },
+    "shop.shipping_labels.Parcel.from_payload@shop/shipping_labels.py:21": {
+        "of": "4c6aefb3eeb7098072303f81402196f1d2525b0e",
+        "normalized": "fcd6e707058e5cdc9ae560b70ec3ebe3ec9eb46f",
+        "weight": 16
+    },
+    "shop.shipping_labels.Parcel.label@shop/shipping_labels.py:25": {
+        "of": "d971a928e94a51c208f163d54db800fbbae39832",
+        "normalized": "b31e3abac555f049ea44694bd9225bb7eb9c5a3d",
+        "weight": 14
+    },
+    "shop.shipping_labels.label@shop/shipping_labels.py:8": {
+        "of": "41a6b8a69cbb6c122ba4b84629a99144f618bb85",
+        "normalized": "db59c9a1b7530717d109d8941eb3d3e44a333ece",
+        "weight": 18
+    },
+    "shop.shipping_notices.Notifier.__init__@shop/shipping_notices.py:14": {
+        "of": "9cac240c325d8fca4e7e109ef28fe40c9c53ba1b",
+        "normalized": "9399b483ace488b377f5b14f8d7834041b850ac0",
+        "weight": 9
+    },
+    "shop.shipping_notices.Notifier.notify@shop/shipping_notices.py:18": {
+        "of": "f15035157a79eae685fad024b8afa10b36d12ec9",
+        "normalized": "4250bcb0ed1b42d28cd22ab92160cb67834d6bbc",
+        "weight": 18
+    },
+    "shop.shipping_notices.Notifier.notify_tracked@shop/shipping_notices.py:24": {
+        "of": "62f893362fc7fe5a5b0b7bddf9e977d35abfc8f2",
+        "normalized": "55c02bb7b3a2c220e45abd23491a28c00a461f1b",
+        "weight": 25
+    },
+    "shop.shipping_quotes.Parcel.__init__@shop/shipping_quotes.py:6": {
+        "of": "617bec5462fc7a3e3efa9625984de3158f9ee19f",
+        "normalized": "dce13154488434f6e138f81a816dfe5a7ad69226",
+        "weight": 5
+    },
+    "shop.shipping_quotes.quote@shop/shipping_quotes.py:11": {
+        "of": "c1386eba388c19ecaadece97f0d024e384a3d859",
+        "normalized": "7514f0fab10da988e75b48d1f43cb80a2ab98393",
+        "weight": 8
+    },
+    "shop.shipping_quotes.quote_cents@shop/shipping_quotes.py:24": {
+        "of": "c1386eba388c19ecaadece97f0d024e384a3d859",
+        "normalized": "7514f0fab10da988e75b48d1f43cb80a2ab98393",
+        "weight": 8
+    },
+    "shop.shipping_rates.Letter.rate_cents@shop/shipping_rates.py:14": {
+        "of": "ec247d20ea89f09c0c394c9db30dd92354f82d12",
+        "normalized": "29cdf3663714b9fee5de0621d174b6000f3d85e2",
+        "weight": 3
+    },
+    "shop.shipping_rates.Pallet.rate_cents@shop/shipping_rates.py:19": {
+        "of": "c2e79b6f964cd722af8a1afd3fbbff2a757f4c31",
+        "normalized": "7514f0fab10da988e75b48d1f43cb80a2ab98393",
+        "weight": 8
+    },
+    "shop.shipping_rates.Parcel.__init__@shop/shipping_rates.py:6": {
+        "of": "617bec5462fc7a3e3efa9625984de3158f9ee19f",
+        "normalized": "dce13154488434f6e138f81a816dfe5a7ad69226",
+        "weight": 5
+    },
+    "shop.shipping_rates.Parcel.rate_cents@shop/shipping_rates.py:9": {
+        "of": "de9c93f9742fba13b5866d18be4c65eed1279050",
+        "normalized": "29cdf3663714b9fee5de0621d174b6000f3d85e2",
+        "weight": 3
+    },
+    "shop.shipping_rates.quote@shop/shipping_rates.py:23": {
+        "of": "3e480ac25d4684b94c721bdaa35208d8cfc6c8a9",
+        "normalized": "57efa10d345eb39a91b59edd8d042b5822a96235",
+        "weight": 24
+    },
+    "shop.shipping_rates.quote_told@shop/shipping_rates.py:33": {
+        "of": "93ca9d522a695c9539f165188b492682de477d25",
+        "normalized": "7572f4c8638b46a51fdce591bfcbadfe31f24fd5",
+        "weight": 5
+    },
+    "shop.stamp_cards.RewardDesk.__init__@shop/stamp_cards.py:18": {
+        "of": "1af293edbeb388a5ee651591ee9d277ac2b47d69",
+        "normalized": "367a6aa18a72f82e9dae4cdfecd4b35a5f2aba7e",
+        "weight": 5
+    },
+    "shop.stamp_cards.RewardDesk.redeem@shop/stamp_cards.py:22": {
+        "of": "22703906723c8f00d64c8b8f66064d256313fa03",
+        "normalized": "ed71f16f069fd38cd4b63077c130c95e936553e0",
+        "weight": 17
+    },
+    "shop.stamp_cards.RewardDesk.redeem_card@shop/stamp_cards.py:29": {
+        "of": "e23e515106fd915004df95f4f0d562b944217c28",
+        "normalized": "762f2f3d9c6c9befbc3aa1c8079488f3734be7b5",
+        "weight": 10
+    },
+    "shop.stamp_cards.StampCard.__init__@shop/stamp_cards.py:5": {
+        "of": "d38c2b3662f091cb6ee09fc7766355bd2736ebca",
+        "normalized": "db6f1c3791a9ca61e3ef0a8240c4d63fc4abc026",
+        "weight": 13
+    },
+    "shop.stamp_cards.StampCard.close_with@shop/stamp_cards.py:11": {
+        "of": "390a23d9964aedf42aaeebf1a35ddc91cdb135e5",
+        "normalized": "999fe77e0c8fb33165bb7d2b2cb21927fa5d64c7",
+        "weight": 13
+    },
+    "shop.startup.configure_logging@shop/startup.py:8": {
+        "of": "3b57b7661ceab36466877d3e2eab33eb288cae7c",
+        "normalized": "5fa2fee4562009679a5605d50dbac5d25a0cbc2f",
+        "weight": 5
+    },
+    "shop.startup.display_name@shop/startup.py:21": {
+        "of": "a42e2480e2c8d0ddf7698314351ab785810671d4",
+        "normalized": "414dc1b3f998dadde9d8c4420b38d3dff0c33c98",
+        "weight": 7
+    },
+    "shop.startup.ready@shop/startup.py:26": {
+        "of": "e2ef5909f047f86ef669861097f3b8b4448af732",
+        "normalized": "829171fbeaa62813e10cd40503b1d76b5b2b3882",
+        "weight": 10
+    },
+    "shop.status_colours.badge@shop/status_colours.py:5": {
+        "of": "d47b2b2a8e13ffa181cc9bdbb2b4727354ee72b0",
+        "normalized": "44efd1439d71e814111b2086e1c2d4b0f4afe90e",
+        "weight": 15
+    },
+    "shop.status_colours.badge_for@shop/status_colours.py:11": {
+        "of": "feaee662c877d85834a198844f8fa4ef41f26050",
+        "normalized": "da59741645d64e77fc7990ed9596798574dda173",
+        "weight": 19
+    },
+    "shop.statuses.outcome@shop/statuses.py:4": {
+        "of": "fc972673c50a364a37f6d62d86bd3357de541081",
+        "normalized": "1f3cf284a679f14209a26a555cb1ece728480fa4",
+        "weight": 42
+    },
+    "shop.stock_alerts.UnhandledLevel.of@shop/stock_alerts.py:13": {
+        "of": "48e33074f3f842b8cc68591ce8184b8f64779318",
+        "normalized": "3b31ae0a9ccabf8055b6bae77160b377ed8009fc",
+        "weight": 7
+    },
+    "shop.stock_alerts.channel@shop/stock_alerts.py:18": {
+        "of": "4180b8d08f27496ddaa20fd23e52efa2f3228331",
+        "normalized": "3bdedebe5f70d8f5b4e085c626a54f2ff99f4daf",
+        "weight": 19
+    },
+    "shop.stock_alerts.channel_for@shop/stock_alerts.py:30": {
+        "of": "377e7806b45c2f3324fb1c041427273ebed1b622",
+        "normalized": "0fe2e0a01a6539b55d3fcca204cc56d84c584da1",
+        "weight": 26
+    },
+    "shop.stock_alerts.colour@shop/stock_alerts.py:41": {
+        "of": "7fa3f25c57ed0a0ca043ed7f0063bf25a18d17ae",
+        "normalized": "9d2e0c7e5eca36b7c4a3154984b842c5c302afe1",
+        "weight": 14
+    },
+    "shop.stock_alerts.escalation@shop/stock_alerts.py:50": {
+        "of": "7205ca4458bcdfd95790659a50ecea588dcafe20",
+        "normalized": "e87355f769d3257b60e819944db32d163467393a",
+        "weight": 20
+    },
+    "shop.stock_badges.StockBadge.colour@shop/stock_badges.py:14": {
+        "of": "4572f238a56266d36e70e3be5831f08b3efcd84d",
+        "normalized": "79c5b1414f9bd5bbd5c07f7b11ae7dfe9f982276",
+        "weight": 13
+    },
+    "shop.stock_badges.StockBadge.colour_of@shop/stock_badges.py:22": {
+        "of": "bed3a6ec128a6ec22dcc86a4669bcdf2f644ef46",
+        "normalized": "6222d62d14a6002796d435cfa93b165f3b2874ae",
+        "weight": 17
+    },
+    "shop.stock_badges.listing_badge@shop/stock_badges.py:39": {
+        "of": "a576cb9cbc4429e64f9ba1a8c4458ce45362263d",
+        "normalized": "2db637d4f2bf918b8b3fe06a8a16ffbdaa874708",
+        "weight": 6
+    },
+    "shop.stock_badges.search_badge@shop/stock_badges.py:34": {
+        "of": "9dea5b5087c08cb3665dd648676b2295cd7c4948",
+        "normalized": "7c08530a1da1c003763ca72079e081744c64e9ee",
+        "weight": 13
+    },
+    "shop.stock_badges.shelf_badge@shop/stock_badges.py:30": {
+        "of": "767345ed7f75d4c072a9023e1b17d70de31b9722",
+        "normalized": "7459bf7720b361488abadb1f54b32e4e54ed0c3c",
+        "weight": 11
+    },
+    "shop.stock_counts.StockCount.total@shop/stock_counts.py:17": {
+        "of": "707c881b1d18ead651bbcfad2fbea409cb6b1997",
+        "normalized": "8f8ea0701796cbea7ec855aa6986797214704710",
+        "weight": 7
+    },
+    "shop.stock_counts.count_stock@shop/stock_counts.py:6": {
+        "of": "c016257cce87f1e0908b662cef00415ac89e5c56",
+        "normalized": "bf679e4084120826fa6679eccb557d3c052955c8",
+        "weight": 16
+    },
+    "shop.stock_counts.dimensions@shop/stock_counts.py:28": {
+        "of": "73ffd352b5a5ba12d499342432628fba7b4ec8b8",
+        "normalized": "183a38356e3fbe97055c14fcd3c21a64b1c35017",
+        "weight": 9
+    },
+    "shop.stock_counts.sku_numbers@shop/stock_counts.py:23": {
+        "of": "a042af4e2ea7328380b2766033fc3d4a80ab032d",
+        "normalized": "65871891a6d00d2189b14d14be7ad0a08ef3a159",
+        "weight": 9
+    },
+    "shop.stock_export.export_stock@shop/stock_export.py:9": {
+        "of": "0df451a65dacbac50944574eab58023c31596f99",
+        "normalized": "ddd9e38bed7b1d074fc44fc431fb9ec8ade86418",
+        "weight": 58
+    },
+    "shop.stock_levels.level@shop/stock_levels.py:5": {
+        "of": "b00ea9642315896a52fd03e7593445fef3808589",
+        "normalized": "1a0d966583cfd6b1a6eae68f61a1bc7803866deb",
+        "weight": 24
+    },
+    "shop.stock_movements.Movement.__init__@shop/stock_movements.py:6": {
+        "of": "ed71a5fc75310b52d188355fb516612b3c203a70",
+        "normalized": "d49fea400ce4f7f5ccfc52d0a16f811bd79d9795",
+        "weight": 9
+    },
+    "shop.stock_movements.Movement.delta@shop/stock_movements.py:10": {
+        "of": "20f9bb2bacaa522d15a906ad8d093de84a29d341",
+        "normalized": "7b886c93346e0c2ef2e92e50baecb33bf5153936",
+        "weight": 23
+    },
+    "shop.stock_moves.empty_out@shop/stock_moves.py:26": {
+        "of": "2254f26e37e4d02b872e74f719c56d97f7134033",
+        "normalized": "b12dd9453ab8a7802e5719f66dc227d118f51397",
+        "weight": 22
+    },
+    "shop.stock_moves.log_move@shop/stock_moves.py:12": {
+        "of": "6c25a139173e6f9c5590d7542fda15bdfb3be977",
+        "normalized": "342cfbdfba3501fbb0d51d88790017d07d10644a",
+        "weight": 9
+    },
+    "shop.stock_moves.log_move_from@shop/stock_moves.py:17": {
+        "of": "2534f6680966165b17c4e1c2b942d1fec80df57a",
+        "normalized": "2c70f0e7e547be62ab236a246e8eb8ceab8bd7bd",
+        "weight": 10
+    },
+    "shop.stock_moves.restock@shop/stock_moves.py:21": {
+        "of": "de8f453aa5e3a2d1a1c0b385b50f27f40e456fe2",
+        "normalized": "440c3954e40f74dad78b9f34b62a6103c20b694b",
+        "weight": 8
+    },
+    "shop.stock_moves.restock_honestly@shop/stock_moves.py:35": {
+        "of": "53a2a13571fc751a86593421d7c6a0707862441c",
+        "normalized": "4dc61e85e0dc9f70b01cfa4ffed90db9532eb036",
+        "weight": 6
+    },
+    "shop.stock_queries.Carrier.__init__@shop/stock_queries.py:7": {
+        "of": "e0ffd0a2661f1636f872f8dc4bc34679a9ccbd2b",
+        "normalized": "cc9d3f82167b5a002952bca1bb6d646fe2c17a67",
+        "weight": 5
+    },
+    "shop.stock_queries.carrier_or_default@shop/stock_queries.py:19": {
+        "of": "943a2301d5efcedec55239266f27f80a05f637d3",
+        "normalized": "b6d257bc7036f11fdafe097b1685caa51efe1000",
+        "weight": 12
+    },
+    "shop.stock_queries.units_in_stock@shop/stock_queries.py:12": {
+        "of": "c7d575e58dca9834104d28e454e94a9a59243259",
+        "normalized": "2f7f546d2b5c5747529e70cabb41a6795b73ec78",
+        "weight": 28
+    },
+    "shop.stock_report.report_line@shop/stock_report.py:6": {
+        "of": "833a7269247a3bb6daebf585f7d36006cd4fb8a9",
+        "normalized": "799953a5012180e3bb14f95cf14091dc77fe0dd6",
+        "weight": 18
+    },
+    "shop.store_context.RequestContext.__init__@shop/store_context.py:15": {
+        "of": "1d772dcf0e7cb31f7f0158c29938e1b3764a5577",
+        "normalized": "72797b21688ffb93b9430d772a3c5b5c67c56feb",
+        "weight": 5
+    },
+    "shop.store_context.enter_store@shop/store_context.py:7": {
+        "of": "38c8ef940f855a6c22f705eeaffe156300f3dde7",
+        "normalized": "095eb4c85705c66ea86903c33757bcaa284bb94e",
+        "weight": 6
+    },
+    "shop.store_settings.SettingsFile.__init__@shop/store_settings.py:9": {
+        "of": "0359ca2964c729feb042db0ee86282671f1504d0",
+        "normalized": "67a4dba3760c7f08617e7ef28c8d157f5debebc0",
+        "weight": 5
+    },
+    "shop.store_settings.SettingsFile.read@shop/store_settings.py:12": {
+        "of": "2171acd6e7058c48434d95f65e3f259a6189378a",
+        "normalized": "b1c5179da010725c436b2c75349831168edd6c40",
+        "weight": 13
+    },
+    "shop.store_settings.StoreSettings.read@shop/store_settings.py:24": {
+        "of": "e161b6ef2e7016cb528a8d12aa6564ff58dd7df0",
+        "normalized": "10efb6b57ecd54f8b19e50fc4b992720d4181cde",
+        "weight": 20
+    },
+    "shop.storefront.layout.footer@shop/storefront/layout.py:8": {
+        "of": "4b3de10600aeffdd4f6362734b1405fe439ba0ee",
+        "normalized": "49313075f30b8b322493027d90e1ffab4b346ca6",
+        "weight": 3
+    },
+    "shop.storefront.layout.frame@shop/storefront/layout.py:4": {
+        "of": "71e3877cbc64cb7f38a07ff87ee1872f4fc8b38e",
+        "normalized": "6e62276c59195b9e3ef6b91c6c6c139759832f30",
+        "weight": 6
+    },
+    "shop.storefront.pages.results_page@shop/storefront/pages.py:5": {
+        "of": "c7017fc36c207962d5d3da0365702875672be320",
+        "normalized": "a6bccd5ed5256b28b1aa2737d75144ae0fd41d4c",
+        "weight": 7
+    },
+    "shop.stores.PhoneStore.ship_to@shop/stores.py:18": {
+        "of": "83512d870563643c1ef0d664303111c0f4b486ec",
+        "normalized": "62a34944466ed9d911253908a77960951969e728",
+        "weight": 9
+    },
+    "shop.stores.Store.ship_to@shop/stores.py:6": {
+        "of": "0a299e7a9043c8a77394876753b6d9a0f1282c5a",
+        "normalized": "dac5d1c31a216e913114c52e93294c93609f7920",
+        "weight": 3
+    },
+    "shop.stores.WebStore.ship_to@shop/stores.py:12": {
+        "of": "df25ace9db59133bd8e7fa792a12b0e3ae40f45f",
+        "normalized": "222a2a9525b7ff2983c685e2322c14ccc1cd865f",
+        "weight": 13
+    },
+    "shop.streams.AsyncFeedStream.__init__@shop/streams.py:23": {
+        "of": "c2536f7960ae6e8edb2b4bbbe86f2af64a1be74c",
+        "normalized": "e8a076ffb1593504ac2565745f288c340025b49e",
+        "weight": 17
+    },
+    "shop.streams.AsyncFeedStream.chunks@shop/streams.py:30": {
+        "of": "02502791b847464ec84f3804651858b82757ba9d",
+        "normalized": "60b8bc8a52db87eb79623a6a10e8de134eff7af6",
+        "weight": 20
+    },
+    "shop.streams.FeedStream.__init__@shop/streams.py:8": {
+        "of": "c2536f7960ae6e8edb2b4bbbe86f2af64a1be74c",
+        "normalized": "e8a076ffb1593504ac2565745f288c340025b49e",
+        "weight": 17
+    },
+    "shop.streams.FeedStream.chunks@shop/streams.py:15": {
+        "of": "6ede6cf96ad80d3f1d57970227c771fe87b91df2",
+        "normalized": "0166a8193f077538ca892ebd5918fbae8a10e1b2",
+        "weight": 20
+    },
+    "shop.streams_io.LineStream.__init__@shop/streams_io.py:5": {
+        "of": "ac0470312b3473625d4c60a796f2c3443bfa04c9",
+        "normalized": "cc540484ea8e44f7bfbdb30a02cbedbf5d141521",
+        "weight": 9
+    },
+    "shop.streams_io.LineStream.read_line@shop/streams_io.py:9": {
+        "of": "4e3f5ae17930d8a049ebeb9cc83bace30ba86143",
+        "normalized": "227cd7a231ffeb3cd213eb4e0b47ae965fadeaf0",
+        "weight": 14
+    },
+    "shop.subscriptions.Subscriptions.__init__@shop/subscriptions.py:6": {
+        "of": "bce50d6ad273656b175d3c06b4965f22b714d8ed",
+        "normalized": "b4eb8160092f255f46f2761611c34fb1af9fd432",
+        "weight": 6
+    },
+    "shop.subscriptions.Subscriptions.flip@shop/subscriptions.py:14": {
+        "of": "4bcf2c1020938cedacadf0558909bed69752df21",
+        "normalized": "cd9f522397880585972712d0995a9d07d23e1484",
+        "weight": 20
+    },
+    "shop.subscriptions.Subscriptions.toggle@shop/subscriptions.py:9": {
+        "of": "b231031d7c7231604b2ac2550664b618e0992a20",
+        "normalized": "14f88c5bab7e4c8c0e53b447c0094933118f17a0",
+        "weight": 17
+    },
+    "shop.supplier_feed.SupplierPrice.from_json@shop/supplier_feed.py:18": {
+        "of": "01f394b9410ecb0177d0e6105b9b236a2de42feb",
+        "normalized": "b4fcb01c483e3da0678e8b8d125aa7a02f01635f",
+        "weight": 14
+    },
+    "shop.supplier_feed.fetch_prices@shop/supplier_feed.py:7": {
+        "of": "594a2f2306917dec42447ff11c15927c36d85766",
+        "normalized": "0c97649b1dae1d75be4d61adb51fc5c6819a3348",
+        "weight": 12
+    },
+    "shop.supplier_feed.fetch_supplier_prices@shop/supplier_feed.py:24": {
+        "of": "c8e0cdcf7582a958e37a93fe5617f70d6bb8227f",
+        "normalized": "e2d4a2cdc950b6a3f3e1c5bede40526b8b1858cc",
+        "weight": 19
+    },
+    "shop.support_desk.raise_level@shop/support_desk.py:5": {
+        "of": "bbc531892db0a9698e1758f5fab2ea09d140e95f",
+        "normalized": "8c3295da93dddb67bb46d59565db4d61caa9eaea",
+        "weight": 12
+    },
+    "shop.support_tickets.RoutedTicket.__init__@shop/support_tickets.py:28": {
+        "of": "61943b7869425d4f9165ad1648529c27d1178341",
+        "normalized": "5b121e12d621b56a861c8e95e3d4ab041e02c9eb",
+        "weight": 9
+    },
+    "shop.support_tickets.RoutedTicket.escalated_to@shop/support_tickets.py:35": {
+        "of": "4c9202e2f3fc793a9b0b7ba961e7644ad3caccad",
+        "normalized": "8c3295da93dddb67bb46d59565db4d61caa9eaea",
+        "weight": 12
+    },
+    "shop.support_tickets.RoutedTicket.evolve@shop/support_tickets.py:32": {
+        "of": "17dc135c3b0bfb3bf0602edc7ada3159b4046596",
+        "normalized": "580058623fcd850ed9459c4ea9e8b14dbb19aa66",
+        "weight": 16
+    },
+    "shop.support_tickets.Ticket.__init__@shop/support_tickets.py:18": {
+        "of": "61943b7869425d4f9165ad1648529c27d1178341",
+        "normalized": "5b121e12d621b56a861c8e95e3d4ab041e02c9eb",
+        "weight": 9
+    },
+    "shop.support_tickets.Ticket.evolve@shop/support_tickets.py:22": {
+        "of": "8cd72dfbfeb4e17a975c2ef79311a6ba4eacabdf",
+        "normalized": "53d9124f022411fe6f7cd39a2d8a5dcd2f266cf2",
+        "weight": 16
+    },
+    "shop.support_tickets.TicketMeta.__init__@shop/support_tickets.py:6": {
+        "of": "6133e2dec1641aeeb1662d361af0837944eb04ea",
+        "normalized": "e89f604b929ee6e9e0973b41b91233d3bc3c2430",
+        "weight": 5
+    },
+    "shop.support_tickets.TicketMeta.of@shop/support_tickets.py:9": {
+        "of": "f75efecd0b7d12cb7710190b037905c9e577b001",
+        "normalized": "d8a3dc97755796618bcdd3de59ac7b6870fc7014",
+        "weight": 5
+    },
+    "shop.support_tickets.TicketMeta.to_dict@shop/support_tickets.py:13": {
+        "of": "2390a2bbeb7015430d9ff6d5faed796ce884147a",
+        "normalized": "220448d11860a3883660b62a8759f731d04a2348",
+        "weight": 6
+    },
+    "shop.tax_bands.TaxTable.band_for@shop/tax_bands.py:15": {
+        "of": "e2aa37e5492d8c0ce0b169f6bfbd4e38be17f813",
+        "normalized": "8c83969aa9a0f6bcf393b3c4aead4e01b47a0084",
+        "weight": 7
+    },
+    "shop.tax_contexts.Pricer.__init__@shop/tax_contexts.py:8": {
+        "of": "43a90d6cafcfbf9632bf05cdf3e239a0efa3b95b",
+        "normalized": "a8067e9f366b81025b7f6a838537391ff343b14e",
+        "weight": 13
+    },
+    "shop.tax_contexts.Pricer.count_quote@shop/tax_contexts.py:33": {
+        "of": "a3826af2172dbc15a648b2ec511c5a4ac1150415",
+        "normalized": "afd8f18ad9a7ad7fa2d0510e1d5868a4f347b88f",
+        "weight": 14
+    },
+    "shop.tax_contexts.Pricer.price@shop/tax_contexts.py:13": {
+        "of": "e8d3d38a314ae0d369a7aad5fab228bd0d850a88",
+        "normalized": "89e433a51326a0da025387a75aa4d6ec75aeceb7",
+        "weight": 15
+    },
+    "shop.tax_contexts.Pricer.price_abroad@shop/tax_contexts.py:17": {
+        "of": "c08fece6e2874c4da98b06e2328b3fd3266ccc6e",
+        "normalized": "af34064cc7aae7366b754b74dcec20c5b2e2696c",
+        "weight": 21
+    },
+    "shop.tax_contexts.Pricer.shipping_to@shop/tax_contexts.py:25": {
+        "of": "26a37b48dc40099d70cd5b892d2ce815a529b10d",
+        "normalized": "362104654831f18eacc4c6a18843aa7af810b1d8",
+        "weight": 16
+    },
+    "shop.tax_contexts.RegionPricer.__init__@shop/tax_contexts.py:42": {
+        "of": "dff04f4747c291d3f182d477dcbb3c50b4585459",
+        "normalized": "3bd2017c7221adcee3bbc0ec3f1eab5c2c76f5a6",
+        "weight": 5
+    },
+    "shop.tax_contexts.RegionPricer.price@shop/tax_contexts.py:45": {
+        "of": "16b5a37b7c6c1314e888bd9fd260f6c36a8eeba8",
+        "normalized": "bc362aaad5f1ae78c1b2b7417d31d5aeeb125116",
+        "weight": 14
+    },
+    "shop.tax_rates.TaxRates.__init__@shop/tax_rates.py:16": {
+        "of": "dff04f4747c291d3f182d477dcbb3c50b4585459",
+        "normalized": "3bd2017c7221adcee3bbc0ec3f1eab5c2c76f5a6",
+        "weight": 5
+    },
+    "shop.tax_rates.TaxRates.rate_for@shop/tax_rates.py:19": {
+        "of": "631f694d06e63aabc22aa54508d9c1a104420efa",
+        "normalized": "892ce951bf949d0ff0318cc12d675bce9c8230ca",
+        "weight": 6
+    },
+    "shop.tax_rates.TaxTable.load@shop/tax_rates.py:8": {
+        "of": "7fabb0585becaf5274596dfc7d6f91c0e65ee10c",
+        "normalized": "3bd2017c7221adcee3bbc0ec3f1eab5c2c76f5a6",
+        "weight": 5
+    },
+    "shop.tax_totals.TaxTotal.__init__@shop/tax_totals.py:5": {
+        "of": "ea73535da4de95954f04ab0a08f8d292abae810f",
+        "normalized": "c8205af3d9446790a1b42f2e7780bd61030de5a1",
+        "weight": 9
+    },
+    "shop.tax_totals.TaxTotal.amount@shop/tax_totals.py:9": {
+        "of": "b2a66b03077ff999c0e619bcae208a40318d5841",
+        "normalized": "cc8da67dc9b31407127df63ad63ad620d3d7b0fb",
+        "weight": 14
+    },
+    "shop.tax_totals.TaxTotal.rounded_amount@shop/tax_totals.py:16": {
+        "of": "fe9c9192872b13856622e6b9c1e70873400404ea",
+        "normalized": "cc8da67dc9b31407127df63ad63ad620d3d7b0fb",
+        "weight": 14
+    },
+    "shop.thumbnails.make_thumbnail@shop/thumbnails.py:4": {
+        "of": "799bc058b734402eb192c17cac006467385e68b2",
+        "normalized": "c439e05ff80ee6168cd87c3d21cde71d54b670fc",
+        "weight": 15
+    },
+    "shop.ticket_triage.Priority.can_wait@shop/ticket_triage.py:11": {
+        "of": "7ba9bb2ba7294a5122c9721575f56eed2c807402",
+        "normalized": "d23ce82fc6902f2441f00da591abb973c856a9df",
+        "weight": 6
+    },
+    "shop.ticket_triage.Triage.__init__@shop/ticket_triage.py:17": {
+        "of": "c601cc8aff1bcb3178afe98127ff3d5d5dc0559a",
+        "normalized": "9be5163eeabbe5f21af2e23a456f6d044110038b",
+        "weight": 5
+    },
+    "shop.ticket_triage.Triage.route@shop/ticket_triage.py:20": {
+        "of": "dba398b283ab88bed350be090c14c1b6fc7bca66",
+        "normalized": "d274adf7fb7fa4a32dd851b55b5578b5c5c1f370",
+        "weight": 16
+    },
+    "shop.ticket_triage.Triage.route_by_priority@shop/ticket_triage.py:26": {
+        "of": "3b7c878ef57ecf3e2f05ed9e2a388e05f9cf023e",
+        "normalized": "2b1c296ac7b1c32398d56315688d24e63e15c27d",
+        "weight": 16
+    },
+    "shop.tiers.Loyalty.__init__@shop/tiers.py:6": {
+        "of": "602fa0bf7c22a30a727f755300c45ba53efd756c",
+        "normalized": "a2ba30b071866636d597d43fbfe864ac3022f884",
+        "weight": 5
+    },
+    "shop.tiers.Loyalty.rate@shop/tiers.py:9": {
+        "of": "3d644d8b1fd4d6d0fee5d7ad08d5dda456eeb213",
+        "normalized": "2e1c02b629fb583804e0fca4670a1af13922d04b",
+        "weight": 13
+    },
+    "shop.tiers.Loyalty.rate_for@shop/tiers.py:14": {
+        "of": "a838a45ee3a7889d061d4ea5b312c07ac8699b77",
+        "normalized": "15905a124db826daaaec8007a83a21245981ca74",
+        "weight": 18
+    },
+    "shop.till_drawers.CashOffice.__init__@shop/till_drawers.py:29": {
+        "of": "3cee96358dcfad2c723e3fe47609e15323fd9966",
+        "normalized": "739e2f10f981beb00eb02135646030af9ea0e6bd",
+        "weight": 5
+    },
+    "shop.till_drawers.CashOffice.came_up_short@shop/till_drawers.py:33": {
+        "of": "e0ae6bd2cd6cc9ad2e13dd95a322d3f1e68384ba",
+        "normalized": "bbcd04b5970b6aa957d5a21d3319cf02c061c8a4",
+        "weight": 20
+    },
+    "shop.till_drawers.Float.is_short@shop/till_drawers.py:10": {
+        "of": "e2a2fa7e7b925ad4f9dc1f2bb0a2b42ad089f88a",
+        "normalized": "71de0a41107261947cd3d3cef178f6a337f547ea",
+        "weight": 6
+    },
+    "shop.till_drawers.FloatBook.__init__@shop/till_drawers.py:21": {
+        "of": "655335829cc1a695a4402733277d83be46745519",
+        "normalized": "a8575df0dd59240f8a8aba85f0ccfffb47ddf959",
+        "weight": 5
+    },
+    "shop.till_drawers.FloatBook.float_for@shop/till_drawers.py:24": {
+        "of": "47be08e4d8a6ec6133af7c86d723d9eafd1d6334",
+        "normalized": "4ba901d63186f82f38efda9957c9fa2b0b5f42c4",
+        "weight": 6
+    },
+    "shop.till_sessions.TillSession.__init__@shop/till_sessions.py:9": {
+        "of": "1e4f646630539a19765435036936e5ed96f55c46",
+        "normalized": "e86a1ff3486d9318bdb7696bf5fd9280850da672",
+        "weight": 5
+    },
+    "shop.till_sessions.TillSession.open@shop/till_sessions.py:12": {
+        "of": "351ad492425268a47c08d354f3f9978cac8ca920",
+        "normalized": "4c088da4529dcdb945a1d0fd1e2ac3e1ab1c88bc",
+        "weight": 5
+    },
+    "shop.till_sessions.TillSession.receipt_footer@shop/till_sessions.py:15": {
+        "of": "5d36e96e62bf6c07b8d17761c7d164fe3474b832",
+        "normalized": "ccea2fda3d7830f30b14b1732471f02977d9b768",
+        "weight": 10
+    },
+    "shop.tip_cents.Cents.parse@shop/tip_cents.py:5": {
+        "of": "0edfa07c18b734abdcfd30e836f7574c0ba9f735",
+        "normalized": "ef0bd4e4bbb7002091636694abc6a74f97939ca6",
+        "weight": 9
+    },
+    "shop.tip_cents.TipJar.__init__@shop/tip_cents.py:11": {
+        "of": "e25711d426091d321e2264bcf2f83081dac84e3a",
+        "normalized": "c20e899b1f58d8453860cf26e8f1edef34454290",
+        "weight": 5
+    },
+    "shop.tip_cents.TipJar.add@shop/tip_cents.py:14": {
+        "of": "d17a2dec7c9c0b608c1e83664f0ef981123d60d9",
+        "normalized": "aea3ada23a82dc4f9451865c456c08cf7342c3bb",
+        "weight": 5
+    },
+    "shop.tip_cents.TipJar.add_typed@shop/tip_cents.py:18": {
+        "of": "1356e762e5e921b6f5abea42ee6be25827ef7491",
+        "normalized": "baf195f220a3c27863aa8d6001e5c07571efae5b",
+        "weight": 8
+    },
+    "shop.tip_cents.ring_up@shop/tip_cents.py:22": {
+        "of": "7f5d3d52c4154f7e59f43c991eb65c4c99e6d549",
+        "normalized": "54a3f4b168bd036af45b7b2213f8c4e432e00765",
+        "weight": 9
+    },
+    "shop.tip_cents.ring_up_all@shop/tip_cents.py:27": {
+        "of": "2ead43786609df72a462afeeb1af6b76756415d8",
+        "normalized": "84f9268716d97672aa272d4ca8778f1975bc8ab8",
+        "weight": 14
+    },
+    "shop.tip_cents.ring_up_honestly@shop/tip_cents.py:34": {
+        "of": "a12726b1ef6b198c9a40585e20ba4f2c198796d4",
+        "normalized": "d36c68d5868a3db9dcd33d0011c8d7ac22060463",
+        "weight": 6
+    },
+    "shop.tracking.events.record@shop/tracking/events.py:7": {
+        "of": "49f0191f201edd1ef6deefc2c19541cbd7c63497",
+        "normalized": "c5966a643e1d1580fe9f7d549a0ec3e1357a362c",
+        "weight": 8
+    },
+    "shop.validation.set_quantity@shop/validation.py:5": {
+        "of": "b33eb788b04d7162c8dadd9392bc6039962b8e8c",
+        "normalized": "5fcf1d92a48a9e4d7a560fa77bf22560dfc8dd16",
+        "weight": 27
+    },
+    "shop.vat_bands.TaxBand.rate@shop/vat_bands.py:21": {
+        "of": "c2269869ee624ab016655de71bedf63a742f07c6",
+        "normalized": "3c878509fea3e567fc89197c09709a9b56bd0dfe",
+        "weight": 21
+    },
+    "shop.voucher_book.VoucherBook.__init__@shop/voucher_book.py:9": {
+        "of": "a6be960f04fa0417de898a676d6b394e68fdb633",
+        "normalized": "389f3776dfcb547b627def864b6da90bca1722ff",
+        "weight": 9
+    },
+    "shop.voucher_book.VoucherBook.issue@shop/voucher_book.py:13": {
+        "of": "192aa3f6529278370cbe7ebb25d57754229d9561",
+        "normalized": "f0259f180fe6296f3fa7593e8dbc5afbeb681137",
+        "weight": 7
+    },
+    "shop.voucher_book.VoucherBook.label@shop/voucher_book.py:20": {
+        "of": "da81c8813546bccabef91ad10d433ba1f6730803",
+        "normalized": "5f6ed5072b70581c0df404bfe7640090aeae2607",
+        "weight": 8
+    },
+    "shop.voucher_book.VoucherBook.voucher@shop/voucher_book.py:16": {
+        "of": "3999d3b9ee53c4dd297c5f9eafdf5f3998387b4a",
+        "normalized": "23b24346886f72c74696a226345ca015d9a2bb63",
+        "weight": 8
+    },
+    "shop.voucher_codes.is_valid@shop/voucher_codes.py:6": {
+        "of": "4cd473c664c54bac27a88f1e68d7735093adeba4",
+        "normalized": "6d580634d24f721e84a66df7e00368727b741d72",
+        "weight": 5
+    },
+    "shop.voucher_codes.normalise@shop/voucher_codes.py:17": {
+        "of": "95c87289f4944f73045ed589c8ffe4dacd97eaf7",
+        "normalized": "e39e64229389cf7c8c1bf11ccfb2281d7a346a1f",
+        "weight": 7
+    },
+    "shop.voucher_guards.VoucherGuard.__init__@shop/voucher_guards.py:12": {
+        "of": "2897b2ca15a24052317f822c75d527a1883d7f32",
+        "normalized": "7a5073934bd9c5fc2373346138fe7cd12e72d919",
+        "weight": 5
+    },
+    "shop.voucher_guards.VoucherGuard.fails_on@shop/voucher_guards.py:16": {
+        "of": "a087f0155c43a446a0a193e064b6794246a0c245",
+        "normalized": "c0ee8d31ed47aa53e1cf75921a4ecec1829d44b2",
+        "weight": 6
+    },
+    "shop.voucher_guards.VoucherRefused.for_code@shop/voucher_guards.py:6": {
+        "of": "c8392e4bab46df590c48e84d9a6a078f09c71679",
+        "normalized": "ed8a04ff2ddcff0e5cbf77ec4fe231e9ce2a38eb",
+        "weight": 8
+    },
+    "shop.wallet_balances.Balance.covers@shop/wallet_balances.py:12": {
+        "of": "6f084b9d53c2124b0800156cd4350d9ebaa74660",
+        "normalized": "6bb4d1ced496bc74d9d98c56b64d736339b6f6c5",
+        "weight": 6
+    },
+    "shop.wallet_balances.Balance.deposit@shop/wallet_balances.py:19": {
+        "of": "9d4888400c0ea4a471c42881315c1f6060b97699",
+        "normalized": "53dd5d496201c4178e561fd5e75db884545ce16b",
+        "weight": 5
+    },
+    "shop.wallet_balances.Balance.shown@shop/wallet_balances.py:15": {
+        "of": "6fe4db3a3e1261f343acbe8932e5b8bec382855f",
+        "normalized": "b17cb3e64fd7d7f21c22fffecff70bb91f1bf2e1",
+        "weight": 19
+    },
+    "shop.wallet_balances.Funds.deposited@shop/wallet_balances.py:29": {
+        "of": "bbbeaecf66a978140a61fc752b2bdea17f5bd65c",
+        "normalized": "7e97c2d62d0e1460b3b93188972b09f29c371b23",
+        "weight": 10
+    },
+    "shop.warehouse.bins.Bin.__str__@shop/warehouse/bins.py:5": {
+        "of": "57c6dac3ae3df36c878d83a1b105a34fd3e4dcc8",
+        "normalized": "49313075f30b8b322493027d90e1ffab4b346ca6",
+        "weight": 3
+    },
+    "shop.warehouse.picking.lines@shop/warehouse/picking.py:4": {
+        "of": "196495ddbfa8e4511f4e0a46c8c2be686fc2f655",
+        "normalized": "71a96b02e50dfdd80444a9d4cb36ec948030c489",
+        "weight": 6
+    },
+    "shop.warehouse.stock.reserve@shop/warehouse/stock.py:7": {
+        "of": "b4fa5ece24979466eb03e5d6ee0384b34ff70ad6",
+        "normalized": "ccc6274ec03e3ca087e8b34427524d34aebc3393",
+        "weight": 7
+    },
+    "shop.warehouse_api.reserve@shop/warehouse_api.py:4": {
+        "of": "1e7ca619d7d47f83257bbbf174f62c85f7fa5ff5",
+        "normalized": "b5bbd729d86af4118607ff2446715cc59fb196b8",
+        "weight": 35
+    },
+    "shop.warehouse_returns.ReturnsBatch.__init__@shop/warehouse_returns.py:5": {
+        "of": "953ea271ebb789a50fbd1257c0fbdf7b83edc8ff",
+        "normalized": "868ab74275fa16b494a988447287f4cea8079d0c",
+        "weight": 9
+    },
+    "shop.warehouse_returns.ReturnsBatch.outstanding@shop/warehouse_returns.py:13": {
+        "of": "0d2a34ec0da6b6fbefc9422edab8cf4d27df6bef",
+        "normalized": "c5242dd2b69dbcb85f77158a2b96bc67580d3941",
+        "weight": 4
+    },
+    "shop.warehouse_returns.ReturnsBatch.waits_on_warehouse@shop/warehouse_returns.py:10": {
+        "of": "8cbd59060b02ae17ea3fbed7fcd6b856c985b00e",
+        "normalized": "82520be2e01306152dd7e6a377581788a03c8307",
+        "weight": 6
+    },
+    "shop.webhook_events.handle@shop/webhook_events.py:11": {
+        "of": "df90edd0677dbef58d0efb4669e21ed6c3bac3de",
+        "normalized": "205b43b0e4a26704fd8577308c4e07cbb5cf4ed8",
+        "weight": 19
+    },
+    "shop.webhook_events.handle_event@shop/webhook_events.py:21": {
+        "of": "a3fe41925c8271609d8ea46c09871dd088e472f0",
+        "normalized": "818363339f14042da674c76e8fc7dc1099cb129d",
+        "weight": 21
+    },
+    "shop.webhook_payloads.Payload.of@shop/webhook_payloads.py:16": {
+        "of": "a0a724aebc3c43bebcee46bd1bc8a655a0ee2a62",
+        "normalized": "02733e816092140ae1f2315c4e8cc53658133437",
+        "weight": 17
+    },
+    "shop.webhook_payloads.payload@shop/webhook_payloads.py:6": {
+        "of": "e9135416b9a3f92c3021ab60444e7c16f46829ee",
+        "normalized": "d4764fef737412260be36303ccf767c205a35216",
+        "weight": 14
+    },
+    "shop.webhook_payloads.payload_for@shop/webhook_payloads.py:22": {
+        "of": "288b9488428c869950d0757757b025797f98149f",
+        "normalized": "feb85376d437397bb1e0c2ce600100dc71dc23e2",
+        "weight": 10
+    },
+    "shop.widgets.card.Card.__init__@shop/widgets/card.py:6": {
+        "of": "f0650dbe53bff402d074896755bba46d66003fd3",
+        "normalized": "ad140b9bb4fffefcddb725e1f1dfe14be4d6f5a0",
+        "weight": 5
+    },
+    "shop.widgets.card.Card.__str__@shop/widgets/card.py:9": {
+        "of": "bd912c3be191242c2d43bfdba53e7fd22998607e",
+        "normalized": "97d4d1e5fff768da8fc04184b8bdfddb1f46f6cd",
+        "weight": 4
+    },
+    "shop.widgets.card.Card.link@shop/widgets/card.py:12": {
+        "of": "864c1d2f4b1dfbb32b7ca4526ca6d7bb07c453bd",
+        "normalized": "9e31e97859fb9b7d59a8132f011f02e70cde2525",
+        "weight": 8
+    },
+    "shop.wishlists.Wishlist.__init__@shop/wishlists.py:5": {
+        "of": "5a18a87f0e5a2c7fadc9abee85b0df343d7385b8",
+        "normalized": "b5d0a5fff80f25dbd0f2e4e4e1af05f7e86738d5",
+        "weight": 9
+    },
+    "shop.wishlists.Wishlist.add@shop/wishlists.py:9": {
+        "of": "cd9429085cab6d74690304daefeae5b48c3a4773",
+        "normalized": "73f7aded52ee6272d6bd4a2c1f3eb8950d035771",
+        "weight": 7
+    },
+    "shop.wishlists.Wishlist.remove@shop/wishlists.py:15": {
+        "of": "42566436d2824e482aed3bc3be2448ed11fd379e",
+        "normalized": "61b488643af55943a8718471974be8d8c7a2f502",
+        "weight": 7
+    }
+}

@@ -141,6 +141,19 @@ func (m Match) Name() string {
 	return m.node.Name
 }
 
+// Written is the node's source text: the bytes of its span, as the file spells them; empty for no node.
+func (m Match) Written() string {
+	if m.node == nil {
+		return ""
+	}
+	source, err := m.file.Source()
+	if err != nil {
+		return ""
+	}
+
+	return string(source[m.node.Span.Start:m.node.Span.End])
+}
+
 // Text is a literal's decoded string value; false when the node is no string literal.
 func (m Match) Text() (string, bool) {
 	if m.node == nil || m.node.Value == nil {
@@ -192,6 +205,38 @@ func (m Match) Child(field string) Match {
 	return Match{}
 }
 
+// Descendants is every node below this one, in pre-order: children before their own children's siblings.
+func (m Match) Descendants() []Match {
+	var below []Match
+	for _, child := range m.Children() {
+		below = append(below, child)
+		below = append(below, child.Descendants()...)
+	}
+
+	return below
+}
+
+// ChildrenIn is every child filling the field, in source order, such as a class's "bases" or a body's statements.
+func (m Match) ChildrenIn(field string) []Match {
+	var filling []Match
+	for _, child := range m.Children() {
+		if child.node.Field == field {
+			filling = append(filling, child)
+		}
+	}
+
+	return filling
+}
+
+// Root is the root node of the match's file; no node for no match.
+func (m Match) Root() Match {
+	if m.file == nil {
+		return Match{}
+	}
+
+	return m.file.Match(0)
+}
+
 // Closest is the nearest ancestor that answers the neutral kind; no node when none does.
 func (m Match) Closest(neutral Neutral) Match {
 	for ancestor := m.Parent(); ancestor.Exists(); ancestor = ancestor.Parent() {
@@ -237,6 +282,15 @@ func (m Match) Comments() []contract.Comment {
 	}
 
 	return m.file.Comments(m.node)
+}
+
+// CommentsAbove is the run of own-line comments directly above the node, nearest last.
+func (m Match) CommentsAbove() []contract.Comment {
+	if m.node == nil {
+		return nil
+	}
+
+	return m.file.CommentsAbove(m.node)
 }
 
 // IsDocumented says whether a doc comment is attached to the node.

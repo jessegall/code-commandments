@@ -5,7 +5,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/jessegall/code-commandments/engine/php/prose"
+	"github.com/jessegall/code-commandments/prose"
 )
 
 // DocblockIsInline says whether a docblock with content opens or closes on a content line rather than on a line of

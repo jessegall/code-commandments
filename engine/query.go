@@ -71,3 +71,8 @@ func (q *Query) passes(match Match) bool {
 
 	return true
 }
+
+// Answers keeps the nodes that answer a neutral kind: Where(engine.Answers(engine.NullSafe)).
+func Answers(neutral Neutral) Check {
+	return func(m Match) bool { return m.Is(neutral) }
+}

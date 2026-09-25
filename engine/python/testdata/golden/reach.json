@@ -1,0 +1,1302 @@
+{
+    "shop/aisle_signs.py:18": [],
+    "shop/aisle_signs.py:23": [],
+    "shop/aisle_signs.py:26": [],
+    "shop/aisle_signs.py:31": [],
+    "shop/aisle_signs.py:35": [],
+    "shop/aisle_signs.py:39": [],
+    "shop/alerts.py:5": [
+        "fn:builtins.MentionInChat",
+        "fn:builtins.RepeatStanding",
+        "fn:builtins.WatchKeyword"
+    ],
+    "shop/allergen_labels.py:17": [
+        "type:builtins.list"
+    ],
+    "shop/allergen_labels.py:22": [],
+    "shop/allergen_labels.py:26": [
+        "type:builtins.list"
+    ],
+    "shop/allergen_labels.py:29": [],
+    "shop/allergen_labels.py:33": [],
+    "shop/attachments.py:17": [],
+    "shop/attachments.py:6": [],
+    "shop/attachments.py:9": [],
+    "shop/audit.py:13": [],
+    "shop/audit.py:20": [],
+    "shop/audit.py:6": [],
+    "shop/backups.py:13": [
+        "fn:shutil.copy2",
+        "fn:shutil.copytree"
+    ],
+    "shop/backups.py:7": [
+        "fn:shutil.copy2",
+        "fn:shutil.copytree"
+    ],
+    "shop/badge_codes.py:12": [],
+    "shop/badge_codes.py:16": [
+        "type:builtins.str"
+    ],
+    "shop/badge_codes.py:4": [],
+    "shop/badge_codes.py:8": [],
+    "shop/badge_colours.py:11": [
+        "type:shop.badge_colours.PaymentStatus"
+    ],
+    "shop/badge_colours.py:21": [],
+    "shop/badge_colours.py:33": [],
+    "shop/badges.py:18": [],
+    "shop/badges.py:30": [],
+    "shop/badges.py:38": [
+        "type:builtins.NotImplementedError",
+        "type:builtins.type"
+    ],
+    "shop/badges.py:45": [],
+    "shop/badges.py:53": [
+        "type:builtins.NotImplementedError",
+        "type:builtins.type"
+    ],
+    "shop/badges.py:7": [],
+    "shop/barcode_parsing.py:10": [],
+    "shop/barcode_parsing.py:25": [],
+    "shop/barcode_parsing.py:28": [
+        "type:shop.barcode_parsing.Scan"
+    ],
+    "shop/barcode_parsing.py:7": [],
+    "shop/basket_codes.py:12": [],
+    "shop/basket_codes.py:17": [],
+    "shop/basket_codes.py:22": [],
+    "shop/basket_codes.py:6": [],
+    "shop/basket_limits.py:14": [
+        "fn:builtins.len"
+    ],
+    "shop/basket_limits.py:26": [
+        "fn:builtins.len"
+    ],
+    "shop/basket_totals.py:5": [],
+    "shop/basket_totals.py:9": [
+        "fn:builtins.sum"
+    ],
+    "shop/billing/invoice.py:10": [
+        "type:builtins.str",
+        "type:shop.warehouse.bins.Bin"
+    ],
+    "shop/billing/invoice.py:7": [],
+    "shop/box_sizes.py:11": [
+        "type:shop.box_sizes.ParcelSize"
+    ],
+    "shop/box_sizes.py:17": [],
+    "shop/box_sizes.py:20": [],
+    "shop/box_sizes.py:31": [],
+    "shop/builds.py:11": [],
+    "shop/builds.py:5": [],
+    "shop/caches.py:15": [],
+    "shop/caches.py:6": [],
+    "shop/caches.py:9": [],
+    "shop/carrier_labels.py:13": [
+        "type:shop.carrier_labels.UnhandledCarrier"
+    ],
+    "shop/carrier_labels.py:18": [
+        "type:shop.carrier_labels.LabelCarrier"
+    ],
+    "shop/carrier_labels.py:30": [
+        "type:shop.carrier_labels.LabelCarrier"
+    ],
+    "shop/carrier_profiles.py:26": [],
+    "shop/carrier_rates.py:11": [
+        "fn:json.loads"
+    ],
+    "shop/carrier_rates.py:24": [],
+    "shop/carrier_rates.py:27": [
+        "fn:json.loads"
+    ],
+    "shop/carrier_rates.py:32": [
+        "fn:json.dumps",
+        "fn:json.loads"
+    ],
+    "shop/carrier_rates.py:8": [],
+    "shop/carriers.py:27": [
+        "type:shop.carriers.Service"
+    ],
+    "shop/carriers.py:7": [
+        "type:builtins.ValueError"
+    ],
+    "shop/cart_lines.py:13": [],
+    "shop/cart_lines.py:18": [],
+    "shop/cart_lines.py:24": [],
+    "shop/cart_lines.py:5": [],
+    "shop/cart_lines.py:9": [
+        "type:shop.cart_lines.CartLine"
+    ],
+    "shop/cart_totals.py:20": [
+        "type:builtins.int",
+        "type:shop.cart_totals.BasketLine"
+    ],
+    "shop/cart_totals.py:27": [],
+    "shop/cart_totals.py:31": [
+        "fn:builtins.len"
+    ],
+    "shop/cart_totals.py:36": [
+        "type:builtins.str"
+    ],
+    "shop/cart_totals.py:6": [
+        "type:builtins.int"
+    ],
+    "shop/catalog_file.py:18": [
+        "type:shop.catalog_file.CatalogUnreadable"
+    ],
+    "shop/catalog_file.py:23": [
+        "fn:json.loads",
+        "type:builtins.Exception",
+        "type:shop.catalog_file.Catalog"
+    ],
+    "shop/catalog_file.py:32": [
+        "fn:json.loads",
+        "type:json.decoder.JSONDecodeError",
+        "type:shop.catalog_file.Catalog",
+        "type:shop.catalog_file.CatalogUnreadable"
+    ],
+    "shop/categories.py:17": [
+        "type:builtins.list",
+        "type:collections.defaultdict"
+    ],
+    "shop/categories.py:25": [],
+    "shop/categories.py:7": [],
+    "shop/category_walker.py:11": [],
+    "shop/category_walker.py:24": [],
+    "shop/category_walker.py:27": [],
+    "shop/category_walker.py:6": [],
+    "shop/charges.py:4": [],
+    "shop/checkout.py:7": [],
+    "shop/checkout_settings.py:10": [],
+    "shop/checkout_settings.py:19": [],
+    "shop/cleanup.py:10": [
+        "fn:os.remove",
+        "type:builtins.FileNotFoundError"
+    ],
+    "shop/cleanup.py:18": [
+        "type:builtins.Exception"
+    ],
+    "shop/cli.py:11": [
+        "fn:json.loads",
+        "type:builtins.str",
+        "type:shop.settings.SettingsMissing"
+    ],
+    "shop/closing.py:11": [],
+    "shop/closing.py:19": [],
+    "shop/closing.py:26": [],
+    "shop/closing.py:31": [],
+    "shop/closing.py:6": [],
+    "shop/contacts.py:14": [
+        "type:shop.contacts.Contact"
+    ],
+    "shop/contacts.py:7": [],
+    "shop/coupons.py:18": [],
+    "shop/coupons.py:6": [],
+    "shop/courier_manifests.py:12": [
+        "type:builtins.enumerate"
+    ],
+    "shop/courier_manifests.py:6": [
+        "type:builtins.str"
+    ],
+    "shop/courier_picks.py:14": [],
+    "shop/courier_picks.py:26": [],
+    "shop/courier_picks.py:30": [],
+    "shop/courier_picks.py:37": [],
+    "shop/courier_pickups.py:6": [],
+    "shop/courier_slots.py:11": [],
+    "shop/courier_slots.py:16": [],
+    "shop/courier_slots.py:6": [],
+    "shop/courier_zones.py:11": [
+        "type:shop.courier_zones.Zone"
+    ],
+    "shop/courier_zones.py:16": [],
+    "shop/courier_zones.py:22": [
+        "type:shop.courier_zones.Zone"
+    ],
+    "shop/couriers.py:10": [],
+    "shop/couriers.py:16": [],
+    "shop/couriers.py:23": [],
+    "shop/couriers.py:6": [],
+    "shop/couriers/dispatch.py:10": [],
+    "shop/csv_tokens.py:13": [],
+    "shop/csv_tokens.py:17": [
+        "fn:builtins.len",
+        "type:builtins.ValueError"
+    ],
+    "shop/csv_tokens.py:22": [
+        "type:shop.csv_tokens.Punctuation"
+    ],
+    "shop/csv_tokens.py:25": [],
+    "shop/csv_tokens.py:29": [
+        "type:shop.csv_tokens.Punctuation"
+    ],
+    "shop/csv_tokens.py:34": [
+        "type:shop.csv_tokens.Punctuation"
+    ],
+    "shop/currencies.py:11": [],
+    "shop/currencies.py:15": [],
+    "shop/currencies.py:6": [],
+    "shop/currency_rounding.py:11": [
+        "fn:builtins.round"
+    ],
+    "shop/currency_rounding.py:8": [],
+    "shop/customer_profiles.py:13": [],
+    "shop/customer_profiles.py:17": [],
+    "shop/customer_profiles.py:20": [
+        "type:shop.customer_profiles.Profile"
+    ],
+    "shop/customer_profiles.py:25": [
+        "fn:dataclasses.replace"
+    ],
+    "shop/customers.py:12": [],
+    "shop/customers.py:6": [],
+    "shop/decisions.py:17": [],
+    "shop/decisions.py:6": [],
+    "shop/delivery.py:19": [],
+    "shop/delivery.py:24": [],
+    "shop/delivery.py:8": [],
+    "shop/delivery_addresses.py:13": [],
+    "shop/delivery_addresses.py:16": [],
+    "shop/delivery_addresses.py:19": [],
+    "shop/delivery_addresses.py:31": [
+        "fn:dataclasses.replace"
+    ],
+    "shop/delivery_addresses.py:41": [],
+    "shop/delivery_addresses.py:51": [],
+    "shop/delivery_slots.py:10": [
+        "type:shop.delivery_slots.Slot"
+    ],
+    "shop/delivery_slots.py:15": [],
+    "shop/delivery_slots.py:25": [],
+    "shop/delivery_slots.py:30": [
+        "type:shop.delivery_slots.Slot"
+    ],
+    "shop/delivery_slots.py:39": [],
+    "shop/digests.py:6": [
+        "fn:builtins.MentionInChat",
+        "fn:builtins.RepeatStanding",
+        "fn:builtins.WatchKeyword"
+    ],
+    "shop/discount_rules.py:19": [],
+    "shop/discount_rules.py:22": [
+        "fn:builtins.isinstance",
+        "fn:builtins.max",
+        "type:shop.discount_rules.FixedOff",
+        "type:shop.discount_rules.PercentOff"
+    ],
+    "shop/discount_rules.py:33": [
+        "fn:builtins.isinstance",
+        "type:shop.discount_rules.FixedOff",
+        "type:shop.discount_rules.PercentOff"
+    ],
+    "shop/discount_rules.py:6": [],
+    "shop/discounts.py:5": [],
+    "shop/dispatch_desk.py:13": [],
+    "shop/dispatch_desk.py:16": [],
+    "shop/dispatch_desk.py:20": [],
+    "shop/dispatch_desk.py:6": [],
+    "shop/documents.py:20": [],
+    "shop/documents.py:9": [],
+    "shop/drop_slots.py:12": [],
+    "shop/drop_slots.py:16": [
+        "type:shop.drop_slots.DropOff"
+    ],
+    "shop/drop_slots.py:21": [
+        "type:shop.drop_slots.DropOff",
+        "type:shop.drop_slots.Slot"
+    ],
+    "shop/drop_slots.py:25": [
+        "type:shop.drop_slots.DropOff"
+    ],
+    "shop/dunning.py:11": [
+        "type:shop.dunning.InvoiceStatus"
+    ],
+    "shop/dunning.py:16": [
+        "type:shop.dunning.InvoiceStatus"
+    ],
+    "shop/dunning.py:22": [],
+    "shop/encoders.py:11": [
+        "fn:builtins.len",
+        "type:builtins.str",
+        "type:shop.encoders.ByteStream"
+    ],
+    "shop/encoders.py:20": [
+        "fn:builtins.len",
+        "type:builtins.str",
+        "type:shop.encoders.ByteStream"
+    ],
+    "shop/encoders.py:6": [],
+    "shop/encoding.py:15": [],
+    "shop/encoding.py:20": [],
+    "shop/encoding.py:8": [
+        "fn:builtins.len",
+        "type:builtins.str",
+        "type:shop.encoders.ByteStream"
+    ],
+    "shop/escalations.py:6": [],
+    "shop/escalations.py:9": [
+        "type:shop.support_tickets.TicketMeta"
+    ],
+    "shop/events.py:12": [],
+    "shop/events.py:21": [],
+    "shop/events.py:6": [],
+    "shop/export_jobs.py:13": [],
+    "shop/export_jobs.py:21": [],
+    "shop/export_jobs.py:24": [],
+    "shop/export_jobs.py:29": [],
+    "shop/export_jobs.py:32": [],
+    "shop/export_jobs.py:35": [],
+    "shop/export_jobs.py:7": [],
+    "shop/exports.py:4": [
+        "type:builtins.str"
+    ],
+    "shop/feature_flags.py:15": [],
+    "shop/feature_flags.py:6": [
+        "type:builtins.set"
+    ],
+    "shop/feature_flags.py:9": [],
+    "shop/feed_reader.py:12": [
+        "type:builtins.TimeoutError",
+        "type:shop.feed_reader.FeedUnavailable"
+    ],
+    "shop/feed_reader.py:22": [
+        "type:builtins.TimeoutError",
+        "type:shop.feed_reader.FeedUnavailable"
+    ],
+    "shop/feed_reader.py:31": [
+        "type:builtins.TimeoutError"
+    ],
+    "shop/feed_reader.py:40": [
+        "type:builtins.AttributeError",
+        "type:builtins.KeyError"
+    ],
+    "shop/feed_reader.py:48": [
+        "type:builtins.TimeoutError",
+        "type:shop.feed_reader.FeedUnavailable"
+    ],
+    "shop/feed_reader.py:7": [
+        "type:shop.feed_reader.FeedUnavailable"
+    ],
+    "shop/floor_plans.py:15": [],
+    "shop/floor_plans.py:20": [],
+    "shop/floor_plans.py:26": [],
+    "shop/floor_plans.py:31": [
+        "type:builtins.KeyError"
+    ],
+    "shop/freight.py:14": [
+        "fn:builtins.next"
+    ],
+    "shop/freight.py:7": [],
+    "shop/frozen_prices.py:12": [
+        "type:builtins.object"
+    ],
+    "shop/frozen_prices.py:15": [],
+    "shop/frozen_prices.py:25": [
+        "fn:dataclasses.replace"
+    ],
+    "shop/gift_messages.py:12": [],
+    "shop/gift_messages.py:8": [],
+    "shop/gift_notes.py:12": [],
+    "shop/gift_notes.py:15": [],
+    "shop/gift_notes.py:25": [],
+    "shop/gift_wrap.py:18": [],
+    "shop/gift_wrap.py:22": [],
+    "shop/gift_wrap.py:26": [],
+    "shop/headlines.py:13": [],
+    "shop/headlines.py:6": [],
+    "shop/holds.py:16": [],
+    "shop/holds.py:9": [],
+    "shop/import_progress.py:10": [
+        "fn:builtins.len"
+    ],
+    "shop/import_progress.py:22": [],
+    "shop/import_progress.py:7": [],
+    "shop/imports_progress.py:11": [
+        "type:builtins.enumerate"
+    ],
+    "shop/imports_progress.py:18": [
+        "type:builtins.enumerate"
+    ],
+    "shop/imports_progress.py:7": [],
+    "shop/inventory.py:11": [
+        "type:builtins.dict"
+    ],
+    "shop/inventory.py:14": [],
+    "shop/inventory.py:17": [
+        "type:shop.inventory.OutOfStock"
+    ],
+    "shop/inventory.py:5": [
+        "type:shop.inventory.OutOfStock"
+    ],
+    "shop/invoice_numbers.py:12": [],
+    "shop/invoice_numbers.py:7": [],
+    "shop/invoice_render.py:11": [
+        "fn:builtins.len"
+    ],
+    "shop/invoice_render.py:21": [],
+    "shop/invoice_render.py:25": [
+        "fn:builtins.len"
+    ],
+    "shop/invoice_render.py:28": [],
+    "shop/invoice_render.py:6": [],
+    "shop/invoice_split.py:20": [
+        "type:shop.invoice_split.InvoiceSplit"
+    ],
+    "shop/invoice_split.py:6": [],
+    "shop/invoicing.py:17": [],
+    "shop/invoicing.py:5": [],
+    "shop/kiosk_receipts.py:10": [],
+    "shop/kiosk_receipts.py:14": [],
+    "shop/kiosk_receipts.py:19": [],
+    "shop/kiosk_receipts.py:23": [],
+    "shop/kiosk_receipts.py:28": [],
+    "shop/kiosk_receipts.py:32": [
+        "type:builtins.str"
+    ],
+    "shop/kiosk_receipts.py:7": [],
+    "shop/label_queue.py:17": [],
+    "shop/label_queue.py:6": [],
+    "shop/label_queue.py:9": [
+        "type:builtins.IndexError"
+    ],
+    "shop/label_sizes.py:11": [],
+    "shop/label_sizes.py:15": [
+        "type:shop.label_sizes.LabelSize"
+    ],
+    "shop/label_sizes.py:19": [],
+    "shop/label_sizes.py:24": [],
+    "shop/labels.py:4": [],
+    "shop/layout.py:14": [],
+    "shop/layout.py:20": [],
+    "shop/layout.py:8": [],
+    "shop/layout/grid.py:7": [
+        "type:shop.widgets.card.Card"
+    ],
+    "shop/layout/row.py:8": [
+        "fn:html.escape"
+    ],
+    "shop/layout/theme.py:6": [],
+    "shop/ledger_dump.py:6": [
+        "type:builtins.str"
+    ],
+    "shop/ledger_export.py:13": [],
+    "shop/ledger_export.py:19": [],
+    "shop/ledger_export.py:23": [],
+    "shop/ledger_export.py:8": [],
+    "shop/ledger_lines.py:12": [],
+    "shop/ledger_lines.py:17": [
+        "type:builtins.str"
+    ],
+    "shop/ledger_posting.py:10": [
+        "type:builtins.str"
+    ],
+    "shop/ledger_posting.py:15": [],
+    "shop/ledger_posting.py:7": [],
+    "shop/listeners.py:12": [
+        "fn:builtins.listener"
+    ],
+    "shop/listeners.py:18": [
+        "fn:glob.glob"
+    ],
+    "shop/listeners.py:23": [
+        "fn:builtins.len",
+        "fn:glob.glob"
+    ],
+    "shop/listeners.py:8": [],
+    "shop/log_bundles.py:17": [
+        "fn:datetime.date.today",
+        "fn:os.scandir",
+        "fn:tarfile.open",
+        "type:datetime.date"
+    ],
+    "shop/log_bundles.py:26": [],
+    "shop/log_bundles.py:8": [
+        "fn:datetime.date.today",
+        "fn:os.path.getmtime",
+        "fn:os.scandir",
+        "fn:os.utime",
+        "fn:tarfile.open",
+        "type:datetime.date"
+    ],
+    "shop/lookups.py:15": [],
+    "shop/lookups.py:6": [],
+    "shop/loyalty_cards.py:11": [],
+    "shop/loyalty_cards.py:25": [],
+    "shop/loyalty_points.py:13": [
+        "type:builtins.ValueError"
+    ],
+    "shop/loyalty_points.py:20": [],
+    "shop/loyalty_points.py:28": [],
+    "shop/loyalty_points.py:32": [],
+    "shop/loyalty_points.py:35": [
+        "type:builtins.ValueError"
+    ],
+    "shop/loyalty_points.py:42": [
+        "type:builtins.str"
+    ],
+    "shop/loyalty_points.py:47": [],
+    "shop/loyalty_points.py:7": [],
+    "shop/loyalty_tiers.py:11": [
+        "type:shop.loyalty_tiers.Tier"
+    ],
+    "shop/loyalty_tiers.py:16": [
+        "type:builtins.int"
+    ],
+    "shop/loyalty_tiers.py:24": [
+        "type:builtins.int",
+        "type:shop.loyalty_tiers.Tier"
+    ],
+    "shop/loyalty_tiers.py:31": [
+        "type:shop.loyalty_tiers.Tier"
+    ],
+    "shop/loyalty_tiers.py:36": [],
+    "shop/mailer_options.py:12": [],
+    "shop/mailer_options.py:17": [],
+    "shop/mailer_options.py:22": [],
+    "shop/mailer_options.py:6": [],
+    "shop/markdown_runs.py:10": [],
+    "shop/markdown_runs.py:13": [],
+    "shop/markdown_runs.py:17": [],
+    "shop/markdown_runs.py:24": [],
+    "shop/markdown_runs.py:5": [],
+    "shop/menu_boards.py:17": [],
+    "shop/menu_boards.py:22": [],
+    "shop/menu_boards.py:27": [],
+    "shop/menu_boards.py:31": [],
+    "shop/menu_boards.py:35": [],
+    "shop/menus/sidebar.py:7": [],
+    "shop/notes.py:10": [],
+    "shop/notes.py:15": [],
+    "shop/notes.py:7": [],
+    "shop/opening_hours.py:11": [],
+    "shop/opening_hours.py:17": [],
+    "shop/opening_hours.py:22": [
+        "type:shop.opening_hours.Hours"
+    ],
+    "shop/opening_hours.py:25": [],
+    "shop/opening_hours.py:32": [],
+    "shop/opening_hours.py:36": [],
+    "shop/order_archive.py:4": [],
+    "shop/order_cards.py:12": [
+        "type:shop.order_cards.OrderCard"
+    ],
+    "shop/order_cards.py:24": [
+        "type:shop.order_cards.OrderHeading"
+    ],
+    "shop/order_emails.py:5": [],
+    "shop/order_emails.py:9": [],
+    "shop/order_exports.py:10": [
+        "type:builtins.str"
+    ],
+    "shop/order_exports.py:15": [
+        "type:builtins.str"
+    ],
+    "shop/order_exports.py:6": [],
+    "shop/order_numbers.py:12": [
+        "type:shop.order_numbers.OrderNumbers"
+    ],
+    "shop/order_numbers.py:20": [],
+    "shop/order_numbers.py:23": [],
+    "shop/order_numbers.py:29": [
+        "fn:re.compile"
+    ],
+    "shop/orders.py:14": [],
+    "shop/orders.py:23": [
+        "fn:builtins.sum"
+    ],
+    "shop/orders.py:26": [],
+    "shop/packing.py:5": [],
+    "shop/packing_slips.py:17": [
+        "fn:textwrap.dedent"
+    ],
+    "shop/packing_slips.py:26": [],
+    "shop/packing_slips.py:6": [],
+    "shop/pagination.py:11": [],
+    "shop/pagination.py:16": [],
+    "shop/pagination.py:6": [],
+    "shop/pallet_loads.py:16": [
+        "fn:builtins.max"
+    ],
+    "shop/pallet_loads.py:22": [
+        "fn:builtins.max"
+    ],
+    "shop/pallet_loads.py:29": [],
+    "shop/parcel_kinds.py:10": [],
+    "shop/parcel_kinds.py:19": [],
+    "shop/parcel_kinds.py:6": [],
+    "shop/parcel_labels.py:13": [],
+    "shop/parcel_labels.py:5": [],
+    "shop/parcel_labels.py:9": [],
+    "shop/parcel_locks.py:11": [],
+    "shop/parcel_locks.py:17": [],
+    "shop/parcel_locks.py:21": [],
+    "shop/parcel_locks.py:6": [],
+    "shop/parcel_returns.py:12": [
+        "type:shop.parcel_returns.ParcelState"
+    ],
+    "shop/parcel_returns.py:17": [],
+    "shop/parcel_returns.py:20": [
+        "type:shop.parcel_returns.ParcelState"
+    ],
+    "shop/parcel_returns.py:26": [],
+    "shop/parcel_routes.py:14": [],
+    "shop/parcel_routes.py:19": [
+        "type:shop.parcel_routes.Leg"
+    ],
+    "shop/parcel_routes.py:27": [],
+    "shop/parcel_weighing.py:11": [],
+    "shop/parcel_weighing.py:15": [
+        "type:builtins.float"
+    ],
+    "shop/parcel_weighing.py:20": [
+        "fn:builtins.max",
+        "type:builtins.float"
+    ],
+    "shop/parcel_weighing.py:26": [
+        "type:builtins.float"
+    ],
+    "shop/payload_fields.py:14": [],
+    "shop/payload_fields.py:19": [],
+    "shop/payload_fields.py:5": [
+        "type:builtins.str"
+    ],
+    "shop/payment_events.py:12": [],
+    "shop/payment_events.py:17": [
+        "fn:builtins.isinstance",
+        "type:shop.payment_events.Challenge"
+    ],
+    "shop/payment_events.py:22": [
+        "fn:builtins.isinstance",
+        "type:shop.payment_events.CardPayment",
+        "type:shop.payment_events.Challenge"
+    ],
+    "shop/payment_events.py:29": [
+        "fn:builtins.isinstance",
+        "type:shop.payment_events.CardPayment",
+        "type:shop.payment_events.Challenge"
+    ],
+    "shop/payment_events.py:36": [
+        "fn:builtins.isinstance",
+        "type:builtins.str",
+        "type:shop.payment_events.CardPayment"
+    ],
+    "shop/payment_events.py:43": [
+        "fn:builtins.isinstance",
+        "type:shop.payment_events.CardPayment"
+    ],
+    "shop/payment_events.py:7": [],
+    "shop/payment_icons.py:13": [
+        "type:shop.payment_icons.UnhandledMethod"
+    ],
+    "shop/payment_icons.py:19": [
+        "type:shop.payment_icons.PaymentMethod"
+    ],
+    "shop/payment_icons.py:28": [
+        "type:shop.payment_icons.PaymentMethod"
+    ],
+    "shop/payment_plugins.py:11": [],
+    "shop/payment_plugins.py:17": [],
+    "shop/payment_plugins.py:20": [],
+    "shop/payment_plugins.py:25": [
+        "type:shop.payment_plugins.CardPayments"
+    ],
+    "shop/payment_plugins.py:7": [],
+    "shop/photo_archive.py:20": [
+        "fn:os.path.join",
+        "fn:os.path.relpath",
+        "fn:os.walk",
+        "fn:time.strftime",
+        "type:zipfile.ZipFile"
+    ],
+    "shop/photo_archive.py:9": [
+        "fn:os.chmod",
+        "fn:os.path.join",
+        "fn:os.path.relpath",
+        "fn:os.walk",
+        "fn:time.strftime",
+        "type:zipfile.ZipFile"
+    ],
+    "shop/picking.py:5": [],
+    "shop/picking_queue.py:12": [],
+    "shop/picking_queue.py:17": [],
+    "shop/picking_queue.py:7": [],
+    "shop/picking_waves.py:13": [],
+    "shop/picking_waves.py:16": [],
+    "shop/picking_waves.py:23": [],
+    "shop/picking_waves.py:26": [],
+    "shop/picking_waves.py:29": [],
+    "shop/picking_waves.py:9": [],
+    "shop/plugins.py:5": [
+        "type:builtins.Exception"
+    ],
+    "shop/price_export.py:9": [
+        "fn:builtins.open",
+        "fn:csv.writer",
+        "fn:os.makedirs",
+        "fn:os.replace",
+        "fn:shutil.copy2"
+    ],
+    "shop/price_lists.py:12": [],
+    "shop/price_lists.py:16": [
+        "type:builtins.KeyError",
+        "type:shop.price_lists.UnknownSku"
+    ],
+    "shop/price_lists.py:27": [
+        "type:builtins.KeyError",
+        "type:shop.price_lists.UnknownSku"
+    ],
+    "shop/price_lists.py:6": [
+        "type:shop.price_lists.UnknownSku"
+    ],
+    "shop/price_quotes.py:20": [
+        "type:shop.price_quotes.PriceQuote"
+    ],
+    "shop/price_quotes.py:6": [],
+    "shop/price_rules.py:13": [],
+    "shop/price_rules.py:16": [
+        "fn:builtins.max",
+        "fn:builtins.round"
+    ],
+    "shop/price_rules.py:20": [
+        "fn:builtins.min",
+        "type:builtins.type"
+    ],
+    "shop/price_rules.py:25": [
+        "fn:dataclasses.replace"
+    ],
+    "shop/price_rules.py:29": [
+        "type:shop.price_rules.PriceRule"
+    ],
+    "shop/price_rules.py:35": [],
+    "shop/price_rules.py:38": [
+        "type:shop.price_rules.Coupon"
+    ],
+    "shop/price_tags.py:12": [],
+    "shop/price_tags.py:22": [],
+    "shop/pricing.py:12": [],
+    "shop/pricing.py:22": [],
+    "shop/pricing.py:6": [],
+    "shop/pricing/rates.py:4": [
+        "fn:builtins.len"
+    ],
+    "shop/printer_commands.py:10": [
+        "type:builtins.str"
+    ],
+    "shop/printer_commands.py:15": [
+        "type:builtins.str"
+    ],
+    "shop/printer_commands.py:19": [],
+    "shop/printer_commands.py:6": [],
+    "shop/printer_pool.py:10": [
+        "type:shop.printer_pool.UnknownTill"
+    ],
+    "shop/printer_pool.py:16": [],
+    "shop/printer_pool.py:19": [],
+    "shop/printer_pool.py:22": [],
+    "shop/printer_pool.py:28": [],
+    "shop/printer_pool.py:32": [
+        "type:builtins.KeyError",
+        "type:shop.printer_pool.UnknownTill"
+    ],
+    "shop/printer_pool.py:39": [],
+    "shop/printer_pool.py:5": [],
+    "shop/product_teasers.py:14": [
+        "type:shop.product_teasers.Teaser"
+    ],
+    "shop/product_teasers.py:27": [
+        "type:shop.product_teasers.ProductTeaser"
+    ],
+    "shop/product_teasers.py:32": [
+        "type:shop.product_teasers.Teaser"
+    ],
+    "shop/quantities.py:11": [],
+    "shop/quantities.py:20": [
+        "type:shop.quantities.MissingQuantity"
+    ],
+    "shop/quantities.py:6": [
+        "type:shop.quantities.MissingQuantity"
+    ],
+    "shop/quantity_parsing.py:11": [
+        "type:builtins.ValueError",
+        "type:builtins.int",
+        "type:shop.quantity_parsing.BadQuantity"
+    ],
+    "shop/quantity_parsing.py:20": [
+        "type:builtins.ValueError",
+        "type:builtins.int",
+        "type:shop.quantity_parsing.BadQuantity"
+    ],
+    "shop/quantity_parsing.py:6": [
+        "type:shop.quantity_parsing.BadQuantity"
+    ],
+    "shop/queue_tickets.py:10": [],
+    "shop/queue_tickets.py:15": [],
+    "shop/queue_tickets.py:20": [],
+    "shop/queue_tickets.py:5": [],
+    "shop/quotes.py:5": [],
+    "shop/receipt_banner.py:4": [],
+    "shop/receipt_printers.py:12": [],
+    "shop/receipt_printers.py:18": [],
+    "shop/receipt_printers.py:21": [],
+    "shop/receipt_printers.py:28": [],
+    "shop/receipt_printers.py:32": [
+        "fn:builtins.sorted",
+        "type:builtins.dict"
+    ],
+    "shop/receipt_printers.py:8": [],
+    "shop/receipt_printing.py:10": [],
+    "shop/receipt_printing.py:14": [],
+    "shop/receipt_printing.py:25": [],
+    "shop/receipt_printing.py:28": [],
+    "shop/receipt_printing.py:31": [],
+    "shop/receipt_printing.py:6": [],
+    "shop/receipt_signing.py:10": [
+        "fn:base64.urlsafe_b64encode",
+        "fn:binascii.hexlify",
+        "fn:hashlib.pbkdf2_hmac",
+        "fn:hmac.compare_digest",
+        "fn:hmac.new"
+    ],
+    "shop/receipt_signing.py:18": [
+        "fn:base64.urlsafe_b64encode",
+        "fn:binascii.hexlify",
+        "fn:hashlib.pbkdf2_hmac",
+        "fn:hmac.new"
+    ],
+    "shop/receipt_signing.py:26": [],
+    "shop/receipts.py:13": [],
+    "shop/receipts.py:19": [
+        "type:shop.receipts.NoEmail"
+    ],
+    "shop/receipts.py:8": [
+        "type:shop.receipts.NoEmail"
+    ],
+    "shop/receiving.py:6": [],
+    "shop/refund_events.py:5": [
+        "fn:builtins.isinstance",
+        "type:shop.payment_events.CardPayment",
+        "type:shop.payment_events.Challenge"
+    ],
+    "shop/refund_windows.py:11": [],
+    "shop/refund_windows.py:20": [],
+    "shop/refund_windows.py:30": [],
+    "shop/refund_windows.py:35": [
+        "type:shop.refund_windows.SalesChannel"
+    ],
+    "shop/refunds.py:9": [
+        "type:shop.refunds.RefundRefused"
+    ],
+    "shop/reminders.py:4": [],
+    "shop/reorder_alerts.py:13": [],
+    "shop/reorder_alerts.py:17": [],
+    "shop/reorder_levels.py:11": [
+        "type:shop.reorder_levels.ShelfLevel"
+    ],
+    "shop/reorder_levels.py:16": [
+        "type:shop.reorder_levels.ShelfLevel"
+    ],
+    "shop/reorder_levels.py:23": [],
+    "shop/reorder_levels.py:29": [
+        "type:shop.reorder_levels.ShelfLevel"
+    ],
+    "shop/reorder_levels.py:34": [
+        "type:shop.reorder_levels.ShelfLevel"
+    ],
+    "shop/report_cells.py:11": [],
+    "shop/report_cells.py:16": [
+        "fn:builtins.isinstance",
+        "fn:builtins.len",
+        "type:builtins.str",
+        "type:shop.report_cells.Cell",
+        "type:shop.report_cells.Table"
+    ],
+    "shop/report_cells.py:22": [
+        "fn:builtins.isinstance",
+        "type:shop.report_cells.Cell",
+        "type:shop.report_cells.Table"
+    ],
+    "shop/report_cells.py:6": [],
+    "shop/report_formats.py:12": [
+        "type:decimal.Decimal"
+    ],
+    "shop/report_formats.py:16": [
+        "fn:builtins.sum",
+        "type:decimal.Decimal"
+    ],
+    "shop/report_formats.py:24": [],
+    "shop/report_formats.py:30": [],
+    "shop/report_formats.py:37": [],
+    "shop/report_formats.py:44": [],
+    "shop/report_formats.py:8": [],
+    "shop/restock.py:5": [],
+    "shop/retries.py:16": [],
+    "shop/retries.py:21": [
+        "type:builtins.range"
+    ],
+    "shop/retries.py:7": [
+        "type:builtins.range"
+    ],
+    "shop/retry_backoff.py:13": [
+        "fn:builtins.min"
+    ],
+    "shop/retry_backoff.py:7": [],
+    "shop/retry_clients.py:24": [],
+    "shop/retry_clients.py:27": [
+        "fn:builtins.next",
+        "type:builtins.range"
+    ],
+    "shop/retry_clients.py:6": [],
+    "shop/retry_clients.py:9": [
+        "type:builtins.range"
+    ],
+    "shop/return_desk.py:14": [],
+    "shop/return_desk.py:18": [],
+    "shop/return_desk.py:23": [],
+    "shop/return_desk.py:26": [],
+    "shop/return_desk.py:31": [],
+    "shop/return_desk.py:34": [],
+    "shop/return_desk.py:38": [],
+    "shop/return_labels.py:8": [],
+    "shop/return_reasons.py:11": [
+        "type:shop.return_reasons.ReturnReason"
+    ],
+    "shop/return_reasons.py:17": [],
+    "shop/return_reasons.py:20": [],
+    "shop/return_reasons.py:31": [],
+    "shop/return_reasons.py:34": [],
+    "shop/returns/desk.py:8": [],
+    "shop/returns_desk.py:4": [],
+    "shop/route_stops.py:15": [],
+    "shop/route_stops.py:26": [],
+    "shop/route_stops.py:30": [],
+    "shop/route_stops.py:36": [],
+    "shop/scale_readers.py:13": [],
+    "shop/scale_readers.py:16": [],
+    "shop/scale_readers.py:22": [],
+    "shop/scale_readers.py:25": [],
+    "shop/scale_readers.py:5": [],
+    "shop/screens/home.py:9": [],
+    "shop/search.py:17": [],
+    "shop/search.py:27": [],
+    "shop/search.py:7": [],
+    "shop/search/engine.py:6": [],
+    "shop/seat_maps.py:19": [],
+    "shop/seat_maps.py:28": [],
+    "shop/session_limits.py:11": [],
+    "shop/session_limits.py:16": [],
+    "shop/session_limits.py:24": [],
+    "shop/session_limits.py:27": [],
+    "shop/session_limits.py:7": [],
+    "shop/sessions.py:13": [
+        "type:builtins.RuntimeError"
+    ],
+    "shop/sessions.py:21": [
+        "type:shop.sessions.NoActiveSession"
+    ],
+    "shop/sessions.py:8": [
+        "type:shop.sessions.NoActiveSession"
+    ],
+    "shop/settings.py:12": [
+        "fn:json.loads",
+        "type:builtins.str",
+        "type:shop.settings.SettingsMissing"
+    ],
+    "shop/shelf_audits.py:12": [],
+    "shop/shelf_audits.py:20": [],
+    "shop/shelf_audits.py:24": [],
+    "shop/shelf_audits.py:30": [],
+    "shop/shelf_audits.py:35": [],
+    "shop/shelf_audits.py:38": [
+        "type:builtins.map",
+        "type:builtins.str"
+    ],
+    "shop/shelf_audits.py:5": [],
+    "shop/shelf_labels.py:12": [],
+    "shop/shelf_labels.py:19": [],
+    "shop/shelf_labels.py:24": [],
+    "shop/shelf_labels.py:6": [],
+    "shop/shift_reports.py:18": [],
+    "shop/shift_reports.py:22": [],
+    "shop/shift_reports.py:26": [],
+    "shop/shipment_records.py:13": [],
+    "shop/shipment_records.py:16": [],
+    "shop/shipment_records.py:19": [
+        "type:shop.shipment_records.Shipment"
+    ],
+    "shop/shipment_records.py:24": [
+        "fn:dataclasses.replace"
+    ],
+    "shop/shipments.py:24": [],
+    "shop/shipments.py:7": [],
+    "shop/shipping_labels.py:21": [
+        "type:shop.shipping_labels.Parcel"
+    ],
+    "shop/shipping_labels.py:25": [],
+    "shop/shipping_labels.py:8": [],
+    "shop/shipping_notices.py:14": [],
+    "shop/shipping_notices.py:18": [
+        "type:shop.shipping_notices.ShippingNotice"
+    ],
+    "shop/shipping_notices.py:24": [
+        "type:shop.shipping_notices.ShippingNotice"
+    ],
+    "shop/shipping_quotes.py:11": [],
+    "shop/shipping_quotes.py:24": [],
+    "shop/shipping_quotes.py:6": [],
+    "shop/shipping_rates.py:14": [],
+    "shop/shipping_rates.py:19": [],
+    "shop/shipping_rates.py:23": [
+        "fn:builtins.isinstance",
+        "type:shop.shipping_rates.Letter",
+        "type:shop.shipping_rates.Pallet"
+    ],
+    "shop/shipping_rates.py:33": [],
+    "shop/shipping_rates.py:6": [],
+    "shop/shipping_rates.py:9": [],
+    "shop/stamp_cards.py:11": [],
+    "shop/stamp_cards.py:18": [],
+    "shop/stamp_cards.py:22": [],
+    "shop/stamp_cards.py:29": [],
+    "shop/stamp_cards.py:5": [],
+    "shop/startup.py:21": [],
+    "shop/startup.py:26": [],
+    "shop/startup.py:8": [
+        "fn:builtins.print"
+    ],
+    "shop/status_colours.py:11": [],
+    "shop/status_colours.py:5": [],
+    "shop/statuses.py:4": [],
+    "shop/stock_alerts.py:13": [
+        "type:shop.stock_alerts.UnhandledLevel"
+    ],
+    "shop/stock_alerts.py:18": [
+        "type:shop.stock_alerts.AlertLevel"
+    ],
+    "shop/stock_alerts.py:30": [
+        "type:shop.stock_alerts.AlertLevel"
+    ],
+    "shop/stock_alerts.py:41": [
+        "type:shop.stock_alerts.AlertLevel"
+    ],
+    "shop/stock_alerts.py:50": [
+        "type:shop.stock_alerts.AlertLevel"
+    ],
+    "shop/stock_badges.py:14": [],
+    "shop/stock_badges.py:22": [],
+    "shop/stock_badges.py:30": [],
+    "shop/stock_badges.py:34": [],
+    "shop/stock_badges.py:39": [],
+    "shop/stock_counts.py:17": [],
+    "shop/stock_counts.py:23": [],
+    "shop/stock_counts.py:28": [],
+    "shop/stock_counts.py:6": [],
+    "shop/stock_export.py:9": [
+        "fn:builtins.open",
+        "fn:csv.writer",
+        "fn:os.fsync",
+        "fn:os.makedirs",
+        "fn:os.replace",
+        "fn:shutil.copy2"
+    ],
+    "shop/stock_levels.py:5": [],
+    "shop/stock_movements.py:10": [
+        "fn:builtins.isinstance",
+        "type:shop.stock_movements.Dispatch",
+        "type:shop.stock_movements.Receipt"
+    ],
+    "shop/stock_movements.py:6": [],
+    "shop/stock_moves.py:12": [],
+    "shop/stock_moves.py:17": [],
+    "shop/stock_moves.py:21": [],
+    "shop/stock_moves.py:26": [],
+    "shop/stock_moves.py:35": [],
+    "shop/stock_queries.py:12": [
+        "fn:builtins.sum"
+    ],
+    "shop/stock_queries.py:19": [
+        "type:shop.stock_queries.Carrier"
+    ],
+    "shop/stock_queries.py:7": [],
+    "shop/stock_report.py:6": [],
+    "shop/store_context.py:15": [],
+    "shop/store_context.py:7": [],
+    "shop/store_settings.py:12": [
+        "fn:json.load"
+    ],
+    "shop/store_settings.py:24": [
+        "fn:json.loads",
+        "type:shop.store_settings.StoreSettings"
+    ],
+    "shop/store_settings.py:9": [],
+    "shop/storefront/layout.py:4": [],
+    "shop/storefront/layout.py:8": [],
+    "shop/storefront/pages.py:5": [],
+    "shop/stores.py:12": [],
+    "shop/stores.py:18": [],
+    "shop/stores.py:6": [
+        "type:builtins.NotImplementedError"
+    ],
+    "shop/streams.py:15": [],
+    "shop/streams.py:23": [],
+    "shop/streams.py:30": [],
+    "shop/streams.py:8": [],
+    "shop/streams_io.py:5": [],
+    "shop/streams_io.py:9": [
+        "type:builtins.RuntimeError"
+    ],
+    "shop/subscriptions.py:14": [],
+    "shop/subscriptions.py:6": [
+        "type:builtins.set"
+    ],
+    "shop/subscriptions.py:9": [],
+    "shop/supplier_feed.py:18": [
+        "type:builtins.int",
+        "type:shop.supplier_feed.SupplierPrice"
+    ],
+    "shop/supplier_feed.py:24": [
+        "fn:json.loads",
+        "type:shop.supplier_feed.SupplierPrice"
+    ],
+    "shop/supplier_feed.py:7": [
+        "fn:json.loads"
+    ],
+    "shop/support_desk.py:5": [
+        "type:shop.support_tickets.TicketMeta"
+    ],
+    "shop/support_tickets.py:13": [],
+    "shop/support_tickets.py:18": [],
+    "shop/support_tickets.py:22": [
+        "type:shop.support_tickets.Ticket"
+    ],
+    "shop/support_tickets.py:28": [],
+    "shop/support_tickets.py:32": [
+        "type:shop.support_tickets.RoutedTicket"
+    ],
+    "shop/support_tickets.py:35": [
+        "type:shop.support_tickets.TicketMeta"
+    ],
+    "shop/support_tickets.py:6": [],
+    "shop/support_tickets.py:9": [
+        "type:shop.support_tickets.TicketMeta"
+    ],
+    "shop/tax_bands.py:15": [],
+    "shop/tax_contexts.py:13": [
+        "fn:builtins.sum"
+    ],
+    "shop/tax_contexts.py:17": [],
+    "shop/tax_contexts.py:25": [],
+    "shop/tax_contexts.py:33": [],
+    "shop/tax_contexts.py:42": [],
+    "shop/tax_contexts.py:45": [
+        "fn:builtins.sum"
+    ],
+    "shop/tax_contexts.py:8": [],
+    "shop/tax_rates.py:16": [],
+    "shop/tax_rates.py:19": [],
+    "shop/tax_rates.py:8": [],
+    "shop/tax_totals.py:16": [
+        "fn:builtins.round",
+        "fn:builtins.sum"
+    ],
+    "shop/tax_totals.py:5": [],
+    "shop/tax_totals.py:9": [
+        "fn:builtins.round",
+        "fn:builtins.sum"
+    ],
+    "shop/thumbnails.py:4": [],
+    "shop/ticket_triage.py:11": [
+        "type:shop.ticket_triage.Priority"
+    ],
+    "shop/ticket_triage.py:17": [],
+    "shop/ticket_triage.py:20": [],
+    "shop/ticket_triage.py:26": [
+        "type:shop.ticket_triage.Priority"
+    ],
+    "shop/tiers.py:14": [],
+    "shop/tiers.py:6": [],
+    "shop/tiers.py:9": [],
+    "shop/till_drawers.py:10": [],
+    "shop/till_drawers.py:21": [],
+    "shop/till_drawers.py:24": [],
+    "shop/till_drawers.py:29": [],
+    "shop/till_drawers.py:33": [],
+    "shop/till_sessions.py:12": [],
+    "shop/till_sessions.py:15": [
+        "fn:builtins.getattr"
+    ],
+    "shop/till_sessions.py:9": [],
+    "shop/tip_cents.py:11": [],
+    "shop/tip_cents.py:14": [],
+    "shop/tip_cents.py:18": [
+        "type:shop.tip_cents.Cents"
+    ],
+    "shop/tip_cents.py:22": [
+        "type:shop.tip_cents.Cents"
+    ],
+    "shop/tip_cents.py:27": [
+        "type:shop.tip_cents.Cents"
+    ],
+    "shop/tip_cents.py:34": [],
+    "shop/tip_cents.py:5": [
+        "fn:builtins.round",
+        "type:builtins.float"
+    ],
+    "shop/tracking/events.py:7": [],
+    "shop/validation.py:5": [
+        "fn:builtins.TypeError",
+        "fn:builtins.isinstance",
+        "type:builtins.ValueError",
+        "type:builtins.int"
+    ],
+    "shop/vat_bands.py:21": [
+        "type:shop.vat_bands.TaxBand"
+    ],
+    "shop/voucher_book.py:13": [],
+    "shop/voucher_book.py:16": [],
+    "shop/voucher_book.py:20": [],
+    "shop/voucher_book.py:9": [],
+    "shop/voucher_codes.py:17": [],
+    "shop/voucher_codes.py:6": [],
+    "shop/voucher_guards.py:12": [],
+    "shop/voucher_guards.py:16": [
+        "type:shop.voucher_guards.VoucherRefused"
+    ],
+    "shop/voucher_guards.py:6": [
+        "type:shop.voucher_guards.VoucherRefused"
+    ],
+    "shop/wallet_balances.py:12": [],
+    "shop/wallet_balances.py:15": [
+        "fn:builtins.divmod"
+    ],
+    "shop/wallet_balances.py:19": [],
+    "shop/wallet_balances.py:29": [
+        "fn:dataclasses.replace"
+    ],
+    "shop/warehouse/bins.py:5": [],
+    "shop/warehouse/picking.py:4": [],
+    "shop/warehouse/stock.py:7": [],
+    "shop/warehouse_api.py:4": [
+        "type:builtins.Exception",
+        "type:builtins.range"
+    ],
+    "shop/warehouse_returns.py:10": [],
+    "shop/warehouse_returns.py:13": [],
+    "shop/warehouse_returns.py:5": [],
+    "shop/webhook_events.py:11": [],
+    "shop/webhook_events.py:21": [
+        "type:shop.webhook_events.PaymentEvent"
+    ],
+    "shop/webhook_payloads.py:16": [
+        "type:shop.webhook_payloads.Payload"
+    ],
+    "shop/webhook_payloads.py:22": [
+        "type:shop.webhook_payloads.Payload"
+    ],
+    "shop/webhook_payloads.py:6": [],
+    "shop/widgets/card.py:12": [],
+    "shop/widgets/card.py:6": [],
+    "shop/widgets/card.py:9": [],
+    "shop/wishlists.py:15": [],
+    "shop/wishlists.py:5": [],
+    "shop/wishlists.py:9": []
+}

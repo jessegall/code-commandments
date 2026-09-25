@@ -92,18 +92,20 @@ func TestEnrolmentImportsEveryRuleFolderOnly(t *testing.T) {
 	write("detectors/_draft/draft.go")
 	write("skill/backend/absence/SKILL.md")
 	write("skill/python/flow/flow_test.go")
+	write("published/published.go")
+	write("published/spatie/spatie.go")
 
 	source, err := catalog.Enrolment(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	for _, want := range []string{`"github.com/jessegall/code-commandments/detectors/backend/laravel"`, `"github.com/jessegall/code-commandments/sins/backend"`} {
+	for _, want := range []string{`"github.com/jessegall/code-commandments/detectors/backend/laravel"`, `"github.com/jessegall/code-commandments/sins/backend"`, `"github.com/jessegall/code-commandments/published/spatie"`} {
 		if !strings.Contains(string(source), want) {
 			t.Fatalf("%s is not imported:\n%s", want, source)
 		}
 	}
-	if strings.Count(string(source), "_ \"") != 2 {
-		t.Fatalf("only the two rule packages are imported:\n%s", source)
+	if strings.Count(string(source), "_ \"") != 3 {
+		t.Fatalf("only the three rule packages are imported:\n%s", source)
 	}
 }

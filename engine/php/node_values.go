@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/php/prose"
+	"github.com/jessegall/code-commandments/prose"
 )
 
 // witherCarriedFloor is how many of its own properties a rebuild must carry over to be a hand-rolled wither.

@@ -93,9 +93,9 @@ each line against the schema, and checks every span, line and comment against th
 | parsed binding and interpolation expressions | TypeScript nodes under `value` | bridge | vue |
 | `v-if`/`v-else-if`/`v-else` chains | sibling order in `children` | engine | vue (the three `<span>`s in `StockIndicator`) |
 | component-ness of a tag | `Element.name` | engine | vue |
-| which file a component tag resolves to | the script's import `resolves` + `program.aliases` | bridge | — |
+| which file a component tag resolves to | the `Element`'s own `resolves`, through the script's imports and `program.aliases` | bridge | — |
 | prop types down and up the render tree, cross-file types | `defineProps` type argument, imports' `resolves`, `resolved` | engine | vue (`defineProps<{ customer: CustomerData }>()`) |
-| checker-resolved types of script locals | `resolved` with `origin: compiler` | bridge | typescript (the same walker types a script block; this Vue fixture's only expressions go through `defineProps`, which plain `tsc` cannot type, so they stay absent) |
+| checker-resolved types of script locals | `resolved` with `origin: compiler` | bridge | typescript, vue (a script block is checked in the same program as every `.ts` file; template expressions are not typed) |
 | a hand-written type mirroring a PHP Data class | TS `InterfaceDeclaration`/`TypeAliasDeclaration` fields, beside the PHP stream's class and its `#[TypeScript]` attribute | engine | — |
 | structural hashes across components | `kind`, `field`, `name`, `value` | engine | — |
 
@@ -128,7 +128,7 @@ each line against the schema, and checks every span, line and comment against th
 | class: name, bases (incl. keyword bases), body, decorators | `ClassDef`, `bases`/`keywords`/`decorator_list` children | bridge | python |
 | param: name, `*`/`**`, annotation, default, keyword-only | `arg` `name`, `declared`, the `arguments` fields `vararg`/`kwarg`/`kwonlyargs`/`defaults` | bridge | python (`discount: int`) |
 | assign / annotated assign / augmented assign | `Assign`/`AnnAssign`/`AugAssign`, `operator`, `declared` | bridge | python (`self.lines = lines`) |
-| imports: names, aliases, module, relative level | `Import`/`ImportFrom`, `alias` children, `extras.python.level` | bridge | python (`import json`, `from pathlib import Path`, a level-2 relative import in `billing/invoice`) |
+| imports: names, aliases, module, relative level | `Import`/`ImportFrom` (a from-import's module as `name`), `alias` children, `extras.python.as`, `extras.python.level` | bridge | python (`import json`, `from pathlib import Path`, a level-2 relative import in `billing/invoice`, `dispatch as sent` in `tracking/events`) |
 | if / for / while / try / except (+ `except*`) / with / match / case | `kind`, `field`, `flags: group` | bridge | python (`if` in `cli`; `while`, `for`, `match`/`case` in `packing`) |
 | return / raise with cause / break / continue / pass / assert / del / global / type alias | `kind`, `is: bail-out` | bridge | python (`Return`, `raise SettingsMissing(...)`) |
 | every expression kind and its props | `kind` (ast class), `field` (ast field) | bridge | python (`BinOp`, `Call`, `Attribute`) |
@@ -144,6 +144,7 @@ each line against the schema, and checks every span, line and comment against th
 | class ancestry, enums, dataclasses, TypedDicts | `bases` children + `decorator_list`, resolved names | engine | python |
 | attribute-flow tallies, resource reach, constant vocabulary | `children`, `resolved.name`, `resolved.constructs`, `target` | engine | python |
 | which files are judged vs only inform | `file.context` | bridge | python (`shop/settings.py`, which `cli` imports from) |
+| a comment that reads as code | `comment.extras.python.code` | bridge | — (`# return self.labels[-1]` in `label_queue`, checked by the bridge test) |
 
 ## C#
 

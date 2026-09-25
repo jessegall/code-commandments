@@ -7,7 +7,7 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/php/prose"
+	"github.com/jessegall/code-commandments/prose"
 )
 
 // parserComments is every node's comments as php-parser attaches them: a comment belongs to the outermost node that
@@ -323,47 +323,34 @@ func typeKey(written string) string {
 	return strings.Join(members, "|")
 }
 
-// constructKeywords are the words a construct is spelled with, and the words that name what it does.
-var constructKeywords = map[string][]string{
-	"Stmt_Foreach": {"foreach"}, "Stmt_For": {"for"}, "Stmt_While": {"while"}, "Stmt_Do": {"do"},
-	"Stmt_If": {"if"}, "Stmt_ElseIf": {"elseif"}, "Stmt_Else": {"else"}, "Stmt_Return": {"return"},
-	"Stmt_Break": {"break"}, "Stmt_Continue": {"continue"}, "Stmt_Switch": {"switch"}, "Stmt_TryCatch": {"try"},
-	"Stmt_Catch": {"catch"}, "Stmt_Throw": {"throw"}, "Stmt_Unset": {"unset"}, "Stmt_Echo": {"echo"},
-	"Stmt_Class": {"class"}, "Stmt_Interface": {"interface"}, "Stmt_Trait": {"trait"}, "Stmt_Enum": {"enum"},
-	"Stmt_ClassMethod": {"function"}, "Stmt_Function": {"function"}, "Stmt_Property": {}, "Stmt_ClassConst": {"const"},
-	"Expr_Throw": {"throw"}, "Expr_Match": {"match"}, "Expr_New": {"new"}, "Expr_Assign": {}, "Expr_Ternary": {},
+// constructs is the construct each PHP node kind is, and the keywords PHP spells it with.
+var constructs = map[string]struct {
+	construct prose.Construct
+	keywords  []string
+}{
+	"Stmt_Foreach": {prose.Loop, []string{"foreach"}}, "Stmt_For": {prose.Loop, []string{"for"}},
+	"Stmt_While": {prose.ConditionalLoop, []string{"while"}}, "Stmt_Do": {prose.ConditionalLoop, []string{"do"}},
+	"Stmt_If": {prose.Condition, []string{"if"}}, "Stmt_ElseIf": {prose.Condition, []string{"elseif"}},
+	"Stmt_Else": {prose.Otherwise, []string{"else"}}, "Stmt_Return": {prose.Return, []string{"return"}},
+	"Stmt_Break": {prose.Break, []string{"break"}}, "Stmt_Continue": {prose.Continue, []string{"continue"}},
+	"Stmt_Switch": {prose.Branch, []string{"switch"}}, "Stmt_TryCatch": {prose.Attempt, []string{"try"}},
+	"Stmt_Catch": {prose.Recovery, []string{"catch"}}, "Stmt_Throw": {prose.Failure, []string{"throw"}},
+	"Stmt_Unset": {prose.Removal, []string{"unset"}}, "Stmt_Echo": {prose.Output, []string{"echo"}},
+	"Stmt_Class": {prose.Type, []string{"class"}}, "Stmt_Interface": {prose.Contract, []string{"interface"}},
+	"Stmt_Trait": {prose.Type, []string{"trait"}}, "Stmt_Enum": {prose.Type, []string{"enum"}},
+	"Stmt_ClassMethod": {prose.Method, []string{"function"}}, "Stmt_Function": {prose.Method, []string{"function"}},
+	"Stmt_Property": {prose.Field, nil}, "Stmt_ClassConst": {prose.Constant, []string{"const"}},
+	"Expr_Throw": {prose.Failure, []string{"throw"}}, "Expr_Match": {prose.Branch, []string{"match"}},
+	"Expr_New": {prose.Creation, []string{"new"}}, "Expr_Assign": {prose.Assignment, nil},
+	"Expr_Ternary": {prose.Condition, nil},
 }
-
-// constructMeanings are the words that name what each construct does.
-var constructMeanings = map[string][]string{
-	"Stmt_Foreach": meansLoop, "Stmt_For": meansLoop, "Stmt_While": meansConditionalLoop, "Stmt_Do": meansConditionalLoop,
-	"Stmt_If": meansCondition, "Stmt_ElseIf": meansCondition, "Stmt_Else": {"else", "otherwise"},
-	"Stmt_Return": {"return", "give", "yield", "result"}, "Stmt_Break": {"stop", "leave"},
-	"Stmt_Continue": {"skip", "next"}, "Stmt_Switch": meansBranch, "Stmt_TryCatch": {"try", "catch", "handle"},
-	"Stmt_Catch": {"catch", "handle", "error"}, "Stmt_Throw": meansFailure, "Stmt_Unset": {"remove", "drop", "clear"},
-	"Stmt_Echo": {"print", "output"}, "Stmt_Class": meansTypeWords, "Stmt_Interface": {"interface", "contract"},
-	"Stmt_Trait": meansTypeWords, "Stmt_Enum": meansTypeWords, "Stmt_ClassMethod": meansMethod, "Stmt_Function": meansMethod,
-	"Stmt_Property": {"property", "field"}, "Stmt_ClassConst": {"const", "constant"}, "Expr_Throw": meansFailure,
-	"Expr_Match": meansBranch, "Expr_New": {"new", "create", "make", "build"}, "Expr_Assign": {"set", "assign", "store"},
-	"Expr_Ternary": meansCondition,
-}
-
-var (
-	meansLoop            = []string{"loop", "iterate", "every", "each"}
-	meansConditionalLoop = []string{"loop", "until", "repeat"}
-	meansCondition       = []string{"if", "when", "check", "whether", "otherwise"}
-	meansBranch          = []string{"match", "case", "branch"}
-	meansFailure         = []string{"throw", "raise", "fail", "error"}
-	meansTypeWords       = []string{"class", "type"}
-	meansMethod          = []string{"method", "function"}
-)
 
 // constructWords is the keywords and meanings of the construct a node kind is, none for any other.
 func constructWords(kind string) []string {
-	keywords, ok := constructKeywords[kind]
+	known, ok := constructs[kind]
 	if !ok {
 		return nil
 	}
 
-	return append(slices.Clone(keywords), constructMeanings[kind]...)
+	return append(slices.Clone(known.keywords), known.construct.Words()...)
 }

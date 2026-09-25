@@ -8,7 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
-	"github.com/jessegall/code-commandments/engine/php/prose"
+	"github.com/jessegall/code-commandments/prose"
 	spatienode "github.com/jessegall/code-commandments/engine/php/spatie"
 	"github.com/jessegall/code-commandments/sins"
 	spatiesins "github.com/jessegall/code-commandments/sins/backend/spatie"

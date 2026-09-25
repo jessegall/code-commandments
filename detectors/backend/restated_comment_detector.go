@@ -8,7 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
-	"github.com/jessegall/code-commandments/engine/php/prose"
+	"github.com/jessegall/code-commandments/prose"
 	"github.com/jessegall/code-commandments/sins"
 	backendsins "github.com/jessegall/code-commandments/sins/backend"
 )

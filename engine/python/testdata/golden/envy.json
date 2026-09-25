@@ -1,0 +1,2866 @@
+{
+    "shop.aisle_signs.Aisle.sign_heading@shop/aisle_signs.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.aisle_signs.SignCatalogue.__init__@shop/aisle_signs.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.aisle_signs.SignCatalogue.entry@shop/aisle_signs.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.aisle_signs.SignPrinter.__init__@shop/aisle_signs.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.aisle_signs.SignPrinter.heading@shop/aisle_signs.py:35": {
+        "envies": null,
+        "lookup": true
+    },
+    "shop.aisle_signs.SignPrinter.heading_of@shop/aisle_signs.py:39": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.alerts.register@shop/alerts.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.allergen_labels.DeliCounter.__init__@shop/allergen_labels.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.allergen_labels.DeliCounter.allergens_of@shop/allergen_labels.py:26": {
+        "envies": null,
+        "lookup": true
+    },
+    "shop.allergen_labels.DeliCounter.is_nut_free@shop/allergen_labels.py:33": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.allergen_labels.DeliCounter.warning_for@shop/allergen_labels.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.allergen_labels.DeliItem.allergens@shop/allergen_labels.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.attachments.Mailer.__init__@shop/attachments.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.attachments.Mailer.send@shop/attachments.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.attachments.Mailer.send_with@shop/attachments.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.audit.audit@shop/audit.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.audit.audit_event@shop/audit.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.audit.audit_level@shop/audit.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.backups.back_up@shop/backups.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.backups.back_up_path@shop/backups.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badge_codes.badge_text@shop/badge_codes.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badge_codes.front_desk@shop/badge_codes.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badge_codes.visitor@shop/badge_codes.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badge_codes.warehouse@shop/badge_codes.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badge_colours.PaymentStatus.colour@shop/badge_colours.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badge_colours.badge@shop/badge_colours.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badge_colours.badge_for@shop/badge_colours.py:33": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badges.Badge.__init__@shop/badges.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badges.Badge.render@shop/badges.py:38": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badges.Ribbon.__init__@shop/badges.py:45": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badges.Ribbon.render@shop/badges.py:53": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badges.status_colour@shop/badges.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.badges.status_icon@shop/badges.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.barcode_parsing.NamedScanner.__init__@shop/barcode_parsing.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.barcode_parsing.NamedScanner.parse@shop/barcode_parsing.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.barcode_parsing.Scanner.__init__@shop/barcode_parsing.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.barcode_parsing.Scanner.parse@shop/barcode_parsing.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.basket_codes.carries_coupon@shop/basket_codes.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.basket_codes.has_coupon@shop/basket_codes.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.basket_codes.is_staff_coupon@shop/basket_codes.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.basket_codes.lacks_referrer@shop/basket_codes.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.basket_limits.Basket.full@shop/basket_limits.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.basket_limits.Trolley.full@shop/basket_limits.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.basket_totals.Basket.__init__@shop/basket_totals.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.basket_totals.Basket.total@shop/basket_totals.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.billing.invoice.Invoice.__init__@shop/billing/invoice.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.billing.invoice.Invoice.lines@shop/billing/invoice.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.box_sizes.Packer.__init__@shop/box_sizes.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.box_sizes.Packer.box_for@shop/box_sizes.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.box_sizes.Packer.pack@shop/box_sizes.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.box_sizes.ParcelSize.box@shop/box_sizes.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.builds.forget@shop/builds.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.builds.forget_stale@shop/builds.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.caches.Cache.__init__@shop/caches.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.caches.Cache.ensure@shop/caches.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.caches.Cache.ensure_warm@shop/caches.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carrier_labels.UnhandledCarrier.of@shop/carrier_labels.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carrier_labels.label_size@shop/carrier_labels.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carrier_labels.label_size_for@shop/carrier_labels.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carrier_profiles.ParcelLimits.fits@shop/carrier_profiles.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carrier_rates.RateCache.__init__@shop/carrier_rates.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carrier_rates.RateCache.rates@shop/carrier_rates.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carrier_rates.TypedRateCache.__init__@shop/carrier_rates.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carrier_rates.TypedRateCache.rates@shop/carrier_rates.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carrier_rates.detached@shop/carrier_rates.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carriers.Service.carrier@shop/carriers.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.carriers.carrier_for@shop/carriers.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_lines.CartLine.__init__@shop/cart_lines.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_lines.CartLine.amend@shop/cart_lines.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_lines.mark_gift@shop/cart_lines.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_lines.mark_sample@shop/cart_lines.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_lines.rename@shop/cart_lines.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_totals.Basket.__init__@shop/cart_totals.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_totals.Basket.to_json@shop/cart_totals.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_totals.download_headers@shop/cart_totals.py:36": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_totals.parse_basket_line@shop/cart_totals.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cart_totals.parse_line@shop/cart_totals.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.catalog_file.CatalogUnreadable.at@shop/catalog_file.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.catalog_file.load_catalog@shop/catalog_file.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.catalog_file.read_catalog@shop/catalog_file.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.categories.children_index@shop/categories.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.categories.descendants@shop/categories.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.categories.descendants_of@shop/categories.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.category_walker.CategoryPaths.__init__@shop/category_walker.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.category_walker.CategoryPaths.visit@shop/category_walker.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.category_walker.CategoryWalker.__init__@shop/category_walker.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.category_walker.CategoryWalker.visit@shop/category_walker.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.charges.charge@shop/charges.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.checkout.checkout@shop/checkout.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.checkout_settings.CartSettings.allows@shop/checkout_settings.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.checkout_settings.CheckoutSettings.allows@shop/checkout_settings.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cleanup.nightly@shop/cleanup.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cleanup.remove_upload@shop/cleanup.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.cli.load_config@shop/cli.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.closing.close_all@shop/closing.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.closing.close_labelled@shop/closing.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.closing.close_till@shop/closing.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.closing.close_till_then@shop/closing.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.closing.noop@shop/closing.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.contacts.Contact.__init__@shop/contacts.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.contacts.Contact.of@shop/contacts.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.coupons.first_usable_coupon@shop/coupons.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.coupons.usable_coupon@shop/coupons.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_manifests.manifest@shop/courier_manifests.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_manifests.manifest_lines@shop/courier_manifests.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_picks.CourierPicker.pick@shop/courier_picks.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_picks.CourierPicker.pick_for@shop/courier_picks.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_picks.quote@shop/courier_picks.py:37": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_picks.route_all@shop/courier_picks.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_pickups.load@shop/courier_pickups.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_slots.CourierSlot.__init__@shop/courier_slots.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_slots.CourierSlot.covers@shop/courier_slots.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_slots.CourierSlot.ships@shop/courier_slots.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_zones.Zone.next_day@shop/courier_zones.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_zones.next_day_for@shop/courier_zones.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.courier_zones.next_day_possible@shop/courier_zones.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.couriers.Courier.__init__@shop/couriers.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.couriers.Courier.book@shop/couriers.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.couriers.Courier.book_tracked@shop/couriers.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.couriers.dispatch.dispatch@shop/couriers/dispatch.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.couriers.manifest@shop/couriers.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.csv_tokens.PriceListReader.__init__@shop/csv_tokens.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.csv_tokens.PriceListReader.cell_end@shop/csv_tokens.py:34": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.csv_tokens.PriceListReader.expect@shop/csv_tokens.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.csv_tokens.PriceListReader.field_end@shop/csv_tokens.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.csv_tokens.PriceListReader.quoted_end@shop/csv_tokens.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.csv_tokens.PriceListReader.row_end@shop/csv_tokens.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.currencies.format_money@shop/currencies.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.currencies.price_label@shop/currencies.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.currencies.render_lines@shop/currencies.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.currency_rounding.CurrencyRounder.__init__@shop/currency_rounding.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.currency_rounding.CurrencyRounder.round@shop/currency_rounding.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.customer_profiles.Profile.greeting@shop/customer_profiles.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.customer_profiles.Profile.reachable_by_sms@shop/customer_profiles.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.customer_profiles.Profile.with_email@shop/customer_profiles.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.customer_profiles.Profile.with_phone@shop/customer_profiles.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.customers.Loyalty.enrol@shop/customers.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.customers.Newsletter.subscribe@shop/customers.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.decisions.route@shop/decisions.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.decisions.size_band@shop/decisions.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery.Address.line@shop/delivery.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery.book_delivery@shop/delivery.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery.schedule_delivery@shop/delivery.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_addresses.DeliveryAddress.envelope@shop/delivery_addresses.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_addresses.DeliveryAddress.in_city@shop/delivery_addresses.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_addresses.DeliveryAddress.move@shop/delivery_addresses.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_addresses.Invoice.pdf@shop/delivery_addresses.py:51": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_addresses.PickRound.pick@shop/delivery_addresses.py:41": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_addresses.ShippingAddress.moved@shop/delivery_addresses.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_slots.Slot.fee@shop/delivery_slots.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_slots.slot_fee@shop/delivery_slots.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_slots.slot_fee_for@shop/delivery_slots.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_slots.slot_label@shop/delivery_slots.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.delivery_slots.weekday_index@shop/delivery_slots.py:39": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.digests.register@shop/digests.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.discount_rules.Checkout.__init__@shop/discount_rules.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.discount_rules.Checkout.apply@shop/discount_rules.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.discount_rules.Price.__init__@shop/discount_rules.py:33": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.discount_rules.Rule.__init__@shop/discount_rules.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.discounts.discounted@shop/discounts.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.dispatch_desk.DispatchDesk.__init__@shop/dispatch_desk.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.dispatch_desk.DispatchDesk.may_leave@shop/dispatch_desk.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.dispatch_desk.DispatchDesk.outgoing@shop/dispatch_desk.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.dispatch_desk.Parcel.__init__@shop/dispatch_desk.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.documents.InvoiceSheet.line_items@shop/documents.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.documents.PackingSlip.rows@shop/documents.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.drop_slots.DropOff.__init__@shop/drop_slots.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.drop_slots.DropOff.booked@shop/drop_slots.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.drop_slots.evening_drop@shop/drop_slots.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.drop_slots.morning_drop@shop/drop_slots.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.dunning.InvoiceStatus.is_unpaid@shop/dunning.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.dunning.needs_reminder@shop/dunning.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.dunning.owes_money@shop/dunning.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.encoders.ByteStream.__init__@shop/encoders.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.encoders.encode_html@shop/encoders.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.encoders.encode_text@shop/encoders.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.encoding.encode@shop/encoding.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.encoding.encode_html@shop/encoding.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.encoding.encode_text@shop/encoding.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.escalations.EscalationPolicy.__init__@shop/escalations.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.escalations.EscalationPolicy.escalate@shop/escalations.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.events.Listener.handle@shop/events.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.events.ReceiptMailer.on_event@shop/events.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.events.StockSync.on_event@shop/events.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.export_jobs.ExportJob.__init__@shop/export_jobs.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.export_jobs.ExportJob.run@shop/export_jobs.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.export_jobs.ExportSlot.__eq__@shop/export_jobs.py:35": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.export_jobs.ExportSlot.__init__@shop/export_jobs.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.export_jobs.ExportSlot._get_hour@shop/export_jobs.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.export_jobs.ImportJob.__init__@shop/export_jobs.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.export_jobs.ImportJob.run@shop/export_jobs.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.exports.export_row@shop/exports.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.feature_flags.FeatureFlags.__init__@shop/feature_flags.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.feature_flags.FeatureFlags.enable@shop/feature_flags.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.feature_flags.FeatureFlags.is_on@shop/feature_flags.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.feed_reader.FeedUnavailable.at@shop/feed_reader.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.feed_reader.read_chained_by_hand@shop/feed_reader.py:48": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.feed_reader.read_feed@shop/feed_reader.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.feed_reader.read_feed_from@shop/feed_reader.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.feed_reader.read_or_reraise@shop/feed_reader.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.feed_reader.setting@shop/feed_reader.py:40": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.floor_plans.FloorPlan.bay@shop/floor_plans.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.floor_plans.bay_or_fail@shop/floor_plans.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.floor_plans.relabel@shop/floor_plans.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.floor_plans.relabel_bay@shop/floor_plans.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.freight.quote@shop/freight.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.freight.quote_banded@shop/freight.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.frozen_prices.ShelfPrice.discount@shop/frozen_prices.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.frozen_prices.ShelfPrice.label@shop/frozen_prices.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.frozen_prices.TagPrice.discounted@shop/frozen_prices.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.gift_messages.GiftMessage.__init__@shop/gift_messages.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.gift_messages.GiftMessage.card@shop/gift_messages.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.gift_notes.GiftWrap.card@shop/gift_notes.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.gift_notes.GiftWrap.needs_card@shop/gift_notes.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.gift_notes.WrappedGift.card@shop/gift_notes.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.gift_wrap.Wrapper.paper@shop/gift_wrap.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.gift_wrap.rewrap@shop/gift_wrap.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.gift_wrap.wrap@shop/gift_wrap.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.headlines.headline@shop/headlines.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.headlines.headline_for@shop/headlines.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.holds.hold_order@shop/holds.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.holds.release_order@shop/holds.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.import_progress.ImportProgress.left@shop/import_progress.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.import_progress.StockImport.__init__@shop/import_progress.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.import_progress.StockImport.progress@shop/import_progress.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.imports_progress.StockImport.__init__@shop/imports_progress.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.imports_progress.StockImport.run@shop/imports_progress.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.imports_progress.StockImport.run_reporting@shop/imports_progress.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.inventory.Inventory.__init__@shop/inventory.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.inventory.Inventory.on_hand@shop/inventory.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.inventory.Inventory.reserve@shop/inventory.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.inventory.OutOfStock.for_sku@shop/inventory.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoice_numbers.next_invoice_number@shop/invoice_numbers.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoice_numbers.next_number@shop/invoice_numbers.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoice_render.InvoiceSheet.__init__@shop/invoice_render.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoice_render.InvoiceSheet.render_compact@shop/invoice_render.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoice_render.InvoiceSheet.render_full@shop/invoice_render.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoice_render.InvoiceView.__init__@shop/invoice_render.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoice_render.InvoiceView.render@shop/invoice_render.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoice_split.split_invoice@shop/invoice_split.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoice_split.split_total@shop/invoice_split.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoicing.invoice_all@shop/invoicing.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.invoicing.invoice_delivered@shop/invoicing.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.kiosk_receipts.KioskSession.items@shop/kiosk_receipts.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.kiosk_receipts.KioskSession.paid_by_card@shop/kiosk_receipts.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.kiosk_receipts.banner@shop/kiosk_receipts.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.kiosk_receipts.finish@shop/kiosk_receipts.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.kiosk_receipts.kiosk_banner@shop/kiosk_receipts.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.kiosk_receipts.receipt@shop/kiosk_receipts.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.kiosk_receipts.receipt_of@shop/kiosk_receipts.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.label_queue.LabelQueue.__init__@shop/label_queue.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.label_queue.LabelQueue.peek@shop/label_queue.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.label_queue.LabelQueue.pop@shop/label_queue.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.label_sizes.custom_label@shop/label_sizes.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.label_sizes.price_label@shop/label_sizes.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.label_sizes.print_label@shop/label_sizes.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.label_sizes.promo_label@shop/label_sizes.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.labels.print_labels@shop/labels.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.layout.DeliveryNote.rows@shop/layout.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.layout.ReturnForm.line_items@shop/layout.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.layout.describe_lines@shop/layout.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.layout.grid.cell@shop/layout/grid.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.layout.row.row@shop/layout/row.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.layout.theme.colour@shop/layout/theme.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_dump.dump@shop/ledger_dump.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_export.LazyLedgerExport.__init__@shop/ledger_export.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_export.LazyLedgerExport.body@shop/ledger_export.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_export.LedgerExport.__init__@shop/ledger_export.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_export.LedgerExport.body@shop/ledger_export.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_lines.ledger_line@shop/ledger_lines.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_lines.ledger_line_for@shop/ledger_lines.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_posting.Posting.__init__@shop/ledger_posting.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_posting.Posting.post@shop/ledger_posting.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ledger_posting.Posting.post_honestly@shop/ledger_posting.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.listeners.Listeners.__init__@shop/listeners.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.listeners.Listeners.notify@shop/listeners.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.listeners.archive@shop/listeners.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.listeners.reports@shop/listeners.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.log_bundles.bundle@shop/log_bundles.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.log_bundles.bundle_day@shop/log_bundles.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.log_bundles.bundle_week@shop/log_bundles.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.lookups.first_open@shop/lookups.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.lookups.paid_orders@shop/lookups.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_cards.LoyaltyCard.redeemable@shop/loyalty_cards.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_cards.StampCard.full@shop/loyalty_cards.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_points.Account.__init__@shop/loyalty_points.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_points.Account.can_redeem@shop/loyalty_points.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_points.Account.redeem@shop/loyalty_points.py:35": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_points.Member.__init__@shop/loyalty_points.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_points.preview@shop/loyalty_points.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_points.redeem@shop/loyalty_points.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_points.tier_badge@shop/loyalty_points.py:47": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_points.tier_label@shop/loyalty_points.py:42": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_tiers.Tier.earns_points@shop/loyalty_tiers.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_tiers.is_card_payment@shop/loyalty_tiers.py:36": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_tiers.points_earned@shop/loyalty_tiers.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_tiers.points_for@shop/loyalty_tiers.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.loyalty_tiers.top_tier@shop/loyalty_tiers.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.mailer_options.headers@shop/mailer_options.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.mailer_options.layout@shop/mailer_options.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.mailer_options.notify@shop/mailer_options.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.mailer_options.notify_all@shop/mailer_options.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.markdown_runs.HonestMarkdownRun.run@shop/markdown_runs.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.markdown_runs.Markdown.applies_to@shop/markdown_runs.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.markdown_runs.MarkdownRun.__init__@shop/markdown_runs.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.markdown_runs.MarkdownRun.reduced@shop/markdown_runs.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.markdown_runs.MarkdownRun.run@shop/markdown_runs.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.menu_boards.BoardPainter.__init__@shop/menu_boards.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.menu_boards.BoardPainter.paint@shop/menu_boards.py:35": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.menu_boards.BoardPainter.vegan_line@shop/menu_boards.py:31": {
+        "envies": "board",
+        "lookup": false
+    },
+    "shop.menu_boards.Chalk.write@shop/menu_boards.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.menu_boards.MenuBoard.vegan_names@shop/menu_boards.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.menus.sidebar.sidebar@shop/menus/sidebar.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.notes.Order.__init__@shop/notes.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.notes.Order.has_note@shop/notes.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.notes.Order.is_noted@shop/notes.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.opening_hours.Hours.covers@shop/opening_hours.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.opening_hours.OpenWeekday.__init__@shop/opening_hours.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.opening_hours.OpenWeekday.label@shop/opening_hours.py:36": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.opening_hours.Weekday.__init__@shop/opening_hours.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.opening_hours.Weekday.hours@shop/opening_hours.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.opening_hours.Weekday.label@shop/opening_hours.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_archive.archive@shop/order_archive.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_cards.card_for@shop/order_cards.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_cards.heading_for@shop/order_cards.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_emails.ConfirmationEmail.__init__@shop/order_emails.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_emails.ConfirmationEmail.body@shop/order_emails.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_exports.OrderExport.__init__@shop/order_exports.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_exports.OrderExport.to_csv@shop/order_exports.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_exports.OrderExport.to_json@shop/order_exports.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_numbers.OrderNumberSequence.__init__@shop/order_numbers.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_numbers.OrderNumberSequence.next@shop/order_numbers.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_numbers.OrderNumbers.next@shop/order_numbers.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.order_numbers.sku_pattern@shop/order_numbers.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.orders.Line.total@shop/orders.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.orders.Order.is_empty@shop/orders.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.orders.Order.total@shop/orders.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.packing.pack@shop/packing.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.packing_slips.pick_list@shop/packing_slips.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.packing_slips.slip@shop/packing_slips.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.packing_slips.slip_shown@shop/packing_slips.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.pagination.label@shop/pagination.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.pagination.mode@shop/pagination.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.pagination.window@shop/pagination.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.pallet_loads.DockPlanner.heaviest_crate@shop/pallet_loads.py:22": {
+        "envies": "pallet",
+        "lookup": false
+    },
+    "shop.pallet_loads.DockPlanner.heaviest_on@shop/pallet_loads.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.pallet_loads.Pallet.heaviest@shop/pallet_loads.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_kinds.Envelope.__init__@shop/parcel_kinds.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_kinds.Envelope.kind@shop/parcel_kinds.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_kinds.Letter.__init__@shop/parcel_kinds.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_labels.express_label@shop/parcel_labels.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_labels.label_for@shop/parcel_labels.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_labels.standard_label@shop/parcel_labels.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_locks.LockerDoor.__init__@shop/parcel_locks.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_locks.LockerDoor.locks@shop/parcel_locks.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_locks.LockerHatch.__init__@shop/parcel_locks.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_locks.LockerHatch.is_locked@shop/parcel_locks.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_returns.ParcelState.accepts_return@shop/parcel_returns.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_returns.ReturnsCounter.__init__@shop/parcel_returns.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_returns.ReturnsCounter.open_return@shop/parcel_returns.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_returns.ReturnsCounter.start_return@shop/parcel_returns.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_routes.ParcelBooking.__init__@shop/parcel_routes.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_routes.ParcelBooking.leg@shop/parcel_routes.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_routes.RoutedParcel.__init__@shop/parcel_routes.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_weighing.heaviest_label@shop/parcel_weighing.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_weighing.labels@shop/parcel_weighing.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_weighing.reading_label@shop/parcel_weighing.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.parcel_weighing.weight_label@shop/parcel_weighing.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payload_fields.note_for@shop/payload_fields.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payload_fields.summary@shop/payload_fields.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payload_fields.text_of@shop/payload_fields.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_events.CardPayment.__init__@shop/payment_events.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_events.CardPayment.is_challenged@shop/payment_events.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_events.Challenge.__init__@shop/payment_events.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_events.challenge_link@shop/payment_events.py:36": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_events.challenge_url@shop/payment_events.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_events.is_card@shop/payment_events.py:43": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_events.notify_customer@shop/payment_events.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_icons.CheckoutView.shows_card_icon@shop/payment_icons.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_icons.CheckoutView.shows_card_icon_for@shop/payment_icons.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_icons.UnhandledMethod.of@shop/payment_icons.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_plugins.CardPayments.__init__@shop/payment_plugins.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_plugins.CardPayments.charge@shop/payment_plugins.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_plugins.CardPlugin.__init__@shop/payment_plugins.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_plugins.CardPlugin.charge@shop/payment_plugins.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.payment_plugins.install_card_payments@shop/payment_plugins.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.photo_archive.archive_photos@shop/photo_archive.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.photo_archive.archive_thumbnails@shop/photo_archive.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking.pick_list@shop/picking.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking_queue.PickingQueue.__init__@shop/picking_queue.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking_queue.PickingQueue.sorts@shop/picking_queue.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking_queue.PickingQueue.starts_in@shop/picking_queue.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking_waves.Pallet.__init__@shop/picking_waves.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking_waves.Pallet.described@shop/picking_waves.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking_waves.Pallet.move@shop/picking_waves.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking_waves.PickingWave.__init__@shop/picking_waves.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking_waves.PickingWave.slip@shop/picking_waves.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.picking_waves.PickingWave.start@shop/picking_waves.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.plugins.run_plugins@shop/plugins.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_export.export_prices@shop/price_export.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_lists.PriceList.__init__@shop/price_lists.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_lists.PriceList.price@shop/price_lists.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_lists.PriceList.price_of@shop/price_lists.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_lists.UnknownSku.at@shop/price_lists.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_quotes.price_quote@shop/price_quotes.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_quotes.quote_for@shop/price_quotes.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_rules.Coupon.__init__@shop/price_rules.py:35": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_rules.Coupon.used@shop/price_rules.py:38": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_rules.PriceRule.applies_on@shop/price_rules.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_rules.PriceRule.duplicate@shop/price_rules.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_rules.PriceRule.extended@shop/price_rules.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_rules.PriceRule.price_for@shop/price_rules.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_rules.PriceRule.rerated@shop/price_rules.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_tags.PriceTag.banner@shop/price_tags.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.price_tags.PromotedTag.banner@shop/price_tags.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.pricing.Line.__init__@shop/pricing.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.pricing.price@shop/pricing.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.pricing.price_of@shop/pricing.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.pricing.rates.rate_for@shop/pricing/rates.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_commands.LabelJob.__init__@shop/printer_commands.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_commands.LabelJob.command@shop/printer_commands.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_commands.LabelJob.command_for@shop/printer_commands.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_commands.LabelJob.flags@shop/printer_commands.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_pool.HonestPrinterRegistry.__contains__@shop/printer_pool.py:39": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_pool.HonestPrinterRegistry.__init__@shop/printer_pool.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_pool.HonestPrinterRegistry.get@shop/printer_pool.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_pool.PrinterRegistry.__init__@shop/printer_pool.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_pool.PrinterRegistry.get@shop/printer_pool.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_pool.PrinterRegistry.register@shop/printer_pool.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_pool.ReceiptPrinter.print_line@shop/printer_pool.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.printer_pool.UnknownTill.for_name@shop/printer_pool.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.product_teasers.fresh_teaser@shop/product_teasers.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.product_teasers.product_teaser@shop/product_teasers.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.product_teasers.teaser@shop/product_teasers.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.quantities.MissingQuantity.in_row@shop/quantities.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.quantities.stock_counted@shop/quantities.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.quantities.stock_rows@shop/quantities.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.quantity_parsing.BadQuantity.of@shop/quantity_parsing.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.quantity_parsing.quantity@shop/quantity_parsing.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.quantity_parsing.quantity_of@shop/quantity_parsing.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.queue_tickets.QueueTicket.__init__@shop/queue_tickets.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.queue_tickets.QueueTicket.called_at@shop/queue_tickets.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.queue_tickets.ServedTicket.__init__@shop/queue_tickets.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.queue_tickets.ServedTicket.called_at@shop/queue_tickets.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.quotes.quote@shop/quotes.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_banner.banner@shop/receipt_banner.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printers.DeferredReceiptPrinter.__init__@shop/receipt_printers.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printers.DeferredReceiptPrinter.print@shop/receipt_printers.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printers.PriceBoard.__init__@shop/receipt_printers.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printers.PriceBoard._sort@shop/receipt_printers.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printers.ReceiptPrinter.__init__@shop/receipt_printers.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printers.ReceiptPrinter.print@shop/receipt_printers.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printing.IndentedPrinter.__init__@shop/receipt_printing.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printing.IndentedPrinter.bundle@shop/receipt_printing.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printing.IndentedPrinter.line@shop/receipt_printing.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printing.ReceiptPrinter.__init__@shop/receipt_printing.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printing.ReceiptPrinter.bundle@shop/receipt_printing.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_printing.ReceiptPrinter.line@shop/receipt_printing.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_signing.refund_signature_checks@shop/receipt_signing.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_signing.refund_signature_matches@shop/receipt_signing.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipt_signing.signature_matches@shop/receipt_signing.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipts.NoEmail.on@shop/receipts.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipts.mail_receipt@shop/receipts.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receipts.send_receipt@shop/receipts.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.receiving.receive@shop/receiving.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.refund_events.refund_cents@shop/refund_events.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.refund_windows.SalesChannel.refund_days@shop/refund_windows.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.refund_windows.refund_days@shop/refund_windows.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.refund_windows.refund_window@shop/refund_windows.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.refund_windows.return_address@shop/refund_windows.py:35": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.refunds.refund@shop/refunds.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.reminders.send_reminders@shop/reminders.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.reorder_alerts.ReorderAlert.__init__@shop/reorder_alerts.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.reorder_alerts.ReorderAlert.is_due@shop/reorder_alerts.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.reorder_levels.ShelfLevel.needs_order@shop/reorder_levels.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.reorder_levels.either_empty@shop/reorder_levels.py:34": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.reorder_levels.reorder@shop/reorder_levels.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.reorder_levels.reorder_short@shop/reorder_levels.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.reorder_levels.sold_out@shop/reorder_levels.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_cells.Cell.__init__@shop/report_cells.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_cells.ReportRenderer.export@shop/report_cells.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_cells.ReportRenderer.render@shop/report_cells.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_cells.Table.__init__@shop/report_cells.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_formats.ConsoleReport.out@shop/report_formats.py:44": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_formats.CsvExport.extension@shop/report_formats.py:37": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_formats.Export.extension@shop/report_formats.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_formats.SalesReport.__init__@shop/report_formats.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_formats.SalesReport.opening_total@shop/report_formats.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_formats.SalesReport.total@shop/report_formats.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.report_formats.StockReport.__init__@shop/report_formats.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.restock.rebalance@shop/restock.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.retries.ignore@shop/retries.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.retries.retrying@shop/retries.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.retries.with_retries@shop/retries.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.retry_backoff.backoff@shop/retry_backoff.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.retry_backoff.retry_delay@shop/retry_backoff.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.retry_clients.PatientSupplierClient.__init__@shop/retry_clients.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.retry_clients.PatientSupplierClient.fetch@shop/retry_clients.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.retry_clients.SupplierClient.__init__@shop/retry_clients.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.retry_clients.SupplierClient.fetch@shop/retry_clients.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_desk.Desk.__init__@shop/return_desk.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_desk.Desk.accept@shop/return_desk.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_desk.Portal.__init__@shop/return_desk.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_desk.Portal.offers@shop/return_desk.py:34": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_desk.Portal.offers_honestly@shop/return_desk.py:38": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_desk.RefundPolicy.allows@shop/return_desk.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_desk.RefundPolicy.allows_for@shop/return_desk.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_labels.ReturnLabel.__init__@shop/return_labels.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_reasons.ReturnForm.__init__@shop/return_reasons.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_reasons.ReturnForm.is_shipping_refunded@shop/return_reasons.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_reasons.ReturnReason.is_shipping_refunded@shop/return_reasons.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_reasons.TypedReturnForm.__init__@shop/return_reasons.py:31": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.return_reasons.TypedReturnForm.is_shipping_refunded@shop/return_reasons.py:34": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.returns.desk.book_return@shop/returns/desk.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.returns_desk.process@shop/returns_desk.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.route_stops.Dispatcher.__init__@shop/route_stops.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.route_stops.Dispatcher.tick@shop/route_stops.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.route_stops.Dispatcher.tick_stop@shop/route_stops.py:36": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.route_stops.Schedule.find@shop/route_stops.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.scale_readers.CounterScale.grams@shop/scale_readers.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.scale_readers.HonestScaleReader.__init__@shop/scale_readers.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.scale_readers.HonestScaleReader.weigh@shop/scale_readers.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.scale_readers.ScaleReader.weigh@shop/scale_readers.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.scale_readers.ScaleReader.weigh_twice@shop/scale_readers.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.screens.home.path@shop/screens/home.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.search.engine.render@shop/search/engine.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.search.first_in_stock@shop/search.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.search.label@shop/search.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.search.note@shop/search.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.seat_maps.book@shop/seat_maps.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.seat_maps.book_seat@shop/seat_maps.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.session_limits.Session.__init__@shop/session_limits.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.session_limits.Session.expires_after@shop/session_limits.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.session_limits.Session.lifetime_seconds@shop/session_limits.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.session_limits.ShopSession.__init__@shop/session_limits.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.session_limits.ShopSession.expires_after@shop/session_limits.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.sessions.NoActiveSession.reading@shop/sessions.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.sessions.basket@shop/sessions.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.sessions.current_basket@shop/sessions.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.settings.read_settings@shop/settings.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_audits.AuditRow.__init__@shop/shelf_audits.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_audits.AuditRow.cells@shop/shelf_audits.py:35": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_audits.AuditRow.csv@shop/shelf_audits.py:38": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_audits.AuditedShelf.__init__@shop/shelf_audits.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_audits.HonestAudit.__init__@shop/shelf_audits.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_audits.HonestAudit.shelf_code@shop/shelf_audits.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_audits.ShelfAudit.__init__@shop/shelf_audits.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_labels.AisleLabel.__init__@shop/shelf_labels.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_labels.AisleLabel.reload@shop/shelf_labels.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_labels.ShelfLabel.__init__@shop/shelf_labels.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shelf_labels.ShelfLabel.reloads@shop/shelf_labels.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shift_reports.TillPrinter.closing_line@shop/shift_reports.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shift_reports.TillPrinter.closing_line_of@shop/shift_reports.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shift_reports.close@shop/shift_reports.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipment_records.Shipment.arrived@shop/shipment_records.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipment_records.Shipment.delivered@shop/shipment_records.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipment_records.Shipment.is_heavy@shop/shipment_records.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipment_records.Shipment.tracking_url@shop/shipment_records.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipments.pack@shop/shipments.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipments.pack_order@shop/shipments.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_labels.Parcel.from_payload@shop/shipping_labels.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_labels.Parcel.label@shop/shipping_labels.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_labels.label@shop/shipping_labels.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_notices.Notifier.__init__@shop/shipping_notices.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_notices.Notifier.notify@shop/shipping_notices.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_notices.Notifier.notify_tracked@shop/shipping_notices.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_quotes.Parcel.__init__@shop/shipping_quotes.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_quotes.quote@shop/shipping_quotes.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_quotes.quote_cents@shop/shipping_quotes.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_rates.Letter.rate_cents@shop/shipping_rates.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_rates.Pallet.rate_cents@shop/shipping_rates.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_rates.Parcel.__init__@shop/shipping_rates.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_rates.Parcel.rate_cents@shop/shipping_rates.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_rates.quote@shop/shipping_rates.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.shipping_rates.quote_told@shop/shipping_rates.py:33": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stamp_cards.RewardDesk.__init__@shop/stamp_cards.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stamp_cards.RewardDesk.redeem@shop/stamp_cards.py:22": {
+        "envies": "card",
+        "lookup": false
+    },
+    "shop.stamp_cards.RewardDesk.redeem_card@shop/stamp_cards.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stamp_cards.StampCard.__init__@shop/stamp_cards.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stamp_cards.StampCard.close_with@shop/stamp_cards.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.startup.configure_logging@shop/startup.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.startup.display_name@shop/startup.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.startup.ready@shop/startup.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.status_colours.badge@shop/status_colours.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.status_colours.badge_for@shop/status_colours.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.statuses.outcome@shop/statuses.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_alerts.UnhandledLevel.of@shop/stock_alerts.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_alerts.channel@shop/stock_alerts.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_alerts.channel_for@shop/stock_alerts.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_alerts.colour@shop/stock_alerts.py:41": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_alerts.escalation@shop/stock_alerts.py:50": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_badges.StockBadge.colour@shop/stock_badges.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_badges.StockBadge.colour_of@shop/stock_badges.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_badges.listing_badge@shop/stock_badges.py:39": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_badges.search_badge@shop/stock_badges.py:34": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_badges.shelf_badge@shop/stock_badges.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_counts.StockCount.total@shop/stock_counts.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_counts.count_stock@shop/stock_counts.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_counts.dimensions@shop/stock_counts.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_counts.sku_numbers@shop/stock_counts.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_export.export_stock@shop/stock_export.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_levels.level@shop/stock_levels.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_movements.Movement.__init__@shop/stock_movements.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_movements.Movement.delta@shop/stock_movements.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_moves.empty_out@shop/stock_moves.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_moves.log_move@shop/stock_moves.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_moves.log_move_from@shop/stock_moves.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_moves.restock@shop/stock_moves.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_moves.restock_honestly@shop/stock_moves.py:35": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_queries.Carrier.__init__@shop/stock_queries.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_queries.carrier_or_default@shop/stock_queries.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_queries.units_in_stock@shop/stock_queries.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stock_report.report_line@shop/stock_report.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.store_context.RequestContext.__init__@shop/store_context.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.store_context.enter_store@shop/store_context.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.store_settings.SettingsFile.__init__@shop/store_settings.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.store_settings.SettingsFile.read@shop/store_settings.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.store_settings.StoreSettings.read@shop/store_settings.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.storefront.layout.footer@shop/storefront/layout.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.storefront.layout.frame@shop/storefront/layout.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.storefront.pages.results_page@shop/storefront/pages.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stores.PhoneStore.ship_to@shop/stores.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stores.Store.ship_to@shop/stores.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.stores.WebStore.ship_to@shop/stores.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.streams.AsyncFeedStream.__init__@shop/streams.py:23": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.streams.AsyncFeedStream.chunks@shop/streams.py:30": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.streams.FeedStream.__init__@shop/streams.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.streams.FeedStream.chunks@shop/streams.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.streams_io.LineStream.__init__@shop/streams_io.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.streams_io.LineStream.read_line@shop/streams_io.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.subscriptions.Subscriptions.__init__@shop/subscriptions.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.subscriptions.Subscriptions.flip@shop/subscriptions.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.subscriptions.Subscriptions.toggle@shop/subscriptions.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.supplier_feed.SupplierPrice.from_json@shop/supplier_feed.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.supplier_feed.fetch_prices@shop/supplier_feed.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.supplier_feed.fetch_supplier_prices@shop/supplier_feed.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.support_desk.raise_level@shop/support_desk.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.support_tickets.RoutedTicket.__init__@shop/support_tickets.py:28": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.support_tickets.RoutedTicket.escalated_to@shop/support_tickets.py:35": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.support_tickets.RoutedTicket.evolve@shop/support_tickets.py:32": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.support_tickets.Ticket.__init__@shop/support_tickets.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.support_tickets.Ticket.evolve@shop/support_tickets.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.support_tickets.TicketMeta.__init__@shop/support_tickets.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.support_tickets.TicketMeta.of@shop/support_tickets.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.support_tickets.TicketMeta.to_dict@shop/support_tickets.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_bands.TaxTable.band_for@shop/tax_bands.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_contexts.Pricer.__init__@shop/tax_contexts.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_contexts.Pricer.count_quote@shop/tax_contexts.py:33": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_contexts.Pricer.price@shop/tax_contexts.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_contexts.Pricer.price_abroad@shop/tax_contexts.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_contexts.Pricer.shipping_to@shop/tax_contexts.py:25": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_contexts.RegionPricer.__init__@shop/tax_contexts.py:42": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_contexts.RegionPricer.price@shop/tax_contexts.py:45": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_rates.TaxRates.__init__@shop/tax_rates.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_rates.TaxRates.rate_for@shop/tax_rates.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_rates.TaxTable.load@shop/tax_rates.py:8": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_totals.TaxTotal.__init__@shop/tax_totals.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_totals.TaxTotal.amount@shop/tax_totals.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tax_totals.TaxTotal.rounded_amount@shop/tax_totals.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.thumbnails.make_thumbnail@shop/thumbnails.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ticket_triage.Priority.can_wait@shop/ticket_triage.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ticket_triage.Triage.__init__@shop/ticket_triage.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ticket_triage.Triage.route@shop/ticket_triage.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.ticket_triage.Triage.route_by_priority@shop/ticket_triage.py:26": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tiers.Loyalty.__init__@shop/tiers.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tiers.Loyalty.rate@shop/tiers.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tiers.Loyalty.rate_for@shop/tiers.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.till_drawers.CashOffice.__init__@shop/till_drawers.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.till_drawers.CashOffice.came_up_short@shop/till_drawers.py:33": {
+        "envies": null,
+        "lookup": true
+    },
+    "shop.till_drawers.Float.is_short@shop/till_drawers.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.till_drawers.FloatBook.__init__@shop/till_drawers.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.till_drawers.FloatBook.float_for@shop/till_drawers.py:24": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.till_sessions.TillSession.__init__@shop/till_sessions.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.till_sessions.TillSession.open@shop/till_sessions.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.till_sessions.TillSession.receipt_footer@shop/till_sessions.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tip_cents.Cents.parse@shop/tip_cents.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tip_cents.TipJar.__init__@shop/tip_cents.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tip_cents.TipJar.add@shop/tip_cents.py:14": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tip_cents.TipJar.add_typed@shop/tip_cents.py:18": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tip_cents.ring_up@shop/tip_cents.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tip_cents.ring_up_all@shop/tip_cents.py:27": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tip_cents.ring_up_honestly@shop/tip_cents.py:34": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.tracking.events.record@shop/tracking/events.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.validation.set_quantity@shop/validation.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.vat_bands.TaxBand.rate@shop/vat_bands.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.voucher_book.VoucherBook.__init__@shop/voucher_book.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.voucher_book.VoucherBook.issue@shop/voucher_book.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.voucher_book.VoucherBook.label@shop/voucher_book.py:20": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.voucher_book.VoucherBook.voucher@shop/voucher_book.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.voucher_codes.is_valid@shop/voucher_codes.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.voucher_codes.normalise@shop/voucher_codes.py:17": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.voucher_guards.VoucherGuard.__init__@shop/voucher_guards.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.voucher_guards.VoucherGuard.fails_on@shop/voucher_guards.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.voucher_guards.VoucherRefused.for_code@shop/voucher_guards.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.wallet_balances.Balance.covers@shop/wallet_balances.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.wallet_balances.Balance.deposit@shop/wallet_balances.py:19": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.wallet_balances.Balance.shown@shop/wallet_balances.py:15": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.wallet_balances.Funds.deposited@shop/wallet_balances.py:29": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.warehouse.bins.Bin.__str__@shop/warehouse/bins.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.warehouse.picking.lines@shop/warehouse/picking.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.warehouse.stock.reserve@shop/warehouse/stock.py:7": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.warehouse_api.reserve@shop/warehouse_api.py:4": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.warehouse_returns.ReturnsBatch.__init__@shop/warehouse_returns.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.warehouse_returns.ReturnsBatch.outstanding@shop/warehouse_returns.py:13": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.warehouse_returns.ReturnsBatch.waits_on_warehouse@shop/warehouse_returns.py:10": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.webhook_events.handle@shop/webhook_events.py:11": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.webhook_events.handle_event@shop/webhook_events.py:21": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.webhook_payloads.Payload.of@shop/webhook_payloads.py:16": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.webhook_payloads.payload@shop/webhook_payloads.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.webhook_payloads.payload_for@shop/webhook_payloads.py:22": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.widgets.card.Card.__init__@shop/widgets/card.py:6": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.widgets.card.Card.__str__@shop/widgets/card.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.widgets.card.Card.link@shop/widgets/card.py:12": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.wishlists.Wishlist.__init__@shop/wishlists.py:5": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.wishlists.Wishlist.add@shop/wishlists.py:9": {
+        "envies": null,
+        "lookup": false
+    },
+    "shop.wishlists.Wishlist.remove@shop/wishlists.py:15": {
+        "envies": null,
+        "lookup": false
+    }
+}

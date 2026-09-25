@@ -1,0 +1,17 @@
+{
+  "name": "code-commandments-frontend-bridge",
+  "private": true,
+  "type": "module",
+  "description": "Parses TypeScript and Vue into the generic tree (contract/CONTRACT.md).",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@vue/compiler-dom": "3.5.43",
+    "typescript": "6.0.3",
+    "vue": "3.5.43"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

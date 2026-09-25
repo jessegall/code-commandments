@@ -22,8 +22,12 @@ const (
 // attributeTags are the tags an attribute spells by its class's short name.
 var attributeTags = map[string]Tag{"Sinful": Sinful, "Fixed": Fixed, "Righteous": Righteous}
 
-// commentMarker is a marker as a comment writes it: @sin ArrayBag. Scanning comment text, not code.
-var commentMarker = regexp.MustCompile(`@(sin|fixed|righteous)\s+(\w+)`)
+// commentMarker is a marker as a comment writes it, the comment's whole text: @sin ArrayBag. A comment that
+// only mentions a marker in its prose marks nothing. Scanning comment text, not code.
+var commentMarker = regexp.MustCompile(`^@(sin|fixed|righteous)\s+(\w+)$`)
+
+// commentDelimiters are what opens and closes a comment in every language the fixtures are written in.
+var commentDelimiters = regexp.MustCompile(`^(?:#|//+|/\*+|<!--)|(?:\*/|-->)$`)
 
 // Marker is one mark in a fixture: a tag, the sin or detector it names, and the code it covers.
 type Marker struct {
@@ -108,7 +112,8 @@ func commentMarkers(codebase *engine.Codebase) []Marker {
 			}
 			marked := file.Match(*comment.Attached)
 			location := marked.Location()
-			for _, found := range commentMarker.FindAllStringSubmatch(comment.Text, -1) {
+			words := strings.TrimSpace(commentDelimiters.ReplaceAllString(strings.TrimSpace(comment.Text), ""))
+			for _, found := range commentMarker.FindAllStringSubmatch(words, -1) {
 				markers = append(markers, Marker{
 					Tag:      Tag(found[1]),
 					Name:     found[2],
