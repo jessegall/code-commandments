@@ -311,7 +311,7 @@ its own parser's vocabulary, so a bridge never translates:
 
 | language | `kind` | `field` |
 |---|---|---|
-| php | php-parser's `getType()`: `Stmt_Class`, `Expr_MethodCall`, `Scalar_String`, `Name_FullyQualified` | php-parser's sub-node names (`getSubNodeNames()`) |
+| php | php-parser's `getType()`: `Stmt_Class`, `Expr_MethodCall`, `Scalar_String`, `Name_FullyQualified`; `File` for the file root | php-parser's sub-node names (`getSubNodeNames()`); `stmts` under the root |
 | csharp | Roslyn's `SyntaxKind`: `MethodDeclaration`, `InvocationExpression` | the Roslyn property the child is: `Expression`, `ArgumentList`, `Body` |
 | python | the class name in Python's `ast`: `FunctionDef`, `ClassDef`, `Call`, `Attribute`, `Compare` | the `ast` field: `body`, `args`, `func`, `test` |
 | typescript | TypeScript's `SyntaxKind`: `ClassDeclaration`, `CallExpression`, `TypeReference` | the compiler's property name: `expression`, `arguments`, `body` |
