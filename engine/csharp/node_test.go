@@ -85,3 +85,16 @@ func TestTheStatementsOfABlockAreStatements(t *testing.T) {
 		t.Errorf("found %d statements, not the block, the if, its return and the call", statements)
 	}
 }
+
+func TestAFindingIsScopedByItsKindAndTheNameItDeclares(t *testing.T) {
+	codebase := csharptest.FromSource(t, map[string]string{"Shop/Cart.cs": cart})
+	if scope := csharptest.First(t, codebase, "Shop/Cart.cs", "MethodDeclaration").Scope(); scope != "MethodDeclaration Count" {
+		t.Errorf("the method is scoped %q", scope)
+	}
+	if scope := csharptest.First(t, codebase, "Shop/Cart.cs", "GetAccessorDeclaration").Scope(); scope != "GetAccessorDeclaration Name" {
+		t.Errorf("the accessor is scoped %q", scope)
+	}
+	if scope := csharptest.First(t, codebase, "Shop/Cart.cs", "IfStatement").Scope(); scope != "IfStatement" {
+		t.Errorf("the if is scoped %q", scope)
+	}
+}
