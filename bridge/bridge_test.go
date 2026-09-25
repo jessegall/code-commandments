@@ -59,6 +59,25 @@ func TestTheMypyBridgeWritesAValidTreeOfThePythonFixture(t *testing.T) {
 	if stream.Program == nil || len(stream.Program.Packages) == 0 {
 		t.Error("the program line names no package")
 	}
+	for _, file := range stream.Files {
+		inSourceOrder(t, file)
+	}
+}
+
+// inSourceOrder holds every node of the file inside its parent, after the sibling before it.
+func inSourceOrder(t *testing.T, file *contract.File) {
+	t.Helper()
+	for _, node := range file.Nodes() {
+		parent, ok := node.Parent()
+		if ok && (node.Span.Start < parent.Span.Start || node.Span.End > parent.Span.End) {
+			t.Errorf("%s: node %d %v lies outside its parent %d %v", file.Path, node.ID, node.Span, parent.ID, parent.Span)
+		}
+		for at := 1; at < len(node.Children); at++ {
+			if node.Children[at].Span.Start < node.Children[at-1].Span.End {
+				t.Errorf("%s: node %d starts before its sibling %d ends", file.Path, node.Children[at].ID, node.Children[at-1].ID)
+			}
+		}
+	}
 }
 
 func TestAServedBridgeAnswersEachRequestWithAWholeStream(t *testing.T) {

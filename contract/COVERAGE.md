@@ -127,7 +127,7 @@ each line against the schema, and checks every span, line and comment against th
 | class: name, bases (incl. keyword bases), body, decorators | `ClassDef`, `bases`/`keywords`/`decorator_list` children | bridge | python |
 | param: name, `*`/`**`, annotation, default, keyword-only | `arg` `name`, `declared`, the `arguments` fields `vararg`/`kwarg`/`kwonlyargs`/`defaults` | bridge | python (`discount: int`) |
 | assign / annotated assign / augmented assign | `Assign`/`AnnAssign`/`AugAssign`, `operator`, `declared` | bridge | python (`self.lines = lines`) |
-| imports: names, aliases, module, relative level | `Import`/`ImportFrom`, `alias` children, `extras.python.level` | bridge | python (`import json`, `from pathlib import Path`, a level-2 relative import in `billing/invoice`) |
+| imports: names, aliases, module, relative level | `Import`/`ImportFrom` (a from-import's module as `name`), `alias` children, `extras.python.as`, `extras.python.level` | bridge | python (`import json`, `from pathlib import Path`, a level-2 relative import in `billing/invoice`, `dispatch as sent` in `tracking/events`) |
 | if / for / while / try / except (+ `except*`) / with / match / case | `kind`, `field`, `flags: group` | bridge | python (`if` in `cli`; `while`, `for`, `match`/`case` in `packing`) |
 | return / raise with cause / break / continue / pass / assert / del / global / type alias | `kind`, `is: bail-out` | bridge | python (`Return`, `raise SettingsMissing(...)`) |
 | every expression kind and its props | `kind` (ast class), `field` (ast field) | bridge | python (`BinOp`, `Call`, `Attribute`) |

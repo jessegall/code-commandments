@@ -10,7 +10,7 @@ import (
 )
 
 // SupportedVersions are the contract versions this package reads.
-var SupportedVersions = []int{1}
+var SupportedVersions = []int{1, 2}
 
 // maxLine is the longest line a stream may hold: one file's whole tree.
 const maxLine = 256 << 20

@@ -11,6 +11,9 @@ context: true, never judged. From the repository root:
         tests/Fixtures/python/shop/packing.py /fixtures/python/shop/packing.py \
         tests/Fixtures/python/shop/billing/invoice.py /fixtures/python/shop/billing/invoice.py \
         tests/Fixtures/python/shop/voucher_guards.py /fixtures/python/shop/voucher_guards.py \
+        tests/Fixtures/python/shop/order_numbers.py /fixtures/python/shop/order_numbers.py \
+        tests/Fixtures/python/shop/tracking/events.py /fixtures/python/shop/tracking/events.py \
+        tests/Fixtures/python/shop/quantity_parsing.py /fixtures/python/shop/quantity_parsing.py \
         > contract/samples/python.jsonl
 """
 

@@ -65,7 +65,9 @@ class TreeWriter:
             return children[0]["span"][0], children[-1]["span"][1]
         return -1, -1
 
-    def node(self, node: ast.AST, field: str | None, scope: list[str]) -> dict:
+    def node(self, node: ast.AST, field: str | None, scope: list[str], floor: int = 0) -> dict:
+        """The node and its subtree. $floor is where a node without a position of its own sits: the end of its
+        previous sibling, or its parent's start."""
         identity = self.next
         self.next += 1
         out: dict = {"id": identity, "kind": type(node).__name__, "role": self.role(node, field)}
@@ -73,13 +75,13 @@ class TreeWriter:
         self.spans.append((0, 0, identity))
         inner = scope + [node.name] if isinstance(node, DEFINITIONS) else scope
         children = []
-        for name, value in ast.iter_fields(node):
-            for child in value if isinstance(value, list) else [value]:
-                if isinstance(child, ast.AST) and not isinstance(child, SKIPPED):
-                    children.append(self.node(child, name, inner))
+        after = self.offset(node.lineno, node.col_offset) if hasattr(node, "lineno") else floor
+        for name, child in self.ordered(node):
+            children.append(self.node(child, name, inner, after))
+            after = children[-1]["span"][1]
         start, end = self.span_of(node, children)
         if start < 0:
-            start = end = self.empty_at(node, children)
+            start = end = floor
         self.spans[placeholder] = (start, end, identity)
         answers = self.neutral(node)
         if answers:
@@ -95,8 +97,25 @@ class TreeWriter:
             self.docstrings.append((node.body[0].value, identity))
         return out
 
-    def empty_at(self, node: ast.AST, children: list[dict]) -> int:
-        return self.spans[-2][1] if len(self.spans) > 1 else 0
+    def ordered(self, node: ast.AST) -> list[tuple[str, ast.AST]]:
+        """The node's children with their fields, in source order: `ast` keeps its own field order, which puts an
+        `IfExp`'s test before its body and a `Dict`'s keys before its values. A child with no position anywhere
+        in it keeps its place after the child before it."""
+        children = [(name, child) for name, value in ast.iter_fields(node)
+                    for child in (value if isinstance(value, list) else [value])
+                    if isinstance(child, ast.AST) and not isinstance(child, SKIPPED)]
+        keys, last = [], (-1, -1)
+        for _, child in children:
+            last = self.position(child) or last
+            keys.append(last)
+        return [pair for _, _, pair in sorted(zip(keys, range(len(children)), children))]
+
+    def position(self, node: ast.AST) -> tuple[int, int] | None:
+        """Where the node's source starts: its own position, else the earliest one inside it."""
+        if hasattr(node, "lineno"):
+            return node.lineno, node.col_offset
+        found = [(inner.lineno, inner.col_offset) for inner in ast.walk(node) if hasattr(inner, "lineno")]
+        return min(found) if found else None
 
     def role(self, node: ast.AST, field: str | None) -> str:
         if isinstance(node, DEFINITIONS):
@@ -161,6 +180,10 @@ class TreeWriter:
             facts["extras"] = {"python": {"operators": [OPERATORS[type(op)] for op in node.ops]}}
         if isinstance(node, ast.ImportFrom) and node.level:
             facts["extras"] = {"python": {"level": node.level}}
+        if isinstance(node, ast.alias) and node.asname is not None:
+            facts["extras"] = {"python": {"as": node.asname}}
+        if isinstance(node, (ast.Global, ast.Nonlocal)):
+            facts["extras"] = {"python": {"names": list(node.names)}}
         return facts
 
     def name_of(self, node: ast.AST) -> str | None:
@@ -174,6 +197,12 @@ class TreeWriter:
             return node.attr
         if isinstance(node, ast.keyword) and node.arg is not None:
             return node.arg
+        if isinstance(node, ast.ImportFrom):
+            return node.module
+        if isinstance(node, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)):
+            return node.name
+        if isinstance(node, ast.MatchMapping):
+            return node.rest
         return None
 
     def literal(self, node: ast.AST) -> dict:
@@ -321,7 +350,7 @@ def unparsed(source: bytes) -> dict:
 
 def stream(session: Session, paths: list[str], write: list[str], python: str | None) -> Iterator[dict]:
     """The contract's lines for the modules under $paths: the header, one file line each, the program, the trailer."""
-    yield {"header": {"contract": "tree", "version": 1, "language": "python",
+    yield {"header": {"contract": "tree", "version": 2, "language": "python",
                       "bridge": {"name": "mypy-bridge", "version": MYPY_VERSION}, "roots": [os.path.realpath(p) for p in paths]}}
     found, types, graph = session.checked(paths, python)
     judged = {os.path.realpath(p) for p in write}

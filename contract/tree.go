@@ -250,6 +250,8 @@ type CSharpNode struct {
 type PythonNode struct {
 	Operators []string `json:"operators,omitempty"`
 	Level     int      `json:"level,omitempty"`
+	As        string   `json:"as,omitempty"`
+	Names     []string `json:"names,omitempty"`
 }
 
 // VueNode is what only Vue says about a node.
