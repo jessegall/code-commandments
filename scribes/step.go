@@ -118,6 +118,25 @@ type Maintainer interface {
 	Maintain(codebase *engine.Codebase, pass Pass) (Rewrites, error)
 }
 
+var maintainers = map[catalog.Engine][]Maintainer{}
+
+// Maintains enrols a maintainer of one engine's files, from the maintainer's own file.
+func Maintains(engine catalog.Engine, maintainer Maintainer) {
+	maintainers[engine] = append(maintainers[engine], maintainer)
+}
+
+// MaintenanceSteps is a step for each maintainer of the engine's files, over the scanner, by name.
+func MaintenanceSteps(engine catalog.Engine, scanner *Scanner) []Step {
+	enrolled := slices.Clone(maintainers[engine])
+	slices.SortFunc(enrolled, func(a, b Maintainer) int { return strings.Compare(a.Name(), b.Name()) })
+	steps := make([]Step, 0, len(enrolled))
+	for _, maintainer := range enrolled {
+		steps = append(steps, MaintenanceStep{Maintainer: maintainer, Scanner: scanner})
+	}
+
+	return steps
+}
+
 // MaintenanceStep runs one maintainer over the pass, before every fix.
 type MaintenanceStep struct {
 	Maintainer Maintainer

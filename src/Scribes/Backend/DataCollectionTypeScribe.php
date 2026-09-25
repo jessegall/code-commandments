@@ -7,6 +7,7 @@ namespace JesseGall\CodeCommandments\Scribes\Backend;
 use JesseGall\CodeCommandments\Ast\AstNode;
 
 use JesseGall\CodeCommandments\Ast\NodeMatch;
+use JesseGall\CodeCommandments\Ast\Spatie\SpatieDataNode;
 use JesseGall\CodeCommandments\Ast\Support\Docblock;
 use JesseGall\CodeCommandments\Scribes\Draft;
 use JesseGall\CodeCommandments\Scribes\RepentScribe;

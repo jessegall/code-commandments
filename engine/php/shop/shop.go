@@ -43,10 +43,10 @@ func Testdata() string {
 	return filepath.Join(Repository(), "engine", "php", "testdata")
 }
 
-// inputs are what the committed files are generated from, folders and files: the fixture, the PHP tool the oracle
+// inputs are what the committed files are generated from, folders and files: the fixtures, the PHP tool the oracle
 // asks (its engine, and the rules whose findings and definitions it records), the lock that pins php-parser, the
 // bridge and the oracle. A change to any makes them stale.
-var inputs = []string{"tests/Fixtures/backend", "src", "composer.lock", "bridge/php", "bridge/frontend/dist", "engine/php/oracle"}
+var inputs = []string{"tests/Fixtures/backend", "tests/Fixtures/frontend", "src", "composer.lock", "bridge/php", "bridge/frontend/dist", "engine/php/oracle"}
 
 // Digest is the hash of every source the committed files are generated from.
 func Digest() (string, error) {
