@@ -250,3 +250,16 @@ func (n Node) CommentWords() []string {
 
 	return words
 }
+
+// WhereComment is the code documented by every comment the check keeps, each where the comment is reported: a
+// comment that documents nothing is reported nowhere.
+func (c *Codebase) WhereComment(check func(Comment) bool) []engine.Match {
+	var found []engine.Match
+	for _, comment := range c.Comments() {
+		if documented := comment.Documented(); documented.Exists() && check(comment) {
+			found = append(found, documented.Match)
+		}
+	}
+
+	return found
+}

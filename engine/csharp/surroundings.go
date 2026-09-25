@@ -667,3 +667,9 @@ func (n Node) BranchingDepth() int {
 
 	return depth
 }
+
+// IsInTest says whether the node is written in a file of a test project: code that exercises the product rather
+// than being it.
+func (n Node) IsInTest() bool {
+	return n.Exists() && n.Source().Test
+}

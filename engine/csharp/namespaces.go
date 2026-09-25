@@ -112,3 +112,25 @@ func (g *NamespaceGraph) WouldCloseACycle(referrer, target string) bool {
 func nests(outer, inner string) bool {
 	return strings.HasPrefix(inner, outer+".")
 }
+
+// LayerViolations is every reference out of a declared layer into a namespace it may not use: one per file and
+// namespace it reaches, at its first reference.
+func (g *NamespaceGraph) LayerViolations(stack engine.LayerStack) []engine.Match {
+	if stack.IsEmpty() {
+		return nil
+	}
+	seen := map[string]bool{}
+	var found []engine.Match
+	for _, arrow := range g.arrows {
+		from := stack.LayerOf(arrow.From)
+		if from == "" || stack.LayerOf(arrow.To) == "" || stack.MayReference(from, arrow.To) {
+			continue
+		}
+		if key := arrow.At.File() + "\x00" + arrow.To; !seen[key] {
+			seen[key] = true
+			found = append(found, arrow.At)
+		}
+	}
+
+	return found
+}
