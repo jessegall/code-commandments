@@ -1,5 +1,7 @@
 package detectors
 
+import "github.com/jessegall/code-commandments/engine"
+
 // WholeTree marks a detector whose verdict needs the whole tree: shown one file it can find the wrong thing, so a
 // per-file check must not ask it.
 type WholeTree interface {
@@ -20,4 +22,10 @@ type RunsLast interface {
 // reporter can conceive.
 type RequiresBestDesign interface {
 	RequiresBestDesign()
+}
+
+// RecurrenceDetector marks a detector whose sin is one shape recurring: one occurrence proves nothing, so it names
+// the group each finding belongs to, and the fixture must show a group reaching across files.
+type RecurrenceDetector interface {
+	GroupKey(finding engine.Match, codebase *engine.Codebase) string
 }

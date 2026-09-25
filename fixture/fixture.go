@@ -58,6 +58,38 @@ func (f Fixture) Prove(t testing.TB) {
 	for _, detector := range f.Detectors {
 		f.proveDiversity(t, detector)
 	}
+	for detector, widest := range f.RecurrenceSpans() {
+		if widest < MinRecurrenceFiles {
+			t.Errorf("%s is a recurrence detector but its widest group touches only %d file(s); mark one recurring group across two classes or files, not twice in one", detector, widest)
+		}
+	}
+}
+
+// MinRecurrenceFiles is how many files a recurrence detector's widest group must reach.
+const MinRecurrenceFiles = 2
+
+// RecurrenceSpans is, for every recurrence detector, how many files its widest group of findings reaches.
+func (f Fixture) RecurrenceSpans() map[string]int {
+	spans := map[string]int{}
+	for _, detector := range f.Detectors {
+		recurring, ok := detector.(detectors.RecurrenceDetector)
+		if !ok {
+			continue
+		}
+		groups := map[string]map[string]bool{}
+		widest := 0
+		for _, finding := range detector.Find(f.Codebase) {
+			key := recurring.GroupKey(finding, f.Codebase)
+			if groups[key] == nil {
+				groups[key] = map[string]bool{}
+			}
+			groups[key][finding.File()] = true
+			widest = max(widest, len(groups[key]))
+		}
+		spans[catalog.Name(detector)] = widest
+	}
+
+	return spans
 }
 
 // report fails the test for each way a detector's findings missed its markers.

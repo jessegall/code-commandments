@@ -130,6 +130,7 @@ var capabilities = map[string]func(detectors.Detector) bool{
 	"RunsLast":           is[detectors.RunsLast],
 	"RequiresBestDesign": is[detectors.RequiresBestDesign],
 	"Exemptable":         is[packages.Exemptable],
+	"RecurrenceDetector": is[detectors.RecurrenceDetector],
 }
 
 func is[C any](detector detectors.Detector) bool {
