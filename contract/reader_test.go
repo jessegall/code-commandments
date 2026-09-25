@@ -82,3 +82,30 @@ func TestRefuses(t *testing.T) {
 		})
 	}
 }
+
+func TestTheValidatorRefusesAKeywordItWouldIgnore(t *testing.T) {
+	schema := map[string]any{"properties": map[string]any{"x": map[string]any{"format": "uri"}}}
+	if err := known(schema, ""); err == nil {
+		t.Fatal("a schema using format loads, though nothing applies it")
+	}
+}
+
+func TestTheSchemaAloneRefusesWhatDecodingWouldAccept(t *testing.T) {
+	lines := map[string]string{
+		"a neutral kind outside the set": strings.Replace(phpFile, `["type-declaration"]`, `["thing"]`, 1),
+		"a literal kind outside the set": strings.Replace(phpFile, `"name": "Cart", "symbol"`, `"name": "Cart", "literal": "decimal", "symbol"`, 1),
+		"a relative path":                strings.Replace(phpFile, `"/abs/src/Cart.php"`, `"src/Cart.php"`, 1),
+		"a line with two keys":           `{"trailer": {"files": 0}, "program": {}}`,
+		"a missing required key":         strings.Replace(phpFile, `"errors": 0, `, ``, 1),
+	}
+	for name, line := range lines {
+		t.Run(name, func(t *testing.T) {
+			if err := Validate([]byte(line)); err == nil {
+				t.Fatalf("the schema accepts %s", name)
+			}
+		})
+	}
+	if err := Validate([]byte(phpFile)); err != nil {
+		t.Fatalf("the schema refuses a valid file line: %v", err)
+	}
+}

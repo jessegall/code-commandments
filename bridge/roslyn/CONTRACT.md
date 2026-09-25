@@ -8,7 +8,7 @@ comment fields for every language. Until this bridge writes it, this document is
 at a time however large the project. Version 7:
 
 ```json
-{"version": 2}
+{"version": 7}
 {"path": "/abs/path/File.cs", "errors": 0, "root": {"kind": "CompilationUnit", "start": 0, "end": 812, "children": []}}
 {"resolution": {"calls": 1, "resolved": 1}}
 ```
