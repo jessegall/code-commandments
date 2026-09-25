@@ -106,13 +106,15 @@ func TestAClassNamesAShippedRuleByKindEngineAndName(t *testing.T) {
 		`JesseGall\CodeCommandments\Skills\TypeScript\Absence`:                   {Skill, catalog.TypeScript, "Absence"},
 		`JesseGall\CodeCommandments\Detectors\CSharp\DuplicateMethodDetector`:    {Detector, catalog.CSharp, "DuplicateMethodDetector"},
 		`JesseGall\CodeCommandments\Sins\Python\DictBag`:                         {Sin, catalog.Python, "DictBag"},
+		`JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder`:                {Hook, "", "JudgeReminder"},
+		`JesseGall\CodeCommandments\Agents\CodexAgent`:                           {Agent, "", "CodexAgent"},
 	} {
 		if got, shipped := RuleOf(class); !shipped || got != want {
 			t.Errorf("%s: %+v %v", class, got, shipped)
 		}
 	}
 
-	for _, class := range []string{`App\Rules\Old`, `JesseGall\CodeCommandments\Hooks\JudgeReminder`, `JesseGall\CodeCommandments\Config`} {
+	for _, class := range []string{`App\Rules\Old`, `JesseGall\CodeCommandments\Config`} {
 		if _, shipped := RuleOf(class); shipped {
 			t.Errorf("%s read as a shipped rule", class)
 		}

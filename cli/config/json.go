@@ -35,6 +35,8 @@ type disabled struct {
 	Skills    []string `json:"skills,omitempty"`
 	Sins      []string `json:"sins,omitempty"`
 	Detectors []string `json:"detectors,omitempty"`
+	Hooks     []string `json:"hooks,omitempty"`
+	Agents    []string `json:"agents,omitempty"`
 }
 
 // ReadJSON reads the config.json at path. A key the format does not have is an invalid configuration, so a
@@ -70,6 +72,8 @@ func (d document) config() (Config, error) {
 		config.Disabled = append(config.Disabled, rulesNamed(Skill, d.Disable.Skills)...)
 		config.Disabled = append(config.Disabled, rulesNamed(Sin, d.Disable.Sins)...)
 		config.Disabled = append(config.Disabled, rulesNamed(Detector, d.Disable.Detectors)...)
+		config.Disabled = append(config.Disabled, rulesNamed(Hook, d.Disable.Hooks)...)
+		config.Disabled = append(config.Disabled, rulesNamed(Agent, d.Disable.Agents)...)
 	}
 
 	for _, target := range sortedKeys(d.Configure) {
@@ -201,6 +205,10 @@ func (c Config) JSON() []byte {
 				written.Disable.Skills = append(written.Disable.Skills, rule.ID())
 			case Sin:
 				written.Disable.Sins = append(written.Disable.Sins, rule.ID())
+			case Hook:
+				written.Disable.Hooks = append(written.Disable.Hooks, rule.ID())
+			case Agent:
+				written.Disable.Agents = append(written.Disable.Agents, rule.ID())
 			default:
 				written.Disable.Detectors = append(written.Disable.Detectors, rule.ID())
 			}

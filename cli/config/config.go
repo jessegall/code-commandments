@@ -80,12 +80,19 @@ const (
 	Skill    Kind = "Skills"
 	Sin      Kind = "Sins"
 	Detector Kind = "Detectors"
+	Hook     Kind = "Hooks"
+	Agent    Kind = "Agents"
 )
 
-// RuleOf reads a shipped rule from its class; false when the class is none of the tool's rules.
+// RuleOf reads a shipped rule from its class; false when the class is none of the tool's rules. A hook or an
+// agent the tool ships is named by its short name alone.
 func RuleOf(class string) (Rule, bool) {
 	path, shipped := strings.CutPrefix(strings.TrimPrefix(class, `\`), root)
 	segments := strings.Split(path, `\`)
+
+	if shipped && (segments[0] == string(Hook) || segments[0] == string(Agent)) && len(segments) > 1 {
+		return Rule{Kind(segments[0]), "", segments[len(segments)-1]}, true
+	}
 
 	if !shipped || len(segments) < 3 {
 		return Rule{}, false

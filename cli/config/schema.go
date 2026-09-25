@@ -39,6 +39,8 @@ func Schema() []byte {
 					"skills":    list("Whole skills turned off, every sin under them with it.", rules(skillRules())),
 					"sins":      list("Sins turned off, whichever detector finds them.", rules(sinRules())),
 					"detectors": list("Detectors turned off, shipped (engine/Name) or the project's own (Name).", rules(detectorRules())),
+					"hooks":     list("Hooks turned off, by name.", object{"type": "string", "pattern": ownRule}),
+					"agents":    list("Agents turned off, by name: ClaudeAgent, CodexAgent, or one of the project's own.", object{"type": "string", "pattern": ownRule}),
 				},
 			},
 			"detectors": list("The project's own detectors in .commandments/custom/, by name, turned on.", object{"type": "string", "pattern": ownRule}),
