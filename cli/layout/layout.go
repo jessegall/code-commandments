@@ -113,3 +113,13 @@ func wrapJoined(text string, width int, brk string) string {
 
 	return out.String()
 }
+
+// PadBytes fills text with spaces on the right to width bytes, as PHP's `%-Ns` and str_pad do.
+func PadBytes(text string, width int) string {
+	return text + strings.Repeat(" ", max(0, width-len(text)))
+}
+
+// PadBytesLeft fills text with spaces on the left to width bytes, as PHP's `%Ns` does.
+func PadBytesLeft(text string, width int) string {
+	return strings.Repeat(" ", max(0, width-len(text))) + text
+}

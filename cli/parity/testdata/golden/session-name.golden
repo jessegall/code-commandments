@@ -1,0 +1,6 @@
+exit: 0
+--- stdout
+▸ This session is `review`.
+  <project>/.commandments/sessions/review
+
+--- stderr

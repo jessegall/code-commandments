@@ -40,6 +40,10 @@ func TestEachFlagNarrowsToItsFiles(t *testing.T) {
 	space := workspace.At(root, "s")
 	write(t, root, ".commandments/sessions/"+workspace.KeyFor("s")+"/sins/sins.md", "- [ ] `src/Kept.php:3` — x\n- [ ] `src/Kept.php:9` — y\n")
 
+	was, _ := os.Getwd()
+	os.Chdir(root)
+	defer os.Chdir(was)
+
 	for flags, want := range map[string][]string{
 		"--changes":         {"src/Edited.vue", "src/Untracked.py"},
 		"--branch":          {"src/Added.ts", "src/Branched.php", "src/Edited.vue", "src/Untracked.py"},
@@ -47,7 +51,6 @@ func TestEachFlagNarrowsToItsFiles(t *testing.T) {
 		"--repent":          {"src/Kept.php"},
 		"--repent=nowhere?": nil,
 	} {
-		t.Chdir(root)
 		scope, err := FromArgs([]string{flags}, root, space, nil)
 
 		if want == nil {

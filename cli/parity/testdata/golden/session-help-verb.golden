@@ -1,0 +1,33 @@
+exit: 0
+--- stdout
+commandments session — Where this session keeps its state — the folder holding its checklist and hook counters.
+
+Usage:
+  commandments session              print the folder, and what is in it
+  commandments session list         every session folder this project has, newest first — what a
+                                    SECOND terminal asks, having no session of its own. An ORPHAN, a
+                                    folder no session and no name points at any more, is marked as
+                                    one
+  commandments session --path       print only the path, for piping somewhere
+  commandments session name "<name>"
+                                    NAME this session — the folder is renamed to match in every
+                                    checkout, so it is one you can come back to
+  commandments session forget "<name>"
+                                    drop a name; its session answers to its hash again
+  commandments session adopt <folder>
+                                    take a stranded folder INTO this session — everything it holds
+                                    is moved, and nothing that did not come across is deleted
+
+Options:
+  --path  the bare path and nothing else
+  --into  the folder to adopt INTO, for a terminal with no session of its own
+
+  Run it from inside Claude Code by typing `!vendor/bin/commandments session` at the prompt: the `!`
+  prefix runs a shell command in the session, so the answer lands in the conversation without
+  costing a turn of thinking. From any other terminal, `session list` is the one to use — a shell
+  outside the harness has no session of its own to report.
+
+  `adopt` acts on the CHECKOUT it is run from, because worktree-scoped state belongs to its worktree
+  — so a folder `list` shows under a worktree is adopted from inside that worktree.
+
+--- stderr

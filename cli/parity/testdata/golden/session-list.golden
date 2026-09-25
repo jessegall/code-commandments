@@ -1,0 +1,9 @@
+exit: 0
+--- stdout
+  d0941    other      2026-01-04 11:00  Port the CLI
+  zzzzz               2026-01-04 11:00  (ORPHAN — nothing points here; `session adopt zzzzz`)
+  review   named-id   2026-01-03 11:00  (nothing said yet)
+  61bdc    parity     2026-01-02 11:00  fix the gate
+  default             2026-01-01 11:00  (no transcript found)
+
+--- stderr

@@ -1,0 +1,6 @@
+exit: 0
+--- stdout
+▸ `review` is forgotten.
+  <project>/.commandments/sessions/61bdc
+
+--- stderr
