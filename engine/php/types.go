@@ -34,16 +34,11 @@ type Types struct {
 	locals map[scope]map[string]string
 }
 
-var resolvers sync.Map
+var resolvers = Memoised(indexTypes)
 
 // TypesOf is the codebase's type resolver, indexed on first need and kept for the codebase's life.
 func TypesOf(codebase *engine.Codebase) *Types {
-	if types, ok := resolvers.Load(codebase); ok {
-		return types.(*Types)
-	}
-	types, _ := resolvers.LoadOrStore(codebase, indexTypes(codebase))
-
-	return types.(*Types)
+	return resolvers.Of(codebase)
 }
 
 func indexTypes(codebase *engine.Codebase) *Types {
@@ -118,7 +113,7 @@ func (t *Types) index(declaration engine.Match) {
 		var nullable []bool
 		var written []string
 		variadic := false
-		for _, param := range params(method) {
+		for _, param := range Params(method) {
 			nullable = append(nullable, acceptsNull(param))
 			written = append(written, Written(param.Node().Declared).SimpleName())
 			variadic = variadic || slices.Contains(param.Node().Flags, "variadic")
@@ -182,11 +177,12 @@ func (t *Types) TypeOf(expr engine.Match) string {
 		return ""
 	}
 
-	return t.typeIn(expr, function, EnclosingClassName(expr))
+	return t.TypeIn(expr, function, EnclosingClassName(expr))
 }
 
-// typeIn is the class the expression holds, read in the function as though it sat in the class.
-func (t *Types) typeIn(expr, function engine.Match, self string) string {
+// TypeIn is the class the expression holds, read in the function as though it sat in the class. Empty without a
+// function.
+func (t *Types) TypeIn(expr, function engine.Match, self string) string {
 	if !function.Exists() {
 		return ""
 	}
@@ -396,7 +392,7 @@ func (t *Types) localTypes(function engine.Match, self string) map[string]string
 		return cached
 	}
 	locals := t.capturedTypes(function, self)
-	for _, param := range params(function) {
+	for _, param := range Params(function) {
 		if variable := param.Child("var"); variable.Kind() == "Expr_Variable" && variable.Name() != "" {
 			locals[variable.Name()] = typeName(Written(param.Node().Declared))
 		}
@@ -520,8 +516,8 @@ func Arguments(call engine.Match) []engine.Match {
 	return arguments
 }
 
-// params is each parameter a function-like declares, in order.
-func params(function engine.Match) []engine.Match {
+// Params is each parameter a function-like declares, in order.
+func Params(function engine.Match) []engine.Match {
 	var params []engine.Match
 	for _, param := range function.Children() {
 		if param.Node().Field == "params" {
@@ -541,6 +537,18 @@ func enclosingFunction(node engine.Match) engine.Match {
 	}
 
 	return engine.Match{}
+}
+
+// EnclosingFunctionName is the name of the method or function around the node, or of the node itself; a closure
+// or arrow function passes it over. Empty outside any.
+func EnclosingFunctionName(node engine.Match) string {
+	for at := node; at.Exists(); at = at.Parent() {
+		if at.Kind() == "Stmt_ClassMethod" || at.Kind() == "Stmt_Function" {
+			return at.Name()
+		}
+	}
+
+	return ""
 }
 
 // EnclosingClassName is the name of the nearest class-like around the node, or of the node itself; empty inside an

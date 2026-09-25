@@ -24,6 +24,8 @@ needs PHP and this package's own `vendor/`, which is where php-parser comes from
 
 - **Syntax**: every php-parser node, `kind` its `getType()` and `field` its sub-node name, with `role`,
   `is`, `name`, `literal`/`value`, `operator`, `modifiers`, `flags`, `declared` and `returns`.
+- **An interpolated string's literal parts** (`InterpolatedStringPart`) are `literal: "string"` with their
+  decoded `value`, so the text between the interpolations reads without its escapes.
 - **The file root** is a `File` node spanning the whole file, its top-level statements in field `stmts`
   in order. php-parser has no file node, and a file holds more than one statement whenever it opens with
   `declare(strict_types=1)`.

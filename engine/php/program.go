@@ -4,7 +4,6 @@ import (
 	"maps"
 	"slices"
 	"strings"
-	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -32,16 +31,11 @@ type Program struct {
 	traitUsers   map[string][]string
 }
 
-var programs sync.Map
+var programs = Memoised(readProgram)
 
 // ProgramOf is the codebase's PHP program, read on first need and kept for the codebase's life.
 func ProgramOf(codebase *engine.Codebase) *Program {
-	if program, ok := programs.Load(codebase); ok {
-		return program.(*Program)
-	}
-	program, _ := programs.LoadOrStore(codebase, readProgram(codebase))
-
-	return program.(*Program)
+	return programs.Of(codebase)
 }
 
 func readProgram(codebase *engine.Codebase) *Program {
@@ -283,7 +277,7 @@ func Fields(declaration engine.Match) []Field {
 		property := member.Node()
 		for _, item := range member.Children() {
 			if item.Node().Field == "props" {
-				fields = append(fields, Field{Name: item.Name(), Type: property.Declared, IsPublic: isPublic(property), Node: item})
+				fields = append(fields, Field{Name: item.Name(), Type: property.Declared, IsPublic: IsPublic(property), Node: item})
 			}
 		}
 	}
@@ -329,8 +323,8 @@ func constructorParams(declaration engine.Match) []engine.Match {
 	return params
 }
 
-// isPublic says whether a member is public: written so, or written with no visibility at all.
-func isPublic(member *contract.Node) bool {
+// IsPublic says whether a member is public: written so, or written with no visibility at all.
+func IsPublic(member *contract.Node) bool {
 	return slices.Contains(member.Modifiers, "public") ||
 		!(slices.Contains(member.Modifiers, "protected") || slices.Contains(member.Modifiers, "private"))
 }

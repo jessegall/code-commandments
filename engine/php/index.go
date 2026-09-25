@@ -2,7 +2,6 @@ package php
 
 import (
 	"slices"
-	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -17,16 +16,11 @@ type Index struct {
 	byName  map[string][]engine.Match
 }
 
-var indexes sync.Map
+var indexes = Memoised(buildIndex)
 
 // IndexOf is the codebase's call graph, built on first need.
 func IndexOf(codebase *engine.Codebase) *Index {
-	if index, ok := indexes.Load(codebase); ok {
-		return index.(*Index)
-	}
-	index, _ := indexes.LoadOrStore(codebase, buildIndex(codebase))
-
-	return index.(*Index)
+	return indexes.Of(codebase)
 }
 
 func buildIndex(codebase *engine.Codebase) *Index {
@@ -53,7 +47,7 @@ func buildIndex(codebase *engine.Codebase) *Index {
 func (i *Index) CallersOf(fqcn, method string) []engine.Match {
 	var callers []engine.Match
 	for _, call := range i.byName[method] {
-		receiver := staticCallClass(call)
+		receiver := StaticCallClass(call)
 		if receiver == "" {
 			receiver = ReceiverTypeOf(call)
 		}
@@ -65,8 +59,8 @@ func (i *Index) CallersOf(fqcn, method string) []engine.Match {
 	return callers
 }
 
-// staticCallClass is the class a static call names, `self` and `static` read as the class they sit in.
-func staticCallClass(call engine.Match) string {
+// StaticCallClass is the class a static call names, `self` and `static` read as the class they sit in.
+func StaticCallClass(call engine.Match) string {
 	class := call.Child("class")
 	if call.Kind() != "Expr_StaticCall" || !isName(class) {
 		return ""

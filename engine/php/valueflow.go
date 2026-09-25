@@ -42,16 +42,11 @@ type ValueFlow struct {
 	verdicts map[string]FlowVerdict
 }
 
-var flows sync.Map
+var flows = Memoised(gatherFlow)
 
 // ValueFlowOf is the codebase's value flow, its field reads gathered on first need.
 func ValueFlowOf(codebase *engine.Codebase) *ValueFlow {
-	if flow, ok := flows.Load(codebase); ok {
-		return flow.(*ValueFlow)
-	}
-	flow, _ := flows.LoadOrStore(codebase, gatherFlow(codebase))
-
-	return flow.(*ValueFlow)
+	return flows.Of(codebase)
 }
 
 func gatherFlow(codebase *engine.Codebase) *ValueFlow {
@@ -86,7 +81,7 @@ func (f *ValueFlow) gather(fetch engine.Match) {
 		return
 	}
 	function := enclosingFunction(fetch)
-	class := f.types.typeIn(fetch.Child("var"), function, flowClass(function))
+	class := f.types.TypeIn(fetch.Child("var"), function, flowClass(function))
 	if class == "" {
 		f.unresolved[name.Name()] = true
 
@@ -372,7 +367,7 @@ func (f *ValueFlow) viaFieldWrite(occurrence engine.Match, slots map[string]bool
 		return nil
 	}
 	function := enclosingFunction(occurrence)
-	owner := f.types.typeIn(target.Child("var"), function, flowClass(function))
+	owner := f.types.TypeIn(target.Child("var"), function, flowClass(function))
 	if owner == "" {
 		return nil
 	}
@@ -410,7 +405,7 @@ func (f *ValueFlow) targetParam(arg engine.Match) (paramTarget, bool) {
 		return paramTarget{}, false
 	}
 	declaration, _ := f.methodNode(class, method)
-	declared := params(declaration)
+	declared := Params(declaration)
 	if len(declared) == 0 {
 		return paramTarget{}, false
 	}
@@ -438,7 +433,7 @@ func (f *ValueFlow) callee(call engine.Match) (class, method string) {
 	case "Expr_MethodCall":
 		if name := call.Child("name"); name.Kind() == "Identifier" {
 			function := enclosingFunction(call)
-			if receiver := f.types.typeIn(call.Child("var"), function, flowClass(function)); receiver != "" {
+			if receiver := f.types.TypeIn(call.Child("var"), function, flowClass(function)); receiver != "" {
 				return receiver, name.Name()
 			}
 		}

@@ -215,6 +215,7 @@ final class TreeWriter
             $node instanceof Node\Scalar\Int_ => ['literal' => 'int', 'value' => (string) $node->value],
             $node instanceof Node\Scalar\Float_ => ['literal' => 'float', 'value' => $this->decimal($node->value)],
             $node instanceof Node\Scalar\InterpolatedString => ['literal' => 'interpolated'],
+            $node instanceof Node\InterpolatedStringPart => ['literal' => 'string', 'value' => $node->value],
             $node instanceof Node\Expr\ConstFetch && in_array($node->name->toLowerString(), ['true', 'false'], true)
                 => ['literal' => 'bool', 'value' => $node->name->toLowerString() === 'true'],
             $node instanceof Node\Expr\ConstFetch && $node->name->toLowerString() === 'null' => ['literal' => 'null', 'value' => null],

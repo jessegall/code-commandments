@@ -3,7 +3,6 @@ package php
 import (
 	"slices"
 	"strings"
-	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -34,7 +33,7 @@ func receiverParamType(call engine.Match, variable string) string {
 	if variable == "" || !function.Exists() {
 		return ""
 	}
-	for _, param := range params(function) {
+	for _, param := range Params(function) {
 		if own := param.Child("var"); own.Kind() == "Expr_Variable" && own.Name() == variable {
 			return writtenClass(param.Node().Declared)
 		}
@@ -154,16 +153,11 @@ type Chains struct {
 	returns    map[string]map[string]string
 }
 
-var chains sync.Map
+var chains = Memoised(indexChains)
 
 // ChainsOf is the codebase's chain reader, indexed on first need.
 func ChainsOf(codebase *engine.Codebase) *Chains {
-	if read, ok := chains.Load(codebase); ok {
-		return read.(*Chains)
-	}
-	read, _ := chains.LoadOrStore(codebase, indexChains(codebase))
-
-	return read.(*Chains)
+	return chains.Of(codebase)
 }
 
 func indexChains(codebase *engine.Codebase) *Chains {
@@ -242,7 +236,7 @@ func (c *Chains) Resolve(expr engine.Match, variables map[string]string) string 
 // ParamTypes is each parameter of a function-like by its variable, with the one name its type is written with.
 func ParamTypes(function engine.Match) map[string]string {
 	types := map[string]string{}
-	for _, param := range params(function) {
+	for _, param := range Params(function) {
 		own := param.Child("var")
 		if written := Written(param.Node().Declared).SimpleName(); written != "" && own.Kind() == "Expr_Variable" && own.Name() != "" {
 			types[own.Name()] = written
