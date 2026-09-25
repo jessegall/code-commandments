@@ -6,8 +6,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"github.com/jessegall/code-commandments/workspace"
 )
 
 // probeMarker opens the name of each probe's impossible type, which carries the local it asks about.
@@ -153,9 +151,10 @@ func (o *VueTscOracle) arguments() []string {
 	}
 }
 
-// buildInfo is where the checker keeps what it learned for the next run, its folder made.
+// buildInfo is where the checker keeps what it learned for the next run: the project's own cache of its node tools,
+// its folder made.
 func (o *VueTscOracle) buildInfo() string {
-	path := workspace.At(o.root).Cache(".vue-tsc.tsbuildinfo")
+	path := strings.TrimRight(o.root, "/") + "/node_modules/.cache/code-commandments/vue-tsc.tsbuildinfo"
 	os.MkdirAll(filepath.Dir(path), 0o777)
 
 	return path
