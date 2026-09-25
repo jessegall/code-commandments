@@ -1105,3 +1105,30 @@ func Interpolations(text string) []string {
 		at = closing + 2
 	}
 }
+
+// CalleeName is the name a call calls: a plain name, or the method a member call names.
+func (e *Expr) CalleeName() string {
+	callee := e.child("callee")
+	switch callee.Kind {
+	case IdentifierExpr:
+		return callee.Name
+	case MemberExpr:
+		return callee.Property
+	}
+
+	return ""
+}
+
+// Arguments is a call's arguments.
+func (e *Expr) Arguments() []*Expr {
+	return e.list("arguments")
+}
+
+// Value is a literal's value: a string's text without its quotes, anything else as written.
+func (e *Expr) Value() string {
+	if e.Raw != "" && (e.Raw[0] == '"' || e.Raw[0] == '\'' || e.Raw[0] == '`') {
+		return unquote(e.Raw)
+	}
+
+	return e.Raw
+}

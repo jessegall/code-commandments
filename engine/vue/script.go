@@ -297,3 +297,64 @@ func scriptTokens(source string) []scriptToken {
 
 	return tokens
 }
+
+// ObjectAfter is the object literal written after `key:`, as written.
+func (s Script) ObjectAfter(key string) (string, bool) {
+	for at := 0; at < len(s.tokens); at++ {
+		if !(s.isID(at, key) && s.isPunct(at+1, ":") && s.isPunct(at+2, "{")) {
+			continue
+		}
+		closing := s.matchingParen(at + 2)
+
+		return s.source[s.tokens[at+2].start:s.tokens[closing].end], true
+	}
+
+	return "", false
+}
+
+// ReExports is every module the script re-exports from, once.
+func (s Script) ReExports() []string {
+	var specifiers []string
+	for at := 0; at < len(s.tokens); at++ {
+		if !s.isID(at, "export") {
+			continue
+		}
+		for next := at + 1; next < len(s.tokens) && !s.isPunct(next, ";"); next++ {
+			if !s.isID(next, "from") {
+				continue
+			}
+			if next+1 < len(s.tokens) && s.tokens[next+1].kind == "string" {
+				value := s.tokens[next+1].value
+				specifier := value
+				if len(value) >= 2 {
+					specifier = value[1 : len(value)-1]
+				}
+				if !slices.Contains(specifiers, specifier) {
+					specifiers = append(specifiers, specifier)
+				}
+			}
+
+			break
+		}
+	}
+
+	return specifiers
+}
+
+// matchingParen is the token that closes the group opening at open, the last token when none does.
+func (s Script) matchingParen(open int) int {
+	depth := 0
+	for at := open; at < len(s.tokens); at++ {
+		switch s.tokens[at].value {
+		case "(", "[", "{":
+			depth++
+		case ")", "]", "}":
+			depth--
+			if depth == 0 {
+				return at
+			}
+		}
+	}
+
+	return len(s.tokens) - 1
+}
