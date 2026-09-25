@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"slices"
+	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -100,6 +101,12 @@ func (m Match) Location() string {
 
 // Scope is the enclosing type and function, Type::function, (file) outside any type.
 func (m Match) Scope() string {
+	if m.file != nil {
+		if namer, named := scopeNamers.Load(m.file.Language()); named {
+			return namer.(func(Match) string)(m)
+		}
+	}
+
 	scope := "(file)"
 	if declaration := m.EnclosingType(); declaration.Exists() {
 		scope = declaration.Identity()
@@ -338,4 +345,13 @@ func (m Match) Span() (Span, error) {
 	}
 
 	return Span{Path: m.file.Path, Source: source, Start: m.node.Span.Start, End: m.node.Span.End}, nil
+}
+
+// scopeNamers name the scope of a language's matches where a report says it otherwise than by the enclosing
+// type and function: a Vue element by its tag, a TypeScript declaration by its kind and name.
+var scopeNamers sync.Map
+
+// NameScopes has every match in a file of the language name its scope with namer.
+func NameScopes(language contract.Language, namer func(Match) string) {
+	scopeNamers.Store(language, namer)
 }
