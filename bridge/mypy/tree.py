@@ -349,6 +349,40 @@ def is_code(words: str) -> bool:
     return not (isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Name))
 
 
+SKIPPED_FOLDERS = {"vendor", "node_modules", "site-packages", "__pycache__"}
+
+
+def python_files(paths: list[str]) -> list[str]:
+    """Every `.py` file under the paths, resolved, in walk order: a folder that is a link, hidden, a dependency
+    store, bytecode, an `.egg-info` or a virtual environment is not walked. A module a package shadows is still
+    one, so it is written even where mypy leaves it out."""
+    found: list[str] = []
+    for root in paths:
+        if os.path.isfile(root):
+            found.append(os.path.realpath(root))
+            continue
+        for folder, subfolders, names in os.walk(root):
+            subfolders[:] = sorted(sub for sub in subfolders if walks(os.path.join(folder, sub)))
+            found += [os.path.realpath(os.path.join(folder, name)) for name in sorted(names) if name.endswith(".py")]
+    return list(dict.fromkeys(found))
+
+
+def walks(folder: str) -> bool:
+    name = os.path.basename(folder)
+    return not (os.path.islink(folder) or name.startswith(".") or name in SKIPPED_FOLDERS or name.endswith(".egg-info")
+                or os.path.isfile(os.path.join(folder, "pyvenv.cfg")))
+
+
+def module_name(path: str) -> str:
+    """The dotted name Python imports the file by: its path from the top of its outermost package."""
+    parts = [] if os.path.basename(path) == "__init__.py" else [os.path.basename(path)[:-3]]
+    folder = os.path.dirname(path)
+    while os.path.isfile(os.path.join(folder, "__init__.py")):
+        parts.insert(0, os.path.basename(folder))
+        folder = os.path.dirname(folder)
+    return ".".join(parts)
+
+
 def packages(path: str) -> list[str]:
     """Every folder holding an __init__.py, from the file's own up."""
     found = []
@@ -370,18 +404,17 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
                       "bridge": {"name": "mypy-bridge", "version": MYPY_VERSION}, "roots": [os.path.realpath(p) for p in paths]}}
     found, types, graph = session.checked(paths, python)
     judged = {os.path.realpath(p) for p in write}
-    checked = states(graph, {os.path.realpath(s.path) for s in found if s.path})
+    named = {os.path.realpath(s.path): s.module for s in found if s.path}
+    checked = states(graph, set(named))
     seen = resolved = unjoined = files = 0
     folders: list[str] = []
-    for source in found:
-        if not source.path:
-            continue
-        path = os.path.realpath(source.path)
+    for path in python_files(paths):
         text = open(path, "rb").read()
         state = checked.get(path)
         count, typed = spans(path, state, types) if state is not None else (0, {})
         seen, resolved = seen + count, resolved + len(typed)
-        writer = TreeWriter(text, source.module, typed)
+        module = named.get(path) or module_name(path)
+        writer = TreeWriter(text, module, typed)
         line: dict = {"path": path, "language": "python", "errors": 0}
         try:
             root = writer.node(ast.parse(text), None, [])
@@ -389,7 +422,7 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
             line["errors"], root = 1, unparsed(text)
         if write and path not in judged:
             line["context"] = True
-        line.update({"module": source.module, "resolver": {"tool": "mypy", "ran": state is not None and state.tree is not None},
+        line.update({"module": module, "resolver": {"tool": "mypy", "ran": state is not None and state.tree is not None},
                      "root": root, "comments": writer.comments() if not line["errors"] else []})
         yield {"file": line}
         files += 1

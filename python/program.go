@@ -19,6 +19,7 @@ type Program struct {
 	homes   map[*contract.Node]*Module
 	bound   sync.Map
 	classes classes
+	calls   callGraph
 }
 
 // Module is one Python file and the dotted name Python imports it by.

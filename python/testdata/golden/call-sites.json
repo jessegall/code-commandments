@@ -1,0 +1,912 @@
+{
+    "shop/aisle_signs.py@762-796": {
+        "target": "shop.aisle_signs.SignCatalogue.entry",
+        "arguments": {
+            "number": "aisle.number"
+        },
+        "literalKey": false
+    },
+    "shop/aisle_signs.py@897-917": {
+        "target": "shop.aisle_signs.Aisle.sign_heading",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/allergen_labels.py@880-909": {
+        "target": "shop.allergen_labels.DeliCounter.warning_for",
+        "arguments": {
+            "recipe": "item.recipe"
+        },
+        "literalKey": false
+    },
+    "shop/badge_codes.py@176-192": {
+        "target": "shop.badge_codes.badge_text",
+        "arguments": {
+            "code": "code"
+        },
+        "literalKey": false
+    },
+    "shop/badge_codes.py@239-263": {
+        "target": "shop.badge_codes.badge_text",
+        "arguments": {
+            "code": "code.strip()"
+        },
+        "literalKey": false
+    },
+    "shop/badge_codes.py@345-368": {
+        "target": "shop.badge_codes.badge_text",
+        "arguments": {
+            "code": "str(number)"
+        },
+        "literalKey": false
+    },
+    "shop/billing/invoice.py@312-338": {
+        "target": "shop.warehouse.picking.lines",
+        "arguments": {
+            "number": "self.number"
+        },
+        "literalKey": false
+    },
+    "shop/carrier_labels.py@965-993": {
+        "target": "shop.carrier_labels.UnhandledCarrier.of",
+        "arguments": {
+            "carrier": "carrier"
+        },
+        "literalKey": false
+    },
+    "shop/cart_lines.py@410-459": {
+        "target": "shop.cart_lines.CartLine.amend",
+        "arguments": {
+            "flags": "{\"gift\": True, \"wrap\": \"paper\"}"
+        },
+        "literalKey": false
+    },
+    "shop/cart_lines.py@547-581": {
+        "target": "shop.cart_lines.CartLine.amend",
+        "arguments": {
+            "flags": "{\"sample\": True}"
+        },
+        "literalKey": false
+    },
+    "shop/cart_lines.py@676-695": {
+        "target": "shop.cart_lines.CartLine.amend",
+        "arguments": {
+            "sku": "sku"
+        },
+        "literalKey": false
+    },
+    "shop/catalog_file.py@1013-1039": {
+        "target": "shop.catalog_file.CatalogUnreadable.at",
+        "arguments": {
+            "path": "path"
+        },
+        "literalKey": false
+    },
+    "shop/categories.py@461-486": {
+        "target": "shop.categories.descendants",
+        "arguments": {
+            "below": "below",
+            "parent": "child"
+        },
+        "literalKey": false
+    },
+    "shop/categories.py@883-911": {
+        "target": "shop.categories.descendants_of",
+        "arguments": {
+            "below": "below",
+            "parent": "child"
+        },
+        "literalKey": false
+    },
+    "shop/category_walker.py@547-564": {
+        "target": "shop.category_walker.CategoryWalker.visit",
+        "arguments": {
+            "category": "child"
+        },
+        "literalKey": false
+    },
+    "shop/category_walker.py@917-940": {
+        "target": "shop.category_walker.CategoryPaths.visit",
+        "arguments": {
+            "category": "child",
+            "path": "here"
+        },
+        "literalKey": false
+    },
+    "shop/checkout.py@206-222": {
+        "target": "shop.orders.Order.is_empty",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/checkout.py@279-321": {
+        "target": "shop.inventory.Inventory.reserve",
+        "arguments": {
+            "sku": "line.sku",
+            "wanted": "line.quantity"
+        },
+        "literalKey": false
+    },
+    "shop/checkout.py@334-347": {
+        "target": "shop.orders.Order.total",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/closing.py@713-736": {
+        "target": "shop.closing.close_till",
+        "arguments": {
+            "till": "till",
+            "after": "after"
+        },
+        "literalKey": false
+    },
+    "shop/courier_picks.py@1150-1258": {
+        "target": "shop.courier_picks.CourierPicker.pick",
+        "arguments": {
+            "express": "consignment.service == \"next-day\"",
+            "fragile": "consignment.contents in (\"glass\", \"ceramic\")"
+        },
+        "literalKey": false
+    },
+    "shop/courier_picks.py@666-756": {
+        "target": "shop.courier_picks.CourierPicker.pick",
+        "arguments": {
+            "fragile": "consignment.contents in (\"glass\", \"ceramic\")",
+            "express": "consignment.service == \"next-day\""
+        },
+        "literalKey": false
+    },
+    "shop/courier_picks.py@956-1048": {
+        "target": "shop.courier_picks.CourierPicker.pick",
+        "arguments": {
+            "fragile": "consignment.contents in (\"glass\", \"ceramic\")",
+            "express": "consignment.service == \"next-day\""
+        },
+        "literalKey": false
+    },
+    "shop/couriers/dispatch.py@363-398": {
+        "target": "shop.tracking.events.record",
+        "arguments": {
+            "parcel": "parcel"
+        },
+        "literalKey": false
+    },
+    "shop/couriers/dispatch.py@425-441": {
+        "target": "shop.pricing.rates.rate_for",
+        "arguments": {
+            "parcel": "parcel"
+        },
+        "literalKey": false
+    },
+    "shop/csv_tokens.py@524-556": {
+        "target": "shop.csv_tokens.PriceListReader.expect",
+        "arguments": {
+            "token": "Punctuation.NEWLINE"
+        },
+        "literalKey": false
+    },
+    "shop/csv_tokens.py@639-655": {
+        "target": "shop.csv_tokens.PriceListReader.expect",
+        "arguments": {
+            "token": "\",\""
+        },
+        "literalKey": false
+    },
+    "shop/csv_tokens.py@699-729": {
+        "target": "shop.csv_tokens.PriceListReader.expect",
+        "arguments": {
+            "token": "Punctuation.QUOTE"
+        },
+        "literalKey": false
+    },
+    "shop/csv_tokens.py@914-944": {
+        "target": "shop.csv_tokens.PriceListReader.expect",
+        "arguments": {
+            "token": "Punctuation.COMMA"
+        },
+        "literalKey": false
+    },
+    "shop/currencies.py@252-291": {
+        "target": "shop.currencies.format_money",
+        "arguments": {
+            "amount": "amount",
+            "currency": "currency or \"EUR\""
+        },
+        "literalKey": false
+    },
+    "shop/delivery.py@680-694": {
+        "target": "shop.delivery.Address.line",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/drop_slots.py@424-457": {
+        "target": "shop.drop_slots.DropOff.booked",
+        "arguments": {
+            "slot": "Slot.MORNING",
+            "day": "day"
+        },
+        "literalKey": false
+    },
+    "shop/drop_slots.py@546-576": {
+        "target": "shop.drop_slots.DropOff.booked",
+        "arguments": {
+            "slot": "\"evening\"",
+            "day": "day"
+        },
+        "literalKey": false
+    },
+    "shop/encoding.py@538-564": {
+        "target": "shop.encoding.encode",
+        "arguments": {
+            "text": "text",
+            "kind": "\"text/plain\""
+        },
+        "literalKey": false
+    },
+    "shop/encoding.py@674-699": {
+        "target": "shop.encoding.encode",
+        "arguments": {
+            "text": "html",
+            "kind": "\"text/html\""
+        },
+        "literalKey": false
+    },
+    "shop/escalations.py@395-441": {
+        "target": "shop.support_tickets.Ticket.evolve",
+        "arguments": {
+            "meta": "TicketMeta.of(3).to_dict()"
+        },
+        "literalKey": false
+    },
+    "shop/escalations.py@414-430": {
+        "target": "shop.support_tickets.TicketMeta.of",
+        "arguments": {
+            "level": "3"
+        },
+        "literalKey": false
+    },
+    "shop/events.py@448-466": {
+        "target": "shop.events.Listener.handle",
+        "arguments": {
+            "event": "event"
+        },
+        "literalKey": false
+    },
+    "shop/events.py@737-755": {
+        "target": "shop.events.Listener.handle",
+        "arguments": {
+            "event": "event"
+        },
+        "literalKey": false
+    },
+    "shop/feed_reader.py@1499-1522": {
+        "target": "shop.feed_reader.FeedUnavailable.at",
+        "arguments": {
+            "url": "url"
+        },
+        "literalKey": false
+    },
+    "shop/feed_reader.py@640-663": {
+        "target": "shop.feed_reader.FeedUnavailable.at",
+        "arguments": {
+            "url": "url"
+        },
+        "literalKey": false
+    },
+    "shop/feed_reader.py@872-895": {
+        "target": "shop.feed_reader.FeedUnavailable.at",
+        "arguments": {
+            "url": "url"
+        },
+        "literalKey": false
+    },
+    "shop/floor_plans.py@392-410": {
+        "target": "shop.floor_plans.FloorPlan.bay",
+        "arguments": {
+            "code": "bay_code"
+        },
+        "literalKey": false
+    },
+    "shop/gift_wrap.py@464-509": {
+        "target": "shop.gift_wrap.Wrapper.paper",
+        "arguments": {
+            "gift": "order.gift",
+            "heavy": "parcel.weight > 10"
+        },
+        "literalKey": false
+    },
+    "shop/gift_wrap.py@598-654": {
+        "target": "shop.gift_wrap.Wrapper.paper",
+        "arguments": {
+            "gift": "order.gift",
+            "heavy": "parcel.weight > 10"
+        },
+        "literalKey": false
+    },
+    "shop/inventory.py@516-533": {
+        "target": "shop.inventory.Inventory.on_hand",
+        "arguments": {
+            "sku": "sku"
+        },
+        "literalKey": false
+    },
+    "shop/inventory.py@562-593": {
+        "target": "shop.inventory.OutOfStock.for_sku",
+        "arguments": {
+            "sku": "sku",
+            "wanted": "wanted"
+        },
+        "literalKey": false
+    },
+    "shop/kiosk_receipts.py@430-445": {
+        "target": "shop.kiosk_receipts.KioskSession.items",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/kiosk_receipts.py@482-504": {
+        "target": "shop.kiosk_receipts.KioskSession.paid_by_card",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/kiosk_receipts.py@602-665": {
+        "target": "shop.kiosk_receipts.receipt",
+        "arguments": {
+            "total": "session.total",
+            "items": "session.items()",
+            "card": "session.paid_by_card()"
+        },
+        "literalKey": false
+    },
+    "shop/kiosk_receipts.py@625-640": {
+        "target": "shop.kiosk_receipts.KioskSession.items",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/kiosk_receipts.py@642-664": {
+        "target": "shop.kiosk_receipts.KioskSession.paid_by_card",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/kiosk_receipts.py@845-893": {
+        "target": "shop.kiosk_receipts.banner",
+        "arguments": {
+            "title": "str(session.total)",
+            "subtitle": "str(session.items())"
+        },
+        "literalKey": false
+    },
+    "shop/kiosk_receipts.py@876-891": {
+        "target": "shop.kiosk_receipts.KioskSession.items",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/label_sizes.py@267-322": {
+        "target": "shop.label_sizes.print_label",
+        "arguments": {
+            "text": "f\"{cents / 100:.2f}\"",
+            "size": "LabelSize.SMALL"
+        },
+        "literalKey": false
+    },
+    "shop/label_sizes.py@407-437": {
+        "target": "shop.label_sizes.print_label",
+        "arguments": {
+            "text": "text",
+            "size": "\"wide\""
+        },
+        "literalKey": false
+    },
+    "shop/label_sizes.py@529-561": {
+        "target": "shop.label_sizes.print_label",
+        "arguments": {
+            "text": "text",
+            "size": "\"poster\""
+        },
+        "literalKey": false
+    },
+    "shop/layout.py@509-530": {
+        "target": "shop.layout.describe_lines",
+        "arguments": {
+            "lines": "lines"
+        },
+        "literalKey": false
+    },
+    "shop/layout.py@655-676": {
+        "target": "shop.layout.describe_lines",
+        "arguments": {
+            "lines": "lines"
+        },
+        "literalKey": false
+    },
+    "shop/ledger_dump.py@246-307": {
+        "target": "shop.ledger_lines.ledger_line",
+        "arguments": {
+            "reference": "str(entry.number)",
+            "amount": "entry.amount"
+        },
+        "literalKey": false
+    },
+    "shop/ledger_posting.py@325-369": {
+        "target": "shop.ledger_lines.ledger_line",
+        "arguments": {
+            "reference": "str(entry.number)",
+            "amount": "entry.amount"
+        },
+        "literalKey": false
+    },
+    "shop/ledger_posting.py@488-510": {
+        "target": "shop.ledger_lines.ledger_line_for",
+        "arguments": {
+            "entry": "entry"
+        },
+        "literalKey": false
+    },
+    "shop/log_bundles.py@826-845": {
+        "target": "shop.log_bundles.bundle_week",
+        "arguments": {
+            "folder": "folder"
+        },
+        "literalKey": false
+    },
+    "shop/log_bundles.py@863-881": {
+        "target": "shop.log_bundles.bundle_day",
+        "arguments": {
+            "folder": "folder"
+        },
+        "literalKey": false
+    },
+    "shop/loyalty_points.py@1112-1133": {
+        "target": "shop.loyalty_points.Account.can_redeem",
+        "arguments": {
+            "cost": "cost"
+        },
+        "literalKey": false
+    },
+    "shop/markdown_runs.py@397-414": {
+        "target": "shop.markdown_runs.MarkdownRun.reduced",
+        "arguments": {
+            "sku": "sku"
+        },
+        "literalKey": false
+    },
+    "shop/markdown_runs.py@726-750": {
+        "target": "shop.markdown_runs.Markdown.applies_to",
+        "arguments": {
+            "sku": "sku"
+        },
+        "literalKey": false
+    },
+    "shop/menu_boards.py@820-842": {
+        "target": "shop.menu_boards.Chalk.write",
+        "arguments": {
+            "dish": "dish"
+        },
+        "literalKey": false
+    },
+    "shop/menus/sidebar.py@276-287": {
+        "target": "shop.layout.grid.cell",
+        "arguments": {
+            "title": "title"
+        },
+        "literalKey": false
+    },
+    "shop/pallet_loads.py@680-697": {
+        "target": "shop.pallet_loads.Pallet.heaviest",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/parcel_labels.py@215-239": {
+        "target": "shop.parcel_labels.express_label",
+        "arguments": {
+            "parcel_id": "parcel_id"
+        },
+        "literalKey": false
+    },
+    "shop/parcel_labels.py@256-295": {
+        "target": "shop.parcel_labels.standard_label",
+        "arguments": {
+            "parcel_id": "parcel_id",
+            "weight_grams": "weight_grams"
+        },
+        "literalKey": false
+    },
+    "shop/parcel_weighing.py@349-385": {
+        "target": "shop.parcel_weighing.weight_label",
+        "arguments": {
+            "kilos": "float(reading.display)"
+        },
+        "literalKey": false
+    },
+    "shop/parcel_weighing.py@510-602": {
+        "target": "shop.parcel_weighing.weight_label",
+        "arguments": {
+            "kilos": "float(max(readings, key=lambda reading: float(reading.display)).display)"
+        },
+        "literalKey": false
+    },
+    "shop/payload_fields.py@435-461": {
+        "target": "shop.payload_fields.text_of",
+        "arguments": {
+            "raw": "payload",
+            "keys": "'number'"
+        },
+        "literalKey": true
+    },
+    "shop/payload_fields.py@465-502": {
+        "target": "shop.payload_fields.text_of",
+        "arguments": {
+            "raw": "payload",
+            "keys": "'customer'"
+        },
+        "literalKey": true
+    },
+    "shop/payment_icons.py@1057-1083": {
+        "target": "shop.payment_icons.UnhandledMethod.of",
+        "arguments": {
+            "method": "method"
+        },
+        "literalKey": false
+    },
+    "shop/price_lists.py@1130-1163": {
+        "target": "shop.price_lists.UnknownSku.at",
+        "arguments": {
+            "supplier": "self.supplier",
+            "sku": "sku"
+        },
+        "literalKey": false
+    },
+    "shop/price_lists.py@783-816": {
+        "target": "shop.price_lists.UnknownSku.at",
+        "arguments": {
+            "supplier": "self.supplier",
+            "sku": "sku"
+        },
+        "literalKey": false
+    },
+    "shop/printer_commands.py@648-660": {
+        "target": "shop.printer_commands.LabelJob.flags",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/printer_pool.py@978-1004": {
+        "target": "shop.printer_pool.UnknownTill.for_name",
+        "arguments": {
+            "till": "till"
+        },
+        "literalKey": false
+    },
+    "shop/quantities.py@698-725": {
+        "target": "shop.quantities.MissingQuantity.in_row",
+        "arguments": {
+            "row": "row"
+        },
+        "literalKey": false
+    },
+    "shop/quantity_parsing.py@469-488": {
+        "target": "shop.quantity_parsing.BadQuantity.of",
+        "arguments": {
+            "raw": "raw"
+        },
+        "literalKey": false
+    },
+    "shop/quantity_parsing.py@631-650": {
+        "target": "shop.quantity_parsing.BadQuantity.of",
+        "arguments": {
+            "raw": "raw"
+        },
+        "literalKey": false
+    },
+    "shop/receipt_printers.py@906-918": {
+        "target": "shop.receipt_printers.PriceBoard._sort",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/receipt_printing.py@466-481": {
+        "target": "shop.receipt_printing.ReceiptPrinter.line",
+        "arguments": {
+            "text": "name"
+        },
+        "literalKey": false
+    },
+    "shop/receipt_printing.py@581-596": {
+        "target": "shop.receipt_printing.ReceiptPrinter.line",
+        "arguments": {
+            "text": "item"
+        },
+        "literalKey": false
+    },
+    "shop/receipt_printing.py@904-919": {
+        "target": "shop.receipt_printing.IndentedPrinter.line",
+        "arguments": {
+            "text": "name"
+        },
+        "literalKey": false
+    },
+    "shop/receipt_printing.py@959-984": {
+        "target": "shop.receipt_printing.IndentedPrinter.line",
+        "arguments": {
+            "text": "item",
+            "indent": "2"
+        },
+        "literalKey": false
+    },
+    "shop/receipt_signing.py@927-970": {
+        "target": "shop.receipt_signing.signature_matches",
+        "arguments": {
+            "secret": "secret",
+            "receipt": "receipt",
+            "claimed": "claimed"
+        },
+        "literalKey": false
+    },
+    "shop/receipts.py@663-680": {
+        "target": "shop.receipts.NoEmail.on",
+        "arguments": {
+            "order": "order"
+        },
+        "literalKey": false
+    },
+    "shop/return_desk.py@1112-1144": {
+        "target": "shop.return_desk.RefundPolicy.allows_for",
+        "arguments": {
+            "purchase": "purchase"
+        },
+        "literalKey": false
+    },
+    "shop/return_desk.py@624-668": {
+        "target": "shop.return_desk.RefundPolicy.allows",
+        "arguments": {
+            "expired": "purchase.days_since > 30"
+        },
+        "literalKey": false
+    },
+    "shop/return_desk.py@890-942": {
+        "target": "shop.return_desk.RefundPolicy.allows",
+        "arguments": {
+            "expired": "purchase.days_since > 30"
+        },
+        "literalKey": false
+    },
+    "shop/returns/desk.py@315-341": {
+        "target": "shop.tracking.events.record",
+        "arguments": {
+            "parcel": "f\"return {parcel}\""
+        },
+        "literalKey": false
+    },
+    "shop/scale_readers.py@532-550": {
+        "target": "shop.scale_readers.CounterScale.grams",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/screens/home.py@274-289": {
+        "target": "shop.pricing.rates.rate_for",
+        "arguments": {
+            "parcel": "title"
+        },
+        "literalKey": false
+    },
+    "shop/search/engine.py@231-243": {
+        "target": "shop.storefront.layout.frame",
+        "arguments": {
+            "body": "query"
+        },
+        "literalKey": false
+    },
+    "shop/search/engine.py@246-254": {
+        "target": "shop.storefront.layout.footer",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/sessions.py@763-796": {
+        "target": "shop.sessions.NoActiveSession.reading",
+        "arguments": {
+            "what": "\"basket\""
+        },
+        "literalKey": false
+    },
+    "shop/shift_reports.py@621-687": {
+        "target": "shop.shift_reports.TillPrinter.closing_line",
+        "arguments": {
+            "shift": "shift",
+            "cashier_name": "shift.cashier.name"
+        },
+        "literalKey": false
+    },
+    "shop/shipping_rates.py@783-802": {
+        "target": "shop.shipping_rates.Parcel.rate_cents",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/stamp_cards.py@701-731": {
+        "target": "shop.stamp_cards.StampCard.close_with",
+        "arguments": {
+            "reward": "\"free coffee\""
+        },
+        "literalKey": false
+    },
+    "shop/startup.py@356-375": {
+        "target": "shop.startup.configure_logging",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/startup.py@424-443": {
+        "target": "shop.startup.configure_logging",
+        "arguments": {},
+        "literalKey": false
+    },
+    "shop/stock_alerts.py@965-989": {
+        "target": "shop.stock_alerts.UnhandledLevel.of",
+        "arguments": {
+            "level": "level"
+        },
+        "literalKey": false
+    },
+    "shop/stock_badges.py@1012-1036": {
+        "target": "shop.stock_badges.StockBadge.colour_of",
+        "arguments": {
+            "product": "product"
+        },
+        "literalKey": false
+    },
+    "shop/stock_badges.py@703-751": {
+        "target": "shop.stock_badges.StockBadge.colour",
+        "arguments": {
+            "low": "product.stock < 5",
+            "discontinued": "product.retired"
+        },
+        "literalKey": false
+    },
+    "shop/stock_badges.py@832-897": {
+        "target": "shop.stock_badges.StockBadge.colour",
+        "arguments": {
+            "low": "product.stock < 5",
+            "discontinued": "product.retired"
+        },
+        "literalKey": false
+    },
+    "shop/stock_moves.py@527-561": {
+        "target": "shop.stock_moves.log_move",
+        "arguments": {
+            "shelf": "shelf",
+            "shelf_code": "shelf.code",
+            "units": "units"
+        },
+        "literalKey": false
+    },
+    "shop/stock_moves.py@707-754": {
+        "target": "shop.stock_moves.log_move",
+        "arguments": {
+            "shelf": "shelf",
+            "shelf_code": "shelf.code",
+            "units": "0"
+        },
+        "literalKey": false
+    },
+    "shop/stock_moves.py@866-893": {
+        "target": "shop.stock_moves.log_move_from",
+        "arguments": {
+            "shelf": "shelf",
+            "units": "units"
+        },
+        "literalKey": false
+    },
+    "shop/storefront/pages.py@245-265": {
+        "target": "shop.search.engine.render",
+        "arguments": {
+            "query": "query"
+        },
+        "literalKey": false
+    },
+    "shop/supplier_feed.py@669-697": {
+        "target": "shop.supplier_feed.SupplierPrice.from_json",
+        "arguments": {
+            "raw": "raw"
+        },
+        "literalKey": false
+    },
+    "shop/support_desk.py@228-278": {
+        "target": "shop.support_tickets.Ticket.evolve",
+        "arguments": {
+            "meta": "TicketMeta.of(level).to_dict()"
+        },
+        "literalKey": false
+    },
+    "shop/support_desk.py@247-267": {
+        "target": "shop.support_tickets.TicketMeta.of",
+        "arguments": {
+            "level": "level"
+        },
+        "literalKey": false
+    },
+    "shop/support_tickets.py@1067-1115": {
+        "target": "shop.support_tickets.RoutedTicket.evolve",
+        "arguments": {
+            "meta": "TicketMeta.of(level).to_dict()"
+        },
+        "literalKey": false
+    },
+    "shop/support_tickets.py@1084-1104": {
+        "target": "shop.support_tickets.TicketMeta.of",
+        "arguments": {
+            "level": "level"
+        },
+        "literalKey": false
+    },
+    "shop/tax_contexts.py@710-728": {
+        "target": "shop.tax_contexts.Pricer.price",
+        "arguments": {
+            "basket": "basket"
+        },
+        "literalKey": false
+    },
+    "shop/till_drawers.py@721-754": {
+        "target": "shop.till_drawers.FloatBook.float_for",
+        "arguments": {
+            "drawer": "shift.drawer"
+        },
+        "literalKey": false
+    },
+    "shop/tip_cents.py@409-427": {
+        "target": "shop.tip_cents.Cents.parse",
+        "arguments": {
+            "typed": "typed"
+        },
+        "literalKey": false
+    },
+    "shop/tip_cents.py@509-536": {
+        "target": "shop.tip_cents.TipJar.add",
+        "arguments": {
+            "cents": "Cents.parse(typed)"
+        },
+        "literalKey": false
+    },
+    "shop/tip_cents.py@517-535": {
+        "target": "shop.tip_cents.Cents.parse",
+        "arguments": {
+            "typed": "typed"
+        },
+        "literalKey": false
+    },
+    "shop/tip_cents.py@664-697": {
+        "target": "shop.tip_cents.TipJar.add",
+        "arguments": {
+            "cents": "Cents.parse(typed)"
+        },
+        "literalKey": false
+    },
+    "shop/tip_cents.py@678-696": {
+        "target": "shop.tip_cents.Cents.parse",
+        "arguments": {
+            "typed": "typed"
+        },
+        "literalKey": false
+    },
+    "shop/tip_cents.py@786-806": {
+        "target": "shop.tip_cents.TipJar.add_typed",
+        "arguments": {
+            "typed": "typed"
+        },
+        "literalKey": false
+    },
+    "shop/voucher_guards.py@462-491": {
+        "target": "shop.voucher_guards.VoucherRefused.for_code",
+        "arguments": {
+            "code": "code"
+        },
+        "literalKey": false
+    },
+    "shop/webhook_payloads.py@722-756": {
+        "target": "shop.webhook_payloads.Payload.of",
+        "arguments": {
+            "id": "order_id",
+            "note": "note"
+        },
+        "literalKey": false
+    },
+    "shop/widgets/card.py@396-417": {
+        "target": "shop.screens.home.path",
+        "arguments": {
+            "title": "self.title"
+        },
+        "literalKey": false
+    }
+}
