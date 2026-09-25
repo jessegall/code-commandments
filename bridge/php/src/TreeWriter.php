@@ -29,6 +29,9 @@ final class TreeWriter
     /** @var array<int, int> */
     private array $commentEnds = [];
 
+    /** @var array<int, true> the offsets a zero-width node stands at */
+    private array $emptyStatements = [];
+
     private ?string $class = null;
 
     public function __construct(private readonly string $code) {}
@@ -95,6 +98,9 @@ final class TreeWriter
         $start = $node->getStartFilePos();
         $end = $node->getEndFilePos() + 1;
         $this->spans[] = ['start' => $start, 'end' => $end, 'id' => $id];
+        if ($start === $end) {
+            $this->emptyStatements[$start] = true;
+        }
         $out = ['id' => $id, 'kind' => $node->getType(), 'role' => $this->role($node, $field, $parent)];
         $is = $this->neutral($node);
         if ($is !== []) {
@@ -450,13 +456,25 @@ final class TreeWriter
 
             return $owner === null ? ['trailing' => true] : ['attached' => $owner, 'trailing' => true];
         }
-        $next = strspn($this->code, " \t\r\n", $end) + $end;
-        while (isset($this->commentEnds[$next])) {
-            $next = strspn($this->code, " \t\r\n", $this->commentEnds[$next]) + $this->commentEnds[$next];
+        // A comment closing its block belongs to the empty statement php-parser stands at the end of the block's last comment.
+        $next = $end;
+        while (! $this->emptyStatementAt($next)) {
+            $after = strspn($this->code, " \t\r\n", $next) + $next;
+            if (! isset($this->commentEnds[$after])) {
+                $next = $after;
+
+                break;
+            }
+            $next = $this->commentEnds[$after];
         }
         $owner = $this->outermost(fn (array $span): bool => $span['id'] !== 0 && $span['start'] === $next);
 
         return $owner === null ? [] : ['attached' => $owner];
+    }
+
+    private function emptyStatementAt(int $at): bool
+    {
+        return isset($this->emptyStatements[$at]);
     }
 
     private function outermost(Closure $matches): ?int
