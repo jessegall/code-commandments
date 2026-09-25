@@ -2,13 +2,13 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
-	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/skill"
@@ -65,8 +65,8 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 		roots = DetectRoots(root)
 	}
 
-	file := ".commandments/config.php"
-	if _, err := os.Stat(workspace.Config(root)); err != nil {
+	file := EditorIn(root).Name()
+	if _, err := os.Stat(filepath.Join(root, file)); err != nil {
 		file += " (not yet written)"
 	}
 
@@ -97,11 +97,13 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 func reindex(root string, console cli.Console) (int, error) {
 	roots := DetectRoots(root)
 
-	if err := EditorIn(root).RewritePaths(roots); err != nil {
+	editor := EditorIn(root)
+
+	if err := editor.RewritePaths(roots); err != nil {
 		return 0, err
 	}
 
-	return console.Say("\033[32m✓ Reindexed " + strconv.Itoa(len(roots)) + " source root(s) into .commandments/config.php:\033[0m " + strings.Join(roots, ", ")), nil
+	return console.Say("\033[32m✓ Reindexed " + strconv.Itoa(len(roots)) + " source root(s) into " + editor.Name() + ":\033[0m " + strings.Join(roots, ", ")), nil
 }
 
 func countIn(list []detectors.Detector, engines []catalog.Engine) int {
