@@ -1,0 +1,5 @@
+exit: 1
+--- stdout
+`001` is already active.
+
+--- stderr

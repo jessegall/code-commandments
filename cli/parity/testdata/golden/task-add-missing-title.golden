@@ -1,0 +1,38 @@
+exit: 2
+--- stdout
+
+--- stderr
+✗ Say what the task is: `commandments task add "<title>" "<why>"`.
+
+commandments task — The work in front of this session — numbered tasks, one markdown file each, moved between queue, active and history.
+Also answers to: tasks
+
+Usage:
+  commandments task                 the board — every task still owed, in address order, subtasks
+                                    beneath their parent
+  commandments task add "<title>" ["<why>"]
+                                    queue one, and print the NUMBER it was given
+  commandments task add --under=<id> "<title>" ["<why>"]
+                                    queue a SUBTASK of <id> — it carries <id>'s number (`002.1`),
+                                    it does not move into a folder of its own
+  commandments task start <id>      begin it — the file moves from `queue/` into `active/`
+  commandments task done <id> "<what came of it>"
+                                    close it — the file moves into `history/`, and the reason goes
+                                    in its log
+  commandments task show <id>       read one out, whole — what you paste into a worker's brief
+  commandments task history         what has been closed, and what came of each
+  commandments task stale [--for=N] active tasks nobody has touched for N minutes (default 60)
+
+Options:
+  --under=ID  with `add`: the task the new one is a subtask of
+  --for=N     with `stale`: how many minutes untouched counts as stale (default 60)
+
+  A task is ADDRESSED by its number, not by where it sits. That is the whole design: `002.1` means
+  the same thing in a listing, in a filename and in a brief handed to a worker, where a folder path
+  stops meaning anything the moment the work moves on. A subtask carries its parent's number and
+  nothing else — there is no nesting to walk, and no cursor to be standing in.
+
+  The three folders under `.commandments/sessions/<id>/tasks/` ARE the state: moving the file is the
+  change, so `git status` shows it, nothing has to be kept in step with a field, and a task nobody
+  closed is a file still sitting in `active/`. `history/` keeps every task this session ever had —
+  which is also why a number is never handed out twice.

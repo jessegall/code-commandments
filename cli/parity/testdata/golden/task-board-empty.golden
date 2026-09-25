@@ -1,0 +1,5 @@
+exit: 0
+--- stdout
+Nothing queued. `commandments task add "<title>"` starts one.
+
+--- stderr

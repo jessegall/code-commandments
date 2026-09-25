@@ -7,6 +7,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/session"
+	"github.com/jessegall/code-commandments/cli/task"
 )
 
 // version is stamped by the release build; a local build is dev.
@@ -20,5 +21,6 @@ func main() {
 func Kernel() *cli.Kernel {
 	return cli.NewKernel(version,
 		session.Command{},
+		task.Command{},
 	)
 }

@@ -1,0 +1,6 @@
+exit: 1
+--- stdout
+No task `1.x`.
+  `commandments task` lists what is open, `commandments task history` what is closed.
+
+--- stderr
