@@ -18,6 +18,7 @@ type Program struct {
 	byPath  map[string]*Module
 	homes   map[*contract.Node]*Module
 	bound   sync.Map
+	classes classes
 }
 
 // Module is one Python file and the dotted name Python imports it by.
