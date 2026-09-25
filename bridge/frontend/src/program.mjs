@@ -1,6 +1,11 @@
 import ts from 'typescript'
+import { existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { aliasesOf, projectRoot } from './aliases.mjs'
+
+/** Vue's own declarations, shipped beside the bundle: what a bare import resolves to when the project has none installed. */
+const SHIPPED = resolve(dirname(fileURLToPath(import.meta.url)), 'types')
 
 /** The suffix that turns a `.vue` file into the TypeScript file its scripts are checked as. */
 const VIRTUAL = '.ts'
@@ -89,6 +94,15 @@ export class Program {
             if (known === undefined) return getSourceFile.call(host, name, version, onError, create)
 
             return ts.createSourceFile(name, known, version, true, this.virtual.has(name) ? ts.ScriptKind.TS : undefined)
+        }
+
+        if (existsSync(SHIPPED)) {
+            host.resolveModuleNameLiterals = (literals, containingFile, redirected, options) => literals.map((literal) => {
+                const found = ts.resolveModuleName(literal.text, containingFile, options, host, undefined, redirected)
+                if (found.resolvedModule || literal.text.startsWith('.')) return found
+
+                return ts.resolveModuleName(literal.text, resolve(SHIPPED, 'index.ts'), options, host, undefined, redirected)
+            })
         }
 
         return host

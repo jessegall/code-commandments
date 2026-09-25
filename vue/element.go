@@ -239,14 +239,27 @@ func (e Element) Resolves() string {
 	return e.Node().Resolves
 }
 
-// Bindings is every prop the element binds with v-bind, :customer="order.customer", by the prop's name as written.
+// Bindings is every prop the element binds with v-bind, :customer="order.customer", by the prop's name as
+// the child declares it: Vue reads :order-table as orderTable.
 func (e Element) Bindings() map[string]Directive {
 	bindings := map[string]Directive{}
 	for _, directive := range e.Directives() {
 		if directive.Named(Bind) && directive.Target() != "" {
-			bindings[directive.Target()] = directive
+			bindings[camelized(directive.Target())] = directive
 		}
 	}
 
 	return bindings
+}
+
+// camelized is a kebab-case name as Vue maps it to a prop: order-table → orderTable.
+func camelized(name string) string {
+	parts := strings.Split(name, "-")
+	for index := 1; index < len(parts); index++ {
+		if parts[index] != "" {
+			parts[index] = strings.ToUpper(parts[index][:1]) + parts[index][1:]
+		}
+	}
+
+	return strings.Join(parts, "")
 }

@@ -110,7 +110,7 @@ func (c Component) TypeOf(codebase *engine.Codebase, name string) (*contract.Typ
 
 // unwrapped is a ref's value type, as a template reads it; any other type as it is.
 func unwrapped(t *contract.Type) *contract.Type {
-	if t.Kind == "named" && refs[typescript.DeclaredName(t.Name)] && len(t.Args) == 1 {
+	if t.Kind == "named" && refs[typescript.DeclaredName(t.Name)] && len(t.Args) > 0 {
 		return t.Args[0]
 	}
 

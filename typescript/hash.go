@@ -95,8 +95,8 @@ func (n Node) BodyShape() string {
 	return ""
 }
 
-// BodyWeight is how much code the function's body holds: its statements and expressions, member and
-// declaration names not counted.
+// BodyWeight is how much code the function's body holds: its statements, blocks, catch clauses and
+// expressions, member and declaration names not counted.
 func (n Node) BodyWeight() int {
 	body := n.Body()
 	if !body.Exists() {
@@ -105,7 +105,8 @@ func (n Node) BodyWeight() int {
 	weight := 0
 	for _, node := range append([]engine.Match{body.Match}, body.Descendants()...) {
 		role := node.Node().Role
-		if (role == "statement" || role == "expression") && !(node.Kind() == "Identifier" && node.Node().Field == "name") {
+		counted := role == "statement" || role == "expression" || node.Is(engine.Block) || node.Is(engine.Catch)
+		if counted && !(node.Kind() == "Identifier" && node.Node().Field == "name") {
 			weight++
 		}
 	}
