@@ -49,3 +49,28 @@ Where the settled heap goes (heap profile after load):
 The trees are nearly all of what is held once a codebase is loaded: about 450 bytes of structs a node and, in C#,
 another 140 of strings, most of them the same symbol and type text again and again. The detectors' whole-program
 analyses, kept on the codebase for the run, then roughly double it at the peak.
+
+## Compacting the trees
+
+Each step measured on the same snapshots; the load average (1, 5 and 15 minutes, on 10 cores) is recorded beside
+each load time, because the machine is shared and a load time means little without it.
+
+| Step | Commit | smart-farmers-pos: bytes/node, settled, peak heap, peak footprint, load | Chronos largest project: bytes/node, settled, peak heap, peak footprint, load |
+|---|---|---|---|
+| Baseline | 1a29061ff | 816, 1,431 MiB, 3,062 MiB, 3,312 MiB, 117 s | 757, 495 MiB, 1,160 MiB, —, 37 s |
+| Facts held off the node | 0b8d27579 | 681, 1,195 MiB, 2,867 MiB, 3,114 MiB, 407 s (load ~18) | — (the run's bridge stalled; to-do 15) |
+| Strings, lists, types and targets interned per stream | 943ecf984 | 442, 775 MiB, 1,864 MiB, 2,077 MiB, 61 s (load 6–10) | 348, 228 MiB, 544 MiB, 569 MiB, 38 s (load 6–10) |
+| The schema checked in tests only | 0bd335bf7 | 411, 722 MiB, 1,837 MiB, 2,024 MiB, 70 s (load 12 15 16) | 322, 211 MiB, 562 MiB, 588 MiB, 122 s (load 18 15 16) |
+
+smart-farmers-pos now judges whole under the limit, at two thirds of it. What is left of a node is its own
+struct: after interning, a heap profile of Chronos's largest project holds 152 MB of node, facts and type structs,
+6 MB of parent links, 6 MB of slices and 3.5 MB of strings. Packing the span and id would only move a node from
+the 176-byte size class to 160, so it is not done. At 322 bytes a node, Chronos's 5.8 million nodes are still
+about 1.8 GB before a detector runs, and the detectors' analyses more than double the heap: the whole solution
+needs its projects loaded one at a time, with the facts that cross projects kept as summaries.
+
+The compaction changes no finding: the per-project Chronos parity on the snapshot finds all 15,023 of the PHP
+tool's findings. It also finds three more, all DanglingDocReference in test projects, whose verdict reads nothing
+but the reference facts the Roslyn bridge writes; this snapshot's restore output was made fresh in the capped
+container, where the kept PHP answer's snapshot carried the restore output of a built checkout.
+
