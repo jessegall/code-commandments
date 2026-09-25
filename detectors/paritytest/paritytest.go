@@ -6,9 +6,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"runtime/debug"
 	"slices"
 	"strconv"
 	"strings"
@@ -24,6 +27,8 @@ import (
 // the findings script, and fails for every finding only one of them makes. It skips the test without a project: a
 // real project is the parity check, not the suite. $COMMANDMENTS_PARITY_FINDINGS names a file the PHP findings are
 // kept in, read back on the next run, since the PHP half of a large project takes the longest.
+// $COMMANDMENTS_PARITY_EACH compares a solution project by project, one held at a time, so a solution too large to
+// hold whole is still compared; each tool then reads each project alone.
 func Compare(t *testing.T, rules catalog.Engine, findings string, command func(testing.TB, ...string) []string) {
 	t.Helper()
 	project := os.Getenv("COMMANDMENTS_PARITY")
@@ -34,11 +39,45 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 	if err != nil {
 		t.Fatal(err)
 	}
-	php, err := phpFindings(findings, root)
+	parts := []string{root}
+	if os.Getenv("COMMANDMENTS_PARITY_EACH") != "" {
+		parts = projectFolders(root)
+	}
+	php, err := phpFindings(findings, root, parts)
 	if err != nil {
 		t.Fatalf("the PHP engine failed: %v", err)
 	}
-	stream, err := bridge.Once(command(t, root), root)
+	found := map[string]bool{}
+	for _, part := range parts {
+		for _, finding := range goFindings(t, rules, command, root, part) {
+			found[finding] = true
+		}
+		runtime.GC()
+		debug.FreeOSMemory()
+	}
+	expected := map[string]bool{}
+	for _, line := range strings.Split(strings.TrimSpace(string(php)), "\n") {
+		if line != "" && !strings.HasPrefix(line, "#") {
+			expected[line] = true
+		}
+	}
+	for _, finding := range sorted(expected) {
+		if !found[finding] {
+			t.Errorf("only PHP: %s", finding)
+		}
+	}
+	for _, finding := range sorted(found) {
+		if !expected[finding] {
+			t.Errorf("only Go:  %s", finding)
+		}
+	}
+	t.Logf("%d findings in PHP, %d in Go, over %d part(s)", len(expected), len(found), len(parts))
+}
+
+// goFindings is every finding the engine's Go detectors make in the part, each as `path:line Sin` under the root.
+func goFindings(t *testing.T, rules catalog.Engine, command func(testing.TB, ...string) []string, root, part string) []string {
+	t.Helper()
+	stream, err := bridge.Once(command(t, part), part)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,48 +86,78 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 	for _, detector := range detectors.Of(rules) {
 		sin := strings.TrimSuffix(catalog.Name(detector), "Detector")
 		for _, finding := range detector.Find(codebase) {
-			file := strings.TrimPrefix(finding.File(), root+"/")
-			if !walked(file) {
-				continue
-			}
-			if at := file + ":" + strconv.Itoa(finding.Line()) + " " + sin; !slices.Contains(found, at) {
-				found = append(found, at)
+			if file := strings.TrimPrefix(finding.File(), root+"/"); walked(file) {
+				found = append(found, file+":"+strconv.Itoa(finding.Line())+" "+sin)
 			}
 		}
 	}
-	slices.Sort(found)
-	var expected []string
-	for _, line := range strings.Split(strings.TrimSpace(string(php)), "\n") {
-		if line != "" && !strings.HasPrefix(line, "#") {
-			expected = append(expected, line)
+
+	return found
+}
+
+// projectFolders is the folder of every project under the root, a project inside another's folder read as part of
+// it, and never one in a hidden folder or in build output.
+func projectFolders(root string) []string {
+	var folders []string
+	filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil || !entry.IsDir() {
+			return nil
 		}
-	}
-	for _, finding := range expected {
-		if !slices.Contains(found, finding) {
-			t.Errorf("only PHP: %s", finding)
+		if name := entry.Name(); path != root && (strings.HasPrefix(name, ".") || name == "bin" || name == "obj" || name == "node_modules") {
+			return filepath.SkipDir
 		}
-	}
-	for _, finding := range found {
-		if !slices.Contains(expected, finding) {
-			t.Errorf("only Go:  %s", finding)
+		if projects, _ := filepath.Glob(filepath.Join(path, "*.csproj")); len(projects) > 0 {
+			folders = append(folders, path)
+
+			return filepath.SkipDir
 		}
+
+		return nil
+	})
+
+	return folders
+}
+
+// sorted is the set's members in order.
+func sorted(set map[string]bool) []string {
+	members := make([]string, 0, len(set))
+	for member := range set {
+		members = append(members, member)
 	}
-	t.Logf("%d findings in PHP, %d in Go", len(expected), len(found))
+	slices.Sort(members)
+
+	return members
 }
 
 // phpFindings is what the PHP engine finds under root: kept in $COMMANDMENTS_PARITY_FINDINGS once found, gzipped
 // when the name ends in .gz, and read back from there when it is. A line opening with `#` says where the findings
 // came from and is not one of them.
-func phpFindings(script, root string) ([]byte, error) {
+func phpFindings(script, root string, parts []string) ([]byte, error) {
 	kept := os.Getenv("COMMANDMENTS_PARITY_FINDINGS")
 	if kept != "" {
 		if found, err := readKept(kept); err == nil {
 			return found, nil
 		}
 	}
-	found, err := exec.Command("php", script, root).Output()
-	if err != nil || kept == "" {
-		return found, err
+	var found []byte
+	for _, part := range parts {
+		out, err := exec.Command("php", script, part).Output()
+		if err != nil {
+			return nil, err
+		}
+		prefix := strings.TrimPrefix(strings.TrimPrefix(part, root), "/")
+		for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+			if line == "" {
+				continue
+			}
+			if prefix != "" {
+				line = prefix + "/" + line
+			}
+			found = append(found, line+"\n"...)
+		}
+	}
+	if kept == "" {
+		return found, nil
 	}
 
 	return found, writeKept(kept, found)

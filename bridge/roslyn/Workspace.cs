@@ -58,7 +58,8 @@ public sealed class Workspace
     /// <summary>
     /// The run as a stream, one project at a time, holding nothing between runs: each project is parsed and compiled
     /// when it is reached, dependencies first, its asked files handed to <paramref name="write"/>, and its compilation
-    /// let go once no project still to be written reaches it. Files outside every project come last, compiled alone.
+    /// let go once no project still to be written reaches it. An assembly is loaded once for the run and shared by
+    /// every project that reaches it. Files outside every project come last, compiled alone.
     /// </summary>
     public void Stream(IReadOnlyList<string> paths, Action<Project> write)
     {
@@ -76,13 +77,14 @@ public sealed class Workspace
 
         var readers = order.SelectMany(csproj => reach[csproj]).GroupBy(other => other).ToDictionary(group => group.Key, group => group.Count());
         var compilations = new Dictionary<string, CSharpCompilation>(StringComparer.Ordinal);
+        var loaded = new Dictionary<string, MetadataReference>(StringComparer.Ordinal);
 
         foreach (var csproj in order)
         {
             var sources = (owned.GetValueOrDefault(csproj) ?? []).Select(Parse).ToList();
             var usings = CSharpSyntaxTree.ParseText(GlobalUsings.Of(csproj), Options);
             var projects = reach[csproj].Where(compilations.ContainsKey).Select(other => compilations[other].ToMetadataReference());
-            var assemblies = References.Load(References.Of(csproj), reach[csproj].Select(References.Of));
+            var assemblies = References.Load(References.Of(csproj), reach[csproj].Select(References.Of), loaded);
             var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(csproj), [..sources, usings], [..assemblies, ..projects], Compiled);
             compilations[csproj] = compilation;
             WriteAsked(sources, compilation, asked, solution.Projects[csproj].IsTestProject(), write);
@@ -104,7 +106,7 @@ public sealed class Workspace
         if (owned.TryGetValue("", out var loose))
         {
             var sources = loose.Select(Parse).ToList();
-            WriteAsked(sources, CSharpCompilation.Create("loose", sources, References.Loose(), Compiled), asked, false, write);
+            WriteAsked(sources, CSharpCompilation.Create("loose", sources, References.Loose(loaded), Compiled), asked, false, write);
         }
     }
 

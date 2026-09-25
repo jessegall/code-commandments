@@ -32,19 +32,23 @@ public static class References
     /// it references reach: their shared frameworks by name, resolved for this project's framework, and
     /// their packages. Each assembly is loaded once, the project's own first.
     /// </summary>
-    public static IReadOnlyList<MetadataReference> Load(Reach own, IEnumerable<Reach> reached)
+    /// <remarks>
+    /// Given <paramref name="loaded"/>, an assembly another project of the run already loaded is shared rather than
+    /// loaded again, so its symbols are built once for the whole run.
+    /// </remarks>
+    public static IReadOnlyList<MetadataReference> Load(Reach own, IEnumerable<Reach> reached, IDictionary<string, MetadataReference>? loaded = null)
     {
         var all = reached.Prepend(own).ToList();
         var frameworks = all.SelectMany(reach => reach.Frameworks).Distinct(StringComparer.OrdinalIgnoreCase);
 
-        return Load([..frameworks.SelectMany(framework => FrameworkPack(framework, own.Tfm)), ..all.SelectMany(reach => reach.Packages)]);
+        return Load([..frameworks.SelectMany(framework => FrameworkPack(framework, own.Tfm)), ..all.SelectMany(reach => reach.Packages)], loaded);
     }
 
     /// <summary>What a file that belongs to no project compiles against: the running runtime's assemblies.</summary>
-    public static IReadOnlyList<MetadataReference> Loose() => Load([]);
+    public static IReadOnlyList<MetadataReference> Loose(IDictionary<string, MetadataReference>? loaded = null) => Load([], loaded);
 
     /// <summary><paramref name="found"/> once each by file name, with the runtime's assemblies when they name no System.Runtime.</summary>
-    private static IReadOnlyList<MetadataReference> Load(IEnumerable<string> found)
+    private static IReadOnlyList<MetadataReference> Load(IEnumerable<string> found, IDictionary<string, MetadataReference>? loaded)
     {
         var dlls = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -61,7 +65,23 @@ public static class References
             }
         }
 
-        return dlls.Values.Select(dll => (MetadataReference)MetadataReference.CreateFromFile(dll)).ToList();
+        return dlls.Values.Select(dll => Reference(dll, loaded)).ToList();
+    }
+
+    /// <summary>The assembly at <paramref name="dll"/>: the one <paramref name="loaded"/> already holds, or loaded now and kept there.</summary>
+    private static MetadataReference Reference(string dll, IDictionary<string, MetadataReference>? loaded)
+    {
+        if (loaded is null)
+        {
+            return MetadataReference.CreateFromFile(dll);
+        }
+
+        if (!loaded.TryGetValue(dll, out var reference))
+        {
+            loaded[dll] = reference = MetadataReference.CreateFromFile(dll);
+        }
+
+        return reference;
     }
 
     /// <summary>
