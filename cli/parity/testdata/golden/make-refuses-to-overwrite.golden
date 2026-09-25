@@ -1,8 +1,0 @@
-exit: 2
---- stdout
-
---- stderr
-Already there — pass --force to overwrite:
-  <project>/.commandments/custom/Thing.php
-
---- files

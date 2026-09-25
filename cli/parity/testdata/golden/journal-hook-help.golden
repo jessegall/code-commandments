@@ -1,0 +1,11 @@
+exit: 0
+--- stdout
+commandments journal-hook — The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape.
+
+Usage:
+  commandments journal-hook  answer the moment on stdin (wired by the journal plugin; you rarely run
+                             this by hand)
+
+--- stderr
+
+--- files

@@ -205,12 +205,27 @@
     ]
   },
   {
+    "name": "judge-vue-in-a-composer-project",
+    "project": "tests/Fixtures/frontend",
+    "args": [
+      "judge",
+      ".",
+      "--skill=vue-components",
+      "--no-checklist"
+    ],
+    "setup": [
+      "printf '{}' > composer.json"
+    ]
+  },
+  {
     "name": "judge-list",
     "args": [
       "judge",
       "--list"
     ],
-    "pending": "ticket 7: the C# detectors"
+    "setup": [
+      "mkdir -p vendor/composer && printf '{\"packages\": [{\"name\": \"jessegall/php-types\"}]}' > vendor/composer/installed.json"
+    ]
   },
   {
     "name": "judge-without-a-path",

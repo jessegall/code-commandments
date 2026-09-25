@@ -30,3 +30,6 @@ func (OrphanedBindingDetector) Find(codebase *engine.Codebase) []engine.Match {
 		})).
 		Get()
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (OrphanedBindingDetector) CrossFile() {}

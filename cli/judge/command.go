@@ -14,6 +14,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/checklist"
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/scan"
@@ -107,6 +108,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
+	own := custom.Load(cwd)
+	console.Warn(own.Warnings(project)...)
+	enabled = append(enabled, own.Enabled(project)...)
 
 	selected := selectFrom(enabled, options.skill, options.sin)
 
@@ -408,11 +413,18 @@ func list(cwd string, console cli.Console) (int, error) {
 		return 0, err
 	}
 
+	enabled = append(config.InClassOrder(config.Detector, enabled), custom.Load(cwd).Enabled(project)...)
 	bySkill := map[string][]string{}
 
 	for _, detector := range enabled {
 		slug := detector.Sin().Definition().Slug()
-		bySkill[slug] = append(bySkill[slug], catalog.Name(detector))
+		name := catalog.Name(detector)
+
+		if custom.Owns(detector) {
+			name += " (custom)"
+		}
+
+		bySkill[slug] = append(bySkill[slug], name)
 	}
 
 	skills := make([]string, 0, len(bySkill))

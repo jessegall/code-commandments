@@ -31,3 +31,6 @@ func (PhantomNullableDetector) Find(codebase *engine.Codebase) []engine.Match {
 
 	return findings
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (PhantomNullableDetector) CrossFile() {}

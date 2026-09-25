@@ -1,0 +1,11 @@
+exit: 0
+--- stdout
+commandments journal-config — Write the agent journal plugin's chosen switches into .commandments/config.php.
+
+Usage:
+  commandments journal-config  apply JOURNAL_SETTINGS to the project config (run by the journal
+                               plugin)
+
+--- stderr
+
+--- files

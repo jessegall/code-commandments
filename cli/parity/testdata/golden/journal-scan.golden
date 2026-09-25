@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+{"settings":{"folders_judged":"resources/js\nsrc","folders_skipped":"node_modules\nvendor","language_php":"true","language_vue":"false","language_ts":"true","language_py":"false","language_cs":"false"}}
+
+--- stderr
+
+--- files

@@ -1,0 +1,201 @@
+[
+ {
+  "name": "journal-hook-help",
+  "args": [
+   "journal-hook",
+   "--help"
+  ]
+ },
+ {
+  "name": "journal-serve-help",
+  "args": [
+   "journal-serve",
+   "--help"
+  ]
+ },
+ {
+  "name": "journal-config-help",
+  "args": [
+   "journal-config",
+   "--help"
+  ]
+ },
+ {
+  "name": "journal-scan-help",
+  "args": [
+   "journal-scan",
+   "--help"
+  ]
+ },
+ {
+  "name": "journal-skills-help",
+  "args": [
+   "journal-skills",
+   "--help"
+  ]
+ },
+ {
+  "name": "journal-hook-names-no-moment",
+  "args": [
+   "journal-hook"
+  ],
+  "stdin": "{}"
+ },
+ {
+  "name": "journal-hook-stop-with-changes",
+  "args": [
+   "journal-hook"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p src",
+   "printf '<?php\\n' > src/A.php"
+  ],
+  "stdin": "{\"event\":\"hook.Stop\",\"agent\":{\"session\":\"s1\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "journal-hook-gate-refuses",
+  "args": [
+   "journal-hook"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "git worktree add -q .wt/other 2>/dev/null"
+  ],
+  "stdin": "{\"event\":\"hook.PreToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Bash\",\"command\":\"git pull --rebase\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "journal-hook-write-a-sin",
+  "args": [
+   "journal-hook"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php"
+  ],
+  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "journal-hook-write-a-sin-kept",
+  "args": [
+   "journal-hook"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
+   "mkdir -p plugin-data"
+  ],
+  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z",
+   "JOURNAL_PLUGIN_DATA": "plugin-data"
+  }
+ },
+ {
+  "name": "journal-hook-sin-repented",
+  "args": [
+   "journal-hook"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
+   "mkdir -p plugin-data",
+   "echo '{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}' | JOURNAL_PLUGIN_DATA=plugin-data php \"$PARITY_PACKAGE/bin/commandments\" journal-hook > /dev/null",
+   "printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '}' > src/Order.php"
+  ],
+  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z",
+   "JOURNAL_PLUGIN_DATA": "plugin-data"
+  }
+ },
+ {
+  "name": "journal-hook-quiet-hooks",
+  "args": [
+   "journal-hook"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p src",
+   "printf '<?php\\n' > src/A.php"
+  ],
+  "stdin": "{\"event\":\"hook.Stop\",\"agent\":{\"session\":\"s1\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z",
+   "COMMANDMENTS_QUIET_HOOKS": "JudgeReminder, Other"
+  }
+ },
+ {
+  "name": "journal-scan",
+  "args": [
+   "journal-scan"
+  ],
+  "setup": [
+   "mkdir -p src/Domain vendor/x node_modules resources/js",
+   "printf '<?php\\n' > src/Domain/A.php",
+   "printf 'x' > resources/js/app.ts",
+   "printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"src/\"}}}' > composer.json"
+  ]
+ },
+ {
+  "name": "journal-serve-without-a-socket",
+  "args": [
+   "journal-serve"
+  ]
+ },
+ {
+  "name": "journal-config-without-settings",
+  "args": [
+   "journal-config"
+  ]
+ },
+ {
+  "name": "journal-config-applies",
+  "args": [
+   "journal-config"
+  ],
+  "setup": [
+   "mkdir -p src lib"
+  ],
+  "env": {
+   "JOURNAL_SETTINGS": "{\"language_py\": \"false\", \"language_php\": \"true\", \"sin_array-bag\": \"false\", \"sin_narrated-command\": \"true\", \"folders_judged\": \"src\\nlib\\n\", \"folders_skipped\": \"src/Generated\"}"
+  }
+ },
+ {
+  "name": "journal-hook-sin-still-there",
+  "args": [
+   "journal-hook"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
+   "mkdir -p plugin-data",
+   "echo '{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}' | JOURNAL_PLUGIN_DATA=plugin-data php \"$PARITY_PACKAGE/bin/commandments\" journal-hook > /dev/null"
+  ],
+  "stdin": "{\"event\":\"hook.PostToolUse\",\"agent\":{\"session\":\"s1\"},\"tool\":{\"name\":\"Write\",\"file\":\"src/Order.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z",
+   "JOURNAL_PLUGIN_DATA": "plugin-data"
+  }
+ }
+]

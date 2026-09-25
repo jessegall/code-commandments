@@ -1,0 +1,11 @@
+exit: 0
+--- stdout
+commandments journal-serve — Answer the agent journal's hooks from one running process, over the socket the journal names in $JOURNAL_PLUGIN_SOCKET.
+
+Usage:
+  commandments journal-serve  serve until the code it runs changes (started by the journal as a
+                              plugin service)
+
+--- stderr
+
+--- files

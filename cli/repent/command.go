@@ -4,6 +4,7 @@
 package repent
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"strconv"
 	"strings"
@@ -74,7 +75,7 @@ func Fixable(checklist string) map[string]string {
 	for _, detector := range detectors.All() {
 		if _, repentable := detector.(detectors.Repentable); repentable {
 			name := detector.Sin().Definition().Name
-			commands[name] = "vendor/bin/commandments repent" + where + " --sin=" + name
+			commands[name] = binary.Here() + " repent" + where + " --sin=" + name
 		}
 	}
 

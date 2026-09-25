@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"Code Commandments — this dispatch names no model, so `the agent` will run on YOURS. Say what the task actually demands and pass the cheapest model that meets it: haiku for mechanical work with a known answer (run this, read that file, list what matches); sonnet for ordinary work that needs care but no invention; opus only where the task turns on judgement — a design call, a review, an ambiguous failure. If you have already judged this one and your model is the right one, carry on — the point is that it be a decision rather than a default."},"suppressOutput":true}
+
+--- stderr
+
+--- files

@@ -7,6 +7,7 @@ package parity
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -52,9 +53,31 @@ type Case struct {
 	// Stdin is fed to the tool.
 	Stdin string `json:"stdin,omitempty"`
 
+	// Digest are folders, under the project, whose files a golden records by their hash rather than their
+	// contents: what a run publishes by the hundred is held just as exactly, in a golden a reviewer can read.
+	Digest []string `json:"digest,omitempty"`
+
 	// Pending names what the Go side still waits on. A pending case is skipped while it differs, and fails
 	// the moment it matches, so the mark cannot outlive the gap.
 	Pending string `json:"pending,omitempty"`
+}
+
+// HasComposer says whether the case's project has a composer.json: the folder it copies holds one, or its setup
+// writes one.
+func (c Case) HasComposer(repo string) bool {
+	if c.Project != "" {
+		if _, err := os.Stat(filepath.Join(repo, c.Project, "composer.json")); err == nil {
+			return true
+		}
+	}
+
+	for _, line := range c.Setup {
+		if strings.Contains(line, "> composer.json") {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Result is what one run printed and answered, and what it wrote into its project.
@@ -156,7 +179,7 @@ func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 
 	result.Stdout = normalise(stdout.String(), repo, project)
 	result.Stderr = normalise(stderr.String(), repo, project)
-	result.Files = normalise(written(before, snapshot(project)), repo, project)
+	result.Files = normalise(written(before, digested(snapshot(project), c.Digest)), repo, project)
 
 	return result, nil
 }
@@ -186,6 +209,19 @@ func snapshot(project string) map[string]string {
 
 		return nil
 	})
+
+	return files
+}
+
+// digested is the snapshot with every file under a digest folder standing as its hash.
+func digested(files map[string]string, folders []string) map[string]string {
+	for path, contents := range files {
+		for _, folder := range folders {
+			if strings.HasPrefix(path, strings.TrimSuffix(folder, "/")+"/") {
+				files[path] = fmt.Sprintf("sha256 %x", sha256.Sum256([]byte(contents)))
+			}
+		}
+	}
 
 	return files
 }
@@ -286,6 +322,15 @@ var stamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}[ _]\d{2}:?\d{2}(:?\d{2})?`)
 
 var versionLine = regexp.MustCompile(`(?m)^code-commandments \S+$`)
 
+// versionRow is the version as config's overview prints it, after the tool's bold name.
+var versionRow = regexp.MustCompile("(code-commandments\x1b\\[0m  )\\S+")
+
+// hashedIdentity is a key hashed from what includes the project's own path, such as a sin's identity.
+var hashedIdentity = regexp.MustCompile(`"[0-9a-f]{40}":`)
+
+// unixStamp is a state value that holds the moment it was written, in unix seconds.
+var unixStamp = regexp.MustCompile(`(?m)^(marked-at): \d{9,}$`)
+
 // normalise replaces what differs between two runs of the same case: where the project and the package
 // live, and the installed version.
 func normalise(text, repo, project string) string {
@@ -298,6 +343,10 @@ func normalise(text, repo, project string) string {
 	}
 
 	text = versionLine.ReplaceAllString(text, "code-commandments <version>")
+	text = versionRow.ReplaceAllString(text, "${1}<version>")
+
+	text = unixStamp.ReplaceAllString(text, "$1: <time>")
+	text = hashedIdentity.ReplaceAllString(text, `"<id>":`)
 
 	return stamp.ReplaceAllString(text, "<time>")
 }

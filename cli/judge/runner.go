@@ -4,6 +4,7 @@ package judge
 
 import (
 	"fmt"
+	"github.com/jessegall/code-commandments/cli/custom"
 	"io"
 	"runtime"
 	"slices"
@@ -127,6 +128,7 @@ func findings(detector detectors.Detector, matches []engine.Match) []engine.Find
 			Location: location,
 			Scope:    match.Scope(),
 			Twins:    twins,
+			Custom:   custom.Owns(detector),
 		})
 	}
 

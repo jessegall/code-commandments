@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+JOURNAL_SETTINGS holds no settings to apply.
+
+--- files

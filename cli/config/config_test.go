@@ -12,6 +12,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
+var deepNested = Rule{Detector, catalog.Frontend, "DeepNestedDetector"}
+
 func TestEveryCallTheConfigMakesIsReadWithoutRunningIt(t *testing.T) {
 	path := write(t, `<?php
 use JesseGall\CodeCommandments\Config;
@@ -33,6 +35,7 @@ return function (Config $config) use ($menu): void {
     $config->disable(DictBag::class, Language::CSharp, 'App\Rules\Old');
     $config->detector(\App\Commandments\NoRawSql::class);
     $config->package(\App\Commandments\Framework::class);
+    $config->hook(\JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder::class)->agent(\App\Agents\Aider::class);
     $config->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10)->named(label: 'deep', on: true, list: ['a', -2]));
     $config->configure(function (DeepNestedDetector $d) {
         return $d->maxDepth(3);
@@ -40,7 +43,7 @@ return function (Config $config) use ($menu): void {
 };
 `)
 
-	config, err := Read(path)
+	config, err := ReadPHP(path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,16 +51,18 @@ return function (Config $config) use ($menu): void {
 	want := Config{
 		Paths:             []string{"src", "resources/js"},
 		Excluded:          []string{"src/Generated"},
-		Disabled:          []string{`JesseGall\CodeCommandments\Skills\Python\Absence`, `JesseGall\CodeCommandments\Sins\Python\DictBag`, `App\Rules\Old`},
+		Disabled:          []Rule{{Skill, catalog.Python, "Absence"}, {Sin, catalog.Python, "DictBag"}, {Detector, "", "Old"}},
 		DisabledLanguages: []source.Language{source.CSharp},
-		Detectors:         []string{`App\Commandments\NoRawSql`},
-		Packages:          []string{`App\Commandments\Framework`},
+		Detectors:         []string{"NoRawSql"},
+		Packages:          []string{"Framework"},
+		Hooks:             []string{"SkillReminder"},
+		Agents:            []string{"Aider"},
 		Configurators: []Configurator{
-			{`JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector`, []Call{
+			{deepNested, []Call{
 				{"maxDepth", []Arg{{"", 10}}},
 				{"named", []Arg{{"label", "deep"}, {"on", true}, {"list", []any{"a", -2}}}},
 			}},
-			{`JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector`, []Call{{"maxDepth", []Arg{{"", 3}}}}},
+			{deepNested, []Call{{"maxDepth", []Arg{{"", 3}}}}},
 		},
 	}
 
@@ -67,7 +72,7 @@ return function (Config $config) use ($menu): void {
 }
 
 func TestTheFixtureDeclaresItsLayersThroughConfigure(t *testing.T) {
-	config, err := Read("../../tests/Fixtures/backend/.commandments/config.php")
+	config, err := ReadPHP("../../tests/Fixtures/backend/.commandments/config.php")
 
 	if err != nil || len(config.Configurators) != 1 || len(config.Configurators[0].Calls) != 4 {
 		t.Fatalf("%+v %v", config, err)
@@ -85,7 +90,7 @@ func TestNoConfigFileIsTheEmptyConfig(t *testing.T) {
 }
 
 func TestWhatCannotBeReadWithoutRunningItIsAnInvalidConfiguration(t *testing.T) {
-	_, err := Read(write(t, "<?php\nreturn function ($config) {\n    $config->exclude(getenv('X'));\n};\n"))
+	_, err := ReadPHP(write(t, "<?php\nreturn function ($config) {\n    $config->exclude(getenv('X'));\n};\n"))
 
 	var invalid *cli.InvalidConfiguration
 	if !errors.As(err, &invalid) || invalid.Reason != "line 3 is not something the tool can read without running it — it wants a literal here." {
@@ -101,13 +106,15 @@ func TestAClassNamesAShippedRuleByKindEngineAndName(t *testing.T) {
 		`JesseGall\CodeCommandments\Skills\TypeScript\Absence`:                   {Skill, catalog.TypeScript, "Absence"},
 		`JesseGall\CodeCommandments\Detectors\CSharp\DuplicateMethodDetector`:    {Detector, catalog.CSharp, "DuplicateMethodDetector"},
 		`JesseGall\CodeCommandments\Sins\Python\DictBag`:                         {Sin, catalog.Python, "DictBag"},
+		`JesseGall\CodeCommandments\Hooks\Handlers\JudgeReminder`:                {Hook, "", "JudgeReminder"},
+		`JesseGall\CodeCommandments\Agents\CodexAgent`:                           {Agent, "", "CodexAgent"},
 	} {
 		if got, shipped := RuleOf(class); !shipped || got != want {
 			t.Errorf("%s: %+v %v", class, got, shipped)
 		}
 	}
 
-	for _, class := range []string{`App\Rules\Old`, `JesseGall\CodeCommandments\Hooks\JudgeReminder`, `JesseGall\CodeCommandments\Config`} {
+	for _, class := range []string{`App\Rules\Old`, `JesseGall\CodeCommandments\Config`} {
 		if _, shipped := RuleOf(class); shipped {
 			t.Errorf("%s read as a shipped rule", class)
 		}
@@ -123,4 +130,12 @@ func write(t *testing.T, contents string) string {
 	}
 
 	return path
+}
+
+type pointerRule struct{}
+
+func TestARuleRegisteredAsAPointerIsNamedByItsDeclaration(t *testing.T) {
+	if byValue, byPointer := ClassOf(Detector, pointerRule{}), ClassOf(Detector, &pointerRule{}); byPointer != byValue {
+		t.Errorf("%q is not %q", byPointer, byValue)
+	}
 }

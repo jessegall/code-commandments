@@ -37,8 +37,17 @@ func Of(engine catalog.Engine) []Detector {
 	return detectors.Of(engine)
 }
 
-// EngineOf is the engine a published detector judges.
+// Engined is a detector that states its engine itself, as a project's own rule does.
+type Engined interface {
+	Engine() catalog.Engine
+}
+
+// EngineOf is the engine a detector judges: the one it states, else the one it was published under.
 func EngineOf(detector Detector) (catalog.Engine, bool) {
+	if engined, states := detector.(Engined); states {
+		return engined.Engine(), true
+	}
+
 	return detectors.EngineOf(detector)
 }
 

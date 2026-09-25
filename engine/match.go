@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -35,6 +36,9 @@ const (
 	Import              Neutral = "import"
 	Catch               Neutral = "catch"
 )
+
+// Neutrals are every neutral kind, in the order the contract lists them.
+var Neutrals = []Neutral{Function, TypeDeclaration, Parameter, Block, Branch, Loop, Return, Throw, BailOut, ExpressionStatement, Call, Construction, MemberAccess, NullSafe, SelfReference, Identifier, Assignment, Comparison, Literal, Import, Catch}
 
 // Located is anything a finding can point at.
 type Located interface {
@@ -146,6 +150,39 @@ func (m Match) Kind() string {
 	}
 
 	return m.node.Kind
+}
+
+// calleeFields are where each language keeps what a call calls: PHP's name, Python's func, TypeScript's
+// expression.
+var calleeFields = []string{"name", "func", "expression"}
+
+// CalleeName is the name a call calls, in any language: the function, or the method a member call reaches
+// (select in DB::select, join in os.path.join), without its namespace; empty for anything else.
+func (m Match) CalleeName() string {
+	for _, field := range calleeFields {
+		callee := m.Child(field)
+		if !callee.Exists() {
+			continue
+		}
+
+		name := callee.Name()
+		if name == "" {
+			name = callee.Child("name").Name()
+		}
+
+		return name[strings.LastIndexAny(name, `\.`)+1:]
+	}
+
+	return ""
+}
+
+// Refers is the symbol a name refers to, resolved: a class, a function, a constant; empty for anything else.
+func (m Match) Refers() string {
+	if m.node == nil {
+		return ""
+	}
+
+	return m.node.Refers
 }
 
 // Resolves is the file an import, a re-export or a component tag reaches; empty for anything else.

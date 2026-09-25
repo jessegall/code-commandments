@@ -40,3 +40,6 @@ func (NamespaceDependencyDetector) Sin() sins.Sin {
 func (d NamespaceDependencyDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return matches(py.In(codebase).Program.LayerViolations(engine.Layers(d.layers, ".", true)))
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (NamespaceDependencyDetector) CrossFile() {}

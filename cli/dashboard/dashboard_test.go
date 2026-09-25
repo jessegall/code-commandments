@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"encoding/json"
+	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"os"
 	"testing"
 
@@ -17,9 +18,9 @@ func TestTheDashboardAndStoreAreWrittenAsPhpWritesThem(t *testing.T) {
 	}
 
 	for golden, render := range map[string]func() (string, error){
-		"testdata/stored.json": func() (string, error) { return Pretty(stored, false) },
-		"testdata/sins.json":   func() (string, error) { return Pretty(Render(stored), true) },
-		"testdata/empty.json":  func() (string, error) { return Pretty(Render(nil), true) },
+		"testdata/stored.json": func() (string, error) { return jsonfile.Pretty(stored, false) },
+		"testdata/sins.json":   func() (string, error) { return jsonfile.Pretty(Render(stored), true) },
+		"testdata/empty.json":  func() (string, error) { return jsonfile.Pretty(Render(nil), true) },
 	} {
 		got, err := render()
 		want, _ := os.ReadFile(golden)

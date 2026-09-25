@@ -31,3 +31,6 @@ func (UnnamedVocabularyLiteralDetector) Find(codebase *engine.Codebase) []engine
 
 	return findings
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (UnnamedVocabularyLiteralDetector) CrossFile() {}

@@ -2,8 +2,8 @@
   {"name": "version", "args": ["--version"]},
   {"name": "unknown-verb", "args": ["nope"]},
   {"name": "unknown-option-without-verb", "args": ["--bogus"]},
-  {"name": "overview", "args": ["--help"], "pending": "every command registered (ticket 10 adds sync, install and the hooks)"},
-  {"name": "overview-by-help-verb", "args": ["help"], "pending": "every command registered (ticket 10 adds sync, install and the hooks)"},
-  {"name": "overview-for-an-unknown-verb", "args": ["help", "nope"], "pending": "every command registered (ticket 10 adds sync, install and the hooks)"},
-  {"name": "overview-short-flag", "args": ["-h"], "pending": "every command registered (ticket 10 adds sync, install and the hooks)"}
+  {"name": "overview", "args": ["--help"]},
+  {"name": "overview-by-help-verb", "args": ["help"]},
+  {"name": "overview-for-an-unknown-verb", "args": ["help", "nope"]},
+  {"name": "overview-short-flag", "args": ["-h"]}
 ]

@@ -62,3 +62,6 @@ func namesARouteVerb(call engine.Match) bool {
 
 	return name.Kind() == "Identifier" && slices.Contains(laravelnode.RouteVerbs, name.Name())
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (DuplicateRouteDetector) CrossFile() {}

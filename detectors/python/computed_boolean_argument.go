@@ -34,3 +34,6 @@ func (ComputedBooleanArgumentDetector) Find(codebase *engine.Codebase) []engine.
 		Where(engine.As(func(n py.Node) bool { return program.CallersAllAskOneObject(n, computedCallers) })).
 		Get()
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (ComputedBooleanArgumentDetector) CrossFile() {}

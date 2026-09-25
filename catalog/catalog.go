@@ -130,8 +130,13 @@ func IsUnpublished(rule any) bool {
 	return unpublished
 }
 
-// Name is a rule's short type name, the name a fixture marker and a report use: ArrayBagDetector.
+// Name is a rule's name, as a fixture marker and a report use it: the one it states, as a project's own rule
+// does, else its short type name, ArrayBagDetector.
 func Name(rule any) string {
+	if named, states := rule.(interface{ Name() string }); states {
+		return named.Name()
+	}
+
 	kind := reflect.TypeOf(rule)
 	for kind.Kind() == reflect.Pointer {
 		kind = kind.Elem()

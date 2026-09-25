@@ -25,3 +25,6 @@ func (UnnamedVocabularyLiteralDetector) Find(codebase *engine.Codebase) []engine
 		Reject(engine.As(php.Node.IsParameterDefault)).
 		Get()
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (UnnamedVocabularyLiteralDetector) CrossFile() {}

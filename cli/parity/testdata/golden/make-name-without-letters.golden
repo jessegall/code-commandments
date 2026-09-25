@@ -1,7 +1,0 @@
-exit: 2
---- stdout
-
---- stderr
-Unknown option --- for `make`. Try: commandments make --help
-
---- files

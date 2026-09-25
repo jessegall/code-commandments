@@ -1,6 +1,7 @@
 package session
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"math"
 	"os"
 	"path/filepath"
@@ -35,7 +36,7 @@ func (Command) Help() help.Help {
 		Form("session adopt <folder>", "take a stranded folder INTO this session — everything it holds is moved, and nothing that did not come across is deleted").
 		Option("--path", "the bare path and nothing else").
 		Option("--into", "the folder to adopt INTO, for a terminal with no session of its own").
-		Note("Run it from inside Claude Code by typing `!vendor/bin/commandments session` at the prompt: " +
+		Note("Run it from inside Claude Code by typing `!" + binary.Here() + " session` at the prompt: " +
 			"the `!` prefix runs a shell command in the session, so the answer lands in the conversation " +
 			"without costing a turn of thinking. From any other terminal, `session list` is the one to use — " +
 			"a shell outside the harness has no session of its own to report.").

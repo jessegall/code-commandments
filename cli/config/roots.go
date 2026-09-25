@@ -7,6 +7,8 @@ import (
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/source"
 )
 
 var (
@@ -146,7 +148,7 @@ func DeclaredRoots(root string) ([]string, error) {
 	}
 
 	detected := DetectRoots(root)
-	scribe := ScribeIn(root)
+	scribe := EditorIn(root)
 	scaffolded, err := scribe.Scaffold(detected)
 
 	if err == nil && !scaffolded {
@@ -200,4 +202,58 @@ func realOr(path string) string {
 	}
 
 	return resolved
+}
+
+// BuiltFolders are the folders a build or an installer wrote under root, at the top or beside a detected
+// source root, sorted.
+func BuiltFolders(root string) []string {
+	bases := []string{"."}
+	for _, dir := range DetectRoots(root) {
+		bases = append(bases, filepath.Dir(dir))
+	}
+
+	var found []string
+
+	for _, base := range bases {
+		for _, folder := range built {
+			path := folder
+			if base != "." {
+				path = base + "/" + folder
+			}
+
+			if isDir(root+"/"+path) && !slices.Contains(found, path) {
+				found = append(found, path)
+			}
+		}
+	}
+
+	sort.Strings(found)
+
+	return found
+}
+
+// WritesLanguage says whether any detected source root holds a file of the language, outside built folders.
+func WritesLanguage(root string, language source.Language) bool {
+	for _, dir := range DetectRoots(root) {
+		found := false
+
+		filepath.WalkDir(root+"/"+dir, func(path string, entry os.DirEntry, err error) error {
+			switch {
+			case err != nil || found:
+				return filepath.SkipDir
+			case entry.IsDir() && slices.Contains(built, entry.Name()):
+				return filepath.SkipDir
+			case !entry.IsDir() && strings.TrimPrefix(filepath.Ext(path), ".") == string(language):
+				found = true
+			}
+
+			return nil
+		})
+
+		if found {
+			return true
+		}
+	}
+
+	return false
 }

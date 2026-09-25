@@ -1,0 +1,13 @@
+exit: 2
+--- stdout
+
+--- stderr
+✗ no composer.json at or above <project> — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in.
+
+commandments sync — Refresh this project's code-commandments integration — publish the skills into the library every agent reads, refresh the AGENTS.md briefing and the config surface, and wire each agent's own view of them.
+
+Usage:
+  commandments sync  run it (idempotent; composer runs it for you on every install/update once
+                     `install` has wired it)
+
+--- files

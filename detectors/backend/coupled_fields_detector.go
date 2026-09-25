@@ -161,3 +161,6 @@ func upperFirst(name string) string {
 
 	return string(name[0]-'a'+'A') + name[1:]
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (CoupledFieldsDetector) CrossFile() {}

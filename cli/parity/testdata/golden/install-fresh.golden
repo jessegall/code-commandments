@@ -1,0 +1,1305 @@
+exit: 0
+--- stdout
+✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.
+✓ Wired the Claude Code hooks: the cardinal-rule reminder (PostToolUse) + the judge nudge (Stop).
+↻ code-commandments synced — 66 skills published to .agents/skills, read by Claude Code, Codex.
+
+--- stderr
+
+--- files
+=== created .agents/skills/commandments-backend-absence/SKILL.md
+sha256 e0d9c8b90fa928ff13c3952b8336633bd0e9c631b90346c583224a43b753506a
+=== created .agents/skills/commandments-backend-absence/evals/triggers.json
+sha256 0d1ff2eaa3e50e7419bdabdded9a96fe61d78b0d27b72cdf3d2709e25cc72cee
+=== created .agents/skills/commandments-backend-absence/reference/detectors.md
+sha256 2ef18a3ea8d52d8d15dbd49876d4abee305bf147753f16cc60622814ae300a6c
+=== created .agents/skills/commandments-backend-absence/reference/examples.md
+sha256 b36829aade300aace6900a98840e55a0f5018e5dd07256c22d34e22d915e3e8f
+=== created .agents/skills/commandments-backend-behaviour-per-method/SKILL.md
+sha256 7416bfb7849e6235a726d794c4337f8eb50e1bb0edfd3ac83e6abba070901a2f
+=== created .agents/skills/commandments-backend-behaviour-per-method/reference/detectors.md
+sha256 983aa7a0498d971d6666c915ff06e830b63fb9adddacf3cb65a31b9c198dab37
+=== created .agents/skills/commandments-backend-class-layout/SKILL.md
+sha256 68d1f2ff1483538d108886998ae3cfaa811e0d094aad7b127061da00aec0e122
+=== created .agents/skills/commandments-backend-class-layout/evals/triggers.json
+sha256 d4632886706279f968c199bec81276421dcbf0221d04dfedefe88405b7cc2e7a
+=== created .agents/skills/commandments-backend-class-layout/reference/detectors.md
+sha256 50f5a748baf466e0f2c7becd556156c4a4e1f5ac02ded4c4af9afde22680fb0d
+=== created .agents/skills/commandments-backend-class-layout/reference/examples.md
+sha256 c2eeff3123c7b4d3851ef52ca1076da3528d6d44f0d5e9e6d0442ae80df41cd4
+=== created .agents/skills/commandments-backend-concurrent-state/SKILL.md
+sha256 93c91a8b16c2d0a740a482493907e7e545128ffde71e6abf9b0ac5d3c2859e4a
+=== created .agents/skills/commandments-backend-concurrent-state/reference/detectors.md
+sha256 b4cb157fee5cc4f1809331139cdf75a67d44d72d449445c26928bf84d343bb65
+=== created .agents/skills/commandments-backend-dependency-direction/SKILL.md
+sha256 58816eef8765df5cd4c89fcef988bd4301ff81b4d3a29c446aa0ca36bfcf5a59
+=== created .agents/skills/commandments-backend-dependency-direction/reference/detectors.md
+sha256 23a6e94feb5b25b8fc44ec9dfb4e4c658e3fa288ffacce78fd634b98ecceec2d
+=== created .agents/skills/commandments-backend-dependency-direction/reference/examples.md
+sha256 3fb68d39a94d21ff9bae7fe350e77e82db8e224ca951852d1634e96f5ab0de05
+=== created .agents/skills/commandments-backend-documentation/SKILL.md
+sha256 e2fe5623966185ba8bc30693ce655a5ac68f2fa3df59e17c50b0cdf9765599ca
+=== created .agents/skills/commandments-backend-documentation/evals/triggers.json
+sha256 8f674155dc6959c83e8fec49b30d745f8547c18542856b13b87698f6a19ef3a7
+=== created .agents/skills/commandments-backend-documentation/reference/detectors.md
+sha256 6d7d232a8c81c8f77cdd58b997cb7f8fbdf50e0258846ffe573c0481614c6ee4
+=== created .agents/skills/commandments-backend-documentation/reference/examples.md
+sha256 a247887aafdb6753490666fd88cc97ce147657cb58796d1eaa1d69784c85caa1
+=== created .agents/skills/commandments-backend-enums-with-behaviour/SKILL.md
+sha256 3eb2c105e617e55e70e393efe3da82fb6382fecc5f73fe49bfe178bfb25f0b04
+=== created .agents/skills/commandments-backend-enums-with-behaviour/reference/detectors.md
+sha256 46dcec5e1c3f7e5aca76062a7edbaf9450cf93487f3e6d869dfa55f223e242d0
+=== created .agents/skills/commandments-backend-enums-with-behaviour/reference/examples.md
+sha256 ca305dec07a8a057364062ca5882ddf1dfe258d1c74db50df55f1825fb73e8b5
+=== created .agents/skills/commandments-backend-exceptions/SKILL.md
+sha256 5b9f15cf96a35ceb9a5fe81c0ee5293286bea22d130a8b6f3006cdfeaf30409c
+=== created .agents/skills/commandments-backend-exceptions/reference/detectors.md
+sha256 ad1ba5a5e692f97139cfd6176693b02f770711326c77fa4af22f71943f0d0ab7
+=== created .agents/skills/commandments-backend-exceptions/reference/examples.md
+sha256 9b2fbb4832928975c4b1d9c5a89a9d9d8034f133f309d8dca50e5f5f2e5d9e3c
+=== created .agents/skills/commandments-backend-fix-at-the-source/SKILL.md
+sha256 cb1eab66ab2841b1b3cf64c99a9b8cce8b03bcec0f83a9abad44f3c78b2ba7b3
+=== created .agents/skills/commandments-backend-fix-at-the-source/evals/triggers.json
+sha256 353f548c902f613b2474812df1b419cd59ebbfe23f9ca5ab0946f0885568e5d0
+=== created .agents/skills/commandments-backend-fix-at-the-source/reference/detectors.md
+sha256 1f447665adc2fc6d59e443176c23c636af254e31fa00d5c13815668f0369fa2e
+=== created .agents/skills/commandments-backend-fix-at-the-source/reference/examples.md
+sha256 f1ee4dd472aa55083acd4aac937d4b466c29f74767b4c864af34c87a5e9dea1b
+=== created .agents/skills/commandments-backend-guard-clauses-and-flow/SKILL.md
+sha256 9c2d82dc686c248a502ccc6a7dd24300c3f69fb787f71c0feb89b2f79723908a
+=== created .agents/skills/commandments-backend-guard-clauses-and-flow/evals/triggers.json
+sha256 78cdb5b117e3beac6f647e8f37b333dfefc9be3c595727fb44df650b82bc8f98
+=== created .agents/skills/commandments-backend-guard-clauses-and-flow/reference/detectors.md
+sha256 a4cd61c78085c877e771eef2003e79880a468a301a3c2cdbc65bed62beec1eb9
+=== created .agents/skills/commandments-backend-guard-clauses-and-flow/reference/examples.md
+sha256 2fdb458eecb99496c3c0d954481e7e94c43bc3c685e6f425885af193a10a23c2
+=== created .agents/skills/commandments-backend-laravel-idioms/SKILL.md
+sha256 d9212d5682c172fa8165fcd8cb69f9c1b363fb2fd41495cff1f60db8a46f12c7
+=== created .agents/skills/commandments-backend-laravel-idioms/evals/triggers.json
+sha256 f3673ef98b8ce1acab91f3ecc97301c16aa176283fa9a4af0069d55bd04467ec
+=== created .agents/skills/commandments-backend-laravel-idioms/reference/detectors.md
+sha256 e4a7edd50b41fc5edfcaffd6b77dae3307bb5f56f3c443b15db67702d085d89a
+=== created .agents/skills/commandments-backend-laravel-idioms/reference/examples.md
+sha256 3d0a1fe261065dfe0ba617c8a7884debe49bbeb977a68b9f25294e69cdaff11f
+=== created .agents/skills/commandments-backend-method-mood/SKILL.md
+sha256 1532e19b9d6e23f6386c4d3db863ace2b36bd2bd32d5ac304964dbedc0602ee2
+=== created .agents/skills/commandments-backend-method-mood/evals/triggers.json
+sha256 757b9f25005a7289952f6ac141f4057fb4fbe51c1e06f93fe7095852a943b855
+=== created .agents/skills/commandments-backend-method-mood/reference/detectors.md
+sha256 bb09b49e6aae8752272e6bfa1b19a1ebba47d2343c0ab4823498fcc77e57a203
+=== created .agents/skills/commandments-backend-method-mood/reference/examples.md
+sha256 847da21ed5ca2f361c82c538b1d5361bd22744a78444ec45eb534aa37f9f542a
+=== created .agents/skills/commandments-backend-page-objects/SKILL.md
+sha256 4aeb9646afb2a4ad031a8ad9515248323d57879c279222a320c01daf51d2d59e
+=== created .agents/skills/commandments-backend-page-objects/evals/triggers.json
+sha256 4040e7acd3c965288c67657477bfbbc187c6631e7576de025acde9d72adaa5c8
+=== created .agents/skills/commandments-backend-page-objects/reference/detectors.md
+sha256 1e2b41b8e51de4a77aa27d73f2cdd6a31d49ff0a93bfe578a89e44425f3f8cfe
+=== created .agents/skills/commandments-backend-page-objects/reference/examples.md
+sha256 6bd42f867176d4bc07c9a16b97fe75215fec81dca3c4289d9e51d899198693f5
+=== created .agents/skills/commandments-backend-pass-the-object/SKILL.md
+sha256 04f045ae047b2901d263afef37c05ba59556f7a78cc8860db768ee51f652dcf0
+=== created .agents/skills/commandments-backend-pass-the-object/reference/detectors.md
+sha256 c13d8fe4bc79cf9f8ecb22e821427cd283aeeb56581778af7b51da719ff9e6ea
+=== created .agents/skills/commandments-backend-pass-the-object/reference/examples.md
+sha256 6188cb4b1a580e15bacf9a26b0643493dcc4312d88f969a70efbefa95aa76a48
+=== created .agents/skills/commandments-backend-repeated-call-helper/SKILL.md
+sha256 322c303e63b6eb12b7f4dc7a9507437d72a71aba324187c7c9aa89a42da5f15c
+=== created .agents/skills/commandments-backend-repeated-call-helper/evals/triggers.json
+sha256 4bc1590caefff59e69d0411fae6bbd091b18079addd8c6faeac38c16f95d389e
+=== created .agents/skills/commandments-backend-repeated-call-helper/reference/detectors.md
+sha256 044063234c894c44b9a08b09cd9393effa992dde6c756f105694a869501670f9
+=== created .agents/skills/commandments-backend-repeated-call-helper/reference/examples.md
+sha256 9cc8c7cc01cc8e1b021a3bf2f5c3e8a6fb02a3cd38563ce39222df2b623a3723
+=== created .agents/skills/commandments-backend-role-vocabulary/SKILL.md
+sha256 a83bf1a4156460d40aaf146fb1489ad58ed945a01bae4127edeaa13b42b738fa
+=== created .agents/skills/commandments-backend-role-vocabulary/reference/detectors.md
+sha256 1990ef20016407254fbf6818bdd684800a9e798bc834472b35ae183cc3dcf09b
+=== created .agents/skills/commandments-backend-route-actions/SKILL.md
+sha256 8f52b4a12019ef684726db1291705a89a2028900c50d16e57e5a7af4c5a1d0da
+=== created .agents/skills/commandments-backend-route-actions/evals/triggers.json
+sha256 f340a04dc4342d4ebe63be2821a8328aa944a70a0760fba8fd8f0ac8a6f18331
+=== created .agents/skills/commandments-backend-route-actions/reference/detectors.md
+sha256 5a307607a46d914d74286f7e6d1b4fd24958bf8b87290ca76c07b053162a599c
+=== created .agents/skills/commandments-backend-route-actions/reference/examples.md
+sha256 53929353f82afb73beede32d155e2a1eaa436caf332636d7e73d5d142d89c6d3
+=== created .agents/skills/commandments-backend-spatie-data-hydration/SKILL.md
+sha256 54cf85b187f44b51ed843bcb211b044483b8d66bac3e8457b703c890382a3a0c
+=== created .agents/skills/commandments-backend-spatie-data-hydration/evals/triggers.json
+sha256 0f29b5a9810cb1a6a64c639e6c8306b672fe73ba17bad033e9c43857253e5201
+=== created .agents/skills/commandments-backend-spatie-data-hydration/reference/detectors.md
+sha256 6bd22b8b047b8a9c5608c827714b909fd7c6e75dfe7ec0e2bd603cae934785db
+=== created .agents/skills/commandments-backend-spatie-data-hydration/reference/examples.md
+sha256 d8733341b31ed8194d4729bda2ba67372ff5908210973d87258c92e0dfb8b544
+=== created .agents/skills/commandments-backend-spatie-data-hydration/reference/mechanics.md
+sha256 518e19806a38bdc1ebe8033bcbd897a5fd2a5dd0a211704ac53fef7f2ef40ca6
+=== created .agents/skills/commandments-backend-spatie-data/SKILL.md
+sha256 3a7dde4565c08633e5dea54b2078cd9a8dc8552e9db233df91413cb2c5352e16
+=== created .agents/skills/commandments-backend-spatie-data/evals/triggers.json
+sha256 1a589fd51af9da85f7561b9dfacb0bf974e200ce7cafbfe910836114a63cb13d
+=== created .agents/skills/commandments-backend-spatie-data/reference/detectors.md
+sha256 7c1a0da09a8db313b137ed6c3eaf0bb16dc904e8a7bfa2dc1a3ddec77a28ee1b
+=== created .agents/skills/commandments-backend-spatie-data/reference/examples.md
+sha256 dc3394866f45f28453f0bd719c7ef089642b1f94087e9cba2f5c4dc4c4eb100f
+=== created .agents/skills/commandments-backend-tell-dont-ask/SKILL.md
+sha256 81a639e5c0f9f4e2efcf97f8a4c4fe4bd75b5e8a841055426a2fe8bf561fadb9
+=== created .agents/skills/commandments-backend-tell-dont-ask/reference/detectors.md
+sha256 72e695dfb6506f0284d050f46a7d0495c5e763395078a28a297a53062aea0578
+=== created .agents/skills/commandments-backend-tell-dont-ask/reference/examples.md
+sha256 91e9295a62173e44b51900fc860684ddbe2f3fc1eea434094242ce4bb1888de8
+=== created .agents/skills/commandments-backend-templates/SKILL.md
+sha256 3c60524124d9d556920a6a0060945ecc70780cb2a11ed5d84768d8c6ce9859e1
+=== created .agents/skills/commandments-backend-templates/reference/detectors.md
+sha256 172d0beeb842bb0c0d7d70c4bfc1b82f735384a3bd93b2cb972e2fb8f7393509
+=== created .agents/skills/commandments-backend-type-honesty/SKILL.md
+sha256 ea04ee4c0a108b4afb23ba5fc1a733fabf2559ecf2b9a6492c8dc72b610dcb4e
+=== created .agents/skills/commandments-backend-type-honesty/evals/triggers.json
+sha256 6ae1a8224c4896470eff830f9b98fb735cde972605d29d8632e582f46cfa9342
+=== created .agents/skills/commandments-backend-type-honesty/reference/detectors.md
+sha256 4f7283a17777170ce828864caa97f9dcd42ed8413a5f0e655be00be99db944f7
+=== created .agents/skills/commandments-backend-type-honesty/reference/examples.md
+sha256 d860cc585fb3f70c3b7c4c119a591ceb7d00b1873455133b21e0b07f73dd9653
+=== created .agents/skills/commandments-backend-value-objects/SKILL.md
+sha256 b5c96c192aafad2d5fcc51ddbd7d7f15c81e453f5f26b851e107eab8789437a0
+=== created .agents/skills/commandments-backend-value-objects/evals/triggers.json
+sha256 5d352efb68c25a9f70e4981ff9e3ce94927eff698da1aa4deca7e94b5e2ee238
+=== created .agents/skills/commandments-backend-value-objects/reference/detectors.md
+sha256 6870e0df45c0957cebcf08027c1757be0408bfddc38716252ab66031edb40f39
+=== created .agents/skills/commandments-backend-value-objects/reference/examples.md
+sha256 e36a3b0b5cdab03ee34d3dab76bdcc63d6fc14953d8ffc5dbcf4e406544ca196
+=== created .agents/skills/commandments-csharp-absence/SKILL.md
+sha256 8d520639d424fcd3795abe387df2a67d5bc8a36fdd429775620e9f3e6c133cf7
+=== created .agents/skills/commandments-csharp-absence/evals/triggers.json
+sha256 486f118a9ba25698edd80e47d2e32843a2edd73069a8f700947e5a26c5967af5
+=== created .agents/skills/commandments-csharp-absence/reference/detectors.md
+sha256 42594d8b6a65b4a307ded1fc42f5ce1f84df803852145f3fe5219c65e2207410
+=== created .agents/skills/commandments-csharp-absence/reference/examples.md
+sha256 aa0a7c7e8d06eacd625792cee42f87380791739269b9b35d74a22266ab0b4bde
+=== created .agents/skills/commandments-csharp-behaviour-per-method/SKILL.md
+sha256 a90f33c8f6761aec139e69d231c53e0395da71af16b69fe758edbfd8544341cb
+=== created .agents/skills/commandments-csharp-behaviour-per-method/evals/triggers.json
+sha256 81021234a85e35e3aad38b245a7ca703b9b7dc1d81e1610530556ed17d42e86f
+=== created .agents/skills/commandments-csharp-behaviour-per-method/reference/detectors.md
+sha256 295d5121822ae72057893a35638b458ce41ec3efc6b72f8c20fbc329bc670108
+=== created .agents/skills/commandments-csharp-class-layout/SKILL.md
+sha256 d812a8daf034c4f77c62d9c478447063fdcd5261847c81bc6a176e10e186af58
+=== created .agents/skills/commandments-csharp-class-layout/evals/triggers.json
+sha256 2d39de49b036ab639b1f74ad6d42c37f5a534bf48b8a5245cc09c65c0cafff60
+=== created .agents/skills/commandments-csharp-class-layout/reference/detectors.md
+sha256 852570a5d1af58aec83795c44687bfb51c03b4c024c74e090fa4894fc9161550
+=== created .agents/skills/commandments-csharp-class-layout/reference/examples.md
+sha256 0e8106bd2509b81e909a547991fc17ea9c937f37e4f84ff080ec20dc102edb4d
+=== created .agents/skills/commandments-csharp-dependency-direction/SKILL.md
+sha256 f7b0e4aa42fa15551b6945c64e57a259ff41042f021c188c48ab86c679546192
+=== created .agents/skills/commandments-csharp-dependency-direction/reference/detectors.md
+sha256 5f2d2ddcdaee2d7d22e0a31ae136f4270e64c65d9d47453add660058ca38c7bc
+=== created .agents/skills/commandments-csharp-dependency-direction/reference/examples.md
+sha256 c985e349785f68b1f7121814284f67dc0e7a5037bf5ed69d257ac5c38a25837d
+=== created .agents/skills/commandments-csharp-documentation/SKILL.md
+sha256 c32389daded344f02605736acce2a4ae9325197f7a7d2d5c0e4920edd78c0c56
+=== created .agents/skills/commandments-csharp-documentation/evals/triggers.json
+sha256 ced328d409958baa0f5d6eb067fa5d3b60365035e35c3d66a34708b5cb55be5c
+=== created .agents/skills/commandments-csharp-documentation/reference/detectors.md
+sha256 b41e80eaaa48ca84e21d7e687aa1793c359315fa0f42eae723d210341c4fdf87
+=== created .agents/skills/commandments-csharp-documentation/reference/examples.md
+sha256 3e0f305467bcf367d48524b63edc44966b454b34d26cbe4c0e6561087d2e8ad2
+=== created .agents/skills/commandments-csharp-duplication/SKILL.md
+sha256 a2acb1e094cd343bb59391fefca62da6c6c2d048937ab3732b2d56e1b23b69d3
+=== created .agents/skills/commandments-csharp-duplication/evals/triggers.json
+sha256 fa65d3221cf44c471a24cbfc5ff308bbcda3ec557c1d4090e698480a87820ac5
+=== created .agents/skills/commandments-csharp-duplication/reference/detectors.md
+sha256 2f3c9ce9d4ae8aa31778978397e2a928c4037f012261759f05c33238e91229a3
+=== created .agents/skills/commandments-csharp-duplication/reference/examples.md
+sha256 18594d0badbc3c1d7dbeffac5deba5616e35dc7a35ebff60e013db593afa9c17
+=== created .agents/skills/commandments-csharp-enums/SKILL.md
+sha256 b01ac5ae77d91a0781c437c7584d87e2bf4cfec6870b999b344382d451b5ff75
+=== created .agents/skills/commandments-csharp-enums/evals/triggers.json
+sha256 a9f583d31207154985eb355e747bf3c7f86857701ba50dfaccd7fb90988f8492
+=== created .agents/skills/commandments-csharp-enums/reference/detectors.md
+sha256 35a6cbb8607606603911038096b0e2bfb2c5980ab0aabf38287f365cfa5d7cae
+=== created .agents/skills/commandments-csharp-enums/reference/examples.md
+sha256 083d5d06e85755b0e58f4ff553c223b76e74c7f69023bf30c473eb97f033bff4
+=== created .agents/skills/commandments-csharp-exceptions/SKILL.md
+sha256 c46d67bfc04e37b7aa33f61be6f8f0b2858584dc23f5ac7b94f535ba06b58bfb
+=== created .agents/skills/commandments-csharp-exceptions/evals/triggers.json
+sha256 8aa39d02dca93515191a843592640ed19ac9a21662b218db7d92f990c8d88c8c
+=== created .agents/skills/commandments-csharp-exceptions/reference/detectors.md
+sha256 e5da27be698239753ab32351098efd6e8659ae1db4c784dfcc274851d97746c1
+=== created .agents/skills/commandments-csharp-exceptions/reference/examples.md
+sha256 395548c53a7503191be573221681987e03d835c5d67865c4039323a6300826ed
+=== created .agents/skills/commandments-csharp-fix-at-the-source/SKILL.md
+sha256 1afa94124e8937882e25db31a46c7c7fb6410bafe8e26d2a8584f2e918062f33
+=== created .agents/skills/commandments-csharp-fix-at-the-source/evals/triggers.json
+sha256 8c2f1dd0fbc17c78d65f8665e95eb513dfc318fe1843d3d51ed08a0523848f5f
+=== created .agents/skills/commandments-csharp-fix-at-the-source/reference/detectors.md
+sha256 2925e13c7b9be911446fb5a5127c1a52511f777d662cebc0a48483c433f7690b
+=== created .agents/skills/commandments-csharp-fix-at-the-source/reference/examples.md
+sha256 be82559c640b1f52dd5ae5ab749d3fdbaa02096f93a857c2869085ee4ff64747
+=== created .agents/skills/commandments-csharp-flow/SKILL.md
+sha256 6a2771190ae34e0f0c135ff24266a890c268af3ba71ca5ee843ada8ece51e0c5
+=== created .agents/skills/commandments-csharp-flow/evals/triggers.json
+sha256 a9182138fe4601cd05a262dd97848783883fd245ae22326c0cb21dd05155a2f1
+=== created .agents/skills/commandments-csharp-flow/reference/detectors.md
+sha256 8e0d06f3f93b9576e8ed77088cca150e5905b459d805864ebc457edaad3d3336
+=== created .agents/skills/commandments-csharp-flow/reference/examples.md
+sha256 86712123edc931debed95fe8b23ebc8a8cad4eecee7311e389addf7947720709
+=== created .agents/skills/commandments-csharp-method-mood/SKILL.md
+sha256 f92173572bd8a65aa21b2d3c94876f1b5121048110bfec2a0814d6087a643245
+=== created .agents/skills/commandments-csharp-method-mood/evals/triggers.json
+sha256 27868ccd396e52f059b548867b53756314e59f1ddbbb81fa5d89d3e277f24528
+=== created .agents/skills/commandments-csharp-method-mood/reference/detectors.md
+sha256 f8134d3b07cd23195ff9e078c0384337170334e714ccdbe401ef9d1e314d9f26
+=== created .agents/skills/commandments-csharp-pass-the-object/SKILL.md
+sha256 df33a7b5fa50fa271d17878aed8d3827d05c14db012b5b7206584abbaaed531a
+=== created .agents/skills/commandments-csharp-pass-the-object/reference/detectors.md
+sha256 51b7127fc8b10a6e8872f66910ca41edd1561910a366832a9ad4fc9bac7b25be
+=== created .agents/skills/commandments-csharp-pass-the-object/reference/examples.md
+sha256 b350a03eb65458916c6ec06b96c0e9d9f2d060907473597db982285dfbd51a7b
+=== created .agents/skills/commandments-csharp-repeated-call-helper/SKILL.md
+sha256 546a3dd980cbcd6c8107a21fcabebc3313294f7dda3647c683a1b5d2fdff6861
+=== created .agents/skills/commandments-csharp-repeated-call-helper/evals/triggers.json
+sha256 c914455dfa1e75267d6f724b635337d62b89c383782debfa3ff5971cb69d4108
+=== created .agents/skills/commandments-csharp-repeated-call-helper/reference/detectors.md
+sha256 fed6121b457df125fb6990b60bce86ffd0e8b0c7aae27e5da4db7b5562d5a365
+=== created .agents/skills/commandments-csharp-repeated-call-helper/reference/examples.md
+sha256 c6378ffcbce661a10b9afccc18c7e4ce64127799791beeb54251455bf5450437
+=== created .agents/skills/commandments-csharp-role-vocabulary/SKILL.md
+sha256 1606b508d7fba0190960bd013d354388945bfbaaaa26c43c09ead1398511e4ae
+=== created .agents/skills/commandments-csharp-tell-dont-ask/SKILL.md
+sha256 1e5756fa444133496e5bb9948e1d54d24da4da2d2ade39e100c635903ed9e116
+=== created .agents/skills/commandments-csharp-tell-dont-ask/evals/triggers.json
+sha256 f3192247b1a8bf31f77fe6cb49f9b0add81c39ce84934582acf7b17a9fd20a63
+=== created .agents/skills/commandments-csharp-tell-dont-ask/reference/detectors.md
+sha256 81c01b3fb519a6a7d1afd9dd9096e4a592ace2fc389a285f865516556790fdbe
+=== created .agents/skills/commandments-csharp-tell-dont-ask/reference/examples.md
+sha256 16498249239a5ae06215a0f4862585cb23d08ddc47e9754e91672552800ba702
+=== created .agents/skills/commandments-csharp-templates/SKILL.md
+sha256 bd431d4218f62157ac53dbd58ea243c3ef569fd7200efd6051f4dbf52dc453ac
+=== created .agents/skills/commandments-csharp-templates/evals/triggers.json
+sha256 db87dbad982001be50b9295739e6c5c2a454e265084d5bc8b112b4e75b54c813
+=== created .agents/skills/commandments-csharp-templates/reference/detectors.md
+sha256 5e289ee9e4cf476a49e83edd251a0832eeca1714bd1a446a6b4bf2ac0030df27
+=== created .agents/skills/commandments-csharp-type-honesty/SKILL.md
+sha256 a7904320d6421575cf375d330bcf43999392bf54d611aecc971ed3ca9327b3b0
+=== created .agents/skills/commandments-csharp-type-honesty/evals/triggers.json
+sha256 a7429b30b9d09758435cc5cc73137d9ed75073b190a47edeb1635fee97c6b319
+=== created .agents/skills/commandments-csharp-type-honesty/reference/detectors.md
+sha256 8fa91ca832aca798dc9937cf5d8014c020f25c27ab86cd66520c8e66673e6419
+=== created .agents/skills/commandments-csharp-value-objects/SKILL.md
+sha256 d02c8852dddaf9170d603eb97d2f18a56d04dd3dba06284d82732e067f7c95bb
+=== created .agents/skills/commandments-csharp-value-objects/evals/triggers.json
+sha256 36531d81899def3fb5108a4348958646129b5869c555ab2693c9e952f9cbc66f
+=== created .agents/skills/commandments-csharp-value-objects/reference/detectors.md
+sha256 2ec379c6ece7cb8274841eb1d1fff32ad88128370c365443057bd2c775047ac3
+=== created .agents/skills/commandments-csharp-value-objects/reference/examples.md
+sha256 078578b9b7b33ffc6228379e3b5b23c688c16d7d854ceb71bd85b276cfa3a5fc
+=== created .agents/skills/commandments-frontend-mirrored-server-type/SKILL.md
+sha256 d9d11e702e74dba3dc9f3522deb389cdbed5d866a05e4c70617832f9d3b997fb
+=== created .agents/skills/commandments-frontend-mirrored-server-type/reference/detectors.md
+sha256 85d7b36a19ed1620c215e3e46b1eee833991088b395bcbbc3619bcbb1fd2275f
+=== created .agents/skills/commandments-frontend-mirrored-server-type/reference/examples.md
+sha256 53fbe76ec0bbadca68e21997b5397e78f44f083a84a70c8839bb5ddb15eac2be
+=== created .agents/skills/commandments-frontend-vue-components/SKILL.md
+sha256 317ac0e73af55e55797f2f2d47b0033b80534ddac20793b4f38adee7fbd3f0b3
+=== created .agents/skills/commandments-frontend-vue-components/reference/detectors.md
+sha256 365c7efb6968e777ce5ec4bbb46c41e9b5be39b08746a8f5e269f1329885246f
+=== created .agents/skills/commandments-frontend-vue-components/reference/examples.md
+sha256 99628bc1fdf91d6d64dce8652a8d10a2ec6963cf1494b605d8d68030009fb367
+=== created .agents/skills/commandments-frontend-vue-control-flow/SKILL.md
+sha256 2e7a446e99982b7a5f219b48222f21e667d525bf2c6b0cebac16658a12852369
+=== created .agents/skills/commandments-frontend-vue-control-flow/reference/detectors.md
+sha256 cf8762933d2c807c4872e1558093d0f5797dca893320011a92d4210efc8aa656
+=== created .agents/skills/commandments-frontend-vue-control-flow/reference/examples.md
+sha256 a3ab3bdd6342f9a4088b064c2a5a97451264f8785bdf101fa1c8c5ec73619b8e
+=== created .agents/skills/commandments-python-absence/SKILL.md
+sha256 dac06bbec94f8075091e8430a01b11e2ab769d7cd26ed126d54facb4e8c5480f
+=== created .agents/skills/commandments-python-absence/evals/triggers.json
+sha256 04a1a302e31f6a86ac93f9a8e306da499d80e9fe772f3b5d22a55d3eb94102e3
+=== created .agents/skills/commandments-python-absence/reference/detectors.md
+sha256 e33aa976b95cacca4c39529b55aa07703a3a7aa79f9b6ef2b9e249dac95a09a0
+=== created .agents/skills/commandments-python-absence/reference/examples.md
+sha256 3fd30ac08c4babececc6c0fd79c68fc759e8ac85beb2e0481eac10b8f111124a
+=== created .agents/skills/commandments-python-behaviour-per-method/SKILL.md
+sha256 cbbe221f6eaf70c22d95f411a2c57db49ce4f6363bdeef0732c2af2865055051
+=== created .agents/skills/commandments-python-behaviour-per-method/evals/triggers.json
+sha256 cf73524c09e481f83fd209d70910b23ec5e1eb671f8c07f26b4a0917b5a1694c
+=== created .agents/skills/commandments-python-behaviour-per-method/reference/detectors.md
+sha256 24156e8d972a9b00b0426cf0ae4a6247f6d02ff0dbd396e27457edf7608c1738
+=== created .agents/skills/commandments-python-class-layout/SKILL.md
+sha256 b029deb3888ea5a1f5f8ad02ca91f293ca5c1e7abc31fd4f15157460ec5b67c2
+=== created .agents/skills/commandments-python-class-layout/evals/triggers.json
+sha256 1f5ae2de333950c95607e966113ee0d015b1aaf03f7e83ed8d7158214e139345
+=== created .agents/skills/commandments-python-class-layout/reference/detectors.md
+sha256 f0488f7525c2a19f2c4c64dc840a5bfce8c173c76d1e0ae429749b313c0dcc24
+=== created .agents/skills/commandments-python-class-layout/reference/examples.md
+sha256 d339a80d14e535a73e9335726b604cf9b43c45035ec6245d41d8f9d893c8bde9
+=== created .agents/skills/commandments-python-dependency-direction/SKILL.md
+sha256 e175e2bb41270426719a18c6d53062994f747ef42a542af8c9c39369e55af935
+=== created .agents/skills/commandments-python-dependency-direction/evals/triggers.json
+sha256 4add8755fb0231cc1ab2438b571f8771da6e1ddd5cada17f16dbf827c8cbc0d7
+=== created .agents/skills/commandments-python-dependency-direction/reference/detectors.md
+sha256 072986582cedd1106bce6be2520075c98406cea1473ae4f350a38539fe74113d
+=== created .agents/skills/commandments-python-dependency-direction/reference/examples.md
+sha256 84354724a560927b3f175539518b6424d8b59286cca285ebf9b4a3f7f9ea9858
+=== created .agents/skills/commandments-python-documentation/SKILL.md
+sha256 1af733da050b9c33fa37822d3052558ad2806f46f00905831ffeb9738a5241a1
+=== created .agents/skills/commandments-python-documentation/evals/triggers.json
+sha256 4f41e9c3c4d84b8b5a4d2681ee74452eddab8c05e95298a60114bc55a7237003
+=== created .agents/skills/commandments-python-documentation/reference/detectors.md
+sha256 dbc0b2622fd8f199bb3f6a25ee38f200294deecdb43259354c6afd762e6a36ee
+=== created .agents/skills/commandments-python-documentation/reference/examples.md
+sha256 c6cf1ea1370d2502e615b3d26bc6e1a89cba8df0040e8a5c9881ac9e45e7eb04
+=== created .agents/skills/commandments-python-duplication/SKILL.md
+sha256 9a7a5ea88732f9fb209aba113acbfc207b36c4706b76acd46a6cfea667178861
+=== created .agents/skills/commandments-python-duplication/evals/triggers.json
+sha256 04962f99da2e3237b2ea094d0ef509c31e095e2f0d901307f488a2724b3fe1d7
+=== created .agents/skills/commandments-python-duplication/reference/detectors.md
+sha256 247f76b411b691e1ea9f9eb6aac3f05b355113d2869421225ed60080c2a80b02
+=== created .agents/skills/commandments-python-duplication/reference/examples.md
+sha256 785a98418701a385cc0df59e86ed591b103ff003cf411544f2c0d2542f371e7d
+=== created .agents/skills/commandments-python-enums/SKILL.md
+sha256 02764d2cc70d31f5407465ae8441491a8701eb778aed6054d733970fc92b35eb
+=== created .agents/skills/commandments-python-enums/evals/triggers.json
+sha256 626cf2d32c2ea6d868980e7400095ab0dc711104d1cc8c49c1b99a16a038ea0a
+=== created .agents/skills/commandments-python-enums/reference/detectors.md
+sha256 232b67e6411e7a29f4530d7b35409127a496bf4fe57c5a2125696cd7510cea95
+=== created .agents/skills/commandments-python-enums/reference/examples.md
+sha256 0fb70c93e4585fc2b1bc27b9efa27a9fd02c76bf23376bf63063035c9094908a
+=== created .agents/skills/commandments-python-exceptions/SKILL.md
+sha256 39e70a29eeef033dcc76d3a4a04ebfc684403686e0d95b3099f6ad5a35fd1fc5
+=== created .agents/skills/commandments-python-exceptions/evals/triggers.json
+sha256 88bead1d452302d389d59f2fe0538078ee04d69b5d129c321a061afae2adeb5c
+=== created .agents/skills/commandments-python-exceptions/reference/detectors.md
+sha256 c5998d5cc62851462ff6117ed141c44a6c2eafe06cc9f34fdcc1770f26f1c64b
+=== created .agents/skills/commandments-python-exceptions/reference/examples.md
+sha256 6731a3069da5f32857b92a736fa35a9f825df8f86b46f3001ba6d570aa2e67c5
+=== created .agents/skills/commandments-python-fix-at-the-source/SKILL.md
+sha256 88e2410a00e183b9be1ccfe0d0ba62aa5c1a3546a9fe0d244e7fc7a901fd6375
+=== created .agents/skills/commandments-python-fix-at-the-source/evals/triggers.json
+sha256 40f3c0ef66201a403bdd34663ed47e82c8c77a0981cdd8b6fb8b27b6f818e644
+=== created .agents/skills/commandments-python-fix-at-the-source/reference/detectors.md
+sha256 9d7be2106d63b02be6971d73f18b28b65b692955870728405f13f86a5e7755ff
+=== created .agents/skills/commandments-python-fix-at-the-source/reference/examples.md
+sha256 d4ec7cbbfe5431c936b4d8fddd4d6bd4192f77a472ad77d5ffb66ca0275b7b44
+=== created .agents/skills/commandments-python-flow/SKILL.md
+sha256 ffb92550248937a2fc37cd94a0c273940fae24038d45e1a11c00c82c2a3f0afd
+=== created .agents/skills/commandments-python-flow/evals/triggers.json
+sha256 b6fc5e492ba1ab37cbe9445b72c22c54723582a1fbf1c485b479fbb6650c5934
+=== created .agents/skills/commandments-python-flow/reference/detectors.md
+sha256 19658e3993618e496ada68498efa78c8498a3b6e38abcc54a603f7c8f9106aff
+=== created .agents/skills/commandments-python-flow/reference/examples.md
+sha256 1272cecd174794f669c6ae82cba28d80af88f5f7d365e4df69971855efab8205
+=== created .agents/skills/commandments-python-method-mood/SKILL.md
+sha256 2d1645796b9ee6f2ef18b2ad2e0af7b87a3a0506879df6f2a91d5755329445e0
+=== created .agents/skills/commandments-python-method-mood/evals/triggers.json
+sha256 241873ab80ff7f49d7b67848c63e5816a45ce694b9a62435d1f2033f0d9744d5
+=== created .agents/skills/commandments-python-method-mood/reference/detectors.md
+sha256 923153c85d97f668db9c289a12b5e781c4035b698336a62a43e0ac49d8d86c08
+=== created .agents/skills/commandments-python-method-mood/reference/examples.md
+sha256 c55a68e502bf1c97279e1262a4053accac1ee0e28e6f8f13f7cbbc37ba00dbeb
+=== created .agents/skills/commandments-python-pass-the-object/SKILL.md
+sha256 73aa2bd58225bbba8af6247c2cceb22e3a8ffba951e9bd79277fba8ac0f8629b
+=== created .agents/skills/commandments-python-pass-the-object/evals/triggers.json
+sha256 e01dae9b52f73145183fae23936438ad4208b43c7bfc7536ebfec6f41cff4f1e
+=== created .agents/skills/commandments-python-pass-the-object/reference/detectors.md
+sha256 1592f5b0acb5b4e7448114efe971755a2a48559d312da2ccd6c04eb05f610c97
+=== created .agents/skills/commandments-python-pass-the-object/reference/examples.md
+sha256 6d83ec864d2c71663f742cd95eb0639f93c915daf80addf61ab59401fcfea5aa
+=== created .agents/skills/commandments-python-repeated-call-helper/SKILL.md
+sha256 8d9ccfcefd5a38534da5d756bb76de31200cedd6d631a94a9d82466ae35aa625
+=== created .agents/skills/commandments-python-repeated-call-helper/evals/triggers.json
+sha256 055040b7d28bd4b70afd273f8eb7f034185c7b8fbb22d83f1032cf2a7165243b
+=== created .agents/skills/commandments-python-repeated-call-helper/reference/detectors.md
+sha256 6f1733bd63641e1ba89bf1da9412c14fab266403807547f7c006c935338534db
+=== created .agents/skills/commandments-python-repeated-call-helper/reference/examples.md
+sha256 ec6b072e10dfd0268d72d4e93b529b6dd63c811be43e273847accc53660df41d
+=== created .agents/skills/commandments-python-role-vocabulary/SKILL.md
+sha256 dc9ae3a4f666af5f806986558a46ef06337e301085607670b76b89ebb7afaeae
+=== created .agents/skills/commandments-python-role-vocabulary/evals/triggers.json
+sha256 d61a9bb1fa290a41353c36f41f271bade2d947942738fcbc26146a3c5f8f59fb
+=== created .agents/skills/commandments-python-role-vocabulary/reference/detectors.md
+sha256 0232ea4d0a819741c1445d11c8f8fc15843920256776191b268b5d70e23f21cf
+=== created .agents/skills/commandments-python-tell-dont-ask/SKILL.md
+sha256 c6c0754ea095908ec30e027efdb1d463923e5e1b4f59318537ec69d78ed6898d
+=== created .agents/skills/commandments-python-tell-dont-ask/evals/triggers.json
+sha256 59b0817c6e9f0694f9b547839f1107c4ac85a49670fb6c0482377c447aa44b61
+=== created .agents/skills/commandments-python-tell-dont-ask/reference/detectors.md
+sha256 8df89824b369818bcd251f8afb53a292aa98940aab5b337c08ea9ac9b62dc1ec
+=== created .agents/skills/commandments-python-tell-dont-ask/reference/examples.md
+sha256 9c1a9d5d00b8347d49756d32e9c489a9ca0e8f74843b3ad06133f6b4ebb42f0b
+=== created .agents/skills/commandments-python-templates/SKILL.md
+sha256 6b6f306e7968ee58989305fadb9406e4d40da088f9c4681802d19db12c079d33
+=== created .agents/skills/commandments-python-templates/evals/triggers.json
+sha256 9683c432cb02155e65bf175d3e0573df942214901fdf7fb6df2008513898373c
+=== created .agents/skills/commandments-python-templates/reference/detectors.md
+sha256 e3a73de9c199a8e64420bd166273e6f8a17259f58e1d3779e824d8d108145627
+=== created .agents/skills/commandments-python-type-honesty/SKILL.md
+sha256 df144e58f3b505d4d4fc9c90a5ed81aa6309544ff4b43511bb14b37b67d674dc
+=== created .agents/skills/commandments-python-type-honesty/evals/triggers.json
+sha256 a572c11507b088bc4f53cafbf2319453888a256484df3bf7b8c662cddc79bedd
+=== created .agents/skills/commandments-python-type-honesty/reference/detectors.md
+sha256 befd21e1d0912241a197b25e868283d749c1682f5dedcb355eb3481fb8316fb7
+=== created .agents/skills/commandments-python-type-honesty/reference/examples.md
+sha256 757e4b5bbc3fdc614f2846dae9f8cf9d2630ea7c44ec0a7e5b3e54cff137d568
+=== created .agents/skills/commandments-python-value-objects/SKILL.md
+sha256 b961ef01ad731b893985484268256a702cde478279d537efc0034bbb6725782d
+=== created .agents/skills/commandments-python-value-objects/evals/triggers.json
+sha256 8555b63298c2db187ae9e8640785a2d40221d03b767077f1cdf02fcc01be4cfc
+=== created .agents/skills/commandments-python-value-objects/reference/detectors.md
+sha256 bc6742fcf2d6e65830f82e429d1169acabd841ccfa01fe41e1c14de9a8ad9909
+=== created .agents/skills/commandments-python-value-objects/reference/examples.md
+sha256 af95ea7b89fed5e6dce4052d3b5d1219ddf1e7cecec9f899077a39cd8a44c608
+=== created .agents/skills/commandments-typescript-absence/SKILL.md
+sha256 2dd7af8b89d3f0e5fd4ddb230ec828b41933a548b1b63a0fda6d0e946e39f159
+=== created .agents/skills/commandments-typescript-absence/evals/triggers.json
+sha256 6ef30a905658099f09e900ac015064bf758f0f6b4f856ff9fd2e3df9f400df10
+=== created .agents/skills/commandments-typescript-absence/reference/detectors.md
+sha256 dae489d7a1de27dcedbda4daf08149cc6b7fa7cc8a868d1fddce4d4892bcae97
+=== created .agents/skills/commandments-typescript-absence/reference/examples.md
+sha256 5f42bd8d0075640a6ffa3b7ae264ba19c545100e3bba413881c0acf5b26c64cf
+=== created .agents/skills/commandments-typescript-duplication/SKILL.md
+sha256 04cbee17174b6a34be8def960ef1837ce23a10fb6492ad8f496eedddca866d7c
+=== created .agents/skills/commandments-typescript-duplication/evals/triggers.json
+sha256 883009bdc125f06784d7386a09e678b6e689ed77f9278b2f9a6f013ab25aa655
+=== created .agents/skills/commandments-typescript-duplication/reference/detectors.md
+sha256 506c78b8f2c04d83b36c09d3eab8803c6f83d549637833253836a26572efec80
+=== created .agents/skills/commandments-typescript-duplication/reference/examples.md
+sha256 99a0880fb31cd8a9223ffbbe3fe77c44175a777fdbeda820a55ff5402377f8d2
+=== created .agents/skills/commandments-writing-detectors/SKILL.md
+sha256 271240bfcf4c435b7a23ebe0c1d26dbc2a7b414e96d03d4014d8ca552a49be52
+=== created .agents/skills/commandments/SKILL.md
+sha256 dfbdd2c16a9625918010b2838269c24ef63f833c28e4e66c2821a5bace810a1d
+=== created .claude/settings.json
+{
+    "hooks": {
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                    }
+                ]
+            }
+        ],
+        "PreToolUse": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                    }
+                ]
+            }
+        ],
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                    }
+                ]
+            }
+        ],
+        "PostToolUse": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                    }
+                ]
+            }
+        ]
+    }
+}
+
+=== created .commandments/.gitignore
+# code-commandments generated state; the lines below stay tracked.
+# Add your own exceptions underneath — they are preserved across a sync.
+*
+!.gitignore
+!config.php
+!custom/
+!custom/**
+
+# A session's TASKS are tracked; everything else in its folder is this run's own state.
+# Un-ignoring something nested takes a line per level, so these four are one rule.
+!sessions/
+!sessions/*/
+!sessions/*/tasks/
+!sessions/*/tasks/**
+
+=== created .commandments/.state-format
+format: 5
+-----
+Which format code-commandments writes its session state files in. It exists so an upgrade can convert what is already on disk exactly once.
+
+The block above the first divider is this file's state, one `name: value` per line:
+  format  the state-file format this project has been brought up to
+
+Safe to delete — the conversion simply runs again on the next `composer update`.
+
+=== created .commandments/.sync.lock
+
+=== created .commandments/config.php
+<?php
+
+declare(strict_types=1);
+
+use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Skills;
+use JesseGall\CodeCommandments\Sins;
+use JesseGall\CodeCommandments\Hooks;
+use JesseGall\CodeCommandments\Agents;
+
+/*
+ | code-commandments configuration.
+ |
+ | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to
+ |             adjust scope, or run `commandments config reindex`).
+ | exclude() — subtract explicit paths ON TOP of paths(): a dir or file listed here is never a
+ |             target (never reported, never rewritten), e.g. $config->exclude('app/Generated').
+ | disable() — silence a rule by its Sin, Detector, or whole Skill class, or a Claude Code
+ |             hook by its class (or use `commandments disable/enable <sin>`). The
+ |             $disabledSkills / $disabledSins / $disabledHooks menus below list every one.
+ |
+ | Extend it inside the closure:
+ |   $config->detector(\App\Commandments\NoRawSqlDetector::class);        — add your own finder
+ |   $config->package(\App\Commandments\MyFrameworkPackage::class);       — register its exemptions
+ |   $config->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10));  — tune a threshold
+ */
+
+/**
+ * Uncomment a line to disable that skill (every detector it teaches). New entries are appended on composer update; your edits are kept.
+ */
+$disabledSkills = function (Config $config): void {
+    $config->disable(
+        // ----------[ Backend ]----------
+        // Skills\Backend\Absence::class,
+        // Skills\Backend\BehaviourPerMethod::class,
+        // Skills\Backend\ClassLayout::class,
+        // Skills\Backend\Concurrent\ConcurrentState::class,
+        // Skills\Backend\DependencyDirection::class,
+        // Skills\Backend\Documentation::class,
+        // Skills\Backend\EnumsWithBehaviour::class,
+        // Skills\Backend\Exceptions::class,
+        // Skills\Backend\FixAtTheSource::class,
+        // Skills\Backend\GuardClausesAndFlow::class,
+        // Skills\Backend\Laravel\LaravelIdioms::class,
+        // Skills\Backend\Laravel\RouteActions::class,
+        // Skills\Backend\MethodMood::class,
+        // Skills\Backend\PassTheObject::class,
+        // Skills\Backend\RepeatedCallHelper::class,
+        // Skills\Backend\RoleVocabulary::class,
+        // Skills\Backend\Spatie\PageObjects::class,
+        // Skills\Backend\Spatie\SpatieData::class,
+        // Skills\Backend\Spatie\SpatieDataHydration::class,
+        // Skills\Backend\TellDontAsk::class,
+        // Skills\Backend\Templates::class,
+        // Skills\Backend\TypeHonesty::class,
+        // Skills\Backend\ValueObjects::class,
+        // Skills\TypeScript\Absence::class,
+        // Skills\TypeScript\Duplication::class,
+
+        // ----------[ Frontend ]----------
+        // Skills\Frontend\MirroredServerType::class,
+        // Skills\Frontend\VueComponents::class,
+        // Skills\Frontend\VueControlFlow::class,
+
+        // ----------[ Python ]----------
+        // Skills\Python\Absence::class,
+        // Skills\Python\BehaviourPerMethod::class,
+        // Skills\Python\ClassLayout::class,
+        // Skills\Python\DependencyDirection::class,
+        // Skills\Python\Documentation::class,
+        // Skills\Python\Duplication::class,
+        // Skills\Python\Enums::class,
+        // Skills\Python\Exceptions::class,
+        // Skills\Python\FixAtTheSource::class,
+        // Skills\Python\Flow::class,
+        // Skills\Python\MethodMood::class,
+        // Skills\Python\PassTheObject::class,
+        // Skills\Python\RepeatedCallHelper::class,
+        // Skills\Python\RoleVocabulary::class,
+        // Skills\Python\TellDontAsk::class,
+        // Skills\Python\Templates::class,
+        // Skills\Python\TypeHonesty::class,
+        // Skills\Python\ValueObjects::class,
+
+        // ----------[ C# ]----------
+        // Skills\CSharp\Absence::class,
+        // Skills\CSharp\BehaviourPerMethod::class,
+        // Skills\CSharp\ClassLayout::class,
+        // Skills\CSharp\DependencyDirection::class,
+        // Skills\CSharp\Documentation::class,
+        // Skills\CSharp\Duplication::class,
+        // Skills\CSharp\Enums::class,
+        // Skills\CSharp\Exceptions::class,
+        // Skills\CSharp\FixAtTheSource::class,
+        // Skills\CSharp\Flow::class,
+        // Skills\CSharp\MethodMood::class,
+        // Skills\CSharp\PassTheObject::class,
+        // Skills\CSharp\RepeatedCallHelper::class,
+        // Skills\CSharp\RoleVocabulary::class,
+        // Skills\CSharp\TellDontAsk::class,
+        // Skills\CSharp\Templates::class,
+        // Skills\CSharp\TypeHonesty::class,
+        // Skills\CSharp\ValueObjects::class,
+    );
+};
+
+/**
+ * Uncomment a line to disable that single sin. New entries are appended on composer update; your edits are kept.
+ */
+$disabledSins = function (Config $config): void {
+    $config->disable(
+        // ----------[ Backend ]----------
+        // Sins\Backend\ArchaeologyComment::class,
+        // Sins\Backend\ArrayBag::class,
+        // Sins\Backend\ArrayReturnBag::class,
+        // Sins\Backend\AssembledTemplate::class,
+        // Sins\Backend\BareStatePredicate::class,
+        // Sins\Backend\BlankStringDefault::class,
+        // Sins\Backend\BlankStringOnTheWire::class,
+        // Sins\Backend\BloatedDocblock::class,
+        // Sins\Backend\CancelledCoalesce::class,
+        // Sins\Backend\CeremonyDocblock::class,
+        // Sins\Backend\CoalescedLoopSubject::class,
+        // Sins\Backend\ComputedBooleanArgument::class,
+        // Sins\Backend\Concurrent\ConcurrentSubclass::class,
+        // Sins\Backend\ConditionalArraySpread::class,
+        // Sins\Backend\ConstClassEnum::class,
+        // Sins\Backend\ConstructorSideEffect::class,
+        // Sins\Backend\ConvertedArgument::class,
+        // Sins\Backend\CoupledFields::class,
+        // Sins\Backend\DanglingDocReference::class,
+        // Sins\Backend\DataClump::class,
+        // Sins\Backend\DeNulledFinder::class,
+        // Sins\Backend\DeepNesting::class,
+        // Sins\Backend\DerivedArgument::class,
+        // Sins\Backend\DivergentTwin::class,
+        // Sins\Backend\DuplicateFunction::class,
+        // Sins\Backend\EnumCaseOrChain::class,
+        // Sins\Backend\EnumValueMatch::class,
+        // Sins\Backend\ErasedNullObject::class,
+        // Sins\Backend\FeatureEnvy::class,
+        // Sins\Backend\FlagArgument::class,
+        // Sins\Backend\GenericException::class,
+        // Sins\Backend\HandRolledWither::class,
+        // Sins\Backend\IfElseLadder::class,
+        // Sins\Backend\InArrayMirrorsEnum::class,
+        // Sins\Backend\InlineDocblock::class,
+        // Sins\Backend\InlineThrow::class,
+        // Sins\Backend\KeyedLookupEnvy::class,
+        // Sins\Backend\Laravel\BoundaryDuplicatedOperation::class,
+        // Sins\Backend\Laravel\ConfigRead::class,
+        // Sins\Backend\Laravel\ContainerReach::class,
+        // Sins\Backend\Laravel\DanglingRouteName::class,
+        // Sins\Backend\Laravel\DeadConfigKey::class,
+        // Sins\Backend\Laravel\DeadEventWiring::class,
+        // Sins\Backend\Laravel\DuplicateRoute::class,
+        // Sins\Backend\Laravel\DuplicateRouteAction::class,
+        // Sins\Backend\Laravel\DuplicatedConfigDefault::class,
+        // Sins\Backend\Laravel\FacadeCall::class,
+        // Sins\Backend\Laravel\MassUpdateAtCallSite::class,
+        // Sins\Backend\Laravel\ModelMutationAtCallSite::class,
+        // Sins\Backend\Laravel\OrphanedBinding::class,
+        // Sins\Backend\Laravel\RawRequestInput::class,
+        // Sins\Backend\Laravel\RequestAccessorRecast::class,
+        // Sins\Backend\Laravel\RouteDelegatesToController::class,
+        // Sins\Backend\LoopInvertedGuard::class,
+        // Sins\Backend\ManufacturedFakeFill::class,
+        // Sins\Backend\MaskedInvariant::class,
+        // Sins\Backend\MatchDefaultReturnsNull::class,
+        // Sins\Backend\MemberAfterMethod::class,
+        // Sins\Backend\MemberOutOfOrder::class,
+        // Sins\Backend\MessageAtThrow::class,
+        // Sins\Backend\MutableStaticState::class,
+        // Sins\Backend\MutableValueObject::class,
+        // Sins\Backend\NamespaceCycle::class,
+        // Sins\Backend\NamespaceDependency::class,
+        // Sins\Backend\NarratedCommand::class,
+        // Sins\Backend\NearDuplicateFunction::class,
+        // Sins\Backend\NegativeSpaceComment::class,
+        // Sins\Backend\NestedTernary::class,
+        // Sins\Backend\NonCountingFor::class,
+        // Sins\Backend\NullableCallback::class,
+        // Sins\Backend\NullableRegistryLookup::class,
+        // Sins\Backend\ParamResolvedFromParam::class,
+        // Sins\Backend\PhantomNullable::class,
+        // Sins\Backend\PhpTypes\OptionAsNullable::class,
+        // Sins\Backend\PositionalTupleReturn::class,
+        // Sins\Backend\RawDecodedArrayReturn::class,
+        // Sins\Backend\RedundantArrowReturnType::class,
+        // Sins\Backend\RedundantElse::class,
+        // Sins\Backend\RepeatedGuard::class,
+        // Sins\Backend\RepeatedNamedCall::class,
+        // Sins\Backend\RepeatedTypeGuard::class,
+        // Sins\Backend\RestatedComment::class,
+        // Sins\Backend\ScratchStateRestore::class,
+        // Sins\Backend\ShortCircuitStatement::class,
+        // Sins\Backend\Spatie\AllNullableData::class,
+        // Sins\Backend\Spatie\AllOptionalData::class,
+        // Sins\Backend\Spatie\ConstructorOrchestration::class,
+        // Sins\Backend\Spatie\DataCollectionType::class,
+        // Sins\Backend\Spatie\DataMethodHintCollision::class,
+        // Sins\Backend\Spatie\DataToArrayRoundtrip::class,
+        // Sins\Backend\Spatie\DerivedCollectionCast::class,
+        // Sins\Backend\Spatie\FlatFieldCluster::class,
+        // Sins\Backend\Spatie\HandKeyRemap::class,
+        // Sins\Backend\Spatie\HookMissingComputed::class,
+        // Sins\Backend\Spatie\InjectedServiceNotHidden::class,
+        // Sins\Backend\Spatie\ManualHydrationLoop::class,
+        // Sins\Backend\Spatie\ManualInputCast::class,
+        // Sins\Backend\Spatie\ManualOutputTransform::class,
+        // Sins\Backend\Spatie\NestedTypeMissingTypeScript::class,
+        // Sins\Backend\Spatie\NewDataObject::class,
+        // Sins\Backend\Spatie\NonFinalData::class,
+        // Sins\Backend\Spatie\NullToOptionalMap::class,
+        // Sins\Backend\Spatie\NullableWireObject::class,
+        // Sins\Backend\Spatie\PageObjectMissingTypeScript::class,
+        // Sins\Backend\Spatie\PlaceholderFilledData::class,
+        // Sins\Backend\Spatie\PreferOptionalCreate::class,
+        // Sins\Backend\Spatie\RedundantEnumUnwrap::class,
+        // Sins\Backend\Spatie\RedundantNativeCast::class,
+        // Sins\Backend\Spatie\RedundantNestedFrom::class,
+        // Sins\Backend\Spatie\ServiceLocationInPageObject::class,
+        // Sins\Backend\Spatie\TransformerWithoutTsType::class,
+        // Sins\Backend\StackedDocblock::class,
+        // Sins\Backend\StringMatchMirrorsEnum::class,
+        // Sins\Backend\SwallowCatch::class,
+        // Sins\Backend\TernaryStatement::class,
+        // Sins\Backend\TypeSwitch::class,
+        // Sins\Backend\UnnamedVocabularyLiteral::class,
+        // Sins\Backend\UselessPropertyHook::class,
+        // Sins\Backend\WrappingWithoutCause::class,
+
+        // ----------[ Frontend ]----------
+        // Sins\Frontend\CompoundInlineComponent::class,
+        // Sins\Frontend\ControlFlowOnElement::class,
+        // Sins\Frontend\DeepDataReach::class,
+        // Sins\Frontend\DeepNested::class,
+        // Sins\Frontend\DuplicateElement::class,
+        // Sins\Frontend\IndexAsKey::class,
+        // Sins\Frontend\LoopWithCondition::class,
+        // Sins\Frontend\MirroredServerType::class,
+        // Sins\Frontend\NearDuplicateElement::class,
+        // Sins\Frontend\PropDrilling::class,
+        // Sins\Frontend\PropMutation::class,
+        // Sins\Frontend\SwitchCase::class,
+        // Sins\Frontend\TypeScript\DefendedCertainField::class,
+        // Sins\Frontend\TypeScript\DuplicateFunction::class,
+        // Sins\Frontend\TypeScript\FalselyOptionalField::class,
+        // Sins\Frontend\TypeScript\NearDuplicateFunction::class,
+
+        // ----------[ Python ]----------
+        // Sins\Python\ArchaeologyComment::class,
+        // Sins\Python\AssembledTemplate::class,
+        // Sins\Python\BareStatePredicate::class,
+        // Sins\Python\BlankStringDefault::class,
+        // Sins\Python\BloatedDocblock::class,
+        // Sins\Python\CancelledFallback::class,
+        // Sins\Python\CeremonyDocblock::class,
+        // Sins\Python\CoalescedLoopSubject::class,
+        // Sins\Python\ComputedBooleanArgument::class,
+        // Sins\Python\ConditionalSpread::class,
+        // Sins\Python\ConditionalStatement::class,
+        // Sins\Python\ConstantClassEnum::class,
+        // Sins\Python\ConstantProperty::class,
+        // Sins\Python\ConstructorSideEffect::class,
+        // Sins\Python\ConvertedArgument::class,
+        // Sins\Python\CoupledFields::class,
+        // Sins\Python\DanglingDocReference::class,
+        // Sins\Python\DataClump::class,
+        // Sins\Python\DeepNesting::class,
+        // Sins\Python\DerivedArgument::class,
+        // Sins\Python\DictBag::class,
+        // Sins\Python\DictReturnBag::class,
+        // Sins\Python\DivergentTwin::class,
+        // Sins\Python\DuplicateFunction::class,
+        // Sins\Python\EnumCaseOrChain::class,
+        // Sins\Python\EnumValueMatch::class,
+        // Sins\Python\FeatureEnvy::class,
+        // Sins\Python\FlagArgument::class,
+        // Sins\Python\HandRolledReplace::class,
+        // Sins\Python\InLiteralsMirrorsEnum::class,
+        // Sins\Python\InventedDefault::class,
+        // Sins\Python\KeyedLookupEnvy::class,
+        // Sins\Python\LoopWrappedInIf::class,
+        // Sins\Python\MaskedInvariant::class,
+        // Sins\Python\MatchWildcardReturnsNone::class,
+        // Sins\Python\MemberAfterMethod::class,
+        // Sins\Python\MemberOutOfOrder::class,
+        // Sins\Python\MessageStringRaise::class,
+        // Sins\Python\MutableStaticState::class,
+        // Sins\Python\MutableValueObject::class,
+        // Sins\Python\NamespaceCycle::class,
+        // Sins\Python\NamespaceDependency::class,
+        // Sins\Python\NarratedCommand::class,
+        // Sins\Python\NearDuplicateFunction::class,
+        // Sins\Python\NegativeSpaceComment::class,
+        // Sins\Python\NestedConditional::class,
+        // Sins\Python\NullableCallback::class,
+        // Sins\Python\NullableRegistryLookup::class,
+        // Sins\Python\ParamResolvedFromParam::class,
+        // Sins\Python\PhantomNullable::class,
+        // Sins\Python\PlaceholderFilledData::class,
+        // Sins\Python\PositionalTupleReturn::class,
+        // Sins\Python\RaiseWithoutCause::class,
+        // Sins\Python\RawDecodedReturn::class,
+        // Sins\Python\RedundantElse::class,
+        // Sins\Python\RepeatedGuard::class,
+        // Sins\Python\RepeatedNamedCall::class,
+        // Sins\Python\RepeatedTypeGuard::class,
+        // Sins\Python\RestatedComment::class,
+        // Sins\Python\ScratchStateRestore::class,
+        // Sins\Python\ShortCircuitStatement::class,
+        // Sins\Python\StringMatchMirrorsEnum::class,
+        // Sins\Python\SubjectLadder::class,
+        // Sins\Python\SwallowedException::class,
+        // Sins\Python\TypeSwitch::class,
+        // Sins\Python\UnnamedVocabularyLiteral::class,
+
+        // ----------[ C# ]----------
+        // Sins\CSharp\ArchaeologyComment::class,
+        // Sins\CSharp\ArrayReturnBag::class,
+        // Sins\CSharp\AssembledTemplate::class,
+        // Sins\CSharp\BareStatePredicate::class,
+        // Sins\CSharp\BlankStringDefault::class,
+        // Sins\CSharp\BloatedDocblock::class,
+        // Sins\CSharp\CancelledCoalesce::class,
+        // Sins\CSharp\CeremonyDocblock::class,
+        // Sins\CSharp\CoalescedLoopSubject::class,
+        // Sins\CSharp\ConstClassEnum::class,
+        // Sins\CSharp\ConstructorSideEffect::class,
+        // Sins\CSharp\ConvertedArgument::class,
+        // Sins\CSharp\CoupledFields::class,
+        // Sins\CSharp\DanglingDocReference::class,
+        // Sins\CSharp\DataClump::class,
+        // Sins\CSharp\DeNulledFinder::class,
+        // Sins\CSharp\DeepNesting::class,
+        // Sins\CSharp\DerivedArgument::class,
+        // Sins\CSharp\DictionaryBag::class,
+        // Sins\CSharp\DuplicateMethod::class,
+        // Sins\CSharp\EnumCaseOrChain::class,
+        // Sins\CSharp\FeatureEnvy::class,
+        // Sins\CSharp\FlagArgument::class,
+        // Sins\CSharp\GenericThrow::class,
+        // Sins\CSharp\InArrayMirrorsEnum::class,
+        // Sins\CSharp\InlineThrow::class,
+        // Sins\CSharp\InventedDefault::class,
+        // Sins\CSharp\LoopWrappedInIf::class,
+        // Sins\CSharp\MatchDefaultReturnsNull::class,
+        // Sins\CSharp\MemberAfterMethod::class,
+        // Sins\CSharp\MemberOutOfOrder::class,
+        // Sins\CSharp\MutableStaticState::class,
+        // Sins\CSharp\MutableValueObject::class,
+        // Sins\CSharp\NamespaceCycle::class,
+        // Sins\CSharp\NamespaceDependency::class,
+        // Sins\CSharp\NearDuplicateMethod::class,
+        // Sins\CSharp\NegativeSpaceComment::class,
+        // Sins\CSharp\NestedTernary::class,
+        // Sins\CSharp\NonCountingFor::class,
+        // Sins\CSharp\NullForgiven::class,
+        // Sins\CSharp\ParamResolvedFromParam::class,
+        // Sins\CSharp\PlaceholderFilledData::class,
+        // Sins\CSharp\PositionalTupleReturn::class,
+        // Sins\CSharp\RedundantElse::class,
+        // Sins\CSharp\RepeatedGuard::class,
+        // Sins\CSharp\RepeatedNamedCall::class,
+        // Sins\CSharp\RepeatedTypeGuard::class,
+        // Sins\CSharp\RestatedComment::class,
+        // Sins\CSharp\StringMirrorsEnum::class,
+        // Sins\CSharp\SubjectLadder::class,
+        // Sins\CSharp\SwallowedException::class,
+        // Sins\CSharp\TypeSwitch::class,
+        // Sins\CSharp\UnnamedVocabularyLiteral::class,
+        // Sins\CSharp\WrappingWithoutCause::class,
+    );
+};
+
+/**
+ * Uncomment a line to disable that Claude Code hook (a wired nudge). New entries are appended on composer update; your edits are kept.
+ */
+$disabledHooks = function (Config $config): void {
+    $config->disable(
+        // Hooks\Handlers\JudgeReminder::class,
+        // Hooks\Handlers\ModelChoiceReminder::class,
+        // Hooks\Handlers\SessionReset::class,
+        // Hooks\Handlers\SharedBranchGate::class,
+        // Hooks\Handlers\SkillReminder::class,
+        // Hooks\Handlers\SourceReminder::class,
+    );
+};
+
+/**
+ * Uncomment a line to stop publishing into that agent (its skills, its instructions file, its hooks). New entries are appended on composer update; your edits are kept.
+ */
+$disabledAgents = function (Config $config): void {
+    $config->disable(
+        // Agents\ClaudeAgent::class,
+        // Agents\CodexAgent::class,
+    );
+};
+
+return function (Config $config) use ($disabledSkills, $disabledSins, $disabledHooks, $disabledAgents): void {
+    $config->paths('src');
+
+    $config->disable(
+        // \JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,
+    );
+    $disabledSkills($config);
+    $disabledSins($config);
+    $disabledHooks($config);
+    $disabledAgents($config);
+};
+
+=== created .commandments/published-skills
+# The skills code-commandments published here, so it can retire its own and leave yours
+# alone. Regenerated on every sync; deleting it only means a retired skill lingers.
+commandments
+commandments-backend-fix-at-the-source
+commandments-backend-guard-clauses-and-flow
+commandments-backend-value-objects
+commandments-backend-spatie-data
+commandments-backend-spatie-data-hydration
+commandments-backend-laravel-idioms
+commandments-backend-page-objects
+commandments-backend-documentation
+commandments-backend-absence
+commandments-backend-class-layout
+commandments-backend-exceptions
+commandments-backend-method-mood
+commandments-backend-enums-with-behaviour
+commandments-backend-role-vocabulary
+commandments-backend-tell-dont-ask
+commandments-backend-type-honesty
+commandments-backend-pass-the-object
+commandments-backend-concurrent-state
+commandments-backend-templates
+commandments-backend-route-actions
+commandments-frontend-vue-components
+commandments-backend-repeated-call-helper
+commandments-frontend-vue-control-flow
+commandments-backend-dependency-direction
+commandments-backend-behaviour-per-method
+commandments-frontend-mirrored-server-type
+commandments-typescript-absence
+commandments-typescript-duplication
+commandments-python-duplication
+commandments-python-flow
+commandments-csharp-duplication
+commandments-python-exceptions
+commandments-csharp-flow
+commandments-python-absence
+commandments-csharp-exceptions
+commandments-python-value-objects
+commandments-csharp-absence
+commandments-python-enums
+commandments-csharp-value-objects
+commandments-python-fix-at-the-source
+commandments-csharp-enums
+commandments-python-type-honesty
+commandments-csharp-fix-at-the-source
+commandments-python-class-layout
+commandments-csharp-type-honesty
+commandments-python-method-mood
+commandments-csharp-class-layout
+commandments-python-behaviour-per-method
+commandments-csharp-method-mood
+commandments-python-repeated-call-helper
+commandments-csharp-behaviour-per-method
+commandments-python-templates
+commandments-csharp-repeated-call-helper
+commandments-python-tell-dont-ask
+commandments-csharp-templates
+commandments-python-documentation
+commandments-csharp-tell-dont-ask
+commandments-python-dependency-direction
+commandments-csharp-documentation
+commandments-python-pass-the-object
+commandments-csharp-dependency-direction
+commandments-python-role-vocabulary
+commandments-csharp-pass-the-object
+commandments-csharp-role-vocabulary
+commandments-writing-detectors
+
+=== created .gitignore
+
+# code-commandments skill library (regenerated on composer update)
+.agents/skills/commandments-*/
+
+# code-commandments published skills (regenerated on composer update)
+.claude/skills/commandments-*
+
+=== created AGENTS.md
+# AGENTS
+
+<!-- BEGIN: code-commandments briefing (auto-generated, run `composer update`) -->
+## Skills — load before you work
+
+Code style in this project lives in the code-commandments skills, published to
+`.agents/skills/` and loaded **by the exact id in each bullet below** —
+`commandments-backend-<name>` / `commandments-frontend-<name>` (e.g.
+`commandments-backend-absence`). HOW you load one is your own business: some agents
+have a tool for it, some a `/`-command, some want the file read. The id is the same
+either way, and so is the rule — read the relevant skill before writing or reviewing
+code. Two tiers.
+
+### ⚠️ THE MOST IMPORTANT RULE — TRACE TO THE SOURCE
+
+**Every sin has an origin. Fix it THERE, never where it surfaces.** A finding is a
+symptom; before you change a line, trace upstream to where the bad value, missing
+type, or wrong shape is BORN, and fix it at that origin. Then the symptom — and
+usually several others you hadn't found — disappears on its own.
+
+This is the rule the detectors exist to serve. Honour it on EVERY fix:
+
+- Do NOT silence the symptom. A `?? default`, a cast, a null-check, a wrapper, a
+  constructor override, a try/catch, or removing a type to satisfy a detector is
+  laundering the problem, not solving it — and it grows the code while hiding the
+  smell. That is the wrong move even when the real fix is awkward to reach.
+- Ask "where does this value/shape come from?" and walk back until you reach the
+  birthplace. Fix is at the birthplace. If the honest fix touches many call sites,
+  touch them — that breadth IS the bug surfacing, not a reason to wrap it.
+- If a finding is a genuine false positive, say so and why — and **report it** so
+  it gets fixed upstream instead of silently ignored, ALWAYS referencing the code:
+  `vendor/bin/commandments report --detector=NAME --reason="…" --ref=PATH:LINE`
+  (repeat `--ref` for EVERY file involved — a bug spanning files references each).
+  Design-smell detectors REQUIRE a `--best-design="…"`: the cleanest design you can
+  conceive for this code. It is the litmus — a report is valid ONLY if the flagged
+  code already IS that design; if you can name anything cleaner, that design is the
+  owed fix, so implement it and do not file. The reason may not hedge; a "correct,
+  but…" is rejected. Never rationalise a real finding as "pre-existing baseline."
+- **A report is NOT a deferral.** A detector-report claims ONE thing: the flagged
+  code is CORRECT under the architecture and the detector is wrong. If the finding
+  is right and an honest fix exists, you MUST implement it — however far it
+  cascades: many call sites, a data migration, a refactor that ripples. That
+  breadth IS the point; it is the debt surfacing, not a reason to file. The moment
+  your report would contain "the honest fix is real, but…" — stop: everything
+  after "but" is scope you own. Cost, timing, "needs its own change", or "risks
+  breaking existing data" are never grounds for a report; they are the work.
+
+**You are ENCOURAGED to make the tool better — not just when a finding is clearly
+wrong.** Surface every improvement idea: a rule that's missing or should catch more,
+a false positive, OR a `repent` auto-fix that did the wrong thing or left a rough
+edge. Two channels, and using them is expected, not exceptional:
+
+- `vendor/bin/commandments report --reason="…" --ref=PATH:LINE [--ref=…]` — a bug or
+  false positive (a wrong finding, or a broken/incorrect `repent` result). A broken
+  auto-fix is itself a bug: report it, referencing both the source and the bad output.
+- `vendor/bin/commandments feature-request --title="…" --reason="…"` — a new or
+  changed rule.
+
+Reporting false positives, flagging bad auto-fixes, and requesting rules is how the
+disciplines get sharper — do it whenever something is wrong or could be better, don't
+just work around it.
+
+**Frozen files — a file that is deliberately immutable.** A few files must not
+change even though they carry sins: a frozen graph migration whose body mirrors
+its siblings on purpose, a snapshot committed for the record, generated code
+checked into the tree. Mark such a file frozen:
+`vendor/bin/commandments freeze <path>` (or add `#[Frozen]` / an `@frozen`
+docblock tag by hand). A frozen file is still **scanned** — the call graph,
+provenance and type resolution read it, so cross-file findings elsewhere stay
+correct — but it is never a **target**: it is never flagged, and a repenter
+never rewrites it (a cross-file fix whose edits would touch a frozen file is
+dropped whole, never half-applied). Lift it with
+`vendor/bin/commandments unfreeze <path>`. **Freeze only what is genuinely
+immutable — never to silence a sin you could fix.** A real finding you disagree
+with is a `report`; a rule you want off is `disable`; freezing is for files that
+by their nature cannot move.
+
+When in doubt, load `commandments-backend-fix-at-the-source` and re-read it. It is the parent move
+behind every other skill.
+
+**Leave it cleaner than you found it — the gentleman's duty.** When you touch a
+file (or even read past a sin while working in it), fix it at the source per the
+rule above. Every finding on code you come across is yours to resolve.
+
+**The disciplines.** Each one is a skill, and each says in its own description WHEN to
+reach for it — the syntax you are about to write, the decision you are about to make. Load
+one when its subject comes up, and load it again rather than working from memory: a
+compaction drops instructions silently while leaving you the impression they are still
+there. A `judge` finding names the skill that fixes it, so you are never guessing.
+
+Load **`commandments-backend-fix-at-the-source`** before your first edit whatever else you
+do — every other discipline defers to it. And **`commandments`** is this whole list as a
+loadable skill, for when you want the map in front of you.
+
+**CONSTANTLY IN PLAY — these fire on ordinary, everyday code, so you will reach for them
+most:**
+
+- **`commandments-backend-fix-at-the-source`** — the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made.
+- **`commandments-backend-guard-clauses-and-flow`** — validate preconditions at the TOP (early return/throw), flat body, happy path last; never bury a check inline.
+- **`commandments-backend-value-objects`** — give related data a type: no loose `array<string,mixed>` bags, no data clumps, no primitive obsession. (Decide the type; then `spatie-data` is how to write it.)
+- **`commandments-backend-spatie-data`** — how to write and construct Spatie `Data` classes — `::from()` not `new`, total types, sealed and readonly.
+- **`commandments-backend-spatie-data-hydration`** — construct and consume `Data` objects without re-doing what the class declares — pass raw input, let `::from`/casts/collections build.
+- **`commandments-backend-laravel-idioms`** — typed request/bag access (never raw `->input()`/`->get()`), required constructor DI (never `app()`/facade), Eloquent scopes + intention-revealing model mutation methods.
+- **`commandments-backend-page-objects`** — the composed `Data` a controller returns for a page — container-injected + `#[Hidden]` collaborators, computed slots over a fat constructor, transformers for output shape.
+- **`commandments-backend-documentation`** — concise, present-tense docs; rare inline comments; never narrate the past.
+- **`commandments-backend-absence`** — modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw).
+- **`commandments-backend-class-layout`** — state at the top — traits, constants, properties and hooks above the constructor, methods after.
+- **`commandments-backend-method-mood`** — commands are imperatives (`hide()`), state predicates are questions (`isHidden()`).
+- **`commandments-backend-type-honesty`** — a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`.
+- **`commandments-backend-route-actions`** — route actions are thin, single entry points — no controller wrapping another, no duplicate actions, no two routes to one action.
+- **`commandments-backend-repeated-call-helper`** — a repeated `with`-style call passing the same named argument belongs as a named method on the receiver's type.
+- **`commandments-python-flow`** — check preconditions at the top and leave (`return`/`raise`/`continue`), keep the body flat, no `else` after an exit, dispatch instead of an `elif` ladder over one subject.
+- **`commandments-csharp-flow`** — check preconditions at the top and leave (`return`/`throw`/`continue`), keep the body flat, no `else` after an exit, a `switch` expression or polymorphism instead of an `else if` ladder over one subject.
+- **`commandments-python-absence`** — decide absence where the value is born — raise, return an empty collection, or a Null Object — instead of an `X | None` every caller re-checks; never `or ""` a required value.
+- **`commandments-python-value-objects`** — give related data a type — a frozen dataclass — instead of a dict with string keys passed around, or values that always travel together.
+- **`commandments-csharp-absence`** — decide absence where the value is born — throw, return an empty collection, or a Null Object — with nullable reference types saying honestly what may be missing; never `?? ""` a required value, never `!` to silence the compiler.
+- **`commandments-csharp-value-objects`** — give related data a type — an immutable `record` built at the edge — instead of a dictionary read by fixed string keys, or values that always travel together.
+- **`commandments-python-fix-at-the-source`** — trace a value, an effect or a piece of state to where it starts, and fix it there.
+- **`commandments-python-type-honesty`** — a type must not lie: don't fake optionality with `| None` a value never is, or keep per-call scratch state on `self`.
+- **`commandments-csharp-fix-at-the-source`** — trace a value, an effect or a piece of state back to where it starts, and fix it there.
+- **`commandments-python-class-layout`** — state at the top — constants, class attributes and fields above `__init__`, methods after.
+- **`commandments-csharp-type-honesty`** — a type must not lie: no `T?` a value never is, no `!` to silence the compiler, no per-call scratch state kept on the instance.
+- **`commandments-python-method-mood`** — commands are imperatives (`hide()`), state predicates are questions (`is_hidden()`).
+- **`commandments-csharp-class-layout`** — state at the top — constants, fields and stored properties above the constructor, methods after.
+- **`commandments-csharp-method-mood`** — commands are orders (`Hide()`), state checks are questions (`IsHidden`, `HasParent`).
+- **`commandments-python-repeated-call-helper`** — a keyword call, a guard or a type check written the same way at 2+ sites belongs as one named method on the type it is about.
+- **`commandments-csharp-repeated-call-helper`** — a call, a guard or a type check written the same way at 2+ sites belongs as one named member on the type it is about.
+- **`commandments-python-documentation`** — concise, present-tense docstrings; rare comments; never narrate the past.
+- **`commandments-csharp-documentation`** — short, present-tense doc comments; rare comments; never narrate the past.
+
+**ON CONTACT — load the moment the work touches the subject:**
+
+- **`commandments-backend-exceptions`** — throwing or catching: named `::for()` factory exceptions, never swallow a failure.
+- **`commandments-backend-enums-with-behaviour`** — a closed set of values: seal it as a native backed enum, put the per-case logic on the enum (not a `match` at every call site).
+- **`commandments-backend-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract.
+- **`commandments-backend-tell-dont-ask`** — behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). A Strategy over flat scalar fields is the exception.
+- **`commandments-backend-pass-the-object`** — demand the resolved type you need, not an id plus its container: a method that takes `(Workflow $workflow, string $nodeId)` then unpacks `$workflow->graph->nodeById($nodeId)` should take the node — the caller resolves once and passes the object (and owns the not-found failure).
+- **`commandments-backend-concurrent-state`** — state shared across requests/workers (`::for($id): Concurrent<self>`).
+- **`commandments-backend-templates`** — a multi-line string is a heredoc that SHOWS its output, never a list of line fragments joined.
+- **`commandments-frontend-vue-components`** — extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop.
+- **`commandments-frontend-vue-control-flow`** — dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject.
+- **`commandments-backend-dependency-direction`** — a declared layer may only reference the layers it declared it may use — down the stack, never back up, never sideways; the direction is enforced from the project's own layer declaration.
+- **`commandments-backend-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two methods share one name — split them and let the call site say which it wants, instead of passing a bare `true`.
+- **`commandments-frontend-mirrored-server-type`** — a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one.
+- **`commandments-typescript-absence`** — model absence honestly — one spelling for missing, no `??` that invents a value, no `?.` on something always set.
+- **`commandments-typescript-duplication`** — a function body written twice becomes one shared function or composable, parameterised by what differs.
+- **`commandments-python-duplication`** — a function body written twice becomes one shared function, parameterised by what differs.
+- **`commandments-csharp-duplication`** — a method body written twice becomes one shared method, parameterised by what differs.
+- **`commandments-python-exceptions`** — raise named exceptions built by a classmethod factory, never swallow a failure, and keep the cause with `raise … from`.
+- **`commandments-csharp-exceptions`** — throw named exceptions built by a static factory, never swallow a failure, and keep the cause as the inner exception.
+- **`commandments-python-enums`** — a closed set of values is an `Enum` or `StrEnum` carrying the per-case knowledge as methods, not string constants compared at every call site.
+- **`commandments-csharp-enums`** — a closed set of values is an `enum`, its per-case knowledge in one exhaustive `switch` expression beside it — not string constants compared at every call site.
+- **`commandments-python-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two functions share one name — split them and let the call say which it wants, instead of passing a bare `True`.
+- **`commandments-csharp-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two methods share one name — split them and let the call say which it wants, instead of passing a bare `true`.
+- **`commandments-python-templates`** — a multi-line string is a triple-quoted f-string that SHOWS its output, never a list of line fragments joined.
+- **`commandments-python-tell-dont-ask`** — behaviour belongs with its data: move a loop over one object's collection onto that object, and replace an `isinstance` ladder with a method each type answers.
+- **`commandments-csharp-templates`** — a multi-line string is a raw string literal that SHOWS its output, never a list of line fragments joined.
+- **`commandments-csharp-tell-dont-ask`** — behaviour belongs with its data: move a loop over one object's collection onto that object, and replace a type `switch` with a member each type answers.
+- **`commandments-python-dependency-direction`** — a declared layer may only import the layers it declared it may use — down the stack, never back up, never sideways, and never in a cycle.
+- **`commandments-python-pass-the-object`** — demand the resolved object you need, not an id plus its container — the caller resolves once and passes the object (and owns the not-found failure).
+- **`commandments-csharp-dependency-direction`** — a declared layer may only use the layers it declared it may use — down the stack, never back up, never sideways, and never in a cycle.
+- **`commandments-python-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver` and honour the contract — a registry `get` raises on a miss.
+- **`commandments-csharp-pass-the-object`** — demand the resolved object you need, not an id plus its container — the caller resolves once and passes the object (and owns the not-found failure).
+- **`commandments-csharp-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver` and honour the contract — a registry `Get` throws on a miss.
+
+**Finding and fixing sins — the checklist workflow.** Run
+`vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the
+scan: judge runs EVERY engine over whatever you point it at, so a path holding
+frontend sources (`judge resources/js`) is judged as the frontend
+— **Vue components and plain TypeScript alike** — a path holding Python is judged as
+Python, one holding C# as C#, and any subdirectory of your
+own tree scopes to that subtree. (Also `--skill=NAME` to scope to one group; `--branch`
+for files new/changed vs `main`; `--changes` for uncommitted changes.) A full scan
+is slow, so it writes the findings to a checklist — your session's `sins/sins.md`,
+under `.commandments/sessions/<id>/`, or under the journal plugin's data folder
+when the agent journal runs the hooks (the run prints the exact path) — and that
+file, not repeated scans, is how you work:
+
+1. Open the checklist judge wrote. Each line is one sin: `file:line`, the scope, and
+   the detector, grouped under the skill that teaches the fix.
+2. Go top to bottom, ONE line at a time: read that section's skill, fix the sin at
+   the source, then **delete that line from the file.** Do not re-run judge, re-scan,
+   or re-verify between fixes — the open checklist is your only source of truth.
+3. Work **wave by wave.** When the file is EMPTY, run judge again. If your fixes
+   rippled into other files it writes a fresh worklist — a new wave; work it the same
+   way. Repeat, judging ONLY between waves, until a run is clean and deletes the file.
+
+**Don't know what a finding MEANS? Ask.** A checklist line names its detector and
+nothing else, so when you do not recognise a rule — or are about to argue with one —
+run `vendor/bin/commandments info <sin>` before you touch the code. It prints what
+the rule flags, WHY it is a sin in the skill's own words, how it is fixed, a worked
+example, and the exact commands that act on it (fix it, find it, turn it off, report
+it). The name is matched leniently, so the detector name straight off the checklist
+works: `info ArrayBagDetector`, `info array-bag`, `info ArrayBag`. Add `--full` for
+the skill's whole principle. Guessing at a rule you have not read is how a finding
+gets "fixed" by silencing it.
+
+**Auto-fixable sins.** Some sins have a scribe that fixes them. The report
+advertises the command — typically `vendor/bin/commandments repent --repent=latest`
+(optionally `--sin=NAME` to fix just one). `--repent=latest` scopes repent to the
+last judge run's checklist, so it fixes exactly what was reported; review the diff
+with `--dry-run` first.
+
+**Write commandments of your OWN.** The shipped rules are not the ceiling. When
+this project has a discipline of its own — a convention you keep restating in
+review, a mistake that keeps coming back, anything the shipped set doesn't
+catch — it can become a rule that judges every file from then on. Scaffold it:
+
+`vendor/bin/commandments make <Name>` (add `--engine=frontend` for a rule over
+your frontend sources — a Vue component or a TypeScript module)
+
+That writes the three classes a commandment is made of — the skill that teaches
+it, the sin that names it, the detector that finds it — into
+`.commandments/custom/`, registers the detector in this project's config, and
+prints the rest of the process. The folder is committed like any other source:
+these are the project's rules. **Load the `commandments-writing-detectors`
+skill before you write one** — it lists the engine predicates that already
+exist (hand-rolling one that does is the usual first mistake) and teaches the
+probe-then-calibrate discipline that proves a detector fires on what you meant.
+Reach for this whenever the user asks for a new rule, check, or detector.
+
+**Scaffoldable sins.** A few sins are fixed by reaching for a generic helper the
+project may not have yet (e.g. a no-op invokable for a nullable callback). For
+those the report advertises `vendor/bin/commandments scaffold --sin=NAME`, which
+generates the helper into your source root with its namespace set. Scaffold the
+construct, then write the fix that uses it (`scaffold` creates the helper; `repent`
+fixes call sites).
+<!-- END: code-commandments briefing -->
+
+=== created CLAUDE.md
+# CLAUDE
+
+<!-- BEGIN: code-commandments skills (auto-generated, run `composer update`) -->
+@AGENTS.md
+
+## Working here as Claude Code
+
+The briefing above is the canon, shared with every agent. These are the parts of it
+that have a specific name in this harness:
+
+- **Load a skill with the Skill tool**, by the exact id in the briefing's bullets —
+  e.g. `commandments-backend-absence`. The published skills are linked into
+  `.claude/skills/`, so they also autocomplete as `/`-commands.
+
+**The disciplines here are ENFORCED, not just written down.** Hooks are wired into
+`.claude/settings.json`: the cardinal rule resurfaces as you work, `judge` is nudged
+before risky commands and on stop. That is a property of this agent alone — under an
+agent with no hook protocol the same disciplines are documents you are asked to follow,
+and nothing checks that you did.
+<!-- END: code-commandments skills -->
+
+=== changed composer.json
+{
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "scripts": {
+        "post-update-cmd": [
+            "@php vendor/bin/commandments sync"
+        ],
+        "post-install-cmd": [
+            "@php vendor/bin/commandments sync"
+        ]
+    }
+}
+

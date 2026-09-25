@@ -29,3 +29,6 @@ func (BoundaryDuplicatedOperationDetector) Find(codebase *engine.Codebase) []eng
 		}).
 		Get()
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (BoundaryDuplicatedOperationDetector) CrossFile() {}

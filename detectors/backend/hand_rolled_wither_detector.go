@@ -31,3 +31,6 @@ func (HandRolledWitherDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(php.Node.IsWitherRebuild)).
 		Get()
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (HandRolledWitherDetector) CrossFile() {}

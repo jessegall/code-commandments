@@ -234,7 +234,6 @@ $tables = [
 
 $embedded = [
     'hooks-table' => \JesseGall\CodeCommandments\Cli\Doc\HookCatalog::table(),
-    'commands-table' => \JesseGall\CodeCommandments\Cli\Doc\CommandTable::overview(),
     'agents-table' => \JesseGall\CodeCommandments\Cli\Doc\AgentCatalog::table(),
 ];
 

@@ -47,3 +47,6 @@ func isDeNulledByEveryCaller(finder cs.Node, program *cs.Program) bool {
 
 	return len(callers) >= 2 && !slices.ContainsFunc(callers, func(call cs.Node) bool { return !call.ResultIsAssertedPresent() })
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (DeNulledFinderDetector) CrossFile() {}

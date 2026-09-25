@@ -45,3 +45,6 @@ func takesABoundary(codebase *engine.Codebase, method engine.Match) bool {
 
 	return false
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (ParamResolvedFromParamDetector) CrossFile() {}

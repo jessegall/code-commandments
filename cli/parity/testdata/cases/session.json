@@ -1,6 +1,6 @@
 [
-  {"name": "session-help", "args": ["session", "--help"]},
-  {"name": "session-help-verb", "args": ["help", "session"]},
+  {"name": "session-help", "args": ["session", "--help"], "setup": ["printf '{}' > composer.json"]},
+  {"name": "session-help-verb", "args": ["help", "session"], "setup": ["printf '{}' > composer.json"]},
   {"name": "session-unknown-option", "args": ["session", "--nope"]},
   {"name": "session-nothing-written", "args": ["session"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
   {"name": "session-default-folder", "args": ["session"]},

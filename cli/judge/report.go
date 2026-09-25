@@ -1,6 +1,7 @@
 package judge
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"sort"
 	"strconv"
 	"strings"
@@ -111,7 +112,7 @@ func (r Report) Console() string {
 
 	lines = append(lines,
 		"\033[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.\033[0m",
-		"\033[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.\033[0m",
+		"\033[2m↳ don't recognise a rule above? `"+binary.Here()+" info <sin>` — what it flags, why it is a sin, the fix, an example.\033[0m",
 	)
 
 	return strings.Join(lines, "\n")
@@ -121,7 +122,7 @@ func (r Report) Console() string {
 func (r Report) Checklist() string {
 	var out strings.Builder
 
-	out.WriteString("# Code Commandments — " + strconv.Itoa(r.total) + " sins to fix\n\n" + r.skipped.Markdown() + checklistPreamble)
+	out.WriteString("# Code Commandments — " + strconv.Itoa(r.total) + " sins to fix\n\n" + r.skipped.Markdown() + checklistPreamble())
 
 	for _, slug := range r.skills {
 		findings := r.bySkill[slug]
@@ -156,33 +157,35 @@ func (r Report) Checklist() string {
 }
 
 // checklistPreamble is how the checklist tells its reader to work it.
-const checklistPreamble = "> 🔱 **The rule above all — `fix-at-the-source`.** Every sin below is a SYMPTOM. " +
-	"Before you change a line, trace the value to where it is BORN and fix it there; " +
-	"the symptom (and often others) then disappears on its own. Never silence it with a " +
-	"`?? default`, a cast, or a null-check.\n\n" +
-	"**This file is your worklist. Work it straight down, deleting as you go — do NOT " +
-	"stop to re-check.** For each line, top to bottom, do exactly this:\n\n" +
-	"1. **LOAD the skill named in the section header.** It " +
-	"teaches the fix; do NOT fix from memory. Even if you believe you already loaded it, treat " +
-	"it as NOT loaded (a context compaction may have silently dropped its instructions while " +
-	"leaving you the impression they're still there) and load it again before touching the " +
-	"section. Once per section is enough.\n" +
-	"   _Don't recognise the rule, or about to argue with it? Run " +
-	"`vendor/bin/commandments info <sin>` first — it prints what the rule flags, WHY it is a " +
-	"sin, how it is fixed, and a worked example. The detector name from the line works as the " +
-	"argument. Guessing at a rule you have not read is how a finding gets silenced instead of " +
-	"fixed._\n" +
-	"2. Open the `file:line` and fix the sin at its source.\n" +
-	"3. **Delete that line from this file.** Nothing else — no tick, no mark, no " +
-	"strike-through. The deleted line IS the record that it's fixed.\n\n" +
-	"**Do NOT re-run `judge`, re-scan, or re-verify between fixes.** That is slow and " +
-	"pointless: the shrinking file is your only source of truth, and each deleted line " +
-	"is its own confirmation. Do not pause to check your work — just fix, delete, and " +
-	"move to the next line until none remain.\n\n" +
-	"Work **wave by wave.** ONLY when this list is EMPTY, run `commandments judge` again. " +
-	"If your fixes rippled into other files, it writes a fresh worklist — a new wave; work " +
-	"it exactly the same way (fix, delete, no re-checks between). Repeat, judging only " +
-	"between waves, until a run is clean and deletes this file.\n"
+func checklistPreamble() string {
+	return "> 🔱 **The rule above all — `fix-at-the-source`.** Every sin below is a SYMPTOM. " +
+		"Before you change a line, trace the value to where it is BORN and fix it there; " +
+		"the symptom (and often others) then disappears on its own. Never silence it with a " +
+		"`?? default`, a cast, or a null-check.\n\n" +
+		"**This file is your worklist. Work it straight down, deleting as you go — do NOT " +
+		"stop to re-check.** For each line, top to bottom, do exactly this:\n\n" +
+		"1. **LOAD the skill named in the section header.** It " +
+		"teaches the fix; do NOT fix from memory. Even if you believe you already loaded it, treat " +
+		"it as NOT loaded (a context compaction may have silently dropped its instructions while " +
+		"leaving you the impression they're still there) and load it again before touching the " +
+		"section. Once per section is enough.\n" +
+		"   _Don't recognise the rule, or about to argue with it? Run " +
+		"`" + binary.Here() + " info <sin>` first — it prints what the rule flags, WHY it is a " +
+		"sin, how it is fixed, and a worked example. The detector name from the line works as the " +
+		"argument. Guessing at a rule you have not read is how a finding gets silenced instead of " +
+		"fixed._\n" +
+		"2. Open the `file:line` and fix the sin at its source.\n" +
+		"3. **Delete that line from this file.** Nothing else — no tick, no mark, no " +
+		"strike-through. The deleted line IS the record that it's fixed.\n\n" +
+		"**Do NOT re-run `judge`, re-scan, or re-verify between fixes.** That is slow and " +
+		"pointless: the shrinking file is your only source of truth, and each deleted line " +
+		"is its own confirmation. Do not pause to check your work — just fix, delete, and " +
+		"move to the next line until none remain.\n\n" +
+		"Work **wave by wave.** ONLY when this list is EMPTY, run `commandments judge` again. " +
+		"If your fixes rippled into other files, it writes a fresh worklist — a new wave; work " +
+		"it exactly the same way (fix, delete, no re-checks between). Repeat, judging only " +
+		"between waves, until a run is clean and deletes this file.\n"
+}
 
 // loadInstruction tells the reader to load the skill that teaches a fix.
 func loadInstruction(slug string) string {

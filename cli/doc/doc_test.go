@@ -2,9 +2,8 @@ package doc
 
 import (
 	"errors"
+	"github.com/jessegall/code-commandments/cli/block"
 	"os"
-	"slices"
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/commands"
@@ -36,20 +35,13 @@ func TestAMarkerThatCannotBeTrustedIsRefused(t *testing.T) {
 		"<!-- BEGIN: commands:x (a) -->\n":                           "it has a BEGIN marker with no END",
 		"<!-- END: commands:x -->\n<!-- BEGIN: commands:x (a) -->\n": "its END marker stands above its BEGIN",
 	} {
-		_, _, err := Replace(document, "commands:x", "y")
+		_, _, err := block.Replace(document, "commands:x", "y")
 
-		var malformed *Malformed
+		var malformed *block.Malformed
 		if !errors.As(err, &malformed) || malformed.Reason != reason {
 			t.Errorf("%q: %v", document, err)
 		}
 	}
-}
-
-// awaited are the verbs the README's table lists that ticket 10 brings to the Go binary: sync, install and
-// the hook commands.
-var awaited = []string{
-	"sync", "install", "judge-reminder", "hooks", "journal-hook", "journal-serve", "journal-config",
-	"journal-scan", "journal-skills", "hook",
 }
 
 func TestTheReadmeCommandTableIsWhatTheGoHelpProjects(t *testing.T) {
@@ -58,35 +50,12 @@ func TestTheReadmeCommandTableIsWhatTheGoHelpProjects(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	overview := Overview(commands.Kernel("dev"))
-
-	for _, verb := range awaited {
-		if strings.Contains(overview, "| `commandments "+verb+"`") || strings.Contains(overview, "| `commandments "+verb+" ") {
-			t.Errorf("the Go binary documents %s now: drop it from awaited", verb)
-		}
-	}
-
-	projected, found, err := Replace(withoutAwaited(string(raw)), "commands-table", "\n"+overview)
+	projected, found, err := block.Replace(string(raw), "commands-table", "\n"+Overview(commands.Kernel("dev")))
 	if err != nil || !found {
 		t.Fatalf("no commands-table block: %v", err)
 	}
 
-	if projected != withoutAwaited(string(raw)) {
-		t.Error("the README's command table differs from the Go help's, beyond ticket 10's verbs")
+	if projected != string(raw) {
+		t.Error("the README's command table differs from the Go help's")
 	}
-}
-
-// withoutAwaited is the document less the table rows of the verbs ticket 10 brings.
-func withoutAwaited(document string) string {
-	var kept []string
-
-	for _, line := range strings.Split(document, "\n") {
-		if !slices.ContainsFunc(awaited, func(verb string) bool {
-			return strings.HasPrefix(line, "| `commandments "+verb+"`") || strings.HasPrefix(line, "| `commandments "+verb+" ")
-		}) {
-			kept = append(kept, line)
-		}
-	}
-
-	return strings.Join(kept, "\n")
 }

@@ -1,0 +1,152 @@
+package agents
+
+import (
+	"errors"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"reflect"
+	"strings"
+	"testing"
+
+	"github.com/jessegall/code-commandments/cli/config"
+)
+
+// injectedByPHP runs the PHP tool's own Instructions over the file and answers what it left there.
+func injectedByPHP(t *testing.T, path, root, name, body string) string {
+	t.Helper()
+
+	if _, err := exec.LookPath("php"); err != nil {
+		t.Fatal("no php to inject with the PHP tool")
+	}
+
+	repo, _ := filepath.Abs("../..")
+	script := `require '` + repo + `/vendor/autoload.php';
+(new \JesseGall\CodeCommandments\Agents\Instructions($argv[1], $argv[2]))->inject($argv[3], $argv[4]);`
+
+	if out, err := exec.Command("php", "-r", script, "--", path, root, name, body).CombinedOutput(); err != nil {
+		t.Fatalf("php: %v\n%s", err, out)
+	}
+
+	contents, _ := os.ReadFile(path)
+
+	return string(contents)
+}
+
+func TestInstructionsAreInjectedAsThePHPToolInjectsThem(t *testing.T) {
+	block := "<!-- BEGIN: briefing (auto-generated, run `composer update`) -->\nold\n<!-- END: briefing -->"
+
+	for name, document := range map[string]*string{
+		"no file":                 nil,
+		"a file with no block":    ptr("# Mine\n\nMy own words.\n"),
+		"a stale block":           ptr("# Mine\n\n" + block + "\n\nAfter.\n"),
+		"windows line endings":    ptr("# Mine\r\n\r\n" + strings.ReplaceAll(block, "\n", "\r\n") + "\r\n"),
+		"a byte-order mark":       ptr(bom + "# Mine\n\n" + block + "\n"),
+		"no trailing newline":     ptr("# Mine"),
+		"a block quoted in prose": ptr("# Mine\n\nWrite `<!-- END: briefing -->` to close it.\n"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			php, golang := t.TempDir(), t.TempDir()
+
+			for _, dir := range []string{php, golang} {
+				if document != nil {
+					must(t, os.WriteFile(filepath.Join(dir, "AGENTS.md"), []byte(*document), 0o644))
+				}
+			}
+
+			want := injectedByPHP(t, filepath.Join(php, "AGENTS.md"), php, "briefing", "\nThe canon.\n\n")
+			must(t, InstructionsAt(filepath.Join(golang, "AGENTS.md"), golang).Inject("briefing", "\nThe canon.\n\n"))
+
+			if got, _ := os.ReadFile(filepath.Join(golang, "AGENTS.md")); string(got) != want {
+				t.Errorf("injected\n%q\nthe PHP tool injected\n%q", got, want)
+			}
+		})
+	}
+}
+
+func TestMarkersThatCannotBeTrustedRefuseTheInjection(t *testing.T) {
+	begin, end := "<!-- BEGIN: briefing (auto-generated, run `composer update`) -->", "<!-- END: briefing -->"
+
+	for document, reason := range map[string]string{
+		begin + "\n" + end + "\n" + begin + "\n" + end + "\n": "the document carries more than one of them",
+		begin + "\nno end\n":      "it has a BEGIN marker with no END",
+		end + "\n" + begin + "\n": "its END marker stands above its BEGIN",
+	} {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "AGENTS.md")
+		must(t, os.WriteFile(path, []byte(document), 0o644))
+
+		var refused *Refused
+		if err := InstructionsAt(path, dir).Inject("briefing", "new"); !errors.As(err, &refused) || !strings.Contains(refused.Reason, reason) {
+			t.Errorf("%q: %v", document, err)
+		}
+
+		if after, _ := os.ReadFile(path); string(after) != document {
+			t.Errorf("%q was rewritten", document)
+		}
+	}
+}
+
+func TestAFileOutsideTheProjectIsLeftAlone(t *testing.T) {
+	project, elsewhere := t.TempDir(), t.TempDir()
+	must(t, os.Symlink(filepath.Join(elsewhere, "CLAUDE.md"), filepath.Join(project, "CLAUDE.md")))
+	must(t, os.WriteFile(filepath.Join(elsewhere, "CLAUDE.md"), []byte("theirs\n"), 0o644))
+
+	var refused *Refused
+	if err := InstructionsAt(filepath.Join(project, "CLAUDE.md"), project).Inject("x", "y"); !errors.As(err, &refused) {
+		t.Errorf("err %v", err)
+	}
+}
+
+func TestOneFileUnderTwoNamesIsTheSameFile(t *testing.T) {
+	dir := t.TempDir()
+	must(t, os.WriteFile(filepath.Join(dir, "AGENTS.md"), []byte("x"), 0o644))
+	must(t, os.Symlink("AGENTS.md", filepath.Join(dir, "CLAUDE.md")))
+
+	agents, claude := InstructionsAt(filepath.Join(dir, "AGENTS.md"), dir), InstructionsAt(filepath.Join(dir, "CLAUDE.md"), dir)
+	fresh := InstructionsAt(filepath.Join(dir, "GEMINI.md"), dir)
+
+	if !agents.SameFileAs(claude) || agents.SameFileAs(fresh) || fresh.SameFileAs(InstructionsAt(filepath.Join(dir, "OTHER.md"), dir)) {
+		t.Error("sameness decided by name rather than by inode")
+	}
+}
+
+func TestASkillIsLinkedRelativelyAndOnlyOnce(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, ".agents", "skills", "commandments-x")
+	link := filepath.Join(root, ".claude", "skills", "commandments-x")
+	must(t, os.MkdirAll(target, 0o755))
+	must(t, os.WriteFile(filepath.Join(target, "SKILL.md"), []byte("skill"), 0o644))
+
+	if !Point(link, target) || !Point(link, target) {
+		t.Fatal("not linked")
+	}
+
+	if named, err := os.Readlink(link); err != nil || named != "../../.agents/skills/commandments-x" {
+		t.Errorf("%q %v", named, err)
+	}
+
+	if Point(filepath.Join(root, "nowhere"), filepath.Join(root, "missing")) {
+		t.Error("linked a target that does not exist")
+	}
+}
+
+func TestAProjectTurnsAnAgentOffInItsConfig(t *testing.T) {
+	kept := ForProject(config.Config{Disabled: []config.Rule{{Kind: config.Agent, Name: "CodexAgent"}}})
+
+	if !reflect.DeepEqual(kept, []Agent{Claude{}}) {
+		t.Errorf("%v", kept)
+	}
+}
+
+func ptr(text string) *string {
+	return &text
+}
+
+func must(t *testing.T, err error) {
+	t.Helper()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+}

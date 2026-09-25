@@ -1,0 +1,10 @@
+exit: 0
+--- stdout
+commandments judge-reminder — A "did you judge?" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files are touched but unchecked, deduped per changed-file set.
+
+Usage:
+  commandments judge-reminder  run this hook — it reads its payload from stdin, not from flags
+
+--- stderr
+
+--- files

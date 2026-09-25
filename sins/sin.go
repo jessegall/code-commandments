@@ -84,16 +84,18 @@ func (d Definition) Scopes(query string) bool {
 }
 
 // InstalledIn says whether the project at root depends on the package, as composer installed it — itself, or
-// replaced or provided by a package it installed, as laravel/framework replaces illuminate/support; a project whose
-// manifest cannot be read is taken to have it, so a rule is never silenced by a missing file. Only composer is read
-// here; the other ecosystems' manifests arrive with their engines.
+// replaced or provided by a package it installed, as laravel/framework replaces illuminate/support. A project composer
+// never installed into has none of its packages, as the PHP tool finds none in an install that lacks them, so a project
+// with no PHP never runs Laravel rules; a record composer wrote but that cannot be read is taken to have it, so a rule
+// is never silenced by a broken file. Only composer is read here; the other ecosystems' manifests arrive with their
+// engines.
 func (p Package) InstalledIn(root string) bool {
 	if p.Ecosystem != Composer {
 		return true
 	}
 	content, err := os.ReadFile(filepath.Join(root, "vendor", "composer", "installed.json"))
 	if err != nil {
-		return true
+		return false
 	}
 	var installed struct {
 		Packages []struct {

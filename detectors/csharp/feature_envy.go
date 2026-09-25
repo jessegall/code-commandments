@@ -30,3 +30,6 @@ func (FeatureEnvyDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(func(n cs.Node) bool { return n.EnviedParameter(program) != "" })).
 		Get()
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (FeatureEnvyDetector) CrossFile() {}

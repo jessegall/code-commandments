@@ -24,3 +24,6 @@ func (DeadConfigKeyDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(func(n engine.Match) bool { return laravelnode.ConfigKeysOf(codebase).DeadKeyAt(n) != "" }).
 		Get()
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (DeadConfigKeyDetector) CrossFile() {}

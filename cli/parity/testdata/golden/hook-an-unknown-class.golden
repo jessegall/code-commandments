@@ -1,0 +1,12 @@
+exit: 2
+--- stdout
+
+--- stderr
+✗ 'ModelChoiceReminder' is not a runnable JesseGall\CodeCommandments\Hooks\Hook.
+
+commandments hook — Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...).
+
+Usage:
+  commandments hook <Class>  instantiate that Hook and run it against the payload on stdin
+
+--- files

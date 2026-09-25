@@ -1,0 +1,338 @@
+[
+ {
+  "name": "hooks-help",
+  "args": [
+   "hooks",
+   "--help"
+  ]
+ },
+ {
+  "name": "hook-help",
+  "args": [
+   "hook",
+   "--help"
+  ]
+ },
+ {
+  "name": "judge-reminder-help",
+  "args": [
+   "judge-reminder",
+   "--help"
+  ]
+ },
+ {
+  "name": "install-help",
+  "args": [
+   "install",
+   "--help"
+  ]
+ },
+ {
+  "name": "hooks-with-no-payload",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init"
+  ],
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-stop-on-a-clean-tree",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init"
+  ],
+  "stdin": "{\"hook_event_name\":\"Stop\",\"session_id\":\"s1\"}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-stop-with-changes",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p src",
+   "printf '<?php\\n' > src/A.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"Stop\",\"session_id\":\"s1\"}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-stop-in-plan-mode",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p src",
+   "printf '<?php\\n' > src/A.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"Stop\",\"session_id\":\"s1\",\"permission_mode\":\"plan\"}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-stop-while-work-pends",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p src",
+   "printf '<?php\\n' > src/A.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"Stop\",\"session_id\":\"s1\",\"background_tasks\":[{\"status\":\"running\"}]}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-commit-with-changes",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p src",
+   "printf '<?php\\n' > src/A.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"PreToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git commit -m x\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-dispatch-without-a-model",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init"
+  ],
+  "stdin": "{\"hook_event_name\":\"PreToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Agent\",\"tool_input\":{\"prompt\":\"go\",\"subagent_type\":\"Explore\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-dispatch-in-a-subagent",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init"
+  ],
+  "stdin": "{\"hook_event_name\":\"PreToolUse\",\"session_id\":\"s1\",\"agent_id\":\"a1\",\"tool_name\":\"Agent\",\"tool_input\":{\"prompt\":\"go\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-rebase-beside-a-worktree",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "git worktree add -q .wt/other 2>/dev/null"
+  ],
+  "stdin": "{\"hook_event_name\":\"PreToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"git fetch && git pull --rebase\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-edit-a-test",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"PreToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"tests/OrderTest.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-edit-a-judged-test",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"PreToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"src/tests/OrderTest.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-fresh-session",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments/sessions/s1 && touch .commandments/sessions/s1/.judge-count"
+  ],
+  "stdin": "{\"hook_event_name\":\"SessionStart\",\"session_id\":\"s1\",\"source\":\"startup\"}",
+  "env": {
+   "CLAUDE_CODE_SESSION_ID": "s1",
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hook-a-class",
+  "args": [
+   "hook",
+   "JesseGall\\CodeCommandments\\Hooks\\Handlers\\ModelChoiceReminder"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init"
+  ],
+  "stdin": "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Agent\",\"tool_input\":{\"prompt\":\"go\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hook-an-unknown-class",
+  "args": [
+   "hook",
+   "ModelChoiceReminder"
+  ]
+ },
+ {
+  "name": "judge-reminder-on-stop",
+  "args": [
+   "judge-reminder"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p src",
+   "printf '<?php\\n' > src/A.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"Stop\",\"session_id\":\"s1\"}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "install-outside-a-project",
+  "args": [
+   "install"
+  ]
+ },
+ {
+  "name": "install-fresh",
+  "args": [
+   "install"
+  ],
+  "digest": [
+   ".agents/skills"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p src",
+   "printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"src/\"}}}' > composer.json"
+  ],
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-write-a-sin",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Order.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-write-a-sin-again",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
+   "echo '{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Order.php\"}}' | php \"$PARITY_PACKAGE/bin/commandments\" hooks > /dev/null"
+  ],
+  "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Order.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-bash-changes-a-sin",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
+   "mkdir -p src && printf '<?php\\n' > src/Clean.php && touch -t 200001010000 src/Clean.php && echo '{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Clean.php\"}}' | php \"$PARITY_PACKAGE/bin/commandments\" hooks > /dev/null",
+   "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -i x src/Order.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ },
+ {
+  "name": "hooks-write-outside-the-roots",
+  "args": [
+   "hooks"
+  ],
+  "setup": [
+   "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
+   "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
+   "mkdir -p lib && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > lib/Order.php"
+  ],
+  "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"lib/Order.php\"}}",
+  "env": {
+   "GIT_AUTHOR_DATE": "2026-01-01T00:00:00Z",
+   "GIT_COMMITTER_DATE": "2026-01-01T00:00:00Z"
+  }
+ }
+]

@@ -30,3 +30,6 @@ func (KeyedLookupEnvyDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(program.IsLookupEnvious)).
 		Get()
 }
+
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (KeyedLookupEnvyDetector) CrossFile() {}
