@@ -11,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/info"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/layers"
+	makecommand "github.com/jessegall/code-commandments/cli/make"
 	"github.com/jessegall/code-commandments/cli/scaffold"
 	"github.com/jessegall/code-commandments/cli/session"
 	"github.com/jessegall/code-commandments/cli/task"
@@ -28,6 +29,7 @@ func main() {
 func Kernel() *cli.Kernel {
 	return cli.NewKernel(version,
 		judge.Command{Scaffoldable: scaffold.Scaffoldable()},
+		makecommand.Command{},
 		scaffold.Command{},
 		freeze.Command{},
 		session.Command{},

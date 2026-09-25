@@ -1,0 +1,39 @@
+exit: 2
+--- stdout
+
+--- stderr
+✗ unknown --engine=rust — it is one of `backend`, `frontend`, `python`, `csharp`.
+
+commandments make — Scaffold a commandment of your own — a skill, a sin and a detector in `.commandments/custom/`, registered in your config, with the rest of the process printed for you.
+
+Usage:
+  commandments make <Name>          scaffold a backend (PHP) commandment and register it
+  commandments make <Name> --engine=frontend
+                                    scaffold a frontend (Vue) one instead
+  commandments make <Name> --engine=python
+                                    scaffold a Python one instead
+  commandments make <Name> --engine=csharp
+                                    scaffold a C# one instead
+  commandments make <Name> --skill=NAME
+                                    point the sin at an EXISTING skill (shipped or your own) instead
+                                    of writing a new one
+
+Options:
+  --engine=backend|frontend|python|csharp
+                                    which parse engine the detector reads (default: backend)
+  --skill=NAME                      the skill that teaches the fix — a lenient name/slug match
+                                    against the existing skills, or a new slug to create one
+  --force                           overwrite files that already exist
+
+  The generated classes live in `.commandments/custom/`, beside your config. That folder is not
+  PSR-4 mapped and does not need to be: its files are required directly, so dropping a class in is
+  what makes it loadable. It is kept OUT of the .commandments/ gitignore — your rules are source
+  code, so commit them.
+
+  A scaffolded detector does not work yet, and is not meant to: its `find()` returns nothing until
+  you write the rule. Load the `commandments-writing-detectors` skill first — it lists the engine
+  predicates that already exist (hand-rolling one that does is the most common mistake), and it
+  teaches the probe-then-calibrate discipline that proves a detector actually fires on what you
+  meant.
+
+--- files

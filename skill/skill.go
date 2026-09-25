@@ -65,14 +65,21 @@ func Of(engine catalog.Engine) []Skill {
 // InTier is every published skill of a tier, in its order.
 func InTier(tier Tier) []Skill {
 	var inTier []Skill
-	for _, skill := range All() {
+	for _, skill := range Ordered() {
 		if skill.Definition().Tier == tier {
 			inTier = append(inTier, skill)
 		}
 	}
-	slices.SortStableFunc(inTier, func(a, b Skill) int { return a.Definition().Order - b.Definition().Order })
 
 	return inTier
+}
+
+// Ordered is every published skill in the order the curriculum lists them: by order, engine by engine.
+func Ordered() []Skill {
+	ordered := slices.Clone(All())
+	slices.SortStableFunc(ordered, func(a, b Skill) int { return a.Definition().Order - b.Definition().Order })
+
+	return ordered
 }
 
 // Slugged is the published skill with the slug.

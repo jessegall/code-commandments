@@ -1,0 +1,17 @@
+[
+  {"name": "make-help", "args": ["make", "--help"]},
+  {"name": "make-without-a-name", "args": ["make"]},
+  {"name": "make-name-without-letters", "args": ["make", "---"]},
+  {"name": "make-unknown-engine", "args": ["make", "Thing", "--engine=rust"]},
+  {"name": "make-backend", "args": ["make", "NullableElementReturn"], "setup": ["mkdir -p src"]},
+  {"name": "make-frontend", "args": ["make", "loose-prop", "--engine=Frontend"]},
+  {"name": "make-python-existing-skill", "args": ["make", "LongGuard", "--engine=python", "--skill=python-flow"]},
+  {"name": "make-csharp-new-slug", "args": ["make", "WideEvent", "--engine=csharp", "--skill=Event Shapes"]},
+  {"name": "make-slug-with-a-slash", "args": ["make", "Thing", "--skill=team/house-rules"]},
+  {"name": "make-name-is-the-skill", "args": ["make", "Naming"]},
+  {"name": "make-drops-the-detector-suffix", "args": ["make", "HTTPClientDetector"]},
+  {"name": "make-refuses-to-overwrite", "args": ["make", "Thing"], "setup": ["mkdir -p .commandments/custom", "printf '<?php\\n' > .commandments/custom/Thing.php"]},
+  {"name": "make-forced", "args": ["make", "Thing", "--force"], "setup": ["mkdir -p .commandments/custom", "printf '<?php\\n' > .commandments/custom/Thing.php"]},
+  {"name": "make-joins-the-detector-call", "args": ["make", "Second"], "setup": ["mkdir -p .commandments", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->paths('\\''src'\\'');\\n\\n    $config->detector(\\\\Commandments\\\\FirstDetector::class);\\n};\\n' > .commandments/config.php"]},
+  {"name": "make-already-registered", "args": ["make", "First", "--force"], "setup": ["mkdir -p .commandments", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->detector(\\n        \\\\Commandments\\\\FirstDetector::class,\\n    );\\n};\\n' > .commandments/config.php"]}
+]

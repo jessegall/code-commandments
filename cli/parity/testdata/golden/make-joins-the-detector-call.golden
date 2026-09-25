@@ -1,0 +1,175 @@
+exit: 0
+--- stdout
+[32m✓ Scaffolded the `second` commandment.[0m
+  .commandments/custom/SecondSkill.php[2m  — SecondSkill[0m
+  .commandments/custom/Second.php[2m  — Second[0m
+  .commandments/custom/SecondDetector.php[2m  — SecondDetector[0m
+  [2m.commandments/config.php  — registered ->detector(SecondDetector::class)[0m
+
+[1mNext — a scaffold is not a detector yet:[0m
+  [1;36m1.[0m [1mLoad the skill[0m [36mcommandments-writing-detectors[0m. It lists the engine
+     predicates that ALREADY exist; hand-rolling one that does is the mistake this command exists to prevent.
+  [1;36m2.[0m [1mWrite the teaching[0m — fill the TODOs in [36mSecondSkill[0m. It is what a finding
+     sends the reader to, so write it before the rule: if you can't state what good looks like,
+     the detector doesn't know what it's looking for either.
+  [1;36m3.[0m [1mName the sin[0m — fill the description/rule in [36mSecond[0m. The description is the
+     symptom, the rule is the positive directive. Both are projected into the docs.
+  [1;36m4.[0m [1mWrite the rule[0m — the `where()` chain in [36mSecondDetector[0m. One check per line,
+     classified by what the AST or the resolved type IS — never by a name or a suffix.
+  [1;36m5.[0m [1mProve it fires[0m — write a throwaway probe at [36msrc/ProbeSecond.php[0m holding one example of
+     EVERY form you mean to catch plus a near-miss you must NOT, then run
+     [36mvendor/bin/commandments judge src --sin=second --no-checklist[0m
+     and confirm exactly the intended lines are flagged. Delete the probe after.
+  [1;36m6.[0m [1mCalibrate on real code[0m — run the same judge over your actual source and READ the hits.
+     Judge each against the skill, never against what the code happens to do: volume proves
+     nothing, only a genuine false positive does. Tighten with a principled `reject`, never a name list.
+  [1;36m7.[0m [1mPublish the skill[0m — [36mvendor/bin/commandments sync[0m renders
+     [36mcommandments-backend-second[0m so the agent can load what your finding points at.
+
+[2mThe skill's SKILL.md is generated from the class on every sync — edit the class, never the markdown.[0m
+
+--- stderr
+
+--- files
+=== changed .commandments/config.php
+<?php
+
+return function ($config) {
+    $config->paths('src');
+
+    $config->detector(
+        \Commandments\FirstDetector::class,
+        \Commandments\SecondDetector::class,
+    );
+};
+
+=== created .commandments/custom/Second.php
+<?php
+
+declare(strict_types=1);
+
+namespace Commandments;
+
+use JesseGall\CodeCommandments\Sins\Sin;
+
+/**
+ * TODO — one line on the shape this sin names.
+ */
+final class Second extends Sin
+{
+    public function __construct()
+    {
+        parent::__construct(
+            // The `--sin=` id, and the key a report is filed against.
+            name: 'second',
+            // The skill that teaches the fix — by CLASS, so a slug rename can't strand it.
+            skill: SecondSkill::class,
+            // The SYMPTOM, one line: what the detector saw. ("A method returns ?Element.")
+            description: 'TODO — what the detector found.',
+            // The RULE, stated as a positive directive. ("Return Element::none(), never null.")
+            rule: 'TODO — what to do instead.',
+            // Optional: the concrete construct to reach for. Drop the line if there isn't one.
+            suggestion: null,
+        );
+    }
+}
+
+=== created .commandments/custom/SecondDetector.php
+<?php
+
+declare(strict_types=1);
+
+namespace Commandments;
+
+use JesseGall\CodeCommandments\Ast\AstNode;
+use JesseGall\CodeCommandments\Ast\Codebase;
+use JesseGall\CodeCommandments\Backend\Detector;
+use JesseGall\CodeCommandments\Sins\Sin;
+
+/**
+ * Finds {@see Second} — TODO, one line on the shape it looks for.
+ */
+final class SecondDetector implements Detector
+{
+    public function sin(): Sin
+    {
+        return new Second;
+    }
+
+    public function find(Codebase $codebase): array
+    {
+        // BEFORE you write a line of this: skim what the engine already answers. Almost
+        // every predicate you are about to hand-roll exists — `AstNode` alone carries ~150.
+        // Load the `commandments-writing-detectors` skill; it lists the arsenal.
+        //
+        // Open with a SELECTOR, then one check per line. Classify by what the AST or the
+        // resolved type IS — never by a class or method NAME.
+        return $codebase
+            ->whereMethodDeclaration()
+            ->where(static fn (AstNode $node): bool => false) // TODO — the rule
+            ->get();
+    }
+}
+
+=== created .commandments/custom/SecondSkill.php
+<?php
+
+declare(strict_types=1);
+
+namespace Commandments;
+
+use JesseGall\CodeCommandments\Skills\Skill;
+use JesseGall\CodeCommandments\Skills\Tier;
+
+/**
+ * TODO — one line on what discipline this skill teaches.
+ *
+ * Its `SKILL.md` is GENERATED from this class on every `sync`, published as
+ * `commandments-backend-second`. Never edit that markdown; edit this class.
+ */
+final class SecondSkill extends Skill
+{
+    public function __construct()
+    {
+        parent::__construct(
+            slug: 'backend/second',
+            tier: Tier::KeepInMind,
+            order: 100,
+        );
+    }
+
+    public function title(): string
+    {
+        return 'TODO — the H1, stated as the discipline: "second".';
+    }
+
+    public function trigger(): string
+    {
+        // WHEN to load this skill, phrased as the situation — it becomes the frontmatter
+        // `description:` an agent matches its task against.
+        return 'TODO — Read this when …';
+    }
+
+    public function intro(): string
+    {
+        return 'TODO — one punchy sentence: the rule, stated positively.';
+    }
+
+    public function summary(): string
+    {
+        // The one-liner in the project briefing. Lowercase, no trailing period needed.
+        return 'TODO — the rule in half a line.';
+    }
+
+    public function principle(): string
+    {
+        return <<<'PRINCIPLE'
+        TODO — the conceptual WHY, in prose. No rule list and no code examples: those are
+        projected from this skill's sins, so writing them here would only let them drift.
+
+        Explain what goes wrong when the discipline is broken, and what the reader should
+        see instead. This is the part a human actually reads.
+        PRINCIPLE;
+    }
+}
+

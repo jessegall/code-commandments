@@ -327,3 +327,73 @@ func indentOfChain(rest string) string {
 func quote(namespace string) string {
 	return "'" + strings.ReplaceAll(namespace, `\`, `\\`) + "'"
 }
+
+// RegisterDetector adds the project's own detector to the config's detector() call, or appends one after
+// the config's last statement; false when it is already registered.
+func (f File) RegisterDetector(class string) (bool, error) {
+	if err := f.scaffoldIfMissing(); err != nil {
+		return false, err
+	}
+
+	class = strings.TrimLeft(class, `\`)
+	call, found, err := Scribe{f.path}.first("detector")
+	if err != nil {
+		return false, err
+	}
+
+	if found {
+		current := classesIn(call)
+		if slices.Contains(current, class) {
+			return false, nil
+		}
+
+		return true, f.rewrite(call, append(current, class), nil)
+	}
+
+	return true, f.appendStatement(`$config->detector(\` + class + `::class);`)
+}
+
+// appendStatement writes the statement after the config's last statement, in its indentation.
+func (f File) appendStatement(statement string) error {
+	anchor, found, err := f.lastStatement()
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		return &Unrecognizable{f.path}
+	}
+
+	raw, err := os.ReadFile(f.path)
+	if err != nil {
+		return err
+	}
+
+	source := string(raw)
+	at := anchor.Node().Span.End
+	start := anchor.Node().Span.Start
+	indent := source[lineStartAt(source, start):start]
+
+	return os.WriteFile(f.path, []byte(source[:at]+"\n\n"+indent+statement+source[at:]), 0o644)
+}
+
+// lastStatement is the last expression statement that is a method call, by where it starts.
+func (f File) lastStatement() (engine.Match, bool, error) {
+	stream, err := php.Here().Stream(f.path)
+	if err != nil {
+		return engine.Match{}, false, err
+	}
+
+	var last engine.Match
+	found := false
+
+	for _, call := range engine.Load(stream).WhereKind("Expr_MethodCall").Get() {
+		statement := call.Parent()
+
+		if statement.Kind() == "Stmt_Expression" && (!found || statement.Node().Span.Start > last.Node().Span.Start) {
+			last, found = statement, true
+		}
+	}
+
+	return last, found, nil
+}
