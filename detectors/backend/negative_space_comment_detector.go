@@ -20,7 +20,7 @@ func (NegativeSpaceCommentDetector) Sin() sins.Sin { return backendsins.Negative
 
 // Find is every node with a comment that denies a strawman.
 func (NegativeSpaceCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.HasCommentMatching(prose.Strawman) })).
 		Get()
 }

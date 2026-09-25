@@ -19,7 +19,7 @@ func (ConditionalArraySpreadDetector) Sin() sins.Sin { return backendsins.Condit
 
 // Find is every ternary between an empty and a filled array that is spread or merged.
 func (ConditionalArraySpreadDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsConditionalArraySpread)).
 		Get()
 }

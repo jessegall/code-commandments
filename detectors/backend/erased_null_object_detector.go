@@ -19,7 +19,7 @@ func (ErasedNullObjectDetector) Sin() sins.Sin { return backendsins.ErasedNullOb
 
 // Find is every new of a class rendering as ” that fills a string-typed default or return.
 func (ErasedNullObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereNew().
 		Where(engine.As(func(n php.Node) bool { return php.RendersBlank(codebase, n.NewClassName()) })).
 		Where(engine.As(func(n php.Node) bool { return n.FillsSlotTyped("string") })).

@@ -19,7 +19,7 @@ func (BlankStringDefaultDetector) Sin() sins.Sin { return backendsins.BlankStrin
 
 // Find is every ” or blank-rendering default of a string parameter or property that its scope tests for blankness.
 func (BlankStringDefaultDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsBlankString)).
 		Where(engine.As(php.Node.IsDeclarationDefault)).
 		Where(engine.As(func(n php.Node) bool { return php.Written(n.DeclaredType()).Render() == "string" })).

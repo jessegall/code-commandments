@@ -34,7 +34,7 @@ func (d DataClumpDetector) MinClasses(classes int) DataClumpDetector {
 func (d DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 	byClump := map[string][]engine.Match{}
 	var clumps []string
-	for _, method := range codebase.WhereKind("Stmt_ClassMethod").Get() {
+	for _, method := range php.In(codebase).WhereKind("Stmt_ClassMethod").Get() {
 		node := php.Node{Match: method}
 		signature := node.ValueParamSignature()
 		if len(signature) == 0 || node.IsConstructorDeclaration() || node.IsNamedConstructor() || node.NameIsInherited() {

@@ -19,7 +19,7 @@ func (RedundantArrowReturnTypeDetector) Sin() sins.Sin { return backendsins.Redu
 
 // Find is every arrow function whose return type is its expression's plain type.
 func (RedundantArrowReturnTypeDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Expr_ArrowFunction").
 		Where(engine.As(php.Node.HasReturnType)).
 		Where(engine.As(php.Node.ReturnTypeRestatesItsExpression)).

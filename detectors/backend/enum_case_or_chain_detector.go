@@ -19,7 +19,7 @@ func (EnumCaseOrChainDetector) Sin() sins.Sin { return backendsins.EnumCaseOrCha
 
 // Find is every outermost || chain comparing against two or more constants of one declared enum.
 func (EnumCaseOrChainDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return php.EnumsOf(codebase).IsIndexed(n.OrChainComparedClass()) })).
 		Get()
 }

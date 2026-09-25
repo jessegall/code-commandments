@@ -19,7 +19,7 @@ func (BloatedDocblockDetector) Sin() sins.Sin { return backendsins.BloatedDocblo
 
 // Find is every class whose doc comment holds two or more prose paragraphs.
 func (BloatedDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_Class").
 		Where(engine.As(php.Node.HasMultiParagraphDocblock)).
 		Get()

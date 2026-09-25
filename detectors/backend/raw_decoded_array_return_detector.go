@@ -19,7 +19,7 @@ func (RawDecodedArrayReturnDetector) Sin() sins.Sin { return backendsins.RawDeco
 
 // Find is every returned json_decode that does not decode the function's own encoding.
 func (RawDecodedArrayReturnDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("json_decode") })).
 		Where(engine.As(php.Node.IsReturnedValue)).
 		Reject(engine.As(php.Node.DecodesItsOwnEncoding)).

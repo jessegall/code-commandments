@@ -27,7 +27,7 @@ func (ParamResolvedFromParamDetector) Exemptions() []packages.Exemption {
 // Find is every method, boundaries aside, that resolves a key parameter on an object parameter it otherwise only
 // reads properties of.
 func (ParamResolvedFromParamDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
 		Reject(func(n engine.Match) bool { return takesABoundary(codebase, n) }).
 		Where(engine.As(php.Node.UnpacksTargetFromContainerParam)).

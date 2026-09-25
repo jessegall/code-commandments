@@ -19,7 +19,7 @@ func (UnnamedVocabularyLiteralDetector) Sin() sins.Sin { return backendsins.Unna
 
 // Find is every string literal, not a parameter default, that a class's constant already names for its slot.
 func (UnnamedVocabularyLiteralDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Scalar_String").
 		Where(func(n engine.Match) bool { return php.VocabularyOf(codebase).NameFor(n) != "" }).
 		Reject(engine.As(php.Node.IsParameterDefault)).

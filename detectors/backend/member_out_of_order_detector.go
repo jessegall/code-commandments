@@ -19,7 +19,7 @@ func (MemberOutOfOrderDetector) Sin() sins.Sin { return backendsins.MemberOutOfO
 
 // Find is every head member placed after a member that ranks later.
 func (MemberOutOfOrderDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind(classMembers...).
 		Reject(engine.As(php.Node.IsBelowAMethodInItsClass)).
 		Where(engine.As(php.Node.BreaksClassLayoutOrder)).

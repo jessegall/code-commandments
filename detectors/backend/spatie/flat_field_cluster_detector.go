@@ -38,7 +38,7 @@ func (FlatFieldClusterDetector) Sin() sins.Sin { return spatiesins.FlatFieldClus
 func (FlatFieldClusterDetector) Find(codebase *engine.Codebase) []engine.Match {
 	shapes := valueObjectShapes(codebase)
 
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_Class").
 		Where(engine.As(spatienode.Node.IsTypeScriptData)).
 		Where(engine.As(func(n php.Node) bool { return flattensAValueObject(n, shapes) })).
@@ -100,7 +100,7 @@ func clustersByPrefix(class php.Node) (map[string][]php.Field, []string) {
 // short name, and again without a Data suffix.
 func valueObjectShapes(codebase *engine.Codebase) map[string][]string {
 	shapes := map[string][]string{}
-	for _, class := range codebase.WhereKind("Stmt_Class").Get() {
+	for _, class := range php.In(codebase).WhereKind("Stmt_Class").Get() {
 		short := strings.ToLower(php.ShortName(php.EnclosingClassName(class)))
 		if short == "" {
 			continue

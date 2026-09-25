@@ -19,7 +19,7 @@ func (NestedTernaryDetector) Sin() sins.Sin { return backendsins.NestedTernary{}
 
 // Find is every outermost ternary with a ternary in a branch.
 func (NestedTernaryDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsOutermostNestedTernary)).
 		Get()
 }

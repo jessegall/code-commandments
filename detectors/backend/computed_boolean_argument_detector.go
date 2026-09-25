@@ -27,7 +27,7 @@ func (ComputedBooleanArgumentDetector) WholeTree() {}
 // Find is every method branching on bool parameters alone whose two or more callers, one of them outside its class,
 // all compute the arguments from one object of one class.
 func (ComputedBooleanArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
 		Where(engine.As(php.Node.DecidesOnBoolsAlone)).
 		Where(func(n engine.Match) bool { return callersAllAskOneObject(codebase, n) }).

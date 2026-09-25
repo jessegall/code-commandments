@@ -19,7 +19,7 @@ func (StringMatchMirrorsEnumDetector) Sin() sins.Sin { return backendsins.String
 
 // Find is every match or switch not on ->value whose case literals are one enum's values.
 func (StringMatchMirrorsEnumDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return len(n.ArmConditionLiterals()) > 0 })).
 		Reject(engine.As(php.Node.IsMatchOnEnumValue)).
 		Where(engine.As(func(n php.Node) bool { return php.EnumsOf(codebase).MirroredBy(n.ArmConditionLiterals()) })).

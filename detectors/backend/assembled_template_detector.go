@@ -27,7 +27,7 @@ func (AssembledTemplateDetector) Sin() sins.Sin { return backendsins.AssembledTe
 // Find is every implode with a newline separator over an array literal of three or more lines, two written out,
 // passed there or assigned to the variable passed.
 func (AssembledTemplateDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("implode") })).
 		Where(engine.As(func(n php.Node) bool { return n.Argument(0).IsNewlineSeparator() })).
 		Where(engine.As(statesATemplate)).

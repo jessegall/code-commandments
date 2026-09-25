@@ -20,7 +20,7 @@ func (UselessPropertyHookDetector) Sin() sins.Sin { return backendsins.UselessPr
 
 // Find is every concrete get hook on a property without a setter that reaches neither $this, self, static nor parent, outside Data classes.
 func (UselessPropertyHookDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("PropertyHook").
 		Where(func(n engine.Match) bool { return n.Name() == "get" }).
 		Reject(engine.As(php.Node.IsAbstractHook)).

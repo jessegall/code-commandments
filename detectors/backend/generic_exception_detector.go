@@ -36,7 +36,7 @@ func (GenericExceptionDetector) Sin() sins.Sin { return backendsins.GenericExcep
 
 // Find is every new of a built-in exception that a throw throws.
 func (GenericExceptionDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return slices.Contains(generic, n.NewClassName()) })).
 		Where(engine.As(func(n php.Node) bool { return n.Up().IsThrow() })).
 		Get()

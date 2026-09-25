@@ -19,7 +19,7 @@ func (InlineDocblockDetector) Sin() sins.Sin { return backendsins.InlineDocblock
 
 // Find is every node whose doc comment opens or closes on a content line.
 func (InlineDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.HasDocComment)).
 		Where(engine.As(php.Node.HasInlineDocblock)).
 		Get()

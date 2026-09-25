@@ -19,7 +19,7 @@ func (NonCountingForDetector) Sin() sins.Sin { return backendsins.NonCountingFor
 
 // Find is every for loop whose steps advance no counter.
 func (NonCountingForDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsNonCountingFor)).
 		Get()
 }

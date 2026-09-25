@@ -19,7 +19,7 @@ func (MaskedInvariantDetector) Sin() sins.Sin { return backendsins.MaskedInvaria
 
 // Find is every ?? with a non-null literal fallback over a nullsafe read of a private nullable property set outside the constructor.
 func (MaskedInvariantDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.MasksOwnState)).
 		Get()
 }

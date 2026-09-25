@@ -21,7 +21,7 @@ func (MutableValueObjectDetector) Sin() sins.Sin { return backendsins.MutableVal
 func (MutableValueObjectDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := php.ProgramOf(codebase)
 
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_Class").
 		Where(func(n engine.Match) bool { return program.ClassIsValueType(php.EnclosingClassName(n)) }).
 		Where(engine.As(func(n php.Node) bool {

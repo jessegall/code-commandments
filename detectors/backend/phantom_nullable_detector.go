@@ -36,7 +36,7 @@ func (PhantomNullableDetector) ChainPath(finding engine.Match, codebase *engine.
 func (PhantomNullableDetector) Find(codebase *engine.Codebase) []engine.Match {
 	flow := php.ValueFlowOf(codebase)
 	var findings []engine.Match
-	for _, class := range codebase.WhereKind("Stmt_Class").Get() {
+	for _, class := range php.In(codebase).WhereKind("Stmt_Class").Get() {
 		for _, field := range nullableFields(class) {
 			if (php.Node{Match: field}).DeclaresNullableWireType() {
 				continue

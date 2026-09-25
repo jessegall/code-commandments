@@ -19,7 +19,7 @@ func (CoalescedLoopSubjectDetector) Sin() sins.Sin { return backendsins.Coalesce
 
 // Find is every loop subject that falls back to an empty array from a value reached through a parameter.
 func (CoalescedLoopSubjectDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsLoopSubject)).
 		Where(engine.As(php.Node.FallsBackToEmptyCollection)).
 		Where(engine.As(func(n php.Node) bool { return n.FallbackSubject().ReachesIntoParameter() })).

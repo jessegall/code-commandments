@@ -25,7 +25,7 @@ func (SwallowCatchDetector) Exemptions() []packages.Exemption {
 
 // Find is every swallowing catch, save one that catches only control signals.
 func (SwallowCatchDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsSwallowedCatch)).
 		Reject(engine.As(func(n php.Node) bool { return catchesOnlyControlSignals(codebase, n) })).
 		Get()

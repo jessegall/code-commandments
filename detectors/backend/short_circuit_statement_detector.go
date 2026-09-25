@@ -19,7 +19,7 @@ func (ShortCircuitStatementDetector) Sin() sins.Sin { return backendsins.ShortCi
 
 // Find is every boolean and or or whose value is thrown away.
 func (ShortCircuitStatementDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsShortCircuit)).
 		Where(engine.As(php.Node.ResultIsDiscarded)).
 		Get()

@@ -19,7 +19,7 @@ func (PositionalTupleReturnDetector) Sin() sins.Sin { return backendsins.Positio
 
 // Find is every returned unkeyed array of three or more items reading two or more variables, unless the function documents a list.
 func (PositionalTupleReturnDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsPositionalTuple)).
 		Where(engine.As(php.Node.IsReturnExpression)).
 		Reject(engine.As(php.Node.EnclosingFunctionReturnsSequence)).

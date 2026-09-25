@@ -19,7 +19,7 @@ func (ScratchStateRestoreDetector) Sin() sins.Sin { return backendsins.ScratchSt
 
 // Find is every method that saves and restores an own property through a local.
 func (ScratchStateRestoreDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
 		Where(engine.As(php.Node.HasOwnStateSaveAndRestore)).
 		Get()

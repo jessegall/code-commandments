@@ -19,7 +19,7 @@ func (NullableRegistryLookupDetector) Sin() sins.Sin { return backendsins.Nullab
 
 // Find is every returned `$this->items[$key] ?? null`, save in a method that answers to an ancestor's.
 func (NullableRegistryLookupDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsCoalesce)).
 		Where(engine.As(php.Node.IsReturnedValue)).
 		Where(engine.As(func(n php.Node) bool { return n.CoalesceRight().IsNull() })).

@@ -26,7 +26,7 @@ func (RestatedCommentDetector) Sin() sins.Sin { return backendsins.RestatedComme
 
 // Find is every statement in a function whose line comment uses only words its own code says.
 func (RestatedCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.HasLineComment)).
 		Where(engine.As(func(n php.Node) bool { return n.EnclosingFunctionLike().Exists() })).
 		Reject(engine.As(php.Node.IsFunctionDeclaration)).

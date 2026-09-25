@@ -19,7 +19,7 @@ func (ConstClassEnumDetector) Sin() sins.Sin { return backendsins.ConstClassEnum
 
 // Find is every parentless class holding only two or more scalar constants.
 func (ConstClassEnumDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_Class").
 		Where(engine.As(php.Node.IsScalarConstClass)).
 		Reject(engine.As(php.Node.ExtendsAClass)).

@@ -19,7 +19,7 @@ func (CancelledCoalesceDetector) Sin() sins.Sin { return backendsins.CancelledCo
 
 // Find is every ?? falling back to an empty literal other than [] and compared with that same literal.
 func (CancelledCoalesceDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsCoalesce)).
 		Where(engine.As(func(n php.Node) bool { return n.CoalesceRight().IsEmptyLiteral() })).
 		Reject(engine.As(func(n php.Node) bool { return n.CoalesceRight().IsEmptyArrayLiteral() })).

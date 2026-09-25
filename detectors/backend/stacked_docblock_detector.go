@@ -19,7 +19,7 @@ func (StackedDocblockDetector) Sin() sins.Sin { return backendsins.StackedDocblo
 
 // Find is every node with more than one doc comment attached.
 func (StackedDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.HasDocComment)).
 		Where(engine.As(php.Node.HasStackedDocblocks)).
 		Get()

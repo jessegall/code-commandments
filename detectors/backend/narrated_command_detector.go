@@ -21,7 +21,7 @@ func (NarratedCommandDetector) Sin() sins.Sin { return backendsins.NarratedComma
 // Find is every command method, not magic nor inherited, whose name narrates a verb, unless it declares a relation
 // to its argument.
 func (NarratedCommandDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
 		Reject(engine.As(php.Node.IsMagicMethod)).
 		Reject(engine.As(php.Node.NameIsInherited)).

@@ -26,7 +26,7 @@ func (HandRolledWitherDetector) Find(codebase *engine.Codebase) []engine.Match {
 		return nil
 	}
 
-	return codebase.
+	return php.In(codebase).
 		WhereNew().
 		Where(engine.As(php.Node.IsWitherRebuild)).
 		Get()

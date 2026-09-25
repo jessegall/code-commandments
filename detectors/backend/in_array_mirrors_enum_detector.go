@@ -19,7 +19,7 @@ func (InArrayMirrorsEnumDetector) Sin() sins.Sin { return backendsins.InArrayMir
 
 // Find is every in_array whose array literal holds two or more of one enum's values and nothing else.
 func (InArrayMirrorsEnumDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("in_array") })).
 		Where(engine.As(func(n php.Node) bool { return php.EnumsOf(codebase).MirroredBy(n.ArgumentArrayLiterals(1)) })).
 		Get()

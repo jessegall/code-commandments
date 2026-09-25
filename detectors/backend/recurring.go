@@ -7,7 +7,7 @@ import (
 
 // callSites is every named method send, static call and new of a named class: the calls a callee can be resolved for.
 func callSites(codebase *engine.Codebase) []engine.Match {
-	return codebase.Where(func(m engine.Match) bool {
+	return php.In(codebase).Where(func(m engine.Match) bool {
 		switch m.Kind() {
 		case "Expr_MethodCall", "Expr_NullsafeMethodCall", "Expr_StaticCall":
 			return m.Child("name").Kind() == "Identifier"

@@ -19,7 +19,7 @@ func (EnumValueMatchDetector) Sin() sins.Sin { return backendsins.EnumValueMatch
 
 // Find is every match or switch on some ->value that does not sit in an enum.
 func (EnumValueMatchDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsMatchOnEnumValue)).
 		Reject(engine.As(php.Node.IsInEnum)).
 		Get()

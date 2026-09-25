@@ -21,7 +21,7 @@ func (PlaceholderFilledDataDetector) Sin() sins.Sin { return spatiesins.Placehol
 
 // Find is every new of a Data class that passes ” to a parameter promising a string.
 func (PlaceholderFilledDataDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereNew().
 		Where(engine.As(spatienode.Node.IsNewData)).
 		Where(engine.As(func(n php.Node) bool { return fillsAStringSlotWithNothing(codebase, n) })).

@@ -22,7 +22,7 @@ func (DanglingDocReferenceDetector) Sin() sins.Sin { return backendsins.Dangling
 
 // Find is every class and method whose doc comment points at a first-party class nothing declares.
 func (DanglingDocReferenceDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_Class", "Stmt_ClassMethod").
 		Where(engine.As(func(n php.Node) bool { return pointsAtNothing(codebase, n) })).
 		Get()

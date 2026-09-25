@@ -19,7 +19,7 @@ func (MatchDefaultReturnsNullDetector) Sin() sins.Sin { return backendsins.Match
 
 // Find is every match with an absence default, unless its handled arms already return null from their own declarations.
 func (MatchDefaultReturnsNullDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsMatchWithAbsenceDefault)).
 		Reject(engine.As(php.Node.MatchHandledArmsAdmitNull)).
 		Get()

@@ -19,7 +19,7 @@ func (MemberAfterMethodDetector) Sin() sins.Sin { return backendsins.MemberAfter
 
 // Find is every class member that sits below a method.
 func (MemberAfterMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind(classMembers...).
 		Where(engine.As(php.Node.IsBelowAMethodInItsClass)).
 		Get()

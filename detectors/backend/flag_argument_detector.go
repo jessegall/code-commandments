@@ -19,7 +19,7 @@ func (FlagArgumentDetector) Sin() sins.Sin { return backendsins.FlagArgument{} }
 
 // Find is every method, constructors aside, whose body is a two-way branch on a bool parameter or on whether a nullable one is null.
 func (FlagArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
 		Reject(engine.As(php.Node.IsConstructorDeclaration)).
 		Where(engine.As(func(n php.Node) bool { return n.SwitchesEntirelyOnABoolParam() || n.SwitchesEntirelyOnAnAbsentParam() })).

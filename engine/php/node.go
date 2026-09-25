@@ -1,6 +1,7 @@
 package php
 
 import (
+	"github.com/jessegall/code-commandments/contract"
 	"strings"
 
 	"github.com/jessegall/code-commandments/engine"
@@ -121,4 +122,10 @@ func (n Node) IsFalse() bool {
 // IsEmptyArrayLiteral says whether the node is an array literal with no items.
 func (n Node) IsEmptyArrayLiteral() bool {
 	return n.Kind() == "Expr_Array" && len(n.Children()) == 0
+}
+
+// In is the PHP part of a codebase, the part every PHP rule selects from; analyses still read the whole codebase a
+// match belongs to.
+func In(codebase *engine.Codebase) *engine.Codebase {
+	return codebase.Of(contract.PHP)
 }

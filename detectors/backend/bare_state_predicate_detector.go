@@ -20,7 +20,7 @@ func (BareStatePredicateDetector) Sin() sins.Sin { return backendsins.BareStateP
 
 // Find is every parameterless bool method, not magic nor inherited, whose name narrates a verb rather than asks.
 func (BareStatePredicateDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
 		Reject(engine.As(php.Node.IsMagicMethod)).
 		Reject(engine.As(php.Node.NameIsInherited)).

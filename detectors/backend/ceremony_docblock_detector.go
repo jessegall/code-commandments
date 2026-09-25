@@ -19,7 +19,7 @@ func (CeremonyDocblockDetector) Sin() sins.Sin { return backendsins.CeremonyDocb
 
 // Find is every method whose doc comment only restates its native types.
 func (CeremonyDocblockDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
 		Where(engine.As(php.Node.HasCeremonyDocblock)).
 		Get()

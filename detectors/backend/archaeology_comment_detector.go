@@ -20,7 +20,7 @@ func (ArchaeologyCommentDetector) Sin() sins.Sin { return backendsins.Archaeolog
 
 // Find is every node with a comment that tells its history.
 func (ArchaeologyCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.HasCommentMatching(prose.History) })).
 		Get()
 }

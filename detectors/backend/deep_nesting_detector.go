@@ -19,7 +19,7 @@ func (DeepNestingDetector) Sin() sins.Sin { return backendsins.DeepNesting{} }
 
 // Find is every if inside two or more ifs of its own function.
 func (DeepNestingDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsDeeplyNestedIf)).
 		Get()
 }

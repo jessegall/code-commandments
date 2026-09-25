@@ -19,7 +19,7 @@ func (TernaryStatementDetector) Sin() sins.Sin { return backendsins.TernaryState
 
 // Find is every ternary whose value is thrown away.
 func (TernaryStatementDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.IsTernary)).
 		Where(engine.As(php.Node.ResultIsDiscarded)).
 		Get()

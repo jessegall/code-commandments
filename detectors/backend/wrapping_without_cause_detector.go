@@ -19,7 +19,7 @@ func (WrappingWithoutCauseDetector) Sin() sins.Sin { return backendsins.Wrapping
 
 // Find is every exception thrown inside a catch without the caught one as its cause.
 func (WrappingWithoutCauseDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereNew().
 		Where(engine.As(php.Node.IsRethrowWithoutCause)).
 		Get()

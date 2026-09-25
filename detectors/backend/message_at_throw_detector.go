@@ -19,7 +19,7 @@ func (MessageAtThrowDetector) Sin() sins.Sin { return backendsins.MessageAtThrow
 
 // Find is every thrown new that passes a message string.
 func (MessageAtThrowDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereNew().
 		Where(engine.As(php.Node.IsThrownWithMessage)).
 		Get()

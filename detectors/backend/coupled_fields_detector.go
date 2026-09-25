@@ -24,7 +24,7 @@ func (CoupledFieldsDetector) Sin() sins.Sin { return backendsins.CoupledFields{}
 
 // Find is every class of two or more fields some of which are coupled.
 func (CoupledFieldsDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_Class").
 		Where(engine.As(func(n php.Node) bool { return isCoupled(codebase, n) })).
 		Get()

@@ -19,7 +19,7 @@ func (NullableCallbackDetector) Sin() sins.Sin { return backendsins.NullableCall
 
 // Find is every method with a null-defaulted nullable callable it both null-checks and calls.
 func (NullableCallbackDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
 		Where(engine.As(php.Node.HasNullNormalisedNullableCallback)).
 		Get()

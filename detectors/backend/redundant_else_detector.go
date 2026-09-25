@@ -19,7 +19,7 @@ func (RedundantElseDetector) Sin() sins.Sin { return backendsins.RedundantElse{}
 
 // Find is every if with an else whose own body ends by leaving.
 func (RedundantElseDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return codebase.
+	return php.In(codebase).
 		Where(engine.As(php.Node.HasRedundantElse)).
 		Get()
 }
