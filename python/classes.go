@@ -17,7 +17,13 @@ type classes struct {
 // several share it.
 func (p *Program) ClassCalled(dotted string) (Node, bool) {
 	p.classes.once.Do(p.findClasses)
-	class, ok := p.classes.named[dotted[strings.LastIndex(dotted, ".")+1:]]
+
+	return p.classes.called(dotted)
+}
+
+// called is the class the named classes hold under the name the dotted spelling ends in.
+func (c *classes) called(dotted string) (Node, bool) {
+	class, ok := c.named[dotted[strings.LastIndex(dotted, ".")+1:]]
 
 	return class, ok
 }
@@ -99,7 +105,7 @@ func (p *Program) findClasses() {
 }
 
 // dispatchedBy is the class a getattr with a run-time name reads from: `self` in one of its methods, or an
-// object mypy types as it.
+// object mypy types as it. It runs while the classes are being found, so it reads them without waiting on that.
 func (p *Program) dispatchedBy(call Node) (Node, bool) {
 	arguments := call.Arguments()
 	if !call.IsCall() || call.Callee().DottedName() != "getattr" || len(arguments) < 2 || arguments[1].Node().Literal != "" {
@@ -112,7 +118,7 @@ func (p *Program) dispatchedBy(call Node) (Node, bool) {
 		return class, class.Exists()
 	}
 	if resolved := receiver.Node().Resolved; resolved != nil && resolved.Kind == "named" {
-		return p.ClassCalled(resolved.Name)
+		return p.classes.called(resolved.Name)
 	}
 
 	return Node{}, false
