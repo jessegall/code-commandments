@@ -17,7 +17,7 @@ import (
 type everywhere struct{}
 
 func (everywhere) Includes(string) bool { return true }
-func (everywhere) IsScoped() bool        { return false }
+func (everywhere) IsScoped() bool       { return false }
 
 // project writes files into a fresh folder and answers its real path.
 func project(t *testing.T, files map[string]string) string {
