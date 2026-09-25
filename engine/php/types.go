@@ -186,16 +186,19 @@ func (t *Types) TypeOf(expr engine.Match) string {
 	return t.resolve(expr, t.localTypes(function, self), self)
 }
 
-// Fill writes what TypeOf answers into the `resolved` of every expression inside a function the codebase holds.
+// Fill writes what the engine fills for PHP: the `resolved` TypeOf answers for every expression inside a function,
+// and the `target` Callee finds for every call and construction.
 func (t *Types) Fill(codebase *engine.Codebase) {
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		for _, node := range file.Nodes() {
 			if node.Role != "expression" {
 				continue
 			}
-			if class := t.TypeOf(file.Match(node.ID)); class != "" {
+			expression := file.Match(node.ID)
+			if class := t.TypeOf(expression); class != "" {
 				node.Resolved = resolvedType(class)
 			}
+			t.fillTarget(expression)
 		}
 	}
 }
