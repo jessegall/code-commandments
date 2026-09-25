@@ -36,6 +36,9 @@ const (
 	Catch               Neutral = "catch"
 )
 
+// Neutrals are every neutral kind, in the order the contract lists them.
+var Neutrals = []Neutral{Function, TypeDeclaration, Parameter, Block, Branch, Loop, Return, Throw, BailOut, ExpressionStatement, Call, Construction, MemberAccess, NullSafe, SelfReference, Identifier, Assignment, Comparison, Literal, Import, Catch}
+
 // Located is anything a finding can point at.
 type Located interface {
 	File() string
