@@ -1,12 +1,14 @@
 package judge
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
@@ -135,10 +137,12 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	progress := cli.NewProgress(console.Err)
 	progress.Status("parsing")
+	parsing := time.Now()
 
 	sources := scan.Walk(roots, source.Under(options.path, judged.Excluded)).Only(languagesFor(selected, judged)...)
 
 	codebase, err := sources.Load()
+	parseSeconds := time.Since(parsing).Seconds()
 	if err != nil {
 		progress.Finish()
 
@@ -151,8 +155,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		tasks[i] = Task{detector, codebase}
 	}
 
-	judgement := Run(tasks, options.parallel, progress, console.Err)
-	progress.Finish()
+	judgement := c.run(tasks, options, progress, parseSeconds, console)
 	judgement.Findings = keep(asWalked(judgement.Findings, sources.GivenOf()), options.exclude, targets)
 
 	if space.IsJournalDriven() {
@@ -191,6 +194,22 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	}
 
 	return 1, nil
+}
+
+// run runs the tasks across the workers, or one by one and timed under --benchmark.
+func (Command) run(tasks []Task, options options, progress *cli.Progress, parseSeconds float64, console cli.Console) Judgement {
+	if !options.benchmark {
+		judgement := Run(tasks, options.parallel, progress, console.Err)
+		progress.Finish()
+
+		return judgement
+	}
+
+	judgement, profiles := Benchmark(tasks, console.Err)
+	progress.Finish()
+	fmt.Fprint(console.Err, Profiles(profiles, parseSeconds))
+
+	return judgement
 }
 
 // configured are the shipped detectors the project keeps, tuned as it configures them.
