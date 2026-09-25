@@ -6,6 +6,7 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/scribes"
 )
 
@@ -172,14 +173,14 @@ func (w *Writer) RemoveReturnType(function engine.Match) {
 
 // ReplaceDocblock replaces a declaration's docblock with text, the declaration untouched.
 func (w *Writer) ReplaceDocblock(node engine.Match, text string) {
-	if doc, documented := DocComment(node); documented {
+	if doc, documented := (php.Node{Match: node}).DocComment(); documented {
 		w.edit(doc.Span.Start, doc.Span.End, text)
 	}
 }
 
 // RemoveDocblock takes a declaration's docblock out, with its line when it stands alone on it.
 func (w *Writer) RemoveDocblock(node engine.Match) {
-	doc, documented := DocComment(node)
+	doc, documented := php.Node{Match: node}.DocComment()
 	if !documented {
 		return
 	}
@@ -288,7 +289,7 @@ func (w *Writer) declarationEndOf(node engine.Match, run []engine.Match) int {
 // their own lines above it included.
 func (w *Writer) lineStartOf(node engine.Match) int {
 	start, _ := bounds(node)
-	for _, comment := range Comments(node) {
+	for _, comment := range (php.Node{Match: node}).Comments() {
 		if w.Source().StartsItsLine(comment.Span.Start) {
 			start = min(start, comment.Span.Start)
 		}
@@ -328,30 +329,6 @@ func importsIn(namespace engine.Match) []engine.Match {
 	}
 
 	return uses
-}
-
-// Comments is every comment php-parser gives a node: the ones leading it, not one trailing the code before it.
-func Comments(node engine.Match) []contract.Comment {
-	var leading []contract.Comment
-	for _, comment := range node.Comments() {
-		if !comment.Trailing {
-			leading = append(leading, comment)
-		}
-	}
-
-	return leading
-}
-
-// DocComment is the last docblock among a node's comments, as php-parser's getDocComment answers.
-func DocComment(node engine.Match) (contract.Comment, bool) {
-	comments := Comments(node)
-	for index := len(comments) - 1; index >= 0; index-- {
-		if comments[index].Kind == "doc" {
-			return comments[index], true
-		}
-	}
-
-	return contract.Comment{}, false
 }
 
 // bounds is a node's half-open byte range.

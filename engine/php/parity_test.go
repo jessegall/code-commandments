@@ -42,13 +42,11 @@ func TestTheGoTreeHoldsNoNodeThePhpEngineLacks(t *testing.T) {
 
 func TestEveryNodeHoldsTheCommentsPhpParserAttachesToIt(t *testing.T) {
 	shop.Parity(t, "comments", func(_ shop.Answer, node engine.Match) any {
-		leading := [][2]int{}
-		for _, comment := range node.Comments() {
-			if !comment.Trailing {
-				leading = append(leading, [2]int{comment.Span.Start, comment.Span.End})
-			}
+		spans := [][2]int{}
+		for _, comment := range (Node{Match: node}).Comments() {
+			spans = append(spans, [2]int{comment.Span.Start, comment.Span.End})
 		}
 
-		return leading
+		return spans
 	})
 }
