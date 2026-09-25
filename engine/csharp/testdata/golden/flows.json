@@ -3248,6 +3248,14 @@
         },
         "coupled": false
     },
+    "Shop/Search/Rankings.cs@165:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
     "Shop/Shipping/CarrierCodes.cs@210:ClassDeclaration": {
         "state": {},
         "readsByMember": {},
@@ -5175,6 +5183,27 @@
         "reads": {
             "Slug": 0,
             "Heading": 0
+        },
+        "coupled": false
+    },
+    "Shop/Storefront/Shelves.cs@109:ClassDeclaration": {
+        "state": {
+            "items": "global::System.Collections.Generic.IReadOnlyList<T>",
+            "Count": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Count": [
+                "items"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "items": [],
+            "Count": []
+        },
+        "reads": {
+            "items": 1,
+            "Count": 0
         },
         "coupled": false
     },

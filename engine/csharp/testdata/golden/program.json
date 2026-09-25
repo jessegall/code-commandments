@@ -1538,6 +1538,12 @@
             "envied": "",
             "unpacks": false
         },
+        "global::Shop.Search.Rankings.Shown(global::Shop.Storefront.Shelf<global::Shop.Catalog.Product>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
         "global::Shop.Shipping.CarrierCodes.TrackingUrl(global::System.String, global::System.String)": {
             "callers": [],
             "handedOut": false,
@@ -3546,6 +3552,12 @@
             "enum": [],
             "cased": false
         },
+        "global::Shop.Search.Rankings": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
         "global::Shop.Shipping.CarrierCodes": {
             "declared": true,
             "record": false,
@@ -4221,6 +4233,12 @@
         "global::Shop.Storefront.ProductPage": {
             "declared": true,
             "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Storefront.Shelf<T>": {
+            "declared": true,
+            "record": false,
             "enum": [],
             "cased": false
         },

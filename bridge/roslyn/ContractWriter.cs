@@ -439,7 +439,7 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             {
                 written["symbol"] = declared.OriginalDefinition.ToDisplayString(TreeWriter.Declared);
 
-                if (declared is IMethodSymbol or IPropertySymbol or IEventSymbol && (declared.IsOverride || TreeWriter.ImplementsInterfaceMember(declared)))
+                if (node is MemberDeclarationSyntax && (declared.IsOverride || TreeWriter.ImplementsInterfaceMember(declared)))
                 {
                     written["inherited"] = true;
                 }

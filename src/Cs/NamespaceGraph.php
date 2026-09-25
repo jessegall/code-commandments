@@ -27,7 +27,7 @@ final class NamespaceGraph
     public function __construct(Codebase $codebase)
     {
         foreach ($codebase->whereType()->get() as $type) {
-            $this->homes[(string) $type->node->symbol] = self::namespaceOf($type);
+            $this->homes[self::typeKey((string) $type->node->symbol)] = self::namespaceOf($type);
         }
 
         foreach ($codebase->modules() as $module) {
@@ -59,8 +59,8 @@ final class NamespaceGraph
      */
     public function wouldCloseACycle(string $referrer, string $target): bool
     {
-        $from = $this->homes[$referrer] ?? null;
-        $to = $this->homes[$target] ?? null;
+        $from = $this->homes[self::typeKey($referrer)] ?? null;
+        $to = $this->homes[self::typeKey($target)] ?? null;
 
         return $from !== null && $to !== null && $from !== $to && $this->independentArrows()->has($to, $from);
     }
@@ -101,7 +101,7 @@ final class NamespaceGraph
     {
         $symbols = [...($node->type?->namedTypes() ?? []), ...array_filter([$node->target?->type])];
 
-        return array_values(array_unique(array_filter(array_map(fn (string $symbol): ?string => $this->homes[$symbol] ?? null, $symbols))));
+        return array_values(array_unique(array_filter(array_map(fn (string $symbol): ?string => $this->homes[self::typeKey($symbol)] ?? null, $symbols))));
     }
 
     /**
@@ -112,5 +112,16 @@ final class NamespaceGraph
         $declaration = array_values(array_filter($type->module->ancestorsOf($type->node), static fn (Node $node): bool => $node->is('NamespaceDeclaration', 'FileScopedNamespaceDeclaration')))[0] ?? null;
 
         return (string) $declaration?->namespaceName();
+    }
+
+    /**
+     * The type $symbol names, its type arguments aside: `Pipeline<TIn, TOut>` as declared and `Pipeline<Order, Invoice>` as
+     * used are the one type, whose home a reference through either reaches.
+     */
+    private static function typeKey(string $symbol): string
+    {
+        $open = strpos($symbol, '<');
+
+        return $open === false ? $symbol : substr($symbol, 0, $open);
     }
 }

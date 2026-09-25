@@ -52,10 +52,10 @@ func isAccessedMember(node engine.Match) bool {
 	return node.Node().Field == "Name" && slices.Contains([]string{"SimpleMemberAccessExpression", "PointerMemberAccessExpression", "MemberBindingExpression"}, node.Parent().Kind())
 }
 
-// Declares says whether the node declares a name normalising leaves out: a declaration or statement outside any
-// expression. A part of an expression keeps its name, as the PHP engine reads it there.
+// Declares says whether the node carries a name normalising leaves out: a declaration, a statement or a written type
+// outside any expression, as the PHP engine reads them. A part of an expression keeps its name.
 func (hashRules) Declares(node engine.Match) bool {
-	return !(Node{node}).IsExpression() && node.Node().Role != "type" && !insideAnExpression(node)
+	return !(Node{node}).IsExpression() && !insideAnExpression(node)
 }
 
 func (hashRules) IsCallee(node engine.Match) bool {

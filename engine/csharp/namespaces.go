@@ -21,7 +21,7 @@ func Namespaces(codebase *engine.Codebase) *NamespaceGraph {
 		program := Of(codebase)
 		for _, node := range program.nodes {
 			if node.IsTypeDeclaration() {
-				graph.homes[node.Symbol()] = node.Parent().namespaceAround()
+				graph.homes[typeKey(node.Symbol())] = node.Parent().namespaceAround()
 			}
 		}
 		for _, file := range In(codebase).Files() {
@@ -73,7 +73,7 @@ func (g *NamespaceGraph) reachedFrom(node Node) []string {
 	}
 	var homes []string
 	for _, symbol := range symbols {
-		if home, declared := g.homes[symbol]; declared && home != "" && !slices.Contains(homes, home) {
+		if home, declared := g.homes[typeKey(symbol)]; declared && home != "" && !slices.Contains(homes, home) {
 			homes = append(homes, home)
 		}
 	}
@@ -102,8 +102,8 @@ func (g *NamespaceGraph) IndependentArrows() engine.DependencyArrows {
 // WouldCloseACycle says whether a reference from the referrer type to the target type would close a cycle between
 // their namespaces: the target's namespace already refers back to the referrer's.
 func (g *NamespaceGraph) WouldCloseACycle(referrer, target string) bool {
-	from, fromDeclared := g.homes[referrer]
-	to, toDeclared := g.homes[target]
+	from, fromDeclared := g.homes[typeKey(referrer)]
+	to, toDeclared := g.homes[typeKey(target)]
 
 	return fromDeclared && toDeclared && from != to && g.IndependentArrows().Has(to, from)
 }
@@ -133,4 +133,14 @@ func (g *NamespaceGraph) LayerViolations(stack engine.LayerStack) []engine.Match
 	}
 
 	return found
+}
+
+// typeKey is the type the symbol names, its type arguments aside: `Pipeline<TIn, TOut>` as declared and
+// `Pipeline<Order, Invoice>` as used are the one type, whose home a reference through either reaches.
+func typeKey(symbol string) string {
+	if open := strings.Index(symbol, "<"); open >= 0 {
+		return symbol[:open]
+	}
+
+	return symbol
 }

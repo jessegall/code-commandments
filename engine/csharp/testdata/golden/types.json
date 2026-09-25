@@ -24986,6 +24986,54 @@
         "value": false,
         "inner": []
     },
+    "Shop/Search/Rankings.cs@246:PredefinedType": {
+        "name": "global::System.Int32",
+        "nullable": false,
+        "value": true,
+        "inner": []
+    },
+    "Shop/Search/Rankings.cs@256:Parameter": {
+        "name": "global::Shop.Storefront.Shelf<global::Shop.Catalog.Product>",
+        "nullable": false,
+        "value": false,
+        "inner": [
+            "global::Shop.Catalog.Product"
+        ]
+    },
+    "Shop/Search/Rankings.cs@256:QualifiedName": {
+        "name": "global::Shop.Storefront.Shelf<global::Shop.Catalog.Product>",
+        "nullable": false,
+        "value": false,
+        "inner": [
+            "global::Shop.Catalog.Product"
+        ]
+    },
+    "Shop/Search/Rankings.cs@278:IdentifierName": {
+        "name": "global::Shop.Catalog.Product",
+        "nullable": false,
+        "value": false,
+        "inner": []
+    },
+    "Shop/Search/Rankings.cs@297:IdentifierName": {
+        "name": "global::Shop.Storefront.Shelf<global::Shop.Catalog.Product>",
+        "nullable": false,
+        "value": false,
+        "inner": [
+            "global::Shop.Catalog.Product"
+        ]
+    },
+    "Shop/Search/Rankings.cs@297:SimpleMemberAccessExpression": {
+        "name": "global::System.Int32",
+        "nullable": false,
+        "value": true,
+        "inner": []
+    },
+    "Shop/Search/Rankings.cs@303:IdentifierName": {
+        "name": "global::System.Int32",
+        "nullable": false,
+        "value": true,
+        "inner": []
+    },
     "Shop/Shipping/CarrierCodes.cs@263:PredefinedType": {
         "name": "global::System.String",
         "nullable": false,
@@ -39696,6 +39744,48 @@
         "name": "global::System.String",
         "nullable": false,
         "value": false,
+        "inner": []
+    },
+    "Shop/Storefront/Shelves.cs@138:GenericName": {
+        "name": "global::System.Collections.Generic.IReadOnlyList<T>",
+        "nullable": false,
+        "value": false,
+        "inner": []
+    },
+    "Shop/Storefront/Shelves.cs@138:Parameter": {
+        "name": "global::System.Collections.Generic.IReadOnlyList<T>",
+        "nullable": false,
+        "value": false,
+        "inner": []
+    },
+    "Shop/Storefront/Shelves.cs@152:IdentifierName": {
+        "name": "T",
+        "nullable": false,
+        "value": false,
+        "inner": []
+    },
+    "Shop/Storefront/Shelves.cs@175:PredefinedType": {
+        "name": "global::System.Int32",
+        "nullable": false,
+        "value": true,
+        "inner": []
+    },
+    "Shop/Storefront/Shelves.cs@188:IdentifierName": {
+        "name": "global::System.Collections.Generic.IReadOnlyList<T>",
+        "nullable": false,
+        "value": false,
+        "inner": []
+    },
+    "Shop/Storefront/Shelves.cs@188:SimpleMemberAccessExpression": {
+        "name": "global::System.Int32",
+        "nullable": false,
+        "value": true,
+        "inner": []
+    },
+    "Shop/Storefront/Shelves.cs@194:IdentifierName": {
+        "name": "global::System.Int32",
+        "nullable": false,
+        "value": true,
         "inner": []
     },
     "Shop/Warranty/Policies.cs@123:PredefinedType": {
