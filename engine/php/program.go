@@ -415,3 +415,46 @@ func names(node *contract.Node, field string) []string {
 func lastPart(name string) string {
 	return name[strings.LastIndex(name, `\`)+1:]
 }
+
+// InheritsMutableProperty says whether an ancestor of the class declares the property writable: a promoted parameter
+// or a property, neither readonly.
+func (p *Program) InheritsMutableProperty(class, property string) bool {
+	for _, ancestor := range p.Ancestors(class) {
+		declaration, ok := p.Class(ancestor)
+		if ok && slices.Contains(MutablePropertyNames(declaration), property) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// MutablePropertyNames is every property a class declares writable: its promoted parameters and its properties that
+// are not readonly, each once.
+func MutablePropertyNames(class engine.Match) []string {
+	if class.Kind() != "Stmt_Class" {
+		return nil
+	}
+	var names []string
+	add := func(name string) {
+		if !slices.Contains(names, name) {
+			names = append(names, name)
+		}
+	}
+	for _, param := range ConstructorParams(class) {
+		name := variableName(param.Child("var"))
+		if len(param.Node().Modifiers) > 0 && !slices.Contains(param.Node().Modifiers, "readonly") && name != "" {
+			add(name)
+		}
+	}
+	for _, property := range class.ChildrenIn("stmts") {
+		if property.Kind() != "Stmt_Property" || slices.Contains(property.Node().Modifiers, "readonly") {
+			continue
+		}
+		for _, declared := range property.ChildrenIn("props") {
+			add(declared.Child("name").Name())
+		}
+	}
+
+	return names
+}
