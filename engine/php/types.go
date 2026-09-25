@@ -211,6 +211,7 @@ func (t *Types) Fill(codebase *engine.Codebase) {
 			t.fillTarget(expression)
 		}
 	}
+	engine.Untouched()
 }
 
 func resolvedType(class string) *contract.Type {

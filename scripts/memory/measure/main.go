@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"runtime/debug"
 	"runtime/pprof"
@@ -22,12 +23,14 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/engine"
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
 func main() {
 	each := flag.Bool("each", false, "read each C# project folder alone")
 	heap := flag.String("heap", "", "write a heap profile of the loaded codebase here")
+	fields := flag.Bool("fields", false, "count how many nodes set each field")
 	flag.Parse()
 
 	if flag.NArg() != 1 {
@@ -45,7 +48,7 @@ func main() {
 
 	largest := reading{}
 	for _, part := range parts {
-		read, err := measure(part, *heap)
+		read, err := measure(part, *heap, *fields)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -79,7 +82,7 @@ func (r reading) String() string {
 }
 
 // measure loads the path, weighs what it holds, then runs every detector over it.
-func measure(path, heap string) (reading, error) {
+func measure(path, heap string, fields bool) (reading, error) {
 	started := time.Now()
 	codebase, err := scan.Walk([]string{path}, source.Excluded{}).Load()
 	if err != nil {
@@ -92,6 +95,10 @@ func measure(path, heap string) (reading, error) {
 	}
 	read.heap = settled()
 	fmt.Fprintf(os.Stderr, "loaded %s\t%s\n", path, read)
+
+	if fields {
+		population(codebase)
+	}
 
 	if heap != "" {
 		if err := profile(heap); err != nil {
@@ -134,6 +141,38 @@ func reads(engine catalog.Engine, held map[contract.Language]bool) bool {
 	}
 
 	return false
+}
+
+// population prints the share of nodes that set each field of the node, and how many distinct values the
+// strings among them take.
+func population(codebase *engine.Codebase) {
+	kind := reflect.TypeOf(contract.Node{})
+	set := make([]int, kind.NumField())
+	distinct := make([]map[string]bool, kind.NumField())
+	total := 0
+	for _, file := range codebase.Files() {
+		for _, node := range file.Nodes() {
+			total++
+			value := reflect.ValueOf(node).Elem()
+			for i := range kind.NumField() {
+				if !kind.Field(i).IsExported() || value.Field(i).IsZero() {
+					continue
+				}
+				set[i]++
+				if text, isString := value.Field(i).Interface().(string); isString {
+					if distinct[i] == nil {
+						distinct[i] = map[string]bool{}
+					}
+					distinct[i][text] = true
+				}
+			}
+		}
+	}
+	for i := range kind.NumField() {
+		if kind.Field(i).IsExported() {
+			fmt.Fprintf(os.Stderr, "%-10s %5.1f%%  %d distinct\n", kind.Field(i).Name, 100*float64(set[i])/float64(total), len(distinct[i]))
+		}
+	}
 }
 
 // settled is the heap in use once every collectable byte is collected.

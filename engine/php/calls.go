@@ -131,7 +131,7 @@ func CallName(call engine.Match) string {
 
 func (t *Types) fillTarget(call engine.Match) {
 	if owner, method := t.Callee(call); owner != "" {
-		call.Node().Target = &contract.Target{Symbol: owner + "::" + method + "()", Type: owner, Name: method}
+		call.Node().Own().Target = &contract.Target{Symbol: owner + "::" + method + "()", Type: owner, Name: method}
 	}
 }
 

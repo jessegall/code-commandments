@@ -1,6 +1,7 @@
 package python
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -21,20 +22,28 @@ func fill(codebase *engine.Codebase) {
 		for _, node := range module.Nodes() {
 			facts := node.Node()
 			if target, ok := program.Callee(node); ok {
-				facts.Target = targetOf(target)
+				facts.Own().Target = targetOf(target)
 			}
 			if refers, ok := program.refersTo(node, module); ok {
-				facts.Refers = refers
+				facts.Own().Refers = refers
 			}
 			if node.Kind() == "alias" {
 				if reached, ok := module.importedModule(node.Parent(), node); ok {
-					facts.Resolves = reached.File.Path
+					facts.Own().Resolves = reached.File.Path
 				}
 			}
-			facts.Inherited = node.IsFunction() && program.IsOverride(node)
-			facts.Constant = node.isConstant() || program.isEnumCase(node)
-			program.resolveType(facts.Declared, module)
-			program.resolveType(facts.Returns, module)
+			if node.IsFunction() && program.IsOverride(node) {
+				facts.Own().Inherited = true
+			}
+			if node.isConstant() || program.isEnumCase(node) {
+				facts.Own().Constant = true
+			}
+			if declared := program.resolvedType(facts.Declared, module); declared != facts.Declared {
+				facts.Own().Declared = declared
+			}
+			if returns := program.resolvedType(facts.Returns, module); returns != facts.Returns {
+				facts.Own().Returns = returns
+			}
 		}
 	}
 }
@@ -184,23 +193,42 @@ func (node Node) isConstant() bool {
 	return false
 }
 
-// resolveType names the class each named part of a written type spells, read in the module: a class of the
-// codebase by its symbol id, an imported one by the id its import binds. A name that resolves to neither, such as
-// a builtin, stays as written.
-func (p *Program) resolveType(written *contract.Type, module *Module) {
+// resolvedType is the written type with the class each named part spells named, read in the module: a class of
+// the codebase by its symbol id, an imported one by the id its import binds. A name that resolves to neither, such
+// as a builtin, stays as written. The written type is never changed, since decoded types are shared: a type that
+// resolves differently is a new one, and one that resolves as written is itself.
+func (p *Program) resolvedType(written *contract.Type, module *Module) *contract.Type {
 	if written == nil {
-		return
+		return nil
 	}
+	resolved := *written
 	if written.Kind == "named" && written.Name != "" {
 		if class, ok := p.classSpelled(written.Name, module); ok {
-			written.Name = class.Node().Symbol
+			resolved.Name = class.Node().Symbol
 		} else if imported, ok := module.importedName(written.Name); ok {
-			written.Name = imported
+			resolved.Name = imported
 		}
 	}
-	for _, inner := range append(append([]*contract.Type{}, written.Args...), written.Members...) {
-		p.resolveType(inner, module)
+	resolved.Args = p.resolvedTypes(written.Args, module)
+	resolved.Members = p.resolvedTypes(written.Members, module)
+	if resolved.Name == written.Name && slices.Equal(resolved.Args, written.Args) && slices.Equal(resolved.Members, written.Members) {
+		return written
 	}
+
+	return &resolved
+}
+
+// resolvedTypes are the types resolved, the slice itself when none of them changed.
+func (p *Program) resolvedTypes(written []*contract.Type, module *Module) []*contract.Type {
+	resolved := make([]*contract.Type, len(written))
+	for at, inner := range written {
+		resolved[at] = p.resolvedType(inner, module)
+	}
+	if slices.Equal(resolved, written) {
+		return written
+	}
+
+	return resolved
 }
 
 // fillRefs writes, on each docstring, the Sphinx cross-references it makes: each as written, whether the codebase

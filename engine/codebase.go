@@ -31,6 +31,14 @@ func Fills(language contract.Language, fill Filler) {
 	fillers[language] = fill
 }
 
+// Untouched fails the run when a fill wrote a fact into the Facts nodes without any share, which would hand that
+// fact to every one of them: a fact is written through the node's Own.
+func Untouched() {
+	if !contract.Untouched() {
+		panic("a fact was written into the Facts every node without any shares; write it through Node.Own")
+	}
+}
+
 // Keep makes a value built elsewhere the codebase's analysis under the key, in place of the one its build would make.
 func Keep[T any](c *Codebase, key any, value T) {
 	c.analyses.Store(key, value)
@@ -92,6 +100,7 @@ func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *C
 			fill(codebase)
 		}
 	}
+	Untouched()
 
 	return codebase
 }
@@ -211,7 +220,7 @@ func (f *File) CommentMatch(comment contract.Comment, line int) Match {
 	span := comment.Span
 	span.Line = line
 
-	return Match{node: &contract.Node{ID: -1, Kind: CommentKind, Role: "other", Span: span, Name: comment.Kind}, file: f}
+	return Match{node: contract.NewNode(contract.Node{ID: -1, Kind: CommentKind, Role: "other", Span: span, Name: comment.Kind}), file: f}
 }
 
 // Comments is every comment attached to the node.

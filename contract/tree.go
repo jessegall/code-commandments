@@ -4,6 +4,7 @@ package contract
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 )
 
 // Language is the language a stream or a file is written in.
@@ -91,16 +92,26 @@ func (s *Span) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Node is one syntax node.
+// Node is one syntax node. What nearly every node has is held on it; the facts only some nodes carry are held in
+// its Facts, read through the node as its own fields, and every node without any shares one empty Facts.
 type Node struct {
-	ID        int         `json:"id"`
-	Kind      string      `json:"kind"`
-	Role      string      `json:"role"`
-	Is        []string    `json:"is,omitempty"`
-	Span      Span        `json:"span"`
-	Field     string      `json:"field,omitempty"`
-	Children  []*Node     `json:"children,omitempty"`
-	Name      string      `json:"name,omitempty"`
+	ID       int      `json:"id"`
+	Kind     string   `json:"kind"`
+	Role     string   `json:"role"`
+	Is       []string `json:"is,omitempty"`
+	Span     Span     `json:"span"`
+	Field    string   `json:"field,omitempty"`
+	Children []*Node  `json:"children,omitempty"`
+	Name     string   `json:"name,omitempty"`
+	Resolved *Type    `json:"resolved,omitempty"`
+	*Facts
+
+	parent *Node
+}
+
+// Facts are what only some nodes carry: a literal and its value, an operator, modifiers and flags, types written
+// or returned, a symbol, a reference, a call's target, the file an import resolves to, and what the engine fills.
+type Facts struct {
 	Literal   string      `json:"literal,omitempty"`
 	Value     *Value      `json:"value,omitempty"`
 	Operator  string      `json:"operator,omitempty"`
@@ -108,7 +119,6 @@ type Node struct {
 	Flags     []string    `json:"flags,omitempty"`
 	Declared  *Type       `json:"declared,omitempty"`
 	Returns   *Type       `json:"returns,omitempty"`
-	Resolved  *Type       `json:"resolved,omitempty"`
 	Symbol    string      `json:"symbol,omitempty"`
 	Refers    string      `json:"refers,omitempty"`
 	Target    *Target     `json:"target,omitempty"`
@@ -116,8 +126,33 @@ type Node struct {
 	Constant  bool        `json:"constant,omitempty"`
 	Inherited bool        `json:"inherited,omitempty"`
 	Extras    *NodeExtras `json:"extras,omitempty"`
+}
 
-	parent *Node
+// none is the Facts of every node that carries none; it is read, never written.
+var none = &Facts{}
+
+// NewNode is the node, ready to read: one built outside a stream, such as a comment standing as a node.
+func NewNode(node Node) *Node {
+	if node.Facts == nil {
+		node.Facts = none
+	}
+
+	return &node
+}
+
+// Untouched says whether the Facts every node without any shares is still empty: a fact written through a node
+// rather than through its Own lands there, on every such node at once.
+func Untouched() bool {
+	return reflect.ValueOf(*none).IsZero()
+}
+
+// Own is the node's own Facts to write a fact into, made for it when it shares the empty one.
+func (n *Node) Own() *Facts {
+	if n.Facts == none {
+		n.Facts = &Facts{}
+	}
+
+	return n.Facts
 }
 
 // Parent is the node whose children hold this one; the root has none.

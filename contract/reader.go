@@ -199,6 +199,9 @@ func link(file *File) error {
 			return fmt.Errorf("node %d's span starts after it ends", node.ID)
 		}
 		node.parent = parent
+		if node.Facts == nil {
+			node.Facts = none
+		}
 		file.nodes = append(file.nodes, node)
 		for _, child := range node.Children {
 			if err := walk(child, node); err != nil {

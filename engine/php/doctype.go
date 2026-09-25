@@ -157,5 +157,5 @@ func child(node *contract.Node, field string) *contract.Node {
 		}
 	}
 
-	return &contract.Node{}
+	return contract.NewNode(contract.Node{})
 }
