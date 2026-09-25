@@ -102,3 +102,20 @@ func TestADocstringIsReadAsProseOrAsARestatement(t *testing.T) {
 		t.Errorf("the references are %v", refs)
 	}
 }
+
+func TestAStatementSpellsItsConstructAndItsOwnHead(t *testing.T) {
+	codebase := pythontest.FromSource(t, map[string]string{"loop.py": `
+def settle(orders):
+    for order in orders.pending:
+        order.save(force=True)
+`})
+	for _, match := range pythontest.File(t, codebase, "loop.py").Match(0).Descendants() {
+		node := python.Node{Match: match}
+		if node.Kind() != "For" {
+			continue
+		}
+		if words := strings.Join(node.CodeWords(), " "); words != "loop iterat every order pend" {
+			t.Errorf("the loop spells %q", words)
+		}
+	}
+}
