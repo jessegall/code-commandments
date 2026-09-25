@@ -30,8 +30,8 @@ func fill(codebase *engine.Codebase) {
 					facts.Resolves = reached.File.Path
 				}
 			}
-			facts.Inherited = IsFunction(node) && program.IsOverride(node)
-			facts.Constant = isConstant(node)
+			facts.Inherited = node.IsFunction() && program.IsOverride(node)
+			facts.Constant = node.isConstant()
 			program.resolveType(facts.Declared, module)
 			program.resolveType(facts.Returns, module)
 		}
@@ -39,7 +39,7 @@ func fill(codebase *engine.Codebase) {
 }
 
 // targetOf is the contract's target for a def: its symbol, its name, and the class that declares it.
-func targetOf(def engine.Match) *contract.Target {
+func targetOf(def Node) *contract.Target {
 	target := &contract.Target{Symbol: def.Node().Symbol, Name: def.Name()}
 	if class := def.Parent(); class.Kind() == "ClassDef" {
 		target.Type = class.Node().Symbol
@@ -49,7 +49,7 @@ func targetOf(def engine.Match) *contract.Target {
 }
 
 // IsOverride says whether a method, a def in a class body, overrides one a base class of the codebase declares.
-func (p *Program) IsOverride(method engine.Match) bool {
+func (p *Program) IsOverride(method Node) bool {
 	class := method.Parent()
 	home := p.homes[class.Node()]
 	if class.Kind() != "ClassDef" || home == nil {
@@ -69,7 +69,7 @@ func (p *Program) IsOverride(method engine.Match) bool {
 // refersTo is the symbol id an import alias or a name at the top of its module names: a def or class of the
 // codebase, or what an import binds, whether or not the scan holds it. A name a function binds for itself
 // refers to its own local, which has no id.
-func (p *Program) refersTo(node engine.Match, module *Module) (string, bool) {
+func (p *Program) refersTo(node Node, module *Module) (string, bool) {
 	switch node.Kind() {
 	case "alias":
 		return module.importedId(node)
@@ -92,10 +92,10 @@ func (p *Program) refersTo(node engine.Match, module *Module) (string, bool) {
 
 // importedId is the dotted id an import alias binds: the module it imports, or the member a from-import names.
 // A relative import names one only when it reaches a module of the codebase.
-func (m *Module) importedId(alias engine.Match) (string, bool) {
+func (m *Module) importedId(alias Node) (string, bool) {
 	statement := alias.Parent()
 	if statement.Kind() == "Import" {
-		if _, renamed := renamedTo(alias); renamed {
+		if _, renamed := alias.renamedTo(); renamed {
 			return alias.Name(), true
 		}
 
@@ -104,10 +104,10 @@ func (m *Module) importedId(alias engine.Match) (string, bool) {
 	if alias.Name() == "*" {
 		return "", false
 	}
-	if Level(statement) == 0 {
+	if statement.Level() == 0 {
 		return statement.Name() + "." + alias.Name(), true
 	}
-	source, ok := m.program.moduleNamed(statement.Name(), m, Level(statement))
+	source, ok := m.program.moduleNamed(statement.Name(), m, statement.Level())
 	if !ok {
 		return "", false
 	}
@@ -131,7 +131,7 @@ func (m *Module) importedName(dotted string) (string, bool) {
 }
 
 // renamedTo is the name an import alias renames what it imports to, if it renames it.
-func renamedTo(alias engine.Match) (string, bool) {
+func (alias Node) renamedTo() (string, bool) {
 	if extras := alias.Node().Extras; extras != nil && extras.Python != nil && extras.Python.As != "" {
 		return extras.Python.As, true
 	}
@@ -140,8 +140,8 @@ func renamedTo(alias engine.Match) (string, bool) {
 }
 
 // isLocal says whether a function around the node binds the name for itself: as a parameter, or by assigning it.
-func (p *Program) isLocal(name string, node engine.Match) bool {
-	for function := EnclosingFunction(node); function.Exists(); function = EnclosingFunction(function.Parent()) {
+func (p *Program) isLocal(name string, node Node) bool {
+	for function := node.EnclosingFunction(); function.Exists(); function = function.Parent().EnclosingFunction() {
 		if p.locals(function)[name] {
 			return true
 		}
@@ -151,16 +151,16 @@ func (p *Program) isLocal(name string, node engine.Match) bool {
 }
 
 // locals is every name the function binds for itself, read once.
-func (p *Program) locals(function engine.Match) map[string]bool {
+func (p *Program) locals(function Node) map[string]bool {
 	if held, ok := p.bound.Load(function.Node()); ok {
 		return held.(map[string]bool)
 	}
 	names := map[string]bool{}
-	for _, parameter := range Parameters(function) {
+	for _, parameter := range function.Parameters() {
 		names[parameter.Name()] = true
 	}
-	for _, statement := range statementsIn(function) {
-		for _, written := range writtenNames(statement) {
+	for _, statement := range function.statementsIn() {
+		for _, written := range statement.writtenNames() {
 			names[written] = true
 		}
 	}
@@ -170,14 +170,14 @@ func (p *Program) locals(function engine.Match) map[string]bool {
 }
 
 // isConstant says whether the expression has a value before the program runs: a literal, or arithmetic on literals.
-func isConstant(node engine.Match) bool {
+func (node Node) isConstant() bool {
 	switch node.Kind() {
 	case "Constant":
 		return true
 	case "UnaryOp":
-		return isConstant(node.Child("operand"))
+		return node.Child("operand").isConstant()
 	case "BinOp":
-		return isConstant(node.Child("left")) && isConstant(node.Child("right"))
+		return node.Child("left").isConstant() && node.Child("right").isConstant()
 	}
 
 	return false

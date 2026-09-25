@@ -35,7 +35,7 @@ type Module struct {
 // class another module declares.
 type bindings struct {
 	modules map[string]*Module
-	members map[string]engine.Match
+	members map[string]Node
 	ids     map[string]string
 }
 
@@ -67,7 +67,7 @@ func (p *Program) Modules() []*Module {
 }
 
 // ModuleOf is the module a node sits in.
-func (p *Program) ModuleOf(node engine.Match) *Module {
+func (p *Program) ModuleOf(node Node) *Module {
 	return p.byPath[node.File()]
 }
 
@@ -130,26 +130,26 @@ func (p *Program) moduleNamed(dotted string, from *Module, level int) (*Module, 
 }
 
 // Root is the module's root node.
-func (m *Module) Root() engine.Match {
-	return m.File.Match(0)
+func (m *Module) Root() Node {
+	return Node{m.File.Match(0)}
 }
 
 // Nodes is every node of the module, in pre-order.
-func (m *Module) Nodes() []engine.Match {
+func (m *Module) Nodes() []Node {
 	root := m.Root()
 
-	return append([]engine.Match{root}, root.Descendants()...)
+	return append([]Node{root}, root.Descendants()...)
 }
 
 // Declared is the function or class the module's own body declares under the name.
-func (m *Module) Declared(name string) (engine.Match, bool) {
+func (m *Module) Declared(name string) (Node, bool) {
 	for _, statement := range m.Root().ChildrenIn("body") {
-		if IsDefinition(statement) && statement.Name() == name {
+		if statement.IsDefinition() && statement.Name() == name {
 			return statement, true
 		}
 	}
 
-	return engine.Match{}, false
+	return Node{}, false
 }
 
 // Binds says whether the module binds the name at its top: a declaration, an import, or an assignment
@@ -158,10 +158,10 @@ func (m *Module) Binds(name string) bool {
 	m.once.Do(func() {
 		m.binds = map[string]bool{}
 		for _, node := range m.Nodes() {
-			if insideDefinition(node) {
+			if node.insideDefinition() {
 				continue
 			}
-			for _, bound := range append(declaredNames(node), writtenNames(node)...) {
+			for _, bound := range append(node.declaredNames(), node.writtenNames()...) {
 				m.binds[bound] = true
 			}
 		}
@@ -178,12 +178,12 @@ func (m *Module) bindings() *bindings {
 }
 
 func (m *Module) bind() {
-	bound := &bindings{modules: map[string]*Module{}, members: map[string]engine.Match{}, ids: map[string]string{}}
+	bound := &bindings{modules: map[string]*Module{}, members: map[string]Node{}, ids: map[string]string{}}
 	for _, statement := range m.Nodes() {
-		if IsImport(statement) {
+		if statement.IsImport() {
 			for _, alias := range statement.ChildrenIn("names") {
 				if id, ok := m.importedId(alias); ok {
-					bound.ids[boundAs(alias)] = id
+					bound.ids[alias.boundAs()] = id
 				}
 			}
 		}
@@ -191,7 +191,7 @@ func (m *Module) bind() {
 		case "Import":
 			for _, alias := range statement.ChildrenIn("names") {
 				if found, ok := m.program.moduleNamed(alias.Name(), m, 0); ok {
-					key := boundAs(alias)
+					key := alias.boundAs()
 					if key == strings.Split(alias.Name(), ".")[0] {
 						key = alias.Name()
 					}
@@ -199,17 +199,17 @@ func (m *Module) bind() {
 				}
 			}
 		case "ImportFrom":
-			source, sourced := m.program.moduleNamed(statement.Name(), m, Level(statement))
+			source, sourced := m.program.moduleNamed(statement.Name(), m, statement.Level())
 			for _, alias := range statement.ChildrenIn("names") {
 				if sourced {
 					if declared, ok := source.Declared(alias.Name()); ok {
-						bound.members[boundAs(alias)] = declared
+						bound.members[alias.boundAs()] = declared
 						continue
 					}
 				}
 				submodule := strings.TrimPrefix(statement.Name()+"."+alias.Name(), ".")
-				if found, ok := m.program.moduleNamed(submodule, m, Level(statement)); ok {
-					bound.modules[boundAs(alias)] = found
+				if found, ok := m.program.moduleNamed(submodule, m, statement.Level()); ok {
+					bound.modules[alias.boundAs()] = found
 				}
 			}
 		}
@@ -222,7 +222,7 @@ func (m *Module) bind() {
 func (m *Module) Imports() []Import {
 	var reached []Import
 	for _, statement := range m.Nodes() {
-		if !IsImport(statement) {
+		if !statement.IsImport() {
 			continue
 		}
 		for _, alias := range statement.ChildrenIn("names") {
@@ -237,22 +237,22 @@ func (m *Module) Imports() []Import {
 
 // Import is one import reaching a module of the codebase.
 type Import struct {
-	Statement engine.Match
-	Alias     engine.Match
+	Statement Node
+	Alias     Node
 	Module    *Module
 }
 
 // importedModule is the module the import's alias reaches.
-func (m *Module) importedModule(statement, alias engine.Match) (*Module, bool) {
+func (m *Module) importedModule(statement, alias Node) (*Module, bool) {
 	switch statement.Kind() {
 	case "Import":
 		return m.program.moduleNamed(alias.Name(), m, 0)
 	case "ImportFrom":
-		source, ok := m.program.moduleNamed(statement.Name(), m, Level(statement))
+		source, ok := m.program.moduleNamed(statement.Name(), m, statement.Level())
 		if ok && source.Binds(alias.Name()) {
 			return source, true
 		}
-		if submodule, found := m.program.moduleNamed(strings.TrimPrefix(statement.Name()+"."+alias.Name(), "."), m, Level(statement)); found {
+		if submodule, found := m.program.moduleNamed(strings.TrimPrefix(statement.Name()+"."+alias.Name(), "."), m, statement.Level()); found {
 			return submodule, true
 		}
 
@@ -264,7 +264,7 @@ func (m *Module) importedModule(statement, alias engine.Match) (*Module, bool) {
 
 // named is what the name is bound to at the top of the module: a function or class it declares, or one it
 // imports.
-func (m *Module) named(name string) (engine.Match, bool) {
+func (m *Module) named(name string) (Node, bool) {
 	if imported, ok := m.bindings().members[name]; ok {
 		return imported, true
 	}
