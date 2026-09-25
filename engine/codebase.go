@@ -108,6 +108,16 @@ func (f *File) Language() contract.Language {
 	return f.stream.Header.Language
 }
 
+// Match is the file's node with the id, such as the node a comment is attached to; no node when the file holds none.
+func (f *File) Match(id int) Match {
+	node, ok := f.Node(id)
+	if !ok {
+		return Match{}
+	}
+
+	return Match{node: node, file: f}
+}
+
 // Comments is every comment attached to the node.
 func (f *File) Comments(node *contract.Node) []contract.Comment {
 	var attached []contract.Comment

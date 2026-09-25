@@ -131,6 +131,15 @@ func (m Match) Name() string {
 	return m.node.Name
 }
 
+// Text is a literal's decoded string value; false when the node is no string literal.
+func (m Match) Text() (string, bool) {
+	if m.node == nil || m.node.Value == nil {
+		return "", false
+	}
+
+	return m.node.Value.Text()
+}
+
 // Is says whether the node answers a neutral kind.
 func (m Match) Is(neutral Neutral) bool {
 	return m.node != nil && m.node.Answers(string(neutral))
