@@ -35,8 +35,21 @@ type Definition struct {
 	Principle             string
 	ExamplesKeepDocblocks bool
 	Languages             []string
-	Related               []string
-	References            []string
+	Related               []Related
+	References            []Reference
+}
+
+// Related is another skill a skill points the reader at, by slug, and why.
+type Related struct {
+	Slug   string
+	Reason string
+}
+
+// Reference is a page of detail published beside a skill.
+type Reference struct {
+	Name  string
+	Title string
+	Body  string
 }
 
 var skills catalog.Catalog[Skill]

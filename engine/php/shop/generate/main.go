@@ -1,5 +1,6 @@
 // Command generate writes engine/php/testdata: the shop's stream through the bridge, the PHP engine's answers
-// through the oracle, both gzipped, and the digest of the sources they came from.
+// through the oracle, both gzipped, what every backend rule states about itself, and the digest of the sources
+// they came from.
 package main
 
 import (
@@ -10,7 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/jessegall/code-commandments/engine/php/internal/shop"
+	"github.com/jessegall/code-commandments/engine/php/shop"
 )
 
 func main() {
@@ -56,6 +57,13 @@ func generate() error {
 		if err := zipped(filepath.Join(answers, filepath.Base(question)+".gz"), lines); err != nil {
 			return err
 		}
+	}
+	definitions, err := run("php", filepath.Join(shop.Repository(), "engine", "php", "oracle", "definitions.php"))
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(testdata, "definitions.json"), definitions, 0o644); err != nil {
+		return err
 	}
 	digest, err := shop.Digest()
 	if err != nil {

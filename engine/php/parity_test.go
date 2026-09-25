@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/php/internal/shop"
+	"github.com/jessegall/code-commandments/engine/php/shop"
 )
 
 func TestTheCommittedShopIsGeneratedFromTodaysSources(t *testing.T) {

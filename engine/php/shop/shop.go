@@ -30,7 +30,7 @@ const Root = "/shop"
 func Repository() string {
 	_, source, _, _ := runtime.Caller(0)
 
-	return filepath.Join(filepath.Dir(source), "..", "..", "..", "..")
+	return filepath.Join(filepath.Dir(source), "..", "..", "..")
 }
 
 // Fixture is the backend shop fixture.
@@ -43,12 +43,10 @@ func Testdata() string {
 	return filepath.Join(Repository(), "engine", "php", "testdata")
 }
 
-// inputs are what the committed files are generated from, folders and files: the fixture, the PHP engine the oracle
-// asks and what it stands on, the lock that pins php-parser, the bridge and the oracle. A change to any makes them stale.
-var inputs = []string{
-	"tests/Fixtures/backend", "src/Ast", "src/Support", "src/Packages", "src/Span.php", "src/Located.php",
-	"src/WorkingCopy.php", "src/Query.php", "composer.lock", "bridge/php", "engine/php/oracle",
-}
+// inputs are what the committed files are generated from, folders and files: the fixture, the PHP tool the oracle
+// asks (its engine, and the rules whose findings and definitions it records), the lock that pins php-parser, the
+// bridge and the oracle. A change to any makes them stale.
+var inputs = []string{"tests/Fixtures/backend", "src", "composer.lock", "bridge/php", "engine/php/oracle"}
 
 // Digest is the hash of every source the committed files are generated from.
 func Digest() (string, error) {

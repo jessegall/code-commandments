@@ -6,7 +6,7 @@ import (
 
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php/concurrent"
-	"github.com/jessegall/code-commandments/engine/php/internal/shop"
+	"github.com/jessegall/code-commandments/engine/php/shop"
 	"github.com/jessegall/code-commandments/engine/php/phptypes"
 )
 
