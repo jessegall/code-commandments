@@ -3,7 +3,7 @@
 /**
  * Writes one engine's skills and sins as Go, from the PHP declarations: skill/<engine>/ holds a type per skill with
  * its intro and principle embedded from markdown beside it, sins/<engine>/ a type per sin. Go enrols them through
- * `go generate ./registry`.
+ * `scripts/dev go generate ./registry`.
  *
  * Run from the repository root: php scripts/go-rules.php Python
  */

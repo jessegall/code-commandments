@@ -1,5 +1,5 @@
 // Command record runs the PHP tool over every parity case and writes what it printed as the case's golden.
-// Run it from the repository root: `go run ./cli/parity/record [case-name...]`.
+// Run it from the repository root, in the dev container: `scripts/dev go run ./cli/parity/record [case-name...]`.
 package main
 
 import (

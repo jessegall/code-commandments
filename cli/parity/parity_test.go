@@ -32,7 +32,7 @@ func TestTheGoBinaryAnswersEveryCaseAsThePhpToolDid(t *testing.T) {
 
 			raw, err := os.ReadFile(filepath.Join(repo, GoldenFile(c)))
 			if err != nil {
-				t.Fatalf("no golden; record it with `go run ./cli/parity/record %s`", c.Name)
+				t.Fatalf("no golden; record it with `scripts/dev go run ./cli/parity/record %s`", c.Name)
 			}
 
 			want, err := ReadGolden(string(raw))
