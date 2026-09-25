@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 use JesseGall\CodeCommandments\Py\Codebase;
 use JesseGall\CodeCommandments\Py\ExprMatch;
+use JesseGall\CodeCommandments\Py\FeatureEnvy;
+use JesseGall\CodeCommandments\Py\LookupEnvy;
 use JesseGall\CodeCommandments\Py\ModuleFile;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
@@ -176,3 +178,17 @@ foreach ($codebase->modules() as $module) {
 }
 
 $write('declarations', $declared);
+
+// Which methods envy a parameter, directly or through a lookup keyed by it.
+$featureEnvy = new FeatureEnvy($codebase);
+$lookupEnvy = new LookupEnvy($codebase);
+$envy = [];
+
+foreach ($defs as [$def, $module]) {
+    $envy[$symbol($def, $module) . '@' . $place($module, $def->start)] = [
+        'envies' => $featureEnvy->enviedParameter($def, $module)->unwrapOr(null),
+        'lookup' => $lookupEnvy->isEnvious($def, $module),
+    ];
+}
+
+$write('envy', $envy);
