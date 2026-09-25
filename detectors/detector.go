@@ -73,3 +73,30 @@ func NamedIn(detectors []Detector, name string) (Detector, bool) {
 type Grouped interface {
 	GroupKey(match engine.Match) (string, bool)
 }
+
+// Aggregating is a detector whose verdict on a candidate weighs the candidates of the whole program: a group that
+// recurs, a slot every call fills alike. It weighs them in two steps, so a program judged a part at a time weighs
+// every part's candidates at once: Candidates reads the codebase's candidates, each with what the verdict needs to
+// know of it, and Decide picks the sins among every candidate read, in the order it reports them.
+type Aggregating interface {
+	Candidates(codebase *engine.Codebase) []Candidate
+	Decide(candidates []Candidate) []int
+}
+
+// Candidate is one place a rule weighs, and what its verdict needs to know of it. The match holds its codebase's
+// trees, so it is let go once the codebase is; Decide reads the record alone.
+type Candidate struct {
+	At     engine.Match
+	Record any
+}
+
+// Aggregate is what the aggregating detector finds in the codebase as a whole program.
+func Aggregate(detector Aggregating, codebase *engine.Codebase) []engine.Match {
+	candidates := detector.Candidates(codebase)
+	var sins []engine.Match
+	for _, at := range detector.Decide(candidates) {
+		sins = append(sins, candidates[at].At)
+	}
+
+	return sins
+}

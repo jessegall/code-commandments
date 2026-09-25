@@ -1,7 +1,6 @@
 package csharp
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -43,9 +42,9 @@ func (DeNulledFinderDetector) Find(codebase *engine.Codebase) []engine.Match {
 // isDeNulledByEveryCaller says whether two or more calls outside the tests reach the finder, and every one asserts
 // its result is there.
 func isDeNulledByEveryCaller(finder cs.Node, program *cs.Program) bool {
-	callers := slices.DeleteFunc(slices.Clone(program.CallersOf(finder)), cs.Node.IsInTest)
+	calls := program.CallsTo(finder)
 
-	return len(callers) >= 2 && !slices.ContainsFunc(callers, func(call cs.Node) bool { return !call.ResultIsAssertedPresent() })
+	return calls.OutsideTests >= 2 && calls.Asserting == calls.OutsideTests
 }
 
 // CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.

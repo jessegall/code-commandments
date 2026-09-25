@@ -253,13 +253,18 @@ func TestTheProgramReadsWholeAsThePhpEngineReadsIt(t *testing.T) {
 		Types   map[string]goldenDeclaration `json:"types"`
 	}
 	golden(t, "program", &want)
+	calls := map[string][]string{}
+	for _, file := range codebase.Files() {
+		for _, match := range file.Match(0).Descendants() {
+			if call := (csharp.Node{Match: match}); call.IsCall() && call.Target().Exists() {
+				calls[call.Target().Symbol()] = append(calls[call.Target().Symbol()], at(call))
+			}
+		}
+	}
 	methods := map[string]goldenMethod{}
 	for _, match := range csharp.In(codebase).WhereMethodDeclaration().Get() {
 		method := csharp.Node{Match: match}
-		callers := []string{}
-		for _, call := range program.CallersOf(method) {
-			callers = append(callers, at(call))
-		}
+		callers := append([]string{}, calls[method.Symbol()]...)
 		sort.Strings(callers)
 		if parameters := method.Parameters(); len(parameters) > 0 && parameters[0].HasModifier("this") {
 			callers = want.Methods[method.Symbol()].Callers

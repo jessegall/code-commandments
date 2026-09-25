@@ -284,8 +284,8 @@ func (n Node) isTypeParameter() bool {
 // or outside it.
 func (n Node) namesAValue() bool {
 	symbol := n.Node().Refers
-	if declared := Of(n.Codebase()).TypeDeclared(symbol); declared.Exists() {
-		return declared.Is("StructDeclaration", "RecordStructDeclaration", "EnumDeclaration")
+	if kind, declared := kindsOf(n.Codebase())[symbol]; declared {
+		return slices.Contains([]string{"StructDeclaration", "RecordStructDeclaration", "EnumDeclaration"}, kind)
 	}
 	program, ok := n.Codebase().Program(contract.CSharp)
 	if !ok {

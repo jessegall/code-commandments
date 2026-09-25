@@ -23,7 +23,7 @@ func (NamespaceCycleDetector) Sin() sins.Sin {
 
 // Find is every place the sin is committed.
 func (NamespaceCycleDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return cs.Namespaces(codebase).IndependentArrows().ClosingAMutualPair()
+	return cs.Namespaces(codebase).ClosingAMutualPair()
 }
 
 // CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.

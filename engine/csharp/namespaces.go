@@ -8,28 +8,33 @@ import (
 )
 
 // NamespaceGraph is every reference from one namespace of the program to another: a type named, built, called or
-// resolved in one namespace and declared in another, each an arrow at the node that makes it.
+// resolved in one namespace and declared in another, each an arrow at the node that makes it. A part of a program
+// judged alone holds the arrows of the rest only as counts, since they are written in files it does not hold.
 type NamespaceGraph struct {
-	homes  map[string]string
-	arrows engine.DependencyArrows
+	homes     map[string]string
+	arrows    engine.DependencyArrows
+	elsewhere engine.ArrowCounts
 }
 
 // Namespaces is the namespace graph of the program's C# code, read once.
 func Namespaces(codebase *engine.Codebase) *NamespaceGraph {
 	return engine.Analysis(codebase, "csharp.namespaces", func(codebase *engine.Codebase) *NamespaceGraph {
-		graph := &NamespaceGraph{homes: map[string]string{}}
-		program := Of(codebase)
-		for node := range program.all() {
-			if node.IsTypeDeclaration() {
-				graph.homes[typeKey(node.Symbol())] = node.Parent().namespaceAround()
-			}
-		}
-		for _, file := range In(codebase).Files() {
-			graph.walk(Node{file.Match(0)}, "")
-		}
-
-		return graph
+		return graphOf(codebase, Of(codebase).facts, nil)
 	})
+}
+
+// graphOf is the codebase's arrows, the program's types at home where its facts say, beside the references the
+// facts count beyond the part's own; none beside them when the codebase is the whole program.
+func graphOf(codebase *engine.Codebase, facts, own *Summary) *NamespaceGraph {
+	graph := &NamespaceGraph{homes: facts.homes}
+	if own != nil {
+		graph.elsewhere = facts.arrowsBeside(own)
+	}
+	for _, file := range In(codebase).Files() {
+		graph.walk(Node{file.Match(0)}, "")
+	}
+
+	return graph
 }
 
 // namespaceAround is the name of the namespace the node sits in; empty outside one.
@@ -105,7 +110,26 @@ func (g *NamespaceGraph) WouldCloseACycle(referrer, target string) bool {
 	from, fromDeclared := g.homes[typeKey(referrer)]
 	to, toDeclared := g.homes[typeKey(target)]
 
-	return fromDeclared && toDeclared && from != to && g.IndependentArrows().Has(to, from)
+	return fromDeclared && toDeclared && from != to && (g.IndependentArrows().Has(to, from) || g.independentElsewhere()[engine.Pair{From: to, To: from}] > 0)
+}
+
+// ClosingAMutualPair is the references worth cutting in every pair of independent namespaces that use each other,
+// the references elsewhere in the program counted beside this part's own.
+func (g *NamespaceGraph) ClosingAMutualPair() []engine.Match {
+	return g.IndependentArrows().ClosingAMutualPairBeside(g.independentElsewhere())
+}
+
+// independentElsewhere is the references elsewhere in the program between namespaces neither of which nests the
+// other.
+func (g *NamespaceGraph) independentElsewhere() engine.ArrowCounts {
+	independent := engine.ArrowCounts{}
+	for pair, count := range g.elsewhere {
+		if !nests(pair.From, pair.To) && !nests(pair.To, pair.From) {
+			independent[pair] = count
+		}
+	}
+
+	return independent
 }
 
 // nests says whether the outer namespace holds the inner one.

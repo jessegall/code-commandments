@@ -233,14 +233,14 @@ func (n Node) buildsAnotherOwnType(creation Node, program *Program) bool {
 // `Workflow` whose type has an `Id` of the same type.
 func mirrorsASibling(state []State, program *Program) bool {
 	for _, object := range state {
-		declaration := program.TypeDeclared(strings.TrimSuffix(object.Type.Name(), "?"))
-		if !declaration.Exists() {
+		declaration, declared := program.TypeDeclared(strings.TrimSuffix(object.Type.Name(), "?"))
+		if !declared {
 			continue
 		}
-		for _, inner := range declaration.StateTypes() {
+		for _, inner := range declaration.State {
 			mirrored := object.Name + capitalized(inner.Name)
 			at := slices.IndexFunc(state, func(held State) bool { return held.Name == mirrored })
-			if at >= 0 && state[at].Type.Exists() && inner.Type.Exists() && strings.TrimSuffix(state[at].Type.Name(), "?") == strings.TrimSuffix(inner.Type.Name(), "?") {
+			if at >= 0 && state[at].Type.Exists() && inner.Type != "" && strings.TrimSuffix(state[at].Type.Name(), "?") == strings.TrimSuffix(inner.Type, "?") {
 				return true
 			}
 		}

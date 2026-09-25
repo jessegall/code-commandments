@@ -34,14 +34,33 @@ func (a DependencyArrows) References() map[string][]string {
 	return references
 }
 
+// Pair is the two parts a reference joins: the part it is written in and the part it reaches.
+type Pair struct {
+	From string
+	To   string
+}
+
+// ArrowCounts is references counted by the parts they join, without where they are written: the references of
+// the parts of a program not held, beside the arrows of the part that is.
+type ArrowCounts map[Pair]int
+
 // ClosingAMutualPair is the references of the direction worth cutting in every pair of parts that use each
 // other: the thinner of the two, the one with fewer references, ties broken on the name so a codebase always
 // yields the same answer. One per file and part it reaches, each where it is written.
 func (a DependencyArrows) ClosingAMutualPair() []Match {
+	return a.ClosingAMutualPairBeside(nil)
+}
+
+// ClosingAMutualPairBeside is ClosingAMutualPair with the references elsewhere in the program counted beside
+// these: only these are reported, since only these are held where they are written.
+func (a DependencyArrows) ClosingAMutualPairBeside(elsewhere ArrowCounts) []Match {
 	type pair struct{ from, to string }
 	count := map[pair]int{}
 	for _, arrow := range a {
 		count[pair{arrow.From, arrow.To}]++
+	}
+	for held, references := range elsewhere {
+		count[pair{held.From, held.To}] += references
 	}
 	type place struct{ file, to string }
 	seen := map[place]bool{}
