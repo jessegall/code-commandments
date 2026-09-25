@@ -45,6 +45,6 @@
     "setup": [
       "mkdir -p bin && printf '#!/bin/sh\\necho '\"'\"'[]'\"'\"'\\n' > bin/claude && chmod +x bin/claude"
     ],
-    "pending": "tickets 4 and 7: the PHP and C# skills' trigger sets"
+    "pending": "ticket 7: the C# skills' trigger sets"
   }
 ]

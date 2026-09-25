@@ -7,5 +7,5 @@
   {"name": "config-reindex-rewrites-paths", "args": ["config", "reindex"], "setup": ["mkdir -p .commandments src", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->paths('\\''old'\\'', '\\''older'\\'');\\n};\\n' > .commandments/config.php"]},
   {"name": "config-reindex-fills-empty-paths", "args": ["config", "reindex"], "setup": ["mkdir -p .commandments app", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->paths();\\n};\\n' > .commandments/config.php"]},
   {"name": "judge-without-a-path-fills-empty-paths", "args": ["judge", "--skill=typescript", "--no-checklist"], "setup": ["mkdir -p .commandments src", "printf 'export const one = 1;\\n' > src/one.ts", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->paths();\\n};\\n' > .commandments/config.php"]},
-  {"name": "config-about", "args": ["config"], "pending": "tickets 4 and 7: the PHP and C# detectors, packages and skills it counts"}
+  {"name": "config-about", "args": ["config"], "pending": "ticket 7: the C# detectors, packages and skills it counts"}
 ]

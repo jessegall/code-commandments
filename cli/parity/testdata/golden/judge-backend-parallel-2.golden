@@ -1,0 +1,50 @@
+exit: 1
+--- stdout
+
+[1;33mbackend/documentation[0m  (2)
+  [1;36m↳ LOAD the skill `commandments-backend-documentation` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mapp/Support/FeatureGate.php:21[0m  Shop\Support\FeatureGate  [2m[InlineDocblockDetector][0m
+  [36mapp/Webhooks/PaymentEventHandler.php:31[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[ArchaeologyCommentDetector][0m
+  [32m↳ auto-fixable: vendor/bin/commandments repent --repent=latest --sin=inline-docblock[0m
+
+[1;33mbackend/enums-with-behaviour[0m  (1)
+  [1;36m↳ LOAD the skill `commandments-backend-enums-with-behaviour` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mapp/Support/FeatureGate.php:66[0m  Shop\Support\FeatureGate::enabled  [2m[MatchDefaultReturnsNullDetector][0m
+
+[1;33mbackend/exceptions[0m  (2)
+  [1;36m↳ LOAD the skill `commandments-backend-exceptions` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mapp/Webhooks/PaymentEventHandler.php:33[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[GenericExceptionDetector][0m
+  [36mapp/Webhooks/PaymentEventHandler.php:33[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[MessageAtThrowDetector][0m
+
+[1;33mbackend/guard-clauses-and-flow[0m  (1)
+  [1;36m↳ LOAD the skill `commandments-backend-guard-clauses-and-flow` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mapp/Webhooks/PaymentEventHandler.php:33[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[InlineThrowDetector][0m
+
+[1;33mbackend/method-mood[0m  (1)
+  [1;36m↳ LOAD the skill `commandments-backend-method-mood` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mapp/Support/FeatureGate.php:28[0m  Shop\Support\FeatureGate::tracks  [2m[BareStatePredicateDetector][0m
+
+[1;33mbackend/type-honesty[0m  (1)
+  [1;36m↳ LOAD the skill `commandments-backend-type-honesty` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mapp/Support/FeatureGate.php:40[0m  Shop\Support\FeatureGate::factory  [2m[RedundantArrowReturnTypeDetector][0m
+  [32m↳ auto-fixable: vendor/bin/commandments repent --repent=latest --sin=redundant-arrow-return-type[0m
+
+[1;33mbackend/value-objects[0m  (2)
+  [1;36m↳ LOAD the skill `commandments-backend-value-objects` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mapp/Webhooks/PaymentEventHandler.php:31[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[ArrayBagDetector][0m
+  [36mapp/Webhooks/PaymentEventHandler.php:33[0m  Shop\Webhooks\PaymentEventHandler::handle  [2m[ArrayBagDetector][0m
+
+[1m10 sins[0m across 7 skills.
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+--- stderr
+
+--- files

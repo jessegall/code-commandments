@@ -1,0 +1,76 @@
+exit: 0
+--- stdout
+
+[1marray-bag[0m  [2mbackend/value-objects[0m
+  String-indexing (`$arr['key']`) a structured array param instead of giving it a name —
+  the type was never defined.
+
+[33mWhy it is a sin[0m
+
+  Data that travels together is a **thing**, not a loose pile of arrays and primitives.
+  The moment a
+  cluster of values is passed around, returned, or reached into by string keys, it wants a
+  name and a type.
+
+[33mHow to fix it[0m
+
+  Give a structured array a typed value object — never read a named field by string key
+  off an `array` param.
+  A Spatie `Data` object built via `::from($array)`.
+
+[33mExample[0m
+
+  ```php
+  ----------[ Bad ]----------
+  
+  public function normalize(array $row): void
+  {
+      $this->products->upsert(
+          $row['sku'] ?? '',
+          $row['name'] ?? '',
+          (int) ($row['stock'] ?? 0),
+      );
+  }
+  
+  ----------[ Good ]----------
+  
+  // in Shop\Catalog\ImportRowNormalizer
+  // The same import row, given its type the moment it arrives: `ImportRow::from($row)` names the
+  // fields ONCE at the boundary, so nothing downstream reads `$row['sku']` off a loose array.
+  
+  public function ingest(array $row): void
+  {
+      $this->persist(ImportRow::from($row));
+  }
+  
+  // The same row with its required fields non-nullable: `::from()` fails hard on a
+  // real miss, so a valid row can't be confused with a malformed one.
+  
+  final class ImportRow extends Data
+  {
+      public function __construct(
+          public readonly string $sku,
+          public readonly int $quantity,
+          public readonly ?int $priceCents = null,
+          public readonly ?string $note = null,
+      ) {}
+  
+      public function lineTotal(): int
+      {
+          return $this->quantity * ($this->priceCents ?? 0);
+      }
+  }
+  ```
+
+[33mCommands[0m
+
+  [36mLearn     [0m load the skill [1mcommandments-backend-value-objects[0m
+  [36mExempts   [0m commandments exemptions array-bag
+  [36mFind it   [0m commandments judge --sin=array-bag
+  [36mTurn off  [0m commandments disable array-bag
+  [36mWrong?    [0m commandments report --detector=ArrayBagDetector --reason="…" --ref=PATH:LINE
+
+
+--- stderr
+
+--- files

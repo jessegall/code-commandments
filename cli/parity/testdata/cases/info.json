@@ -82,5 +82,7 @@
       "info",
       "switch-case"
     ]
-  }
+  },
+  {"name": "info-backend-sin", "args": ["info", "swallow-catch"]},
+  {"name": "info-backend-detector-name", "args": ["info", "ArrayBagDetector"]}
 ]

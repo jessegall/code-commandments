@@ -99,7 +99,8 @@ func (m Match) Location() string {
 	return fmt.Sprintf("%s:%d", m.File(), m.Line())
 }
 
-// Scope is the enclosing type and function, Type::function, (file) outside any type.
+// Scope is the enclosing type and function, Type::function, (file) outside any type; a type or a named
+// function names itself.
 func (m Match) Scope() string {
 	if m.file != nil {
 		if namer, named := scopeNamers.Load(m.file.Language()); named {
@@ -107,11 +108,19 @@ func (m Match) Scope() string {
 		}
 	}
 
+	declaration, function := m.EnclosingType(), m.EnclosingFunction()
+	if m.Is(TypeDeclaration) {
+		declaration = m
+	}
+	if m.Is(Function) && m.Name() != "" {
+		function = m
+	}
+
 	scope := "(file)"
-	if declaration := m.EnclosingType(); declaration.Exists() {
+	if declaration.Exists() {
 		scope = declaration.Identity()
 	}
-	if function := m.EnclosingFunction(); function.Exists() {
+	if function.Exists() {
 		return scope + "::" + function.Name()
 	}
 

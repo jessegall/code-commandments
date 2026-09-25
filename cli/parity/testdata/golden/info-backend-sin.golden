@@ -1,0 +1,62 @@
+exit: 0
+--- stdout
+
+[1mswallow-catch[0m  [2mbackend/exceptions[0m
+  `catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)
+
+[33mWhy it is a sin[0m
+
+  **Fail hard, fix once** beats *fail gracefully, debug forever.* A loud, named,
+  contextual failure is a
+  five-minute fix. A swallowed one is a silent wrong result you chase for a week.
+
+[33mHow to fix it[0m
+
+  Let a failure throw, or surface it named with the cause; never swallow a catch into
+  `null`/`false`/`[]`/`none()` or an empty body.
+  Rethrow wrapped (`previous: $e`), or catch-log-skip at one named boundary.
+
+[33mExample[0m
+
+  ```php
+  ----------[ Bad ]----------
+  
+  public function forecast(string $city): array
+  {
+      try {
+          $body = $this->http->get("https://weather.test/{$city}");
+  
+          return (array) json_decode($body, true);
+      } catch (\Throwable $e) {
+          return [];
+      }
+  }
+  
+  ----------[ Good ]----------
+  
+  public function forecastOrThrow(string $city): array
+  {
+      try {
+          $body = $this->http->get("https://weather.test/{$city}");
+  
+          return (array) json_decode($body, true);
+      } catch (\Throwable $e) {
+          report($e);
+  
+          throw $e;
+      }
+  }
+  ```
+
+[33mCommands[0m
+
+  [36mLearn     [0m load the skill [1mcommandments-backend-exceptions[0m
+  [36mExempts   [0m commandments exemptions swallow-catch
+  [36mFind it   [0m commandments judge --sin=swallow-catch
+  [36mTurn off  [0m commandments disable swallow-catch
+  [36mWrong?    [0m commandments report --detector=SwallowCatchDetector --reason="…" --ref=PATH:LINE
+
+
+--- stderr
+
+--- files

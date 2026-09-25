@@ -96,8 +96,11 @@ func TestAMatchKnowsItsScope(t *testing.T) {
 	if scope := call.Scope(); scope != `Shop\Notifications\SlackNotifier::ping` {
 		t.Fatalf("got %s", scope)
 	}
-	if scope := call.EnclosingType().Scope(); scope != "(file)" {
-		t.Fatalf("a type at file level scopes to (file), got %s", scope)
+	if scope := call.EnclosingType().Scope(); scope != `Shop\Notifications\SlackNotifier` {
+		t.Fatalf("a type names itself, as PHP's enclosingClass does, got %s", scope)
+	}
+	if scope := call.EnclosingFunction().Scope(); scope != `Shop\Notifications\SlackNotifier::ping` {
+		t.Fatalf("a method names itself, as PHP's enclosingFunctionName does, got %s", scope)
 	}
 }
 
