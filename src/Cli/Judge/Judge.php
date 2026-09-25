@@ -72,7 +72,7 @@ final class Judge implements Command
             ->option('--sin=NAME', 'only run detectors for one sin (lenient name match), e.g. nullable-callback')
             ->option('--exclude=A,B', 'skip findings in paths containing any fragment')
             ->adopt(Scope::options())
-            ->option('--parallel=N', 'run detectors across N worker processes (default: 4, capped at cores; 1 = off)')
+            ->option('--parallel=N', 'run detectors across N worker processes (default: 2, capped at cores; 1 = off)')
             ->option('--ignore-package-requirements', 'keep package-gated rules even if this project lacks the package (cross-project calibration)')
             ->option('--checklist=FILE', "write the checklist here (default: your session's sins/sins.md, in .commandments/sessions/<id>/ or the journal plugin's data folder)")
             ->option('--no-checklist', "print only, don't write the checklist file")
