@@ -69,3 +69,23 @@ func TestAFileIsReadByItsExtension(t *testing.T) {
 		t.Error("a stamp below the code is not a heading")
 	}
 }
+
+func TestAFreezeIsReadWherePhpReadsItAndNowhereElse(t *testing.T) {
+	raw, err := os.ReadFile("testdata/frozen.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var cases []struct {
+		Path   string `json:"path"`
+		Source string `json:"source"`
+		Want   bool   `json:"want"`
+	}
+	json.Unmarshal(raw, &cases)
+
+	for _, c := range cases {
+		if got := IsFrozenFile(c.Path, c.Source); got != c.Want {
+			t.Errorf("IsFrozenFile(%q, %q) = %v", c.Path, c.Source, got)
+		}
+	}
+}
