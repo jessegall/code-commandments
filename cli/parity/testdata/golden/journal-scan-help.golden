@@ -1,0 +1,10 @@
+exit: 0
+--- stdout
+commandments journal-scan — Scan the project for the folders to check and the ones to leave out, for the agent journal plugin.
+
+Usage:
+  commandments journal-scan  answer the detected folders as settings (run by the journal plugin)
+
+--- stderr
+
+--- files

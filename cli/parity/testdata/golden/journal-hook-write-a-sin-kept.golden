@@ -1,0 +1,323 @@
+exit: 0
+--- stdout
+{"whisper":"Code Commandments — the edit you just made to `Order.php` breaks a rule. Fix it now, at its SOURCE, while the code is still in front of you:\n  • array-bag at <project>/src/Order.php:13\n    LOAD the skill `commandments-backend-value-objects` before fixing — load it even if you believe you already have.\n  • narrated-command at <project>/src/Order.php:7\n    LOAD the skill `commandments-backend-method-mood` before fixing — load it even if you believe you already have.\nRun `vendor/bin/commandments info <sin>` if a rule is not one you recognise. This check reads a file at a time, so it is not the whole picture — `judge` still is.","raise":[{"event":"sin-found","brief":"array-bag at src/Order.php:13","open":"sins/sin/array-bag/src/Order.php"},{"event":"sin-found","brief":"narrated-command at src/Order.php:7","open":"sins/sin/narrated-command/src/Order.php"}]}
+
+--- stderr
+
+--- files
+=== created .commandments/dashboards/findings.json
+[
+    {
+        "sin": "array-bag",
+        "skill": "backend/value-objects",
+        "path": "<project>/src/Order.php",
+        "file": "src/Order.php",
+        "line": 13,
+        "scope": "App\\Order::total"
+    },
+    {
+        "sin": "narrated-command",
+        "skill": "backend/method-mood",
+        "path": "<project>/src/Order.php",
+        "file": "src/Order.php",
+        "line": 7,
+        "scope": "App\\Order::hides"
+    }
+]
+=== created .commandments/dashboards/sins.json
+{
+    "title": "Code Commandments",
+    "start": "overview",
+    "pages": {
+        "overview": {
+            "title": "Overview",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "row",
+                        "gap": 12,
+                        "children": [
+                            {
+                                "type": "stat",
+                                "label": "Sins",
+                                "value": "2",
+                                "tone": "danger",
+                                "note": "2 different rules"
+                            },
+                            {
+                                "type": "stat",
+                                "label": "Files",
+                                "value": "1",
+                                "tone": "warn"
+                            },
+                            {
+                                "type": "stat",
+                                "label": "Skills",
+                                "value": "2",
+                                "note": "the skills that teach the fixes"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "bars",
+                        "title": "Most common sins",
+                        "unit": "sins",
+                        "items": [
+                            {
+                                "label": "array-bag",
+                                "value": 1,
+                                "note": "1 file",
+                                "tone": "danger",
+                                "open": "sin/array-bag"
+                            },
+                            {
+                                "label": "narrated-command",
+                                "value": 1,
+                                "note": "1 file",
+                                "tone": "danger",
+                                "open": "sin/narrated-command"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "sin/array-bag": {
+            "title": "array-bag",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "array-bag",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "About this rule",
+                        "children": [
+                            {
+                                "type": "fact",
+                                "label": "What it is",
+                                "body": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined."
+                            },
+                            {
+                                "type": "fact",
+                                "label": "The rule",
+                                "body": "Give a structured array a typed value object — never read a named field by string key off an `array` param."
+                            },
+                            {
+                                "type": "fact",
+                                "label": "How to fix it",
+                                "body": "A Spatie `Data` object built via `::from($array)`."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "code",
+                        "text": "commandments info array-bag"
+                    },
+                    {
+                        "type": "table",
+                        "columns": [
+                            "File",
+                            "Sins"
+                        ],
+                        "rows": [
+                            {
+                                "cells": [
+                                    "src/Order.php",
+                                    "1"
+                                ],
+                                "open": "sin/array-bag/src/Order.php"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "sin/array-bag/src/Order.php": {
+            "title": "array-bag in Order.php",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "array-bag in src/Order.php",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "Where",
+                        "children": [
+                            {
+                                "type": "file",
+                                "path": "src/Order.php",
+                                "line": 13,
+                                "label": "line 13 — App\\Order::total"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "card",
+                        "title": "About this rule",
+                        "children": [
+                            {
+                                "type": "fact",
+                                "label": "What it is",
+                                "body": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined."
+                            },
+                            {
+                                "type": "fact",
+                                "label": "The rule",
+                                "body": "Give a structured array a typed value object — never read a named field by string key off an `array` param."
+                            },
+                            {
+                                "type": "fact",
+                                "label": "How to fix it",
+                                "body": "A Spatie `Data` object built via `::from($array)`."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "code",
+                        "text": "commandments info array-bag"
+                    }
+                ]
+            }
+        },
+        "sin/narrated-command": {
+            "title": "narrated-command",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "narrated-command",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "About this rule",
+                        "children": [
+                            {
+                                "type": "fact",
+                                "label": "What it is",
+                                "body": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one"
+                            },
+                            {
+                                "type": "fact",
+                                "label": "The rule",
+                                "body": "Name a command in the imperative: `hide()`, `enterTestMode()`, `openFor(\\$user)` — never the third-person `hides()`, and never a participle."
+                            },
+                            {
+                                "type": "fact",
+                                "label": "How to fix it",
+                                "body": "drop the -s: the call site is giving the order, not narrating it"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "code",
+                        "text": "commandments info narrated-command"
+                    },
+                    {
+                        "type": "table",
+                        "columns": [
+                            "File",
+                            "Sins"
+                        ],
+                        "rows": [
+                            {
+                                "cells": [
+                                    "src/Order.php",
+                                    "1"
+                                ],
+                                "open": "sin/narrated-command/src/Order.php"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "sin/narrated-command/src/Order.php": {
+            "title": "narrated-command in Order.php",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "narrated-command in src/Order.php",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "Where",
+                        "children": [
+                            {
+                                "type": "file",
+                                "path": "src/Order.php",
+                                "line": 7,
+                                "label": "line 7 — App\\Order::hides"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "card",
+                        "title": "About this rule",
+                        "children": [
+                            {
+                                "type": "fact",
+                                "label": "What it is",
+                                "body": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one"
+                            },
+                            {
+                                "type": "fact",
+                                "label": "The rule",
+                                "body": "Name a command in the imperative: `hide()`, `enterTestMode()`, `openFor(\\$user)` — never the third-person `hides()`, and never a participle."
+                            },
+                            {
+                                "type": "fact",
+                                "label": "How to fix it",
+                                "body": "drop the -s: the call site is giving the order, not narrating it"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "code",
+                        "text": "commandments info narrated-command"
+                    }
+                ]
+            }
+        }
+    }
+}
+=== created .commandments/sessions/640d8/.reported-findings
+-----
+<project>/src/Order.php	array-bag at <project>/src/Order.php:13
+<project>/src/Order.php	narrated-command at <project>/src/Order.php:7
+-----
+Code-commandments — the findings the per-edit check has already named this session, so each is said once.
+
+Between the dividers is the list: one finding per line: the file, a tab, then the finding as it was named
+
+Safe to delete — the findings still standing are named once more.
+
+=== created .commandments/sessions/640d8/.touched-sources
+marked-at: <time>
+-----
+Code-commandments — where the `edits` watcher has looked up to.
+
+The block above the first divider is this file's state, one `name: value` per line:
+  marked-at  the unix time of the last look; a judged file newer than this is one a tool has changed since
+
+Safe to delete — it regenerates.
+
+=== created plugin-data/sins.json
+{"src/Order.php":{"<id>":"array-bag at src/Order.php:13","<id>":"narrated-command at src/Order.php:7"}}

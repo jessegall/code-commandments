@@ -61,13 +61,17 @@ func (SkillReminder) Handle(event Event) Response {
 	reported := ReportedIn(event.Workspace())
 	sins := map[string][]string{}
 	var skills []string
+	var activity []SinMark
 
 	for _, file := range files {
 		if !project.Writes(source.OfFile(file)) {
 			continue
 		}
 
-		found, order := sinsIn(file, single, git.ChangedLinesOf(event.Root, file))
+		marks := marksIn(file, single, git.ChangedLinesOf(event.Root, file))
+		activity = append(activity, marks...)
+
+		found, order := bySkill(marks)
 		unseen := reported.Unseen(file, found, order)
 
 		for _, slug := range order {
@@ -83,11 +87,14 @@ func (SkillReminder) Handle(event Event) Response {
 		}
 	}
 
-	if len(sins) == 0 {
-		return Silent()
+	response := Silent()
+	if len(sins) > 0 {
+		response = Injecting(event.Name(), nudge(event, files, sins, skills), false)
 	}
 
-	return Injecting(event.Name(), nudge(event, files, sins, skills), false)
+	response.Activity = activity
+
+	return response
 }
 
 // edited are the files the moment changed, within the budget: a writer's own file when it is judged, or the
@@ -139,37 +146,48 @@ func judgedFile(root, file string, project config.Config) string {
 	return absolute
 }
 
-// sinsIn are the findings the rules make in the file on the lines the working tree changed, by the skill
-// that fixes them, and the skills in the order they were found.
-func sinsIn(file string, rules []detectors.Detector, changed git.ChangedLines) (map[string][]string, []string) {
+// marksIn are every sin the rules find in the file, each marked touched when it stands on a line the working
+// tree changed.
+func marksIn(file string, rules []detectors.Detector, changed git.ChangedLines) []SinMark {
 	language := source.OfFile(file)
 
 	codebase, err := scan.Sources{language: {file}}.Load()
 	if err != nil {
-		return nil, nil
+		return nil
 	}
 
-	found := map[string][]string{}
-	var order []string
+	var marks []SinMark
 
 	for _, rule := range rules {
 		if engine, _ := detectors.EngineOf(rule); engine != language.Engine() {
 			continue
 		}
 
-		sin := rule.Sin().Definition()
-
 		for _, match := range safely(rule, codebase) {
-			if !changed.Covers(match.Line()) {
-				continue
-			}
-
-			if _, seen := found[sin.Slug()]; !seen {
-				order = append(order, sin.Slug())
-			}
-
-			found[sin.Slug()] = append(found[sin.Slug()], sin.Name+" at "+match.Location())
+			marks = append(marks, MarkOf(rule, match, changed))
 		}
+	}
+
+	return marks
+}
+
+// bySkill are the touched marks as the check names them, by the skill that fixes them, and the skills in the
+// order they were found.
+func bySkill(marks []SinMark) (map[string][]string, []string) {
+	found := map[string][]string{}
+	var order []string
+
+	for _, mark := range marks {
+		if !mark.Touched {
+			continue
+		}
+
+		slug := mark.Rule.Sin().Definition().Slug()
+		if _, seen := found[slug]; !seen {
+			order = append(order, slug)
+		}
+
+		found[slug] = append(found[slug], mark.Found())
 	}
 
 	return found, order

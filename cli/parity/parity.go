@@ -304,6 +304,9 @@ var stamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}[ _]\d{2}:?\d{2}(:?\d{2})?`)
 
 var versionLine = regexp.MustCompile(`(?m)^code-commandments \S+$`)
 
+// hashedIdentity is a key hashed from what includes the project's own path, such as a sin's identity.
+var hashedIdentity = regexp.MustCompile(`"[0-9a-f]{40}":`)
+
 // unixStamp is a state value that holds the moment it was written, in unix seconds.
 var unixStamp = regexp.MustCompile(`(?m)^(marked-at): \d{9,}$`)
 
@@ -321,6 +324,7 @@ func normalise(text, repo, project string) string {
 	text = versionLine.ReplaceAllString(text, "code-commandments <version>")
 
 	text = unixStamp.ReplaceAllString(text, "$1: <time>")
+	text = hashedIdentity.ReplaceAllString(text, `"<id>":`)
 
 	return stamp.ReplaceAllString(text, "<time>")
 }

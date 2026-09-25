@@ -1,0 +1,11 @@
+exit: 0
+--- stdout
+commandments journal-skills — Render the skills into the agent journal plugin's folder, for the journal to publish.
+
+Usage:
+  commandments journal-skills  render the skills into ./journal-skills/.agents/skills (run by the
+                               journal plugin)
+
+--- stderr
+
+--- files

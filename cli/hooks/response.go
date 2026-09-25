@@ -20,6 +20,8 @@ type Response struct {
 	context      *string
 	quietly      bool
 	instructions *string
+	// Activity is every sin a check found in the files it read, said to the harness or not.
+	Activity []SinMark
 }
 
 // Silent says nothing.
@@ -56,9 +58,12 @@ func Instructing(text string) Response {
 // hook had is kept beside it.
 func Merge(responses []Response) Response {
 	var reasons, contexts, instructions []string
+	var activity []SinMark
 	quietly := true
 
 	for _, response := range responses {
+		activity = append(activity, response.Activity...)
+
 		if response.blockReason != nil {
 			reasons = append(reasons, *response.blockReason)
 		}
@@ -73,6 +78,13 @@ func Merge(responses []Response) Response {
 		}
 	}
 
+	merged := merge(reasons, contexts, instructions, quietly)
+	merged.Activity = activity
+
+	return merged
+}
+
+func merge(reasons, contexts, instructions []string, quietly bool) Response {
 	switch {
 	case len(reasons) > 0:
 		merged := Blocking(strings.Join(reasons, "\n\n"))

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -317,4 +318,70 @@ func withLayers(configurators []Configurator, layers []Layer) []Configurator {
 	}
 
 	return append(configurators, Configurator{Target: layered, Calls: calls})
+}
+
+// Switches are the edits the agent journal's settings make: a language on or off, and the folders judged
+// and left out. Only config.json takes them; a config.php is migrated first.
+type Switches interface {
+	Editor
+	// DisableLanguage turns a language off; false when it already was.
+	DisableLanguage(language source.Language) (bool, error)
+	// EnableLanguage turns a language back on; false when it was not off.
+	EnableLanguage(language source.Language) (bool, error)
+	// JudgeFolders makes the folders the paths judged.
+	JudgeFolders(folders []string) error
+	// SkipFolders makes the folders the paths left out.
+	SkipFolders(folders []string) error
+}
+
+func (j jsonConfig) DisableLanguage(language source.Language) (bool, error) {
+	if _, err := j.Scaffold(DetectRoots(j.root())); err != nil {
+		return false, err
+	}
+
+	return j.edit(func(config *Config) bool {
+		if slices.Contains(config.DisabledLanguages, language) {
+			return false
+		}
+
+		config.DisabledLanguages = append(config.DisabledLanguages, language)
+
+		return true
+	})
+}
+
+func (j jsonConfig) EnableLanguage(language source.Language) (bool, error) {
+	if !j.exists() {
+		return false, nil
+	}
+
+	return j.edit(func(config *Config) bool {
+		kept := slices.DeleteFunc(slices.Clone(config.DisabledLanguages), func(each source.Language) bool { return each == language })
+		changed := len(kept) != len(config.DisabledLanguages)
+		config.DisabledLanguages = kept
+
+		return changed
+	})
+}
+
+func (j jsonConfig) JudgeFolders(folders []string) error {
+	return j.setFolders(func(config *Config) *[]string { return &config.Paths }, folders)
+}
+
+func (j jsonConfig) SkipFolders(folders []string) error {
+	return j.setFolders(func(config *Config) *[]string { return &config.Excluded }, folders)
+}
+
+func (j jsonConfig) setFolders(list func(*Config) *[]string, folders []string) error {
+	if _, err := j.Scaffold(DetectRoots(j.root())); err != nil {
+		return err
+	}
+
+	_, err := j.edit(func(config *Config) bool {
+		*list(config) = folders
+
+		return true
+	})
+
+	return err
 }

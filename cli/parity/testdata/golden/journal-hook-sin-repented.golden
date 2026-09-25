@@ -1,0 +1,75 @@
+exit: 0
+--- stdout
+{"raise":[{"event":"sin-resolved","brief":"array-bag at src/Order.php:13\nnarrated-command at src/Order.php:7"}]}
+
+--- stderr
+
+--- files
+=== changed .commandments/dashboards/findings.json
+[]
+=== changed .commandments/dashboards/sins.json
+{
+    "title": "Code Commandments",
+    "start": "overview",
+    "pages": {
+        "overview": {
+            "title": "Overview",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "row",
+                        "gap": 12,
+                        "children": [
+                            {
+                                "type": "stat",
+                                "label": "Sins",
+                                "value": "0",
+                                "tone": "good",
+                                "note": "0 different rules"
+                            },
+                            {
+                                "type": "stat",
+                                "label": "Files",
+                                "value": "0",
+                                "tone": "good"
+                            },
+                            {
+                                "type": "stat",
+                                "label": "Skills",
+                                "value": "0",
+                                "note": "the skills that teach the fixes"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "text",
+                        "body": "No sins in the last judged files."
+                    }
+                ]
+            }
+        }
+    }
+}
+=== changed .commandments/sessions/640d8/.reported-findings
+-----
+-----
+Code-commandments — the findings the per-edit check has already named this session, so each is said once.
+
+Between the dividers is the list: one finding per line: the file, a tab, then the finding as it was named
+
+Safe to delete — the findings still standing are named once more.
+
+=== changed .commandments/sessions/640d8/.touched-sources
+marked-at: <time>
+-----
+Code-commandments — where the `edits` watcher has looked up to.
+
+The block above the first divider is this file's state, one `name: value` per line:
+  marked-at  the unix time of the last look; a judged file newer than this is one a tool has changed since
+
+Safe to delete — it regenerates.
+
+=== changed plugin-data/sins.json
+[]

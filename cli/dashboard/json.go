@@ -84,6 +84,17 @@ func Pretty(value any, unicode bool) (string, error) {
 	return escapeUnicode(indented.String()), nil
 }
 
+// Compact is value as PHP's json_encode writes it on one line with unescaped slashes, and unescaped unicode
+// when unicode is true.
+func Compact(value any, unicode bool) (string, error) {
+	raw, err := encode(value)
+	if err != nil || unicode {
+		return string(raw), err
+	}
+
+	return escapeUnicode(string(raw)), nil
+}
+
 func encode(value any) ([]byte, error) {
 	var out bytes.Buffer
 	encoder := json.NewEncoder(&out)

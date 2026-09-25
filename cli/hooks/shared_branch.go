@@ -24,6 +24,7 @@ func (SharedBranchGate) Summary() string {
 }
 func (SharedBranchGate) Bindings() []Binding { return []Binding{{"PreToolUse", "Bash"}} }
 func (SharedBranchGate) SpeaksToSubagents()  {}
+func (SharedBranchGate) Gate()               {}
 
 func (SharedBranchGate) Handle(event Event) Response {
 	if event.Name() != "PreToolUse" || !event.IsTool("Bash") || !rewritesHistory(event.Command()) {

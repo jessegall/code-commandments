@@ -23,7 +23,7 @@ const (
 // is the golden's config.php one when both declare the same layers. The schema written beside a config.json
 // and the ignore rule that keeps it tracked are the rest of its form.
 func EquateConfigs(want, got Result, scratch string) (Result, Result) {
-	for _, name := range []string{jsonConfig, "config.json already declares"} {
+	for _, name := range []string{jsonConfig, "config.json already declares", "config.json follows the plugin"} {
 		got.Stdout = strings.ReplaceAll(got.Stdout, name, strings.Replace(name, "json", "php", 1))
 		got.Stderr = strings.ReplaceAll(got.Stderr, name, strings.Replace(name, "json", "php", 1))
 	}

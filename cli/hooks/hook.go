@@ -34,6 +34,13 @@ type Discipline interface {
 	SpeaksToSubagents()
 }
 
+// Gate is a hook that decides whether a call may run at all: under the agent journal it answers at once,
+// before any advice is worked out.
+type Gate interface {
+	Hook
+	Gate()
+}
+
 // QuietWhileWorkPends is a hook that stays quiet at a stop while background work is still running.
 type QuietWhileWorkPends interface {
 	Hook
