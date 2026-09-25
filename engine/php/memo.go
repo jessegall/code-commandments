@@ -26,3 +26,8 @@ func (p *PerCodebase[T]) Of(codebase *engine.Codebase) T {
 
 	return built.(T)
 }
+
+// Keep makes a value built elsewhere the codebase's analysis, in place of the one build would make.
+func (p *PerCodebase[T]) Keep(codebase *engine.Codebase, value T) {
+	p.built.Store(codebase, value)
+}
