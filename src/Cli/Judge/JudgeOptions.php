@@ -53,7 +53,7 @@ final class JudgeOptions
             list: $input->hasFlag('list'),
             exclude: $input->list('exclude'),
             checklist: $checklist,
-            parallel: max(1, $input->option('parallel')->mapOr(8, intval(...))),
+            parallel: max(1, $input->option('parallel')->mapOr(4, intval(...))),
             benchmark: $input->hasFlag('benchmark'),
             pathGiven: $path->isSome(),
             ignorePackages: $input->hasFlag('ignore-package-requirements'),

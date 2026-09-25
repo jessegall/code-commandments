@@ -80,7 +80,7 @@ vendor/bin/commandments judge src --sin=swallow-catch
 vendor/bin/commandments judge src --branch         # branch vs main (--branch=BASE to override)
 vendor/bin/commandments judge src --changes        # uncommitted working-tree changes
 
-# detectors run across 8 workers by default (capped at CPU cores); --parallel=1 disables
+# detectors run across 4 workers by default (capped at CPU cores); --parallel=1 disables
 vendor/bin/commandments judge src --parallel=4
 
 # skip paths (comma-separated fragments); list everything
