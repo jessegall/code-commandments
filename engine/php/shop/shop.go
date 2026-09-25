@@ -115,6 +115,21 @@ func readStream(name string) (*contract.Stream, error) {
 	return contract.ReadAll(unzipped)
 }
 
+// readZipped is a committed file of the shop's testdata, unzipped.
+func readZipped(name string) ([]byte, error) {
+	handle, err := os.Open(filepath.Join(Testdata(), name))
+	if err != nil {
+		return nil, err
+	}
+	defer handle.Close()
+	unzipped, err := gzip.NewReader(handle)
+	if err != nil {
+		return nil, err
+	}
+
+	return io.ReadAll(unzipped)
+}
+
 func readFixture(path string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(Fixture(), strings.TrimPrefix(path, Root+"/")))
 }

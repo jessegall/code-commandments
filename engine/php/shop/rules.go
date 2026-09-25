@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
@@ -83,7 +81,7 @@ func (d DetectorRule) Name() string {
 
 var rules = sync.OnceValues(func() (Rules, error) {
 	var loaded Rules
-	content, err := os.ReadFile(filepath.Join(Testdata(), "definitions.json"))
+	content, err := readZipped("definitions.json.gz")
 	if err != nil {
 		return loaded, err
 	}
@@ -180,7 +178,7 @@ type proseReadings struct {
 
 var readings = sync.OnceValues(func() (proseReadings, error) {
 	var loaded proseReadings
-	content, err := os.ReadFile(filepath.Join(Testdata(), "prose.json"))
+	content, err := readZipped("prose.json.gz")
 	if err != nil {
 		return loaded, err
 	}

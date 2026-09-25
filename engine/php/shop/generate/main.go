@@ -69,14 +69,14 @@ func generate() error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(testdata, "definitions.json"), definitions, 0o644); err != nil {
+	if err := zipped(filepath.Join(testdata, "definitions.json.gz"), definitions); err != nil {
 		return err
 	}
 	prose, err := run("php", filepath.Join(shop.Repository(), "engine", "php", "oracle", "prose.php"), shop.Fixture())
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(testdata, "prose.json"), prose, 0o644); err != nil {
+	if err := zipped(filepath.Join(testdata, "prose.json.gz"), prose); err != nil {
 		return err
 	}
 	digest, err := shop.Digest()
