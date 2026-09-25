@@ -17,7 +17,8 @@ scripts/dev --mount ../some-app go run ./engine/frontend/parity ../some-app
 - **The image** (`docker/dev/Dockerfile`): PHP and composer, Go, node, Python with
   the pinned mypy, git and the docker CLI. It is built on the first run and rebuilt
   only when the Dockerfile or the mypy pin changes.
-- **Inside**: `GOMEMLIMIT=3GiB`, `GOMAXPROCS=2`, and `go` builds and tests with
+- **Inside**: `GOMEMLIMIT=1200MiB` per process (so the two a `-p=2` test run starts
+  feel GC pressure before the 3 GB kill), `GOMAXPROCS=2`, and `go` builds and tests with
   `-p=2 -parallel=2`.
 - **Caches**: Go's module and build caches are shared docker volumes, so only the
   first run is slow.

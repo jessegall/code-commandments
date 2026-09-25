@@ -19,9 +19,19 @@ $toBytes = static function (string $limit): int {
 
 // COMMANDMENTS_ENGINE=go hands the whole run to the Go binary, its streams and exit code the run's own:
 // $COMMANDMENTS_GO_BINARY when set, else bin/commandments-go beside this script, else `go run` over the
-// checkout's cmd/commandments.
+// checkout's cmd/commandments. The package's own checkout (the one with scripts/dev) never runs Go on the
+// host: without a built binary it stops and names the capped build that makes one.
 if (getenv('COMMANDMENTS_ENGINE') === 'go') {
     $binary = getenv('COMMANDMENTS_GO_BINARY') ?: __DIR__ . '/commandments-go';
+
+    if (! is_file($binary) && is_file(dirname(__DIR__) . '/scripts/dev')) {
+        $os = strtolower(PHP_OS_FAMILY);
+        $arch = ['x86_64' => 'amd64', 'aarch64' => 'arm64'][php_uname('m')] ?? php_uname('m');
+        fwrite(STDERR, "No Go binary at {$binary}, and Go never runs on the host here. Build it in the capped dev container:\n"
+            . "  scripts/dev env GOOS={$os} GOARCH={$arch} CGO_ENABLED=0 go build -o bin/commandments-go ./cmd/commandments\n");
+        exit(1);
+    }
+
     $command = is_file($binary)
         ? [$binary, ...array_slice($argv, 1)]
         : ['go', 'run', dirname(__DIR__) . '/cmd/commandments', ...array_slice($argv, 1)];

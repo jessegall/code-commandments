@@ -61,10 +61,11 @@ $restaged = [];
 foreach (GENERATORS as ['run' => $argv, 'paths' => $paths]) {
     $command = 'php ' . implode(' ', [escapeshellarg("{$root}/{$argv[0]}"), ...array_map('escapeshellarg', array_slice($argv, 1))]);
 
-    passthru("{$command} > /dev/null 2>&1", $generated);
+    $errors = [];
+    exec("{$command} 2>&1 > /dev/null", $errors, $generated);
 
     if ($generated !== 0) {
-        fwrite(STDERR, '✗ ' . implode(' ', $argv) . " failed\n");
+        fwrite(STDERR, '✗ ' . implode(' ', $argv) . " failed\n" . implode("\n", $errors) . "\n");
         exit(1);
     }
 

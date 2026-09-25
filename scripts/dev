@@ -3,7 +3,8 @@
 # --mount <path> (repeatable, before the command) also mounts a folder outside the checkout, read-only at its
 # own path: scripts/dev --mount ../some-app go run ./engine/frontend/parity ../some-app
 #
-# The machine enforces the cap (3 GB, no swap, 2 CPUs); GOMEMLIMIT is only a target inside it.
+# The machine enforces the cap (3 GB, no swap, 2 CPUs); GOMEMLIMIT is only a target inside it, set per process
+# at 1200MiB so the two a go test -p 2 runs feel the GC's pressure well before the kernel kills.
 # The checkout is mounted at its own path, so the paths the Roslyn bridge hands to the host's
 # docker (through the mounted socket) resolve there too. Go's module and build caches live in
 # named volumes shared by every checkout, so only the first run is slow; every other cache (the Python
@@ -79,7 +80,7 @@ run() {
         -v code-commandments-gobuild:/root/go/build \
         -v "code-commandments-cache-$tag:/root/.cache" \
         -e GOCACHE=/root/go/build \
-        -e GOMEMLIMIT=3GiB -e GOMAXPROCS=2 -e GOFLAGS="-p=2 -parallel=2" \
+        -e GOMEMLIMIT=1200MiB -e GOMAXPROCS=2 -e GOFLAGS="-p=2 -parallel=2" \
         -e TMPDIR="$scratch" \
         -w "$cwd" \
         "$image" "$@"
