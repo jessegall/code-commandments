@@ -31,6 +31,8 @@ needs PHP and this package's own `vendor/`, which is where php-parser comes from
   name, on a fully qualified function call's name (`Shop\total()`), and on each class or function a `use`
   imports, group uses included. An unqualified function or constant name that PHP resolves only at run
   time refers to nothing.
+- **Imports** carry `modifiers: ["function"]` or `["const"]` on a `use function` or `use const`, on the
+  statement and on each item that writes its own.
 - **`symbol`** on every class-like, function, method, property, promoted parameter, class constant and
   enum case, spelled as the contract's *Symbols* table spells it. An anonymous class's members have none.
 - **Comments** from php-parser's tokens, attached as the contract's *Attachment* says.

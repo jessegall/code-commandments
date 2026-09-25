@@ -256,6 +256,13 @@ final class TreeWriter
     /** @return list<string> */
     private function modifiers(Node $node): array
     {
+        if ($node instanceof Node\Stmt\Use_ || $node instanceof Node\Stmt\GroupUse || $node instanceof Node\UseItem) {
+            return match ($node->type) {
+                Node\Stmt\Use_::TYPE_FUNCTION => ['function'],
+                Node\Stmt\Use_::TYPE_CONSTANT => ['const'],
+                default => [],
+            };
+        }
         $flags = match (true) {
             $node instanceof Node\Stmt\ClassMethod, $node instanceof Node\Stmt\Property, $node instanceof Node\Stmt\ClassConst,
             $node instanceof Node\Param, $node instanceof Node\Stmt\Class_ => $node->flags,
