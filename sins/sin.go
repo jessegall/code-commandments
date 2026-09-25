@@ -2,6 +2,9 @@
 package sins
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -96,4 +99,32 @@ func (d Definition) Scopes(query string) bool {
 	needle := catalog.Normalise(query)
 
 	return strings.Contains(catalog.Normalise(d.Name), needle) || strings.Contains(catalog.Normalise(d.Slug()), needle)
+}
+
+// InstalledIn says whether the project at root depends on the package, as composer installed it; a project whose
+// manifest cannot be read is taken to have it, so a rule is never silenced by a missing file. Only composer is read
+// here; the other ecosystems' manifests arrive with their engines.
+func (p Package) InstalledIn(root string) bool {
+	if p.Ecosystem != Composer {
+		return true
+	}
+	content, err := os.ReadFile(filepath.Join(root, "vendor", "composer", "installed.json"))
+	if err != nil {
+		return true
+	}
+	var installed struct {
+		Packages []struct {
+			Name string `json:"name"`
+		} `json:"packages"`
+	}
+	if json.Unmarshal(content, &installed) != nil {
+		return true
+	}
+	for _, each := range installed.Packages {
+		if each.Name == p.Name {
+			return true
+		}
+	}
+
+	return false
 }
