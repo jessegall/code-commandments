@@ -35,3 +35,18 @@ func TestMypy(t testing.TB) []string {
 
 	return command
 }
+
+// TestRoslyn is the C# bridge's command for a test, built once per version of its sources in the user's cache.
+// It skips the test when there is no dotnet.
+func TestRoslyn(t testing.TB) []string {
+	t.Helper()
+	if _, err := exec.LookPath("dotnet"); err != nil {
+		t.Skip("no dotnet on the PATH")
+	}
+	command, err := Roslyn()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return command
+}
