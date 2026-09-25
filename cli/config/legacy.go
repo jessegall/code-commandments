@@ -63,9 +63,9 @@ func (c *Config) take(call engine.Match) error {
 	case "exclude":
 		return appendTexts(args, &c.Excluded)
 	case "detector":
-		return appendTexts(args, &c.Detectors)
+		return appendNames(args, &c.Detectors)
 	case "package":
-		return appendTexts(args, &c.Packages)
+		return appendNames(args, &c.Packages)
 	case "hook":
 		return appendNames(args, &c.Hooks)
 	case "agent":
@@ -98,7 +98,8 @@ func appendTexts(args []engine.Match, into *[]string) error {
 	return nil
 }
 
-// appendNames appends each argument's short name: a hook or an agent is named by its class's last segment.
+// appendNames appends each argument's short name: a project's own detector or package, a hook and an agent
+// are named by their class's last segment, as config.json names them.
 func appendNames(args []engine.Match, into *[]string) error {
 	var classes []string
 	if err := appendTexts(args, &classes); err != nil {

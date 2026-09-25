@@ -97,7 +97,7 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 func reindex(root string, console cli.Console) (int, error) {
 	roots := DetectRoots(root)
 
-	if err := ScribeIn(root).RewritePaths(roots); err != nil {
+	if err := EditorIn(root).RewritePaths(roots); err != nil {
 		return 0, err
 	}
 

@@ -77,7 +77,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	registered, err := config.FileIn(root).RegisterDetector(blueprint.DetectorClass())
+	registered, err := config.EditorIn(root).RegisterDetector(blueprint.DetectorClass())
 	if err != nil {
 		return 0, err
 	}
@@ -161,9 +161,9 @@ func report(blueprint Blueprint, registered bool, root string, console cli.Conso
 	}
 
 	if registered {
-		console.Write("  \033[2m.commandments/config.php  — registered ->detector(" + blueprint.Detector() + "::class)\033[0m\n")
+		console.Write("  \033[2m" + config.EditorIn(root).Name() + "  — registered ->detector(" + blueprint.Detector() + "::class)\033[0m\n")
 	} else {
-		console.Write("  \033[2m.commandments/config.php  — already registered\033[0m\n")
+		console.Write("  \033[2m" + config.EditorIn(root).Name() + "  — already registered\033[0m\n")
 	}
 
 	console.Write("\n\033[1mNext — a scaffold is not a detector yet:\033[0m\n")

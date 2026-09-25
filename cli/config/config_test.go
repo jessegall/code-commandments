@@ -53,8 +53,8 @@ return function (Config $config) use ($menu): void {
 		Excluded:          []string{"src/Generated"},
 		Disabled:          []Rule{{Skill, catalog.Python, "Absence"}, {Sin, catalog.Python, "DictBag"}, {Detector, "", "Old"}},
 		DisabledLanguages: []source.Language{source.CSharp},
-		Detectors:         []string{`App\Commandments\NoRawSql`},
-		Packages:          []string{`App\Commandments\Framework`},
+		Detectors:         []string{"NoRawSql"},
+		Packages:          []string{"Framework"},
 		Hooks:             []string{"SkillReminder"},
 		Agents:            []string{"Aider"},
 		Configurators: []Configurator{

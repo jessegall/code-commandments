@@ -49,9 +49,9 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	switch verb, _ := in.FirstArgument(); verb {
 	case "add":
-		return c.add(in, config.FileIn(root), console)
+		return c.add(in, config.EditorIn(root), console)
 	case "allow":
-		return c.allow(in, config.FileIn(root), console)
+		return c.allow(in, config.EditorIn(root), console)
 	default:
 		return c.propose(in, root, console)
 	}
@@ -83,7 +83,7 @@ func (c Command) propose(in *cli.Input, project string, console cli.Console) (in
 		proposed = graph.FloorShape()
 	}
 
-	report(graph, proposed, floorOnly, console)
+	report(graph, proposed, floorOnly, config.EditorIn(project), console)
 
 	if len(proposed) == 0 || !in.HasFlag("write") {
 		return 0, nil
@@ -92,7 +92,7 @@ func (c Command) propose(in *cli.Input, project string, console cli.Console) (in
 	return write(project, layersOf(proposed), in.HasFlag("refresh"), console)
 }
 
-func report(graph *namespaces.NamespaceGraph, proposed []namespaces.Layer, floorOnly bool, console cli.Console) {
+func report(graph *namespaces.NamespaceGraph, proposed []namespaces.Layer, floorOnly bool, editor config.Editor, console cli.Console) {
 	order := graph.DependencyOrder()
 	foundation := graph.FloorShape()
 
@@ -145,30 +145,32 @@ func report(graph *namespaces.NamespaceGraph, proposed []namespaces.Layer, floor
 	}
 
 	console.Say("")
-	console.Say(render(layersOf(proposed)))
+	console.Say(editor.Declaration(layersOf(proposed)))
 	console.Say("")
 	console.Say("  \033[2mA starting point to EDIT, not a verdict: everything already here passes, so this" +
 		"\n  holds the architecture where it stands and refuses the NEXT arrow somewhere new.\033[0m")
-	console.Say("  \033[2mre-run with --write to add it to .commandments/config.php" + hint + "\033[0m")
+	console.Say("  \033[2mre-run with --write to add it to " + editor.Name() + hint + "\033[0m")
 }
 
 func write(project string, layers []config.Layer, refresh bool, console cli.Console) (int, error) {
+	editor := config.EditorIn(project)
+
 	if refresh {
-		rewritten, err := config.FileIn(project).RewriteLayers(layers)
+		rewritten, err := editor.RewriteLayers(layers)
 		if err != nil {
 			return 0, err
 		}
 
 		if rewritten {
 			console.Say("")
-			console.Say("\033[32m✓ refreshed the declaration in .commandments/config.php\033[0m")
+			console.Say("\033[32m✓ refreshed the declaration in " + editor.Name() + "\033[0m")
 			console.Say("  \033[2mthe stack as it stands today — read the diff before you commit it\033[0m")
 
 			return 0, nil
 		}
 	}
 
-	written, err := config.ScribeIn(project).EnsureLayers(render(layers))
+	written, err := editor.EnsureLayers(layers)
 	if err != nil {
 		return 0, err
 	}
@@ -176,9 +178,9 @@ func write(project string, layers []config.Layer, refresh bool, console cli.Cons
 	console.Say("")
 
 	if written {
-		console.Say("\033[32m✓ written to .commandments/config.php\033[0m")
+		console.Say("\033[32m✓ written to " + editor.Name() + "\033[0m")
 	} else {
-		console.Say("\033[33m• config.php already declares layers — left untouched.\033[0m" +
+		console.Say("\033[33m• " + strings.TrimPrefix(editor.Name(), ".commandments/") + " already declares layers — left untouched.\033[0m" +
 			"\n  \033[2mAdd to it instead: `layers add <Namespace> [--may-use=A,B]`, `layers allow <Layer> <Target>`," +
 			"\n  or `layers --write --refresh` to regenerate the whole block from today's shape.\033[0m")
 	}
@@ -197,13 +199,7 @@ func layersOf(shape []namespaces.Layer) []config.Layer {
 	return layers
 }
 
-// render is the declaration as source: one ->layer(...) per namespace, in dependency order.
-func render(layers []config.Layer) string {
-	return "    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector" +
-		config.RenderChain(layers, "        ") + ");"
-}
-
-func (c Command) add(in *cli.Input, file config.File, console cli.Console) (int, error) {
+func (c Command) add(in *cli.Input, file config.Editor, console cli.Console) (int, error) {
 	named, given := in.Argument(1)
 	if !given {
 		return c.usage("layers add <Namespace> [--may-use=A,B]", console), nil
@@ -252,7 +248,7 @@ func addReport(namespace string, added []string, declared bool) string {
 	}
 }
 
-func (c Command) allow(in *cli.Input, file config.File, console cli.Console) (int, error) {
+func (c Command) allow(in *cli.Input, file config.Editor, console cli.Console) (int, error) {
 	arguments := in.Arguments()
 	if len(arguments) < 3 {
 		return c.usage("layers allow <Layer> <Target>", console), nil
@@ -280,11 +276,11 @@ func (c Command) allow(in *cli.Input, file config.File, console cli.Console) (in
 	return commit(file, layers, "✓ "+from+" may now use "+to, console)
 }
 
-func commit(file config.File, layers []config.Layer, message string, console cli.Console) (int, error) {
+func commit(file config.Editor, layers []config.Layer, message string, console cli.Console) (int, error) {
 	rewritten, err := file.RewriteLayers(layers)
 
 	if err != nil || !rewritten {
-		return fail(".commandments/config.php declares no layers yet — run `commandments layers --write` to propose the stack first.", console), err
+		return fail(file.Name()+" declares no layers yet — run `commandments layers --write` to propose the stack first.", console), err
 	}
 
 	return done(message, console), nil

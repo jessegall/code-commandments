@@ -146,7 +146,7 @@ func DeclaredRoots(root string) ([]string, error) {
 	}
 
 	detected := DetectRoots(root)
-	scribe := ScribeIn(root)
+	scribe := EditorIn(root)
 	scaffolded, err := scribe.Scaffold(detected)
 
 	if err == nil && !scaffolded {

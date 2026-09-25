@@ -68,7 +68,7 @@ func (t Toggle) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	file := FileIn(root)
+	file := EditorIn(root)
 	toggle := file.Disable
 
 	if action == "enable" {
