@@ -9,19 +9,20 @@ import (
 // enumRoots is the standard library's enum base classes, as a base list spells them.
 var enumRoots = []string{"Enum", "StrEnum", "IntEnum", "Flag", "IntFlag", "ReprEnum"}
 
-// declarations is what the program declares by name, found once: its enums and each one's member values as
-// literal keys, its TypedDicts, and its dataclasses.
+// declarations is what the program declares by name, found once: its enums, the member values of each class that
+// is one, as literal keys, its TypedDicts, and its dataclasses. The values are kept per enum, never by name, so a
+// plain class sharing an enum's name never hides the enum's members.
 type declarations struct {
 	once        sync.Once
 	enums       map[string]bool
-	values      map[string][]string
+	values      [][]string
 	typedDicts  map[string]bool
 	dataclasses map[string]Node
 }
 
 func (p *Program) declared() *declarations {
 	p.names.once.Do(func() {
-		p.names.enums, p.names.values = map[string]bool{}, map[string][]string{}
+		p.names.enums = map[string]bool{}
 		p.names.typedDicts, p.names.dataclasses = map[string]bool{}, map[string]Node{}
 		var classes []Node
 		for _, module := range p.modules {
@@ -40,8 +41,8 @@ func (p *Program) declared() *declarations {
 			}
 		}
 		for _, class := range classes {
-			if p.names.enums[class.Name()] {
-				p.names.values[class.Name()] = class.MemberValueKeys()
+			if slices.ContainsFunc(append(class.ChildrenIn("bases"), class.decoratorArguments()...), p.isEnumBase) {
+				p.names.values = append(p.names.values, class.MemberValueKeys())
 			}
 			if slices.ContainsFunc(class.ChildrenIn("bases"), isTypedDictBase) {
 				p.names.typedDicts[class.Name()] = true
