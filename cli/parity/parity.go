@@ -117,8 +117,10 @@ func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 		return Result{}, err
 	}
 
-	if err := os.WriteFile(filepath.Join(guard, "gh"), []byte(guardedGh), 0o755); err != nil {
-		return Result{}, err
+	for _, tool := range []string{"gh", "claude"} {
+		if err := os.WriteFile(filepath.Join(guard, tool), []byte(guarded(tool)), 0o755); err != nil {
+			return Result{}, err
+		}
 	}
 
 	env := environment(c, home, strings.Join([]string{filepath.Join(project, "bin"), guard, os.Getenv("PATH")}, string(os.PathListSeparator)))
@@ -236,9 +238,12 @@ func prepare(c Case, repo, project, home string) error {
 	return os.CopyFS(project, os.DirFS(filepath.Join(repo, c.Project)))
 }
 
-// guardedGh stands in for the real GitHub CLI, so no case can ever file a real issue; a case that needs gh
-// puts its own fake in its project's bin/, which comes first.
-const guardedGh = "#!/bin/sh\necho 'parity: the real gh is out of reach' >&2\nexit 97\n"
+// guarded stands in for a tool whose real run reaches the outside world, gh filing an issue or claude a
+// billed request, so no case can reach it; a case that needs one puts its own fake in its project's bin/,
+// which comes first.
+func guarded(tool string) string {
+	return "#!/bin/sh\necho 'parity: the real " + tool + " is out of reach' >&2\nexit 97\n"
+}
 
 // environment is the fixed world every case runs in, so nothing of the machine running it leaks in.
 func environment(c Case, home, path string) []string {

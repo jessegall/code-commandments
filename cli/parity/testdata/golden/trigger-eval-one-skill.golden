@@ -1,0 +1,12 @@
+exit: 1
+--- stdout
+Asking `claude -p` 1× per query across 1 skills — this takes a while.
+
+[31m✗[0m commandments-python-flow                     pulled 3/3 (100%)  [33manswered 1 that were not its own[0m
+    [2m↳ how do I copy the same helper function between two Python modules without duplicating it[0m
+
+[31mA description is not doing its job — rewrite it to name WHEN to reach for the skill, and what it is NOT.[0m
+
+--- stderr
+
+--- files

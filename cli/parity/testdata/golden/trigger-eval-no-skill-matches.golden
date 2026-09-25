@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+No skill with a trigger set matched. Write one at skills/commandments/<slug>/evals/triggers.json.
+
+--- files

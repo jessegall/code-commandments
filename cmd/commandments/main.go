@@ -16,6 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/scaffold"
 	"github.com/jessegall/code-commandments/cli/session"
 	"github.com/jessegall/code-commandments/cli/task"
+	"github.com/jessegall/code-commandments/cli/triggers"
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
@@ -41,5 +42,6 @@ func Kernel() *cli.Kernel {
 		config.Command{Version: version},
 		layers.Command{},
 		info.Command{Scaffoldable: scaffold.Scaffoldable()},
+		triggers.Command{},
 	)
 }

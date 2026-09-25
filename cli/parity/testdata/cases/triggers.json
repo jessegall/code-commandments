@@ -1,0 +1,50 @@
+[
+  {
+    "name": "trigger-eval-help",
+    "args": [
+      "trigger-eval",
+      "--help"
+    ]
+  },
+  {
+    "name": "trigger-eval-no-skill-matches",
+    "args": [
+      "trigger-eval",
+      "--skill=zz-nothing"
+    ]
+  },
+  {
+    "name": "trigger-eval-one-skill",
+    "args": [
+      "trigger-eval",
+      "--skill=python/flow",
+      "--samples=1"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\necho '\"'\"'Consult [\"commandments-python-flow\"]'\"'\"'\\n' > bin/claude && chmod +x bin/claude"
+    ]
+  },
+  {
+    "name": "trigger-eval-answered-by-another",
+    "args": [
+      "trigger-eval",
+      "--skill=typescript",
+      "--samples=2",
+      "--model=fake"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\necho '\"'\"'[\"commandments-typescript-absence\"]'\"'\"'\\n' > bin/claude && chmod +x bin/claude"
+    ]
+  },
+  {
+    "name": "trigger-eval-every-skill",
+    "args": [
+      "trigger-eval",
+      "--samples=1"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\necho '\"'\"'[]'\"'\"'\\n' > bin/claude && chmod +x bin/claude"
+    ],
+    "pending": "tickets 4 and 7: the PHP and C# skills' trigger sets"
+  }
+]
