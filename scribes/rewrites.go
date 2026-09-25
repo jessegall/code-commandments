@@ -55,6 +55,40 @@ func (r Rewrites) Apply() ([]string, error) {
 	return r.Paths(), nil
 }
 
+// Contents is every path's new content, keyed by path.
+func (r Rewrites) Contents() map[string]string {
+	contents := make(map[string]string, len(r.content))
+	for path, content := range r.content {
+		contents[path] = content
+	}
+
+	return contents
+}
+
+// with is these rewrites with others laid over them: a path set again keeps its place, a new one comes last.
+func (r Rewrites) with(other Rewrites) Rewrites {
+	merged := r.clone()
+	for _, path := range other.paths {
+		merged.Set(path, other.content[path])
+	}
+
+	return merged
+}
+
+// Equal says whether both set the same paths, in the same order, to the same content.
+func (r Rewrites) Equal(other Rewrites) bool {
+	if !slices.Equal(r.paths, other.paths) {
+		return false
+	}
+	for _, path := range r.paths {
+		if r.content[path] != other.content[path] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (r Rewrites) clone() Rewrites {
 	clone := Rewrites{}
 	for _, path := range r.paths {

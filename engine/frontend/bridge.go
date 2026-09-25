@@ -57,3 +57,14 @@ func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {
 
 	return engine.Load(stream), nil
 }
+
+// Over is the codebase a served bridge answers the request with, its sources read through the contents the request
+// carries.
+func Over(server *bridge.Server, request bridge.Request) (*engine.Codebase, error) {
+	stream, err := server.Ask(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return engine.New(engine.ReadThrough(request.Contents), stream), nil
+}

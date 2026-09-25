@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -62,6 +63,19 @@ func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {
 		return nil, err
 	}
 	codebase := engine.Load(stream)
+	TypesOf(codebase).Fill(codebase)
+
+	return codebase, nil
+}
+
+// Over is the codebase a served bridge answers the request with, its sources read through the contents the request
+// carries, with the facts the engine fills for PHP filled.
+func Over(server *bridge.Server, request bridge.Request) (*engine.Codebase, error) {
+	stream, err := server.Ask(request)
+	if err != nil {
+		return nil, err
+	}
+	codebase := engine.New(engine.ReadThrough(request.Contents), stream)
 	TypesOf(codebase).Fill(codebase)
 
 	return codebase, nil
