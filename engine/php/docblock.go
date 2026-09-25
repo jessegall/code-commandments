@@ -211,3 +211,82 @@ func (n Node) ParamNames() []string {
 func docEndLine(comment contract.Comment) int {
 	return comment.Span.Line + strings.Count(comment.Text, "\n")
 }
+
+// DocblockRetype is a docblock with the type it gives name changed from one class to another: in `@param T $name`,
+// `@var T $name`, and a property's bare `@var T`, a generic's arguments kept.
+func DocblockRetype(text, name, from, to string) string {
+	quoted := regexp.QuoteMeta(name)
+	rehead := func(match []string) string {
+		if reheaded, ok := docReheaded(strings.TrimRight(match[2], " \t\n\r\x00\x0b"), from, to); ok {
+			return match[1] + reheaded + match[3]
+		}
+
+		return match[0]
+	}
+	text = replaceSubmatches(regexp.MustCompile(`(@param\s+)(.+?)(\s+(?:\.\.\.)?&?\$`+quoted+`\b)`), text, rehead)
+	text = replaceSubmatches(regexp.MustCompile(`(@var\s+)(.+?)(\s+\$`+quoted+`\b)`), text, rehead)
+
+	return replaceSubmatches(regexp.MustCompile(`(?m)(@var\s+)([^\r\n]+?)(\s*)$`), text, rehead)
+}
+
+// DocblockMentionsType says whether a docblock spells a class's short name as a whole word, not part of another
+// name or namespace.
+func DocblockMentionsType(text, fqcn string) bool {
+	short := fqcn[strings.LastIndex(fqcn, `\`)+1:]
+	for at := 0; ; {
+		found := strings.Index(text[at:], short)
+		if found < 0 {
+			return false
+		}
+		start, end := at+found, at+found+len(short)
+		before := start > 0 && (isWordByte(text[start-1]) || text[start-1] == '\\')
+		joined := end < len(text) && isWordByte(text[end]) == isWordByte(short[len(short)-1])
+		if !before && !joined {
+			return true
+		}
+		at = start + 1
+	}
+}
+
+// docReheaded is a type with its head class changed, `?` and generic arguments kept; nothing when another class heads it.
+func docReheaded(written, from, to string) (string, bool) {
+	prefix := ""
+	if strings.HasPrefix(written, "?") {
+		prefix = "?"
+	}
+	head := written[len(prefix):]
+	for _, spelling := range []string{from, `\` + from, from[strings.LastIndex(from, `\`)+1:]} {
+		if head == spelling {
+			return prefix + to, true
+		}
+		if strings.HasPrefix(head, spelling+"<") {
+			return prefix + to + head[len(spelling):], true
+		}
+	}
+
+	return "", false
+}
+
+// replaceSubmatches replaces every match of the pattern, left to right, with what replace makes of its groups.
+func replaceSubmatches(pattern *regexp.Regexp, text string, replace func([]string) string) string {
+	var out strings.Builder
+	last := 0
+	for _, at := range pattern.FindAllStringSubmatchIndex(text, -1) {
+		groups := make([]string, len(at)/2)
+		for group := range groups {
+			if at[2*group] >= 0 {
+				groups[group] = text[at[2*group]:at[2*group+1]]
+			}
+		}
+		out.WriteString(text[last:at[0]])
+		out.WriteString(replace(groups))
+		last = at[1]
+	}
+	out.WriteString(text[last:])
+
+	return out.String()
+}
+
+func isWordByte(c byte) bool {
+	return c == '_' || c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z'
+}
