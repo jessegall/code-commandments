@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"testing"
 )
 
 // SupportedVersions are the contract versions this package reads.
@@ -30,6 +31,11 @@ type Stream struct {
 	Program *Program
 	Trailer Trailer
 }
+
+// checksSchema says whether each line is checked against tree.schema.json before it is decoded: in every test, where
+// the streams of every bridge pass through, and never in a run, where checking would read each line twice — once
+// into a generic tree many times the size of the typed one — and a line is still refused a field it does not know.
+var checksSchema = testing.Testing()
 
 // Reader reads a stream line by line and refuses one that breaks the contract.
 type Reader struct {
@@ -64,8 +70,10 @@ func (r *Reader) Next() (Line, error) {
 	}
 	r.number++
 	raw := r.scanner.Bytes()
-	if err := Validate(raw); err != nil {
-		return Line{}, fmt.Errorf("line %d: %w", r.number, err)
+	if checksSchema {
+		if err := Validate(raw); err != nil {
+			return Line{}, fmt.Errorf("line %d: %w", r.number, err)
+		}
 	}
 	line, err := decode(raw)
 	if err != nil {
