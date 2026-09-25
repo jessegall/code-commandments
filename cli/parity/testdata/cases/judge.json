@@ -20,5 +20,5 @@
   {"name": "judge-typescript", "project": "tests/Fixtures/frontend", "args": ["judge", ".", "--skill=typescript", "--no-checklist"]},
   {"name": "judge-vue", "project": "tests/Fixtures/frontend", "args": ["judge", ".", "--skill=vue-components", "--no-checklist"], "pending": "ticket 8: the auto-fixable lines come from the repentable detectors"},
   {"name": "judge-list", "args": ["judge", "--list"], "pending": "tickets 4 and 7: the PHP and C# detectors"},
-  {"name": "judge-without-a-path", "args": ["judge"], "setup": ["mkdir -p src", "printf 'export const one = 1;\\n' > src/one.ts"], "pending": "to-do 33: scaffolding the config a path-less run writes"}
+  {"name": "judge-without-a-path", "args": ["judge"], "setup": ["mkdir -p src", "printf 'export const one = 1;\\n' > src/one.ts"]}
 ]

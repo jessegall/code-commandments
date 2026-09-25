@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/session"
 	"github.com/jessegall/code-commandments/cli/task"
@@ -25,5 +26,6 @@ func Kernel() *cli.Kernel {
 		judge.Command{},
 		session.Command{},
 		task.Command{},
+		config.Command{Version: version},
 	)
 }

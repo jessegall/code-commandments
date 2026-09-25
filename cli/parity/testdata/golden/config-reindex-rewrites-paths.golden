@@ -1,0 +1,14 @@
+exit: 0
+--- stdout
+[32m✓ Reindexed 1 source root(s) into .commandments/config.php:[0m src
+
+--- stderr
+
+--- files
+=== changed .commandments/config.php
+<?php
+
+return function ($config) {
+    $config->paths('src');
+};
+

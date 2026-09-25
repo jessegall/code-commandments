@@ -1,4 +1,4 @@
-package judge
+package config
 
 import (
 	"fmt"
@@ -7,14 +7,39 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/detectors"
 )
+
+// Enabled are the shipped detectors the project keeps: every one the config does not disable, by itself,
+// its sin or its skill, tuned as the config configures it.
+func (c Config) Enabled() ([]detectors.Detector, error) {
+	var kept []detectors.Detector
+
+	for _, detector := range detectors.All() {
+		if !c.Disables(rulesOf(detector)...) {
+			kept = append(kept, detector)
+		}
+	}
+
+	return tune(kept, c.Configurators)
+}
+
+// rulesOf names the detector, its sin and its skill as a config names them.
+func rulesOf(detector detectors.Detector) []Rule {
+	engine, _ := detectors.EngineOf(detector)
+	sin := detector.Sin()
+
+	return []Rule{
+		{Kind: Detector, Engine: engine, Name: catalog.Name(detector)},
+		{Kind: Sin, Engine: engine, Name: catalog.Name(sin)},
+		{Kind: Skill, Engine: engine, Name: catalog.Name(sin.Definition().Skill)},
+	}
+}
 
 // tune applies each configurator to the detector it names: every call it makes becomes the detector's
 // method of the same name, and a method that answers a detector replaces it. A configurator naming a
 // detector not in the list is an invalid configuration.
-func tune(list []detectors.Detector, configurators []config.Configurator) ([]detectors.Detector, error) {
+func tune(list []detectors.Detector, configurators []Configurator) ([]detectors.Detector, error) {
 	tuned := append([]detectors.Detector(nil), list...)
 
 	for _, configurator := range configurators {
@@ -38,12 +63,12 @@ func tune(list []detectors.Detector, configurators []config.Configurator) ([]det
 }
 
 func indexOf(list []detectors.Detector, class string) int {
-	rule, shipped := config.RuleOf(class)
+	rule, shipped := RuleOf(class)
 
 	for i, detector := range list {
 		engine, _ := detectors.EngineOf(detector)
 
-		if shipped && rule.Kind == config.Detector && rule.Engine == engine && rule.Name == catalog.Name(detector) {
+		if shipped && rule.Kind == Detector && rule.Engine == engine && rule.Name == catalog.Name(detector) {
 			return i
 		}
 	}
@@ -52,7 +77,7 @@ func indexOf(list []detectors.Detector, class string) int {
 }
 
 // apply calls the method a configurator names on the detector.
-func apply(detector detectors.Detector, call config.Call) (detectors.Detector, error) {
+func apply(detector detectors.Detector, call Call) (detectors.Detector, error) {
 	method := reflect.ValueOf(detector).MethodByName(exported(call.Method))
 
 	if !method.IsValid() {
@@ -77,7 +102,7 @@ func apply(detector detectors.Detector, call config.Call) (detectors.Detector, e
 
 // arguments converts the literal arguments, in order, to the method's parameters; the last one takes the
 // rest when the method is variadic, and an array given for it is spread.
-func arguments(method reflect.Type, given []config.Arg) ([]reflect.Value, error) {
+func arguments(method reflect.Type, given []Arg) ([]reflect.Value, error) {
 	var args []reflect.Value
 
 	for i, arg := range given {

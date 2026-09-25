@@ -94,7 +94,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	enabled, err := configured(project)
+	enabled, err := project.Enabled()
 	if err != nil {
 		return 0, err
 	}
@@ -212,32 +212,6 @@ func (Command) run(tasks []Task, options options, progress *cli.Progress, parseS
 	return judgement
 }
 
-// configured are the shipped detectors the project keeps, tuned as it configures them.
-func configured(project config.Config) ([]detectors.Detector, error) {
-	var kept []detectors.Detector
-
-	for _, detector := range detectors.All() {
-		if !project.Disables(ruleOf(detector)...) {
-			kept = append(kept, detector)
-		}
-	}
-
-	return tune(kept, project.Configurators)
-}
-
-// ruleOf names the detector, its sin and its skill as a config names them.
-func ruleOf(detector detectors.Detector) []config.Rule {
-	engine, _ := detectors.EngineOf(detector)
-	sin := detector.Sin()
-	teaching := sin.Definition().Skill
-
-	return []config.Rule{
-		{Kind: config.Detector, Engine: engine, Name: catalog.Name(detector)},
-		{Kind: config.Sin, Engine: engine, Name: catalog.Name(sin)},
-		{Kind: config.Skill, Engine: engine, Name: catalog.Name(teaching)},
-	}
-}
-
 // selectFrom narrows to one skill (a lenient slug match) and one sin (its name or its skill's slug).
 func selectFrom(list []detectors.Detector, skill, sin string) []detectors.Detector {
 	var kept []detectors.Detector
@@ -317,28 +291,7 @@ func sourceRoots(options options) ([]string, error) {
 		return []string{strings.TrimRight(options.path, "/")}, nil
 	}
 
-	declared, err := config.Load(options.path)
-	if err != nil {
-		return nil, err
-	}
-
-	roots := declared.Paths
-	if len(roots) == 0 {
-		roots = []string{"."}
-	}
-
-	absolute := make([]string, len(roots))
-	root := strings.TrimRight(options.path, "/")
-
-	for i, dir := range roots {
-		absolute[i] = root + "/" + dir
-
-		if dir == "." {
-			absolute[i] = root
-		}
-	}
-
-	return absolute, nil
+	return config.DeclaredRoots(options.path)
 }
 
 // asWalked names every finding's file, location and twins by the path its file was walked as.
@@ -420,7 +373,7 @@ func list(cwd string, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	enabled, err := configured(project)
+	enabled, err := project.Enabled()
 	if err != nil {
 		return 0, err
 	}

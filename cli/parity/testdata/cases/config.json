@@ -1,0 +1,11 @@
+[
+  {"name": "config-help", "args": ["config", "--help"]},
+  {"name": "config-unknown-subcommand", "args": ["config", "tidy"]},
+  {"name": "config-reindex-scaffolds", "args": ["config", "reindex"], "setup": ["mkdir -p src resources/js tests"]},
+  {"name": "config-reindex-reads-composer", "args": ["config", "reindex"], "setup": ["mkdir -p lib/Domain database/seeders tests app web/src .hidden", "printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"app/\", \"Lib\\\\\\\\\": [\"lib/Domain\", \"missing\"], \"Seed\\\\\\\\\": \"database/seeders\", \"H\\\\\\\\\": \".hidden\"}}}' > composer.json", "printf '{}' > web/package.json"]},
+  {"name": "config-reindex-nothing-found", "args": ["config", "reindex"]},
+  {"name": "config-reindex-rewrites-paths", "args": ["config", "reindex"], "setup": ["mkdir -p .commandments src", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->paths('\\''old'\\'', '\\''older'\\'');\\n};\\n' > .commandments/config.php"]},
+  {"name": "config-reindex-fills-empty-paths", "args": ["config", "reindex"], "setup": ["mkdir -p .commandments app", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->paths();\\n};\\n' > .commandments/config.php"]},
+  {"name": "judge-without-a-path-fills-empty-paths", "args": ["judge", "--skill=typescript", "--no-checklist"], "setup": ["mkdir -p .commandments src", "printf 'export const one = 1;\\n' > src/one.ts", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->paths();\\n};\\n' > .commandments/config.php"]},
+  {"name": "config-about", "args": ["config"], "pending": "tickets 4 and 7: the PHP and C# detectors, packages and skills it counts"}
+]

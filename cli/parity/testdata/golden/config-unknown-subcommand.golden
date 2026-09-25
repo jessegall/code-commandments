@@ -1,0 +1,15 @@
+exit: 2
+--- stdout
+
+--- stderr
+✗ Unknown subcommand 'tidy'.
+
+commandments config — Inspect and manage .commandments/config.php — what is configured, and what is actually running.
+
+Usage:
+  commandments config          the effective configuration: source roots, detectors running vs
+                               available, packages, skills
+  commandments config reindex  re-detect the source roots from composer.json and rewrite the
+                               config's paths()
+
+--- files
