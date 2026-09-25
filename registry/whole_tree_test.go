@@ -1,4 +1,4 @@
-package detectors_test
+package registry_test
 
 import (
 	"os/exec"
@@ -10,7 +10,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/detectors"
-	_ "github.com/jessegall/code-commandments/registry"
 )
 
 // TestTheDetectorsThatReadBeyondOneFileAreThePHPToolsOwn holds the WholeTree marks to the PHP tool's own

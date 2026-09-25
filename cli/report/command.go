@@ -1,6 +1,10 @@
 package report
 
 import (
+	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/cli/custom"
+	"github.com/jessegall/code-commandments/cli/workspace"
+	"os"
 	"strings"
 	"unicode/utf8"
 
@@ -78,6 +82,14 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 }
 
 func detectorReport(in *cli.Input, detector, reason string, refs []Reference, console cli.Console) int {
+	if own, found := ownRule(detector); found {
+		console.Warn("✋ "+detector+" is THIS project's own rule — it lives in .commandments/custom/, not in the",
+			"  package (.commandments/custom/"+catalog.Name(own)+".json). Nothing upstream can fix it: tighten the rule there",
+			"  (a principled reject, never a name list) or drop it from the detectors in .commandments/config.json.")
+
+		return 2
+	}
+
 	design, _ := in.Option("best-design")
 	designed := strings.Trim(design, " \t\n\r\x00\x0B") != ""
 
@@ -202,4 +214,16 @@ func summarise(reason string) string {
 	}
 
 	return first
+}
+
+// ownRule is the project's own rule the name means, and whether there is one.
+func ownRule(name string) (detectors.Detector, bool) {
+	cwd, _ := os.Getwd()
+
+	var own []detectors.Detector
+	for _, read := range custom.Load(workspace.ProjectRoot(cwd)).Rules {
+		own = append(own, read)
+	}
+
+	return detectors.NamedIn(own, name)
 }
