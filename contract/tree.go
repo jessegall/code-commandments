@@ -278,7 +278,13 @@ type TypeScriptNode struct {
 // CommentExtras holds the facts only one language has on a comment.
 type CommentExtras struct {
 	CSharp *CSharpComment `json:"csharp,omitempty"`
+	PHP    *PHPComment    `json:"php,omitempty"`
 	Python *PythonComment `json:"python,omitempty"`
+}
+
+// PHPComment is what only PHP says about a comment.
+type PHPComment struct {
+	Code bool `json:"code,omitempty"`
 }
 
 // PythonComment is what only Python says about a comment.

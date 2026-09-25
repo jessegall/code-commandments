@@ -17,6 +17,7 @@ import (
 type Codebase struct {
 	streams  []*contract.Stream
 	files    []*File
+	read     func(path string) ([]byte, error)
 	analyses sync.Map
 }
 
@@ -28,6 +29,11 @@ var fillers = map[contract.Language]Filler{}
 // Fills enrols the filler of one language's engine-owned facts, from that language's own package.
 func Fills(language contract.Language, fill Filler) {
 	fillers[language] = fill
+}
+
+// Keep makes a value built elsewhere the codebase's analysis under the key, in place of the one its build would make.
+func Keep[T any](c *Codebase, key any, value T) {
+	c.analyses.Store(key, value)
 }
 
 // Analysis is one whole-program analysis of the codebase, built by build on first use and kept as long as the
@@ -59,9 +65,21 @@ func Load(streams ...*contract.Stream) *Codebase {
 	return New(os.ReadFile, streams...)
 }
 
+// ReadThrough reads a path's drafted text where contents holds one, and the disk's otherwise: the sources a
+// codebase re-read over a rewrite's drafts is read through.
+func ReadThrough(contents map[string]string) func(path string) ([]byte, error) {
+	return func(path string) ([]byte, error) {
+		if drafted, ok := contents[path]; ok {
+			return []byte(drafted), nil
+		}
+
+		return os.ReadFile(path)
+	}
+}
+
 // New is the codebase the streams describe, its sources read through read.
 func New(read func(path string) ([]byte, error), streams ...*contract.Stream) *Codebase {
-	codebase := &Codebase{streams: streams}
+	codebase := &Codebase{streams: streams, read: read}
 	for _, stream := range streams {
 		for _, file := range stream.Files {
 			codebase.files = append(codebase.files, &File{File: file, codebase: codebase, stream: stream, read: read})
@@ -95,6 +113,11 @@ func FromString(stream string, sources map[string]string) (*Codebase, error) {
 	}, read), nil
 }
 
+// Read is a file of the project, one beside the sources such as a manifest, read as the sources are.
+func (c *Codebase) Read(path string) ([]byte, error) {
+	return c.read(path)
+}
+
 // Files is every file, in the order the streams wrote them.
 func (c *Codebase) Files() []*File {
 	return c.files
@@ -103,7 +126,7 @@ func (c *Codebase) Files() []*File {
 // Of is the part of the codebase written in these languages: each file by its own language, so the
 // TypeScript a Vue stream carries is TypeScript, and each stream by the language its bridge wrote.
 func (c *Codebase) Of(languages ...contract.Language) *Codebase {
-	part := &Codebase{}
+	part := &Codebase{read: c.read}
 	for _, stream := range c.streams {
 		if slices.Contains(languages, stream.Header.Language) {
 			part.streams = append(part.streams, stream)

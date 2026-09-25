@@ -87,4 +87,15 @@ final class ExprTest extends TestCase
         $this->assertSame('', Parser::parse("'' === ''")->comparisonSubject()->readName(), 'two literals ask about nothing');
         $this->assertSame('', Parser::parse('isolation')->comparisonSubject()->readName(), 'not a comparison at all');
     }
+
+    public function test_every_unary_operator_the_parser_emits_has_a_type_or_none(): void
+    {
+        $this->assertSame('number', Parser::parse('count++')->inferType());
+        $this->assertSame('number', Parser::parse('--count')->inferType());
+        $this->assertSame('undefined', Parser::parse('void 0')->inferType());
+        $this->assertSame('boolean', Parser::parse('delete map.key')->inferType());
+        $this->assertNull(Parser::parse('new Date()')->inferType(), 'a construction is the checker\'s to name');
+        $this->assertNull(Parser::parse('await load()')->inferType());
+        $this->assertNull(Parser::parse('[...rows]')->inferType());
+    }
 }

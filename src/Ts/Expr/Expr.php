@@ -523,9 +523,12 @@ final class Expr implements SyntaxExpression
             // Every operator the parser can emit, and no fallback arm: one it learns to produce
             // without a type decided here must fail rather than quietly infer nothing.
             ExprKind::Unary => match ((string) $this->get('op')) {
-                '!' => 'boolean',
+                '!', 'delete' => 'boolean',
                 'typeof' => 'string',
-                '-', '+' => 'number',
+                '-', '+', '++', '--' => 'number',
+                'void' => 'undefined',
+                // What these evaluate to is the operand's business, which only a checker could name.
+                '...', 'await', 'new', 'yield' => null,
             },
             ExprKind::Binary => $this->binaryType(),
             ExprKind::Conditional => $this->unionType([$this->child('then'), $this->child('else')]),

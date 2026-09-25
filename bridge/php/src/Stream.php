@@ -19,7 +19,7 @@ final readonly class Stream
     /** @param  resource  $out */
     public function write($out): void
     {
-        $files = Sources::in($this->request->paths);
+        $files = Sources::in($this->request->paths, $this->request->contents);
         $this->line($out, ['header' => [
             'contract' => 'tree',
             'version' => 1,
@@ -45,7 +45,7 @@ final readonly class Stream
     /** @param-out array<string, mixed> $file */
     private function parsed(string $path, ?array &$file): TreeWriter
     {
-        $code = file_get_contents($path);
+        $code = $this->request->contents[$path] ?? file_get_contents($path);
         $errors = new Collecting();
         $parser = (new ParserFactory())->createForNewestSupportedVersion();
         $statements = $parser->parse($code, $errors) ?? [];

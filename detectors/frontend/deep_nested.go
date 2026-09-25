@@ -46,3 +46,6 @@ func (d *DeepNestedDetector) Find(codebase *engine.Codebase) []engine.Match {
 
 	return boundaries
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (DeepNestedDetector) Repentable() {}

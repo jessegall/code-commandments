@@ -307,3 +307,13 @@ func prove(proving fixture.Fixture) []string {
 
 	return proven.failures
 }
+
+func TestLikenessReadsTwoPiecesOfCodeAlikeInEitherOrder(t *testing.T) {
+	a, b := "bafoobar", "barfoo"
+	if fixture.Similarity(a, b) == fixture.Similarity(b, a) {
+		t.Fatal("the sample no longer reads differently in the two orders; pick one that does")
+	}
+	if fixture.Likeness(a, b) != fixture.Likeness(b, a) || fixture.Likeness(a, b) != min(fixture.Similarity(a, b), fixture.Similarity(b, a)) {
+		t.Error("likeness depends on which piece is read first")
+	}
+}

@@ -235,6 +235,25 @@ final class ExtractComponentScribeTest extends TestCase
         $this->assertStringContainsString('group: Group', reset($components));
     }
 
+    public function test_a_link_component_is_lifted_with_what_it_wraps(): void
+    {
+        // Inertia's <Link> is a component, not the void <link>: the nesting it wraps is its own, so the subtree the
+        // component is lifted from holds the link and everything inside it.
+        $src = "<script setup lang=\"ts\">\nimport { Link } from '@inertiajs/vue3';\n</script>\n"
+            . "<template>\n  <ul>\n"
+            . '    <li v-for="order in orders" :key="order.id"><Link :href="order.url">' . str_repeat('<div>', 11) . '{{ order.number }}' . str_repeat('</div>', 11) . "</Link></li>\n"
+            . "    <li class=\"footer\">end</li>\n"
+            . "  </ul>\n</template>\n";
+
+        $files = $this->extract(new DeepNestedDetector, $src);
+        $components = $this->components($files);
+        $component = (string) reset($components);
+
+        $this->assertStringContainsString('<Link :href="order.url">', $component, 'the link travels with the subtree');
+        $this->assertStringContainsString("import { Link } from '@inertiajs/vue3';", $component);
+        $this->assertStringNotContainsString('<Link', $files['component.vue'] ?? '', 'the call site no longer renders the link itself');
+    }
+
     public function test_types_a_loop_variable_as_the_iterable_element_type(): void
     {
         // `interface Props { agents: Agent[] }` → a v-for="agent in agents" list item

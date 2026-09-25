@@ -230,15 +230,6 @@ func (e Element) IsTemplateRoot() bool {
 	return e.Depth() == 1 && len(e.Siblings()) == 1
 }
 
-// Resolves is the file the element's tag names through the script's imports; empty for a tag no import names.
-func (e Element) Resolves() string {
-	if e.Node() == nil {
-		return ""
-	}
-
-	return e.Node().Resolves
-}
-
 // Bindings is every prop the element binds with v-bind, :customer="order.customer", by the prop's name as
 // the child declares it: Vue reads :order-table as orderTable.
 func (e Element) Bindings() map[string]Directive {

@@ -1,0 +1,164 @@
+{
+    "test_deep_reach_flattens_the_shared_object_to_a_prop": [
+        {
+            "component.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>"
+        }
+    ],
+    "test_deep_reach_keeps_every_other_free_variable_as_a_prop": [
+        {
+            "component.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <fieldset><h3>{{ projection.name }}</h3><input :value=\"projection.config.decimals\" /><input :value=\"projection.config.prefix\" /></fieldset>\n  </div>\n</template>"
+        }
+    ],
+    "test_an_all_caps_prop_is_bound_verbatim_not_mangled": [
+        {
+            "component.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <fieldset><h3>{{ ROWS.name }}</h3><input :value=\"ROWS.config.decimals\" /><input :value=\"ROWS.config.prefix\" /></fieldset>\n  </div>\n</template>"
+        }
+    ],
+    "test_a_deep_reach_through_a_generic_container_is_named_after_a_meaningful_segment": [
+        {
+            "component.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <section><p>{{ spawnFailure.detail.message }}</p><p>{{ spawnFailure.detail.code }}</p></section>\n  </div>\n</template>"
+        }
+    ],
+    "test_a_module_local_static_const_is_copied_in_not_threaded_as_a_prop": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nconst INLINE = { BOOL: 'bool', INT: 'int' } as const;\nconst order = useOrder();\n</script>\n<template>\n  <div>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.kind === INLINE.BOOL }}</p></section>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_ref_typed_binding_becomes_an_unwrapped_prop_not_a_raw_ref": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport type { Ref } from 'vue';\nconst texts: Ref<InspectorTexts | null> | null = getTexts();\nconst order = useOrder();\n</script>\n<template>\n  <div>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <section><p>{{ order.customer.fullName }}: {{ texts?.hint }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_does_not_infer_called_functions_or_globals_as_props": [
+        {
+            "component.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <div><input :value=\"row.cfg.a\" @input=\"emit('x', Number($event))\" /><input :value=\"row.cfg.b\" @input=\"clearOverride()\" /></div>\n  </div>\n</template>"
+        }
+    ],
+    "test_unwraps_a_structural_directive_template_so_the_root_is_a_real_element": [
+        {
+            "component.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <template v-if=\"ready\"><div class=\"inner\"><p>{{ stat.detail.a }}</p><p>{{ stat.detail.b }}</p></div></template>\n  </div>\n</template>"
+        }
+    ],
+    "test_unwraps_a_context_bound_template_to_its_content": [
+        {
+            "component.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <template #panel><div class=\"inner\"><p>{{ stat.detail.a }}</p><p>{{ stat.detail.b }}</p></div></template>\n  </div>\n</template>"
+        }
+    ],
+    "test_duplicate_blocks_collapse_to_one_component_with_their_free_vars": [
+        {
+            "component.vue": "<script setup>\n</script>\n<template><div><DialogClose class=\"close\"><X class=\"icon\" /><span>{{ label }}</span></DialogClose></div><aside><DialogClose class=\"close\"><X class=\"icon\" /><span>{{ label }}</span></DialogClose></aside></template>"
+        }
+    ],
+    "test_rewrites_the_call_site_and_imports_the_component": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nconst order = useOrder();\n</script>\n<template>\n  <div>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_carries_the_imports_the_extracted_markup_uses": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Badge } from '@/ui/badge';\nimport { Unused } from '@/x';\n</script>\n<template>\n  <div>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <p>row</p>\n    <section><Badge>{{ order.customer.fullName }}</Badge><Badge>{{ order.customer.email }}</Badge></section>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_forwards_a_source_prop_type_instead_of_unknown": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport type { Order } from '@/types';\ndefineProps<{ order: Order }>();\n</script>\n<template>\n  <section><div><div><div><div><div><div><div><div><div><div><div><div><div><p>{{ order.field.value }}</p></div></div></div></div></div></div></div></div></div></div></div></div></div></section>\n  <footer>end</footer>\n</template>\n"
+        }
+    ],
+    "test_traces_a_local_computed_to_type_a_loop_variable": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport type { Group } from '@/types';\nconst groups = computed<Group[]>(() => []);\n</script>\n<template>\n  <ul>\n    <li v-for=\"group in groups\" :key=\"group.id\"><div><div><div><div><div><div><div><div><div><div><div>{{ group.name }}</div></div></div></div></div></div></div></div></div></div></div></li>\n    <li class=\"footer\">end</li>\n  </ul>\n</template>\n"
+        }
+    ],
+    "test_a_link_component_is_lifted_with_what_it_wraps": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Link } from '@inertiajs/vue3';\n</script>\n<template>\n  <ul>\n    <li v-for=\"order in orders\" :key=\"order.id\"><Link :href=\"order.url\"><div><div><div><div><div><div><div><div><div><div><div>{{ order.number }}</div></div></div></div></div></div></div></div></div></div></div></Link></li>\n    <li class=\"footer\">end</li>\n  </ul>\n</template>\n"
+        }
+    ],
+    "test_types_a_loop_variable_as_the_iterable_element_type": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport type { Agent } from '@/types';\ninterface Props { agents: Agent[] }\ndefineProps<Props>();\n</script>\n<template>\n  <ul>\n    <li v-for=\"agent in agents\" :key=\"agent.id\"><div><div><div><div><div><div><div><div><div><div><div>{{ agent.name }}</div></div></div></div></div></div></div></div></div></div></div></li>\n    <li class=\"footer\">end</li>\n  </ul>\n</template>\n"
+        }
+    ],
+    "test_same_name_in_different_directories_is_not_suffixed": [
+        {
+            "a/PanelA.vue": "<template>\n  <section><div><div><div><div><div><div><div><div><div><div><div><div><div><p>{{ data.value }}</p></div></div></div></div></div></div></div></div></div></div></div></div></div></section>\n  <footer>end</footer>\n</template>\n",
+            "b/CardB.vue": "<template>\n  <section><div><div><div><div><div><div><div><div><div><div><div><div><div><p>{{ data.value }}</p></div></div></div></div></div></div></div></div></div></div></div></div></div></section>\n  <footer>end</footer>\n</template>\n"
+        }
+    ],
+    "test_two_collisions_in_one_directory_are_suffixed": [
+        {
+            "Twin.vue": "<template>\n  <section><div><div><div><div><div><div><div><div><div><div><div><div><div><p>{{ data.value }}</p></div></div></div></div></div></div></div></div></div></div></div></div></div></section>\n  <section><div><div><div><div><div><div><div><div><div><div><div><div><div><p>{{ data.label }}</p></div></div></div></div></div></div></div></div></div></div></div></div></div></section>\n</template>\n"
+        }
+    ],
+    "test_identical_extractions_in_one_directory_reuse_one_component": [
+        {
+            "PanelB.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>\n",
+            "PanelA.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_the_oracle_dry_render_does_not_leak_phantom_reuses": [
+        {
+            "PanelA.vue": "<template>\n  <div>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <p>row</p>\n  <section><p>{{ order.customer.fullName }}</p><p>{{ order.customer.email }}</p></section>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_dynamic_compound_title_does_not_become_the_component_name": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/ui/dialog';\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Dialog><DialogContent><DialogHeader><DialogTitle>{{ selected ? selected.name : (scoped ? 'Add account' : 'Add credential') }}</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader><form><Label>A</Label><Input :model-value=\"a\" /><Label>B</Label><Input :model-value=\"b\" /><Label>C</Label><Input :model-value=\"c\" /><Button>Save</Button></form></DialogContent></Dialog>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_written_value_becomes_a_model_not_a_prop": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Popover, PopoverTrigger, PopoverContent } from '@/ui/popover';\nconst confirmOpen = ref(false);\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Popover v-model:open=\"confirmOpen\"><PopoverTrigger as-child><Button variant=\"destructive\"><Trash2 class=\"size-3\" />Delete node</Button></PopoverTrigger><PopoverContent class=\"w-64\"><header><h4>Confirm</h4></header><p class=\"title\">Delete {{ label }}?</p><p class=\"note\">This cannot be undone.</p><ul><li>One</li><li>Two</li></ul><div class=\"actions\"><Button @click=\"confirmOpen = false\">Cancel</Button><Button @click=\"remove\">Delete</Button></div></PopoverContent></Popover>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_an_inertia_useform_model_is_typed_from_its_seed_not_unknown": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { useForm } from '@inertiajs/vue3';\nimport { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';\nconst form = useForm({ name: '', quantity: 0, active: true });\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Dialog><DialogContent><DialogHeader><DialogTitle>Edit</DialogTitle></DialogHeader><form><Label>Name</Label><Input v-model=\"form.name\" /><Label>Qty</Label><Input v-model=\"form.quantity\" /><Label>Active</Label><Input v-model=\"form.active\" /><Button @click=\"form.reset()\">Reset</Button></form></DialogContent></Dialog>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_props_variable_access_forwards_the_member_not_the_props_object": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Popover, PopoverTrigger, PopoverContent } from '@/ui/popover';\ninterface Props { label: string }\nconst props = defineProps<Props>();\nconst confirmOpen = ref(false);\nfunction remove() {}\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Popover v-model:open=\"confirmOpen\"><PopoverTrigger as-child><Button variant=\"destructive\"><Trash2 class=\"size-3\" />Delete node</Button></PopoverTrigger><PopoverContent class=\"w-64\"><header><h4>Confirm</h4></header><p class=\"title\">Delete {{ props.label }}?</p><p class=\"note\">This cannot be undone.</p><ul><li>One</li><li>Two</li></ul><div class=\"actions\"><Button @click=\"confirmOpen = false\">Cancel</Button><Button @click=\"remove\">Delete</Button></div></PopoverContent></Popover>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_the_oracle_types_a_prop_no_ast_rung_could": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Popover, PopoverTrigger, PopoverContent } from '@/ui/popover';\nconst blurb = computed(() => schema.value.label);\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Popover><PopoverTrigger as-child><Button>Open</Button></PopoverTrigger><PopoverContent class=\"w-64\"><header><h4>Summary</h4></header><p class=\"title\">{{ blurb }}</p><p class=\"note\">Detail</p><ul><li>One</li><li>Two</li></ul><div class=\"actions\"><Button>Close</Button></div></PopoverContent></Popover>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_handler_arg_with_a_ts_cast_keeps_its_value_expression": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nfunction commitText(v: string) { save(v); }\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Dialog><DialogContent><DialogHeader><DialogTitle>Rename</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader><div class=\"body\"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div><DialogFooter><input @change=\"commitText(($event.target as HTMLInputElement).value)\" /></DialogFooter></DialogContent></Dialog>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_an_assigned_value_becomes_a_model_not_a_readonly_prop": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nconst dismissed = ref(false);\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Dialog><DialogContent><DialogHeader><DialogTitle>Confirm</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader><div class=\"body\"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div><DialogFooter><Button @click=\"dismissed = true\">Dismiss</Button><Button @click=\"confirm\">OK</Button></DialogFooter></DialogContent></Dialog>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_chunk_that_renders_slots_forwards_the_host_slots": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Dialog><DialogContent><DialogHeader><DialogTitle>Title</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader><div class=\"body\"><slot name=\"lead\" /><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div><DialogFooter><Button>OK</Button></DialogFooter></DialogContent></Dialog>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_handler_call_to_a_parent_function_is_forwarded_as_an_emit": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nfunction copyJson(scope: string) { navigator.clipboard.writeText(scope); }\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Dialog><DialogContent><DialogHeader><DialogTitle>Export</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader><div class=\"body\"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div><DialogFooter><Button @click=\"copyJson('nodes')\">Copy</Button></DialogFooter></DialogContent></Dialog>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_handler_calling_the_components_own_emit_refuses_extraction": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nconst emit = defineEmits<{ close: [] }>();\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Dialog><DialogContent><DialogHeader><DialogTitle>Confirm</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader><div class=\"body\"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div><DialogFooter><Button @click=\"emit('close')\">Cancel</Button></DialogFooter></DialogContent></Dialog>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_parent_function_reached_outside_a_clean_handler_refuses_extraction": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/ui/dialog';\nfunction formatBlurb() { return 'x'; }\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Dialog><DialogContent><DialogHeader><DialogTitle>Export</DialogTitle><DialogDescription>{{ formatBlurb() }}</DialogDescription></DialogHeader><div class=\"body\"><p>One</p><p>Two</p><ul><li>a</li><li>b</li></ul></div><DialogFooter><Button>OK</Button></DialogFooter></DialogContent></Dialog>\n  </div>\n</template>\n"
+        }
+    ],
+    "test_a_multi_loop_container_is_not_named_after_one_of_its_loops": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/ui/dialog';\n</script>\n<template>\n  <div>\n    <button>Open</button>\n    <Dialog><DialogContent><DialogHeader><DialogTitle>{{ heading }}</DialogTitle><DialogDescription>{{ blurb }}</DialogDescription></DialogHeader><ul><li v-for=\"type in selected.types\" :key=\"type.id\">{{ type.name }}</li></ul><ul><li v-for=\"field in selected.fields\" :key=\"field.id\">{{ field.label }}</li></ul><footer><Button>Save</Button><Button>Cancel</Button></footer></DialogContent></Dialog>\n  </div>\n</template>\n"
+        }
+    ]
+}

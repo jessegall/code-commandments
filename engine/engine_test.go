@@ -157,3 +157,26 @@ func TestFromStringReadsSourcesByPath(t *testing.T) {
 		}
 	}
 }
+
+func TestTwoNodesWrittenAlikeAreTheSameSyntaxWhereverTheySit(t *testing.T) {
+	seen := map[string]engine.Match{}
+	compared := 0
+	for _, node := range sample(t).Where(func(m engine.Match) bool { return len(m.Children()) == 0 && m.Name() != "" }).Get() {
+		key := node.Kind() + " " + node.Name()
+		earlier, ok := seen[key]
+		if !ok {
+			seen[key] = node
+			continue
+		}
+		if earlier.Node().Field == node.Node().Field {
+			continue
+		}
+		compared++
+		if !earlier.SameSyntax(node) {
+			t.Errorf("%s in %s and in %s are not the same syntax", key, earlier.Node().Field, node.Node().Field)
+		}
+	}
+	if compared == 0 {
+		t.Fatal("the sample writes no name twice in different slots")
+	}
+}

@@ -1,0 +1,1 @@
+`null` is not a way to model absence. It is the *absence of a decision* about absence. Make the decision.

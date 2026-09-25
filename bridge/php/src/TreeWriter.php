@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace CodeCommandments\PhpBridge;
 
 use Closure;
+use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Modifiers;
 use PhpParser\Node;
+use PhpParser\Parser;
+use PhpParser\ParserFactory;
 use PhpParser\Token;
 
 /** One parsed file as the contract's nested nodes and its comments. */
@@ -25,6 +28,9 @@ final class TreeWriter
 
     /** @var array<int, int> */
     private array $commentEnds = [];
+
+    /** @var array<int, true> the offsets a zero-width node stands at */
+    private array $emptyStatements = [];
 
     private ?string $class = null;
 
@@ -58,15 +64,32 @@ final class TreeWriter
         $comments = [];
         foreach ($written as $token) {
             $text = rtrim($token->text, "\r\n");
+            $kind = $token->id === T_DOC_COMMENT ? 'doc' : (str_starts_with($token->text, '/*') ? 'block' : 'line');
             $comments[] = [
                 'id' => count($comments),
-                'kind' => $token->id === T_DOC_COMMENT ? 'doc' : (str_starts_with($token->text, '/*') ? 'block' : 'line'),
+                'kind' => $kind,
                 'text' => $text,
                 'span' => [$token->pos, $token->pos + strlen($text), $token->line],
-            ] + $this->attachment($token->pos, $token->pos + strlen($token->text));
+            ] + $this->attachment($token->pos, $token->pos + strlen($token->text))
+                + ($kind === 'line' && self::readsAsCode($text) ? ['extras' => ['php' => ['code' => true]]] : []);
         }
 
         return $comments;
+    }
+
+    /** Whether a line comment's text, marker and trailing separators stripped, parses as PHP: commented-out code. */
+    private static function readsAsCode(string $comment): bool
+    {
+        static $parser = null;
+        $text = rtrim(ltrim($comment, "/# \t"), " \t,;");
+        if ($text === '') {
+            return false;
+        }
+        $errors = new Collecting();
+        $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
+        $statements = $parser->parse("<?php [{$text}];", $errors);
+
+        return $errors->getErrors() === [] && $statements !== null;
     }
 
     private function node(Node $node, string $field, ?Node $parent = null): array
@@ -75,6 +98,9 @@ final class TreeWriter
         $start = $node->getStartFilePos();
         $end = $node->getEndFilePos() + 1;
         $this->spans[] = ['start' => $start, 'end' => $end, 'id' => $id];
+        if ($start === $end) {
+            $this->emptyStatements[$start] = true;
+        }
         $out = ['id' => $id, 'kind' => $node->getType(), 'role' => $this->role($node, $field, $parent)];
         $is = $this->neutral($node);
         if ($is !== []) {
@@ -430,13 +456,25 @@ final class TreeWriter
 
             return $owner === null ? ['trailing' => true] : ['attached' => $owner, 'trailing' => true];
         }
-        $next = strspn($this->code, " \t\r\n", $end) + $end;
-        while (isset($this->commentEnds[$next])) {
-            $next = strspn($this->code, " \t\r\n", $this->commentEnds[$next]) + $this->commentEnds[$next];
+        // A comment closing its block belongs to the empty statement php-parser stands at the end of the block's last comment.
+        $next = $end;
+        while (! $this->emptyStatementAt($next)) {
+            $after = strspn($this->code, " \t\r\n", $next) + $next;
+            if (! isset($this->commentEnds[$after])) {
+                $next = $after;
+
+                break;
+            }
+            $next = $this->commentEnds[$after];
         }
         $owner = $this->outermost(fn (array $span): bool => $span['id'] !== 0 && $span['start'] === $next);
 
         return $owner === null ? [] : ['attached' => $owner];
+    }
+
+    private function emptyStatementAt(int $at): bool
+    {
+        return isset($this->emptyStatements[$at]);
     }
 
     private function outermost(Closure $matches): ?int

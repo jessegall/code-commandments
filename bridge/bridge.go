@@ -12,11 +12,13 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// Request is what a served bridge is asked: the paths whose files it reads, and the ones it writes to be judged.
+// Request is what a served bridge is asked: the paths whose files it reads, the ones it writes to be judged, and
+// the text drafted for any file, read in place of the disk's.
 type Request struct {
-	Paths  []string `json:"paths"`
-	Write  []string `json:"write,omitempty"`
-	Python string   `json:"python,omitempty"`
+	Paths    []string          `json:"paths"`
+	Write    []string          `json:"write,omitempty"`
+	Python   string            `json:"python,omitempty"`
+	Contents map[string]string `json:"contents,omitempty"`
 }
 
 // Once runs the bridge over the paths and reads the stream it writes.

@@ -255,3 +255,42 @@ func Paragraphs(lines []string, isProse func(string) bool) int {
 
 	return paragraphs
 }
+
+// History says whether a phrase that narrates the code's past stands anywhere in the text, whatever clause holds it:
+// the pattern alone, which PHP's documentation rules match a comment against.
+func History(text string) bool {
+	return slices.ContainsFunc(history, func(narration phrase) bool { return len(narration.starts(text)) > 0 })
+}
+
+// Strawman says whether a phrase that defends the code against a reading nobody made stands anywhere in the text,
+// whatever clause holds it: the pattern alone, which PHP's documentation rules match a comment against.
+func Strawman(text string) bool {
+	return len(strawmanNegations(text)) > 0 ||
+		slices.ContainsFunc(strawman, func(defence phrase) bool { return len(defence.starts(text)) > 0 })
+}
+
+// Trim trims what PHP's trim trims: spaces, tabs, line ends, NUL and vertical tabs.
+func Trim(text string) string {
+	return strings.Trim(text, " \t\n\r\x00\x0B")
+}
+
+// Lines splits a text at every line end PCRE's \R matches without the u flag.
+func Lines(text string) []string {
+	var lines []string
+	start := 0
+	for at := 0; at < len(text); at++ {
+		switch text[at] {
+		case '\r':
+			lines = append(lines, text[start:at])
+			if at+1 < len(text) && text[at+1] == '\n' {
+				at++
+			}
+			start = at + 1
+		case '\n', '\x0B', '\f', '\x85':
+			lines = append(lines, text[start:at])
+			start = at + 1
+		}
+	}
+
+	return append(lines, text[start:])
+}

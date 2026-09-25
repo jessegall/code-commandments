@@ -76,3 +76,6 @@ func filtered(candidates []engine.Match, keep func(vue.Element) bool) []engine.M
 func (DuplicateElementDetector) GroupKey(match engine.Match) (string, bool) {
 	return structureHash(match), true
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (DuplicateElementDetector) Repentable() {}

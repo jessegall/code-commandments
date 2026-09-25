@@ -1,0 +1,2 @@
+State shared across processes is not a pile of `Cache::get`/`put` calls with a key you reinvent at every
+site. It is a **domain object** with behaviour methods, handed to you thread-safe by one factory.

@@ -17,7 +17,7 @@ only `node`. It is built from `src/` by `npm run build` (or `go generate ./engin
 | `PATH` | a file, or a folder read for every `*.vue` and `*.ts` under it; links, dot folders, `node_modules`, `vendor`, `site-packages` and `__pycache__` are skipped. Files are written sorted, each once |
 | `--write=PATH` | a file or folder that is judged. When any is given, every other file is written with `"context": true` |
 | `--rename=FROM=TO` | writes paths under `FROM` as under `TO`, so a committed stream names no machine's own folders |
-| `--serve` | answers each stdin line `{"paths": [...], "write": [...]}` with a whole stream, header to trailer |
+| `--serve` | answers each stdin line `{"paths": [...], "write": [...], "contents": {...}}` with a whole stream, header to trailer. `contents` maps absolute paths to the text a rewrite has drafted for them, read in place of the disk; a `*.vue` or `*.ts` path in it under a requested folder that is not on disk is read too |
 
 ## One stream, one program
 

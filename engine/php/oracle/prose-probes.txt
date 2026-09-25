@@ -1,0 +1,87 @@
+// This was formerly the order importer.
+// the formerly active flag
+// a formerly private helper, now public
+// an formerly odd case
+// The formerly used path.
+// Refactored out of the controller.
+// renamed from OrderSync
+// ported from the Python tool
+// This class is retired.
+// It was extracted from the builder.
+// It was extracted for clarity.
+// The value was extracted
+// This used to be a string.
+// what is used to be matched
+// the rule we are used to live with
+// It can only used to hold ids
+// used to fire an event on save
+// Used to return null here.
+// It no longer does any mapping.
+// no longer an array
+// The handler now lives in Checkout.
+// Previously this held the raw payload.
+// previously   we cached it
+// the equivalent of the old importer
+// This is not random.
+// not by chance, the order is fixed
+// never a typo — the name is deliberate
+// It is not a mistake.
+// This is not to mistake for a bug.
+// This could not mistake the two.
+// no magic here
+// no magical numbers.
+// Not arbitrary: the API caps it.
+// not arbitrary; see below
+// nothing arbitrary about it
+// isn't a coincidence
+// isnt coincidental, it follows the spec
+// aren't accidental
+// no blanket rule applies, this one is narrow
+// not dead code
+// not dead code, it is called by the queue
+// It's not an oversight
+// not a courtesy to callers
+// no vibes involved
+// not an afterthought.
+// not — random at all
+// not. random
+// not, random
+// not something that happens to look quite random
+// not something that happens to look quite very random at all
+// Intentionally left empty.
+// deliberately not cached
+// intentionally, the list is never empty
+// This is not on purpose.
+// never done on purpose
+// The key is not in this map.
+// is not in this class's scope
+// It's not here.
+// they're not in this file
+// 're not here
+// The totals are not stored here.
+// not listed in this table
+// not included in this response's body
+// not kept here, see the cache
+// not shown here
+// Returns the total.
+// $total = $this->sum($items);
+// return $order->total();
+// foo(), bar()
+// if ($x) {
+// TODO: fix this
+# $cache[] = $key;
+/** Inline docblock. */
+/**
+ * A summary.
+ *
+ * A second paragraph.
+ */
+/**
+ * @param int $count
+ */
+/** @see \App\Orders\OrderData and {@see \App\Missing\Thing} */
+/**
+ * {@link App\Orders\OrderService::place} and {@see Carbon\Carbon}
+ */
+// camelCaseWords and HTTPRequest parsing isn't hard
+// fixes, fixing, fixed, fix; parties, studies; boxes; horses; rode

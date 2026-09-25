@@ -52,13 +52,23 @@ function relative(string $path): string
     return substr(realpath($path), strlen($GLOBALS['oracleRoot']) + 1);
 }
 
-[, $root, $out] = $argv + [null, null, null];
+$arguments = array_slice($argv, 1);
+foreach ($arguments as $at => $argument) {
+    if (str_starts_with($argument, '--autoload=')) {
+        // The project's own classes resolve through its loader, appended so the tool's own classes still win.
+        $loader = require substr($argument, strlen('--autoload='));
+        $loader->unregister();
+        $loader->register(false);
+        unset($arguments[$at]);
+    }
+}
+[$root, $out] = array_values($arguments) + [null, null];
 if ($root === null || $out === null) {
-    fwrite(STDERR, "usage: php oracle.php <root> <out> [question...]\n");
+    fwrite(STDERR, "usage: php oracle.php [--autoload=FILE] <root> <out> [question...]\n");
     exit(1);
 }
 $root = $GLOBALS['oracleRoot'] = realpath($root);
-$asked = array_slice($argv, 3);
+$asked = array_slice(array_values($arguments), 2);
 $questions = array_values(array_filter(
     array_map(static fn (string $class): Question => new $class(), array_filter(get_declared_classes(), static fn (string $class): bool => is_subclass_of($class, Question::class))),
     static fn (Question $question): bool => $asked === [] || in_array($question->name(), $asked, true),

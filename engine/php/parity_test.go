@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/engine/php/internal/shop"
+	"github.com/jessegall/code-commandments/engine/php/shop"
 )
 
 func TestTheCommittedShopIsGeneratedFromTodaysSources(t *testing.T) {
@@ -38,4 +38,15 @@ func TestTheGoTreeHoldsNoNodeThePhpEngineLacks(t *testing.T) {
 	if answers := len(shop.Answers(t, "parents")); nodes != answers {
 		t.Fatalf("the Go tree holds %d nodes under its file roots, the PHP engine %d", nodes, answers)
 	}
+}
+
+func TestEveryNodeHoldsTheCommentsPhpParserAttachesToIt(t *testing.T) {
+	shop.Parity(t, "comments", func(_ shop.Answer, node engine.Match) any {
+		spans := [][2]int{}
+		for _, comment := range (Node{Match: node}).Comments() {
+			spans = append(spans, [2]int{comment.Span.Start, comment.Span.End})
+		}
+
+		return spans
+	})
 }

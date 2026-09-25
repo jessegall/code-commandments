@@ -44,7 +44,9 @@ mirrors a PHP Data class, joins the two streams in the engine by what both trees
 class's `#[TypeScript]` attribute and the fields each side declares.
 
 `--serve` keeps the bridge running: it answers each request on stdin, one JSON line (`{"paths": [...],
-"write": [...]}`, as the mypy bridge takes it today), with a full stream, header to trailer. A bridge
+"write": [...]}`, as the mypy bridge takes it today), with a full stream, header to trailer. A request
+may carry `"contents"`, absolute paths to the text a rewrite has drafted for them, and the bridge reads
+those in place of the disk, a file under a requested folder that exists only there included. A bridge
 that fails as a whole exits non-zero and writes why to stderr. A file it could only partly parse is
 still written, with `errors` counting what it could not read.
 
@@ -301,6 +303,7 @@ language's keys are closed and typed in the schema, just as the generic ones are
 |---|---|---|---|
 | csharp | `forgivesNull` | a `SuppressNullableWarningExpression` | the `!`'s operand is declared nullable |
 | csharp | `code` | a comment | the comment parses as one C# statement |
+| php | `code` | a line comment | its text, marker and trailing `,`/`;` stripped, parses as PHP inside `[…]` |
 | python | `code` | a `#` comment | the words after the `#` parse as one Python statement, end to end, that is not a lone name |
 | python | `operators` | a `Compare` | the chained comparison's operators, in order (`a < b <= c` → `["<", "<="]`) |
 | python | `level` | an `ImportFrom` | the relative-import dot count |

@@ -27,6 +27,11 @@ func All() []Detector {
 	return detectors.All()
 }
 
+// Every is every detector registered under one engine, unpublished ones included.
+func Every(engine catalog.Engine) []Detector {
+	return detectors.Every(engine)
+}
+
 // Of is every published detector of one engine.
 func Of(engine catalog.Engine) []Detector {
 	return detectors.Of(engine)

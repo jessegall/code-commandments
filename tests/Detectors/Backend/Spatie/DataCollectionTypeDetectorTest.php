@@ -77,6 +77,23 @@ final class DataCollectionTypeDetectorTest extends TestCase
         $this->assertStringContainsString('#[DataCollectionOf(NodeData::class)]', $fixed);
     }
 
+    public function test_the_scribe_retypes_a_data_collection_in_a_union(): void
+    {
+        $php = self::PRELUDE . <<<'PHP'
+        class Page extends Data {
+            public function __construct(
+                #[DataCollectionOf(NodeData::class)]
+                public readonly DataCollection|null $nodes,
+            ) {}
+        }
+        PHP;
+
+        $fixed = $this->fix($php);
+
+        $this->assertStringNotContainsString('DataCollection|null $nodes', $fixed);
+        $this->assertStringContainsString('#[DataCollectionOf(NodeData::class)]', $fixed);
+    }
+
     public function test_the_scribe_leaves_a_docblock_only_property_for_a_hand_fix(): void
     {
         // The element lives only in the `@var` docblock, not on the AST as `#[DataCollectionOf]`. Adding the

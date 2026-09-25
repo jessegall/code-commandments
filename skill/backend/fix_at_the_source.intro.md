@@ -1,0 +1,1 @@
+When a value is wrong where you found it, the bug is almost always where it was **born**. Fix it there, and the symptom disappears on its own.
