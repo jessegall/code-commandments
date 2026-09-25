@@ -143,6 +143,7 @@ each line against the schema, and checks every span, line and comment against th
 | class ancestry, enums, dataclasses, TypedDicts | `bases` children + `decorator_list`, resolved names | engine | python |
 | attribute-flow tallies, resource reach, constant vocabulary | `children`, `resolved.name`, `resolved.constructs`, `target` | engine | python |
 | which files are judged vs only inform | `file.context` | bridge | python (`shop/settings.py`, which `cli` imports from) |
+| a comment that reads as code | `comment.extras.python.code` | bridge | — (`# return self.labels[-1]` in `label_queue`, checked by the bridge test) |
 
 ## C#
 

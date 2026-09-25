@@ -30,8 +30,17 @@ func TestTheMypyBridgeWritesAValidTreeOfThePythonFixture(t *testing.T) {
 	if stream.Program == nil || len(stream.Program.Packages) == 0 {
 		t.Error("the program line names no package")
 	}
+	code := 0
 	for _, file := range stream.Files {
 		inSourceOrder(t, file)
+		for _, comment := range file.Comments {
+			if comment.Extras != nil && comment.Extras.Python != nil && comment.Extras.Python.Code {
+				code++
+			}
+		}
+	}
+	if code == 0 {
+		t.Error("no comment is marked as code, not even label_queue's `# return self.labels[-1]`")
 	}
 }
 

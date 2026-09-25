@@ -307,6 +307,8 @@ class TreeWriter:
             comment = {"id": len(comments), "kind": "doc" if kind.startswith("doc") else "line",
                        "text": self.source[start:end].decode(), "span": [start, end, self.line_of(start)]}
             comment.update({"attached": int(kind[4:])} if kind.startswith("doc") else self.attachment(start, end))
+            if not kind.startswith("doc") and is_code(comment["text"][1:]):
+                comment["extras"] = {"python": {"code": True}}
             comments.append(comment)
         return comments
 
@@ -331,6 +333,20 @@ class TreeWriter:
                 return identity
         return None
 
+
+
+def is_code(words: str) -> bool:
+    """Whether a comment's words read as one Python statement from end to end, `total += rate` or `return
+    order.total`, rather than prose: words strung together parse as several statements or none, and a lone name
+    is a label, not code."""
+    text = words.strip()
+    try:
+        body = ast.parse(text).body if text else []
+    except (SyntaxError, ValueError):
+        return False
+    if len(body) != 1 or body[0].end_lineno != text.count("\n") + 1 or body[0].end_col_offset != len(text.split("\n")[-1].encode()):
+        return False
+    return not (isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Name))
 
 
 def packages(path: str) -> list[str]:

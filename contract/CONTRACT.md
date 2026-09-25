@@ -4,7 +4,7 @@ Every language bridge — PHP, Vue, TypeScript, Python, C# — answers in this o
 reads only this shape. A bridge is a small parser: it parses its language, and it writes what only that
 language's own compiler or checker can know. Everything else the engine derives itself, into the same
 fields, once it has read the stream. *Who fills it* says which is which. Version 2; a version 1 stream is the same contract without the Python
-extras `as` and `names`, and a reader of version 2 reads it too.
+extras `as`, `names` and `code`, and a reader of version 2 reads it too.
 
 What the engine must be able to read is listed per engine in [`inventory/`](inventory/). The mapping
 from each of those facts to a field here is in [`COVERAGE.md`](COVERAGE.md). The machine-checked form
@@ -300,6 +300,7 @@ language's keys are closed and typed in the schema, just as the generic ones are
 |---|---|---|---|
 | csharp | `forgivesNull` | a `SuppressNullableWarningExpression` | the `!`'s operand is declared nullable |
 | csharp | `code` | a comment | the comment parses as one C# statement |
+| python | `code` | a `#` comment | the words after the `#` parse as one Python statement, end to end, that is not a lone name |
 | python | `operators` | a `Compare` | the chained comparison's operators, in order (`a < b <= c` → `["<", "<="]`) |
 | python | `level` | an `ImportFrom` | the relative-import dot count |
 | python | `as` | an `alias` | the name an import binds when it renames: `y` in `import x as y` |
