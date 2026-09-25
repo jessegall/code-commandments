@@ -11,7 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-const shop = "../../tests/Fixtures/backend"
+const fixture = "../../tests/Fixtures/backend"
 
 func bridged(t *testing.T, arguments ...string) *contract.Stream {
 	t.Helper()
@@ -52,7 +52,7 @@ func find(file *contract.File, check func(*contract.Node) bool) *contract.Node {
 }
 
 func TestTheShopStreamsWholeAndPointsIntoItsSources(t *testing.T) {
-	stream := bridged(t, shop)
+	stream := bridged(t, fixture)
 	if len(stream.Files) < 500 || stream.Trailer.Files != len(stream.Files) {
 		t.Fatalf("%d files streamed, the trailer counts %d", len(stream.Files), stream.Trailer.Files)
 	}
