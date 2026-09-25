@@ -253,11 +253,11 @@ func (m Match) IsDocumented() bool {
 // SameSyntax says whether two nodes are written alike: the same kinds in the same slots, with the same names,
 // literals, operators, modifiers and flags, child for child. Where they sit and how they are spaced is no part of it.
 func (m Match) SameSyntax(other Match) bool {
-	return m.Exists() && other.Exists() && sameSyntax(m.node, other.node)
+	return m.Exists() && other.Exists() && sameSyntax(m.node, other.node, true)
 }
 
-func sameSyntax(a, b *contract.Node) bool {
-	if a.Kind != b.Kind || a.Field != b.Field || a.Name != b.Name || a.Literal != b.Literal || a.Operator != b.Operator ||
+func sameSyntax(a, b *contract.Node, root bool) bool {
+	if a.Kind != b.Kind || !root && a.Field != b.Field || a.Name != b.Name || a.Literal != b.Literal || a.Operator != b.Operator ||
 		!slices.Equal(a.Modifiers, b.Modifiers) || !slices.Equal(a.Flags, b.Flags) || len(a.Children) != len(b.Children) {
 		return false
 	}
@@ -265,7 +265,7 @@ func sameSyntax(a, b *contract.Node) bool {
 		return false
 	}
 	for i := range a.Children {
-		if !sameSyntax(a.Children[i], b.Children[i]) {
+		if !sameSyntax(a.Children[i], b.Children[i], false) {
 			return false
 		}
 	}
