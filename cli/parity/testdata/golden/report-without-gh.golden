@@ -1,0 +1,9 @@
+exit: 2
+--- stdout
+
+--- stderr
+GitHub CLI (`gh`) is required to file the issue automatically.
+Install it and run `gh auth login`, or open one directly at:
+  https://github.com/jessegall/code-commandments/issues/new
+
+--- files

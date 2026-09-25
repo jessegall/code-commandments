@@ -1,0 +1,70 @@
+exit: 0
+--- stdout
+https://github.com/jessegall/code-commandments/issues/1
+
+--- stderr
+
+--- files
+=== created gh-args.txt
+issue
+----
+create
+----
+--repo
+----
+jessegall/code-commandments
+----
+--title
+----
+[bug-report] A title
+----
+--body
+----
+**Report:**
+wrong
+
+**Where:** `src/A.php:5`
+
+**Code** (`src/A.php:5`):
+
+```php
+  2  
+  3  class A
+  4  {
+→ 5      private string $password = "███████";
+  6      private string $plain = "visible";
+  7  }
+```
+
+**Where:** `src/B.vue:2-3`
+
+**Code** (`src/B.vue:2-3`):
+
+```vue
+  1  <template>
+→ 2    <div>
+→ 3      <span>{{ x }}</span>
+  4    </div>
+  5  </template>
+```
+
+**Where:** `missing.ts:9`
+
+**Where:** `src/A.php`
+
+**Code** (`src/A.php`):
+
+```php
+  1  <?php
+  2  
+  3  class A
+  4  {
+  5      private string $password = "███████";
+  6      private string $plain = "visible";
+  7  }
+```
+
+_Filed via `commandments report` from a consumer project._
+
+----
+

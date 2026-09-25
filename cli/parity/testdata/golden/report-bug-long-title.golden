@@ -1,0 +1,29 @@
+exit: 0
+--- stdout
+https://github.com/jessegall/code-commandments/issues/1
+
+--- stderr
+
+--- files
+=== created gh-args.txt
+issue
+----
+create
+----
+--repo
+----
+jessegall/code-commandments
+----
+--title
+----
+[bug-report] ünïcödé reason that runs well past the sixty characters a…
+----
+--body
+----
+**Report:**
+ünïcödé reason that runs well past the sixty characters a title may hold
+
+_Filed via `commandments report` from a consumer project._
+
+----
+

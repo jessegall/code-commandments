@@ -1,0 +1,11 @@
+exit: 2
+--- stdout
+
+--- stderr
+A detector-report against AllNullableDataDetector REQUIRES --best-design: the cleanest design you
+  can conceive for this code. The litmus — a report is only valid when the flagged code
+  ALREADY IS that design. If you can name anything cleaner, THAT design is the owed fix:
+  implement it and don't file. Pass it once you've confronted that:
+    commandments report --detector=AllNullableDataDetector --reason="…" --best-design="…" --ref=PATH:LINE
+
+--- files

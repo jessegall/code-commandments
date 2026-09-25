@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+Unknown option --line for `report`. Try: commandments report --help
+
+--- files

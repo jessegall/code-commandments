@@ -1,0 +1,30 @@
+exit: 0
+--- stdout
+https://github.com/jessegall/code-commandments/issues/1
+
+--- stderr
+
+--- files
+=== created gh-args.txt
+issue
+----
+create
+----
+--repo
+----
+jessegall/code-commandments
+----
+--title
+----
+[bug-report] judge crashes with no arguments
+----
+--body
+----
+**Report:**
+judge crashes with no arguments
+second line
+
+_Filed via `commandments report` from a consumer project._
+
+----
+

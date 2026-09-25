@@ -1,0 +1,30 @@
+exit: 0
+--- stdout
+https://github.com/jessegall/code-commandments/issues/1
+
+--- stderr
+
+--- files
+=== created gh-args.txt
+issue
+----
+create
+----
+--repo
+----
+jessegall/code-commandments
+----
+--title
+----
+[feature-request] Catch loose dicts
+----
+--body
+----
+**Proposal:**
+Dicts passed around
+should be types.
+
+_Filed via `commandments feature-request` from a consumer project._
+
+----
+
