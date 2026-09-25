@@ -26,7 +26,7 @@ This is the rule the detectors exist to serve. Honour it on EVERY fix:
   touch them — that breadth IS the bug surfacing, not a reason to wrap it.
 - If a finding is a genuine false positive, say so and why — and **report it** so
   it gets fixed upstream instead of silently ignored, ALWAYS referencing the code:
-  `vendor/bin/commandments report --detector=NAME --reason="…" --ref=PATH:LINE`
+  `{{binary}} report --detector=NAME --reason="…" --ref=PATH:LINE`
   (repeat `--ref` for EVERY file involved — a bug spanning files references each).
   Design-smell detectors REQUIRE a `--best-design="…"`: the cleanest design you can
   conceive for this code. It is the litmus — a report is valid ONLY if the flagged
@@ -47,10 +47,10 @@ wrong.** Surface every improvement idea: a rule that's missing or should catch m
 a false positive, OR a `repent` auto-fix that did the wrong thing or left a rough
 edge. Two channels, and using them is expected, not exceptional:
 
-- `vendor/bin/commandments report --reason="…" --ref=PATH:LINE [--ref=…]` — a bug or
+- `{{binary}} report --reason="…" --ref=PATH:LINE [--ref=…]` — a bug or
   false positive (a wrong finding, or a broken/incorrect `repent` result). A broken
   auto-fix is itself a bug: report it, referencing both the source and the bad output.
-- `vendor/bin/commandments feature-request --title="…" --reason="…"` — a new or
+- `{{binary}} feature-request --title="…" --reason="…"` — a new or
   changed rule.
 
 Reporting false positives, flagging bad auto-fixes, and requesting rules is how the
@@ -61,13 +61,13 @@ just work around it.
 change even though they carry sins: a frozen graph migration whose body mirrors
 its siblings on purpose, a snapshot committed for the record, generated code
 checked into the tree. Mark such a file frozen:
-`vendor/bin/commandments freeze <path>` (or add `#[Frozen]` / an `@frozen`
+`{{binary}} freeze <path>` (or add `#[Frozen]` / an `@frozen`
 docblock tag by hand). A frozen file is still **scanned** — the call graph,
 provenance and type resolution read it, so cross-file findings elsewhere stay
 correct — but it is never a **target**: it is never flagged, and a repenter
 never rewrites it (a cross-file fix whose edits would touch a frozen file is
 dropped whole, never half-applied). Lift it with
-`vendor/bin/commandments unfreeze <path>`. **Freeze only what is genuinely
+`{{binary}} unfreeze <path>`. **Freeze only what is genuinely
 immutable — never to silence a sin you could fix.** A real finding you disagree
 with is a `report`; a rule you want off is `disable`; freezing is for files that
 by their nature cannot move.
@@ -99,7 +99,7 @@ most:**
 {{keepInMind}}
 
 **Finding and fixing sins — the checklist workflow.** Run
-`vendor/bin/commandments judge src` ONCE — and **pass any path** to scope the
+`{{binary}} judge src` ONCE — and **pass any path** to scope the
 scan: judge runs EVERY engine over whatever you point it at, so a path holding
 frontend sources (`judge resources/js`) is judged as the frontend
 — **Vue components and plain TypeScript alike** — a path holding Python is judged as
@@ -122,7 +122,7 @@ file, not repeated scans, is how you work:
 
 **Don't know what a finding MEANS? Ask.** A checklist line names its detector and
 nothing else, so when you do not recognise a rule — or are about to argue with one —
-run `vendor/bin/commandments info <sin>` before you touch the code. It prints what
+run `{{binary}} info <sin>` before you touch the code. It prints what
 the rule flags, WHY it is a sin in the skill's own words, how it is fixed, a worked
 example, and the exact commands that act on it (fix it, find it, turn it off, report
 it). The name is matched leniently, so the detector name straight off the checklist
@@ -131,7 +131,7 @@ the skill's whole principle. Guessing at a rule you have not read is how a findi
 gets "fixed" by silencing it.
 
 **Auto-fixable sins.** Some sins have a scribe that fixes them. The report
-advertises the command — typically `vendor/bin/commandments repent --repent=latest`
+advertises the command — typically `{{binary}} repent --repent=latest`
 (optionally `--sin=NAME` to fix just one). `--repent=latest` scopes repent to the
 last judge run's checklist, so it fixes exactly what was reported; review the diff
 with `--dry-run` first.
@@ -141,7 +141,7 @@ this project has a discipline of its own — a convention you keep restating in
 review, a mistake that keeps coming back, anything the shipped set doesn't
 catch — it can become a rule that judges every file from then on. Scaffold it:
 
-`vendor/bin/commandments make <Name>` (add `--engine=frontend` for a rule over
+`{{binary}} make <Name>` (add `--engine=frontend` for a rule over
 your frontend sources — a Vue component or a TypeScript module)
 
 That writes the three classes a commandment is made of — the skill that teaches
@@ -156,7 +156,7 @@ Reach for this whenever the user asks for a new rule, check, or detector.
 
 **Scaffoldable sins.** A few sins are fixed by reaching for a generic helper the
 project may not have yet (e.g. a no-op invokable for a nullable callback). For
-those the report advertises `vendor/bin/commandments scaffold --sin=NAME`, which
+those the report advertises `{{binary}} scaffold --sin=NAME`, which
 generates the helper into your source root with its namespace set. Scaffold the
 construct, then write the fix that uses it (`scaffold` creates the helper; `repent`
 fixes call sites).

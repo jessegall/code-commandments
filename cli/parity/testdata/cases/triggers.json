@@ -44,7 +44,6 @@
     ],
     "setup": [
       "mkdir -p bin && printf '#!/bin/sh\\necho '\"'\"'[]'\"'\"'\\n' > bin/claude && chmod +x bin/claude"
-    ],
-    "pending": "ticket 7: the C# skills' trigger sets"
+    ]
   }
 ]

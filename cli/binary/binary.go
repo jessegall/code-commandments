@@ -2,10 +2,14 @@
 // project (a wired hook, the composer sync call) names a file that is really there.
 package binary
 
-import "os"
+import (
+	"os"
+
+	"github.com/jessegall/code-commandments/cli/workspace"
+)
 
 // candidates are where the executable lives: a consumer's composer shim, else a checkout's own bin/.
-var candidates = []string{"vendor/bin/commandments", "bin/commandments"}
+var candidates = []string{shim, "bin/commandments"}
 
 // Name is the executable as a project with no PHP runs it: from the PATH it was installed on.
 const Name = "commandments"
@@ -36,4 +40,25 @@ func In(root string) string {
 	}
 
 	return candidates[0]
+}
+
+// shim is how a project that installs the tool with composer runs it, as every command the tool prints
+// names it there.
+const shim = "vendor/bin/commandments"
+
+// Invocation is the command a person or an agent types in the project at root to run the tool: the
+// composer shim where the project installs it through PHP, else the binary from the PATH.
+func Invocation(root string) string {
+	if ThroughPHP(root) {
+		return shim
+	}
+
+	return Name
+}
+
+// Here is the invocation for the project the working folder is in.
+func Here() string {
+	cwd, _ := os.Getwd()
+
+	return Invocation(workspace.ProjectRoot(cwd))
 }

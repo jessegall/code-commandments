@@ -131,3 +131,11 @@ func write(t *testing.T, contents string) string {
 
 	return path
 }
+
+type pointerRule struct{}
+
+func TestARuleRegisteredAsAPointerIsNamedByItsDeclaration(t *testing.T) {
+	if byValue, byPointer := ClassOf(Detector, pointerRule{}), ClassOf(Detector, &pointerRule{}); byPointer != byValue {
+		t.Errorf("%q is not %q", byPointer, byValue)
+	}
+}

@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
 	"slices"
@@ -250,7 +251,7 @@ func nudge(event Event, files []string, sins map[string][]string, skills []strin
 		lines = append(lines, line+"\n    LOAD the skill `"+skill.IDFor(slug)+"` before fixing — load it even if you believe you already have.")
 	}
 
-	lines = append(lines, "Run `vendor/bin/commandments info <sin>` if a rule is not one you recognise. "+
+	lines = append(lines, "Run `"+binary.Invocation(event.Root)+" info <sin>` if a rule is not one you recognise. "+
 		"This check reads a file at a time, so it is not the whole picture — `judge` still is.")
 
 	return strings.Join(lines, "\n")

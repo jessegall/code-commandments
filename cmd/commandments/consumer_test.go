@@ -190,6 +190,23 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 	if !strings.Contains(stopped, `"decision":"block"`) {
 		t.Errorf("the stop hook said\n%s", stopped)
 	}
+
+	// A project with no composer.json has no composer shim: everything names the binary itself.
+	for said, text := range map[string]string{
+		"AGENTS.md":                            c.read("AGENTS.md"),
+		".agents/skills/commandments/SKILL.md": c.read(".agents/skills/commandments/SKILL.md"),
+		"judge":                                judged,
+		"the per-edit hook":                    hooked,
+		"the stop hook":                        stopped,
+	} {
+		if strings.Contains(text, "vendor/bin") {
+			t.Errorf("%s names vendor/bin, which the project does not have", said)
+		}
+	}
+
+	if !strings.Contains(c.read("AGENTS.md"), "`commandments judge src`") || !strings.Contains(stopped, "`commandments judge --changes`") {
+		t.Error("the briefing or the stop hook does not name the binary")
+	}
 }
 
 // lookIn says where a program is on the environment's PATH, and whether it is there.

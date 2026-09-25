@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"github.com/jessegall/code-commandments/cli/binary"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/config"
@@ -33,6 +34,7 @@ func Briefing(root string, project config.Config) string {
 
 	return strings.NewReplacer(
 		"{{library}}", Dir,
+		"{{binary}}", binary.Invocation(root),
 		"{{mandatory}}", bullets(skill.Mandatory, project, own),
 		"{{keepInMind}}", bullets(skill.KeepInMind, project, own),
 	).Replace(briefing)

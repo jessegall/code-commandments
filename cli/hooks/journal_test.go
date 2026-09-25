@@ -9,7 +9,7 @@ import (
 
 func TestAdviceIsQueuedAsThePHPToolQueuesIt(t *testing.T) {
 	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("no php to queue with the PHP tool")
+		t.Fatal("no php to queue with the PHP tool")
 	}
 
 	whisper := "Code Commandments — the edit: it breaks a rule that is described at such length that its first line runs well past eighty characters.\n  • it's here\n\n    and here"

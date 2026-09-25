@@ -20,7 +20,7 @@ func publishedByPHP(t *testing.T, project string, disabled []source.Language) []
 	t.Helper()
 
 	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("no php to publish the PHP tool's library with")
+		t.Fatal("no php to publish the PHP tool's library with")
 	}
 
 	repo, err := filepath.Abs("../..")
@@ -58,6 +58,13 @@ func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			php, golang := t.TempDir(), t.TempDir()
+
+			for _, project := range []string{php, golang} {
+				if err := os.WriteFile(filepath.Join(project, "composer.json"), []byte("{}"), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+
 			wantIDs := publishedByPHP(t, php, disabled)
 
 			ids, err := At(golang, config.Config{DisabledLanguages: disabled}).Publish()

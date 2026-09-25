@@ -1,7 +1,7 @@
 exit: 0
 --- stdout
 
-  [1mcode-commandments[0m  dev-main
+  [1mcode-commandments[0m  <version>
 
   [36mConfig ...............[0m .commandments/config.php (not yet written)
   [36mSource roots .........[0m .

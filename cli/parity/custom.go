@@ -19,3 +19,19 @@ func EquateMake(want, got Result) (Result, Result) {
 
 	return want, got
 }
+
+// bareInvocation is the binary named from the PATH, as it names itself in a project with no composer.json,
+// where the PHP tool always names its composer shim.
+var bareInvocation = regexp.MustCompile("(^|[\\s`!])commandments ")
+
+// EquateInvocation reads the tool's own name as the composer shim in both runs, so a command the binary
+// prints bare in a project with no composer.json is the one the PHP tool prints through the shim.
+func EquateInvocation(want, got Result) (Result, Result) {
+	for _, result := range []*Result{&want, &got} {
+		result.Stdout = bareInvocation.ReplaceAllString(result.Stdout, "${1}vendor/bin/commandments ")
+		result.Stderr = bareInvocation.ReplaceAllString(result.Stderr, "${1}vendor/bin/commandments ")
+		result.Files = bareInvocation.ReplaceAllString(result.Files, "${1}vendor/bin/commandments ")
+	}
+
+	return want, got
+}

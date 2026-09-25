@@ -23,7 +23,12 @@ var namespaces = map[string]string{
 // ClassOf is the class a config names a shipped rule by: its kind's namespace, its engine's and any package
 // folder's, then its name. A TypeScript sin or detector sits under the frontend, a TypeScript skill beside it.
 func ClassOf(kind Kind, rule any) string {
-	folders := strings.Split(reflect.TypeOf(rule).PkgPath(), "/")
+	declared := reflect.TypeOf(rule)
+	for declared.Kind() == reflect.Pointer {
+		declared = declared.Elem()
+	}
+
+	folders := strings.Split(declared.PkgPath(), "/")
 	var path []string
 
 	for _, folder := range folders[indexOfKind(folders)+1:] {

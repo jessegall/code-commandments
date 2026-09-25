@@ -304,6 +304,9 @@ var stamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}[ _]\d{2}:?\d{2}(:?\d{2})?`)
 
 var versionLine = regexp.MustCompile(`(?m)^code-commandments \S+$`)
 
+// versionRow is the version as config's overview prints it, after the tool's bold name.
+var versionRow = regexp.MustCompile("(code-commandments\x1b\\[0m  )\\S+")
+
 // hashedIdentity is a key hashed from what includes the project's own path, such as a sin's identity.
 var hashedIdentity = regexp.MustCompile(`"[0-9a-f]{40}":`)
 
@@ -322,6 +325,7 @@ func normalise(text, repo, project string) string {
 	}
 
 	text = versionLine.ReplaceAllString(text, "code-commandments <version>")
+	text = versionRow.ReplaceAllString(text, "${1}<version>")
 
 	text = unixStamp.ReplaceAllString(text, "$1: <time>")
 	text = hashedIdentity.ReplaceAllString(text, `"<id>":`)

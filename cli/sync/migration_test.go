@@ -27,7 +27,7 @@ var sessionFiles = []string{
 
 func TestTheStateMigratesAsThePHPToolMigratesIt(t *testing.T) {
 	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("no php to migrate with the PHP tool")
+		t.Fatal("no php to migrate with the PHP tool")
 	}
 
 	for name, journal := range map[string]bool{"the tool's own folder": false, "the journal's folder": true} {

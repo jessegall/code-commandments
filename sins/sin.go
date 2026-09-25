@@ -93,7 +93,7 @@ func (p Package) InstalledIn(root string) bool {
 	}
 	content, err := os.ReadFile(filepath.Join(root, "vendor", "composer", "installed.json"))
 	if err != nil {
-		return true
+		return false
 	}
 	var installed struct {
 		Packages []struct {

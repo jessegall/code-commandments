@@ -5,6 +5,7 @@ package scaffold
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -43,7 +44,7 @@ func Scaffoldable() map[string]string {
 	for _, sin := range sins.All() {
 		if scaffolding, scaffolds := sin.(sins.Scaffolding); scaffolds && len(scaffolding.Scaffolds()) > 0 {
 			name := sin.Definition().Name
-			commands[name] = "vendor/bin/commandments scaffold --sin=" + name
+			commands[name] = binary.Here() + " scaffold --sin=" + name
 		}
 	}
 

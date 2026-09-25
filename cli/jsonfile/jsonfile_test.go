@@ -9,7 +9,7 @@ import (
 
 func TestAFileIsWrittenBackAsThePHPToolWritesIt(t *testing.T) {
 	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("no php to write with the PHP tool")
+		t.Fatal("no php to write with the PHP tool")
 	}
 
 	document := `{"name":"acme/app","autoload":{"psr-4":{"App\\":"src/"}},"extra":{},"scripts":{"test":"phpunit","post-install-cmd":["@php artisan x"]},` +

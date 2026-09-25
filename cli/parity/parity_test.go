@@ -47,6 +47,7 @@ func TestTheGoBinaryAnswersEveryCaseAsThePhpToolDid(t *testing.T) {
 
 			want, got = EquateConfigs(want, got, t.TempDir())
 			want, got = EquateMake(want, got)
+			want, got = EquateInvocation(want, got)
 			matches := got == want
 
 			if c.Pending != "" && matches {

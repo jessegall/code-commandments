@@ -17,7 +17,7 @@ return function ($config): void {
 
 func TestHooksAreWiredAsThePHPToolWiresThem(t *testing.T) {
 	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("no php to wire with the PHP tool")
+		t.Fatal("no php to wire with the PHP tool")
 	}
 
 	for name, settings := range map[string]*string{

@@ -19,5 +19,6 @@ func (MirroredServerType) Definition() sins.Definition {
 		Skill:       frontendskill.MirroredServerType{},
 		Description: "A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes",
 		Rule:        "Let the server own the shape: mark the `Data` class `#[TypeScript]`, generate the type, and import the generated one. Never hand-maintain a copy of a server contract.",
+		Requires:    sins.Package{Name: "spatie/laravel-typescript-transformer", Ecosystem: sins.Composer},
 	}
 }

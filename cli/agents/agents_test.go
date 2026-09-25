@@ -17,7 +17,7 @@ func injectedByPHP(t *testing.T, path, root, name, body string) string {
 	t.Helper()
 
 	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("no php to inject with the PHP tool")
+		t.Fatal("no php to inject with the PHP tool")
 	}
 
 	repo, _ := filepath.Abs("../..")

@@ -210,7 +210,9 @@
       "judge",
       "--list"
     ],
-    "pending": "ticket 7: the C# detectors"
+    "setup": [
+      "mkdir -p vendor/composer && printf '{\"packages\": [{\"name\": \"jessegall/php-types\"}]}' > vendor/composer/installed.json"
+    ]
   },
   {
     "name": "judge-without-a-path",
