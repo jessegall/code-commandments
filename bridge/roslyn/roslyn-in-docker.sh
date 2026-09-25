@@ -4,7 +4,8 @@
 #   roslyn-in-docker.sh <folder>[:ro]... -- <bridge arguments>
 #
 # The image is the one IMAGE beside this script names, built once per release and never here. Each folder is mounted
-# at its own path, so a path reads the same inside the container as outside, and the NuGet cache is mounted the same
+# at its own path, a read-only one widened to the git repository that holds it, so a path reads the same inside the
+# container as outside and a project compiles with the projects it references; the NuGet cache is mounted the same
 # way, read-only, so a project's restored packages resolve where its assets file says. Two cores and 4 GB at most;
 # the container is named and labelled as the bridge's own, and removed when the run ends.
 set -euo pipefail
@@ -19,13 +20,22 @@ fi
 
 packages="${NUGET_PACKAGES:-$HOME/.nuget/packages}"
 mounts=()
+mounted=""
 [ -d "$packages" ] && mounts+=(-v "$packages:$packages:ro")
 
 while [ "$#" -gt 0 ] && [ "$1" != "--" ]; do
     folder="${1%:ro}"
     mode=""
     [ "$folder" != "$1" ] && mode=":ro"
-    mounts+=(-v "$folder:$folder$mode")
+    # A project compiles with the projects it references, anywhere in its repository: a read-only folder is widened
+    # to the repository that holds it.
+    if [ -n "$mode" ] && repository="$(git -C "$folder" rev-parse --show-toplevel 2> /dev/null)"; then
+        folder="$repository"
+    fi
+    case "$mounted" in
+        *"|$folder|"*) ;;
+        *) mounts+=(-v "$folder:$folder$mode"); mounted="$mounted|$folder|" ;;
+    esac
     shift
 done
 [ "$#" -gt 0 ] && shift
