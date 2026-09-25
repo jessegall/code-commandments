@@ -10,12 +10,26 @@ import (
 	"github.com/jessegall/code-commandments/fixture"
 )
 
+// tunings are the shop's own settings, as tests/Fixtures/backend/.commandments/config.php declares them for judge.
+var tunings []detectors.Tuning
+
+// tuned is the detectors set as the shop's config sets them.
+func tuned(t *testing.T, registered []detectors.Detector) []detectors.Detector {
+	t.Helper()
+	set, unmatched := detectors.Tuned(registered, tunings...)
+	if len(unmatched) > 0 {
+		t.Fatalf("the shop tunes detectors that are not registered: %v", unmatched)
+	}
+
+	return set
+}
+
 func TestEveryBackendDetectorProvesItselfOnTheShop(t *testing.T) {
-	fixture.Fixture{Codebase: shop.Codebase(t), Detectors: detectors.Of(catalog.Backend)}.Prove(t)
+	fixture.Fixture{Codebase: shop.Codebase(t), Detectors: tuned(t, detectors.Of(catalog.Backend))}.Prove(t)
 }
 
 func TestEveryBackendDetectorFlagsWhatItsPhpTwinFlags(t *testing.T) {
-	shop.SameFindings(t, detectors.Every(catalog.Backend)...)
+	shop.SameFindings(t, tuned(t, detectors.Every(catalog.Backend))...)
 }
 
 func TestEveryPhpBackendDetectorIsPorted(t *testing.T) {
