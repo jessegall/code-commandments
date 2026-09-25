@@ -230,7 +230,9 @@ the spelling is fixed:
   and `M<T>`, as Roslyn's `OriginalDefinition` prints them, so it equals the declaration's id.
 - **PHP class, function and method names compare case-insensitively**, as PHP resolves them. The id is
   spelled as the declaration spells it, and a `$property` or constant compares exactly.
-- **A TS id splits at its last `#`**, so a path holding one stays readable.
+- **A TS id splits at its last `#`**, so a path holding one stays readable. A declaration of the
+  standard library has no path: it is its global name, `Array.map`, `fetch`, `ErrorConstructor.new`
+  for a construct signature.
 
 A **target** is the declaration static lookup finds for a call or construction: the member the
 receiver's static type declares or inherits, nearest first. The receiver's own type is its child's
