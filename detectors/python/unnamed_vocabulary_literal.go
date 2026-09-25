@@ -1,0 +1,33 @@
+package python
+
+import (
+	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/engine"
+	py "github.com/jessegall/code-commandments/engine/python"
+	"github.com/jessegall/code-commandments/sins"
+	pysins "github.com/jessegall/code-commandments/sins/python"
+)
+
+// UnnamedVocabularyLiteralDetector finds a string literal handed to a parameter other calls fill with a named constant that holds the same string.
+type UnnamedVocabularyLiteralDetector struct{}
+
+func init() {
+	detectors.Register(catalog.Python, UnnamedVocabularyLiteralDetector{})
+}
+
+// Sin is the sin the detector finds.
+func (UnnamedVocabularyLiteralDetector) Sin() sins.Sin {
+	return pysins.UnnamedVocabularyLiteral{}
+}
+
+// Find is every place the sin is committed.
+func (UnnamedVocabularyLiteralDetector) Find(codebase *engine.Codebase) []engine.Match {
+	program := py.In(codebase).Program
+	var findings []engine.Match
+	for _, call := range py.In(codebase).WhereCall().Where(engine.As(py.Node.IsEvaluated)).Get() {
+		findings = append(findings, matches(program.UnnamedVocabularyLiterals(py.Node{Match: call}))...)
+	}
+
+	return findings
+}

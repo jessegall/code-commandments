@@ -31,6 +31,8 @@ func (VueControlFlow) Definition() skill.Definition {
 		Summary:   "dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject.",
 		Principle: vueControlFlowPrinciple,
 		Languages: []string{"vue"},
-		Related:   []string{"frontend/vue-components"},
+		Related: []skill.Relation{
+			{Slug: "frontend/vue-components", Note: "a `<SwitchCase>` IS a component — the same extract-don't-inline instinct."},
+		},
 	}
 }

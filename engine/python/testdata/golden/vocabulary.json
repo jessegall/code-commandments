@@ -1,0 +1,5 @@
+{
+    "shop/csv_tokens.py@651-654": "Punctuation.COMMA",
+    "shop/drop_slots.py@561-570": "Slot.EVENING",
+    "shop/label_sizes.py@430-436": "LabelSize.WIDE"
+}

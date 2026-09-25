@@ -6,54 +6,81 @@ import (
 	"strings"
 )
 
-// HashRules is what a language says about its nodes when a subtree is fingerprinted: which nodes are names a
-// shape ignores, how a literal reads, and which nodes are read whole as a leaf.
+// HashRules is what a language says about fingerprinting its code: which nodes count at all, how much each one
+// weighs, which expression is a local name, how a literal reads, and which nodes read whole. Every language's
+// clone rules share the one fingerprint below through these answers.
 type HashRules interface {
-	// IsName says whether the node is a name a shape reads as any name: a variable, a parameter.
-	IsName(Match) bool
-	// Literal is how a literal reads, its data blanked in a shape; false when the node is no literal.
-	Literal(m Match, shape bool) (string, bool)
-	// Leaf is how a node read whole reads, a written type for one; false when it is walked.
-	Leaf(Match) (string, bool)
+	// Counts says whether the node counts: a Python docstring runs nothing, so it never does.
+	Counts(node Match) bool
+	// Weight is what the node itself adds to a subtree's size, its children aside.
+	Weight(node Match) int
+	// IsName says whether the node is a local name, the thing normalising blanks.
+	IsName(node Match) bool
+	// Declares says whether the node declares its name, which normalising leaves out: two names for one body are
+	// the same code.
+	Declares(node Match) bool
+	// IsCallee says whether the node is what a call calls, whose name normalising keeps: calling different
+	// functions does different things.
+	IsCallee(node Match) bool
+	// Literal is how a literal reads, blanked when normalising if it is data; false when the node is no literal.
+	Literal(node Match, normalize bool) (string, bool)
+	// Leaf is how a node that reads whole reads, never walked or blanked: a TypeScript written type, whose names
+	// say what the code is; false when the node is walked.
+	Leaf(node Match) (string, bool)
 }
 
-// Hash is the subtree's fingerprint: two subtrees share it when they are the same code, formatting and
-// comments aside.
-func Hash(m Match, rules HashRules) string {
-	return fingerprint(canonical(m, rules, false))
+// SyntaxHash is a formatting-blind fingerprint of the nodes, read from the tree and never from the source text,
+// so spacing, comments and quote style do not count. Normalising also blanks local names and data literals, for
+// type-2 clone detection, keeping what is called and which members are read.
+func SyntaxHash(nodes []Match, rules HashRules, normalize bool) string {
+	var hashed strings.Builder
+	for _, node := range nodes {
+		if rules.Counts(node) {
+			hashed.WriteString(fingerprint(node, rules, normalize))
+		}
+	}
+	sum := sha1.Sum([]byte(hashed.String()))
+
+	return hex.EncodeToString(sum[:])
 }
 
-// ShapeHash is the subtree's shape: two subtrees share it when they differ only in the names they use and
-// the data their literals hold.
-func ShapeHash(m Match, rules HashRules) string {
-	return fingerprint(canonical(m, rules, true))
+// SyntaxWeight is how many nodes make up the nodes' subtrees, as the language weighs them: the size a clone rule
+// floors trivial bodies by.
+func SyntaxWeight(nodes []Match, rules HashRules) int {
+	weight := 0
+	for _, node := range nodes {
+		if rules.Counts(node) {
+			weight += rules.Weight(node) + SyntaxWeight(node.Children(), rules)
+		}
+	}
+
+	return weight
 }
 
-func canonical(m Match, rules HashRules, shape bool) string {
-	if leaf, ok := rules.Leaf(m); ok {
+// fingerprint is one node's fingerprint: its kind, its name unless normalising blanks it, its operator, modifiers
+// and flags, its literal, and each counted child's slot and fingerprint. A node's own slot is its parent's to say,
+// so the same expression reads alike wherever it stands.
+func fingerprint(node Match, rules HashRules, normalize bool) string {
+	if leaf, ok := rules.Leaf(node); ok {
 		return leaf
 	}
-	if shape && rules.IsName(m) {
+	if normalize && rules.IsName(node) && !rules.IsCallee(node) {
 		return "id"
 	}
-	if literal, ok := rules.Literal(m, shape); ok {
+	if literal, ok := rules.Literal(node, normalize); ok {
 		return literal
 	}
-	node := m.Node()
-	parts := []string{node.Kind, node.Field, node.Operator, strings.Join(node.Modifiers, " "), strings.Join(node.Flags, " ")}
-	// A declaration repeats its name child's name as its own; a shape that blanks the one blanks both.
-	if !shape || !rules.IsName(m.Child("name")) {
-		parts = append(parts, node.Name)
+	facts := node.Node()
+	parts := []string{facts.Kind}
+	if !normalize || !rules.Declares(node) {
+		parts = append(parts, facts.Name)
 	}
-	for _, child := range m.Children() {
-		parts = append(parts, canonical(child, rules, shape))
+	parts = append(parts, facts.Operator, strings.Join(facts.Modifiers, " "), strings.Join(facts.Flags, " "))
+	for _, child := range node.Children() {
+		if rules.Counts(child) {
+			parts = append(parts, child.Node().Field+"="+fingerprint(child, rules, normalize))
+		}
 	}
 
 	return "(" + strings.Join(parts, "|") + ")"
-}
-
-func fingerprint(canonical string) string {
-	sum := sha1.Sum([]byte(canonical))
-
-	return hex.EncodeToString(sum[:])
 }

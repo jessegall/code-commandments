@@ -3,7 +3,8 @@
 Every language bridge — PHP, Vue, TypeScript, Python, C# — answers in this one shape, and the engine
 reads only this shape. A bridge is a small parser: it parses its language, and it writes what only that
 language's own compiler or checker can know. Everything else the engine derives itself, into the same
-fields, once it has read the stream. *Who fills it* says which is which. Version 1.
+fields, once it has read the stream. *Who fills it* says which is which. Version 2; a version 1 stream is the same contract without the Python
+extras `as`, `names` and `code` and the flag `elif`, and a reader of version 2 reads it too.
 
 What the engine must be able to read is listed per engine in [`inventory/`](inventory/). The mapping
 from each of those facts to a field here is in [`COVERAGE.md`](COVERAGE.md). The machine-checked form
@@ -16,7 +17,7 @@ against it.
 time however large the project. Each line has exactly one key, and that key says what the line is:
 
 ```json
-{"header": {"contract": "tree", "version": 1, "language": "php", "bridge": {"name": "php-bridge", "version": "4.374.0"}, "roots": ["/abs/src"]}}
+{"header": {"contract": "tree", "version": 2, "language": "php", "bridge": {"name": "php-bridge", "version": "4.374.0"}, "roots": ["/abs/src"]}}
 {"file": {"path": "/abs/src/Cart.php", "language": "php", "errors": 0, "root": {"id": 0, "kind": "Stmt_Namespace", "role": "statement", "span": [6, 812, 3]}, "comments": []}}
 {"program": {"symbols": []}}
 {"trailer": {"files": 1, "resolution": {"expressions": 9992, "typed": 7823, "unjoined": 0}}}
@@ -182,6 +183,7 @@ A list drawn from this closed set. Each appears only where the language has the 
 | `nullable-sugar` | a type written `?T` rather than `T\|null` |
 | `group` | a Python `except*` |
 | `step` | an expression in a `for` loop's step list |
+| `elif` | a Python `if` written as the `elif` of the one before it, rather than an `if` inside an `else` |
 
 ## Types
 
@@ -299,8 +301,11 @@ language's keys are closed and typed in the schema, just as the generic ones are
 |---|---|---|---|
 | csharp | `forgivesNull` | a `SuppressNullableWarningExpression` | the `!`'s operand is declared nullable |
 | csharp | `code` | a comment | the comment parses as one C# statement |
+| python | `code` | a `#` comment | the words after the `#` parse as one Python statement, end to end, that is not a lone name |
 | python | `operators` | a `Compare` | the chained comparison's operators, in order (`a < b <= c` → `["<", "<="]`) |
 | python | `level` | an `ImportFrom` | the relative-import dot count |
+| python | `as` | an `alias` | the name an import binds when it renames: `y` in `import x as y` |
+| python | `names` | a `Global`, `Nonlocal` | the names it declares, in order |
 | vue | `directive` | a `Directive` | `{"name", "modifiers"}`: `v-model:title.lazy` is `{"name": "model", "modifiers": ["lazy"]}`. The argument is the child in field `arg`: an `Identifier` for a static `title`, an expression for a dynamic `[key]` |
 | typescript | `typeOnly` | an import | an `import type` |
 
@@ -316,6 +321,11 @@ its own parser's vocabulary, so a bridge never translates:
 | python | the class name in Python's `ast`: `FunctionDef`, `ClassDef`, `Call`, `Attribute`, `Compare` | the `ast` field: `body`, `args`, `func`, `test` |
 | typescript | TypeScript's `SyntaxKind`: `ClassDeclaration`, `CallExpression`, `TypeReference` | the compiler's property name: `expression`, `arguments`, `body` |
 | vue | `Component` (the file root), `Block`, `Element`, `Text`, `Interpolation`, `Attribute`, `Directive` | `blocks`, `children`, `attributes`, `arg`, `value`, `alias`, `iterable` |
+
+**Python.** A node whose `ast` class holds one name as a plain string writes it as `name`: a `FunctionDef`'s
+or `ClassDef`'s own, an `arg`, a `Name`, an `Attribute`'s attribute, a named `keyword`, an `alias`'s imported
+name, an `ImportFrom`'s module as written (none for `from . import x`), the name an `ExceptHandler` binds, a
+`MatchAs` or `MatchStar` capture, and a `MatchMapping`'s `**rest`. A `FormattedValue`'s conversion is its `operator`: `!r` in `f"{x!r}"`.
 
 **Vue.** A `Block` is a top-level `<template>`, `<script>`, `<style>` or custom block; its own
 attributes (`setup`, `lang`, `generic`, `src`, `scoped`) are its `Attribute` children, and a

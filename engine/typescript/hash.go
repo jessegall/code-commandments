@@ -7,34 +7,61 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Rules is how TypeScript reads when a subtree is fingerprinted.
-type Rules struct{}
+// rules is how TypeScript code is fingerprinted: every node counts, a written type reads whole, a name read or a
+// local's declared name is a name while a called name and a member's name are kept, a string or number is data.
+// Nodes weigh as the PHP engine's tree has them, so a size floor means the same on both.
+type rules struct{}
 
-var _ engine.HashRules = Rules{}
+var hashing engine.HashRules = rules{}
 
-// declaresName are the declarations whose own name a shape reads as any name.
+// declaresName are the declarations whose own name normalising leaves out: two names for one body are one code.
 var declaresName = []string{"VariableDeclaration", "Parameter", "BindingElement", "FunctionDeclaration"}
 
-// IsName says whether the node is a name read or a local's declared name; a called name and a member's name
-// are kept, as they say what the code does.
-func (Rules) IsName(m engine.Match) bool {
-	if m.Kind() != "Identifier" {
+func (rules) Counts(engine.Match) bool {
+	return true
+}
+
+// Weight counts statements, blocks, catch clauses and expressions, but not a member's or a declaration's name,
+// nor a written type. A construction counts twice, for the object it builds and the constructor it calls, as the
+// PHP engine's tree reads `new X()`.
+func (rules) Weight(node engine.Match) int {
+	facts := node.Node()
+	if node.Kind() == "Identifier" && facts.Field == "name" {
+		return 0
+	}
+	weight := 0
+	if facts.Role == "statement" || facts.Role == "expression" || node.Is(engine.Block) || node.Is(engine.Catch) {
+		weight = 1
+	}
+	if node.Is(engine.Construction) {
+		weight++
+	}
+
+	return weight
+}
+
+func (rules) IsName(node engine.Match) bool {
+	if node.Kind() != "Identifier" {
 		return false
 	}
-	field := m.Node().Field
-	if field == "expression" && m.Parent().Kind() == "CallExpression" {
-		return false
-	}
-	if field == "name" {
-		return slices.Contains(declaresName, m.Parent().Kind())
+	if node.Node().Field == "name" {
+		return slices.Contains(declaresName, node.Parent().Kind())
 	}
 
 	return true
 }
 
+func (rules) Declares(node engine.Match) bool {
+	return slices.Contains(declaresName, node.Kind())
+}
+
+func (rules) IsCallee(node engine.Match) bool {
+	return node.Node().Field == "expression" && node.Parent().Kind() == "CallExpression"
+}
+
 // Literal reads a literal as its kind and value, a string or number blanked in a shape; a template reads
 // whole, as its source.
-func (Rules) Literal(m engine.Match, shape bool) (string, bool) {
+func (rules) Literal(m engine.Match, shape bool) (string, bool) {
 	node := m.Node()
 	if node.Literal == "" {
 		return "", false
@@ -52,7 +79,7 @@ func (Rules) Literal(m engine.Match, shape bool) (string, bool) {
 }
 
 // Leaf reads a written type whole, as its source.
-func (Rules) Leaf(m engine.Match) (string, bool) {
+func (rules) Leaf(m engine.Match) (string, bool) {
 	if m.Node().Role != "type" {
 		return "", false
 	}
@@ -80,7 +107,7 @@ func (n Node) Body() Node {
 // BodyHash is the fingerprint of the function's body; empty for a function without a block.
 func (n Node) BodyHash() string {
 	if body := n.Body(); body.Exists() {
-		return engine.Hash(body.Match, Rules{})
+		return engine.SyntaxHash([]engine.Match{body.Match}, hashing, false)
 	}
 
 	return ""
@@ -89,33 +116,20 @@ func (n Node) BodyHash() string {
 // BodyShape is the shape of the function's body: its code with names and data blanked.
 func (n Node) BodyShape() string {
 	if body := n.Body(); body.Exists() {
-		return engine.ShapeHash(body.Match, Rules{})
+		return engine.SyntaxHash([]engine.Match{body.Match}, hashing, true)
 	}
 
 	return ""
 }
 
-// BodyWeight is how much code the function's body holds: its statements, blocks, catch clauses and
-// expressions, member and declaration names not counted. A construction counts twice, for the object it builds
-// and the constructor it calls: the duplicate thresholds were set on a count that reads `new X()` as both.
+// BodyWeight is how much code the function's body holds, as the rules weigh it.
 func (n Node) BodyWeight() int {
 	body := n.Body()
 	if !body.Exists() {
 		return 0
 	}
-	weight := 0
-	for _, node := range append([]engine.Match{body.Match}, body.Descendants()...) {
-		role := node.Node().Role
-		counted := role == "statement" || role == "expression" || node.Is(engine.Block) || node.Is(engine.Catch)
-		if counted && !(node.Kind() == "Identifier" && node.Node().Field == "name") {
-			weight++
-		}
-		if node.Is(engine.Construction) {
-			weight++
-		}
-	}
 
-	return weight
+	return engine.SyntaxWeight([]engine.Match{body.Match}, hashing)
 }
 
 // SoleStatement is the body's only statement; no node when it holds more or none.

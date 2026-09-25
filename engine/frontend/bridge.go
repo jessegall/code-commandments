@@ -3,13 +3,12 @@
 package frontend
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 
+	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -35,15 +34,8 @@ func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
 	if err != nil {
 		return nil, fmt.Errorf("the frontend bridge needs node, and %q is not on PATH: %w", b.Node, err)
 	}
-	var out, failure bytes.Buffer
-	command := exec.Command(node, append([]string{b.Script}, arguments...)...)
-	command.Stdout = &out
-	command.Stderr = &failure
-	if err := command.Run(); err != nil {
-		return nil, errors.Join(fmt.Errorf("the frontend bridge failed: %w", err), errors.New(failure.String()))
-	}
 
-	return contract.ReadAll(&out)
+	return bridge.Once([]string{node, b.Script}, arguments...)
 }
 
 // Scan is the codebase the bridge reads at paths.

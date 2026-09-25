@@ -1,8 +1,14 @@
 # The mypy bridge's output
 
-This shape is on its way out. The target every bridge moves to is the generic tree contract in
-[`contract/CONTRACT.md`](../../contract/CONTRACT.md): one tree, one stream framing, one set of type, symbol and
-comment fields for every language. Until this bridge writes it, this document is what it writes.
+The bridge has two entry points over one mypy session:
+
+- **`tree.py`** writes the generic tree contract in [`contract/CONTRACT.md`](../../contract/CONTRACT.md): each
+  module's `ast` as nodes, with mypy's type joined to each expression by exact span as `resolved`, plus the
+  `module`, `resolver`, `program.packages` and the Python `extras`. `python tree.py <path>...` writes one stream;
+  `--serve` takes the request line below and answers each with a full stream, header to trailer, writing a module
+  outside `write` with `context: true`. This is what the Go engine reads.
+- **`bridge.py`** writes the types alone, in the shape below, for the PHP engine's own Python parser. It stays
+  exactly as it is until the switch to the Go engine, then goes.
 
 `python bridge.py <path>...` writes JSON lines to stdout: one object per line, so a reader holds one file at a
 time. Version 2:

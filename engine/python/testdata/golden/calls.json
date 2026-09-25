@@ -1,0 +1,4515 @@
+{
+    "shop.aisle_signs.Aisle.sign_heading": {
+        "callers": [
+            "shop/aisle_signs.py:40"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.aisle_signs.SignCatalogue.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.aisle_signs.SignCatalogue.entry": {
+        "callers": [
+            "shop/aisle_signs.py:36"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.aisle_signs.SignPrinter.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.aisle_signs.SignPrinter.heading": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.aisle_signs.SignPrinter.heading_of": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.alerts.register": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.allergen_labels.DeliCounter.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.allergen_labels.DeliCounter.allergens_of": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.allergen_labels.DeliCounter.is_nut_free": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.allergen_labels.DeliCounter.warning_for": {
+        "callers": [
+            "shop/allergen_labels.py:34"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.allergen_labels.DeliItem.allergens": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.attachments.Mailer.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.attachments.Mailer.send": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.attachments.Mailer.send_with": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.audit.audit": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.audit.audit_event": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.audit.audit_level": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.backups.back_up": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.backups.back_up_path": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badge_codes.badge_text": {
+        "callers": [
+            "shop/badge_codes.py:13",
+            "shop/badge_codes.py:18",
+            "shop/badge_codes.py:9"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badge_codes.front_desk": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badge_codes.visitor": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badge_codes.warehouse": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badge_colours.PaymentStatus.colour": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.badge_colours.badge": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badge_colours.badge_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badges.Badge.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badges.Badge.render": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badges.Ribbon.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badges.Ribbon.render": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badges.status_colour": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.badges.status_icon": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.barcode_parsing.NamedScanner.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.barcode_parsing.NamedScanner.parse": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.barcode_parsing.Scanner.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.barcode_parsing.Scanner.parse": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.basket_codes.carries_coupon": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.basket_codes.has_coupon": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.basket_codes.is_staff_coupon": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.basket_codes.lacks_referrer": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.basket_limits.Basket.full": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.basket_limits.Trolley.full": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.basket_totals.Basket.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.basket_totals.Basket.total": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.billing.invoice.Invoice.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.billing.invoice.Invoice.lines": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.box_sizes.Packer.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.box_sizes.Packer.box_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.box_sizes.Packer.pack": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.box_sizes.ParcelSize.box": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.builds.forget": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.builds.forget_stale": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.caches.Cache.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.caches.Cache.ensure": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.caches.Cache.ensure_warm": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.carrier_labels.UnhandledCarrier.of": {
+        "callers": [
+            "shop/carrier_labels.py:37"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.carrier_labels.label_size": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.carrier_labels.label_size_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.carrier_profiles.ParcelLimits.fits": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.carrier_rates.RateCache.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.carrier_rates.RateCache.rates": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.carrier_rates.TypedRateCache.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.carrier_rates.TypedRateCache.rates": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.carrier_rates.detached": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.carriers.Service.carrier": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.carriers.carrier_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_lines.CartLine.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_lines.CartLine.amend": {
+        "callers": [
+            "shop/cart_lines.py:15",
+            "shop/cart_lines.py:20",
+            "shop/cart_lines.py:25"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_lines.mark_gift": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_lines.mark_sample": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_lines.rename": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_totals.Basket.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_totals.Basket.to_json": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_totals.download_headers": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_totals.parse_basket_line": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cart_totals.parse_line": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.catalog_file.CatalogUnreadable.at": {
+        "callers": [
+            "shop/catalog_file.py:36"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.catalog_file.load_catalog": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.catalog_file.read_catalog": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.categories.children_index": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.categories.descendants": {
+        "callers": [
+            "shop/categories.py:12"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.categories.descendants_of": {
+        "callers": [
+            "shop/categories.py:29"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.category_walker.CategoryPaths.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.category_walker.CategoryPaths.visit": {
+        "callers": [
+            "shop/category_walker.py:31"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.category_walker.CategoryWalker.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.category_walker.CategoryWalker.visit": {
+        "callers": [
+            "shop/category_walker.py:17"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.charges.charge": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.checkout.checkout": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.checkout_settings.CartSettings.allows": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.checkout_settings.CheckoutSettings.allows": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cleanup.nightly": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cleanup.remove_upload": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.cli.load_config": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.closing.close_all": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.closing.close_labelled": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.closing.close_till": {
+        "callers": [
+            "shop/closing.py:27"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.closing.close_till_then": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.closing.noop": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.contacts.Contact.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.contacts.Contact.of": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.coupons.first_usable_coupon": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.coupons.usable_coupon": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_manifests.manifest": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_manifests.manifest_lines": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_picks.CourierPicker.pick": {
+        "callers": [
+            "shop/courier_picks.py:27",
+            "shop/courier_picks.py:33",
+            "shop/courier_picks.py:38"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_picks.CourierPicker.pick_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_picks.quote": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_picks.route_all": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_pickups.load": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_slots.CourierSlot.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_slots.CourierSlot.covers": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_slots.CourierSlot.ships": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_zones.Zone.next_day": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.courier_zones.next_day_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.courier_zones.next_day_possible": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.couriers.Courier.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.couriers.Courier.book": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.couriers.Courier.book_tracked": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.couriers.dispatch.dispatch": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.couriers.manifest": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.csv_tokens.PriceListReader.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.csv_tokens.PriceListReader.cell_end": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.csv_tokens.PriceListReader.expect": {
+        "callers": [
+            "shop/csv_tokens.py:23",
+            "shop/csv_tokens.py:27",
+            "shop/csv_tokens.py:30",
+            "shop/csv_tokens.py:35"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.csv_tokens.PriceListReader.field_end": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.csv_tokens.PriceListReader.quoted_end": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.csv_tokens.PriceListReader.row_end": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.currencies.format_money": {
+        "callers": [
+            "shop/currencies.py:7"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.currencies.price_label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.currencies.render_lines": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.currency_rounding.CurrencyRounder.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.currency_rounding.CurrencyRounder.round": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.customer_profiles.Profile.greeting": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.customer_profiles.Profile.reachable_by_sms": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.customer_profiles.Profile.with_email": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.customer_profiles.Profile.with_phone": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.customers.Loyalty.enrol": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.customers.Newsletter.subscribe": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.decisions.route": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.decisions.size_band": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery.Address.line": {
+        "callers": [
+            "shop/delivery.py:25"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery.book_delivery": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery.schedule_delivery": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_addresses.DeliveryAddress.envelope": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_addresses.DeliveryAddress.in_city": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_addresses.DeliveryAddress.move": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_addresses.Invoice.pdf": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_addresses.PickRound.pick": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_addresses.ShippingAddress.moved": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_slots.Slot.fee": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.delivery_slots.slot_fee": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_slots.slot_fee_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_slots.slot_label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.delivery_slots.weekday_index": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.digests.register": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.discount_rules.Checkout.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.discount_rules.Checkout.apply": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.discount_rules.Price.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.discount_rules.Rule.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": true,
+        "extendsOutside": false
+    },
+    "shop.discounts.discounted": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.dispatch_desk.DispatchDesk.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.dispatch_desk.DispatchDesk.may_leave": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.dispatch_desk.DispatchDesk.outgoing": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.dispatch_desk.Parcel.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.documents.InvoiceSheet.line_items": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.documents.PackingSlip.rows": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.drop_slots.DropOff.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.drop_slots.DropOff.booked": {
+        "callers": [
+            "shop/drop_slots.py:22",
+            "shop/drop_slots.py:27"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.drop_slots.evening_drop": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.drop_slots.morning_drop": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.dunning.InvoiceStatus.is_unpaid": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.dunning.needs_reminder": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.dunning.owes_money": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.encoders.ByteStream.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.encoders.encode_html": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.encoders.encode_text": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.encoding.encode": {
+        "callers": [
+            "shop/encoding.py:16",
+            "shop/encoding.py:21"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.encoding.encode_html": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.encoding.encode_text": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.escalations.EscalationPolicy.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.escalations.EscalationPolicy.escalate": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.events.Listener.handle": {
+        "callers": [
+            "shop/events.py:15",
+            "shop/events.py:24"
+        ],
+        "override": false,
+        "overridden": true,
+        "extendsOutside": false
+    },
+    "shop.events.ReceiptMailer.on_event": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.events.StockSync.on_event": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.export_jobs.ExportJob.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.export_jobs.ExportJob.run": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.export_jobs.ExportSlot.__eq__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.export_jobs.ExportSlot.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.export_jobs.ExportSlot._get_hour": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.export_jobs.ImportJob.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.export_jobs.ImportJob.run": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.exports.export_row": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.feature_flags.FeatureFlags.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.feature_flags.FeatureFlags.enable": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.feature_flags.FeatureFlags.is_on": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.feed_reader.FeedUnavailable.at": {
+        "callers": [
+            "shop/feed_reader.py:18",
+            "shop/feed_reader.py:27",
+            "shop/feed_reader.py:52"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.feed_reader.read_chained_by_hand": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.feed_reader.read_feed": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.feed_reader.read_feed_from": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.feed_reader.read_or_reraise": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.feed_reader.setting": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.floor_plans.FloorPlan.bay": {
+        "callers": [
+            "shop/floor_plans.py:21"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.floor_plans.bay_or_fail": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.floor_plans.relabel": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.floor_plans.relabel_bay": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.freight.quote": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.freight.quote_banded": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.frozen_prices.ShelfPrice.discount": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.frozen_prices.ShelfPrice.label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.frozen_prices.TagPrice.discounted": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.gift_messages.GiftMessage.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.gift_messages.GiftMessage.card": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.gift_notes.GiftWrap.card": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.gift_notes.GiftWrap.needs_card": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.gift_notes.WrappedGift.card": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.gift_wrap.Wrapper.paper": {
+        "callers": [
+            "shop/gift_wrap.py:23",
+            "shop/gift_wrap.py:27"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.gift_wrap.rewrap": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.gift_wrap.wrap": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.headlines.headline": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.headlines.headline_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.holds.hold_order": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.holds.release_order": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.import_progress.ImportProgress.left": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.import_progress.StockImport.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.import_progress.StockImport.progress": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.imports_progress.StockImport.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.imports_progress.StockImport.run": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.imports_progress.StockImport.run_reporting": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.inventory.Inventory.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.inventory.Inventory.on_hand": {
+        "callers": [
+            "shop/inventory.py:18"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.inventory.Inventory.reserve": {
+        "callers": [
+            "shop/checkout.py:12"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.inventory.OutOfStock.for_sku": {
+        "callers": [
+            "shop/inventory.py:19"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.invoice_numbers.next_invoice_number": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoice_numbers.next_number": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoice_render.InvoiceSheet.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoice_render.InvoiceSheet.render_compact": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoice_render.InvoiceSheet.render_full": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoice_render.InvoiceView.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoice_render.InvoiceView.render": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoice_split.split_invoice": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoice_split.split_total": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoicing.invoice_all": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.invoicing.invoice_delivered": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.kiosk_receipts.KioskSession.items": {
+        "callers": [
+            "shop/kiosk_receipts.py:20",
+            "shop/kiosk_receipts.py:25",
+            "shop/kiosk_receipts.py:34"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.kiosk_receipts.KioskSession.paid_by_card": {
+        "callers": [
+            "shop/kiosk_receipts.py:20",
+            "shop/kiosk_receipts.py:25"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.kiosk_receipts.banner": {
+        "callers": [
+            "shop/kiosk_receipts.py:34"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.kiosk_receipts.finish": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.kiosk_receipts.kiosk_banner": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.kiosk_receipts.receipt": {
+        "callers": [
+            "shop/kiosk_receipts.py:25"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.kiosk_receipts.receipt_of": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.label_queue.LabelQueue.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.label_queue.LabelQueue.peek": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.label_queue.LabelQueue.pop": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.label_sizes.custom_label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.label_sizes.price_label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.label_sizes.print_label": {
+        "callers": [
+            "shop/label_sizes.py:16",
+            "shop/label_sizes.py:21",
+            "shop/label_sizes.py:26"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.label_sizes.promo_label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.labels.print_labels": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.layout.DeliveryNote.rows": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.layout.ReturnForm.line_items": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.layout.describe_lines": {
+        "callers": [
+            "shop/layout.py:15",
+            "shop/layout.py:21"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.layout.grid.cell": {
+        "callers": [
+            "shop/menus/sidebar.py:8"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.layout.row.row": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.layout.theme.colour": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_dump.dump": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_export.LazyLedgerExport.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_export.LazyLedgerExport.body": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_export.LedgerExport.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_export.LedgerExport.body": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_lines.ledger_line": {
+        "callers": [
+            "shop/ledger_dump.py:10",
+            "shop/ledger_posting.py:12"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_lines.ledger_line_for": {
+        "callers": [
+            "shop/ledger_posting.py:16"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_posting.Posting.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_posting.Posting.post": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ledger_posting.Posting.post_honestly": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.listeners.Listeners.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.listeners.Listeners.notify": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.listeners.archive": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.listeners.reports": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.log_bundles.bundle": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.log_bundles.bundle_day": {
+        "callers": [
+            "shop/log_bundles.py:27"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.log_bundles.bundle_week": {
+        "callers": [
+            "shop/log_bundles.py:27"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.lookups.first_open": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.lookups.paid_orders": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_cards.LoyaltyCard.redeemable": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_cards.StampCard.full": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_points.Account.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_points.Account.can_redeem": {
+        "callers": [
+            "shop/loyalty_points.py:36"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_points.Account.redeem": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_points.Member.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_points.preview": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_points.redeem": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_points.tier_badge": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_points.tier_label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_tiers.Tier.earns_points": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.loyalty_tiers.is_card_payment": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_tiers.points_earned": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_tiers.points_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.loyalty_tiers.top_tier": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.mailer_options.headers": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.mailer_options.layout": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.mailer_options.notify": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.mailer_options.notify_all": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.markdown_runs.HonestMarkdownRun.run": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.markdown_runs.Markdown.applies_to": {
+        "callers": [
+            "shop/markdown_runs.py:25"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.markdown_runs.MarkdownRun.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.markdown_runs.MarkdownRun.reduced": {
+        "callers": [
+            "shop/markdown_runs.py:15"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.markdown_runs.MarkdownRun.run": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.menu_boards.BoardPainter.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.menu_boards.BoardPainter.paint": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.menu_boards.BoardPainter.vegan_line": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.menu_boards.Chalk.write": {
+        "callers": [
+            "shop/menu_boards.py:37"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.menu_boards.MenuBoard.vegan_names": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.menus.sidebar.sidebar": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.notes.Order.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.notes.Order.has_note": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.notes.Order.is_noted": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.opening_hours.Hours.covers": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.opening_hours.OpenWeekday.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.opening_hours.OpenWeekday.label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.opening_hours.Weekday.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.opening_hours.Weekday.hours": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.opening_hours.Weekday.label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_archive.archive": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_cards.card_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_cards.heading_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_emails.ConfirmationEmail.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_emails.ConfirmationEmail.body": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_exports.OrderExport.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_exports.OrderExport.to_csv": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_exports.OrderExport.to_json": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_numbers.OrderNumberSequence.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_numbers.OrderNumberSequence.next": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_numbers.OrderNumbers.next": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.order_numbers.sku_pattern": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.orders.Line.total": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.orders.Order.is_empty": {
+        "callers": [
+            "shop/checkout.py:8"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.orders.Order.total": {
+        "callers": [
+            "shop/checkout.py:14"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.packing.pack": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.packing_slips.pick_list": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.packing_slips.slip": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.packing_slips.slip_shown": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pagination.label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pagination.mode": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pagination.window": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pallet_loads.DockPlanner.heaviest_crate": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pallet_loads.DockPlanner.heaviest_on": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pallet_loads.Pallet.heaviest": {
+        "callers": [
+            "shop/pallet_loads.py:30"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_kinds.Envelope.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_kinds.Envelope.kind": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_kinds.Letter.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_labels.express_label": {
+        "callers": [
+            "shop/parcel_labels.py:6"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_labels.label_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_labels.standard_label": {
+        "callers": [
+            "shop/parcel_labels.py:6"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_locks.LockerDoor.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_locks.LockerDoor.locks": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_locks.LockerHatch.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_locks.LockerHatch.is_locked": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_returns.ParcelState.accepts_return": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.parcel_returns.ReturnsCounter.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_returns.ReturnsCounter.open_return": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_returns.ReturnsCounter.start_return": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_routes.ParcelBooking.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_routes.ParcelBooking.leg": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_routes.RoutedParcel.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_weighing.heaviest_label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_weighing.labels": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_weighing.reading_label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.parcel_weighing.weight_label": {
+        "callers": [
+            "shop/parcel_weighing.py:17",
+            "shop/parcel_weighing.py:22"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payload_fields.note_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payload_fields.summary": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payload_fields.text_of": {
+        "callers": [
+            "shop/payload_fields.py:16"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_events.CardPayment.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_events.CardPayment.is_challenged": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_events.Challenge.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_events.challenge_link": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_events.challenge_url": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_events.is_card": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_events.notify_customer": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_icons.CheckoutView.shows_card_icon": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_icons.CheckoutView.shows_card_icon_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_icons.UnhandledMethod.of": {
+        "callers": [
+            "shop/payment_icons.py:35"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.payment_plugins.CardPayments.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_plugins.CardPayments.charge": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_plugins.CardPlugin.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_plugins.CardPlugin.charge": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.payment_plugins.install_card_payments": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.photo_archive.archive_photos": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.photo_archive.archive_thumbnails": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking.pick_list": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking_queue.PickingQueue.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking_queue.PickingQueue.sorts": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking_queue.PickingQueue.starts_in": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking_waves.Pallet.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking_waves.Pallet.described": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking_waves.Pallet.move": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking_waves.PickingWave.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking_waves.PickingWave.slip": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.picking_waves.PickingWave.start": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.plugins.run_plugins": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_export.export_prices": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_lists.PriceList.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_lists.PriceList.price": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_lists.PriceList.price_of": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_lists.UnknownSku.at": {
+        "callers": [
+            "shop/price_lists.py:23",
+            "shop/price_lists.py:33"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.price_quotes.price_quote": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_quotes.quote_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_rules.Coupon.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_rules.Coupon.used": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_rules.PriceRule.applies_on": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_rules.PriceRule.duplicate": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_rules.PriceRule.extended": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_rules.PriceRule.price_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_rules.PriceRule.rerated": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_tags.PriceTag.banner": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.price_tags.PromotedTag.banner": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pricing.Line.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pricing.price": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pricing.price_of": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.pricing.rates.rate_for": {
+        "callers": [
+            "shop/couriers/dispatch.py:12",
+            "shop/screens/home.py:10"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_commands.LabelJob.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_commands.LabelJob.command": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_commands.LabelJob.command_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_commands.LabelJob.flags": {
+        "callers": [
+            "shop/printer_commands.py:16"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_pool.HonestPrinterRegistry.__contains__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_pool.HonestPrinterRegistry.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_pool.HonestPrinterRegistry.get": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_pool.PrinterRegistry.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_pool.PrinterRegistry.get": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_pool.PrinterRegistry.register": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_pool.ReceiptPrinter.print_line": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.printer_pool.UnknownTill.for_name": {
+        "callers": [
+            "shop/printer_pool.py:36"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.product_teasers.fresh_teaser": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.product_teasers.product_teaser": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.product_teasers.teaser": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.quantities.MissingQuantity.in_row": {
+        "callers": [
+            "shop/quantities.py:23"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.quantities.stock_counted": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.quantities.stock_rows": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.quantity_parsing.BadQuantity.of": {
+        "callers": [
+            "shop/quantity_parsing.py:16",
+            "shop/quantity_parsing.py:24"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.quantity_parsing.quantity": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.quantity_parsing.quantity_of": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.queue_tickets.QueueTicket.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.queue_tickets.QueueTicket.called_at": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.queue_tickets.ServedTicket.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.queue_tickets.ServedTicket.called_at": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.quotes.quote": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_banner.banner": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printers.DeferredReceiptPrinter.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printers.DeferredReceiptPrinter.print": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printers.PriceBoard.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printers.PriceBoard._sort": {
+        "callers": [
+            "shop/receipt_printers.py:30"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printers.ReceiptPrinter.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printers.ReceiptPrinter.print": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printing.IndentedPrinter.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printing.IndentedPrinter.bundle": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printing.IndentedPrinter.line": {
+        "callers": [
+            "shop/receipt_printing.py:32",
+            "shop/receipt_printing.py:34"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printing.ReceiptPrinter.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printing.ReceiptPrinter.bundle": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_printing.ReceiptPrinter.line": {
+        "callers": [
+            "shop/receipt_printing.py:15",
+            "shop/receipt_printing.py:19"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_signing.refund_signature_checks": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_signing.refund_signature_matches": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipt_signing.signature_matches": {
+        "callers": [
+            "shop/receipt_signing.py:27"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipts.NoEmail.on": {
+        "callers": [
+            "shop/receipts.py:21"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.receipts.mail_receipt": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receipts.send_receipt": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.receiving.receive": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.refund_events.refund_cents": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.refund_windows.SalesChannel.refund_days": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.refund_windows.refund_days": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.refund_windows.refund_window": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.refund_windows.return_address": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.refunds.refund": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.reminders.send_reminders": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.reorder_alerts.ReorderAlert.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.reorder_alerts.ReorderAlert.is_due": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.reorder_levels.ShelfLevel.needs_order": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.reorder_levels.either_empty": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.reorder_levels.reorder": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.reorder_levels.reorder_short": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.reorder_levels.sold_out": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_cells.Cell.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_cells.ReportRenderer.export": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_cells.ReportRenderer.render": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_cells.Table.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_formats.ConsoleReport.out": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_formats.CsvExport.extension": {
+        "callers": [],
+        "override": true,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_formats.Export.extension": {
+        "callers": [],
+        "override": false,
+        "overridden": true,
+        "extendsOutside": false
+    },
+    "shop.report_formats.SalesReport.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_formats.SalesReport.opening_total": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_formats.SalesReport.total": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.report_formats.StockReport.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.restock.rebalance": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.retries.ignore": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.retries.retrying": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.retries.with_retries": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.retry_backoff.backoff": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.retry_backoff.retry_delay": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.retry_clients.PatientSupplierClient.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.retry_clients.PatientSupplierClient.fetch": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.retry_clients.SupplierClient.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.retry_clients.SupplierClient.fetch": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_desk.Desk.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_desk.Desk.accept": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_desk.Portal.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_desk.Portal.offers": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_desk.Portal.offers_honestly": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_desk.RefundPolicy.allows": {
+        "callers": [
+            "shop/return_desk.py:27",
+            "shop/return_desk.py:35"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_desk.RefundPolicy.allows_for": {
+        "callers": [
+            "shop/return_desk.py:39"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_labels.ReturnLabel.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_reasons.ReturnForm.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_reasons.ReturnForm.is_shipping_refunded": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_reasons.ReturnReason.is_shipping_refunded": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.return_reasons.TypedReturnForm.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.return_reasons.TypedReturnForm.is_shipping_refunded": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.returns.desk.book_return": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.returns_desk.process": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.route_stops.Dispatcher.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.route_stops.Dispatcher.tick": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.route_stops.Dispatcher.tick_stop": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.route_stops.Schedule.find": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.scale_readers.CounterScale.grams": {
+        "callers": [
+            "shop/scale_readers.py:26"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.scale_readers.HonestScaleReader.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.scale_readers.HonestScaleReader.weigh": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.scale_readers.ScaleReader.weigh": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.scale_readers.ScaleReader.weigh_twice": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.screens.home.path": {
+        "callers": [
+            "shop/widgets/card.py:15"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.search.engine.render": {
+        "callers": [
+            "shop/storefront/pages.py:8"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.search.first_in_stock": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.search.label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.search.note": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.seat_maps.book": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.seat_maps.book_seat": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.session_limits.Session.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.session_limits.Session.expires_after": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.session_limits.Session.lifetime_seconds": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.session_limits.ShopSession.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.session_limits.ShopSession.expires_after": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.sessions.NoActiveSession.reading": {
+        "callers": [
+            "shop/sessions.py:23"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.sessions.basket": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.sessions.current_basket": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.settings.read_settings": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_audits.AuditRow.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_audits.AuditRow.cells": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_audits.AuditRow.csv": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_audits.AuditedShelf.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_audits.HonestAudit.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_audits.HonestAudit.shelf_code": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_audits.ShelfAudit.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_labels.AisleLabel.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_labels.AisleLabel.reload": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_labels.ShelfLabel.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shelf_labels.ShelfLabel.reloads": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shift_reports.TillPrinter.closing_line": {
+        "callers": [
+            "shop/shift_reports.py:28"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shift_reports.TillPrinter.closing_line_of": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shift_reports.close": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipment_records.Shipment.arrived": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipment_records.Shipment.delivered": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipment_records.Shipment.is_heavy": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipment_records.Shipment.tracking_url": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipments.pack": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipments.pack_order": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_labels.Parcel.from_payload": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_labels.Parcel.label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_labels.label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_notices.Notifier.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_notices.Notifier.notify": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_notices.Notifier.notify_tracked": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_quotes.Parcel.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_quotes.quote": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_quotes.quote_cents": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_rates.Letter.rate_cents": {
+        "callers": [],
+        "override": true,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_rates.Pallet.rate_cents": {
+        "callers": [],
+        "override": true,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_rates.Parcel.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": true,
+        "extendsOutside": false
+    },
+    "shop.shipping_rates.Parcel.rate_cents": {
+        "callers": [
+            "shop/shipping_rates.py:34"
+        ],
+        "override": false,
+        "overridden": true,
+        "extendsOutside": false
+    },
+    "shop.shipping_rates.quote": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.shipping_rates.quote_told": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stamp_cards.RewardDesk.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stamp_cards.RewardDesk.redeem": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stamp_cards.RewardDesk.redeem_card": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stamp_cards.StampCard.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stamp_cards.StampCard.close_with": {
+        "callers": [
+            "shop/stamp_cards.py:30"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.startup.configure_logging": {
+        "callers": [
+            "shop/startup.py:13",
+            "shop/startup.py:17"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.startup.display_name": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.startup.ready": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.status_colours.badge": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.status_colours.badge_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.statuses.outcome": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_alerts.UnhandledLevel.of": {
+        "callers": [
+            "shop/stock_alerts.py:37"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.stock_alerts.channel": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_alerts.channel_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_alerts.colour": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_alerts.escalation": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_badges.StockBadge.colour": {
+        "callers": [
+            "shop/stock_badges.py:31",
+            "shop/stock_badges.py:35"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_badges.StockBadge.colour_of": {
+        "callers": [
+            "shop/stock_badges.py:40"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_badges.listing_badge": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_badges.search_badge": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_badges.shelf_badge": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_counts.StockCount.total": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_counts.count_stock": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_counts.dimensions": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_counts.sku_numbers": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_export.export_stock": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_levels.level": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_movements.Movement.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": true,
+        "extendsOutside": false
+    },
+    "shop.stock_movements.Movement.delta": {
+        "callers": [],
+        "override": false,
+        "overridden": true,
+        "extendsOutside": false
+    },
+    "shop.stock_moves.empty_out": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_moves.log_move": {
+        "callers": [
+            "shop/stock_moves.py:23",
+            "shop/stock_moves.py:30"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_moves.log_move_from": {
+        "callers": [
+            "shop/stock_moves.py:36"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_moves.restock": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_moves.restock_honestly": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_queries.Carrier.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_queries.carrier_or_default": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_queries.units_in_stock": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stock_report.report_line": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.store_context.RequestContext.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.store_context.enter_store": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.store_settings.SettingsFile.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.store_settings.SettingsFile.read": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.store_settings.StoreSettings.read": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.storefront.layout.footer": {
+        "callers": [
+            "shop/search/engine.py:7"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.storefront.layout.frame": {
+        "callers": [
+            "shop/search/engine.py:7"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.storefront.pages.results_page": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stores.PhoneStore.ship_to": {
+        "callers": [],
+        "override": true,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.stores.Store.ship_to": {
+        "callers": [],
+        "override": false,
+        "overridden": true,
+        "extendsOutside": false
+    },
+    "shop.stores.WebStore.ship_to": {
+        "callers": [],
+        "override": true,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.streams.AsyncFeedStream.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.streams.AsyncFeedStream.chunks": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.streams.FeedStream.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.streams.FeedStream.chunks": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.streams_io.LineStream.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.streams_io.LineStream.read_line": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.subscriptions.Subscriptions.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.subscriptions.Subscriptions.flip": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.subscriptions.Subscriptions.toggle": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.supplier_feed.SupplierPrice.from_json": {
+        "callers": [
+            "shop/supplier_feed.py:25"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.supplier_feed.fetch_prices": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.supplier_feed.fetch_supplier_prices": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.support_desk.raise_level": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.support_tickets.RoutedTicket.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.support_tickets.RoutedTicket.escalated_to": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.support_tickets.RoutedTicket.evolve": {
+        "callers": [
+            "shop/support_tickets.py:36"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.support_tickets.Ticket.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.support_tickets.Ticket.evolve": {
+        "callers": [
+            "shop/escalations.py:12",
+            "shop/support_desk.py:7"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.support_tickets.TicketMeta.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.support_tickets.TicketMeta.of": {
+        "callers": [
+            "shop/escalations.py:12",
+            "shop/support_desk.py:7",
+            "shop/support_tickets.py:36"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.support_tickets.TicketMeta.to_dict": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_bands.TaxTable.band_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_contexts.Pricer.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_contexts.Pricer.count_quote": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_contexts.Pricer.price": {
+        "callers": [
+            "shop/tax_contexts.py:20"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_contexts.Pricer.price_abroad": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_contexts.Pricer.shipping_to": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_contexts.RegionPricer.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_contexts.RegionPricer.price": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_rates.TaxRates.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_rates.TaxRates.rate_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_rates.TaxTable.load": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_totals.TaxTotal.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_totals.TaxTotal.amount": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tax_totals.TaxTotal.rounded_amount": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.thumbnails.make_thumbnail": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ticket_triage.Priority.can_wait": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.ticket_triage.Triage.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ticket_triage.Triage.route": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.ticket_triage.Triage.route_by_priority": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tiers.Loyalty.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tiers.Loyalty.rate": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tiers.Loyalty.rate_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.till_drawers.CashOffice.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.till_drawers.CashOffice.came_up_short": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.till_drawers.Float.is_short": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.till_drawers.FloatBook.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.till_drawers.FloatBook.float_for": {
+        "callers": [
+            "shop/till_drawers.py:36"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.till_sessions.TillSession.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.till_sessions.TillSession.open": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.till_sessions.TillSession.receipt_footer": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tip_cents.Cents.parse": {
+        "callers": [
+            "shop/tip_cents.py:19",
+            "shop/tip_cents.py:24",
+            "shop/tip_cents.py:30"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tip_cents.TipJar.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tip_cents.TipJar.add": {
+        "callers": [
+            "shop/tip_cents.py:24",
+            "shop/tip_cents.py:30"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tip_cents.TipJar.add_typed": {
+        "callers": [
+            "shop/tip_cents.py:35"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tip_cents.ring_up": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tip_cents.ring_up_all": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tip_cents.ring_up_honestly": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.tracking.events.record": {
+        "callers": [
+            "shop/couriers/dispatch.py:11",
+            "shop/returns/desk.py:9"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.validation.set_quantity": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.vat_bands.TaxBand.rate": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.voucher_book.VoucherBook.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.voucher_book.VoucherBook.issue": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.voucher_book.VoucherBook.label": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.voucher_book.VoucherBook.voucher": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.voucher_codes.is_valid": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.voucher_codes.normalise": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.voucher_guards.VoucherGuard.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.voucher_guards.VoucherGuard.fails_on": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.voucher_guards.VoucherRefused.for_code": {
+        "callers": [
+            "shop/voucher_guards.py:17"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": true
+    },
+    "shop.wallet_balances.Balance.covers": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.wallet_balances.Balance.deposit": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.wallet_balances.Balance.shown": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.wallet_balances.Funds.deposited": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.warehouse.bins.Bin.__str__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.warehouse.picking.lines": {
+        "callers": [
+            "shop/billing/invoice.py:11"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.warehouse.stock.reserve": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.warehouse_api.reserve": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.warehouse_returns.ReturnsBatch.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.warehouse_returns.ReturnsBatch.outstanding": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.warehouse_returns.ReturnsBatch.waits_on_warehouse": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.webhook_events.handle": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.webhook_events.handle_event": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.webhook_payloads.Payload.of": {
+        "callers": [
+            "shop/webhook_payloads.py:23"
+        ],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.webhook_payloads.payload": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.webhook_payloads.payload_for": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.widgets.card.Card.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.widgets.card.Card.__str__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.widgets.card.Card.link": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.wishlists.Wishlist.__init__": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.wishlists.Wishlist.add": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    },
+    "shop.wishlists.Wishlist.remove": {
+        "callers": [],
+        "override": false,
+        "overridden": false,
+        "extendsOutside": false
+    }
+}

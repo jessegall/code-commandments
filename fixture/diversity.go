@@ -56,8 +56,8 @@ func ScopeScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]S
 	return scenarios, nil
 }
 
-// FileScenarios reads each finding as its whole file: the frontend's scenario is a component or a module,
-// so two findings in one file are one scenario.
+// FileScenarios reads each finding as the whole file it sits in, so two findings in one file are one scenario:
+// the reading for a fixture of modules or components rather than classes.
 func FileScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]Scenario, error) {
 	var scenarios []Scenario
 	for _, finding := range detector.Find(codebase) {

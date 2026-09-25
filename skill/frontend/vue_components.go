@@ -31,6 +31,8 @@ func (VueComponents) Definition() skill.Definition {
 		Summary:   "extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop.",
 		Principle: vueComponentsPrinciple,
 		Languages: []string{"vue"},
-		Related:   []string{"frontend/vue-control-flow"},
+		Related: []skill.Relation{
+			{Slug: "frontend/vue-control-flow", Note: "the other half of an honest template — dispatch with `<SwitchCase>`, don't re-test a subject with `v-if` chains."},
+		},
 	}
 }

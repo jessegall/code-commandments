@@ -10,7 +10,7 @@ import (
 )
 
 // SupportedVersions are the contract versions this package reads.
-var SupportedVersions = []int{1}
+var SupportedVersions = []int{1, 2}
 
 // maxLine is the longest line a stream may hold: one file's whole tree.
 const maxLine = 256 << 20
@@ -79,10 +79,16 @@ func (r *Reader) Next() (Line, error) {
 
 // ReadAll reads the whole stream r holds.
 func ReadAll(r io.Reader) (*Stream, error) {
-	reader := NewReader(r)
+	return NewReader(r).Stream()
+}
+
+// Stream reads the next whole stream, header to trailer. A served bridge answers each request with one, back
+// to back on the same output, so each call starts a new stream where the last one ended.
+func (r *Reader) Stream() (*Stream, error) {
+	*r = Reader{scanner: r.scanner, number: r.number}
 	stream := &Stream{}
 	for {
-		line, err := reader.Next()
+		line, err := r.Next()
 		if err == io.EOF {
 			return stream, nil
 		}

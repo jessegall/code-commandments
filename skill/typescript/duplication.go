@@ -31,6 +31,9 @@ func (Duplication) Definition() skill.Definition {
 		Summary:   "a function body written twice becomes one shared function or composable, parameterised by what differs.",
 		Principle: duplicationPrinciple,
 		Languages: []string{"ts", "vue"},
-		Related:   []string{"backend/fix-at-the-source", "frontend/vue-components"},
+		Related: []skill.Relation{
+			{Slug: "backend/fix-at-the-source", Note: "the same instinct on the server — one decision, made once, where it is born."},
+			{Slug: "frontend/vue-components", Note: "the template twin: markup written twice is a component waiting to be extracted."},
+		},
 	}
 }

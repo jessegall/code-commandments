@@ -255,6 +255,8 @@ type CSharpNode struct {
 type PythonNode struct {
 	Operators []string `json:"operators,omitempty"`
 	Level     int      `json:"level,omitempty"`
+	As        string   `json:"as,omitempty"`
+	Names     []string `json:"names,omitempty"`
 }
 
 // VueNode is what only Vue says about a node.
@@ -276,6 +278,12 @@ type TypeScriptNode struct {
 // CommentExtras holds the facts only one language has on a comment.
 type CommentExtras struct {
 	CSharp *CSharpComment `json:"csharp,omitempty"`
+	Python *PythonComment `json:"python,omitempty"`
+}
+
+// PythonComment is what only Python says about a comment.
+type PythonComment struct {
+	Code bool `json:"code,omitempty"`
 }
 
 // CSharpComment is what only C# says about a comment.
