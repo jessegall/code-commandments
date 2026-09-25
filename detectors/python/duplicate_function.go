@@ -39,3 +39,10 @@ func (DuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Match 
 func bodyHash(match engine.Match) (string, bool) {
 	return py.Node{Match: match}.BodyHash(), true
 }
+
+// GroupKey groups a finding with the defs whose body it repeats.
+func (DuplicateFunctionDetector) GroupKey(match engine.Match) (string, bool) {
+	hash, _ := bodyHash(match)
+
+	return hash, hash != ""
+}

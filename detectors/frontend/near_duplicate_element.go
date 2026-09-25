@@ -46,3 +46,8 @@ func (NearDuplicateElementDetector) Find(codebase *engine.Codebase) []engine.Mat
 func shapeHash(m engine.Match) string {
 	return vue.Of(m).ShapeHash()
 }
+
+// GroupKey groups a finding with the elements of its shape.
+func (NearDuplicateElementDetector) GroupKey(match engine.Match) (string, bool) {
+	return shapeHash(match), true
+}

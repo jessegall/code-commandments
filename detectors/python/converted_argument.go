@@ -36,3 +36,8 @@ func matches(nodes []py.Node) []engine.Match {
 
 	return found
 }
+
+// GroupKey groups a finding with the calls converting the same argument of the same def the same way.
+func (ConvertedArgumentDetector) GroupKey(match engine.Match) (string, bool) {
+	return py.In(match.Codebase()).Program.ConversionKey(py.Node{Match: match})
+}

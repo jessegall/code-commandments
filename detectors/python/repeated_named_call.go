@@ -31,3 +31,8 @@ func (RepeatedNamedCallDetector) Find(codebase *engine.Codebase) []engine.Match 
 
 	return flatten(engine.RecurringBuckets(calls, func(match engine.Match) (string, bool) { return program.NamedCallKey(py.Node{Match: match}) }, namedCallThreshold))
 }
+
+// GroupKey groups a finding with the calls built the same way.
+func (RepeatedNamedCallDetector) GroupKey(match engine.Match) (string, bool) {
+	return py.In(match.Codebase()).Program.NamedCallKey(py.Node{Match: match})
+}

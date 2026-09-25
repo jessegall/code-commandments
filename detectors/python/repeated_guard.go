@@ -47,3 +47,8 @@ func flatten(groups [][]engine.Match) []engine.Match {
 
 	return matches
 }
+
+// GroupKey groups a finding with the guards it repeats.
+func (RepeatedGuardDetector) GroupKey(match engine.Match) (string, bool) {
+	return guardFingerprint(match)
+}

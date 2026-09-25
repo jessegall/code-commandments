@@ -31,3 +31,8 @@ func (RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Match 
 
 	return flatten(engine.RecurringBuckets(guards, guardFingerprint, 2))
 }
+
+// GroupKey groups a finding with the type checks it repeats.
+func (RepeatedTypeGuardDetector) GroupKey(match engine.Match) (string, bool) {
+	return guardFingerprint(match)
+}

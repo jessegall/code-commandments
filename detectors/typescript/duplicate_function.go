@@ -38,3 +38,10 @@ func (DuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Match 
 func bodyHash(function engine.Match) string {
 	return typescript.Of(function).BodyHash()
 }
+
+// GroupKey groups a finding with the functions whose body it repeats.
+func (DuplicateFunctionDetector) GroupKey(match engine.Match) (string, bool) {
+	hash := bodyHash(match)
+
+	return hash, hash != ""
+}

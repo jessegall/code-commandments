@@ -71,3 +71,8 @@ func filtered(candidates []engine.Match, keep func(vue.Element) bool) []engine.M
 
 	return kept
 }
+
+// GroupKey groups a finding with the elements built exactly like it.
+func (DuplicateElementDetector) GroupKey(match engine.Match) (string, bool) {
+	return structureHash(match), true
+}
