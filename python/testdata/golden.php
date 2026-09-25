@@ -126,3 +126,12 @@ foreach ($codebase->modules() as $module) {
 }
 
 $write('attribute-flow', $fields);
+
+// Every import between two packages, and the imports worth cutting in each pair of packages that import each other.
+$relative = static fn (string $path): string => substr($path, strlen($root) + 1) ?: '.';
+$graph = $codebase->packageGraph();
+$arrows = (new ReflectionProperty($graph, 'arrows'))->getValue($graph);
+$write('packages', [
+    'arrows' => array_map(static fn ($arrow): string => $place($arrow->at->module, $arrow->at->node->start) . ' ' . $relative($arrow->from) . ' -> ' . $relative($arrow->to), $arrows->all),
+    'closing' => array_map(static fn ($at): string => $place($at->module, $at->node->start), $graph->arrowsClosingAMutualPair()),
+]);

@@ -1,0 +1,25 @@
+{
+    "arrows": [
+        "shop/storefront/pages.py:7 shop/storefront -> shop/search",
+        "shop/couriers/dispatch.py:5 shop/couriers -> shop/tracking",
+        "shop/couriers/dispatch.py:7 shop/couriers -> shop/pricing",
+        "shop/layout/grid.py:4 shop/layout -> shop/widgets",
+        "shop/layout/theme.py:3 shop/layout -> shop/screens",
+        "shop/screens/home.py:4 shop/screens -> shop/pricing",
+        "shop/search/engine.py:2 shop/search -> shop/storefront",
+        "shop/search/engine.py:3 shop/search -> shop/storefront",
+        "shop/menus/sidebar.py:4 shop/menus -> shop/layout",
+        "shop/tracking/events.py:3 shop/tracking -> shop/couriers",
+        "shop/tracking/events.py:4 shop/tracking -> shop/couriers",
+        "shop/returns/desk.py:5 shop/returns -> shop/tracking",
+        "shop/warehouse/stock.py:4 shop/warehouse -> shop/billing",
+        "shop/billing/invoice.py:2 shop/billing -> shop/warehouse",
+        "shop/billing/invoice.py:3 shop/billing -> shop/warehouse",
+        "shop/widgets/card.py:14 shop/widgets -> shop/screens"
+    ],
+    "closing": [
+        "shop/storefront/pages.py:7",
+        "shop/couriers/dispatch.py:5",
+        "shop/warehouse/stock.py:4"
+    ]
+}
