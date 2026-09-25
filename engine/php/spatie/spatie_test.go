@@ -2,9 +2,13 @@ package spatie
 
 import (
 	"encoding/json"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/engine/php/internal/shop"
 )
 
@@ -101,4 +105,71 @@ func TestTheSpatieConstructionPredicatesAnswerAsPhpDoes(t *testing.T) {
 			"isRedundantToArrayRoundtrip": data.IsRedundantToArrayRoundtrip(),
 		}
 	})
+}
+
+func TestTheSpatieAssignmentPredicatesAnswerAsPhpDoes(t *testing.T) {
+	shop.Parity(t, "spatieassignments", func(answer shop.Answer, node engine.Match) any {
+		var ask string
+		if err := json.Unmarshal(answer.Ask, &ask); err != nil {
+			t.Fatal(err)
+		}
+		data := Node{}.Decorate(node)
+		switch ask {
+		case "assign":
+			return map[string]any{
+				"assignedPropertyIsPublicSlot": data.AssignedPropertyIsPublicSlot(),
+				"assignmentRhsIsDeferred":      data.AssignmentRhsIsDeferred(),
+				"assignedSlotTypeIsDeferred":   data.AssignedSlotTypeIsDeferred(),
+				"assignmentReadsScopedState":   data.AssignmentReadsScopedState(),
+				"assignedSlotIsEager":          data.AssignedSlotIsEager(),
+				"propertyAssignedMoreThanOnce": data.PropertyAssignedMoreThanOnce(),
+			}
+		case "optional":
+			return map[string]any{
+				"isOptionalAbsentMarker":   data.IsOptionalAbsentMarker(),
+				"isOptionalNullFallback":   data.IsOptionalNullFallback(),
+				"isSharedOptionalFactory":  data.IsSharedOptionalFactory(),
+				"isReplaceableNewOptional": data.IsReplaceableNewOptional(),
+			}
+		case "attribute":
+			return data.TransformerLacksTsType()
+		case "flattens":
+			return data.FlattensValueObjectToArray()
+		case "transformerOutput":
+			return orNil(TransformerOutputIn(node.Codebase()))
+		}
+		t.Fatalf("an unknown ask %s", answer.Ask)
+
+		return nil
+	})
+}
+
+func TestTheTransformerOutputIsReadFromTheProjectsOwnConfig(t *testing.T) {
+	if _, err := exec.LookPath("php"); err != nil {
+		t.Skip("php is not on PATH")
+	}
+	project, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, source := range map[string]string{
+		"composer.json":               "{}",
+		"config/typescript.php":       "<?php\n$folder = 'types';\nreturn ['output_file' => resource_path('js/' . $folder . '/generated.d.ts')];\n",
+		"app/Providers/Unrelated.php": "<?php\nnamespace App\\Providers;\nfinal class Unrelated {}\n",
+	} {
+		path := filepath.Join(project, name)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(source), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	codebase, err := php.Here().Scan(project)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := TransformerOutputIn(codebase), project+"/resources/js/types/generated.d.ts"; got != want {
+		t.Fatalf("the output is %q, not %q", got, want)
+	}
 }

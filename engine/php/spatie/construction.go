@@ -877,9 +877,9 @@ func within(node engine.Match, test func(engine.Match) bool) bool {
 	return false
 }
 
-// enclosingFunction is the nearest function-like around the node, the node itself aside.
+// enclosingFunction is the function-like the node is, or the nearest one around it.
 func enclosingFunction(node engine.Match) engine.Match {
-	for at := node.Parent(); at.Exists(); at = at.Parent() {
+	for at := node; at.Exists(); at = at.Parent() {
 		if slices.Contains([]string{"Stmt_ClassMethod", "Stmt_Function", "Expr_Closure", "Expr_ArrowFunction", "PropertyHook"}, at.Kind()) {
 			return at
 		}
