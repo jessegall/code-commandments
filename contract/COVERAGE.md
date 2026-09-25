@@ -92,9 +92,9 @@ each line against the schema, and checks every span, line and comment against th
 | parsed binding and interpolation expressions | TypeScript nodes under `value` | bridge | vue |
 | `v-if`/`v-else-if`/`v-else` chains | sibling order in `children` | engine | vue (the three `<span>`s in `StockIndicator`) |
 | component-ness of a tag | `Element.name` | engine | vue |
-| which file a component tag resolves to | the script's import `resolves` + `program.aliases` | bridge | — |
+| which file a component tag resolves to | the `Element`'s own `resolves`, through the script's imports and `program.aliases` | bridge | — |
 | prop types down and up the render tree, cross-file types | `defineProps` type argument, imports' `resolves`, `resolved` | engine | vue (`defineProps<{ customer: CustomerData }>()`) |
-| checker-resolved types of script locals | `resolved` with `origin: compiler` | bridge | typescript (the same walker types a script block; this Vue fixture's only expressions go through `defineProps`, which plain `tsc` cannot type, so they stay absent) |
+| checker-resolved types of script locals | `resolved` with `origin: compiler` | bridge | typescript, vue (a script block is checked in the same program as every `.ts` file; template expressions are not typed) |
 | a hand-written type mirroring a PHP Data class | TS `InterfaceDeclaration`/`TypeAliasDeclaration` fields, beside the PHP stream's class and its `#[TypeScript]` attribute | engine | — |
 | structural hashes across components | `kind`, `field`, `name`, `value` | engine | — |
 
