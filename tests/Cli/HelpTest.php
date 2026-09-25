@@ -115,19 +115,6 @@ final class HelpTest extends TestCase
         $this->assertSame($refreshed, CommandBlocks::refresh($refreshed), 'refreshing twice must be a no-op');
     }
 
-    public function test_every_skill_command_reference_is_current(): void
-    {
-        $root = dirname(__DIR__, 2) . '/skills';
-
-        foreach (CommandBlocks::documentsIn($root) as $path => $document) {
-            $this->assertSame(
-                $document,
-                CommandBlocks::refresh($document),
-                substr($path, strlen($root) + 1) . ' has a stale command reference — run `composer sins`.',
-            );
-        }
-    }
-
     private function command(string $verb): Command
     {
         foreach ($this->commands() as $command) {

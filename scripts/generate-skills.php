@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use JesseGall\CodeCommandments\Cli\Doc\CommandBlocks;
 use JesseGall\CodeCommandments\Skills\Catalog as Skills;
 use JesseGall\CodeCommandments\Skills\SkillRenderer;
 use JesseGall\CodeCommandments\Testing\SkillExamples;
@@ -82,25 +81,8 @@ foreach (Skills::all() as $skill) {
     }
 }
 
-// ---- Command references inside the skills -----------------------------------
-// Any skill (generated or standalone) that teaches a CLI command declares a `commands:<verbs>`
-// block; it is filled from the commands themselves, so a skill can never drift from the CLI.
-
-foreach (CommandBlocks::documentsIn("{$root}/skills") as $path => $document) {
-    $refreshed = CommandBlocks::refresh($document);
-
-    if ($refreshed === $document) {
-        continue;
-    }
-
-    if ($check) {
-        $stale[] = substr($path, strlen("{$root}/skills/"));
-        continue;
-    }
-
-    file_put_contents($path, $refreshed);
-    $written++;
-}
+// Command references inside the skills are the Go binary's help, projected by
+// scripts/refresh-command-docs.php.
 
 if ($check) {
     if ($stale === []) {
