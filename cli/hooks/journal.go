@@ -85,8 +85,8 @@ type Raise struct {
 	Event, Brief, Open string
 }
 
-func (r Raise) object() *dashboard.Object {
-	raised := dashboard.NewObject("event", r.Event, "brief", r.Brief)
+func (r Raise) object() *jsonfile.Object {
+	raised := jsonfile.NewObject("event", r.Event, "brief", r.Brief)
 	if r.Open != "" {
 		raised.Set("open", r.Open)
 	}
@@ -103,7 +103,7 @@ type JournalAnswer struct {
 
 // JSON is the answer as the journal reads it, leaving out what it does not say.
 func (a JournalAnswer) JSON() string {
-	answer := dashboard.NewObject()
+	answer := jsonfile.NewObject()
 
 	if a.Refuse != nil {
 		answer.Set("refuse", *a.Refuse)
@@ -122,7 +122,7 @@ func (a JournalAnswer) JSON() string {
 		answer.Set("raise", raised)
 	}
 
-	text, _ := dashboard.Compact(answer, true)
+	text, _ := jsonfile.Compact(answer, true)
 
 	return text
 }
@@ -366,7 +366,7 @@ func (a Announced) keep() {
 		return
 	}
 
-	record := dashboard.NewObject()
+	record := jsonfile.NewObject()
 	kept := 0
 
 	for _, file := range a.files.Keys() {
@@ -377,7 +377,7 @@ func (a Announced) keep() {
 			continue
 		}
 
-		ids := dashboard.NewObject()
+		ids := jsonfile.NewObject()
 		for _, id := range sins.Keys() {
 			shown, _ := sins.Get(id)
 			ids.Set(id, asText(shown))
@@ -387,7 +387,7 @@ func (a Announced) keep() {
 		kept++
 	}
 
-	text, err := dashboard.Compact(record, false)
+	text, err := jsonfile.Compact(record, false)
 	if kept == 0 {
 		text, err = "[]", nil
 	}

@@ -4,6 +4,7 @@ package dashboard
 
 import (
 	"encoding/json"
+	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"os"
 	"path/filepath"
 	"sort"
@@ -74,7 +75,7 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 		all = []Stored{}
 	}
 
-	store, err := Pretty(all, false)
+	store, err := jsonfile.Pretty(all, false)
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 		return err
 	}
 
-	dashboard, err := Pretty(Render(all), true)
+	dashboard, err := jsonfile.Pretty(Render(all), true)
 	if err != nil {
 		return err
 	}
@@ -127,19 +128,19 @@ func (g group) count() int {
 
 // Render draws the dashboard: an overview of the most common sins, a page per sin, and a page per sin in
 // each file.
-func Render(findings []Stored) *Object {
+func Render(findings []Stored) *jsonfile.Object {
 	groups := bySin(findings)
-	pages := NewObject("overview", NewObject("title", "Overview", "view", overview(findings, groups)))
+	pages := jsonfile.NewObject("overview", jsonfile.NewObject("title", "Overview", "view", overview(findings, groups)))
 
 	for _, g := range groups {
-		pages.Set("sin/"+g.sin, NewObject("title", g.sin, "view", sinPage(g)))
+		pages.Set("sin/"+g.sin, jsonfile.NewObject("title", g.sin, "view", sinPage(g)))
 
 		for _, file := range g.files {
-			pages.Set(fileOf(g.sin, file), NewObject("title", g.sin+" in "+filepath.Base(file), "view", filePage(g.sin, file, g.found[file])))
+			pages.Set(fileOf(g.sin, file), jsonfile.NewObject("title", g.sin+" in "+filepath.Base(file), "view", filePage(g.sin, file, g.found[file])))
 		}
 	}
 
-	return NewObject("title", "Code Commandments", "start", "overview", "pages", pages)
+	return jsonfile.NewObject("title", "Code Commandments", "start", "overview", "pages", pages)
 }
 
 func bySin(findings []Stored) []group {
@@ -169,7 +170,7 @@ func bySin(findings []Stored) []group {
 	return groups
 }
 
-func overview(findings []Stored, groups []group) *Object {
+func overview(findings []Stored, groups []group) *jsonfile.Object {
 	total := len(findings)
 	tone, filesTone := "danger", "warn"
 
@@ -177,14 +178,14 @@ func overview(findings []Stored, groups []group) *Object {
 		tone, filesTone = "good", "good"
 	}
 
-	tiles := NewObject("type", "row", "gap", 12, "children", []any{
-		NewObject("type", "stat", "label", "Sins", "value", strconv.Itoa(total), "tone", tone, "note", strconv.Itoa(len(groups))+" different rules"),
-		NewObject("type", "stat", "label", "Files", "value", strconv.Itoa(distinct(findings, func(s Stored) string { return s.File })), "tone", filesTone),
-		NewObject("type", "stat", "label", "Skills", "value", strconv.Itoa(distinct(findings, func(s Stored) string { return s.Skill })), "note", "the skills that teach the fixes"),
+	tiles := jsonfile.NewObject("type", "row", "gap", 12, "children", []any{
+		jsonfile.NewObject("type", "stat", "label", "Sins", "value", strconv.Itoa(total), "tone", tone, "note", strconv.Itoa(len(groups))+" different rules"),
+		jsonfile.NewObject("type", "stat", "label", "Files", "value", strconv.Itoa(distinct(findings, func(s Stored) string { return s.File })), "tone", filesTone),
+		jsonfile.NewObject("type", "stat", "label", "Skills", "value", strconv.Itoa(distinct(findings, func(s Stored) string { return s.Skill })), "note", "the skills that teach the fixes"),
 	})
 
 	if total == 0 {
-		return NewObject("type", "stack", "gap", 16, "children", []any{tiles, NewObject("type", "text", "body", "No sins in the last judged files.")})
+		return jsonfile.NewObject("type", "stack", "gap", 16, "children", []any{tiles, jsonfile.NewObject("type", "text", "body", "No sins in the last judged files.")})
 	}
 
 	bars := []any{}
@@ -195,16 +196,16 @@ func overview(findings []Stored, groups []group) *Object {
 			files = "1 file"
 		}
 
-		bars = append(bars, NewObject("label", g.sin, "value", g.count(), "note", files, "tone", "danger", "open", "sin/"+g.sin))
+		bars = append(bars, jsonfile.NewObject("label", g.sin, "value", g.count(), "note", files, "tone", "danger", "open", "sin/"+g.sin))
 	}
 
-	return NewObject("type", "stack", "gap", 16, "children", []any{
+	return jsonfile.NewObject("type", "stack", "gap", 16, "children", []any{
 		tiles,
-		NewObject("type", "bars", "title", "Most common sins", "unit", "sins", "items", bars),
+		jsonfile.NewObject("type", "bars", "title", "Most common sins", "unit", "sins", "items", bars),
 	})
 }
 
-func sinPage(g group) *Object {
+func sinPage(g group) *jsonfile.Object {
 	files := append([]string(nil), g.files...)
 
 	sort.SliceStable(files, func(i, j int) bool {
@@ -214,15 +215,15 @@ func sinPage(g group) *Object {
 	rows := []any{}
 
 	for _, file := range files {
-		rows = append(rows, NewObject("cells", []string{file, strconv.Itoa(len(g.found[file]))}, "open", fileOf(g.sin, file)))
+		rows = append(rows, jsonfile.NewObject("cells", []string{file, strconv.Itoa(len(g.found[file]))}, "open", fileOf(g.sin, file)))
 	}
 
-	children := append([]any{NewObject("type", "heading", "text", g.sin, "level", 1)}, explanation(g.sin)...)
+	children := append([]any{jsonfile.NewObject("type", "heading", "text", g.sin, "level", 1)}, explanation(g.sin)...)
 
-	return NewObject("type", "stack", "gap", 16, "children", append(children, NewObject("type", "table", "columns", []string{"File", "Sins"}, "rows", rows)))
+	return jsonfile.NewObject("type", "stack", "gap", 16, "children", append(children, jsonfile.NewObject("type", "table", "columns", []string{"File", "Sins"}, "rows", rows)))
 }
 
-func filePage(sin, file string, found []Stored) *Object {
+func filePage(sin, file string, found []Stored) *jsonfile.Object {
 	found = append([]Stored(nil), found...)
 
 	sort.SliceStable(found, func(i, j int) bool {
@@ -232,7 +233,7 @@ func filePage(sin, file string, found []Stored) *Object {
 	places := []any{}
 
 	for _, finding := range found {
-		places = append(places, NewObject("type", "file", "path", file, "line", finding.Line, "label", "line "+strconv.Itoa(finding.Line)+" — "+finding.Scope))
+		places = append(places, jsonfile.NewObject("type", "file", "path", file, "line", finding.Line, "label", "line "+strconv.Itoa(finding.Line)+" — "+finding.Scope))
 	}
 
 	title := strconv.Itoa(len(found)) + " places"
@@ -241,11 +242,11 @@ func filePage(sin, file string, found []Stored) *Object {
 	}
 
 	children := []any{
-		NewObject("type", "heading", "text", sin+" in "+file, "level", 1),
-		NewObject("type", "card", "title", title, "children", places),
+		jsonfile.NewObject("type", "heading", "text", sin+" in "+file, "level", 1),
+		jsonfile.NewObject("type", "card", "title", title, "children", places),
 	}
 
-	return NewObject("type", "stack", "gap", 16, "children", append(children, explanation(sin)...))
+	return jsonfile.NewObject("type", "stack", "gap", 16, "children", append(children, explanation(sin)...))
 }
 
 func explanation(name string) []any {
@@ -257,21 +258,21 @@ func explanation(name string) []any {
 		}
 
 		facts := []any{
-			NewObject("type", "fact", "label", "What it is", "body", rule.Description),
-			NewObject("type", "fact", "label", "The rule", "body", rule.Rule),
+			jsonfile.NewObject("type", "fact", "label", "What it is", "body", rule.Description),
+			jsonfile.NewObject("type", "fact", "label", "The rule", "body", rule.Rule),
 		}
 
 		if rule.Suggestion != "" {
-			facts = append(facts, NewObject("type", "fact", "label", "How to fix it", "body", rule.Suggestion))
+			facts = append(facts, jsonfile.NewObject("type", "fact", "label", "How to fix it", "body", rule.Suggestion))
 		}
 
 		return []any{
-			NewObject("type", "card", "title", "About this rule", "children", facts),
-			NewObject("type", "code", "text", "commandments info "+name),
+			jsonfile.NewObject("type", "card", "title", "About this rule", "children", facts),
+			jsonfile.NewObject("type", "code", "text", "commandments info "+name),
 		}
 	}
 
-	return []any{NewObject("type", "text", "body", "A rule of this project's own — its description lives in `.commandments/custom/`.")}
+	return []any{jsonfile.NewObject("type", "text", "body", "A rule of this project's own — its description lives in `.commandments/custom/`.")}
 }
 
 func distinct(findings []Stored, key func(Stored) string) int {

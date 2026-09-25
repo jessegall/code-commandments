@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"encoding/json"
+	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -10,7 +11,6 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
-	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/library"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -58,7 +58,7 @@ func (JournalScan) Help() help.Help {
 // Run answers the detected settings.
 func (JournalScan) Run(in *cli.Input, console cli.Console) (int, error) {
 	project := journalProjectRoot()
-	settings := dashboard.NewObject(
+	settings := jsonfile.NewObject(
 		judgedKey, strings.Join(config.DetectRoots(project), "\n"),
 		skippedKey, strings.Join(config.BuiltFolders(project), "\n"),
 	)
@@ -67,7 +67,7 @@ func (JournalScan) Run(in *cli.Input, console cli.Console) (int, error) {
 		settings.Set(languageKey(language), strconv.FormatBool(config.WritesLanguage(project, language)))
 	}
 
-	text, err := dashboard.Compact(dashboard.NewObject("settings", settings), false)
+	text, err := jsonfile.Compact(jsonfile.NewObject("settings", settings), false)
 	if err != nil {
 		return 0, err
 	}
@@ -232,7 +232,7 @@ func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
-	text, _ := dashboard.Compact(dashboard.NewObject("notify", editor.Name()[len(".commandments/"):]+" follows the plugin's switches: "+strconv.Itoa(changed)+" changed"), true)
+	text, _ := jsonfile.Compact(jsonfile.NewObject("notify", editor.Name()[len(".commandments/"):]+" follows the plugin's switches: "+strconv.Itoa(changed)+" changed"), true)
 	console.Say(text)
 
 	return 0, nil
