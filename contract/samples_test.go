@@ -115,6 +115,7 @@ var shows = map[string]map[string]func(*Node) bool{
 		"a forgiven nullable":     func(n *Node) bool { return n.Extras != nil && n.Extras.CSharp != nil && n.Extras.CSharp.ForgivesNull },
 		"an inherited member":     func(n *Node) bool { return n.Inherited && n.Symbol != "" },
 		"a resolved call target":  func(n *Node) bool { return n.Target != nil && n.Target.Symbol != "" },
+		"a bound parameter type":  func(n *Node) bool { return n.Target != nil && len(n.Target.Parameters) > 0 },
 		"a compile-time constant": func(n *Node) bool { return n.Constant },
 		"a for loop's step":       func(n *Node) bool { return slices.Contains(n.Flags, "step") },
 		"a written base list":     func(n *Node) bool { return n.Kind == "BaseList" },

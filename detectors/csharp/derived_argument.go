@@ -77,7 +77,7 @@ func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 // redundantPositions is the positions of the call's arguments that are pieces read off an object the call is also
 // handed whole, or three or more pieces of one object the method could take whole instead.
 func redundantPositions(call cs.Node, program *cs.Program, graph *cs.NamespaceGraph) []int {
-	if slices.Contains(program.ParametersOf(call), "global::System.Object") {
+	if slices.Contains(call.Target().Parameters(), "global::System.Object") {
 		return nil
 	}
 	receiver := call.ReceiverName()
@@ -91,7 +91,7 @@ func redundantPositions(call cs.Node, program *cs.Program, graph *cs.NamespaceGr
 			continue
 		}
 		root := argument.ProjectionRoot()
-		if root.Exists() && root.Name() != receiver && call.FillsScalarAt(program, position) {
+		if root.Exists() && root.Name() != receiver && call.FillsScalarAt(position) {
 			if _, seen := pieces[root.Name()]; !seen {
 				names = append(names, root.Name())
 				roots[root.Name()] = root

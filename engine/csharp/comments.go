@@ -2,11 +2,11 @@ package csharp
 
 import (
 	"encoding/xml"
-	"sort"
 	"errors"
 	"io"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"

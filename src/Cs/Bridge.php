@@ -11,7 +11,8 @@ use JesseGall\PhpTypes\Option;
  * The Roslyn bridge this package carries in `bridge/roslyn`, a prebuilt image run over C# files to read their trees.
  * .NET never runs on the host, and the bridge is never built on demand: every run goes through
  * `bridge/roslyn/roslyn-in-docker.sh`, a memory-capped container of the image `bridge/roslyn/IMAGE` names. Where there
- * is no Docker or no image, there is no bridge, and C# is not judged rather than failing the run.
+ * is no Docker or no image, there is no bridge, and C# is not judged rather than failing the run — said out loud
+ * ({@see self::missing}), never in silence.
  */
 final class Bridge implements LocatedTool
 {
@@ -44,10 +45,28 @@ final class Bridge implements LocatedTool
      */
     public static function located(): Option
     {
-        $image = trim((string) file_get_contents(self::SOURCE . '/IMAGE'));
-        exec('docker image inspect ' . escapeshellarg($image) . ' > /dev/null 2>&1', $output, $code);
+        exec('docker image inspect ' . escapeshellarg(self::image()) . ' > /dev/null 2>&1', $output, $code);
 
         return $code === 0 ? Option::some(new self()) : Option::none();
+    }
+
+    /**
+     * The image this package's bridge runs as, built once per release.
+     */
+    public static function image(): string
+    {
+        return trim((string) file_get_contents(self::SOURCE . '/IMAGE'));
+    }
+
+    /**
+     * What a run without the bridge says: that C# goes unjudged, which image it needs, and how that image is built.
+     */
+    public static function missing(): string
+    {
+        $image = self::image();
+        $source = (string) realpath(self::SOURCE);
+
+        return "the C# bridge image {$image} is not available (Docker is not running, or the image is not installed), so C# is not judged; it is built once per release, never on demand: docker build -t {$image} {$source}";
     }
 
     /**

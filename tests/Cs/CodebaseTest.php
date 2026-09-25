@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The C# engine reads the bridge's tree behind the selectors every engine answers: functions and
  * statements found by what they are, calls carrying their resolved target, spans that point at the
- * right bytes. Run against the real bridge; skipped where `dotnet` is not installed.
+ * right bytes. Run against the real bridge; skipped where its Docker image is not.
  */
 final class CodebaseTest extends TestCase
 {
@@ -55,7 +55,7 @@ final class CodebaseTest extends TestCase
     protected function setUp(): void
     {
         if (self::$codebase === null) {
-            $this->markTestSkipped('needs the dotnet SDK to build the Roslyn bridge');
+            $this->markTestSkipped(Bridge::missing());
         }
     }
 

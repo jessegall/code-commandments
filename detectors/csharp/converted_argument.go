@@ -59,7 +59,7 @@ func conversionSlot(call cs.Node, program *cs.Program) (string, bool) {
 	if !program.ReachesOwnSignature(call) {
 		return "", false
 	}
-	conversions := call.ScalarConversions(program)
+	conversions := call.ScalarConversions()
 	var positions []int
 	for position := range conversions {
 		positions = append(positions, position)

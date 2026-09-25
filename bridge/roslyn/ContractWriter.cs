@@ -18,7 +18,7 @@ namespace CodeCommandments.Bridge;
 /// </summary>
 public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<string>? written = null)
 {
-    public const int Version = 2;
+    public const int Version = 3;
 
     /// <summary>How a line is written: as deep as the version-7 writer goes, since a long chain of expressions nests past 64.</summary>
     private static readonly JsonWriterOptions Json = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 1000 };
@@ -566,7 +566,10 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             }
         }
 
-        /// <summary>The declaration a call or construction reaches, as its original definition.</summary>
+        /// <summary>
+        /// The declaration a call or construction reaches, as its original definition, and the types of the parameters
+        /// the call fills as it binds them: a generic's arguments filled in, a reduced extension method without its `this`.
+        /// </summary>
         private void Target(Utf8JsonWriter json, SyntaxNode node)
         {
             if (node is not (InvocationExpressionSyntax or BaseObjectCreationExpressionSyntax))
@@ -587,6 +590,14 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             json.WriteString("symbol", original.ToDisplayString(TreeWriter.Declared));
             json.WriteString("type", original.ContainingType.ToDisplayString(TreeWriter.Qualified));
             json.WriteString("name", original.Name);
+            json.WriteStartArray("parameters");
+
+            foreach (var parameter in method.Parameters)
+            {
+                json.WriteStringValue(parameter.Type.ToDisplayString(TreeWriter.Qualified));
+            }
+
+            json.WriteEndArray();
             json.WriteEndObject();
             run.Remember(original.ContainingType);
         }

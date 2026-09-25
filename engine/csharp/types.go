@@ -300,28 +300,12 @@ func (n Node) namesAValue() bool {
 	return false
 }
 
-// Parameters is the types of the method's parameters, in order, as its symbol spells them.
+// Parameters is the types of the parameters the call fills, by position, as the compiler bound them: a generic's
+// arguments filled in, an extension method called on a receiver without its `this`.
 func (t CallTarget) Parameters() []string {
-	symbol := t.Symbol()
-	open := strings.LastIndex(symbol, "(")
-	if open < 0 || !strings.HasSuffix(symbol, ")") || open+1 == len(symbol)-1 {
+	if t.target == nil {
 		return nil
 	}
-	var parameters []string
-	depth, start := 0, open+1
-	for at := open + 1; at < len(symbol)-1; at++ {
-		switch symbol[at] {
-		case '<', '(', '[':
-			depth++
-		case '>', ')', ']':
-			depth--
-		case ',':
-			if depth == 0 {
-				parameters = append(parameters, strings.TrimSpace(symbol[start:at]))
-				start = at + 1
-			}
-		}
-	}
 
-	return append(parameters, strings.TrimSpace(symbol[start:len(symbol)-1]))
+	return t.target.Parameters
 }

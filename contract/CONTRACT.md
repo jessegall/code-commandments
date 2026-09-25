@@ -3,8 +3,9 @@
 Every language bridge — PHP, Vue, TypeScript, Python, C# — answers in this one shape, and the engine
 reads only this shape. A bridge is a small parser: it parses its language, and it writes what only that
 language's own compiler or checker can know. Everything else the engine derives itself, into the same
-fields, once it has read the stream. *Who fills it* says which is which. Version 2; a version 1 stream is the same contract without the Python
-extras `as`, `names` and `code` and the flag `elif`, and a reader of version 2 reads it too.
+fields, once it has read the stream. *Who fills it* says which is which. Version 3; a version 2 stream is the same contract without a target's
+`parameters`, a version 1 stream is version 2 without the Python extras `as`, `names` and `code` and the flag
+`elif`, and a reader of version 3 reads both.
 
 What the engine must be able to read is listed per engine in [`inventory/`](inventory/). The mapping
 from each of those facts to a field here is in [`COVERAGE.md`](COVERAGE.md). The machine-checked form
@@ -249,6 +250,7 @@ receiver's static type declares or inherits, nearest first. The receiver's own t
 | `symbol` | always | the symbol id of the declaration called |
 | `type` | a member | the id of the type that declares it |
 | `name` | always | the member's or function's name |
+| `parameters` | the bridge knows the bound method | the types of the parameters the call fills, in order, as bound at the call: a generic's arguments filled in, an extension method called on a receiver without its `this`; each spelled as a `resolved` type's `text` |
 
 ## Comments
 

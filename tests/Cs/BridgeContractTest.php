@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The Roslyn bridge's output is the contract bridge/roslyn/CONTRACT.md writes down: each file's tree,
  * node by node, with the facts the compiler resolved and nothing it did not. Run against the real
- * bridge; skipped where `dotnet` is not installed.
+ * bridge; skipped where its Docker image is not.
  */
 final class BridgeContractTest extends TestCase
 {
@@ -62,7 +62,7 @@ final class BridgeContractTest extends TestCase
     protected function setUp(): void
     {
         if (self::$read === null) {
-            $this->markTestSkipped('needs the dotnet SDK to build the Roslyn bridge');
+            $this->markTestSkipped(Bridge::missing());
         }
     }
 

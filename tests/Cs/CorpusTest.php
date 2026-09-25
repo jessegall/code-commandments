@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
  * The bridge and the engine against a real C# codebase: every file compiles without a syntax error,
  * every node lies inside its parent, and every identifier's byte span spells its name — the proof that
  * the offsets are UTF-8 bytes on real source, not UTF-16 code units. `CS_CORPUS=<dir>` points it at
- * another codebase to prove one before calibrating on it. Skipped where the corpus or `dotnet` is not.
+ * another codebase to prove one before calibrating on it. Skipped where the corpus or the bridge's Docker image is not.
  */
 final class CorpusTest extends TestCase
 {

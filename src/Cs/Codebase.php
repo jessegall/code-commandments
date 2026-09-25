@@ -15,8 +15,8 @@ use JesseGall\PhpTypes\Option;
 
 /**
  * The C# files of a project as the Roslyn bridge read them, behind the same selectors the other engines
- * answer. The bridge runs only in its Docker container; without Docker there is no bridge and so no C#: the
- * codebase is empty, and C# is not judged rather than failing the run.
+ * answer. The bridge runs only in its Docker container; without Docker or its image there is no bridge and so no C#:
+ * the codebase is empty, and C# is not judged rather than failing the run, with a warning that names the image.
  */
 final class Codebase implements ModuleCodebase
 {
@@ -82,7 +82,7 @@ final class Codebase implements ModuleCodebase
 
     /**
      * Every C# file under $path, read by the bridge $held keeps (one sought for this scan by default) —
-     * none when Docker is missing, and no bridge sought at all when there is no C# to read.
+     * none when there is no bridge, which the scan warns about, and no bridge sought at all when there is no C# to read.
      *
      * @param  string|list<string>  $path
      */
@@ -94,7 +94,15 @@ final class Codebase implements ModuleCodebase
             return new self([]);
         }
 
-        return $held->tool()->mapOr(new self([]), static fn (Bridge $bridge): self => self::read($bridge, (array) $path, $files));
+        $bridge = $held->tool();
+
+        if ($bridge->isNone()) {
+            fwrite(STDERR, '⚠ ' . count($files) . ' C# file(s) left unread — ' . Bridge::missing() . "\n");
+
+            return new self([]);
+        }
+
+        return self::read($bridge->unwrap(), (array) $path, $files);
     }
 
     /**

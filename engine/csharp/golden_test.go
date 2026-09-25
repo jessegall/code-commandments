@@ -151,11 +151,10 @@ func withoutArguments(name string) string {
 }
 
 // The PHP engine bound a call to the method as constructed (`List<String>.Add(String)`, an extension method without
-// its `this`); the tree names the original definition, so a call joins its declaration. The type is compared
-// without its arguments, and the parameters where the codebase declares the method, as the program reads them.
+// its `this`); the tree names the original definition, so a call joins its declaration, and carries the parameter
+// types as the call binds them. The type is compared without its arguments; the parameters as they are.
 func TestEveryCallReachesTheMethodThePhpEngineBindsItTo(t *testing.T) {
 	codebase := shop(t)
-	program := csharp.Of(codebase)
 	var want map[string]goldenTarget
 	golden(t, "targets", &want)
 	got := map[string]goldenTarget{}
@@ -165,11 +164,7 @@ func TestEveryCallReachesTheMethodThePhpEngineBindsItTo(t *testing.T) {
 			continue
 		}
 		wanted := want[at(node)]
-		answer := goldenTarget{Type: withoutArguments(target.Type()), Name: target.Name(), Parameters: wanted.Parameters}
-		if program.DeclarationOf(node).Exists() {
-			answer.Parameters = program.ParametersOf(node)
-		}
-		got[at(node)] = answer
+		got[at(node)] = goldenTarget{Type: withoutArguments(target.Type()), Name: target.Name(), Parameters: target.Parameters()}
 		want[at(node)] = goldenTarget{Type: withoutArguments(wanted.Type), Name: wanted.Name, Parameters: wanted.Parameters}
 	}
 	compare(t, "target", want, got)

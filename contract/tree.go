@@ -212,9 +212,10 @@ type TypeField struct {
 
 // Target is the declaration a call or construction reaches.
 type Target struct {
-	Symbol string `json:"symbol"`
-	Type   string `json:"type,omitempty"`
-	Name   string `json:"name"`
+	Symbol     string   `json:"symbol"`
+	Type       string   `json:"type,omitempty"`
+	Name       string   `json:"name"`
+	Parameters []string `json:"parameters,omitempty"`
 }
 
 // Comment is one comment, attached to the node it belongs to.
