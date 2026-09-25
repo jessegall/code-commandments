@@ -132,3 +132,45 @@ func IsEverProduced(codebase *engine.Codebase, class string, statically ...strin
 		return slices.Contains(statically, call.StaticCallMethod()) && program.IsA(call.StaticCallClass(), class)
 	}).Count() > 0
 }
+
+// IsPropertyFetchNamed says whether the node reads a property of that name.
+func (n Node) IsPropertyFetchNamed(name string) bool {
+	return isPropertyRead(n.Match) && n.Child("name").Kind() == "Identifier" && n.Child("name").Name() == name
+}
+
+// IsThisPropertyAssignment says whether the node assigns a named property of $this.
+func (n Node) IsThisPropertyAssignment() bool {
+	return n.Kind() == "Expr_Assign" && Node{Match: n.Child("var")}.IsOwnPropertyRead()
+}
+
+// AssignmentReferencesLocalVariable says whether the value an assignment assigns reads a variable other than $this.
+func (n Node) AssignmentReferencesLocalVariable() bool {
+	return n.Kind() == "Expr_Assign" && slices.ContainsFunc(withDescendants(n.Child("expr")), func(node engine.Match) bool {
+		return node.Kind() == "Expr_Variable" && node.Name() != "this"
+	})
+}
+
+// IsWithinBranch says whether a branch or a loop of its own function holds the node.
+func (n Node) IsWithinBranch() bool {
+	for at := n.Up(); at.Exists() && !at.IsFunctionLike(); at = at.Up() {
+		switch at.Kind() {
+		case "Stmt_If", "Expr_Match", "Expr_Ternary", "Stmt_Foreach", "Stmt_For", "Stmt_While", "Stmt_Do":
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasAttribute says whether the node carries an attribute by one of the short names.
+func (n Node) HasAttribute(shortNames ...string) bool {
+	return HasAttribute(n.Match, shortNames...)
+}
+
+// IsAttributeNamed says whether the node is an attribute resolving to the name, or ending in it.
+func (n Node) IsAttributeNamed(name string) bool {
+	want := strings.TrimLeft(name, `\`)
+	resolved := n.Child("name").Name()
+
+	return n.Kind() == "Attribute" && (resolved == want || ShortName(resolved) == want)
+}
