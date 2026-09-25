@@ -6,12 +6,21 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/detectors/backend"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 	"github.com/jessegall/code-commandments/fixture"
 )
 
 // tunings are the shop's own settings, as tests/Fixtures/backend/.commandments/config.php declares them for judge.
-var tunings []detectors.Tuning
+var tunings = []detectors.Tuning{
+	detectors.Tune(func(d backend.NamespaceDependencyDetector) backend.NamespaceDependencyDetector {
+		return d.
+			Layer(`Shop\Ui\Tokens`).
+			Layer(`Shop\Ui\Elements`, `Shop\Ui\Tokens`).
+			Layer(`Shop\Ui\Shared`, `Shop\Ui\Elements`, `Shop\Ui\Tokens`).
+			Layer(`Shop\Ui\Pages`, `Shop\Ui\Shared`, `Shop\Ui\Elements`, `Shop\Ui\Tokens`)
+	}),
+}
 
 // tuned is the detectors set as the shop's config sets them.
 func tuned(t *testing.T, registered []detectors.Detector) []detectors.Detector {
