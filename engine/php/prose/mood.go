@@ -107,3 +107,34 @@ func lowerFirst(name string) string {
 
 	return string(name[0]+'a'-'A') + name[1:]
 }
+
+// nonEntities are the words that open a name as grammar — a verb, a modal, a quantifier, a state — not as the
+// entity a group of fields describes.
+var nonEntities = []string{
+	"is", "are", "was", "be", "been", "has", "have", "had", "can", "could", "should", "would",
+	"will", "shall", "may", "might", "must", "do", "does", "did",
+	"no", "all", "any", "some", "each", "every", "none", "total", "sum", "count", "num", "min",
+	"max", "first", "last", "next", "prev", "only",
+	"add", "remove", "delete", "close", "open", "move", "copy", "import", "export", "discard",
+	"confirm", "cancel", "save", "load", "run", "sort", "filter", "toggle", "show", "hide", "get",
+	"set", "fetch", "send", "submit", "reset", "clear", "apply", "select", "edit", "update", "create",
+	"connect", "disconnect", "replay", "zoom", "scroll", "refresh", "pick",
+	"running", "booting", "loading", "pending", "unsaved", "empty", "used", "auto", "required",
+	"active", "enabled", "disabled", "dynamic", "advisory", "quick", "current",
+	"to", "of", "in", "on", "at", "by", "for", "with", "from",
+}
+
+// IsNonEntity says whether a name's leading word is grammar rather than an entity.
+func IsNonEntity(token string) bool {
+	return slices.Contains(nonEntities, strings.ToLower(token))
+}
+
+// LeadingToken is a camel-case name's leading run before its first capital.
+func LeadingToken(name string) string {
+	return leadingToken(name)
+}
+
+// AfterLeadingToken is what follows a camel-case name's leading run.
+func AfterLeadingToken(name string) string {
+	return name[len(leadingToken(name)):]
+}
