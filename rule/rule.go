@@ -253,14 +253,13 @@ func (s Step) check(match engine.Match) bool {
 	return false
 }
 
-// nameOf is the name a reader gives the node: its own, or, for a call or an access, the one its name child
-// carries.
+// nameOf is the name a reader gives the node: its own, or, for a call, the name it calls.
 func nameOf(match engine.Match) string {
 	if name := match.Name(); name != "" {
 		return name
 	}
 
-	return match.Child("name").Name()
+	return match.CalleeName()
 }
 
 func (s Step) subject(match engine.Match) engine.Match {

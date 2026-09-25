@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -25,7 +26,7 @@ const (
 	budget = 120_000
 )
 
-// SkillReminder checks what an edit changed against the rules that can judge one file, and names the skill
+// SkillReminder checks what an edit changed against the rules that can judge one file, the project's own among them, and names the skill
 // that teaches the fix of each finding it has not named before; a shell command's edits are the judged
 // files changed since the last look.
 type SkillReminder struct{}
@@ -51,6 +52,8 @@ func (SkillReminder) Handle(event Event) Response {
 	if err != nil {
 		return Silent()
 	}
+
+	enabled = append(enabled, custom.Load(event.Root).Enabled(project)...)
 
 	single := slices.DeleteFunc(enabled, func(detector detectors.Detector) bool {
 		_, wholeTree := detector.(detectors.WholeTree)
