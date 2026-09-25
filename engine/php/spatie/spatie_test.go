@@ -60,3 +60,45 @@ func orNil(text string) any {
 
 	return text
 }
+
+func TestTheSpatieConstructionPredicatesAnswerAsPhpDoes(t *testing.T) {
+	shop.Parity(t, "spatieconstructions", func(answer shop.Answer, node engine.Match) any {
+		var ask string
+		if err := json.Unmarshal(answer.Ask, &ask); err != nil {
+			t.Fatal(err)
+		}
+		data := Node{}.Decorate(node)
+		if ask == "field" {
+			return data.AlwaysHandBuiltAtConstruction()
+		}
+		var slot, factory any
+		if found, ok := data.HydrationSlot(); ok {
+			slot = []any{found.Owner, found.Property, orNil(found.DeclaredType), found.IsCollection, orNil(found.ElementType), found.ValueInList, found.DestHasCast}
+		}
+		if found, ok := data.MappedFactory(); ok {
+			factory = []any{found.Class, found.Method, orNil(found.ReturnsType), found.ClosesOverContext}
+		}
+
+		return map[string]any{
+			"slot":                        slot,
+			"isHandedConstructedData":     data.IsHandedConstructedData(),
+			"isPerItemHydration":          data.IsPerItemHydration(),
+			"isInlineProjection":          data.IsInlineProjection(),
+			"isConditionalConstruction":   data.IsConditionalConstruction(),
+			"isWithinTolerantCatch":       data.IsWithinTolerantCatch(),
+			"isKeyedMapAssignment":        data.IsKeyedMapAssignment(),
+			"isEnumUnwrapIntoItsOwnSlot":  data.IsEnumUnwrapIntoItsOwnSlot(),
+			"fromArgIsArrayLiteral":       data.FromArgIsArrayLiteral(),
+			"constructedClass":            orNil(data.ConstructedClass()),
+			"hydratesAnAutoBuiltSlot":     data.HydratesAnAutoBuiltSlot(),
+			"hydrationSlotHasCast":        data.HydrationSlotHasCast(),
+			"mappedFactory":               factory,
+			"mappedFactoryDerivesElement": data.MappedFactoryDerivesElement(),
+			"constructsNativeCastValue":   data.ConstructsNativeCastValue(),
+			"hasSingleArgument":           data.HasSingleArgument(),
+			"slotAcceptsNativeCast":       data.SlotAcceptsNativeCast(),
+			"isHandKeyRemap":              data.IsHandKeyRemap(),
+			"isRedundantToArrayRoundtrip": data.IsRedundantToArrayRoundtrip(),
+		}
+	})
+}

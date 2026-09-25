@@ -245,3 +245,57 @@ func ParamTypes(function engine.Match) map[string]string {
 
 	return types
 }
+
+// SharedFetchReceiver is the one receiver every element of an array literal reads a member of, when there are two or
+// more and all reach through the same path: `[$order->id, $order->total()]`.
+func SharedFetchReceiver(array engine.Match) (engine.Match, bool) {
+	var items []engine.Match
+	for _, item := range array.Children() {
+		if item.Node().Field == "items" {
+			items = append(items, item)
+		}
+	}
+	if len(items) < 2 {
+		return engine.Match{}, false
+	}
+	var receiver engine.Match
+	path := ""
+	for _, item := range items {
+		value := item.Child("value")
+		if item.Kind() != "ArrayItem" || !slices.Contains([]string{"Expr_PropertyFetch", "Expr_NullsafePropertyFetch", "Expr_MethodCall", "Expr_NullsafeMethodCall"}, value.Kind()) {
+			return engine.Match{}, false
+		}
+		here, ok := fetchPath(value.Child("var"))
+		switch {
+		case !ok:
+			return engine.Match{}, false
+		case path == "":
+			path, receiver = here, value.Child("var")
+		case here != path:
+			return engine.Match{}, false
+		}
+	}
+
+	return receiver, receiver.Exists()
+}
+
+// fetchPath is a member chain written out: `$order->customer->address()`.
+func fetchPath(expr engine.Match) (string, bool) {
+	switch expr.Kind() {
+	case "Expr_Variable":
+		return "$" + expr.Name(), expr.Name() != ""
+	case "Expr_PropertyFetch", "Expr_NullsafePropertyFetch", "Expr_MethodCall", "Expr_NullsafeMethodCall":
+		base, ok := fetchPath(expr.Child("var"))
+		name := expr.Child("name")
+		if !ok || name.Kind() != "Identifier" {
+			return "", false
+		}
+		if expr.Kind() == "Expr_MethodCall" || expr.Kind() == "Expr_NullsafeMethodCall" {
+			return base + "->" + name.Name() + "()", true
+		}
+
+		return base + "->" + name.Name(), true
+	}
+
+	return "", false
+}
