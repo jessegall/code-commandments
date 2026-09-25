@@ -31,6 +31,7 @@ func main() {
 	each := flag.Bool("each", false, "read each C# project folder alone")
 	heap := flag.String("heap", "", "write a heap profile of the loaded codebase here")
 	fields := flag.Bool("fields", false, "count how many nodes set each field")
+	judged := flag.String("judged", "", "write a heap profile once the detectors ran, the analyses they built still held")
 	flag.Parse()
 
 	if flag.NArg() != 1 {
@@ -48,7 +49,7 @@ func main() {
 
 	largest := reading{}
 	for _, part := range parts {
-		read, err := measure(part, *heap, *fields)
+		read, err := measure(part, *heap, *judged, *fields)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -59,7 +60,7 @@ func main() {
 		if read.heap > largest.heap {
 			largest = read
 		}
-		*heap = ""
+		*heap, *judged = "", ""
 	}
 
 	fmt.Printf("largest\t%s\npeak heap while judging\t%s\n", largest, mib(peak.Load()))
@@ -82,7 +83,7 @@ func (r reading) String() string {
 }
 
 // measure loads the path, weighs what it holds, then runs every detector over it.
-func measure(path, heap string, fields bool) (reading, error) {
+func measure(path, heap, judged string, fields bool) (reading, error) {
 	started := time.Now()
 	codebase, err := scan.Walk([]string{path}, source.Excluded{}).Load()
 	if err != nil {
@@ -116,6 +117,12 @@ func measure(path, heap string, fields bool) (reading, error) {
 		}
 		for _, detector := range detectors.Of(engine) {
 			detector.Find(codebase)
+		}
+	}
+	if judged != "" {
+		runtime.GC()
+		if err := profile(judged); err != nil {
+			return reading{}, err
 		}
 	}
 	runtime.KeepAlive(codebase)

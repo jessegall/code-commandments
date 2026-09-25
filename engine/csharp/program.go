@@ -1,6 +1,7 @@
 package csharp
 
 import (
+	"iter"
 	"slices"
 	"strconv"
 	"strings"
@@ -13,7 +14,7 @@ import (
 // Program is the C# part of a codebase read whole: the types, records, enums and methods it declares by symbol,
 // who calls each method, and the vocabularies its calls spell.
 type Program struct {
-	nodes        []Node
+	codebase     *engine.Codebase
 	types        map[string]Node
 	records      map[string]Node
 	enums        map[string][]string
@@ -33,19 +34,28 @@ func Of(codebase *engine.Codebase) *Program {
 }
 
 func build(codebase *engine.Codebase) *Program {
-	program := &Program{types: map[string]Node{}, records: map[string]Node{}, enums: map[string][]string{}, methods: map[string]Node{}, callers: map[string][]Node{}, keys: map[string][]int{}, handedOut: map[string]bool{}}
-	for _, file := range codebase.Of(contract.CSharp).Files() {
-		for _, match := range file.Match(0).Descendants() {
-			program.nodes = append(program.nodes, Node{match})
-		}
-	}
-	for _, node := range program.nodes {
+	program := &Program{codebase: codebase, types: map[string]Node{}, records: map[string]Node{}, enums: map[string][]string{}, methods: map[string]Node{}, callers: map[string][]Node{}, keys: map[string][]int{}, handedOut: map[string]bool{}}
+	for node := range program.all() {
 		program.enrol(node)
 	}
 	program.findHandedOut()
 	program.findVocabularies()
 
 	return program
+}
+
+// all is every node of every C# file, walked again each time: holding them for the run would hold a second
+// reference to every node the codebase already holds.
+func (p *Program) all() iter.Seq[Node] {
+	return func(yield func(Node) bool) {
+		for _, file := range p.codebase.Of(contract.CSharp).Files() {
+			for _, match := range file.Match(0).Descendants() {
+				if !yield(Node{match}) {
+					return
+				}
+			}
+		}
+	}
 }
 
 // enrol files the node under every index it belongs to.
@@ -116,7 +126,7 @@ func (n Node) isComparedAsACase() bool {
 // type the compiler gave the name.
 func (p *Program) findHandedOut() {
 	named := map[*contract.Node]bool{}
-	for _, node := range p.nodes {
+	for node := range p.all() {
 		switch {
 		case node.IsCall():
 			named[node.At(0).Node()] = true
@@ -124,7 +134,7 @@ func (p *Program) findHandedOut() {
 			named[node.At(1).Node()] = true
 		}
 	}
-	for _, node := range p.nodes {
+	for node := range p.all() {
 		if node.Is("IdentifierName", "SimpleMemberAccessExpression") && node.IsExpression() && !node.Type().Exists() && !named[node.Node()] {
 			p.handedOut[node.ReferencedName()] = true
 		}
@@ -135,7 +145,7 @@ func (p *Program) findHandedOut() {
 // call fills it with. A library method's parameter takes values from every vocabulary at once.
 func (p *Program) findVocabularies() {
 	p.vocabularies = map[string][]Node{}
-	for _, call := range p.nodes {
+	for call := range p.all() {
 		if !call.IsCall() || !call.Target().Exists() || !call.PassesByPosition() || !p.DeclarationOf(call).Exists() {
 			continue
 		}

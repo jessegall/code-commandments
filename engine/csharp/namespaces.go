@@ -19,7 +19,7 @@ func Namespaces(codebase *engine.Codebase) *NamespaceGraph {
 	return engine.Analysis(codebase, "csharp.namespaces", func(codebase *engine.Codebase) *NamespaceGraph {
 		graph := &NamespaceGraph{homes: map[string]string{}}
 		program := Of(codebase)
-		for _, node := range program.nodes {
+		for node := range program.all() {
 			if node.IsTypeDeclaration() {
 				graph.homes[typeKey(node.Symbol())] = node.Parent().namespaceAround()
 			}
