@@ -437,7 +437,7 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 	parallel := defaultParallel
 
 	if value, set := in.Option("parallel"); set {
-		parallel, _ = strconv.Atoi(value)
+		parallel = cli.Intval(value)
 	}
 
 	var targets []string

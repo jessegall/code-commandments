@@ -9,6 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/engine"
 )
 
 // Command is `freeze` and `unfreeze`.
@@ -49,7 +50,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 }
 
 func freeze(path, contents string, console cli.Console) (int, error) {
-	if strings.Contains(contents, source.FileMarker) {
+	if strings.Contains(contents, engine.FrozenMarker) {
 		return console.Say("\033[2mAlready frozen: " + path + "\033[0m"), nil
 	}
 
@@ -61,14 +62,14 @@ func freeze(path, contents string, console cli.Console) (int, error) {
 }
 
 func unfreeze(path, contents string, console cli.Console) (int, error) {
-	if !strings.Contains(contents, source.FileMarker) {
+	if !strings.Contains(contents, engine.FrozenMarker) {
 		return console.Say("\033[2mNot frozen: " + path + "\033[0m"), nil
 	}
 
 	var kept []string
 
 	for _, line := range strings.Split(contents, "\n") {
-		if !strings.Contains(line, source.FileMarker) {
+		if !strings.Contains(line, engine.FrozenMarker) {
 			kept = append(kept, line)
 		}
 	}
@@ -83,7 +84,7 @@ func unfreeze(path, contents string, console cli.Console) (int, error) {
 // stamped is the source with the freeze stamp as its first line, or its second after PHP's opening line or
 // a shebang.
 func stamped(contents string, language source.Language) string {
-	stamp := language.Comment(source.FileMarker + " — deliberately immutable; excluded from code-commandments " +
+	stamp := language.Comment(engine.FrozenMarker + " — deliberately immutable; excluded from code-commandments " +
 		"judging & repent (run `commandments unfreeze` to lift).")
 
 	if language != source.PHP && !strings.HasPrefix(contents, "#!") {

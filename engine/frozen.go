@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"bytes"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -53,6 +54,22 @@ func (f *File) IsFrozen() bool {
 	}
 
 	return isGenerated(language, f.Path, string(source))
+}
+
+// MayBeFrozen says whether a file could be frozen at all: its text names a freeze, or it is C#, which a build
+// may write. A file it rules out need not be parsed to be asked.
+func MayBeFrozen(path string, source []byte) bool {
+	return languageOfPath(path) == contract.CSharp ||
+		bytes.Contains(bytes.ToLower(source), []byte("frozen")) ||
+		bytes.Contains(source, []byte(GeneratedMarker))
+}
+
+// FreezeReadsATree says whether the file's language declares a freeze in its syntax, so asking needs its parsed
+// tree rather than its lines alone.
+func FreezeReadsATree(path string) bool {
+	_, declared := freezers[languageOfPath(path)]
+
+	return declared
 }
 
 // languageOfPath is the language a path's extension names, PHP when it names none.

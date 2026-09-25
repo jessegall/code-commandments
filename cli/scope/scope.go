@@ -14,6 +14,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
@@ -312,8 +313,7 @@ func (f *Frozen) Includes(file string) bool {
 		return !frozen.(bool)
 	}
 
-	raw, _ := os.ReadFile(real)
-	frozen := source.IsFrozenFile(real, string(raw))
+	frozen := scan.IsFrozen(real)
 	f.seen.Store(real, frozen)
 
 	return !frozen
