@@ -64,6 +64,11 @@ func All() []Skill {
 	return skills.All()
 }
 
+// Every is every skill registered under one engine, unpublished ones included.
+func Every(engine catalog.Engine) []Skill {
+	return skills.Every(engine)
+}
+
 // Of is every published skill of one engine.
 func Of(engine catalog.Engine) []Skill {
 	return skills.Of(engine)

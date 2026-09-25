@@ -3,4 +3,14 @@
 // Package registry enrols every shipped rule: importing it registers each sin, skill and detector.
 package registry
 
-import ()
+import (
+	_ "github.com/jessegall/code-commandments/sins/backend"
+	_ "github.com/jessegall/code-commandments/sins/backend/concurrent"
+	_ "github.com/jessegall/code-commandments/sins/backend/laravel"
+	_ "github.com/jessegall/code-commandments/sins/backend/phptypes"
+	_ "github.com/jessegall/code-commandments/sins/backend/spatie"
+	_ "github.com/jessegall/code-commandments/skill/backend"
+	_ "github.com/jessegall/code-commandments/skill/backend/concurrent"
+	_ "github.com/jessegall/code-commandments/skill/backend/laravel"
+	_ "github.com/jessegall/code-commandments/skill/backend/spatie"
+)

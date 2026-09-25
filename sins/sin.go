@@ -71,6 +71,11 @@ func All() []Sin {
 	return sins.All()
 }
 
+// Every is every sin registered under one engine, unpublished ones included.
+func Every(engine catalog.Engine) []Sin {
+	return sins.Every(engine)
+}
+
 // Of is every published sin of one engine.
 func Of(engine catalog.Engine) []Sin {
 	return sins.Of(engine)

@@ -1,0 +1,164 @@
+package spatie
+
+import (
+	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/skill"
+)
+
+// SpatieDataHydration is the backend/spatie-data-hydration discipline.
+type SpatieDataHydration struct{}
+
+func init() { skill.Register(catalog.Backend, SpatieDataHydration{}) }
+
+// Definition is what the skill states about itself.
+func (SpatieDataHydration) Definition() skill.Definition {
+	return skill.Definition{
+		Slug:    "backend/spatie-data-hydration",
+		Tier:    skill.Mandatory,
+		Order:   4,
+		Title:   "Spatie Data — feed the framework, don't hand-build",
+		Trigger: `How to CONSTRUCT and CONSUME a Spatie ` + "`" + `Data` + "`" + ` object at a call site without re-doing work the class already declares — the nested ` + "`" + `X::from([...])` + "`" + ` the parent would hydrate, the ` + "`" + `Enum::from($x)` + "`" + `/` + "`" + `new DateTime($x)` + "`" + ` a property already casts, the ` + "`" + `array_map` + "`" + ` filling a ` + "`" + `#[DataCollectionOf]` + "`" + `, the hand-rolled ` + "`" + `toArray()` + "`" + `, the ` + "`" + `#[Computed]` + "`" + ` field computed at the call site, the keys remapped by hand. Read this whenever you write or review a ` + "`" + `::from([...])` + "`" + ` array, a hydrator, or a call that fills a ` + "`" + `Data` + "`" + ` object.`,
+		Intro: `A ` + "`" + `Data` + "`" + ` object hydrates itself: ` + "`" + `::from([...])` + "`" + ` builds nested ` + "`" + `Data` + "`" + `, ` + "`" + `#[DataCollectionOf]` + "`" + `
+collections, and enum/date casts straight from a plain array. Feed it the **simplest input** and let it
+build. The moment you re-create a nested type, a cast, or a derivation at the call site, you've duplicated
+the mapping the class owns — and coupled every caller to it.`,
+		Summary: `construct and consume ` + "`" + `Data` + "`" + ` objects without re-doing what the class declares — pass raw input, let ` + "`" + `::from` + "`" + `/casts/collections build.`,
+		Principle: `The sibling skill [` + "`" + `spatie-data` + "`" + `](../spatie-data/SKILL.md) teaches how to *author* a ` + "`" + `Data` + "`" + ` class. This one
+teaches how to *feed* it. They share one root: the ` + "`" + `Data` + "`" + ` class is a declarative machine — ` + "`" + `::from()` + "`" + `,
+` + "`" + `::collect()` + "`" + `, casts, ` + "`" + `#[DataCollectionOf]` + "`" + `, ` + "`" + `#[Computed]` + "`" + `, and name mappers already do the array↔object
+work. A **call site** that re-does any of it by hand is redundant, and it duplicates a mapping that should
+live in exactly one place — the class.
+
+### The one rule: pass the simplest input the class can build from
+
+` + "`" + `::from([...])` + "`" + ` runs the whole pipeline **recursively**. Every value in that array is fed to the matching
+property through its own hydration — nested ` + "`" + `Data` + "`" + `, typed collection, enum, or date. So the value you write
+should be the **raw material**, not the finished object.
+
+### Nested ` + "`" + `Data` + "`" + ` and collections auto-hydrate — don't wrap them
+
+A property typed as a nested ` + "`" + `Data` + "`" + ` builds itself from a plain array; a ` + "`" + `#[DataCollectionOf(E)]` + "`" + ` builds each
+element from an array. So ` + "`" + `X::from([...])` + "`" + ` sitting in a parent ` + "`" + `::from` + "`" + ` array is pure ceremony:
+
+- ` + "`" + `'sandbox' => ConsoleSandboxCopy::from(['label' => 'x'])` + "`" + ` → just ` + "`" + `'sandbox' => ['label' => 'x']` + "`" + `.
+- ` + "`" + `'modes' => [Mode::from([...]), Mode::from([...])]` + "`" + ` → just ` + "`" + `'modes' => [[...], [...]]` + "`" + `.
+
+Pass the array; the parent nests it. (The one-argument, array-literal form is the redundant one — an
+**object** source like ` + "`" + `X::from($model)` + "`" + ` is a real conversion, not this sin.)
+
+### Enums and dates auto-cast — pass the scalar
+
+Spatie casts enums (native) and ` + "`" + `DateTimeInterface` + "`" + ` (built-in) straight from their raw value. So constructing
+them at a hydration site is redundant:
+
+- ` + "`" + `'status' => WorkflowRunStatus::from($raw)` + "`" + ` → just ` + "`" + `'status' => $raw` + "`" + `.
+
+(A ` + "`" + `tryFrom` + "`" + `, or a ` + "`" + `new DateTime($x, $tz)` + "`" + ` / ` + "`" + `createFromFormat(...)` + "`" + ` that carries a timezone or format the
+default cast wouldn't reproduce, is **not** redundant — those change the semantics.)
+
+### A derivation belongs in a cast, not a call-site ` + "`" + `array_map` + "`" + `
+
+When each element is **derived** from a simpler value through a factory — ` + "`" + `array_map(E::for($enum), $cases)` + "`" + ` —
+auto-hydration can't help (the input isn't the element's array shape). But a **cast** can: a ` + "`" + `#[WithCast]` + "`" + `
+(or per-item ` + "`" + `IterableItemCast` + "`" + `) on the collection property owns the ` + "`" + `enum → E` + "`" + ` derivation once, and every
+caller just passes the raw list. A factory that closes over services/` + "`" + `$this` + "`" + ` can't move into a per-item cast,
+so it stays at the call site — that's the boundary of this rule.
+
+### Don't build a ` + "`" + `Data` + "`" + ` only to discard it
+
+Building ` + "`" + `X::from([...])->toArray()` + "`" + ` constructs a typed object just to flatten it back to an array — either
+pass the source array, or type the receiving slot as ` + "`" + `X` + "`" + ` and pass the object. And to serialize a ` + "`" + `Data` + "`" + `
+object, call ` + "`" + `->toArray()` + "`" + ` — never hand-write ` + "`" + `['a' => $d->a, 'b' => $d->b, …]` + "`" + `, which silently drifts from
+the class the moment a field is added.
+
+### Derive and map on the class, not the caller
+
+A field that is a pure function of other fields is a ` + "`" + `#[Computed]` + "`" + ` property — computed once in the class, not
+recomputed at every construction site. A boundary that renames keys (snake ↔ camel) is one class-level
+` + "`" + `#[MapInputName(SnakeCaseMapper::class)]` + "`" + ` — not a hand-written translation array at each ` + "`" + `::from` + "`" + `.`,
+		Languages: []string{"php"},
+		Related: []skill.Related{
+			{Slug: "backend/spatie-data", Reason: `the sibling: how to AUTHOR the ` + "`" + `Data` + "`" + ` class this skill teaches you to feed — types, ` + "`" + `::from` + "`" + ` vs ` + "`" + `new` + "`" + `, declaring casts/collections.`},
+		},
+		References: []skill.Reference{
+			{Name: "mechanics", Title: "Spatie Data hydration mechanics", Body: `The exact APIs behind the rules — what to reach for when you apply a fix.
+
+## What hydrates automatically (never build it by hand)
+
+` + "`" + `::from([...])` + "`" + ` runs recursively and builds these from a plain array with **no** call-site work:
+
+| Property shape | Raw input it accepts |
+|---|---|
+| a nested ` + "`" + `Data` + "`" + ` (` + "`" + `public Sandbox $box` + "`" + `) | a nested array ` + "`" + `['box' => ['label' => 'x']]` + "`" + ` |
+| ` + "`" + `#[DataCollectionOf(E)] public array $items` + "`" + ` | an array of arrays ` + "`" + `['items' => [[...], [...]]]` + "`" + ` |
+| a backed **enum** (` + "`" + `public Status $status` + "`" + `) | the backing scalar ` + "`" + `['status' => 'open']` + "`" + ` |
+| a ` + "`" + `DateTimeInterface` + "`" + ` (` + "`" + `public Carbon $at` + "`" + `) | a date string ` + "`" + `['at' => '2024-01-01']` + "`" + ` (built-in ` + "`" + `DateTimeInterfaceCast` + "`" + `) |
+
+So a nested ` + "`" + `E::from([...])` + "`" + `, an ` + "`" + `Enum::from($x)` + "`" + `, or a ` + "`" + `new DateTime($x)` + "`" + ` at a hydration site is redundant.
+
+## Custom casts — for a DERIVATION the framework can't guess
+
+A ` + "`" + `Cast` + "`" + ` turns a **simpler input** into a complex property value during ` + "`" + `::from()` + "`" + `. Reach for one when the
+raw value isn't the property's own array shape — e.g. an enum mapped to a rich ` + "`" + `Data` + "`" + `, a value object built
+from a scalar.
+
+` + "`" + `` + "`" + `` + "`" + `php
+final class StatusStyleCast implements \Spatie\LaravelData\Casts\Cast
+{
+    public function cast(DataProperty $property, mixed $value, array $properties, CreationContext $context): mixed
+    {
+        return ConsoleStatusStyle::for($value);   // $value is the raw enum; never null
+    }
+}
+` + "`" + `` + "`" + `` + "`" + `
+
+Attach it, and pass the raw list at the call site:
+
+` + "`" + `` + "`" + `` + "`" + `php
+#[WithCast(StatusStyleCast::class)]
+public array $statuses;   // NB: a #[WithCast] property cannot be ` + "`" + `readonly` + "`" + ` — the framework injects after construction
+` + "`" + `` + "`" + `` + "`" + `
+
+- **Per-item casts for a collection:** implement ` + "`" + `Cast` + "`" + ` **and** ` + "`" + `IterableItemCast` + "`" + `, and enable the feature
+  in ` + "`" + `config/data.php` + "`" + `: ` + "`" + `'features' => ['cast_and_transform_iterables' => true]` + "`" + `. Then ` + "`" + `castIterableItem` + "`" + `
+  runs once per element — the home for ` + "`" + `array_map(E::for(...), $xs)` + "`" + `.
+- **` + "`" + `Castable` + "`" + ` value object:** instead of a separate cast class, a value object can implement ` + "`" + `Castable` + "`" + `
+  with a static ` + "`" + `castUsing(array $arguments): Cast` + "`" + `, so ` + "`" + `#[WithCast]` + "`" + ` isn't needed at each use.
+- **Don't** write a cast for a nested ` + "`" + `Data` + "`" + ` (it auto-hydrates) or a plain scalar.
+
+## ` + "`" + `#[Computed]` + "`" + ` — a field derived from other fields
+
+Compute it once in the constructor, never at every call site:
+
+` + "`" + `` + "`" + `` + "`" + `php
+#[Computed]
+public string $fullName;
+
+public function __construct(public string $first, public string $last)
+{
+    $this->fullName = "{$this->first} {$this->last}";
+}
+` + "`" + `` + "`" + `` + "`" + `
+
+You must **not** pass a computed value into ` + "`" + `::from()` + "`" + ` — a ` + "`" + `CannotSetComputedValue` + "`" + ` is thrown. It isn't
+re-evaluated when its inputs change; build a new object to update it.
+
+## Name mapping — one class-level mapper, not a hand-remap
+
+For a snake_case boundary, one attribute maps every property — never a translation array at the call site:
+
+` + "`" + `` + "`" + `` + "`" + `php
+#[MapInputName(SnakeCaseMapper::class)]   // input only; #[MapName(...)] maps both directions
+final class ContractData extends Data { /* camelCase properties */ }
+` + "`" + `` + "`" + `` + "`" + `
+
+Or set it app-wide in ` + "`" + `config/data.php` + "`" + ` under ` + "`" + `name_mapping_strategy` + "`" + `.
+
+## Serialization — ` + "`" + `toArray()` + "`" + `, never a hand-rolled array
+
+` + "`" + `toArray()` + "`" + ` already flattens nested ` + "`" + `Data` + "`" + `, collections, enums, and dates. Building ` + "`" + `X::from([...])->toArray()` + "`" + `
+round-trips for nothing, and a hand-written ` + "`" + `['a' => $d->a, …]` + "`" + ` drifts from the class the moment a field is
+added. Call ` + "`" + `$d->toArray()` + "`" + `.`},
+		},
+	}
+}
