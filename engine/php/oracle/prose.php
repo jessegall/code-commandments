@@ -1,7 +1,8 @@
 <?php
 
 /**
- * Writes what the PHP tool reads in comment text, for every comment in a tree and every line of prose-probes.txt:
+ * Writes what the PHP tool reads in comment text, for every comment in a tree and every line of prose-probes.txt,
+ * and in method names, for every function name in the tree and every name in name-probes.txt:
  * php prose.php <root> > prose.json
  */
 
@@ -12,18 +13,28 @@ namespace CodeCommandments\Oracle;
 use JesseGall\CodeCommandments\Ast\Support\CommentedCode;
 use JesseGall\CodeCommandments\Ast\Support\Docblock;
 use JesseGall\CodeCommandments\Support\Prose;
+use JesseGall\CodeCommandments\Support\VerbMood;
 
 require __DIR__ . '/../../../vendor/autoload.php';
 require __DIR__ . '/../../../bridge/php/src/Sources.php';
 
 $texts = [];
+$names = file(__DIR__ . '/name-probes.txt', FILE_IGNORE_NEW_LINES);
 foreach (\CodeCommandments\PhpBridge\Sources::in([$argv[1]]) as $path) {
+    $function = false;
     foreach (\PhpToken::tokenize((string) file_get_contents($path)) as $token) {
         if ($token->is([T_COMMENT, T_DOC_COMMENT])) {
             $texts[] = rtrim($token->text, "\r\n");
         }
+        if ($function && $token->is(T_STRING)) {
+            $names[] = $token->text;
+        }
+        if (! $token->is([T_WHITESPACE, T_COMMENT, T_DOC_COMMENT, T_AMPERSAND_NOT_FOLLOWED_BY_VAR_OR_VARARG])) {
+            $function = $token->is(T_FUNCTION);
+        }
     }
 }
+$names = array_values(array_unique($names));
 foreach (file(__DIR__ . '/prose-probes.txt', FILE_IGNORE_NEW_LINES) as $line) {
     $texts[] = $line;
 }
@@ -41,7 +52,7 @@ foreach (file(__DIR__ . '/prose-probes.txt', FILE_IGNORE_NEW_LINES) as $line) {
 }
 $texts = array_values(array_unique($texts));
 
-echo json_encode(array_map(static function (string $text): array {
+$readings = array_map(static function (string $text): array {
     preg_match_all('/\{@(?:see|link)\s+\\\\?([A-Za-z_][\w\\\\]*\\\\[\w\\\\]+)/', $text, $references);
     $lines = array_map(static fn (string $line) => trim(ltrim(trim($line), '/*')), preg_split('/\R/', $text) ?: []);
 
@@ -55,4 +66,13 @@ echo json_encode(array_map(static function (string $text): array {
         'references' => array_values(array_unique($references[1])),
         'paragraphs' => Prose::paragraphs($lines, static fn (string $line): bool => ! str_starts_with($line, '@')),
     ];
-}, $texts), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n";
+}, $texts);
+
+$moods = array_map(static fn (string $name): array => [
+    'name' => $name,
+    'question' => VerbMood::readsAsQuestion($name),
+    'thirdPerson' => VerbMood::isThirdPerson($name),
+    'relational' => VerbMood::isRelationalCompound($name),
+], $names);
+
+echo json_encode(['texts' => $readings, 'names' => $moods], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) . "\n";

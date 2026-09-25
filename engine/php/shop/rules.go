@@ -165,11 +165,24 @@ type ProseReading struct {
 	Paragraphs int      `json:"paragraphs"`
 }
 
-var readings = sync.OnceValues(func() ([]ProseReading, error) {
-	var loaded []ProseReading
+// MoodReading is what the PHP tool reads in one method name.
+type MoodReading struct {
+	Name        string `json:"name"`
+	Question    bool   `json:"question"`
+	ThirdPerson bool   `json:"thirdPerson"`
+	Relational  bool   `json:"relational"`
+}
+
+type proseReadings struct {
+	Texts []ProseReading `json:"texts"`
+	Names []MoodReading  `json:"names"`
+}
+
+var readings = sync.OnceValues(func() (proseReadings, error) {
+	var loaded proseReadings
 	content, err := os.ReadFile(filepath.Join(Testdata(), "prose.json"))
 	if err != nil {
-		return nil, err
+		return loaded, err
 	}
 
 	return loaded, json.Unmarshal(content, &loaded)
@@ -183,5 +196,16 @@ func PhpProse(t testing.TB) []ProseReading {
 		t.Fatalf("the committed prose readings do not load (run go generate ./engine/php): %v", err)
 	}
 
-	return loaded
+	return loaded.Texts
+}
+
+// PhpMoods is what the PHP tool reads in every function name of the shop and every probe name.
+func PhpMoods(t testing.TB) []MoodReading {
+	t.Helper()
+	loaded, err := readings()
+	if err != nil {
+		t.Fatalf("the committed prose readings do not load (run go generate ./engine/php): %v", err)
+	}
+
+	return loaded.Names
 }

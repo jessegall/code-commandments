@@ -96,3 +96,15 @@ func orEmpty(names []string) []string {
 
 	return names
 }
+
+func TestAMethodOverridesWhatPhpSaysItOverrides(t *testing.T) {
+	program := ProgramOf(shop.Codebase(t))
+	shop.Parity(t, "overrides", func(answer shop.Answer, _ engine.Match) any {
+		var asked [2]string
+		if err := json.Unmarshal(answer.Ask, &asked); err != nil {
+			t.Fatal(err)
+		}
+
+		return program.OverridesMethod(asked[0], asked[1])
+	})
+}
