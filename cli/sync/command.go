@@ -77,7 +77,7 @@ func Sync(root string, console cli.Console) error {
 	}
 
 	canon := agents.InstructionsAt(filepath.Join(root, "AGENTS.md"), root)
-	warn(console, canon.Inject(BriefingBlock, library.Briefing(project)))
+	warn(console, canon.Inject(BriefingBlock, library.Briefing(root, project)))
 
 	for _, agent := range kept {
 		wire(root, agent, lib, published, canon, console)

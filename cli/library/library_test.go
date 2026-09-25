@@ -129,3 +129,36 @@ func tree(t *testing.T, project string) map[string]string {
 
 	return files
 }
+
+func TestAProjectsOwnSkillIsPublishedAndBriefedAsItsOwn(t *testing.T) {
+	project := t.TempDir()
+	dir := filepath.Join(project, ".commandments", "custom", "skills", "no-raw-sql")
+
+	if err := os.MkdirAll(filepath.Join(dir, "reference"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	skill := "---\nname: No raw SQL\ndescription: before a query.\nsummary: queries go through the repository.\ntier: mandatory\nlanguages: [php]\n---\n# No raw SQL\n"
+	os.WriteFile(filepath.Join(dir, "SKILL.md"), []byte(skill), 0o644)
+	os.WriteFile(filepath.Join(dir, "reference", "examples.md"), []byte("examples"), 0o644)
+
+	ids, err := At(project, config.Config{DisabledLanguages: []source.Language{source.CSharp}}).Publish()
+	if err != nil || ids[len(ids)-1] != "commandments-no-raw-sql" {
+		t.Fatalf("%v %v", ids, err)
+	}
+
+	for file, want := range map[string]string{"SKILL.md": skill, "reference/examples.md": "examples"} {
+		if got, _ := os.ReadFile(filepath.Join(project, Dir, "commandments-no-raw-sql", file)); string(got) != want {
+			t.Errorf("%s published as %q", file, got)
+		}
+	}
+
+	bullet := "- **`commandments-no-raw-sql`** — queries go through the repository. _(this project's own — `.commandments/custom/`)_"
+	if briefing := Briefing(project, config.Config{}); !strings.Contains(briefing, bullet) {
+		t.Errorf("the briefing does not name the project's own skill")
+	}
+
+	if briefing := Briefing(project, config.Config{DisabledLanguages: []source.Language{source.PHP}}); strings.Contains(briefing, "no-raw-sql") {
+		t.Errorf("a skill for a language the project does not write is briefed")
+	}
+}

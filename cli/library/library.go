@@ -15,6 +15,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/skills"
@@ -56,7 +57,7 @@ func (l Library) Path(id string) string {
 func (l Library) Publish() ([]string, error) {
 	var ids []string
 
-	if written(atomic.Write(filepath.Join(l.Path(MapID), "SKILL.md"), Map(l.project))) {
+	if written(atomic.Write(filepath.Join(l.Path(MapID), "SKILL.md"), Map(l.root, l.project))) {
 		ids = append(ids, MapID)
 	}
 
@@ -77,6 +78,14 @@ func (l Library) Publish() ([]string, error) {
 	for _, slug := range standalone() {
 		if copied(slug, l.Path(skill.IDFor(slug))) {
 			ids = append(ids, skill.IDFor(slug))
+		}
+	}
+
+	for _, own := range custom.Load(l.root).Skills {
+		id := own.Definition().ID()
+
+		if len(Written([]skill.Skill{own}, l.project)) > 0 && copiedFrom(os.DirFS(own.Dir), ".", l.Path(id)) {
+			ids = append(ids, id)
 		}
 	}
 
@@ -131,20 +140,31 @@ func standalone() []string {
 
 // copied copies the embedded folder into to, recursively, and says whether every file arrived.
 func copied(from, to string) bool {
+	return copiedFrom(skills.Files, from, to)
+}
+
+// copiedFrom copies the folder from, in the file system files, into to, recursively, and says whether every
+// file arrived.
+func copiedFrom(files fs.FS, from, to string) bool {
 	all := true
 
-	err := fs.WalkDir(skills.Files, from, func(name string, entry fs.DirEntry, err error) error {
+	err := fs.WalkDir(files, from, func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		target := filepath.Join(to, filepath.FromSlash(strings.TrimPrefix(strings.TrimPrefix(name, from), "/")))
+		relative := name
+		if from != "." {
+			relative = strings.TrimPrefix(strings.TrimPrefix(name, from), "/")
+		}
+
+		target := filepath.Join(to, filepath.FromSlash(relative))
 
 		if entry.IsDir() {
 			return os.MkdirAll(target, 0o775)
 		}
 
-		contents, err := fs.ReadFile(skills.Files, name)
+		contents, err := fs.ReadFile(files, name)
 		if err != nil || os.WriteFile(target, contents, 0o644) != nil {
 			all = false
 		}

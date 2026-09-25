@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -25,18 +26,20 @@ const mapTrigger = "The index of this project's architectural disciplines — ev
 //go:embed briefing.md
 var briefing string
 
-// Briefing is the canon every agent in the project is handed: how the skills are loaded, the rule they
-// all serve, and the disciplines the project can use, tier by tier.
-func Briefing(project config.Config) string {
+// Briefing is the canon every agent in the project at root is handed: how the skills are loaded, the rule
+// they all serve, and the disciplines the project can use, tier by tier, its own among them.
+func Briefing(root string, project config.Config) string {
+	own := custom.Load(root).Skills
+
 	return strings.NewReplacer(
 		"{{library}}", Dir,
-		"{{mandatory}}", bullets(skill.Mandatory, project),
-		"{{keepInMind}}", bullets(skill.KeepInMind, project),
+		"{{mandatory}}", bullets(skill.Mandatory, project, own),
+		"{{keepInMind}}", bullets(skill.KeepInMind, project, own),
 	).Replace(briefing)
 }
 
 // Map is the SKILL.md of the map skill: the briefing under a front matter that says when to load it.
-func Map(project config.Config) string {
+func Map(root string, project config.Config) string {
 	var description bytes.Buffer
 
 	encoder := json.NewEncoder(&description)
@@ -45,14 +48,23 @@ func Map(project config.Config) string {
 
 	return "---\nname: " + MapID + "\ndescription: " + strings.TrimSuffix(description.String(), "\n") + "\n---\n\n" +
 		"# Code Commandments — the disciplines in force here\n\n" +
-		Briefing(project) + "\n"
+		Briefing(root, project) + "\n"
 }
 
-func bullets(tier skill.Tier, project config.Config) string {
+// ownMark follows the bullet of a skill the project wrote itself.
+const ownMark = " _(this project's own — `.commandments/custom/`)_"
+
+func bullets(tier skill.Tier, project config.Config, own []custom.Skill) string {
 	var lines []string
 
 	for _, each := range Written(skill.InTier(tier), project) {
 		lines = append(lines, each.Definition().Bullet())
+	}
+
+	for _, each := range own {
+		if each.Definition().Tier == tier && len(Written([]skill.Skill{each}, project)) > 0 {
+			lines = append(lines, each.Definition().Bullet()+ownMark)
+		}
 	}
 
 	return strings.Join(lines, "\n")
