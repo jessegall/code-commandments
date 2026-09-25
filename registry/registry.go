@@ -13,6 +13,7 @@ import (
 	_ "github.com/jessegall/code-commandments/detectors/python"
 	_ "github.com/jessegall/code-commandments/detectors/typescript"
 	_ "github.com/jessegall/code-commandments/published/spatie"
+	_ "github.com/jessegall/code-commandments/published/typescript"
 	_ "github.com/jessegall/code-commandments/sins/backend"
 	_ "github.com/jessegall/code-commandments/sins/backend/concurrent"
 	_ "github.com/jessegall/code-commandments/sins/backend/laravel"

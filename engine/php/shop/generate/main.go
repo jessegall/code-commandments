@@ -37,6 +37,13 @@ func generate() error {
 	if err := zipped(filepath.Join(testdata, "shop.jsonl.gz"), stream); err != nil {
 		return err
 	}
+	frontend, err := run("node", filepath.Join(shop.Repository(), "bridge", "frontend", "dist", "bridge.mjs"), "--rename="+shop.Fixture()+"="+shop.Root, shop.Fixture())
+	if err != nil {
+		return err
+	}
+	if err := zipped(filepath.Join(testdata, "shop-frontend.jsonl.gz"), frontend); err != nil {
+		return err
+	}
 	written, err := os.MkdirTemp("", "oracle")
 	if err != nil {
 		return err

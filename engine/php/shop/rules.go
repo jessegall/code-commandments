@@ -106,7 +106,7 @@ func PhpRules(t testing.TB) Rules {
 // each as often.
 func SameFindings(t *testing.T, ported ...detectors.Detector) {
 	t.Helper()
-	codebase := Codebase(t)
+	codebase := Project(t)
 	expected := map[string]map[string]int{}
 	for _, answer := range Answers(t, "findings") {
 		var detector string

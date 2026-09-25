@@ -1,5 +1,5 @@
-// Command findings runs every backend detector over a PHP project and prints what each finds, to hold the Go port
-// to the PHP tool on a real codebase: go run ./engine/php/cmd/findings [--spans] <project> [path...]
+// Command findings runs every backend detector over a PHP project, its frontend read beside it as judge reads it,
+// and prints what each finds, to hold the Go port to the PHP tool on a real codebase: go run ./engine/php/cmd/findings [--spans] <project> [path...]
 //
 // Each line is file:line, the detector and its sin, sorted. With --spans each is the file, the span and the kind of
 // the node flagged, and the detector, which is what the PHP oracle's findings question records.
@@ -16,6 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php"
 	_ "github.com/jessegall/code-commandments/registry"
 )
@@ -35,10 +36,16 @@ func main() {
 	if len(paths) == 0 {
 		paths = []string{root}
 	}
-	codebase, err := php.Here().Scan(paths...)
+	backend, err := php.Here().Stream(paths...)
 	if err != nil {
 		fail(err)
 	}
+	frontend, err := frontend.Here().Stream(paths...)
+	if err != nil {
+		fail(err)
+	}
+	codebase := engine.Load(backend, frontend)
+	php.TypesOf(codebase).Fill(codebase)
 	var lines []string
 	for _, detector := range InForce(root) {
 		for _, finding := range detector.Find(codebase) {

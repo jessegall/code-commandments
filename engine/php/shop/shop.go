@@ -46,7 +46,7 @@ func Testdata() string {
 // inputs are what the committed files are generated from, folders and files: the fixture, the PHP tool the oracle
 // asks (its engine, and the rules whose findings and definitions it records), the lock that pins php-parser, the
 // bridge and the oracle. A change to any makes them stale.
-var inputs = []string{"tests/Fixtures/backend", "src", "composer.lock", "bridge/php", "engine/php/oracle"}
+var inputs = []string{"tests/Fixtures/backend", "src", "composer.lock", "bridge/php", "bridge/frontend/dist", "engine/php/oracle"}
 
 // Digest is the hash of every source the committed files are generated from.
 func Digest() (string, error) {
@@ -54,7 +54,7 @@ func Digest() (string, error) {
 	for _, input := range inputs {
 		var paths []string
 		err := filepath.WalkDir(filepath.Join(Repository(), input), func(path string, entry fs.DirEntry, err error) error {
-			if err == nil && !entry.IsDir() && (strings.HasSuffix(path, ".php") || strings.HasSuffix(path, ".txt") || filepath.Base(path) == "composer.lock") {
+			if err == nil && !entry.IsDir() && (slices.Contains([]string{".php", ".txt", ".ts", ".vue", ".mjs"}, filepath.Ext(path)) || filepath.Base(path) == "composer.lock") {
 				paths = append(paths, path)
 			}
 
@@ -79,7 +79,30 @@ func Digest() (string, error) {
 }
 
 var loaded = sync.OnceValues(func() (*engine.Codebase, error) {
-	handle, err := os.Open(filepath.Join(Testdata(), "shop.jsonl.gz"))
+	stream, err := readStream("shop.jsonl.gz")
+	if err != nil {
+		return nil, err
+	}
+
+	return engine.New(readFixture, stream), nil
+})
+
+var project = sync.OnceValues(func() (*engine.Codebase, error) {
+	backend, err := readStream("shop.jsonl.gz")
+	if err != nil {
+		return nil, err
+	}
+	frontend, err := readStream("shop-frontend.jsonl.gz")
+	if err != nil {
+		return nil, err
+	}
+
+	return engine.New(readFixture, backend, frontend), nil
+})
+
+// readStream reads a committed stream of the shop.
+func readStream(name string) (*contract.Stream, error) {
+	handle, err := os.Open(filepath.Join(Testdata(), name))
 	if err != nil {
 		return nil, err
 	}
@@ -88,15 +111,25 @@ var loaded = sync.OnceValues(func() (*engine.Codebase, error) {
 	if err != nil {
 		return nil, err
 	}
-	stream, err := contract.ReadAll(unzipped)
+
+	return contract.ReadAll(unzipped)
+}
+
+func readFixture(path string) ([]byte, error) {
+	return os.ReadFile(filepath.Join(Fixture(), strings.TrimPrefix(path, Root+"/")))
+}
+
+// Project is the whole shop as judge reads it: its PHP beside its frontend, so a rule reading what one side
+// publishes for the other sees both.
+func Project(t testing.TB) *engine.Codebase {
+	t.Helper()
+	codebase, err := project()
 	if err != nil {
-		return nil, err
+		t.Fatalf("the committed shop streams do not load (run go generate ./engine/php): %v", err)
 	}
 
-	return engine.New(func(path string) ([]byte, error) {
-		return os.ReadFile(filepath.Join(Fixture(), strings.TrimPrefix(path, Root+"/")))
-	}, stream), nil
-})
+	return codebase
+}
 
 // Codebase is the shop, read from the committed stream once per test binary.
 func Codebase(t testing.TB) *engine.Codebase {
