@@ -8,7 +8,11 @@ using CodeCommandments.Bridge;
 // roslyn-bridge --serve    — the same, kept warm: one request per line on stdin, {"paths": [...]}, each
 // answered with those lines, reusing loaded references and unchanged trees between requests.
 // "write": [...] limits the answer to those files; the rest are still compiled, for their types.
+//
+// --tree                   — either of the above, written as the generic tree (contract/CONTRACT.md) instead:
+// files outside "write" are written too, marked as context.
 var workspace = new Workspace();
+var contract = args.Contains("--tree");
 
 if (args.Contains("--serve"))
 {
@@ -19,7 +23,15 @@ if (args.Contains("--serve"))
         var request = JsonDocument.Parse(line).RootElement;
         var paths = request.GetProperty("paths").EnumerateArray().Select(path => path.GetString()!).ToList();
         var written = request.TryGetProperty("write", out var write) ? write.EnumerateArray().Select(path => Path.GetFullPath(path.GetString()!)).ToHashSet() : [];
-        new TreeWriter(workspace.Read(paths), written).Write(output);
+        if (contract)
+        {
+            new ContractWriter(workspace.Read(paths), paths, written).Write(output);
+        }
+        else
+        {
+            new TreeWriter(workspace.Read(paths), written).Write(output);
+        }
+
         output.Flush();
     }
 
@@ -30,7 +42,7 @@ var roots = args.Where(arg => !arg.StartsWith("--")).ToList();
 
 if (roots.Count == 0)
 {
-    Console.Error.WriteLine("usage: roslyn-bridge <path>... | roslyn-bridge --serve");
+    Console.Error.WriteLine("usage: roslyn-bridge [--tree] <path>... | roslyn-bridge [--tree] --serve");
     return 2;
 }
 
@@ -51,7 +63,14 @@ if (args.Contains("--diagnose"))
 
 using (var output = Console.OpenStandardOutput())
 {
-    new TreeWriter(project).Write(output);
+    if (contract)
+    {
+        new ContractWriter(project, roots).Write(output);
+    }
+    else
+    {
+        new TreeWriter(project).Write(output);
+    }
 }
 
 return 0;
