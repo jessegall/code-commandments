@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/python"
+	"github.com/jessegall/code-commandments/engine/python"
 )
 
 func TestEveryDefReachesWhatThePHPEngineSays(t *testing.T) {

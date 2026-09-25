@@ -3,8 +3,8 @@ package python_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/python"
-	"github.com/jessegall/code-commandments/python/pythontest"
+	"github.com/jessegall/code-commandments/engine/python"
+	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
 func TestAClassKnowsItsAncestryAndHowItIsReached(t *testing.T) {

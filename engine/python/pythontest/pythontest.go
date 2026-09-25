@@ -9,7 +9,7 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/engine"
-	_ "github.com/jessegall/code-commandments/python"
+	_ "github.com/jessegall/code-commandments/engine/python"
 )
 
 // FromSource is the codebase the Python sources describe, keyed by their path under one project folder, as the

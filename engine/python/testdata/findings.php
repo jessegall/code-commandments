@@ -4,7 +4,7 @@
  * Prints every finding the PHP engine's Python detectors make under a path, one `path:line Sin` per line, the path
  * relative to the one given, sorted: the PHP half of the Go port's parity check.
  *
- * Run from the repository root: php python/testdata/findings.php <path>
+ * Run from the repository root: php engine/python/testdata/findings.php <path>
  */
 
 declare(strict_types=1);
@@ -12,7 +12,7 @@ declare(strict_types=1);
 use JesseGall\CodeCommandments\Detectors\Catalog;
 use JesseGall\CodeCommandments\Py\Codebase;
 
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__ . '/../../../vendor/autoload.php';
 
 ini_set('memory_limit', '-1');
 

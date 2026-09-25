@@ -4,7 +4,7 @@
  * Writes what the PHP Python engine answers about tests/Fixtures/python, one JSON file per analysis under golden/,
  * for the Go ports to match. A def is named by its symbol id, a place by its path under the fixture and its line.
  *
- * Run from the repository root: php python/testdata/golden.php
+ * Run from the repository root: php engine/python/testdata/golden.php
  */
 
 declare(strict_types=1);
@@ -25,9 +25,9 @@ use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
 use JesseGall\CodeCommandments\Py\Node\Node;
 
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__ . '/../../../vendor/autoload.php';
 
-$root = (string) realpath(__DIR__ . '/../../tests/Fixtures/python');
+$root = (string) realpath(__DIR__ . '/../../../tests/Fixtures/python');
 $codebase = Codebase::scan($root);
 
 /** The place $offset is in $module: its path under the fixture, and its line. */

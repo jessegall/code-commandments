@@ -4,8 +4,8 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	py "github.com/jessegall/code-commandments/engine/python"
 	"github.com/jessegall/code-commandments/prose"
-	py "github.com/jessegall/code-commandments/python"
 	"github.com/jessegall/code-commandments/sins"
 	pysins "github.com/jessegall/code-commandments/sins/python"
 )

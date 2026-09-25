@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/python"
+	"github.com/jessegall/code-commandments/engine/python"
 )
 
 func TestThePackageGraphDrawsTheArrowsThePHPEngineDraws(t *testing.T) {

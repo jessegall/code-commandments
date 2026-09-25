@@ -27,7 +27,7 @@ func TestTheGoDetectorsFindWhatThePHPOnesFind(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	php, err := exec.Command("php", "../../python/testdata/findings.php", root).Output()
+	php, err := exec.Command("php", "../../engine/python/testdata/findings.php", root).Output()
 	if err != nil {
 		t.Fatalf("the PHP engine failed: %v", err)
 	}

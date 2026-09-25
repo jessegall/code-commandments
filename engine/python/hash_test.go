@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/python"
+	"github.com/jessegall/code-commandments/engine/python"
 )
 
 // groups is the keys that share a fingerprint, each group sorted, the groups sorted: what two engines agree on

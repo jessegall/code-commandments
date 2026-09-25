@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/jessegall/code-commandments/python"
+	"github.com/jessegall/code-commandments/engine/python"
 )
 
 func TestEveryFieldFlowsAsThePHPEngineSays(t *testing.T) {

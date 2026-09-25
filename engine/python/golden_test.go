@@ -10,7 +10,7 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/python"
+	"github.com/jessegall/code-commandments/engine/python"
 )
 
 // fixture is tests/Fixtures/python as the Go engine reads it, loaded once for every golden test.
@@ -26,7 +26,7 @@ func shopFixture(t *testing.T) *python.Codebase {
 	t.Helper()
 	command := bridge.TestMypy(t)
 	fixture.once.Do(func() {
-		fixture.root, fixture.err = filepath.Abs("../tests/Fixtures/python")
+		fixture.root, fixture.err = filepath.Abs("../../tests/Fixtures/python")
 		stream, err := bridge.Once(command, fixture.root)
 		if err != nil {
 			fixture.err = err

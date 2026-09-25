@@ -3,7 +3,7 @@ package python_test
 import (
 	"testing"
 
-	"github.com/jessegall/code-commandments/python"
+	"github.com/jessegall/code-commandments/engine/python"
 )
 
 func TestEveryMethodEnviesWhatThePHPEngineSays(t *testing.T) {

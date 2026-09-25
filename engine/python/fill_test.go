@@ -6,7 +6,7 @@ import (
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/python/pythontest"
+	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
 var shop = map[string]string{
