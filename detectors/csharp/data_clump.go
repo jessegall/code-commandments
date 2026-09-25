@@ -31,11 +31,8 @@ func (DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(cs.Node.IsInherited)).
 		Reject(engine.As(cs.Node.IsNamedConstructor)).
 		Get()
-	signature := func(match engine.Match) (string, bool) {
-		return strings.Join(cs.Node{Match: match}.ValueParamSignature(), ", "), true
-	}
 	var findings []engine.Match
-	for _, clump := range engine.RecurringBuckets(candidates, signature, 1) {
+	for _, clump := range engine.RecurringBuckets(candidates, DataClumpDetector{}.GroupKey, 1) {
 		owners := map[string]bool{}
 		for _, match := range clump {
 			owners[cs.Node{Match: match}.Owner()] = true
@@ -46,4 +43,11 @@ func (DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 	}
 
 	return findings
+}
+
+// GroupKey is the group a function recurs in: the scalar parameters it takes, each `type name`.
+func (DataClumpDetector) GroupKey(match engine.Match) (string, bool) {
+	signature := cs.Node{Match: match}.ValueParamSignature()
+
+	return strings.Join(signature, ", "), len(signature) > 0
 }

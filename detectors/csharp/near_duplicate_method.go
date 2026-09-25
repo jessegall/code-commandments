@@ -33,11 +33,12 @@ func (NearDuplicateMethodDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Reject(engine.As(cs.Node.IsStub)).
 		Reject(engine.As(cs.Node.IsInherited)).
 		Get()
-	shapeHash := func(match engine.Match) (string, bool) {
-		hash := cs.Node{Match: match}.ShapeHash()
+	return engine.NearCopies(candidates, NearDuplicateMethodDetector{}.GroupKey, bodyHash)
+}
 
-		return hash, hash != ""
-	}
+// GroupKey is the group a function recurs in: the skeleton of its body, whatever its locals and constants.
+func (NearDuplicateMethodDetector) GroupKey(match engine.Match) (string, bool) {
+	hash := cs.Node{Match: match}.ShapeHash()
 
-	return engine.NearCopies(candidates, shapeHash, bodyHash)
+	return hash, hash != ""
 }

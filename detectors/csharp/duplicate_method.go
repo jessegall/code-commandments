@@ -29,11 +29,16 @@ func (DuplicateMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(func(n cs.Node) bool { return n.Is("ConstructorDeclaration") })).
 		Get()
 	var found []engine.Match
-	for _, bucket := range engine.RecurringBuckets(candidates, bodyHash, 2) {
+	for _, bucket := range engine.RecurringBuckets(candidates, DuplicateMethodDetector{}.GroupKey, 2) {
 		found = append(found, bucket...)
 	}
 
 	return found
+}
+
+// GroupKey is the group a function recurs in: the body it runs.
+func (DuplicateMethodDetector) GroupKey(match engine.Match) (string, bool) {
+	return bodyHash(match)
 }
 
 // bodyHash is the fingerprint of the body the function runs.

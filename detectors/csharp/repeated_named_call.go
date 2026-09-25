@@ -31,9 +31,15 @@ func (RepeatedNamedCallDetector) Find(codebase *engine.Codebase) []engine.Match 
 		Reject(engine.As(cs.Node.IsInTest)).
 		Get()
 
-	return recurring(copies, func(match engine.Match) (string, bool) {
-		copied := cs.Node{Match: match}
+	return recurring(copies, RepeatedNamedCallDetector{}.GroupKey)
+}
 
-		return copied.Type().Name() + "#" + strings.Join(copied.ConstantChanges(), ","), true
-	})
+// GroupKey is the group a `with` copy recurs in: the type it copies and the constants it changes.
+func (RepeatedNamedCallDetector) GroupKey(match engine.Match) (string, bool) {
+	copied := cs.Node{Match: match}
+	if len(copied.ConstantChanges()) == 0 {
+		return "", false
+	}
+
+	return copied.Type().Name() + "#" + strings.Join(copied.ConstantChanges(), ","), true
 }

@@ -47,3 +47,12 @@ func recurring(candidates []engine.Match, key func(engine.Match) (string, bool))
 
 	return found
 }
+
+// GroupKey is the group a guard recurs in: what it asks, whatever order its conditions are in.
+func (RepeatedGuardDetector) GroupKey(match engine.Match) (string, bool) {
+	if !(cs.Node{Match: match}).IsSubstantiveGuard() {
+		return "", false
+	}
+
+	return guardFingerprint(match)
+}

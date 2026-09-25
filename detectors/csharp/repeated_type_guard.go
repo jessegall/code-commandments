@@ -31,3 +31,12 @@ func (RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Match 
 
 	return recurring(guards, guardFingerprint)
 }
+
+// GroupKey is the group a type-narrowing guard recurs in: what it asks, whatever order its checks are in.
+func (RepeatedTypeGuardDetector) GroupKey(match engine.Match) (string, bool) {
+	if !(cs.Node{Match: match}).IsTypeNarrowingGuard() {
+		return "", false
+	}
+
+	return guardFingerprint(match)
+}

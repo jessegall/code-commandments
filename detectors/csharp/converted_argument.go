@@ -47,6 +47,12 @@ func (ConvertedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match 
 	return dominant
 }
 
+// GroupKey is the group a call recurs in: the parameter of the codebase's own method it converts a scalar for, and
+// the conversion.
+func (ConvertedArgumentDetector) GroupKey(match engine.Match) (string, bool) {
+	return conversionSlot(cs.Node{Match: match}, cs.Of(match.Codebase()))
+}
+
 // conversionSlot is the first parameter of the codebase's own method the call converts a scalar for, with the
 // conversion: `Shop.Pricing.Quote(…)#1=Convert.ToInt32`; false for a call that converts none.
 func conversionSlot(call cs.Node, program *cs.Program) (string, bool) {
