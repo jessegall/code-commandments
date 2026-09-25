@@ -61,8 +61,11 @@ func inSizeableTemplate(element vue.Element) bool {
 	return vue.ComponentOf(element.Match).TemplateLines() >= reachTemplateLines
 }
 
+// reachesDeep says whether any data the element reads, its v-for's iterable included, reaches deep.
 func reachesDeep(element vue.Element) bool {
-	return slices.ContainsFunc(element.Expressions(), func(expression typescript.Node) bool {
+	read := append(element.Expressions(), typescript.Of(element.Directive(vue.For).Iterable()))
+
+	return slices.ContainsFunc(read, func(expression typescript.Node) bool {
 		return expression.MemberDepth(transparent...) >= reachDepth
 	})
 }

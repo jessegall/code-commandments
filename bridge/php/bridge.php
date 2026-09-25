@@ -8,6 +8,9 @@ declare(strict_types=1);
 
 namespace CodeCommandments\PhpBridge;
 
+// One file's tree is encoded whole, and a generated file can hold more than PHP's default limit allows.
+ini_set('memory_limit', '-1');
+
 require __DIR__ . '/../../vendor/autoload.php';
 require __DIR__ . '/src/Request.php';
 require __DIR__ . '/src/Sources.php';

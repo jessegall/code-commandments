@@ -6,9 +6,12 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// unwrap is the expression a parenthesised or non-null-asserted one holds: (a.b) and a.b! read as a.b.
+// wrappers are the expressions that change how an expression is typed, never what it reads.
+var wrappers = []string{"ParenthesizedExpression", "NonNullExpression", "AsExpression", "SatisfiesExpression", "TypeAssertionExpression"}
+
+// unwrap is the expression a wrapper holds: (a.b), a.b!, (a as T).b and <T>a read as what they wrap.
 func (n Node) unwrap() Node {
-	for n.Kind() == "ParenthesizedExpression" || n.Kind() == "NonNullExpression" {
+	for slices.Contains(wrappers, n.Kind()) {
 		n = Node{n.Child("expression")}
 	}
 
