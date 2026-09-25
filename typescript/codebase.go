@@ -26,7 +26,8 @@ func (c *Codebase) WhereMemberAccess() *engine.Query {
 	return c.WhereKind("PropertyAccessExpression")
 }
 
-// WhereFunction opens a query over every function-like with a body: a function, a method, an arrow.
+// WhereFunction opens a query over every named function: a function, a method, a constructor, an accessor,
+// and a variable declared as an arrow.
 func (c *Codebase) WhereFunction() *engine.Query {
-	return c.WhereIs(engine.Function)
+	return c.Where(engine.As(Node.IsFunction))
 }
