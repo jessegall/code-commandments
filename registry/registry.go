@@ -6,6 +6,7 @@ package registry
 import (
 	_ "github.com/jessegall/code-commandments/detectors/backend"
 	_ "github.com/jessegall/code-commandments/detectors/backend/concurrent"
+	_ "github.com/jessegall/code-commandments/detectors/backend/laravel"
 	_ "github.com/jessegall/code-commandments/detectors/backend/phptypes"
 	_ "github.com/jessegall/code-commandments/detectors/backend/spatie"
 	_ "github.com/jessegall/code-commandments/detectors/frontend"
