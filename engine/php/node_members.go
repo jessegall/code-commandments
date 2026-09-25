@@ -440,3 +440,18 @@ func (n Node) FirstMethodOfItsClass() (engine.Match, bool) {
 
 	return engine.Match{}, false
 }
+
+// PromotedParamName is the name of the parameter at index when it promotes a property: modified, not variadic, and
+// named plainly.
+func PromotedParamName(params []engine.Match, index int) (string, bool) {
+	if index >= len(params) {
+		return "", false
+	}
+	param := params[index]
+	name := variableName(param.Child("var"))
+	if len(param.Node().Modifiers) == 0 || slices.Contains(param.Node().Flags, "variadic") || name == "" {
+		return "", false
+	}
+
+	return name, true
+}
