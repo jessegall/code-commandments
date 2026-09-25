@@ -1,0 +1,27 @@
+exit: 2
+--- stdout
+
+--- stderr
+✗ name a sin or detector to explain
+
+commandments info — Explain one sin — what it flags, why it is a sin, how to fix it, and a worked example.
+Also answers to: explain
+
+Usage:
+  commandments info <sin|detector>  explain a rule by sin id or detector name (lenient match)
+  commandments info --sin=NAME      the same, named explicitly
+  commandments info --detector=NAME the same, by detector class name
+
+Options:
+  --sin=NAME       the sin to explain
+  --detector=NAME  the detector to explain
+  --full           print the skill's whole principle, not just the opening
+
+  The name is matched leniently, so `array-bag`, `ArrayBag` and `ArrayBagDetector` all resolve to
+  the same rule. The worked example is read from the published skill, so it is the same code the
+  skill teaches. Run `commandments judge --list` for every rule there is.
+
+  A rule this project wrote into .commandments/custom/ is explained beside the shipped ones and
+  named as the project's own — those are the rules a reader is least likely to recognise.
+
+--- files

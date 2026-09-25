@@ -1,0 +1,98 @@
+exit: 0
+--- stdout
+
+[1mpython-dict-return-bag[0m  [2mpython/value-objects[0m
+  `return {"total": …, "tax": …}` — a record of several fields handed back as a dict
+  its callers read by string key
+
+[33mWhy it is a sin[0m
+
+  A dict with string keys is a record nobody declared. Every reader re-learns its shape
+  from
+  the code that happened to build it, a typo in a key is a `KeyError` at run time instead
+  of an
+  error in the editor, and nothing says which keys are always there.
+  
+  ### A record is a type
+  
+  When the keys of a dict are known in advance — the same handful, read by name — the
+  dict is a record,
+  and a record is a type:
+  
+  ```python
+  from dataclasses import dataclass
+  
+  
+  @dataclass(frozen=True)
+  class Line:
+      sku: str
+      quantity: int
+      unit_price: int
+  ```
+  
+  The fields are declared once, the type checker sees every read, a missing field fails
+  where the value
+  is built, and `frozen=True` means nobody changes it behind your back. Behaviour that
+  reads only those
+  fields — a total, a label — becomes a method on it.
+  
+  ### Build it at the edge
+  
+  Loose data arrives as dicts: JSON, a form, a row. Turn it into the type **where it
+  enters** — one
+  `Line.from_payload(payload)` — and pass the type from there on. The rest of the
+  program never sees
+  the dict, so it never has to wonder which keys are there.
+  
+  ### Values that always travel together are one value
+  
+  Three parameters that every caller passes side by side — `street, city, postcode` —
+  are an `Address`
+  waiting to be named. Give them one type and pass that.
+  
+  ### What is NOT this sin
+  
+  - A dict used as a **mapping**: keys that are data (a SKU → stock level), iterated or
+  looked up by a
+    value you did not write in the source.
+  - `**kwargs` forwarded unchanged, and the dict a serializer hands you right before you
+  convert it.
+
+[33mHow to fix it[0m
+
+  Return a typed value — a frozen dataclass — not a dict of several named fields.
+  A `@dataclass(frozen=True)` for the result, built where it is returned — or a
+  `TypedDict` when a dict must cross a boundary.
+
+[33mExample[0m
+
+  ```py
+  ----------[ Bad ]----------
+  
+  def progress(self, done: int, failed: int) -> dict:
+      return {"done": done, "failed": failed, "left": len(self.rows) - done - failed}
+  
+  ----------[ Good ]----------
+  
+  @dataclass(frozen=True)
+  class ImportProgress:
+      done: int
+      failed: int
+      total: int
+  
+      @property
+      def left(self) -> int:
+          return self.total - self.done - self.failed
+  ```
+
+[33mCommands[0m
+
+  [36mLearn     [0m load the skill [1mcommandments-python-value-objects[0m
+  [36mFind it   [0m commandments judge --sin=python-dict-return-bag
+  [36mTurn off  [0m commandments disable python-dict-return-bag
+  [36mWrong?    [0m commandments report --detector=DictReturnBagDetector --reason="…" --ref=PATH:LINE
+
+
+--- stderr
+
+--- files

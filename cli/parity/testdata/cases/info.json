@@ -1,0 +1,13 @@
+[
+  {"name": "info-help", "args": ["info", "--help"]},
+  {"name": "info-alias-help", "args": ["explain", "-h"]},
+  {"name": "info-without-a-name", "args": ["info"]},
+  {"name": "info-unknown", "args": ["info", "zz-no-such-rule"], "pending": "tickets 4 and 7: the suggestions list every engine's sins"},
+  {"name": "info-python-sin", "args": ["info", "python-dict-bag"]},
+  {"name": "info-python-detector-name", "args": ["info", "--detector=DictBagDetector"]},
+  {"name": "info-python-full", "args": ["info", "--sin=python-dict-return-bag", "--full"]},
+  {"name": "info-frontend-sin", "args": ["info", "prop-drilling"]},
+  {"name": "info-typescript-sin", "args": ["explain", "duplicate-typescript-function"]},
+  {"name": "info-several", "args": ["info", "python-dict"]},
+  {"name": "info-repentable", "args": ["info", "duplicate-element"]}
+]

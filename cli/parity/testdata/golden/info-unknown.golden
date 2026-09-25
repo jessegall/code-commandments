@@ -1,0 +1,19 @@
+exit: 2
+--- stdout
+
+--- stderr
+No rule matches "zz-no-such-rule".
+
+Some of the rules there are:
+  all-nullable-data
+  all-optional-data
+  archaeology-comment
+  array-bag
+  array-return-bag
+  assembled-template
+  bare-state-predicate
+  blank-string-default
+
+Run `commandments judge --list` for all of them.
+
+--- files
