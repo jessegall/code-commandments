@@ -9,11 +9,12 @@ import (
 // selectors: csharp.In(codebase).WhereCall().Where(...).
 type Codebase struct {
 	*engine.Codebase
+	Program *Program
 }
 
 // In is the C# part of the codebase.
 func In(codebase *engine.Codebase) *Codebase {
-	return &Codebase{Codebase: codebase.Of(contract.CSharp)}
+	return &Codebase{Codebase: codebase.Of(contract.CSharp), Program: Of(codebase)}
 }
 
 // WhereType opens a query over every type declaration: class, record, struct, interface, enum.
