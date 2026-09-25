@@ -192,6 +192,29 @@ func (c Config) Positional() Config {
 	return c
 }
 
+// IsJudged says whether the file, absolute or under root, lies in one of the declared source roots.
+func (c Config) IsJudged(root, file string) bool {
+	home := strings.TrimRight(root, "/")
+	absolute := file
+
+	if !strings.HasPrefix(file, "/") {
+		absolute = home + "/" + strings.TrimLeft(file, "/")
+	}
+
+	for _, relative := range c.Paths {
+		dir := home + "/" + strings.Trim(relative, "/")
+		if relative == "." {
+			dir = home
+		}
+
+		if absolute == dir || strings.HasPrefix(absolute, dir+"/") {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Writes says whether the project writes the language.
 func (c Config) Writes(language source.Language) bool {
 	return !slices.Contains(c.DisabledLanguages, language)

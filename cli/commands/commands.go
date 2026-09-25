@@ -8,6 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/exemptions"
 	"github.com/jessegall/code-commandments/cli/freeze"
 	"github.com/jessegall/code-commandments/cli/hints"
+	"github.com/jessegall/code-commandments/cli/hooks"
 	"github.com/jessegall/code-commandments/cli/info"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/layers"
@@ -34,8 +35,12 @@ func Kernel(version string) *cli.Kernel {
 		report.FeatureRequest{},
 		freeze.Command{},
 		sync.Command{},
+		sync.Install{},
+		hooks.Single{Verbs: []string{"judge-reminder"}, Hook: hooks.JudgeReminder{}, About: hooks.JudgeReminderAbout},
 		session.Command{},
 		task.Command{},
+		hooks.Dispatch{},
+		hooks.Runner{},
 		config.Toggle{},
 		config.Command{Version: version},
 		layers.Command{},

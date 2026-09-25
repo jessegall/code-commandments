@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+{"decision":"block","reason":"Code Commandments — that rebases a branch 1 other worktree(s) are standing on:\n\n  • <project>/.wt/other\n\nA rebase rewrites the commits they are built on, so each ends up carrying commits this branch\nno longer has — and the duplicates are byte-identical, so nothing looks wrong until a merge.\nUse `git pull --ff-only`, or merge, and let them fast-forward."}
+
+--- stderr
+
+--- files

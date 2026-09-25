@@ -83,13 +83,18 @@ func Read(path string) (*Object, bool) {
 	return object, isObject
 }
 
-// Write writes the object to path, pretty-printed as the PHP tool prints it, with a closing newline.
+// Write writes the object to path as Text prints it.
 func Write(path string, object *Object) error {
+	return atomic.Write(path, Text(object))
+}
+
+// Text is the object pretty-printed as the PHP tool prints it, keys in order, with a closing newline.
+func Text(object *Object) string {
 	var out strings.Builder
 	encode(&out, object, "")
 	out.WriteString("\n")
 
-	return atomic.Write(path, out.String())
+	return out.String()
 }
 
 func decode(decoder *json.Decoder) (any, error) {

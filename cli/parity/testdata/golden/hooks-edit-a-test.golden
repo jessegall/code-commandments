@@ -1,0 +1,17 @@
+exit: 0
+--- stdout
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"Code Commandments — you're editing `OrderTest.php`, a test/stub/fixture that `judge` never scans, so nothing here will flag a symptom-fix. If you're changing it to make a failing check pass, first ask WHERE the failure is born: a failing test usually means the PRODUCTION code is missing behaviour — a method, a type, a total value on the real type. Fix it THERE (trace to the source; re-open the relevant skill), and change this file only if the TEST itself is wrong. If this is just legitimate test coverage, carry on."}}
+
+--- stderr
+
+--- files
+=== created .commandments/sessions/640d8/.source-remind-count
+count: 1
+-----
+Code-commandments counter `source-remind` — a hook heartbeat.
+
+The block above the first divider is this file's state, one `name: value` per line:
+  count  the running count. It nudges "fix at the source, not the test" on an edit to an unjudged test/stub
+
+Safe to delete — it regenerates.
+

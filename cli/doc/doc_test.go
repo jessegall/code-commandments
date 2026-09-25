@@ -49,8 +49,8 @@ func TestAMarkerThatCannotBeTrustedIsRefused(t *testing.T) {
 // awaited are the verbs the README's table lists that ticket 10 brings to the Go binary: install and
 // the hook commands.
 var awaited = []string{
-	"install", "judge-reminder", "hooks", "journal-hook", "journal-serve", "journal-config",
-	"journal-scan", "journal-skills", "hook",
+	"journal-hook", "journal-serve", "journal-config",
+	"journal-scan", "journal-skills",
 }
 
 func TestTheReadmeCommandTableIsWhatTheGoHelpProjects(t *testing.T) {

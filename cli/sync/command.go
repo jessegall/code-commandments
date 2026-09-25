@@ -140,7 +140,10 @@ func wire(root string, agent agents.Agent, lib library.Library, published []stri
 		}
 	}
 
-	agent.Wire(root)
+	_, err := agent.Wire(root)
+	if err != nil {
+		console.Warn(err.Error())
+	}
 }
 
 // ensureConfig brings the project's config to config.json: a config.php is migrated once, a project with
