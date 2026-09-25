@@ -17,6 +17,7 @@ func init() {
 func fill(codebase *engine.Codebase) {
 	program := Of(codebase)
 	for _, module := range program.Modules() {
+		program.fillRefs(module)
 		for _, node := range module.Nodes() {
 			facts := node.Node()
 			if target, ok := program.Callee(node); ok {
@@ -199,5 +200,28 @@ func (p *Program) resolveType(written *contract.Type, module *Module) {
 	}
 	for _, inner := range append(append([]*contract.Type{}, written.Args...), written.Members...) {
 		p.resolveType(inner, module)
+	}
+}
+
+// fillRefs writes, on each docstring, the Sphinx cross-references it makes: each as written, whether the codebase
+// owns the package it names, and the symbol it reaches when the codebase resolves it.
+func (p *Program) fillRefs(module *Module) {
+	for at := range module.File.File.Comments {
+		comment := &module.File.File.Comments[at]
+		if comment.Kind != "doc" || comment.Attached == nil {
+			continue
+		}
+		docstring, ok := Node{module.File.Match(*comment.Attached)}.Docstring()
+		if !ok {
+			continue
+		}
+		for _, reference := range References(docstring) {
+			owned := p.OwnsPackage(strings.Split(reference, ".")[0])
+			ref := contract.Ref{Text: reference, OwnedHere: &owned}
+			if p.Resolves(reference) {
+				ref.Symbol = reference
+			}
+			comment.Refs = append(comment.Refs, ref)
+		}
 	}
 }

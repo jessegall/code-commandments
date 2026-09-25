@@ -3,6 +3,7 @@
 package engine
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -46,6 +47,8 @@ type File struct {
 	once   sync.Once
 	source []byte
 	err    error
+	lines  sync.Once
+	own    map[int]contract.Comment
 }
 
 // Load is the codebase the streams describe, its sources read from disk.
@@ -156,4 +159,48 @@ func (f *File) Comments(node *contract.Node) []contract.Comment {
 	}
 
 	return attached
+}
+
+// CommentsAbove is the run of comments standing on lines of their own directly above the node: the last on the
+// line before it, each earlier one on the line before that. A comment that trails code on its line is above
+// nothing.
+func (f *File) CommentsAbove(node *contract.Node) []contract.Comment {
+	f.lines.Do(f.findOwnLineComments)
+	var run []contract.Comment
+	for line := node.Span.Line - 1; ; line-- {
+		comment, ok := f.own[line]
+		if !ok {
+			return run
+		}
+		run = append([]contract.Comment{comment}, run...)
+	}
+}
+
+// isInsideItsNode says whether the comment lies inside the node it belongs to, as a Python docstring lies inside
+// its def: it is part of that node, not a comment above anything.
+func (f *File) isInsideItsNode(comment contract.Comment) bool {
+	if comment.Attached == nil {
+		return false
+	}
+	node, ok := f.Node(*comment.Attached)
+
+	return ok && node.Span.Start <= comment.Span.Start
+}
+
+// findOwnLineComments indexes, by line, every comment with nothing but whitespace before it on its line.
+func (f *File) findOwnLineComments() {
+	f.own = map[int]contract.Comment{}
+	source, err := f.Source()
+	if err != nil {
+		return
+	}
+	for _, comment := range f.File.Comments {
+		if f.isInsideItsNode(comment) {
+			continue
+		}
+		lineStart := bytes.LastIndexByte(source[:comment.Span.Start], '\n') + 1
+		if len(bytes.TrimSpace(source[lineStart:comment.Span.Start])) == 0 {
+			f.own[comment.Span.Line] = comment
+		}
+	}
 }

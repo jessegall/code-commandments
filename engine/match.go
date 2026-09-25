@@ -252,6 +252,15 @@ func (m Match) Comments() []contract.Comment {
 	return m.file.Comments(m.node)
 }
 
+// CommentsAbove is the run of own-line comments directly above the node, nearest last.
+func (m Match) CommentsAbove() []contract.Comment {
+	if m.node == nil {
+		return nil
+	}
+
+	return m.file.CommentsAbove(m.node)
+}
+
 // IsDocumented says whether a doc comment is attached to the node.
 func (m Match) IsDocumented() bool {
 	for _, comment := range m.Comments() {
