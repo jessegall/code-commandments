@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+No such file: nope.php
+
+--- files

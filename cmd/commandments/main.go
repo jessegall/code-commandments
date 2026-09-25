@@ -7,6 +7,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/freeze"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/session"
 	"github.com/jessegall/code-commandments/cli/task"
@@ -24,6 +25,7 @@ func main() {
 func Kernel() *cli.Kernel {
 	return cli.NewKernel(version,
 		judge.Command{},
+		freeze.Command{},
 		session.Command{},
 		task.Command{},
 		config.Toggle{},

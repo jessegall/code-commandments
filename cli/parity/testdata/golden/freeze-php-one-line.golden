@@ -1,0 +1,11 @@
+exit: 0
+--- stdout
+[32m✓ Frozen A.php[0m — scanned for resolution, but never flagged or repented.
+
+--- stderr
+
+--- files
+=== changed A.php
+<?php class A {}
+// @code-commandments-frozen — deliberately immutable; excluded from code-commandments judging & repent (run `commandments unfreeze` to lift).
+
