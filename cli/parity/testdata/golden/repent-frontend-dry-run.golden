@@ -1,0 +1,986 @@
+exit: 0
+--- stdout
+--- a/<project>/components/CustomerAccountPanel.vue
++++ b/<project>/components/CustomerAccountPanel.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import BillingSection from './BillingSection.vue';
++
+ import type { Customer, CustomerOrder } from '@/types';
+ 
+ defineProps<{ customer: Customer; orders: CustomerOrder[] }>();
+@@ -26,21 +28,18 @@
+ 
+     <!-- A cluster: customer.billing read in three fields → extract <AccountBilling :billing>. -->
+     <!-- @sin DeepDataReach -->
+-    <div class="account__billing">
+-      <h2 class="account__section">Billing</h2>
+-      <p class="account__plan">{{ customer.billing.plan }}</p>
+-      <p class="account__amount">{{ customer.billing.amount }}</p>
+-      <p class="account__renews">{{ customer.billing.renewsAt }}</p>
+-    </div>
++    <BillingSection :billing="customer.billing" />
+ 
+     <div class="account__preferences">
+       <h2 class="account__section">Preferences</h2>
+       <ul class="account__prefs">
+         <!-- @sin ControlFlowOnElement -->
+-        <li v-for="pref in customer.preferences" :key="pref.id" class="account__pref">
+-          <span class="account__pref-name">{{ pref.label }}</span>
+-          <span class="account__pref-value">{{ pref.enabled }}</span>
+-        </li>
++        <template v-for="pref in customer.preferences" :key="pref.id">
++          <li class="account__pref">
++            <span class="account__pref-name">{{ pref.label }}</span>
++            <span class="account__pref-value">{{ pref.enabled }}</span>
++          </li>
++        </template>
+       </ul>
+     </div>
+ 
+--- a/<project>/components/OrderDetailPanel.vue
++++ b/<project>/components/OrderDetailPanel.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import OrderCustomer from './OrderCustomer.vue';
++
+ import type { Order, OrderEvent } from '@/types';
+ 
+ defineProps<{ order: Order; history: OrderEvent[] }>();
+@@ -14,12 +16,7 @@
+ 
+     <!-- A cluster: order.customer read in three fields → extract <OrderCustomer :customer>. -->
+     <!-- @sin DeepDataReach -->
+-    <section class="order-detail__customer">
+-      <h2 class="section-title">Customer</h2>
+-      <p class="customer-name">{{ order.customer.fullName }}</p>
+-      <p class="customer-email">{{ order.customer.email }}</p>
+-      <p class="customer-phone">{{ order.customer.phone }}</p>
+-    </section>
++    <OrderCustomer :customer="order.customer" />
+ 
+     <!-- @fixed DeepDataReach -->
+     <!-- @righteous DeepDataReach -->
+@@ -36,11 +33,13 @@
+       <h2 class="section-title">Items</h2>
+       <ul class="item-list">
+         <!-- @sin ControlFlowOnElement -->
+-        <li v-for="item in order.items" :key="item.id" class="item-row">
+-          <span class="item-name">{{ item.name }}</span>
+-          <span class="item-qty">{{ item.quantity }}</span>
+-          <span class="item-price">{{ item.price }}</span>
+-        </li>
++        <template v-for="item in order.items" :key="item.id">
++          <li class="item-row">
++            <span class="item-name">{{ item.name }}</span>
++            <span class="item-qty">{{ item.quantity }}</span>
++            <span class="item-price">{{ item.price }}</span>
++          </li>
++        </template>
+       </ul>
+     </section>
+ 
+--- a/<project>/components/OrderStatusBadge.vue
++++ b/<project>/components/OrderStatusBadge.vue
+@@ -1,26 +1,17 @@
+ <script setup lang="ts">
++import StatusSection from './StatusSection.vue';
++
+ defineProps<{ status: string }>();
+ </script>
+ 
+ <template>
+   <!-- @sin SwitchCase -->
+   <!-- @sin ControlFlowOnElement -->
+-  <span v-if="status === 'paid'" class="badge badge-green">Paid</span>
+-  <!-- @sin ControlFlowOnElement -->
+-  <span v-else-if="status === 'pending'" class="badge badge-amber">Pending</span>
+-  <!-- @sin ControlFlowOnElement -->
+-  <span v-else-if="status === 'refunded'" class="badge badge-grey">Refunded</span>
+-  <!-- @sin ControlFlowOnElement -->
+-  <span v-else class="badge">Unknown</span>
++  <StatusSection :status="status" />
+ 
+   <!-- @fixed SwitchCase -->
+   <!-- @righteous SwitchCase -->
+-  <SwitchCase :value="status">
+-    <template #paid><span class="badge badge-green">Paid</span></template>
+-    <template #pending><span class="badge badge-amber">Pending</span></template>
+-    <template #refunded><span class="badge badge-grey">Refunded</span></template>
+-    <template #default><span class="badge">Unknown</span></template>
+-  </SwitchCase>
++  <StatusSection :status="status" />
+ 
+   <!-- @fixed ControlFlowOnElement -->
+   <!-- @righteous ControlFlowOnElement -->
+--- a/<project>/components/InventoryFilterPanel.vue
++++ b/<project>/components/InventoryFilterPanel.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import FilterInventorySheet from './FilterInventorySheet.vue';
++
+ import { ref } from 'vue';
+ 
+ const open = ref(false);
+@@ -13,26 +15,6 @@
+     <!-- A Sheet compound assembled inline — Sheet + Sheet* parts with a filter body.
+          It is its own InventoryFilterSheet. -->
+     <!-- @sin CompoundInlineComponent -->
+-    <Sheet v-model:open="open">
+-      <SheetContent side="right">
+-        <SheetHeader>
+-          <SheetTitle>Filter inventory</SheetTitle>
+-          <SheetDescription>Narrow the catalogue by name and availability.</SheetDescription>
+-        </SheetHeader>
+-        <div class="filter-body">
+-          <Label>Search</Label>
+-          <Input v-model="query" type="search" placeholder="SKU or name" />
+-          <fieldset class="availability">
+-            <legend>Availability</legend>
+-            <!-- @sin LoopWithCondition -->
+-            <!-- @sin ControlFlowOnElement -->
+-            <label v-for="opt in options" v-if="opt.enabled" :key="opt.id"><input type="checkbox" :value="opt.value" /> {{ opt.label }}</label>
+-          </fieldset>
+-        </div>
+-        <SheetFooter>
+-          <Button @click="apply">Apply filters</Button>
+-        </SheetFooter>
+-      </SheetContent>
+-    </Sheet>
++    <FilterInventorySheet v-model:open="open" v-model:query="query" :options="options" :apply="apply" />
+   </aside>
+ </template>
+--- a/<project>/components/StockIndicator.vue
++++ b/<project>/components/StockIndicator.vue
+@@ -5,9 +5,15 @@
+ <template>
+   <!-- Range checks, not equality on one value — a genuine conditional, NOT a switch. -->
+   <!-- @sin ControlFlowOnElement -->
+-  <span v-if="stock > 10" class="text-green-600">In stock</span>
++  <template v-if="stock > 10">
++    <span class="text-green-600">In stock</span>
++  </template>
+   <!-- @sin ControlFlowOnElement -->
+-  <span v-else-if="stock > 0" class="text-amber-600">Only a few left</span>
++  <template v-else-if="stock > 0">
++    <span class="text-amber-600">Only a few left</span>
++  </template>
+   <!-- @sin ControlFlowOnElement -->
+-  <span v-else class="text-red-600">Sold out</span>
++  <template v-else>
++    <span class="text-red-600">Sold out</span>
++  </template>
+ </template>
+--- a/<project>/components/ProductReviewList.vue
++++ b/<project>/components/ProductReviewList.vue
+@@ -1,26 +1,16 @@
+ <script setup lang="ts">
++import ReviewCardSection from './ReviewCardSection.vue';
++
+ defineProps<{ productId: number }>();
+ </script>
+ 
+ <template>
+   <section class="reviews">
+     <!-- @sin DuplicateElement -->
+-    <article class="review-card">
+-      <header class="review-head">
+-        <Avatar class="size-8" />
+-        <strong class="review-author">Verified buyer</strong>
+-      </header>
+-      <p class="review-body">Exactly as described, shipped fast.</p>
+-    </article>
++    <ReviewCardSection />
+ 
+     <!-- @sin DuplicateElement -->
+-    <article class="review-card">
+-      <header class="review-head">
+-        <Avatar class="size-8" />
+-        <strong class="review-author">Verified buyer</strong>
+-      </header>
+-      <p class="review-body">Exactly as described, shipped fast.</p>
+-    </article>
++    <ReviewCardSection />
+ 
+     <!-- @fixed DuplicateElement -->
+     <!-- @righteous DuplicateElement -->
+@@ -37,7 +27,9 @@
+     <ul class="review-tags">
+       <!-- @sin LoopWithCondition -->
+       <!-- @sin ControlFlowOnElement -->
+-      <li v-for="tag in tags" v-if="tag.visible" :key="tag.id" class="review-tag">{{ tag.label }}</li>
++      <template v-if="tag.visible" v-for="tag in tags" :key="tag.id">
++        <li class="review-tag">{{ tag.label }}</li>
++      </template>
+     </ul>
+ 
+     <!-- @fixed LoopWithCondition -->
+--- a/<project>/components/CheckoutStep.vue
++++ b/<project>/components/CheckoutStep.vue
+@@ -15,11 +15,17 @@
+     <section class="checkout__panel">
+       <!-- @sin SwitchCase -->
+       <!-- @sin ControlFlowOnElement -->
+-      <CartReview v-if="step === 1" />
+-      <!-- @sin ControlFlowOnElement -->
+-      <ShippingForm v-else-if="step === 2" />
+-      <!-- @sin ControlFlowOnElement -->
+-      <PaymentForm v-else-if="step === 3" />
++      <SwitchCase :value="step">
++          <template #1>
++        <CartReview />
++      </template>
++          <template #2>
++        <ShippingForm />
++      </template>
++          <template #3>
++        <PaymentForm />
++      </template>
++      </SwitchCase>
+     </section>
+ 
+     <!-- Assigning the `dismissed` PROP in a handler — a silent no-op. -->
+--- a/<project>/components/StorefrontHero.vue
++++ b/<project>/components/StorefrontHero.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import CampaignSection from './CampaignSection.vue';
++
+ import type { Storefront } from '@/types';
+ 
+ defineProps<{ storefront: Storefront }>();
+@@ -13,17 +15,16 @@
+ 
+     <!-- A cluster: storefront.campaign read in three fields → extract <HeroBanner :campaign>. -->
+     <!-- @sin DeepDataReach -->
+-    <div class="hero__banner" :style="storefront.campaign.theme">
+-      <h1 class="hero__headline">{{ storefront.campaign.title }}</h1>
+-      <p class="hero__sub">{{ storefront.campaign.subtitle }}</p>
+-    </div>
++    <CampaignSection :campaign="storefront.campaign" />
+ 
+     <nav class="hero__nav">
+       <ul class="hero__links">
+         <!-- @sin ControlFlowOnElement -->
+-        <li v-for="link in storefront.links" :key="link.id" class="hero__link">
+-          <span class="hero__link-label">{{ link.label }}</span>
+-        </li>
++        <template v-for="link in storefront.links" :key="link.id">
++          <li class="hero__link">
++            <span class="hero__link-label">{{ link.label }}</span>
++          </li>
++        </template>
+       </ul>
+     </nav>
+ 
+--- a/<project>/components/AccountMenu.vue
++++ b/<project>/components/AccountMenu.vue
+@@ -10,15 +10,23 @@
+   <nav class="account-menu">
+     <!-- A branch testing two values (||) is not a single case — NOT a switch. -->
+     <!-- @sin ControlFlowOnElement -->
+-    <MenuLink v-if="role === 'admin'" to="/admin">Dashboard</MenuLink>
++    <template v-if="role === 'admin'">
++      <MenuLink to="/admin">Dashboard</MenuLink>
++    </template>
+     <!-- @sin ControlFlowOnElement -->
+-    <MenuLink v-else-if="role === 'editor' || role === 'author'" to="/catalog">Catalog</MenuLink>
++    <template v-else-if="role === 'editor' || role === 'author'">
++      <MenuLink to="/catalog">Catalog</MenuLink>
++    </template>
+ 
+     <!-- Different subjects per branch (role vs membership) — NOT a switch. -->
+     <!-- @sin ControlFlowOnElement -->
+-    <Badge v-if="role === 'admin'">Staff</Badge>
++    <template v-if="role === 'admin'">
++      <Badge>Staff</Badge>
++    </template>
+     <!-- @sin ControlFlowOnElement -->
+-    <Badge v-else-if="membership === 'gold'">Gold member</Badge>
++    <template v-else-if="membership === 'gold'">
++      <Badge>Gold member</Badge>
++    </template>
+ 
+     <!-- `notifications` is read nowhere here, and NotificationBell pipes it on — a chain. -->
+     <!-- @sin PropDrilling -->
+--- a/<project>/components/OrderLineItems.vue
++++ b/<project>/components/OrderLineItems.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import LineItemSection from './LineItemSection.vue';
++
+ defineProps<{ orderId: number; currency: string }>();
+ </script>
+ 
+@@ -13,21 +15,17 @@
+     </thead>
+     <tbody>
+       <!-- @sin DuplicateElement -->
+-      <tr class="line-item">
+-        <td class="line-item__name">Sample product</td>
+-        <td class="line-item__qty">1</td>
+-      </tr>
++      <LineItemSection />
+       <!-- @sin DuplicateElement -->
+-      <tr class="line-item">
+-        <td class="line-item__name">Sample product</td>
+-        <td class="line-item__qty">1</td>
+-      </tr>
++      <LineItemSection />
+       <!-- @sin LoopWithCondition -->
+       <!-- @sin ControlFlowOnElement -->
+-      <tr v-for="line in lines" v-if="line.quantity > 0" :key="line.id" class="line-item">
+-        <td class="line-item__name">{{ line.name }}</td>
+-        <td class="line-item__qty">{{ line.quantity }}</td>
+-      </tr>
++      <template v-if="line.quantity > 0" v-for="line in lines" :key="line.id">
++        <tr class="line-item">
++          <td class="line-item__name">{{ line.name }}</td>
++          <td class="line-item__qty">{{ line.quantity }}</td>
++        </tr>
++      </template>
+     </tbody>
+   </table>
+ </template>
+--- a/<project>/components/ProductCell.vue
++++ b/<project>/components/ProductCell.vue
+@@ -5,15 +5,17 @@
+ <template>
+   <td class="cell">
+     <!-- @sin SwitchCase -->
+-    <template v-if="column === 'price'">
++    <SwitchCase :value="column">
++        <template #price>
+       <strong>{{ '$' }}</strong>
+       <PriceTag />
+     </template>
+-    <template v-else-if="column === 'stock'">
++        <template #stock>
+       <StockLevel />
+     </template>
+-    <template v-else>
++        <template #default>
+       <span class="muted">—</span>
+     </template>
++    </SwitchCase>
+   </td>
+ </template>
+--- a/<project>/components/FilterInventorySheet.vue
++++ b/<project>/components/FilterInventorySheet.vue
+@@ -0,0 +1,31 @@
++<script setup lang="ts">
++const open = defineModel<boolean>('open');
++const query = defineModel<string>('query');
++defineProps<{ options: unknown; apply: () => void }>();
++</script>
++
++<template>
++    <Sheet v-model:open="open">
++      <SheetContent side="right">
++        <SheetHeader>
++          <SheetTitle>Filter inventory</SheetTitle>
++          <SheetDescription>Narrow the catalogue by name and availability.</SheetDescription>
++        </SheetHeader>
++        <div class="filter-body">
++          <Label>Search</Label>
++          <Input v-model="query" type="search" placeholder="SKU or name" />
++          <fieldset class="availability">
++            <legend>Availability</legend>
++            <!-- @sin LoopWithCondition -->
++            <!-- @sin ControlFlowOnElement -->
++            <template v-if="opt.enabled" v-for="opt in options" :key="opt.id">
++              <label><input type="checkbox" :value="opt.value" /> {{ opt.label }}</label>
++            </template>
++          </fieldset>
++        </div>
++        <SheetFooter>
++          <Button @click="apply">Apply filters</Button>
++        </SheetFooter>
++      </SheetContent>
++    </Sheet>
++</template>
+--- a/<project>/components/OrderSummaryCard.vue
++++ b/<project>/components/OrderSummaryCard.vue
+@@ -0,0 +1,28 @@
++<script setup lang="ts">
++import type { Order, OrderBadge } from '@/types';
++
++defineProps<{ order: Order }>();
++</script>
++
++<template>
++    <Card class="summary">
++      <CardHeader>
++        <CardTitle>Order summary</CardTitle>
++        <CardDescription>Placed and awaiting fulfilment.</CardDescription>
++      </CardHeader>
++      <CardContent>
++        <dl class="lines">
++          <dt>Reference</dt>
++          <dd>{{ order.reference }}</dd>
++          <dt>Placed</dt>
++          <dd>{{ order.placedAt }}</dd>
++        </dl>
++        <ul class="totals">
++          <li class="total"><span>Subtotal</span><span>{{ order.subtotal }}</span></li>
++        </ul>
++      </CardContent>
++      <CardFooter>
++        <Button variant="ghost">Print</Button>
++      </CardFooter>
++    </Card>
++</template>
+--- a/<project>/components/PairReaderDialog.vue
++++ b/<project>/components/PairReaderDialog.vue
+@@ -0,0 +1,33 @@
++<script setup lang="ts">
++const open = defineModel<boolean>('open');
++const form = defineModel<unknown>('form');
++defineProps<{ submit: () => void }>();
++</script>
++
++<template>
++    <Dialog v-model:open="open">
++      <DialogContent class="sm:max-w-md">
++        <DialogHeader>
++          <DialogTitle>Pair Reader</DialogTitle>
++          <DialogDescription>Enter the device name and reader model to pair.</DialogDescription>
++        </DialogHeader>
++        <form class="space-y-4" @submit.prevent="submit">
++          <div class="field">
++            <Label>Device name</Label>
++            <Input v-model="form.name" type="text" placeholder="Front counter" />
++          </div>
++          <div class="select-row">
++            <Label>Reader model</Label>
++            <select v-model="form.model" class="select">
++              <option value="s1">SumUp Solo</option>
++              <option value="s2">SumUp Air</option>
++            </select>
++          </div>
++          <DialogFooter>
++            <Button variant="outline" @click="open = false">Cancel</Button>
++            <Button type="submit">Pair reader</Button>
++          </DialogFooter>
++        </form>
++      </DialogContent>
++    </Dialog>
++</template>
+--- a/<project>/components/OrderSummaryPanel.vue
++++ b/<project>/components/OrderSummaryPanel.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import OrderSummaryCard from './OrderSummaryCard.vue';
++
+ import type { Order, OrderBadge } from '@/types';
+ import OrderBadgeBar from './OrderBadgeBar.vue';
+ 
+@@ -10,26 +12,7 @@
+     <!-- A Card compound welded inline — Card + Card* parts with a populated body.
+          It is its own OrderSummaryCard. -->
+     <!-- @sin CompoundInlineComponent -->
+-    <Card class="summary">
+-      <CardHeader>
+-        <CardTitle>Order summary</CardTitle>
+-        <CardDescription>Placed and awaiting fulfilment.</CardDescription>
+-      </CardHeader>
+-      <CardContent>
+-        <dl class="lines">
+-          <dt>Reference</dt>
+-          <dd>{{ order.reference }}</dd>
+-          <dt>Placed</dt>
+-          <dd>{{ order.placedAt }}</dd>
+-        </dl>
+-        <ul class="totals">
+-          <li class="total"><span>Subtotal</span><span>{{ order.subtotal }}</span></li>
+-        </ul>
+-      </CardContent>
+-      <CardFooter>
+-        <Button variant="ghost">Print</Button>
+-      </CardFooter>
+-    </Card>
++    <OrderSummaryCard :order="order" />
+ 
+     <!-- `badge` is read nowhere here, and OrderBadgeBar just pipes it on — a drilling chain. -->
+     <!-- @sin PropDrilling -->
+--- a/<project>/components/ReaderPairingPanel.vue
++++ b/<project>/components/ReaderPairingPanel.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import PairReaderDialog from './PairReaderDialog.vue';
++
+ import { reactive, ref } from 'vue';
+ 
+ const open = ref(false);
+@@ -13,31 +15,7 @@
+     <!-- A whole dialog assembled inline — Dialog + Dialog* parts with a real form body.
+          It is its own ReaderPairingDialog, not part of this panel. -->
+     <!-- @sin CompoundInlineComponent -->
+-    <Dialog v-model:open="open">
+-      <DialogContent class="sm:max-w-md">
+-        <DialogHeader>
+-          <DialogTitle>Pair Reader</DialogTitle>
+-          <DialogDescription>Enter the device name and reader model to pair.</DialogDescription>
+-        </DialogHeader>
+-        <form class="space-y-4" @submit.prevent="submit">
+-          <div class="field">
+-            <Label>Device name</Label>
+-            <Input v-model="form.name" type="text" placeholder="Front counter" />
+-          </div>
+-          <div class="select-row">
+-            <Label>Reader model</Label>
+-            <select v-model="form.model" class="select">
+-              <option value="s1">SumUp Solo</option>
+-              <option value="s2">SumUp Air</option>
+-            </select>
+-          </div>
+-          <DialogFooter>
+-            <Button variant="outline" @click="open = false">Cancel</Button>
+-            <Button type="submit">Pair reader</Button>
+-          </DialogFooter>
+-        </form>
+-      </DialogContent>
+-    </Dialog>
++    <PairReaderDialog v-model:open="open" :submit="submit" v-model:form="form" />
+ 
+     <!-- Righteous: the same dialog already lives in its own component, referenced here. -->
+     <!-- @fixed CompoundInlineComponent -->
+--- a/<project>/components/BillingSection.vue
++++ b/<project>/components/BillingSection.vue
+@@ -0,0 +1,14 @@
++<script setup lang="ts">
++import type { Customer, CustomerOrder } from '@/types';
++
++defineProps<{ billing: Customer['billing'] }>();
++</script>
++
++<template>
++    <div class="account__billing">
++      <h2 class="account__section">Billing</h2>
++      <p class="account__plan">{{ billing.plan }}</p>
++      <p class="account__amount">{{ billing.amount }}</p>
++      <p class="account__renews">{{ billing.renewsAt }}</p>
++    </div>
++</template>
+--- a/<project>/components/CampaignSection.vue
++++ b/<project>/components/CampaignSection.vue
+@@ -0,0 +1,12 @@
++<script setup lang="ts">
++import type { Storefront } from '@/types';
++
++defineProps<{ campaign: Storefront['campaign'] }>();
++</script>
++
++<template>
++    <div class="hero__banner" :style="campaign.theme">
++      <h1 class="hero__headline">{{ campaign.title }}</h1>
++      <p class="hero__sub">{{ campaign.subtitle }}</p>
++    </div>
++</template>
+--- a/<project>/components/SettingsSection.vue
++++ b/<project>/components/SettingsSection.vue
+@@ -0,0 +1,32 @@
++<script setup lang="ts">
++import type { Settings } from '@/types';
++
++defineProps<{ settings: Settings }>();
++</script>
++
++<template>
++    <div class="settings-card__body">
++      <div class="accordion">
++        <div class="accordion__item">
++          <div class="accordion__panel">
++            <div class="field-group">
++              <div class="field-grid">
++                <div class="field-grid__row">
++                  <div class="field">
++                    <div class="field__control">
++                      <div class="field__input-wrap">
++                        <div class="field__inner">
++                          <label class="field__label">{{ settings.profile.displayName }}</label>
++                          <input class="field__input" :value="settings.profile.handle" />
++                        </div>
++                      </div>
++                    </div>
++                  </div>
++                </div>
++              </div>
++            </div>
++          </div>
++        </div>
++      </div>
++    </div>
++</template>
+--- a/<project>/components/CartSection.vue
++++ b/<project>/components/CartSection.vue
+@@ -0,0 +1,31 @@
++<script setup lang="ts">
++import type { Cart } from '@/types';
++
++defineProps<{ cart: Cart }>();
++</script>
++
++<template>
++    <section class="invoice__body">
++      <article class="invoice__statement">
++        <header class="invoice__masthead">
++          <span class="invoice__ledger">
++            <span class="invoice__entry">
++              <span class="invoice__money">
++                <strong class="invoice__frame">
++                  <strong class="invoice__pad">
++                    <strong class="invoice__inset">
++                      <em class="invoice__stack">
++                        <em class="invoice__line">
++                          <em class="invoice__value">{{ cart.totals.grand }}</em>
++                        </em>
++                      </em>
++                    </strong>
++                  </strong>
++                </strong>
++              </span>
++            </span>
++          </span>
++        </header>
++      </article>
++    </section>
++</template>
+--- a/<project>/components/MetricSection.vue
++++ b/<project>/components/MetricSection.vue
+@@ -0,0 +1,32 @@
++<script setup lang="ts">
++import type { Metric, TrendData } from '@/types';
++
++defineProps<{ metric: Metric }>();
++</script>
++
++<template>
++    <figure class="tile__viz">
++      <div class="chart">
++        <div class="chart__frame">
++          <div class="chart__plot">
++            <div class="series">
++              <div class="series__track">
++                <div class="bar">
++                  <div class="bar__fill">
++                    <div class="bar__cap">
++                      <div class="bar__readout">
++                        <div class="bar__numbers">
++                          <span class="bar__value">{{ metric.summary.total }}</span>
++                          <span class="bar__delta">{{ metric.summary.change }}</span>
++                        </div>
++                      </div>
++                    </div>
++                  </div>
++                </div>
++              </div>
++            </div>
++          </div>
++        </div>
++      </div>
++    </figure>
++</template>
+--- a/<project>/components/SettingsAccordionCard.vue
++++ b/<project>/components/SettingsAccordionCard.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import SettingsSection from './SettingsSection.vue';
++
+ import { ref } from 'vue';
+ import type { Settings } from '@/types';
+ 
+@@ -13,30 +15,7 @@
+ 
+     <!-- 13 levels deep with 4 still below the boundary → extract the body. -->
+     <!-- @sin DeepNested -->
+-    <div class="settings-card__body">
+-      <div class="accordion">
+-        <div class="accordion__item">
+-          <div class="accordion__panel">
+-            <div class="field-group">
+-              <div class="field-grid">
+-                <div class="field-grid__row">
+-                  <div class="field">
+-                    <div class="field__control">
+-                      <div class="field__input-wrap">
+-                        <div class="field__inner">
+-                          <label class="field__label">{{ settings.profile.displayName }}</label>
+-                          <input class="field__input" :value="settings.profile.handle" />
+-                        </div>
+-                      </div>
+-                    </div>
+-                  </div>
+-                </div>
+-              </div>
+-            </div>
+-          </div>
+-        </div>
+-      </div>
+-    </div>
++    <SettingsSection :settings="settings" />
+ 
+     <!-- @fixed DeepNested -->
+     <!-- @righteous DeepNested -->
+--- a/<project>/components/CheckoutTotalsBreakdown.vue
++++ b/<project>/components/CheckoutTotalsBreakdown.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import CartSection from './CartSection.vue';
++
+ import type { Cart } from '@/types';
+ 
+ defineProps<{ cart: Cart }>();
+@@ -9,28 +11,6 @@
+     <p class="invoice__caption">Order summary</p>
+ 
+     <!-- @sin DeepNested -->
+-    <section class="invoice__body">
+-      <article class="invoice__statement">
+-        <header class="invoice__masthead">
+-          <span class="invoice__ledger">
+-            <span class="invoice__entry">
+-              <span class="invoice__money">
+-                <strong class="invoice__frame">
+-                  <strong class="invoice__pad">
+-                    <strong class="invoice__inset">
+-                      <em class="invoice__stack">
+-                        <em class="invoice__line">
+-                          <em class="invoice__value">{{ cart.totals.grand }}</em>
+-                        </em>
+-                      </em>
+-                    </strong>
+-                  </strong>
+-                </strong>
+-              </span>
+-            </span>
+-          </span>
+-        </header>
+-      </article>
+-    </section>
++    <CartSection :cart="cart" />
+   </aside>
+ </template>
+--- a/<project>/components/DashboardMetricTile.vue
++++ b/<project>/components/DashboardMetricTile.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import MetricSection from './MetricSection.vue';
++
+ import type { Metric, TrendData } from '@/types';
+ import MetricTrend from './MetricTrend.vue';
+ 
+@@ -12,30 +14,7 @@
+     </header>
+ 
+     <!-- @sin DeepNested -->
+-    <figure class="tile__viz">
+-      <div class="chart">
+-        <div class="chart__frame">
+-          <div class="chart__plot">
+-            <div class="series">
+-              <div class="series__track">
+-                <div class="bar">
+-                  <div class="bar__fill">
+-                    <div class="bar__cap">
+-                      <div class="bar__readout">
+-                        <div class="bar__numbers">
+-                          <span class="bar__value">{{ metric.summary.total }}</span>
+-                          <span class="bar__delta">{{ metric.summary.change }}</span>
+-                        </div>
+-                      </div>
+-                    </div>
+-                  </div>
+-                </div>
+-              </div>
+-            </div>
+-          </div>
+-        </div>
+-      </div>
+-    </figure>
++    <MetricSection :metric="metric" />
+ 
+     <!-- `trend` is never used here — only piped through to the child. -->
+     <!-- @sin PropDrilling -->
+--- a/<project>/components/StatusSection.vue
++++ b/<project>/components/StatusSection.vue
+@@ -0,0 +1,20 @@
++<script setup lang="ts">
++defineProps<{ status: string }>();
++</script>
++
++<template>
++    <SwitchCase :value="status">
++        <template #paid>
++      <span class="badge badge-green">Paid</span>
++    </template>
++        <template #pending>
++      <span class="badge badge-amber">Pending</span>
++    </template>
++        <template #refunded>
++      <span class="badge badge-grey">Refunded</span>
++    </template>
++        <template #default>
++      <span class="badge">Unknown</span>
++    </template>
++    </SwitchCase>
++</template>
+--- a/<project>/components/ReviewCardSection.vue
++++ b/<project>/components/ReviewCardSection.vue
+@@ -0,0 +1,12 @@
++<script setup lang="ts">
++</script>
++
++<template>
++    <article class="review-card">
++      <header class="review-head">
++        <Avatar class="size-8" />
++        <strong class="review-author">Verified buyer</strong>
++      </header>
++      <p class="review-body">Exactly as described, shipped fast.</p>
++    </article>
++</template>
+--- a/<project>/components/FilterGroupSection.vue
++++ b/<project>/components/FilterGroupSection.vue
+@@ -0,0 +1,9 @@
++<script setup lang="ts">
++</script>
++
++<template>
++    <fieldset class="filter-group">
++      <legend class="filter-legend">Brand</legend>
++      <label class="filter-option"><input type="checkbox" /> Any brand</label>
++    </fieldset>
++</template>
+--- a/<project>/components/PromoStripSection.vue
++++ b/<project>/components/PromoStripSection.vue
+@@ -0,0 +1,10 @@
++<script setup lang="ts">
++</script>
++
++<template>
++    <div class="promo-strip">
++      <span class="promo-icon">%</span>
++      <strong class="promo-headline">Free shipping this week</strong>
++      <small class="promo-terms">On orders over 50.</small>
++    </div>
++</template>
+--- a/<project>/components/LineItemSection.vue
++++ b/<project>/components/LineItemSection.vue
+@@ -0,0 +1,9 @@
++<script setup lang="ts">
++</script>
++
++<template>
++    <tr class="line-item">
++      <td class="line-item__name">Sample product</td>
++      <td class="line-item__qty">1</td>
++    </tr>
++</template>
+--- a/<project>/components/FilterSidebar.vue
++++ b/<project>/components/FilterSidebar.vue
+@@ -1,4 +1,6 @@
+ <script setup lang="ts">
++import FilterGroupSection from './FilterGroupSection.vue';
++
+ defineProps<{ categories: string[]; brands: string[]; query: string }>();
+ </script>
+ 
+@@ -17,15 +19,9 @@
+     </div>
+ 
+     <!-- @sin DuplicateElement -->
+-    <fieldset class="filter-group">
+-      <legend class="filter-legend">Brand</legend>
+-      <label class="filter-option"><input type="checkbox" /> Any brand</label>
+-    </fieldset>
++    <FilterGroupSection />
+ 
+     <!-- @sin DuplicateElement -->
+-    <fieldset class="filter-group">
+-      <legend class="filter-legend">Brand</legend>
+-      <label class="filter-option"><input type="checkbox" /> Any brand</label>
+-    </fieldset>
++    <FilterGroupSection />
+   </aside>
+ </template>
+--- a/<project>/components/CheckoutPromoBanner.vue
++++ b/<project>/components/CheckoutPromoBanner.vue
+@@ -1,14 +1,12 @@
+ <script setup lang="ts">
++import PromoStripSection from './PromoStripSection.vue';
++
+ defineProps<{ code: string }>();
+ </script>
+ 
+ <template>
+   <aside class="promo">
+     <!-- @sin DuplicateElement -->
+-    <div class="promo-strip">
+-      <span class="promo-icon">%</span>
+-      <strong class="promo-headline">Free shipping this week</strong>
+-      <small class="promo-terms">On orders over 50.</small>
+-    </div>
++    <PromoStripSection />
+   </aside>
+ </template>
+--- a/<project>/components/BasketPromoBanner.vue
++++ b/<project>/components/BasketPromoBanner.vue
+@@ -1,14 +1,12 @@
+ <script setup lang="ts">
++import PromoStripSection from './PromoStripSection.vue';
++
+ defineProps<{ total: number }>();
+ </script>
+ 
+ <template>
+   <aside class="basket-promo">
+     <!-- @sin DuplicateElement -->
+-    <div class="promo-strip">
+-      <span class="promo-icon">%</span>
+-      <strong class="promo-headline">Free shipping this week</strong>
+-      <small class="promo-terms">On orders over 50.</small>
+-    </div>
++    <PromoStripSection />
+   </aside>
+ </template>
+[2m↳ Judge THIS diff on its own. The auto-fixers change every release, so never skip a repent from a
+  past result or a remembered "this fix is broken" — and don't record one as permanently broken;
+  re-run `--dry-run` and read the CURRENT output. If a fix is genuinely broken, incomplete, or wrong,
+  file it (don't just discard it): `commandments report --reason="…" --ref=path:line` (source AND bad output).[0m
+
+--- stderr
+
+--- files
+=== created .commandments/config.php
+<?php
+
+declare(strict_types=1);
+
+use JesseGall\CodeCommandments\Config;
+
+/*
+ | code-commandments configuration.
+ |
+ | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to
+ |             adjust scope, or run `commandments config reindex`).
+ | exclude() — subtract explicit paths ON TOP of paths(): a dir or file listed here is never a
+ |             target (never reported, never rewritten), e.g. $config->exclude('app/Generated').
+ | disable() — silence a rule by its Sin, Detector, or whole Skill class, or a Claude Code
+ |             hook by its class (or use `commandments disable/enable <sin>`). The
+ |             $disabledSkills / $disabledSins / $disabledHooks menus below list every one.
+ |
+ | Extend it inside the closure:
+ |   $config->detector(\App\Commandments\NoRawSqlDetector::class);        — add your own finder
+ |   $config->package(\App\Commandments\MyFrameworkPackage::class);       — register its exemptions
+ |   $config->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10));  — tune a threshold
+ */
+
+return function (Config $config): void {
+    $config->paths('.');
+
+    $config->disable(
+        // \JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,
+    );
+};
+

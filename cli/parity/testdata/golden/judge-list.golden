@@ -1,0 +1,273 @@
+exit: 0
+--- stdout
+[1;33mbackend/absence[0m
+  BlankStringDefaultDetector
+  BlankStringOnTheWireDetector
+  CancelledCoalesceDetector
+  ConditionalArraySpreadDetector
+  DeNulledFinderDetector
+  ErasedNullObjectDetector
+  NullableCallbackDetector
+  OptionAsNullableDetector
+[1;33mbackend/behaviour-per-method[0m
+  FlagArgumentDetector
+[1;33mbackend/class-layout[0m
+  MemberAfterMethodDetector
+  MemberOutOfOrderDetector
+[1;33mbackend/dependency-direction[0m
+  NamespaceCycleDetector
+  NamespaceDependencyDetector
+[1;33mbackend/documentation[0m
+  ArchaeologyCommentDetector
+  BloatedDocblockDetector
+  CeremonyDocblockDetector
+  DanglingDocReferenceDetector
+  InlineDocblockDetector
+  NegativeSpaceCommentDetector
+  RestatedCommentDetector
+  StackedDocblockDetector
+[1;33mbackend/enums-with-behaviour[0m
+  ConstClassEnumDetector
+  EnumCaseOrChainDetector
+  EnumValueMatchDetector
+  InArrayMirrorsEnumDetector
+  MatchDefaultReturnsNullDetector
+  StringMatchMirrorsEnumDetector
+  UnnamedVocabularyLiteralDetector
+[1;33mbackend/exceptions[0m
+  GenericExceptionDetector
+  MessageAtThrowDetector
+  SwallowCatchDetector
+  WrappingWithoutCauseDetector
+[1;33mbackend/fix-at-the-source[0m
+  ConstructorSideEffectDetector
+  DivergentTwinDetector
+  DuplicateFunctionDetector
+  ManufacturedFakeFillDetector
+  MutableStaticStateDetector
+  NearDuplicateFunctionDetector
+[1;33mbackend/guard-clauses-and-flow[0m
+  CoalescedLoopSubjectDetector
+  DeepNestingDetector
+  IfElseLadderDetector
+  InlineThrowDetector
+  LoopInvertedGuardDetector
+  NestedTernaryDetector
+  NonCountingForDetector
+  RedundantElseDetector
+  ShortCircuitStatementDetector
+  TernaryStatementDetector
+[1;33mbackend/method-mood[0m
+  BareStatePredicateDetector
+  NarratedCommandDetector
+[1;33mbackend/pass-the-object[0m
+  ComputedBooleanArgumentDetector
+  ConvertedArgumentDetector
+  DerivedArgumentDetector
+  ParamResolvedFromParamDetector
+[1;33mbackend/repeated-call-helper[0m
+  RepeatedGuardDetector
+  RepeatedNamedCallDetector
+  RepeatedTypeGuardDetector
+[1;33mbackend/role-vocabulary[0m
+  NullableRegistryLookupDetector
+[1;33mbackend/tell-dont-ask[0m
+  FeatureEnvyDetector
+  KeyedLookupEnvyDetector
+  TypeSwitchDetector
+[1;33mbackend/templates[0m
+  AssembledTemplateDetector
+[1;33mbackend/type-honesty[0m
+  MaskedInvariantDetector
+  PhantomNullableDetector
+  RedundantArrowReturnTypeDetector
+  ScratchStateRestoreDetector
+  PlaceholderFilledDataDetector
+  UselessPropertyHookDetector
+[1;33mbackend/value-objects[0m
+  ArrayBagDetector
+  ArrayReturnBagDetector
+  CoupledFieldsDetector
+  DataClumpDetector
+  HandRolledWitherDetector
+  MutableValueObjectDetector
+  PositionalTupleReturnDetector
+  RawDecodedArrayReturnDetector
+[1;33mcsharp/absence[0m
+  BlankStringDefaultDetector
+  CancelledCoalesceDetector
+  DeNulledFinderDetector
+  InventedDefaultDetector
+  NullForgivenDetector
+[1;33mcsharp/behaviour-per-method[0m
+  FlagArgumentDetector
+[1;33mcsharp/class-layout[0m
+  MemberAfterMethodDetector
+  MemberOutOfOrderDetector
+[1;33mcsharp/dependency-direction[0m
+  NamespaceCycleDetector
+  NamespaceDependencyDetector
+[1;33mcsharp/documentation[0m
+  ArchaeologyCommentDetector
+  BloatedDocblockDetector
+  CeremonyDocblockDetector
+  DanglingDocReferenceDetector
+  NegativeSpaceCommentDetector
+  RestatedCommentDetector
+[1;33mcsharp/duplication[0m
+  DuplicateMethodDetector
+  NearDuplicateMethodDetector
+[1;33mcsharp/enums[0m
+  ConstClassEnumDetector
+  EnumCaseOrChainDetector
+  InArrayMirrorsEnumDetector
+  MatchDefaultReturnsNullDetector
+  StringMirrorsEnumDetector
+  UnnamedVocabularyLiteralDetector
+[1;33mcsharp/exceptions[0m
+  GenericThrowDetector
+  SwallowedExceptionDetector
+  WrappingWithoutCauseDetector
+[1;33mcsharp/fix-at-the-source[0m
+  ConstructorSideEffectDetector
+  MutableStaticStateDetector
+[1;33mcsharp/flow[0m
+  CoalescedLoopSubjectDetector
+  DeepNestingDetector
+  InlineThrowDetector
+  LoopWrappedInIfDetector
+  NestedTernaryDetector
+  NonCountingForDetector
+  RedundantElseDetector
+  SubjectLadderDetector
+[1;33mcsharp/method-mood[0m
+  BareStatePredicateDetector
+[1;33mcsharp/pass-the-object[0m
+  ConvertedArgumentDetector
+  DerivedArgumentDetector
+  ParamResolvedFromParamDetector
+[1;33mcsharp/repeated-call-helper[0m
+  RepeatedGuardDetector
+  RepeatedNamedCallDetector
+  RepeatedTypeGuardDetector
+[1;33mcsharp/tell-dont-ask[0m
+  FeatureEnvyDetector
+  TypeSwitchDetector
+[1;33mcsharp/templates[0m
+  AssembledTemplateDetector
+[1;33mcsharp/type-honesty[0m
+  PlaceholderFilledDataDetector
+[1;33mcsharp/value-objects[0m
+  ArrayReturnBagDetector
+  CoupledFieldsDetector
+  DataClumpDetector
+  DictionaryBagDetector
+  MutableValueObjectDetector
+  PositionalTupleReturnDetector
+[1;33mfrontend/vue-components[0m
+  CompoundInlineComponentDetector
+  DeepDataReachDetector
+  DeepNestedDetector
+  DuplicateElementDetector
+  NearDuplicateElementDetector
+  PropDrillingDetector
+  PropMutationDetector
+[1;33mfrontend/vue-control-flow[0m
+  ControlFlowOnElementDetector
+  IndexAsKeyDetector
+  LoopWithConditionDetector
+  SwitchCaseDetector
+[1;33mpython/absence[0m
+  BlankStringDefaultDetector
+  CancelledFallbackDetector
+  ConditionalSpreadDetector
+  InventedDefaultDetector
+  NullableCallbackDetector
+[1;33mpython/behaviour-per-method[0m
+  FlagArgumentDetector
+[1;33mpython/class-layout[0m
+  MemberAfterMethodDetector
+  MemberOutOfOrderDetector
+[1;33mpython/dependency-direction[0m
+  NamespaceCycleDetector
+  NamespaceDependencyDetector
+[1;33mpython/documentation[0m
+  ArchaeologyCommentDetector
+  BloatedDocblockDetector
+  CeremonyDocblockDetector
+  DanglingDocReferenceDetector
+  NegativeSpaceCommentDetector
+  RestatedCommentDetector
+[1;33mpython/duplication[0m
+  DuplicateFunctionDetector
+  NearDuplicateFunctionDetector
+[1;33mpython/enums[0m
+  ConstantClassEnumDetector
+  EnumCaseOrChainDetector
+  EnumValueMatchDetector
+  InLiteralsMirrorsEnumDetector
+  MatchWildcardReturnsNoneDetector
+  StringMatchMirrorsEnumDetector
+  UnnamedVocabularyLiteralDetector
+[1;33mpython/exceptions[0m
+  MessageStringRaiseDetector
+  RaiseWithoutCauseDetector
+  SwallowedExceptionDetector
+[1;33mpython/fix-at-the-source[0m
+  ConstructorSideEffectDetector
+  DivergentTwinDetector
+  MutableStaticStateDetector
+[1;33mpython/flow[0m
+  CoalescedLoopSubjectDetector
+  ConditionalStatementDetector
+  DeepNestingDetector
+  LoopWrappedInIfDetector
+  NestedConditionalDetector
+  RedundantElseDetector
+  ShortCircuitStatementDetector
+  SubjectLadderDetector
+[1;33mpython/method-mood[0m
+  BareStatePredicateDetector
+  NarratedCommandDetector
+[1;33mpython/pass-the-object[0m
+  ComputedBooleanArgumentDetector
+  ConvertedArgumentDetector
+  DerivedArgumentDetector
+  ParamResolvedFromParamDetector
+[1;33mpython/repeated-call-helper[0m
+  RepeatedGuardDetector
+  RepeatedNamedCallDetector
+  RepeatedTypeGuardDetector
+[1;33mpython/role-vocabulary[0m
+  NullableRegistryLookupDetector
+[1;33mpython/tell-dont-ask[0m
+  FeatureEnvyDetector
+  KeyedLookupEnvyDetector
+  TypeSwitchDetector
+[1;33mpython/templates[0m
+  AssembledTemplateDetector
+[1;33mpython/type-honesty[0m
+  ConstantPropertyDetector
+  MaskedInvariantDetector
+  PhantomNullableDetector
+  PlaceholderFilledDataDetector
+  ScratchStateRestoreDetector
+[1;33mpython/value-objects[0m
+  CoupledFieldsDetector
+  DataClumpDetector
+  DictBagDetector
+  DictReturnBagDetector
+  HandRolledReplaceDetector
+  MutableValueObjectDetector
+  PositionalTupleReturnDetector
+  RawDecodedReturnDetector
+[1;33mtypescript/absence[0m
+  DefendedCertainFieldDetector
+  FalselyOptionalFieldDetector
+[1;33mtypescript/duplication[0m
+  DuplicateFunctionDetector
+  NearDuplicateFunctionDetector
+
+--- stderr
+
+--- files

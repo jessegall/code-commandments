@@ -1,0 +1,104 @@
+exit: 0
+--- stdout
+
+[1mpython-dict-bag[0m  [2mpython/value-objects[0m
+  A parameter typed as a dict read by string keys — `row["sku"]`, `row.get("quantity")`
+  — a record nobody declared
+
+[33mWhy it is a sin[0m
+
+  A dict with string keys is a record nobody declared. Every reader re-learns its shape
+  from
+  the code that happened to build it, a typo in a key is a `KeyError` at run time instead
+  of an
+  error in the editor, and nothing says which keys are always there.
+
+[33mHow to fix it[0m
+
+  Give a record a type — a frozen dataclass — instead of a dict read by string keys.
+  Declare the keys as fields of a frozen dataclass, build it where the data enters (a
+  `from_payload` classmethod), and take that type as the parameter.
+
+[33mExample[0m
+
+  ```py
+  ----------[ Bad ]----------
+  
+  def label(parcel: dict[str, Any]) -> str:
+      return f"{parcel['recipient']}\n{parcel['street']}\n{parcel['postcode']} {parcel['city']}"
+  
+  ----------[ Good ]----------
+  
+  @dataclass(frozen=True)
+  class Parcel:
+      recipient: str
+      street: str
+      postcode: str
+      city: str
+  
+      @classmethod
+      def from_payload(cls, payload: dict[str, Any]) -> "Parcel":
+          return cls(payload["recipient"], payload["street"], payload["postcode"], payload["city"])
+  
+      def label(self) -> str:
+          return f"{self.recipient}\n{self.street}\n{self.postcode} {self.city}"
+  ```
+
+[33mCommands[0m
+
+  [36mLearn     [0m load the skill [1mcommandments-python-value-objects[0m
+  [36mFind it   [0m commandments judge --sin=python-dict-bag
+  [36mTurn off  [0m commandments disable python-dict-bag
+  [36mWrong?    [0m commandments report --detector=DictBagDetector --reason="…" --ref=PATH:LINE
+
+
+[1mpython-dict-return-bag[0m  [2mpython/value-objects[0m
+  `return {"total": …, "tax": …}` — a record of several fields handed back as a dict
+  its callers read by string key
+
+[33mWhy it is a sin[0m
+
+  A dict with string keys is a record nobody declared. Every reader re-learns its shape
+  from
+  the code that happened to build it, a typo in a key is a `KeyError` at run time instead
+  of an
+  error in the editor, and nothing says which keys are always there.
+
+[33mHow to fix it[0m
+
+  Return a typed value — a frozen dataclass — not a dict of several named fields.
+  A `@dataclass(frozen=True)` for the result, built where it is returned — or a
+  `TypedDict` when a dict must cross a boundary.
+
+[33mExample[0m
+
+  ```py
+  ----------[ Bad ]----------
+  
+  def progress(self, done: int, failed: int) -> dict:
+      return {"done": done, "failed": failed, "left": len(self.rows) - done - failed}
+  
+  ----------[ Good ]----------
+  
+  @dataclass(frozen=True)
+  class ImportProgress:
+      done: int
+      failed: int
+      total: int
+  
+      @property
+      def left(self) -> int:
+          return self.total - self.done - self.failed
+  ```
+
+[33mCommands[0m
+
+  [36mLearn     [0m load the skill [1mcommandments-python-value-objects[0m
+  [36mFind it   [0m commandments judge --sin=python-dict-return-bag
+  [36mTurn off  [0m commandments disable python-dict-return-bag
+  [36mWrong?    [0m commandments report --detector=DictReturnBagDetector --reason="…" --ref=PATH:LINE
+
+
+--- stderr
+
+--- files

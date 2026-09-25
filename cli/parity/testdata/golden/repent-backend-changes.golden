@@ -1,0 +1,9 @@
+exit: 0
+--- stdout
+[32m✓ Nothing to AUTO-FIX here.[0m [2mThis is NOT "no sins" — it only means no scribe could
+  rewrite this scope. A sin `judge` flags without an auto-fixer still stands; fix it BY HAND at its
+  source per its skill. Run `judge` to see what remains.[0m
+
+--- stderr
+
+--- files

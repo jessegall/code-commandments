@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+[1mDictBagDetector[0m honours no exemptions.
+
+--- stderr
+
+--- files

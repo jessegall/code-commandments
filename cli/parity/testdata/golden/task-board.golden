@@ -1,0 +1,12 @@
+exit: 0
+--- stdout
+● 001  First — It matters
+  ○ 001.2  Sub one
+    ○ 001.2.1  Deep
+  ○ 001.10  Sub two
+○ 002  Second
+○ 004  004-untitled — no heading
+
+--- stderr
+
+--- files

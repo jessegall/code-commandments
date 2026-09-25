@@ -1,0 +1,7 @@
+exit: 1
+--- stdout
+Say what to call it: `commandments session name "<name>"`.
+
+--- stderr
+
+--- files

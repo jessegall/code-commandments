@@ -22,3 +22,8 @@ func (SwitchCase) Definition() sins.Definition {
 		Suggestion:  "the `<SwitchCase :value>` component: `commandments scaffold --sin=switch-case`.",
 	}
 }
+
+// Scaffolds is the <SwitchCase> component the fix reaches for.
+func (SwitchCase) Scaffolds() []sins.Scaffold {
+	return []sins.Scaffold{{Path: "components/SwitchCase.vue", Stub: "vue/SwitchCase.vue", Frontend: true}}
+}

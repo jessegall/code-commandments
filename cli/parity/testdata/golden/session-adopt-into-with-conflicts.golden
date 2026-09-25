@@ -1,0 +1,15 @@
+exit: 1
+--- stdout
+▸ `zzzzz` — 1 entry adopted into
+  <project>/.commandments/sessions/kept
+  moved    one
+  KEPT     link  (the destination already has one; nothing was deleted)
+  KEPT     sins/sins.md  (the destination already has one; nothing was deleted)
+  `zzzzz` still stands. Merge what is left by hand, then adopt again.
+
+--- stderr
+
+--- files
+=== created .commandments/sessions/kept/one
+a
+=== deleted .commandments/sessions/zzzzz/one

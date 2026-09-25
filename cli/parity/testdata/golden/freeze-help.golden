@@ -1,0 +1,14 @@
+exit: 0
+--- stdout
+commandments freeze — Mark a file intentionally immutable, or lift the mark. A frozen file is still scanned (so cross-file rules stay correct) but never flagged and never rewritten.
+Also answers to: unfreeze
+
+Usage:
+  commandments freeze <path>    stamp the file frozen
+  commandments unfreeze <path>  lift the stamp — the file is a target again
+
+  Idempotent: freezing a frozen file (or unfreezing an unfrozen one) reports and does nothing.
+
+--- stderr
+
+--- files

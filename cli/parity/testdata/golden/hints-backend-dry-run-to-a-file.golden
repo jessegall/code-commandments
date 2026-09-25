@@ -1,0 +1,348 @@
+exit: 0
+--- stdout
+[2m↳ dry-run diff for 17 file(s) written to hints.diff[0m
+
+--- stderr
+
+--- files
+=== created hints.diff
+--- a/app/Http/Pages/CatalogPage.php
++++ b/app/Http/Pages/CatalogPage.php
+@@ -14,6 +14,9 @@
+  * A page seeded through a `for()` factory, composing direct nested Data slots (no typed collection),
+  * with TWO container-injected collaborators: `$reader` is correctly `#[Hidden]`, but `$facetBuilder`
+  * is not — one un-hidden service is enough to leak into the frontend type.
++ *
++ * @method static static from(string $category)
++ * @method static static from(array $payload)
+  */
+ #[TypeScript]
+ #[Sinful(InjectedServiceNotHidden::class)]
+@@ -25,7 +28,7 @@
+ 
+     public readonly CartLine $featured;
+ 
+-    public static function for(string $category): self
++    public static function fromString(string $category): self
+     {
+         return self::from(['category' => $category]);
+     }
+@@ -50,6 +53,9 @@
+ /**
+  * The FIX for the same catalog page: BOTH injected collaborators carry `#[Hidden]`, so neither the
+  * reader nor the facet builder serializes into the payload or reaches the generated TypeScript type.
++ *
++ * @method static static from(string $category)
++ * @method static static from(array $payload)
+  */
+ #[TypeScript]
+ #[Fixed(InjectedServiceNotHidden::class)]
+@@ -61,7 +67,7 @@
+ 
+     public readonly CartLine $featured;
+ 
+-    public static function for(string $category): self
++    public static function fromString(string $category): self
+     {
+         return self::from(['category' => $category]);
+     }
+--- a/app/Http/Pages/Hydration/LazyRelationRow.php
++++ b/app/Http/Pages/Hydration/LazyRelationRow.php
+@@ -13,6 +13,10 @@
+  * relation from the wire" pattern. It is NOT a hand-rolled null→Optional map (the scaffolded factory maps a
+  * null PAYLOAD via `::from`, which this isn't), so it must NOT flag. Only a null-guard ternary is the map.
+  */
++/**
++ * @method static static from(object $row)
++ * @method static static from(array $payload)
++ */
+ #[Righteous(NullToOptionalMap::class)]
+ final class LazyRelationRow extends Data
+ {
+--- a/app/Http/Pages/Hydration/DeriveTiles.php
++++ b/app/Http/Pages/Hydration/DeriveTiles.php
+@@ -33,7 +33,7 @@
+             return TileGrid::from(['tiles' => []]);
+         }
+ 
+-        return TileGrid::from(['tiles' => array_map(GridTile::make(...), range(0, $size - 1))]);
++        return TileGrid::from(['tiles' => array_map(GridTile::from(...), range(0, $size - 1))]);
+     }
+ 
+     public function capacity(): int
+@@ -78,7 +78,7 @@
+     #[Righteous(DerivedCollectionCast::class)]
+     public function build(): LabelStrip
+     {
+-        $chips = [StateChip::for(ShipState::Pending), StateChip::for(ShipState::Shipped)];
++        $chips = [StateChip::from(ShipState::Pending), StateChip::from(ShipState::Shipped)];
+ 
+         return LabelStrip::from(['labels' => array_map(static fn (StateChip $c): string => $c->label, $chips)]);
+     }
+--- a/app/Http/Pages/Hydration/CollTypedFeed.php
++++ b/app/Http/Pages/Hydration/CollTypedFeed.php
+@@ -29,6 +29,9 @@
+     }
+ }
+ 
++/**
++ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
++ */
+ final class FeedItem extends Data
+ {
+     public function __construct(public readonly string $verb) {}
+--- a/app/Http/Pages/Hydration/DeriveLegend.php
++++ b/app/Http/Pages/Hydration/DeriveLegend.php
+@@ -30,7 +30,7 @@
+ {
+     public function cast(ShipState $state): StateChip
+     {
+-        return StateChip::for($state);
++        return StateChip::from($state);
+     }
+ }
+ 
+@@ -52,7 +52,7 @@
+     #[Sinful(DerivedCollectionCast::class)]
+     public function build(): ShipStatusLegend
+     {
+-        return ShipStatusLegend::from(['chips' => array_map(StateChip::for(...), ShipState::cases())]);
++        return ShipStatusLegend::from(['chips' => array_map(StateChip::from(...), ShipState::cases())]);
+     }
+ 
+     /**
+--- a/app/Http/Pages/Hydration/Leaves.php
++++ b/app/Http/Pages/Hydration/Leaves.php
+@@ -39,11 +39,15 @@
+     case Lost = 'lost';
+ }
+ 
++/**
++ * @method static static from(ShipState $state)
++ * @method static static from(array $payload)
++ */
+ final class StateChip extends Data
+ {
+     public function __construct(public readonly string $label, public readonly string $tone) {}
+ 
+-    public static function for(ShipState $state): self
++    public static function fromShipState(ShipState $state): self
+     {
+         return new self(ucfirst($state->value), $state === ShipState::Lost ? 'danger' : 'ok');
+     }
+@@ -54,21 +58,29 @@
+     }
+ }
+ 
++/**
++ * @method static static from(string $sku)
++ * @method static static from(array $payload)
++ */
+ final class ProductBadge extends Data
+ {
+     public function __construct(public readonly string $sku, public readonly string $caption) {}
+ 
+-    public static function forProduct(string $sku): self
++    public static function fromString(string $sku): self
+     {
+         return new self($sku, "SKU {$sku}");
+     }
+ }
+ 
++/**
++ * @method static static from(int $index)
++ * @method static static from(array $payload)
++ */
+ final class GridTile extends Data
+ {
+     public function __construct(public readonly int $x, public readonly int $y) {}
+ 
+-    public static function make(int $index): self
++    public static function fromInt(int $index): self
+     {
+         return new self($index % 4, intdiv($index, 4));
+     }
+--- a/app/Http/Pages/PrintQueuePage.php
++++ b/app/Http/Pages/PrintQueuePage.php
+@@ -11,6 +11,9 @@
+ /**
+  * The Smart Farmers PrintAgents IndexPage shape — seeded through a `for()` factory over direct nested
+  * slots, reading a buffer service out of the container inside a getter.
++ *
++ * @method static static from(string $agent)
++ * @method static static from(array $payload)
+  */
+ #[Sinful(PageObjectMissingTypeScript::class)]
+ final class PrintQueuePage extends Data
+@@ -21,7 +24,7 @@
+ 
+     public readonly StatCard $depth;
+ 
+-    public static function for(string $agent): self
++    public static function fromString(string $agent): self
+     {
+         return self::from(['agent' => $agent]);
+     }
+--- a/app/Http/Pages/TimelinePage.php
++++ b/app/Http/Pages/TimelinePage.php
+@@ -12,6 +12,9 @@
+ /**
+  * Seeded through a `for()` factory, then a constructor that projects each slot from the injected
+  * reader — pure `$this->slot = $this->cart->…()` fills that belong in `#[Computed]` hooks.
++ *
++ * @method static static from(string $order)
++ * @method static static from(array $payload)
+  */
+ #[TypeScript]
+ final class TimelinePage extends Data
+@@ -20,7 +23,7 @@
+ 
+     public readonly MenuLink $back;
+ 
+-    public static function for(string $order): self
++    public static function fromString(string $order): self
+     {
+         return self::from(['order' => $order]);
+     }
+--- a/app/Data/CouponData.php
++++ b/app/Data/CouponData.php
+@@ -13,7 +13,6 @@
+  * Here the `@method` collides with the real static `rules()` — the collision sin
+  * is not specific to factories or to promoted-constructor classes.
+  *
+- * @method static array rules()
+  */
+ #[Sinful(DataMethodHintCollision::class)]
+ final class CouponData extends Data
+@@ -36,6 +35,7 @@
+  * never the concrete `fromCode()` factory it dispatches to — so nothing collides.
+  *
+  * @method static static from(string $code)
++ * @method static static from(array $payload)
+  */
+ #[Righteous(DataMethodHintCollision::class)]
+ final class VoucherData extends Data
+--- a/app/Data/InvoiceData.php
++++ b/app/Data/InvoiceData.php
+@@ -12,7 +12,8 @@
+ /**
+  * Typed invoice view, built from an order.
+  *
+- * @method static static fromOrder(Order $order)
++ * @method static static from(Order $order)
++ * @method static static from(array $payload)
+  */
+ #[Sinful(DataMethodHintCollision::class)]
+ final class InvoiceData extends Data
+@@ -39,7 +40,8 @@
+  * method the IDE cannot see — and says nothing about the concrete `fromOrder()` factory declared
+  * below it, so no hint re-declares a real method.
+  *
+- * @method static static from(mixed ...$payloads)
++ * @method static static from(Order $order)
++ * @method static static from(array $payload)
+  */
+ #[Fixed(DataMethodHintCollision::class)]
+ final class CreditNoteData extends Data
+--- a/app/Data/WarehouseStockData.php
++++ b/app/Data/WarehouseStockData.php
+@@ -12,7 +12,6 @@
+  * Stock-on-hand per warehouse. The conditional-return `@method` collides with the
+  * real `collect()` override below — the parens in the return type must not hide it.
+  *
+- * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+  */
+ #[Sinful(DataMethodHintCollision::class)]
+ final class WarehouseStockData extends Data
+--- a/app/Data/VoucherPanelData.php
++++ b/app/Data/VoucherPanelData.php
+@@ -10,7 +10,6 @@
+  * The voucher panel of the checkout page. A voucher that was never entered travels as a blank code,
+  * which the page then has to decode back into "no voucher".
+  *
+- * @method static self from(mixed ...$payload)
+  */
+ #[Sinful(BlankStringOnTheWire::class)]
+ final class VoucherPanelData extends Data
+--- a/app/Data/CustomerData.php
++++ b/app/Data/CustomerData.php
+@@ -9,6 +9,8 @@
+ /**
+  * Typed view of a customer. The snake_case input map is what `::from()` runs and a
+  * raw `new` skips — so this class is RICH: `new CustomerData(...)` is a real sin.
++ *
++ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+  */
+ #[MapInputName(SnakeCaseMapper::class)]
+ final class CustomerData extends Data
+--- a/app/Data/MembershipData.php
++++ b/app/Data/MembershipData.php
+@@ -11,6 +11,7 @@
+  * factory. No real method named `from` is declared here, so there is no collision.
+  *
+  * @method static static from(Customer $customer)
++ * @method static static from(array $payload)
+  */
+ final class MembershipData extends Data
+ {
+--- a/app/Data/ProductData.php
++++ b/app/Data/ProductData.php
+@@ -10,6 +10,8 @@
+ /**
+  * Typed view of a product. The `#[WithCast]` on `category` is work `::from()` runs
+  * and a raw `new` skips — so this class is RICH: `new ProductData(...)` is a real sin.
++ *
++ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+  */
+ final class ProductData extends Data
+ {
+--- a/app/Http/Controllers/PageController.php
++++ b/app/Http/Controllers/PageController.php
+@@ -38,7 +38,7 @@
+ 
+     public function catalog(): CatalogPage
+     {
+-        return CatalogPage::for('books');
++        return CatalogPage::from('books');
+     }
+ 
+     public function account(): AccountPage
+@@ -63,7 +63,7 @@
+ 
+     public function printQueue(): PrintQueuePage
+     {
+-        return PrintQueuePage::for('agent-1');
++        return PrintQueuePage::from('agent-1');
+     }
+ 
+     public function overview(): OverviewPage
+@@ -73,7 +73,7 @@
+ 
+     public function timeline(): TimelinePage
+     {
+-        return TimelinePage::for('order-1');
++        return TimelinePage::from('order-1');
+     }
+ 
+     public function metrics(): MetricsPage
+@@ -93,7 +93,7 @@
+ 
+     public function hiddenCatalog(): HiddenCatalogPage
+     {
+-        return HiddenCatalogPage::for('books');
++        return HiddenCatalogPage::from('books');
+     }
+ 
+     public function computedOverview(): ComputedOverviewPage
+--- a/app/Http/Pages/Hydration/DeriveBadges.php
++++ b/app/Http/Pages/Hydration/DeriveBadges.php
+@@ -31,7 +31,7 @@
+     {
+         $active = array_values(array_filter($this->skus, static fn (string $sku): bool => $sku !== ''));
+ 
+-        return CatalogBadges::from(['badges' => array_map(fn (string $sku) => ProductBadge::forProduct($sku), $active)]);
++        return CatalogBadges::from(['badges' => array_map(fn (string $sku) => ProductBadge::from($sku), $active)]);
+     }
+ 
+     public function register(string $sku): void
+

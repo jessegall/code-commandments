@@ -11,6 +11,8 @@ import (
 // NamespaceGraph is which namespace references which, read from every class reference to a declared class.
 type NamespaceGraph struct {
 	references map[string]map[string]bool
+	nodes      []string
+	known      map[string]bool
 	arrows     map[string]map[string][]engine.Match
 	order      []string
 	targets    map[string][]string
@@ -26,9 +28,11 @@ var graphs = php.Memoised(func(codebase *engine.Codebase) *NamespaceGraph {
 			continue
 		}
 		to := php.NamespaceOf(target)
+		graph.node(from)
 		if to == "" {
 			continue
 		}
+		graph.node(to)
 		if to != from {
 			if graph.references[from] == nil {
 				graph.references[from] = map[string]bool{}
@@ -75,15 +79,15 @@ func declaresAnAssociation(codebase *engine.Codebase, reference php.Node) bool {
 // each other: fewer references, ties broken on the name.
 func (g *NamespaceGraph) ArrowsClosingAMutualPair() []engine.Match {
 	var cutting []engine.Match
-	for _, pair := range g.mutualPairs() {
+	for _, pair := range g.MutualPairs() {
 		cutting = append(cutting, g.arrows[pair[0]][pair[1]]...)
 	}
 
 	return cutting
 }
 
-// mutualPairs is each pair of namespaces referencing each other, as its thinner direction, in first-seen order.
-func (g *NamespaceGraph) mutualPairs() [][2]string {
+// MutualPairs is each pair of namespaces referencing each other, as its thinner direction, in first-seen order.
+func (g *NamespaceGraph) MutualPairs() [][2]string {
 	chosen := map[[2]string][2]string{}
 	var order [][2]string
 	for _, from := range g.order {

@@ -1,0 +1,99 @@
+[
+  {"name": "task-help", "args": ["task", "--help"]},
+  {"name": "task-alias-help", "args": ["tasks", "-h"]},
+  {"name": "task-unknown-verb", "args": ["task", "juggle"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "task-unknown-option", "args": ["task", "--by=me"]},
+  {"name": "task-board-empty", "args": ["task"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "task-alias-board-empty", "args": ["tasks"]},
+  {"name": "task-add", "args": ["task", "add", "Port the CLI — all of it!", "because Go is the whole tool"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "task-add-missing-title", "args": ["task", "add"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "task-add-under-unknown", "args": ["task", "add", "--under=9", "Sub"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "task-add-under-malformed", "args": ["task", "add", "--under=1.x", "Sub"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {
+    "name": "task-add-under",
+    "args": ["task", "add", "--under=1", "Sub", "why not"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": [
+      "mkdir -p .commandments/sessions/61bdc/tasks/queue .commandments/sessions/61bdc/tasks/history",
+      "printf '# Parent\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/queue/001-parent.md",
+      "printf '# Old child\\n\\n- queued 2026-01-01 10:00\\n- done 2026-01-01 11:00 — fine\\n' > .commandments/sessions/61bdc/tasks/history/001.4-old-child.md"
+    ]
+  },
+  {
+    "name": "task-add-after-history",
+    "args": ["task", "add", "Next"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": [
+      "mkdir -p .commandments/sessions/61bdc/tasks/history",
+      "printf '# Closed\\n\\n- done 2026-01-01 11:00\\n' > .commandments/sessions/61bdc/tasks/history/003-closed.md"
+    ]
+  },
+  {
+    "name": "task-board",
+    "args": ["task"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": [
+      "mkdir -p .commandments/sessions/61bdc/tasks/queue .commandments/sessions/61bdc/tasks/active .commandments/sessions/61bdc/tasks/history",
+      "printf '# Second\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/queue/002-second.md",
+      "printf '# First\\n\\nIt matters\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/active/001-first.md",
+      "printf '# Sub two\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/queue/001.10-sub-two.md",
+      "printf '# Sub one\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/queue/001.2-sub-one.md",
+      "printf '# Deep\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/queue/001.2.1-deep.md",
+      "printf 'no heading\\n' > .commandments/sessions/61bdc/tasks/queue/004-untitled.md",
+      "printf '# Not a task\\n' > .commandments/sessions/61bdc/tasks/queue/notes.md",
+      "printf '# Closed\\n\\n- done 2026-01-01 11:00\\n' > .commandments/sessions/61bdc/tasks/history/003-closed.md"
+    ]
+  },
+  {
+    "name": "task-start",
+    "args": ["task", "start", "001"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": ["mkdir -p .commandments/sessions/61bdc/tasks/queue", "printf '# First\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/queue/001-first.md"]
+  },
+  {
+    "name": "task-start-already-active",
+    "args": ["task", "start", "1"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": ["mkdir -p .commandments/sessions/61bdc/tasks/active", "printf '# First\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/active/001-first.md"]
+  },
+  {"name": "task-start-unknown", "args": ["task", "start", "7"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "task-start-no-id", "args": ["task", "start"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "task-start-zero", "args": ["task", "start", "0"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {
+    "name": "task-done",
+    "args": ["task", "done", "1", "it landed"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": ["mkdir -p .commandments/sessions/61bdc/tasks/active", "printf '# First\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/active/001-first.md"]
+  },
+  {
+    "name": "task-done-without-reason",
+    "args": ["task", "done", "1"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": ["mkdir -p .commandments/sessions/61bdc/tasks/active", "printf '# First\\n\\n- queued 2026-01-01 10:00\\n' > .commandments/sessions/61bdc/tasks/active/001-first.md"]
+  },
+  {
+    "name": "task-done-already-closed",
+    "args": ["task", "done", "1", "again"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": ["mkdir -p .commandments/sessions/61bdc/tasks/history", "printf '# First\\n\\n- done 2026-01-01 10:00 — once\\n' > .commandments/sessions/61bdc/tasks/history/001-first.md"]
+  },
+  {
+    "name": "task-show",
+    "args": ["task", "show", "1.2"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": ["mkdir -p .commandments/sessions/61bdc/tasks/queue", "printf '# Sub\\n\\nWhy\\n\\n- queued 2026-01-01 10:00\\n\\n\\n' > .commandments/sessions/61bdc/tasks/queue/001.2-sub.md"]
+  },
+  {"name": "task-history-empty", "args": ["task", "history"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {
+    "name": "task-history",
+    "args": ["task", "history"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": [
+      "mkdir -p .commandments/sessions/61bdc/tasks/history",
+      "printf '# Two\\n\\n- queued 2026-01-01 10:00\\n- done 2026-01-01 11:00\\n' > .commandments/sessions/61bdc/tasks/history/002-two.md",
+      "printf '# One\\n\\n- queued 2026-01-01 10:00\\n- done 2026-01-01 11:00 —   it worked  \\n' > .commandments/sessions/61bdc/tasks/history/001-one.md"
+    ]
+  },
+  {"name": "task-stale-nothing", "args": ["task", "stale", "--for=5"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "task-stale-default", "args": ["task", "stale"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}}
+]

@@ -1,0 +1,140 @@
+exit: 0
+--- stdout
+
+[1mduplicate-element[0m  [2mfrontend/vue-components[0m
+  Identical markup (3+ elements) repeated 2+ times — within a template or across
+  components — extract one component
+
+[33mWhy it is a sin[0m
+
+  Two forms of one rule: **a chunk of template that repeats, or that reaches deep into
+  data, is a component trying to get out.** Pull it into its own file, pass it what it
+  needs as props, and use it by name.
+
+[33mHow to fix it[0m
+
+  Extract repeated identical markup into one component.
+
+[33mExample[0m
+
+  ```vue
+  ----------[ Bad ]----------
+  
+  <!-- in ProductReviewList.vue -->
+  <article class="review-card">
+    <header class="review-head">
+      <Avatar class="size-8" />
+      <strong class="review-author">Verified buyer</strong>
+    </header>
+    <p class="review-body">Exactly as described, shipped fast.</p>
+  </article>
+  
+  <!-- in ProductReviewList.vue -->
+  <article class="review-card">
+    <header class="review-head">
+      <Avatar class="size-8" />
+      <strong class="review-author">Verified buyer</strong>
+    </header>
+    <p class="review-body">Exactly as described, shipped fast.</p>
+  </article>
+  
+  ----------[ Good ]----------
+  
+  <template v-for="review in reviews" :key="review.id">
+    <article class="review-card">
+      <header class="review-head">
+        <Avatar class="size-8" />
+        <strong class="review-author">{{ review.author }}</strong>
+      </header>
+      <p class="review-body">{{ review.body }}</p>
+    </article>
+  </template>
+  ```
+
+[33mCommands[0m
+
+  [36mLearn     [0m load the skill [1mcommandments-frontend-vue-components[0m
+  [36mFind it   [0m commandments judge --sin=duplicate-element
+  [36mTurn off  [0m commandments disable duplicate-element
+  [36mWrong?    [0m commandments report --detector=DuplicateElementDetector --reason="…" --ref=PATH:LINE
+
+
+[1mnear-duplicate-element[0m  [2mfrontend/vue-components[0m
+  Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting
+  binding different data — within a template, across components, or as two components'
+  whole templates
+
+[33mWhy it is a sin[0m
+
+  Two forms of one rule: **a chunk of template that repeats, or that reaches deep into
+  data, is a component trying to get out.** Pull it into its own file, pass it what it
+  needs as props, and use it by name.
+
+[33mHow to fix it[0m
+
+  Extract markup that repeats with different data into one component, and pass what
+  differs as props.
+  Make the shared skeleton a component; each place that repeated it renders the component
+  with its own data.
+
+[33mExample[0m
+
+  ```vue
+  ----------[ Bad ]----------
+  
+  <!-- in ShippingAddressPage.vue -->
+  <section class="address-page">
+      <header class="address-head">
+          <h2>Shipping address</h2>
+          <p>Where we deliver your order.</p>
+      </header>
+      <form class="address-form">
+          <label class="address-field">Street<input v-model="shipping.street" name="shipping-street" /></label>
+          <label class="address-field">City<input v-model="shipping.city" name="shipping-city" /></label>
+      </form>
+  </section>
+  
+  <!-- in BillingAddressPage.vue -->
+  <section class="address-page billing">
+      <header class="address-head">
+          <h2>Billing address</h2>
+          <p>Where we send your invoice.</p>
+      </header>
+      <form class="address-form">
+          <label class="address-field">Street<input v-model="billing.street" name="billing-street" /></label>
+          <label class="address-field">Town<input v-model="billing.city" name="billing-town" /></label>
+      </form>
+  </section>
+  
+  ----------[ Good ]----------
+  
+  <!-- in DeliveryOptions.vue -->
+  <div class="slots">
+      <DeliveryOptionCard :option="standard" />
+      <DeliveryOptionCard :option="express" />
+  </div>
+  
+  <!-- in DeliveryOptionCard.vue -->
+  <article class="slot">
+      <h3>{{ option.title }}</h3>
+      <strong class="slot-price">{{ option.price }}</strong>
+      <ul class="slot-perks">
+          <template v-for="perk in option.perks" :key="perk">
+              <li>{{ perk }}</li>
+          </template>
+      </ul>
+      <button type="button" @click="emit('choose', option.key)">Choose {{ option.title }}</button>
+  </article>
+  ```
+
+[33mCommands[0m
+
+  [36mLearn     [0m load the skill [1mcommandments-frontend-vue-components[0m
+  [36mFind it   [0m commandments judge --sin=near-duplicate-element
+  [36mTurn off  [0m commandments disable near-duplicate-element
+  [36mWrong?    [0m commandments report --detector=NearDuplicateElementDetector --reason="…" --ref=PATH:LINE
+
+
+--- stderr
+
+--- files

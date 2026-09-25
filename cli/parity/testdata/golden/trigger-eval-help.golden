@@ -1,0 +1,27 @@
+exit: 0
+--- stdout
+commandments trigger-eval — Measure whether skill descriptions pull their own skill in — and stay out of their neighbours'.
+
+Usage:
+  commandments trigger-eval         score every skill that ships a trigger set
+  commandments trigger-eval --skill=NAME
+                                    score one skill (lenient name match), still judged against every
+                                    other
+
+Options:
+  --skill=NAME  only score this skill
+  --samples=N   how many times to ask each query (default 3; a majority decides)
+  --model=ID    the model to ask — default is whatever `claude -p` uses
+
+  Each skill's queries live in `skills/commandments/<slug>/evals/triggers.json`: `triggers` are
+  prompts it must answer, `not` are near-misses it must leave alone. Every query is judged against
+  EVERY measured skill, so a prompt that belongs to one is automatically a negative for the rest —
+  which is how a collision between two similar descriptions shows up at all.
+
+  It shells out to `claude -p` once per query per sample, so it is slow and it is billed. Run it
+  deliberately, never as part of `composer sins`. Exit code 1 when a description misses one of its
+  own prompts or answers another skill's.
+
+--- stderr
+
+--- files

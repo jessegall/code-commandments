@@ -1,0 +1,14 @@
+exit: 0
+--- stdout
+✓ 001 done — First
+
+--- stderr
+
+--- files
+=== deleted .commandments/sessions/61bdc/tasks/active/001-first.md
+=== created .commandments/sessions/61bdc/tasks/history/001-first.md
+# First
+
+- queued <time>
+- done <time> — it landed
+

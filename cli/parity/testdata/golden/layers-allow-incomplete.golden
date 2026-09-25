@@ -1,0 +1,32 @@
+exit: 2
+--- stdout
+
+--- stderr
+✗ Incomplete — that form reads `commandments layers allow <Layer> <Target>`.
+
+commandments layers — Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file.
+
+Usage:
+  commandments layers [path]        propose today's shape: every namespace with what it already uses
+  commandments layers [path] --floor
+                                    propose only the bottom — what others depend on and that
+                                    depends on nothing
+  commandments layers [path] --write
+                                    add the proposal to .commandments/config.php
+  commandments layers add <Namespace> [--may-use=A,B]
+                                    declare a new layer, or widen a declared one, in place
+  commandments layers allow <Layer> <Target>
+                                    one more arrow, in place
+
+Options:
+  --floor        propose only the bottom layer
+  --write        write the proposal into .commandments/config.php
+  --refresh      with --write, regenerate a block that is already declared
+  --may-use=A,B  with `add`, the namespaces the new layer may depend on
+
+  Once a stack is declared the proposal refuses to overwrite it — a GROWING codebase edits it
+  INCREMENTALLY with `add`/`allow`, or regenerates the whole block from today's shape with `--write
+  --refresh`. Every edit goes through the AST and replaces only the ->layer(...) chain, keeping your
+  config's own formatting.
+
+--- files

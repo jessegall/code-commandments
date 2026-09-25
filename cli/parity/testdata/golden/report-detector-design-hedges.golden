@@ -1,0 +1,11 @@
+exit: 2
+--- stdout
+
+--- stderr
+✋ Your report hedges ("good enough"). A detector-report is a FLAT assertion: the flagged
+  code is correct, the detector is wrong — full stop. A hedge means the finding is
+  REAL and everything after it is scope you own (cost, timing, "its own migration",
+  a cascading refactor are never grounds to file). Implement the fix, or restate the
+  reason with no qualifier if the code genuinely already is the cleanest design.
+
+--- files

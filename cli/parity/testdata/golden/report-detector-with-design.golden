@@ -1,0 +1,43 @@
+exit: 0
+--- stdout
+https://github.com/jessegall/code-commandments/issues/1
+
+--- stderr
+⚠ A detector-report claims ONE thing: the flagged code is CORRECT under the
+  architecture and the detector is wrong. It is NOT a deferral. If the finding
+  is right and an honest fix exists — however big (a migration, a cascading
+  refactor, many call sites) — you must IMPLEMENT it; a report of a correct
+  finding will be closed and the fix will still be owed.
+
+--- files
+=== created gh-args.txt
+issue
+----
+create
+----
+--repo
+----
+jessegall/code-commandments
+----
+--title
+----
+[detector-report] DictBagDetector
+----
+--body
+----
+**Detector:** `DictBagDetector`
+
+**Report (why the flagged code is CORRECT and the detector is wrong):**
+The dict is the wire format.
+
+**Cleanest design the reporter can conceive:**
+Keep the dict: it is the payload json.dumps writes.
+
+> ⚖️ Maintainer litmus: a valid detector-report needs the flagged code to ALREADY BE the
+> cleanest design. If the design above differs from the flagged code at all, THAT design is
+> the owed fix — close this report; the fix is still owed.
+
+_Filed via `commandments report` from a consumer project._
+
+----
+

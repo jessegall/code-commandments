@@ -1,0 +1,15 @@
+exit: 0
+--- stdout
+commandments scaffold — Generate the reusable helper a sin's fix uses — written into your source root with its namespace injected. Idempotent: an existing file is skipped.
+
+Usage:
+  commandments scaffold             generate every sin's scaffold that is missing
+  commandments scaffold --sin=NAME  generate one sin's scaffold (lenient name match)
+
+Options:
+  --sin=NAME  only scaffold for this sin
+  --dry-run   print what would be created, and its contents, without writing
+
+--- stderr
+
+--- files

@@ -1,0 +1,18 @@
+exit: 0
+--- stdout
+[32m✓ enabled `duplicate-element`.[0m
+
+--- stderr
+
+--- files
+=== changed .commandments/config.php
+<?php
+
+use JesseGall\CodeCommandments\Sins;
+
+return function ($config) {
+    $config->disable(
+        \JesseGall\CodeCommandments\Sins\Python\DictBag::class,
+    );
+};
+

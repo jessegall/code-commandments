@@ -1,0 +1,10 @@
+exit: 2
+--- stdout
+
+--- stderr
+A bug-report must reference the code it's about. Pass one --ref per file involved:
+  commandments report --reason="…" --ref=path/to/File.vue:42 --ref=other/File.ts:10-25
+If the bug spans multiple files, you MUST reference EACH of them (repeat --ref).
+Only if it genuinely isn't tied to any file, pass --global.
+
+--- files

@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+Unknown option --nope for `session`. Try: commandments session --help
+
+--- files

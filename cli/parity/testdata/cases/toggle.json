@@ -1,0 +1,14 @@
+[
+  {"name": "disable-help", "args": ["disable", "--help"]},
+  {"name": "enable-help-verb", "args": ["help", "enable"]},
+  {"name": "disable-without-a-name", "args": ["disable"]},
+  {"name": "disable-unknown", "args": ["disable", "zz-nothing-like-it"]},
+  {"name": "disable-ambiguous", "args": ["disable", "python-dict"]},
+  {"name": "disable-scaffolds-the-config", "args": ["disable", "python-dict-bag"], "setup": ["mkdir -p src"]},
+  {"name": "disable-a-skill-by-slug", "args": ["disable", "python/absence"], "setup": ["mkdir -p .commandments", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->paths('\\''src'\\'');\\n\\n    $config->disable(\\n        // a comment\\n    );\\n};\\n' > .commandments/config.php"]},
+  {"name": "disable-into-a-one-line-call", "args": ["disable", "duplicate-element"], "setup": ["mkdir -p .commandments", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->disable(\\\\JesseGall\\\\CodeCommandments\\\\Language::Python);\\n};\\n' > .commandments/config.php"]},
+  {"name": "disable-already-disabled", "args": ["disable", "duplicate-element"], "setup": ["mkdir -p .commandments", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->disable(\\n        \\\\JesseGall\\\\CodeCommandments\\\\Sins\\\\Frontend\\\\DuplicateElement::class,\\n    );\\n};\\n' > .commandments/config.php"]},
+  {"name": "enable-a-disabled-sin", "args": ["enable", "duplicate-element"], "setup": ["mkdir -p .commandments", "printf '<?php\\n\\nuse JesseGall\\\\CodeCommandments\\\\Sins;\\n\\nreturn function ($config) {\\n    $config->disable(\\n        Sins\\\\Frontend\\\\DuplicateElement::class,\\n        // kept?\\n        \\\\JesseGall\\\\CodeCommandments\\\\Sins\\\\Python\\\\DictBag::class,\\n    );\\n};\\n' > .commandments/config.php"]},
+  {"name": "enable-not-disabled", "args": ["enable", "python-dict-bag"], "setup": ["mkdir -p .commandments", "printf '<?php\\n\\nreturn function ($config) {\\n    $config->disable(\\n    );\\n};\\n' > .commandments/config.php"]},
+  {"name": "enable-without-a-config", "args": ["enable", "python-dict-bag"]}
+]

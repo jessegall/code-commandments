@@ -43,3 +43,10 @@ func (NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Ma
 func shapeHash(match engine.Match) (string, bool) {
 	return py.Node{Match: match}.ShapeHash(), true
 }
+
+// GroupKey groups a finding with the defs whose body has its shape.
+func (NearDuplicateFunctionDetector) GroupKey(match engine.Match) (string, bool) {
+	shape, _ := shapeHash(match)
+
+	return shape, shape != ""
+}

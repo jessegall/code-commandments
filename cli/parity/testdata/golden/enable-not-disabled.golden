@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+[2m`python-dict-bag` was not disabled — nothing to do.[0m
+
+--- stderr
+
+--- files

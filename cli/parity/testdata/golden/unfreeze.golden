@@ -1,0 +1,10 @@
+exit: 0
+--- stdout
+[32m✓ Unfroze e.ts[0m — it is a target again.
+
+--- stderr
+
+--- files
+=== changed e.ts
+export {}
+

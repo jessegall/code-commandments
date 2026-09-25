@@ -1,0 +1,94 @@
+[
+  {"name": "session-help", "args": ["session", "--help"]},
+  {"name": "session-help-verb", "args": ["help", "session"]},
+  {"name": "session-unknown-option", "args": ["session", "--nope"]},
+  {"name": "session-nothing-written", "args": ["session"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "session-default-folder", "args": ["session"]},
+  {"name": "session-path", "args": ["session", "--path"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {
+    "name": "session-contents",
+    "args": ["session"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": [
+      "mkdir -p .commandments/sessions/61bdc/sins",
+      "printf '# sins\\n' > .commandments/sessions/61bdc/sins/sins.md",
+      "head -c 2500 /dev/zero > .commandments/sessions/61bdc/.judge-counter",
+      "printf 'x' > .commandments/sessions/61bdc/touched",
+      "touch -t 202601011200 .commandments/sessions/61bdc/touched",
+      "touch -t 202601011205 .commandments/sessions/61bdc/.judge-counter",
+      "touch -t 202601011210 .commandments/sessions/61bdc/sins"
+    ]
+  },
+  {"name": "session-list-empty", "args": ["session", "list"]},
+  {
+    "name": "session-list",
+    "args": ["session", "list"],
+    "setup": [
+      "mkdir -p .commandments/sessions/default .commandments/sessions/61bdc .commandments/sessions/review .commandments/sessions/zzzzz .commandments/sessions/d0941",
+      "printf -- '-----\\nreview\\tnamed-id\\n-----\\nlegend\\n' > .commandments/sessions/.names",
+      "T=\"$HOME/.claude/projects/$(pwd -P | tr / -)\"; mkdir -p \"$T\"; printf '%s\\n' '{\"type\":\"summary\"}' '{\"type\":\"user\",\"promptSource\":\"typed\",\"message\":{\"content\":\"  fix the gate  \"}}' > \"$T/parity.jsonl\"; printf '%s\\n' '{\"type\":\"user\",\"promptSource\":\"typed\",\"message\":{\"content\":\"hello\"}}' '{\"aiTitle\":\"Port the CLI\"}' > \"$T/other.jsonl\"; printf '%s\\n' '{\"type\":\"assistant\"}' > \"$T/named-id.jsonl\"",
+      "touch -t 202601011200 .commandments/sessions/default",
+      "touch -t 202601021200 .commandments/sessions/61bdc",
+      "touch -t 202601031200 .commandments/sessions/review",
+      "touch -t 202601041200 .commandments/sessions/zzzzz",
+      "touch -t 202601041200 .commandments/sessions/d0941"
+    ]
+  },
+  {"name": "session-name-missing", "args": ["session", "name"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {"name": "session-name-without-session", "args": ["session", "name", "review"]},
+  {
+    "name": "session-name",
+    "args": ["session", "name", "review"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": ["mkdir -p .commandments/sessions/61bdc", "printf 'x' > .commandments/sessions/61bdc/kept"]
+  },
+  {
+    "name": "session-name-taken",
+    "args": ["session", "name", "review"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": ["mkdir -p .commandments/sessions", "printf -- '-----\\nreview\\tsomeone-else\\n-----\\nlegend\\n' > .commandments/sessions/.names"]
+  },
+  {"name": "session-forget-unknown", "args": ["session", "forget", "review"]},
+  {
+    "name": "session-forget",
+    "args": ["session", "forget", "review"],
+    "setup": [
+      "mkdir -p .commandments/sessions/review",
+      "printf -- '-----\\nreview\\tparity\\n-----\\nlegend\\n' > .commandments/sessions/.names"
+    ]
+  },
+  {"name": "session-adopt-missing", "args": ["session", "adopt"]},
+  {"name": "session-adopt-unknown", "args": ["session", "adopt", "zzzzz"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
+  {
+    "name": "session-adopt-without-session",
+    "args": ["session", "adopt", "zzzzz"],
+    "setup": ["mkdir -p .commandments/sessions/zzzzz"]
+  },
+  {
+    "name": "session-adopt-itself",
+    "args": ["session", "adopt", "61bdc"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": ["mkdir -p .commandments/sessions/61bdc"]
+  },
+  {
+    "name": "session-adopt",
+    "args": ["session", "adopt", "zzzzz"],
+    "env": {"CLAUDE_CODE_SESSION_ID": "parity"},
+    "setup": [
+      "mkdir -p .commandments/sessions/zzzzz/sins .commandments/sessions/61bdc",
+      "printf 'a' > .commandments/sessions/zzzzz/one",
+      "printf 'b' > .commandments/sessions/zzzzz/sins/sins.md"
+    ]
+  },
+  {
+    "name": "session-adopt-into-with-conflicts",
+    "args": ["session", "adopt", "zzzzz", "--into=kept"],
+    "setup": [
+      "mkdir -p .commandments/sessions/zzzzz/sins .commandments/sessions/kept/sins",
+      "printf 'a' > .commandments/sessions/zzzzz/one",
+      "printf 'b' > .commandments/sessions/zzzzz/sins/sins.md",
+      "printf 'c' > .commandments/sessions/kept/sins/sins.md",
+      "ln -s /tmp .commandments/sessions/zzzzz/link"
+    ]
+  }
+]

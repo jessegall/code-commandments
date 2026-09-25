@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+No detector matched --skill= --sin=zzz-matches-nothing
+
+--- files

@@ -1,0 +1,7 @@
+exit: 1
+--- stdout
+`61bdc` is the folder this session already reads.
+
+--- stderr
+
+--- files

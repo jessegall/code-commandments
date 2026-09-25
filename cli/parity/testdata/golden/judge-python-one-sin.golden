@@ -1,0 +1,29 @@
+exit: 1
+--- stdout
+
+[1;33mpython/value-objects[0m  (15)
+  [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mdiscounts.py:7[0m  call  [2m[DictBagDetector][0m
+  [36mdiscounts.py:9[0m  call  [2m[DictBagDetector][0m
+  [36mdiscounts.py:11[0m  call  [2m[DictBagDetector][0m
+  [36mexports.py:7[0m  call  [2m[DictBagDetector][0m
+  [36mexports.py:7[0m  subscript  [2m[DictBagDetector][0m
+  [36mexports.py:7[0m  subscript  [2m[DictBagDetector][0m
+  [36mpayload_fields.py:16[0m  call  [2m[DictBagDetector][0m
+  [36mpayload_fields.py:16[0m  call  [2m[DictBagDetector][0m
+  [36mshipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mstock_report.py:8[0m  subscript  [2m[DictBagDetector][0m
+  [36mstock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mstock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
+
+[1m15 sins[0m across 1 skill.
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+--- stderr
+
+--- files

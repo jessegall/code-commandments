@@ -1,0 +1,174 @@
+exit: 0
+--- stdout
+[32m✓ Scaffolded 7 files.[0m
+  app/Support/Invokable.php
+  app/Support/NoOp.php
+  app/Support/Eager.php
+  app/TypeScript/DropDataHiddenPropertyProcessor.php
+  app/TypeScript/HiddenAwareAttributedClassTransformer.php
+  app/Support/OptionalOrMissing.php
+  <project>/resources/js/components/SwitchCase.vue
+
+--- stderr
+
+--- files
+=== created app/Support/Eager.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Support;
+
+use Attribute;
+
+/**
+ * Opt a Spatie Data slot OUT of the constructor-orchestration lazify — pin its eager build for a value that
+ * must be captured at construction time, where a `get` hook would re-resolve it against a since-changed world.
+ */
+#[Attribute(Attribute::TARGET_PROPERTY)]
+final class Eager {}
+
+=== created app/Support/Invokable.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Support;
+
+/**
+ * A callable as a first-class object — the seam that lets an optional callback default to
+ * a no-op ({@see NoOp}) instead of a nullable normalised in the body. Type a parameter
+ * `Invokable`, default it to `new NoOp`, and call it with `($this->callback)(...)`.
+ */
+interface Invokable
+{
+    public function __invoke(mixed ...$arguments): mixed;
+}
+
+=== created app/Support/NoOp.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Support;
+
+/**
+ * The do-nothing {@see Invokable} — the Null Object for an optional callback, so a slot
+ * that "might have a callback" defaults to behaviour (a harmless no-op), never null.
+ * Default an optional-callback parameter to `new NoOp` and just call it.
+ */
+final class NoOp implements Invokable
+{
+    public function __invoke(mixed ...$arguments): mixed
+    {
+        return null;
+    }
+}
+
+=== created app/Support/OptionalOrMissing.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Support;
+
+use Spatie\LaravelData\Optional;
+
+/**
+ * The null→Optional map, in ONE named home — the omit-from-wire counterpart to Spatie's `optional()`
+ * (which maps null→null). `use` it on a `Data` class and build with `Foo::optionalOrMissing($payload)`:
+ * a null payload becomes an absent `Optional` (omitted from the wire), anything else hydrates through `::from`.
+ * So a producer never re-derives `$x === null ? Optional::create() : Foo::from($x)` at every call site.
+ */
+trait OptionalOrMissing
+{
+    public static function optionalOrMissing(mixed $payload): static|Optional
+    {
+        return $payload === null ? Optional::create() : static::from($payload);
+    }
+}
+
+=== created app/TypeScript/DropDataHiddenPropertyProcessor.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\TypeScript;
+
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
+use Spatie\LaravelData\Attributes\Hidden;
+use Spatie\TypeScriptTransformer\PhpNodes\PhpPropertyNode;
+use Spatie\TypeScriptTransformer\Transformers\ClassPropertyProcessors\ClassPropertyProcessor;
+use Spatie\TypeScriptTransformer\TypeScriptNodes\TypeScriptProperty;
+
+/**
+ * Drops any property carrying Spatie LaravelData's #[Hidden] from the generated TypeScript. The vendor
+ * DataClassPropertyProcessor only excludes a property when it carries BOTH the LaravelData #[Hidden] and
+ * the typescript-transformer #[Hidden]; this makes the LaravelData one alone enough, so a page object's
+ * #[Hidden] injected services never leak into the frontend type without a second annotation.
+ */
+final class DropDataHiddenPropertyProcessor implements ClassPropertyProcessor
+{
+    public function execute(PhpPropertyNode $phpPropertyNode, ?TypeNode $annotation, TypeScriptProperty $property): ?TypeScriptProperty
+    {
+        if (! empty($phpPropertyNode->getAttributes(Hidden::class))) {
+            return null;
+        }
+
+        return $property;
+    }
+}
+
+=== created app/TypeScript/HiddenAwareAttributedClassTransformer.php
+<?php
+
+declare(strict_types=1);
+
+namespace App\TypeScript;
+
+use Spatie\TypeScriptTransformer\Transformers\AttributedClassTransformer;
+
+/**
+ * The #[TypeScript] attributed-class transformer, extended to drop LaravelData #[Hidden] properties via
+ * {@see DropDataHiddenPropertyProcessor} — register it in place of the default AttributedClassTransformer
+ * in your typescript-transformer config so a page object's #[Hidden] injected services stay out of the
+ * generated type with the one attribute, no typescript-transformer #[Hidden] twin.
+ */
+final class HiddenAwareAttributedClassTransformer extends AttributedClassTransformer
+{
+    protected function classPropertyProcessors(): array
+    {
+        return [
+            new DropDataHiddenPropertyProcessor(),
+            ...parent::classPropertyProcessors(),
+        ];
+    }
+}
+
+=== created resources/js/components/SwitchCase.vue
+<script setup lang="ts" generic="TValue extends string | number | symbol">
+/**
+ * Utility component that flattens long v-if/v-else-if chains in the
+ * editor. Pass `value` and provide named slots per case, plus an
+ * optional `default` slot. Only the slot whose name matches `value`
+ * renders; if none match, the `default` slot renders (when present).
+ */
+import { computed } from 'vue';
+
+const props = defineProps<{
+    value: TValue;
+}>();
+
+const slots = defineSlots<Record<string, (() => unknown) | undefined>>();
+
+const activeSlot = computed<string>(() => {
+    const key = String(props.value);
+    return slots[key] ? key : 'default';
+});
+</script>
+
+<template>
+    <slot v-if="activeSlot !== 'default'" :name="activeSlot" />
+    <slot v-else name="default" />
+</template>
+

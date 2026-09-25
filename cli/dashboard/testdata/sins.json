@@ -1,0 +1,393 @@
+{
+    "title": "Code Commandments",
+    "start": "overview",
+    "pages": {
+        "overview": {
+            "title": "Overview",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "row",
+                        "gap": 12,
+                        "children": [
+                            {
+                                "type": "stat",
+                                "label": "Sins",
+                                "value": "5",
+                                "tone": "danger",
+                                "note": "3 different rules"
+                            },
+                            {
+                                "type": "stat",
+                                "label": "Files",
+                                "value": "4",
+                                "tone": "warn"
+                            },
+                            {
+                                "type": "stat",
+                                "label": "Skills",
+                                "value": "3",
+                                "note": "the skills that teach the fixes"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "bars",
+                        "title": "Most common sins",
+                        "unit": "sins",
+                        "items": [
+                            {
+                                "label": "duplicate-element",
+                                "value": 3,
+                                "note": "2 files",
+                                "tone": "danger",
+                                "open": "sin/duplicate-element"
+                            },
+                            {
+                                "label": "python-dict-bag",
+                                "value": 1,
+                                "note": "1 file",
+                                "tone": "danger",
+                                "open": "sin/python-dict-bag"
+                            },
+                            {
+                                "label": "not-shipped",
+                                "value": 1,
+                                "note": "1 file",
+                                "tone": "danger",
+                                "open": "sin/not-shipped"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "sin/duplicate-element": {
+            "title": "duplicate-element",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "duplicate-element",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "About this rule",
+                        "children": [
+                            {
+                                "type": "fact",
+                                "label": "What it is",
+                                "body": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component"
+                            },
+                            {
+                                "type": "fact",
+                                "label": "The rule",
+                                "body": "Extract repeated identical markup into one component."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "code",
+                        "text": "commandments info duplicate-element"
+                    },
+                    {
+                        "type": "table",
+                        "columns": [
+                            "File",
+                            "Sins"
+                        ],
+                        "rows": [
+                            {
+                                "cells": [
+                                    "components/B.vue",
+                                    "2"
+                                ],
+                                "open": "sin/duplicate-element/components/B.vue"
+                            },
+                            {
+                                "cells": [
+                                    "components/A.vue",
+                                    "1"
+                                ],
+                                "open": "sin/duplicate-element/components/A.vue"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "sin/duplicate-element/components/A.vue": {
+            "title": "duplicate-element in A.vue",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "duplicate-element in components/A.vue",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "Where",
+                        "children": [
+                            {
+                                "type": "file",
+                                "path": "components/A.vue",
+                                "line": 8,
+                                "label": "line 8 — <div>"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "card",
+                        "title": "About this rule",
+                        "children": [
+                            {
+                                "type": "fact",
+                                "label": "What it is",
+                                "body": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component"
+                            },
+                            {
+                                "type": "fact",
+                                "label": "The rule",
+                                "body": "Extract repeated identical markup into one component."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "code",
+                        "text": "commandments info duplicate-element"
+                    }
+                ]
+            }
+        },
+        "sin/duplicate-element/components/B.vue": {
+            "title": "duplicate-element in B.vue",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "duplicate-element in components/B.vue",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "2 places",
+                        "children": [
+                            {
+                                "type": "file",
+                                "path": "components/B.vue",
+                                "line": 1,
+                                "label": "line 1 — <div>"
+                            },
+                            {
+                                "type": "file",
+                                "path": "components/B.vue",
+                                "line": 3,
+                                "label": "line 3 — <section>"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "card",
+                        "title": "About this rule",
+                        "children": [
+                            {
+                                "type": "fact",
+                                "label": "What it is",
+                                "body": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component"
+                            },
+                            {
+                                "type": "fact",
+                                "label": "The rule",
+                                "body": "Extract repeated identical markup into one component."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "code",
+                        "text": "commandments info duplicate-element"
+                    }
+                ]
+            }
+        },
+        "sin/python-dict-bag": {
+            "title": "python-dict-bag",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "python-dict-bag",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "About this rule",
+                        "children": [
+                            {
+                                "type": "fact",
+                                "label": "What it is",
+                                "body": "A parameter typed as a dict read by string keys — `row[\"sku\"]`, `row.get(\"quantity\")` — a record nobody declared"
+                            },
+                            {
+                                "type": "fact",
+                                "label": "The rule",
+                                "body": "Give a record a type — a frozen dataclass — instead of a dict read by string keys."
+                            },
+                            {
+                                "type": "fact",
+                                "label": "How to fix it",
+                                "body": "Declare the keys as fields of a frozen dataclass, build it where the data enters (a `from_payload` classmethod), and take that type as the parameter."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "code",
+                        "text": "commandments info python-dict-bag"
+                    },
+                    {
+                        "type": "table",
+                        "columns": [
+                            "File",
+                            "Sins"
+                        ],
+                        "rows": [
+                            {
+                                "cells": [
+                                    "app/ünï.py",
+                                    "1"
+                                ],
+                                "open": "sin/python-dict-bag/app/ünï.py"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "sin/python-dict-bag/app/ünï.py": {
+            "title": "python-dict-bag in ünï.py",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "python-dict-bag in app/ünï.py",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "Where",
+                        "children": [
+                            {
+                                "type": "file",
+                                "path": "app/ünï.py",
+                                "line": 12,
+                                "label": "line 12 — load"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "card",
+                        "title": "About this rule",
+                        "children": [
+                            {
+                                "type": "fact",
+                                "label": "What it is",
+                                "body": "A parameter typed as a dict read by string keys — `row[\"sku\"]`, `row.get(\"quantity\")` — a record nobody declared"
+                            },
+                            {
+                                "type": "fact",
+                                "label": "The rule",
+                                "body": "Give a record a type — a frozen dataclass — instead of a dict read by string keys."
+                            },
+                            {
+                                "type": "fact",
+                                "label": "How to fix it",
+                                "body": "Declare the keys as fields of a frozen dataclass, build it where the data enters (a `from_payload` classmethod), and take that type as the parameter."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "code",
+                        "text": "commandments info python-dict-bag"
+                    }
+                ]
+            }
+        },
+        "sin/not-shipped": {
+            "title": "not-shipped",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "not-shipped",
+                        "level": 1
+                    },
+                    {
+                        "type": "text",
+                        "body": "A rule of this project's own — its description lives in `.commandments/custom/`."
+                    },
+                    {
+                        "type": "table",
+                        "columns": [
+                            "File",
+                            "Sins"
+                        ],
+                        "rows": [
+                            {
+                                "cells": [
+                                    "x.php",
+                                    "1"
+                                ],
+                                "open": "sin/not-shipped/x.php"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "sin/not-shipped/x.php": {
+            "title": "not-shipped in x.php",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "heading",
+                        "text": "not-shipped in x.php",
+                        "level": 1
+                    },
+                    {
+                        "type": "card",
+                        "title": "Where",
+                        "children": [
+                            {
+                                "type": "file",
+                                "path": "x.php",
+                                "line": 2,
+                                "label": "line 2 — X::y"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "text",
+                        "body": "A rule of this project's own — its description lives in `.commandments/custom/`."
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,22 @@
+exit: 0
+--- stdout
+commandments hints — Auto-fix the Spatie Data magic surface — rename non-`from…` object factories to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the `@method from(...)`/`collect(...)` docblock hints.
+
+Usage:
+  commandments hints [path]         apply the fixes (the default — this WRITES)
+  commandments hints [path] --dry-run[=FILE]
+                                    preview a unified diff instead, to the screen or a file
+
+Options:
+  --changes         only files changed in the working tree (alias: --git)
+  --branch[=BASE]   only files new/changed on this branch vs BASE (default: main)
+  --repent[=ID]     only the files listed in a past run's checklist (bare: the latest)
+  --dry-run[=FILE]  preview the rewrite as a unified diff instead of applying it
+
+  A scoped run (--changes/--branch) is forced to docblock-only: a rename's call sites can live
+  outside the scope, so renaming is whole-tree only. `repent` runs this as one of its scribes;
+  `hints` is the focused Data-only entry.
+
+--- stderr
+
+--- files

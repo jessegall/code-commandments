@@ -41,3 +41,10 @@ func (NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Ma
 func bodyShape(function engine.Match) string {
 	return typescript.Of(function).BodyShape()
 }
+
+// GroupKey groups a finding with the functions whose body has its shape.
+func (NearDuplicateFunctionDetector) GroupKey(match engine.Match) (string, bool) {
+	shape := bodyShape(match)
+
+	return shape, shape != ""
+}

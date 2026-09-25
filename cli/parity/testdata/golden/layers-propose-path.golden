@@ -1,0 +1,25 @@
+exit: 0
+--- stdout
+[1mNamespace layers[0m — 5 namespaces
+
+  [32m3[0m are depended on but depend on nothing of yours — the floor your stack rests on
+      Shop\Ui\Pages
+      Shop\Ui\Tokens
+      Shop\Ui\Wire
+
+  Proposed declaration — today's shape, held (5 namespaces):
+
+    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector
+        ->layer('Shop\\Ui\\Pages')
+        ->layer('Shop\\Ui\\Tokens')
+        ->layer('Shop\\Ui\\Wire')
+        ->layer('Shop\\Ui\\Shared', mayUse: ['Shop\\Ui\\Pages', 'Shop\\Ui\\Tokens'])
+        ->layer('Shop\\Ui\\Elements', mayUse: ['Shop\\Ui\\Shared', 'Shop\\Ui\\Tokens']));
+
+  [2mA starting point to EDIT, not a verdict: everything already here passes, so this
+  holds the architecture where it stands and refuses the NEXT arrow somewhere new.[0m
+  [2mre-run with --write to add it to .commandments/config.php, or --floor for just the bottom[0m
+
+--- stderr
+
+--- files

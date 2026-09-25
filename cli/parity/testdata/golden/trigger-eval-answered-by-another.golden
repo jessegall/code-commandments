@@ -1,0 +1,18 @@
+exit: 1
+--- stdout
+Asking `claude -p` 2× per query across 2 skills — this takes a while.
+
+[31m✗[0m commandments-typescript-absence              pulled 3/3 (100%)  [33manswered 5 that were not its own[0m
+    [2m↳ typescript is complaining `Object is possibly 'null'` on document.getElementById('app') in resou[0m
+    [2m↳ I need the same formatPrice helper in CartSummary.vue that ProductCard.vue already has — can I[0m
+    [2m↳ resources/js/composables/useOrders.ts and useInvoices.ts both have a loadPage function that's id[0m
+[31m✗[0m commandments-typescript-duplication          pulled 0/3 (0%)
+    [2m↳ I need the same formatPrice helper in CartSummary.vue that ProductCard.vue already has — can I[0m
+    [2m↳ resources/js/composables/useOrders.ts and useInvoices.ts both have a loadPage function that's id[0m
+    [2m↳ judge flagged duplicate-typescript-function on two handlers in NewsletterSignup.vue that do the [0m
+
+[31mA description is not doing its job — rewrite it to name WHEN to reach for the skill, and what it is NOT.[0m
+
+--- stderr
+
+--- files

@@ -1,0 +1,17 @@
+exit: 0
+--- stdout
+[1mExemptions[0m — what a package registers to quiet a general rule (by slug or class).
+
+  [36marray-returning [0m A class whose whole job is handing the framework arrays (a FormRequest, an MCP tool) — its array returns are contractual, exempt from array-return-bag (class-level).
+  [36massociation     [0m A call or attribute declaring one end of a two-way association (an ORM relation like `hasOne(Picker::class)`, a binding like `#[ObservedBy(OrderObserver::class)]`) — the framework requires both ends to name each other, so the reference carries no dependency direction and cannot close a cycle.
+  [36mboundary        [0m A framework entry point (an HTTP/RPC request) — exempt from feature-envy (don't move behaviour onto it) and pass-the-object (a method taking one may unpack its input).
+  [36mcomposition-root[0m A service provider's register/boot — the composition root where config() is wired into typed objects; a provider can't inject its own config, so config() reads here are exempt from config-read.
+  [36mcontract-method [0m A framework-mandated method (`rules`/`schema`/`casts`/`Guard::user`) whose signature the framework dictates — exempt from near-duplicate, array-return-bag and de-nulled-finder.
+  [36mcontrol-signal  [0m A Throwable thrown purely to steer control flow, not to report a failure (an engine's break/stop signal) — catching it with an empty body IS the semantics, so it is exempt from swallow-catch.
+  [36mno-container    [0m A type the framework instantiates itself, no container/DI (an Eloquent cast, a Spatie DataPipe/Cast) — a loose array parameter and per-call container reach are the framework's convention; exempt from array-bag and container-reach.
+
+[2mRun `commandments exemptions <sin|detector>` to see one detector's exemptions.[0m
+
+--- stderr
+
+--- files

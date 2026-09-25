@@ -1,0 +1,31 @@
+exit: 0
+--- stdout
+commandments repent — Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, backend and frontend.
+
+Usage:
+  commandments repent [path]        apply every fix, re-scanning until it converges (the default —
+                                    this WRITES)
+  commandments repent [path] --dry-run[=FILE]
+                                    preview a unified diff instead, to the screen or a file
+  commandments repent --only=NAME   run ONE rewriter (a Scribe or a Repentable detector, lenient
+                                    name match)
+
+Options:
+  --changes                      only files changed in the working tree (alias: --git)
+  --branch[=BASE]                only files new/changed on this branch vs BASE (default: main)
+  --repent[=ID]                  only the files listed in a past run's checklist (bare: the latest)
+  --dry-run[=FILE]               preview the rewrite as a unified diff instead of applying it
+  --only=NAME                    run one rewriter only (alias: --sin=NAME)
+  --ignore-package-requirements  keep package-gated scribes even if this project lacks the package
+
+  Rewrites only within the source roots `judge` reads (config.php's paths()), so it never touches
+  tests/ or anything judge would not flag. A broken or incorrect repent result is a BUG — report
+  it with `commandments report`, referencing both the source and the broken output.
+
+  A rewriter that BREAKS is dropped so every other fix still applies — one bad scribe used to take
+  the whole command down. The run then names it and exits 3, because it did not auto-fix everything
+  it advertises.
+
+--- stderr
+
+--- files

@@ -1,0 +1,863 @@
+exit: 0
+--- stdout
+--- a/app/Http/Pages/CatalogPage.php
++++ b/app/Http/Pages/CatalogPage.php
+@@ -14,6 +14,9 @@
+  * A page seeded through a `for()` factory, composing direct nested Data slots (no typed collection),
+  * with TWO container-injected collaborators: `$reader` is correctly `#[Hidden]`, but `$facetBuilder`
+  * is not — one un-hidden service is enough to leak into the frontend type.
++ *
++ * @method static static from(string $category)
++ * @method static static from(array $payload)
+  */
+ #[TypeScript]
+ #[Sinful(InjectedServiceNotHidden::class)]
+@@ -25,7 +28,7 @@
+ 
+     public readonly CartLine $featured;
+ 
+-    public static function for(string $category): self
++    public static function fromString(string $category): self
+     {
+         return self::from(['category' => $category]);
+     }
+@@ -50,6 +53,9 @@
+ /**
+  * The FIX for the same catalog page: BOTH injected collaborators carry `#[Hidden]`, so neither the
+  * reader nor the facet builder serializes into the payload or reaches the generated TypeScript type.
++ *
++ * @method static static from(string $category)
++ * @method static static from(array $payload)
+  */
+ #[TypeScript]
+ #[Fixed(InjectedServiceNotHidden::class)]
+@@ -61,7 +67,7 @@
+ 
+     public readonly CartLine $featured;
+ 
+-    public static function for(string $category): self
++    public static function fromString(string $category): self
+     {
+         return self::from(['category' => $category]);
+     }
+--- a/app/Http/Pages/Hydration/LazyRelationRow.php
++++ b/app/Http/Pages/Hydration/LazyRelationRow.php
+@@ -13,6 +13,11 @@
+  * relation from the wire" pattern. It is NOT a hand-rolled null→Optional map (the scaffolded factory maps a
+  * null PAYLOAD via `::from`, which this isn't), so it must NOT flag. Only a null-guard ternary is the map.
+  */
++/**
++ *
++ * @method static static from(object $row)
++ * @method static static from(array $payload)
++ */
+ #[Righteous(NullToOptionalMap::class)]
+ final class LazyRelationRow extends Data
+ {
+--- a/app/Http/Pages/Hydration/DeriveTiles.php
++++ b/app/Http/Pages/Hydration/DeriveTiles.php
+@@ -33,7 +33,7 @@
+             return TileGrid::from(['tiles' => []]);
+         }
+ 
+-        return TileGrid::from(['tiles' => array_map(GridTile::make(...), range(0, $size - 1))]);
++        return TileGrid::from(['tiles' => array_map(GridTile::from(...), range(0, $size - 1))]);
+     }
+ 
+     public function capacity(): int
+@@ -78,7 +78,7 @@
+     #[Righteous(DerivedCollectionCast::class)]
+     public function build(): LabelStrip
+     {
+-        $chips = [StateChip::for(ShipState::Pending), StateChip::for(ShipState::Shipped)];
++        $chips = [StateChip::from(ShipState::Pending), StateChip::from(ShipState::Shipped)];
+ 
+         return LabelStrip::from(['labels' => array_map(static fn (StateChip $c): string => $c->label, $chips)]);
+     }
+--- a/app/Http/Pages/Hydration/CollTypedFeed.php
++++ b/app/Http/Pages/Hydration/CollTypedFeed.php
+@@ -29,6 +29,10 @@
+     }
+ }
+ 
++/**
++ *
++ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
++ */
+ final class FeedItem extends Data
+ {
+     public function __construct(public readonly string $verb) {}
+--- a/app/Http/Pages/Hydration/DeriveLegend.php
++++ b/app/Http/Pages/Hydration/DeriveLegend.php
+@@ -30,7 +30,7 @@
+ {
+     public function cast(ShipState $state): StateChip
+     {
+-        return StateChip::for($state);
++        return StateChip::from($state);
+     }
+ }
+ 
+@@ -52,7 +52,7 @@
+     #[Sinful(DerivedCollectionCast::class)]
+     public function build(): ShipStatusLegend
+     {
+-        return ShipStatusLegend::from(['chips' => array_map(StateChip::for(...), ShipState::cases())]);
++        return ShipStatusLegend::from(['chips' => array_map(StateChip::from(...), ShipState::cases())]);
+     }
+ 
+     /**
+--- a/app/Http/Pages/Hydration/Leaves.php
++++ b/app/Http/Pages/Hydration/Leaves.php
+@@ -39,11 +39,16 @@
+     case Lost = 'lost';
+ }
+ 
++/**
++ *
++ * @method static static from(ShipState $state)
++ * @method static static from(array $payload)
++ */
+ final class StateChip extends Data
+ {
+     public function __construct(public readonly string $label, public readonly string $tone) {}
+ 
+-    public static function for(ShipState $state): self
++    public static function fromShipState(ShipState $state): self
+     {
+         return new self(ucfirst($state->value), $state === ShipState::Lost ? 'danger' : 'ok');
+     }
+@@ -54,21 +59,31 @@
+     }
+ }
+ 
++/**
++ *
++ * @method static static from(string $sku)
++ * @method static static from(array $payload)
++ */
+ final class ProductBadge extends Data
+ {
+     public function __construct(public readonly string $sku, public readonly string $caption) {}
+ 
+-    public static function forProduct(string $sku): self
++    public static function fromString(string $sku): self
+     {
+         return new self($sku, "SKU {$sku}");
+     }
+ }
+ 
++/**
++ *
++ * @method static static from(int $index)
++ * @method static static from(array $payload)
++ */
+ final class GridTile extends Data
+ {
+     public function __construct(public readonly int $x, public readonly int $y) {}
+ 
+-    public static function make(int $index): self
++    public static function fromInt(int $index): self
+     {
+         return new self($index % 4, intdiv($index, 4));
+     }
+--- a/app/Http/Pages/PrintQueuePage.php
++++ b/app/Http/Pages/PrintQueuePage.php
+@@ -11,6 +11,9 @@
+ /**
+  * The Smart Farmers PrintAgents IndexPage shape — seeded through a `for()` factory over direct nested
+  * slots, reading a buffer service out of the container inside a getter.
++ *
++ * @method static static from(string $agent)
++ * @method static static from(array $payload)
+  */
+ #[Sinful(PageObjectMissingTypeScript::class)]
+ final class PrintQueuePage extends Data
+@@ -21,7 +24,7 @@
+ 
+     public readonly StatCard $depth;
+ 
+-    public static function for(string $agent): self
++    public static function fromString(string $agent): self
+     {
+         return self::from(['agent' => $agent]);
+     }
+--- a/app/Http/Pages/TimelinePage.php
++++ b/app/Http/Pages/TimelinePage.php
+@@ -12,6 +12,9 @@
+ /**
+  * Seeded through a `for()` factory, then a constructor that projects each slot from the injected
+  * reader — pure `$this->slot = $this->cart->…()` fills that belong in `#[Computed]` hooks.
++ *
++ * @method static static from(string $order)
++ * @method static static from(array $payload)
+  */
+ #[TypeScript]
+ final class TimelinePage extends Data
+@@ -20,7 +23,7 @@
+ 
+     public readonly MenuLink $back;
+ 
+-    public static function for(string $order): self
++    public static function fromString(string $order): self
+     {
+         return self::from(['order' => $order]);
+     }
+--- a/app/Data/CouponData.php
++++ b/app/Data/CouponData.php
+@@ -13,7 +13,6 @@
+  * Here the `@method` collides with the real static `rules()` — the collision sin
+  * is not specific to factories or to promoted-constructor classes.
+  *
+- * @method static array rules()
+  */
+ #[Sinful(DataMethodHintCollision::class)]
+ final class CouponData extends Data
+@@ -36,6 +35,7 @@
+  * never the concrete `fromCode()` factory it dispatches to — so nothing collides.
+  *
+  * @method static static from(string $code)
++ * @method static static from(array $payload)
+  */
+ #[Righteous(DataMethodHintCollision::class)]
+ final class VoucherData extends Data
+--- a/app/Data/InvoiceData.php
++++ b/app/Data/InvoiceData.php
+@@ -12,7 +12,8 @@
+ /**
+  * Typed invoice view, built from an order.
+  *
+- * @method static static fromOrder(Order $order)
++ * @method static static from(Order $order)
++ * @method static static from(array $payload)
+  */
+ #[Sinful(DataMethodHintCollision::class)]
+ final class InvoiceData extends Data
+@@ -39,7 +40,8 @@
+  * method the IDE cannot see — and says nothing about the concrete `fromOrder()` factory declared
+  * below it, so no hint re-declares a real method.
+  *
+- * @method static static from(mixed ...$payloads)
++ * @method static static from(Order $order)
++ * @method static static from(array $payload)
+  */
+ #[Fixed(DataMethodHintCollision::class)]
+ final class CreditNoteData extends Data
+--- a/app/Data/WarehouseStockData.php
++++ b/app/Data/WarehouseStockData.php
+@@ -12,7 +12,6 @@
+  * Stock-on-hand per warehouse. The conditional-return `@method` collides with the
+  * real `collect()` override below — the parens in the return type must not hide it.
+  *
+- * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+  */
+ #[Sinful(DataMethodHintCollision::class)]
+ final class WarehouseStockData extends Data
+--- a/app/Data/VoucherPanelData.php
++++ b/app/Data/VoucherPanelData.php
+@@ -10,7 +10,6 @@
+  * The voucher panel of the checkout page. A voucher that was never entered travels as a blank code,
+  * which the page then has to decode back into "no voucher".
+  *
+- * @method static self from(mixed ...$payload)
+  */
+ #[Sinful(BlankStringOnTheWire::class)]
+ final class VoucherPanelData extends Data
+--- a/app/Data/CustomerData.php
++++ b/app/Data/CustomerData.php
+@@ -9,6 +9,8 @@
+ /**
+  * Typed view of a customer. The snake_case input map is what `::from()` runs and a
+  * raw `new` skips — so this class is RICH: `new CustomerData(...)` is a real sin.
++ *
++ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+  */
+ #[MapInputName(SnakeCaseMapper::class)]
+ final class CustomerData extends Data
+--- a/app/Data/MembershipData.php
++++ b/app/Data/MembershipData.php
+@@ -11,6 +11,7 @@
+  * factory. No real method named `from` is declared here, so there is no collision.
+  *
+  * @method static static from(Customer $customer)
++ * @method static static from(array $payload)
+  */
+ final class MembershipData extends Data
+ {
+--- a/app/Data/ProductData.php
++++ b/app/Data/ProductData.php
+@@ -10,6 +10,8 @@
+ /**
+  * Typed view of a product. The `#[WithCast]` on `category` is work `::from()` runs
+  * and a raw `new` skips — so this class is RICH: `new ProductData(...)` is a real sin.
++ *
++ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+  */
+ final class ProductData extends Data
+ {
+--- a/app/Http/Controllers/PageController.php
++++ b/app/Http/Controllers/PageController.php
+@@ -38,7 +38,7 @@
+ 
+     public function catalog(): CatalogPage
+     {
+-        return CatalogPage::for('books');
++        return CatalogPage::from('books');
+     }
+ 
+     public function account(): AccountPage
+@@ -63,7 +63,7 @@
+ 
+     public function printQueue(): PrintQueuePage
+     {
+-        return PrintQueuePage::for('agent-1');
++        return PrintQueuePage::from('agent-1');
+     }
+ 
+     public function overview(): OverviewPage
+@@ -73,7 +73,7 @@
+ 
+     public function timeline(): TimelinePage
+     {
+-        return TimelinePage::for('order-1');
++        return TimelinePage::from('order-1');
+     }
+ 
+     public function metrics(): MetricsPage
+@@ -93,7 +93,7 @@
+ 
+     public function hiddenCatalog(): HiddenCatalogPage
+     {
+-        return HiddenCatalogPage::for('books');
++        return HiddenCatalogPage::from('books');
+     }
+ 
+     public function computedOverview(): ComputedOverviewPage
+--- a/app/Http/Pages/Hydration/DeriveBadges.php
++++ b/app/Http/Pages/Hydration/DeriveBadges.php
+@@ -31,7 +31,7 @@
+     {
+         $active = array_values(array_filter($this->skus, static fn (string $sku): bool => $sku !== ''));
+ 
+-        return CatalogBadges::from(['badges' => array_map(fn (string $sku) => ProductBadge::forProduct($sku), $active)]);
++        return CatalogBadges::from(['badges' => array_map(fn (string $sku) => ProductBadge::from($sku), $active)]);
+     }
+ 
+     public function register(string $sku): void
+--- a/app/Sockets/InputSocket.php
++++ b/app/Sockets/InputSocket.php
+@@ -25,7 +25,7 @@
+     #[Sinful(HandRolledWither::class)]
+     public function withValue(?string $value): self
+     {
+-        return new self($this->id, $this->label, $this->type, $this->required, $value, $this->order);
++        return clone($this, ['value' => $value]);
+     }
+ 
+     /**
+--- a/app/Sockets/CredentialField.php
++++ b/app/Sockets/CredentialField.php
+@@ -38,12 +38,6 @@
+     #[Sinful(HandRolledWither::class)]
+     public function revealed(string $secret): static
+     {
+-        return new static(
+-            key: $this->key,
+-            label: $this->label,
+-            group: $this->group,
+-            secret: $secret,
+-            masked: false,
+-        );
++        return clone($this, ['secret' => $secret, 'masked' => false]);
+     }
+ }
+--- a/app/Sockets/StepEntry.php
++++ b/app/Sockets/StepEntry.php
+@@ -24,14 +24,6 @@
+     #[Sinful(HandRolledWither::class)]
+     public function stamp(string $status): self
+     {
+-        return new self(
+-            id: $this->id,
+-            name: $this->name,
+-            nodeId: $this->nodeId,
+-            status: $status,
+-            depth: $this->depth,
+-            attempt: $this->attempt,
+-            correlationId: $this->correlationId,
+-        );
++        return clone($this, ['status' => $status]);
+     }
+ }
+--- a/app/Reporting/RowProcessor.php
++++ b/app/Reporting/RowProcessor.php
+@@ -21,10 +21,12 @@
+     public function process(array $rows): void
+     {
+         foreach ($rows as $row) {
+-            if ($row->total > 0) {
+-                $this->normalise($row);
+-                $this->persist($row);
++            if (! ($row->total > 0)) {
++                continue;
+             }
++
++            $this->normalise($row);
++            $this->persist($row);
+         }
+     }
+ 
+--- a/app/Catalog/StockSweep.php
++++ b/app/Catalog/StockSweep.php
+@@ -20,10 +20,12 @@
+     public function reorder(array $products): void
+     {
+         foreach ($products as $product) {
+-            if ($product->stock < $product->reorder_point) {
+-                $this->raisePurchaseOrder($product);
+-                $this->notifyBuyer($product);
++            if (! ($product->stock < $product->reorder_point)) {
++                continue;
+             }
++
++            $this->raisePurchaseOrder($product);
++            $this->notifyBuyer($product);
+         }
+     }
+ 
+--- a/app/Webhooks/EventReplayer.php
++++ b/app/Webhooks/EventReplayer.php
+@@ -18,10 +18,12 @@
+         $replayed = 0;
+ 
+         while ($events->valid()) {
+-            if (! $events->current()->expired) {
+-                $this->dispatch($events->current());
+-                $replayed++;
++            if ($events->current()->expired) {
++                continue;
+             }
++
++            $this->dispatch($events->current());
++            $replayed++;
+         }
+ 
+         return $replayed;
+--- a/app/Integrations/CourierRegistry.php
++++ b/app/Integrations/CourierRegistry.php
+@@ -8,21 +8,20 @@
+ 
+ /**
+  * Keyed store of couriers, resolved by the courier binding to turn a configured name into an API.
+- */
+-/**
++ *
+  * Written twice, read once — PHP shows a reader only this block.
+  */
+ #[Sinful(MemberAfterMethod::class)]
+ #[Sinful(StackedDocblock::class)]
+ final class CourierRegistry
+ {
+-    public function preferred(): CourierApi
+-    {
+-        return $this->couriers['preferred'];
+-    }
+-
+     /**
+      * @var array<string, CourierApi>
+      */
+     private array $couriers = [];
++
++    public function preferred(): CourierApi
++    {
++        return $this->couriers['preferred'];
++    }
+ }
+--- a/app/Shipping/ZoneRater.php
++++ b/app/Shipping/ZoneRater.php
+@@ -16,6 +16,8 @@
+ #[Sinful(MemberAfterMethod::class)]
+ final class ZoneRater
+ {
++    private const int REMOTE_SURCHARGE = 250;
++
+     #[Sinful(ParamResolvedFromParam::class)]
+     public function rate(RateCard $card, string $zoneCode): int
+     {
+@@ -44,8 +46,6 @@
+ 
+         return $zone;
+     }
+-
+-    private const int REMOTE_SURCHARGE = 250;
+ }
+ 
+ final class UnknownZone extends \RuntimeException
+--- a/app/Enums/ShippingMethod.php
++++ b/app/Enums/ShippingMethod.php
+@@ -18,6 +18,8 @@
+     case Standard = 'standard';
+     case Express = 'express';
+ 
++    case Pickup = 'pickup';
++
+     /**
+      * Shipping reaches for this enum all over; this is the ONE place the enum reaches back, and it
+      * welds the two namespaces into a single unit — neither can now be lifted out alone.
+@@ -29,8 +31,6 @@
+         // rate registry through app() is the only option here.
+         return app(ShippingRateRegistry::class)->for($this)->quote($weightGrams);
+     }
+-
+-    case Pickup = 'pickup';
+ }
+ 
+ /**
+--- a/app/Reporting/LogLine.php
++++ b/app/Reporting/LogLine.php
+@@ -8,20 +8,22 @@
+ use JesseGall\CodeCommandments\Testing\Fixed;
+ use JesseGall\CodeCommandments\Testing\Sinful;
+ 
+-/** A node in a test log tree — it holds its own children, so a failure is knowledge it could answer. */
++/**
++ * A node in a test log tree — it holds its own children, so a failure is knowledge it could answer.
++ */
+ #[Sinful(InlineDocblock::class)]
+ #[Sinful(MemberOutOfOrder::class)]
+ final class LogLine
+ {
+     public string $level = 'info';
+ 
+-    private int $depth = 0;
+-
+     /**
+      * @var list<LogLine>
+      */
+     public array $children = [];
+ 
++    private int $depth = 0;
++
+     /**
+      * A bool about the line itself, named as a claim instead of a question.
+      */
+--- a/app/Shipping/Itinerary.php
++++ b/app/Shipping/Itinerary.php
+@@ -12,18 +12,17 @@
+ #[Sinful(StackedDocblock::class)]
+ final class Itinerary
+ {
++    public static int $planned = 0;
++
+     /**
+      * How each leg is carried, in order.
+-     */
+-    /**
++     *
+      * @var list<string>
+      */
+     public array $legModes = [];
+ 
+     public string $reference = '';
+ 
+-    public static int $planned = 0;
+-
+     /**
+      * The relational twin `covers($leg)` would be fine; with nothing to compare, this is a question.
+      */
+--- a/app/Support/ReportFile.php
++++ b/app/Support/ReportFile.php
+@@ -15,16 +15,15 @@
+ #[Sinful(MemberOutOfOrder::class)]
+ final class ReportFile
+ {
++    private const string EXTENSION = '.csv';
++
+     public string $name = '';
+ 
+     public string $contents = '';
+ 
+-    private const string EXTENSION = '.csv';
+-
+     /**
+      * Writes the report where the export job expects it.
+-     */
+-    /**
++     *
+      * The second block PHP never hands to a reader.
+      */
+     #[Sinful(StackedDocblock::class)]
+--- a/app/Reporting/GradeCalculator.php
++++ b/app/Reporting/GradeCalculator.php
+@@ -25,7 +25,11 @@
+     #[Sinful(NestedTernary::class)]
+     private function band(int $score): string
+     {
+-        return $score >= 90 ? 'A' : ($score >= 75 ? 'B' : 'C');
++        return match (true) {
++            $score >= 90 => 'A',
++            $score >= 75 => 'B',
++            default => 'C',
++        };
+     }
+ 
+     /**
+--- a/app/Pricing/DiscountLabel.php
++++ b/app/Pricing/DiscountLabel.php
+@@ -11,6 +11,10 @@
+     #[Sinful(NestedTernary::class)]
+     public function forPercent(int $percent): string
+     {
+-        return $percent >= 50 ? 'half off' : ($percent >= 20 ? 'sale' : 'list price');
++        return match (true) {
++            $percent >= 50 => 'half off',
++            $percent >= 20 => 'sale',
++            default => 'list price',
++        };
+     }
+ }
+--- a/app/Reporting/WeightAggregator.php
++++ b/app/Reporting/WeightAggregator.php
+@@ -53,7 +53,7 @@
+      */
+     public function unit(): callable
+     {
+-        return fn (): string => 'g';
++        return fn () => 'g';
+     }
+ 
+     public function push(int $grams): void
+--- a/app/Checkout/CouponDesk.php
++++ b/app/Checkout/CouponDesk.php
+@@ -72,7 +72,7 @@
+      */
+     public function reader(): callable
+     {
+-        return fn (): array => $this->applied;
++        return fn () => $this->applied;
+     }
+ 
+     /**
+--- a/app/Support/FeatureGate.php
++++ b/app/Support/FeatureGate.php
+@@ -17,7 +17,9 @@
+ #[Sinful(InlineDocblock::class)]
+ final class FeatureGate
+ {
+-    /** @var array<string, bool> */
++    /**
++     * @var array<string, bool>
++     */
+     private array $overrides = [];
+ 
+     public function __construct(private readonly string $environment) {}
+@@ -37,7 +39,7 @@
+     #[Sinful(RedundantArrowReturnType::class)]
+     public function factory(): callable
+     {
+-        return fn (): FeatureGate => new FeatureGate($this->environment);
++        return fn () => new FeatureGate($this->environment);
+     }
+ 
+     /**
+--- a/app/Dispatch/CrateInspector.php
++++ b/app/Dispatch/CrateInspector.php
+@@ -29,9 +29,9 @@
+     {
+         if ($kind === null) {
+             return array_merge(...array_values($this->labels));
+-        } else {
+-            return $this->labels[$kind] ?? [];
+         }
++
++        return $this->labels[$kind] ?? [];
+     }
+ 
+     /**
+--- a/app/Catalog/AvailabilityResolver.php
++++ b/app/Catalog/AvailabilityResolver.php
+@@ -29,9 +29,9 @@
+         foreach ($products as $product) {
+             if ($product->stock <= 0) {
+                 continue;
+-            } else {
+-                $available[] = $product;
+             }
++
++            $available[] = $product;
+         }
+ 
+         return $available;
+--- a/app/Support/AccessLevel.php
++++ b/app/Support/AccessLevel.php
+@@ -17,9 +17,9 @@
+     {
+         if (! $authenticated) {
+             return 0;
+-        } else {
+-            return $role;
+         }
++
++        return $role;
+     }
+ 
+     public function level(bool $authenticated, int $role): int
+--- a/app/Orders/RefundPolicy.php
++++ b/app/Orders/RefundPolicy.php
+@@ -18,8 +18,8 @@
+     {
+         if ($order->status === 'shipped') {
+             return '14 days';
+-        } else {
+-            return '30 days';
+         }
++
++        return '30 days';
+     }
+ }
+--- a/app/Reporting/LedgerTotals.php
++++ b/app/Reporting/LedgerTotals.php
+@@ -22,7 +22,9 @@
+         $totals = [];
+ 
+         foreach ($entries as $entry) {
+-            $entry['cents'] === 0 || $totals[$entry['account']] = ($totals[$entry['account']] ?? 0) + $entry['cents'];
++            if ($entry['cents'] !== 0) {
++                $totals[$entry['account']] = ($totals[$entry['account']] ?? 0) + $entry['cents'];
++            }
+         }
+ 
+         return $totals;
+--- a/app/Kiosk/IdleWatch.php
++++ b/app/Kiosk/IdleWatch.php
+@@ -17,13 +17,17 @@
+     #[Sinful(ShortCircuitStatement::class)]
+     public function tick(int $idleSeconds, bool $unlocked): void
+     {
+-        $unlocked && $idleSeconds > 300 && ! $this->asleep && $this->sleep();
++        if ($unlocked && $idleSeconds > 300 && ! $this->asleep) {
++            $this->sleep();
++        }
+     }
+ 
+     #[Sinful(ShortCircuitStatement::class)]
+     public function wake(bool $touched): void
+     {
+-        $touched and $this->asleep and $this->asleep = false;
++        if ($touched and $this->asleep) {
++            $this->asleep = false;
++        }
+     }
+ 
+     public function tickGuarded(int $idleSeconds, bool $unlocked): void
+--- a/app/Notifications/DigestDispatcher.php
++++ b/app/Notifications/DigestDispatcher.php
+@@ -20,7 +20,9 @@
+     #[Sinful(ShortCircuitStatement::class)]
+     public function send(string $address, bool $subscribed): void
+     {
+-        $subscribed && $this->mailer->send($address, 'Your weekly digest', $this->digest());
++        if ($subscribed) {
++            $this->mailer->send($address, 'Your weekly digest', $this->digest());
++        }
+     }
+ 
+     #[Fixed(ShortCircuitStatement::class)]
+--- a/app/Ui/ShelfCollapse.php
++++ b/app/Ui/ShelfCollapse.php
+@@ -24,9 +24,11 @@
+         $gone = [];
+ 
+         foreach ($below[$id] as $child) {
+-            $this->isOpen($child->id)
+-                ? array_push($gone, ...$this->collapsed($child->id, $below))
+-                : $gone[] = $child->id;
++            if ($this->isOpen($child->id)) {
++                array_push($gone, ...$this->collapsed($child->id, $below));
++            } else {
++                $gone[] = $child->id;
++            }
+         }
+ 
+         return $gone;
+--- a/app/Loyalty/BadgeToggle.php
++++ b/app/Loyalty/BadgeToggle.php
+@@ -15,7 +15,11 @@
+     #[Sinful(TernaryStatement::class)]
+     public function toggle(string $member): void
+     {
+-        $this->awarded($member) ? $this->revoke($member) : $this->award($member);
++        if ($this->awarded($member)) {
++            $this->revoke($member);
++        } else {
++            $this->award($member);
++        }
+     }
+ 
+     private function awarded(string $member): bool
+--- a/app/Realtime/HeartbeatLog.php
++++ b/app/Realtime/HeartbeatLog.php
+@@ -20,7 +20,9 @@
+     #[Sinful(TernaryStatement::class)]
+     public function beat(string $label): void
+     {
+-        $label ?: $this->warnUnlabelled();
++        if (! $label) {
++            $this->warnUnlabelled();
++        }
+ 
+         $this->beats[] = $label;
+     }
+--- a/app/Reporting/ExportUploader.php
++++ b/app/Reporting/ExportUploader.php
+@@ -21,7 +21,7 @@
+         try {
+             $this->pushToBucket($path);
+         } catch (\Throwable $storageError) {
+-            throw new IntegrationException($path);
++            throw new IntegrationException($path, previous: $storageError);
+         }
+     }
+ 
+--- a/app/Payments/PaymentGatewayClient.php
++++ b/app/Payments/PaymentGatewayClient.php
+@@ -19,7 +19,7 @@
+         try {
+             return $this->callSdk($token, $amountCents);
+         } catch (\Throwable $failure) {
+-            throw new IntegrationException($token);
++            throw new IntegrationException($token, previous: $failure);
+         }
+     }
+ 
+--- a/app/Integrations/CourierApi.php
++++ b/app/Integrations/CourierApi.php
+@@ -22,7 +22,7 @@
+         try {
+             return $this->http->get("https://courier.test/track/{$trackingCode}");
+         } catch (\Throwable $e) {
+-            throw new IntegrationException($trackingCode);
++            throw new IntegrationException($trackingCode, previous: $e);
+         }
+     }
+ 
+--- a/app/Support/PdfRenderer.php
++++ b/app/Support/PdfRenderer.php
+@@ -22,7 +22,8 @@
+     /**
+      * The typefaces registered with the engine.
+      *
+-     * @var list<string> */
++     * @var list<string>
++     */
+     private array $fonts = [];
+ 
+     public function __construct(private readonly string $letterhead) {}
+[2m↳ Judge THIS diff on its own. The auto-fixers change every release, so never skip a repent from a
+  past result or a remembered "this fix is broken" — and don't record one as permanently broken;
+  re-run `--dry-run` and read the CURRENT output. If a fix is genuinely broken, incomplete, or wrong,
+  file it (don't just discard it): `commandments report --reason="…" --ref=path:line` (source AND bad output).[0m
+
+--- stderr
+
+--- files

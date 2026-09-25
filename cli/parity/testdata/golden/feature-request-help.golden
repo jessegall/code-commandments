@@ -1,0 +1,15 @@
+exit: 0
+--- stdout
+commandments feature-request — File a [feature-request] GitHub issue (via `gh`) proposing a new or changed rule.
+
+Usage:
+  commandments feature-request --title="…" --reason="…"
+                                    propose it
+
+Options:
+  --title="…"   a short title for the proposal (required)
+  --reason="…"  what to add or change, and why (required)
+
+--- stderr
+
+--- files

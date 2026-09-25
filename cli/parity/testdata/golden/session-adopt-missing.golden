@@ -1,0 +1,8 @@
+exit: 1
+--- stdout
+Say which folder to adopt: `commandments session adopt <folder>`.
+  `session list` marks the orphans.
+
+--- stderr
+
+--- files

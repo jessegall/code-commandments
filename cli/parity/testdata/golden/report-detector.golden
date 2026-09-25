@@ -1,0 +1,50 @@
+exit: 0
+--- stdout
+https://github.com/jessegall/code-commandments/issues/1
+
+--- stderr
+⚠ A detector-report claims ONE thing: the flagged code is CORRECT under the
+  architecture and the detector is wrong. It is NOT a deferral. If the finding
+  is right and an honest fix exists — however big (a migration, a cascading
+  refactor, many call sites) — you must IMPLEMENT it; a report of a correct
+  finding will be closed and the fix will still be owed.
+
+--- files
+=== created gh-args.txt
+issue
+----
+create
+----
+--repo
+----
+jessegall/code-commandments
+----
+--title
+----
+[detector-report] DictBagDetector
+----
+--body
+----
+**Detector:** `DictBagDetector`
+
+**Report (why the flagged code is CORRECT and the detector is wrong):**
+The dict is the wire format itself.
+
+
+**Where:** `src/A.php:5`
+
+**Code** (`src/A.php:5`):
+
+```php
+  2  
+  3  class A
+  4  {
+→ 5      private string $password = "███████";
+  6      private string $plain = "visible";
+  7  }
+```
+
+_Filed via `commandments report` from a consumer project._
+
+----
+

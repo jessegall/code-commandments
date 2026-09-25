@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+Unknown option --by for `task`. Try: commandments task --help
+
+--- files

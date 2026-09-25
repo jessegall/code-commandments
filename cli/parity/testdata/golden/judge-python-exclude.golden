@@ -1,0 +1,34 @@
+exit: 1
+--- stdout
+
+[1;33mpython/duplication[0m  (10)
+  [1;36m↳ LOAD the skill `commandments-python-duplication` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/alerts.py:5[0m  FunctionDef register  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/digests.py:6[0m
+  [36mshop/cli.py:11[0m  FunctionDef load_config  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/settings.py:12[0m
+  [36mshop/digests.py:6[0m  FunctionDef register  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/alerts.py:5[0m
+  [36mshop/documents.py:9[0m  FunctionDef rows  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/documents.py:20[0m
+  [36mshop/documents.py:20[0m  FunctionDef line_items  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/documents.py:9[0m
+  [36mshop/encoders.py:11[0m  FunctionDef encode_text  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/encoders.py:20[0m
+  [36mshop/encoders.py:20[0m  FunctionDef encode_html  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/encoders.py:11[0m
+  [36mshop/holds.py:9[0m  FunctionDef hold_order  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/holds.py:16[0m
+  [36mshop/holds.py:16[0m  FunctionDef release_order  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/holds.py:9[0m
+  [36mshop/settings.py:12[0m  FunctionDef read_settings  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/cli.py:11[0m
+
+[1m10 sins[0m across 1 skill.
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+--- stderr
+
+--- files

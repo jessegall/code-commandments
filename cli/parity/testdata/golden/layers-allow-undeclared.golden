@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+[31m✗ Shop\Nope is not a declared layer — run `commandments layers add Shop\Nope` first, or check the spelling.[0m
+
+--- files

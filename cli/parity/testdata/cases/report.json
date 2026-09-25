@@ -1,0 +1,180 @@
+[
+  {
+    "name": "report-help",
+    "args": [
+      "report",
+      "--help"
+    ]
+  },
+  {
+    "name": "feature-request-help",
+    "args": [
+      "feature-request",
+      "--help"
+    ]
+  },
+  {
+    "name": "report-without-a-reason",
+    "args": [
+      "report",
+      "--ref=src/A.php:2"
+    ]
+  },
+  {
+    "name": "report-bug-without-a-ref",
+    "args": [
+      "report",
+      "--reason=it crashes"
+    ]
+  },
+  {
+    "name": "report-bug-global",
+    "args": [
+      "report",
+      "--reason=judge crashes with no arguments\nsecond line",
+      "--global"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh"
+    ]
+  },
+  {
+    "name": "report-bug-with-refs",
+    "args": [
+      "report",
+      "--reason=wrong",
+      "--title=A title",
+      "--ref=src/A.php:5",
+      "--ref=src/B.vue:2-3",
+      "--ref=missing.ts:9",
+      "--ref=src/A.php"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh",
+      "mkdir -p src && printf '<?php\\n\\nclass A\\n{\\n    private string $password = \"hunter2\";\\n    private string $plain = \"visible\";\\n}\\n' > src/A.php && printf '<template>\\n  <div>\\n    <span>{{ x }}</span>\\n  </div>\\n</template>\\n' > src/B.vue"
+    ]
+  },
+  {
+    "name": "report-bug-file-and-line",
+    "args": [
+      "report",
+      "--reason=wrong",
+      "--file=src/A.php",
+      "--line=2"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh",
+      "mkdir -p src && printf '<?php\\n\\nclass A\\n{\\n    private string $password = \"hunter2\";\\n    private string $plain = \"visible\";\\n}\\n' > src/A.php && printf '<template>\\n  <div>\\n    <span>{{ x }}</span>\\n  </div>\\n</template>\\n' > src/B.vue"
+    ]
+  },
+  {
+    "name": "report-bug-long-title",
+    "args": [
+      "report",
+      "--reason=ünïcödé reason that runs well past the sixty characters a title may hold",
+      "--global"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh"
+    ]
+  },
+  {
+    "name": "report-detector-hedges",
+    "args": [
+      "report",
+      "--detector=DictBagDetector",
+      "--reason=Correct, but a fix is for later."
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh"
+    ]
+  },
+  {
+    "name": "report-detector",
+    "args": [
+      "report",
+      "--detector=DictBagDetector",
+      "--reason=The dict is the wire format itself.",
+      "--ref=src/A.php:5"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh",
+      "mkdir -p src && printf '<?php\\n\\nclass A\\n{\\n    private string $password = \"hunter2\";\\n    private string $plain = \"visible\";\\n}\\n' > src/A.php && printf '<template>\\n  <div>\\n    <span>{{ x }}</span>\\n  </div>\\n</template>\\n' > src/B.vue"
+    ]
+  },
+  {
+    "name": "report-detector-with-design",
+    "args": [
+      "report",
+      "--detector=DictBagDetector",
+      "--reason=The dict is the wire format.",
+      "--best-design=Keep the dict: it is the payload json.dumps writes."
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh"
+    ]
+  },
+  {
+    "name": "report-detector-design-hedges",
+    "args": [
+      "report",
+      "--detector=DictBagDetector",
+      "--reason=Flat.",
+      "--best-design=A dataclass would be good enough"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh"
+    ]
+  },
+  {
+    "name": "report-gh-fails",
+    "args": [
+      "report",
+      "--reason=broken",
+      "--global"
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\necho \"HTTP 401: Bad credentials\"\\nexit 1\\n' > bin/gh && chmod +x bin/gh"
+    ]
+  },
+  {
+    "name": "report-without-gh",
+    "args": [
+      "report",
+      "--reason=broken",
+      "--global"
+    ],
+    "env": {
+      "PATH": "/usr/bin:/bin"
+    }
+  },
+  {
+    "name": "feature-request-incomplete",
+    "args": [
+      "feature-request",
+      "--title=More rules"
+    ]
+  },
+  {
+    "name": "feature-request",
+    "args": [
+      "feature-request",
+      "--title=Catch loose dicts",
+      "--reason=Dicts passed around\nshould be types."
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh"
+    ]
+  },
+  {
+    "name": "report-design-smell-needs-a-design",
+    "args": [
+      "report",
+      "--detector=AllNullableDataDetector",
+      "--reason=Fine."
+    ],
+    "setup": [
+      "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh"
+    ]
+  }
+]

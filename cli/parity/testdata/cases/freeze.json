@@ -1,0 +1,13 @@
+[
+  {"name": "freeze-help", "args": ["freeze", "--help"]},
+  {"name": "freeze-without-a-path", "args": ["freeze"]},
+  {"name": "unfreeze-missing-file", "args": ["unfreeze", "nope.php"]},
+  {"name": "freeze-php", "args": ["freeze", "src/A.php"], "setup": ["mkdir -p src", "printf '<?php\\n\\nclass A {}\\n' > src/A.php"]},
+  {"name": "freeze-php-one-line", "args": ["freeze", "A.php"], "setup": ["printf '<?php class A {}' > A.php"]},
+  {"name": "freeze-vue", "args": ["freeze", "B.vue"], "setup": ["printf '<template/>\\n' > B.vue"]},
+  {"name": "freeze-python", "args": ["freeze", "c.py"], "setup": ["printf 'x = 1\\n' > c.py"]},
+  {"name": "freeze-script-with-shebang", "args": ["freeze", "run.py"], "setup": ["printf '#!/usr/bin/env python\\nx = 1\\n' > run.py"]},
+  {"name": "freeze-already-frozen", "args": ["freeze", "d.ts"], "setup": ["printf '// @code-commandments-frozen\\nexport {}\\n' > d.ts"]},
+  {"name": "unfreeze", "args": ["unfreeze", "e.ts"], "setup": ["printf '// @code-commandments-frozen — x\\nexport {}\\n' > e.ts"]},
+  {"name": "unfreeze-not-frozen", "args": ["unfreeze", "f.ts"], "setup": ["printf 'export {}\\n' > f.ts"]}
+]

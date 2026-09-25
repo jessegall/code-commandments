@@ -58,3 +58,8 @@ func (DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 func hasValueParamSignature(n py.Node) bool {
 	return len(n.ValueParamSignature()) > 0
 }
+
+// GroupKey groups a finding with the defs taking the same scalar parameters.
+func (DataClumpDetector) GroupKey(match engine.Match) (string, bool) {
+	return strings.Join(py.Node{Match: match}.ValueParamSignature(), ", "), true
+}

@@ -17,6 +17,19 @@ $toBytes = static function (string $limit): int {
     };
 };
 
+// COMMANDMENTS_ENGINE=go hands the whole run to the Go binary, its streams and exit code the run's own:
+// $COMMANDMENTS_GO_BINARY when set, else bin/commandments-go beside this script, else `go run` over the
+// checkout's cmd/commandments.
+if (getenv('COMMANDMENTS_ENGINE') === 'go') {
+    $binary = getenv('COMMANDMENTS_GO_BINARY') ?: __DIR__ . '/commandments-go';
+    $command = is_file($binary)
+        ? [$binary, ...array_slice($argv, 1)]
+        : ['go', 'run', dirname(__DIR__) . '/cmd/commandments', ...array_slice($argv, 1)];
+    $process = proc_open($command, [STDIN, STDOUT, STDERR], $pipes);
+
+    exit($process === false ? 1 : proc_close($process));
+}
+
 (static function (array $argv) use ($toBytes): void {
     // Parsing a whole codebase into ASTs (and bucketing its nodes) is memory-hungry;
     // lift the default 128M ceiling so a large source tree doesn't abort mid-scan.

@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+[32m• Shop\Ui\Shared already reaches those layers — nothing to add[0m
+
+--- stderr
+
+--- files

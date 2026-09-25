@@ -1,0 +1,128 @@
+exit: 1
+--- stdout
+
+[1;33mpython/value-objects[0m  (37)
+  [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/barcode_parsing.py:13[0m  tuple  [2m[PositionalTupleReturnDetector][0m
+  [36mshop/carrier_rates.py:14[0m  call  [2m[RawDecodedReturnDetector][0m
+  [36mshop/cart_totals.py:9[0m  dict  [2m[DictReturnBagDetector][0m
+  [36mshop/customer_profiles.py:22[0m  call  [2m[HandRolledReplaceDetector][0m
+  [36mshop/customers.py:6[0m  FunctionDef subscribe  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: shop/customers.py:12[0m
+  [36mshop/customers.py:12[0m  FunctionDef enrol  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: shop/customers.py:6[0m
+  [36mshop/delivery.py:8[0m  FunctionDef book_delivery  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: shop/quotes.py:5[0m
+  [36mshop/delivery_addresses.py:7[0m  ClassDef DeliveryAddress  [2m[MutableValueObjectDetector][0m
+  [36mshop/discounts.py:7[0m  call  [2m[DictBagDetector][0m
+  [36mshop/discounts.py:9[0m  call  [2m[DictBagDetector][0m
+  [36mshop/discounts.py:11[0m  call  [2m[DictBagDetector][0m
+  [36mshop/exports.py:7[0m  call  [2m[DictBagDetector][0m
+  [36mshop/exports.py:7[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/exports.py:7[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/frozen_prices.py:7[0m  ClassDef ShelfPrice  [2m[MutableValueObjectDetector][0m
+  [36mshop/import_progress.py:12[0m  dict  [2m[DictReturnBagDetector][0m
+  [36mshop/invoice_split.py:8[0m  tuple  [2m[PositionalTupleReturnDetector][0m
+  [36mshop/opening_hours.py:16[0m  ClassDef Weekday  [2m[CoupledFieldsDetector][0m
+  [36mshop/parcel_routes.py:13[0m  ClassDef ParcelBooking  [2m[CoupledFieldsDetector][0m
+  [36mshop/payload_fields.py:16[0m  call  [2m[DictBagDetector][0m
+  [36mshop/payload_fields.py:16[0m  call  [2m[DictBagDetector][0m
+  [36mshop/price_quotes.py:8[0m  dict  [2m[DictReturnBagDetector][0m
+  [36mshop/price_rules.py:22[0m  call  [2m[HandRolledReplaceDetector][0m
+  [36mshop/quotes.py:5[0m  FunctionDef quote  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: shop/delivery.py:8[0m
+  [36mshop/shelf_audits.py:11[0m  ClassDef ShelfAudit  [2m[CoupledFieldsDetector][0m
+  [36mshop/shipment_records.py:21[0m  call  [2m[HandRolledReplaceDetector][0m
+  [36mshop/shipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/shipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/shipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/shipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/stock_counts.py:8[0m  tuple  [2m[PositionalTupleReturnDetector][0m
+  [36mshop/stock_report.py:8[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/stock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/stock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/store_settings.py:15[0m  call  [2m[RawDecodedReturnDetector][0m
+  [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedReturnDetector][0m
+  [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
+
+[1m37 sins[0m across 1 skill.
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+[2m↳ checklist written to <project>/.commandments/sessions/61bdc/sins/sins.md — fix each item, then delete its line[0m
+
+--- stderr
+
+--- files
+=== created .commandments/sessions/61bdc/sins/README.md
+# Judge checklists
+
+`sins.md` is the live worklist from the last `commandments judge` run: one line per sin,
+grouped under the skill that fixes it. Work it top to bottom, deleting each line as you
+fix its sin, and re-run judge only when the file is empty.
+
+`sins-<date>_<time>.md` are the runs before it. **They are kept deliberately** — each one
+is the record of what was true when it ran, and `commandments judge --repent=<date>_<time>`
+scopes a re-run or a `repent` to exactly what that run reported. Nothing here leaked: the
+newest five are kept and older ones are rotated out on their own.
+
+The whole folder is generated and gitignored. Deleting it is safe — the next judge run
+writes it again.
+=== created .commandments/sessions/61bdc/sins/sins.md
+# Code Commandments — 37 sins to fix
+
+> 🔱 **The rule above all — `fix-at-the-source`.** Every sin below is a SYMPTOM. Before you change a line, trace the value to where it is BORN and fix it there; the symptom (and often others) then disappears on its own. Never silence it with a `?? default`, a cast, or a null-check.
+
+**This file is your worklist. Work it straight down, deleting as you go — do NOT stop to re-check.** For each line, top to bottom, do exactly this:
+
+1. **LOAD the skill named in the section header.** It teaches the fix; do NOT fix from memory. Even if you believe you already loaded it, treat it as NOT loaded (a context compaction may have silently dropped its instructions while leaving you the impression they're still there) and load it again before touching the section. Once per section is enough.
+   _Don't recognise the rule, or about to argue with it? Run `vendor/bin/commandments info <sin>` first — it prints what the rule flags, WHY it is a sin, how it is fixed, and a worked example. The detector name from the line works as the argument. Guessing at a rule you have not read is how a finding gets silenced instead of fixed._
+2. Open the `file:line` and fix the sin at its source.
+3. **Delete that line from this file.** Nothing else — no tick, no mark, no strike-through. The deleted line IS the record that it's fixed.
+
+**Do NOT re-run `judge`, re-scan, or re-verify between fixes.** That is slow and pointless: the shrinking file is your only source of truth, and each deleted line is its own confirmation. Do not pause to check your work — just fix, delete, and move to the next line until none remain.
+
+Work **wave by wave.** ONLY when this list is EMPTY, run `commandments judge` again. If your fixes rippled into other files, it writes a fresh worklist — a new wave; work it exactly the same way (fix, delete, no re-checks between). Repeat, judging only between waves, until a run is clean and deletes this file.
+
+## python/value-objects
+
+> ▶ **LOAD the skill `commandments-python-value-objects` before fixing.** It teaches every fix below. Don't work from memory, and don't assume it's still loaded from earlier — a compaction can drop it silently — load it again if in any doubt.
+
+- `./shop/barcode_parsing.py:13`  tuple  [PositionalTupleReturnDetector]
+- `./shop/carrier_rates.py:14`  call  [RawDecodedReturnDetector]
+- `./shop/cart_totals.py:9`  dict  [DictReturnBagDetector]
+- `./shop/customer_profiles.py:22`  call  [HandRolledReplaceDetector]
+- `./shop/customers.py:6`  FunctionDef subscribe  [DataClumpDetector] — same shape as shop/customers.py:12
+- `./shop/customers.py:12`  FunctionDef enrol  [DataClumpDetector] — same shape as shop/customers.py:6
+- `./shop/delivery.py:8`  FunctionDef book_delivery  [DataClumpDetector] — same shape as shop/quotes.py:5
+- `./shop/delivery_addresses.py:7`  ClassDef DeliveryAddress  [MutableValueObjectDetector]
+- `./shop/discounts.py:7`  call  [DictBagDetector]
+- `./shop/discounts.py:9`  call  [DictBagDetector]
+- `./shop/discounts.py:11`  call  [DictBagDetector]
+- `./shop/exports.py:7`  call  [DictBagDetector]
+- `./shop/exports.py:7`  subscript  [DictBagDetector]
+- `./shop/exports.py:7`  subscript  [DictBagDetector]
+- `./shop/frozen_prices.py:7`  ClassDef ShelfPrice  [MutableValueObjectDetector]
+- `./shop/import_progress.py:12`  dict  [DictReturnBagDetector]
+- `./shop/invoice_split.py:8`  tuple  [PositionalTupleReturnDetector]
+- `./shop/opening_hours.py:16`  ClassDef Weekday  [CoupledFieldsDetector]
+- `./shop/parcel_routes.py:13`  ClassDef ParcelBooking  [CoupledFieldsDetector]
+- `./shop/payload_fields.py:16`  call  [DictBagDetector]
+- `./shop/payload_fields.py:16`  call  [DictBagDetector]
+- `./shop/price_quotes.py:8`  dict  [DictReturnBagDetector]
+- `./shop/price_rules.py:22`  call  [HandRolledReplaceDetector]
+- `./shop/quotes.py:5`  FunctionDef quote  [DataClumpDetector] — same shape as shop/delivery.py:8
+- `./shop/shelf_audits.py:11`  ClassDef ShelfAudit  [CoupledFieldsDetector]
+- `./shop/shipment_records.py:21`  call  [HandRolledReplaceDetector]
+- `./shop/shipping_labels.py:10`  subscript  [DictBagDetector]
+- `./shop/shipping_labels.py:10`  subscript  [DictBagDetector]
+- `./shop/shipping_labels.py:10`  subscript  [DictBagDetector]
+- `./shop/shipping_labels.py:10`  subscript  [DictBagDetector]
+- `./shop/stock_counts.py:8`  tuple  [PositionalTupleReturnDetector]
+- `./shop/stock_report.py:8`  subscript  [DictBagDetector]
+- `./shop/stock_report.py:10`  subscript  [DictBagDetector]
+- `./shop/stock_report.py:10`  subscript  [DictBagDetector]
+- `./shop/store_settings.py:15`  call  [RawDecodedReturnDetector]
+- `./shop/supplier_feed.py:9`  call  [RawDecodedReturnDetector]
+- `./shop/wallet_balances.py:7`  ClassDef Balance  [MutableValueObjectDetector]
+

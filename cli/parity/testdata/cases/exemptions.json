@@ -1,0 +1,43 @@
+[
+  {
+    "name": "exemptions-help",
+    "args": [
+      "exemptions",
+      "--help"
+    ]
+  },
+  {
+    "name": "exemptions",
+    "args": [
+      "exemptions"
+    ]
+  },
+  {
+    "name": "exemptions-one-detector",
+    "args": [
+      "exemptions",
+      "array-bag"
+    ]
+  },
+  {
+    "name": "exemptions-honours-none",
+    "args": [
+      "exemptions",
+      "python-dict-bag"
+    ]
+  },
+  {
+    "name": "exemptions-unknown",
+    "args": [
+      "exemptions",
+      "zz-nothing"
+    ]
+  },
+  {
+    "name": "info-exempts",
+    "args": [
+      "info",
+      "ArrayBagDetector"
+    ]
+  }
+]

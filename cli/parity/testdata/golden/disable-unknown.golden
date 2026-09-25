@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+No sin or skill matches "zz-nothing-like-it". Run `commandments judge --list` to see them.
+
+--- files

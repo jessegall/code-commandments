@@ -1,0 +1,148 @@
+[
+  {
+    "name": "repent-help",
+    "args": [
+      "repent",
+      "--help"
+    ]
+  },
+  {
+    "name": "hints-help",
+    "args": [
+      "hints",
+      "--help"
+    ]
+  },
+  {
+    "name": "repent-not-a-directory",
+    "args": [
+      "repent",
+      "nope"
+    ]
+  },
+  {
+    "name": "repent-nothing-to-fix",
+    "args": [
+      "repent"
+    ],
+    "setup": [
+      "mkdir -p src",
+      "printf 'export const one = 1;\\n' > src/one.ts"
+    ]
+  },
+  {
+    "name": "repent-changes-outside-git",
+    "args": [
+      "repent",
+      ".",
+      "--changes"
+    ]
+  },
+  {
+    "name": "repent-frontend-dry-run",
+    "project": "tests/Fixtures/frontend",
+    "args": [
+      "repent",
+      "components",
+      "--dry-run"
+    ]
+  },
+  {
+    "name": "repent-frontend-dry-run-to-a-file",
+    "project": "tests/Fixtures/frontend",
+    "args": [
+      "repent",
+      "components",
+      "--dry-run=out.diff"
+    ]
+  },
+  {
+    "name": "repent-frontend-only-one",
+    "project": "tests/Fixtures/frontend",
+    "args": [
+      "repent",
+      "components",
+      "--only=switch-case",
+      "--dry-run"
+    ]
+  },
+  {
+    "name": "repent-frontend",
+    "project": "tests/Fixtures/frontend",
+    "args": [
+      "repent",
+      "components"
+    ],
+    "env": {
+      "CLAUDE_CODE_SESSION_ID": "parity"
+    }
+  },
+  {
+    "name": "repent-backend-dry-run",
+    "project": "tests/Fixtures/backend",
+    "args": [
+      "repent",
+      "--dry-run"
+    ],
+    "setup": [
+      "mkdir -p vendor/composer && cp \"$PARITY_PACKAGE/vendor/composer/installed.json\" vendor/composer/installed.json"
+    ]
+  },
+  {
+    "name": "repent-backend-changes",
+    "project": "tests/Fixtures/backend",
+    "args": [
+      "repent",
+      ".",
+      "--changes",
+      "--dry-run"
+    ],
+    "setup": [
+      "mkdir -p vendor/composer && cp \"$PARITY_PACKAGE/vendor/composer/installed.json\" vendor/composer/installed.json",
+      "git init -q -b main && git add . && git -c user.email=t@t -c user.name=t commit -q -m start"
+    ]
+  },
+  {
+    "name": "hints-not-a-directory",
+    "args": [
+      "hints",
+      "nope"
+    ]
+  },
+  {
+    "name": "hints-nothing",
+    "args": [
+      "hints"
+    ],
+    "setup": [
+      "mkdir -p src",
+      "printf '<?php\\nclass A {}\\n' > src/A.php"
+    ]
+  },
+  {
+    "name": "hints-backend-dry-run",
+    "project": "tests/Fixtures/backend",
+    "args": [
+      "hints",
+      ".",
+      "--dry-run"
+    ]
+  },
+  {
+    "name": "hints-backend-dry-run-to-a-file",
+    "project": "tests/Fixtures/backend",
+    "args": [
+      "hints",
+      ".",
+      "--dry-run=hints.diff"
+    ]
+  },
+  {
+    "name": "hints-backend",
+    "project": "tests/Fixtures/backend",
+    "args": [
+      "hints",
+      "."
+    ]
+  }
+]

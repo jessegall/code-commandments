@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+No checklist for --repent=latest (looked for <project>/.commandments/sessions/default/sins/sins.md).
+
+--- files

@@ -1,15 +1,25 @@
 package engine
 
-import "slices"
-
 // Where opens a query over every node the check answers yes to.
 func (c *Codebase) Where(check Check) *Query {
 	return c.nodes().Where(check)
 }
 
 // WhereKind opens a query over the nodes of the language's own kinds, such as Expr_MethodCall.
+// The kinds are gathered one after another, each in file order, as the PHP engine's selectors read their
+// node buckets, so a detector over several kinds lists its findings in the same order either engine runs.
 func (c *Codebase) WhereKind(kinds ...string) *Query {
-	return c.nodes().Where(func(m Match) bool { return slices.Contains(kinds, m.Kind()) })
+	return &Query{selected: func(yield func(Match) bool) {
+		for _, kind := range kinds {
+			for _, file := range c.files {
+				for _, node := range file.Nodes() {
+					if node.Kind == kind && !yield(Match{node: node, file: file}) {
+						return
+					}
+				}
+			}
+		}
+	}}
 }
 
 // WhereIs opens a query over the nodes that answer a neutral kind.

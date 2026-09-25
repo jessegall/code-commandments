@@ -62,3 +62,6 @@ phpcs.xml
 .lanes/
 /journal-skills/
 __pycache__/
+
+# The Go binary, built with `go build -o bin/commandments-go ./cmd/commandments`.
+/bin/commandments-go

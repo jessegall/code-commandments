@@ -1,0 +1,7 @@
+exit: 1
+--- stdout
+HTTP 401: Bad credentials
+
+--- stderr
+
+--- files

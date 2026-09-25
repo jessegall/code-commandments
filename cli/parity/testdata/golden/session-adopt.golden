@@ -1,0 +1,17 @@
+exit: 0
+--- stdout
+▸ `zzzzz` — 2 entries adopted into
+  <project>/.commandments/sessions/61bdc
+  moved    one
+  moved    sins
+  `zzzzz` is gone; nothing was left behind.
+
+--- stderr
+
+--- files
+=== created .commandments/sessions/61bdc/one
+a
+=== created .commandments/sessions/61bdc/sins/sins.md
+b
+=== deleted .commandments/sessions/zzzzz/one
+=== deleted .commandments/sessions/zzzzz/sins/sins.md

@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+[2m--sin=zz-nothing provides a scaffold (most fixes are domain-specific).[0m
+
+--- stderr
+
+--- files

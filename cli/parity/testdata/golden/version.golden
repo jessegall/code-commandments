@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+code-commandments <version>
+
+--- stderr
+
+--- files

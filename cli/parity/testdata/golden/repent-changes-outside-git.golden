@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+Not a git repository (or git unavailable): .
+
+--- files

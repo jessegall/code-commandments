@@ -1,0 +1,19 @@
+[
+  {"name": "layers-help", "args": ["layers", "--help"]},
+  {"name": "layers-add-incomplete", "args": ["layers", "add"]},
+  {"name": "layers-allow-incomplete", "args": ["layers", "allow", "Shop\\Ui\\Pages"]},
+  {"name": "layers-add-without-a-stack", "args": ["layers", "add", "App\\Domain"]},
+  {"name": "layers-add-new", "project": "tests/Fixtures/backend", "args": ["layers", "add", "\\Shop\\Ui\\Widgets", "--may-use=Shop\\\\Ui\\\\Elements,,Shop\\Ui\\Tokens"]},
+  {"name": "layers-add-bare", "project": "tests/Fixtures/backend", "args": ["layers", "add", "Shop\\Ui\\Widgets"]},
+  {"name": "layers-add-widens", "project": "tests/Fixtures/backend", "args": ["layers", "add", "Shop\\Ui\\Elements", "--may-use=Shop\\Ui\\Tokens,Shop\\Ui\\Icons"]},
+  {"name": "layers-add-nothing-new", "project": "tests/Fixtures/backend", "args": ["layers", "add", "Shop\\Ui\\Shared", "--may-use=Shop\\Ui\\Tokens"]},
+  {"name": "layers-allow", "project": "tests/Fixtures/backend", "args": ["layers", "allow", "Shop\\Ui\\Tokens", "Shop\\Ui\\Icons"]},
+  {"name": "layers-allow-already", "project": "tests/Fixtures/backend", "args": ["layers", "allow", "Shop\\Ui\\Pages", "Shop\\Ui\\Shared"]},
+  {"name": "layers-allow-undeclared", "project": "tests/Fixtures/backend", "args": ["layers", "allow", "Shop\\Nope", "Shop\\Ui\\Shared"]},
+  {"name": "layers-propose", "project": "tests/Fixtures/backend", "args": ["layers"]},
+  {"name": "layers-propose-floor", "project": "tests/Fixtures/backend", "args": ["layers", "--floor"]},
+  {"name": "layers-write-declared", "project": "tests/Fixtures/backend", "args": ["layers", "--write"]},
+  {"name": "layers-write-refresh", "project": "tests/Fixtures/backend", "args": ["layers", "--write", "--refresh"]},
+  {"name": "layers-propose-path", "project": "tests/Fixtures/backend", "args": ["layers", "app/Ui"]},
+  {"name": "layers-write-fresh", "args": ["layers", "--write"], "setup": ["mkdir -p src/Domain src/Http", "printf '{\"autoload\": {\"psr-4\": {\"App\\\\\\\\\": \"src/\"}}}' > composer.json", "printf '<?php\\nnamespace App\\\\Domain;\\nfinal class Order {}\\n' > src/Domain/Order.php", "printf '<?php\\nnamespace App\\\\Http;\\nuse App\\\\Domain\\\\Order;\\nfinal class Show { public function __invoke(Order $order): Order { return $order; } }\\n' > src/Http/Show.php"]}
+]

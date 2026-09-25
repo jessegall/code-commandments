@@ -1,0 +1,11 @@
+exit: 0
+--- stdout
+<project>/.commandments/sessions/61bdc
+
+  sins                        96B  11:10
+  .judge-counter             2.4K  11:05
+  touched                      1B  11:00
+
+--- stderr
+
+--- files

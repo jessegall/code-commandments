@@ -1,0 +1,194 @@
+exit: 1
+--- stdout
+Asking `claude -p` 1× per query across 49 skills — this takes a while.
+
+[31m✗[0m commandments-backend-absence                 pulled 0/4 (0%)
+    [2m↳ getUserPreferences() in app/Services/PrefService.php returns ?UserPreferences and I've now got `[0m
+    [2m↳ I'm writing a findByEmail on our UserRepository. should it return null when there's no match, or[0m
+    [2m↳ our ReportBuilder has `private ?Formatter $formatter = null` and the constructor does $this->for[0m
+[31m✗[0m commandments-backend-class-layout            pulled 0/2 (0%)
+    [2m↳ I'm adding a `private const int MAX_RETRIES = 3;` to app/Jobs/RetryablePush.php — does it go a[0m
+    [2m↳ our WorkflowNode class has a property declared between two methods about 200 lines down. is that[0m
+[31m✗[0m commandments-backend-documentation           pulled 0/2 (0%)
+    [2m↳ I'm adding a docblock to app/Support/Money.php — how much should it say? the class has about 1[0m
+    [2m↳ our codebase is full of comments like `// previously this returned an array, now it returns a Co[0m
+[31m✗[0m commandments-backend-fix-at-the-source       pulled 0/2 (0%)
+    [2m↳ the same `?? []` guard shows up in about nine places wherever we read $config['channels']. I cou[0m
+    [2m↳ a test is failing because getTotal() returns null for orders with no lines. easiest fix is a nul[0m
+[31m✗[0m commandments-backend-guard-clauses-and-flow  pulled 0/2 (0%)
+    [2m↳ this handle() method in app/Jobs/SyncInventory.php is four levels of nested ifs by the time it g[0m
+    [2m↳ I keep writing `($order->customer ?? throw new MissingCustomer())->email()` inline. a colleague [0m
+[31m✗[0m commandments-backend-laravel-idioms          pulled 0/3 (0%)
+    [2m↳ in app/Http/Controllers/CheckoutController.php I'm reading $request->input('coupon_code') direct[0m
+    [2m↳ I need the CurrencyConverter inside a model method and reached for app(CurrencyConverter::class)[0m
+    [2m↳ we've got `->where('status', 'active')->where('deleted_at', null)` repeated in about a dozen que[0m
+[31m✗[0m commandments-backend-method-mood             pulled 0/2 (0%)
+    [2m↳ naming question: our OrderStatus class has a method that returns bool for whether it's been ship[0m
+    [2m↳ I've got `->hides()` and `->reveals()` on our UiElement class as commands that mutate. someone i[0m
+[31m✗[0m commandments-backend-page-objects            pulled 0/2 (0%)
+    [2m↳ our DashboardController returns a big array of nested arrays to Inertia. I want to make it a typ[0m
+    [2m↳ I've got a *Page Data class and I need a CurrencyFormatter inside it to compute a display field.[0m
+[31m✗[0m commandments-backend-repeated-call-helper    pulled 0/1 (0%)
+    [2m↳ we write `$element->copyWith(metadata: ElementMeta::from([...])->toArray())` at about fifteen ca[0m
+[31m✗[0m commandments-backend-route-actions           pulled 0/2 (0%)
+    [2m↳ our AdminOrderController::store() just calls OrderController::store() with a tweaked request. is[0m
+    [2m↳ I've registered both POST /orders and POST /api/orders pointing at the same OrderController@stor[0m
+[31m✗[0m commandments-backend-spatie-data             pulled 0/3 (0%)
+    [2m↳ writing a CheckoutData class with spatie/laravel-data — should the properties be readonly, and[0m
+    [2m↳ our OrderData has every property as `?string` because the form can post partials. reviewer says [0m
+    [2m↳ how do I type a collection of LineItemData inside OrderData so it hydrates properly from the req[0m
+[31m✗[0m commandments-backend-spatie-data-hydration   pulled 0/2 (0%)
+    [2m↳ at the call site I'm doing OrderData::from(['customer' => CustomerData::from($row['customer']), [0m
+    [2m↳ I build a ShipmentData just to immediately call ->toArray() on it before passing to the queue jo[0m
+[31m✗[0m commandments-backend-type-honesty            pulled 0/2 (0%)
+    [2m↳ I've got `private ?Invoice $current = null` on our PdfRenderer that gets set at the top of rende[0m
+    [2m↳ our ExportJob stashes $this->previousLocale before switching, then restores it in a finally. the[0m
+[31m✗[0m commandments-backend-value-objects           pulled 0/2 (0%)
+    [2m↳ half our service methods take ($street, $city, $postcode, $country) and pass them straight throu[0m
+    [2m↳ we return `array{total: int, currency: string, formatted: string}` from PricingService::quote() [0m
+[31m✗[0m commandments-csharp-absence                  pulled 0/3 (0%)
+    [2m↳ my FindOrder method returns Order? and every caller does if (order is null) throw new NotFoundEx[0m
+    [2m↳ is it ok to write var title = row.Title ?? ""; in C# when the title is required[0m
+    [2m↳ the compiler warns the customer may be null so I added customer!.Name — is that fine[0m
+[31m✗[0m commandments-csharp-behaviour-per-method     pulled 0/3 (0%)
+    [2m↳ should I add a `bool compact = false` parameter to my C# Render(order) method to switch between [0m
+    [2m↳ my C# method's whole body is `if (dryRun) { ... } else { ... }` — is that fine or should it be[0m
+    [2m↳ I made `Fields(string? kind = null)` in C# so calling it with no kind returns all of them — go[0m
+[31m✗[0m commandments-csharp-class-layout             pulled 0/3 (0%)
+    [2m↳ I need a private const int Retries = 3 for the retry loop in my C# Client.Send — can I put it [0m
+    [2m↳ my C# record has its properties at the top but I want to add one more at the bottom next to the [0m
+    [2m↳ judge flagged csharp-member-after-method on a field I declared under the constructor — where s[0m
+[31m✗[0m commandments-csharp-documentation            pulled 0/3 (0%)
+    [2m↳ should every C# method have a /// <param> tag for each parameter, even when it just repeats the [0m
+    [2m↳ I left `// formerly lived in CheckoutService` above a C# method I moved — is that useful?[0m
+    [2m↳ judge flagged csharp-restated-comment on `// add the rate` above `total += rate;`, how do I fix [0m
+[31m✗[0m commandments-csharp-duplication              pulled 0/3 (0%)
+    [2m↳ OrdersHandler.cs needs the same MapToDto method that InvoicesHandler.cs already has — can I ju[0m
+    [2m↳ ExportService and ReportService both have a WriteRows method that's identical except for the fil[0m
+    [2m↳ judge flagged a duplicate C# function on two repository classes that build the query the exact s[0m
+[31m✗[0m commandments-csharp-enums                    pulled 0/3 (0%)
+    [2m↳ in my C# code order.Status is a string and I check == "paid" or == "refunded" in several service[0m
+    [2m↳ should I use public const string Pending = "pending" fields or something else for statuses[0m
+    [2m↳ I switch on shipment.Kind against "box", "pallet" and "crate" in three different C# classes, sho[0m
+[31m✗[0m commandments-csharp-exceptions               pulled 0/3 (0%)
+    [2m↳ in my C# repository I wrapped the JsonSerializer.Deserialize in try/catch (Exception) and return[0m
+    [2m↳ should I throw new InvalidOperationException("carrier not found: " + name) here or something els[0m
+    [2m↳ judge flagged a swallowed exception in my C# service where the catch block just logs and returns[0m
+[31m✗[0m commandments-csharp-fix-at-the-source        pulled 0/3 (0%)
+    [2m↳ my C# constructor calls cache.Warm() on the cache it was given — is that OK?[0m
+    [2m↳ I keep a static List<string> of seen ids that my methods add to in C#[0m
+    [2m↳ judge flagged csharp-constructor-side-effect, what does it want me to do[0m
+[31m✗[0m commandments-csharp-flow                     pulled 0/3 (0%)
+    [2m↳ my C# controller action starts with if (request != null) { and then the whole method is indented[0m
+    [2m↳ I have if (status == OrderStatus.Open) ... else if (status == OrderStatus.Closed) ... else if (s[0m
+    [2m↳ judge flagged an else after a return in my C# method, why does that matter[0m
+[31m✗[0m commandments-csharp-method-mood              pulled 0/3 (0%)
+    [2m↳ I have a C# method `public bool Binds()` that says whether the node is bound — is that a good [0m
+    [2m↳ what should I call a C# method that hides the panel — `Hides()` or something else?[0m
+    [2m↳ judge flagged csharp-bare-state-predicate on `public bool Spins()`, how do I rename it[0m
+[31m✗[0m commandments-csharp-repeated-call-helper     pulled 0/3 (0%)
+    [2m↳ I write `order with { Status = OrderStatus.Shipped }` in four different C# handlers — is that [0m
+    [2m↳ the same `if (order.IsPaid && !order.IsCancelled)` check appears in two C# services, should I le[0m
+    [2m↳ judge flagged csharp-repeated-guard on my C# code, what does it want[0m
+[31m✗[0m commandments-csharp-tell-dont-ask            pulled 0/3 (0%)
+    [2m↳ I have a C# helper `static decimal Total(Order order)` that sums over order.Lines — should it [0m
+    [2m↳ my C# code has a `switch (shape) { case Circle c: … case Square s: … }` to compute the area,[0m
+    [2m↳ judge flagged csharp-type-switch on my C# switch, how do I fix it[0m
+[31m✗[0m commandments-csharp-templates                pulled 0/3 (0%)
+    [2m↳ I'm generating a C# class as text by adding strings to a List<string> and joining with newlines [0m
+    [2m↳ how should I write a multi-line email body my C# service builds with StringBuilder.AppendLine?[0m
+    [2m↳ judge flagged csharp-assembled-template on my string.Join("\n", ...), how do I fix it[0m
+[31m✗[0m commandments-csharp-type-honesty             pulled 0/3 (0%)
+    [2m↳ my C# service has a `Batch? batch` field that Load() always sets, and every method does batch?.X[0m
+    [2m↳ I added = null! to a required property so my C# class compiles, what's the right fix[0m
+    [2m↳ judge flagged csharp-masked-invariant on my C# code, what does it want[0m
+[31m✗[0m commandments-csharp-value-objects            pulled 0/3 (0%)
+    [2m↳ my C# services pass around Dictionary<string, object> like row["sku"], row["qty"], row["price"] [0m
+    [2m↳ I keep reading payload["name"] and payload["email"] from the same JsonNode in five places[0m
+    [2m↳ should CreateShipment(string street, string city, string postcode, string country) take an objec[0m
+[31m✗[0m commandments-python-absence                  pulled 0/3 (0%)
+    [2m↳ my find_order function returns Order | None and every place that calls it does if order is None:[0m
+    [2m↳ is it ok to write title = row.get('title') or '' in Python when the title is required[0m
+    [2m↳ should get_config return None when the file is missing or raise[0m
+[31m✗[0m commandments-python-behaviour-per-method     pulled 0/3 (0%)
+    [2m↳ should I add a `compact: bool = False` parameter to my Python `render(order)` function to switch[0m
+    [2m↳ my function's whole body is `if dry_run: ... else: ...` — is that fine or should it be split?[0m
+    [2m↳ I made `fields(kind: str | None = None)` so calling it with no kind returns all of them — good[0m
+[31m✗[0m commandments-python-class-layout             pulled 0/3 (0%)
+    [2m↳ I need a RETRIES = 3 constant for the retry loop in Client.send — can I put it right above sen[0m
+    [2m↳ this dataclass has its fields at the top but I want to add one more at the bottom next to the me[0m
+    [2m↳ judge flagged python-member-after-method on a class attribute I declared under __init__ — wher[0m
+[31m✗[0m commandments-python-dependency-direction     pulled 0/3 (0%)
+    [2m↳ I need a helper from shop.ui.shared inside shop.ui.elements — can I just import it?[0m
+    [2m↳ I get a circular import between two of my Python packages; should I move the import inside the f[0m
+    [2m↳ judge flagged python-namespace-dependency on an import in my domain package, what does it want[0m
+[31m✗[0m commandments-python-documentation            pulled 0/3 (0%)
+    [2m↳ should my Python function's docstring have an Args: section listing every parameter with its typ[0m
+    [2m↳ I left a comment `# formerly lived in checkout.py` above a function I moved — is that useful?[0m
+    [2m↳ judge flagged python-restated-comment on `# add the rate` above `total += rate`, how do I fix it[0m
+[31m✗[0m commandments-python-duplication              pulled 0/3 (0%)
+    [2m↳ src/features/messages/handlers.py needs the same _read_payload helper that src/features/todos/ha[0m
+    [2m↳ cli/export.py and cli/report.py both have a write_rows function that's identical except for the [0m
+    [2m↳ judge flagged duplicate-python-function on two methods in two different service classes that par[0m
+[31m✗[0m commandments-python-enums                    pulled 0/3 (0%)
+    [2m↳ in my Python code order.status is a string and I check == 'paid' or == 'refunded' in several mod[0m
+    [2m↳ should I use module-level constants PENDING = 'pending' or something else for statuses[0m
+    [2m↳ I compare shipment.kind against "box", "pallet" and "crate" in three different Python modules, s[0m
+[31m✗[0m commandments-python-exceptions               pulled 0/3 (0%)
+    [2m↳ in my Python loader I wrapped the json.load in try/except Exception and return {} if it fails, i[0m
+    [2m↳ should I raise ValueError('carrier not found: ' + name) here or something else[0m
+    [2m↳ judge flagged a swallowed exception in my handlers.py except block that just logs and passes —[0m
+[31m✗[0m commandments-python-fix-at-the-source        pulled 0/3 (0%)
+    [2m↳ my ReportExport.__init__ calls client.warm(period) so the cache is ready — is that fine or sho[0m
+    [2m↳ I keep a module-level _registry dict and a register() function that does global _registry and ad[0m
+    [2m↳ a KeyError keeps surfacing in three handlers that read the same config dict, should I add a try/[0m
+[31m✗[0m commandments-python-flow                     pulled 0/3 (0%)
+    [2m↳ my Python handler starts with if request is not None: and then the whole function is indented un[0m
+    [2m↳ in agent code I have if status == 'open': ... elif status == 'closed': ... elif status == 'stale[0m
+    [2m↳ judge flagged an else after a return in my Python function, why does that matter[0m
+[31m✗[0m commandments-python-method-mood              pulled 0/3 (0%)
+    [2m↳ I have a method `def binds(self) -> bool` that says whether the node is bound — is that a good[0m
+    [2m↳ what should I call a method that hides the panel — `hides()` or something else?[0m
+    [2m↳ judge flagged python-bare-state-predicate on `def spins(self)`, how do I rename it[0m
+[31m✗[0m commandments-python-pass-the-object          pulled 0/3 (0%)
+    [2m↳ my Python function takes `workflow` and `node_id` and starts with `node = workflow.graph.node(no[0m
+    [2m↳ every caller of my function passes `is_paid=order.status == 'paid'`; should the signature change[0m
+    [2m↳ judge flagged python-param-resolved-from-param on my service function, what does it want me to d[0m
+[31m✗[0m commandments-python-repeated-call-helper     pulled 0/3 (0%)
+    [2m↳ I call `dataclasses.replace(order, status="shipped")` in four different places — should that b[0m
+    [2m↳ the same `if order.paid and not order.cancelled and order.lines:` check appears in two of my Pyt[0m
+    [2m↳ judge flagged python-repeated-type-guard on `isinstance(node, Call) and isinstance(node.func, At[0m
+[31m✗[0m commandments-python-role-vocabulary          pulled 0/3 (0%)
+    [2m↳ I have a Python class holding a dict of handlers by name with register() and get() — should ge[0m
+    [2m↳ what should a class called PluginRegistry in Python look like[0m
+    [2m↳ judge flagged python-nullable-registry-lookup on my registry, what does it want[0m
+[31m✗[0m commandments-python-tell-dont-ask            pulled 0/3 (0%)
+    [2m↳ I have a helper `def total(order)` that sums over `order.lines` — should it live somewhere els[0m
+    [2m↳ my Python function has an `isinstance(shape, Circle)` / `elif isinstance(shape, Square)` ladder [0m
+    [2m↳ judge flagged python-type-switch on my isinstance chain, how do I fix it[0m
+[31m✗[0m commandments-python-templates                pulled 0/3 (0%)
+    [2m↳ I'm generating a Python class as text by appending strings to a `lines` list and joining with ne[0m
+    [2m↳ how should I write a multi-line config block my Python script prints out?[0m
+    [2m↳ judge flagged python-assembled-template on my `"\n".join([...])`, how do I fix it[0m
+[31m✗[0m commandments-python-type-honesty             pulled 0/3 (0%)
+    [2m↳ my GradeSelector has self.batch: Batch | None = None, set in run(), and accepts() does `return s[0m
+    [2m↳ I save `previous = self.scope`, set self.scope for the nested call and restore it afterwards; is[0m
+    [2m↳ the dataclass needs a note: str but this caller has none, so I pass note="" — ok?[0m
+[31m✗[0m commandments-python-value-objects            pulled 0/3 (0%)
+    [2m↳ my Python functions pass around dicts like {'sku': ..., 'qty': ..., 'price': ...} everywhere, sh[0m
+    [2m↳ I keep reading payload.get('name') and payload.get('email') from the same request dict in five p[0m
+    [2m↳ should create_shipment(street, city, postcode, country) take an object instead[0m
+[31m✗[0m commandments-typescript-absence              pulled 0/3 (0%)
+    [2m↳ in resources/js/composables/useCart.ts I've got `const total = cart.value?.summary?.total ?? 0` [0m
+    [2m↳ our OrderRow.vue script has `props.customer?.name ?? '—'` in three places. customer is typed `[0m
+    [2m↳ what's the right way to say 'this field might not be there' in a TS interface — `field?: strin[0m
+[31m✗[0m commandments-typescript-duplication          pulled 0/3 (0%)
+    [2m↳ I need the same formatPrice helper in CartSummary.vue that ProductCard.vue already has — can I[0m
+    [2m↳ resources/js/composables/useOrders.ts and useInvoices.ts both have a loadPage function that's id[0m
+    [2m↳ judge flagged duplicate-typescript-function on two handlers in NewsletterSignup.vue that do the [0m
+
+[31mA description is not doing its job — rewrite it to name WHEN to reach for the skill, and what it is NOT.[0m
+
+--- stderr
+
+--- files

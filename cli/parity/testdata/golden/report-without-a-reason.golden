@@ -1,0 +1,37 @@
+exit: 2
+--- stdout
+
+--- stderr
+✗ --reason is required — say what is wrong.
+
+commandments report — File a GitHub issue about code-commandments itself (via `gh`) — a false positive, a wrong rule, or a bug.
+
+Usage:
+  commandments report --reason="…" --ref=PATH:LINE
+                                    a [bug-report] — a defect in the tool, pointing at the code it
+                                    happened on
+  commandments report --detector=NAME --reason="…" --ref=PATH:LINE
+                                    a [detector-report] — this finding is a false positive
+
+Options:
+  --reason="…"          what is wrong (required)
+  --ref=PATH:LINE       the code this is about — repeatable, and PATH:START-END works; the source
+                        is read and injected into the issue
+  --detector=NAME       the detector that fired — makes this a false-positive report
+  --best-design="…"     the cleanest design you can conceive for the flagged code; REQUIRED by
+                        design-smell detectors
+  --title="…"           the issue title (default: the reason's first line)
+  --global              opt out of --ref when the defect is tied to no file at all (a crash with no
+                        args, a CLI-wide bug)
+  --file=PATH --line=N  the single-ref alias for --ref
+
+  Only rules the PACKAGE ships can be reported here. A finding printed as `[Name (custom)]` comes
+  from a detector this project wrote into .commandments/custom/ — fix it there; a report against
+  it is refused.
+
+  A report is NOT a deferral. A correct finding must be FIXED, however big the fix — a
+  detector-report asserts flatly that the code is right and the rule is wrong, with no hedge. Some
+  detectors (design smells) REQUIRE --best-design: the report is valid only when the flagged code
+  ALREADY IS that best design.
+
+--- files

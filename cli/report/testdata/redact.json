@@ -1,0 +1,126 @@
+[
+    {
+        "line": "'password' => 'hunter2',",
+        "want": "'password' => '███████',"
+    },
+    {
+        "line": "\"api_key\": \"abc\\\"def\",",
+        "want": "\"api_key\": \"████████\","
+    },
+    {
+        "line": "$token = 'x\\'y\\\\';",
+        "want": "$token = '██████';"
+    },
+    {
+        "line": "$token = 'unterminated",
+        "want": "$token = 'unterminated"
+    },
+    {
+        "line": "$secret = \"a\" . 'b';",
+        "want": "$secret = \"█\" . 'b';"
+    },
+    {
+        "line": "'DB_PASSWORD' => env('DB_PASSWORD', 'fallback-pw'),",
+        "want": "'DB_PASSWORD' => env('DB_PASSWORD', '███████████'),"
+    },
+    {
+        "line": "config('services.stripe.secret', \"sk\")",
+        "want": "config('services.stripe.secret', \"██\")"
+    },
+    {
+        "line": "export API_TOKEN=abc123 # note",
+        "want": "export API_TOKEN=█████████████"
+    },
+    {
+        "line": "APP_KEY=base64:QUJDREVGR0g=",
+        "want": "APP_KEY=base64:QUJDREVGR0g="
+    },
+    {
+        "line": "APP_KEY='quoted'",
+        "want": "APP_KEY='██████'"
+    },
+    {
+        "line": "  db_pass=   spaced",
+        "want": "  db_pass=   spaced"
+    },
+    {
+        "line": "mysql:\/\/user:pa55@host\/db",
+        "want": "mysql:\/\/█████████@host\/db"
+    },
+    {
+        "line": "https:\/\/example.com\/path@x",
+        "want": "https:\/\/example.com\/path@x"
+    },
+    {
+        "line": "key AKIAABCDEFGHIJKLMNOP here",
+        "want": "key ████████████████████ here"
+    },
+    {
+        "line": "ghp_abcdefghijklmnopqrstuvwxyz0123",
+        "want": "██████████████████████████████████"
+    },
+    {
+        "line": "github_pat_ABCDEFGHIJKLMNOPQRSTUV_xyz",
+        "want": "█████████████████████████████████████"
+    },
+    {
+        "line": "AIzaSyA-abcdefghijklmnopqrstuvwxyz",
+        "want": "██████████████████████████████████"
+    },
+    {
+        "line": "xoxb-1234567890-abcdef",
+        "want": "██████████████████████"
+    },
+    {
+        "line": "sk_live_abcdefghijklmnop1234",
+        "want": "████████████████████████████"
+    },
+    {
+        "line": "eyJhbGciOiJ.eyJzdWIiOiIx.SflKxwRJSMeKKF2QT4",
+        "want": "███████████████████████████████████████████"
+    },
+    {
+        "line": "-----BEGIN RSA PRIVATE KEY-----",
+        "want": "███████████████████████████████"
+    },
+    {
+        "line": "$h = 'abcdefghijklmnopqrstuvwxyzABCDEF12';",
+        "want": "$h = '██████████████████████████████████';"
+    },
+    {
+        "line": "$h = 'abcdefghijklmnopqrstuvwxyzABCDEFGH';",
+        "want": "$h = 'abcdefghijklmnopqrstuvwxyzABCDEFGH';"
+    },
+    {
+        "line": "$h = \"abcdefghijklmnopqrstuvwxyz123456'",
+        "want": "$h = \"abcdefghijklmnopqrstuvwxyz123456'"
+    },
+    {
+        "line": "'token' => 'ünïcödé', 'secret': \"two\"",
+        "want": "'token' => '███████', 'secret': \"███\""
+    },
+    {
+        "line": "Bearer: 'b\\\\' . 'c'",
+        "want": "Bearer: '███' . 'c'"
+    },
+    {
+        "line": "$pwd='a\\\\\\'b'",
+        "want": "$pwd='██████'"
+    },
+    {
+        "line": "nothing sensitive here",
+        "want": "nothing sensitive here"
+    },
+    {
+        "line": "$passwd = '' ;",
+        "want": "$passwd = '█' ;"
+    },
+    {
+        "line": "'signature' => \"x\\\"",
+        "want": "'signature' => \"██\""
+    },
+    {
+        "line": "'Authorization' => 'Bearer abc', 'salt' => 'pepper'",
+        "want": "'Authorization' => '██████████', 'salt' => '██████'"
+    }
+]
