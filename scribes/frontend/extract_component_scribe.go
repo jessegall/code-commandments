@@ -46,6 +46,20 @@ type ExtractComponentScribe struct {
 	library   *vue.ComponentLibrary
 	propTypes vue.PropTypes
 	sfcs      map[string]*vue.Sfc
+	oracle    vue.TypeOracle
+	queries   *[]vue.TypeQuery
+	resolved  map[string]map[string]string
+}
+
+// Situate hands the scribe the project's own vue-tsc, when it ships one, to type the props no reading of the source
+// could.
+func (s *ExtractComponentScribe) Situate(roots []string) {
+	if len(roots) == 0 {
+		return
+	}
+	if oracle, ok := vue.LocateVueTsc(roots[0], vue.ShellRunner{}); ok {
+		s.oracle = oracle
+	}
 }
 
 // Stage is after every in-place fix.
@@ -59,16 +73,34 @@ func (s *ExtractComponentScribe) Rewrite(findings []engine.Match, codebase *engi
 	s.library = vue.LibraryOf(components)
 	s.propTypes = vue.PropTypesOver(vue.GraphOf(components))
 	blocks := s.outermost(s.blocks(findings))
-	switch s.strategy {
-	case duplicates:
-		return s.duplicates(blocks), nil
-	case deepReach:
-		return s.deepReach(blocks), nil
-	case compound:
-		return s.compound(blocks), nil
+	if s.oracle != nil {
+		s.prime(blocks)
 	}
 
-	return s.nesting(blocks), nil
+	return s.dispatch(blocks), nil
+}
+
+// prime runs the checker once for the whole run: a throwaway extraction, over a copy of the library so nothing it
+// registers is reused by the real one, collects every prop it left unknown, and the oracle resolves them all.
+func (s *ExtractComponentScribe) prime(blocks []block) {
+	dry := *s
+	dry.library = s.library.Clone()
+	dry.queries = &[]vue.TypeQuery{}
+	dry.dispatch(blocks)
+	s.resolved = s.oracle.ResolveAll(*dry.queries)
+}
+
+func (s *ExtractComponentScribe) dispatch(blocks []block) scribes.Rewrites {
+	switch s.strategy {
+	case duplicates:
+		return s.duplicates(blocks)
+	case deepReach:
+		return s.deepReach(blocks)
+	case compound:
+		return s.compound(blocks)
+	}
+
+	return s.nesting(blocks)
 }
 
 // block is a finding read as the PHP tool's template tree holds it.
@@ -548,7 +580,49 @@ func (s *ExtractComponentScribe) resolveTypes(boundary *vue.Extraction, props []
 		}
 	}
 
+	return s.consultOracle(boundary.Sfc, props, types)
+}
+
+// consultOracle is where the checker joins the type chain: the throwaway extraction records each component's props
+// still unknown, and the real one takes the types the checker resolved for them, their ref unwrapped.
+func (s *ExtractComponentScribe) consultOracle(component *vue.Sfc, props []string, types map[string]string) map[string]string {
+	var unknown []string
+	for _, prop := range props {
+		if types[prop] == "unknown" && !slices.Contains(unknown, prop) {
+			unknown = append(unknown, prop)
+		}
+	}
+	if len(unknown) == 0 {
+		return types
+	}
+	if s.queries != nil {
+		s.record(component, unknown)
+
+		return types
+	}
+	for _, name := range unknown {
+		if typed, ok := s.resolved[component.Path][name]; ok {
+			types[name] = typescript.UnwrapRefText(typed)
+		}
+	}
+
 	return types
+}
+
+func (s *ExtractComponentScribe) record(component *vue.Sfc, unknown []string) {
+	for index, query := range *s.queries {
+		if query.Sfc.Path != component.Path {
+			continue
+		}
+		for _, name := range unknown {
+			if !slices.Contains(query.Names, name) {
+				(*s.queries)[index].Names = append((*s.queries)[index].Names, name)
+			}
+		}
+
+		return
+	}
+	*s.queries = append(*s.queries, vue.TypeQuery{Sfc: component, Names: unknown})
 }
 
 func (s *ExtractComponentScribe) propType(boundary *vue.Extraction, script vue.Script, source typescript.Fields, prop string) string {

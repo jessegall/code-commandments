@@ -15,6 +15,11 @@ type Scribe interface {
 	Rewrite(findings []engine.Match, codebase *engine.Codebase) (Rewrites, error)
 }
 
+// Situated is a scribe that reads where the pass runs from before it rewrites: the project's own tools it may consult.
+type Situated interface {
+	Situate(roots []string)
+}
+
 var scribesOf = map[string]func() Scribe{}
 
 // Fixes enrols the scribe that rewrites a detector's sin, from the scribe's own file.
@@ -109,7 +114,12 @@ func (s DetectorStep) Run(pass Pass) (Rewrites, error) {
 		}
 	}
 
-	return s.scribe().Rewrite(findings, codebase)
+	scribe := s.scribe()
+	if situated, ok := scribe.(Situated); ok {
+		situated.Situate(pass.Roots)
+	}
+
+	return scribe.Rewrite(findings, codebase)
 }
 
 // Maintainer regenerates what a codebase declares about itself, whether or not any sin was found.
