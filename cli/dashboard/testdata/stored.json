@@ -1,0 +1,42 @@
+[
+    {
+        "sin": "duplicate-element",
+        "skill": "frontend/vue-components",
+        "path": "/p/components/A.vue",
+        "file": "components/A.vue",
+        "line": 8,
+        "scope": "<div>"
+    },
+    {
+        "sin": "duplicate-element",
+        "skill": "frontend/vue-components",
+        "path": "/p/components/B.vue",
+        "file": "components/B.vue",
+        "line": 3,
+        "scope": "<section>"
+    },
+    {
+        "sin": "duplicate-element",
+        "skill": "frontend/vue-components",
+        "path": "/p/components/B.vue",
+        "file": "components/B.vue",
+        "line": 1,
+        "scope": "<div>"
+    },
+    {
+        "sin": "python-dict-bag",
+        "skill": "python/value-objects",
+        "path": "/p/app/\u00fcn\u00ef.py",
+        "file": "app/\u00fcn\u00ef.py",
+        "line": 12,
+        "scope": "load"
+    },
+    {
+        "sin": "not-shipped",
+        "skill": "custom/x",
+        "path": "/p/x.php",
+        "file": "x.php",
+        "line": 2,
+        "scope": "X::y"
+    }
+]

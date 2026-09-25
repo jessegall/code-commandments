@@ -1,0 +1,44 @@
+{
+    "title": "Code Commandments",
+    "start": "overview",
+    "pages": {
+        "overview": {
+            "title": "Overview",
+            "view": {
+                "type": "stack",
+                "gap": 16,
+                "children": [
+                    {
+                        "type": "row",
+                        "gap": 12,
+                        "children": [
+                            {
+                                "type": "stat",
+                                "label": "Sins",
+                                "value": "0",
+                                "tone": "good",
+                                "note": "0 different rules"
+                            },
+                            {
+                                "type": "stat",
+                                "label": "Files",
+                                "value": "0",
+                                "tone": "good"
+                            },
+                            {
+                                "type": "stat",
+                                "label": "Skills",
+                                "value": "0",
+                                "note": "the skills that teach the fixes"
+                            }
+                        ]
+                    },
+                    {
+                        "type": "text",
+                        "body": "No sins in the last judged files."
+                    }
+                ]
+            }
+        }
+    }
+}
