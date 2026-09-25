@@ -27,6 +27,11 @@ func All() []Detector {
 	return detectors.All()
 }
 
+// Every is every detector registered under one engine, unpublished ones included.
+func Every(engine catalog.Engine) []Detector {
+	return detectors.Every(engine)
+}
+
 // Of is every published detector of one engine.
 func Of(engine catalog.Engine) []Detector {
 	return detectors.Of(engine)
@@ -52,4 +57,10 @@ func NamedIn(detectors []Detector, name string) (Detector, bool) {
 	}
 
 	return nil, false
+}
+
+// Grouped is a detector whose findings recur in groups: the key says which group a finding is in, so a
+// report can name the other members as its twins. False leaves the finding in no group.
+type Grouped interface {
+	GroupKey(match engine.Match) (string, bool)
 }

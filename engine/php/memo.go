@@ -16,3 +16,8 @@ func Memoised[T any](build func(*engine.Codebase) T) *PerCodebase[T] {
 func (p *PerCodebase[T]) Of(codebase *engine.Codebase) T {
 	return engine.Analysis(codebase, p, p.build)
 }
+
+// Keep makes a value built elsewhere the codebase's analysis, in place of the one build would make.
+func (p *PerCodebase[T]) Keep(codebase *engine.Codebase, value T) {
+	engine.Keep(codebase, p, value)
+}

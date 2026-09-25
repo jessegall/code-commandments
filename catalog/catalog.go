@@ -96,6 +96,20 @@ func (c *Catalog[T]) Of(engine Engine) []T {
 	return rules
 }
 
+// Every is every rule registered under one engine, unpublished ones included, in registration order.
+func (c *Catalog[T]) Every(engine Engine) []T {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	var rules []T
+	for _, registered := range c.entries {
+		if registered.engine == engine {
+			rules = append(rules, registered.rule)
+		}
+	}
+
+	return rules
+}
+
 // EngineOf is the engine a published rule was registered under.
 func (c *Catalog[T]) EngineOf(rule T) (Engine, bool) {
 	c.mutex.Lock()

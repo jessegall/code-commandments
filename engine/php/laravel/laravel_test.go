@@ -6,7 +6,7 @@ import (
 
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/php"
-	"github.com/jessegall/code-commandments/engine/php/internal/shop"
+	"github.com/jessegall/code-commandments/engine/php/shop"
 )
 
 func TestTheLaravelDecoratorAnswersAsPhpDoes(t *testing.T) {

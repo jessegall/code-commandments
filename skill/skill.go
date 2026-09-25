@@ -36,7 +36,14 @@ type Definition struct {
 	ExamplesKeepDocblocks bool
 	Languages             []string
 	Related               []Relation
-	References            []string
+	References            []Reference
+}
+
+// Reference is a page of detail published beside a skill.
+type Reference struct {
+	Name  string
+	Title string
+	Body  string
 }
 
 // Relation is a skill another one points its reader on to, by slug, with the one line that says why.
@@ -55,6 +62,11 @@ func Register(engine catalog.Engine, skill Skill) {
 // All is every published skill.
 func All() []Skill {
 	return skills.All()
+}
+
+// Every is every skill registered under one engine, unpublished ones included.
+func Every(engine catalog.Engine) []Skill {
+	return skills.Every(engine)
 }
 
 // Of is every published skill of one engine.

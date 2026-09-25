@@ -301,6 +301,7 @@ language's keys are closed and typed in the schema, just as the generic ones are
 |---|---|---|---|
 | csharp | `forgivesNull` | a `SuppressNullableWarningExpression` | the `!`'s operand is declared nullable |
 | csharp | `code` | a comment | the comment parses as one C# statement |
+| php | `code` | a line comment | its text, marker and trailing `,`/`;` stripped, parses as PHP inside `[…]` |
 | python | `code` | a `#` comment | the words after the `#` parse as one Python statement, end to end, that is not a lone name |
 | python | `operators` | a `Compare` | the chained comparison's operators, in order (`a < b <= c` → `["<", "<="]`) |
 | python | `level` | an `ImportFrom` | the relative-import dot count |

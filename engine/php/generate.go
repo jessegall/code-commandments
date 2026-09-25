@@ -1,3 +1,3 @@
 package php
 
-//go:generate go run ./internal/shop/generate
+//go:generate go run ./shop/generate

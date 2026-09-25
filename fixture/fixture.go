@@ -3,11 +3,13 @@ package fixture
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/sins"
 )
 
 // Fixture is a marked codebase and the detectors it proves.
@@ -57,6 +59,70 @@ func (f Fixture) Prove(t testing.TB) {
 	for _, detector := range f.Detectors {
 		f.proveDiversity(t, detector)
 	}
+	for detector, deepest := range f.ChainDepths() {
+		if deepest < MinChainFiles {
+			t.Errorf("%s is a chain detector but its deepest finding crosses only %d file(s); it must follow a value through %d or more", detector, deepest, MinChainFiles)
+		}
+	}
+	for detector, widest := range f.RecurrenceSpans() {
+		if widest < MinRecurrenceFiles {
+			t.Errorf("%s is a recurrence detector but its widest group touches only %d file(s); mark one recurring group across two classes or files, not twice in one", detector, widest)
+		}
+	}
+}
+
+// MinChainFiles is how many files a chain detector's deepest finding must cross.
+const MinChainFiles = 5
+
+// ChainDepths is, for every chain detector, how many files its deepest finding's chain crosses.
+func (f Fixture) ChainDepths() map[string]int {
+	depths := map[string]int{}
+	for _, detector := range f.Detectors {
+		chained, ok := detector.(detectors.ChainDetector)
+		if !ok {
+			continue
+		}
+		deepest := 0
+		for _, finding := range detector.Find(f.Codebase) {
+			files := map[string]bool{}
+			for _, step := range chained.ChainPath(finding, f.Codebase) {
+				if _, file, found := strings.Cut(step, "@"); found {
+					files[file] = true
+				}
+			}
+			deepest = max(deepest, len(files))
+		}
+		depths[catalog.Name(detector)] = deepest
+	}
+
+	return depths
+}
+
+// MinRecurrenceFiles is how many files a recurrence detector's widest group must reach.
+const MinRecurrenceFiles = 2
+
+// RecurrenceSpans is, for every recurrence detector, how many files its widest group of findings reaches.
+func (f Fixture) RecurrenceSpans() map[string]int {
+	spans := map[string]int{}
+	for _, detector := range f.Detectors {
+		recurring, ok := detector.(detectors.Grouped)
+		if !ok {
+			continue
+		}
+		groups := map[string]map[string]bool{}
+		widest := 0
+		for _, finding := range detector.Find(f.Codebase) {
+			key, _ := recurring.GroupKey(finding)
+			if groups[key] == nil {
+				groups[key] = map[string]bool{}
+			}
+			groups[key][finding.File()] = true
+			widest = max(widest, len(groups[key]))
+		}
+		spans[catalog.Name(detector)] = widest
+	}
+
+	return spans
 }
 
 // report fails the test for each way a detector's findings missed its markers.
@@ -143,7 +209,7 @@ func (f Fixture) WithoutRighteous() []string {
 	return without
 }
 
-// UnknownResolutions is every #[Fixed] that names no sin or detector the catalog knows; a typo there
+// UnknownResolutions is every #[Fixed] that names no known detector nor any published sin; a typo there
 // silently drops the resolution.
 func (f Fixture) UnknownResolutions() []string {
 	known := f.Known
@@ -153,6 +219,9 @@ func (f Fixture) UnknownResolutions() []string {
 	var names []string
 	for _, detector := range known {
 		names = append(names, keys(detector)...)
+	}
+	for _, sin := range sins.All() {
+		names = append(names, catalog.Name(sin), sin.Definition().Name)
 	}
 	var unknown []string
 	for _, marker := range Markers(f.Codebase) {

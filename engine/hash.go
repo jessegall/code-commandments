@@ -67,6 +67,12 @@ func SyntaxHash(nodes []Match, rules HashRules, normalize bool) string {
 	return hex.EncodeToString(sum[:])
 }
 
+// SyntaxFingerprint is one node's fingerprint unhashed: what a language's rules read a stand-in as when it must
+// fingerprint exactly like the code it stands for, such as a local read as the expression it was assigned.
+func SyntaxFingerprint(node Match, rules HashRules, normalize bool) string {
+	return fingerprint(node, rules, normalize)
+}
+
 // SyntaxWeight is how many nodes make up the nodes' subtrees, as the language weighs them: the size a clone rule
 // floors trivial bodies by.
 func SyntaxWeight(nodes []Match, rules HashRules) int {
