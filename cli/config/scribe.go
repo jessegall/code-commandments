@@ -136,3 +136,48 @@ func renderRoots(roots []string) string {
 func addSlashes(text string) string {
 	return strings.NewReplacer(`\`, `\\`, `'`, `\'`, `"`, `\"`, "\x00", `\0`).Replace(text)
 }
+
+// EnsureLayers writes the declaration in before the config's paths() call, and imports the detector it
+// configures; false when the config already declares layers, or has no call to write it before.
+func (s Scribe) EnsureLayers(declaration string) (bool, error) {
+	if _, err := os.Stat(s.path); err != nil {
+		return false, nil
+	}
+
+	if _, declared, err := s.first("layer"); err != nil || declared {
+		return false, err
+	}
+
+	anchor, found, err := s.first("paths")
+	if err == nil && !found {
+		anchor, found, err = s.first("disable")
+	}
+
+	if err != nil || !found {
+		return false, err
+	}
+
+	raw, err := os.ReadFile(s.path)
+	if err != nil {
+		return false, err
+	}
+
+	source := string(raw)
+	at := anchor.Node().Span.Start
+	source = source[:at] + strings.TrimLeft(declaration, " \t\n\r\x00\x0B") + "\n\n    " + source[at:]
+
+	return true, os.WriteFile(s.path, []byte(importDetector(source)), 0o644)
+}
+
+// importDetector is the source with the NamespaceDependencyDetector imported after Config, unless it is
+// already imported or Config is not.
+func importDetector(source string) string {
+	existing := `use JesseGall\CodeCommandments\Config;`
+	detector := `use JesseGall\CodeCommandments\Detectors\Backend\NamespaceDependencyDetector;`
+
+	if strings.Contains(source, detector) || !strings.Contains(source, existing) {
+		return source
+	}
+
+	return strings.ReplaceAll(source, existing, existing+"\n"+detector)
+}

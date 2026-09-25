@@ -1,0 +1,176 @@
+exit: 0
+--- stdout
+[1mNamespace layers[0m — 60 namespaces
+
+  [32m20[0m are depended on but depend on nothing of yours — the floor your stack rests on
+      Shop\Authoring
+      Shop\Billing
+      Shop\Contracts
+      Shop\Domain
+      Shop\Events
+      Shop\Exceptions
+      Shop\Http\Controllers\Delegated
+      Shop\Http\Controllers\DuplicateActions
+      Shop\Http\Pages\FlatCluster
+      Shop\Http\Pages\RepeatedCall
+      Shop\Inertia
+      Shop\Labels
+      … and 8 more
+
+  [33m28[0m sit in a cycle — declared below as they stand, each permitting the other:
+      Shop\Enums  ->  Shop\Shipping
+      Shop\Fulfillment  ->  Shop\Models
+      Shop\Telemetry  ->  Shop\Diagnostics
+      Shop\Warranty  ->  Shop\Claims
+    [2mrun `commandments judge --sin=namespace-cycle` for the exact arrows to cut[0m
+
+  Proposed declaration — today's shape, held (60 namespaces):
+
+    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector
+        ->layer('Shop\\Authoring')
+        ->layer('Shop\\Billing')
+        ->layer('Shop\\Contracts')
+        ->layer('Shop\\Domain')
+        ->layer('Shop\\Events')
+        ->layer('Shop\\Exceptions')
+        ->layer('Shop\\Http\\Controllers\\Delegated')
+        ->layer('Shop\\Http\\Controllers\\DuplicateActions')
+        ->layer('Shop\\Http\\Pages\\FlatCluster')
+        ->layer('Shop\\Http\\Pages\\RepeatedCall')
+        ->layer('Shop\\Inertia')
+        ->layer('Shop\\Labels')
+        ->layer('Shop\\Returns')
+        ->layer('Shop\\Routing')
+        ->layer('Shop\\Shelving')
+        ->layer('Shop\\Support\\Text')
+        ->layer('Shop\\Ui\\Pages')
+        ->layer('Shop\\Ui\\Tokens')
+        ->layer('Shop\\ValueObjects')
+        ->layer('Shop\\Wire')
+        ->layer('Shop\\Console', mayUse: ['Shop\\Labels'])
+        ->layer('Shop\\Dispatch', mayUse: ['Shop\\Labels'])
+        ->layer('Shop\\Docs', mayUse: ['Shop\\Labels', 'Shop\\Support\\Text'])
+        ->layer('Shop\\Integrations', mayUse: ['Shop\\Contracts', 'Shop\\Exceptions'])
+        ->layer('Shop\\Mcp', mayUse: ['Shop\\Labels'])
+        ->layer('Shop\\Notifications', mayUse: ['Shop\\Contracts', 'Shop\\Support\\Text'])
+        ->layer('Shop\\Pricing', mayUse: ['Shop\\Events'])
+        ->layer('Shop\\Support', mayUse: ['Shop\\Exceptions'])
+        ->layer('Shop\\Ui\\Shared', mayUse: ['Shop\\Ui\\Pages', 'Shop\\Ui\\Tokens'])
+        ->layer('Shop\\Audit', mayUse: ['Shop\\Docs'])
+        ->layer('Shop\\Kiosk', mayUse: ['Shop\\Support', 'Shop\\Support\\Text'])
+        ->layer('Shop\\Ui\\Elements', mayUse: ['Shop\\Ui\\Shared', 'Shop\\Ui\\Tokens'])
+        ->layer('Shop\\Catalog', mayUse: ['Shop\\Data', 'Shop\\Enums', 'Shop\\Models', 'Shop\\Repositories'])
+        ->layer('Shop\\Checkout', mayUse: ['Shop\\Models', 'Shop\\Repositories'])
+        ->layer('Shop\\Claims', mayUse: ['Shop\\Warranty'])
+        ->layer('Shop\\Customers', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Exceptions', 'Shop\\Models'])
+        ->layer('Shop\\Data', mayUse: ['Shop\\Enums', 'Shop\\Models'])
+        ->layer('Shop\\Diagnostics', mayUse: ['Shop\\Telemetry'])
+        ->layer('Shop\\Enums', mayUse: ['Shop\\Shipping'])
+        ->layer('Shop\\Fulfillment', mayUse: ['Shop\\Models', 'Shop\\Support\\Text'])
+        ->layer('Shop\\Http\\Controllers', mayUse: ['Shop\\Http\\Pages', 'Shop\\Http\\Requests', 'Shop\\Labels', 'Shop\\Models', 'Shop\\Repositories', 'Shop\\Services'])
+        ->layer('Shop\\Http\\Pages', mayUse: ['Shop\\Http\\Requests'])
+        ->layer('Shop\\Http\\Pages\\Hydration', mayUse: ['Shop\\Enums'])
+        ->layer('Shop\\Http\\Presenters', mayUse: ['Shop\\Data', 'Shop\\Models'])
+        ->layer('Shop\\Http\\Requests', mayUse: ['Shop\\Enums'])
+        ->layer('Shop\\Legacy', mayUse: ['Shop\\Models'])
+        ->layer('Shop\\Loyalty', mayUse: ['Shop\\Catalog'])
+        ->layer('Shop\\Models', mayUse: ['Shop\\Enums', 'Shop\\Fulfillment', 'Shop\\ValueObjects'])
+        ->layer('Shop\\Orders', mayUse: ['Shop\\Contracts', 'Shop\\Enums', 'Shop\\Models'])
+        ->layer('Shop\\Payments', mayUse: ['Shop\\Enums', 'Shop\\Exceptions'])
+        ->layer('Shop\\Providers', mayUse: ['Shop\\Audit', 'Shop\\Events', 'Shop\\Inertia', 'Shop\\Integrations', 'Shop\\Legacy', 'Shop\\Services', 'Shop\\Shipping'])
+        ->layer('Shop\\Reminders', mayUse: ['Shop\\Warranty'])
+        ->layer('Shop\\Reporting', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Repositories', 'Shop\\Support'])
+        ->layer('Shop\\Repositories', mayUse: ['Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Models', 'Shop\\ValueObjects'])
+        ->layer('Shop\\Services', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Http\\Requests', 'Shop\\Models', 'Shop\\Repositories', 'Shop\\Support', 'Shop\\ValueObjects'])
+        ->layer('Shop\\Shipping', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Enums', 'Shop\\Models', 'Shop\\Repositories', 'Shop\\Support'])
+        ->layer('Shop\\Telemetry', mayUse: ['Shop\\Diagnostics'])
+        ->layer('Shop\\Ui\\Wire', mayUse: ['Shop\\Enums'])
+        ->layer('Shop\\Warranty', mayUse: ['Shop\\Claims'])
+        ->layer('Shop\\Webhooks', mayUse: ['Shop\\Data', 'Shop\\Services']));
+
+  [2mA starting point to EDIT, not a verdict: everything already here passes, so this
+  holds the architecture where it stands and refuses the NEXT arrow somewhere new.[0m
+  [2mre-run with --write to add it to .commandments/config.php, or --floor for just the bottom[0m
+
+[32m✓ refreshed the declaration in .commandments/config.php[0m
+  [2mthe stack as it stands today — read the diff before you commit it[0m
+
+--- stderr
+
+--- files
+=== changed .commandments/config.php
+<?php
+
+use JesseGall\CodeCommandments\Config;
+use JesseGall\CodeCommandments\Detectors\Backend\NamespaceDependencyDetector;
+
+/*
+ * The Shop's own project configuration — the fixture is a project, so it declares here what only a
+ * project can know. Read the stack top-down: Pages are built from Shared, Shared from Elements,
+ * Elements from the raw tokens, and the tokens from nothing at all. Every namespace NOT listed (the
+ * rest of the Shop, the framework, this package's own test attributes) is unconstrained, both ways.
+ */
+return function (Config $config): void {
+    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector
+        ->layer('Shop\\Authoring')
+        ->layer('Shop\\Billing')
+        ->layer('Shop\\Contracts')
+        ->layer('Shop\\Domain')
+        ->layer('Shop\\Events')
+        ->layer('Shop\\Exceptions')
+        ->layer('Shop\\Http\\Controllers\\Delegated')
+        ->layer('Shop\\Http\\Controllers\\DuplicateActions')
+        ->layer('Shop\\Http\\Pages\\FlatCluster')
+        ->layer('Shop\\Http\\Pages\\RepeatedCall')
+        ->layer('Shop\\Inertia')
+        ->layer('Shop\\Labels')
+        ->layer('Shop\\Returns')
+        ->layer('Shop\\Routing')
+        ->layer('Shop\\Shelving')
+        ->layer('Shop\\Support\\Text')
+        ->layer('Shop\\Ui\\Pages')
+        ->layer('Shop\\Ui\\Tokens')
+        ->layer('Shop\\ValueObjects')
+        ->layer('Shop\\Wire')
+        ->layer('Shop\\Console', mayUse: ['Shop\\Labels'])
+        ->layer('Shop\\Dispatch', mayUse: ['Shop\\Labels'])
+        ->layer('Shop\\Docs', mayUse: ['Shop\\Labels', 'Shop\\Support\\Text'])
+        ->layer('Shop\\Integrations', mayUse: ['Shop\\Contracts', 'Shop\\Exceptions'])
+        ->layer('Shop\\Mcp', mayUse: ['Shop\\Labels'])
+        ->layer('Shop\\Notifications', mayUse: ['Shop\\Contracts', 'Shop\\Support\\Text'])
+        ->layer('Shop\\Pricing', mayUse: ['Shop\\Events'])
+        ->layer('Shop\\Support', mayUse: ['Shop\\Exceptions'])
+        ->layer('Shop\\Ui\\Shared', mayUse: ['Shop\\Ui\\Pages', 'Shop\\Ui\\Tokens'])
+        ->layer('Shop\\Audit', mayUse: ['Shop\\Docs'])
+        ->layer('Shop\\Kiosk', mayUse: ['Shop\\Support', 'Shop\\Support\\Text'])
+        ->layer('Shop\\Ui\\Elements', mayUse: ['Shop\\Ui\\Shared', 'Shop\\Ui\\Tokens'])
+        ->layer('Shop\\Catalog', mayUse: ['Shop\\Data', 'Shop\\Enums', 'Shop\\Models', 'Shop\\Repositories'])
+        ->layer('Shop\\Checkout', mayUse: ['Shop\\Models', 'Shop\\Repositories'])
+        ->layer('Shop\\Claims', mayUse: ['Shop\\Warranty'])
+        ->layer('Shop\\Customers', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Exceptions', 'Shop\\Models'])
+        ->layer('Shop\\Data', mayUse: ['Shop\\Enums', 'Shop\\Models'])
+        ->layer('Shop\\Diagnostics', mayUse: ['Shop\\Telemetry'])
+        ->layer('Shop\\Enums', mayUse: ['Shop\\Shipping'])
+        ->layer('Shop\\Fulfillment', mayUse: ['Shop\\Models', 'Shop\\Support\\Text'])
+        ->layer('Shop\\Http\\Controllers', mayUse: ['Shop\\Http\\Pages', 'Shop\\Http\\Requests', 'Shop\\Labels', 'Shop\\Models', 'Shop\\Repositories', 'Shop\\Services'])
+        ->layer('Shop\\Http\\Pages', mayUse: ['Shop\\Http\\Requests'])
+        ->layer('Shop\\Http\\Pages\\Hydration', mayUse: ['Shop\\Enums'])
+        ->layer('Shop\\Http\\Presenters', mayUse: ['Shop\\Data', 'Shop\\Models'])
+        ->layer('Shop\\Http\\Requests', mayUse: ['Shop\\Enums'])
+        ->layer('Shop\\Legacy', mayUse: ['Shop\\Models'])
+        ->layer('Shop\\Loyalty', mayUse: ['Shop\\Catalog'])
+        ->layer('Shop\\Models', mayUse: ['Shop\\Enums', 'Shop\\Fulfillment', 'Shop\\ValueObjects'])
+        ->layer('Shop\\Orders', mayUse: ['Shop\\Contracts', 'Shop\\Enums', 'Shop\\Models'])
+        ->layer('Shop\\Payments', mayUse: ['Shop\\Enums', 'Shop\\Exceptions'])
+        ->layer('Shop\\Providers', mayUse: ['Shop\\Audit', 'Shop\\Events', 'Shop\\Inertia', 'Shop\\Integrations', 'Shop\\Legacy', 'Shop\\Services', 'Shop\\Shipping'])
+        ->layer('Shop\\Reminders', mayUse: ['Shop\\Warranty'])
+        ->layer('Shop\\Reporting', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Repositories', 'Shop\\Support'])
+        ->layer('Shop\\Repositories', mayUse: ['Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Models', 'Shop\\ValueObjects'])
+        ->layer('Shop\\Services', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Http\\Requests', 'Shop\\Models', 'Shop\\Repositories', 'Shop\\Support', 'Shop\\ValueObjects'])
+        ->layer('Shop\\Shipping', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Enums', 'Shop\\Models', 'Shop\\Repositories', 'Shop\\Support'])
+        ->layer('Shop\\Telemetry', mayUse: ['Shop\\Diagnostics'])
+        ->layer('Shop\\Ui\\Wire', mayUse: ['Shop\\Enums'])
+        ->layer('Shop\\Warranty', mayUse: ['Shop\\Claims'])
+        ->layer('Shop\\Webhooks', mayUse: ['Shop\\Data', 'Shop\\Services']));
+};
+

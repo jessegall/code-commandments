@@ -3,14 +3,17 @@
 package layers
 
 import (
-	"errors"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/engine/php/namespaces"
 )
 
 // Command is `layers`.
@@ -50,8 +53,154 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	case "allow":
 		return c.allow(in, config.FileIn(root), console)
 	default:
-		return 0, errors.New("proposing a layer stack reads the PHP engine's namespace graph, which this build does not have yet")
+		return c.propose(in, root, console)
 	}
+}
+
+// propose reads the graph of the given path, else of the project's declared roots, and reports or writes
+// its shape into this project's config.
+func (c Command) propose(in *cli.Input, project string, console cli.Console) (int, error) {
+	roots := []string{}
+
+	if given, named := in.FirstArgument(); named {
+		roots = append(roots, strings.TrimRight(given, "/"))
+	} else if declared, err := config.DeclaredRoots(project); err == nil {
+		roots = declared
+	} else {
+		return 0, err
+	}
+
+	codebase, err := scan.Walk(roots, source.Excluded{}).Only(source.PHP).Load()
+	if err != nil {
+		return 0, err
+	}
+
+	graph := namespaces.Of(codebase)
+	floorOnly := in.HasFlag("floor")
+	proposed := graph.CurrentShape()
+
+	if floorOnly {
+		proposed = graph.FloorShape()
+	}
+
+	report(graph, proposed, floorOnly, console)
+
+	if len(proposed) == 0 || !in.HasFlag("write") {
+		return 0, nil
+	}
+
+	return write(project, layersOf(proposed), in.HasFlag("refresh"), console)
+}
+
+func report(graph *namespaces.NamespaceGraph, proposed []namespaces.Layer, floorOnly bool, console cli.Console) {
+	order := graph.DependencyOrder()
+	foundation := graph.FloorShape()
+
+	console.Say("\033[1mNamespace layers\033[0m — " + strconv.Itoa(order.Total()) + " namespaces")
+	console.Say("")
+	console.Say("  \033[32m" + strconv.Itoa(len(foundation)) + "\033[0m are depended on but depend on nothing of yours — the floor your stack rests on")
+
+	for _, layer := range foundation[:min(12, len(foundation))] {
+		console.Say("      " + layer.Namespace)
+	}
+
+	if len(foundation) > 12 {
+		console.Say("      … and " + strconv.Itoa(len(foundation)-12) + " more")
+	}
+
+	if order.HasCycles() {
+		pairs := graph.MutualPairs()
+
+		console.Say("")
+		console.Say("  \033[33m" + strconv.Itoa(len(order.Cyclic)) + "\033[0m sit in a cycle — declared below as they stand, each permitting the other:")
+
+		for _, pair := range pairs[:min(8, len(pairs))] {
+			console.Say("      " + pair[0] + "  ->  " + pair[1])
+		}
+
+		console.Say("    \033[2mrun `commandments judge --sin=namespace-cycle` for the exact arrows to cut\033[0m")
+	}
+
+	console.Say("")
+
+	if len(proposed) == 0 {
+		if floorOnly {
+			console.Say("  Nothing at the floor — every namespace here reaches another. Drop --floor for the whole shape.")
+		} else {
+			console.Say("  Nothing to propose — nothing here references anything else of yours.")
+		}
+
+		return
+	}
+
+	if floorOnly {
+		console.Say("  Proposed declaration — the floor (" + strconv.Itoa(len(proposed)) + " namespaces):")
+	} else {
+		console.Say("  Proposed declaration — today's shape, held (" + strconv.Itoa(len(proposed)) + " namespaces):")
+	}
+
+	hint := ", or --floor for just the bottom"
+	if floorOnly {
+		hint = ""
+	}
+
+	console.Say("")
+	console.Say(render(layersOf(proposed)))
+	console.Say("")
+	console.Say("  \033[2mA starting point to EDIT, not a verdict: everything already here passes, so this" +
+		"\n  holds the architecture where it stands and refuses the NEXT arrow somewhere new.\033[0m")
+	console.Say("  \033[2mre-run with --write to add it to .commandments/config.php" + hint + "\033[0m")
+}
+
+func write(project string, layers []config.Layer, refresh bool, console cli.Console) (int, error) {
+	if refresh {
+		rewritten, err := config.FileIn(project).RewriteLayers(layers)
+		if err != nil {
+			return 0, err
+		}
+
+		if rewritten {
+			console.Say("")
+			console.Say("\033[32m✓ refreshed the declaration in .commandments/config.php\033[0m")
+			console.Say("  \033[2mthe stack as it stands today — read the diff before you commit it\033[0m")
+
+			return 0, nil
+		}
+	}
+
+	written, err := config.ScribeIn(project).EnsureLayers(render(layers))
+	if err != nil {
+		return 0, err
+	}
+
+	console.Say("")
+
+	if written {
+		console.Say("\033[32m✓ written to .commandments/config.php\033[0m")
+	} else {
+		console.Say("\033[33m• config.php already declares layers — left untouched.\033[0m" +
+			"\n  \033[2mAdd to it instead: `layers add <Namespace> [--may-use=A,B]`, `layers allow <Layer> <Target>`," +
+			"\n  or `layers --write --refresh` to regenerate the whole block from today's shape.\033[0m")
+	}
+
+	return 0, nil
+}
+
+// layersOf is the shape as the config declares it.
+func layersOf(shape []namespaces.Layer) []config.Layer {
+	layers := make([]config.Layer, len(shape))
+
+	for i, layer := range shape {
+		layers[i] = config.Layer{Namespace: layer.Namespace, MayUse: layer.Uses}
+	}
+
+	return layers
+}
+
+// render is the declaration as source: one ->layer(...) per namespace, in dependency order.
+func render(layers []config.Layer) string {
+	return "    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector" +
+		config.RenderChain(layers, "        ") + ");"
 }
 
 func (c Command) add(in *cli.Input, file config.File, console cli.Console) (int, error) {
@@ -75,7 +224,7 @@ func (c Command) add(in *cli.Input, file config.File, console cli.Console) (int,
 
 	var added []string
 
-	for _, use := range namespaces(in.List("may-use")) {
+	for _, use := range normalisedAll(in.List("may-use")) {
 		if !slices.Contains(existing, use) {
 			added = append(added, use)
 		}
@@ -151,8 +300,8 @@ func indexOf(layers []config.Layer, namespace string) int {
 	return -1
 }
 
-// namespaces are the given namespaces normalised, the blank ones dropped.
-func namespaces(given []string) []string {
+// normalisedAll are the given namespaces normalised, the blank ones dropped.
+func normalisedAll(given []string) []string {
 	var kept []string
 
 	for _, namespace := range given {
