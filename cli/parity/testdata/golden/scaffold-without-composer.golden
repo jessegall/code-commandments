@@ -1,0 +1,7 @@
+exit: 2
+--- stdout
+
+--- stderr
+Could not resolve a PSR-4 source root from composer.json (run from the project root).
+
+--- files

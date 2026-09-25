@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+[2m↳ exists, skipped <project>/resources/js/ui/deep/SwitchCase.vue[0m
+
+--- stderr
+
+--- files

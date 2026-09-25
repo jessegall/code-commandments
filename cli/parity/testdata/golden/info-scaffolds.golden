@@ -1,0 +1,52 @@
+exit: 0
+--- stdout
+
+[1mswitch-case[0m  [2mfrontend/vue-control-flow[0m
+  A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)
+
+[33mWhy it is a sin[0m
+
+  A `v-if="status === 'paid'"` / `v-else-if="status === 'pending'"` / `v-else` chain
+  is a `switch` in disguise: one subject (`status`), tested case by case. Each
+  `v-else-if` restates the subject and reads as a fresh, independent decision when
+  there is really only one — *which case is this value?*
+
+[33mHow to fix it[0m
+
+  Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a
+  `v-if`/`v-else-if` chain re-testing the same subject.
+  the `<SwitchCase :value>` component: `commandments scaffold --sin=switch-case`.
+
+[33mExample[0m
+
+  ```vue
+  ----------[ Bad ]----------
+  
+  <span v-if="status === 'paid'" class="badge badge-green">Paid</span>
+  
+  ----------[ Good ]----------
+  
+  <!-- in OrderStatusBadge.vue -->
+  <SwitchCase :value="status">
+    <template #paid><span class="badge badge-green">Paid</span></template>
+    <template #pending><span class="badge badge-amber">Pending</span></template>
+    <template #refunded><span class="badge badge-grey">Refunded</span></template>
+    <template #default><span class="badge">Unknown</span></template>
+  </SwitchCase>
+  
+  <!-- in SwitchCase.vue -->
+  <slot :name="$slots[value] ? value : 'default'" />
+  ```
+
+[33mCommands[0m
+
+  [36mLearn     [0m load the skill [1mcommandments-frontend-vue-control-flow[0m
+  [36mScaffold  [0m commandments scaffold --sin=switch-case
+  [36mFind it   [0m commandments judge --sin=switch-case
+  [36mTurn off  [0m commandments disable switch-case
+  [36mWrong?    [0m commandments report --detector=SwitchCaseDetector --reason="…" --ref=PATH:LINE
+
+
+--- stderr
+
+--- files

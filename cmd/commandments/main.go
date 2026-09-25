@@ -11,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/info"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/layers"
+	"github.com/jessegall/code-commandments/cli/scaffold"
 	"github.com/jessegall/code-commandments/cli/session"
 	"github.com/jessegall/code-commandments/cli/task"
 	_ "github.com/jessegall/code-commandments/registry"
@@ -26,13 +27,14 @@ func main() {
 // Kernel is the kernel with every command registered, in the order the overview lists them.
 func Kernel() *cli.Kernel {
 	return cli.NewKernel(version,
-		judge.Command{},
+		judge.Command{Scaffoldable: scaffold.Scaffoldable()},
+		scaffold.Command{},
 		freeze.Command{},
 		session.Command{},
 		task.Command{},
 		config.Toggle{},
 		config.Command{Version: version},
 		layers.Command{},
-		info.Command{},
+		info.Command{Scaffoldable: scaffold.Scaffoldable()},
 	)
 }
