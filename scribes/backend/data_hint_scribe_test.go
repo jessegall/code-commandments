@@ -1,6 +1,8 @@
 package backend
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -51,7 +53,7 @@ func TestDataHintRewritesEachHintsProjectAsThePHPToolDoes(t *testing.T) {
 				scoped = append(scoped, filepath.Join(dir, name))
 			}
 
-			want := phpHints(t, dir, scoped)
+			want := hintAnswer(t, project, dir, scoped)
 			codebase, err := php.Here().Scan(dir)
 			if err != nil {
 				t.Fatal(err)
@@ -71,6 +73,52 @@ func TestDataHintRewritesEachHintsProjectAsThePHPToolDoes(t *testing.T) {
 			}
 		})
 	}
+}
+
+// hintAnswer is what PHP's DataHintScribe rewrites in the project, by path: asked live when recording, else as
+// recorded.
+func hintAnswer(t *testing.T, project hintProject, dir string, scoped []string) map[string]string {
+	t.Helper()
+	key := project.key()
+	if *record {
+		live := phpHints(t, dir, scoped)
+		relative := map[string]string{}
+		for path, content := range live {
+			relative[strings.TrimPrefix(path, dir+"/")] = content
+		}
+		recordedHintsMu.Lock()
+		recordedHints[key] = relative
+		recordedHintsMu.Unlock()
+
+		return live
+	}
+	hintAnswersOnce.Do(loadHintAnswers)
+	relative, ok := hintAnswers[key]
+	if !ok {
+		t.Fatalf("PHP's hints for %s are not recorded: run go generate ./scribes/backend", project.name)
+	}
+	answer := map[string]string{}
+	for path, content := range relative {
+		answer[dir+"/"+path] = content
+	}
+
+	return answer
+}
+
+// key names the project by what it holds: its name, its scope and every file.
+func (p hintProject) key() string {
+	names := make([]string, 0, len(p.files))
+	for name := range p.files {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	hash := sha256.New()
+	hash.Write([]byte(p.name + "\x00" + strings.Join(p.scoped, ",") + "\x00"))
+	for _, name := range names {
+		hash.Write([]byte(name + "\x00" + p.files[name] + "\x00"))
+	}
+
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 // phpHints is what PHP's DataHintScribe rewrites in the project, restricted to scoped when it names files.

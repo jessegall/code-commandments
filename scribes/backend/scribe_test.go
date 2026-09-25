@@ -2,7 +2,6 @@ package backend
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -45,12 +44,6 @@ func (c scribeCase) fix(t *testing.T, source string) string {
 	return rewrites.Content(rewrites.Paths()[0])
 }
 
-func (c scribeCase) rewrote(t *testing.T, source string) bool {
-	t.Helper()
-
-	return c.rewrites(t, source).Len() > 0
-}
-
 func (c scribeCase) findings(t *testing.T, source string) []engine.Match {
 	t.Helper()
 
@@ -66,30 +59,4 @@ func (c scribeCase) rewrites(t *testing.T, source string) scribes.Rewrites {
 	}
 
 	return rewrites
-}
-
-// fixStable is the fix, held to parse, to leave the sin gone, and to change nothing on a second pass.
-func (c scribeCase) fixStable(t *testing.T, source string) string {
-	t.Helper()
-	fixed := c.fix(t, source)
-	parses(t, fixed)
-	if found := c.findings(t, fixed); len(found) > 0 {
-		t.Fatalf("the sin still fires after the fix:\n%s", fixed)
-	}
-	if again := c.fix(t, fixed); again != fixed {
-		t.Fatalf("the fix is not idempotent, a second pass changed the source:\n%s", again)
-	}
-
-	return fixed
-}
-
-func parses(t *testing.T, source string) {
-	t.Helper()
-	path := filepath.Join(t.TempDir(), "Fixed.php")
-	if err := os.WriteFile(path, []byte(source), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if out, err := exec.Command("php", "-l", path).CombinedOutput(); err != nil {
-		t.Fatalf("rewritten source does not parse:\n%s\n\n%s", out, source)
-	}
 }
