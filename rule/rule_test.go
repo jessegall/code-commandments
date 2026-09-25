@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/scan"
-	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/engine"
 	_ "github.com/jessegall/code-commandments/registry"
 	"github.com/jessegall/code-commandments/rule"
@@ -52,7 +51,7 @@ func codebase(t *testing.T) *engine.Codebase {
 		t.Fatal(err)
 	}
 
-	loaded, err := scan.Sources{source.PHP: {path}}.Load()
+	loaded, err := scan.OneFile(path).Load()
 	if err != nil {
 		t.Fatalf("the PHP bridge cannot run here: %v", err)
 	}

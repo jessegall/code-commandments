@@ -151,7 +151,7 @@ func judgedFile(root, file string, project config.Config) string {
 func marksIn(file string, rules []detectors.Detector, changed git.ChangedLines) []SinMark {
 	language := source.OfFile(file)
 
-	codebase, err := scan.Sources{language: {file}}.Load()
+	codebase, err := scan.OneFile(file).Load()
 	if err != nil {
 		return nil
 	}

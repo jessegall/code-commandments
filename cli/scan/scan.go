@@ -73,6 +73,11 @@ func Walk(roots []string, excluded source.Excluded) Sources {
 	return sources
 }
 
+// OneFile is the sources of one file alone, in its language, rooted at its folder.
+func OneFile(path string) Sources {
+	return Sources{byLanguage: map[source.Language][]string{source.OfFile(path): {path}}, roots: []string{filepath.Dir(path)}}
+}
+
 // Count is how many files the languages have.
 func (s Sources) Count(languages ...source.Language) int {
 	count := 0
