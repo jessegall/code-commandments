@@ -403,3 +403,55 @@ func (n Node) DocblockMethodTagRedeclaresRealMethod() bool {
 func (n Node) IsField() bool {
 	return n.Kind() == "Param" && len(n.Node().Modifiers) > 0 || n.Kind() == "Stmt_Property"
 }
+
+// ClassHead is a class-like's members above its first method, in source order.
+func (n Node) ClassHead() []engine.Match {
+	return classHead(n)
+}
+
+// GroupedClassHead is a class-like's head grouped by layout rank, the groups in the order the layout puts them and
+// each group's members in source order.
+func (n Node) GroupedClassHead() [][]engine.Match {
+	byRank := map[int][]engine.Match{}
+	var ranks []int
+	for _, member := range classHead(n) {
+		rank := layoutRank(member)
+		if _, seen := byRank[rank]; !seen {
+			ranks = append(ranks, rank)
+		}
+		byRank[rank] = append(byRank[rank], member)
+	}
+	slices.Sort(ranks)
+	groups := make([][]engine.Match, 0, len(ranks))
+	for _, rank := range ranks {
+		groups = append(groups, byRank[rank])
+	}
+
+	return groups
+}
+
+// FirstMethodOfItsClass is the first method among the members of the class-like around the node.
+func (n Node) FirstMethodOfItsClass() (engine.Match, bool) {
+	for _, member := range n.EnclosingClassLike().ChildrenIn("stmts") {
+		if member.Kind() == "Stmt_ClassMethod" {
+			return member, true
+		}
+	}
+
+	return engine.Match{}, false
+}
+
+// PromotedParamName is the name of the parameter at index when it promotes a property: modified, not variadic, and
+// named plainly.
+func PromotedParamName(params []engine.Match, index int) (string, bool) {
+	if index >= len(params) {
+		return "", false
+	}
+	param := params[index]
+	name := variableName(param.Child("var"))
+	if len(param.Node().Modifiers) == 0 || slices.Contains(param.Node().Flags, "variadic") || name == "" {
+		return "", false
+	}
+
+	return name, true
+}

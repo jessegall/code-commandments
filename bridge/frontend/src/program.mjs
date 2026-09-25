@@ -3,6 +3,8 @@ import { existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { aliasesOf, projectRoot } from './aliases.mjs'
+import { Source } from './source.mjs'
+import { Sfc } from './vue.mjs'
 
 /** Vue's own declarations, shipped beside the bundle: what a bare import resolves to when the project has none installed. */
 const SHIPPED = resolve(dirname(fileURLToPath(import.meta.url)), 'types')
@@ -83,10 +85,24 @@ export class Program {
         return options
     }
 
+    /**
+     * The checked text of a component outside the scan that an import reaches: read from disk as a scanned one is
+     * read, so `import X from '../X.vue'` resolves wherever X lives, as an import of a `.ts` file does.
+     */
+    unscanned(name) {
+        if (!name.endsWith('.vue' + VIRTUAL)) return undefined
+        const path = name.slice(0, -VIRTUAL.length)
+        if (!existsSync(path)) return undefined
+        const checked = new Sfc(Source.read(path)).checkedText()
+        this.virtual.set(name, checked)
+
+        return checked
+    }
+
     hostFor() {
         const host = ts.createCompilerHost(this.options, true)
         const { fileExists, readFile, getSourceFile } = host
-        const text = (name) => this.virtual.get(name) ?? (name.endsWith('.vue') ? undefined : this.sources.get(name)?.text)
+        const text = (name) => this.virtual.get(name) ?? this.unscanned(name) ?? (name.endsWith('.vue') ? undefined : this.sources.get(name)?.text)
         host.fileExists = (name) => text(name) !== undefined || fileExists.call(host, name)
         host.readFile = (name) => text(name) ?? readFile.call(host, name)
         host.getSourceFile = (name, version, onError, create) => {

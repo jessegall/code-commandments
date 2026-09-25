@@ -123,8 +123,8 @@ func (n Node) MemberDepth(transparent ...string) int {
 	return 0
 }
 
-// Roots is every name the expression reads its data from: form for form.email, both a and i for a[i];
-// a name an arrow function binds is its own, not a root.
+// Roots is every name the expression reads its data from, once, in the order it first reads them: form for
+// form.email, both a and i for a[i]; a name an arrow function binds is its own, not a root.
 func (n Node) Roots() []string {
 	n = n.unwrap()
 	var roots []string
@@ -152,9 +152,14 @@ func (n Node) Roots() []string {
 			}
 		}
 	}
-	slices.Sort(roots)
+	var once []string
+	for _, root := range roots {
+		if !slices.Contains(once, root) {
+			once = append(once, root)
+		}
+	}
 
-	return slices.Compact(roots)
+	return once
 }
 
 func (n Node) chainLength(transparent []string) int {

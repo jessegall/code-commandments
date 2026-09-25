@@ -1,9 +1,6 @@
 package engine
 
-import (
-	"bytes"
-	"strings"
-)
+import "bytes"
 
 // Span is a half-open byte range [Start, End) into one file's source.
 type Span struct {
@@ -38,12 +35,15 @@ func (s Span) Column() int {
 
 // LineIndent is the indentation of the line the span starts on, or "" when code precedes it there.
 func (s Span) LineIndent() string {
-	before := string(s.Source[s.lineStart():s.Start])
-	if strings.TrimSpace(before) != "" {
-		return ""
-	}
+	indent, _ := Source(s.Source).OwnLineIndent(s.Start)
 
-	return before
+	return indent
+}
+
+// Reindent is the span's text laid out at base: the indentation of the line it begins on comes off
+// every continuation line, so a span starting mid-line shifts with its block instead of flattening.
+func (s Span) Reindent(base string) string {
+	return Reindent(s.Text(), len(Source(s.Source).LineIndentAt(s.Start)), base)
 }
 
 // lineStart is the offset the span's first line starts at.

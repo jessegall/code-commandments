@@ -139,6 +139,25 @@ func (m Match) Kind() string {
 	return m.node.Kind
 }
 
+// Resolves is the file an import, a re-export or a component tag reaches; empty for anything else.
+func (m Match) Resolves() string {
+	if m.node == nil {
+		return ""
+	}
+
+	return m.node.Resolves
+}
+
+// HasFlag says whether the bridge flags the node so: optional, variadic, shorthand, promoted.
+func (m Match) HasFlag(flag string) bool {
+	return m.node != nil && slices.Contains(m.node.Flags, flag)
+}
+
+// HasModifier says whether the node is declared with the modifier: export, readonly, public, static.
+func (m Match) HasModifier(modifier string) bool {
+	return m.node != nil && slices.Contains(m.node.Modifiers, modifier)
+}
+
 // Name is the name as written, for a declaration, a name or a member.
 func (m Match) Name() string {
 	if m.node == nil {

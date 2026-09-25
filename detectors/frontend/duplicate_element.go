@@ -71,3 +71,6 @@ func filtered(candidates []engine.Match, keep func(vue.Element) bool) []engine.M
 
 	return kept
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (DuplicateElementDetector) Repentable() {}

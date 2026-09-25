@@ -34,3 +34,6 @@ func (CompoundInlineComponentDetector) Find(codebase *engine.Codebase) []engine.
 		Reject(engine.As(vue.Element.IsTemplateRoot)).
 		Get()
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (CompoundInlineComponentDetector) Repentable() {}

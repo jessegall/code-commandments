@@ -28,14 +28,24 @@ func Here() Bridge {
 	return Bridge{Script: filepath.Join(filepath.Dir(source), "..", "..", "bridge", "frontend", "dist", "bridge.mjs"), Node: "node"}
 }
 
-// Stream is the stream the bridge writes for its arguments: paths, and any of its flags.
-func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
+// Command is the command that runs the bridge: the node found on PATH, and the script.
+func (b Bridge) Command() ([]string, error) {
 	node, err := exec.LookPath(b.Node)
 	if err != nil {
 		return nil, fmt.Errorf("the frontend bridge needs node, and %q is not on PATH: %w", b.Node, err)
 	}
 
-	return bridge.Once([]string{node, b.Script}, arguments...)
+	return []string{node, b.Script}, nil
+}
+
+// Stream is the stream the bridge writes for its arguments: paths, and any of its flags.
+func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
+	command, err := b.Command()
+	if err != nil {
+		return nil, err
+	}
+
+	return bridge.Once(command, arguments...)
 }
 
 // Scan is the codebase the bridge reads at paths.
@@ -46,4 +56,15 @@ func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {
 	}
 
 	return engine.Load(stream), nil
+}
+
+// Over is the codebase a served bridge answers the request with, its sources read through the contents the request
+// carries.
+func Over(server *bridge.Server, request bridge.Request) (*engine.Codebase, error) {
+	stream, err := server.Ask(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return engine.New(engine.ReadThrough(request.Contents), stream), nil
 }

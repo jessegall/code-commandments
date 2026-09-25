@@ -39,3 +39,14 @@ func TestTheGoTreeHoldsNoNodeThePhpEngineLacks(t *testing.T) {
 		t.Fatalf("the Go tree holds %d nodes under its file roots, the PHP engine %d", nodes, answers)
 	}
 }
+
+func TestEveryNodeHoldsTheCommentsPhpParserAttachesToIt(t *testing.T) {
+	shop.Parity(t, "comments", func(_ shop.Answer, node engine.Match) any {
+		spans := [][2]int{}
+		for _, comment := range (Node{Match: node}).Comments() {
+			spans = append(spans, [2]int{comment.Span.Start, comment.Span.End})
+		}
+
+		return spans
+	})
+}
