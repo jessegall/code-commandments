@@ -101,7 +101,8 @@ func (d Definition) Scopes(query string) bool {
 	return strings.Contains(catalog.Normalise(d.Name), needle) || strings.Contains(catalog.Normalise(d.Slug()), needle)
 }
 
-// InstalledIn says whether the project at root depends on the package, as composer installed it; a project whose
+// InstalledIn says whether the project at root depends on the package, as composer installed it — itself, or
+// replaced or provided by a package it installed, as laravel/framework replaces illuminate/support; a project whose
 // manifest cannot be read is taken to have it, so a rule is never silenced by a missing file. Only composer is read
 // here; the other ecosystems' manifests arrive with their engines.
 func (p Package) InstalledIn(root string) bool {
@@ -114,14 +115,18 @@ func (p Package) InstalledIn(root string) bool {
 	}
 	var installed struct {
 		Packages []struct {
-			Name string `json:"name"`
+			Name    string            `json:"name"`
+			Replace map[string]string `json:"replace"`
+			Provide map[string]string `json:"provide"`
 		} `json:"packages"`
 	}
 	if json.Unmarshal(content, &installed) != nil {
 		return true
 	}
 	for _, each := range installed.Packages {
-		if each.Name == p.Name {
+		_, replaced := each.Replace[p.Name]
+		_, provided := each.Provide[p.Name]
+		if each.Name == p.Name || replaced || provided {
 			return true
 		}
 	}

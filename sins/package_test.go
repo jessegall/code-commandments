@@ -30,3 +30,20 @@ func TestAProjectWithoutAManifestHasEveryPackage(t *testing.T) {
 		t.Error("a missing manifest silences the package's rules")
 	}
 }
+
+func TestAPackageAnotherReplacesOrProvidesIsInstalled(t *testing.T) {
+	root := t.TempDir()
+	vendor := filepath.Join(root, "vendor", "composer")
+	if err := os.MkdirAll(vendor, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := `{"packages":[{"name":"laravel/framework","replace":{"illuminate/support":"self.version"},"provide":{"psr/log-implementation":"1.0"}}]}`
+	if err := os.WriteFile(filepath.Join(vendor, "installed.json"), []byte(manifest), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"illuminate/support", "psr/log-implementation"} {
+		if !(sins.Package{Name: name, Ecosystem: sins.Composer}).InstalledIn(root) {
+			t.Errorf("%s reads as missing", name)
+		}
+	}
+}
