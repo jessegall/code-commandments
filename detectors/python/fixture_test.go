@@ -29,7 +29,7 @@ func shop(t *testing.T) *engine.Codebase {
 }
 
 func TestEveryPythonDetectorFlagsExactlyWhatTheFixtureMarks(t *testing.T) {
-	fixture.Fixture{Codebase: shop(t), Detectors: detectors.Of(catalog.Python)}.Prove(t)
+	fixture.Fixture{Codebase: shop(t), Detectors: detectors.Of(catalog.Python), Resolver: fixture.FileScenarios}.Prove(t)
 }
 
 func TestEverySinTheFixtureMarksHasADetector(t *testing.T) {

@@ -43,6 +43,8 @@ class TreeWriter:
                 self.starts.append(index + 1)
         self.spans: list[tuple[int, int, int]] = []
         self.docstrings: list[tuple[ast.Constant, int]] = []
+        self.defaults: dict[int, ast.expr] = {}
+        self.spreads: set[int] = set()
         self.next = 0
 
     def offset(self, line: int, column: int) -> int:
@@ -52,6 +54,8 @@ class TreeWriter:
         return self.source.count(b"\n", 0, offset) + 1
 
     def span_of(self, node: ast.AST, children: list[dict]) -> tuple[int, int]:
+        """The node's byte span: its own position, from its first decorator, and reaching its last child, as a
+        parameter reaches the default the contract nests under it."""
         if isinstance(node, ast.Module):
             return 0, len(self.source)
         if hasattr(node, "lineno") and node.end_lineno is not None:
@@ -60,7 +64,7 @@ class TreeWriter:
             decorators = [child for child in children if child["field"] == "decorator_list"]
             if decorators:
                 start = self.source.rindex(b"@", 0, decorators[0]["span"][0])
-            return start, end
+            return start, max([end, *(child["span"][1] for child in children)])
         if children:
             return children[0]["span"][0], children[-1]["span"][1]
         return -1, -1
@@ -101,7 +105,7 @@ class TreeWriter:
         """The node's children with their fields, in source order: `ast` keeps its own field order, which puts an
         `IfExp`'s test before its body and a `Dict`'s keys before its values. A child with no position anywhere
         in it keeps its place after the child before it."""
-        children = [(name, child) for name, value in ast.iter_fields(node)
+        children = [(name, child) for name, value in self.fields(node)
                     for child in (value if isinstance(value, list) else [value])
                     if isinstance(child, ast.AST) and not isinstance(child, SKIPPED)]
         keys, last = [], (-1, -1)
@@ -109,6 +113,24 @@ class TreeWriter:
             last = self.position(child) or last
             keys.append(last)
         return [pair for _, _, pair in sorted(zip(keys, range(len(children)), children))]
+
+    def fields(self, node: ast.AST) -> list[tuple[str, object]]:
+        """The node's `ast` fields, as the contract nests them: a parameter's default is its own `default` child, not
+        an entry in a list beside the parameters, and a `**` entry of a dict is flagged where `ast` leaves its key
+        `None`."""
+        if isinstance(node, ast.arguments):
+            positional = [*node.posonlyargs, *node.args]
+            paired = zip(positional[len(positional) - len(node.defaults):], node.defaults)
+            for parameter, default in [*paired, *zip(node.kwonlyargs, node.kw_defaults)]:
+                if default is not None:
+                    self.defaults[id(parameter)] = default
+            return [(name, value) for name, value in ast.iter_fields(node) if name not in ("defaults", "kw_defaults")]
+        if isinstance(node, ast.Dict):
+            self.spreads.update(id(value) for key, value in zip(node.keys, node.values) if key is None)
+        fields = list(ast.iter_fields(node))
+        if isinstance(node, ast.arg) and id(node) in self.defaults:
+            fields.append(("default", self.defaults[id(node)]))
+        return fields
 
     def position(self, node: ast.AST) -> tuple[int, int] | None:
         """Where the node's source starts: its own position, else the earliest one inside it."""
@@ -246,7 +268,7 @@ class TreeWriter:
             flags.append("async")
         if isinstance(node, ast.comprehension) and node.is_async:
             flags.append("async")
-        if isinstance(node, ast.Starred):
+        if isinstance(node, ast.Starred) or id(node) in self.spreads:
             flags.append("spread")
         if isinstance(node, ast.keyword):
             flags.append("named" if node.arg is not None else "spread")
