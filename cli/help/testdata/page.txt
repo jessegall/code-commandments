@@ -1,0 +1,19 @@
+commandments widget — Tend the widgets — every one of them, in the order they were made, with a summary long enough to wrap past the width.
+Also answers to: widgets
+
+Usage:
+  commandments widget               the list
+  commandments widget add "<title>" --under=<id> [--priority=NUMBER] --and-a-very-long-form
+                                    queue one — a subtask when --under names its parent, which
+                                    carries its number
+  commandments widget show <id>
+
+Options:
+  --under=<id>      the parent
+  --dry-run[=FILE]  preview a unified diff instead of applying it; with FILE, write the diff there
+                    rather than to the terminal
+
+  A widget is a small thing. This note is long enough that it has to wrap onto a second line when
+  the screen lays it out at the classic terminal width.
+
+  Short note.

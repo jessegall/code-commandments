@@ -1,0 +1,18 @@
+Code Commandments — a compiler for architecture.
+
+Usage:
+  commandments <command> [options]
+
+Commands:
+  widget  Tend the widgets — every one of them, in the order they were made, with a summary long
+          enough to wrap past the width.
+
+Hooks (wired automatically — you rarely run these by hand):
+  bare  Nothing else.
+
+Global options:
+  --help, -h      show this help — or, after a verb, that command's own usage
+  --memory=LIMIT  memory ceiling for the run (default: 2G; -1 for no limit)
+  --version       print the installed version of code-commandments
+
+Run `commandments <command> --help` for a command's forms, options and notes.

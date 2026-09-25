@@ -1,0 +1,2402 @@
+[
+    {
+        "text": "`code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — —\n   ",
+        "width": 32,
+        "break": "\n",
+        "want": "`code`\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n— —\n   "
+    },
+    {
+        "text": "  --flag=VALUEümlaut ümlaut`code` —`code` ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd `code`dddd --flag=VALUE  dddd ccc ",
+        "width": 15,
+        "break": "\n      ",
+        "want": " \n      --flag=VALUEümlaut\n      ümlaut`code`\n      —`code`\n      ümlaut\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd\n      `code`dddd\n      --flag=VALUE \n      dddd ccc "
+    },
+    {
+        "text": "— ccc ",
+        "width": 4,
+        "break": "\n",
+        "want": "—\nccc "
+    },
+    {
+        "text": "a \n  bb   —   a ümlauta bbccc    ccc dddd    dddd a x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    a dddd \n   ",
+        "width": 1,
+        "break": "\n",
+        "want": "a\n\n \nbb\n \n—\n \na\nümlauta\nbbccc\n \n ccc\ndddd\n \n dddd\na\nx\ny\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\ndddd\na\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n \n a\ndddd\n\n \n "
+    },
+    {
+        "text": "   `code` dddd`code` --flag=VALUE ccc dddd`code`\n     ",
+        "width": 32,
+        "break": "|",
+        "want": "   `code` dddd`code`|--flag=VALUE ccc dddd`code`\n    |"
+    },
+    {
+        "text": "— bb `code`a dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` --flag=VALUE— --flag=VALUE ümlautdddd ümlaut a bb x\ny x\nyümlaut   ",
+        "width": 2,
+        "break": "\n  ",
+        "want": "—\n  bb\n  `code`a\n  dddd\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n    \n   \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  `code`\n  --flag=VALUE—\n  --flag=VALUE\n  ümlautdddd\n  ümlaut\n  a\n  bb\n  x\ny\n  x\nyümlaut\n    "
+    },
+    {
+        "text": "a ",
+        "width": 21,
+        "break": "\n  ",
+        "want": "a "
+    },
+    {
+        "text": "a bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlautümlaut  dddd— bb   — ümlaut --flag=VALUE",
+        "width": 21,
+        "break": "\n  ",
+        "want": "a bb\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  ümlautümlaut \n  dddd— bb   —\n  ümlaut --flag=VALUE"
+    },
+    {
+        "text": "ccc \n   — --flag=VALUE x\ny x\nyccc dddd--flag=VALUE ccc ümlaut--flag=VALUE ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` —ümlaut `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    \n       a `code` ",
+        "width": 35,
+        "break": "\n",
+        "want": "ccc \n   — --flag=VALUE x\ny x\nyccc dddd--flag=VALUE ccc\nümlaut--flag=VALUE ümlaut\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n`code` —ümlaut `code`\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee    \n       a `code` "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny`code`     eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE \n   accc —ccc ddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee    x\ny a \n  --flag=VALUE `code`x\ny`code`x\ny ümlaut ümlaut --flag=VALUEbb `code` ",
+        "width": 3,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      x\ny`code`\n         \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      --flag=VALUE\n      \n  \n      accc\n      —ccc\n      ddddddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n        \n      x\ny\n      a \n\n       --flag=VALUE\n      `code`x\ny`code`x\ny\n      ümlaut\n      ümlaut\n      --flag=VALUEbb\n      `code`\n      "
+    },
+    {
+        "text": "--flag=VALUE   ümlaut ccc    \n   \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE  ccc —   --flag=VALUE —ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd `code`x\ny — \n  x\ny ",
+        "width": 21,
+        "break": "\n",
+        "want": "--flag=VALUE  \nümlaut ccc    \n   \n \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n--flag=VALUE  ccc —\n  --flag=VALUE —ccc\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd\n`code`x\ny — \n  x\ny "
+    },
+    {
+        "text": "--flag=VALUEdddd dddd`code` \n      — ",
+        "width": 30,
+        "break": "\n  ",
+        "want": "--flag=VALUEdddd dddd`code` \n      — "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   \n   —`code`ümlaut `code` bb    dddd a",
+        "width": 32,
+        "break": "|",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n|  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|\n   \n   —`code`ümlaut `code`|bb    dddd a"
+    },
+    {
+        "text": "dddd ccc — ümlaut --flag=VALUE  ümlaut   `code`x\ny `code` dddd aa a ümlaut    \n   — dddd   —x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc bb   bb bb",
+        "width": 2,
+        "break": "\n      ",
+        "want": "dddd\n      ccc\n      —\n      ümlaut\n      --flag=VALUE\n       ümlaut\n       \n      `code`x\ny\n      `code`\n      dddd\n      aa\n      a\n      ümlaut\n        \n      \n \n       —\n      dddd\n       \n      —x\ny\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ccc\n      bb\n       \n      bb\n      bb"
+    },
+    {
+        "text": "aümlaut ümlaut    `code``code` — dddd\n   \n     eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny `code` dddd `code` \n   ",
+        "width": 34,
+        "break": "\n",
+        "want": "aümlaut ümlaut    `code``code`\n— dddd\n   \n    \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny `code` dddd `code` \n   "
+    },
+    {
+        "text": "ddddccc ",
+        "width": 18,
+        "break": "\n  ",
+        "want": "ddddccc "
+    },
+    {
+        "text": "  dddd \n         x\ny ",
+        "width": 39,
+        "break": "\n      ",
+        "want": "  dddd \n         x\ny "
+    },
+    {
+        "text": "--flag=VALUE --flag=VALUEx\ny ümlaut —`code` a dddd       ümlaut",
+        "width": 17,
+        "break": "|",
+        "want": "--flag=VALUE|--flag=VALUEx\ny|ümlaut —`code`|a dddd      |ümlaut"
+    },
+    {
+        "text": "—   \n   ümlaut ccc\n   ccc`code` x\ny — ümlaut    ümlaut—`code`a —bb --flag=VALUE bb ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   `code` ümlaut— ",
+        "width": 15,
+        "break": "\n",
+        "want": "—   \n   ümlaut ccc\n   ccc`code` x\ny — ümlaut  \n ümlaut—`code`a\n—bb\n--flag=VALUE bb\nümlaut\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   `code`\nümlaut— "
+    },
+    {
+        "text": "ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc \n  bb a  ccc dddd ",
+        "width": 39,
+        "break": "|",
+        "want": "ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ccc \n  bb a  ccc dddd "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 5,
+        "break": "\n",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n"
+    },
+    {
+        "text": "—bb `code`  dddd \n   ümlaut`code` ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 12,
+        "break": "\n",
+        "want": "—bb `code`\n dddd \n  \nümlaut`code`\nccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n"
+    },
+    {
+        "text": "a `code` --flag=VALUE—    ccc bb ümlautbbaümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeecccx\ny bb bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut --flag=VALUE a x\ny ümlaut a\n   ",
+        "width": 23,
+        "break": "|",
+        "want": "a `code`|--flag=VALUE—    ccc|bb ümlautbbaümlaut|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|dddd \n  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeeecccx\ny|bb bb|eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut|--flag=VALUE a x\ny|ümlaut a\n   "
+    },
+    {
+        "text": "bb  a ümlaut a bb      `code` `code`--flag=VALUE ",
+        "width": 6,
+        "break": "|",
+        "want": "bb  a|ümlaut|a bb  |  |`code`|`code`--flag=VALUE|"
+    },
+    {
+        "text": "a\n  --flag=VALUE — ümlaut dddd ümlaut    — x\ny `code`      ümlaut \n  `code`x\ny    `code`ümlaut ümlaut--flag=VALUE dddd `code` abb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc ",
+        "width": 9,
+        "break": "\n      ",
+        "want": "a\n \n      --flag=VALUE\n      —\n      ümlaut\n      dddd\n      ümlaut  \n       — x\ny\n      `code`   \n        ümlaut\n      \n \n      `code`x\ny\n        \n      `code`ümlaut\n      ümlaut--flag=VALUE\n      dddd\n      `code`\n      abb\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ccc "
+    },
+    {
+        "text": "ümlaut x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE   ümlaut",
+        "width": 13,
+        "break": "\n      ",
+        "want": "ümlaut x\ny\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      --flag=VALUE \n       ümlaut"
+    },
+    {
+        "text": "bb --flag=VALUE `code` a   ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` bb x\ny bb — x\nyx\ny     `code` ümlaut dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb bb ccc  bb  ",
+        "width": 4,
+        "break": "|",
+        "want": "bb|--flag=VALUE|`code`|a  |ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|`code`|bb|x\ny|bb|—|x\nyx\ny|   |`code`|ümlaut|dddd|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|bb|bb|ccc |bb  "
+    },
+    {
+        "text": "--flag=VALUE  \n   ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee — ümlaut \n     ccc   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ddddccc --flag=VALUEümlaut \n  ccc ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee— ümlaut ",
+        "width": 16,
+        "break": "|",
+        "want": "--flag=VALUE  \n | ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee|— ümlaut \n   | ccc  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ddddccc|--flag=VALUEümlaut|\n  ccc ccc|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee—|ümlaut "
+    },
+    {
+        "text": "bb \n  ",
+        "width": 25,
+        "break": "\n      ",
+        "want": "bb \n  "
+    },
+    {
+        "text": "bb bb ccc",
+        "width": 18,
+        "break": "|",
+        "want": "bb bb ccc"
+    },
+    {
+        "text": "\n   ccc",
+        "width": 3,
+        "break": "|",
+        "want": "\n  |ccc"
+    },
+    {
+        "text": " ümlaut     ccc    ccc   `code` — ccc`code` --flag=VALUE ",
+        "width": 28,
+        "break": "|",
+        "want": " ümlaut     ccc    ccc  |`code` — ccc`code`|--flag=VALUE "
+    },
+    {
+        "text": "--flag=VALUE x\ny ccc bb \n   a —    bb dddd x\ny a `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` --flag=VALUEdddd \n     x\ny --flag=VALUEccc a\n     — ümlaut ",
+        "width": 37,
+        "break": "\n      ",
+        "want": "--flag=VALUE x\ny ccc bb \n   a —   \n      bb dddd x\ny a\n      `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      `code` --flag=VALUEdddd \n     x\ny\n      --flag=VALUEccc a\n     — ümlaut "
+    },
+    {
+        "text": "bb ccc bba x\ny a bb`code`    —   bb",
+        "width": 24,
+        "break": "\n",
+        "want": "bb ccc bba x\ny a bb`code`    —   bb"
+    },
+    {
+        "text": "`code` ccc    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee   x\ny --flag=VALUE —--flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE `code`   —",
+        "width": 16,
+        "break": "\n      ",
+        "want": "`code` ccc   \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n       \n      ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n        x\ny\n      --flag=VALUE\n      —--flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      --flag=VALUE\n      `code`   —"
+    },
+    {
+        "text": "— — --flag=VALUE --flag=VALUE  ümlaut a ümlaut dddd    dddd   ",
+        "width": 27,
+        "break": "|",
+        "want": "— — --flag=VALUE|--flag=VALUE  ümlaut a|ümlaut dddd    dddd   "
+    },
+    {
+        "text": "ccc dddd    `code` `code` --flag=VALUE a bb bb `code` \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a—  --flag=VALUE a",
+        "width": 37,
+        "break": "\n",
+        "want": "ccc dddd    `code` `code`\n--flag=VALUE a bb bb `code` \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\na—  --flag=VALUE a"
+    },
+    {
+        "text": "bb \n   ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut   dddd `code`",
+        "width": 10,
+        "break": "|",
+        "want": "bb \n  |ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ümlaut  |dddd|`code`"
+    },
+    {
+        "text": "bb x\ny --flag=VALUE x\ny --flag=VALUE ümlautbb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\nyx\ny x\ny --flag=VALUE    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  x\ny ",
+        "width": 8,
+        "break": "\n",
+        "want": "bb x\ny\n--flag=VALUE\nx\ny\n--flag=VALUE\nümlautbb\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n \nccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nx\nyx\ny x\ny\n--flag=VALUE\n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n x\ny "
+    },
+    {
+        "text": "x\ny `code` ccc dddd    \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — ccc ",
+        "width": 15,
+        "break": "|",
+        "want": "x\ny `code` ccc|dddd    \n  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|— ccc "
+    },
+    {
+        "text": "\n   — bbbbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee a ümlautx\ny --flag=VALUE --flag=VALUE bb aabb eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb ümlaut \n   x\nya ümlaut ccc ",
+        "width": 29,
+        "break": "\n",
+        "want": "\n   —\nbbbbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\na ümlautx\ny --flag=VALUE --flag=VALUE\nbb aabb\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb\nümlaut \n   x\nya ümlaut ccc "
+    },
+    {
+        "text": "ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` — ",
+        "width": 3,
+        "break": "\n",
+        "want": "ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n`code`\n—\n"
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut ümlaut --flag=VALUE    --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a    \n   \n   a ccc ccc bb  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 19,
+        "break": "\n",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nümlaut ümlaut\n--flag=VALUE   \n--flag=VALUE\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\na    \n   \n   a ccc ccc bb \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n"
+    },
+    {
+        "text": "ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee — bb ümlaut x\ny a --flag=VALUE  `code` `code` — `code` bb `code` \n  `code` ccc",
+        "width": 14,
+        "break": "|",
+        "want": "ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|— bb ümlaut|x\ny a|--flag=VALUE |`code` `code`|— `code` bb|`code` \n |`code` ccc"
+    },
+    {
+        "text": "x\ny x\ny \n   x\ny ",
+        "width": 29,
+        "break": "\n      ",
+        "want": "x\ny x\ny \n   x\ny "
+    },
+    {
+        "text": "a dddd  ",
+        "width": 5,
+        "break": "\n      ",
+        "want": "a\n      dddd \n      "
+    },
+    {
+        "text": "— ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code`    dddd x\ny bb --flag=VALUE",
+        "width": 24,
+        "break": "\n      ",
+        "want": "— ümlaut\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      `code`    dddd x\ny bb\n      --flag=VALUE"
+    },
+    {
+        "text": "--flag=VALUE \n   a \n   `code` ccc — bb ccc — cccdddd bb ccc ccc`code`x\ny\n     dddd ",
+        "width": 25,
+        "break": "|",
+        "want": "--flag=VALUE \n   a \n  |`code` ccc — bb ccc —|cccdddd bb ccc|ccc`code`x\ny\n     dddd "
+    },
+    {
+        "text": "--flag=VALUE x\ny ümlaut \n   x\ny — \n   a   x\ny `code` `code` bb `code` x\ny",
+        "width": 19,
+        "break": "\n",
+        "want": "--flag=VALUE x\ny ümlaut \n   x\ny — \n   a   x\ny `code` `code` bb\n`code` x\ny"
+    },
+    {
+        "text": "— bb `code`ümlautümlaut — ",
+        "width": 38,
+        "break": "|",
+        "want": "— bb `code`ümlautümlaut — "
+    },
+    {
+        "text": "a a   —— a — `code`   `code` ümlaut bb a —     bb\n   --flag=VALUE bb `code` `code` `code` x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny  a",
+        "width": 17,
+        "break": "|",
+        "want": "a a   —— a|— `code`  |`code` ümlaut bb|a —     bb\n  |--flag=VALUE bb|`code` `code`|`code` x\ny|eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny| a"
+    },
+    {
+        "text": "a  ",
+        "width": 26,
+        "break": "\n  ",
+        "want": "a  "
+    },
+    {
+        "text": "dddd bb    bb ccc x\ny  `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n  x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`   --flag=VALUE `code` \n      —ümlaut--flag=VALUE   ümlaut bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd dddd —",
+        "width": 29,
+        "break": "\n",
+        "want": "dddd bb    bb ccc x\ny  `code`\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n  x\ny\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`\n  --flag=VALUE `code` \n      —ümlaut--flag=VALUE \n ümlaut bb\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\ndddd dddd —"
+    },
+    {
+        "text": "   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code``code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc — x\ny ",
+        "width": 23,
+        "break": "\n  ",
+        "want": "  \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code``code`\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  ccc — x\ny "
+    },
+    {
+        "text": "\n   bb \n    x\nyümlautx\ny ",
+        "width": 28,
+        "break": "\n",
+        "want": "\n   bb \n    x\nyümlautx\ny "
+    },
+    {
+        "text": "x\ny \n  ccc --flag=VALUE ddddx\ny \n  —eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a — a — \n   a a \n   ümlaut —    ümlaut--flag=VALUE— ",
+        "width": 25,
+        "break": "\n  ",
+        "want": "x\ny \n  ccc --flag=VALUE ddddx\ny \n  —eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  a — a — \n   a a \n   ümlaut —   \n  ümlaut--flag=VALUE— "
+    },
+    {
+        "text": "ümlaut",
+        "width": 6,
+        "break": "|",
+        "want": "ümlaut"
+    },
+    {
+        "text": "ccc — dddd dddd  dddd x\ny — \n   \n  --flag=VALUE ümlautdddd bb \n   `code`    a `code` a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — --flag=VALUE    x\ny ",
+        "width": 12,
+        "break": "\n  ",
+        "want": "ccc — dddd\n  dddd  dddd\n  x\ny — \n   \n  --flag=VALUE\n  ümlautdddd\n  bb \n   `code`    a\n  `code` a\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  —\n  --flag=VALUE\n     x\ny "
+    },
+    {
+        "text": "  ümlaut ",
+        "width": 14,
+        "break": "\n  ",
+        "want": "  ümlaut "
+    },
+    {
+        "text": "ümlaut a bb \n   `code`   --flag=VALUE ümlaut ",
+        "width": 1,
+        "break": "\n",
+        "want": "ümlaut\na\nbb\n\n \n `code`\n \n--flag=VALUE\nümlaut\n"
+    },
+    {
+        "text": "bb a ümlaut ax\ny bb   \n  — dddd `code`    ümlaut \n     ccc `code` --flag=VALUEccc bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n  `code` ümlaut",
+        "width": 22,
+        "break": "\n  ",
+        "want": "bb a ümlaut ax\ny bb  \n  \n  — dddd `code`   \n  ümlaut \n     ccc `code`\n  --flag=VALUEccc bb\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  \n  `code` ümlaut"
+    },
+    {
+        "text": "  x\ny   `code` \n   ümlaut --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bbx\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddddddd ",
+        "width": 6,
+        "break": "\n",
+        "want": "  x\ny  \n`code`\n\n  \nümlaut\n--flag=VALUE\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nbbx\ny\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\na a\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\ndddddddd\n"
+    },
+    {
+        "text": "",
+        "width": 30,
+        "break": "\n      ",
+        "want": ""
+    },
+    {
+        "text": "bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb  --flag=VALUE    dddd  — a ümlaut dddd bb ümlaut`code` ",
+        "width": 10,
+        "break": "\n      ",
+        "want": "bb\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      bb \n      --flag=VALUE\n         dddd \n      — a\n      ümlaut\n      dddd bb\n      ümlaut`code`\n      "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  cccümlautbb   `code`    cccbb`code`bb dddd —— a dddd \n    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb    \n       dddd — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny ",
+        "width": 29,
+        "break": "\n  ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   cccümlautbb   `code`   \n  cccbb`code`bb dddd —— a\n  dddd \n   \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb\n     \n       dddd —\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  x\ny "
+    },
+    {
+        "text": "`code` dddd bb dddd    bb—eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 20,
+        "break": "\n  ",
+        "want": "`code` dddd bb dddd \n   \n  bb—eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  "
+    },
+    {
+        "text": "`code` ümlaut bb dddd ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    bb— ümlauta dddd  dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb ümlaut \n   ümlaut ümlaut ",
+        "width": 39,
+        "break": "\n  ",
+        "want": "`code` ümlaut bb dddd ccc\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    bb—\n  ümlauta dddd  dddd\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb\n  ümlaut \n   ümlaut ümlaut "
+    },
+    {
+        "text": "--flag=VALUE — dddd — x\ny ümlaut --flag=VALUE ümlauta ccc ",
+        "width": 11,
+        "break": "|",
+        "want": "--flag=VALUE|— dddd|— x\ny|ümlaut|--flag=VALUE|ümlauta|ccc "
+    },
+    {
+        "text": "x\ny ",
+        "width": 26,
+        "break": "\n",
+        "want": "x\ny "
+    },
+    {
+        "text": "`code` — ccc \n   —   \n   \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee aa —ccc ümlaut \n  bba --flag=VALUE dddd x\ny ccc x\ny `code` — dddd — — ",
+        "width": 10,
+        "break": "\n      ",
+        "want": "`code` —\n      ccc \n  \n      —   \n  \n      \n \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      aa —ccc\n      ümlaut \n \n      bba\n      --flag=VALUE\n      dddd x\ny\n      ccc x\ny\n      `code` —\n      dddd —\n      — "
+    },
+    {
+        "text": "  \n     ümlaut— — ",
+        "width": 17,
+        "break": "\n",
+        "want": "  \n     ümlaut—\n— "
+    },
+    {
+        "text": "\n   a dddddddd dddd   a x\ny--flag=VALUEccc a — --flag=VALUE ",
+        "width": 16,
+        "break": "\n  ",
+        "want": "\n   a dddddddd dddd\n    a\n  x\ny--flag=VALUEccc\n  a —\n  --flag=VALUE "
+    },
+    {
+        "text": "ccc `code` --flag=VALUE    \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeax\ny--flag=VALUEccc \n     ümlaut   ccc \n   ümlautccc aeeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd ",
+        "width": 14,
+        "break": "|",
+        "want": "ccc `code`|--flag=VALUE  | \n  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeax\ny--flag=VALUEccc|\n     ümlaut | ccc \n  |ümlautccc|aeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|dddd "
+    },
+    {
+        "text": "\n   bb \n          a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —   --flag=VALUE  \n   ümlaut a ümlaut ümlaut ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee    ",
+        "width": 33,
+        "break": "\n",
+        "want": "\n   bb \n          a\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n—   --flag=VALUE  \n   ümlaut a ümlaut ümlaut\nccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   "
+    },
+    {
+        "text": "aa --flag=VALUE ",
+        "width": 17,
+        "break": "\n      ",
+        "want": "aa --flag=VALUE "
+    },
+    {
+        "text": "   --flag=VALUE cccx\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut --flag=VALUE ccc a `code` a ccc  --flag=VALUE x\ny— eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — ",
+        "width": 24,
+        "break": "\n  ",
+        "want": "   --flag=VALUE cccx\ny\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  ümlaut --flag=VALUE ccc\n  a `code` a ccc \n  --flag=VALUE x\ny—\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  ccc\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  — "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb \n   bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — `code` bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 23,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      bb \n  \n      bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      x\ny\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      — `code`\n      bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      "
+    },
+    {
+        "text": "x\ny dddd `code` — eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut a --flag=VALUE     \n   dddd ",
+        "width": 13,
+        "break": "\n      ",
+        "want": "x\ny dddd\n      `code` —\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut\n      a\n      --flag=VALUE \n         \n   dddd "
+    },
+    {
+        "text": "bb \n     `code` dddd ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd —    ümlaut ümlaut ccc ccc `code`  — — ",
+        "width": 28,
+        "break": "\n      ",
+        "want": "bb \n     `code` dddd ümlaut\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd\n      —    ümlaut ümlaut ccc\n      ccc `code`  — — "
+    },
+    {
+        "text": "--flag=VALUE ccc a `code`bb ümlaut  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 28,
+        "break": "|",
+        "want": "--flag=VALUE ccc a `code`bb|ümlaut |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|"
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  bb ümlaut cccbb bb — a  dddd ümlautümlaut bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 6,
+        "break": "|",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee| bb|ümlaut|cccbb|bb —|a |dddd|ümlautümlaut|bb|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|"
+    },
+    {
+        "text": "\n   a \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee           — ",
+        "width": 9,
+        "break": "\n  ",
+        "want": "\n   a \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n           \n  — "
+    },
+    {
+        "text": "--flag=VALUE  ümlaut x\ny cccx\ny ",
+        "width": 33,
+        "break": "\n  ",
+        "want": "--flag=VALUE  ümlaut x\ny cccx\ny "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee      bb  aümlaut a ümlautdddd \n  ümlaut --flag=VALUE a ",
+        "width": 9,
+        "break": "|",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|     bb |aümlaut|a|ümlautdddd|\n |ümlaut|--flag=VALUE|a "
+    },
+    {
+        "text": "         ümlaut --flag=VALUE ",
+        "width": 3,
+        "break": "\n  ",
+        "want": "   \n     \n   ümlaut\n  --flag=VALUE\n  "
+    },
+    {
+        "text": "ccc ümlaut a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd ",
+        "width": 6,
+        "break": "|",
+        "want": "ccc|ümlaut|a|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|dddd "
+    },
+    {
+        "text": "ümlaut  `code` ümlaut x\ny \n   ",
+        "width": 31,
+        "break": "|",
+        "want": "ümlaut  `code` ümlaut x\ny \n  |"
+    },
+    {
+        "text": "ümlaut `code` x\ny  \n   \n   ",
+        "width": 24,
+        "break": "\n",
+        "want": "ümlaut `code` x\ny  \n   \n   "
+    },
+    {
+        "text": "a    \n     dddd `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 34,
+        "break": "\n  ",
+        "want": "a    \n     dddd `code`\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee "
+    },
+    {
+        "text": " --flag=VALUE —    a `code` --flag=VALUE ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE \n   a —   ccc ddddccc \n    ccc--flag=VALUE — --flag=VALUE x\ny ",
+        "width": 25,
+        "break": "\n  ",
+        "want": " --flag=VALUE —    a\n  `code` --flag=VALUE\n  ümlaut\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  --flag=VALUE \n   a —   ccc ddddccc \n    ccc--flag=VALUE —\n  --flag=VALUE x\ny "
+    },
+    {
+        "text": "--flag=VALUEx\ny    —  `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut —bb — --flag=VALUE bb x\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee   bb `code`dddd dddd ",
+        "width": 35,
+        "break": "\n      ",
+        "want": "--flag=VALUEx\ny    —  `code`\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ümlaut —bb — --flag=VALUE bb\n      x\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee  \n      bb `code`dddd dddd "
+    },
+    {
+        "text": "  a ümlaut bb    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd dddd— ddddccc dddd `code` bb    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUEx\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code`   ümlaut ümlaut — bb \n   ",
+        "width": 2,
+        "break": "|",
+        "want": " |a|ümlaut|bb|  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|dddd|dddd—|ddddccc|dddd|`code`|bb|  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|--flag=VALUEx\ny|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|a|a|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|`code`| |ümlaut|ümlaut|—|bb|\n | "
+    },
+    {
+        "text": "--flag=VALUE a`code` a   `code` a bb  `code` a \n  --flag=VALUEdddd ümlaut ümlaut ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`  ccc— `code` --flag=VALUE x\ny --flag=VALUE —",
+        "width": 22,
+        "break": "\n  ",
+        "want": "--flag=VALUE a`code` a\n    `code` a bb  `code`\n  a \n  --flag=VALUEdddd\n  ümlaut ümlaut\n  ümlaut\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`\n   ccc— `code`\n  --flag=VALUE x\ny\n  --flag=VALUE —"
+    },
+    {
+        "text": "aeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut   ddddccc ccc --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd  ",
+        "width": 16,
+        "break": "|",
+        "want": "aeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ümlaut  |ddddccc ccc|--flag=VALUE|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|dddd  "
+    },
+    {
+        "text": "ümlaut   `code` --flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee — `code`   —   a   `code`   x\ny",
+        "width": 4,
+        "break": "|",
+        "want": "ümlaut| |`code`|--flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|—|`code`| |— | a  |`code`| |x\ny"
+    },
+    {
+        "text": "",
+        "width": 28,
+        "break": "\n      ",
+        "want": ""
+    },
+    {
+        "text": "dddd ccc bb \n   —a `code`dddd--flag=VALUE \n   ccc bb dddd \n   ",
+        "width": 30,
+        "break": "\n",
+        "want": "dddd ccc bb \n   —a `code`dddd--flag=VALUE\n\n   ccc bb dddd \n   "
+    },
+    {
+        "text": "",
+        "width": 21,
+        "break": "\n      ",
+        "want": ""
+    },
+    {
+        "text": "  abb\n     `code` --flag=VALUEdddd  --flag=VALUE ddddbbx\nyümlaut`code` bb — ccc a dddd — ccc a",
+        "width": 35,
+        "break": "\n      ",
+        "want": "  abb\n     `code` --flag=VALUEdddd \n      --flag=VALUE ddddbbx\nyümlaut`code`\n      bb — ccc a dddd — ccc a"
+    },
+    {
+        "text": "bb   `code` \n  ccc ccc     ccc ddddbbdddd   — bb ",
+        "width": 22,
+        "break": "\n  ",
+        "want": "bb   `code` \n  ccc ccc     ccc\n  ddddbbdddd   — bb "
+    },
+    {
+        "text": "\n   — bb dddd \n    abb —    \n   ",
+        "width": 36,
+        "break": "\n  ",
+        "want": "\n   — bb dddd \n    abb —    \n   "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb —      ümlauta\n   bb \n   --flag=VALUE dddd dddd    dddd   dddd —    --flag=VALUE a   bb bb   \n   ",
+        "width": 35,
+        "break": "\n",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb\n—      ümlauta\n   bb \n   --flag=VALUE dddd dddd    dddd  \ndddd —    --flag=VALUE a   bb bb \n \n   "
+    },
+    {
+        "text": "x\ny ",
+        "width": 37,
+        "break": "\n  ",
+        "want": "x\ny "
+    },
+    {
+        "text": "`code`      cccdddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee—    dddd \n   x\ny x\ny — --flag=VALUE— --flag=VALUE`code` bb dddd x\nybb   a    ümlaut — — ümlaut `code` ",
+        "width": 31,
+        "break": "\n",
+        "want": "`code`      cccdddd\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee—\n   dddd \n   x\ny x\ny — --flag=VALUE—\n--flag=VALUE`code` bb dddd x\nybb   a    ümlaut — —\nümlaut `code` "
+    },
+    {
+        "text": "ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — `code` ümlautbb `code`    dddd ccc x\ny    `code`x\ny \n      ax\ny dddd `code`ümlaut ",
+        "width": 34,
+        "break": "\n",
+        "want": "ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n— `code` ümlautbb `code`   \ndddd ccc x\ny    `code`x\ny \n      ax\ny dddd `code`ümlaut "
+    },
+    {
+        "text": "\n   a --flag=VALUE      a   x\ny bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee— a    —   a \n  dddd     eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb— eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee— ",
+        "width": 1,
+        "break": "\n      ",
+        "want": "\n\n       \n      a\n      --flag=VALUE\n       \n       \n       a\n       \n      x\ny\n      bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee—\n      a\n       \n       —\n       \n      a\n      \n\n       dddd\n       \n       \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      bb—\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      \n\n       \n      ümlaut\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee—\n      "
+    },
+    {
+        "text": "\n     — \n   \n   ",
+        "width": 8,
+        "break": "|",
+        "want": "\n    |— \n  |\n   "
+    },
+    {
+        "text": "— --flag=VALUE ",
+        "width": 17,
+        "break": "\n",
+        "want": "— --flag=VALUE "
+    },
+    {
+        "text": "\n     bb dddd—x\ny   --flag=VALUE--flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee— eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd --flag=VALUE   ümlaut  ümlaut",
+        "width": 17,
+        "break": "\n      ",
+        "want": "\n     bb\n      dddd—x\ny  \n      --flag=VALUE--flag=VALUE\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee—\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      dddd --flag=VALUE\n        ümlaut \n      ümlaut"
+    },
+    {
+        "text": "aa ccc bb — \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut— x\nya`code`   ümlaut   --flag=VALUE bb bb x\ny    --flag=VALUE--flag=VALUE dddd x\nyccc `code` ",
+        "width": 11,
+        "break": "|",
+        "want": "aa ccc bb|— \n |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ümlaut—|x\nya`code` | ümlaut  |--flag=VALUE|bb bb x\ny  | --flag=VALUE--flag=VALUE|dddd x\nyccc|`code` "
+    },
+    {
+        "text": "  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  ccc   ccc— --flag=VALUEddddümlaut   --flag=VALUE —ümlaut    bb a a bb dddd   --flag=VALUE — ümlaut —     ccc \n   ",
+        "width": 37,
+        "break": "\n",
+        "want": "  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  ccc\n  ccc— --flag=VALUEddddümlaut  \n--flag=VALUE —ümlaut    bb a a bb\ndddd   --flag=VALUE — ümlaut —  \n  ccc \n   "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\nybb bb ümlaut ümlaut  ",
+        "width": 23,
+        "break": "|",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|x\nybb bb ümlaut|ümlaut  "
+    },
+    {
+        "text": "   \n   ccc bb ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb— dddd    dddd `code`\n   x\ny`code` ümlaut \n   ax\ny    cccümlaut — ümlaut a   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   --flag=VALUE ",
+        "width": 28,
+        "break": "\n",
+        "want": "   \n   ccc bb ccc\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nbb— dddd    dddd `code`\n   x\ny`code` ümlaut \n   ax\ny    cccümlaut — ümlaut\na  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n   --flag=VALUE "
+    },
+    {
+        "text": "ddddx\ny ümlaut `code` ",
+        "width": 26,
+        "break": "\n  ",
+        "want": "ddddx\ny ümlaut `code` "
+    },
+    {
+        "text": "bb   a eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb x\ny`code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   a x\nyümlaut ",
+        "width": 10,
+        "break": "\n",
+        "want": "bb   a\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb\nx\ny`code`\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  a x\nyümlaut "
+    },
+    {
+        "text": "accc bbümlauta cccx\ny \n   \n   ccc `code` — —\n   — --flag=VALUE    ccc--flag=VALUE \n  `code` x\ny --flag=VALUE bb \n   ",
+        "width": 6,
+        "break": "\n  ",
+        "want": "accc\n  bbümlauta\n  cccx\ny\n  \n   \n   ccc\n  `code`\n  —\n  —\n   —\n  --flag=VALUE\n    \n  ccc--flag=VALUE\n  \n  `code`\n  x\ny\n  --flag=VALUE\n  bb \n   "
+    },
+    {
+        "text": "aümlaut a bbbb --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE \n   a bb      bb  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeccc     ccc ",
+        "width": 25,
+        "break": "\n  ",
+        "want": "aümlaut a bbbb\n  --flag=VALUE\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  --flag=VALUE \n   a bb      bb \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeccc\n      ccc "
+    },
+    {
+        "text": "ccc `code` \n  bb  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — --flag=VALUE     \n   a    \n    ccc ümlaut \n   `code` ccc dddd ",
+        "width": 6,
+        "break": "\n  ",
+        "want": "ccc\n  `code`\n  \n  bb \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  —\n  --flag=VALUE\n      \n   a    \n    ccc\n  ümlaut\n  \n   `code`\n  ccc\n  dddd "
+    },
+    {
+        "text": "\n  x\ny`code`x\ny `code`dddd ümlaut —bb ccc   dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a   ",
+        "width": 2,
+        "break": "\n      ",
+        "want": "\n \n      x\ny`code`x\ny\n      `code`dddd\n      ümlaut\n      —bb\n      ccc\n       \n      dddd\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      a \n       "
+    },
+    {
+        "text": "x\ny \n   \n   bb `code` --flag=VALUE `code`   ccc —ccc ümlaut--flag=VALUE `code` x\ny dddd dddd ",
+        "width": 27,
+        "break": "\n  ",
+        "want": "x\ny \n   \n   bb `code` --flag=VALUE\n  `code`   ccc —ccc\n  ümlaut--flag=VALUE `code`\n  x\ny dddd dddd "
+    },
+    {
+        "text": "x\ny    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —— eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny ",
+        "width": 36,
+        "break": "\n  ",
+        "want": "x\ny   \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  ——\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny "
+    },
+    {
+        "text": "    `code`  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` dddd bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd   ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee — dddd   x\ny ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee  \n  —x\ny \n   \n  --flag=VALUE a \n   ",
+        "width": 32,
+        "break": "\n  ",
+        "want": "    `code` \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  `code` dddd bb\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  dddd  \n  ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  — dddd   x\ny\n  ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   \n  —x\ny \n   \n  --flag=VALUE a \n   "
+    },
+    {
+        "text": "ccc a    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 25,
+        "break": "\n",
+        "want": "ccc a   \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n"
+    },
+    {
+        "text": "",
+        "width": 40,
+        "break": "\n",
+        "want": ""
+    },
+    {
+        "text": "x\ny bb —   x\ny    `code`    `code` dddd   —   ccc dddd `code` dddd `code` a     bb x\ny \n   bb   ",
+        "width": 35,
+        "break": "\n      ",
+        "want": "x\ny bb —   x\ny    `code`   \n      `code` dddd   —   ccc dddd `code`\n      dddd `code` a     bb x\ny \n   bb   "
+    },
+    {
+        "text": "ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — ccc --flag=VALUE ccc a a abb dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee   x\ny `code` a \n   a    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  ",
+        "width": 27,
+        "break": "\n      ",
+        "want": "ccc\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      — ccc --flag=VALUE ccc a\n      a abb dddd\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      `code` —\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n        x\ny `code` a \n   a   \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n       "
+    },
+    {
+        "text": "  --flag=VALUE          — dddd — ümlaut--flag=VALUE \n     --flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee   ümlaut \n   a ümlaut ümlautbb bb    ",
+        "width": 26,
+        "break": "|",
+        "want": "  --flag=VALUE         |— dddd —|ümlaut--flag=VALUE \n    |--flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|  ümlaut \n   a ümlaut|ümlautbb bb    "
+    },
+    {
+        "text": "ccc a `code` \n   ",
+        "width": 32,
+        "break": "\n",
+        "want": "ccc a `code` \n   "
+    },
+    {
+        "text": "ümlaut \n   ccc ümlaut —eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut ümlaut \n   ",
+        "width": 18,
+        "break": "|",
+        "want": "ümlaut \n   ccc|ümlaut|—eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ümlaut ümlaut \n | "
+    },
+    {
+        "text": "  dddd ax\ny`code`",
+        "width": 21,
+        "break": "|",
+        "want": "  dddd ax\ny`code`"
+    },
+    {
+        "text": "dddd a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny dddd a \n         eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n  \n      ccc a --flag=VALUE--flag=VALUE — —",
+        "width": 33,
+        "break": "\n",
+        "want": "dddd a\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny dddd a \n        \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n  \n      ccc a\n--flag=VALUE--flag=VALUE — —"
+    },
+    {
+        "text": "\n  x\ny --flag=VALUE—bb      `code` x\ny    dddd — x\nyümlaut --flag=VALUE dddd`code` ddddbb ümlaut --flag=VALUE  ",
+        "width": 1,
+        "break": "|",
+        "want": "\n| x\ny|--flag=VALUE—bb| | | `code`|x\ny| | dddd|—|x\nyümlaut|--flag=VALUE|dddd`code`|ddddbb|ümlaut|--flag=VALUE| "
+    },
+    {
+        "text": "cccümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee a x\ny bb x\nyx\ny ccc dddd dddd   dddd ccc a --flag=VALUE   x\ny--flag=VALUE ümlaut ",
+        "width": 30,
+        "break": "|",
+        "want": "cccümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee|a x\ny bb x\nyx\ny ccc dddd dddd | dddd ccc a --flag=VALUE  |x\ny--flag=VALUE ümlaut "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee— ccc bb x\ny —   ccc ccc x\ny a bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —\n   --flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   bb dddd ",
+        "width": 27,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee—\n      ccc bb x\ny —   ccc ccc\n      x\ny a bb\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      x\ny\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      —\n  \n      --flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n        bb dddd "
+    },
+    {
+        "text": "a ccc a x\nybb \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee—— --flag=VALUE —  ccc  ümlaut    — —x\ny —  --flag=VALUE \n   dddd   —— eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —",
+        "width": 32,
+        "break": "|",
+        "want": "a ccc a x\nybb \n  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee——|--flag=VALUE —  ccc  ümlaut  | — —x\ny —  --flag=VALUE \n | dddd   ——|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|—"
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeea a a --flag=VALUE --flag=VALUE ccc adddd    --flag=VALUE ",
+        "width": 23,
+        "break": "\n  ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeea\n  a a --flag=VALUE\n  --flag=VALUE ccc adddd \n    --flag=VALUE "
+    },
+    {
+        "text": "dddd   — `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 24,
+        "break": "|",
+        "want": "dddd   — `code`|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|"
+    },
+    {
+        "text": "--flag=VALUE dddd ",
+        "width": 7,
+        "break": "|",
+        "want": "--flag=VALUE|dddd "
+    },
+    {
+        "text": "a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc   bb ",
+        "width": 40,
+        "break": "\n      ",
+        "want": "a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc  \n      bb "
+    },
+    {
+        "text": "bb  dddd dddd \n   ",
+        "width": 11,
+        "break": "\n  ",
+        "want": "bb  dddd\n  dddd \n   "
+    },
+    {
+        "text": "`code` ccc\n     `code` bb     eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`  \n   \n  dddd a ccc `code` dddd--flag=VALUEümlaut — —  ",
+        "width": 11,
+        "break": "\n      ",
+        "want": "`code` ccc\n\n          `code`\n      bb    \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`\n       \n   \n \n      dddd a ccc\n      `code`\n      dddd--flag=VALUEümlaut\n      — —  "
+    },
+    {
+        "text": "ddddx\ny    x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — ",
+        "width": 2,
+        "break": "|",
+        "want": "ddddx\ny|  |x\ny|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee| |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|—|"
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc`code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb  --flag=VALUE x\ny--flag=VALUE ümlaut\n  a— `code` ümlaut x\ny\n   x\ny x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut \n   ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd dddd ",
+        "width": 8,
+        "break": "\n",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nccc`code`\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nbb \n--flag=VALUE\nx\ny--flag=VALUE\nümlaut\n  a—\n`code`\nümlaut\nx\ny\n   x\ny x\ny\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut\n\n  \nümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\ndddd\ndddd "
+    },
+    {
+        "text": "x\nybb— ",
+        "width": 39,
+        "break": "\n  ",
+        "want": "x\nybb— "
+    },
+    {
+        "text": "a ümlaut \n   — ccc \n   --flag=VALUE dddd bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   ümlaut —a \n  ccc —",
+        "width": 40,
+        "break": "\n      ",
+        "want": "a ümlaut \n   — ccc \n   --flag=VALUE\n      dddd bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n \n       ümlaut —a \n  ccc —"
+    },
+    {
+        "text": "bb x\ny    — ümlaut ccc ",
+        "width": 30,
+        "break": "\n  ",
+        "want": "bb x\ny    — ümlaut ccc "
+    },
+    {
+        "text": "--flag=VALUEcccccc —\n   x\nydddd bb   `code` bb`code`x\ny ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut — bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   ümlaut",
+        "width": 2,
+        "break": "|",
+        "want": "--flag=VALUEcccccc|—\n| |x\nydddd|bb| |`code`|bb`code`x\ny|ümlaut|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ümlaut|—|bb|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee| |ümlaut"
+    },
+    {
+        "text": "\n    `code` a ümlaut `code` `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   — a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut dddd ümlaut  dddd dddd ümlaut dddd   — x\ny `code``code` ",
+        "width": 21,
+        "break": "\n      ",
+        "want": "\n    `code` a ümlaut\n      `code` `code`\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      \n   — a\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ümlaut dddd ümlaut \n      dddd dddd ümlaut\n      dddd   — x\ny\n      `code``code` "
+    },
+    {
+        "text": "   x\ny ",
+        "width": 17,
+        "break": "\n",
+        "want": "   x\ny "
+    },
+    {
+        "text": "   — —   x\ny a x\ny   dddd bb — ccc —bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee— — a `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ddddccc `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "width": 30,
+        "break": "\n      ",
+        "want": "   — —   x\ny a x\ny   dddd\n      bb — ccc —bb\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee—\n      — a `code`\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ddddccc `code`\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    },
+    {
+        "text": "a —   x\ny \n   ümlaut \n   \n   `code`  dddd — \n   ",
+        "width": 26,
+        "break": "\n  ",
+        "want": "a —   x\ny \n   ümlaut \n   \n   `code`  dddd — \n   "
+    },
+    {
+        "text": "a   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeccc ümlaut --flag=VALUE ",
+        "width": 25,
+        "break": "\n",
+        "want": "a  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeeeccc\nümlaut --flag=VALUE "
+    },
+    {
+        "text": "dddd   ",
+        "width": 6,
+        "break": "\n",
+        "want": "dddd  \n"
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb bb     —eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   `code` ccc —  — — a x\ny ",
+        "width": 30,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      bb bb    \n      —eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      \n  \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      \n   `code` ccc —  — — a\n      x\ny "
+    },
+    {
+        "text": "— aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd bb ccc a\n   --flag=VALUEx\ny `code`",
+        "width": 19,
+        "break": "\n  ",
+        "want": "—\n  aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd\n  bb ccc a\n   --flag=VALUEx\ny\n  `code`"
+    },
+    {
+        "text": "  --flag=VALUE ccc bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE ümlaut \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny   ",
+        "width": 11,
+        "break": "\n  ",
+        "want": " \n  --flag=VALUE\n  ccc bb\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  --flag=VALUE\n  ümlaut \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny\n    "
+    },
+    {
+        "text": "ümlaut \n  --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut `code`ümlaut    ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut ümlaut `code` ",
+        "width": 27,
+        "break": "\n",
+        "want": "ümlaut \n  --flag=VALUE\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut\n`code`ümlaut   \nccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nümlaut ümlaut `code` "
+    },
+    {
+        "text": "   --flag=VALUE \n   `code` ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee — \n   x\ny— dddd  bb      dddd — `code` `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 35,
+        "break": "|",
+        "want": "   --flag=VALUE \n   `code`|ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|— \n   x\ny— dddd  bb      dddd|— `code` `code`|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee "
+    },
+    {
+        "text": "ümlaut bb \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code`--flag=VALUE`code` a`code` ccc bb  bb `code`   bb x\ny bb --flag=VALUE      `code` ",
+        "width": 8,
+        "break": "\n",
+        "want": "ümlaut\nbb \n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n`code`--flag=VALUE`code`\na`code`\nccc bb \nbb\n`code`  \nbb x\ny bb\n--flag=VALUE\n    \n`code` "
+    },
+    {
+        "text": "— `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny bb ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   \n  bb dddd\n   bb `code` a —    cccccc    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    dddd --flag=VALUE ",
+        "width": 35,
+        "break": "|",
+        "want": "—|`code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|x\ny bb ccc|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n  |\n  bb dddd\n   bb `code` a —   |cccccc   |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   |dddd --flag=VALUE "
+    },
+    {
+        "text": "--flag=VALUE --flag=VALUE \n   x\ny\n  ümlaut bb —eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code`ümlaut \n   a ümlaut   \n   bb   x\ny `code` ümlaut ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee    `code` \n   ",
+        "width": 22,
+        "break": "|",
+        "want": "--flag=VALUE|--flag=VALUE \n   x\ny\n |ümlaut bb|—eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|`code`ümlaut \n   a|ümlaut   \n   bb   x\ny|`code` ümlaut|ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee|   `code` \n   "
+    },
+    {
+        "text": "— bb ddddbb—ccc x\ny x\nyümlaut ccc cccümlautdddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 14,
+        "break": "\n  ",
+        "want": "— bb\n  ddddbb—ccc\n  x\ny x\nyümlaut\n  ccc\n  cccümlautdddd\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  "
+    },
+    {
+        "text": "  --flag=VALUEümlautx\ny a ccc dddd --flag=VALUE a    cccümlaut ",
+        "width": 39,
+        "break": "|",
+        "want": "  --flag=VALUEümlautx\ny a ccc dddd|--flag=VALUE a    cccümlaut "
+    },
+    {
+        "text": "`code` —  x\ny \n   \n  x\ny ccc x\ny — ",
+        "width": 12,
+        "break": "\n",
+        "want": "`code` — \nx\ny \n   \n  x\ny ccc x\ny — "
+    },
+    {
+        "text": "ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 36,
+        "break": "\n      ",
+        "want": "ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      "
+    },
+    {
+        "text": "\n   \n   a ümlaut `code` --flag=VALUE\n   x\ny — a  dddd ccc--flag=VALUE   \n  x\ny dddd   a ",
+        "width": 13,
+        "break": "\n      ",
+        "want": "\n   \n   a\n      ümlaut\n      `code`\n      --flag=VALUE\n\n        x\ny — a \n      dddd\n      ccc--flag=VALUE\n        \n  x\ny dddd\n        a "
+    },
+    {
+        "text": "--flag=VALUE — ccc dddd ümlaut —`code` \n   bb \n   bb  x\ny bb",
+        "width": 14,
+        "break": "\n      ",
+        "want": "--flag=VALUE\n      — ccc dddd\n      ümlaut\n      —`code` \n  \n      bb \n   bb  x\ny\n      bb"
+    },
+    {
+        "text": "ccc `code`dddd --flag=VALUE \n     a ",
+        "width": 6,
+        "break": "\n      ",
+        "want": "ccc\n      `code`dddd\n      --flag=VALUE\n      \n    \n      a "
+    },
+    {
+        "text": "\n   \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc — ümlaut   `code` \n  ",
+        "width": 16,
+        "break": "\n",
+        "want": "\n   \n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nccc — ümlaut \n `code` \n  "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeea    ümlaut ccc`code` `code` — a   a ",
+        "width": 26,
+        "break": "\n",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeea\n   ümlaut ccc`code`\n`code` — a   a "
+    },
+    {
+        "text": "dddd    dddd   a a   \n        --flag=VALUE `code` ",
+        "width": 37,
+        "break": "\n",
+        "want": "dddd    dddd   a a   \n        --flag=VALUE `code` "
+    },
+    {
+        "text": "`code` bb — `code` x\nyümlaut — `code` dddd `code` a —\n   `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeeecccdddd --flag=VALUE --flag=VALUE bb \n   bbx\ny ",
+        "width": 2,
+        "break": "|",
+        "want": "`code`|bb|—|`code`|x\nyümlaut|—|`code`|dddd|`code`|a|—\n| |`code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeeecccdddd|--flag=VALUE|--flag=VALUE|bb|\n | bbx\ny|"
+    },
+    {
+        "text": "dddd    dddd —`code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — \n   dddd `code`\n   bb ccc bb   bb ccc  a ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee — \n   --flag=VALUE a —    bb  ",
+        "width": 40,
+        "break": "\n",
+        "want": "dddd    dddd —`code`\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee — \n   dddd `code`\n   bb ccc bb   bb ccc  a\nddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee — \n   --flag=VALUE a —    bb  "
+    },
+    {
+        "text": "bb --flag=VALUEx\ny x\nyümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeeea—    ümlauta `code` --flag=VALUE `code`       x\ny x\ny--flag=VALUE     bb  ",
+        "width": 28,
+        "break": "|",
+        "want": "bb --flag=VALUEx\ny|x\nyümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeeea—|   ümlauta `code`|--flag=VALUE `code`      |x\ny x\ny--flag=VALUE     bb  "
+    },
+    {
+        "text": "ccc x\ny    ccc`code` ccc --flag=VALUE\n   ccc `code` `code` bbdddd",
+        "width": 34,
+        "break": "\n  ",
+        "want": "ccc x\ny    ccc`code` ccc\n  --flag=VALUE\n   ccc `code` `code` bbdddd"
+    },
+    {
+        "text": "    ümlaut ümlaut ",
+        "width": 32,
+        "break": "\n",
+        "want": "    ümlaut ümlaut "
+    },
+    {
+        "text": "  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb x\ny  \n   x\ny   — bb    dddd      — dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n         --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   `code`",
+        "width": 5,
+        "break": "\n      ",
+        "want": " \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb\n      x\ny \n      \n  \n      x\ny  \n      —\n      bb   \n      dddd \n         \n      —\n      dddd\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      \n        \n      --flag=VALUE\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n       \n      `code`"
+    },
+    {
+        "text": "x\ny ümlaut \n   \n   \n    — dddd\n   ",
+        "width": 4,
+        "break": "\n  ",
+        "want": "x\ny\n  ümlaut\n  \n   \n   \n   \n  —\n  dddd\n   "
+    },
+    {
+        "text": "dddd —  dddd ccc bb bb — dddd ",
+        "width": 8,
+        "break": "\n      ",
+        "want": "dddd —\n       dddd\n      ccc bb\n      bb —\n      dddd "
+    },
+    {
+        "text": "\n   x\ny `code`    — `code` `code` `code` a --flag=VALUE dddd    dddd x\ny ",
+        "width": 14,
+        "break": "|",
+        "want": "\n   x\ny `code`|   — `code`|`code` `code`|a --flag=VALUE|dddd    dddd|x\ny "
+    },
+    {
+        "text": "--flag=VALUEccc a a     bb `code` —   ümlaut \n   addddbb--flag=VALUE x\ny — `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc \n   bb—   a ",
+        "width": 40,
+        "break": "|",
+        "want": "--flag=VALUEccc a a     bb `code` —  |ümlaut \n   addddbb--flag=VALUE x\ny —|`code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc|\n   bb—   a "
+    },
+    {
+        "text": "`code` a `code`      x\ny\n   ddddx\ny bb x\ny   --flag=VALUE dddd    bb   --flag=VALUE \n   --flag=VALUE \n     eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut     x\ny ",
+        "width": 23,
+        "break": "\n  ",
+        "want": "`code` a `code`     \n  x\ny\n   ddddx\ny bb x\ny  \n  --flag=VALUE dddd    bb\n    --flag=VALUE \n   --flag=VALUE \n    \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  ümlaut     x\ny "
+    },
+    {
+        "text": "\n   — ccc \n   bb ccc `code``code` dddda \n   \n   — `code` a dddd — `code` \n   bb    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   ",
+        "width": 5,
+        "break": "\n      ",
+        "want": "\n  \n      —\n      ccc \n\n        bb\n      ccc\n      `code``code`\n      dddda\n      \n   \n\n        —\n      `code`\n      a\n      dddd\n      —\n      `code`\n      \n  \n      bb   \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n        "
+    },
+    {
+        "text": "--flag=VALUE   --flag=VALUE—eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut — dddd `code` ümlaut   `code` `code` x\ny `code`bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code`x\ny    dddd   —   x\ny ümlaut ",
+        "width": 15,
+        "break": "\n      ",
+        "want": "--flag=VALUE  \n      --flag=VALUE—eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      --flag=VALUE\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ümlaut —\n      dddd `code`\n      ümlaut  \n      `code` `code`\n      x\ny\n      `code`bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      `code`x\ny   \n      dddd   —  \n      x\ny ümlaut "
+    },
+    {
+        "text": "dddd `code` \n   —ccc `code`bb   ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd bb ümlaut \n   --flag=VALUE ccc \n   \n  bb ccc x\ny     ccc ",
+        "width": 33,
+        "break": "\n      ",
+        "want": "dddd `code` \n   —ccc `code`bb  \n      ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      dddd bb ümlaut \n   --flag=VALUE\n      ccc \n   \n  bb ccc x\ny     ccc "
+    },
+    {
+        "text": "`code` ümlaut",
+        "width": 21,
+        "break": "\n  ",
+        "want": "`code` ümlaut"
+    },
+    {
+        "text": "a  x\ny  — a    —  \n     — ccc --flag=VALUE dddd —--flag=VALUEa — --flag=VALUE     bb ccc    bb ",
+        "width": 4,
+        "break": "\n      ",
+        "want": "a \n      x\ny \n      —\n      a   \n      — \n      \n   \n       —\n      ccc\n      --flag=VALUE\n      dddd\n      —--flag=VALUEa\n      —\n      --flag=VALUE\n         \n      bb\n      ccc \n        bb\n      "
+    },
+    {
+        "text": "ümlaut \n   bbbb `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —bb bbx\ny ümlautx\nyx\ny ddddümlaut`code` ",
+        "width": 15,
+        "break": "\n",
+        "want": "ümlaut \n   bbbb\n`code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n—bb bbx\ny ümlautx\nyx\ny\nddddümlaut`code`\n"
+    },
+    {
+        "text": "--flag=VALUEdddd \n  ccc ccc   dddd",
+        "width": 15,
+        "break": "\n  ",
+        "want": "--flag=VALUEdddd\n  \n  ccc ccc   dddd"
+    },
+    {
+        "text": "--flag=VALUE --flag=VALUE ccc ümlaut \n   `code`   a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code` ",
+        "width": 2,
+        "break": "\n",
+        "want": "--flag=VALUE\n--flag=VALUE\nccc\nümlaut\n\n  \n`code`\n \na\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`\n"
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd   dddddddd a \n  x\ny a ",
+        "width": 20,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd\n        dddddddd a \n  x\ny\n      a "
+    },
+    {
+        "text": "--flag=VALUE ccc  bb ddddx\ny\n   ccc ",
+        "width": 11,
+        "break": "\n",
+        "want": "--flag=VALUE\nccc  bb\nddddx\ny\n   ccc "
+    },
+    {
+        "text": "—bb--flag=VALUE ccc x\ny ümlaut x\ny ümlaut x\nyümlaut`code` x\nyx\nyümlaut ",
+        "width": 30,
+        "break": "|",
+        "want": "—bb--flag=VALUE ccc x\ny|ümlaut x\ny ümlaut|x\nyümlaut`code` x\nyx\nyümlaut|"
+    },
+    {
+        "text": "dddd      --flag=VALUE --flag=VALUE `code`--flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` dddd ccc  bb `code` x\ny \n     ümlaut dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut --flag=VALUE--flag=VALUE a ",
+        "width": 30,
+        "break": "|",
+        "want": "dddd      --flag=VALUE|--flag=VALUE|`code`--flag=VALUE|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|`code` dddd ccc  bb `code` x\ny|\n     ümlaut dddd|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ümlaut|--flag=VALUE--flag=VALUE a "
+    },
+    {
+        "text": "--flag=VALUE—— ümlaut dddd dddd dddd ccc --flag=VALUE ümlautx\nydddd  — bb — bb x\ny --flag=VALUE ",
+        "width": 16,
+        "break": "|",
+        "want": "--flag=VALUE——|ümlaut dddd|dddd dddd ccc|--flag=VALUE|ümlautx\nydddd |— bb — bb|x\ny --flag=VALUE|"
+    },
+    {
+        "text": "a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny    ümlaut— --flag=VALUE x\nyx\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee   ccc a ümlaut ümlaut — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 33,
+        "break": "\n",
+        "want": "a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nx\ny    ümlaut— --flag=VALUE x\nyx\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee  \nccc a ümlaut ümlaut —\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n"
+    },
+    {
+        "text": "x\ny`code` ccc — \n   \n   — --flag=VALUE   cccümlaut x\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut ümlaut `code` bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee bbx\ny ümlaut — ccc\n   x\ny --flag=VALUE ",
+        "width": 35,
+        "break": "\n      ",
+        "want": "x\ny`code` ccc — \n   \n   —\n      --flag=VALUE   cccümlaut\n      x\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ümlaut ümlaut `code`\n      bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      bbx\ny ümlaut — ccc\n   x\ny\n      --flag=VALUE "
+    },
+    {
+        "text": "--flag=VALUE --flag=VALUE —dddd —      ",
+        "width": 40,
+        "break": "\n      ",
+        "want": "--flag=VALUE --flag=VALUE —dddd —   \n        "
+    },
+    {
+        "text": "  ümlaut--flag=VALUE — ccc    ccca eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — dddd`code` dddd —  \n      ümlaut ümlautx\ny--flag=VALUE a ",
+        "width": 26,
+        "break": "\n      ",
+        "want": "  ümlaut--flag=VALUE —\n      ccc    ccca\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      — dddd`code` dddd —  \n      ümlaut\n      ümlautx\ny--flag=VALUE a "
+    },
+    {
+        "text": "aümlaut — dddd   a --flag=VALUE ccc`code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny \n   bb `code` bb\n  \n       a dddd ccc bb bb— --flag=VALUE ",
+        "width": 1,
+        "break": "\n      ",
+        "want": "aümlaut\n      —\n      dddd\n       \n      a\n      --flag=VALUE\n      ccc`code`\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      x\ny\n      \n\n       \n      bb\n      `code`\n      bb\n\n       \n       a\n      dddd\n      ccc\n      bb\n      bb—\n      --flag=VALUE\n      "
+    },
+    {
+        "text": "\n   `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   x\ny x\ny — `code` — \n   bb   a  x\ny   dddd   x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   ddddümlaut —dddd ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE   ümlaut",
+        "width": 4,
+        "break": "|",
+        "want": "\n  |`code`|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee| |x\ny|x\ny|—|`code`|—|\n  |bb  |a |x\ny | dddd| |x\ny|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|\n  |ddddümlaut|—dddd|ccc|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|--flag=VALUE| |ümlaut"
+    },
+    {
+        "text": "`code` x\ny    \n  a \n   bb ümlaut   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —--flag=VALUE    a\n   `code` ccc    x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n     — ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code`",
+        "width": 6,
+        "break": "\n      ",
+        "want": "`code`\n      x\ny   \n      \n  a \n\n        bb\n      ümlaut\n       \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      x\ny   \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      —--flag=VALUE\n         a\n \n       `code`\n      ccc   \n      x\ny\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n         \n      —\n      ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      `code`"
+    },
+    {
+        "text": "ccc a\n   x\ny \n   bb bb`code`    dddd    bb dddd    a x\nya —  ccc ",
+        "width": 22,
+        "break": "\n  ",
+        "want": "ccc a\n   x\ny \n   bb bb`code`    dddd  \n   bb dddd    a x\nya —\n   ccc "
+    },
+    {
+        "text": "  `code` dddd   ümlaut ümlaut  ümlaut \n   ümlaut`code`  ümlaut\n   ——bb x\nydddd\n   x\ny dddd x\ny ümlaut— ccc bb ",
+        "width": 20,
+        "break": "|",
+        "want": "  `code` dddd  |ümlaut ümlaut |ümlaut \n  |ümlaut`code` |ümlaut\n   ——bb|x\nydddd\n   x\ny dddd|x\ny ümlaut— ccc|bb "
+    },
+    {
+        "text": "ümlaut — ccc — x\ny`code` --flag=VALUE   x\ny x\ny --flag=VALUE `code`   a `code` a dddd dddd bb    \n     bb ccc — ",
+        "width": 35,
+        "break": "\n",
+        "want": "ümlaut — ccc — x\ny`code` --flag=VALUE   x\ny x\ny --flag=VALUE `code`   a `code` a\ndddd dddd bb    \n     bb ccc — "
+    },
+    {
+        "text": "\n  \n   dddd —`code`--flag=VALUE `code`ümlaut      dddd ümlaut `code`   --flag=VALUE   x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   ccc x\ny --flag=VALUE",
+        "width": 29,
+        "break": "|",
+        "want": "\n  \n   dddd|—`code`--flag=VALUE|`code`ümlaut      dddd|ümlaut `code`   --flag=VALUE|  x\ny|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|\n   ccc x\ny --flag=VALUE"
+    },
+    {
+        "text": "`code` dddd — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb ümlaut a   ccc— dddd —ümlaut \n   ccc --flag=VALUE --flag=VALUE a --flag=VALUEümlaut bb— --flag=VALUE \n   dddd dddd `code`dddd dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "width": 36,
+        "break": "\n",
+        "want": "`code` dddd —\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb\nümlaut a   ccc— dddd —ümlaut \n   ccc --flag=VALUE --flag=VALUE a\n--flag=VALUEümlaut bb—\n--flag=VALUE \n   dddd dddd `code`dddd dddd\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    },
+    {
+        "text": "dddd ümlaut dddd`code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny      --flag=VALUE x\ny bb",
+        "width": 35,
+        "break": "|",
+        "want": "dddd ümlaut dddd`code`|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny |    --flag=VALUE x\ny bb"
+    },
+    {
+        "text": "--flag=VALUE `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE dddd —`code`a bb   \n  --flag=VALUEdddd— dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd — x\ny `code` `code` `code` \n   ccc--flag=VALUE`code` x\ny a",
+        "width": 30,
+        "break": "\n  ",
+        "want": "--flag=VALUE\n  `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  --flag=VALUE dddd —`code`a\n  bb   \n  --flag=VALUEdddd— dddd\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  dddd — x\ny `code` `code`\n  `code` \n   ccc--flag=VALUE`code` x\ny a"
+    },
+    {
+        "text": "dddd \n   — \n   dddd `code` --flag=VALUE ümlaut  x\ny --flag=VALUE ",
+        "width": 33,
+        "break": "|",
+        "want": "dddd \n   — \n   dddd `code`|--flag=VALUE ümlaut  x\ny|--flag=VALUE "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb     —    --flag=VALUE a--flag=VALUE bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb     a a \n   `code` —ümlaut ccc --flag=VALUE ccc",
+        "width": 27,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb\n          —    --flag=VALUE\n      a--flag=VALUE bb\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n       eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      bb     a a \n   `code`\n      —ümlaut ccc --flag=VALUE\n      ccc"
+    },
+    {
+        "text": "\n   \n  `code` ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny ümlautdddd ümlaut   ",
+        "width": 39,
+        "break": "\n",
+        "want": "\n   \n  `code` ccc\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny ümlautdddd ümlaut   "
+    },
+    {
+        "text": "bb dddd —ümlaut x\ny a\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeea eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   — — dddd --flag=VALUEx\ny — —       eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut  `code` bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "width": 15,
+        "break": "\n",
+        "want": "bb dddd\n—ümlaut x\ny a\n \neeeeeeeeeeeeeeeeeeeeeeeeeeeeeea\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n   — — dddd\n--flag=VALUEx\ny — —      \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nümlaut  `code`\nbbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a ccc — a dddd    — bba `code` \n   —   --flag=VALUE   ",
+        "width": 29,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      a ccc — a dddd    — bba\n      `code` \n   —   --flag=VALUE\n        "
+    },
+    {
+        "text": "        `code`   ccc x\ny ",
+        "width": 19,
+        "break": "\n",
+        "want": "        `code`  \nccc x\ny "
+    },
+    {
+        "text": "dddddddd    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    dddd dddd cccümlaut \n      — x\ny a a dddd \n  bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc`code` --flag=VALUE--flag=VALUEccc",
+        "width": 38,
+        "break": "\n      ",
+        "want": "dddddddd   \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    dddd\n      dddd cccümlaut \n      — x\ny a a dddd \n \n      bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ccc`code` --flag=VALUE--flag=VALUEccc"
+    },
+    {
+        "text": "bb ccc  \n   ümlaut ",
+        "width": 13,
+        "break": "\n      ",
+        "want": "bb ccc  \n  \n      ümlaut "
+    },
+    {
+        "text": "",
+        "width": 17,
+        "break": "|",
+        "want": ""
+    },
+    {
+        "text": "a\n   ümlaut ümlaut  dddd ccc     ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd`code`— \n    bb —`code` \n   ümlaut    ccc --flag=VALUE \n   --flag=VALUE  `code` ümlaut",
+        "width": 24,
+        "break": "\n  ",
+        "want": "a\n   ümlaut ümlaut  dddd\n  ccc     ccc\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd`code`—\n  \n    bb —`code` \n   ümlaut    ccc\n  --flag=VALUE \n   --flag=VALUE  `code`\n  ümlaut"
+    },
+    {
+        "text": "x\ny \n   ",
+        "width": 16,
+        "break": "\n",
+        "want": "x\ny \n   "
+    },
+    {
+        "text": "dddd ccc a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` a ümlaut`code`bb ümlaut\n  — a ccc — x\ny    `code` a —   `code`a ccc ",
+        "width": 27,
+        "break": "|",
+        "want": "dddd ccc a|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|\n  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|`code` a ümlaut`code`bb|ümlaut\n  — a ccc — x\ny|   `code` a —   `code`a|ccc "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a\n     `code`a `code`   `code`   bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd ccc bb bb \n   --flag=VALUE   bb \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a a--flag=VALUE --flag=VALUE ",
+        "width": 14,
+        "break": "|",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|a\n     `code`a|`code`  |`code`   bb|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|dddd ccc bb bb|\n  |--flag=VALUE  |bb \n  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|a|a--flag=VALUE|--flag=VALUE "
+    },
+    {
+        "text": "ccc ümlaut x\ny    --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE ccca a bb— `code` x\ny dddd —   aa   \n  cccbb ",
+        "width": 31,
+        "break": "\n      ",
+        "want": "ccc ümlaut x\ny    --flag=VALUE\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      --flag=VALUE ccca a bb—\n      `code` x\ny dddd —   aa   \n \n      cccbb "
+    },
+    {
+        "text": "bb ",
+        "width": 21,
+        "break": "\n      ",
+        "want": "bb "
+    },
+    {
+        "text": "ax\ny ümlaut \n   \n   \n  ccc  cccümlaut\n   ",
+        "width": 24,
+        "break": "|",
+        "want": "ax\ny ümlaut \n   \n   \n |ccc  cccümlaut\n   "
+    },
+    {
+        "text": "   bb dddddddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a    —      --flag=VALUE    bb `code` —      ümlaut `code` \n    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`  a — ",
+        "width": 18,
+        "break": "\n",
+        "want": "   bb dddddddd\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\na    —     \n--flag=VALUE    bb\n`code` —     \nümlaut `code` \n   \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`\n a — "
+    },
+    {
+        "text": "\n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   `code` ——    `code` bb ",
+        "width": 4,
+        "break": "\n",
+        "want": "\n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n \n`code`\n——\n  \n`code`\nbb "
+    },
+    {
+        "text": "a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb ümlaut--flag=VALUE a — x\ny `code` dddd x\ny x\nyx\nyccc `code`\n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb ccc    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb \n  ",
+        "width": 30,
+        "break": "|",
+        "want": "a|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|bb ümlaut--flag=VALUE a —|x\ny `code` dddd x\ny x\nyx\nyccc|`code`\n  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|x\ny|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|bb ccc   |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|bb \n  "
+    },
+    {
+        "text": "ümlaut --flag=VALUE \n   dddd ümlaut ümlaut    a ",
+        "width": 21,
+        "break": "\n",
+        "want": "ümlaut --flag=VALUE \n   dddd ümlaut\nümlaut    a "
+    },
+    {
+        "text": "—    --flag=VALUE --flag=VALUE x\ny --flag=VALUE a ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb x\nyccc \n   a ccc bb\n   ümlaut `code` ",
+        "width": 23,
+        "break": "\n",
+        "want": "—    --flag=VALUE\n--flag=VALUE x\ny --flag=VALUE a\nümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nbb x\nyccc \n   a ccc bb\n   ümlaut `code` "
+    },
+    {
+        "text": "bb acccdddd `code` x\ny dddd ccc     --flag=VALUE x\ny \n   `code`ümlaut\n  `code` dddd `code` `code`  \n   dddd --flag=VALUE x\ny    bb \n   dddd ",
+        "width": 31,
+        "break": "\n      ",
+        "want": "bb acccdddd `code` x\ny dddd ccc\n          --flag=VALUE x\ny \n  \n      `code`ümlaut\n  `code` dddd\n      `code` `code`  \n   dddd\n      --flag=VALUE x\ny    bb \n   dddd\n      "
+    },
+    {
+        "text": "— ccc",
+        "width": 14,
+        "break": "|",
+        "want": "— ccc"
+    },
+    {
+        "text": " --flag=VALUE `code` ümlaut x\ny a dddd --flag=VALUEbbx\nydddd \n   —   bb x\ny —ümlaut bb `code` --flag=VALUEa a ",
+        "width": 1,
+        "break": "\n      ",
+        "want": " --flag=VALUE\n      `code`\n      ümlaut\n      x\ny\n      a\n      dddd\n      --flag=VALUEbbx\nydddd\n      \n\n       \n      —\n       \n      bb\n      x\ny\n      —ümlaut\n      bb\n      `code`\n      --flag=VALUEa\n      a\n      "
+    },
+    {
+        "text": "—x\nya`code` dddd  x\ny \n   x\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc\n   bb dddd `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc--flag=VALUE dddd \n      ",
+        "width": 34,
+        "break": "\n",
+        "want": "—x\nya`code` dddd  x\ny \n   x\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nccc\n   bb dddd `code`\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nccc--flag=VALUE dddd \n      "
+    },
+    {
+        "text": "x\nyccc`code` —      --flag=VALUE --flag=VALUE bb  `code` --flag=VALUE bb ",
+        "width": 34,
+        "break": "\n  ",
+        "want": "x\nyccc`code` —      --flag=VALUE\n  --flag=VALUE bb  `code`\n  --flag=VALUE bb "
+    },
+    {
+        "text": "`code`\n   --flag=VALUEbb — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeccc bba \n  ümlaut     — --flag=VALUEümlaut       x\ny   ",
+        "width": 34,
+        "break": "\n  ",
+        "want": "`code`\n   --flag=VALUEbb —\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeccc\n  bba \n  ümlaut     —\n  --flag=VALUEümlaut       x\ny   "
+    },
+    {
+        "text": "—`code` dddd ccc --flag=VALUE`code` \n   dddd --flag=VALUE dddd ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`    ümlaut ccc --flag=VALUE   dddd bb bb bb bb      ",
+        "width": 9,
+        "break": "\n",
+        "want": "—`code`\ndddd ccc\n--flag=VALUE`code`\n\n   dddd\n--flag=VALUE\ndddd\nümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`\n  \nümlaut\nccc\n--flag=VALUE\n  dddd bb\nbb bb bb \n    "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a \n  dddd   ",
+        "width": 37,
+        "break": "\n  ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a \n  dddd   "
+    },
+    {
+        "text": "`code`bb ccc —— ümlaut    x\ny \n  x\nyccca --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    ümlaut`code`\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — — \n   `code` ümlaut   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd   ümlaut",
+        "width": 34,
+        "break": "\n",
+        "want": "`code`bb ccc —— ümlaut    x\ny \n  x\nyccca --flag=VALUE\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee   \nümlaut`code`\n     \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee —\n— \n   `code` ümlaut  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd\n  ümlaut"
+    },
+    {
+        "text": "dddd  —— \n   --flag=VALUE a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 15,
+        "break": "\n      ",
+        "want": "dddd  —— \n \n       --flag=VALUE a\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      "
+    },
+    {
+        "text": "--flag=VALUE dddd ümlaut dddd   bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut—--flag=VALUE a bb x\ny  ümlaut ",
+        "width": 15,
+        "break": "\n      ",
+        "want": "--flag=VALUE\n      dddd ümlaut\n      dddd  \n      bbeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut—--flag=VALUE\n      a bb x\ny \n      ümlaut "
+    },
+    {
+        "text": "dddd   \n   aümlaut x\ny bb — --flag=VALUE aümlaut dddd   a --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code``code` x\ny    bb a ——   --flag=VALUE \n   ",
+        "width": 26,
+        "break": "|",
+        "want": "dddd   \n   aümlaut x\ny bb|— --flag=VALUE aümlaut|dddd   a --flag=VALUE|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|`code``code` x\ny    bb a|——   --flag=VALUE \n   "
+    },
+    {
+        "text": "x\nybb dddd x\ny --flag=VALUE `code`ümlaut   ccc dddd`code` bb --flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE    x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut — a ümlaut bb —   ",
+        "width": 39,
+        "break": "\n  ",
+        "want": "x\nybb dddd x\ny --flag=VALUE\n  `code`ümlaut   ccc dddd`code` bb\n  --flag=VALUEeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  --flag=VALUE    x\ny\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut\n  — a ümlaut bb —   "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   x\ny ccc dddd a`code` a   bb   --flag=VALUE ümlaut `code`   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   bb — ccc ",
+        "width": 3,
+        "break": "\n",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n  \nx\ny\nccc\ndddd\na`code`\na  \nbb \n --flag=VALUE\nümlaut\n`code`\n \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n \nbb\n—\nccc\n"
+    },
+    {
+        "text": "x\ny ümlaut `code` \n   --flag=VALUE  x\ny ccc --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE ",
+        "width": 24,
+        "break": "\n",
+        "want": "x\ny ümlaut `code` \n   --flag=VALUE  x\ny ccc --flag=VALUE\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n--flag=VALUE "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a   ccc —   ccc x\ny --flag=VALUE  `code`bb    bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   `code` bb`code` `code`ümlaut ",
+        "width": 25,
+        "break": "|",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|a   ccc —   ccc x\ny|--flag=VALUE  `code`bb   |bb|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|  `code` bb`code`|`code`ümlaut "
+    },
+    {
+        "text": "\n  a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — x\ny--flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   — --flag=VALUEccc—   \n  `code`    ccc\n   bbbb ddddx\ny dddd— \n   bb adddd ",
+        "width": 2,
+        "break": "\n",
+        "want": "\n \na\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n—\nx\ny--flag=VALUE\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  \n—\n--flag=VALUEccc—\n  \n \n`code`\n  \nccc\n  \nbbbb\nddddx\ny\ndddd—\n\n  \nbb\nadddd\n"
+    },
+    {
+        "text": "x\ny x\ny dddd `code`x\ny ccc ccc \n   x\ny bbümlaut cccümlaut `code`",
+        "width": 29,
+        "break": "\n",
+        "want": "x\ny x\ny dddd `code`x\ny ccc ccc \n   x\ny bbümlaut cccümlaut `code`"
+    },
+    {
+        "text": "ümlaut — bb    `code` a ccc ccc \n      x\ny —x\ny",
+        "width": 12,
+        "break": "\n",
+        "want": "ümlaut —\nbb    `code`\na ccc ccc \n      x\ny —x\ny"
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   x\ny bbdddd --flag=VALUE— bb    cccx\ny --flag=VALUE `code`ümlaut x\ny ccc dddd ccc\n   ",
+        "width": 11,
+        "break": "\n",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  x\ny bbdddd\n--flag=VALUE—\nbb    cccx\ny\n--flag=VALUE\n`code`ümlaut\nx\ny ccc dddd\nccc\n   "
+    },
+    {
+        "text": " \n  a --flag=VALUE   x\ny x\ny`code` bb\n  --flag=VALUE `code` \n   x\nyx\ny \n  ccc     x\ny --flag=VALUEbb x\ny --flag=VALUE ",
+        "width": 30,
+        "break": "\n  ",
+        "want": " \n  a --flag=VALUE   x\ny x\ny`code`\n  bb\n  --flag=VALUE `code` \n   x\nyx\ny \n  ccc     x\ny --flag=VALUEbb x\ny\n  --flag=VALUE "
+    },
+    {
+        "text": "\n   — `code`      a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   —ccc bb   dddd ",
+        "width": 4,
+        "break": "\n",
+        "want": "\n  \n—\n`code`\n    \na\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n  \n—ccc\nbb  \ndddd\n"
+    },
+    {
+        "text": "\n     bb  \n   dddd --flag=VALUE ümlaut ümlaut ümlaut dddd   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   dddd `code`ccc    x\ny — ümlaut a aa `code`\n  x\nyx\ny ümlaut",
+        "width": 23,
+        "break": "\n",
+        "want": "\n     bb  \n   dddd --flag=VALUE\nümlaut ümlaut ümlaut\ndddd  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  dddd `code`ccc    x\ny — ümlaut a aa\n`code`\n  x\nyx\ny ümlaut"
+    },
+    {
+        "text": "x\ny    `code`   \n  dddd   --flag=VALUE--flag=VALUE",
+        "width": 31,
+        "break": "\n      ",
+        "want": "x\ny    `code`   \n  dddd  \n      --flag=VALUE--flag=VALUE"
+    },
+    {
+        "text": "ümlaut  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   bb x\ny —— ",
+        "width": 25,
+        "break": "\n  ",
+        "want": "ümlaut \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  \n   bb x\ny —— "
+    },
+    {
+        "text": "x\ny x\ny   bb dddd ccc a   a --flag=VALUE — ümlaut   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code`bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    ümlaut--flag=VALUE x\ny   a bb ",
+        "width": 34,
+        "break": "|",
+        "want": "x\ny x\ny   bb dddd ccc a   a|--flag=VALUE — ümlaut  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|`code`bb|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   |ümlaut--flag=VALUE x\ny   a bb "
+    },
+    {
+        "text": "dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 33,
+        "break": "\n  ",
+        "want": "dddd\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee "
+    },
+    {
+        "text": "dddd    — ccc ",
+        "width": 20,
+        "break": "\n",
+        "want": "dddd    — ccc "
+    },
+    {
+        "text": "\n  ccc \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   ccc dddd a — — —abb `code` ümlaut bb —       ddddümlaut ",
+        "width": 3,
+        "break": "\n",
+        "want": "\n \nccc\n\n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n  \nccc\ndddd\na\n—\n—\n—abb\n`code`\nümlaut\nbb\n—\n   \n \nddddümlaut\n"
+    },
+    {
+        "text": "   bb a \n     ümlaut--flag=VALUE bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc dddd a dddd--flag=VALUE a ümlaut ",
+        "width": 30,
+        "break": "\n",
+        "want": "   bb a \n     ümlaut--flag=VALUE bb\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nccc dddd a dddd--flag=VALUE a\nümlaut "
+    },
+    {
+        "text": "\n   ccc—",
+        "width": 40,
+        "break": "|",
+        "want": "\n   ccc—"
+    },
+    {
+        "text": "",
+        "width": 9,
+        "break": "|",
+        "want": ""
+    },
+    {
+        "text": "a \n   a ddddx\ny     ümlaut \n   x\ny ümlaut  ",
+        "width": 10,
+        "break": "|",
+        "want": "a \n   a|ddddx\ny   | ümlaut \n|  x\ny|ümlaut  "
+    },
+    {
+        "text": "ümlaut ümlautdddd —a\n   a `code`\n      ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny bb \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE ",
+        "width": 21,
+        "break": "\n      ",
+        "want": "ümlaut ümlautdddd\n      —a\n   a `code`\n      ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ccc\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny\n      bb \n \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      --flag=VALUE "
+    },
+    {
+        "text": "a —ccc--flag=VALUEdddd  --flag=VALUEümlaut  ümlaut \n   x\ny    `code` `code` --flag=VALUE \n      `code` --flag=VALUE dddd dddd ümlaut ",
+        "width": 3,
+        "break": "|",
+        "want": "a|—ccc--flag=VALUEdddd| --flag=VALUEümlaut| ümlaut|\n  |x\ny|  |`code`|`code`|--flag=VALUE|\n  |  |`code`|--flag=VALUE|dddd|dddd|ümlaut|"
+    },
+    {
+        "text": "x\ny        eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee   bb ümlaut    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 37,
+        "break": "\n",
+        "want": "x\ny       \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee   \nddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee  \nbb ümlaut   \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee "
+    },
+    {
+        "text": "bb ",
+        "width": 28,
+        "break": "\n      ",
+        "want": "bb "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code`ümlaut dddd bb  --flag=VALUEbb bb`code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`x\ny ümlautbb  bb ccc x\ny`code` ümlaut ümlaut\n   dddd ccc ",
+        "width": 14,
+        "break": "\n",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n`code`ümlaut\ndddd bb \n--flag=VALUEbb\nbb`code`\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`x\ny ümlautbb \nbb ccc x\ny`code`\nümlaut\nümlaut\n   dddd ccc "
+    },
+    {
+        "text": "dddda    dddd    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`    x\ny ",
+        "width": 22,
+        "break": "\n  ",
+        "want": "dddda    dddd   \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`\n     x\ny "
+    },
+    {
+        "text": "  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb --flag=VALUE \n     ",
+        "width": 19,
+        "break": "\n",
+        "want": " \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nbb --flag=VALUE \n     "
+    },
+    {
+        "text": "— \n  ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   dddd  a a x\ny— ümlaut— a--flag=VALUE `code`  --flag=VALUE `code`dddd ccc --flag=VALUE dddd ccc   \n  ",
+        "width": 3,
+        "break": "\n      ",
+        "want": "—\n      \n \n      ümlaut\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n       \n      dddd\n       a\n      a\n      x\ny—\n      ümlaut—\n      a--flag=VALUE\n      `code`\n       --flag=VALUE\n      `code`dddd\n      ccc\n      --flag=VALUE\n      dddd\n      ccc\n        \n\n       "
+    },
+    {
+        "text": " \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny ccc      `code` dddd ümlaut ümlaut    a a a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —    dddd bb \n  a    ümlaut      \n   \n   ",
+        "width": 7,
+        "break": "\n",
+        "want": " \n \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nx\ny ccc  \n  \n`code`\ndddd\nümlaut\nümlaut\n   a a\na\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n—   \ndddd bb\n\n  a   \nümlaut\n     \n   \n   "
+    },
+    {
+        "text": "ümlaut ",
+        "width": 18,
+        "break": "\n      ",
+        "want": "ümlaut "
+    },
+    {
+        "text": "x\ny ümlaut ccc  dddd --flag=VALUE `code` `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny dddd --flag=VALUE   x\ny `code` ümlaut `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee a    ",
+        "width": 1,
+        "break": "|",
+        "want": "x\ny|ümlaut|ccc| dddd|--flag=VALUE|`code`|`code`|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|x\ny|dddd|--flag=VALUE| |x\ny|`code`|ümlaut|`code`|eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|a| | "
+    },
+    {
+        "text": "x\ny ccc \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  `code` a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   abb   --flag=VALUE — x\ny a— — ",
+        "width": 16,
+        "break": "\n      ",
+        "want": "x\ny ccc \n  \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n       `code` a\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n        abb  \n      --flag=VALUE —\n      x\ny a— — "
+    },
+    {
+        "text": "accc a `code` `code`",
+        "width": 32,
+        "break": "\n      ",
+        "want": "accc a `code` `code`"
+    },
+    {
+        "text": "  `code` a--flag=VALUEccc ümlaut   — ccc — `code`   — \n  ",
+        "width": 39,
+        "break": "|",
+        "want": "  `code` a--flag=VALUEccc ümlaut   —|ccc — `code`   — \n  "
+    },
+    {
+        "text": "--flag=VALUE aa\n   a ümlaut \n   ",
+        "width": 17,
+        "break": "|",
+        "want": "--flag=VALUE aa\n | a ümlaut \n   "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd --flag=VALUE ddddbb ",
+        "width": 2,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      dddd\n      --flag=VALUE\n      ddddbb\n      "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny \n   ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut ",
+        "width": 33,
+        "break": "|",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|x\ny \n  |ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ümlaut "
+    },
+    {
+        "text": " \n   ",
+        "width": 31,
+        "break": "\n      ",
+        "want": " \n   "
+    },
+    {
+        "text": "— — ümlaut ccc dddd    bb ümlautccc   dddd \n     dddd— ccc — x\ny ",
+        "width": 10,
+        "break": "\n      ",
+        "want": "— —\n      ümlaut\n      ccc dddd  \n       bb\n      ümlautccc\n        dddd \n  \n        dddd—\n      ccc —\n      x\ny "
+    },
+    {
+        "text": "dddd   ümlaut— ",
+        "width": 14,
+        "break": "\n      ",
+        "want": "dddd  \n      ümlaut— "
+    },
+    {
+        "text": "ümlauta bb ümlaut ",
+        "width": 9,
+        "break": "\n",
+        "want": "ümlauta\nbb\nümlaut "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   --flag=VALUE ümlaut ccc  --flag=VALUE ax\ny`code` \n   — — ccc   ümlaut ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb\n   ",
+        "width": 6,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n       \n      --flag=VALUE\n      ümlaut\n      ccc \n      --flag=VALUE\n      ax\ny`code`\n      \n  \n      —\n      —\n      ccc  \n      ümlaut\n      ddddeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      bb\n   "
+    },
+    {
+        "text": "dddd ümlaut ümlaut bb   a ccc x\ny dddd x\ny ",
+        "width": 31,
+        "break": "|",
+        "want": "dddd ümlaut ümlaut bb   a ccc|x\ny dddd x\ny "
+    },
+    {
+        "text": "x\ny--flag=VALUE \n   --flag=VALUE— ccc ccc --flag=VALUE ccc--flag=VALUE   x\ny a  ümlautümlaut ümlautdddd --flag=VALUEa dddd \n   bb ",
+        "width": 38,
+        "break": "\n      ",
+        "want": "x\ny--flag=VALUE \n   --flag=VALUE—\n      ccc ccc --flag=VALUE ccc--flag=VALUE  \n      x\ny a  ümlautümlaut ümlautdddd\n      --flag=VALUEa dddd \n   bb "
+    },
+    {
+        "text": "ccc — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee--flag=VALUEdddd   \n   \n   ümlaut --flag=VALUE ümlaut`code` x\ny ccc ",
+        "width": 36,
+        "break": "\n  ",
+        "want": "ccc —\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee--flag=VALUEdddd\n    \n   \n   ümlaut --flag=VALUE ümlaut`code`\n  x\ny ccc "
+    },
+    {
+        "text": "  a \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` `code`dddd ",
+        "width": 20,
+        "break": "|",
+        "want": "  a \n  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|`code` `code`dddd "
+    },
+    {
+        "text": "--flag=VALUEümlaut\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny       a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee     x\ny \n     \n   a dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  ",
+        "width": 25,
+        "break": "\n      ",
+        "want": "--flag=VALUEümlaut\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny\n            a\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n          x\ny \n     \n   a dddd\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n       "
+    },
+    {
+        "text": "x\ny --flag=VALUE ccc   bb--flag=VALUE — eeeeeeeeeeeeeeeeeeeeeeeeeeeeeea     \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb x\ny --flag=VALUE     bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny bb \n  `code`   \n   ",
+        "width": 6,
+        "break": "\n",
+        "want": "x\ny\n--flag=VALUE\nccc  \nbb--flag=VALUE\n—\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeea\n    \n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb\nx\ny\n--flag=VALUE\n    bb\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny bb \n \n`code`\n  \n   "
+    },
+    {
+        "text": "\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd a --flag=VALUEccc `code`bb— a \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut   ",
+        "width": 30,
+        "break": "\n",
+        "want": "\n \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\ndddd a --flag=VALUEccc\n`code`bb— a \n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nümlaut   "
+    },
+    {
+        "text": "--flag=VALUE ",
+        "width": 11,
+        "break": "\n",
+        "want": "--flag=VALUE\n"
+    },
+    {
+        "text": "x\ny dddd        `code`    —          --flag=VALUE bb ",
+        "width": 28,
+        "break": "|",
+        "want": "x\ny dddd        `code`   |—          --flag=VALUE bb|"
+    },
+    {
+        "text": "—    x\ny--flag=VALUE --flag=VALUE \n  ",
+        "width": 31,
+        "break": "\n      ",
+        "want": "—    x\ny--flag=VALUE\n      --flag=VALUE \n  "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — `code` a`code` x\nyümlaut      ccc— a eeeeeeeeeeeeeeeeeeeeeeeeeeeeeea ax\ny ddddbb \n   `code`    ",
+        "width": 40,
+        "break": "\n",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee —\n`code` a`code` x\nyümlaut      ccc— a\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeea ax\ny ddddbb \n   `code`    "
+    },
+    {
+        "text": "x\ny cccdddd ccc `code`   x\ny —   ümlaut --flag=VALUEccc`code`\n   dddddddd --flag=VALUE`code` dddd ",
+        "width": 11,
+        "break": "|",
+        "want": "x\ny cccdddd|ccc `code` | x\ny —  |ümlaut|--flag=VALUEccc`code`\n|  dddddddd|--flag=VALUE`code`|dddd "
+    },
+    {
+        "text": "",
+        "width": 3,
+        "break": "\n      ",
+        "want": ""
+    },
+    {
+        "text": "ümlaut — bb x\ny bb bb ",
+        "width": 10,
+        "break": "\n  ",
+        "want": "ümlaut\n  — bb x\ny\n  bb bb "
+    },
+    {
+        "text": "",
+        "width": 20,
+        "break": "\n  ",
+        "want": ""
+    },
+    {
+        "text": "dddd`code` — a --flag=VALUE ",
+        "width": 4,
+        "break": "\n  ",
+        "want": "dddd`code`\n  —\n  a\n  --flag=VALUE\n  "
+    },
+    {
+        "text": "`code``code` bb ccc x\ny — x\ny `code` a   --flag=VALUE a   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut ",
+        "width": 2,
+        "break": "\n      ",
+        "want": "`code``code`\n      bb\n      ccc\n      x\ny\n      —\n      x\ny\n      `code`\n      a \n       --flag=VALUE\n      a \n       eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ümlaut\n      "
+    },
+    {
+        "text": "",
+        "width": 32,
+        "break": "\n",
+        "want": ""
+    },
+    {
+        "text": "bbccc --flag=VALUE \n   ccc x\ny dddd— dddd ccc \n   \n   x\ny    ccc— --flag=VALUE bb   `code` x\ny ümlaut --flag=VALUE`code`  dddd ",
+        "width": 20,
+        "break": "|",
+        "want": "bbccc --flag=VALUE \n|  ccc x\ny dddd—|dddd ccc \n   \n   x\ny|   ccc—|--flag=VALUE bb  |`code` x\ny ümlaut|--flag=VALUE`code` |dddd "
+    },
+    {
+        "text": "",
+        "width": 30,
+        "break": "\n",
+        "want": ""
+    },
+    {
+        "text": "\n   a --flag=VALUE    `code` ümlaut --flag=VALUE ümlaut`code` bb \n   a — \n   ",
+        "width": 28,
+        "break": "\n      ",
+        "want": "\n   a --flag=VALUE    `code`\n      ümlaut --flag=VALUE\n      ümlaut`code` bb \n   a — \n\n        "
+    },
+    {
+        "text": "bb\n   --flag=VALUE`code` bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  bb   ccc  --flag=VALUE   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` ",
+        "width": 13,
+        "break": "\n",
+        "want": "bb\n  \n--flag=VALUE`code`\nbb\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n bb   ccc \n--flag=VALUE \n eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n`code` "
+    },
+    {
+        "text": "ümlaut x\ny    ",
+        "width": 16,
+        "break": "\n      ",
+        "want": "ümlaut x\ny    "
+    },
+    {
+        "text": "dddd  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  —adddd   dddd ",
+        "width": 4,
+        "break": "|",
+        "want": "dddd| eeeeeeeeeeeeeeeeeeeeeeeeeeeeee| —adddd| |dddd|"
+    },
+    {
+        "text": "  — dddd\n   \n   a",
+        "width": 27,
+        "break": "\n",
+        "want": "  — dddd\n   \n   a"
+    },
+    {
+        "text": "— dddd `code`   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   — `code` `code` \n   \n   cccaccc bb dddd ",
+        "width": 10,
+        "break": "\n      ",
+        "want": "— dddd\n      `code`  \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      \n   —\n      `code`\n      `code` \n  \n      \n  \n      cccaccc bb\n      dddd "
+    },
+    {
+        "text": "\n   a ümlaut ",
+        "width": 15,
+        "break": "\n  ",
+        "want": "\n   a ümlaut "
+    },
+    {
+        "text": "ümlaut `code`ümlaut\n   cccbb `code`— bbdddd bb   `code`--flag=VALUE --flag=VALUE `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a — — --flag=VALUE ",
+        "width": 24,
+        "break": "\n      ",
+        "want": "ümlaut `code`ümlaut\n  \n      cccbb `code`— bbdddd\n      bb   `code`--flag=VALUE\n      --flag=VALUE\n      `code`eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      a — — --flag=VALUE "
+    },
+    {
+        "text": "   —--flag=VALUE  ümlaut x\ny \n   ümlaut ddddümlaut x\ny ccc --flag=VALUE   bb   ümlaut bb \n      ",
+        "width": 8,
+        "break": "\n",
+        "want": "  \n—--flag=VALUE\n ümlaut\nx\ny \n  \nümlaut\nddddümlaut\nx\ny ccc\n--flag=VALUE\n  bb  \nümlaut\nbb \n      "
+    },
+    {
+        "text": "ccc --flag=VALUE ",
+        "width": 1,
+        "break": "\n  ",
+        "want": "ccc\n  --flag=VALUE\n  "
+    },
+    {
+        "text": "ümlaut x\ny ümlautx\ny \n   --flag=VALUE x\ny ümlaut bbccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — — ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   ümlaut  ccc ddddx\ny`code` `code`—ümlaut   `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee--flag=VALUE ",
+        "width": 1,
+        "break": "\n      ",
+        "want": "ümlaut\n      x\ny\n      ümlautx\ny\n      \n\n       \n      --flag=VALUE\n      x\ny\n      ümlaut\n      bbccc\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      —\n      —\n      ccc\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n\n       \n      ümlaut\n       ccc\n      ddddx\ny`code`\n      `code`—ümlaut\n       \n      `code`\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee--flag=VALUE\n      "
+    },
+    {
+        "text": "—   --flag=VALUE ",
+        "width": 37,
+        "break": "|",
+        "want": "—   --flag=VALUE "
+    },
+    {
+        "text": "a a x\ny ccc dddd dddd ax\ny    ümlaut x\ny `code`--flag=VALUE a ddddccc cccx\ny   `code``code` --flag=VALUE x\ny`code` ümlaut — a— \n   ",
+        "width": 18,
+        "break": "\n  ",
+        "want": "a a x\ny ccc dddd\n  dddd ax\ny   \n  ümlaut x\ny\n  `code`--flag=VALUE\n  a ddddccc cccx\ny  \n  `code``code`\n  --flag=VALUE\n  x\ny`code` ümlaut\n  — a— \n   "
+    },
+    {
+        "text": "ümlaut ümlautx\ny ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\nya bb \n   — ",
+        "width": 29,
+        "break": "\n      ",
+        "want": "ümlaut ümlautx\ny ümlaut\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\nya\n      bb \n   — "
+    },
+    {
+        "text": "  x\ny \n   --flag=VALUE ccc \n   dddd —a ",
+        "width": 23,
+        "break": "\n  ",
+        "want": "  x\ny \n   --flag=VALUE ccc \n   dddd —a "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee--flag=VALUE a a ccc      bb —    bb   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    \n   ",
+        "width": 34,
+        "break": "|",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee--flag=VALUE|a a ccc      bb —    bb  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   |\n   "
+    },
+    {
+        "text": "dddd `code`\n   `code` \n   ümlaut   --flag=VALUE — — x\ny ümlaut ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut `code` \n   bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE \n  --flag=VALUE — bb x\ny a ",
+        "width": 30,
+        "break": "\n      ",
+        "want": "dddd `code`\n   `code` \n  \n      ümlaut   --flag=VALUE — —\n      x\ny ümlaut ccc\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      ümlaut `code` \n   bb\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      --flag=VALUE \n  --flag=VALUE\n      — bb x\ny a "
+    },
+    {
+        "text": "bb \n   dddd \n   \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebbümlaut `code` `code`   ",
+        "width": 17,
+        "break": "\n",
+        "want": "bb \n   dddd \n   \n \neeeeeeeeeeeeeeeeeeeeeeeeeeeeeebbümlaut\n`code` `code`   "
+    },
+    {
+        "text": "x\ny `code` x\ny `code` abbümlaut\n  bb    ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   --flag=VALUE x\ny \n   --flag=VALUE bb bb cccbb a `code` --flag=VALUE — ",
+        "width": 28,
+        "break": "\n  ",
+        "want": "x\ny `code` x\ny `code`\n  abbümlaut\n  bb    ccc\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n    --flag=VALUE x\ny \n   --flag=VALUE bb bb cccbb a\n  `code` --flag=VALUE — "
+    },
+    {
+        "text": "  x\ny dddd--flag=VALUE — `code` ",
+        "width": 39,
+        "break": "\n  ",
+        "want": "  x\ny dddd--flag=VALUE — `code` "
+    },
+    {
+        "text": "dddd \n   bb --flag=VALUE    x\ny --flag=VALUE `code`   ccc  ",
+        "width": 20,
+        "break": "\n      ",
+        "want": "dddd \n   bb\n      --flag=VALUE    x\ny\n      --flag=VALUE `code` \n       ccc  "
+    },
+    {
+        "text": "a\n  ümlaut dddd ümlautccc bb  bb \n     ",
+        "width": 33,
+        "break": "\n",
+        "want": "a\n  ümlaut dddd ümlautccc bb  bb \n     "
+    },
+    {
+        "text": "cccbbdddd ümlaut  --flag=VALUEa \n  `code`  bb `code` a cccdddd — ",
+        "width": 30,
+        "break": "|",
+        "want": "cccbbdddd ümlaut |--flag=VALUEa \n  `code`  bb|`code` a cccdddd — "
+    },
+    {
+        "text": "",
+        "width": 19,
+        "break": "\n      ",
+        "want": ""
+    },
+    {
+        "text": "\n   \n  bb — a — `code`   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd --flag=VALUE— —   --flag=VALUE — ümlaut \n     bbdddd`code`  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 3,
+        "break": "\n      ",
+        "want": "\n  \n      \n \n      bb\n      —\n      a\n      —\n      `code`\n       \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      --flag=VALUE\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n       \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd\n      --flag=VALUE—\n      —\n       \n      --flag=VALUE\n      —\n      ümlaut\n      \n  \n       \n      bbdddd`code`\n       eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      "
+    },
+    {
+        "text": "",
+        "width": 22,
+        "break": "\n  ",
+        "want": ""
+    },
+    {
+        "text": "   ümlaut  x\nyccc — \n   `code` ",
+        "width": 33,
+        "break": "\n      ",
+        "want": "   ümlaut  x\nyccc — \n   `code`\n      "
+    },
+    {
+        "text": "bb ccc — bb --flag=VALUE--flag=VALUE`code`—x\ny x\ny `code` a       ümlaut ümlaut ccc bb --flag=VALUE \n     ümlaut ccc   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a—x\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 18,
+        "break": "\n  ",
+        "want": "bb ccc — bb\n  --flag=VALUE--flag=VALUE`code`—x\ny\n  x\ny `code` a      \n  ümlaut ümlaut\n  ccc bb\n  --flag=VALUE \n     ümlaut ccc  \n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  a—x\nyeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  "
+    },
+    {
+        "text": "\n   --flag=VALUE\n   ccc `code`ddddx\ny --flag=VALUE `code` bb\n   ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc—   --flag=VALUE --flag=VALUE `code`--flag=VALUE\n   ccc--flag=VALUE ",
+        "width": 14,
+        "break": "\n",
+        "want": "\n  \n--flag=VALUE\n   ccc\n`code`ddddx\ny --flag=VALUE\n`code` bb\n  \nümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nccc—  \n--flag=VALUE\n--flag=VALUE\n`code`--flag=VALUE\n  \nccc--flag=VALUE\n"
+    },
+    {
+        "text": "\n   \n   ccc `code`\n   — a ",
+        "width": 14,
+        "break": "\n",
+        "want": "\n   \n   ccc `code`\n   — a "
+    },
+    {
+        "text": "",
+        "width": 23,
+        "break": "\n  ",
+        "want": ""
+    },
+    {
+        "text": "`code` a --flag=VALUE ccc `code` bb     --flag=VALUE ümlaut a x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddddddd ",
+        "width": 37,
+        "break": "\n      ",
+        "want": "`code` a --flag=VALUE ccc `code` bb  \n        --flag=VALUE ümlaut a x\ny\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      dddddddd "
+    },
+    {
+        "text": "a    --flag=VALUE    \n  ccc — bb\n  dddd \n   `code`     `code` dddd --flag=VALUE      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut\n   --flag=VALUE ",
+        "width": 22,
+        "break": "\n",
+        "want": "a    --flag=VALUE    \n  ccc — bb\n  dddd \n   `code`     `code`\ndddd --flag=VALUE     \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nümlaut\n   --flag=VALUE "
+    },
+    {
+        "text": "\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   —ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee a a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   a ",
+        "width": 40,
+        "break": "\n      ",
+        "want": "\n \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee  \n      —ümlaut\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      a a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   a\n      "
+    },
+    {
+        "text": "bb ",
+        "width": 33,
+        "break": "|",
+        "want": "bb "
+    },
+    {
+        "text": "ümlaut --flag=VALUE \n     a dddd a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut ccc\n  x\ny   --flag=VALUE \n  accc dddd ",
+        "width": 16,
+        "break": "|",
+        "want": "ümlaut|--flag=VALUE \n  |  a dddd a|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ümlaut ccc\n |x\ny  |--flag=VALUE \n |accc dddd "
+    },
+    {
+        "text": "— eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — x\nyx\ny dddd— bb  bbdddd \n   x\ny --flag=VALUE`code` dddd ",
+        "width": 18,
+        "break": "|",
+        "want": "—|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|— x\nyx\ny dddd—|bb  bbdddd \n   x\ny|--flag=VALUE`code`|dddd "
+    },
+    {
+        "text": "--flag=VALUE --flag=VALUE a —  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — ddddccc   \n    a dddd x\ny x\ny x\ny `code` ümlaut a ccc `code` --flag=VALUE bb --flag=VALUE \n     \n    dddd",
+        "width": 23,
+        "break": "\n",
+        "want": "--flag=VALUE\n--flag=VALUE a — \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n— ddddccc   \n    a dddd x\ny x\ny x\ny `code` ümlaut a ccc\n`code` --flag=VALUE bb\n--flag=VALUE \n     \n    dddd"
+    },
+    {
+        "text": "— ccc `code` x\ny    x\ny ümlaut --flag=VALUE x\ny `code` ",
+        "width": 35,
+        "break": "|",
+        "want": "— ccc `code` x\ny    x\ny ümlaut|--flag=VALUE x\ny `code` "
+    },
+    {
+        "text": "ddddümlaut    ümlaut ",
+        "width": 35,
+        "break": "\n      ",
+        "want": "ddddümlaut    ümlaut "
+    },
+    {
+        "text": "`code` — ccc x\ny ",
+        "width": 4,
+        "break": "|",
+        "want": "`code`|—|ccc|x\ny "
+    },
+    {
+        "text": "— dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code` — bb  ccc \n   --flag=VALUE `code`dddd \n   \n   ümlaut   — — —  ccc `code` dddd",
+        "width": 3,
+        "break": "\n      ",
+        "want": "—\n      dddd\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      `code`\n      —\n      bb \n      ccc\n      \n  \n      --flag=VALUE\n      `code`dddd\n      \n  \n      \n  \n      ümlaut\n       \n      —\n      —\n      —\n       ccc\n      `code`\n      dddd"
+    },
+    {
+        "text": "   — x\ny \n   dddd —      --flag=VALUE — `code` \n   x\ny `code`   ",
+        "width": 11,
+        "break": "\n      ",
+        "want": "   — x\ny\n      \n   dddd\n      —     \n      --flag=VALUE\n      — `code`\n      \n   x\ny\n      `code`   "
+    },
+    {
+        "text": "— x\ny --flag=VALUEcccdddd —— eeeeeeeeeeeeeeeeeeeeeeeeeeeeee a--flag=VALUE—— ",
+        "width": 32,
+        "break": "\n      ",
+        "want": "— x\ny --flag=VALUEcccdddd\n      ——\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      a--flag=VALUE—— "
+    },
+    {
+        "text": "",
+        "width": 21,
+        "break": "\n  ",
+        "want": ""
+    },
+    {
+        "text": "",
+        "width": 13,
+        "break": "|",
+        "want": ""
+    },
+    {
+        "text": "   dddd--flag=VALUE x\ny ccc dddd --flag=VALUE  --flag=VALUE \n   \n     ccc\n    ccc ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   a   a--flag=VALUE ",
+        "width": 13,
+        "break": "\n",
+        "want": "  \ndddd--flag=VALUE\nx\ny ccc dddd\n--flag=VALUE \n--flag=VALUE \n   \n     ccc\n    ccc ccc\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  a  \na--flag=VALUE\n"
+    },
+    {
+        "text": "--flag=VALUE x\ny`code`--flag=VALUE ümlaut ccc   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —bbbb — — ccc bb ümlaut a ",
+        "width": 9,
+        "break": "\n      ",
+        "want": "--flag=VALUE\n      x\ny`code`--flag=VALUE\n      ümlaut\n      ccc  \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      —bbbb\n      — —\n      ccc bb\n      ümlaut a\n      "
+    },
+    {
+        "text": "`code` a dddd `code` —ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeeea \n   dddd    ümlaut dddd",
+        "width": 1,
+        "break": "|",
+        "want": "`code`|a|dddd|`code`|—ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeeea|\n| |dddd| | ümlaut|dddd"
+    },
+    {
+        "text": "  --flag=VALUE a bb x\ny \n   ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny   \n   ümlaut x\nyümlaut a --flag=VALUE   --flag=VALUE ccc --flag=VALUE`code` ümlaut — \n   `code`dddd ümlaut ",
+        "width": 11,
+        "break": "\n",
+        "want": " \n--flag=VALUE\na bb x\ny \n  \nccceeeeeeeeeeeeeeeeeeeeeeeeeeeeeex\ny   \n   ümlaut\nx\nyümlaut a\n--flag=VALUE\n \n--flag=VALUE\nccc\n--flag=VALUE`code`\nümlaut —\n\n  \n`code`dddd\nümlaut "
+    },
+    {
+        "text": "— --flag=VALUEdddd--flag=VALUE x\ny    x\nyddddx\ny    ccc —",
+        "width": 5,
+        "break": "\n      ",
+        "want": "—\n      --flag=VALUEdddd--flag=VALUE\n      x\ny  \n       x\nyddddx\ny\n        \n      ccc\n      —"
+    },
+    {
+        "text": "x\ny ümlaut ccc     --flag=VALUE `code` ax\nya— x\ny ",
+        "width": 11,
+        "break": "\n      ",
+        "want": "x\ny ümlaut\n      ccc    \n      --flag=VALUE\n      `code`\n      ax\nya—\n      x\ny "
+    },
+    {
+        "text": "x\ny  dddd a bb bb ümlaut ccc — \n   — \n   \n    ümlaut \n   `code` ümlaut bb —   ccc      ",
+        "width": 24,
+        "break": "|",
+        "want": "x\ny  dddd a bb bb|ümlaut ccc — \n   —|\n   \n    ümlaut \n  |`code` ümlaut bb —  |ccc      "
+    },
+    {
+        "text": "`code` `code` x\ny  — bbccc  bb `code` ",
+        "width": 11,
+        "break": "\n      ",
+        "want": "`code`\n      `code` x\ny \n      — bbccc \n      bb `code` "
+    },
+    {
+        "text": "   \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n      bb ccc — ccc a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   a --flag=VALUE ",
+        "width": 24,
+        "break": "\n      ",
+        "want": "   \n  \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      \n      bb ccc — ccc a\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      — ccc\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n        a --flag=VALUE "
+    },
+    {
+        "text": "--flag=VALUEümlaut ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb dddd a ccc ccca `code` ümlaut --flag=VALUEbb x\ny    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut —      ",
+        "width": 3,
+        "break": "|",
+        "want": "--flag=VALUEümlaut|ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeee|bb|dddd|a|ccc|ccca|`code`|ümlaut|--flag=VALUEbb|x\ny|  |eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeümlaut|—|   | "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee      ümlaut     x\ny ccc --flag=VALUE `code` dddd aeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n   ccc bb    —   —    ccc x\ny ümlaut ",
+        "width": 39,
+        "break": "|",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee     |ümlaut     x\ny ccc --flag=VALUE `code`|dddd aeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  |ccc bb    —   —    ccc x\ny ümlaut "
+    },
+    {
+        "text": "",
+        "width": 3,
+        "break": "\n      ",
+        "want": ""
+    },
+    {
+        "text": "--flag=VALUE ümlautbb bb \n   ",
+        "width": 3,
+        "break": "\n",
+        "want": "--flag=VALUE\nümlautbb\nbb \n   "
+    },
+    {
+        "text": "  — ümlaut — x\ny bb dddd a   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb \n      a bb ccc \n  \n   bb",
+        "width": 20,
+        "break": "\n      ",
+        "want": "  — ümlaut —\n      x\ny bb dddd a  \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      bb \n      a bb ccc \n  \n   bb"
+    },
+    {
+        "text": "   `code` dddd a --flag=VALUEccc dddd ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeeea x\nyümlaut dddd \n  ümlaut a ",
+        "width": 16,
+        "break": "|",
+        "want": "   `code` dddd a|--flag=VALUEccc|dddd|ümlauteeeeeeeeeeeeeeeeeeeeeeeeeeeeeea|x\nyümlaut dddd|\n  ümlaut a "
+    },
+    {
+        "text": "— ccc ümlaut `code`ccc \n   — ümlaut    bb    ümlaut bb --flag=VALUE   x\ny `code`\n   dddd bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 18,
+        "break": "\n",
+        "want": "— ccc ümlaut\n`code`ccc \n   — ümlaut   \nbb    ümlaut bb\n--flag=VALUE   x\ny `code`\n   dddd bb\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n"
+    },
+    {
+        "text": "`code` bb ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n  `code`dddd x\ny   `code` — x\ny \n   — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb ccc bb a —`code` x\ny x\ny",
+        "width": 3,
+        "break": "\n  ",
+        "want": "`code`\n  bb\n  ümlaut\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  \n  `code`dddd\n  x\ny\n   \n  `code`\n  —\n  x\ny\n  \n   —\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  bb\n  ccc\n  bb\n  a\n  —`code`\n  x\ny\n  x\ny"
+    },
+    {
+        "text": "x\ny dddd \n   --flag=VALUE dddd ",
+        "width": 10,
+        "break": "\n      ",
+        "want": "x\ny dddd \n\n       \n      --flag=VALUE\n      dddd "
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeccccccdddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb",
+        "width": 36,
+        "break": "\n  ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeccccccdddd\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeeebb"
+    },
+    {
+        "text": "\n   — `code`--flag=VALUE    \n   —",
+        "width": 18,
+        "break": "\n  ",
+        "want": "\n   —\n  `code`--flag=VALUE\n     \n   —"
+    },
+    {
+        "text": "  dddddddd   --flag=VALUE bb",
+        "width": 18,
+        "break": "\n      ",
+        "want": "  dddddddd  \n      --flag=VALUE bb"
+    },
+    {
+        "text": "— a --flag=VALUE a `code`— bb bbx\ny bbccc\n   --flag=VALUE ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — a ",
+        "width": 31,
+        "break": "|",
+        "want": "— a --flag=VALUE a `code`—|bb bbx\ny bbccc\n   --flag=VALUE|ümlaut|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|— a "
+    },
+    {
+        "text": "  \n   \n   ümlautbb dddd dddd --flag=VALUE — bb ",
+        "width": 16,
+        "break": "\n  ",
+        "want": "  \n   \n   ümlautbb dddd\n  dddd\n  --flag=VALUE —\n  bb "
+    },
+    {
+        "text": "   dddddddd  ccc    ümlaut —   ccc ",
+        "width": 13,
+        "break": "\n      ",
+        "want": "   dddddddd \n      ccc   \n      ümlaut —  \n      ccc "
+    },
+    {
+        "text": "ümlaut ccc\n   ddddbb ümlaut — --flag=VALUE dddd      bb    ",
+        "width": 20,
+        "break": "|",
+        "want": "ümlaut ccc\n  |ddddbb ümlaut —|--flag=VALUE dddd   |  bb    "
+    },
+    {
+        "text": "ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   x\ny",
+        "width": 31,
+        "break": "|",
+        "want": "ümlaut|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|\n   x\ny"
+    },
+    {
+        "text": "a  ümlaut   \n  — ümlauta bb ümlaut dddd bb bb\n  ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd   --flag=VALUE \n   --flag=VALUE ax\ny--flag=VALUE eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    ccc`code`--flag=VALUE ",
+        "width": 20,
+        "break": "\n  ",
+        "want": "a  ümlaut   \n  — ümlauta bb\n  ümlaut dddd bb bb\n  ccc\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  dddd   --flag=VALUE \n   --flag=VALUE\n  ax\ny--flag=VALUE\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n    \n  ccc`code`--flag=VALUE\n  "
+    },
+    {
+        "text": "ccc `code` \n   ccc — dddd — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 20,
+        "break": "\n  ",
+        "want": "ccc `code` \n   ccc — dddd —\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  "
+    },
+    {
+        "text": "\n       ümlaut ccc a x\ny `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee eeeeeeeeeeeeeeeeeeeeeeeeeeeeee    ümlautbb bb x\ny  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut ccc bb — —x\ny    ",
+        "width": 40,
+        "break": "\n      ",
+        "want": "\n       ümlaut ccc a x\ny `code`\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   \n      ümlautbb bb x\ny \n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut\n      ccc bb — —x\ny    "
+    },
+    {
+        "text": "dddd  dddd `code` --flag=VALUE`code`dddd `code` x\ny  cccaümlaut",
+        "width": 28,
+        "break": "|",
+        "want": "dddd  dddd `code`|--flag=VALUE`code`dddd|`code` x\ny  cccaümlaut"
+    },
+    {
+        "text": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut ccc --flag=VALUE ümlaut dddd — dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —   \n  \n   bb      --flag=VALUE  ",
+        "width": 38,
+        "break": "\n      ",
+        "want": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlaut\n      ccc --flag=VALUE ümlaut dddd — dddd\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee —   \n\n       \n   bb      --flag=VALUE  "
+    },
+    {
+        "text": "ümlaut bb eeeeeeeeeeeeeeeeeeeeeeeeeeeeee--flag=VALUE\n   — \n     ",
+        "width": 16,
+        "break": "\n  ",
+        "want": "ümlaut bb\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee--flag=VALUE\n   — \n     "
+    },
+    {
+        "text": "dddd x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd ddddbb bb x\ny x\ny dddd — ",
+        "width": 34,
+        "break": "\n",
+        "want": "dddd x\ny\neeeeeeeeeeeeeeeeeeeeeeeeeeeeeedddd\nddddbb bb x\ny x\ny dddd — "
+    },
+    {
+        "text": "`code`x\ny —",
+        "width": 12,
+        "break": "|",
+        "want": "`code`x\ny|—"
+    },
+    {
+        "text": "ümlaut x\ny     dddd ümlaut bb `code` a dddd eeeeeeeeeeeeeeeeeeeeeeeeeeeeee dddd dddd bb`code`   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee --flag=VALUE \n   eeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code` --flag=VALUE ümlaut eeeeeeeeeeeeeeeeeeeeeeeeeeeeee   ",
+        "width": 22,
+        "break": "\n",
+        "want": "ümlaut x\ny     dddd ümlaut bb\n`code` a dddd\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\ndddd dddd bb`code`  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n--flag=VALUE \n  \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee`code`\n--flag=VALUE ümlaut\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  "
+    },
+    {
+        "text": "ümlaut `code`--flag=VALUE —\n   x\ny  ümlaut\n   — eeeeeeeeeeeeeeeeeeeeeeeeeeeeee \n   --flag=VALUE dddd",
+        "width": 21,
+        "break": "\n  ",
+        "want": "ümlaut\n  `code`--flag=VALUE\n  —\n   x\ny  ümlaut\n   —\n  eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n  \n   --flag=VALUE dddd"
+    },
+    {
+        "text": "ümlaut `code` \n  `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee— bb a ccc dddd   \n   ccc dddddddd  --flag=VALUE \n   ",
+        "width": 35,
+        "break": "|",
+        "want": "ümlaut `code` \n  `code`|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee—|bb a ccc dddd   \n   ccc dddddddd |--flag=VALUE \n   "
+    },
+    {
+        "text": "x\ny ccc ",
+        "width": 1,
+        "break": "\n  ",
+        "want": "x\ny\n  ccc\n  "
+    },
+    {
+        "text": "`code` `code` eeeeeeeeeeeeeeeeeeeeeeeeeeeeee     ",
+        "width": 4,
+        "break": "\n",
+        "want": "`code`\n`code`\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n    "
+    },
+    {
+        "text": "a eeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb ",
+        "width": 22,
+        "break": "|",
+        "want": "a|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|bb "
+    },
+    {
+        "text": "--flag=VALUE --flag=VALUE dddd dddd a ümlaut ccc   ",
+        "width": 38,
+        "break": "\n      ",
+        "want": "--flag=VALUE --flag=VALUE dddd dddd a\n      ümlaut ccc   "
+    },
+    {
+        "text": "— ümlaut bb        eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlauta --flag=VALUE x\nyccc—eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 33,
+        "break": "\n",
+        "want": "— ümlaut bb       \neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nümlauta --flag=VALUE x\nyccc—eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n"
+    },
+    {
+        "text": "a  ümlaut ccc\n      `code` ümlaut dddd \n   ",
+        "width": 25,
+        "break": "\n",
+        "want": "a  ümlaut ccc\n      `code` ümlaut dddd\n\n   "
+    },
+    {
+        "text": " eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ümlauta ccc bb ",
+        "width": 10,
+        "break": "|",
+        "want": " eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ümlauta|ccc bb "
+    },
+    {
+        "text": "x\ny eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee ",
+        "width": 25,
+        "break": "|",
+        "want": "x\ny|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|ccc|eeeeeeeeeeeeeeeeeeeeeeeeeeeeee|"
+    },
+    {
+        "text": "cccccc — — — — —ccc --flag=VALUE --flag=VALUEbb bb dddd — --flag=VALUE`code` bb   ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee — bb   --flag=VALUE   ",
+        "width": 16,
+        "break": "\n",
+        "want": "cccccc — —\n— — —ccc\n--flag=VALUE\n--flag=VALUEbb\nbb dddd —\n--flag=VALUE`code`\nbb   ccc\neeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n— bb  \n--flag=VALUE   "
+    },
+    {
+        "text": "   bb   ccc    --flag=VALUEümlaut x\nyccc  x\ny --flag=VALUE",
+        "width": 11,
+        "break": "\n      ",
+        "want": "   bb   ccc\n        \n      --flag=VALUEümlaut\n      x\nyccc  x\ny\n      --flag=VALUE"
+    },
+    {
+        "text": "ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny --flag=VALUE--flag=VALUE dddd x\ny `code`ddddccc   --flag=VALUE --flag=VALUE dddd ümlautccc a    ümlaut —dddd bba ccc\n   ccc  bb  ",
+        "width": 35,
+        "break": "\n",
+        "want": "ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\nx\ny --flag=VALUE--flag=VALUE dddd x\ny `code`ddddccc   --flag=VALUE\n--flag=VALUE dddd ümlautccc a   \nümlaut —dddd bba ccc\n   ccc  bb  "
+    },
+    {
+        "text": "dddd ccc eeeeeeeeeeeeeeeeeeeeeeeeeeeeee `code`     —ümlaut — dddd ccc `code`   a ccc   ccc —eeeeeeeeeeeeeeeeeeeeeeeeeeeeee x\ny bb dddd x\ny ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee bb --flag=VALUE ümlaut",
+        "width": 3,
+        "break": "\n      ",
+        "want": "dddd\n      ccc\n      eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      `code`\n         \n      —ümlaut\n      —\n      dddd\n      ccc\n      `code`\n        a\n      ccc\n       \n      ccc\n      —eeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      x\ny\n      bb\n      dddd\n      x\ny\n      ccceeeeeeeeeeeeeeeeeeeeeeeeeeeeee\n      bb\n      --flag=VALUE\n      ümlaut"
+    }
+]

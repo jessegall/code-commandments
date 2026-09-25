@@ -1,0 +1,5 @@
+exit: 2
+--- stdout
+
+--- stderr
+Unknown option --bogus. Try: commandments --help

@@ -1,0 +1,74 @@
+exit: 0
+--- stdout
+Code Commandments — a compiler for architecture.
+
+Usage:
+  commandments <command> [options]
+
+Commands:
+  judge            Scan a codebase and report its sins, grouped by the skill that fixes each. Exit
+                   code 1 when sins are found, 3 when a rule could not run.
+  make             Scaffold a commandment of your own — a skill, a sin and a detector in
+                   `.commandments/custom/`, registered in your config, with the rest of the process
+                   printed for you.
+  hints            Auto-fix the Spatie Data magic surface — rename non-`from…` object factories
+                   to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the
+                   `@method from(...)`/`collect(...)` docblock hints.
+  repent           Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints)
+                   and each Repentable detector's own fix, backend and frontend.
+  scaffold         Generate the reusable helper a sin's fix uses — written into your source root
+                   with its namespace injected. Idempotent: an existing file is skipped.
+  report           File a GitHub issue about code-commandments itself (via `gh`) — a false
+                   positive, a wrong rule, or a bug.
+  feature-request  File a [feature-request] GitHub issue (via `gh`) proposing a new or changed rule.
+  freeze           Mark a file intentionally immutable, or lift the mark. A frozen file is still
+                   scanned (so cross-file rules stay correct) but never flagged and never rewritten.
+  sync             Refresh this project's code-commandments integration — publish the skills into
+                   the library every agent reads, refresh the AGENTS.md briefing and the config
+                   surface, and wire each agent's own view of them.
+  install          Wire a consumer project up once — the composer sync hook, every agent it
+                   supports (skills, AGENTS.md, and under Claude Code the hook suite) and .gitignore
+                   — then sync.
+  session          Where this session keeps its state — the folder holding its checklist and hook
+                   counters.
+  task             The work in front of this session — numbered tasks, one markdown file each,
+                   moved between queue, active and history.
+  journal-config   Write the agent journal plugin's chosen switches into .commandments/config.php.
+  journal-scan     Scan the project for the folders to check and the ones to leave out, for the
+                   agent journal plugin.
+  journal-skills   Render the skills into the agent journal plugin's folder, for the journal to
+                   publish.
+  disable          Toggle a rule in the project's .commandments/config.php — edited through the
+                   AST, so the file stays valid PHP and your own lines are untouched.
+  config           Inspect and manage .commandments/config.php — what is configured, and what is
+                   actually running.
+  layers           Read the dependency stack this project ALREADY has and propose the layer
+                   declaration for it — the rule is inert until one is declared, and nobody writes
+                   that from a blank file.
+  exemptions       List the exemption tags — what a package registers to quiet a general rule on
+                   its own boundary types.
+  info             Explain one sin — what it flags, why it is a sin, how to fix it, and a worked
+                   example.
+  trigger-eval     Measure whether skill descriptions pull their own skill in — and stay out of
+                   their neighbours'.
+
+Hooks (wired automatically — you rarely run these by hand):
+  judge-reminder  A "did you judge?" nudge wired to `Stop` and `PreToolUse` hooks; reminds when
+                  judged files are touched but unchecked, deduped per changed-file set.
+  hooks           The wired hook entry point — reads one hook payload from stdin, runs every
+                  registered handler, and merges their responses into one.
+  journal-hook    The agent journal's entry point — reads one journal hook payload from stdin,
+                  runs every registered handler, and answers in the journal's shape.
+  journal-serve   Answer the agent journal's hooks from one running process, over the socket the
+                  journal names in $JOURNAL_PLUGIN_SOCKET.
+  hook            Run ONE hook class directly — the form every wired hook is written as, built-in
+                  or a consumer's own $config->hook(...).
+
+Global options:
+  --help, -h      show this help — or, after a verb, that command's own usage
+  --memory=LIMIT  memory ceiling for the run (default: 2G; -1 for no limit)
+  --version       print the installed version of code-commandments
+
+Run `commandments <command> --help` for a command's forms, options and notes.
+
+--- stderr
