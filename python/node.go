@@ -205,3 +205,17 @@ func (n Node) Keyword(name string) Node {
 func (n Node) IsNone() bool {
 	return n.Kind() == "Constant" && n.Node().Literal == "null"
 }
+
+// dottedBinding is what an absolute import alias binds its name to: a from-import's module and name, a renamed
+// import's module, else the first part of the module it imports.
+func (alias Node) dottedBinding() string {
+	statement := alias.Parent()
+	if statement.Kind() == "ImportFrom" {
+		return statement.Name() + "." + alias.Name()
+	}
+	if alias.boundAs() == strings.Split(alias.Name(), ".")[0] {
+		return alias.boundAs()
+	}
+
+	return alias.Name()
+}

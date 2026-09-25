@@ -135,3 +135,15 @@ $write('packages', [
     'arrows' => array_map(static fn ($arrow): string => $place($arrow->at->module, $arrow->at->node->start) . ' ' . $relative($arrow->from) . ' -> ' . $relative($arrow->to), $arrows->all),
     'closing' => array_map(static fn ($at): string => $place($at->module, $at->node->start), $graph->arrowsClosingAMutualPair()),
 ]);
+
+// What every def reaches: its outside calls and the classes it builds or names, keyed where it is declared.
+$population = $codebase->resourceReach()->functions();
+$reach = [];
+
+foreach ($defs as [$def, $module]) {
+    $resources = array_keys($population->of($index->declarationOf($def)));
+    sort($resources);
+    $reach[$place($module, $def->start)] = $resources;
+}
+
+$write('reach', $reach);

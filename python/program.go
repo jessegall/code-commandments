@@ -22,6 +22,7 @@ type Program struct {
 	calls    callGraph
 	flow     attributeFlow
 	packages packageGraph
+	reach    resourceReach
 }
 
 // Module is one Python file and the dotted name Python imports it by.
@@ -38,9 +39,10 @@ type Module struct {
 // bindings are the names a module's imports bind: those bound to a module, and those bound to a function or
 // class another module declares.
 type bindings struct {
-	modules map[string]*Module
-	members map[string]Node
-	ids     map[string]string
+	modules  map[string]*Module
+	members  map[string]Node
+	ids      map[string]string
+	absolute map[string]string
 }
 
 // Of is the Python program of the codebase, built once.
@@ -182,12 +184,15 @@ func (m *Module) bindings() *bindings {
 }
 
 func (m *Module) bind() {
-	bound := &bindings{modules: map[string]*Module{}, members: map[string]Node{}, ids: map[string]string{}}
+	bound := &bindings{modules: map[string]*Module{}, members: map[string]Node{}, ids: map[string]string{}, absolute: map[string]string{}}
 	for _, statement := range m.Nodes() {
 		if statement.IsImport() {
 			for _, alias := range statement.ChildrenIn("names") {
 				if id, ok := m.importedId(alias); ok {
 					bound.ids[alias.boundAs()] = id
+				}
+				if statement.Level() == 0 {
+					bound.absolute[alias.boundAs()] = alias.dottedBinding()
 				}
 			}
 		}
