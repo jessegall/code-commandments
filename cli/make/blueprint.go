@@ -1,30 +1,30 @@
-// Package make is `make`: scaffold a commandment of the project's own, a skill, a sin and a detector in
-// `.commandments/custom/`, registered in the config, with the rest of the process printed.
+// Package make is `make`: scaffold a commandment of the project's own in `.commandments/custom/` (a rule
+// naming its sin, and the skill that teaches the fix when it is a new one), turned on in the config, with the
+// rest of the process printed.
 package make
 
 import (
+	"path/filepath"
 	"regexp"
 	"strings"
 
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// namespace is the namespace the project's own rules are declared in.
-const namespace = "Commandments"
-
-// Engine is the parse engine a new detector reads.
+// Engine is the engine a new rule judges.
 type Engine string
 
 // The engines a commandment can be written for.
 const (
-	Backend  Engine = "backend"
-	Frontend Engine = "frontend"
-	Python   Engine = "python"
-	CSharp   Engine = "csharp"
+	Backend    Engine = "backend"
+	Frontend   Engine = "frontend"
+	TypeScript Engine = "typescript"
+	Python     Engine = "python"
+	CSharp     Engine = "csharp"
 )
 
 // Engines are every engine, in the order they are offered.
-var Engines = []Engine{Backend, Frontend, Python, CSharp}
+var Engines = []Engine{Backend, Frontend, TypeScript, Python, CSharp}
 
 // ParseEngine reads an engine by name, whatever its case.
 func ParseEngine(name string) (Engine, bool) {
@@ -39,18 +39,20 @@ func ParseEngine(name string) (Engine, bool) {
 
 // ProbeRoot is where a throwaway probe for the engine goes.
 func (e Engine) ProbeRoot() string {
-	if e == Frontend {
+	if e == Frontend || e == TypeScript {
 		return "resources/js"
 	}
 
 	return "src"
 }
 
-// ProbeExtension is the probe file's extension.
+// ProbeExtension is the probe file's extension, which is also the language its skill teaches.
 func (e Engine) ProbeExtension() string {
 	switch e {
 	case Frontend:
 		return "vue"
+	case TypeScript:
+		return "ts"
 	case Python:
 		return "py"
 	case CSharp:
@@ -60,68 +62,59 @@ func (e Engine) ProbeExtension() string {
 	}
 }
 
-// Blueprint is the three classes a commandment is made of, named and placed.
+// Blueprint is a commandment named and placed: its sin, the engine its rule judges, and the skill that
+// teaches the fix, written anew when no existing one was named.
 type Blueprint struct {
-	Sin        string
-	ID         string
-	Engine     Engine
-	Slug       string
-	Skill      string
-	SkillClass string
-	Dir        string
+	Sin      string
+	ID       string
+	Engine   Engine
+	Slug     string
+	NewSkill bool
+	Dir      string
 }
 
-// Of plans a commandment named name; with no skillClass it writes a skill of its own for the slug.
-func Of(name string, engine Engine, slug, skillClass, dir string) Blueprint {
+// Of plans a commandment named name, taught by the skill slug; newSkill writes that skill too.
+func Of(name string, engine Engine, slug string, newSkill bool, dir string) Blueprint {
 	sin := Studly(strings.TrimSuffix(Studly(name), "Detector"))
-	blueprint := Blueprint{Sin: sin, ID: Kebab(sin), Engine: engine, Slug: slug, SkillClass: skillClass, Dir: dir}
 
-	if skillClass == "" {
-		blueprint.Skill = skillNamed(slug[strings.LastIndex(slug, "/")+1:], sin)
-		blueprint.SkillClass = namespace + `\` + blueprint.Skill
-	}
-
-	return blueprint
+	return Blueprint{Sin: sin, ID: Kebab(sin), Engine: engine, Slug: slug, NewSkill: newSkill, Dir: dir}
 }
 
-// Detector is the detector's class name.
+// Detector is the rule's name.
 func (b Blueprint) Detector() string {
 	return b.Sin + "Detector"
 }
 
-// DetectorClass is the detector's full class.
-func (b Blueprint) DetectorClass() string {
-	return namespace + `\` + b.Detector()
-}
-
-// File is one class the blueprint writes.
+// File is one file the blueprint writes.
 type File struct {
-	Path  string
-	Class string
+	Path string
+	Is   string
 }
 
-// Files are the classes it writes: the skill first when it writes one, then the sin and the detector.
+// Files are what it writes: the skill first when it writes one, then the rule.
 func (b Blueprint) Files() []File {
 	var files []File
 
-	if b.Skill != "" {
-		files = append(files, File{b.Dir + "/" + b.Skill + ".php", b.Skill})
+	if b.NewSkill {
+		files = append(files, File{b.SkillFile(), "the skill `" + b.Slug + "`"})
 	}
 
-	return append(files, File{b.Dir + "/" + b.Sin + ".php", b.Sin}, File{b.Dir + "/" + b.Detector() + ".php", b.Detector()})
+	return append(files, File{b.RuleFile(), "the rule, and its sin `" + b.ID + "`"})
+}
+
+// SkillFile is where a new skill's SKILL.md goes.
+func (b Blueprint) SkillFile() string {
+	return filepath.Join(b.Dir, "skills", b.Slug, "SKILL.md")
+}
+
+// RuleFile is where the rule goes.
+func (b Blueprint) RuleFile() string {
+	return filepath.Join(b.Dir, b.Detector()+".json")
 }
 
 // SkillID is the id the skill is published under.
 func (b Blueprint) SkillID() string {
 	return skill.IDFor(b.Slug)
-}
-
-func skillNamed(stem, sin string) string {
-	if named := Studly(stem); named != sin {
-		return named
-	}
-
-	return Studly(stem) + "Skill"
 }
 
 var (
@@ -130,7 +123,7 @@ var (
 	acronymToWord = regexp.MustCompile(`([A-Z]+)([A-Z][a-z])`)
 )
 
-// Studly is the name as a class name: its words, each capitalised, run together.
+// Studly is the name as a type name: its words, each capitalised, run together.
 func Studly(name string) string {
 	var studly strings.Builder
 

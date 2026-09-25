@@ -235,7 +235,7 @@ func (s Step) check(match engine.Match) bool {
 
 		return isText && text == *s.Text
 	case s.Resolves != "":
-		return strings.TrimPrefix(subject.Resolves(), `\`) == strings.TrimPrefix(s.Resolves, `\`)
+		return strings.TrimPrefix(subject.Refers(), `\`) == strings.TrimPrefix(s.Resolves, `\`)
 	case s.HasModifier != "":
 		return subject.HasModifier(s.HasModifier)
 	case s.HasFlag != "":

@@ -151,6 +151,15 @@ func (m Match) Kind() string {
 	return m.node.Kind
 }
 
+// Refers is the symbol a name refers to, resolved: a class, a function, a constant; empty for anything else.
+func (m Match) Refers() string {
+	if m.node == nil {
+		return ""
+	}
+
+	return m.node.Refers
+}
+
 // Resolves is the file an import, a re-export or a component tag reaches; empty for anything else.
 func (m Match) Resolves() string {
 	if m.node == nil {
