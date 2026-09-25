@@ -56,11 +56,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	enabled = append(enabled, custom.Load(event.Root).Enabled(project)...)
 
-	single := slices.DeleteFunc(enabled, func(detector detectors.Detector) bool {
-		_, wholeTree := detector.(detectors.WholeTree)
-
-		return wholeTree
-	})
+	single := slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile)
 
 	reported := ReportedIn(event.Workspace())
 	sins := map[string][]string{}

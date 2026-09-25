@@ -31,5 +31,5 @@ func (ParamResolvedFromParamDetector) Find(codebase *engine.Codebase) []engine.M
 		Get()
 }
 
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (ParamResolvedFromParamDetector) WholeTree() {}
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (ParamResolvedFromParamDetector) CrossFile() {}

@@ -27,5 +27,5 @@ func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return matches(py.In(codebase).Program.DerivedArgumentCalls())
 }
 
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (DerivedArgumentDetector) WholeTree() {}
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (DerivedArgumentDetector) CrossFile() {}

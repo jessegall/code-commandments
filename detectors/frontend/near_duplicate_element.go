@@ -51,6 +51,3 @@ func shapeHash(m engine.Match) string {
 func (NearDuplicateElementDetector) GroupKey(match engine.Match) (string, bool) {
 	return shapeHash(match), true
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (NearDuplicateElementDetector) WholeTree() {}

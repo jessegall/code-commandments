@@ -29,5 +29,5 @@ func (NamespaceCycleDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return namespaces.Distinct(namespaces.Of(codebase).ArrowsClosingAMutualPair())
 }
 
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (NamespaceCycleDetector) WholeTree() {}
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (NamespaceCycleDetector) CrossFile() {}

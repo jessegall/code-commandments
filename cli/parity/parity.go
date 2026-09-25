@@ -62,6 +62,24 @@ type Case struct {
 	Pending string `json:"pending,omitempty"`
 }
 
+// HasComposer says whether the case's project has a composer.json: the folder it copies holds one, or its setup
+// writes one.
+func (c Case) HasComposer(repo string) bool {
+	if c.Project != "" {
+		if _, err := os.Stat(filepath.Join(repo, c.Project, "composer.json")); err == nil {
+			return true
+		}
+	}
+
+	for _, line := range c.Setup {
+		if strings.Contains(line, "> composer.json") {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Result is what one run printed and answered, and what it wrote into its project.
 type Result struct {
 	Exit   int

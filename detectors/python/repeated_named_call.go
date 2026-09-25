@@ -36,6 +36,3 @@ func (RepeatedNamedCallDetector) Find(codebase *engine.Codebase) []engine.Match 
 func (RepeatedNamedCallDetector) GroupKey(match engine.Match) (string, bool) {
 	return py.In(match.Codebase()).Program.NamedCallKey(py.Node{Match: match})
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (RepeatedNamedCallDetector) WholeTree() {}

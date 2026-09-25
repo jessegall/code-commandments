@@ -30,5 +30,5 @@ func (BoundaryDuplicatedOperationDetector) Find(codebase *engine.Codebase) []eng
 		Get()
 }
 
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (BoundaryDuplicatedOperationDetector) WholeTree() {}
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (BoundaryDuplicatedOperationDetector) CrossFile() {}

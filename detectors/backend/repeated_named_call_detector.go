@@ -98,6 +98,3 @@ func shapeOf(expr engine.Match) string {
 
 	return expr.Kind()
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (RepeatedNamedCallDetector) WholeTree() {}

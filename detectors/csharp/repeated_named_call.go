@@ -43,6 +43,3 @@ func (RepeatedNamedCallDetector) GroupKey(match engine.Match) (string, bool) {
 
 	return copied.Type().Name() + "#" + strings.Join(copied.ConstantChanges(), ","), true
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (RepeatedNamedCallDetector) WholeTree() {}

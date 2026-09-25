@@ -41,5 +41,5 @@ func (d NamespaceDependencyDetector) Find(codebase *engine.Codebase) []engine.Ma
 	return matches(py.In(codebase).Program.LayerViolations(engine.Layers(d.layers, ".", true)))
 }
 
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (NamespaceDependencyDetector) WholeTree() {}
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (NamespaceDependencyDetector) CrossFile() {}

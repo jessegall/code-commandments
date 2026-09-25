@@ -178,5 +178,5 @@ func subjectOf(argument engine.Match) engine.Match {
 	return engine.Match{}
 }
 
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (DerivedArgumentDetector) WholeTree() {}
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (DerivedArgumentDetector) CrossFile() {}

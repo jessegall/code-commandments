@@ -40,5 +40,5 @@ func fillsAStringSlotWithNothing(codebase *engine.Codebase, built php.Node) bool
 	return false
 }
 
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (PlaceholderFilledDataDetector) WholeTree() {}
+// CrossFile says the PHP tool finds it reaching beyond the file it judges, so a per-file check must not ask it.
+func (PlaceholderFilledDataDetector) CrossFile() {}

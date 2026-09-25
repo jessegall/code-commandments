@@ -31,6 +31,3 @@ func (d RepeatedGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
 
 	return recurring(candidates, d.GroupKey, 2, func([]engine.Match) bool { return true })
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (RepeatedGuardDetector) WholeTree() {}

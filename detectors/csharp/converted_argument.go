@@ -71,6 +71,3 @@ func conversionSlot(call cs.Node, program *cs.Program) (string, bool) {
 
 	return call.Target().Symbol() + "#" + strconv.Itoa(positions[0]) + "=" + conversions[positions[0]], true
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (ConvertedArgumentDetector) WholeTree() {}

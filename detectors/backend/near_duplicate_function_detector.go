@@ -57,6 +57,3 @@ func (d NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.
 
 	return engine.NearCopies(candidates, shape, exact)
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (NearDuplicateFunctionDetector) WholeTree() {}

@@ -1,6 +1,9 @@
 package parity
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 // makeEntry is make's entry in the overview, its summary wrapped over as many lines as it takes.
 var makeEntry = regexp.MustCompile(`(?m)^  make +.*\n(?: {19}.*\n)*`)
@@ -20,18 +23,21 @@ func EquateMake(want, got Result) (Result, Result) {
 	return want, got
 }
 
-// bareInvocation is the binary named from the PATH, as it names itself in a project with no composer.json,
-// where the PHP tool always names its composer shim.
-var bareInvocation = regexp.MustCompile("(^|[\\s`!])commandments ")
-
-// EquateInvocation reads the tool's own name as the composer shim in both runs, so a command the binary
-// prints bare in a project with no composer.json is the one the PHP tool prints through the shim.
-func EquateInvocation(want, got Result) (Result, Result) {
-	for _, result := range []*Result{&want, &got} {
-		result.Stdout = bareInvocation.ReplaceAllString(result.Stdout, "${1}vendor/bin/commandments ")
-		result.Stderr = bareInvocation.ReplaceAllString(result.Stderr, "${1}vendor/bin/commandments ")
-		result.Files = bareInvocation.ReplaceAllString(result.Files, "${1}vendor/bin/commandments ")
+// EquateInvocation reads the composer shim the PHP tool names as the binary from the PATH, in the PHP tool's answer
+// only, when the case's project has no composer.json: there the binary names itself bare, where the PHP tool always
+// names its shim. The binary's own output is compared as printed, so naming the shim in a project without composer,
+// or the bare binary in a project with it, still differs as it should.
+func EquateInvocation(c Case, repo string, want, got Result) (Result, Result) {
+	if c.HasComposer(repo) {
+		return want, got
 	}
+
+	want.Stdout = strings.ReplaceAll(want.Stdout, shim, "commandments ")
+	want.Stderr = strings.ReplaceAll(want.Stderr, shim, "commandments ")
+	want.Files = strings.ReplaceAll(want.Files, shim, "commandments ")
 
 	return want, got
 }
+
+// shim is the composer shim as the PHP tool names it in a command.
+const shim = "vendor/bin/commandments "

@@ -41,6 +41,3 @@ func (d DuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Matc
 
 	return recurring(candidates, d.GroupKey, 2, func([]engine.Match) bool { return true })
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (DuplicateFunctionDetector) WholeTree() {}

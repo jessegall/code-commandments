@@ -46,6 +46,3 @@ func divergences(codebase *engine.Codebase) []engine.Divergence {
 		return engine.DivergentTwins(php.Twins(codebase), php.TwinUnits(codebase))
 	})
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (DivergentTwinDetector) WholeTree() {}

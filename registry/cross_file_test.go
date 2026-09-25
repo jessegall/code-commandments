@@ -12,9 +12,9 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 )
 
-// TestTheDetectorsThatReadBeyondOneFileAreThePHPToolsOwn holds the WholeTree marks to the PHP tool's own
-// analysis of which detectors read beyond the file they judge (CrossFileSet), for every engine the binary
-// carries: the per-edit check asks only the rest.
+// TestTheDetectorsThatReadBeyondOneFileAreThePHPToolsOwn holds the detectors that read beyond one file to the PHP
+// tool's own CrossFileSet, for every engine the binary carries: a WholeTree verdict, a recurrence grouped across files,
+// or a CrossFile reach the analysis finds. The per-edit check asks only the rest.
 func TestTheDetectorsThatReadBeyondOneFileAreThePHPToolsOwn(t *testing.T) {
 	if _, err := exec.LookPath("php"); err != nil {
 		t.Fatal("no php to ask the PHP tool's analysis")
@@ -47,7 +47,7 @@ foreach (\JesseGall\CodeCommandments\Detectors\Catalog::all() as $detector) {
 	}
 
 	for _, detector := range detectors.All() {
-		if _, wholeTree := detector.(detectors.WholeTree); wholeTree {
+		if detectors.ReadsBeyondOneFile(detector) {
 			got = append(got, config.ClassOf(config.Detector, detector))
 		}
 	}

@@ -41,6 +41,3 @@ func matches(nodes []py.Node) []engine.Match {
 func (ConvertedArgumentDetector) GroupKey(match engine.Match) (string, bool) {
 	return py.In(match.Codebase()).Program.ConversionKey(py.Node{Match: match})
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (ConvertedArgumentDetector) WholeTree() {}

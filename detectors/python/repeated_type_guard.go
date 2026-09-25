@@ -36,6 +36,3 @@ func (RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Match 
 func (RepeatedTypeGuardDetector) GroupKey(match engine.Match) (string, bool) {
 	return guardFingerprint(match)
 }
-
-// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
-func (RepeatedTypeGuardDetector) WholeTree() {}
