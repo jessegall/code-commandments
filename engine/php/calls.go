@@ -43,11 +43,11 @@ func receiverParamType(call engine.Match, variable string) string {
 }
 
 func receiverPropertyType(call engine.Match, name string) string {
-	class := enclosingClass(call)
+	class := EnclosingClass(call)
 	if !class.Exists() {
 		return ""
 	}
-	for _, param := range constructorParams(class) {
+	for _, param := range ConstructorParams(class) {
 		if own := param.Child("var"); slices.Contains(param.Node().Flags, "promoted") && own.Kind() == "Expr_Variable" && own.Name() == name {
 			return writtenClass(param.Node().Declared)
 		}
@@ -135,8 +135,8 @@ func (t *Types) fillTarget(call engine.Match) {
 	}
 }
 
-// enclosingClass is the nearest class-like around the node, or the node itself.
-func enclosingClass(node engine.Match) engine.Match {
+// EnclosingClass is the nearest class-like around the node, or the node itself.
+func EnclosingClass(node engine.Match) engine.Match {
 	for at := node; at.Exists(); at = at.Parent() {
 		if slices.Contains(classLikes, at.Kind()) {
 			return at
@@ -189,7 +189,7 @@ func (c *Chains) index(declaration engine.Match) {
 			}
 		}
 	}
-	for _, param := range constructorParams(declaration) {
+	for _, param := range ConstructorParams(declaration) {
 		own := param.Child("var")
 		if class := writtenClass(param.Node().Declared); slices.Contains(param.Node().Flags, "promoted") && own.Kind() == "Expr_Variable" && own.Name() != "" && class != "" {
 			properties[own.Name()] = strings.TrimLeft(class, `\`)

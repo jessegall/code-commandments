@@ -78,7 +78,7 @@ func (t *Types) index(declaration engine.Match) {
 			constructorDoc = doc.Text
 		}
 	}
-	for _, param := range constructorParams(declaration) {
+	for _, param := range ConstructorParams(declaration) {
 		if !slices.Contains(param.Node().Flags, "promoted") {
 			continue
 		}

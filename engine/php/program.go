@@ -257,18 +257,77 @@ type Field struct {
 	Type     *contract.Type
 	IsPublic bool
 	Promoted bool
-	Node     engine.Match
+	// Node is the parameter, or the property's item that names it.
+	Node engine.Match
+	// Declaration carries the field's attributes: the parameter, or the property statement.
+	Declaration engine.Match
+}
+
+// HasAttribute says whether the field carries an attribute by any of the short names.
+func (f Field) HasAttribute(shortNames ...string) bool {
+	return HasAttribute(f.Declaration, shortNames...)
+}
+
+// AsField is the field a promoted parameter or a property statement declares; a property its first.
+func AsField(node engine.Match) (Field, bool) {
+	switch node.Kind() {
+	case "Param":
+		if variable := node.Child("var"); slices.Contains(node.Node().Flags, "promoted") && variable.Kind() == "Expr_Variable" && variable.Name() != "" {
+			return Field{Name: variable.Name(), Type: node.Node().Declared, IsPublic: slices.Contains(node.Node().Modifiers, "public"), Promoted: true, Node: node, Declaration: node}, true
+		}
+	case "Stmt_Property":
+		for _, item := range node.Children() {
+			if item.Node().Field == "props" {
+				return Field{Name: item.Name(), Type: node.Node().Declared, IsPublic: IsPublic(node.Node()), Node: item, Declaration: node}, true
+			}
+		}
+	}
+
+	return Field{}, false
+}
+
+// AttributeNames is every attribute the declaration carries, by its name as resolved, in order.
+func AttributeNames(declaration engine.Match) []string {
+	var names []string
+	for _, group := range declaration.Children() {
+		if group.Kind() != "AttributeGroup" {
+			continue
+		}
+		for _, attribute := range group.Children() {
+			if attribute.Kind() == "Attribute" {
+				names = append(names, attribute.Child("name").Name())
+			}
+		}
+	}
+
+	return names
+}
+
+// HasAttribute says whether the declaration carries an attribute by any of the short names.
+func HasAttribute(declaration engine.Match, shortNames ...string) bool {
+	for _, name := range AttributeNames(declaration) {
+		if slices.Contains(shortNames, ShortName(name)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ShortName is a class name's last part.
+func ShortName(class string) string {
+	return lastPart(class)
 }
 
 // Fields is every field the class-like declares, its promoted constructor parameters first, then its properties.
 func Fields(declaration engine.Match) []Field {
 	var fields []Field
-	for _, param := range constructorParams(declaration) {
+	for _, param := range ConstructorParams(declaration) {
 		node := param.Node()
 		if !slices.Contains(node.Flags, "promoted") {
 			continue
 		}
-		fields = append(fields, Field{Name: node.Name, Type: node.Declared, IsPublic: slices.Contains(node.Modifiers, "public"), Promoted: true, Node: param})
+		fields = append(fields, Field{Name: node.Name, Type: node.Declared, IsPublic: slices.Contains(node.Modifiers, "public"), Promoted: true, Node: param, Declaration: param})
 	}
 	for _, member := range declaration.Children() {
 		if member.Kind() != "Stmt_Property" {
@@ -277,7 +336,7 @@ func Fields(declaration engine.Match) []Field {
 		property := member.Node()
 		for _, item := range member.Children() {
 			if item.Node().Field == "props" {
-				fields = append(fields, Field{Name: item.Name(), Type: property.Declared, IsPublic: IsPublic(property), Node: item})
+				fields = append(fields, Field{Name: item.Name(), Type: property.Declared, IsPublic: IsPublic(property), Node: item, Declaration: member})
 			}
 		}
 	}
@@ -308,7 +367,8 @@ func Method(declaration engine.Match, name string) (engine.Match, bool) {
 	return engine.Match{}, false
 }
 
-func constructorParams(declaration engine.Match) []engine.Match {
+// ConstructorParams is each parameter the class-like's constructor declares.
+func ConstructorParams(declaration engine.Match) []engine.Match {
 	constructor, ok := Method(declaration, "__construct")
 	if !ok {
 		return nil
