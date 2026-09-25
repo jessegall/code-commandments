@@ -85,6 +85,25 @@ func (s *Server) Ask(request Request) (*contract.Stream, error) {
 	return stream, nil
 }
 
+// AskEach sends one request and hands each line of the stream the bridge answers with to each, as it arrives, with
+// the bytes it was read from: an answer too large to hold whole is read this way.
+func (s *Server) AskEach(request Request, each func(line contract.Line, raw []byte) error) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	line, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+	if _, err := s.input.Write(append(line, '\n')); err != nil {
+		return Failed(s.command, err, s.stderr())
+	}
+	if err := s.output.Each(each); err != nil {
+		return Failed(s.command, err, s.stderr())
+	}
+
+	return nil
+}
+
 // Close ends the bridge process, or lets go of the service's socket, which the session keeps up.
 func (s *Server) Close() error {
 	if s.connection != nil {

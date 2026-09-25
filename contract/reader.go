@@ -94,16 +94,8 @@ func ReadAll(r io.Reader) (*Stream, error) {
 // Stream reads the next whole stream, header to trailer. A served bridge answers each request with one, back
 // to back on the same output, so each call starts a new stream where the last one ended.
 func (r *Reader) Stream() (*Stream, error) {
-	*r = Reader{scanner: r.scanner, number: r.number}
 	stream := &Stream{}
-	for {
-		line, err := r.Next()
-		if err == io.EOF {
-			return stream, nil
-		}
-		if err != nil {
-			return nil, err
-		}
+	err := r.Each(func(line Line, _ []byte) error {
 		switch {
 		case line.Header != nil:
 			stream.Header = *line.Header
@@ -113,6 +105,31 @@ func (r *Reader) Stream() (*Stream, error) {
 			stream.Program = line.Program
 		case line.Trailer != nil:
 			stream.Trailer = *line.Trailer
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return stream, nil
+}
+
+// Each reads the next whole stream a line at a time, handing each line to each as it is read, with the bytes it
+// was read from, which each may keep only by copying them: a stream too large to hold whole is read this way.
+func (r *Reader) Each(each func(line Line, raw []byte) error) error {
+	*r = Reader{scanner: r.scanner, number: r.number}
+	for {
+		line, err := r.Next()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if err := each(line, r.scanner.Bytes()); err != nil {
+			return err
 		}
 	}
 }

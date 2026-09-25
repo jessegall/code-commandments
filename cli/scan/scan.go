@@ -181,21 +181,29 @@ var readers = []reader{
 // its prebuilt image. Without the image C# goes unjudged, and the run says so on STDERR, naming the image.
 func csharp(roots, files []string) (*contract.Stream, error) {
 	roots, files = resolved(roots), resolved(files)
-	server, kept := bridge.RoslynService(roots...)
-	if !kept {
-		command, err := bridge.Roslyn(roots...)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "⚠ %d C# file(s) left unread — %s\n", len(files), bridge.RoslynMissing())
-
-			return nil, nil
-		}
-		if server, err = bridge.Serve(command); err != nil {
-			return nil, err
-		}
+	server, err := roslyn(roots, files)
+	if server == nil {
+		return nil, err
 	}
 	defer server.Close()
 
 	return server.Ask(bridge.Request{Paths: roots, Write: files})
+}
+
+// roslyn is the C# bridge for the roots: the one a session keeps up for them, else a capped container of its
+// prebuilt image. Without the image it is none, and the run says on STDERR that the files are left unread.
+func roslyn(roots, files []string) (*bridge.Server, error) {
+	if server, kept := bridge.RoslynService(roots...); kept {
+		return server, nil
+	}
+	command, err := bridge.Roslyn(roots...)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "⚠ %d C# file(s) left unread — %s\n", len(files), bridge.RoslynMissing())
+
+		return nil, nil
+	}
+
+	return bridge.Serve(command)
 }
 
 // resolved is each path absolute with its links resolved, as a container mounts it and the bridge names it.
