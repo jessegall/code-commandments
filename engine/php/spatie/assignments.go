@@ -13,6 +13,11 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
+// AssignedPropertyName is the field a `$this->field = …` assigns; empty for any other node.
+func (n Node) AssignedPropertyName() string {
+	return assignedPropertyName(n.Match)
+}
+
 // assignedPropertyName is the field a `$this->field = …` assigns.
 func assignedPropertyName(node engine.Match) string {
 	target := node.Child("var")
