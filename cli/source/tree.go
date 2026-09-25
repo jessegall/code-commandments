@@ -51,28 +51,35 @@ func walk(root string, excluded Excluded, wanted func(string) bool) []string {
 		return nil
 	}
 
-	var files []string
+	return descend(root, excluded, wanted, nil)
+}
 
-	filepath.WalkDir(root, func(path string, entry fs.DirEntry, err error) error {
+// descend collects the wanted files under dir in the order the directory lists them, going into each
+// folder as it is met, as PHP's recursive directory iterator does; the report's twins and the dashboard
+// keep that order.
+func descend(dir string, excluded Excluded, wanted func(string) bool, files []string) []string {
+	folder, err := os.Open(dir)
+	if err != nil {
+		return files
+	}
+
+	names, _ := folder.Readdirnames(-1)
+	folder.Close()
+
+	for _, name := range names {
+		path := dir + "/" + name
+		info, err := os.Stat(path)
+
 		switch {
 		case err != nil:
-			return nil
-		case path == root:
-			return nil
-		case entry.IsDir():
-			if !descends(path, excluded) {
-				return filepath.SkipDir
+		case info.IsDir():
+			if descends(path, excluded) {
+				files = descend(path, excluded, wanted, files)
 			}
-		case entry.Type()&fs.ModeSymlink != 0:
-			if target, err := os.Stat(path); err == nil && target.Mode().IsRegular() && wanted(path) {
-				files = append(files, path)
-			}
-		case entry.Type().IsRegular() && wanted(path):
+		case info.Mode().IsRegular() && wanted(path):
 			files = append(files, path)
 		}
-
-		return nil
-	})
+	}
 
 	return files
 }

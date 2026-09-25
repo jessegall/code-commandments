@@ -5,7 +5,6 @@ package scan
 import (
 	"path/filepath"
 	"slices"
-	"sort"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -48,7 +47,8 @@ func (s Sources) GivenOf() Given {
 	return given
 }
 
-// Walk finds the source files under every root, less what is excluded, each file once.
+// Walk finds the source files under every root, less what is excluded, each file once, in the order the
+// walk meets them.
 func Walk(roots []string, excluded source.Excluded) Sources {
 	sources := Sources{}
 	seen := map[string]bool{}
@@ -63,10 +63,6 @@ func Walk(roots []string, excluded source.Excluded) Sources {
 			language := source.OfFile(file)
 			sources[language] = append(sources[language], file)
 		}
-	}
-
-	for language := range sources {
-		sort.Strings(sources[language])
 	}
 
 	return sources
