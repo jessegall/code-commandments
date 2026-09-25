@@ -21,14 +21,9 @@ func callSites(codebase *engine.Codebase) []engine.Match {
 
 // recurring is every candidate whose fingerprint recurs at least minimum times, group by group, keeping the groups
 // the qualifier accepts.
-func recurring(candidates []engine.Match, fingerprint func(engine.Match) string, minimum int, qualifies func([]engine.Match) bool) []engine.Match {
+func recurring(candidates []engine.Match, fingerprint func(engine.Match) (string, bool), minimum int, qualifies func([]engine.Match) bool) []engine.Match {
 	var findings []engine.Match
-	key := func(m engine.Match) (string, bool) {
-		read := fingerprint(m)
-
-		return read, read != ""
-	}
-	for _, group := range engine.RecurringBuckets(candidates, key, minimum) {
+	for _, group := range engine.RecurringBuckets(candidates, fingerprint, minimum) {
 		if qualifies(group) {
 			findings = append(findings, group...)
 		}

@@ -21,8 +21,10 @@ const minBodyNodes = 12
 func (DuplicateFunctionDetector) Sin() sins.Sin { return backendsins.DuplicateFunction{} }
 
 // GroupKey is the fingerprint of the method's body.
-func (DuplicateFunctionDetector) GroupKey(finding engine.Match, _ *engine.Codebase) string {
-	return (php.Node{Match: finding}).BodyHash()
+func (DuplicateFunctionDetector) GroupKey(finding engine.Match) (string, bool) {
+	key := (php.Node{Match: finding}).BodyHash()
+
+	return key, key != ""
 }
 
 // Find is every sizeable method, guarded accessors, self-seeding factories, one-return bodies and deprecated ones
@@ -37,5 +39,5 @@ func (d DuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Reject(engine.As(php.Node.IsDeprecated)).
 		Get()
 
-	return recurring(candidates, func(m engine.Match) string { return d.GroupKey(m, codebase) }, 2, func([]engine.Match) bool { return true })
+	return recurring(candidates, d.GroupKey, 2, func([]engine.Match) bool { return true })
 }

@@ -28,8 +28,10 @@ func (NearDuplicateFunctionDetector) Exemptions() []packages.Exemption {
 }
 
 // GroupKey is the shape of the method, names and data blanked.
-func (NearDuplicateFunctionDetector) GroupKey(finding engine.Match, _ *engine.Codebase) string {
-	return (php.Node{Match: finding}).ShapeHash()
+func (NearDuplicateFunctionDetector) GroupKey(finding engine.Match) (string, bool) {
+	key := (php.Node{Match: finding}).ShapeHash()
+
+	return key, key != ""
 }
 
 // Find is every sizeable method sharing its shape with another that it does not copy exactly, the literal tables,
@@ -50,7 +52,7 @@ func (d NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.
 			return packages.Excuses(codebase, packages.ContractMethod, php.EnclosingClassName(n), php.EnclosingFunctionName(n))
 		}).
 		Get()
-	shape := func(m engine.Match) (string, bool) { return d.GroupKey(m, codebase), true }
+	shape := d.GroupKey
 	exact := func(m engine.Match) (string, bool) { return php.StructuralHash(m), true }
 
 	return engine.NearCopies(candidates, shape, exact)

@@ -19,8 +19,11 @@ func init() { detectors.Register(catalog.Backend, DivergentTwinDetector{}) }
 func (DivergentTwinDetector) Sin() sins.Sin { return backendsins.DivergentTwin{} }
 
 // GroupKey is the pair the method belongs to, named alike from either side.
-func (DivergentTwinDetector) GroupKey(finding engine.Match, codebase *engine.Codebase) string {
-	return engine.PairOf(divergences(codebase), php.ScopeOf(finding))
+func (DivergentTwinDetector) GroupKey(finding engine.Match) (string, bool) {
+	codebase := finding.Codebase()
+	key := engine.PairOf(divergences(codebase), php.ScopeOf(finding))
+
+	return key, key != ""
 }
 
 // Find is both methods of every divergent pair, the poorer first.

@@ -19,13 +19,15 @@ func init() { detectors.Register(catalog.Backend, RepeatedGuardDetector{}) }
 func (RepeatedGuardDetector) Sin() sins.Sin { return backendsins.RepeatedGuard{} }
 
 // GroupKey is the guard's conjuncts, in any order, locals read as what they hold.
-func (RepeatedGuardDetector) GroupKey(finding engine.Match, _ *engine.Codebase) string {
-	return (php.Node{Match: finding}).CanonicalGuardHash()
+func (RepeatedGuardDetector) GroupKey(finding engine.Match) (string, bool) {
+	key := (php.Node{Match: finding}).CanonicalGuardHash()
+
+	return key, key != ""
 }
 
 // Find is every substantive guard another site writes alike.
 func (d RepeatedGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
 	candidates := php.In(codebase).Where(engine.As(php.Node.IsSubstantiveGuard)).Get()
 
-	return recurring(candidates, func(m engine.Match) string { return d.GroupKey(m, codebase) }, 2, func([]engine.Match) bool { return true })
+	return recurring(candidates, d.GroupKey, 2, func([]engine.Match) bool { return true })
 }

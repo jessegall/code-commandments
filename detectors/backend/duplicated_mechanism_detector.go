@@ -33,8 +33,11 @@ func (DuplicatedMechanismDetector) Sin() sins.Sin { return backendsins.Duplicate
 func (DuplicatedMechanismDetector) Unpublished() {}
 
 // GroupKey is the verbs the class's cluster shares.
-func (DuplicatedMechanismDetector) GroupKey(finding engine.Match, codebase *engine.Codebase) string {
-	return mechanismsOf(codebase).keys[finding.Location()]
+func (DuplicatedMechanismDetector) GroupKey(finding engine.Match) (string, bool) {
+	codebase := finding.Codebase()
+	key := mechanismsOf(codebase).keys[finding.Location()]
+
+	return key, key != ""
 }
 
 // Find is every class of a cluster of peers sharing a mechanism's worth of rare outside verbs.

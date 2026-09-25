@@ -31,15 +31,18 @@ func (d RepeatedNamedCallDetector) Threshold(times int) RepeatedNamedCallDetecto
 }
 
 // GroupKey is the declaring method and the shape of each named argument.
-func (RepeatedNamedCallDetector) GroupKey(finding engine.Match, codebase *engine.Codebase) string {
-	return namedCallFingerprint(finding, codebase)
+func (RepeatedNamedCallDetector) GroupKey(finding engine.Match) (string, bool) {
+	codebase := finding.Codebase()
+	key := namedCallFingerprint(finding, codebase)
+
+	return key, key != ""
 }
 
 // Find is every call recurring its method and named-argument shapes as often as the threshold asks.
 func (d RepeatedNamedCallDetector) Find(codebase *engine.Codebase) []engine.Match {
 	candidates := php.In(codebase).Where(func(m engine.Match) bool { return (php.Node{Match: m}).MethodCallName() != "" }).Get()
 
-	return recurring(candidates, func(m engine.Match) string { return d.GroupKey(m, codebase) }, d.threshold, func([]engine.Match) bool { return true })
+	return recurring(candidates, d.GroupKey, d.threshold, func([]engine.Match) bool { return true })
 }
 
 func namedCallFingerprint(call engine.Match, codebase *engine.Codebase) string {

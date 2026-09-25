@@ -58,3 +58,9 @@ func NamedIn(detectors []Detector, name string) (Detector, bool) {
 
 	return nil, false
 }
+
+// Grouped is a detector whose findings recur in groups: the key says which group a finding is in, so a
+// report can name the other members as its twins. False leaves the finding in no group.
+type Grouped interface {
+	GroupKey(match engine.Match) (string, bool)
+}

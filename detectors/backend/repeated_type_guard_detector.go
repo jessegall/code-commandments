@@ -19,13 +19,15 @@ func init() { detectors.Register(catalog.Backend, RepeatedTypeGuardDetector{}) }
 func (RepeatedTypeGuardDetector) Sin() sins.Sin { return backendsins.RepeatedTypeGuard{} }
 
 // GroupKey is the guard's conjuncts, in any order, locals read as what they hold.
-func (RepeatedTypeGuardDetector) GroupKey(finding engine.Match, _ *engine.Codebase) string {
-	return (php.Node{Match: finding}).CanonicalGuardHash()
+func (RepeatedTypeGuardDetector) GroupKey(finding engine.Match) (string, bool) {
+	key := (php.Node{Match: finding}).CanonicalGuardHash()
+
+	return key, key != ""
 }
 
 // Find is every type-narrowing guard another site writes alike.
 func (d RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
 	candidates := php.In(codebase).Where(engine.As(php.Node.IsTypeNarrowingGuard)).Get()
 
-	return recurring(candidates, func(m engine.Match) string { return d.GroupKey(m, codebase) }, 2, func([]engine.Match) bool { return true })
+	return recurring(candidates, d.GroupKey, 2, func([]engine.Match) bool { return true })
 }

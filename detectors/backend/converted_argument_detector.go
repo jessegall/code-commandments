@@ -26,18 +26,19 @@ const dominant = 0.5
 func (ConvertedArgumentDetector) Sin() sins.Sin { return backendsins.ConvertedArgument{} }
 
 // GroupKey is the slot a call converts an argument for and the conversion it uses.
-func (ConvertedArgumentDetector) GroupKey(finding engine.Match, codebase *engine.Codebase) string {
-	return conversionFingerprint(finding, codebase)
+func (ConvertedArgumentDetector) GroupKey(finding engine.Match) (string, bool) {
+	codebase := finding.Codebase()
+	key := conversionFingerprint(finding, codebase)
+
+	return key, key != ""
 }
 
 // Find is every call converting an argument for a scalar slot the same way twice or more, where that conversion
 // fills half or more of the slot's call sites.
 func (ConvertedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	supplied := suppliedSlots(codebase)
-	fingerprint := func(m engine.Match) string { return conversionFingerprint(m, codebase) }
-
-	return recurring(callSites(codebase), fingerprint, 2, func(group []engine.Match) bool {
-		slot, _, _ := strings.Cut(fingerprint(group[0]), "=")
+	return recurring(callSites(codebase), ConvertedArgumentDetector{}.GroupKey, 2, func(group []engine.Match) bool {
+		slot, _, _ := strings.Cut(conversionFingerprint(group[0], codebase), "=")
 		sites := supplied[slot]
 
 		return sites > 0 && float64(len(group))/float64(sites) >= dominant

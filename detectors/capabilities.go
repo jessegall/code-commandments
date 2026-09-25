@@ -24,12 +24,6 @@ type RequiresBestDesign interface {
 	RequiresBestDesign()
 }
 
-// RecurrenceDetector marks a detector whose sin is one shape recurring: one occurrence proves nothing, so it names
-// the group each finding belongs to, and the fixture must show a group reaching across files.
-type RecurrenceDetector interface {
-	GroupKey(finding engine.Match, codebase *engine.Codebase) string
-}
-
 // ChainDetector marks a detector whose verdict follows a value through the whole program: its finding's evidence is
 // the chain of kind@file steps the value took, and the fixture must show one crossing several files.
 type ChainDetector interface {

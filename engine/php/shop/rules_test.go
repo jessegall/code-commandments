@@ -130,7 +130,7 @@ var capabilities = map[string]func(detectors.Detector) bool{
 	"RunsLast":           is[detectors.RunsLast],
 	"RequiresBestDesign": is[detectors.RequiresBestDesign],
 	"Exemptable":         is[packages.Exemptable],
-	"RecurrenceDetector": is[detectors.RecurrenceDetector],
+	"RecurrenceDetector": is[detectors.Grouped],
 	"ChainDetector":      is[detectors.ChainDetector],
 	"ConsumesContracts":  is[detectors.ConsumesContracts],
 }

@@ -105,14 +105,14 @@ const MinRecurrenceFiles = 2
 func (f Fixture) RecurrenceSpans() map[string]int {
 	spans := map[string]int{}
 	for _, detector := range f.Detectors {
-		recurring, ok := detector.(detectors.RecurrenceDetector)
+		recurring, ok := detector.(detectors.Grouped)
 		if !ok {
 			continue
 		}
 		groups := map[string]map[string]bool{}
 		widest := 0
 		for _, finding := range detector.Find(f.Codebase) {
-			key := recurring.GroupKey(finding, f.Codebase)
+			key, _ := recurring.GroupKey(finding)
 			if groups[key] == nil {
 				groups[key] = map[string]bool{}
 			}
