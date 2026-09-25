@@ -24,6 +24,9 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
+// defaultParallel is how many workers judge runs detectors across unless --parallel says otherwise.
+const defaultParallel = 4
+
 // aRuleCouldNotRun is the exit code of a run that found nothing while a rule never ran.
 const aRuleCouldNotRun = 3
 
@@ -51,7 +54,7 @@ func (Command) Help() help.Help {
 		Option("--sin=NAME", "only run detectors for one sin (lenient name match), e.g. nullable-callback").
 		Option("--exclude=A,B", "skip findings in paths containing any fragment").
 		Adopt(scope.Options()).
-		Option("--parallel=N", "run detectors across N worker processes (default: 8, capped at cores; 1 = off)").
+		Option("--parallel=N", "run detectors across N worker processes (default: 4, capped at cores; 1 = off)").
 		Option("--ignore-package-requirements", "keep package-gated rules even if this project lacks the package (cross-project calibration)").
 		Option("--checklist=FILE", "write the checklist here (default: your session's sins/sins.md, in .commandments/sessions/<id>/ or the journal plugin's data folder)").
 		Option("--no-checklist", "print only, don't write the checklist file").
@@ -426,7 +429,7 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 
 	skill, _ := in.Option("skill")
 	sin, _ := in.Option("sin")
-	parallel := 8
+	parallel := defaultParallel
 
 	if value, set := in.Option("parallel"); set {
 		parallel, _ = strconv.Atoi(value)

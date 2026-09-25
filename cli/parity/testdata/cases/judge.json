@@ -1,6 +1,6 @@
 [
-  {"name": "judge-help", "args": ["judge", "--help"]},
-  {"name": "judge-help-verb", "args": ["help", "judge"]},
+  {"name": "judge-help", "args": ["judge", "--help"], "pending": "main: PHP's --parallel help says default: 4"},
+  {"name": "judge-help-verb", "args": ["help", "judge"], "pending": "main: PHP's --parallel help says default: 4"},
   {"name": "judge-unknown-option", "args": ["judge", "--nope"]},
   {"name": "judge-not-a-directory", "args": ["judge", "nope"]},
   {"name": "judge-no-detector-matched", "args": ["judge", ".", "--sin=zzz-matches-nothing"]},
