@@ -15,12 +15,29 @@ type Scribe interface {
 	Rewrite(findings []engine.Match, codebase *engine.Codebase) (Rewrites, error)
 }
 
-// Situated is a scribe that reads where the pass runs from before it rewrites: the project's own tools it may consult.
+// Situated is a scribe that reads where the pass runs from before it rewrites: the project's own tools it may consult,
+// and the source the pass does not hold.
 type Situated interface {
-	Situate(roots []string)
+	Situate(roots []string, sources Sources)
+}
+
+// Sources reads source the pass does not hold: text no file holds yet, or a file outside its roots.
+type Sources interface {
+	Parse(sources map[string]string) (*engine.Codebase, error)
+	ReadFile(path string) (*engine.Codebase, error)
 }
 
 var scribesOf = map[string]func() Scribe{}
+
+// ScribeFor is the scribe that rewrites the detector's sin.
+func ScribeFor(detector detectors.Detector) (Scribe, bool) {
+	scribe := scribesOf[catalog.Name(detector)]
+	if scribe == nil {
+		return nil, false
+	}
+
+	return scribe(), true
+}
 
 // Fixes enrols the scribe that rewrites a detector's sin, from the scribe's own file.
 func Fixes(detector detectors.Detector, scribe func() Scribe) {
@@ -116,7 +133,7 @@ func (s DetectorStep) Run(pass Pass) (Rewrites, error) {
 
 	scribe := s.scribe()
 	if situated, ok := scribe.(Situated); ok {
-		situated.Situate(pass.Roots)
+		situated.Situate(pass.Roots, s.scanner)
 	}
 
 	return scribe.Rewrite(findings, codebase)

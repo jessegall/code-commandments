@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
 // probeMarker opens the name of each probe's impossible type, which carries the local it asks about.
@@ -17,8 +19,8 @@ const maxOracleType = 200
 
 // TypeQuery is a component and the locals whose types no reading of its source could tell.
 type TypeQuery struct {
-	Sfc   *Sfc
-	Names []string
+	Component Component
+	Names     []string
 }
 
 // TypeOracle is a real type checker: it resolves, in one pass, the types of every query's names, by component path.
@@ -111,22 +113,22 @@ func (o *VueTscOracle) ResolveAll(queries []TypeQuery) map[string]map[string]str
 func (o *VueTscOracle) writeProbes(queries []TypeQuery) ([]string, []string) {
 	var paths, probes []string
 	for _, query := range queries {
-		source, ok := ProbeSource(query.Sfc, query.Names)
+		source, ok := ProbeSource(query.Component, query.Names)
 		if !ok {
 			continue
 		}
-		probe, err := writeProbe(query.Sfc, source)
+		probe, err := writeProbe(query.Component.File(), source)
 		if err != nil {
 			continue
 		}
-		paths, probes = append(paths, query.Sfc.Path), append(probes, probe)
+		paths, probes = append(paths, query.Component.File()), append(probes, probe)
 	}
 
 	return paths, probes
 }
 
-func writeProbe(component *Sfc, source string) (string, error) {
-	file, err := os.CreateTemp(filepath.Dir(component.Path), "__cc_probe_*.vue")
+func writeProbe(beside, source string) (string, error) {
+	file, err := os.CreateTemp(filepath.Dir(beside), "__cc_probe_*.vue")
 	if err != nil {
 		return "", err
 	}
@@ -174,12 +176,16 @@ func linesNaming(output, file string) string {
 // ProbeSource is the component with a probe written at the end of its `<script setup>`, where its locals are in
 // scope: each name assigned to a string-branded type nothing is assignable to, so every value, of any shape, fails
 // the same way, with the complaint naming its type. Nothing to probe without names or a setup script.
-func ProbeSource(component *Sfc, names []string) (string, bool) {
-	setup, ok := setupBlock(component)
+func ProbeSource(component Component, names []string) (string, bool) {
+	setup, ok := setupScript(component)
 	if !ok || len(names) == 0 {
 		return "", false
 	}
-	at := setup.Start + len(setup.Content)
+	content, err := setup.Child("children").Span()
+	if err != nil {
+		return "", false
+	}
+	source, at := string(content.Source), content.End
 	probes := "\n"
 	for _, name := range names {
 		typed := probeMarker + name
@@ -187,17 +193,23 @@ func ProbeSource(component *Sfc, names []string) (string, bool) {
 		probes += "const __cc_" + name + ": " + typed + " = " + name + ";\n"
 	}
 
-	return component.Source[:at] + probes + component.Source[at:], true
+	return source[:at] + probes + source[at:], true
 }
 
-func setupBlock(component *Sfc) (Block, bool) {
-	for _, block := range component.Blocks {
-		if block.Tag == "script" && block.HasAttribute("setup") {
-			return block, true
+// setupScript is the component's `<script setup>` block.
+func setupScript(component Component) (engine.Match, bool) {
+	for _, block := range component.ChildrenIn("blocks") {
+		if block.Name() != "script" {
+			continue
+		}
+		for _, attribute := range block.ChildrenIn("attributes") {
+			if attribute.Name() == "setup" {
+				return block, true
+			}
 		}
 	}
 
-	return Block{}, false
+	return engine.Match{}, false
 }
 
 // CheckerTypes is each probed local and the type the checker resolved it to, read from its complaints; a type the

@@ -12,6 +12,10 @@ use JesseGall\CodeCommandments\Ts\StringScan;
  */
 final class Tokenizer
 {
+    /**
+     * The HTML elements that never hold content, as Vue reads them: by the tag as written, so a `<Link>` component
+     * is a component that wraps its children, never the void `<link>`.
+     */
     private const array VOID = [
         'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
         'link', 'meta', 'param', 'source', 'track', 'wbr',
@@ -136,7 +140,7 @@ final class Tokenizer
         $line = substr_count($this->html, "\n", 0, $lt) + $this->lineOffset;
         $start = $lt + $this->byteOffset;
 
-        if ($selfClosing || in_array(strtolower($tag), self::VOID, true)) {
+        if ($selfClosing || in_array($tag, self::VOID, true)) {
             $this->append(new Element($tag, $attributes, [], $line, '', $start, $i + 1 + $this->byteOffset, $spans));
         } else {
             $this->stack[] = $this->frame($tag, $attributes, $line, $start, $spans);

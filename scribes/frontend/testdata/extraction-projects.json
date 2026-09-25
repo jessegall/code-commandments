@@ -69,6 +69,11 @@
             "component.vue": "<script setup lang=\"ts\">\nimport type { Group } from '@/types';\nconst groups = computed<Group[]>(() => []);\n</script>\n<template>\n  <ul>\n    <li v-for=\"group in groups\" :key=\"group.id\"><div><div><div><div><div><div><div><div><div><div><div>{{ group.name }}</div></div></div></div></div></div></div></div></div></div></div></li>\n    <li class=\"footer\">end</li>\n  </ul>\n</template>\n"
         }
     ],
+    "test_a_link_component_is_lifted_with_what_it_wraps": [
+        {
+            "component.vue": "<script setup lang=\"ts\">\nimport { Link } from '@inertiajs/vue3';\n</script>\n<template>\n  <ul>\n    <li v-for=\"order in orders\" :key=\"order.id\"><Link :href=\"order.url\"><div><div><div><div><div><div><div><div><div><div><div>{{ order.number }}</div></div></div></div></div></div></div></div></div></div></div></Link></li>\n    <li class=\"footer\">end</li>\n  </ul>\n</template>\n"
+        }
+    ],
     "test_types_a_loop_variable_as_the_iterable_element_type": [
         {
             "component.vue": "<script setup lang=\"ts\">\nimport type { Agent } from '@/types';\ninterface Props { agents: Agent[] }\ndefineProps<Props>();\n</script>\n<template>\n  <ul>\n    <li v-for=\"agent in agents\" :key=\"agent.id\"><div><div><div><div><div><div><div><div><div><div><div>{{ agent.name }}</div></div></div></div></div></div></div></div></div></div></div></li>\n    <li class=\"footer\">end</li>\n  </ul>\n</template>\n"

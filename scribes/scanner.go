@@ -1,6 +1,8 @@
 package scribes
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -46,6 +48,31 @@ func (s *Scanner) Scan(pass Pass) (*engine.Codebase, error) {
 	s.roots, s.drafts, s.codebase = slices.Clone(pass.Roots), pass.Drafts, codebase
 
 	return codebase, nil
+}
+
+// Parse reads text no file holds yet, each under its file name, through the same bridge: a folder of its own is
+// scanned with the text drafted into it, so nothing the pass holds is read with it.
+func (s *Scanner) Parse(sources map[string]string) (*engine.Codebase, error) {
+	made, err := os.MkdirTemp("", "commandments-parse-")
+	if err != nil {
+		return nil, err
+	}
+	defer os.RemoveAll(made)
+	folder, err := filepath.EvalSymlinks(made)
+	if err != nil {
+		return nil, err
+	}
+	contents := map[string]string{}
+	for name, source := range sources {
+		contents[folder+"/"+name] = source
+	}
+
+	return s.read(s.server, bridge.Request{Paths: []string{folder}, Contents: contents})
+}
+
+// ReadFile reads a file outside the pass's roots, as it stands on disk, through the same bridge.
+func (s *Scanner) ReadFile(path string) (*engine.Codebase, error) {
+	return s.read(s.server, bridge.Request{Paths: []string{path}})
 }
 
 // IsFrozen says whether a file the scanner has read is frozen.

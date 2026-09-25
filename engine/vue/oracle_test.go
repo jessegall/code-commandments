@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 	"github.com/jessegall/code-commandments/engine/vue"
 )
 
@@ -18,7 +19,7 @@ const label = computed(() => schema.value.label);
 <template><div>{{ label }}</div></template>`
 
 func TestProbeWritesANameEncodingProbeInsideScriptSetup(t *testing.T) {
-	probe, ok := vue.ProbeSource(vue.ParseSfc(probed, ""), []string{"pageSizes", "label"})
+	probe, ok := vue.ProbeSource(componentFrom(t, probed), []string{"pageSizes", "label"})
 	if !ok {
 		t.Fatal("nothing probed")
 	}
@@ -36,7 +37,7 @@ func TestProbeWritesANameEncodingProbeInsideScriptSetup(t *testing.T) {
 }
 
 func TestProbeKeepsTheSourceAroundIt(t *testing.T) {
-	probe, _ := vue.ProbeSource(vue.ParseSfc(probed, ""), []string{"pageSizes"})
+	probe, _ := vue.ProbeSource(componentFrom(t, probed), []string{"pageSizes"})
 	for _, want := range []string{"const pageSizes = [50, 100, 200];", "<template><div>{{ label }}</div></template>"} {
 		if !strings.Contains(probe, want) {
 			t.Errorf("probe lost %q", want)
@@ -45,11 +46,11 @@ func TestProbeKeepsTheSourceAroundIt(t *testing.T) {
 }
 
 func TestNothingToProbeWithoutNamesOrASetupScript(t *testing.T) {
-	if _, ok := vue.ProbeSource(vue.ParseSfc(probed, ""), nil); ok {
+	if _, ok := vue.ProbeSource(componentFrom(t, probed), nil); ok {
 		t.Error("probed no names")
 	}
 	plain := "<script lang=\"ts\">export default {};</script>\n<template><div /></template>"
-	if _, ok := vue.ProbeSource(vue.ParseSfc(plain, ""), []string{"x"}); ok {
+	if _, ok := vue.ProbeSource(componentFrom(t, plain), []string{"x"}); ok {
 		t.Error("probed a component without a setup script")
 	}
 }
@@ -133,28 +134,45 @@ func oracleRoot(t *testing.T) string {
 	return root
 }
 
-func component(t *testing.T, root, name, body string) *vue.Sfc {
+// components scans the components, each a script setup with the body, from src/ under a fresh root, and answers the
+// root and each component by name.
+func components(t *testing.T, bodies map[string]string) (string, map[string]vue.Component) {
 	t.Helper()
-	source := "<script setup lang=\"ts\">\n" + body + "\n</script>\n<template><div /></template>\n"
-	path := root + "/src/" + name + ".vue"
-	if err := os.WriteFile(path, []byte(source), 0o644); err != nil {
-		t.Fatal(err)
+	sources := map[string]string{}
+	for name, body := range bodies {
+		sources["src/"+name+".vue"] = "<script setup lang=\"ts\">\n" + body + "\n</script>\n<template><div /></template>\n"
+	}
+	scanned := map[string]vue.Component{}
+	root := ""
+	for _, file := range frontendtest.FromSource(t, sources).Files() {
+		root = filepath.Dir(filepath.Dir(file.Path))
+		scanned[strings.TrimSuffix(filepath.Base(file.Path), ".vue")] = vue.ComponentOf(file.Match(file.Root.ID))
 	}
 
-	return vue.ParseSfc(source, path)
+	return root, scanned
+}
+
+// componentFrom is the component of the source, scanned.
+func componentFrom(t *testing.T, source string) vue.Component {
+	t.Helper()
+	for _, file := range frontendtest.FromSource(t, map[string]string{"Probed.vue": source}).Files() {
+		return vue.ComponentOf(file.Match(file.Root.ID))
+	}
+	t.Fatal("nothing scanned")
+
+	return vue.Component{}
 }
 
 func TestOracleResolvesEveryComponentInOneRun(t *testing.T) {
-	root := oracleRoot(t)
-	widget := component(t, root, "Widget", "const pageSizes = magic();")
-	panel := component(t, root, "Panel", "const label = magic();")
+	root, scanned := components(t, map[string]string{"Widget": "const pageSizes = magic();", "Panel": "const label = magic();"})
+	widget, panel := scanned["Widget"], scanned["Panel"]
 	runner := &fakeTsc{types: map[string]string{"pageSizes": "number[]", "label": "string | null"}}
-	types := vue.NewVueTscOracle(root, runner).ResolveAll([]vue.TypeQuery{{Sfc: widget, Names: []string{"pageSizes"}}, {Sfc: panel, Names: []string{"label"}}})
-	if !reflect.DeepEqual(types[widget.Path], map[string]string{"pageSizes": "number[]"}) {
-		t.Errorf("widget: %v", types[widget.Path])
+	types := vue.NewVueTscOracle(root, runner).ResolveAll([]vue.TypeQuery{{Component: widget, Names: []string{"pageSizes"}}, {Component: panel, Names: []string{"label"}}})
+	if !reflect.DeepEqual(types[widget.File()], map[string]string{"pageSizes": "number[]"}) {
+		t.Errorf("widget: %v", types[widget.File()])
 	}
-	if !reflect.DeepEqual(types[panel.Path], map[string]string{"label": "string | null"}) {
-		t.Errorf("panel: %v", types[panel.Path])
+	if !reflect.DeepEqual(types[panel.File()], map[string]string{"label": "string | null"}) {
+		t.Errorf("panel: %v", types[panel.File()])
 	}
 	if runner.runs != 1 {
 		t.Errorf("the checker ran %d times", runner.runs)
@@ -162,9 +180,9 @@ func TestOracleResolvesEveryComponentInOneRun(t *testing.T) {
 }
 
 func TestOracleRunsVueTscIncrementallyWithLibCheckSkipped(t *testing.T) {
-	root := oracleRoot(t)
+	root, scanned := components(t, map[string]string{"Widget": "const x = y();"})
 	runner := &fakeTsc{}
-	vue.NewVueTscOracle(root, runner).ResolveAll([]vue.TypeQuery{{Sfc: component(t, root, "Widget", "const x = y();"), Names: []string{"x"}}})
+	vue.NewVueTscOracle(root, runner).ResolveAll([]vue.TypeQuery{{Component: scanned["Widget"], Names: []string{"x"}}})
 	if !strings.HasSuffix(runner.binary, "/node_modules/.bin/vue-tsc") {
 		t.Errorf("ran %s", runner.binary)
 	}
@@ -179,9 +197,9 @@ func TestOracleRunsVueTscIncrementallyWithLibCheckSkipped(t *testing.T) {
 }
 
 func TestOracleWritesProbesBesideEachComponentThenRemovesThem(t *testing.T) {
-	root := oracleRoot(t)
+	root, scanned := components(t, map[string]string{"Widget": "const x = y();"})
 	runner := &fakeTsc{}
-	vue.NewVueTscOracle(root, runner).ResolveAll([]vue.TypeQuery{{Sfc: component(t, root, "Widget", "const x = y();"), Names: []string{"x"}}})
+	vue.NewVueTscOracle(root, runner).ResolveAll([]vue.TypeQuery{{Component: scanned["Widget"], Names: []string{"x"}}})
 	if !strings.Contains(runner.probe, "__CcNo_x") {
 		t.Errorf("the checker saw no probe: %q", runner.probe)
 	}

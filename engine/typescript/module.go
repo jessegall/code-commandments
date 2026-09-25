@@ -3,49 +3,219 @@ package typescript
 import (
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
-// A script read as the PHP tool's own parser reads it: its imports, and the variables, functions, classes, interfaces
-// and type aliases at its top, as tokens reveal them. What an extracted component declares is built from these
-// readings, so they are taken the way the PHP tool takes them rather than off the compiler's tree.
+// reactive are the calls that wrap a value in a ref, whose type is what the call holds.
+var reactive = []string{"ref", "computed", "shallowRef", "toRef", "customRef", "reactive"}
 
-// Import is an import statement: what it binds, local name to imported name, and where from.
-type Import struct {
-	Bindings map[string]string
-	Names    []string
-	Source   string
-	HasFrom  bool
-	TypeOnly bool
-	Raw      string
+// Module is a script's top-level statements, read as the PHP tool reads a script: its imports, its variables,
+// functions and classes, its type declarations and the calls it makes at the top.
+type Module struct {
+	statements []Node
 }
 
-// Variable is a `const`/`let`/`var` declaration.
+// ModuleOf reads the statements.
+func ModuleOf(statements []engine.Match) Module {
+	module := Module{}
+	for _, statement := range statements {
+		module.statements = append(module.statements, Node{statement})
+	}
+
+	return module
+}
+
+// ModuleOfNodes reads the statements.
+func ModuleOfNodes(statements []Node) Module {
+	return Module{statements: statements}
+}
+
+// Import is an import: the names it binds, each to what it imports, where from, and the statement as written.
+type Import struct {
+	Names     []string
+	Bindings  map[string]string
+	Specifier string
+	HasFrom   bool
+	Resolves  string
+	Statement string
+}
+
+// BindsAny says whether the import binds a name the test accepts.
+func (i Import) BindsAny(test func(string) bool) bool {
+	return slices.ContainsFunc(i.Names, test)
+}
+
+// Imports is every import of the script, each statement ended with a `;`.
+func (m Module) Imports() []Import {
+	var imports []Import
+	for _, statement := range m.statements {
+		if imported, ok := importOf(statement); ok {
+			imports = append(imports, imported)
+		}
+	}
+
+	return imports
+}
+
+func importOf(statement Node) (Import, bool) {
+	imported := Import{Bindings: map[string]string{}, Resolves: statement.Resolves()}
+	bind := func(local, name string) {
+		if _, seen := imported.Bindings[local]; !seen {
+			imported.Names = append(imported.Names, local)
+		}
+		imported.Bindings[local] = name
+	}
+	switch statement.Kind() {
+	case "ImportDeclaration":
+		clause := statement.Child("importClause")
+		if clause.Name() != "" {
+			bind(clause.Name(), "default")
+		}
+		bindings := clause.Child("namedBindings")
+		if bindings.Kind() == "NamespaceImport" {
+			bind(bindings.Name(), "*")
+		}
+		for _, element := range bindings.ChildrenIn("elements") {
+			name := element.Name()
+			if element.Child("propertyName").Exists() {
+				name = element.Child("propertyName").Name()
+			}
+			bind(element.Name(), name)
+		}
+		if specifier, ok := statement.Child("moduleSpecifier").Text(); ok {
+			imported.Specifier, imported.HasFrom = specifier, true
+		}
+	case "ImportEqualsDeclaration":
+		bind(statement.Name(), statement.Child("moduleReference").Written())
+	default:
+		return Import{}, false
+	}
+	imported.Statement = strings.TrimSpace(statement.Written())
+	if !strings.HasSuffix(imported.Statement, ";") {
+		imported.Statement += ";"
+	}
+
+	return imported, true
+}
+
+// ImportOf is the import that binds the name from a module.
+func (m Module) ImportOf(name string) (Import, bool) {
+	for _, imported := range m.Imports() {
+		if _, binds := imported.Bindings[name]; binds && imported.HasFrom {
+			return imported, true
+		}
+	}
+
+	return Import{}, false
+}
+
+// ReExports is the file of every module the script re-exports from, once.
+func (m Module) ReExports() []string {
+	var files []string
+	for _, statement := range m.statements {
+		if statement.Kind() == "ExportDeclaration" && statement.Resolves() != "" && !slices.Contains(files, statement.Resolves()) {
+			files = append(files, statement.Resolves())
+		}
+	}
+
+	return files
+}
+
+// Call is a call at the top of a script, or the one a variable is initialised with: to a plain name.
+type Call struct {
+	Callee        string
+	TypeArguments []TypeNode
+	Arguments     []Node
+}
+
+// CallOf is the call the expression makes to a plain name.
+func CallOf(n Node) (Call, bool) {
+	callee, ok := n.CalleeName()
+	if !ok {
+		return Call{}, false
+	}
+	call := Call{Callee: callee, TypeArguments: typesOf(n.ChildrenIn("typeArguments"))}
+	for _, argument := range n.ChildrenIn("arguments") {
+		call.Arguments = append(call.Arguments, Node{argument})
+	}
+
+	return call, true
+}
+
+// Variable is a `const`/`let`/`var` declaration, its first declarator.
 type Variable struct {
-	Keyword        string
-	Pattern        string
-	Names          []string
-	ObjectPattern  bool
-	NamePattern    bool
-	TypeAnnotation TypeNode
-	InitRaw        string
-	HasInit        bool
-	InitCall       *Call
-	InitParams     []Param
-	HasInitParams  bool
-	InitReturnType TypeNode
+	Keyword       string
+	Pattern       string
+	Names         []string
+	ObjectPattern bool
+	NamePattern   bool
+	Annotation    TypeNode
+	Initializer   Node
+	InitCall      *Call
+	Arrow         *FunctionType
 }
 
 // Render is the declaration as written again: `const name: T = init;`.
 func (v Variable) Render() string {
 	typed, init := "", ""
-	if v.TypeAnnotation != nil {
-		typed = ": " + v.TypeAnnotation.Render()
+	if v.Annotation != nil {
+		typed = ": " + v.Annotation.Render()
 	}
-	if v.HasInit {
-		init = " = " + v.InitRaw
+	if v.Initializer.Exists() {
+		init = " = " + strings.TrimRight(strings.TrimSpace(v.Initializer.Source()), ";")
 	}
 
 	return v.Keyword + " " + v.Pattern + typed + init + ";"
+}
+
+func variableOf(statement Node) (Variable, bool) {
+	list := Node{statement.Child("declarationList")}
+	declarations := list.ChildrenIn("declarations")
+	if statement.Kind() != "VariableStatement" || len(declarations) == 0 {
+		return Variable{}, false
+	}
+	declaration := Node{declarations[0]}
+	name := Node{declaration.Child("name")}
+	variable := Variable{Keyword: strings.Fields(list.Written())[0]}
+	variable.Pattern, variable.Names = Pattern(name)
+	variable.ObjectPattern = name.Kind() == "ObjectBindingPattern"
+	variable.NamePattern = name.Kind() == "Identifier"
+	if declaration.Child("type").Exists() {
+		variable.Annotation = TypeOf(Node{declaration.Child("type")})
+	}
+	initializer := Node{declaration.Child("initializer")}
+	if initializer.Kind() == "AwaitExpression" {
+		initializer = Node{initializer.Child("expression")}
+	}
+	variable.Initializer = initializer
+	if call, ok := CallOf(initializer); ok {
+		variable.InitCall = &call
+	}
+	if arrow, ok := parenthesisedArrow(initializer); ok {
+		variable.Arrow = &arrow
+	}
+
+	return variable, true
+}
+
+// parenthesisedArrow is the signature of an arrow function that writes its parameters in parentheses, its return
+// type left out when it declares none.
+func parenthesisedArrow(n Node) (FunctionType, bool) {
+	written := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(n.Written()), "async"))
+	if n.Kind() != "ArrowFunction" || !strings.HasPrefix(written, "(") {
+		return FunctionType{}, false
+	}
+	params, ok := paramsOf(n.ChildrenIn("parameters"))
+	if !ok {
+		return FunctionType{}, false
+	}
+	arrow := FunctionType{Params: params}
+	if n.Child("type").Exists() {
+		arrow.Returns = TypeOf(Node{n.Child("type")})
+	}
+
+	return arrow, true
 }
 
 // Function is a function declaration.
@@ -53,8 +223,8 @@ type Function struct {
 	Name         string
 	Params       []Param
 	ReturnType   TypeNode
-	ReturnObject *Fields
-	BodySource   string
+	ReturnObject []Returned
+	Body         Module
 }
 
 // Signature is the function's type: its parameters and its return, void when it declares none.
@@ -67,16 +237,234 @@ func (f Function) Signature() FunctionType {
 	return FunctionType{Params: f.Params, Returns: returns}
 }
 
-// Call is a call at the top of a script, or the one a variable is initialised with.
-type Call struct {
-	Callee        string
-	TypeArguments []TypeNode
-	Arguments     []string
+func functionOf(statement Node) (Function, bool) {
+	if statement.Kind() != "FunctionDeclaration" || statement.Name() == "" {
+		return Function{}, false
+	}
+	params, ok := paramsOf(statement.ChildrenIn("parameters"))
+	if !ok {
+		return Function{}, false
+	}
+	function := Function{Name: statement.Name(), Params: params}
+	if statement.Child("type").Exists() {
+		function.ReturnType = TypeOf(Node{statement.Child("type")})
+	}
+	body := statement.Child("body")
+	function.Body = ModuleOf(body.ChildrenIn("statements"))
+	for _, returned := range body.ChildrenIn("statements") {
+		object := Node{returned.Child("expression")}
+		if returned.Kind() == "ReturnStatement" && object.Kind() == "ObjectLiteralExpression" {
+			function.ReturnObject = objectShape(object)
+		}
+	}
+
+	return function, true
 }
 
-// FirstArgumentStartsWith says whether the call's first argument is written starting with prefix.
-func (c Call) FirstArgumentStartsWith(prefix string) bool {
-	return len(c.Arguments) > 0 && strings.HasPrefix(c.Arguments[0], prefix)
+// Returned is a key of a returned object literal and the local it returns, empty when its value is anything else.
+type Returned struct {
+	Key, Local string
+}
+
+// objectShape is a returned object literal's keys, each with the local it returns, a key written again keeping its
+// place.
+func objectShape(object Node) []Returned {
+	var shape []Returned
+	set := func(key, local string) {
+		for index := range shape {
+			if shape[index].Key == key {
+				shape[index].Local = local
+
+				return
+			}
+		}
+		shape = append(shape, Returned{Key: key, Local: local})
+	}
+	for _, property := range object.ChildrenIn("properties") {
+		key := property.Child("name")
+		if key.Kind() != "Identifier" && key.Kind() != "StringLiteral" {
+			continue
+		}
+		switch value := (Node{property.Child("initializer")}); property.Kind() {
+		case "PropertyAssignment":
+			local := ""
+			if value.Kind() == "Identifier" {
+				local = value.Name()
+			}
+			set(key.Written(), local)
+		case "ShorthandPropertyAssignment", "MethodDeclaration", "GetAccessor", "SetAccessor":
+			set(key.Written(), key.Written())
+		}
+	}
+
+	return shape
+}
+
+// Variable is the declaration of a variable binding the name.
+func (m Module) Variable(name string) (Variable, bool) {
+	for _, statement := range m.statements {
+		if variable, ok := variableOf(statement); ok && slices.Contains(variable.Names, name) {
+			return variable, true
+		}
+	}
+
+	return Variable{}, false
+}
+
+// Function is the function declared under the name.
+func (m Module) Function(name string) (Function, bool) {
+	for _, statement := range m.statements {
+		if function, ok := functionOf(statement); ok && function.Name == name {
+			return function, true
+		}
+	}
+
+	return Function{}, false
+}
+
+// Call is the first call to the callee at the top of the script, a variable's initialiser included.
+func (m Module) Call(callee string) (Call, bool) {
+	for _, statement := range m.statements {
+		if call, ok := CallOf(Node{statement.Child("expression")}); statement.Kind() == "ExpressionStatement" && ok && call.Callee == callee {
+			return call, true
+		}
+		if variable, ok := variableOf(statement); ok && variable.InitCall != nil && variable.InitCall.Callee == callee {
+			return *variable.InitCall, true
+		}
+	}
+
+	return Call{}, false
+}
+
+// LocalNames is every name the script's top declares, once, in order: its variables, functions and classes.
+func (m Module) LocalNames() []string {
+	var names []string
+	add := func(declared ...string) {
+		for _, name := range declared {
+			if name != "" && !slices.Contains(names, name) {
+				names = append(names, name)
+			}
+		}
+	}
+	for _, statement := range m.statements {
+		if variable, ok := variableOf(statement); ok {
+			add(variable.Names...)
+		}
+		if statement.Kind() == "FunctionDeclaration" || statement.Kind() == "ClassDeclaration" {
+			add(statement.Name())
+		}
+	}
+
+	return names
+}
+
+// VariableNamedFrom is the name of the first plain `const name = …` whose initialiser call the test accepts.
+func (m Module) VariableNamedFrom(test func(Call) bool) (string, bool) {
+	for _, statement := range m.statements {
+		if variable, ok := variableOf(statement); ok && variable.NamePattern && variable.InitCall != nil && test(*variable.InitCall) {
+			return variable.Pattern, true
+		}
+	}
+
+	return "", false
+}
+
+// DeclaredType is the type the script declares or soundly implies for a name: a function's signature, a variable's
+// annotation, an arrow's signature, a reactive wrapper's value, or an initialiser's inferred type.
+func (m Module) DeclaredType(name string) (TypeNode, bool) {
+	if function, ok := m.Function(name); ok {
+		return function.Signature(), true
+	}
+	variable, ok := m.Variable(name)
+	switch {
+	case !ok:
+		return nil, false
+	case variable.Annotation != nil:
+		return variable.Annotation, true
+	case variable.Arrow != nil:
+		arrow := *variable.Arrow
+		if arrow.Returns == nil {
+			arrow.Returns = KeywordType{Name: "void"}
+		}
+
+		return arrow, true
+	case variable.InitCall != nil:
+		return reactiveType(*variable.InitCall)
+	case variable.Initializer.Exists():
+		return variable.Initializer.InferType()
+	}
+
+	return nil, false
+}
+
+// reactiveType is what a reactive wrapper holds: its type argument, a computed's return, or its value's type.
+func reactiveType(call Call) (TypeNode, bool) {
+	if !slices.Contains(reactive, call.Callee) {
+		return nil, false
+	}
+	if len(call.TypeArguments) > 0 {
+		return call.TypeArguments[0], true
+	}
+	if len(call.Arguments) == 0 {
+		return nil, false
+	}
+	if call.Callee == "computed" {
+		return call.Arguments[0].ReturnType()
+	}
+
+	return call.Arguments[0].InferType()
+}
+
+// StaticConst is a plain `const NAME = …` that calls nothing, as written again: a constant a component can carry in.
+func (m Module) StaticConst(name string) (string, bool) {
+	variable, ok := m.Variable(name)
+	if !ok || variable.Keyword != "const" || variable.InitCall != nil || !variable.NamePattern {
+		return "", false
+	}
+
+	return variable.Render(), true
+}
+
+// DestructuredCall is the call a destructured name comes from: `const { x } = useThing()`.
+func (m Module) DestructuredCall(name string) (string, bool) {
+	variable, ok := m.Variable(name)
+	if !ok || !variable.ObjectPattern || variable.InitCall == nil {
+		return "", false
+	}
+
+	return variable.InitCall.Callee, true
+}
+
+// ReturnTypeName is the return type a function declares, printed.
+func (m Module) ReturnTypeName(function string) (TypeNode, bool) {
+	if declared, ok := m.Function(function); ok {
+		return declared.ReturnType, declared.ReturnType != nil
+	}
+	variable, ok := m.Variable(function)
+	if !ok || variable.Arrow == nil || variable.Arrow.Returns == nil {
+		return nil, false
+	}
+
+	return variable.Arrow.Returns, true
+}
+
+// InferredReturnFields is the type of each field a composable returns, read from the locals it returns.
+func (m Module) InferredReturnFields(function string) Fields {
+	declared, ok := m.Function(function)
+	if !ok || declared.ReturnObject == nil {
+		return Fields{}
+	}
+	var fields Fields
+	for _, returned := range declared.ReturnObject {
+		if returned.Local == "" {
+			continue
+		}
+		if typed, ok := declared.Body.DeclaredType(returned.Local); ok {
+			fields.Set(returned.Key, typed.UnwrapRef())
+		}
+	}
+
+	return fields
 }
 
 // TypeDeclaration is an interface or a type alias.
@@ -122,70 +510,46 @@ func (d TypeDeclaration) Fields() Fields {
 	return Fields{}
 }
 
-// statement is one top-level statement a script's reading keeps.
-type statement struct {
-	variable    *Variable
-	function    *Function
-	class       string
-	declaration *TypeDeclaration
-	call        *Call
-}
-
-// Module is a script as the PHP tool's parser reads it.
-type Module struct {
-	Imports []Import
-	body    []statement
-}
-
-// ParseModule reads a script.
-func ParseModule(source string) Module {
-	parser := &typeParser{source: source, tokens: lex(source)}
-	var module Module
-	for !parser.eof() {
-		before := parser.pos
-		imported, read := parser.parseStatement()
-		switch {
-		case imported != nil:
-			module.Imports = append(module.Imports, *imported)
-		case read != nil:
-			module.body = append(module.body, *read)
+func declarationOf(statement Node) (TypeDeclaration, bool) {
+	name := statement.Child("name")
+	switch statement.Kind() {
+	case "InterfaceDeclaration":
+		declaration := TypeDeclaration{Name: statement.Name(), Header: headerOf(statement, name, "{"), Interface: true}
+		for _, member := range statement.ChildrenIn("members") {
+			if read, ok := memberOf(Node{member}); ok {
+				declaration.Members = append(declaration.Members, read)
+			}
 		}
-		if parser.pos == before {
-			parser.advance()
-		}
+
+		return declaration, true
+	case "TypeAliasDeclaration":
+		return TypeDeclaration{Name: statement.Name(), Header: headerOf(statement, name, "="), Type: TypeOf(Node{statement.Child("type")})}, true
 	}
 
-	return module
+	return TypeDeclaration{}, false
 }
 
-// Variable is the declaration of a variable binding the name.
-func (m Module) Variable(name string) (Variable, bool) {
-	for _, read := range m.body {
-		if read.variable != nil && slices.Contains(read.variable.Names, name) {
-			return *read.variable, true
-		}
+// headerOf is what a declaration writes between its name and the opener: its type parameters and what it extends.
+func headerOf(statement Node, name engine.Match, opener string) string {
+	whole, err := statement.Span()
+	named, nameErr := name.Span()
+	if err != nil || nameErr != nil {
+		return ""
+	}
+	rest := string(whole.Source[named.End:whole.End])
+	if end := strings.Index(rest, opener); end >= 0 {
+		rest = rest[:end]
 	}
 
-	return Variable{}, false
-}
-
-// Function is the function declared under the name.
-func (m Module) Function(name string) (Function, bool) {
-	for _, read := range m.body {
-		if read.function != nil && read.function.Name == name {
-			return *read.function, true
-		}
-	}
-
-	return Function{}, false
+	return strings.TrimSpace(rest)
 }
 
 // TypeDeclaration is the interface declared under the name, else the type alias.
 func (m Module) TypeDeclaration(name string) (TypeDeclaration, bool) {
 	for _, wantInterface := range []bool{true, false} {
-		for _, read := range m.body {
-			if read.declaration != nil && read.declaration.Interface == wantInterface && read.declaration.Name == name {
-				return *read.declaration, true
+		for _, statement := range m.statements {
+			if declaration, ok := declarationOf(statement); ok && declaration.Interface == wantInterface && declaration.Name == name {
+				return declaration, true
 			}
 		}
 	}
@@ -193,52 +557,20 @@ func (m Module) TypeDeclaration(name string) (TypeDeclaration, bool) {
 	return TypeDeclaration{}, false
 }
 
-// Call is the first call to the callee at the top of the script, a variable's initialiser included.
-func (m Module) Call(callee string) (Call, bool) {
-	for _, read := range m.body {
-		switch {
-		case read.call != nil && read.call.Callee == callee:
-			return *read.call, true
-		case read.variable != nil && read.variable.InitCall != nil && read.variable.InitCall.Callee == callee:
-			return *read.variable.InitCall, true
-		}
+// TypeFields is the members of the type the script declares under the name.
+func (m Module) TypeFields(name string) Fields {
+	declaration, declared := m.TypeDeclaration(name)
+	if !declared {
+		return Fields{}
 	}
 
-	return Call{}, false
+	return declaration.Fields()
 }
 
-// LocalNames is every name the script's top declares, in order.
-func (m Module) LocalNames() []string {
-	var names []string
-	for _, read := range m.body {
-		switch {
-		case read.variable != nil:
-			names = append(names, read.variable.Names...)
-		case read.function != nil:
-			names = append(names, read.function.Name)
-		case read.class != "":
-			names = append(names, read.class)
-		}
-	}
-
-	return names
-}
-
-// VariableNamedFrom is the name of the first plain `const name = …` whose initialiser call the test accepts.
-func (m Module) VariableNamedFrom(test func(Call) bool) (string, bool) {
-	for _, read := range m.body {
-		if variable := read.variable; variable != nil && variable.NamePattern && variable.InitCall != nil && test(*variable.InitCall) {
-			return variable.Pattern, true
-		}
-	}
-
-	return "", false
-}
-
-// LocalTypes is each declaration the names reach within the script, the ones they reference followed in turn,
-// printed, keyed by name in the order they were reached.
-func (m Module) LocalTypes(names []string) Fields {
-	var rendered Fields
+// LocalTypes is each declaration the names reach within the script, the ones they reference followed in turn, in
+// the order they were reached.
+func (m Module) LocalTypes(names []string) []TypeDeclaration {
+	var reached []TypeDeclaration
 	seen := map[string]bool{}
 	var queue []string
 	for _, name := range names {
@@ -257,608 +589,19 @@ func (m Module) LocalTypes(names []string) Fields {
 		if !declared {
 			continue
 		}
-		rendered.Set(name, declaration.Render())
+		reached = append(reached, declaration)
 		queue = append(queue, declaration.References()...)
 	}
 
-	return rendered
+	return reached
 }
 
-func (p *typeParser) parseStatement() (imported *Import, read *statement) {
-	defer func() {
-		if failure := recover(); failure != nil {
-			if _, isUnparsed := failure.(unparsed); !isUnparsed {
-				panic(failure)
-			}
-			p.skipStatement()
-			imported, read = nil, nil
-		}
-	}()
-
-	return p.parseModelledStatement()
-}
-
-func (p *typeParser) parseModelledStatement() (*Import, *statement) {
-	switch {
-	case p.atID("import") && !p.at(1).isPunct(".") && !p.at(1).isPunct("("):
-		imported := p.parseImport()
-
-		return &imported, nil
-	case p.atID("export"):
-		p.advance()
-
-		return p.parseStatement()
-	case p.atID("interface"):
-		return nil, &statement{declaration: p.parseInterface()}
-	case p.atID("type") && p.at(1).isIdentifier(""):
-		return nil, &statement{declaration: p.parseTypeAlias()}
-	case p.atPunct(";"):
-		p.consumeToStatementEnd(nil)
-	case p.atPunct("{"):
-		p.skipBlock()
-	case p.atID("if"):
-		p.skipIf()
-	case p.atID("switch"):
-		p.advance()
-		p.skipGroup()
-		p.skipBlock()
-	case p.atID("try"):
-		p.skipTry()
-	case p.atID("return") || p.atID("throw"):
-		p.consumeToStatementEnd(nil)
-	case p.atID("for") || p.atID("while"):
-		p.advance()
-		p.skipGroup()
-		p.skipBody()
-	case p.atID("do"):
-		p.advance()
-		p.skipBody()
-		if p.atID("while") {
-			p.advance()
-			p.skipGroup()
-			p.advanceIfPunct(";")
-		}
-	case p.atID("break") || p.atID("continue"):
-		p.advance()
-		if p.peek().isIdentifier("") {
-			p.advance()
-		}
-		p.advanceIfPunct(";")
-	case p.peek().isIdentifier("") && !p.atID("case") && !p.atID("default") && p.at(1).isPunct(":"):
-		p.advance()
-		p.advance()
-
-		return p.parseStatement()
-	case p.atID("const") || p.atID("let") || p.atID("var"):
-		variable := p.parseVariable()
-
-		return nil, &statement{variable: &variable}
-	case p.atID("class") || p.atID("abstract") && p.at(1).isIdentifier("class"):
-		return nil, &statement{class: p.parseClass()}
-	case p.atID("function") || p.atID("async") && p.at(1).isIdentifier("function"):
-		function := p.parseFunction()
-
-		return nil, &statement{function: &function}
-	case p.peek().isIdentifier("") && (p.at(1).isPunct("(") || p.at(1).isPunct("<")):
-		call, ok := speculate(p, p.parseCall)
-		if !ok {
-			p.consumeToStatementEnd(nil)
-
-			return nil, nil
-		}
-		p.consumeToStatementEnd(p.lastConsumed())
-
-		return nil, &statement{call: &call}
-	default:
-		p.consumeToStatementEnd(nil)
+// FieldType is a declared type's field's type, its reactive wrapper taken off.
+func (m Module) FieldType(typeName, field string) (TypeNode, bool) {
+	typed, ok := m.TypeFields(typeName).Get(field)
+	if !ok {
+		return nil, false
 	}
 
-	return nil, nil
-}
-
-func (p *typeParser) parseImport() Import {
-	start := p.peek().start
-	imported := Import{Bindings: map[string]string{}}
-	bind := func(local, name string) {
-		if _, seen := imported.Bindings[local]; !seen {
-			imported.Names = append(imported.Names, local)
-		}
-		imported.Bindings[local] = name
-	}
-	p.advance()
-	if p.atID("type") {
-		imported.TypeOnly = true
-		p.advance()
-	}
-	if p.peek().isIdentifier("") && p.at(1).isPunct("=") {
-		local := p.advance().value
-		p.advance()
-		bind(local, p.qualifiedName())
-	} else {
-		p.parseImportBindings(bind)
-		if p.atID("from") {
-			p.advance()
-			if p.peek().is(stringToken, "") {
-				value := p.advance().value
-				imported.Source, imported.HasFrom = value[1:len(value)-1], true
-			}
-		} else if p.peek().is(stringToken, "") {
-			value := p.advance().value
-			imported.Source, imported.HasFrom = value[1:len(value)-1], true
-		}
-	}
-	end := p.consumeToStatementEnd(nil)
-	imported.Raw = strings.Trim(p.source[start:end], " \t\n\r\x00\x0b")
-
-	return imported
-}
-
-func (p *typeParser) parseImportBindings(bind func(local, name string)) {
-	if p.peek().isIdentifier("") && !p.atPunct("{") && !p.atPunct("*") {
-		bind(p.advance().value, "default")
-		if p.atPunct(",") {
-			p.advance()
-		}
-	}
-	if p.atPunct("*") {
-		p.advance()
-		if p.atID("as") {
-			p.advance()
-		}
-		bind(p.advance().value, "*")
-	}
-	if !p.atPunct("{") {
-		return
-	}
-	p.advance()
-	for p.inside("}") {
-		if p.atID("type") {
-			p.advance()
-		}
-		name := p.advance().value
-		local := name
-		if p.atID("as") {
-			p.advance()
-			local = p.advance().value
-		}
-		bind(local, name)
-		if p.atPunct(",") {
-			p.advance()
-		}
-	}
-	p.advanceIfPunct("}")
-}
-
-func (p *typeParser) parseInterface() *TypeDeclaration {
-	p.advance()
-	name := p.advance().value
-	header := p.consumeUntilPunct("{")
-
-	return &TypeDeclaration{Name: name, Header: header, Interface: true, Members: p.parseLooseTypeMembers()}
-}
-
-// parseLooseTypeMembers reads an interface's members, passing over a member it does not model.
-func (p *typeParser) parseLooseTypeMembers() []Member {
-	p.expectPunct("{")
-	var members []Member
-	for p.inside("}") {
-		if named := p.peek().isIdentifier("") || p.peek().is(stringToken, "") || p.atID("readonly"); !named {
-			p.consumeMemberVerbatim()
-			p.advanceIfPunct(";")
-			p.advanceIfPunct(",")
-
-			continue
-		}
-		members = append(members, p.parseLooseTypeMember())
-		p.advanceIfPunct(";")
-		p.advanceIfPunct(",")
-	}
-	p.expectPunct("}")
-
-	return members
-}
-
-func (p *typeParser) parseLooseTypeMember() Member {
-	if p.atReadonlyModifier() {
-		p.advance()
-	}
-	name := p.advance().value
-	optional := p.advanceIfPunct("?")
-	if p.atPunct("(") {
-		params := p.parseParams()
-		var returns TypeNode = KeywordType{Name: "void"}
-		if p.advanceIfPunct(":") {
-			returns = p.parseType()
-		}
-
-		return Member{Name: name, Optional: optional, Params: params, Returns: returns}
-	}
-	if p.advanceIfPunct(":") {
-		return Member{Name: name, Optional: optional, Property: p.parseType()}
-	}
-	panic(unparsed{})
-}
-
-func (p *typeParser) consumeMemberVerbatim() {
-	depth := 0
-	for !p.eof() {
-		token := p.peek()
-		if token.isPunct("=") && p.at(1).isPunct(">") {
-			p.advance()
-			p.advance()
-
-			continue
-		}
-		if depth == 0 && (token.isPunct(";") || token.isPunct(",") || token.isPunct("}")) {
-			return
-		}
-		if token.isTypeOpener() {
-			depth++
-		} else if token.isTypeCloser() {
-			depth--
-		}
-		p.advance()
-	}
-}
-
-func (p *typeParser) parseTypeAlias() *TypeDeclaration {
-	p.advance()
-	name := p.advance().value
-	header := p.consumeUntilPunct("=")
-	p.advanceIfPunct("=")
-	typed := p.parseType()
-	p.advanceIfPunct(";")
-
-	return &TypeDeclaration{Name: name, Header: header, Type: typed}
-}
-
-func (p *typeParser) parseVariable() Variable {
-	variable := Variable{Keyword: p.advance().value}
-	variable.Pattern, variable.Names, variable.ObjectPattern = p.parseBindingPattern()
-	variable.NamePattern = !variable.ObjectPattern && !strings.HasPrefix(variable.Pattern, "[")
-	if p.atPunct(":") {
-		p.advance()
-		variable.TypeAnnotation = p.parseType()
-	}
-	if !p.atPunct("=") {
-		p.advanceIfPunct(";")
-
-		return variable
-	}
-	p.advance()
-	if p.atID("await") {
-		p.advance()
-	}
-	initStart := p.peek().start
-	if p.atID("async") && p.at(1).isPunct("(") {
-		p.advance()
-	}
-	switch {
-	case p.peek().isIdentifier("") && (p.at(1).isPunct("(") || p.at(1).isPunct("<")):
-		if call, ok := speculate(p, p.parseCall); ok {
-			variable.InitCall = &call
-		}
-	case p.atPunct("("):
-		if signature, ok := speculate(p, func() Variable {
-			params := p.parseParams()
-			var returns TypeNode
-			if p.advanceIfPunct(":") {
-				returns = p.parseType()
-			}
-			if !p.atPunct("=") || !p.at(1).isPunct(">") {
-				panic(unparsed{})
-			}
-
-			return Variable{InitParams: params, HasInitParams: true, InitReturnType: returns}
-		}); ok {
-			variable.InitParams, variable.HasInitParams, variable.InitReturnType = signature.InitParams, true, signature.InitReturnType
-		}
-	}
-	initEnd := p.consumeToStatementEnd(p.lastConsumed())
-	raw := strings.Trim(p.source[initStart:max(initStart, initEnd)], " \t\n\r\x00\x0b")
-	variable.InitRaw, variable.HasInit = strings.TrimRight(raw, ";"), true
-
-	return variable
-}
-
-// parseBindingPattern reads what a declaration binds: a name, `{ … }` or `[ … ]`, printed, and the names it binds.
-func (p *typeParser) parseBindingPattern() (string, []string, bool) {
-	if !p.atPunct("{") && !p.atPunct("[") {
-		name := p.advance().value
-
-		return name, []string{name}, false
-	}
-	object := p.atPunct("{")
-	printed, names := p.readPattern()
-
-	return printed, names, object
-}
-
-func (p *typeParser) parseFunction() Function {
-	if p.atID("async") {
-		p.advance()
-	}
-	p.advance()
-	p.advanceIfPunct("*")
-	function := Function{Name: p.advance().value}
-	p.consumeUntilPunct("(")
-	function.Params = p.parseParams()
-	if p.atPunct(":") {
-		p.advance()
-		function.ReturnType = p.parseType()
-	}
-	bodyStart := p.peek().start + 1
-	function.ReturnObject = p.skipBodyCapturingReturn()
-	bodyEnd := bodyStart
-	if p.pos > 0 {
-		bodyEnd = p.tokens[p.pos-1].start
-	}
-	if bodyEnd > bodyStart {
-		function.BodySource = p.source[bodyStart:bodyEnd]
-	}
-
-	return function
-}
-
-func (p *typeParser) skipBodyCapturingReturn() *Fields {
-	if !p.atPunct("{") {
-		return nil
-	}
-	p.advance()
-	depth := 1
-	var returned *Fields
-	for !p.eof() && depth > 0 {
-		if depth == 1 && p.atID("return") && p.at(1).isPunct("{") {
-			p.advance()
-			shape := p.parseObjectShape()
-			returned = &shape
-
-			continue
-		}
-		token := p.advance()
-		if token.isPunct("{") {
-			depth++
-		} else if token.isPunct("}") {
-			depth--
-		}
-	}
-
-	return returned
-}
-
-// parseObjectShape reads a returned object literal: each key and the local it returns, empty when the value is
-// computed.
-func (p *typeParser) parseObjectShape() Fields {
-	p.advance()
-	var shape Fields
-	for p.inside("}") {
-		before := p.pos
-		switch {
-		case p.atPunct(".") && p.at(1).isPunct(".") && p.at(2).isPunct("."):
-			p.advanceIfThreeDots()
-			p.consumeExpression(",", "}")
-		case p.peek().isIdentifier("") || p.peek().is(stringToken, ""):
-			key := p.advance().value
-			switch {
-			case !p.advanceIfPunct(":"):
-				shape.Set(key, key)
-			case p.peek().isIdentifier("") && (p.at(1).isPunct(",") || p.at(1).isPunct("}")):
-				shape.Set(key, p.advance().value)
-			default:
-				shape.Set(key, "")
-				p.consumeExpression(",", "}")
-			}
-		default:
-			p.consumeExpression(",", "}")
-		}
-		p.advanceIfPunct(",")
-		if p.pos == before {
-			p.advance()
-		}
-	}
-	p.advanceIfPunct("}")
-
-	return shape
-}
-
-func (p *typeParser) parseClass() string {
-	if p.atID("abstract") {
-		p.advance()
-	}
-	p.advance()
-	name := ""
-	if p.peek().isIdentifier("") {
-		name = p.advance().value
-	}
-	p.consumeUntilPunct("{")
-	p.skipBlock()
-
-	return name
-}
-
-func (p *typeParser) parseCall() Call {
-	call := Call{Callee: p.qualifiedName()}
-	if p.atPunct("<") {
-		call.TypeArguments = p.parseTypeArguments()
-	}
-	if p.atPunct("(") {
-		p.advance()
-		for p.inside(")") {
-			start := p.peek().start
-			end := p.consumeExpression(",", ")")
-			call.Arguments = append(call.Arguments, strings.Trim(p.source[start:max(start, end)], " \t\n\r\x00\x0b"))
-			if p.atPunct(",") {
-				p.advance()
-			}
-		}
-		p.advanceIfPunct(")")
-	}
-
-	return call
-}
-
-func (p *typeParser) consumeExpression(stops ...string) int {
-	depth := 0
-	end := p.peek().start
-	for !p.eof() {
-		token := p.peek()
-		if depth == 0 && token.kind == punctToken && slices.Contains(stops, token.value) {
-			break
-		}
-		if token.isGroupOpener() {
-			depth++
-		} else if token.isGroupCloser() {
-			depth--
-		}
-		end = token.end
-		p.advance()
-	}
-
-	return end
-}
-
-func (p *typeParser) consumeUntilPunct(value string) string {
-	start := p.peek().start
-	end := start
-	for !p.eof() && !p.atPunct(value) {
-		end = p.advance().end
-	}
-
-	return strings.Trim(p.source[start:max(start, end)], " \t\n\r\x00\x0b")
-}
-
-func (p *typeParser) lastConsumed() *lexeme {
-	if p.pos == 0 {
-		return &lexeme{kind: noToken}
-	}
-	token := p.tokens[p.pos-1]
-
-	return &token
-}
-
-// consumeToStatementEnd reads to the statement's end: its `;`, or a line break after something that could end an
-// expression and before something that does not continue one.
-func (p *typeParser) consumeToStatementEnd(after *lexeme) int {
-	depth := 0
-	end := p.peek().start
-	previous := after
-	for !p.eof() {
-		token := p.peek()
-		if depth == 0 {
-			if token.isPunct(";") {
-				end = token.end
-				p.advance()
-
-				break
-			}
-			if previous != nil && couldEndAnExpression(*previous) && !continuesExpression(token) && strings.Contains(p.source[previous.end:token.start], "\n") {
-				break
-			}
-		}
-		if token.isGroupOpener() {
-			depth++
-		} else if token.isGroupCloser() {
-			depth--
-		}
-		end = token.end
-		current := token
-		previous = &current
-		p.advance()
-	}
-
-	return end
-}
-
-func couldEndAnExpression(token lexeme) bool {
-	return token.isIdentifier("") || token.is(stringToken, "") || token.is(numberToken, "") || token.isGroupCloser()
-}
-
-func continuesExpression(token lexeme) bool {
-	return token.kind == punctToken && !token.isGroupOpener() && !token.isGroupCloser() &&
-		!slices.Contains([]string{";", ",", "!", "...", "@", "#", "++", "--"}, token.value)
-}
-
-func (p *typeParser) skipStatement() {
-	if p.atPunct("{") {
-		p.skipBlock()
-
-		return
-	}
-	p.consumeToStatementEnd(nil)
-}
-
-func (p *typeParser) skipBlock() {
-	if !p.atPunct("{") {
-		return
-	}
-	depth := 0
-	for !p.eof() {
-		token := p.advance()
-		if token.isPunct("{") {
-			depth++
-		} else if token.isPunct("}") {
-			depth--
-			if depth == 0 {
-				return
-			}
-		}
-	}
-}
-
-// skipGroup passes over a parenthesised group.
-func (p *typeParser) skipGroup() {
-	if !p.atPunct("(") {
-		return
-	}
-	depth := 0
-	for !p.eof() {
-		token := p.advance()
-		if token.isGroupOpener() {
-			depth++
-		} else if token.isGroupCloser() {
-			depth--
-			if depth == 0 {
-				return
-			}
-		}
-	}
-}
-
-// skipBody passes over a statement's body: a block, or one statement.
-func (p *typeParser) skipBody() {
-	if p.atPunct("{") {
-		p.skipBlock()
-
-		return
-	}
-	p.parseStatement()
-}
-
-func (p *typeParser) skipIf() {
-	p.advance()
-	p.skipGroup()
-	p.skipBody()
-	if p.atID("else") {
-		p.advance()
-		if p.atID("if") {
-			p.skipIf()
-
-			return
-		}
-		p.skipBody()
-	}
-}
-
-func (p *typeParser) skipTry() {
-	p.advance()
-	p.skipBlock()
-	if p.atID("catch") {
-		p.advance()
-		p.skipGroup()
-		p.skipBlock()
-	}
-	if p.atID("finally") {
-		p.advance()
-		p.skipBlock()
-	}
+	return typed.UnwrapRef(), true
 }

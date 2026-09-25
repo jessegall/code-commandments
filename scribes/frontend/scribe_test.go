@@ -67,7 +67,7 @@ func goRewrites(t *testing.T, detector detectors.Detector, dir string) map[strin
 	return relative
 }
 
-// phpRewrites is what PHP's frontend detector step for the detector class rewrites in the folder.
+// phpRewrites is what PHP's frontend detector step for the detector class rewrites in the folder, asked live.
 func phpRewrites(t *testing.T, detectorClass, dir string) map[string]string {
 	t.Helper()
 	probe := `require $argv[1];
@@ -90,12 +90,12 @@ echo json_encode((object) $out);`
 	return want
 }
 
-// sameAsPHP runs the detector's step here and in PHP over the files and holds the two rewrites byte for byte equal;
-// it answers the rewrite.
+// sameAsPHP runs the detector's step over the files and holds its rewrite byte for byte equal to what PHP's step
+// rewrote, as recorded; it answers the rewrite.
 func sameAsPHP(t *testing.T, detector detectors.Detector, detectorClass string, files map[string]string) map[string]string {
 	t.Helper()
 	dir := project(t, files)
-	want := phpRewrites(t, detectorClass, dir)
+	want := phpAnswer(t, detectorClass, files, dir)
 	got := goRewrites(t, detector, dir)
 	if len(got) != len(want) {
 		t.Fatalf("rewrote %v, PHP %v", keys(got), keys(want))

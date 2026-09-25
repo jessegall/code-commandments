@@ -21,10 +21,10 @@ func (o *scriptedOracle) ResolveAll(queries []vue.TypeQuery) map[string]map[stri
 	for _, query := range queries {
 		for _, name := range query.Names {
 			if typed, ok := o.types[name]; ok {
-				if resolved[query.Sfc.Path] == nil {
-					resolved[query.Sfc.Path] = map[string]string{}
+				if resolved[query.Component.File()] == nil {
+					resolved[query.Component.File()] = map[string]string{}
 				}
-				resolved[query.Sfc.Path][name] = typed
+				resolved[query.Component.File()][name] = typed
 			}
 		}
 	}
@@ -49,7 +49,9 @@ func rewrittenWith(t *testing.T, detector, strategy string, oracle vue.TypeOracl
 	if err != nil {
 		t.Fatal(err)
 	}
-	scribe := &ExtractComponentScribe{strategy: strategy, oracle: oracle}
+	scribe := &ExtractComponentScribe{strategy: strategy}
+	scribe.Situate([]string{dir}, scanner)
+	scribe.oracle = oracle
 	rewrites, err := scribe.Rewrite(enrolled(t, detector).Find(codebase), codebase)
 	if err != nil {
 		t.Fatal(err)

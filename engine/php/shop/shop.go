@@ -50,6 +50,12 @@ var inputs = []string{"tests/Fixtures/backend", "tests/Fixtures/frontend", "src"
 
 // Digest is the hash of every source the committed files are generated from.
 func Digest() (string, error) {
+	return DigestOf(inputs...)
+}
+
+// DigestOf is the hash of every source under the repository's folders and files: what a committed answer was
+// generated from, so a change to any shows the answer stale.
+func DigestOf(inputs ...string) (string, error) {
 	hash := sha256.New()
 	for _, input := range inputs {
 		var paths []string

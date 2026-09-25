@@ -68,6 +68,23 @@ final class SfcTest extends TestCase
         $this->assertNotNull($this->find($sfc->template, 'br'), 'void element is parsed');
     }
 
+    public function test_a_component_named_like_a_void_element_holds_its_children(): void
+    {
+        $sfc = Sfc::parse(<<<'VUE'
+            <template>
+              <nav>
+                <Link href="/orders"><span>Orders</span></Link>
+                <link rel="icon">
+              </nav>
+            </template>
+            VUE);
+
+        $component = $this->find($sfc->template, 'Link');
+        $this->assertNotNull($component);
+        $this->assertSame('span', $component->children[0]->tag ?? null, 'a <Link> component wraps what it holds, as Vue reads it');
+        $this->assertSame([], $this->find($sfc->template, 'link')->children ?? null, 'a lowercase <link> is still void');
+    }
+
     public function test_nested_template_does_not_end_the_sfc_block_early(): void
     {
         $sfc = Sfc::parse(<<<'VUE'
