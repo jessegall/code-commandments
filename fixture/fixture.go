@@ -8,6 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/sins"
 )
 
 // Fixture is a marked codebase and the detectors it proves.
@@ -143,7 +144,7 @@ func (f Fixture) WithoutRighteous() []string {
 	return without
 }
 
-// UnknownResolutions is every #[Fixed] that names no sin or detector the catalog knows; a typo there
+// UnknownResolutions is every #[Fixed] that names no known detector nor any published sin; a typo there
 // silently drops the resolution.
 func (f Fixture) UnknownResolutions() []string {
 	known := f.Known
@@ -153,6 +154,9 @@ func (f Fixture) UnknownResolutions() []string {
 	var names []string
 	for _, detector := range known {
 		names = append(names, keys(detector)...)
+	}
+	for _, sin := range sins.All() {
+		names = append(names, catalog.Name(sin), sin.Definition().Name)
 	}
 	var unknown []string
 	for _, marker := range Markers(f.Codebase) {

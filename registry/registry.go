@@ -4,6 +4,7 @@
 package registry
 
 import (
+	_ "github.com/jessegall/code-commandments/detectors/backend"
 	_ "github.com/jessegall/code-commandments/sins/backend"
 	_ "github.com/jessegall/code-commandments/sins/backend/concurrent"
 	_ "github.com/jessegall/code-commandments/sins/backend/laravel"
