@@ -44,12 +44,15 @@ func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
 	return contract.ReadAll(&out)
 }
 
-// Scan is the codebase the bridge reads at paths, as Codebase::scan reads it.
+// Scan is the codebase the bridge reads at paths, as Codebase::scan reads it, with the facts the engine fills for
+// PHP filled: each expression's resolved type and each call's target.
 func (b Bridge) Scan(paths ...string) (*engine.Codebase, error) {
 	stream, err := b.Stream(paths...)
 	if err != nil {
 		return nil, err
 	}
+	codebase := engine.Load(stream)
+	TypesOf(codebase).Fill(codebase)
 
-	return engine.Load(stream), nil
+	return codebase, nil
 }

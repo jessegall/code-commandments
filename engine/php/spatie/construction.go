@@ -127,11 +127,6 @@ func (n Node) castsNatively(class string) bool {
 	return n.program().IsEnum(class) || slices.Contains(nativeCastTypes, php.ShortName(class)) || n.program().Implements(class, "DateTimeInterface")
 }
 
-// CastsNativelyPublic says whether Spatie casts a value of the class without being told: an enum or a date.
-func (n Node) CastsNativelyPublic(class string) bool {
-	return n.castsNatively(class)
-}
-
 // IsPerItemHydration says whether the node runs once per item: in a loop, or in an `array_map` callback.
 func (n Node) IsPerItemHydration() bool {
 	return within(n.Match, isLoop) || n.isWithinArrayMap()

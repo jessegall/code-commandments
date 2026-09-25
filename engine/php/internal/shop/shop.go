@@ -43,16 +43,20 @@ func Testdata() string {
 	return filepath.Join(Repository(), "engine", "php", "testdata")
 }
 
-// inputs are what the committed files are generated from: a change to any of them makes them stale.
-var inputs = []string{"tests/Fixtures/backend", "src/Ast", "bridge/php", "engine/php/oracle"}
+// inputs are what the committed files are generated from, folders and files: the fixture, the PHP engine the oracle
+// asks and what it stands on, the lock that pins php-parser, the bridge and the oracle. A change to any makes them stale.
+var inputs = []string{
+	"tests/Fixtures/backend", "src/Ast", "src/Support", "src/Packages", "src/Span.php", "src/Located.php",
+	"src/WorkingCopy.php", "src/Query.php", "composer.lock", "bridge/php", "engine/php/oracle",
+}
 
-// Digest is the hash of every PHP source the committed files are generated from.
+// Digest is the hash of every source the committed files are generated from.
 func Digest() (string, error) {
 	hash := sha256.New()
 	for _, input := range inputs {
 		var paths []string
 		err := filepath.WalkDir(filepath.Join(Repository(), input), func(path string, entry fs.DirEntry, err error) error {
-			if err == nil && !entry.IsDir() && strings.HasSuffix(path, ".php") {
+			if err == nil && !entry.IsDir() && (strings.HasSuffix(path, ".php") || filepath.Base(path) == "composer.lock") {
 				paths = append(paths, path)
 			}
 

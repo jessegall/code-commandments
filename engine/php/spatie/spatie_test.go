@@ -146,7 +146,7 @@ func TestTheSpatieAssignmentPredicatesAnswerAsPhpDoes(t *testing.T) {
 
 func TestTheTransformerOutputIsReadFromTheProjectsOwnConfig(t *testing.T) {
 	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("php is not on PATH")
+		t.Fatal("this test runs the PHP bridge, and php is not on PATH: install PHP 8.4+ and run composer install")
 	}
 	project, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {

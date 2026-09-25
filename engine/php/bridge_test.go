@@ -15,15 +15,22 @@ const fixture = "../../tests/Fixtures/backend"
 
 func bridged(t *testing.T, arguments ...string) *contract.Stream {
 	t.Helper()
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("php is not on PATH")
-	}
+	needsPHP(t)
 	stream, err := Here().Stream(arguments...)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	return stream
+}
+
+// needsPHP fails the test when php is missing: this repository's tests run the PHP bridge, and a test that skips
+// without it passes having proven nothing.
+func needsPHP(t *testing.T) {
+	t.Helper()
+	if _, err := exec.LookPath("php"); err != nil {
+		t.Fatal("these tests run the PHP bridge, and php is not on PATH: install PHP 8.4+ and run composer install")
+	}
 }
 
 func written(t *testing.T, files map[string]string) string {
@@ -183,9 +190,7 @@ func TestOutsideSymbolsAreClosed(t *testing.T) {
 }
 
 func TestServingAnswersEveryRequestWithAWholeStream(t *testing.T) {
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("php is not on PATH")
-	}
+	needsPHP(t)
 	folder := written(t, map[string]string{"A.php": "<?php class A {}\n", "B.php": "<?php class B {}\n"})
 	a, b := filepath.Join(folder, "A.php"), filepath.Join(folder, "B.php")
 	command := exec.Command("php", Here().Script, "--serve")
@@ -209,5 +214,42 @@ func TestServingAnswersEveryRequestWithAWholeStream(t *testing.T) {
 	}
 	if len(streams) != 2 || len(streams[0].Files) != 1 || len(streams[1].Files) != 2 || !streams[1].Files[0].Context {
 		t.Fatalf("two requests answered with %d streams:\n%s", len(streams), out)
+	}
+}
+
+func TestAScannedCodebaseHasItsTypesAndTargetsFilled(t *testing.T) {
+	needsPHP(t)
+	folder := written(t, map[string]string{"Till.php": `<?php
+namespace Shop;
+
+final class Receipt
+{
+    public function total(): int { return 1; }
+}
+
+final class Till
+{
+    public function ring(Receipt $receipt): int
+    {
+        return $receipt->total();
+    }
+}
+`})
+	codebase, err := Here().Scan(folder)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := codebase.Files()[0].File
+	variable := find(file, func(n *contract.Node) bool {
+		parent, _ := n.Parent()
+
+		return n.Kind == "Expr_Variable" && n.Name == "receipt" && parent.Kind == "Expr_MethodCall"
+	})
+	if variable == nil || variable.Resolved == nil || variable.Resolved.Name != `Shop\Receipt` {
+		t.Fatalf("the receiver's resolved type is %+v", variable)
+	}
+	call := find(file, func(n *contract.Node) bool { return n.Kind == "Expr_MethodCall" })
+	if call.Target == nil || call.Target.Symbol != `Shop\Receipt::total()` {
+		t.Fatalf("the call's target is %+v", call.Target)
 	}
 }
