@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -25,6 +26,12 @@ func RoslynImage() string {
 	image, _ := roslyn.ReadFile("roslyn/IMAGE")
 
 	return strings.TrimSpace(string(image))
+}
+
+// RoslynMissing is what a run without the C# bridge says, as the PHP tool's Bridge::missing says it: that C# goes
+// unjudged, which image it needs, and how that image is built.
+func RoslynMissing() string {
+	return fmt.Sprintf("the C# bridge image %s is not available (Docker is not running, or the image is not installed), so C# is not judged; it is built once per release, never on demand: docker build -t %s %s", RoslynImage(), RoslynImage(), roslynSource())
 }
 
 // Roslyn is the command that runs the C# bridge once as the generic tree over the roots, in a memory-capped
@@ -125,4 +132,11 @@ func roslynScript() (string, error) {
 	path := filepath.Join(folder, "roslyn-in-docker.sh")
 
 	return path, os.WriteFile(path, script, 0o755)
+}
+
+// roslynSource is the folder the C# bridge image is built from, in the checkout this build came from.
+func roslynSource() string {
+	_, source, _, _ := runtime.Caller(0)
+
+	return filepath.Join(filepath.Dir(source), "roslyn")
 }

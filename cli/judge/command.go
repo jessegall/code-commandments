@@ -20,6 +20,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -177,7 +178,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	if len(judgement.Findings) == 0 {
 		deleteChecklist(options.checklist)
 
-		scanned := sources.Count(scannedLanguages(selected)...)
+		scanned := judgedFiles(sources, codebase, scannedLanguages(selected))
 		files := "files"
 		if scanned == 1 {
 			files = "file"
@@ -291,6 +292,27 @@ func scannedLanguages(selected []detectors.Detector) []source.Language {
 	}
 
 	return languages
+}
+
+// judgedFiles is how many of the languages' files the run judged: C#'s are the files its bridge wrote, since
+// without the bridge none is read, and every other language's are the files the walk found.
+func judgedFiles(sources scan.Sources, codebase *engine.Codebase, languages []source.Language) int {
+	judged := 0
+
+	for _, language := range languages {
+		if language != source.CSharp {
+			judged += sources.Count(language)
+
+			continue
+		}
+		for _, file := range codebase.Files() {
+			if file.Language() == contract.CSharp {
+				judged++
+			}
+		}
+	}
+
+	return judged
 }
 
 // sourceRoots are what the run scans: the path it was given, or the roots the config declares.

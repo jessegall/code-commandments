@@ -2,6 +2,7 @@ package scan
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/contract"
@@ -21,6 +22,9 @@ func IsFrozen(path string) bool {
 
 	if engine.FreezeReadsATree(path) {
 		stream, err = streamOf(source.OfFile(path), path)
+		if stream == nil {
+			return false
+		}
 		if err != nil {
 			return false
 		}
@@ -36,7 +40,7 @@ func streamOf(language source.Language, files ...string) (*contract.Stream, erro
 	for _, read := range readers {
 		for _, reads := range read.languages {
 			if reads == language {
-				return read.stream(files)
+				return read.stream([]string{filepath.Dir(files[0])}, files)
 			}
 		}
 	}

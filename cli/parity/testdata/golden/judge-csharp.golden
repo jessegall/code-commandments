@@ -1,0 +1,308 @@
+exit: 1
+--- stdout
+
+[1;33mcsharp/absence[0m  (17)
+  [1;36m↳ LOAD the skill `commandments-csharp-absence` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Addresses/PostcodeChecks.cs:7[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
+  [36mShop/Documents/Headings.cs:7[0m  Parameter strapline  [2m[BlankStringDefaultDetector][0m
+  [36mShop/Documents/LabelTemplates.cs:10[0m  MethodDeclaration Named  [2m[DeNulledFinderDetector][0m
+  [36mShop/Notifications/Mailing.cs:10[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
+  [36mShop/Notifications/Receipts.cs:10[0m  CoalesceExpression  [2m[InventedDefaultDetector][0m
+  [36mShop/Notifications/SmsSettings.cs:7[0m  PropertyDeclaration ApiKey  [2m[BlankStringDefaultDetector][0m
+  [36mShop/Orders/Customers.cs:14[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
+  [36mShop/Orders/GiftMessages.cs:9[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
+  [36mShop/Pricing/CouponBooks.cs:10[0m  MethodDeclaration Find  [2m[DeNulledFinderDetector][0m
+  [36mShop/Pricing/CouponBooks.cs:19[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
+  [36mShop/Pricing/CouponBooks.cs:22[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
+  [36mShop/Pricing/DiscountCodes.cs:9[0m  CoalesceExpression  [2m[CancelledCoalesceDetector][0m
+  [36mShop/Pricing/Labels.cs:8[0m  MethodDeclaration For  [2m[InventedDefaultDetector][0m
+  [36mShop/Shipping/Tracking.cs:15[0m  SuppressNullableWarningExpression  [2m[NullForgivenDetector][0m
+  [36mShop/Stock/BinResolvers.cs:8[0m  MethodDeclaration Resolve  [2m[DeNulledFinderDetector][0m
+  [36mShop/Stock/Reservations.cs:10[0m  ConditionalExpression  [2m[InventedDefaultDetector][0m
+  [36mShop/Stock/ShelfNotes.cs:9[0m  Parameter remark  [2m[BlankStringDefaultDetector][0m
+
+[1;33mcsharp/behaviour-per-method[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-csharp-behaviour-per-method` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Documents/Summaries.cs:7[0m  MethodDeclaration Line  [2m[FlagArgumentDetector][0m
+  [36mShop/Shipping/Manifests.cs:7[0m  MethodDeclaration Covers  [2m[FlagArgumentDetector][0m
+  [36mShop/Stock/Counters.cs:7[0m  MethodDeclaration Count  [2m[FlagArgumentDetector][0m
+
+[1;33mcsharp/class-layout[0m  (8)
+  [1;36m↳ LOAD the skill `commandments-csharp-class-layout` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Notifications/Throttles.cs:9[0m  FieldDeclaration  [2m[MemberOutOfOrderDetector][0m
+  [36mShop/Orders/InvoiceNumbers.cs:12[0m  FieldDeclaration  [2m[MemberAfterMethodDetector][0m
+  [36mShop/Orders/InvoiceNumbers.cs:12[0m  FieldDeclaration  [2m[MemberOutOfOrderDetector][0m
+  [36mShop/Pricing/ExchangeRates.cs:9[0m  FieldDeclaration  [2m[MemberOutOfOrderDetector][0m
+  [36mShop/Reports/ExportJobs.cs:9[0m  PropertyDeclaration Format  [2m[MemberAfterMethodDetector][0m
+  [36mShop/Shipping/CourierAccounts.cs:13[0m  PropertyDeclaration Courier  [2m[MemberAfterMethodDetector][0m
+  [36mShop/Shipping/CourierAccounts.cs:16[0m  PropertyDeclaration CreditCents  [2m[MemberAfterMethodDetector][0m
+  [36mShop/Stock/Reorders.cs:16[0m  FieldDeclaration  [2m[MemberOutOfOrderDetector][0m
+
+[1;33mcsharp/dependency-direction[0m  (7)
+  [1;36m↳ LOAD the skill `commandments-csharp-dependency-direction` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Catalog/Products.cs:8[0m  Parameter cart  [2m[NamespaceDependencyDetector][0m
+  [36mShop/Checkout/Carts.cs:16[0m  Parameter page  [2m[NamespaceDependencyDetector][0m
+  [36mShop/Orders/Discounting.cs:9[0m  Parameter promotion  [2m[NamespaceCycleDetector][0m
+  [36mShop/Rewards/Vouchers.cs:13[0m  Parameter member  [2m[NamespaceCycleDetector][0m
+  [36mShop/Search/Indexes.cs:12[0m  Parameter pages  [2m[NamespaceDependencyDetector][0m
+  [36mShop/Search/Rankings.cs:9[0m  Parameter shelf  [2m[NamespaceDependencyDetector][0m
+  [36mShop/Warranty/Policies.cs:8[0m  Parameter claims  [2m[NamespaceCycleDetector][0m
+
+[1;33mcsharp/documentation[0m  (18)
+  [1;36m↳ LOAD the skill `commandments-csharp-documentation` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Documents/Reprints.cs:14[0m  Documentation comment  [2m[CeremonyDocblockDetector][0m
+  [36mShop/Notifications/Broadcasts.cs:10[0m  Documentation comment  [2m[CeremonyDocblockDetector][0m
+  [36mShop/Orders/Checkouts.cs:10[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
+  [36mShop/Orders/GiftWrapping.cs:5[0m  Documentation comment  [2m[DanglingDocReferenceDetector][0m
+  [36mShop/Orders/Gratuities.cs:9[0m  LocalDeclarationStatement  [2m[RestatedCommentDetector][0m
+  [36mShop/Orders/RefundWindows.cs:8[0m  Line comment  [2m[ArchaeologyCommentDetector][0m
+  [36mShop/Pricing/PrizeDraws.cs:9[0m  Line comment  [2m[NegativeSpaceCommentDetector][0m
+  [36mShop/Pricing/VolumeBands.cs:6[0m  Documentation comment  [2m[CeremonyDocblockDetector][0m
+  [36mShop/Reports/Rounding.cs:7[0m  Block comment  [2m[NegativeSpaceCommentDetector][0m
+  [36mShop/Shipping/ColdChain.cs:7[0m  Documentation comment  [2m[NegativeSpaceCommentDetector][0m
+  [36mShop/Shipping/Consignments.cs:10[0m  ReturnStatement  [2m[RestatedCommentDetector][0m
+  [36mShop/Shipping/Couriers.cs:9[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
+  [36mShop/Shipping/FreightZones.cs:9[0m  Documentation comment  [2m[DanglingDocReferenceDetector][0m
+  [36mShop/Shipping/Surcharges.cs:8[0m  Block comment  [2m[ArchaeologyCommentDetector][0m
+  [36mShop/Stock/BinLocations.cs:5[0m  Documentation comment  [2m[ArchaeologyCommentDetector][0m
+  [36mShop/Stock/BinSweeps.cs:11[0m  ForEachStatement bin  [2m[RestatedCommentDetector][0m
+  [36mShop/Stock/ShelfAudits.cs:16[0m  Documentation comment  [2m[DanglingDocReferenceDetector][0m
+  [36mShop/Stock/Suppliers.cs:8[0m  Documentation comment  [2m[BloatedDocblockDetector][0m
+
+[1;33mcsharp/duplication[0m  (12)
+  [1;36m↳ LOAD the skill `commandments-csharp-duplication` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Documents/Invoice.cs:12[0m  MethodDeclaration Lines  [2m[DuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Documents/PackingSlip.cs:10[0m
+  [36mShop/Documents/PackingSlip.cs:10[0m  MethodDeclaration Rows  [2m[DuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Documents/Invoice.cs:12[0m
+  [36mShop/Notifications/DeliveredMail.cs:11[0m  MethodDeclaration Compose  [2m[NearDuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Notifications/ShippedMail.cs:11[0m
+  [36mShop/Notifications/ShippedMail.cs:11[0m  MethodDeclaration Render  [2m[NearDuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Notifications/DeliveredMail.cs:11[0m
+  [36mShop/Pricing/Discounts.cs:10[0m  MethodDeclaration Wholesale  [2m[NearDuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Pricing/Discounts.cs:32[0m
+  [36mShop/Pricing/Discounts.cs:32[0m  MethodDeclaration Retail  [2m[NearDuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Pricing/Discounts.cs:10[0m
+  [36mShop/Shipping/Carriers.cs:12[0m  GetAccessorDeclaration Surcharge  [2m[DuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Shipping/Carriers.cs:34[0m
+  [36mShop/Shipping/Carriers.cs:34[0m  GetAccessorDeclaration Surcharge  [2m[DuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Shipping/Carriers.cs:12[0m
+  [36mShop/Stock/Ledgers.cs:8[0m  MethodDeclaration Counts  [2m[NearDuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Stock/Ledgers.cs:29[0m
+  [36mShop/Stock/Ledgers.cs:29[0m  MethodDeclaration Reservations  [2m[NearDuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Stock/Ledgers.cs:8[0m
+  [36mShop/Stock/Replenishment.cs:10[0m  LocalFunctionStatement Shortfall  [2m[DuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Stock/Replenishment.cs:24[0m
+  [36mShop/Stock/Replenishment.cs:24[0m  LocalFunctionStatement Shortfall  [2m[DuplicateMethodDetector][0m
+    [2m↳ same shape as: Shop/Stock/Replenishment.cs:10[0m
+
+[1;33mcsharp/enums[0m  (18)
+  [1;36m↳ LOAD the skill `commandments-csharp-enums` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Notifications/ChannelNames.cs:22[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
+  [36mShop/Notifications/Channels.cs:5[0m  ClassDeclaration ContactChannel  [2m[ConstClassEnumDetector][0m
+  [36mShop/Notifications/Quiet.cs:15[0m  OrPattern  [2m[EnumCaseOrChainDetector][0m
+  [36mShop/Orders/Fulfilment.cs:27[0m  LogicalOrExpression  [2m[EnumCaseOrChainDetector][0m
+  [36mShop/Orders/PaymentStates.cs:4[0m  ClassDeclaration PaymentState  [2m[ConstClassEnumDetector][0m
+  [36mShop/Orders/PaymentWebhooks.cs:19[0m  InvocationExpression  [2m[InArrayMirrorsEnumDetector][0m
+  [36mShop/Orders/RefundDesk.cs:10[0m  IfStatement  [2m[StringMirrorsEnumDetector][0m
+  [36mShop/Orders/StatusFeed.cs:10[0m  SwitchStatement  [2m[StringMirrorsEnumDetector][0m
+  [36mShop/Pricing/TierImport.cs:9[0m  SwitchExpression  [2m[StringMirrorsEnumDetector][0m
+  [36mShop/Reports/Closures.cs:9[0m  IsPatternExpression  [2m[InArrayMirrorsEnumDetector][0m
+  [36mShop/Reports/Granularity.cs:16[0m  SwitchStatement  [2m[MatchDefaultReturnsNullDetector][0m
+  [36mShop/Reports/ReportKinds.cs:19[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
+  [36mShop/Shipping/CarrierLogos.cs:14[0m  SwitchExpression  [2m[MatchDefaultReturnsNullDetector][0m
+  [36mShop/Shipping/ServiceLevels.cs:5[0m  ClassDeclaration ServiceLevel  [2m[ConstClassEnumDetector][0m
+  [36mShop/Stock/Batches.cs:16[0m  OrPattern  [2m[EnumCaseOrChainDetector][0m
+  [36mShop/Stock/Holds.cs:9[0m  InvocationExpression  [2m[InArrayMirrorsEnumDetector][0m
+  [36mShop/Stock/Shelving.cs:14[0m  SwitchExpression  [2m[MatchDefaultReturnsNullDetector][0m
+  [36mShop/Stock/StockZones.cs:32[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
+
+[1;33mcsharp/exceptions[0m  (9)
+  [1;36m↳ LOAD the skill `commandments-csharp-exceptions` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Documents/InvoiceArchive.cs:15[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
+  [36mShop/Notifications/Outbox.cs:19[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
+  [36mShop/Orders/Lifecycle.cs:14[0m  ThrowStatement  [2m[GenericThrowDetector][0m
+  [36mShop/Pricing/Currencies.cs:11[0m  ThrowExpression  [2m[GenericThrowDetector][0m
+  [36mShop/Pricing/RateCache.cs:14[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
+  [36mShop/Pricing/RateFeed.cs:17[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
+  [36mShop/Shipping/CarrierDirectory.cs:12[0m  ThrowStatement  [2m[GenericThrowDetector][0m
+  [36mShop/Stock/Snapshots.cs:16[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
+  [36mShop/Stock/StockImport.cs:15[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
+
+[1;33mcsharp/fix-at-the-source[0m  (6)
+  [1;36m↳ LOAD the skill `commandments-csharp-fix-at-the-source` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Notifications/LastSent.cs:14[0m  SimpleAssignmentExpression  [2m[MutableStaticStateDetector][0m
+  [36mShop/Notifications/Subscriptions.cs:22[0m  InvocationExpression  [2m[ConstructorSideEffectDetector][0m
+  [36mShop/Orders/OrderCounter.cs:12[0m  PostIncrementExpression  [2m[MutableStaticStateDetector][0m
+  [36mShop/Pricing/PriceBoard.cs:25[0m  InvocationExpression  [2m[ConstructorSideEffectDetector][0m
+  [36mShop/Pricing/TaxTable.cs:11[0m  CoalesceAssignmentExpression  [2m[MutableStaticStateDetector][0m
+  [36mShop/Stock/ShelfSensors.cs:24[0m  InvocationExpression  [2m[ConstructorSideEffectDetector][0m
+
+[1;33mcsharp/flow[0m  (29)
+  [1;36m↳ LOAD the skill `commandments-csharp-flow` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Addresses/CountryCodes.cs:9[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
+  [36mShop/Addresses/Quotes.cs:8[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
+  [36mShop/Documents/LabelTemplates.cs:19[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
+  [36mShop/Documents/Summaries.cs:10[0m  IfStatement  [2m[RedundantElseDetector][0m
+  [36mShop/Orders/Approvals.cs:30[0m  ForStatement  [2m[NonCountingForDetector][0m
+  [36mShop/Orders/Checkout.cs:10[0m  IfStatement  [2m[RedundantElseDetector][0m
+  [36mShop/Orders/CouponRedeem.cs:11[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
+  [36mShop/Orders/Invoicing.cs:15[0m  IfStatement  [2m[LoopWrappedInIfDetector][0m
+  [36mShop/Orders/OrderNotes.cs:15[0m  ForEachStatement note  [2m[CoalescedLoopSubjectDetector][0m
+  [36mShop/Orders/Refunds.cs:22[0m  IfStatement  [2m[DeepNestingDetector][0m
+  [36mShop/Orders/StatusBadge.cs:12[0m  IfStatement  [2m[SubjectLadderDetector][0m
+  [36mShop/Pricing/LoyaltyTiers.cs:9[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
+  [36mShop/Pricing/PriceList.cs:14[0m  IfStatement  [2m[LoopWrappedInIfDetector][0m
+  [36mShop/Pricing/Rounding.cs:9[0m  IfStatement  [2m[RedundantElseDetector][0m
+  [36mShop/Pricing/Units.cs:18[0m  IfStatement  [2m[SubjectLadderDetector][0m
+  [36mShop/Reports/PageReader.cs:20[0m  ForStatement  [2m[NonCountingForDetector][0m
+  [36mShop/Shipping/CarrierCodes.cs:12[0m  IfStatement  [2m[SubjectLadderDetector][0m
+  [36mShop/Shipping/CarrierPick.cs:11[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
+  [36mShop/Shipping/Carriers.cs:15[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
+  [36mShop/Shipping/Carriers.cs:37[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
+  [36mShop/Shipping/Dispatch.cs:20[0m  WhileStatement  [2m[DeepNestingDetector][0m
+  [36mShop/Shipping/ParcelLabels.cs:12[0m  ForEachStatement mark  [2m[CoalescedLoopSubjectDetector][0m
+  [36mShop/Shipping/ParcelSizes.cs:7[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
+  [36mShop/Stock/Arrivals.cs:13[0m  IfStatement  [2m[LoopWrappedInIfDetector][0m
+  [36mShop/Stock/CategoryPaths.cs:15[0m  ForStatement  [2m[NonCountingForDetector][0m
+  [36mShop/Stock/PickLists.cs:11[0m  ForEachStatement sku  [2m[CoalescedLoopSubjectDetector][0m
+  [36mShop/Stock/Picking.cs:14[0m  IfStatement  [2m[RedundantElseDetector][0m
+  [36mShop/Stock/Restock.cs:20[0m  IfStatement  [2m[DeepNestingDetector][0m
+  [36mShop/Stock/StockLevels.cs:9[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
+
+[1;33mcsharp/method-mood[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-csharp-method-mood` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Orders/Returns.cs:7[0m  PropertyDeclaration Closes  [2m[BareStatePredicateDetector][0m
+  [36mShop/Pricing/PromotionRules.cs:7[0m  PropertyDeclaration Publishes  [2m[BareStatePredicateDetector][0m
+  [36mShop/Shipping/Lockers.cs:7[0m  MethodDeclaration Accepts  [2m[BareStatePredicateDetector][0m
+
+[1;33mcsharp/pass-the-object[0m  (16)
+  [1;36m↳ LOAD the skill `commandments-csharp-pass-the-object` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Documents/Barcodes.cs:13[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Documents/Barcodes.cs:17[0m
+  [36mShop/Documents/Barcodes.cs:17[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Documents/Barcodes.cs:13[0m
+  [36mShop/Notifications/Campaigns.cs:15[0m  MethodDeclaration Send  [2m[ParamResolvedFromParamDetector][0m
+  [36mShop/Notifications/InvoiceMailers.cs:20[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
+  [36mShop/Notifications/InvoiceMailers.cs:26[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
+  [36mShop/Pricing/CreditNotes.cs:23[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Pricing/CreditNotes.cs:33, Shop/Reports/CreditSummaries.cs:12[0m
+  [36mShop/Pricing/CreditNotes.cs:33[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Pricing/CreditNotes.cs:23, Shop/Reports/CreditSummaries.cs:12[0m
+  [36mShop/Pricing/PriceBooks.cs:13[0m  MethodDeclaration Quote  [2m[ParamResolvedFromParamDetector][0m
+  [36mShop/Reports/CreditSummaries.cs:12[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Pricing/CreditNotes.cs:23, Shop/Pricing/CreditNotes.cs:33[0m
+  [36mShop/Shipping/CourierBookings.cs:15[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
+  [36mShop/Shipping/CourierBookings.cs:19[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
+  [36mShop/Stock/Aisles.cs:22[0m  MethodDeclaration Reserve  [2m[ParamResolvedFromParamDetector][0m
+  [36mShop/Stock/BinImports.cs:17[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Stock/BinImports.cs:21[0m
+  [36mShop/Stock/BinImports.cs:21[0m  InvocationExpression  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: Shop/Stock/BinImports.cs:17[0m
+  [36mShop/Stock/StockMoves.cs:18[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
+  [36mShop/Stock/StockMoves.cs:24[0m  InvocationExpression  [2m[DerivedArgumentDetector][0m
+
+[1;33mcsharp/repeated-call-helper[0m  (10)
+  [1;36m↳ LOAD the skill `commandments-csharp-repeated-call-helper` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Documents/LabelFooters.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: Shop/Shipping/TrackingLinks.cs:9[0m
+  [36mShop/Notifications/Promises.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: Shop/Orders/Dispatch.cs:21[0m
+  [36mShop/Orders/Dispatch.cs:21[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: Shop/Notifications/Promises.cs:9[0m
+  [36mShop/Orders/OrderStages.cs:20[0m  WithExpression  [2m[RepeatedNamedCallDetector][0m
+    [2m↳ same shape as: Shop/Reports/Backfills.cs:13, Shop/Shipping/Handover.cs:13[0m
+  [36mShop/Reports/Backfills.cs:13[0m  WithExpression  [2m[RepeatedNamedCallDetector][0m
+    [2m↳ same shape as: Shop/Orders/OrderStages.cs:20, Shop/Shipping/Handover.cs:13[0m
+  [36mShop/Reports/Damage.cs:15[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: Shop/Shipping/Crates.cs:26, Shop/Stock/Palletising.cs:11[0m
+  [36mShop/Shipping/Crates.cs:26[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: Shop/Reports/Damage.cs:15, Shop/Stock/Palletising.cs:11[0m
+  [36mShop/Shipping/Handover.cs:13[0m  WithExpression  [2m[RepeatedNamedCallDetector][0m
+    [2m↳ same shape as: Shop/Orders/OrderStages.cs:20, Shop/Reports/Backfills.cs:13[0m
+  [36mShop/Shipping/TrackingLinks.cs:9[0m  LogicalAndExpression  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: Shop/Documents/LabelFooters.cs:9[0m
+  [36mShop/Stock/Palletising.cs:11[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: Shop/Reports/Damage.cs:15, Shop/Shipping/Crates.cs:26[0m
+
+[1;33mcsharp/tell-dont-ask[0m  (11)
+  [1;36m↳ LOAD the skill `commandments-csharp-tell-dont-ask` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Loyalty/PunchCards.cs:15[0m  MethodDeclaration Redeem  [2m[FeatureEnvyDetector][0m
+  [36mShop/Orders/Approvals.cs:40[0m  MethodDeclaration Signed  [2m[FeatureEnvyDetector][0m
+  [36mShop/Orders/Discounting.cs:12[0m  SwitchStatement  [2m[TypeSwitchDetector][0m
+  [36mShop/Orders/Invoicing.cs:8[0m  MethodDeclaration Bill  [2m[FeatureEnvyDetector][0m
+  [36mShop/Orders/Invoicing.cs:27[0m  MethodDeclaration BillFlat  [2m[FeatureEnvyDetector][0m
+  [36mShop/Orders/Invoicing.cs:47[0m  MethodDeclaration FirstBackordered  [2m[FeatureEnvyDetector][0m
+  [36mShop/Orders/Refunds.cs:10[0m  MethodDeclaration Amount  [2m[FeatureEnvyDetector][0m
+  [36mShop/Pricing/Promotions.cs:35[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
+  [36mShop/Reports/PromotionReport.cs:17[0m  SwitchStatement  [2m[TypeSwitchDetector][0m
+  [36mShop/Returns/ReturnInspections.cs:13[0m  MethodDeclaration NeedsRestocking  [2m[FeatureEnvyDetector][0m
+  [36mShop/Stock/Totes.cs:16[0m  MethodDeclaration Weigh  [2m[FeatureEnvyDetector][0m
+
+[1;33mcsharp/templates[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-csharp-templates` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Documents/Emails.cs:13[0m  ExpressionStatement  [2m[AssembledTemplateDetector][0m
+  [36mShop/Reports/DailySummary.cs:7[0m  InvocationExpression  [2m[AssembledTemplateDetector][0m
+  [36mShop/Shipping/CarrierConfig.cs:7[0m  InvocationExpression  [2m[AssembledTemplateDetector][0m
+
+[1;33mcsharp/type-honesty[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-csharp-type-honesty` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Notifications/Digests.cs:11[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
+  [36mShop/Orders/Payouts.cs:12[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
+  [36mShop/Shipping/Pickups.cs:21[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
+
+[1;33mcsharp/value-objects[0m  (22)
+  [1;36m↳ LOAD the skill `commandments-csharp-value-objects` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Addresses/LabelPrinter.cs:8[0m  MethodDeclaration Print  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: Shop/Addresses/Quotes.cs:6[0m
+  [36mShop/Addresses/Quotes.cs:6[0m  MethodDeclaration Price  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: Shop/Addresses/LabelPrinter.cs:8[0m
+  [36mShop/Notifications/QuietHours.cs:9[0m  ClassDeclaration QuietHours  [2m[CoupledFieldsDetector][0m
+  [36mShop/Orders/Baskets.cs:7[0m  SetAccessorDeclaration Items  [2m[MutableValueObjectDetector][0m
+  [36mShop/Orders/Receipts.cs:7[0m  ImplicitObjectCreationExpression  [2m[ArrayReturnBagDetector][0m
+  [36mShop/Orders/SupplierInvoices.cs:6[0m  ClassDeclaration SupplierInvoice  [2m[CoupledFieldsDetector][0m
+  [36mShop/Pricing/Quotas.cs:16[0m  AddAssignmentExpression  [2m[MutableValueObjectDetector][0m
+  [36mShop/Pricing/Surcharges.cs:14[0m  InvocationExpression  [2m[DictionaryBagDetector][0m
+  [36mShop/Pricing/VatSplits.cs:7[0m  MethodDeclaration Split  [2m[PositionalTupleReturnDetector][0m
+  [36mShop/Reports/SalesReport.cs:8[0m  MethodDeclaration Total  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: Shop/Reports/SalesReport.cs:15[0m
+  [36mShop/Reports/SalesReport.cs:15[0m  MethodDeclaration Count  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: Shop/Reports/SalesReport.cs:8[0m
+  [36mShop/Reports/Snapshots.cs:11[0m  ObjectCreationExpression  [2m[ArrayReturnBagDetector][0m
+  [36mShop/Shipping/DeliverySlots.cs:9[0m  ClassDeclaration DeliverySlot  [2m[CoupledFieldsDetector][0m
+  [36mShop/Shipping/Webhooks.cs:14[0m  InvocationExpression  [2m[DictionaryBagDetector][0m
+  [36mShop/Shipping/Webhooks.cs:20[0m  InvocationExpression  [2m[DictionaryBagDetector][0m
+  [36mShop/Shipping/Weighings.cs:9[0m  SubtractAssignmentExpression  [2m[MutableValueObjectDetector][0m
+  [36mShop/Shipping/Windows.cs:7[0m  PropertyDeclaration Today  [2m[PositionalTupleReturnDetector][0m
+  [36mShop/Stock/Audits.cs:22[0m  ObjectCreationExpression  [2m[ArrayReturnBagDetector][0m
+  [36mShop/Stock/Counts.cs:7[0m  MethodDeclaration TallyAsync  [2m[PositionalTupleReturnDetector][0m
+  [36mShop/Stock/ImportRows.cs:10[0m  ElementAccessExpression  [2m[DictionaryBagDetector][0m
+  [36mShop/Stock/Listings.cs:8[0m  MethodDeclaration Page  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: Shop/Stock/Listings.cs:15[0m
+  [36mShop/Stock/Listings.cs:15[0m  MethodDeclaration Page  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: Shop/Stock/Listings.cs:8[0m
+
+[1m195 sins[0m across 17 skills.
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+--- stderr
+
+--- files
