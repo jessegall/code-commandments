@@ -71,8 +71,8 @@ func entry(files, path string) (fileEntry, bool) {
 	return fileEntry{}, false
 }
 
-// sameSettings says whether the config.php and the config.json declare the same config. An argument's
-// name is left out: config.json passes arguments in order only.
+// sameSettings says whether the config.php and the config.json declare the same config, arguments taken in
+// order as config.json passes them.
 func sameSettings(php, json, scratch string) bool {
 	phpPath, jsonPath := filepath.Join(scratch, "config.php"), filepath.Join(scratch, "config.json")
 
@@ -90,19 +90,7 @@ func sameSettings(php, json, scratch string) bool {
 		return false
 	}
 
-	return reflect.DeepEqual(unnamed(fromPHP), fromJSON)
-}
-
-func unnamed(read config.Config) config.Config {
-	for i, configurator := range read.Configurators {
-		for j, call := range configurator.Calls {
-			for k := range call.Args {
-				read.Configurators[i].Calls[j].Args[k].Name = ""
-			}
-		}
-	}
-
-	return read
+	return reflect.DeepEqual(fromPHP.Positional(), fromJSON)
 }
 
 // equateDeclarations makes the configure() statement the golden shows and the "configure" block the run

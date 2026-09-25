@@ -157,6 +157,34 @@ func (c Config) Disables(rules ...Rule) bool {
 	return false
 }
 
+// Positional is the config with every argument passed in order, as config.json passes them: a config.php
+// may name an argument, config.json cannot.
+func (c Config) Positional() Config {
+	configurators := make([]Configurator, len(c.Configurators))
+
+	for i, configurator := range c.Configurators {
+		calls := make([]Call, len(configurator.Calls))
+
+		for j, call := range configurator.Calls {
+			args := make([]Arg, len(call.Args))
+
+			for k, arg := range call.Args {
+				args[k] = Arg{Value: arg.Value}
+			}
+
+			calls[j] = Call{call.Method, args}
+		}
+
+		configurators[i] = Configurator{configurator.Target, calls}
+	}
+
+	if c.Configurators != nil {
+		c.Configurators = configurators
+	}
+
+	return c
+}
+
 // Writes says whether the project writes the language.
 func (c Config) Writes(language source.Language) bool {
 	return !slices.Contains(c.DisabledLanguages, language)
