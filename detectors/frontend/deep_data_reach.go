@@ -120,3 +120,6 @@ func clusters(elements []vue.Element) [][]vue.Element {
 
 	return found
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (DeepDataReachDetector) Repentable() {}
