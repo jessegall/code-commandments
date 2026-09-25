@@ -24,3 +24,6 @@ func (WrappingWithoutCauseDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Where(engine.As(php.Node.IsRethrowWithoutCause)).
 		Get()
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (WrappingWithoutCauseDetector) Repentable() {}

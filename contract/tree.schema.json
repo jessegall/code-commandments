@@ -225,6 +225,12 @@
           "properties": {"code": {"const": true}},
           "additionalProperties": false,
           "minProperties": 1
+        },
+        "php": {
+          "type": "object",
+          "properties": {"code": {"const": true}},
+          "additionalProperties": false,
+          "minProperties": 1
         }
       },
       "additionalProperties": false,

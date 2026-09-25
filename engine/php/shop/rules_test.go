@@ -2,11 +2,13 @@ package shop_test
 
 import (
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 	_ "github.com/jessegall/code-commandments/registry"
 	"github.com/jessegall/code-commandments/sins"
@@ -103,7 +105,37 @@ func TestEveryPortedBackendDetectorIsItsPhpTwin(t *testing.T) {
 		if catalog.IsUnpublished(detector) != twin.Unpublished {
 			t.Errorf("%s is unpublished in one engine only", name)
 		}
+		for _, capability := range twin.Capabilities {
+			carries, known := capabilities[capability]
+			if !known {
+				t.Errorf("%s declares %s, which has no Go form yet", name, capability)
+				continue
+			}
+			if !carries(detector) {
+				t.Errorf("%s does not declare %s, as its PHP twin does", name, capability)
+			}
+		}
+		for capability, carries := range capabilities {
+			if carries(detector) && !slices.Contains(twin.Capabilities, capability) {
+				t.Errorf("%s declares %s, which its PHP twin does not", name, capability)
+			}
+		}
 	}
+}
+
+// capabilities are the PHP detector capabilities that have a Go form, by the PHP interface's name.
+var capabilities = map[string]func(detectors.Detector) bool{
+	"WholeTree":          is[detectors.WholeTree],
+	"Repentable":         is[detectors.Repentable],
+	"RunsLast":           is[detectors.RunsLast],
+	"RequiresBestDesign": is[detectors.RequiresBestDesign],
+	"Exemptable":         is[packages.Exemptable],
+}
+
+func is[C any](detector detectors.Detector) bool {
+	_, ok := detector.(C)
+
+	return ok
 }
 
 // sameHome fails unless a Go rule lives in the package folder its PHP twin's class does: Laravel\FacadeCall in laravel.

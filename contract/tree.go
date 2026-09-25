@@ -276,6 +276,12 @@ type TypeScriptNode struct {
 // CommentExtras holds the facts only one language has on a comment.
 type CommentExtras struct {
 	CSharp *CSharpComment `json:"csharp,omitempty"`
+	PHP    *PHPComment    `json:"php,omitempty"`
+}
+
+// PHPComment is what only PHP says about a comment.
+type PHPComment struct {
+	Code bool `json:"code,omitempty"`
 }
 
 // CSharpComment is what only C# says about a comment.

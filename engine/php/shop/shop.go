@@ -54,7 +54,7 @@ func Digest() (string, error) {
 	for _, input := range inputs {
 		var paths []string
 		err := filepath.WalkDir(filepath.Join(Repository(), input), func(path string, entry fs.DirEntry, err error) error {
-			if err == nil && !entry.IsDir() && (strings.HasSuffix(path, ".php") || filepath.Base(path) == "composer.lock") {
+			if err == nil && !entry.IsDir() && (strings.HasSuffix(path, ".php") || strings.HasSuffix(path, ".txt") || filepath.Base(path) == "composer.lock") {
 				paths = append(paths, path)
 			}
 

@@ -24,3 +24,6 @@ func (TernaryStatementDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(php.Node.ResultIsDiscarded)).
 		Get()
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (TernaryStatementDetector) Repentable() {}

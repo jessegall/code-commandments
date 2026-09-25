@@ -152,3 +152,36 @@ func difference(php, golang map[string]int) string {
 
 	return strings.Join(lines, "\n")
 }
+
+// ProseReading is what the PHP tool reads in one comment text.
+type ProseReading struct {
+	Text       string   `json:"text"`
+	History    bool     `json:"history"`
+	Strawman   bool     `json:"strawman"`
+	Words      []string `json:"words"`
+	Code       bool     `json:"code"`
+	Inline     bool     `json:"inline"`
+	References []string `json:"references"`
+	Paragraphs int      `json:"paragraphs"`
+}
+
+var readings = sync.OnceValues(func() ([]ProseReading, error) {
+	var loaded []ProseReading
+	content, err := os.ReadFile(filepath.Join(Testdata(), "prose.json"))
+	if err != nil {
+		return nil, err
+	}
+
+	return loaded, json.Unmarshal(content, &loaded)
+})
+
+// PhpProse is what the PHP tool reads in every comment of the shop and every probe sentence.
+func PhpProse(t testing.TB) []ProseReading {
+	t.Helper()
+	loaded, err := readings()
+	if err != nil {
+		t.Fatalf("the committed prose readings do not load (run go generate ./engine/php): %v", err)
+	}
+
+	return loaded
+}

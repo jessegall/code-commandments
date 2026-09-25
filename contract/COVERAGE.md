@@ -59,6 +59,7 @@ each line against the schema, and checks every span, line and comment against th
 | `self` / `static` / `parent` kept apart from a class name | `Name` `name` (`self`), no `refers` | bridge | php (`self::SEPARATOR` in `AccessAuditor`) |
 | declared type rendered, union members, single class of a union | `declared`/`returns` `text`, `members`, `name` | bridge | php |
 | docblock `@var`/`@param`/`@return`/`@see` types and refs, resolved through the file's `use` nodes | `comment.text` + `Stmt_Use` `refers`; `refs` | engine | php (docblock on `Checkout`) |
+| a line comment that reads as code | `comment.extras.php.code` | bridge | — |
 | local variable flow, closure capture, typed foreach, receiver type | `children`, `declared`, `refers`, parents | engine | — |
 | traced-variable interaction kinds | `kind` + parent `field` | engine | — |
 | class / interface / trait hierarchy in the scan | `extends`/`implements`/`traits` children with `refers` | engine | php (`Stmt_Class`) |

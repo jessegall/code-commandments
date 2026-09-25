@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace CodeCommandments\PhpBridge;
 
 use Closure;
+use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Modifiers;
 use PhpParser\Node;
+use PhpParser\Parser;
+use PhpParser\ParserFactory;
 use PhpParser\Token;
 
 /** One parsed file as the contract's nested nodes and its comments. */
@@ -58,15 +61,32 @@ final class TreeWriter
         $comments = [];
         foreach ($written as $token) {
             $text = rtrim($token->text, "\r\n");
+            $kind = $token->id === T_DOC_COMMENT ? 'doc' : (str_starts_with($token->text, '/*') ? 'block' : 'line');
             $comments[] = [
                 'id' => count($comments),
-                'kind' => $token->id === T_DOC_COMMENT ? 'doc' : (str_starts_with($token->text, '/*') ? 'block' : 'line'),
+                'kind' => $kind,
                 'text' => $text,
                 'span' => [$token->pos, $token->pos + strlen($text), $token->line],
-            ] + $this->attachment($token->pos, $token->pos + strlen($token->text));
+            ] + $this->attachment($token->pos, $token->pos + strlen($token->text))
+                + ($kind === 'line' && self::readsAsCode($text) ? ['extras' => ['php' => ['code' => true]]] : []);
         }
 
         return $comments;
+    }
+
+    /** Whether a line comment's text, marker and trailing separators stripped, parses as PHP: commented-out code. */
+    private static function readsAsCode(string $comment): bool
+    {
+        static $parser = null;
+        $text = rtrim(ltrim($comment, "/# \t"), " \t,;");
+        if ($text === '') {
+            return false;
+        }
+        $errors = new Collecting();
+        $parser ??= (new ParserFactory())->createForNewestSupportedVersion();
+        $statements = $parser->parse("<?php [{$text}];", $errors);
+
+        return $errors->getErrors() === [] && $statements !== null;
     }
 
     private function node(Node $node, string $field, ?Node $parent = null): array

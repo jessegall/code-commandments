@@ -24,3 +24,6 @@ func (ShortCircuitStatementDetector) Find(codebase *engine.Codebase) []engine.Ma
 		Where(engine.As(php.Node.ResultIsDiscarded)).
 		Get()
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (ShortCircuitStatementDetector) Repentable() {}

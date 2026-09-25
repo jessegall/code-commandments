@@ -23,3 +23,6 @@ func (NestedTernaryDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(php.Node.IsOutermostNestedTernary)).
 		Get()
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (NestedTernaryDetector) Repentable() {}

@@ -1,5 +1,5 @@
 // Command generate writes engine/php/testdata: the shop's stream through the bridge, the PHP engine's answers
-// through the oracle, both gzipped, what every backend rule states about itself, and the digest of the sources
+// through the oracle, both gzipped, what every backend rule states about itself, what the PHP tool reads in comment text, and the digest of the sources
 // they came from.
 package main
 
@@ -63,6 +63,13 @@ func generate() error {
 		return err
 	}
 	if err := os.WriteFile(filepath.Join(testdata, "definitions.json"), definitions, 0o644); err != nil {
+		return err
+	}
+	prose, err := run("php", filepath.Join(shop.Repository(), "engine", "php", "oracle", "prose.php"), shop.Fixture())
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(testdata, "prose.json"), prose, 0o644); err != nil {
 		return err
 	}
 	digest, err := shop.Digest()

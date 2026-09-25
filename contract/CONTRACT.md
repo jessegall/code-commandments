@@ -299,6 +299,7 @@ language's keys are closed and typed in the schema, just as the generic ones are
 |---|---|---|---|
 | csharp | `forgivesNull` | a `SuppressNullableWarningExpression` | the `!`'s operand is declared nullable |
 | csharp | `code` | a comment | the comment parses as one C# statement |
+| php | `code` | a line comment | its text, marker and trailing `,`/`;` stripped, parses as PHP inside `[…]` |
 | python | `operators` | a `Compare` | the chained comparison's operators, in order (`a < b <= c` → `["<", "<="]`) |
 | python | `level` | an `ImportFrom` | the relative-import dot count |
 | vue | `directive` | a `Directive` | `{"name", "modifiers"}`: `v-model:title.lazy` is `{"name": "model", "modifiers": ["lazy"]}`. The argument is the child in field `arg`: an `Identifier` for a static `title`, an expression for a dynamic `[key]` |
