@@ -258,7 +258,7 @@ Comments are a list on the file, not nodes. Each one names the node it belongs t
 | `extras` | the language has facts of its own on it | as a node's |
 
 **Attachment.** A leading comment belongs to the outermost node that starts at the first token after
-it: the method, not the attribute or the name inside it; the `Stmt_Expression`, not the assignment it
+it, any comments in between skipped: the method, not the attribute or the name inside it; the `Stmt_Expression`, not the assignment it
 wraps. A trailing comment belongs to the outermost node that ends on its line before it. A comment with
 code on neither side belongs to nothing. A node's comments are every comment whose `attached` is its
 id, so a node reads all of them, not only the last docblock.

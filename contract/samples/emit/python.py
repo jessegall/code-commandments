@@ -266,6 +266,7 @@ class TreeWriter:
         for literal, owner in self.docstrings:
             start = self.offset(literal.lineno, literal.col_offset)
             found.append((start, self.offset(literal.end_lineno, literal.end_col_offset), f"doc:{owner}"))
+        self.comment_ends = {start: end for start, end, _ in found}
         comments = []
         for start, end, kind in sorted(found):
             comment = {"id": len(comments), "kind": "doc" if kind.startswith("doc") else "line",
@@ -280,8 +281,12 @@ class TreeWriter:
             owner = self.outermost(lambda s, e: line_start < e <= start)
             return {"trailing": True} if owner is None else {"attached": owner, "trailing": True}
         after = end
-        while after < len(self.source) and self.source[after:after + 1] in (b" ", b"\t", b"\r", b"\n"):
-            after += 1
+        while True:
+            while after < len(self.source) and self.source[after:after + 1] in (b" ", b"\t", b"\r", b"\n"):
+                after += 1
+            if after not in self.comment_ends:
+                break
+            after = self.comment_ends[after]
         owner = self.outermost(lambda s, e: s == after)
         return {} if owner is None else {"attached": owner}
 

@@ -45,6 +45,9 @@ final class TreeWriter
 
     private int $next = 0;
 
+    /** @var array<int, int> */
+    private array $commentEnds = [];
+
     private ?string $class = null;
 
     public function __construct(private readonly string $code) {}
@@ -330,6 +333,11 @@ final class TreeWriter
     /** @param list<\PhpParser\Token> $tokens */
     public function comments(array $tokens): array
     {
+        foreach ($tokens as $token) {
+            if (in_array($token->id, [T_COMMENT, T_DOC_COMMENT], true)) {
+                $this->commentEnds[$token->pos] = $token->pos + strlen($token->text);
+            }
+        }
         $comments = [];
         foreach ($tokens as $token) {
             if (! in_array($token->id, [T_COMMENT, T_DOC_COMMENT], true)) {
@@ -359,6 +367,9 @@ final class TreeWriter
             return $owner === null ? ['trailing' => true] : ['attached' => $owner, 'trailing' => true];
         }
         $next = strspn($this->code, " \t\r\n", $end) + $end;
+        while (isset($this->commentEnds[$next])) {
+            $next = strspn($this->code, " \t\r\n", $this->commentEnds[$next]) + $this->commentEnds[$next];
+        }
         $owner = $this->outermost(fn (array $span): bool => $span['start'] === $next);
 
         return $owner === null ? [] : ['attached' => $owner];
