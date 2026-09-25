@@ -1,24 +1,225 @@
 [
-  {"name": "judge-help", "args": ["judge", "--help"], "pending": "main: PHP's --parallel help says default: 4"},
-  {"name": "judge-help-verb", "args": ["help", "judge"], "pending": "main: PHP's --parallel help says default: 4"},
-  {"name": "judge-unknown-option", "args": ["judge", "--nope"]},
-  {"name": "judge-not-a-directory", "args": ["judge", "nope"]},
-  {"name": "judge-no-detector-matched", "args": ["judge", ".", "--sin=zzz-matches-nothing"]},
-  {"name": "judge-clean", "args": ["judge", ".", "--skill=typescript", "--no-checklist"], "setup": ["mkdir -p src", "printf 'export const one = 1;\\n' > src/one.ts"]},
-  {"name": "judge-clean-deletes-the-checklist", "args": ["judge", ".", "--skill=typescript"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}, "setup": ["mkdir -p .commandments/sessions/61bdc/sins", "printf 'old\\n' > .commandments/sessions/61bdc/sins/sins.md"]},
-  {"name": "judge-changes-outside-git", "args": ["judge", ".", "--changes"]},
-  {"name": "judge-branch-without-base", "args": ["judge", ".", "--branch=nope"], "setup": ["git init -q -b main", "git -c user.email=t@t -c user.name=t commit -q --allow-empty -m start"]},
-  {"name": "judge-repent-without-checklist", "args": ["judge", ".", "--repent"]},
-  {"name": "judge-changes-nothing-changed", "args": ["judge", ".", "--changes"], "setup": ["git init -q -b main", "printf 'x = 1\\n' > a.py", "git add .", "git -c user.email=t@t -c user.name=t commit -q -m start"]},
-  {"name": "judge-python", "project": "tests/Fixtures/python", "args": ["judge", ".", "--no-checklist"]},
-  {"name": "judge-python-one-skill", "project": "tests/Fixtures/python", "args": ["judge", ".", "--skill=python-absence", "--no-checklist"]},
-  {"name": "judge-python-one-sin", "project": "tests/Fixtures/python", "args": ["judge", "shop", "--sin=dict-bag", "--no-checklist"]},
-  {"name": "judge-python-exclude", "project": "tests/Fixtures/python", "args": ["judge", ".", "--skill=python-duplication", "--exclude=shop/events,dispatch", "--no-checklist"]},
-  {"name": "judge-python-checklist", "project": "tests/Fixtures/python", "args": ["judge", ".", "--skill=python-value-objects"], "env": {"CLAUDE_CODE_SESSION_ID": "parity"}},
-  {"name": "judge-python-checklist-elsewhere", "project": "tests/Fixtures/python", "args": ["judge", ".", "--skill=python-templates", "--checklist=out/list.md", "--parallel=1"]},
-  {"name": "judge-python-changes", "project": "tests/Fixtures/python", "args": ["judge", ".", "--changes", "--no-checklist"], "setup": ["git init -q -b main", "git add .", "git -c user.email=t@t -c user.name=t commit -q -m start", "printf '\\n' >> shop/exports.py"]},
-  {"name": "judge-typescript", "project": "tests/Fixtures/frontend", "args": ["judge", ".", "--skill=typescript", "--no-checklist"]},
-  {"name": "judge-vue", "project": "tests/Fixtures/frontend", "args": ["judge", ".", "--skill=vue-components", "--no-checklist"], "pending": "ticket 8: the auto-fixable lines come from the repentable detectors"},
-  {"name": "judge-list", "args": ["judge", "--list"], "pending": "tickets 4 and 7: the PHP and C# detectors"},
-  {"name": "judge-without-a-path", "args": ["judge"], "setup": ["mkdir -p src", "printf 'export const one = 1;\\n' > src/one.ts"]}
+  {
+    "name": "judge-help",
+    "args": [
+      "judge",
+      "--help"
+    ]
+  },
+  {
+    "name": "judge-help-verb",
+    "args": [
+      "help",
+      "judge"
+    ]
+  },
+  {
+    "name": "judge-unknown-option",
+    "args": [
+      "judge",
+      "--nope"
+    ]
+  },
+  {
+    "name": "judge-not-a-directory",
+    "args": [
+      "judge",
+      "nope"
+    ]
+  },
+  {
+    "name": "judge-no-detector-matched",
+    "args": [
+      "judge",
+      ".",
+      "--sin=zzz-matches-nothing"
+    ]
+  },
+  {
+    "name": "judge-clean",
+    "args": [
+      "judge",
+      ".",
+      "--skill=typescript",
+      "--no-checklist"
+    ],
+    "setup": [
+      "mkdir -p src",
+      "printf 'export const one = 1;\\n' > src/one.ts"
+    ]
+  },
+  {
+    "name": "judge-clean-deletes-the-checklist",
+    "args": [
+      "judge",
+      ".",
+      "--skill=typescript"
+    ],
+    "env": {
+      "CLAUDE_CODE_SESSION_ID": "parity"
+    },
+    "setup": [
+      "mkdir -p .commandments/sessions/61bdc/sins",
+      "printf 'old\\n' > .commandments/sessions/61bdc/sins/sins.md"
+    ]
+  },
+  {
+    "name": "judge-changes-outside-git",
+    "args": [
+      "judge",
+      ".",
+      "--changes"
+    ]
+  },
+  {
+    "name": "judge-branch-without-base",
+    "args": [
+      "judge",
+      ".",
+      "--branch=nope"
+    ],
+    "setup": [
+      "git init -q -b main",
+      "git -c user.email=t@t -c user.name=t commit -q --allow-empty -m start"
+    ]
+  },
+  {
+    "name": "judge-repent-without-checklist",
+    "args": [
+      "judge",
+      ".",
+      "--repent"
+    ]
+  },
+  {
+    "name": "judge-changes-nothing-changed",
+    "args": [
+      "judge",
+      ".",
+      "--changes"
+    ],
+    "setup": [
+      "git init -q -b main",
+      "printf 'x = 1\\n' > a.py",
+      "git add .",
+      "git -c user.email=t@t -c user.name=t commit -q -m start"
+    ]
+  },
+  {
+    "name": "judge-python",
+    "project": "tests/Fixtures/python",
+    "args": [
+      "judge",
+      ".",
+      "--no-checklist"
+    ]
+  },
+  {
+    "name": "judge-python-one-skill",
+    "project": "tests/Fixtures/python",
+    "args": [
+      "judge",
+      ".",
+      "--skill=python-absence",
+      "--no-checklist"
+    ]
+  },
+  {
+    "name": "judge-python-one-sin",
+    "project": "tests/Fixtures/python",
+    "args": [
+      "judge",
+      "shop",
+      "--sin=dict-bag",
+      "--no-checklist"
+    ]
+  },
+  {
+    "name": "judge-python-exclude",
+    "project": "tests/Fixtures/python",
+    "args": [
+      "judge",
+      ".",
+      "--skill=python-duplication",
+      "--exclude=shop/events,dispatch",
+      "--no-checklist"
+    ]
+  },
+  {
+    "name": "judge-python-checklist",
+    "project": "tests/Fixtures/python",
+    "args": [
+      "judge",
+      ".",
+      "--skill=python-value-objects"
+    ],
+    "env": {
+      "CLAUDE_CODE_SESSION_ID": "parity"
+    }
+  },
+  {
+    "name": "judge-python-checklist-elsewhere",
+    "project": "tests/Fixtures/python",
+    "args": [
+      "judge",
+      ".",
+      "--skill=python-templates",
+      "--checklist=out/list.md",
+      "--parallel=1"
+    ]
+  },
+  {
+    "name": "judge-python-changes",
+    "project": "tests/Fixtures/python",
+    "args": [
+      "judge",
+      ".",
+      "--changes",
+      "--no-checklist"
+    ],
+    "setup": [
+      "git init -q -b main",
+      "git add .",
+      "git -c user.email=t@t -c user.name=t commit -q -m start",
+      "printf '\\n' >> shop/exports.py"
+    ]
+  },
+  {
+    "name": "judge-typescript",
+    "project": "tests/Fixtures/frontend",
+    "args": [
+      "judge",
+      ".",
+      "--skill=typescript",
+      "--no-checklist"
+    ]
+  },
+  {
+    "name": "judge-vue",
+    "project": "tests/Fixtures/frontend",
+    "args": [
+      "judge",
+      ".",
+      "--skill=vue-components",
+      "--no-checklist"
+    ]
+  },
+  {
+    "name": "judge-list",
+    "args": [
+      "judge",
+      "--list"
+    ],
+    "pending": "tickets 4 and 7: the PHP and C# detectors"
+  },
+  {
+    "name": "judge-without-a-path",
+    "args": [
+      "judge"
+    ],
+    "setup": [
+      "mkdir -p src",
+      "printf 'export const one = 1;\\n' > src/one.ts"
+    ]
+  }
 ]

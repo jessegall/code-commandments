@@ -175,7 +175,6 @@
     ],
     "setup": [
       "mkdir -p bin && printf '#!/bin/sh\\nfor a in \"$@\"; do printf \"%%s\\\\n----\\\\n\" \"$a\"; done > gh-args.txt\\necho https://github.com/jessegall/code-commandments/issues/1\\n' > bin/gh && chmod +x bin/gh"
-    ],
-    "pending": "ticket 4: the PHP design-smell detectors"
+    ]
   }
 ]

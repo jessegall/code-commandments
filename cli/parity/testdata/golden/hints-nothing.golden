@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+[32m✓ Data @method hints already current — nothing to rewrite.[0m
+
+--- stderr
+
+--- files

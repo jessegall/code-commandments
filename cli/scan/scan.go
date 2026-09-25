@@ -103,11 +103,14 @@ func (s Sources) Load() (*engine.Codebase, error) {
 			continue
 		}
 
-		stream, err := read.stream(s.files(read.languages))
+		walked := s.files(read.languages)
+
+		stream, err := read.stream(walked)
 		if err != nil {
 			return nil, err
 		}
 
+		bridge.InWalkOrder(stream, walked)
 		streams = append(streams, stream)
 	}
 

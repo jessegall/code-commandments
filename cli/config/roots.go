@@ -161,3 +161,43 @@ func isDir(path string) bool {
 
 	return err == nil && info.IsDir()
 }
+
+// ToParse are the roots a run over path parses: a path outside the project is its own world; one under a
+// declared root parses the declared roots, so cross-file rules see the whole tree; any other adds itself.
+func ToParse(project, path string) ([]string, error) {
+	target := strings.TrimRight(realOr(path), "/")
+	home := strings.TrimRight(realOr(project), "/")
+
+	if target != home && !strings.HasPrefix(target, home+"/") {
+		return []string{target}, nil
+	}
+
+	roots, err := DeclaredRoots(project)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, root := range roots {
+		real := strings.TrimRight(realOr(root), "/")
+
+		if target == real || strings.HasPrefix(target, real+"/") {
+			return roots, nil
+		}
+	}
+
+	return append(roots, target), nil
+}
+
+// realOr is the path with its links resolved, or the path itself when it does not exist.
+func realOr(path string) string {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return path
+	}
+
+	if absolute, err := filepath.Abs(resolved); err == nil {
+		return absolute
+	}
+
+	return resolved
+}

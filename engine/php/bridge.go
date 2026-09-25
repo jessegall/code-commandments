@@ -75,6 +75,7 @@ func Over(server *bridge.Server, request bridge.Request) (*engine.Codebase, erro
 	if err != nil {
 		return nil, err
 	}
+	bridge.InWalkOrder(stream, request.Paths)
 	codebase := engine.New(engine.ReadThrough(request.Contents), stream)
 	TypesOf(codebase).Fill(codebase)
 

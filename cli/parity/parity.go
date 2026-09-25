@@ -42,7 +42,8 @@ type Case struct {
 	// runs in an empty folder.
 	Project string `json:"project,omitempty"`
 
-	// Setup are shell commands run in the project before the tool, e.g. to make it a git repository.
+	// Setup are shell commands run in the project before the tool, e.g. to make it a git repository;
+	// $PARITY_PACKAGE names the package's own folder, to copy what the PHP tool sees from its install.
 	Setup []string `json:"setup,omitempty"`
 
 	// Env is added to the fixed environment every case runs under.
@@ -127,7 +128,7 @@ func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 
 	for _, line := range c.Setup {
 		setup := exec.Command("sh", "-c", line)
-		setup.Dir, setup.Env = project, env
+		setup.Dir, setup.Env = project, append(env, "PARITY_PACKAGE="+repo)
 
 		if out, err := setup.CombinedOutput(); err != nil {
 			return Result{}, fmt.Errorf("setup %q: %w\n%s", line, err, out)

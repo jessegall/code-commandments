@@ -160,3 +160,18 @@ func NamedIn(text string) (Language, bool) {
 
 	return "", false
 }
+
+// Real is the path with its links resolved and made absolute, as a bridge names it; the path itself when it
+// does not exist.
+func Real(path string) string {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return path
+	}
+
+	if absolute, err := filepath.Abs(resolved); err == nil {
+		return absolute
+	}
+
+	return resolved
+}

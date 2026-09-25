@@ -8,20 +8,49 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/detectors"
+	"github.com/jessegall/code-commandments/sins"
 )
 
-// Enabled are the shipped detectors the project keeps: every one the config does not disable, by itself,
-// its sin or its skill, tuned as the config configures it.
-func (c Config) Enabled() ([]detectors.Detector, error) {
+// Enabled are the shipped detectors the project keeps: every one whose package the project has, that the
+// config does not disable by itself, its sin or its skill, tuned as the config configures it.
+func (c Config) Enabled(installed Installed) ([]detectors.Detector, error) {
 	var kept []detectors.Detector
 
-	for _, detector := range detectors.All() {
+	for _, detector := range Packaged(detectors.All(), installed) {
 		if !c.Disables(rulesOf(detector)...) {
 			kept = append(kept, detector)
 		}
 	}
 
 	return tune(kept, c.Configurators)
+}
+
+// Installed says whether the project has a package.
+type Installed func(sins.Package) bool
+
+// InstalledIn is what the project at root has installed.
+func InstalledIn(root string) Installed {
+	return func(required sins.Package) bool {
+		return required.InstalledIn(root)
+	}
+}
+
+// Everything takes every package as installed, to keep package-bound rules on any project.
+func Everything(sins.Package) bool {
+	return true
+}
+
+// Packaged are the detectors whose sin holds in the project: it requires no package, or one installed.
+func Packaged(list []detectors.Detector, installed Installed) []detectors.Detector {
+	var kept []detectors.Detector
+
+	for _, detector := range list {
+		if required := detector.Sin().Definition().Requires; required.Name == "" || installed(required) {
+			kept = append(kept, detector)
+		}
+	}
+
+	return kept
 }
 
 // rulesOf names the detector, its sin and its skill as a config names them.

@@ -25,8 +25,8 @@ func TestTheSkillsCommandBlocksAreWhatTheGoHelpProjects(t *testing.T) {
 
 func TestAMarkerThatCannotBeTrustedIsRefused(t *testing.T) {
 	for document, reason := range map[string]string{
-		"<!-- END: commands:x -->\n":                                  "it has an END marker with no BEGIN",
-		"<!-- BEGIN: commands:x (a) -->\n":                            "it has a BEGIN marker with no END",
+		"<!-- END: commands:x -->\n":                                 "it has an END marker with no BEGIN",
+		"<!-- BEGIN: commands:x (a) -->\n":                           "it has a BEGIN marker with no END",
 		"<!-- END: commands:x -->\n<!-- BEGIN: commands:x (a) -->\n": "its END marker stands above its BEGIN",
 	} {
 		_, _, err := Replace(document, "commands:x", "y")

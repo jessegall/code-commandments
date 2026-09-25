@@ -24,8 +24,7 @@
     "args": [
       "info",
       "zz-no-such-rule"
-    ],
-    "pending": "tickets 4 and 7: the suggestions list every engine's sins"
+    ]
   },
   {
     "name": "info-python-sin",

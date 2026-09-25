@@ -25,7 +25,7 @@ import (
 )
 
 // defaultParallel is how many workers judge runs detectors across unless --parallel says otherwise.
-const defaultParallel = 4
+const defaultParallel = 2
 
 // aRuleCouldNotRun is the exit code of a run that found nothing while a rule never ran.
 const aRuleCouldNotRun = 3
@@ -54,7 +54,7 @@ func (Command) Help() help.Help {
 		Option("--sin=NAME", "only run detectors for one sin (lenient name match), e.g. nullable-callback").
 		Option("--exclude=A,B", "skip findings in paths containing any fragment").
 		Adopt(scope.Options()).
-		Option("--parallel=N", "run detectors across N worker processes (default: 4, capped at cores; 1 = off)").
+		Option("--parallel=N", "run detectors across N worker processes (default: 2, capped at cores; 1 = off)").
 		Option("--ignore-package-requirements", "keep package-gated rules even if this project lacks the package (cross-project calibration)").
 		Option("--checklist=FILE", "write the checklist here (default: your session's sins/sins.md, in .commandments/sessions/<id>/ or the journal plugin's data folder)").
 		Option("--no-checklist", "print only, don't write the checklist file").
@@ -97,7 +97,12 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	enabled, err := project.Enabled()
+	installed := config.InstalledIn(cwd)
+	if options.ignore {
+		installed = config.Everything
+	}
+
+	enabled, err := project.Enabled(installed)
 	if err != nil {
 		return 0, err
 	}
@@ -376,7 +381,7 @@ func list(cwd string, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	enabled, err := project.Enabled()
+	enabled, err := project.Enabled(config.InstalledIn(cwd))
 	if err != nil {
 		return 0, err
 	}

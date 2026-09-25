@@ -6,10 +6,12 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/freeze"
+	"github.com/jessegall/code-commandments/cli/hints"
 	"github.com/jessegall/code-commandments/cli/info"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/layers"
 	makecommand "github.com/jessegall/code-commandments/cli/make"
+	"github.com/jessegall/code-commandments/cli/repent"
 	"github.com/jessegall/code-commandments/cli/report"
 	"github.com/jessegall/code-commandments/cli/scaffold"
 	"github.com/jessegall/code-commandments/cli/session"
@@ -21,8 +23,10 @@ import (
 // Kernel is the kernel with every command registered, in the order the overview lists them.
 func Kernel(version string) *cli.Kernel {
 	return cli.NewKernel(version,
-		judge.Command{Scaffoldable: scaffold.Scaffoldable()},
+		judge.Command{Fixable: repent.Fixable("latest"), Scaffoldable: scaffold.Scaffoldable()},
 		makecommand.Command{},
+		hints.Command{},
+		repent.Command{},
 		scaffold.Command{},
 		report.Command{},
 		report.FeatureRequest{},

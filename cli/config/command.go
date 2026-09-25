@@ -54,7 +54,7 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	enabled, err := project.Enabled()
+	enabled, err := project.Enabled(InstalledIn(root))
 	if err != nil {
 		return 0, err
 	}

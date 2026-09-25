@@ -1,0 +1,1048 @@
+exit: 0
+--- stdout
+[32m✓ Repented 32 files.[0m
+  <project>/components/CustomerAccountPanel.vue
+  <project>/components/OrderDetailPanel.vue
+  <project>/components/OrderStatusBadge.vue
+  <project>/components/InventoryFilterPanel.vue
+  <project>/components/StockIndicator.vue
+  <project>/components/ProductReviewList.vue
+  <project>/components/CheckoutStep.vue
+  <project>/components/StorefrontHero.vue
+  <project>/components/AccountMenu.vue
+  <project>/components/OrderLineItems.vue
+  <project>/components/ProductCell.vue
+  <project>/components/FilterInventorySheet.vue
+  <project>/components/OrderSummaryCard.vue
+  <project>/components/PairReaderDialog.vue
+  <project>/components/OrderSummaryPanel.vue
+  <project>/components/ReaderPairingPanel.vue
+  <project>/components/BillingSection.vue
+  <project>/components/CampaignSection.vue
+  <project>/components/SettingsSection.vue
+  <project>/components/CartSection.vue
+  <project>/components/MetricSection.vue
+  <project>/components/SettingsAccordionCard.vue
+  <project>/components/CheckoutTotalsBreakdown.vue
+  <project>/components/DashboardMetricTile.vue
+  <project>/components/StatusSection.vue
+  <project>/components/ReviewCardSection.vue
+  <project>/components/FilterGroupSection.vue
+  <project>/components/PromoStripSection.vue
+  <project>/components/LineItemSection.vue
+  <project>/components/FilterSidebar.vue
+  <project>/components/CheckoutPromoBanner.vue
+  <project>/components/BasketPromoBanner.vue
+[2m↳ Did that auto-fix do the right thing? If `repent` produced anything broken, incomplete, or
+  awkward — or you noticed a rule gap or false positive — file it (don't just work around it):
+  `commandments report --reason="…" --ref=path:line` (referencing the source AND the bad output),
+  or `commandments feature-request --title="…" --reason="…"`.[0m
+
+--- stderr
+Could not resolve a PSR-4 source root from composer.json (run from the project root).
+
+--- files
+=== created .commandments/config.php
+<?php
+
+declare(strict_types=1);
+
+use JesseGall\CodeCommandments\Config;
+
+/*
+ | code-commandments configuration.
+ |
+ | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to
+ |             adjust scope, or run `commandments config reindex`).
+ | exclude() — subtract explicit paths ON TOP of paths(): a dir or file listed here is never a
+ |             target (never reported, never rewritten), e.g. $config->exclude('app/Generated').
+ | disable() — silence a rule by its Sin, Detector, or whole Skill class, or a Claude Code
+ |             hook by its class (or use `commandments disable/enable <sin>`). The
+ |             $disabledSkills / $disabledSins / $disabledHooks menus below list every one.
+ |
+ | Extend it inside the closure:
+ |   $config->detector(\App\Commandments\NoRawSqlDetector::class);        — add your own finder
+ |   $config->package(\App\Commandments\MyFrameworkPackage::class);       — register its exemptions
+ |   $config->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10));  — tune a threshold
+ */
+
+return function (Config $config): void {
+    $config->paths('.');
+
+    $config->disable(
+        // \JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,
+    );
+};
+
+=== created .commandments/sessions/61bdc/.repent-feedback-count
+count: 1
+-----
+Code-commandments counter `repent-feedback` — a hook heartbeat.
+
+The block above the first divider is this file's state, one `name: value` per line:
+  count  the running count. It rate-limits the post-repent feedback nudge
+
+Safe to delete — it regenerates.
+
+=== changed components/AccountMenu.vue
+<script setup lang="ts">
+import type { Notification } from '@/types';
+import NotificationBell from './NotificationBell.vue';
+import UserAvatar from './UserAvatar.vue';
+
+defineProps<{ role: string; membership: string; notifications: Notification[]; avatarUrl: string }>();
+</script>
+
+<template>
+  <nav class="account-menu">
+    <!-- A branch testing two values (||) is not a single case — NOT a switch. -->
+    <!-- @sin ControlFlowOnElement -->
+    <template v-if="role === 'admin'">
+      <MenuLink to="/admin">Dashboard</MenuLink>
+    </template>
+    <!-- @sin ControlFlowOnElement -->
+    <template v-else-if="role === 'editor' || role === 'author'">
+      <MenuLink to="/catalog">Catalog</MenuLink>
+    </template>
+
+    <!-- Different subjects per branch (role vs membership) — NOT a switch. -->
+    <!-- @sin ControlFlowOnElement -->
+    <template v-if="role === 'admin'">
+      <Badge>Staff</Badge>
+    </template>
+    <!-- @sin ControlFlowOnElement -->
+    <template v-else-if="membership === 'gold'">
+      <Badge>Gold member</Badge>
+    </template>
+
+    <!-- `notifications` is read nowhere here, and NotificationBell pipes it on — a chain. -->
+    <!-- @sin PropDrilling -->
+    <NotificationBell :items="notifications" />
+
+    <!-- @fixed PropDrilling -->
+    <!-- @righteous PropDrilling -->
+    <!-- `avatarUrl` is forwarded and unused here too, but UserAvatar CONSUMES it — composition. -->
+    <UserAvatar :src="avatarUrl" />
+  </nav>
+</template>
+
+=== changed components/BasketPromoBanner.vue
+<script setup lang="ts">
+import PromoStripSection from './PromoStripSection.vue';
+
+defineProps<{ total: number }>();
+</script>
+
+<template>
+  <aside class="basket-promo">
+    <!-- @sin DuplicateElement -->
+    <PromoStripSection />
+  </aside>
+</template>
+
+=== created components/BillingSection.vue
+<script setup lang="ts">
+import type { Customer, CustomerOrder } from '@/types';
+
+defineProps<{ billing: Customer['billing'] }>();
+</script>
+
+<template>
+    <div class="account__billing">
+      <h2 class="account__section">Billing</h2>
+      <p class="account__plan">{{ billing.plan }}</p>
+      <p class="account__amount">{{ billing.amount }}</p>
+      <p class="account__renews">{{ billing.renewsAt }}</p>
+    </div>
+</template>
+
+=== created components/CampaignSection.vue
+<script setup lang="ts">
+import type { Storefront } from '@/types';
+
+defineProps<{ campaign: Storefront['campaign'] }>();
+</script>
+
+<template>
+    <div class="hero__banner" :style="campaign.theme">
+      <h1 class="hero__headline">{{ campaign.title }}</h1>
+      <p class="hero__sub">{{ campaign.subtitle }}</p>
+    </div>
+</template>
+
+=== created components/CartSection.vue
+<script setup lang="ts">
+import type { Cart } from '@/types';
+
+defineProps<{ cart: Cart }>();
+</script>
+
+<template>
+    <section class="invoice__body">
+      <article class="invoice__statement">
+        <header class="invoice__masthead">
+          <span class="invoice__ledger">
+            <span class="invoice__entry">
+              <span class="invoice__money">
+                <strong class="invoice__frame">
+                  <strong class="invoice__pad">
+                    <strong class="invoice__inset">
+                      <em class="invoice__stack">
+                        <em class="invoice__line">
+                          <em class="invoice__value">{{ cart.totals.grand }}</em>
+                        </em>
+                      </em>
+                    </strong>
+                  </strong>
+                </strong>
+              </span>
+            </span>
+          </span>
+        </header>
+      </article>
+    </section>
+</template>
+
+=== changed components/CheckoutPromoBanner.vue
+<script setup lang="ts">
+import PromoStripSection from './PromoStripSection.vue';
+
+defineProps<{ code: string }>();
+</script>
+
+<template>
+  <aside class="promo">
+    <!-- @sin DuplicateElement -->
+    <PromoStripSection />
+  </aside>
+</template>
+
+=== changed components/CheckoutStep.vue
+<script setup lang="ts">
+defineProps<{ step: number; dismissed: boolean }>();
+</script>
+
+<template>
+  <div class="checkout">
+    <nav class="checkout__progress" aria-label="Checkout steps">
+      <ol class="checkout__steps">
+        <li class="checkout__step checkout__step--cart">Cart</li>
+        <li class="checkout__step checkout__step--shipping">Shipping</li>
+        <li class="checkout__step checkout__step--payment">Payment</li>
+      </ol>
+    </nav>
+
+    <section class="checkout__panel">
+      <!-- @sin SwitchCase -->
+      <!-- @sin ControlFlowOnElement -->
+      <SwitchCase :value="step">
+          <template #1>
+        <CartReview />
+      </template>
+          <template #2>
+        <ShippingForm />
+      </template>
+          <template #3>
+        <PaymentForm />
+      </template>
+      </SwitchCase>
+    </section>
+
+    <!-- Assigning the `dismissed` PROP in a handler — a silent no-op. -->
+    <!-- @sin PropMutation -->
+    <button class="checkout__dismiss" @click="dismissed = true">Dismiss</button>
+  </div>
+</template>
+
+=== changed components/CheckoutTotalsBreakdown.vue
+<script setup lang="ts">
+import CartSection from './CartSection.vue';
+
+import type { Cart } from '@/types';
+
+defineProps<{ cart: Cart }>();
+</script>
+
+<template>
+  <aside class="invoice">
+    <p class="invoice__caption">Order summary</p>
+
+    <!-- @sin DeepNested -->
+    <CartSection :cart="cart" />
+  </aside>
+</template>
+
+=== changed components/CustomerAccountPanel.vue
+<script setup lang="ts">
+import BillingSection from './BillingSection.vue';
+
+import type { Customer, CustomerOrder } from '@/types';
+
+defineProps<{ customer: Customer; orders: CustomerOrder[] }>();
+</script>
+
+<template>
+  <section class="account">
+    <header class="account__header">
+      <h1 class="account__title">My account</h1>
+      <span class="account__id">#{{ customer.id }}</span>
+    </header>
+
+    <div class="account__profile">
+      <h2 class="account__section">Profile</h2>
+      <!-- Righteous: a LONE deep reach (one field off customer.profile) is no cluster. -->
+      <p class="account__name">{{ customer.profile.displayName }}</p>
+      <p class="account__handle">{{ customer.handle }}</p>
+    </div>
+
+    <div class="account__contact">
+      <h2 class="account__section">Contact</h2>
+      <p class="account__email">{{ customer.email }}</p>
+      <p class="account__phone">{{ customer.phone }}</p>
+    </div>
+
+    <!-- A cluster: customer.billing read in three fields → extract <AccountBilling :billing>. -->
+    <!-- @sin DeepDataReach -->
+    <BillingSection :billing="customer.billing" />
+
+    <div class="account__preferences">
+      <h2 class="account__section">Preferences</h2>
+      <ul class="account__prefs">
+        <!-- @sin ControlFlowOnElement -->
+        <template v-for="pref in customer.preferences" :key="pref.id">
+          <li class="account__pref">
+            <span class="account__pref-name">{{ pref.label }}</span>
+            <span class="account__pref-value">{{ pref.enabled }}</span>
+          </li>
+        </template>
+      </ul>
+    </div>
+
+    <div class="account__orders">
+      <h2 class="account__section">Recent orders</h2>
+      <ul class="account__order-list">
+        <!-- @sin IndexAsKey -->
+        <template v-for="(order, index) in orders" :key="index">
+          <li class="account__order">{{ order.reference }}</li>
+        </template>
+      </ul>
+    </div>
+
+    <div class="account__addresses">
+      <h2 class="account__section">Addresses</h2>
+      <ul class="account__address-list">
+        <!-- @fixed IndexAsKey -->
+        <!-- @righteous IndexAsKey -->
+        <template v-for="(address, index) in customer.addresses" :key="address.id">
+          <li class="account__address">{{ address.line }}</li>
+        </template>
+      </ul>
+    </div>
+
+    <footer class="account__footer">
+      <button class="account__save" type="button">Save changes</button>
+      <button class="account__signout" type="button">Sign out</button>
+    </footer>
+  </section>
+</template>
+
+=== changed components/DashboardMetricTile.vue
+<script setup lang="ts">
+import MetricSection from './MetricSection.vue';
+
+import type { Metric, TrendData } from '@/types';
+import MetricTrend from './MetricTrend.vue';
+
+defineProps<{ metric: Metric; trend: TrendData }>();
+</script>
+
+<template>
+  <section class="tile">
+    <header class="tile__head">
+      <span class="tile__name">{{ metric.label }}</span>
+    </header>
+
+    <!-- @sin DeepNested -->
+    <MetricSection :metric="metric" />
+
+    <!-- `trend` is never used here — only piped through to the child. -->
+    <!-- @sin PropDrilling -->
+    <MetricTrend :trend="trend" />
+  </section>
+</template>
+
+=== created components/FilterGroupSection.vue
+<script setup lang="ts">
+</script>
+
+<template>
+    <fieldset class="filter-group">
+      <legend class="filter-legend">Brand</legend>
+      <label class="filter-option"><input type="checkbox" /> Any brand</label>
+    </fieldset>
+</template>
+
+=== created components/FilterInventorySheet.vue
+<script setup lang="ts">
+const open = defineModel<boolean>('open');
+const query = defineModel<string>('query');
+defineProps<{ options: unknown; apply: () => void }>();
+</script>
+
+<template>
+    <Sheet v-model:open="open">
+      <SheetContent side="right">
+        <SheetHeader>
+          <SheetTitle>Filter inventory</SheetTitle>
+          <SheetDescription>Narrow the catalogue by name and availability.</SheetDescription>
+        </SheetHeader>
+        <div class="filter-body">
+          <Label>Search</Label>
+          <Input v-model="query" type="search" placeholder="SKU or name" />
+          <fieldset class="availability">
+            <legend>Availability</legend>
+            <!-- @sin LoopWithCondition -->
+            <!-- @sin ControlFlowOnElement -->
+            <template v-if="opt.enabled" v-for="opt in options" :key="opt.id">
+              <label><input type="checkbox" :value="opt.value" /> {{ opt.label }}</label>
+            </template>
+          </fieldset>
+        </div>
+        <SheetFooter>
+          <Button @click="apply">Apply filters</Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+</template>
+
+=== changed components/FilterSidebar.vue
+<script setup lang="ts">
+import FilterGroupSection from './FilterGroupSection.vue';
+
+defineProps<{ categories: string[]; brands: string[]; query: string }>();
+</script>
+
+<template>
+  <aside class="filters">
+    <header class="filters__header">
+      <h2 class="filters__title">Refine results</h2>
+      <button class="filters__clear" type="button">Clear all</button>
+    </header>
+
+    <div class="filters__search">
+      <label class="filters__search-label" for="q">Search products</label>
+      <!-- Two-way binding the `query` PROP — props are read-only. -->
+      <!-- @sin PropMutation -->
+      <input id="q" class="filters__search-input" type="search" placeholder="Search" v-model="query" />
+    </div>
+
+    <!-- @sin DuplicateElement -->
+    <FilterGroupSection />
+
+    <!-- @sin DuplicateElement -->
+    <FilterGroupSection />
+  </aside>
+</template>
+
+=== changed components/InventoryFilterPanel.vue
+<script setup lang="ts">
+import FilterInventorySheet from './FilterInventorySheet.vue';
+
+import { ref } from 'vue';
+
+const open = ref(false);
+const query = ref('');
+function apply() {}
+</script>
+
+<template>
+  <aside class="inventory-filter">
+    <button class="btn" @click="open = true">Filters</button>
+
+    <!-- A Sheet compound assembled inline — Sheet + Sheet* parts with a filter body.
+         It is its own InventoryFilterSheet. -->
+    <!-- @sin CompoundInlineComponent -->
+    <FilterInventorySheet v-model:open="open" v-model:query="query" :options="options" :apply="apply" />
+  </aside>
+</template>
+
+=== created components/LineItemSection.vue
+<script setup lang="ts">
+</script>
+
+<template>
+    <tr class="line-item">
+      <td class="line-item__name">Sample product</td>
+      <td class="line-item__qty">1</td>
+    </tr>
+</template>
+
+=== created components/MetricSection.vue
+<script setup lang="ts">
+import type { Metric, TrendData } from '@/types';
+
+defineProps<{ metric: Metric }>();
+</script>
+
+<template>
+    <figure class="tile__viz">
+      <div class="chart">
+        <div class="chart__frame">
+          <div class="chart__plot">
+            <div class="series">
+              <div class="series__track">
+                <div class="bar">
+                  <div class="bar__fill">
+                    <div class="bar__cap">
+                      <div class="bar__readout">
+                        <div class="bar__numbers">
+                          <span class="bar__value">{{ metric.summary.total }}</span>
+                          <span class="bar__delta">{{ metric.summary.change }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </figure>
+</template>
+
+=== changed components/OrderDetailPanel.vue
+<script setup lang="ts">
+import OrderCustomer from './OrderCustomer.vue';
+
+import type { Order, OrderEvent } from '@/types';
+
+defineProps<{ order: Order; history: OrderEvent[] }>();
+</script>
+
+<template>
+  <article class="order-detail">
+    <header class="order-detail__header">
+      <h1 class="order-detail__title">Order #{{ order.id }}</h1>
+      <time class="order-detail__date">{{ order.placedAt }}</time>
+      <OrderStatusBadge :status="order.status" />
+    </header>
+
+    <!-- A cluster: order.customer read in three fields → extract <OrderCustomer :customer>. -->
+    <!-- @sin DeepDataReach -->
+    <OrderCustomer :customer="order.customer" />
+
+    <!-- @fixed DeepDataReach -->
+    <!-- @righteous DeepDataReach -->
+    <OrderCustomer :customer="order.customer" />
+
+    <section class="order-detail__shipping">
+      <h2 class="section-title">Shipping to</h2>
+      <!-- Righteous: a LONE deep reach (one field off order.shipping) is no cluster. -->
+      <p class="shipping-city">{{ order.shipping.address.city }}</p>
+      <p class="shipping-method">{{ order.method }}</p>
+    </section>
+
+    <section class="order-detail__items">
+      <h2 class="section-title">Items</h2>
+      <ul class="item-list">
+        <!-- @sin ControlFlowOnElement -->
+        <template v-for="item in order.items" :key="item.id">
+          <li class="item-row">
+            <span class="item-name">{{ item.name }}</span>
+            <span class="item-qty">{{ item.quantity }}</span>
+            <span class="item-price">{{ item.price }}</span>
+          </li>
+        </template>
+      </ul>
+    </section>
+
+    <section class="order-detail__history">
+      <h2 class="section-title">History</h2>
+      <ol class="history-list">
+        <!-- @sin IndexAsKey -->
+        <template v-for="(event, index) in history" :key="index">
+          <li class="history-row">{{ event.label }}</li>
+        </template>
+      </ol>
+    </section>
+
+    <footer class="order-detail__totals">
+      <div class="total-row">
+        <span class="total-label">Subtotal</span>
+        <span class="total-value">{{ order.subtotal }}</span>
+      </div>
+      <div class="total-row">
+        <span class="total-label">Tax</span>
+        <span class="total-value">{{ order.tax }}</span>
+      </div>
+      <div class="total-row total-row--grand">
+        <span class="total-label">Total</span>
+        <span class="total-value">{{ order.total }}</span>
+      </div>
+      <!-- Righteous: a single deep reach into order.invoice, reached once. -->
+      <a class="invoice-link" :href="order.invoice.downloadUrl">Download invoice</a>
+    </footer>
+  </article>
+</template>
+
+=== changed components/OrderLineItems.vue
+<script setup lang="ts">
+import LineItemSection from './LineItemSection.vue';
+
+defineProps<{ orderId: number; currency: string }>();
+</script>
+
+<template>
+  <table class="line-items">
+    <caption class="line-items__caption">Items in this order</caption>
+    <thead class="line-items__head">
+      <tr>
+        <th scope="col">Product</th>
+        <th scope="col">Quantity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- @sin DuplicateElement -->
+      <LineItemSection />
+      <!-- @sin DuplicateElement -->
+      <LineItemSection />
+      <!-- @sin LoopWithCondition -->
+      <!-- @sin ControlFlowOnElement -->
+      <template v-if="line.quantity > 0" v-for="line in lines" :key="line.id">
+        <tr class="line-item">
+          <td class="line-item__name">{{ line.name }}</td>
+          <td class="line-item__qty">{{ line.quantity }}</td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+</template>
+
+=== changed components/OrderStatusBadge.vue
+<script setup lang="ts">
+import StatusSection from './StatusSection.vue';
+
+defineProps<{ status: string }>();
+</script>
+
+<template>
+  <!-- @sin SwitchCase -->
+  <!-- @sin ControlFlowOnElement -->
+  <StatusSection :status="status" />
+
+  <!-- @fixed SwitchCase -->
+  <!-- @righteous SwitchCase -->
+  <StatusSection :status="status" />
+
+  <!-- @fixed ControlFlowOnElement -->
+  <!-- @righteous ControlFlowOnElement -->
+  <template v-if="status === 'paid'">
+    <span class="badge badge-green">Paid</span>
+  </template>
+</template>
+
+=== created components/OrderSummaryCard.vue
+<script setup lang="ts">
+import type { Order, OrderBadge } from '@/types';
+
+defineProps<{ order: Order }>();
+</script>
+
+<template>
+    <Card class="summary">
+      <CardHeader>
+        <CardTitle>Order summary</CardTitle>
+        <CardDescription>Placed and awaiting fulfilment.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <dl class="lines">
+          <dt>Reference</dt>
+          <dd>{{ order.reference }}</dd>
+          <dt>Placed</dt>
+          <dd>{{ order.placedAt }}</dd>
+        </dl>
+        <ul class="totals">
+          <li class="total"><span>Subtotal</span><span>{{ order.subtotal }}</span></li>
+        </ul>
+      </CardContent>
+      <CardFooter>
+        <Button variant="ghost">Print</Button>
+      </CardFooter>
+    </Card>
+</template>
+
+=== changed components/OrderSummaryPanel.vue
+<script setup lang="ts">
+import OrderSummaryCard from './OrderSummaryCard.vue';
+
+import type { Order, OrderBadge } from '@/types';
+import OrderBadgeBar from './OrderBadgeBar.vue';
+
+defineProps<{ order: Order; badge: OrderBadge }>();
+</script>
+
+<template>
+  <div class="order-summary">
+    <!-- A Card compound welded inline — Card + Card* parts with a populated body.
+         It is its own OrderSummaryCard. -->
+    <!-- @sin CompoundInlineComponent -->
+    <OrderSummaryCard :order="order" />
+
+    <!-- `badge` is read nowhere here, and OrderBadgeBar just pipes it on — a drilling chain. -->
+    <!-- @sin PropDrilling -->
+    <OrderBadgeBar :badge="badge" />
+  </div>
+</template>
+
+=== created components/PairReaderDialog.vue
+<script setup lang="ts">
+const open = defineModel<boolean>('open');
+const form = defineModel<unknown>('form');
+defineProps<{ submit: () => void }>();
+</script>
+
+<template>
+    <Dialog v-model:open="open">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Pair Reader</DialogTitle>
+          <DialogDescription>Enter the device name and reader model to pair.</DialogDescription>
+        </DialogHeader>
+        <form class="space-y-4" @submit.prevent="submit">
+          <div class="field">
+            <Label>Device name</Label>
+            <Input v-model="form.name" type="text" placeholder="Front counter" />
+          </div>
+          <div class="select-row">
+            <Label>Reader model</Label>
+            <select v-model="form.model" class="select">
+              <option value="s1">SumUp Solo</option>
+              <option value="s2">SumUp Air</option>
+            </select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" @click="open = false">Cancel</Button>
+            <Button type="submit">Pair reader</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+</template>
+
+=== changed components/ProductCell.vue
+<script setup lang="ts">
+defineProps<{ column: string }>();
+</script>
+
+<template>
+  <td class="cell">
+    <!-- @sin SwitchCase -->
+    <SwitchCase :value="column">
+        <template #price>
+      <strong>{{ '$' }}</strong>
+      <PriceTag />
+    </template>
+        <template #stock>
+      <StockLevel />
+    </template>
+        <template #default>
+      <span class="muted">—</span>
+    </template>
+    </SwitchCase>
+  </td>
+</template>
+
+=== changed components/ProductReviewList.vue
+<script setup lang="ts">
+import ReviewCardSection from './ReviewCardSection.vue';
+
+defineProps<{ productId: number }>();
+</script>
+
+<template>
+  <section class="reviews">
+    <!-- @sin DuplicateElement -->
+    <ReviewCardSection />
+
+    <!-- @sin DuplicateElement -->
+    <ReviewCardSection />
+
+    <!-- @fixed DuplicateElement -->
+    <!-- @righteous DuplicateElement -->
+    <template v-for="review in reviews" :key="review.id">
+      <article class="review-card">
+        <header class="review-head">
+          <Avatar class="size-8" />
+          <strong class="review-author">{{ review.author }}</strong>
+        </header>
+        <p class="review-body">{{ review.body }}</p>
+      </article>
+    </template>
+
+    <ul class="review-tags">
+      <!-- @sin LoopWithCondition -->
+      <!-- @sin ControlFlowOnElement -->
+      <template v-if="tag.visible" v-for="tag in tags" :key="tag.id">
+        <li class="review-tag">{{ tag.label }}</li>
+      </template>
+    </ul>
+
+    <!-- @fixed LoopWithCondition -->
+    <!-- @righteous LoopWithCondition -->
+    <template v-for="tag in tags" :key="tag.id">
+      <template v-if="tag.visible">
+        <li class="review-tag">{{ tag.label }}</li>
+      </template>
+    </template>
+
+    <!-- @righteous ControlFlowOnElement — TransitionGroup tracks its real keyed
+         children for FLIP; the v-for MUST sit on the element, not a <template> -->
+    <TransitionGroup tag="ul" name="review-list" class="review-stream">
+      <li v-for="review in reviews" :key="review.id" class="review-row">{{ review.body }}</li>
+    </TransitionGroup>
+
+    <!-- @righteous ControlFlowOnElement — a <Transition> toggles its single real child -->
+    <Transition name="fade">
+      <p v-if="highlighted" class="review-highlight">{{ highlighted.body }}</p>
+    </Transition>
+  </section>
+</template>
+
+=== created components/PromoStripSection.vue
+<script setup lang="ts">
+</script>
+
+<template>
+    <div class="promo-strip">
+      <span class="promo-icon">%</span>
+      <strong class="promo-headline">Free shipping this week</strong>
+      <small class="promo-terms">On orders over 50.</small>
+    </div>
+</template>
+
+=== changed components/ReaderPairingPanel.vue
+<script setup lang="ts">
+import PairReaderDialog from './PairReaderDialog.vue';
+
+import { reactive, ref } from 'vue';
+
+const open = ref(false);
+const form = reactive({ name: '', model: '' });
+function submit() {}
+</script>
+
+<template>
+  <section class="reader-pairing">
+    <button class="btn" @click="open = true">Pair a reader</button>
+
+    <!-- A whole dialog assembled inline — Dialog + Dialog* parts with a real form body.
+         It is its own ReaderPairingDialog, not part of this panel. -->
+    <!-- @sin CompoundInlineComponent -->
+    <PairReaderDialog v-model:open="open" :submit="submit" v-model:form="form" />
+
+    <!-- Righteous: the same dialog already lives in its own component, referenced here. -->
+    <!-- @fixed CompoundInlineComponent -->
+    <!-- @righteous CompoundInlineComponent -->
+    <ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
+  </section>
+</template>
+
+=== created components/ReviewCardSection.vue
+<script setup lang="ts">
+</script>
+
+<template>
+    <article class="review-card">
+      <header class="review-head">
+        <Avatar class="size-8" />
+        <strong class="review-author">Verified buyer</strong>
+      </header>
+      <p class="review-body">Exactly as described, shipped fast.</p>
+    </article>
+</template>
+
+=== changed components/SettingsAccordionCard.vue
+<script setup lang="ts">
+import SettingsSection from './SettingsSection.vue';
+
+import { ref } from 'vue';
+import type { Settings } from '@/types';
+
+defineProps<{ settings: Settings; expanded: boolean }>();
+
+const panelOpen = ref(false);
+</script>
+
+<template>
+  <article class="settings-card">
+    <h2 class="settings-card__title">Advanced settings</h2>
+
+    <!-- 13 levels deep with 4 still below the boundary → extract the body. -->
+    <!-- @sin DeepNested -->
+    <SettingsSection :settings="settings" />
+
+    <!-- @fixed DeepNested -->
+    <!-- @righteous DeepNested -->
+    <SettingsCardBody :settings="settings" />
+
+    <!-- Writing the `expanded` PROP — read-only, so the v-model fails. -->
+    <!-- @sin PropMutation -->
+    <Collapsible v-model:open="expanded">
+      <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+    </Collapsible>
+
+    <!-- @fixed PropMutation -->
+    <!-- @righteous PropMutation -->
+    <Collapsible v-model:open="panelOpen">
+      <CollapsibleTrigger>Advanced</CollapsibleTrigger>
+    </Collapsible>
+  </article>
+</template>
+
+=== created components/SettingsSection.vue
+<script setup lang="ts">
+import type { Settings } from '@/types';
+
+defineProps<{ settings: Settings }>();
+</script>
+
+<template>
+    <div class="settings-card__body">
+      <div class="accordion">
+        <div class="accordion__item">
+          <div class="accordion__panel">
+            <div class="field-group">
+              <div class="field-grid">
+                <div class="field-grid__row">
+                  <div class="field">
+                    <div class="field__control">
+                      <div class="field__input-wrap">
+                        <div class="field__inner">
+                          <label class="field__label">{{ settings.profile.displayName }}</label>
+                          <input class="field__input" :value="settings.profile.handle" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</template>
+
+=== created components/StatusSection.vue
+<script setup lang="ts">
+defineProps<{ status: string }>();
+</script>
+
+<template>
+    <SwitchCase :value="status">
+        <template #paid>
+      <span class="badge badge-green">Paid</span>
+    </template>
+        <template #pending>
+      <span class="badge badge-amber">Pending</span>
+    </template>
+        <template #refunded>
+      <span class="badge badge-grey">Refunded</span>
+    </template>
+        <template #default>
+      <span class="badge">Unknown</span>
+    </template>
+    </SwitchCase>
+</template>
+
+=== changed components/StockIndicator.vue
+<script setup lang="ts">
+defineProps<{ stock: number }>();
+</script>
+
+<template>
+  <!-- Range checks, not equality on one value — a genuine conditional, NOT a switch. -->
+  <!-- @sin ControlFlowOnElement -->
+  <template v-if="stock > 10">
+    <span class="text-green-600">In stock</span>
+  </template>
+  <!-- @sin ControlFlowOnElement -->
+  <template v-else-if="stock > 0">
+    <span class="text-amber-600">Only a few left</span>
+  </template>
+  <!-- @sin ControlFlowOnElement -->
+  <template v-else>
+    <span class="text-red-600">Sold out</span>
+  </template>
+</template>
+
+=== changed components/StorefrontHero.vue
+<script setup lang="ts">
+import CampaignSection from './CampaignSection.vue';
+
+import type { Storefront } from '@/types';
+
+defineProps<{ storefront: Storefront }>();
+</script>
+
+<template>
+  <header class="hero">
+    <div class="hero__bar">
+      <span class="hero__name">{{ storefront.name }}</span>
+      <span class="hero__status">{{ storefront.open }}</span>
+    </div>
+
+    <!-- A cluster: storefront.campaign read in three fields → extract <HeroBanner :campaign>. -->
+    <!-- @sin DeepDataReach -->
+    <CampaignSection :campaign="storefront.campaign" />
+
+    <nav class="hero__nav">
+      <ul class="hero__links">
+        <!-- @sin ControlFlowOnElement -->
+        <template v-for="link in storefront.links" :key="link.id">
+          <li class="hero__link">
+            <span class="hero__link-label">{{ link.label }}</span>
+          </li>
+        </template>
+      </ul>
+    </nav>
+
+    <div class="hero__promo">
+      <h2 class="hero__promo-title">Featured</h2>
+      <!-- Righteous: a LONE deep reach (one field off storefront.featured) is no cluster. -->
+      <p class="hero__promo-text">{{ storefront.featured.product.name }}</p>
+      <p class="hero__promo-price">{{ storefront.featuredPrice }}</p>
+    </div>
+
+    <div class="hero__meta">
+      <span class="hero__hours">{{ storefront.hours }}</span>
+      <span class="hero__location">{{ storefront.location }}</span>
+      <span class="hero__rating">{{ storefront.rating }}</span>
+    </div>
+
+    <div class="hero__categories">
+      <h2 class="hero__cat-title">Browse the store</h2>
+      <ul class="hero__cat-list">
+        <li class="hero__cat">New arrivals</li>
+        <li class="hero__cat">Best sellers</li>
+        <li class="hero__cat">On sale this week</li>
+        <li class="hero__cat">Clearance</li>
+      </ul>
+    </div>
+
+    <dl class="hero__stats">
+      <!-- @sin IndexAsKey -->
+      <template v-for="(value, label, index) in storefront.stats" :key="index">
+        <dt class="hero__stat-label">{{ label }}</dt>
+        <dd class="hero__stat-value">{{ value }}</dd>
+      </template>
+    </dl>
+
+    <div class="hero__cta">
+      <button class="hero__shop" type="button">Shop now</button>
+      <button class="hero__learn" type="button">Learn more</button>
+    </div>
+  </header>
+</template>
+

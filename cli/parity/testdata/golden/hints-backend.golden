@@ -1,0 +1,979 @@
+exit: 0
+--- stdout
+[32m✓ Rewrote 17 files.[0m
+  app/Http/Pages/CatalogPage.php
+  app/Http/Pages/Hydration/LazyRelationRow.php
+  app/Http/Pages/Hydration/DeriveTiles.php
+  app/Http/Pages/Hydration/CollTypedFeed.php
+  app/Http/Pages/Hydration/DeriveLegend.php
+  app/Http/Pages/Hydration/Leaves.php
+  app/Http/Pages/PrintQueuePage.php
+  app/Http/Pages/TimelinePage.php
+  app/Data/CouponData.php
+  app/Data/InvoiceData.php
+  app/Data/WarehouseStockData.php
+  app/Data/VoucherPanelData.php
+  app/Data/CustomerData.php
+  app/Data/MembershipData.php
+  app/Data/ProductData.php
+  app/Http/Controllers/PageController.php
+  app/Http/Pages/Hydration/DeriveBadges.php
+
+--- stderr
+
+--- files
+=== changed app/Data/CouponData.php
+<?php
+
+namespace Shop\Data;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DataMethodHintCollision;
+
+use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Data;
+
+/**
+ * A discount coupon with public (non-promoted) properties and validation rules.
+ * Here the `@method` collides with the real static `rules()` — the collision sin
+ * is not specific to factories or to promoted-constructor classes.
+ *
+ */
+#[Sinful(DataMethodHintCollision::class)]
+final class CouponData extends Data
+{
+    public string $code;
+
+    public int $percentOff;
+
+    public static function rules(): array
+    {
+        return [
+            'code' => ['required', 'string'],
+            'percentOff' => ['required', 'integer', 'min:1', 'max:100'],
+        ];
+    }
+}
+
+/**
+ * A voucher whose `@method` hint describes only the invisible magic `::from()`,
+ * never the concrete `fromCode()` factory it dispatches to — so nothing collides.
+ *
+ * @method static static from(string $code)
+ * @method static static from(array $payload)
+ */
+#[Righteous(DataMethodHintCollision::class)]
+final class VoucherData extends Data
+{
+    public string $code;
+
+    public static function fromCode(string $code): static
+    {
+        return new static(code: $code);
+    }
+}
+
+=== changed app/Data/CustomerData.php
+<?php
+
+namespace Shop\Data;
+
+use Spatie\LaravelData\Attributes\MapInputName;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Mappers\SnakeCaseMapper;
+
+/**
+ * Typed view of a customer. The snake_case input map is what `::from()` runs and a
+ * raw `new` skips — so this class is RICH: `new CustomerData(...)` is a real sin.
+ *
+ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+ */
+#[MapInputName(SnakeCaseMapper::class)]
+final class CustomerData extends Data
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly string $name,
+        public readonly string $email,
+    ) {}
+}
+
+=== changed app/Data/InvoiceData.php
+<?php
+
+namespace Shop\Data;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DataMethodHintCollision;
+
+use JesseGall\CodeCommandments\Testing\Fixed;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Shop\Models\Order;
+use Spatie\LaravelData\Data;
+
+/**
+ * Typed invoice view, built from an order.
+ *
+ * @method static static from(Order $order)
+ * @method static static from(array $payload)
+ */
+#[Sinful(DataMethodHintCollision::class)]
+final class InvoiceData extends Data
+{
+    public function __construct(
+        public readonly int $orderId,
+        public readonly int $totalCents,
+        public readonly string $reference,
+    ) {}
+
+    // The `@method` tag re-declares THIS visible method — IDE "already defined".
+    public static function fromOrder(Order $order): self
+    {
+        return self::from([
+            'orderId' => $order->id,
+            'totalCents' => $order->total_cents,
+            'reference' => 'INV-' . $order->id,
+        ]);
+    }
+}
+
+/**
+ * The FIX for {@see InvoiceData}: the `@method` tag names the INVISIBLE magic `from()` — the one
+ * method the IDE cannot see — and says nothing about the concrete `fromOrder()` factory declared
+ * below it, so no hint re-declares a real method.
+ *
+ * @method static static from(Order $order)
+ * @method static static from(array $payload)
+ */
+#[Fixed(DataMethodHintCollision::class)]
+final class CreditNoteData extends Data
+{
+    public function __construct(
+        public readonly int $orderId,
+        public readonly int $refundedCents,
+        public readonly string $reference,
+    ) {}
+
+    public static function fromOrder(Order $order): self
+    {
+        return self::from([
+            'orderId' => $order->id,
+            'refundedCents' => $order->total_cents,
+            'reference' => 'CN-' . $order->id,
+        ]);
+    }
+}
+
+=== changed app/Data/MembershipData.php
+<?php
+
+namespace Shop\Data;
+
+use Shop\Models\Customer;
+use Spatie\LaravelData\Data;
+
+/**
+ * Righteous twin for DataMethodHintCollision: the `@method` tag documents the magic
+ * `::from(Customer)` overload — the INVISIBLE thing — not the concrete `fromCustomer`
+ * factory. No real method named `from` is declared here, so there is no collision.
+ *
+ * @method static static from(Customer $customer)
+ * @method static static from(array $payload)
+ */
+final class MembershipData extends Data
+{
+    public function __construct(
+        public readonly int $customerId,
+        public readonly string $tier,
+    ) {}
+
+    public static function fromCustomer(Customer $customer): self
+    {
+        return self::from(['customerId' => $customer->id, 'tier' => 'silver']);
+    }
+}
+
+=== changed app/Data/ProductData.php
+<?php
+
+namespace Shop\Data;
+
+use Shop\Enums\ProductCategory;
+use Spatie\LaravelData\Attributes\WithCast;
+use Spatie\LaravelData\Casts\EnumCast;
+use Spatie\LaravelData\Data;
+
+/**
+ * Typed view of a product. The `#[WithCast]` on `category` is work `::from()` runs
+ * and a raw `new` skips — so this class is RICH: `new ProductData(...)` is a real sin.
+ *
+ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+ */
+final class ProductData extends Data
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly string $name,
+        public readonly int $priceCents,
+        #[WithCast(EnumCast::class)]
+        public readonly ProductCategory $category,
+    ) {}
+}
+
+=== changed app/Data/VoucherPanelData.php
+<?php
+
+namespace Shop\Data;
+
+use JesseGall\CodeCommandments\Sins\Backend\BlankStringOnTheWire;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Data;
+
+/**
+ * The voucher panel of the checkout page. A voucher that was never entered travels as a blank code,
+ * which the page then has to decode back into "no voucher".
+ *
+ */
+#[Sinful(BlankStringOnTheWire::class)]
+final class VoucherPanelData extends Data
+{
+    /**
+     * @param  array<int, string>  $rejectedCodes  every code the till turned away this basket
+     */
+    public function __construct(
+        public readonly string $appliedCode,
+        public readonly string $discountLabel,
+        public readonly array $rejectedCodes = [],
+    ) {}
+
+    public function rejections(): int
+    {
+        return count($this->rejectedCodes);
+    }
+
+    public function turnedAway(string $code): bool
+    {
+        return in_array($code, $this->rejectedCodes, true);
+    }
+}
+
+=== changed app/Data/WarehouseStockData.php
+<?php
+
+namespace Shop\Data;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DataMethodHintCollision;
+
+use Illuminate\Support\Collection;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Data;
+
+/**
+ * Stock-on-hand per warehouse. The conditional-return `@method` collides with the
+ * real `collect()` override below — the parens in the return type must not hide it.
+ *
+ */
+#[Sinful(DataMethodHintCollision::class)]
+final class WarehouseStockData extends Data
+{
+    public function __construct(
+        public readonly string $sku,
+        public readonly int $onHand,
+    ) {}
+
+    public static function collect(iterable $items, ?string $into = null): array|Collection
+    {
+        return is_array($items) ? (array) $items : Collection::make($items);
+    }
+}
+
+=== changed app/Http/Controllers/PageController.php
+<?php
+
+namespace Shop\Http\Controllers;
+
+use Illuminate\Routing\Controller;
+use Shop\Http\Pages\AccountPage;
+use Shop\Http\Pages\AiWorkflowPage;
+use Shop\Http\Pages\CatalogPage;
+use Shop\Http\Pages\CheckoutSummaryPage;
+use Shop\Http\Pages\ComputedOverviewPage;
+use Shop\Http\Pages\DashboardPage;
+use Shop\Http\Pages\HiddenCatalogPage;
+use Shop\Http\Pages\InjectedStatusPage;
+use Shop\Http\Pages\MetricsPage;
+use Shop\Http\Pages\OverviewPage;
+use Shop\Http\Pages\PrintQueuePage;
+use Shop\Http\Pages\ReportPage;
+use Shop\Http\Pages\SystemStatusPage;
+use Shop\Http\Pages\TimelinePage;
+use Shop\Http\Pages\TypedDashboardPage;
+use Shop\Http\Pages\WarehousePage;
+
+/**
+ * Returns each page object — this is what makes them response-bound (a Spatie `Data` is `Responsable`,
+ * so returning it IS the response), and therefore genuine page objects rather than internal aggregates.
+ */
+final class PageController extends Controller
+{
+    public function dashboard(): DashboardPage
+    {
+        return DashboardPage::from([]);
+    }
+
+    public function checkout(): CheckoutSummaryPage
+    {
+        return CheckoutSummaryPage::from([]);
+    }
+
+    public function catalog(): CatalogPage
+    {
+        return CatalogPage::from('books');
+    }
+
+    public function account(): AccountPage
+    {
+        return AccountPage::from([]);
+    }
+
+    public function report(): ReportPage
+    {
+        return ReportPage::from([]);
+    }
+
+    public function aiWorkflow(): AiWorkflowPage
+    {
+        return AiWorkflowPage::from([]);
+    }
+
+    public function systemStatus(): SystemStatusPage
+    {
+        return SystemStatusPage::from([]);
+    }
+
+    public function printQueue(): PrintQueuePage
+    {
+        return PrintQueuePage::from('agent-1');
+    }
+
+    public function overview(): OverviewPage
+    {
+        return OverviewPage::from([]);
+    }
+
+    public function timeline(): TimelinePage
+    {
+        return TimelinePage::from('order-1');
+    }
+
+    public function metrics(): MetricsPage
+    {
+        return MetricsPage::from([]);
+    }
+
+    public function warehouse(): WarehousePage
+    {
+        return WarehousePage::from([]);
+    }
+
+    public function typedDashboard(): TypedDashboardPage
+    {
+        return TypedDashboardPage::from([]);
+    }
+
+    public function hiddenCatalog(): HiddenCatalogPage
+    {
+        return HiddenCatalogPage::from('books');
+    }
+
+    public function computedOverview(): ComputedOverviewPage
+    {
+        return ComputedOverviewPage::from([]);
+    }
+
+    public function injectedStatus(): InjectedStatusPage
+    {
+        return InjectedStatusPage::from([]);
+    }
+}
+
+=== changed app/Http/Pages/CatalogPage.php
+<?php
+
+namespace Shop\Http\Pages;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\InjectedServiceNotHidden;
+use JesseGall\CodeCommandments\Testing\Fixed;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Attributes\FromContainer;
+use Spatie\LaravelData\Attributes\Hidden;
+use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
+
+/**
+ * A page seeded through a `for()` factory, composing direct nested Data slots (no typed collection),
+ * with TWO container-injected collaborators: `$reader` is correctly `#[Hidden]`, but `$facetBuilder`
+ * is not — one un-hidden service is enough to leak into the frontend type.
+ *
+ * @method static static from(string $category)
+ * @method static static from(array $payload)
+ */
+#[TypeScript]
+#[Sinful(InjectedServiceNotHidden::class)]
+final class CatalogPage extends Data
+{
+    public readonly MenuLink $home;
+
+    public readonly MenuLink $active;
+
+    public readonly CartLine $featured;
+
+    public static function fromString(string $category): self
+    {
+        return self::from(['category' => $category]);
+    }
+
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(CatalogReader::class)]
+        public readonly CatalogReader $reader,
+
+        #[FromContainer(FacetBuilder::class)]
+        public readonly FacetBuilder $facetBuilder,
+
+        public readonly string $category,
+    ) {}
+
+    public function breadcrumb(): string
+    {
+        return $this->home->label . ' / ' . $this->active->label;
+    }
+}
+
+/**
+ * The FIX for the same catalog page: BOTH injected collaborators carry `#[Hidden]`, so neither the
+ * reader nor the facet builder serializes into the payload or reaches the generated TypeScript type.
+ *
+ * @method static static from(string $category)
+ * @method static static from(array $payload)
+ */
+#[TypeScript]
+#[Fixed(InjectedServiceNotHidden::class)]
+final class HiddenCatalogPage extends Data
+{
+    public readonly MenuLink $home;
+
+    public readonly MenuLink $active;
+
+    public readonly CartLine $featured;
+
+    public static function fromString(string $category): self
+    {
+        return self::from(['category' => $category]);
+    }
+
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(CatalogReader::class)]
+        public readonly CatalogReader $reader,
+
+        #[Hidden]
+        #[FromContainer(FacetBuilder::class)]
+        public readonly FacetBuilder $facetBuilder,
+
+        public readonly string $category,
+    ) {}
+
+    public function trail(): string
+    {
+        return $this->category . ': ' . $this->active->label;
+    }
+}
+
+=== changed app/Http/Pages/Hydration/CollTypedFeed.php
+<?php
+
+namespace Shop\Http\Pages\Hydration;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DataCollectionType;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Attributes\Computed;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\DataCollection;
+
+/*
+ * Scenario 3 — an activity feed exposing its items through a computed `DataCollection` get-hook. The type
+ * is still wrong (should be `array` + `#[DataCollectionOf]`); a computed-collection shape.
+ */
+#[Sinful(DataCollectionType::class)]
+final class ActivityFeed extends Data
+{
+    /**
+     * @var DataCollection<int, FeedItem>
+     */
+    #[Computed]
+    public DataCollection $items { get => FeedItem::collect([], DataCollection::class); }
+
+    public function __construct(public readonly string $cursor) {}
+
+    public function isOpenAtStart(): bool
+    {
+        return $this->cursor === '';
+    }
+}
+
+/**
+ * @method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)
+ */
+final class FeedItem extends Data
+{
+    public function __construct(public readonly string $verb) {}
+}
+
+=== changed app/Http/Pages/Hydration/DeriveBadges.php
+<?php
+
+namespace Shop\Http\Pages\Hydration;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DerivedCollectionCast;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Attributes\DataCollectionOf;
+use Spatie\LaravelData\Data;
+
+/*
+ * N2 scenario 2 — a derivation over a FILTERED field list through an ARROW function. The class carries its
+ * own SKU state and prunes it before mapping.
+ */
+final class CatalogBadges extends Data
+{
+    public function __construct(
+        #[DataCollectionOf(ProductBadge::class)]
+        public readonly array $badges,
+    ) {}
+}
+
+final class CatalogBadgesComposer
+{
+    /**
+     * @var list<string>
+     */
+    private array $skus = ['A1', 'B2', '', 'C3'];
+
+    #[Sinful(DerivedCollectionCast::class)]
+    public function compose(): CatalogBadges
+    {
+        $active = array_values(array_filter($this->skus, static fn (string $sku): bool => $sku !== ''));
+
+        return CatalogBadges::from(['badges' => array_map(fn (string $sku) => ProductBadge::from($sku), $active)]);
+    }
+
+    public function register(string $sku): void
+    {
+        $this->skus[] = $sku;
+    }
+}
+
+=== changed app/Http/Pages/Hydration/DeriveLegend.php
+<?php
+
+namespace Shop\Http\Pages\Hydration;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DerivedCollectionCast;
+use JesseGall\CodeCommandments\Testing\Fixed;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Attributes\DataCollectionOf;
+use Spatie\LaravelData\Attributes\WithCast;
+use Spatie\LaravelData\Data;
+
+/*
+ * N2 scenario 1 — an enum vocabulary derived through a FIRST-CLASS CALLABLE over every case. A cast on the
+ * `chips` property should own the `state → StateChip` derivation.
+ */
+final class ShipStatusLegend extends Data
+{
+    public function __construct(
+        #[DataCollectionOf(StateChip::class)]
+        public readonly array $chips,
+    ) {}
+}
+
+/**
+ * The cast that OWNS the `ShipState → StateChip` derivation — declared once on the collection property,
+ * so every call site hands over the raw enum cases.
+ */
+#[Fixed(DerivedCollectionCast::class)]
+final class StateChipCast
+{
+    public function cast(ShipState $state): StateChip
+    {
+        return StateChip::from($state);
+    }
+}
+
+/**
+ * The same legend with the derivation moved onto the property: `#[WithCast]` runs `StateChip::for()` per
+ * item, so the `chips` slot is filled from the raw list.
+ */
+final class CastShipStatusLegend extends Data
+{
+    public function __construct(
+        #[WithCast(StateChipCast::class)]
+        #[DataCollectionOf(StateChip::class)]
+        public readonly array $chips,
+    ) {}
+}
+
+final class ShipStatusLegendBuilder
+{
+    #[Sinful(DerivedCollectionCast::class)]
+    public function build(): ShipStatusLegend
+    {
+        return ShipStatusLegend::from(['chips' => array_map(StateChip::from(...), ShipState::cases())]);
+    }
+
+    /**
+     * The FIX: the raw enum cases are passed straight in — the `#[WithCast(StateChipCast::class)]` on the
+     * `chips` property derives each `StateChip`, so there is no `array_map` at the call site.
+     */
+    #[Fixed(DerivedCollectionCast::class)]
+    public function buildCast(): CastShipStatusLegend
+    {
+        return CastShipStatusLegend::from(['chips' => ShipState::cases()]);
+    }
+
+    public function isTerminal(ShipState $state): bool
+    {
+        return match ($state) {
+            ShipState::Shipped, ShipState::Lost => true,
+            ShipState::Pending => false,
+        };
+    }
+}
+
+=== changed app/Http/Pages/Hydration/DeriveTiles.php
+<?php
+
+namespace Shop\Http\Pages\Hydration;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DerivedCollectionCast;
+use JesseGall\CodeCommandments\Testing\Righteous;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Attributes\DataCollectionOf;
+use Spatie\LaravelData\Data;
+
+/*
+ * N2 scenario 3 — a named factory mapped over a numeric range inside a guarded, capped method. Plus the
+ * righteous twins: a service-closed factory (a cast can't reach `$this`), and a plain-scalar map.
+ */
+final class TileGrid extends Data
+{
+    public function __construct(
+        #[DataCollectionOf(GridTile::class)]
+        public readonly array $tiles,
+    ) {}
+}
+
+final class TileGridFactory
+{
+    private const int MAX = 64;
+
+    #[Sinful(DerivedCollectionCast::class)]
+    public function ofSize(int $size): TileGrid
+    {
+        $size = min($size, self::MAX);
+
+        if ($size < 1) {
+            return TileGrid::from(['tiles' => []]);
+        }
+
+        return TileGrid::from(['tiles' => array_map(GridTile::from(...), range(0, $size - 1))]);
+    }
+
+    public function capacity(): int
+    {
+        return self::MAX;
+    }
+}
+
+/**
+ * RIGHTEOUS: the factory closes over `$this->theme`, so it can't move into a per-item cast; and a map to
+ * plain scalars isn't a collection derivation. Neither is flagged.
+ */
+final class ThemedLegend extends Data
+{
+    public function __construct(
+        #[DataCollectionOf(StateChip::class)]
+        public readonly array $chips,
+    ) {}
+}
+
+final class ThemedLegendBuilder
+{
+    private string $theme = 'dark';
+
+    #[Righteous(DerivedCollectionCast::class)]
+    public function build(): ThemedLegend
+    {
+        return ThemedLegend::from(['chips' => array_map(fn (ShipState $s) => StateChip::themed($s, $this->theme), ShipState::cases())]);
+    }
+}
+
+final class LabelStrip extends Data
+{
+    /**
+     * @var list<string>
+     */
+    public function __construct(public readonly array $labels) {}
+}
+
+final class LabelStripBuilder
+{
+    #[Righteous(DerivedCollectionCast::class)]
+    public function build(): LabelStrip
+    {
+        $chips = [StateChip::from(ShipState::Pending), StateChip::from(ShipState::Shipped)];
+
+        return LabelStrip::from(['labels' => array_map(static fn (StateChip $c): string => $c->label, $chips)]);
+    }
+}
+
+=== changed app/Http/Pages/Hydration/LazyRelationRow.php
+<?php
+
+namespace Shop\Http\Pages\Hydration;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\NullToOptionalMap;
+use JesseGall\CodeCommandments\Testing\Righteous;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Optional;
+
+/*
+ * Righteous twin: an `Optional` in a ternary arm whose condition is a BOOLEAN guard, not a null-check
+ * (`$row->relationLoaded('range') ? $row->range : Optional::create()`) — the idiomatic "omit an unloaded
+ * relation from the wire" pattern. It is NOT a hand-rolled null→Optional map (the scaffolded factory maps a
+ * null PAYLOAD via `::from`, which this isn't), so it must NOT flag. Only a null-guard ternary is the map.
+ */
+/**
+ * @method static static from(object $row)
+ * @method static static from(array $payload)
+ */
+#[Righteous(NullToOptionalMap::class)]
+final class LazyRelationRow extends Data
+{
+    public function __construct(
+        public readonly string $label,
+        public readonly OptRange|Optional $range = new Optional(),
+    ) {}
+
+    public static function fromRow(object $row): self
+    {
+        return self::from([
+            'label' => $row->label,
+            'range' => $row->relationLoaded('range') ? $row->range : Optional::create(),
+        ]);
+    }
+}
+
+=== changed app/Http/Pages/Hydration/Leaves.php
+<?php
+
+namespace Shop\Http\Pages\Hydration;
+
+use Spatie\LaravelData\Data;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\DataToArrayRoundtrip;
+use JesseGall\CodeCommandments\Testing\Fixed;
+
+/*
+ * Shared leaf Data classes, enums, and stubs the hydration-site fixtures nest, derive, and cast. Declared
+ * once here (no findings of their own); the per-scenario site files reference them.
+ */
+
+#[Fixed(DataToArrayRoundtrip::class)]
+final class BadgeCopy extends Data
+{
+    public function __construct(public readonly string $label, public readonly string $tone) {}
+}
+
+final class TabCopy extends Data
+{
+    public function __construct(public readonly string $id, public readonly string $title) {}
+}
+
+final class HeaderCopy extends Data
+{
+    public function __construct(public readonly string $heading) {}
+}
+
+final class ToolbarPanel extends Data
+{
+    public function __construct(public readonly HeaderCopy $header) {}
+}
+
+enum ShipState: string
+{
+    case Pending = 'pending';
+    case Shipped = 'shipped';
+    case Lost = 'lost';
+}
+
+/**
+ * @method static static from(ShipState $state)
+ * @method static static from(array $payload)
+ */
+final class StateChip extends Data
+{
+    public function __construct(public readonly string $label, public readonly string $tone) {}
+
+    public static function fromShipState(ShipState $state): self
+    {
+        return new self(ucfirst($state->value), $state === ShipState::Lost ? 'danger' : 'ok');
+    }
+
+    public static function themed(ShipState $state, string $theme): self
+    {
+        return new self(ucfirst($state->value), $theme);
+    }
+}
+
+/**
+ * @method static static from(string $sku)
+ * @method static static from(array $payload)
+ */
+final class ProductBadge extends Data
+{
+    public function __construct(public readonly string $sku, public readonly string $caption) {}
+
+    public static function fromString(string $sku): self
+    {
+        return new self($sku, "SKU {$sku}");
+    }
+}
+
+/**
+ * @method static static from(int $index)
+ * @method static static from(array $payload)
+ */
+final class GridTile extends Data
+{
+    public function __construct(public readonly int $x, public readonly int $y) {}
+
+    public static function fromInt(int $index): self
+    {
+        return new self($index % 4, intdiv($index, 4));
+    }
+}
+
+enum FulfilmentState: string
+{
+    case Open = 'open';
+    case Packed = 'packed';
+    case Done = 'done';
+}
+
+/**
+ * A stand-in date wrapper — short-named `Carbon`, so Spatie's built-in date cast applies.
+ */
+final class Carbon
+{
+    public static function parse(string $value): self
+    {
+        return new self();
+    }
+}
+
+=== changed app/Http/Pages/PrintQueuePage.php
+<?php
+
+namespace Shop\Http\Pages;
+
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\ContainerReach;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\PageObjectMissingTypeScript;
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\ServiceLocationInPageObject;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Data;
+
+/**
+ * The Smart Farmers PrintAgents IndexPage shape — seeded through a `for()` factory over direct nested
+ * slots, reading a buffer service out of the container inside a getter.
+ *
+ * @method static static from(string $agent)
+ * @method static static from(array $payload)
+ */
+#[Sinful(PageObjectMissingTypeScript::class)]
+final class PrintQueuePage extends Data
+{
+    public readonly CartLine $current;
+
+    public readonly MenuLink $home;
+
+    public readonly StatCard $depth;
+
+    public static function fromString(string $agent): self
+    {
+        return self::from(['agent' => $agent]);
+    }
+
+    #[Sinful(ServiceLocationInPageObject::class)]
+    #[Sinful(ContainerReach::class)]
+    public function bufferSize(): int
+    {
+        return app(LogBuffer::class)->size();
+    }
+
+    public function summary(): string
+    {
+        return sprintf('%s: %d queued at %s', $this->current->sku, $this->current->qty, $this->home->label);
+    }
+}
+
+=== changed app/Http/Pages/TimelinePage.php
+<?php
+
+namespace Shop\Http\Pages;
+
+use JesseGall\CodeCommandments\Sins\Backend\Spatie\ConstructorOrchestration;
+use JesseGall\CodeCommandments\Testing\Sinful;
+use Spatie\LaravelData\Attributes\FromContainer;
+use Spatie\LaravelData\Attributes\Hidden;
+use Spatie\LaravelData\Data;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
+
+/**
+ * Seeded through a `for()` factory, then a constructor that projects each slot from the injected
+ * reader — pure `$this->slot = $this->cart->…()` fills that belong in `#[Computed]` hooks.
+ *
+ * @method static static from(string $order)
+ * @method static static from(array $payload)
+ */
+#[TypeScript]
+final class TimelinePage extends Data
+{
+    public readonly CartLine $head;
+
+    public readonly MenuLink $back;
+
+    public static function fromString(string $order): self
+    {
+        return self::from(['order' => $order]);
+    }
+
+    #[Sinful(ConstructorOrchestration::class)]
+    public function __construct(
+        #[Hidden]
+        #[FromContainer(CartReader::class)]
+        public readonly CartReader $cart,
+        public readonly string $order,
+    ) {
+        $this->head = $this->cart->firstLine();
+        $this->back = $this->cart->backLink();
+    }
+
+    public function label(): string
+    {
+        return match ($this->head->qty) {
+            0 => 'empty',
+            1 => 'single',
+            default => 'multiple',
+        };
+    }
+}
+

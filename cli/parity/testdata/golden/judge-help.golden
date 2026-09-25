@@ -17,7 +17,7 @@ Options:
   --changes                      only files changed in the working tree (alias: --git)
   --branch[=BASE]                only files new/changed on this branch vs BASE (default: main)
   --repent[=ID]                  only the files listed in a past run's checklist (bare: the latest)
-  --parallel=N                   run detectors across N worker processes (default: 8, capped at
+  --parallel=N                   run detectors across N worker processes (default: 2, capped at
                                  cores; 1 = off)
   --ignore-package-requirements  keep package-gated rules even if this project lacks the package
                                  (cross-project calibration)
