@@ -210,6 +210,7 @@ Frontend mirror: `Vue\Codebase`→`Vue\Query`→`ElementMatch`, `Vue\Expr\Parser
 | `bin/commandments disable <sin>` / `enable <sin>` | Toggle a rule in the project's `.commandments/config.php`: resolve the sin id (lenient) to its `Sin` class and add/remove it in the `$config->disable(...)` call. Edited through the AST ({@see Cli\ConfigFile}), never text-scanned; the file stays valid PHP and the human's own `register`/`configure` lines are untouched. |
 | `bin/commandments install` | Wire a consumer: composer sync hook + the Claude Code hook suite (per-edit rule check, judge nudge, skill nudge) + gitignore, then sync. Every wired hook is stamped so re-wiring never touches the user's own hooks. Idempotent. |
 | `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
+| `scripts/dev [--mount PATH]… <command>` | Run any Go build/test/vet/run/generate in the capped dev container (3 GB, no swap, 2 CPUs) — never Go on the host. See below. |
 
 **🧾 A consumer writes commandments of its OWN — `.commandments/custom/`.** A project's own `Skill`s,
 `Sin`s, `Detector`s and `Package`s live beside its config, in the ONE folder under `.commandments/`
@@ -349,6 +350,28 @@ deletes the file).
   carry multiple markers (and a detector may have more than 3 marked locations —
   ≥3 *diverse* is the floor, not a cap). Never weaken or delete a valid detection
   just because another detector also flags it; double-mark the fixture instead.
+
+## Go runs ONLY in the capped dev container — `scripts/dev`
+
+`GOMEMLIMIT` is a target, not a cap: a Go test that grows past it takes the machine
+down with it. So every Go command an agent runs — `go test`, `go build`, `go vet`,
+`go run`, `go generate` — goes through `scripts/dev`, which runs it in a container the
+MACHINE caps at 3 GB (no swap) and 2 CPUs, and a run past that is OOM-killed
+(`docker/dev/cap_test.go` proves it). Never run Go on the host.
+
+```
+scripts/dev go test ./cli/...                 # scope it: only the packages you touched
+scripts/dev go run ./cli/parity/record NAME
+scripts/dev --mount ../some-app go run ./engine/frontend/parity ../some-app
+```
+
+The image (`docker/dev/Dockerfile`: PHP, composer, Go, node, Python with mypy, the
+docker CLI) builds itself on the first run and again only when the Dockerfile changes.
+Go's caches live in shared docker volumes, so only the first run is slow. The checkout
+is mounted at its own path and the host's docker socket beside it, so the Roslyn
+bridge a test starts still runs in its own capped container. A folder outside the
+checkout is visible only through `--mount` (read-only). Without docker it fails; there
+is no host fallback. Anything in `scripts/` or a hook that runs Go calls `scripts/dev`.
 
 <!-- BEGIN: code-commandments skills (auto-generated, run `composer update`) -->
 @AGENTS.md

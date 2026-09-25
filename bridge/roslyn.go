@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -61,11 +62,7 @@ func RoslynService(roots ...string) (*Server, bool) {
 		if !found || !holdsAll(project, roots) {
 			continue
 		}
-		address, err := exec.Command("docker", "port", name, "7070/tcp").Output()
-		if err != nil {
-			continue
-		}
-		connection, err := net.Dial("tcp", strings.TrimSpace(strings.Split(string(address), "\n")[0]))
+		connection, err := dialService(name)
 		if err != nil {
 			continue
 		}
@@ -74,6 +71,29 @@ func RoslynService(roots ...string) (*Server, bool) {
 	}
 
 	return nil, false
+}
+
+// dialService connects to a service container: at the port it publishes on the host's loopback, or, from a
+// container beside it (scripts/dev), at its own address on the network they share.
+func dialService(name string) (net.Conn, error) {
+	published, err := exec.Command("docker", "port", name, "7070/tcp").Output()
+	if err != nil {
+		return nil, err
+	}
+	if connection, err := net.Dial("tcp", strings.TrimSpace(strings.Split(string(published), "\n")[0])); err == nil {
+		return connection, nil
+	}
+	addresses, err := exec.Command("docker", "inspect", "--format", `{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}`, name).Output()
+	if err != nil {
+		return nil, err
+	}
+	for _, address := range strings.Fields(string(addresses)) {
+		if connection, err := net.DialTimeout("tcp", net.JoinHostPort(address, "7070"), 2*time.Second); err == nil {
+			return connection, nil
+		}
+	}
+
+	return nil, fmt.Errorf("the C# bridge service %s answers on no address this process can reach", name)
 }
 
 // holdsAll says whether every root lies in the project.
