@@ -1,10 +1,12 @@
 package php
 
 import (
+	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/prose"
 )
 
 // EnclosingClassLike is the node itself when it declares a class-like, else the nearest one around it.
@@ -340,4 +342,64 @@ func (n Node) ArgumentArrayLiteral(position int) Node {
 	}
 
 	return Node{}
+}
+
+// IsNonFinalClass says whether the node is a class neither final nor abstract.
+func (n Node) IsNonFinalClass() bool {
+	modifiers := n.Node().Modifiers
+
+	return n.Kind() == "Stmt_Class" && !slices.Contains(modifiers, "final") && !slices.Contains(modifiers, "abstract")
+}
+
+// EveryConstructorParamNullable says whether the node is a class whose constructor promotes parameters, every one of
+// them nullable.
+func (n Node) EveryConstructorParamNullable() bool {
+	if n.Kind() != "Stmt_Class" {
+		return false
+	}
+	promoted := 0
+	for _, param := range ConstructorParams(n.Match) {
+		if len(param.Node().Modifiers) == 0 {
+			continue
+		}
+		promoted++
+		if !Written(param.Node().Declared).IsNullable() {
+			return false
+		}
+	}
+
+	return promoted > 0
+}
+
+var (
+	methodTag  = regexp.MustCompile(`^\s*\*?\s*@method\b`)
+	methodName = regexp.MustCompile(`(\w+)\s*\(`)
+)
+
+// DocblockMethodTagRedeclaresRealMethod says whether the node's doc comment declares an @method the class-like also
+// declares for real.
+func (n Node) DocblockMethodTagRedeclaresRealMethod() bool {
+	doc, ok := n.DocComment()
+	if !n.IsClassLike() || !ok {
+		return false
+	}
+	declared := map[string]bool{}
+	for _, method := range Methods(n.Match) {
+		declared[strings.ToLower(method.Name())] = true
+	}
+	for _, line := range prose.Lines(doc.Text) {
+		if !methodTag.MatchString(line) {
+			continue
+		}
+		if names := methodName.FindAllStringSubmatch(line, -1); len(names) > 0 && declared[strings.ToLower(names[len(names)-1][1])] {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsField says whether the node declares a field: a promoted parameter or a property.
+func (n Node) IsField() bool {
+	return n.Kind() == "Param" && len(n.Node().Modifiers) > 0 || n.Kind() == "Stmt_Property"
 }
