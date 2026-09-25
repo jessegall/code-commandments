@@ -1,7 +1,9 @@
 package bridge
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -62,5 +64,31 @@ func TestAServedRoslynBridgeMarksTheFilesItWasNotAskedToWriteAsContext(t *testin
 	}
 	if judged != 1 || len(stream.Files) < 2 {
 		t.Errorf("%d of %d files are judged; only the one asked for should be", judged, len(stream.Files))
+	}
+}
+
+func TestTheRoslynBridgeWritesAnExpressionNestedDeeperThanTheSerializersDefault(t *testing.T) {
+	root := t.TempDir()
+	source := "namespace Shop;\n\npublic static class Banner\n{\n    public static string Text() => \"a\"" + strings.Repeat(" + \"a\"", 200) + ";\n}\n"
+	if err := os.WriteFile(filepath.Join(root, "Banner.cs"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stream, err := Once(TestRoslyn(t), root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(stream.Files) != 1 {
+		t.Errorf("the stream holds %d files, not the banner", len(stream.Files))
+	}
+}
+
+func TestTheRoslynBridgeWritesATypeItCouldNotResolveInsideAnotherAsOpaque(t *testing.T) {
+	root := t.TempDir()
+	source := "namespace Shop;\n\npublic sealed class Shelf\n{\n    public (int Count, Missing Item) Top() => default;\n\n    public System.Collections.Generic.List<Missing> All() => new();\n\n    public void Report() => Print((\"shelves\", missing.Count.ToString()));\n\n    private void Print((string, string) row) { }\n}\n"
+	if err := os.WriteFile(filepath.Join(root, "Shelf.cs"), []byte(source), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Once(TestRoslyn(t), root); err != nil {
+		t.Fatal(err)
 	}
 }

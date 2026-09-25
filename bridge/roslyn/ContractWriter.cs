@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -19,7 +20,8 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 {
     public const int Version = 2;
 
-    private static readonly JsonSerializerOptions Json = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+    /// <summary>How a line is written: as deep as the version-7 writer's <see cref="Utf8JsonWriter"/> goes, since a long chain of expressions nests past the serializer's own 64.</summary>
+    private static readonly JsonSerializerOptions Json = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 1000 };
 
     private readonly Project project = project;
 
@@ -139,6 +141,11 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
         private readonly List<(int Start, int End, int Id)> spans = [];
 
+        /// <summary>The outermost node starting at each byte offset: the first a pre-order walk meets there.</summary>
+        private readonly Dictionary<int, int> startingAt = [];
+
+        private byte[]? source;
+
         private int next;
 
         public JsonObject File(bool context)
@@ -167,11 +174,12 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             return file;
         }
 
-        private JsonObject Node(SyntaxNode node, SyntaxNode? parent)
+        private JsonObject Node(SyntaxNode node, string? field)
         {
             var id = next++;
             var (start, end) = (bytes[node.SpanStart], bytes[node.Span.End]);
             spans.Add((start, end, id));
+            startingAt.TryAdd(start, id);
 
             var written = new JsonObject { ["id"] = id, ["kind"] = node.Kind().ToString(), ["role"] = Role(node) };
             var neutral = Neutral(node);
@@ -183,14 +191,15 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
             written["span"] = new JsonArray(start, end, tree.GetLineSpan(node.Span).StartLinePosition.Line + 1);
 
-            if (parent is not null)
+            if (field is not null)
             {
-                written["field"] = FieldOf(parent, node);
+                written["field"] = field;
             }
 
             Facts(node, written);
 
-            var children = node.ChildNodes().Select(child => (JsonNode)Node(child, node)).ToArray();
+            var fields = FieldsOf(node);
+            var children = node.ChildNodes().Select(child => (JsonNode)Node(child, fields[child])).ToArray();
 
             if (children.Length > 0)
             {
@@ -239,29 +248,44 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             return answers.Where(answer => answer.Yes).Select(answer => answer.Name).ToList();
         }
 
-        /// <summary>The Roslyn property of <paramref name="parent"/> that holds <paramref name="child"/>.</summary>
-        private static string FieldOf(SyntaxNode parent, SyntaxNode child)
+        /// <summary>The Roslyn property of <paramref name="parent"/> each of its children fills, the first that holds it.</summary>
+        private static Dictionary<SyntaxNode, string> FieldsOf(SyntaxNode parent)
         {
-            foreach (var property in parent.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            var fields = new Dictionary<SyntaxNode, string>();
+
+            foreach (var property in PropertiesOf(parent.GetType()))
             {
-                if (property.GetIndexParameters().Length > 0 || property.Name == "Parent")
+                switch (property.GetValue(parent))
                 {
-                    continue;
-                }
+                    case SyntaxNode child:
+                        fields.TryAdd(child, property.Name);
+                        break;
+                    case IEnumerable items when property.PropertyType.IsGenericType && property.PropertyType.Name.Contains("SyntaxList"):
+                        foreach (var item in items.OfType<SyntaxNode>())
+                        {
+                            fields.TryAdd(item, property.Name);
+                        }
 
-                if (typeof(SyntaxNode).IsAssignableFrom(property.PropertyType) && property.GetValue(parent) == child)
-                {
-                    return property.Name;
-                }
-
-                if (property.PropertyType.IsGenericType && property.PropertyType.Name.Contains("SyntaxList") && property.GetValue(parent) is IEnumerable items && items.Cast<object>().Contains(child))
-                {
-                    return property.Name;
+                        break;
                 }
             }
 
-            throw new InvalidOperationException($"{child.Kind()} fills no property of {parent.Kind()}");
+            foreach (var child in parent.ChildNodes().Where(child => !fields.ContainsKey(child)))
+            {
+                throw new InvalidOperationException($"{child.Kind()} fills no property of {parent.Kind()}");
+            }
+
+            return fields;
         }
+
+        private static readonly ConcurrentDictionary<Type, PropertyInfo[]> Properties = new();
+
+        /// <summary>The properties of a syntax class that can hold a child, in declaration order, read once per class.</summary>
+        private static PropertyInfo[] PropertiesOf(Type syntax) => Properties.GetOrAdd(syntax, type => type
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(property => property.GetIndexParameters().Length == 0 && property.Name != "Parent")
+            .Where(property => typeof(SyntaxNode).IsAssignableFrom(property.PropertyType) || (property.PropertyType.IsGenericType && property.PropertyType.Name.Contains("SyntaxList")))
+            .ToArray());
 
         private void Facts(SyntaxNode node, JsonObject written)
         {
@@ -415,7 +439,7 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             {
                 written["symbol"] = declared.OriginalDefinition.ToDisplayString(TreeWriter.Declared);
 
-                if (declared.IsOverride || TreeWriter.ImplementsInterfaceMember(declared))
+                if (declared is IMethodSymbol or IPropertySymbol or IEventSymbol && (declared.IsOverride || TreeWriter.ImplementsInterfaceMember(declared)))
                 {
                     written["inherited"] = true;
                 }
@@ -438,12 +462,12 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
             if (type is not null and not IErrorTypeSymbol)
             {
-                written["declared"] = Type(type, "written");
+                SetType(written, "declared", type, "written");
             }
 
             if (declared is IMethodSymbol { MethodKind: MethodKind.Ordinary or MethodKind.LocalFunction, ReturnsVoid: false } method)
             {
-                written["returns"] = Type(method.ReturnType, "written");
+                SetType(written, "returns", method.ReturnType, "written");
             }
         }
 
@@ -457,7 +481,7 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
             if (model.GetTypeInfo(expression).Type is { } type and not IErrorTypeSymbol)
             {
-                written["resolved"] = Type(type, "compiler");
+                SetType(written, "resolved", type, "compiler");
             }
 
             if (TreeWriter.IsConstant(expression, model))
@@ -507,15 +531,43 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
             }
         }
 
-        private JsonObject Type(ITypeSymbol type, string origin)
+        /// <summary>Writes <paramref name="type"/> under <paramref name="key"/>, when it can be spelled.</summary>
+        private void SetType(JsonObject node, string key, ITypeSymbol type, string origin)
         {
-            var written = new JsonObject { ["text"] = type.ToDisplayString(TreeWriter.Qualified) };
+            if (Type(type, origin) is { } written)
+            {
+                node[key] = written;
+            }
+        }
+
+        /// <summary>
+        /// The type as the contract writes it; none when any part of it has no spelling at all, as an element the
+        /// compiler could not type leaves a tuple — absent, never guessed.
+        /// </summary>
+        private JsonObject? Type(ITypeSymbol type, string origin)
+        {
+            var text = type.ToDisplayString(TreeWriter.Qualified);
+
+            if (text.Length == 0)
+            {
+                return null;
+            }
+
+            var written = new JsonObject { ["text"] = text };
 
             switch (type)
             {
+                case IErrorTypeSymbol:
+                    written["kind"] = "opaque";
+                    break;
                 case IArrayTypeSymbol array:
                     written["kind"] = "array";
-                    written["args"] = new JsonArray(Type(array.ElementType, origin));
+                    if (Type(array.ElementType, origin) is not { } element)
+                    {
+                        return null;
+                    }
+
+                    written["args"] = new JsonArray(element);
                     break;
                 case ITypeParameterSymbol parameter:
                     written["kind"] = "parameter";
@@ -523,7 +575,14 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
                     break;
                 case INamedTypeSymbol { IsTupleType: true } tuple:
                     written["kind"] = "tuple";
-                    written["members"] = new JsonArray(tuple.TupleElements.Select(element => (JsonNode)Type(element.Type, origin)).ToArray());
+                    var members = tuple.TupleElements.Select(element => Type(element.Type, origin)).ToList();
+
+                    if (members.Contains(null))
+                    {
+                        return null;
+                    }
+
+                    written["members"] = new JsonArray(members.Select(member => (JsonNode)member!).ToArray());
                     break;
                 case INamedTypeSymbol named:
                     written["kind"] = "named";
@@ -531,7 +590,14 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
 
                     if (named.TypeArguments.Length > 0)
                     {
-                        written["args"] = new JsonArray(named.TypeArguments.Select(argument => (JsonNode)Type(argument, origin)).ToArray());
+                        var arguments = named.TypeArguments.Select(argument => Type(argument, origin)).ToList();
+
+                        if (arguments.Contains(null))
+                        {
+                            return null;
+                        }
+
+                        written["args"] = new JsonArray(arguments.Select(argument => (JsonNode)argument!).ToArray());
                     }
 
                     run.Remember(named);
@@ -560,7 +626,12 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
         private JsonArray Comments()
         {
             var found = tree.GetRoot().DescendantTrivia(descendIntoTrivia: false).Where(TreeWriter.IsComment).ToList();
-            var commentSpans = found.Select(trivia => (Start: bytes[trivia.FullSpan.Start], End: bytes[Trimmed(trivia)])).ToList();
+            var commentEnds = new Dictionary<int, int>();
+
+            foreach (var trivia in found)
+            {
+                commentEnds.TryAdd(bytes[trivia.FullSpan.Start], bytes[Trimmed(trivia)]);
+            }
             var comments = new JsonArray();
 
             foreach (var trivia in found)
@@ -574,7 +645,7 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
                     ["span"] = new JsonArray(start, end, tree.GetLineSpan(trivia.Span).StartLinePosition.Line + 1),
                 };
 
-                Attach(comment, start, end, commentSpans);
+                Attach(comment, start, end, commentEnds);
 
                 if (trivia.GetStructure() is DocumentationCommentTriviaSyntax documentation)
                 {
@@ -652,9 +723,9 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
         /// A trailing comment belongs to the outermost node ending on its line before it; a leading one to the
         /// outermost node starting at the first token after it, other comments skipped.
         /// </summary>
-        private void Attach(JsonObject comment, int start, int end, List<(int Start, int End)> commentSpans)
+        private void Attach(JsonObject comment, int start, int end, Dictionary<int, int> commentEnds)
         {
-            var source = Encoding.UTF8.GetBytes(text);
+            var source = this.source ??= Encoding.UTF8.GetBytes(text);
             var mark = bytes[0];
             var local = start - mark;
             var lineStart = Array.LastIndexOf(source, (byte)'\n', Math.Max(local - 1, 0)) + 1;
@@ -682,21 +753,17 @@ public sealed class ContractWriter(Project project, IReadOnlyList<string> roots,
                     after++;
                 }
 
-                var skipped = commentSpans.FirstOrDefault(span => span.Start == after);
-
-                if (skipped == default)
+                if (!commentEnds.TryGetValue(after, out var skipped))
                 {
                     break;
                 }
 
-                after = skipped.End;
+                after = skipped;
             }
 
-            var next = spans.FirstOrDefault(span => span.Start == after);
-
-            if (next != default)
+            if (startingAt.TryGetValue(after, out var next))
             {
-                comment["attached"] = next.Id;
+                comment["attached"] = next;
             }
         }
     }

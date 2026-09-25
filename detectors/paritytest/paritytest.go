@@ -19,7 +19,8 @@ import (
 
 // Compare runs the engine's detectors in both tools over the project $COMMANDMENTS_PARITY names, the PHP ones through
 // the findings script, and fails for every finding only one of them makes. It skips the test without a project: a
-// real project is the parity check, not the suite.
+// real project is the parity check, not the suite. $COMMANDMENTS_PARITY_FINDINGS names a file the PHP findings are
+// kept in, read back on the next run, since the PHP half of a large project takes the longest.
 func Compare(t *testing.T, rules catalog.Engine, findings string, command func(testing.TB) []string) {
 	t.Helper()
 	project := os.Getenv("COMMANDMENTS_PARITY")
@@ -30,7 +31,7 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 	if err != nil {
 		t.Fatal(err)
 	}
-	php, err := exec.Command("php", findings, root).Output()
+	php, err := phpFindings(findings, root)
 	if err != nil {
 		t.Fatalf("the PHP engine failed: %v", err)
 	}
@@ -66,4 +67,21 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 		}
 	}
 	t.Logf("%d findings in PHP, %d in Go", len(expected), len(found))
+}
+
+// phpFindings is what the PHP engine finds under root: kept in $COMMANDMENTS_PARITY_FINDINGS once found, and read
+// back from there when it is.
+func phpFindings(script, root string) ([]byte, error) {
+	kept := os.Getenv("COMMANDMENTS_PARITY_FINDINGS")
+	if kept != "" {
+		if found, err := os.ReadFile(kept); err == nil {
+			return found, nil
+		}
+	}
+	found, err := exec.Command("php", script, root).Output()
+	if err != nil || kept == "" {
+		return found, err
+	}
+
+	return found, os.WriteFile(kept, found, 0o644)
 }
