@@ -28,3 +28,6 @@ func (SwitchCaseDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(vue.Element.HeadsSwitchCase)).
 		Get()
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (SwitchCaseDetector) Repentable() {}

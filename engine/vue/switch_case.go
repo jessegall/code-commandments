@@ -1,6 +1,9 @@
 package vue
 
-import "github.com/jessegall/code-commandments/engine/typescript"
+import (
+	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/typescript"
+)
 
 // switchCases is how many equality branches a chain needs before it is a dispatch on one value.
 const switchCases = 2
@@ -16,7 +19,34 @@ type EqualityTest struct {
 type SwitchCaseChain struct {
 	Subject  string
 	Head     Element
-	Branches []Element
+	Branches []SwitchCaseBranch
+}
+
+// SwitchCaseBranch is one element of a chain and the key it matches; the v-else that ends a chain matches none.
+type SwitchCaseBranch struct {
+	Element
+	Key      string
+	Fallback bool
+}
+
+// Slot is the name of the slot the branch becomes: its key, or `default` for the fallback.
+func (b SwitchCaseBranch) Slot() string {
+	if b.Fallback {
+		return "default"
+	}
+
+	return b.Key
+}
+
+// Span is the chain's source, from its head's start to its last branch's end.
+func (c SwitchCaseChain) Span() (engine.Span, error) {
+	span, err := c.Head.Span()
+	if err != nil {
+		return span, err
+	}
+	span.End = c.Branches[len(c.Branches)-1].Node().Span.End
+
+	return span, nil
 }
 
 // SwitchCaseChain is the chain the element heads; false unless it re-tests one subject at least twice.
@@ -25,12 +55,12 @@ func (e Element) SwitchCaseChain() (SwitchCaseChain, bool) {
 	if !ok {
 		return SwitchCaseChain{}, false
 	}
-	chain := SwitchCaseChain{Subject: test.Subject, Head: e, Branches: []Element{e}}
+	chain := SwitchCaseChain{Subject: test.Subject, Head: e, Branches: []SwitchCaseBranch{{Element: e, Key: test.Key}}}
 	cases := 1
 	for _, sibling := range e.Following() {
 		if !sibling.Has(ElseIf) {
 			if sibling.Has(Else) {
-				chain.Branches = append(chain.Branches, sibling)
+				chain.Branches = append(chain.Branches, SwitchCaseBranch{Element: sibling, Fallback: true})
 			}
 			break
 		}
@@ -38,7 +68,7 @@ func (e Element) SwitchCaseChain() (SwitchCaseChain, bool) {
 		if !ok || next.Subject != test.Subject {
 			return SwitchCaseChain{}, false
 		}
-		chain.Branches = append(chain.Branches, sibling)
+		chain.Branches = append(chain.Branches, SwitchCaseBranch{Element: sibling, Key: next.Key})
 		cases++
 	}
 

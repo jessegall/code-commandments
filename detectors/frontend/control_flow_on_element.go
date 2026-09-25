@@ -30,3 +30,6 @@ func (ControlFlowOnElementDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Reject(engine.As(vue.Element.IsTransitionChild)).
 		Get()
 }
+
+// Repentable says a scribe rewrites the sin away.
+func (ControlFlowOnElementDetector) Repentable() {}

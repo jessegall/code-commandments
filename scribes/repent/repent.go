@@ -9,6 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/scribes"
 	_ "github.com/jessegall/code-commandments/scribes/backend"
+	_ "github.com/jessegall/code-commandments/scribes/frontend"
 )
 
 // Run sweeps the chain for the detectors given over the roots, narrowed to the steps or sins only names when it
