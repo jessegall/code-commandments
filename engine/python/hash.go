@@ -77,6 +77,11 @@ func (hashRules) IsCallee(node engine.Match) bool {
 	return node.Node().Field == "func" && node.Parent().Kind() == "Call"
 }
 
+// Leaf reads nothing whole: a type annotation, the one thing that might, does not count at all.
+func (hashRules) Leaf(engine.Match) (string, bool) {
+	return "", false
+}
+
 func (hashRules) Literal(node engine.Match, normalize bool) (string, bool) {
 	facts := node.Node()
 	if facts.Kind != "Constant" {

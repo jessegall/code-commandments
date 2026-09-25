@@ -7,7 +7,8 @@ import (
 )
 
 // HashRules is what a language says about fingerprinting its code: which nodes count at all, how much each one
-// weighs, which expression is a local name, and how a literal reads.
+// weighs, which expression is a local name, how a literal reads, and which nodes read whole. Every language's
+// clone rules share the one fingerprint below through these answers.
 type HashRules interface {
 	// Counts says whether the node counts: a Python docstring runs nothing, so it never does.
 	Counts(node Match) bool
@@ -23,6 +24,9 @@ type HashRules interface {
 	IsCallee(node Match) bool
 	// Literal is how a literal reads, blanked when normalising if it is data; false when the node is no literal.
 	Literal(node Match, normalize bool) (string, bool)
+	// Leaf is how a node that reads whole reads, never walked or blanked: a TypeScript written type, whose names
+	// say what the code is; false when the node is walked.
+	Leaf(node Match) (string, bool)
 }
 
 // SyntaxHash is a formatting-blind fingerprint of the nodes, read from the tree and never from the source text,
@@ -53,10 +57,13 @@ func SyntaxWeight(nodes []Match, rules HashRules) int {
 	return weight
 }
 
-// fingerprint is one node's fingerprint: its kind, its name unless normalising blanks it, its operator and flags,
-// its literal, and each counted child's slot and fingerprint. A node's own slot is its parent's to say, so the
-// same expression reads alike wherever it stands.
+// fingerprint is one node's fingerprint: its kind, its name unless normalising blanks it, its operator, modifiers
+// and flags, its literal, and each counted child's slot and fingerprint. A node's own slot is its parent's to say,
+// so the same expression reads alike wherever it stands.
 func fingerprint(node Match, rules HashRules, normalize bool) string {
+	if leaf, ok := rules.Leaf(node); ok {
+		return leaf
+	}
 	if normalize && rules.IsName(node) && !rules.IsCallee(node) {
 		return "id"
 	}
@@ -68,7 +75,7 @@ func fingerprint(node Match, rules HashRules, normalize bool) string {
 	if !normalize || !rules.Declares(node) {
 		parts = append(parts, facts.Name)
 	}
-	parts = append(parts, facts.Operator, strings.Join(facts.Flags, " "))
+	parts = append(parts, facts.Operator, strings.Join(facts.Modifiers, " "), strings.Join(facts.Flags, " "))
 	for _, child := range node.Children() {
 		if rules.Counts(child) {
 			parts = append(parts, child.Node().Field+"="+fingerprint(child, rules, normalize))

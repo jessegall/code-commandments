@@ -228,6 +228,15 @@ func (m Match) ChildrenIn(field string) []Match {
 	return filling
 }
 
+// Root is the root node of the match's file; no node for no match.
+func (m Match) Root() Match {
+	if m.file == nil {
+		return Match{}
+	}
+
+	return m.file.Match(0)
+}
+
 // Closest is the nearest ancestor that answers the neutral kind; no node when none does.
 func (m Match) Closest(neutral Neutral) Match {
 	for ancestor := m.Parent(); ancestor.Exists(); ancestor = ancestor.Parent() {

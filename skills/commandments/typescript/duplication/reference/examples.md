@@ -127,26 +127,37 @@ A near-copy — two+ TypeScript functions with one control-flow skeleton that di
 ```ts
 ----------[ Bad ]----------
 
-// in review-feed.ts
-export async function loadReviews(productId: number): Promise<number[]> {
-    const response = await fetch(`/api/products/${productId}/reviews`)
-    if (!response.ok) {
-        throw new Error(response.statusText)
+// in map-loaders.ts
+async function loadMaps(): Promise<unknown> {
+    if (typeof window === 'undefined') {
+        throw new Error('Maps load only in the browser')
     }
-    const reviews: Entry[] = await response.json()
-    const shown = reviews.filter((review) => review.published)
-    return shown.map((review) => review.id)
+
+    ensureOptions()
+
+    return await importLibrary('maps')
 }
 
-// in QuestionFeed.vue
-const loadQuestions = async (productId: number): Promise<number[]> => {
-    const result = await fetch(`/api/products/${productId}/questions`)
-    if (!result.ok) {
-        throw new Error(result.statusText)
+// in map-loaders.ts
+async function loadPlaces(): Promise<unknown> {
+    if (typeof window === 'undefined') {
+        throw new Error('Maps load only in the browser')
     }
-    const questions: Entry[] = await result.json()
-    const answered = questions.filter((question) => question.published)
-    return answered.map((question) => question.id)
+
+    ensureOptions()
+
+    return await importLibrary('places')
+}
+
+// in map-loaders.ts
+async function loadMarker(): Promise<unknown> {
+    if (typeof window === 'undefined') {
+        throw new Error('Maps load only in the browser')
+    }
+
+    ensureOptions()
+
+    return await importLibrary('marker')
 }
 
 ----------[ Good ]----------
