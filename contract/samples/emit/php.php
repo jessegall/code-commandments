@@ -162,6 +162,9 @@ final class TreeWriter
             $facts['modifiers'] = $modifiers;
         }
         $flags = $this->flags($node);
+        if ($parent instanceof Node\Stmt\For_ && in_array($node, $parent->loop, true)) {
+            $flags[] = 'step';
+        }
         if ($flags !== []) {
             $facts['flags'] = $flags;
         }

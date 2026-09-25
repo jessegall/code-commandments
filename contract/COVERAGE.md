@@ -46,7 +46,7 @@ each line against the schema, and checks every span, line and comment against th
 | assignments, compound assignments, inc/dec | `kind`, `operator`, `is: assignment` | bridge | php (`$sum = 0`, `$sum += $amount` in `BasketTotaller`) |
 | comparison / logical / coalesce operators | `kind` `Expr_BinaryOp_*`, `operator`, `is: comparison` | bridge | php (`!==`, `&&` in `SlackNotifier`) |
 | ternary (full and short), match + arms, switch + case, if/elseif/else | `kind`, `is: branch`, `flags: short-ternary` | bridge | php (ternaries and `match (true)` in `GradeCalculator`, `if`/`elseif` in `DiscountTier`, `switch` in `CarrierPicker`) |
-| loops with step, value and key vars | `kind`, `field` (`loop`, `valueVar`, `keyVar`), `flags: step` | bridge | php (`foreach` in `SlackNotifier` and `BasketTotaller`) |
+| loops with step, value and key vars | `kind`, `field` (`loop`, `valueVar`, `keyVar`), `flags: step` | bridge | php (`foreach` in `SlackNotifier` and `BasketTotaller`; the `for` in `LegChain`, its `$leg = $leg->next` flagged `step`) |
 | try / catch with caught types, throw | `Stmt_Catch` `declared` (a union for several), `is: catch`, `is: throw` | bridge | php (`catch (\Throwable $e)` in `SlackNotifier`) |
 | calls (method, static, function, nullsafe) with positional / named / unpacked args | `kind`, `is: call`/`null-safe`, `Arg` `flags` (`named`, `spread`) | bridge | php (`Expr_MethodCall`) |
 | `new`, property / array-dim / class-const / const fetch, variable | `kind`, `is: construction`/`member-access`/`identifier`/`self-reference` | bridge | php (`Expr_PropertyFetch`, `$this`) |

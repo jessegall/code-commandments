@@ -69,8 +69,9 @@ func lineAt(source []byte, offset int) int {
 // shows are facts COVERAGE.md says a sample carries, each as a test over one node.
 var shows = map[string]map[string]func(*Node) bool{
 	"php.jsonl": {
-		"a foreach loop": func(n *Node) bool { return n.Kind == "Stmt_Foreach" && n.Answers("loop") },
-		"a try/catch":    func(n *Node) bool { return n.Kind == "Stmt_TryCatch" },
+		"a foreach loop":    func(n *Node) bool { return n.Kind == "Stmt_Foreach" && n.Answers("loop") },
+		"a for loop's step": func(n *Node) bool { return slices.Contains(n.Flags, "step") && n.Field == "loop" },
+		"a try/catch":       func(n *Node) bool { return n.Kind == "Stmt_TryCatch" },
 		"a catch and its type": func(n *Node) bool {
 			return n.Kind == "Stmt_Catch" && n.Declared != nil && n.Declared.Name == "Throwable"
 		},
