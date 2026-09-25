@@ -30,8 +30,8 @@ const (
 	digestFile = "testdata/php-answers.digest"
 )
 
-// answerSources are what the recorded answers come from: the PHP tool, and the lock that pins its dependencies.
-var answerSources = []string{"src", "composer.lock"}
+// answerSources are what the recorded answers come from: the PHP tool, and the manifest that requires its dependencies.
+var answerSources = []string{"src", "composer.json"}
 
 // answer is PHP's rewrite of one project by one detector's step, keyed by both.
 type answer struct {

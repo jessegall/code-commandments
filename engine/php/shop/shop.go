@@ -10,8 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -44,41 +44,41 @@ func Testdata() string {
 }
 
 // inputs are what the committed files are generated from, folders and files: the fixtures, the PHP tool the oracle
-// asks (its engine, and the rules whose findings and definitions it records), the lock that pins php-parser, the
-// bridge and the oracle. A change to any makes them stale.
-var inputs = []string{"tests/Fixtures/backend", "tests/Fixtures/frontend", "src", "composer.lock", "bridge/php", "bridge/frontend/dist", "engine/php/oracle"}
+// asks (its engine, and the rules whose findings and definitions it records), the manifest that requires php-parser,
+// the bridge and the oracle. A change to any makes them stale.
+var inputs = []string{"tests/Fixtures/backend", "tests/Fixtures/frontend", "src", "composer.json", "bridge/php", "bridge/frontend/dist", "engine/php/oracle"}
 
 // Digest is the hash of every source the committed files are generated from.
 func Digest() (string, error) {
 	return DigestOf(inputs...)
 }
 
-// DigestOf is the hash of every source under the repository's folders and files: what a committed answer was
-// generated from, so a change to any shows the answer stale.
+// DigestOf is the hash of every source git tracks under the repository's folders and files: what a committed
+// answer was generated from, so a change to any shows the answer stale. Only tracked files count, so every checkout
+// of one commit — a fresh clone, a worktree, the dev container — computes the same digest; a file git ignores, such
+// as composer.lock or vendor/, never moves it.
 func DigestOf(inputs ...string) (string, error) {
+	listing := exec.Command("git", append([]string{"ls-files", "-z", "--"}, inputs...)...)
+	listing.Dir = Repository()
+	tracked, err := listing.Output()
+	if err != nil {
+		return "", fmt.Errorf("git ls-files: %w", err)
+	}
+	var paths []string
+	for _, path := range strings.Split(strings.TrimRight(string(tracked), "\x00"), "\x00") {
+		if slices.Contains([]string{".php", ".txt", ".ts", ".vue", ".mjs"}, filepath.Ext(path)) || filepath.Base(path) == "composer.json" {
+			paths = append(paths, path)
+		}
+	}
+	slices.Sort(paths)
 	hash := sha256.New()
-	for _, input := range inputs {
-		var paths []string
-		err := filepath.WalkDir(filepath.Join(Repository(), input), func(path string, entry fs.DirEntry, err error) error {
-			if err == nil && !entry.IsDir() && (slices.Contains([]string{".php", ".txt", ".ts", ".vue", ".mjs"}, filepath.Ext(path)) || filepath.Base(path) == "composer.lock") {
-				paths = append(paths, path)
-			}
-
-			return err
-		})
+	for _, path := range paths {
+		source, err := os.ReadFile(filepath.Join(Repository(), path))
 		if err != nil {
 			return "", err
 		}
-		slices.Sort(paths)
-		for _, path := range paths {
-			source, err := os.ReadFile(path)
-			if err != nil {
-				return "", err
-			}
-			relative, _ := filepath.Rel(Repository(), path)
-			fmt.Fprintf(hash, "%s\x00%d\x00", filepath.ToSlash(relative), len(source))
-			hash.Write(source)
-		}
+		fmt.Fprintf(hash, "%s\x00%d\x00", path, len(source))
+		hash.Write(source)
 	}
 
 	return hex.EncodeToString(hash.Sum(nil)), nil

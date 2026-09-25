@@ -78,9 +78,9 @@ func writeHintAnswers() error {
 	return zipped.Close()
 }
 
-// caseSources are what the cases come from: the PHP tool, its lock, the tests that read them, and the recorder.
+// caseSources are what the cases come from: the PHP tool, its manifest, the tests that read them, and the recorder.
 var caseSources = []string{
-	"src", "composer.lock", "tests/Scribes/Backend",
+	"src", "composer.json", "tests/Scribes/Backend",
 	"tests/Detectors/Backend/Spatie/DataCollectionTypeDetectorTest.php",
 	"tests/Detectors/Backend/Spatie/HookMissingComputedDetectorTest.php",
 	"tests/Detectors/Backend/Spatie/RedundantEnumUnwrapDetectorTest.php",
