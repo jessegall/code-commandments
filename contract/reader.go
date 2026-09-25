@@ -39,6 +39,7 @@ type Reader struct {
 	files   int
 	program bool
 	done    bool
+	held    *interned
 }
 
 // NewReader reads the stream r holds.
@@ -158,6 +159,10 @@ func (r *Reader) acceptFile(file *File) error {
 	if err := fillsFile(r.header.Language, file); err != nil {
 		return fmt.Errorf("%s: %w", file.Path, err)
 	}
+	if r.held == nil {
+		r.held = newInterned()
+	}
+	r.held.file(file)
 	r.files++
 
 	return nil
