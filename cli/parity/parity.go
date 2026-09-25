@@ -304,6 +304,9 @@ var stamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}[ _]\d{2}:?\d{2}(:?\d{2})?`)
 
 var versionLine = regexp.MustCompile(`(?m)^code-commandments \S+$`)
 
+// unixStamp is a state value that holds the moment it was written, in unix seconds.
+var unixStamp = regexp.MustCompile(`(?m)^(marked-at): \d{9,}$`)
+
 // normalise replaces what differs between two runs of the same case: where the project and the package
 // live, and the installed version.
 func normalise(text, repo, project string) string {
@@ -316,6 +319,8 @@ func normalise(text, repo, project string) string {
 	}
 
 	text = versionLine.ReplaceAllString(text, "code-commandments <version>")
+
+	text = unixStamp.ReplaceAllString(text, "$1: <time>")
 
 	return stamp.ReplaceAllString(text, "<time>")
 }

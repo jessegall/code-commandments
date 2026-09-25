@@ -7,10 +7,10 @@ import (
 	"testing"
 )
 
-// withoutSkillReminder turns SkillReminder off in both tools until the Go side carries it (todo 21).
-const withoutSkillReminder = `<?php
+// withoutCodex turns an agent off, which leaves every hook wired.
+const withoutCodex = `<?php
 return function ($config): void {
-    $config->disable(\JesseGall\CodeCommandments\Hooks\Handlers\SkillReminder::class);
+    $config->disable(\JesseGall\CodeCommandments\Agents\CodexAgent::class);
 };
 `
 
@@ -29,7 +29,7 @@ func TestHooksAreWiredAsThePHPToolWiresThem(t *testing.T) {
 
 			for _, root := range []string{php, golang} {
 				must(t, os.MkdirAll(filepath.Join(root, ".commandments"), 0o755))
-				must(t, os.WriteFile(filepath.Join(root, ".commandments", "config.php"), []byte(withoutSkillReminder), 0o644))
+				must(t, os.WriteFile(filepath.Join(root, ".commandments", "config.php"), []byte(withoutCodex), 0o644))
 
 				if settings != nil {
 					must(t, os.MkdirAll(filepath.Join(root, ".claude"), 0o755))

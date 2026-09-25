@@ -24,7 +24,7 @@ var legacySubcommands = []string{"remind", "judge-reminder", "plan-reminder"}
 
 // Builtins are the hooks every project runs unless its config turns one off, in the order they answer.
 func Builtins() []Hook {
-	return []Hook{JudgeReminder{}, SharedBranchGate{}, ModelChoiceReminder{}, SessionReset{}, SourceReminder{}}
+	return []Hook{JudgeReminder{}, SharedBranchGate{}, ModelChoiceReminder{}, SessionReset{}, SourceReminder{}, SkillReminder{}}
 }
 
 // ForProject are the hooks the project at root keeps.
