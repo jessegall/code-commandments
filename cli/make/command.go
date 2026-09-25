@@ -129,17 +129,21 @@ func write(blueprint Blueprint) error {
 		return err
 	}
 
-	contents := map[string]string{
-		blueprint.Dir + "/" + blueprint.Sin + ".php":        SinStub(blueprint),
-		blueprint.Dir + "/" + blueprint.Detector() + ".php": DetectorStub(blueprint),
-	}
+	type file struct{ path, code string }
+	var files []file
 
 	if blueprint.Skill != "" {
-		contents[blueprint.Dir+"/"+blueprint.Skill+".php"] = SkillStub(blueprint)
+		files = append(files, file{blueprint.Dir + "/" + blueprint.Skill + ".php", SkillStub(blueprint)})
 	}
 
-	for path, code := range contents {
-		if err := os.WriteFile(path, []byte(code), 0o644); err != nil {
+	files = append(files,
+		file{blueprint.Dir + "/" + blueprint.Sin + ".php", SinStub(blueprint)},
+		file{blueprint.Dir + "/" + blueprint.Detector() + ".php", DetectorStub(blueprint)},
+	)
+
+	// In the order PHP writes them: on a case-insensitive disk two of the names can be one file.
+	for _, written := range files {
+		if err := os.WriteFile(written.path, []byte(written.code), 0o644); err != nil {
 			return err
 		}
 	}
