@@ -10,6 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/freeze"
 	"github.com/jessegall/code-commandments/cli/info"
 	"github.com/jessegall/code-commandments/cli/judge"
+	"github.com/jessegall/code-commandments/cli/layers"
 	"github.com/jessegall/code-commandments/cli/session"
 	"github.com/jessegall/code-commandments/cli/task"
 	_ "github.com/jessegall/code-commandments/registry"
@@ -31,6 +32,7 @@ func Kernel() *cli.Kernel {
 		task.Command{},
 		config.Toggle{},
 		config.Command{Version: version},
+		layers.Command{},
 		info.Command{},
 	)
 }

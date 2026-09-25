@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/php"
 )
 
 // File edits a project's config file through its tree: a call's arguments are rewritten one per line in the
@@ -178,6 +180,9 @@ func (f File) rewrite(call engine.Match, classes, languages []string) error {
 	return os.WriteFile(f.path, []byte(source[:from]+text+source[to:]), 0o644)
 }
 
+// lineBreak is any line ending, as PHP's \R reads one.
+var lineBreak = regexp.MustCompile(`\r\n|[\n\r\x0B\f]`)
+
 // lineStartAt is where the line holding position begins.
 func lineStartAt(source string, position int) int {
 	return strings.LastIndex(source[:position], "\n") + 1
@@ -188,4 +193,137 @@ func indentAt(source string, position int) string {
 	prefix := source[lineStartAt(source, position):position]
 
 	return prefix[:len(prefix)-len(strings.TrimLeft(prefix, " \t\n\r\x00\x0B"))]
+}
+
+// Layer is one declared layer and the namespaces it may use.
+type Layer struct {
+	Namespace string
+	MayUse    []string
+}
+
+// Layers are the layers the config's ->layer(...) chain declares, in the order it is written.
+func (f File) Layers() ([]Layer, error) {
+	calls, err := f.layerCalls()
+	if err != nil {
+		return nil, err
+	}
+
+	var layers []Layer
+
+	for i := len(calls) - 1; i >= 0; i-- {
+		args := calls[i].ChildrenIn("args")
+
+		if len(args) == 0 || args[0].Child("value").Kind() != "Scalar_String" {
+			continue
+		}
+
+		namespace, _ := args[0].Child("value").Text()
+		layers = append(layers, Layer{namespace, mayUseOf(args)})
+	}
+
+	return layers, nil
+}
+
+// RewriteLayers writes the layers in place of the config's ->layer(...) chain, in its own indentation;
+// false when the config declares no layers to rewrite.
+func (f File) RewriteLayers(layers []Layer) (bool, error) {
+	calls, err := f.layerCalls()
+	if err != nil || len(calls) == 0 {
+		return false, err
+	}
+
+	raw, err := os.ReadFile(f.path)
+	if err != nil {
+		return false, err
+	}
+
+	source := string(raw)
+	from := calls[len(calls)-1].Child("var").Node().Span.End
+	to := calls[0].Node().Span.End
+	chain := RenderChain(layers, indentOfChain(source[from:]))
+
+	return true, os.WriteFile(f.path, []byte(source[:from]+chain+source[to:]), 0o644)
+}
+
+// RenderChain is the layers as ->layer(...) links, one a line.
+func RenderChain(layers []Layer, indent string) string {
+	var chain strings.Builder
+
+	for _, layer := range layers {
+		may := ""
+
+		if len(layer.MayUse) > 0 {
+			quoted := make([]string, len(layer.MayUse))
+
+			for i, use := range layer.MayUse {
+				quoted[i] = quote(use)
+			}
+
+			may = ", mayUse: [" + strings.Join(quoted, ", ") + "]"
+		}
+
+		chain.WriteString("\n" + indent + "->layer(" + quote(layer.Namespace) + may + ")")
+	}
+
+	return chain.String()
+}
+
+// layerCalls are the config's ->layer(...) calls, the last link written first.
+func (f File) layerCalls() ([]engine.Match, error) {
+	if _, err := os.Stat(f.path); err != nil {
+		return nil, nil
+	}
+
+	stream, err := php.Here().Stream(f.path)
+	if err != nil {
+		return nil, err
+	}
+
+	var calls []engine.Match
+
+	for _, call := range engine.Load(stream).WhereKind("Expr_MethodCall").Get() {
+		if call.Child("name").Name() == "layer" {
+			calls = append(calls, call)
+		}
+	}
+
+	return calls, nil
+}
+
+// mayUseOf are the strings of the first array argument.
+func mayUseOf(args []engine.Match) []string {
+	for _, arg := range args {
+		value := arg.Child("value")
+
+		if value.Kind() != "Expr_Array" {
+			continue
+		}
+
+		var uses []string
+
+		for _, item := range value.ChildrenIn("items") {
+			if text, isString := item.Child("value").Text(); isString && item.Child("value").Kind() == "Scalar_String" {
+				uses = append(uses, text)
+			}
+		}
+
+		return uses
+	}
+
+	return nil
+}
+
+// indentOfChain is the indentation of the first line after the chain's receiver that holds anything.
+func indentOfChain(rest string) string {
+	for _, line := range lineBreak.Split(rest, -1) {
+		if strings.Trim(line, " \t\n\r\x00\x0B") != "" {
+			return line[:len(line)-len(strings.TrimLeft(line, " \t\n\r\x00\x0B"))]
+		}
+	}
+
+	return "        "
+}
+
+func quote(namespace string) string {
+	return "'" + strings.ReplaceAll(namespace, `\`, `\\`) + "'"
 }

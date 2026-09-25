@@ -1,0 +1,7 @@
+exit: 0
+--- stdout
+[32m• Shop\Ui\Pages may already use Shop\Ui\Shared[0m
+
+--- stderr
+
+--- files

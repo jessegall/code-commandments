@@ -1,0 +1,57 @@
+exit: 0
+--- stdout
+[1mNamespace layers[0m — 60 namespaces
+
+  [32m20[0m are depended on but depend on nothing of yours — the floor your stack rests on
+      Shop\Authoring
+      Shop\Billing
+      Shop\Contracts
+      Shop\Domain
+      Shop\Events
+      Shop\Exceptions
+      Shop\Http\Controllers\Delegated
+      Shop\Http\Controllers\DuplicateActions
+      Shop\Http\Pages\FlatCluster
+      Shop\Http\Pages\RepeatedCall
+      Shop\Inertia
+      Shop\Labels
+      … and 8 more
+
+  [33m28[0m sit in a cycle — declared below as they stand, each permitting the other:
+      Shop\Enums  ->  Shop\Shipping
+      Shop\Fulfillment  ->  Shop\Models
+      Shop\Telemetry  ->  Shop\Diagnostics
+      Shop\Warranty  ->  Shop\Claims
+    [2mrun `commandments judge --sin=namespace-cycle` for the exact arrows to cut[0m
+
+  Proposed declaration — the floor (20 namespaces):
+
+    $config->configure(fn (NamespaceDependencyDetector $detector) => $detector
+        ->layer('Shop\\Authoring')
+        ->layer('Shop\\Billing')
+        ->layer('Shop\\Contracts')
+        ->layer('Shop\\Domain')
+        ->layer('Shop\\Events')
+        ->layer('Shop\\Exceptions')
+        ->layer('Shop\\Http\\Controllers\\Delegated')
+        ->layer('Shop\\Http\\Controllers\\DuplicateActions')
+        ->layer('Shop\\Http\\Pages\\FlatCluster')
+        ->layer('Shop\\Http\\Pages\\RepeatedCall')
+        ->layer('Shop\\Inertia')
+        ->layer('Shop\\Labels')
+        ->layer('Shop\\Returns')
+        ->layer('Shop\\Routing')
+        ->layer('Shop\\Shelving')
+        ->layer('Shop\\Support\\Text')
+        ->layer('Shop\\Ui\\Pages')
+        ->layer('Shop\\Ui\\Tokens')
+        ->layer('Shop\\ValueObjects')
+        ->layer('Shop\\Wire'));
+
+  [2mA starting point to EDIT, not a verdict: everything already here passes, so this
+  holds the architecture where it stands and refuses the NEXT arrow somewhere new.[0m
+  [2mre-run with --write to add it to .commandments/config.php[0m
+
+--- stderr
+
+--- files
