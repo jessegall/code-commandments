@@ -10,6 +10,9 @@
 declare(strict_types=1);
 
 use JesseGall\CodeCommandments\Py\Codebase;
+use JesseGall\CodeCommandments\Py\ConstantVocabulary;
+use JesseGall\CodeCommandments\Py\Expr\ExprKind;
+use JesseGall\CodeCommandments\Py\Expr\LiteralType;
 use JesseGall\CodeCommandments\Py\ExprMatch;
 use JesseGall\CodeCommandments\Py\FeatureEnvy;
 use JesseGall\CodeCommandments\Py\FieldClumps;
@@ -246,3 +249,23 @@ foreach ($defs as [$def, $module]) {
 
 sort($unpacks);
 $write('resolution', $unpacks);
+
+// The constant that already names each string literal a resolved call hands a parameter, where one does.
+$vocabulary = new ConstantVocabulary($codebase);
+$named = [];
+
+foreach ($codebase->whereCall()->get() as $call) {
+    foreach ($call->expr->get('arguments') as $argument) {
+        $literal = $argument->is(ExprKind::Keyword) ? $argument->get('value') : $argument;
+
+        if ($literal->literalType() !== LiteralType::String) {
+            continue;
+        }
+
+        $vocabulary->nameFor($call, $literal)->inspect(static function (string $name) use (&$named, $call, $literal, $root): void {
+            $named[substr($call->module->file, strlen($root) + 1) . '@' . $literal->start . '-' . $literal->end] = $name;
+        });
+    }
+}
+
+$write('vocabulary', $named);

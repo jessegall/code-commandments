@@ -13,17 +13,18 @@ import (
 
 // Program is the Python part of a codebase: every module, by path and by dotted name.
 type Program struct {
-	modules  []*Module
-	byName   map[string][]*Module
-	byPath   map[string]*Module
-	homes    map[*contract.Node]*Module
-	bound    sync.Map
-	classes  classes
-	calls    callGraph
-	flow     attributeFlow
-	packages packageGraph
-	reach    resourceReach
-	names    declarations
+	modules    []*Module
+	byName     map[string][]*Module
+	byPath     map[string]*Module
+	homes      map[*contract.Node]*Module
+	bound      sync.Map
+	classes    classes
+	calls      callGraph
+	flow       attributeFlow
+	packages   packageGraph
+	reach      resourceReach
+	names      declarations
+	vocabulary vocabulary
 }
 
 // Module is one Python file and the dotted name Python imports it by.
