@@ -22,7 +22,12 @@ func (RepeatedGuardDetector) Sin() sins.Sin {
 }
 
 // Find is every place the sin is committed.
-func (RepeatedGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
+func (d RepeatedGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
+	return detectors.Aggregate(d, codebase)
+}
+
+// Candidates is every substantive guard, keyed by what it asks.
+func (RepeatedGuardDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	guards := cs.In(codebase).
 		WhereExpression().
 		Where(engine.As(cs.Node.IsSubstantiveGuard)).
@@ -30,22 +35,17 @@ func (RepeatedGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(cs.Node.IsStoredValue)).
 		Get()
 
-	return recurring(guards, guardFingerprint)
+	return keyedBy(guards, guardFingerprint)
+}
+
+// Decide is every guard another asks too.
+func (RepeatedGuardDetector) Decide(candidates []detectors.Candidate) []int {
+	return recurringAt(candidates, 2)
 }
 
 // guardFingerprint is what the guard asks, whatever order its conditions are written in.
 func guardFingerprint(match engine.Match) (string, bool) {
 	return cs.Node{Match: match}.GuardFingerprint(), true
-}
-
-// recurring is every candidate whose key two or more of them read as.
-func recurring(candidates []engine.Match, key func(engine.Match) (string, bool)) []engine.Match {
-	var found []engine.Match
-	for _, bucket := range engine.RecurringBuckets(candidates, key, 2) {
-		found = append(found, bucket...)
-	}
-
-	return found
 }
 
 // GroupKey is the group a guard recurs in: what it asks, whatever order its conditions are in.

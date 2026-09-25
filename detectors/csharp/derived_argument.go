@@ -26,18 +26,30 @@ func (DerivedArgumentDetector) Sin() sins.Sin {
 }
 
 // Find is every place the sin is committed.
-func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
+func (d DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
+	return detectors.Aggregate(d, codebase)
+}
+
+// derivation is the record of a call handing its method pieces of an object it could take whole: the parameters it
+// fills redundantly, each with the path of the piece it reads, and the name it calls the method by.
+type derivation struct {
+	slots  []string
+	paths  []string
+	called string
+}
+
+// Candidates is every call to the codebase's own method that fills a parameter with a piece of an object it could
+// take whole, beside how many calls fill each parameter and the names unresolved calls spell.
+func (DerivedArgumentDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	program := cs.In(codebase).Program
 	graph := cs.Namespaces(codebase)
-	redundant := map[string][]engine.Match{}
+	counts := map[string]int{}
 	var order []string
-	supplied := map[string]int{}
-	paths := map[string]map[string]bool{}
-	unresolved := map[string]bool{}
+	var candidates []detectors.Candidate
 	for _, match := range cs.In(codebase).WhereCall().Get() {
 		call := cs.Node{Match: match}
 		if !call.Target().Exists() {
-			unresolved[call.CalledName()] = true
+			candidates = append(candidates, detectors.Candidate{Record: unresolved{name: call.CalledName()}})
 			continue
 		}
 		if !call.PassesByPosition() || !program.ReachesOwnSignature(call) || program.IsHandedOut(call.CalledName()) {
@@ -46,26 +58,54 @@ func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 		slot := call.Target().Symbol()
 		arguments := call.Arguments()
 		for position := range arguments {
-			supplied[slot+"#"+strconv.Itoa(position)]++
-		}
-		for _, position := range redundantPositions(call, program, graph) {
 			key := slot + "#" + strconv.Itoa(position)
+			if counts[key] == 0 {
+				order = append(order, key)
+			}
+			counts[key]++
+		}
+		derived := derivation{called: call.CalledName()}
+		for _, position := range redundantPositions(call, program, graph) {
+			derived.slots = append(derived.slots, slot+"#"+strconv.Itoa(position))
+			derived.paths = append(derived.paths, arguments[position].ProjectionPath())
+		}
+		if len(derived.slots) > 0 {
+			candidates = append(candidates, detectors.Candidate{At: match, Record: derived})
+		}
+	}
+
+	return append(candidates, supplied(counts, order)...)
+}
+
+// Decide is every call filling a parameter that every call fills alike, with a piece read the same way off an
+// object each could hand whole, of a method no unresolved call might also reach.
+func (DerivedArgumentDetector) Decide(candidates []detectors.Candidate) []int {
+	counts, unresolved := suppliedIn(candidates)
+	redundant := map[string][]int{}
+	var order []string
+	paths := map[string]map[string]bool{}
+	for at, candidate := range candidates {
+		derived, isDerived := candidate.Record.(derivation)
+		if !isDerived {
+			continue
+		}
+		for i, key := range derived.slots {
 			if _, seen := redundant[key]; !seen {
 				order = append(order, key)
 				paths[key] = map[string]bool{}
 			}
-			redundant[key] = append(redundant[key], match)
-			paths[key][arguments[position].ProjectionPath()] = true
+			redundant[key] = append(redundant[key], at)
+			paths[key][derived.paths[i]] = true
 		}
 	}
-	var findings []engine.Match
+	var findings []int
 	for _, key := range order {
 		calls := redundant[key]
-		if len(calls) != supplied[key] || len(paths[key]) != 1 || unresolved[cs.Node{Match: calls[0]}.CalledName()] {
+		if len(calls) != counts[key] || len(paths[key]) != 1 || unresolved[candidates[calls[0]].Record.(derivation).called] {
 			continue
 		}
 		for _, call := range calls {
-			if !slices.ContainsFunc(findings, func(found engine.Match) bool { return found.Node() == call.Node() }) {
+			if !slices.Contains(findings, call) {
 				findings = append(findings, call)
 			}
 		}

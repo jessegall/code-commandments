@@ -22,14 +22,24 @@ func (RepeatedTypeGuardDetector) Sin() sins.Sin {
 }
 
 // Find is every place the sin is committed.
-func (RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
+func (d RepeatedTypeGuardDetector) Find(codebase *engine.Codebase) []engine.Match {
+	return detectors.Aggregate(d, codebase)
+}
+
+// Candidates is every guard that narrows a type, keyed by what it asks.
+func (RepeatedTypeGuardDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	guards := cs.In(codebase).
 		WhereExpression().
 		Where(engine.As(cs.Node.IsTypeNarrowingGuard)).
 		Where(engine.As(cs.Node.IsOutermostAnd)).
 		Get()
 
-	return recurring(guards, guardFingerprint)
+	return keyedBy(guards, guardFingerprint)
+}
+
+// Decide is every type guard another asks too.
+func (RepeatedTypeGuardDetector) Decide(candidates []detectors.Candidate) []int {
+	return recurringAt(candidates, 2)
 }
 
 // GroupKey is the group a type-narrowing guard recurs in: what it asks, whatever order its checks are in.

@@ -26,20 +26,41 @@ func (ConvertedArgumentDetector) Sin() sins.Sin {
 }
 
 // Find is every place the sin is committed.
-func (ConvertedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
+func (d ConvertedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
+	return detectors.Aggregate(d, codebase)
+}
+
+// Candidates is every call that converts a scalar for a parameter of the codebase's own method, keyed by the
+// parameter and the conversion, beside how many calls fill each parameter.
+func (ConvertedArgumentDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	program := cs.In(codebase).Program
-	calls := cs.In(codebase).WhereCall().Get()
-	supplied := map[string]int{}
-	for _, match := range calls {
+	counts := map[string]int{}
+	var order []string
+	var candidates []detectors.Candidate
+	for _, match := range cs.In(codebase).WhereCall().Get() {
 		call := cs.Node{Match: match}
 		for position := range call.Arguments() {
-			supplied[call.Target().Symbol()+"#"+strconv.Itoa(position)]++
+			slot := call.Target().Symbol() + "#" + strconv.Itoa(position)
+			if counts[slot] == 0 {
+				order = append(order, slot)
+			}
+			counts[slot]++
+		}
+		if slot, converts := conversionSlot(call, program); converts {
+			candidates = append(candidates, detectors.Candidate{At: match, Record: keyed{key: slot, read: true}})
 		}
 	}
-	var dominant []engine.Match
-	for _, bucket := range engine.RecurringBuckets(calls, func(match engine.Match) (string, bool) { return conversionSlot(cs.Node{Match: match}, program) }, 2) {
-		slot, _ := conversionSlot(cs.Node{Match: bucket[0]}, program)
-		if float64(len(bucket))/float64(supplied[slot[:strings.LastIndex(slot, "=")]]) >= 0.5 {
+
+	return append(candidates, supplied(counts, order)...)
+}
+
+// Decide is every call converting as half or more of the calls filling its parameter do.
+func (ConvertedArgumentDetector) Decide(candidates []detectors.Candidate) []int {
+	counts, _ := suppliedIn(candidates)
+	var dominant []int
+	for _, bucket := range engine.Recurring(len(candidates), keyOf(candidates), 2) {
+		slot := candidates[bucket[0]].Record.(keyed).key
+		if float64(len(bucket))/float64(counts[slot[:strings.LastIndex(slot, "=")]]) >= 0.5 {
 			dominant = append(dominant, bucket...)
 		}
 	}

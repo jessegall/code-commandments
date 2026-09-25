@@ -24,14 +24,24 @@ func (RepeatedNamedCallDetector) Sin() sins.Sin {
 }
 
 // Find is every place the sin is committed.
-func (RepeatedNamedCallDetector) Find(codebase *engine.Codebase) []engine.Match {
+func (d RepeatedNamedCallDetector) Find(codebase *engine.Codebase) []engine.Match {
+	return detectors.Aggregate(d, codebase)
+}
+
+// Candidates is every call outside the tests that changes a constant, keyed by the change it makes.
+func (d RepeatedNamedCallDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	copies := cs.In(codebase).
 		WhereExpression().
 		Where(engine.As(func(n cs.Node) bool { return len(n.ConstantChanges()) > 0 })).
 		Reject(engine.As(cs.Node.IsInTest)).
 		Get()
 
-	return recurring(copies, RepeatedNamedCallDetector{}.GroupKey)
+	return keyedBy(copies, d.GroupKey)
+}
+
+// Decide is every call another makes too.
+func (RepeatedNamedCallDetector) Decide(candidates []detectors.Candidate) []int {
+	return recurringAt(candidates, 2)
 }
 
 // GroupKey is the group a `with` copy recurs in: the type it copies and the constants it changes.

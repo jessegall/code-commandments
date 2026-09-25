@@ -22,8 +22,14 @@ func (NearDuplicateMethodDetector) Sin() sins.Sin {
 }
 
 // Find is every place the sin is committed.
-func (NearDuplicateMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
-	candidates := cs.In(codebase).
+func (d NearDuplicateMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
+	return detectors.Aggregate(d, codebase)
+}
+
+// Candidates is every function heavy enough to be worth sharing and free to change, keyed by the shape of its body
+// and by the body it runs exactly.
+func (d NearDuplicateMethodDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
+	matches := cs.In(codebase).
 		WhereFunction().
 		Where(engine.As(func(n cs.Node) bool { return n.BodyWeight() >= 20 })).
 		Reject(engine.As(func(n cs.Node) bool { return n.Is("ConstructorDeclaration") })).
@@ -33,7 +39,23 @@ func (NearDuplicateMethodDetector) Find(codebase *engine.Codebase) []engine.Matc
 		Reject(engine.As(cs.Node.IsStub)).
 		Reject(engine.As(cs.Node.IsInherited)).
 		Get()
-	return engine.NearCopies(candidates, NearDuplicateMethodDetector{}.GroupKey, bodyHash)
+	candidates := keyedBy(matches, d.GroupKey)
+	for at, match := range matches {
+		record := candidates[at].Record.(keyed)
+		record.exact, _ = bodyHash(match)
+		candidates[at].Record = record
+	}
+
+	return candidates
+}
+
+// Decide is every function alike in shape to another, yet the only one running its exact body.
+func (NearDuplicateMethodDetector) Decide(candidates []detectors.Candidate) []int {
+	return engine.NearCopyPositions(len(candidates), keyOf(candidates), func(at int) (string, bool) {
+		exact := candidates[at].Record.(keyed).exact
+
+		return exact, exact != ""
+	})
 }
 
 // GroupKey is the group a function recurs in: the skeleton of its body, whatever its locals and constants.

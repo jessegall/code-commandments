@@ -24,18 +24,35 @@ func (DataClumpDetector) Sin() sins.Sin {
 }
 
 // Find is every place the sin is committed.
-func (DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
-	candidates := cs.In(codebase).
+func (d DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
+	return detectors.Aggregate(d, codebase)
+}
+
+// Candidates is every function taking scalar values, keyed by the values it takes, with the type declaring it.
+func (d DataClumpDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
+	matches := cs.In(codebase).
 		WhereFunction().
 		Where(engine.As(func(n cs.Node) bool { return len(n.ValueParamSignature()) > 0 })).
 		Reject(engine.As(cs.Node.IsInherited)).
 		Reject(engine.As(cs.Node.IsNamedConstructor)).
 		Get()
-	var findings []engine.Match
-	for _, clump := range engine.RecurringBuckets(candidates, DataClumpDetector{}.GroupKey, 1) {
+	candidates := keyedBy(matches, d.GroupKey)
+	for at, match := range matches {
+		record := candidates[at].Record.(keyed)
+		record.owner = cs.Node{Match: match}.Owner()
+		candidates[at].Record = record
+	}
+
+	return candidates
+}
+
+// Decide is every function whose values two or more types take together.
+func (DataClumpDetector) Decide(candidates []detectors.Candidate) []int {
+	var findings []int
+	for _, clump := range engine.Recurring(len(candidates), keyOf(candidates), 1) {
 		owners := map[string]bool{}
-		for _, match := range clump {
-			owners[cs.Node{Match: match}.Owner()] = true
+		for _, at := range clump {
+			owners[candidates[at].Record.(keyed).owner] = true
 		}
 		if len(owners) >= 2 {
 			findings = append(findings, clump...)

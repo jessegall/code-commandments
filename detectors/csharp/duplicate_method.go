@@ -22,18 +22,24 @@ func (DuplicateMethodDetector) Sin() sins.Sin {
 }
 
 // Find is every place the sin is committed.
-func (DuplicateMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
+func (d DuplicateMethodDetector) Find(codebase *engine.Codebase) []engine.Match {
+	return detectors.Aggregate(d, codebase)
+}
+
+// Candidates is every function heavy enough to be worth sharing, keyed by the body it runs.
+func (d DuplicateMethodDetector) Candidates(codebase *engine.Codebase) []detectors.Candidate {
 	candidates := cs.In(codebase).
 		WhereFunction().
 		Where(engine.As(func(n cs.Node) bool { return n.BodyWeight() >= 12 })).
 		Reject(engine.As(func(n cs.Node) bool { return n.Is("ConstructorDeclaration") })).
 		Get()
-	var found []engine.Match
-	for _, bucket := range engine.RecurringBuckets(candidates, DuplicateMethodDetector{}.GroupKey, 2) {
-		found = append(found, bucket...)
-	}
 
-	return found
+	return keyedBy(candidates, d.GroupKey)
+}
+
+// Decide is every function whose body another runs too.
+func (DuplicateMethodDetector) Decide(candidates []detectors.Candidate) []int {
+	return recurringAt(candidates, 2)
 }
 
 // GroupKey is the group a function recurs in: the body it runs.
