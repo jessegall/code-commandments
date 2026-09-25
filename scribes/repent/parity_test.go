@@ -148,7 +148,7 @@ func TestTheWholeChainRewritesEachFixtureAsThePHPToolDoes(t *testing.T) {
 				}
 			}
 			if len(missing) > 0 {
-				t.Skipf("PHP's chain runs steps not ported yet: %v", missing)
+				t.Fatalf("PHP's chain runs steps the Go chain lacks: %v", missing)
 			}
 
 			converged := scribes.Converge(chain, []string{root}, everywhere{}, scribes.Frozens{backend, vue})
