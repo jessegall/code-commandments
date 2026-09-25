@@ -93,3 +93,31 @@ func TestAWrongInvocationSaysWhy(t *testing.T) {
 		}
 	}
 }
+
+func TestTheEdgeCasesOfANameAndASlug(t *testing.T) {
+	for name, want := range map[string]struct {
+		args  []string
+		files []string
+		sin   string
+	}{
+		"the Detector suffix is dropped once": {[]string{"HTTPClientDetector"}, []string{"HTTPClientDetector.json", "skills/http-client/SKILL.md"}, "http-client"},
+		"a name that is its skill's":          {[]string{"Naming"}, []string{"NamingDetector.json", "skills/naming/SKILL.md"}, "naming"},
+		"a slug with a slash is one folder":   {[]string{"Thing", "--skill=team/house-rules"}, []string{"ThingDetector.json", "skills/team-house-rules/SKILL.md"}, "thing"},
+	} {
+		root := t.TempDir()
+
+		if said, code := run(t, root, want.args...); code != 0 {
+			t.Fatalf("%s: exit %d\n%s", name, code, said)
+		}
+
+		for _, file := range want.files {
+			if _, err := os.Stat(filepath.Join(root, ".commandments", "custom", file)); err != nil {
+				t.Errorf("%s: %s not written", name, file)
+			}
+		}
+
+		if loaded := custom.Load(root); len(loaded.Rules) != 1 || loaded.Rules[0].Sin().Definition().Name != want.sin {
+			t.Errorf("%s: %+v", name, loaded)
+		}
+	}
+}

@@ -54,7 +54,7 @@ func codebase(t *testing.T) *engine.Codebase {
 
 	loaded, err := scan.Sources{source.PHP: {path}}.Load()
 	if err != nil {
-		t.Skipf("the PHP bridge cannot run here: %v", err)
+		t.Fatalf("the PHP bridge cannot run here: %v", err)
 	}
 
 	return loaded
