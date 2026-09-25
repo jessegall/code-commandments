@@ -10,14 +10,14 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// IsEmptyString says whether the node is the string literal ''.
+// IsEmptyString says whether the node is the string literal ”.
 func (n Node) IsEmptyString() bool {
 	text, ok := n.Text()
 
 	return n.Kind() == "Scalar_String" && ok && text == ""
 }
 
-// IsBlankString says whether the node is '' or a new of a class that renders as ''.
+// IsBlankString says whether the node is ” or a new of a class that renders as ”.
 func (n Node) IsBlankString() bool {
 	return n.IsEmptyString() || RendersBlank(n.Codebase(), n.NewClassName())
 }
@@ -77,7 +77,7 @@ func (n Node) DefaultedNameTestedForBlankness() bool {
 	return slices.Contains(tested, n.DeclaredName())
 }
 
-// VariablesTestedForBlankness is every variable tested for blankness under the node: compared with '', given to
+// VariablesTestedForBlankness is every variable tested for blankness under the node: compared with ”, given to
 // empty(), or, when asked, handed to a static method that decides blankness.
 func (n Node) VariablesTestedForBlankness(viaPredicates bool) []string {
 	return n.testedForBlankness(variableName, viaPredicates)
@@ -152,7 +152,7 @@ func (n Node) StaticCallMethod() string {
 	return ""
 }
 
-// IsEmptyLiteral says whether the node is an empty literal: '', [], 0, 0.0 or false.
+// IsEmptyLiteral says whether the node is an empty literal: ”, [], 0, 0.0 or false.
 func (n Node) IsEmptyLiteral() bool {
 	switch n.Kind() {
 	case "Scalar_String":
@@ -171,7 +171,7 @@ func (n Node) IsEmptyLiteral() bool {
 	return false
 }
 
-// IsCancelledCoalesce says whether the node is a ?? compared with its own fallback: ($x ?? '') === ''.
+// IsCancelledCoalesce says whether the node is a ?? compared with its own fallback: ($x ?? ”) === ”.
 func (n Node) IsCancelledCoalesce() bool {
 	parent := n.Parent()
 	switch parent.Kind() {
@@ -349,7 +349,7 @@ func (n Node) isInvoked(name string) bool {
 // renderings is what each class renders as, per codebase: a __toString that returns one string literal.
 var renderings = Memoised(func(*engine.Codebase) *sync.Map { return &sync.Map{} })
 
-// RendersBlank says whether the class's __toString only returns ''.
+// RendersBlank says whether the class's __toString only returns ”.
 func RendersBlank(codebase *engine.Codebase, class string) bool {
 	rendered, ok := RenderingOf(codebase, class)
 
