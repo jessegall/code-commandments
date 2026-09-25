@@ -3,6 +3,9 @@
 package paritytest
 
 import (
+	"bytes"
+	"compress/gzip"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -52,7 +55,7 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 	slices.Sort(found)
 	var expected []string
 	for _, line := range strings.Split(strings.TrimSpace(string(php)), "\n") {
-		if line != "" {
+		if line != "" && !strings.HasPrefix(line, "#") {
 			expected = append(expected, line)
 		}
 	}
@@ -69,12 +72,13 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 	t.Logf("%d findings in PHP, %d in Go", len(expected), len(found))
 }
 
-// phpFindings is what the PHP engine finds under root: kept in $COMMANDMENTS_PARITY_FINDINGS once found, and read
-// back from there when it is.
+// phpFindings is what the PHP engine finds under root: kept in $COMMANDMENTS_PARITY_FINDINGS once found, gzipped
+// when the name ends in .gz, and read back from there when it is. A line opening with `#` says where the findings
+// came from and is not one of them.
 func phpFindings(script, root string) ([]byte, error) {
 	kept := os.Getenv("COMMANDMENTS_PARITY_FINDINGS")
 	if kept != "" {
-		if found, err := os.ReadFile(kept); err == nil {
+		if found, err := readKept(kept); err == nil {
 			return found, nil
 		}
 	}
@@ -83,5 +87,40 @@ func phpFindings(script, root string) ([]byte, error) {
 		return found, err
 	}
 
-	return found, os.WriteFile(kept, found, 0o644)
+	return found, writeKept(kept, found)
+}
+
+// readKept is the findings kept in the file.
+func readKept(path string) ([]byte, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	if !strings.HasSuffix(path, ".gz") {
+		return io.ReadAll(file)
+	}
+	unzipped, err := gzip.NewReader(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return io.ReadAll(unzipped)
+}
+
+// writeKept keeps the findings in the file.
+func writeKept(path string, found []byte) error {
+	if !strings.HasSuffix(path, ".gz") {
+		return os.WriteFile(path, found, 0o644)
+	}
+	var zipped bytes.Buffer
+	writer := gzip.NewWriter(&zipped)
+	if _, err := writer.Write(found); err != nil {
+		return err
+	}
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, zipped.Bytes(), 0o644)
 }

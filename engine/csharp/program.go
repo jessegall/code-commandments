@@ -2,6 +2,7 @@ package csharp
 
 import (
 	"slices"
+	"sync"
 	"strconv"
 	"strings"
 
@@ -23,6 +24,7 @@ type Program struct {
 	handedOut    map[string]bool
 	cased        []string
 	vocabularies map[string][]Node
+	documented   sync.Map
 }
 
 // Of is the C# program the codebase holds, read once.
@@ -316,4 +318,21 @@ func (p *Program) ParametersOf(call Node) []string {
 	}
 
 	return types
+}
+
+// documentable is the declarations and statements a comment in the file may be about, in the order a pre-order
+// walk meets them, which is the order they start in.
+func (p *Program) documentable(file *engine.File) []Node {
+	if held, ok := p.documented.Load(file); ok {
+		return held.([]Node)
+	}
+	var documentable []Node
+	for _, match := range file.Match(0).Descendants() {
+		if node := (Node{match}); !node.IsExpression() && node.hierarchyRole() != "other" {
+			documentable = append(documentable, node)
+		}
+	}
+	held, _ := p.documented.LoadOrStore(file, documentable)
+
+	return held.([]Node)
 }

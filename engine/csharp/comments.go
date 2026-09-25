@@ -2,6 +2,7 @@ package csharp
 
 import (
 	"encoding/xml"
+	"sort"
 	"errors"
 	"io"
 	"regexp"
@@ -178,21 +179,16 @@ func IsDangling(ref contract.Ref) bool {
 	return ownedHere || (ref.Owner == "" && !ref.Blind)
 }
 
-// Documented is the code the comment is about: the first declaration or statement after it; no node when nothing
-// follows.
+// Documented is the code the comment is about: the first declaration or statement after it, the outermost of
+// those starting there; no node when nothing follows.
 func (c Comment) Documented() Node {
-	var first Node
-	for _, match := range c.File.Match(0).Descendants() {
-		node := Node{match}
-		if node.IsExpression() || node.Node().Span.Start < c.Span.End || node.hierarchyRole() == "other" {
-			continue
-		}
-		if !first.Exists() || node.Node().Span.Start < first.Node().Span.Start {
-			first = node
-		}
+	documentable := Of(c.File.Codebase()).documentable(c.File)
+	at := sort.Search(len(documentable), func(i int) bool { return documentable[i].Node().Span.Start >= c.Span.End })
+	if at == len(documentable) {
+		return Node{}
 	}
 
-	return first
+	return documentable[at]
 }
 
 // Line is the line the comment is reported on: the line of the code it documents, or its own when it documents
