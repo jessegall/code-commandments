@@ -29,6 +29,8 @@ var commentMarker = regexp.MustCompile(`@(sin|fixed|righteous)\s+(\w+)`)
 type Marker struct {
 	Tag      Tag
 	Name     string
+	File     string
+	Class    string
 	Location string
 	covers   func(engine.Match) bool
 }
@@ -67,15 +69,16 @@ func attributeMarkers(codebase *engine.Codebase) []Marker {
 		if named == "" {
 			continue
 		}
-		class := attribute.EnclosingType().Identity()
+		class := classOf(attribute)
 		function := attribute.EnclosingFunction().Name()
 		markers = append(markers, Marker{
 			Tag:      tag,
 			Name:     named,
+			File:     attribute.File(),
+			Class:    class,
 			Location: attribute.Location(),
 			covers: func(finding engine.Match) bool {
-				return finding.EnclosingType().Identity() == class &&
-					(function == "" || finding.EnclosingFunction().Name() == function)
+				return classOf(finding) == class && (function == "" || functionOf(finding) == function)
 			},
 		})
 	}
@@ -103,11 +106,14 @@ func commentMarkers(codebase *engine.Codebase) []Marker {
 			if comment.Attached == nil {
 				continue
 			}
-			location := file.Match(*comment.Attached).Location()
+			marked := file.Match(*comment.Attached)
+			location := marked.Location()
 			for _, found := range commentMarker.FindAllStringSubmatch(comment.Text, -1) {
 				markers = append(markers, Marker{
 					Tag:      Tag(found[1]),
 					Name:     found[2],
+					File:     file.Path,
+					Class:    classOf(marked),
 					Location: location,
 					covers:   func(finding engine.Match) bool { return finding.Location() == location },
 				})
@@ -116,6 +122,27 @@ func commentMarkers(codebase *engine.Codebase) []Marker {
 	}
 
 	return markers
+}
+
+// classOf is the type a node belongs to, itself when it is one, (file) outside any.
+func classOf(node engine.Match) string {
+	if node.Is(engine.TypeDeclaration) {
+		return node.Identity()
+	}
+	if declaration := node.EnclosingType(); declaration.Exists() {
+		return declaration.Identity()
+	}
+
+	return "(file)"
+}
+
+// functionOf is the named function a node belongs to, itself when it is one.
+func functionOf(node engine.Match) string {
+	if node.Is(engine.Function) && node.Name() != "" {
+		return node.Name()
+	}
+
+	return node.EnclosingFunction().Name()
 }
 
 // ShortName is a qualified name's last segment: Shop\Sins\ArrayBag, Shop.Sins.ArrayBag → ArrayBag.

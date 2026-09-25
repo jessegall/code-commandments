@@ -7,13 +7,13 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/sins"
-	"github.com/jessegall/code-commandments/skills"
+	"github.com/jessegall/code-commandments/skill"
 )
 
 type Exceptions struct{}
 
-func (Exceptions) Definition() skills.Definition {
-	return skills.Definition{Slug: "backend/exceptions", Tier: skills.KeepInMind, Summary: "fail named"}
+func (Exceptions) Definition() skill.Definition {
+	return skill.Definition{Slug: "backend/exceptions", Tier: skill.KeepInMind, Summary: "fail named"}
 }
 
 type WrappingWithoutCause struct{}
@@ -38,7 +38,7 @@ type HalfBuiltDetector struct{ WrappingWithoutCauseDetector }
 func (HalfBuiltDetector) Unpublished() {}
 
 func init() {
-	skills.Register(catalog.Backend, Exceptions{})
+	skill.Register(catalog.Backend, Exceptions{})
 	sins.Register(catalog.Backend, WrappingWithoutCause{})
 	detectors.Register(catalog.Backend, WrappingWithoutCauseDetector{})
 	detectors.Register(catalog.Backend, HalfBuiltDetector{})
@@ -76,16 +76,16 @@ func TestASinPointsAtTheSkillThatFixesIt(t *testing.T) {
 }
 
 func TestASkillIsLoadedByItsID(t *testing.T) {
-	skill, ok := skills.Slugged("backend/exceptions")
+	found, ok := skill.Slugged("backend/exceptions")
 	if !ok {
 		t.Fatal("no skill slugged backend/exceptions")
 	}
-	definition := skill.Definition()
+	definition := found.Definition()
 
 	if definition.ID() != "commandments-backend-exceptions" || definition.Bullet() != "- **`commandments-backend-exceptions`** — fail named" || !definition.Matches("Exceptions") {
 		t.Fatalf("got %s / %s", definition.ID(), definition.Bullet())
 	}
-	if len(skills.InTier(skills.KeepInMind)) != 1 || len(skills.InTier(skills.Mandatory)) != 0 {
+	if len(skill.InTier(skill.KeepInMind)) != 1 || len(skill.InTier(skill.Mandatory)) != 0 {
 		t.Fatal("the skill sits in its own tier only")
 	}
 }

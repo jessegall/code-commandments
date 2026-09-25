@@ -1,6 +1,6 @@
-// Package skills holds the teaching layer's metadata: each Skill names a discipline, and a sin
+// Package skill holds the teaching layer's metadata: each Skill names a discipline, and a sin
 // points at the skill that fixes it.
-package skills
+package skill
 
 import (
 	"slices"

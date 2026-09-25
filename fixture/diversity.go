@@ -19,22 +19,38 @@ type Scenario struct {
 	Source string
 }
 
-// Scenarios is each of the detector's findings, read as the function it sits in, or its type, or itself.
-func Scenarios(codebase *engine.Codebase, detector detectors.Detector) ([]Scenario, error) {
+// ScenarioResolver reads a detector's findings as the scenarios the diversity check compares. It is
+// handed the detector, so one resolver can read each kind its own way — a chain detector as its
+// provenance path, a cross-file one as its group — as PHP's scenario resolvers do.
+type ScenarioResolver func(codebase *engine.Codebase, detector detectors.Detector) ([]Scenario, error)
+
+// Scenarios is each of the detector's findings as the fixture's resolver reads them.
+func (f Fixture) Scenarios(detector detectors.Detector) ([]Scenario, error) {
+	resolve := f.Resolver
+	if resolve == nil {
+		resolve = ScopeScenarios
+	}
+
+	return resolve(f.Codebase, detector)
+}
+
+// ScopeScenarios reads each finding as the whole lines of its scope: the type it sits in, else its
+// function, else itself.
+func ScopeScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]Scenario, error) {
 	var scenarios []Scenario
 	for _, finding := range detector.Find(codebase) {
-		around := finding.EnclosingFunction()
-		if !around.Exists() {
-			around = finding.EnclosingType()
+		scope := finding.EnclosingType()
+		if !scope.Exists() {
+			scope = finding.EnclosingFunction()
 		}
-		if !around.Exists() {
-			around = finding
+		if !scope.Exists() {
+			scope = finding
 		}
-		span, err := around.Span()
+		span, err := scope.Span()
 		if err != nil {
 			return nil, err
 		}
-		scenarios = append(scenarios, Scenario{File: finding.File(), Source: span.Text()})
+		scenarios = append(scenarios, Scenario{File: finding.File(), Source: span.Lines()})
 	}
 
 	return scenarios, nil

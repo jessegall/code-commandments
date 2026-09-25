@@ -15,7 +15,7 @@ import (
 const Module = "github.com/jessegall/code-commandments"
 
 // RuleRoots are the folders whose packages enrol rules from their init functions.
-var RuleRoots = []string{"sins", "skills", "detectors"}
+var RuleRoots = []string{"sins", "skill", "detectors"}
 
 // Enrolment is the registry source that imports every rule package under root, so no hand-kept
 // list of rules exists: a new rule folder is found by the next go generate.

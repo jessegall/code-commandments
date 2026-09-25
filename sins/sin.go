@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/skills"
+	"github.com/jessegall/code-commandments/skill"
 )
 
 // Sin is one sin, declared by its type.
@@ -16,7 +16,7 @@ type Sin interface {
 // Definition is what a sin states about itself.
 type Definition struct {
 	Name        string
-	Skill       skills.Skill
+	Skill       skill.Skill
 	Description string
 	Rule        string
 	Suggestion  string

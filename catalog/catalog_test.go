@@ -90,8 +90,8 @@ func TestEnrolmentImportsEveryRuleFolderOnly(t *testing.T) {
 	write("detectors/backend/laravel/facade.go")
 	write("detectors/backend/testdata/toy.go")
 	write("detectors/_draft/draft.go")
-	write("skills/commandments/backend/absence/SKILL.md")
-	write("skills/commandments/python/flow/flow_test.go")
+	write("skill/backend/absence/SKILL.md")
+	write("skill/python/flow/flow_test.go")
 
 	source, err := catalog.Enrolment(root)
 	if err != nil {

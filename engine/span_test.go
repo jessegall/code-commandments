@@ -17,6 +17,9 @@ func TestSpanLocatesItsText(t *testing.T) {
 	if inner.LineIndent() != "" {
 		t.Fatalf("code precedes $x on its line, got indent %q", inner.LineIndent())
 	}
+	if inner.Lines() != "    return $x;\n" {
+		t.Fatalf("a span reads as its whole lines, got %q", inner.Lines())
+	}
 	if !span.Contains(inner) || inner.Contains(span) {
 		t.Fatal("the statement strictly contains its variable")
 	}

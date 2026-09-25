@@ -50,3 +50,13 @@ func (s Span) LineIndent() string {
 func (s Span) lineStart() int {
 	return bytes.LastIndexByte(s.Source[:s.Start], '\n') + 1
 }
+
+// Lines is every line the span touches, whole, the last line's break kept.
+func (s Span) Lines() string {
+	end := len(s.Source)
+	if next := bytes.IndexByte(s.Source[s.End:], '\n'); next >= 0 {
+		end = s.End + next + 1
+	}
+
+	return string(s.Source[s.lineStart():end])
+}
