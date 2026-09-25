@@ -4,3 +4,5 @@ No session to adopt into — a shell outside the harness has none of its own.
   Name the destination: `commandments session adopt zzzzz --into=<folder>`.
 
 --- stderr
+
+--- files

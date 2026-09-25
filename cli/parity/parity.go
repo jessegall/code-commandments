@@ -10,10 +10,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -53,11 +56,13 @@ type Case struct {
 	Pending string `json:"pending,omitempty"`
 }
 
-// Result is what one run printed and answered.
+// Result is what one run printed and answered, and what it wrote into its project.
 type Result struct {
 	Exit   int
 	Stdout string
 	Stderr string
+	// Files are the project files the run created, changed or deleted, each with its contents.
+	Files string
 }
 
 // Cases reads every case from every file in dir. A name two files share is refused, since both would
@@ -118,6 +123,8 @@ func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 		}
 	}
 
+	before := snapshot(project)
+
 	var stdout, stderr bytes.Buffer
 	run := exec.Command(command[0], append(command[1:], c.Args...)...)
 	run.Dir, run.Env = project, env
@@ -137,8 +144,75 @@ func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 
 	result.Stdout = normalise(stdout.String(), repo, project)
 	result.Stderr = normalise(stderr.String(), repo, project)
+	result.Files = normalise(written(before, snapshot(project)), repo, project)
 
 	return result, nil
+}
+
+// caches are files one implementation keeps for itself, meaningless to the other: PHP's record of which of
+// its own classes read beyond one file.
+var caches = []string{".commandments/cross-file.json"}
+
+// snapshot is every file under the project, less git's own and the caches, by its path under the project.
+func snapshot(project string) map[string]string {
+	files := map[string]string{}
+
+	filepath.WalkDir(project, func(path string, entry fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return nil
+		case entry.IsDir() && entry.Name() == ".git":
+			return filepath.SkipDir
+		case entry.Type().IsRegular():
+			contents, _ := os.ReadFile(path)
+			relative, _ := filepath.Rel(project, path)
+
+			if !slices.Contains(caches, relative) {
+				files[relative] = string(contents)
+			}
+		}
+
+		return nil
+	})
+
+	return files
+}
+
+// written lists what changed between two snapshots, in path order: each created or changed file with its
+// contents, each deleted file by name.
+func written(before, after map[string]string) string {
+	var paths []string
+
+	for path, contents := range after {
+		if was, existed := before[path]; !existed || was != contents {
+			paths = append(paths, path)
+		}
+	}
+
+	for path := range before {
+		if _, kept := after[path]; !kept {
+			paths = append(paths, path)
+		}
+	}
+
+	sort.Strings(paths)
+
+	var out strings.Builder
+
+	for _, path := range paths {
+		contents, kept := after[path]
+
+		switch _, existed := before[path]; {
+		case !kept:
+			out.WriteString("=== deleted " + path + "\n")
+		case !existed:
+			out.WriteString("=== created " + path + "\n" + contents + "\n")
+		default:
+			out.WriteString("=== changed " + path + "\n" + contents + "\n")
+		}
+	}
+
+	return out.String()
 }
 
 func prepare(c Case, repo, project, home string) error {
@@ -156,11 +230,12 @@ func prepare(c Case, repo, project, home string) error {
 // environment is the fixed world every case runs in, so nothing of the machine running it leaks in.
 func environment(c Case, home string) []string {
 	env := map[string]string{
-		"PATH":    os.Getenv("PATH"),
-		"HOME":    home,
-		"COLUMNS": "80",
-		"TERM":    "dumb",
-		"LANG":    "C.UTF-8",
+		"PATH":           os.Getenv("PATH"),
+		"HOME":           home,
+		"COLUMNS":        "80",
+		"TERM":           "dumb",
+		"LANG":           "C.UTF-8",
+		"XDG_CACHE_HOME": cache(),
 	}
 
 	for key, value := range c.Env {
@@ -176,6 +251,20 @@ func environment(c Case, home string) []string {
 	return list
 }
 
+// cache is the machine's own cache folder, kept across cases so a bridge's built environment is built once.
+func cache() string {
+	if folder := os.Getenv("XDG_CACHE_HOME"); folder != "" {
+		return folder
+	}
+
+	home, _ := os.UserHomeDir()
+
+	return filepath.Join(home, ".cache")
+}
+
+// stamp is a date and time a run writes: a task's log line, an archived checklist's name.
+var stamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}[ _]\d{2}:?\d{2}(:?\d{2})?`)
+
 var versionLine = regexp.MustCompile(`(?m)^code-commandments \S+$`)
 
 // normalise replaces what differs between two runs of the same case: where the project and the package
@@ -189,7 +278,9 @@ func normalise(text, repo, project string) string {
 		text = strings.ReplaceAll(text, path, placeholder(path, project))
 	}
 
-	return versionLine.ReplaceAllString(text, "code-commandments <version>")
+	text = versionLine.ReplaceAllString(text, "code-commandments <version>")
+
+	return stamp.ReplaceAllString(text, "<time>")
 }
 
 func placeholder(path, project string) string {
@@ -202,19 +293,20 @@ func placeholder(path, project string) string {
 
 // Golden writes a result as the text a reviewer reads in a diff.
 func Golden(result Result) string {
-	return "exit: " + strconv.Itoa(result.Exit) + "\n--- stdout\n" + result.Stdout + "\n--- stderr\n" + result.Stderr
+	return "exit: " + strconv.Itoa(result.Exit) + "\n--- stdout\n" + result.Stdout + "\n--- stderr\n" + result.Stderr + "\n--- files\n" + result.Files
 }
 
 // ReadGolden reads a result back from its golden text.
 func ReadGolden(text string) (Result, error) {
 	head, rest, found := strings.Cut(text, "\n--- stdout\n")
-	stdout, stderr, split := strings.Cut(rest, "\n--- stderr\n")
+	stdout, streams, split := strings.Cut(rest, "\n--- stderr\n")
+	stderr, files, listed := strings.Cut(streams, "\n--- files\n")
 	code, isCode := strings.CutPrefix(head, "exit: ")
 	exit, err := strconv.Atoi(code)
 
-	if !found || !split || !isCode || err != nil {
-		return Result{}, errors.New("not a golden: want `exit: N`, `--- stdout`, `--- stderr`")
+	if !found || !split || !listed || !isCode || err != nil {
+		return Result{}, errors.New("not a golden: want `exit: N`, `--- stdout`, `--- stderr`, `--- files`")
 	}
 
-	return Result{Exit: exit, Stdout: stdout, Stderr: stderr}, nil
+	return Result{Exit: exit, Stdout: stdout, Stderr: stderr, Files: files}, nil
 }

@@ -36,3 +36,5 @@ Options:
   change, so `git status` shows it, nothing has to be kept in step with a field, and a task nobody
   closed is a file still sitting in `active/`. `history/` keeps every task this session ever had —
   which is also why a number is never handed out twice.
+
+--- files

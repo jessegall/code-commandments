@@ -7,3 +7,11 @@ exit: 0
   `zzzzz` is gone; nothing was left behind.
 
 --- stderr
+
+--- files
+=== created .commandments/sessions/61bdc/one
+a
+=== created .commandments/sessions/61bdc/sins/sins.md
+b
+=== deleted .commandments/sessions/zzzzz/one
+=== deleted .commandments/sessions/zzzzz/sins/sins.md

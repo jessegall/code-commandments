@@ -4,3 +4,14 @@ exit: 0
   <project>/.commandments/sessions/61bdc
 
 --- stderr
+
+--- files
+=== changed .commandments/sessions/.names
+-----
+-----
+The names this project has given its sessions (`commandments session name "<name>"`). A session folder is a hash by default; a named one IS the name, and this says which id it belongs to so an agent can still find its own folder from the id it was given.
+
+Between the dividers is the list: one `name<TAB>session-id` per line. The NAME is the folder under `sessions/`, and the id is what the harness calls the session it holds.
+
+Safe to delete — a named session becomes findable by its hash again — nothing inside it is lost.
+

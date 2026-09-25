@@ -3,3 +3,5 @@ exit: 1
 Say what to call it: `commandments session name "<name>"`.
 
 --- stderr
+
+--- files

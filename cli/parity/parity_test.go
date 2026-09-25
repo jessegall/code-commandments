@@ -63,7 +63,7 @@ func TestTheGoBinaryAnswersEveryCaseAsThePhpToolDid(t *testing.T) {
 }
 
 func TestAGoldenReadsBackAsTheResultItWasWrittenFrom(t *testing.T) {
-	result := Result{Exit: 2, Stdout: "a\n\nb\n", Stderr: "✗ c\n"}
+	result := Result{Exit: 2, Stdout: "a\n\nb\n", Stderr: "✗ c\n", Files: "=== created x\ny\n"}
 
 	if back, err := ReadGolden(Golden(result)); err != nil || back != result {
 		t.Errorf("round trip: %+v, %v", back, err)

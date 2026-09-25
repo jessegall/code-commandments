@@ -1,0 +1,22 @@
+exit: 1
+--- stdout
+
+[1;33mpython/absence[0m  (1)
+  [1;36m↳ LOAD the skill `commandments-python-absence` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/exports.py:7[0m  binary  [2m[InventedDefaultDetector][0m
+
+[1;33mpython/value-objects[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/exports.py:7[0m  call  [2m[DictBagDetector][0m
+  [36mshop/exports.py:7[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/exports.py:7[0m  subscript  [2m[DictBagDetector][0m
+
+[1m4 sins[0m across 2 skills.
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+--- stderr
+
+--- files

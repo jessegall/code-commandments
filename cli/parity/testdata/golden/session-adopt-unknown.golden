@@ -4,3 +4,5 @@ No folder called `zzzzz` here.
   `session list` names every folder, and marks the orphans.
 
 --- stderr
+
+--- files

@@ -1,0 +1,56 @@
+exit: 1
+--- stdout
+
+[1;33mtypescript/absence[0m  (8)
+  [1;36m↳ LOAD the skill `commandments-typescript-absence` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mclient/cart-session.ts:15[0m  FieldDecl items  [2m[FalselyOptionalFieldDetector][0m
+  [36mclient/cart-session.ts:18[0m  FieldDecl currency  [2m[FalselyOptionalFieldDetector][0m
+  [36mclient/label-printer.ts:10[0m  FieldDecl queue  [2m[FalselyOptionalFieldDetector][0m
+  [36mclient/label-printer.ts:21[0m  this.printer?.id  [2m[DefendedCertainFieldDetector][0m
+  [36mclient/order-tracker.ts:21[0m  this.customer?.name  [2m[DefendedCertainFieldDetector][0m
+  [36mclient/order-tracker.ts:26[0m  this.reference?.toLowerCase  [2m[DefendedCertainFieldDetector][0m
+  [36mclient/stock-poller.ts:13[0m  FieldDecl attempts  [2m[FalselyOptionalFieldDetector][0m
+  [36mclient/stock-poller.ts:20[0m  this.channel?.id  [2m[DefendedCertainFieldDetector][0m
+
+[1;33mtypescript/duplication[0m  (15)
+  [1;36m↳ LOAD the skill `commandments-typescript-duplication` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mclient/carrier-rates.ts:11[0m  MethodDecl quote  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: client/carrier-rates.ts:25[0m
+  [36mclient/carrier-rates.ts:25[0m  MethodDecl quote  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: client/carrier-rates.ts:11[0m
+  [36mclient/map-loaders.ts:9[0m  FunctionDecl loadMaps  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: client/map-loaders.ts:20, client/map-loaders.ts:31[0m
+  [36mclient/map-loaders.ts:20[0m  FunctionDecl loadPlaces  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: client/map-loaders.ts:9, client/map-loaders.ts:31[0m
+  [36mclient/map-loaders.ts:31[0m  FunctionDecl loadMarker  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: client/map-loaders.ts:9, client/map-loaders.ts:20[0m
+  [36mclient/packing-slip.ts:12[0m  MethodDecl rows  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: client/packing-slip.ts:26[0m
+  [36mclient/packing-slip.ts:26[0m  MethodDecl lineItems  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: client/packing-slip.ts:12[0m
+  [36mclient/review-feed.ts:11[0m  FunctionDecl loadReviews  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: components/QuestionFeed.vue:14[0m
+  [36mclient/stock-lookup.ts:10[0m  FunctionDecl loadStockLevels  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: components/RestockNotice.vue:15[0m
+  [36mcomponents/NewsletterSignup.vue:11[0m  FunctionDecl subscribe  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: components/NewsletterSignup.vue:21[0m
+  [36mcomponents/NewsletterSignup.vue:21[0m  FunctionDecl resubscribe  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: components/NewsletterSignup.vue:11[0m
+  [36mcomponents/PickListActions.vue:8[0m  FunctionDecl release  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: components/PickListActions.vue:19[0m
+  [36mcomponents/PickListActions.vue:19[0m  FunctionDecl pause  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: components/PickListActions.vue:8[0m
+  [36mcomponents/QuestionFeed.vue:14[0m  VariableDecl loadQuestions  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: client/review-feed.ts:11[0m
+  [36mcomponents/RestockNotice.vue:15[0m  VariableDecl fetchAvailability  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: client/stock-lookup.ts:10[0m
+
+[1m23 sins[0m across 2 skills.
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+--- stderr
+
+--- files

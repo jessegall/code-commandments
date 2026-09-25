@@ -1,7 +1,7 @@
 [
   {"name": "version", "args": ["--version"]},
   {"name": "unknown-verb", "args": ["nope"]},
-  {"name": "unknown-option-without-verb", "args": ["--bogus"], "pending": "judge registered as the default verb"},
+  {"name": "unknown-option-without-verb", "args": ["--bogus"]},
   {"name": "overview", "args": ["--help"], "pending": "every command registered (ticket 10 adds sync, install and the hooks)"},
   {"name": "overview-by-help-verb", "args": ["help"], "pending": "every command registered (ticket 10 adds sync, install and the hooks)"},
   {"name": "overview-for-an-unknown-verb", "args": ["help", "nope"], "pending": "every command registered (ticket 10 adds sync, install and the hooks)"},

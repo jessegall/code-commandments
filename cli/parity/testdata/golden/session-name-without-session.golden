@@ -3,3 +3,5 @@ exit: 1
 No session to name — a shell outside the harness has none of its own.
 
 --- stderr
+
+--- files

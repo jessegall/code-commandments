@@ -1,0 +1,361 @@
+exit: 1
+--- stdout
+
+[1;33mpython/absence[0m  (17)
+  [1;36m↳ LOAD the skill `commandments-python-absence` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/basket_codes.py:8[0m  conditional  [2m[CancelledFallbackDetector][0m
+  [36mshop/charges.py:6[0m  binary  [2m[InventedDefaultDetector][0m
+  [36mshop/closing.py:11[0m  FunctionDef close_till  [2m[NullableCallbackDetector][0m
+  [36mshop/couriers.py:10[0m  Param tracking  [2m[BlankStringDefaultDetector][0m
+  [36mshop/exports.py:7[0m  binary  [2m[InventedDefaultDetector][0m
+  [36mshop/gift_notes.py:10[0m  AnnAssign  [2m[BlankStringDefaultDetector][0m
+  [36mshop/headlines.py:6[0m  Param strapline  [2m[BlankStringDefaultDetector][0m
+  [36mshop/imports_progress.py:11[0m  FunctionDef run  [2m[NullableCallbackDetector][0m
+  [36mshop/mailer_options.py:8[0m  starred  [2m[ConditionalSpreadDetector][0m
+  [36mshop/notes.py:12[0m  binary  [2m[CancelledFallbackDetector][0m
+  [36mshop/payload_fields.py:11[0m  Return_  [2m[InventedDefaultDetector][0m
+  [36mshop/payload_fields.py:21[0m  conditional  [2m[InventedDefaultDetector][0m
+  [36mshop/printer_commands.py:12[0m  starred  [2m[ConditionalSpreadDetector][0m
+  [36mshop/quantities.py:14[0m  call  [2m[CancelledFallbackDetector][0m
+  [36mshop/receipts.py:15[0m  binary  [2m[InventedDefaultDetector][0m
+  [36mshop/retries.py:7[0m  FunctionDef with_retries  [2m[NullableCallbackDetector][0m
+  [36mshop/webhook_payloads.py:8[0m  starred  [2m[ConditionalSpreadDetector][0m
+
+[1;33mpython/behaviour-per-method[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-python-behaviour-per-method` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/invoice_render.py:11[0m  FunctionDef render  [2m[FlagArgumentDetector][0m
+  [36mshop/parcel_labels.py:5[0m  FunctionDef label_for  [2m[FlagArgumentDetector][0m
+  [36mshop/stock_queries.py:12[0m  FunctionDef units_in_stock  [2m[FlagArgumentDetector][0m
+
+[1;33mpython/class-layout[0m  (6)
+  [1;36m↳ LOAD the skill `commandments-python-class-layout` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/basket_limits.py:12[0m  AnnAssign  [2m[MemberOutOfOrderDetector][0m
+  [36mshop/carrier_profiles.py:11[0m  AnnAssign  [2m[MemberOutOfOrderDetector][0m
+  [36mshop/checkout_settings.py:8[0m  Assign  [2m[MemberOutOfOrderDetector][0m
+  [36mshop/export_jobs.py:11[0m  Assign  [2m[MemberAfterMethodDetector][0m
+  [36mshop/loyalty_cards.py:15[0m  AnnAssign  [2m[MemberAfterMethodDetector][0m
+  [36mshop/retry_clients.py:17[0m  Assign  [2m[MemberAfterMethodDetector][0m
+
+[1;33mpython/dependency-direction[0m  (6)
+  [1;36m↳ LOAD the skill `commandments-python-dependency-direction` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/couriers/dispatch.py:5[0m  Import shop  [2m[NamespaceCycleDetector][0m
+  [36mshop/layout/grid.py:4[0m  Import Card  [2m[NamespaceDependencyDetector][0m
+  [36mshop/layout/theme.py:3[0m  Import shop  [2m[NamespaceDependencyDetector][0m
+  [36mshop/storefront/pages.py:7[0m  Import engine  [2m[NamespaceCycleDetector][0m
+  [36mshop/warehouse/stock.py:4[0m  Import Invoice  [2m[NamespaceCycleDetector][0m
+  [36mshop/widgets/card.py:14[0m  Import home  [2m[NamespaceDependencyDetector][0m
+
+[1;33mpython/documentation[0m  (18)
+  [1;36m↳ LOAD the skill `commandments-python-documentation` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/basket_totals.py:9[0m  FunctionDef total  [2m[CeremonyDocblockDetector][0m
+  [36mshop/courier_manifests.py:6[0m  FunctionDef manifest  [2m[DanglingDocReferenceDetector][0m
+  [36mshop/currency_rounding.py:5[0m  ClassDef CurrencyRounder  [2m[NegativeSpaceCommentDetector][0m
+  [36mshop/delivery_windows.py:7[0m  ClassDef DeliveryWindow  [2m[BloatedDocblockDetector][0m
+  [36mshop/feature_flags.py:12[0m  ExprStmt  [2m[NegativeSpaceCommentDetector][0m
+  [36mshop/gift_messages.py:5[0m  ClassDef GiftMessage  [2m[ArchaeologyCommentDetector][0m
+  [36mshop/invoice_numbers.py:7[0m  FunctionDef next_number  [2m[ArchaeologyCommentDetector][0m
+  [36mshop/label_queue.py:13[0m  Raise  [2m[RestatedCommentDetector][0m
+  [36mshop/order_archive.py:7[0m  ForLoop  [2m[RestatedCommentDetector][0m
+  [36mshop/order_exports.py:10[0m  FunctionDef to_csv  [2m[DanglingDocReferenceDetector][0m
+  [36mshop/refund_policies.py:7[0m  ClassDef Rule  [2m[BloatedDocblockDetector][0m
+  [36mshop/reorder_alerts.py:5[0m  ClassDef ReorderAlert  [2m[BloatedDocblockDetector][0m
+  [36mshop/retry_backoff.py:7[0m  FunctionDef backoff  [2m[NegativeSpaceCommentDetector][0m
+  [36mshop/return_labels.py:5[0m  ClassDef ReturnLabel  [2m[DanglingDocReferenceDetector][0m
+  [36mshop/shipping_quotes.py:11[0m  FunctionDef quote  [2m[CeremonyDocblockDetector][0m
+  [36mshop/tax_totals.py:12[0m  Assign  [2m[RestatedCommentDetector][0m
+  [36mshop/voucher_codes.py:6[0m  FunctionDef is_valid  [2m[CeremonyDocblockDetector][0m
+  [36mshop/wishlists.py:12[0m  ExprStmt  [2m[ArchaeologyCommentDetector][0m
+
+[1;33mpython/duplication[0m  (12)
+  [1;36m↳ LOAD the skill `commandments-python-duplication` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/alerts.py:5[0m  FunctionDef register  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/digests.py:6[0m
+  [36mshop/cli.py:11[0m  FunctionDef load_config  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/settings.py:12[0m
+  [36mshop/digests.py:6[0m  FunctionDef register  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/alerts.py:5[0m
+  [36mshop/documents.py:9[0m  FunctionDef rows  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/documents.py:20[0m
+  [36mshop/documents.py:20[0m  FunctionDef line_items  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/documents.py:9[0m
+  [36mshop/encoders.py:11[0m  FunctionDef encode_text  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/encoders.py:20[0m
+  [36mshop/encoders.py:20[0m  FunctionDef encode_html  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/encoders.py:11[0m
+  [36mshop/events.py:12[0m  FunctionDef on_event  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/events.py:21[0m
+  [36mshop/events.py:21[0m  FunctionDef on_event  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/events.py:12[0m
+  [36mshop/holds.py:9[0m  FunctionDef hold_order  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/holds.py:16[0m
+  [36mshop/holds.py:16[0m  FunctionDef release_order  [2m[NearDuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/holds.py:9[0m
+  [36mshop/settings.py:12[0m  FunctionDef read_settings  [2m[DuplicateFunctionDetector][0m
+    [2m↳ same shape as: shop/cli.py:11[0m
+
+[1;33mpython/enums[0m  (21)
+  [1;36m↳ LOAD the skill `commandments-python-enums` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/badge_colours.py:23[0m  MatchStmt  [2m[EnumValueMatchDetector][0m
+  [36mshop/box_sizes.py:22[0m  MatchStmt  [2m[EnumValueMatchDetector][0m
+  [36mshop/carrier_codes.py:7[0m  ClassDef Carrier  [2m[ConstantClassEnumDetector][0m
+  [36mshop/carrier_labels.py:20[0m  MatchStmt  [2m[MatchWildcardReturnsNoneDetector][0m
+  [36mshop/courier_zones.py:18[0m  compare  [2m[InLiteralsMirrorsEnumDetector][0m
+  [36mshop/csv_tokens.py:27[0m  literal  [2m[UnnamedVocabularyLiteralDetector][0m
+  [36mshop/delivery_slots.py:17[0m  MatchStmt  [2m[StringMatchMirrorsEnumDetector][0m
+  [36mshop/drop_slots.py:27[0m  literal  [2m[UnnamedVocabularyLiteralDetector][0m
+  [36mshop/dunning.py:18[0m  binary  [2m[EnumCaseOrChainDetector][0m
+  [36mshop/label_sizes.py:21[0m  literal  [2m[UnnamedVocabularyLiteralDetector][0m
+  [36mshop/loyalty_tiers.py:18[0m  compare  [2m[InLiteralsMirrorsEnumDetector][0m
+  [36mshop/order_status.py:7[0m  ClassDef OrderStatus  [2m[ConstantClassEnumDetector][0m
+  [36mshop/parcel_returns.py:22[0m  binary  [2m[EnumCaseOrChainDetector][0m
+  [36mshop/payment_icons.py:21[0m  MatchStmt  [2m[MatchWildcardReturnsNoneDetector][0m
+  [36mshop/refund_windows.py:22[0m  MatchStmt  [2m[EnumValueMatchDetector][0m
+  [36mshop/reorder_levels.py:18[0m  binary  [2m[EnumCaseOrChainDetector][0m
+  [36mshop/return_reasons.py:22[0m  MatchStmt  [2m[StringMatchMirrorsEnumDetector][0m
+  [36mshop/stock_alerts.py:20[0m  MatchStmt  [2m[MatchWildcardReturnsNoneDetector][0m
+  [36mshop/ticket_triage.py:22[0m  compare  [2m[InLiteralsMirrorsEnumDetector][0m
+  [36mshop/vat_bands.py:7[0m  ClassDef VatBand  [2m[ConstantClassEnumDetector][0m
+  [36mshop/webhook_events.py:13[0m  MatchStmt  [2m[StringMatchMirrorsEnumDetector][0m
+
+[1;33mpython/exceptions[0m  (9)
+  [1;36m↳ LOAD the skill `commandments-python-exceptions` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/catalog_file.py:27[0m  ExceptHandler  [2m[SwallowedExceptionDetector][0m
+  [36mshop/feed_reader.py:18[0m  Raise  [2m[RaiseWithoutCauseDetector][0m
+  [36mshop/plugins.py:10[0m  ExceptHandler  [2m[SwallowedExceptionDetector][0m
+  [36mshop/price_lists.py:23[0m  Raise  [2m[RaiseWithoutCauseDetector][0m
+  [36mshop/quantity_parsing.py:16[0m  Raise  [2m[RaiseWithoutCauseDetector][0m
+  [36mshop/sessions.py:16[0m  Raise  [2m[MessageStringRaiseDetector][0m
+  [36mshop/streams_io.py:12[0m  Raise  [2m[MessageStringRaiseDetector][0m
+  [36mshop/thumbnails.py:8[0m  ExceptHandler  [2m[SwallowedExceptionDetector][0m
+  [36mshop/warehouse_api.py:10[0m  Raise  [2m[MessageStringRaiseDetector][0m
+
+[1;33mpython/fix-at-the-source[0m  (12)
+  [1;36m↳ LOAD the skill `commandments-python-fix-at-the-source` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/ledger_export.py:7[0m  ClassDef LedgerExport  [2m[ConstructorSideEffectDetector][0m
+  [36mshop/order_numbers.py:14[0m  AugAssign  [2m[MutableStaticStateDetector][0m
+  [36mshop/payment_plugins.py:6[0m  ClassDef CardPlugin  [2m[ConstructorSideEffectDetector][0m
+  [36mshop/photo_archive.py:9[0m  FunctionDef archive_photos  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: shop/photo_archive.py:20[0m
+  [36mshop/photo_archive.py:20[0m  FunctionDef archive_thumbnails  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: shop/photo_archive.py:9[0m
+  [36mshop/price_export.py:9[0m  FunctionDef export_prices  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: shop/stock_export.py:9[0m
+  [36mshop/receipt_printers.py:7[0m  ClassDef ReceiptPrinter  [2m[ConstructorSideEffectDetector][0m
+  [36mshop/receipt_signing.py:10[0m  FunctionDef signature_matches  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: shop/receipt_signing.py:18[0m
+  [36mshop/receipt_signing.py:18[0m  FunctionDef refund_signature_matches  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: shop/receipt_signing.py:10[0m
+  [36mshop/stock_export.py:9[0m  FunctionDef export_stock  [2m[DivergentTwinDetector][0m
+    [2m↳ same shape as: shop/price_export.py:9[0m
+  [36mshop/store_context.py:10[0m  Assign  [2m[MutableStaticStateDetector][0m
+  [36mshop/tax_rates.py:11[0m  Assign  [2m[MutableStaticStateDetector][0m
+
+[1;33mpython/flow[0m  (26)
+  [1;36m↳ LOAD the skill `commandments-python-flow` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/attachments.py:12[0m  binary  [2m[CoalescedLoopSubjectDetector][0m
+  [36mshop/audit.py:8[0m  conditional  [2m[ConditionalStatementDetector][0m
+  [36mshop/backups.py:9[0m  conditional  [2m[ConditionalStatementDetector][0m
+  [36mshop/builds.py:7[0m  binary  [2m[ShortCircuitStatementDetector][0m
+  [36mshop/caches.py:11[0m  binary  [2m[ShortCircuitStatementDetector][0m
+  [36mshop/carriers.py:9[0m  IfStmt  [2m[SubjectLadderDetector][0m
+  [36mshop/categories.py:10[0m  call  [2m[CoalescedLoopSubjectDetector][0m
+  [36mshop/coupons.py:11[0m  IfStmt  [2m[DeepNestingDetector][0m
+  [36mshop/freight.py:9[0m  conditional  [2m[NestedConditionalDetector][0m
+  [36mshop/invoice_render.py:13[0m  IfStmt  [2m[RedundantElseDetector][0m
+  [36mshop/invoicing.py:9[0m  IfStmt  [2m[LoopWrappedInIfDetector][0m
+  [36mshop/labels.py:8[0m  IfStmt  [2m[LoopWrappedInIfDetector][0m
+  [36mshop/packing.py:10[0m  MatchStmt  [2m[DeepNestingDetector][0m
+  [36mshop/picking.py:10[0m  IfStmt  [2m[RedundantElseDetector][0m
+  [36mshop/pricing.py:14[0m  IfStmt  [2m[RedundantElseDetector][0m
+  [36mshop/refunds.py:11[0m  IfStmt  [2m[RedundantElseDetector][0m
+  [36mshop/reminders.py:7[0m  IfStmt  [2m[LoopWrappedInIfDetector][0m
+  [36mshop/restock.py:11[0m  ForLoop  [2m[DeepNestingDetector][0m
+  [36mshop/restock.py:13[0m  IfStmt  [2m[LoopWrappedInIfDetector][0m
+  [36mshop/returns_desk.py:6[0m  IfStmt  [2m[SubjectLadderDetector][0m
+  [36mshop/shipments.py:10[0m  conditional  [2m[CoalescedLoopSubjectDetector][0m
+  [36mshop/startup.py:13[0m  binary  [2m[ShortCircuitStatementDetector][0m
+  [36mshop/status_colours.py:7[0m  conditional  [2m[NestedConditionalDetector][0m
+  [36mshop/statuses.py:7[0m  IfStmt  [2m[SubjectLadderDetector][0m
+  [36mshop/subscriptions.py:11[0m  conditional  [2m[ConditionalStatementDetector][0m
+  [36mshop/tiers.py:11[0m  conditional  [2m[NestedConditionalDetector][0m
+
+[1;33mpython/method-mood[0m  (6)
+  [1;36m↳ LOAD the skill `commandments-python-method-mood` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/courier_slots.py:11[0m  FunctionDef ships  [2m[BareStatePredicateDetector][0m
+  [36mshop/parcel_locks.py:11[0m  FunctionDef locks  [2m[BareStatePredicateDetector][0m
+  [36mshop/picking_queue.py:12[0m  FunctionDef sorts  [2m[NarratedCommandDetector][0m
+  [36mshop/shelf_labels.py:12[0m  FunctionDef reloads  [2m[NarratedCommandDetector][0m
+  [36mshop/voucher_guards.py:16[0m  FunctionDef fails_on  [2m[NarratedCommandDetector][0m
+  [36mshop/warehouse_returns.py:10[0m  FunctionDef waits_on_warehouse  [2m[BareStatePredicateDetector][0m
+
+[1;33mpython/pass-the-object[0m  (16)
+  [1;36m↳ LOAD the skill `commandments-python-pass-the-object` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/courier_picks.py:14[0m  FunctionDef pick  [2m[ComputedBooleanArgumentDetector][0m
+  [36mshop/floor_plans.py:20[0m  FunctionDef relabel  [2m[ParamResolvedFromParamDetector][0m
+  [36mshop/kiosk_receipts.py:25[0m  call  [2m[DerivedArgumentDetector][0m
+  [36mshop/ledger_dump.py:10[0m  call  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: shop/ledger_posting.py:12[0m
+  [36mshop/ledger_posting.py:12[0m  call  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: shop/ledger_dump.py:10[0m
+  [36mshop/parcel_weighing.py:17[0m  call  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: shop/parcel_weighing.py:22[0m
+  [36mshop/parcel_weighing.py:22[0m  call  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: shop/parcel_weighing.py:17[0m
+  [36mshop/return_desk.py:14[0m  FunctionDef allows  [2m[ComputedBooleanArgumentDetector][0m
+  [36mshop/route_stops.py:30[0m  FunctionDef tick  [2m[ParamResolvedFromParamDetector][0m
+  [36mshop/seat_maps.py:19[0m  FunctionDef book  [2m[ParamResolvedFromParamDetector][0m
+  [36mshop/shift_reports.py:28[0m  call  [2m[DerivedArgumentDetector][0m
+  [36mshop/stock_badges.py:14[0m  FunctionDef colour  [2m[ComputedBooleanArgumentDetector][0m
+  [36mshop/stock_moves.py:23[0m  call  [2m[DerivedArgumentDetector][0m
+  [36mshop/stock_moves.py:30[0m  call  [2m[DerivedArgumentDetector][0m
+  [36mshop/tip_cents.py:24[0m  call  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: shop/tip_cents.py:30[0m
+  [36mshop/tip_cents.py:30[0m  call  [2m[ConvertedArgumentDetector][0m
+    [2m↳ same shape as: shop/tip_cents.py:24[0m
+
+[1;33mpython/repeated-call-helper[0m  (16)
+  [1;36m↳ LOAD the skill `commandments-python-repeated-call-helper` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/cart_lines.py:15[0m  call  [2m[RepeatedNamedCallDetector][0m
+    [2m↳ same shape as: shop/cart_lines.py:20[0m
+  [36mshop/cart_lines.py:20[0m  call  [2m[RepeatedNamedCallDetector][0m
+    [2m↳ same shape as: shop/cart_lines.py:15[0m
+  [36mshop/courier_pickups.py:8[0m  binary  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: shop/dispatch_desk.py:18, shop/dispatch_desk.py:22[0m
+  [36mshop/dispatch_desk.py:18[0m  binary  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: shop/dispatch_desk.py:22, shop/courier_pickups.py:8[0m
+  [36mshop/dispatch_desk.py:22[0m  binary  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: shop/dispatch_desk.py:18, shop/courier_pickups.py:8[0m
+  [36mshop/escalations.py:12[0m  call  [2m[RepeatedNamedCallDetector][0m
+    [2m↳ same shape as: shop/support_desk.py:7[0m
+  [36mshop/events.py:14[0m  binary  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: shop/events.py:23[0m
+  [36mshop/events.py:23[0m  binary  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: shop/events.py:14[0m
+  [36mshop/loyalty_points.py:15[0m  binary  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: shop/loyalty_points.py:23[0m
+  [36mshop/loyalty_points.py:23[0m  binary  [2m[RepeatedGuardDetector][0m
+    [2m↳ same shape as: shop/loyalty_points.py:15[0m
+  [36mshop/payment_events.py:24[0m  binary  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: shop/refund_events.py:7, shop/payment_events.py:31[0m
+  [36mshop/payment_events.py:31[0m  binary  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: shop/refund_events.py:7, shop/payment_events.py:24[0m
+  [36mshop/refund_events.py:7[0m  binary  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: shop/payment_events.py:24, shop/payment_events.py:31[0m
+  [36mshop/report_cells.py:18[0m  binary  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: shop/report_cells.py:24[0m
+  [36mshop/report_cells.py:24[0m  binary  [2m[RepeatedTypeGuardDetector][0m
+    [2m↳ same shape as: shop/report_cells.py:18[0m
+  [36mshop/support_desk.py:7[0m  call  [2m[RepeatedNamedCallDetector][0m
+    [2m↳ same shape as: shop/escalations.py:12[0m
+
+[1;33mpython/role-vocabulary[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-python-role-vocabulary` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/printer_pool.py:24[0m  call  [2m[NullableRegistryLookupDetector][0m
+  [36mshop/tax_bands.py:17[0m  call  [2m[NullableRegistryLookupDetector][0m
+  [36mshop/voucher_book.py:18[0m  call  [2m[NullableRegistryLookupDetector][0m
+
+[1;33mpython/tell-dont-ask[0m  (9)
+  [1;36m↳ LOAD the skill `commandments-python-tell-dont-ask` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/aisle_signs.py:35[0m  FunctionDef heading  [2m[KeyedLookupEnvyDetector][0m
+  [36mshop/allergen_labels.py:26[0m  FunctionDef allergens_of  [2m[KeyedLookupEnvyDetector][0m
+  [36mshop/discount_rules.py:24[0m  call  [2m[TypeSwitchDetector][0m
+  [36mshop/menu_boards.py:31[0m  FunctionDef vegan_line  [2m[FeatureEnvyDetector][0m
+  [36mshop/pallet_loads.py:22[0m  FunctionDef heaviest_crate  [2m[FeatureEnvyDetector][0m
+  [36mshop/shipping_rates.py:25[0m  call  [2m[TypeSwitchDetector][0m
+  [36mshop/stamp_cards.py:22[0m  FunctionDef redeem  [2m[FeatureEnvyDetector][0m
+  [36mshop/stock_movements.py:12[0m  call  [2m[TypeSwitchDetector][0m
+  [36mshop/till_drawers.py:33[0m  FunctionDef came_up_short  [2m[KeyedLookupEnvyDetector][0m
+
+[1;33mpython/templates[0m  (3)
+  [1;36m↳ LOAD the skill `commandments-python-templates` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/order_emails.py:11[0m  call  [2m[AssembledTemplateDetector][0m
+  [36mshop/packing_slips.py:8[0m  call  [2m[AssembledTemplateDetector][0m
+  [36mshop/receipt_banner.py:7[0m  call  [2m[AssembledTemplateDetector][0m
+
+[1;33mpython/type-honesty[0m  (15)
+  [1;36m↳ LOAD the skill `commandments-python-type-honesty` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/category_walker.py:11[0m  FunctionDef visit  [2m[ScratchStateRestoreDetector][0m
+  [36mshop/markdown_runs.py:19[0m  conditional  [2m[MaskedInvariantDetector][0m
+  [36mshop/order_cards.py:14[0m  call  [2m[PlaceholderFilledDataDetector][0m
+  [36mshop/parcel_kinds.py:10[0m  FunctionDef kind  [2m[ConstantPropertyDetector][0m
+  [36mshop/picking_waves.py:18[0m  conditional  [2m[MaskedInvariantDetector][0m
+  [36mshop/price_tags.py:10[0m  AnnAssign  [2m[PhantomNullableDetector][0m
+  [36mshop/product_teasers.py:16[0m  call  [2m[PlaceholderFilledDataDetector][0m
+  [36mshop/queue_tickets.py:8[0m  Assign  [2m[PhantomNullableDetector][0m
+  [36mshop/receipt_printing.py:14[0m  FunctionDef bundle  [2m[ScratchStateRestoreDetector][0m
+  [36mshop/report_formats.py:12[0m  FunctionDef opening_total  [2m[ConstantPropertyDetector][0m
+  [36mshop/scale_readers.py:11[0m  AnnAssign  [2m[PhantomNullableDetector][0m
+  [36mshop/session_limits.py:11[0m  FunctionDef lifetime_seconds  [2m[ConstantPropertyDetector][0m
+  [36mshop/shipping_notices.py:20[0m  call  [2m[PlaceholderFilledDataDetector][0m
+  [36mshop/tax_contexts.py:17[0m  FunctionDef price_abroad  [2m[ScratchStateRestoreDetector][0m
+  [36mshop/till_sessions.py:17[0m  call  [2m[MaskedInvariantDetector][0m
+
+[1;33mpython/value-objects[0m  (37)
+  [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
+    [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mshop/barcode_parsing.py:13[0m  tuple  [2m[PositionalTupleReturnDetector][0m
+  [36mshop/carrier_rates.py:14[0m  call  [2m[RawDecodedReturnDetector][0m
+  [36mshop/cart_totals.py:9[0m  dict  [2m[DictReturnBagDetector][0m
+  [36mshop/customer_profiles.py:22[0m  call  [2m[HandRolledReplaceDetector][0m
+  [36mshop/customers.py:6[0m  FunctionDef subscribe  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: shop/customers.py:12[0m
+  [36mshop/customers.py:12[0m  FunctionDef enrol  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: shop/customers.py:6[0m
+  [36mshop/delivery.py:8[0m  FunctionDef book_delivery  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: shop/quotes.py:5[0m
+  [36mshop/delivery_addresses.py:7[0m  ClassDef DeliveryAddress  [2m[MutableValueObjectDetector][0m
+  [36mshop/discounts.py:7[0m  call  [2m[DictBagDetector][0m
+  [36mshop/discounts.py:9[0m  call  [2m[DictBagDetector][0m
+  [36mshop/discounts.py:11[0m  call  [2m[DictBagDetector][0m
+  [36mshop/exports.py:7[0m  call  [2m[DictBagDetector][0m
+  [36mshop/exports.py:7[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/exports.py:7[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/frozen_prices.py:7[0m  ClassDef ShelfPrice  [2m[MutableValueObjectDetector][0m
+  [36mshop/import_progress.py:12[0m  dict  [2m[DictReturnBagDetector][0m
+  [36mshop/invoice_split.py:8[0m  tuple  [2m[PositionalTupleReturnDetector][0m
+  [36mshop/opening_hours.py:16[0m  ClassDef Weekday  [2m[CoupledFieldsDetector][0m
+  [36mshop/parcel_routes.py:13[0m  ClassDef ParcelBooking  [2m[CoupledFieldsDetector][0m
+  [36mshop/payload_fields.py:16[0m  call  [2m[DictBagDetector][0m
+  [36mshop/payload_fields.py:16[0m  call  [2m[DictBagDetector][0m
+  [36mshop/price_quotes.py:8[0m  dict  [2m[DictReturnBagDetector][0m
+  [36mshop/price_rules.py:22[0m  call  [2m[HandRolledReplaceDetector][0m
+  [36mshop/quotes.py:5[0m  FunctionDef quote  [2m[DataClumpDetector][0m
+    [2m↳ same shape as: shop/delivery.py:8[0m
+  [36mshop/shelf_audits.py:11[0m  ClassDef ShelfAudit  [2m[CoupledFieldsDetector][0m
+  [36mshop/shipment_records.py:21[0m  call  [2m[HandRolledReplaceDetector][0m
+  [36mshop/shipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/shipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/shipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/shipping_labels.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/stock_counts.py:8[0m  tuple  [2m[PositionalTupleReturnDetector][0m
+  [36mshop/stock_report.py:8[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/stock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/stock_report.py:10[0m  subscript  [2m[DictBagDetector][0m
+  [36mshop/store_settings.py:15[0m  call  [2m[RawDecodedReturnDetector][0m
+  [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedReturnDetector][0m
+  [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
+
+[1m235 sins[0m across 18 skills.
+[2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
+[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+
+--- stderr
+
+--- files

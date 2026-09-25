@@ -3,3 +3,12 @@ exit: 0
 ▸ 001.5 queued — Sub
 
 --- stderr
+
+--- files
+=== created .commandments/sessions/61bdc/tasks/queue/001.5-sub.md
+# Sub
+
+why not
+
+- queued <time>
+

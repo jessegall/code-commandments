@@ -3,3 +3,12 @@ exit: 0
 ▸ 001 queued — Port the CLI — all of it!
 
 --- stderr
+
+--- files
+=== created .commandments/sessions/61bdc/tasks/queue/001-port-the-cli-all-of-it.md
+# Port the CLI — all of it!
+
+because Go is the whole tool
+
+- queued <time>
+

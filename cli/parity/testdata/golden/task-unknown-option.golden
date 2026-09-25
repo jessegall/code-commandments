@@ -3,3 +3,5 @@ exit: 2
 
 --- stderr
 Unknown option --by for `task`. Try: commandments task --help
+
+--- files

@@ -4,3 +4,5 @@ Name the task by its number.
   `commandments task` lists what is open, `commandments task history` what is closed.
 
 --- stderr
+
+--- files

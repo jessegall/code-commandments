@@ -1,0 +1,8 @@
+exit: 0
+--- stdout
+[32m✓ No sins found in 0 files.[0m
+
+--- stderr
+
+--- files
+=== deleted .commandments/sessions/61bdc/sins/sins.md

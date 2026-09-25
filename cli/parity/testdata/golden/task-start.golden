@@ -3,3 +3,12 @@ exit: 0
 ▸ 001 started — First
 
 --- stderr
+
+--- files
+=== created .commandments/sessions/61bdc/tasks/active/001-first.md
+# First
+
+- queued <time>
+- started <time>
+
+=== deleted .commandments/sessions/61bdc/tasks/queue/001-first.md

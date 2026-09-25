@@ -3,3 +3,10 @@ exit: 0
 ▸ 004 queued — Next
 
 --- stderr
+
+--- files
+=== created .commandments/sessions/61bdc/tasks/queue/004-next.md
+# Next
+
+- queued <time>
+
