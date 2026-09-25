@@ -31,3 +31,6 @@ func (UnnamedVocabularyLiteralDetector) Find(codebase *engine.Codebase) []engine
 
 	return findings
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (UnnamedVocabularyLiteralDetector) WholeTree() {}

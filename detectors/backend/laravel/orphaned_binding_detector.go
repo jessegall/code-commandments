@@ -30,3 +30,6 @@ func (OrphanedBindingDetector) Find(codebase *engine.Codebase) []engine.Match {
 		})).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (OrphanedBindingDetector) WholeTree() {}

@@ -24,3 +24,6 @@ func (InArrayMirrorsEnumDetector) Find(codebase *engine.Codebase) []engine.Match
 		Where(engine.As(func(n php.Node) bool { return php.EnumsOf(codebase).MirroredBy(n.ArgumentArrayLiterals(1)) })).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (InArrayMirrorsEnumDetector) WholeTree() {}

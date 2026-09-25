@@ -30,3 +30,6 @@ func (FeatureEnvyDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(func(n py.Node) bool { _, envies := program.EnviedParameter(n); return envies })).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (FeatureEnvyDetector) WholeTree() {}

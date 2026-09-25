@@ -30,3 +30,6 @@ func (ParamResolvedFromParamDetector) Find(codebase *engine.Codebase) []engine.M
 		Where(engine.As(program.UnpacksTargetFromContainerParam)).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (ParamResolvedFromParamDetector) WholeTree() {}

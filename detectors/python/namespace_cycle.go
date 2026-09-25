@@ -26,3 +26,6 @@ func (NamespaceCycleDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).Program.PackageArrows().ClosingAMutualPair()
 
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (NamespaceCycleDetector) WholeTree() {}

@@ -79,3 +79,6 @@ func (DuplicateElementDetector) GroupKey(match engine.Match) (string, bool) {
 
 // Repentable says a scribe rewrites the sin away.
 func (DuplicateElementDetector) Repentable() {}
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (DuplicateElementDetector) WholeTree() {}

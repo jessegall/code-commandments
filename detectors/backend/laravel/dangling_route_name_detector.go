@@ -30,3 +30,6 @@ func (DanglingRouteNameDetector) Find(codebase *engine.Codebase) []engine.Match 
 		Reject(engine.As(func(n laravelnode.Node) bool { return names.IsRegistered(n.RouteNameReference()) })).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (DanglingRouteNameDetector) WholeTree() {}

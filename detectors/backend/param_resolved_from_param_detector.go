@@ -45,3 +45,6 @@ func takesABoundary(codebase *engine.Codebase, method engine.Match) bool {
 
 	return false
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (ParamResolvedFromParamDetector) WholeTree() {}

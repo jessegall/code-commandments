@@ -31,3 +31,6 @@ func (PhantomNullableDetector) Find(codebase *engine.Codebase) []engine.Match {
 
 	return findings
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (PhantomNullableDetector) WholeTree() {}

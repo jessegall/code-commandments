@@ -52,3 +52,6 @@ func flatten(groups [][]engine.Match) []engine.Match {
 func (RepeatedGuardDetector) GroupKey(match engine.Match) (string, bool) {
 	return guardFingerprint(match)
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (RepeatedGuardDetector) WholeTree() {}

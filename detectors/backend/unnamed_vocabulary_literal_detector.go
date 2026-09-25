@@ -25,3 +25,6 @@ func (UnnamedVocabularyLiteralDetector) Find(codebase *engine.Codebase) []engine
 		Reject(engine.As(php.Node.IsParameterDefault)).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (UnnamedVocabularyLiteralDetector) WholeTree() {}

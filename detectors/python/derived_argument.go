@@ -26,3 +26,6 @@ func (DerivedArgumentDetector) Sin() sins.Sin {
 func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return matches(py.In(codebase).Program.DerivedArgumentCalls())
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (DerivedArgumentDetector) WholeTree() {}

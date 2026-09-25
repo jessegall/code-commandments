@@ -26,3 +26,6 @@ func (BlankStringDefaultDetector) Find(codebase *engine.Codebase) []engine.Match
 		Where(engine.As(php.Node.DefaultedNameTestedForBlankness)).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (BlankStringDefaultDetector) WholeTree() {}

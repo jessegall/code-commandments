@@ -23,3 +23,6 @@ func (EnumCaseOrChainDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(func(n php.Node) bool { return php.EnumsOf(codebase).IsIndexed(n.OrChainComparedClass()) })).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (EnumCaseOrChainDetector) WholeTree() {}

@@ -63,3 +63,6 @@ func hasValueParamSignature(n py.Node) bool {
 func (DataClumpDetector) GroupKey(match engine.Match) (string, bool) {
 	return strings.Join(py.Node{Match: match}.ValueParamSignature(), ", "), true
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (DataClumpDetector) WholeTree() {}

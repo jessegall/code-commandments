@@ -30,3 +30,6 @@ func (DanglingDocReferenceDetector) Find(codebase *engine.Codebase) []engine.Mat
 		Where(engine.As(program.HasDanglingDocReference)).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (DanglingDocReferenceDetector) WholeTree() {}

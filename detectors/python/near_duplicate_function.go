@@ -50,3 +50,6 @@ func (NearDuplicateFunctionDetector) GroupKey(match engine.Match) (string, bool)
 
 	return shape, shape != ""
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (NearDuplicateFunctionDetector) WholeTree() {}

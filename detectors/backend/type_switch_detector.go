@@ -38,3 +38,6 @@ func (TypeSwitchDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(php.Node.TypeSwitchTranslatesEveryArm)).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (TypeSwitchDetector) WholeTree() {}

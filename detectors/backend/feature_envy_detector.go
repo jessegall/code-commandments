@@ -34,3 +34,6 @@ func (FeatureEnvyDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(func(n engine.Match) bool { return envy.IsEnviedOwner(n, boundary) }).
 		Get()
 }
+
+// WholeTree says the verdict reads beyond the file it judges, so a per-file check must not ask it.
+func (FeatureEnvyDetector) WholeTree() {}
