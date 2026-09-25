@@ -320,3 +320,113 @@ func ParamForArgument(params []engine.Match, argument engine.Match, position int
 
 	return engine.Match{}
 }
+
+// wireTypeAttributes are the attributes that write a field's TypeScript type by hand.
+var wireTypeAttributes = []string{"LiteralTypeScriptType", "TypeScriptType"}
+
+// DeclaresNullableWireType says whether the parameter or property the node belongs to writes its TypeScript type by
+// hand as nullable: null is then part of the serialized contract.
+func (n Node) DeclaresNullableWireType() bool {
+	carrier := n
+	for carrier.Exists() && carrier.Kind() != "Param" && carrier.Kind() != "Stmt_Property" {
+		carrier = carrier.Up()
+	}
+	for _, group := range carrier.Children() {
+		if group.Kind() != "AttributeGroup" {
+			continue
+		}
+		for _, attribute := range group.Children() {
+			if attribute.Kind() != "Attribute" || !slices.Contains(wireTypeAttributes, ShortName(attribute.Child("name").Name())) {
+				continue
+			}
+			arguments := Arguments(attribute)
+			if len(arguments) == 0 {
+				continue
+			}
+			if written, ok := arguments[0].Child("value").Text(); arguments[0].Child("value").Kind() == "Scalar_String" && ok && typeStringIsNullable(written) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func typeStringIsNullable(written string) bool {
+	if strings.HasPrefix(strings.TrimSpace(written), "?") {
+		return true
+	}
+
+	return slices.ContainsFunc(strings.Split(written, "|"), func(part string) bool { return strings.ToLower(strings.TrimSpace(part)) == "null" })
+}
+
+// DecidesOnBoolsAlone says whether the node declares a function, constructors aside, whose every parameter is a bool
+// it branches on.
+func (n Node) DecidesOnBoolsAlone() bool {
+	if !n.IsFunctionDeclaration() || n.IsConstructorDeclaration() {
+		return false
+	}
+	named := 0
+	for _, param := range Params(n.Match) {
+		variable := param.Child("var")
+		if variable.Kind() != "Expr_Variable" || variable.Name() == "" {
+			continue
+		}
+		named++
+		if !strings.EqualFold(Written(param.Node().Declared).SimpleName(), "bool") || !n.readsAsCondition(variable.Name()) {
+			return false
+		}
+	}
+
+	return named > 0
+}
+
+// readsAsCondition says whether the named variable decides a branch anywhere under the node.
+func (n Node) readsAsCondition(name string) bool {
+	for _, variable := range withDescendants(n.Match) {
+		if variable.Kind() != "Expr_Variable" || variable.Name() != name {
+			continue
+		}
+		parent := variable.Parent()
+		switch parent.Kind() {
+		case "Expr_BooleanNot", "Expr_BinaryOp_BooleanAnd", "Expr_BinaryOp_BooleanOr":
+			return true
+		}
+		if isConditionOf(parent, variable) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ArgumentSubjectType is the one class every argument of the call asks something of — a method sent or a property
+// read on it; empty when an argument asks nothing, or they ask different or unknown things.
+func (n Node) ArgumentSubjectType() string {
+	arguments := Arguments(n.Match)
+	if len(arguments) == 0 || !n.EnclosingFunctionLike().Exists() {
+		return ""
+	}
+	types := TypesOf(n.Codebase())
+	subjects := map[string]bool{}
+	for _, argument := range arguments {
+		asked := 0
+		for _, node := range withDescendants(argument.Child("value")) {
+			if isMethodSend(node) || node.Kind() == "Expr_PropertyFetch" {
+				asked++
+				subjects[types.TypeOf(node.Child("var"))] = true
+			}
+		}
+		if asked == 0 {
+			return ""
+		}
+	}
+	if len(subjects) != 1 || subjects[""] {
+		return ""
+	}
+	for subject := range subjects {
+		return subject
+	}
+
+	return ""
+}

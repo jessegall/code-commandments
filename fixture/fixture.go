@@ -3,6 +3,7 @@ package fixture
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -58,11 +59,43 @@ func (f Fixture) Prove(t testing.TB) {
 	for _, detector := range f.Detectors {
 		f.proveDiversity(t, detector)
 	}
+	for detector, deepest := range f.ChainDepths() {
+		if deepest < MinChainFiles {
+			t.Errorf("%s is a chain detector but its deepest finding crosses only %d file(s); it must follow a value through %d or more", detector, deepest, MinChainFiles)
+		}
+	}
 	for detector, widest := range f.RecurrenceSpans() {
 		if widest < MinRecurrenceFiles {
 			t.Errorf("%s is a recurrence detector but its widest group touches only %d file(s); mark one recurring group across two classes or files, not twice in one", detector, widest)
 		}
 	}
+}
+
+// MinChainFiles is how many files a chain detector's deepest finding must cross.
+const MinChainFiles = 5
+
+// ChainDepths is, for every chain detector, how many files its deepest finding's chain crosses.
+func (f Fixture) ChainDepths() map[string]int {
+	depths := map[string]int{}
+	for _, detector := range f.Detectors {
+		chained, ok := detector.(detectors.ChainDetector)
+		if !ok {
+			continue
+		}
+		deepest := 0
+		for _, finding := range detector.Find(f.Codebase) {
+			files := map[string]bool{}
+			for _, step := range chained.ChainPath(finding, f.Codebase) {
+				if _, file, found := strings.Cut(step, "@"); found {
+					files[file] = true
+				}
+			}
+			deepest = max(deepest, len(files))
+		}
+		depths[catalog.Name(detector)] = deepest
+	}
+
+	return depths
 }
 
 // MinRecurrenceFiles is how many files a recurrence detector's widest group must reach.

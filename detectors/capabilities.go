@@ -29,3 +29,9 @@ type RequiresBestDesign interface {
 type RecurrenceDetector interface {
 	GroupKey(finding engine.Match, codebase *engine.Codebase) string
 }
+
+// ChainDetector marks a detector whose verdict follows a value through the whole program: its finding's evidence is
+// the chain of kind@file steps the value took, and the fixture must show one crossing several files.
+type ChainDetector interface {
+	ChainPath(finding engine.Match, codebase *engine.Codebase) []string
+}

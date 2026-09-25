@@ -35,10 +35,16 @@ func (f Fixture) Scenarios(detector detectors.Detector) ([]Scenario, error) {
 }
 
 // ScopeScenarios reads each finding as the whole lines of its scope: the type it sits in, else its
-// function, else itself.
+// function, else itself; a chain detector's finding reads as the chain its value took.
 func ScopeScenarios(codebase *engine.Codebase, detector detectors.Detector) ([]Scenario, error) {
 	var scenarios []Scenario
+	chained, isChain := detector.(detectors.ChainDetector)
 	for _, finding := range detector.Find(codebase) {
+		if isChain {
+			scenarios = append(scenarios, Scenario{File: finding.File(), Source: strings.Join(chained.ChainPath(finding, codebase), "\n")})
+
+			continue
+		}
 		scope := finding.EnclosingType()
 		if !scope.Exists() {
 			scope = finding.EnclosingFunction()
