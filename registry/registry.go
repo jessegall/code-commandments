@@ -3,4 +3,7 @@
 // Package registry enrols every shipped rule: importing it registers each sin, skill and detector.
 package registry
 
-import ()
+import (
+	_ "github.com/jessegall/code-commandments/sins/python"
+	_ "github.com/jessegall/code-commandments/skill/python"
+)

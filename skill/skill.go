@@ -35,8 +35,14 @@ type Definition struct {
 	Principle             string
 	ExamplesKeepDocblocks bool
 	Languages             []string
-	Related               []string
+	Related               []Relation
 	References            []string
+}
+
+// Relation is a skill another one points its reader on to, by slug, with the one line that says why.
+type Relation struct {
+	Slug string
+	Note string
 }
 
 var skills catalog.Catalog[Skill]
