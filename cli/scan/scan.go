@@ -3,6 +3,7 @@
 package scan
 
 import (
+	"path/filepath"
 	"slices"
 	"sort"
 
@@ -16,6 +17,36 @@ import (
 
 // Sources are a tree's source files, by language.
 type Sources map[source.Language][]string
+
+// Given is each walked file's resolved path, back to the path it was walked as: a bridge answers with
+// resolved paths, and a report names a file the way the run was asked for it.
+type Given map[string]string
+
+// Of is the path the file was walked as; a file the walk never met keeps its path.
+func (g Given) Of(path string) string {
+	if given, walked := g[path]; walked {
+		return given
+	}
+
+	return path
+}
+
+// GivenOf is where each of the sources' files was walked from.
+func (s Sources) GivenOf() Given {
+	given := Given{}
+
+	for _, files := range s {
+		for _, file := range files {
+			if real, err := filepath.EvalSymlinks(file); err == nil {
+				if absolute, err := filepath.Abs(real); err == nil {
+					given[absolute] = file
+				}
+			}
+		}
+	}
+
+	return given
+}
 
 // Walk finds the source files under every root, less what is excluded, each file once.
 func Walk(roots []string, excluded source.Excluded) Sources {

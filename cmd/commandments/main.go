@@ -6,8 +6,10 @@ import (
 	"os"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/session"
 	"github.com/jessegall/code-commandments/cli/task"
+	_ "github.com/jessegall/code-commandments/registry"
 )
 
 // version is stamped by the release build; a local build is dev.
@@ -20,6 +22,7 @@ func main() {
 // Kernel is the kernel with every command registered, in the order the overview lists them.
 func Kernel() *cli.Kernel {
 	return cli.NewKernel(version,
+		judge.Command{},
 		session.Command{},
 		task.Command{},
 	)

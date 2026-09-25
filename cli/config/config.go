@@ -388,10 +388,11 @@ func engineOf(namespace []string) (catalog.Engine, bool) {
 	}
 }
 
-// Disables says whether the config turns the rule off.
-func (c Config) Disables(rule Rule) bool {
+// Disables says whether the config turns off any of the rules: a detector is off when it, its sin or its
+// skill is named.
+func (c Config) Disables(rules ...Rule) bool {
 	for _, class := range c.Disabled {
-		if named, shipped := RuleOf(class); shipped && named == rule {
+		if named, shipped := RuleOf(class); shipped && slices.Contains(rules, named) {
 			return true
 		}
 	}
