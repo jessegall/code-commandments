@@ -31,3 +31,8 @@ func (c *Codebase) WhereMemberAccess() *engine.Query {
 func (c *Codebase) WhereFunction() *engine.Query {
 	return c.Where(engine.As(Node.IsFunction))
 }
+
+// WhereObjectType opens a query over every declared object shape: an interface, or a type alias of an object.
+func (c *Codebase) WhereObjectType() *engine.Query {
+	return c.Where(engine.As(Node.IsObjectType))
+}

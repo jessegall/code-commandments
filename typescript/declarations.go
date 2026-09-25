@@ -96,3 +96,25 @@ func (n Node) boundNames() []string {
 
 	return names
 }
+
+// IsObjectType says whether the node declares an object's shape: an interface, or a type alias of a literal
+// object type.
+func (n Node) IsObjectType() bool {
+	return n.Kind() == "InterfaceDeclaration" || (n.Kind() == "TypeAliasDeclaration" && n.Child("type").Kind() == "TypeLiteral")
+}
+
+// FieldNames is the names of the members an object type declares itself, in order.
+func (n Node) FieldNames() []string {
+	members := n.ChildrenIn("members")
+	if n.Kind() == "TypeAliasDeclaration" {
+		members = n.Child("type").ChildrenIn("members")
+	}
+	var names []string
+	for _, member := range members {
+		if member.Name() != "" {
+			names = append(names, member.Name())
+		}
+	}
+
+	return names
+}
