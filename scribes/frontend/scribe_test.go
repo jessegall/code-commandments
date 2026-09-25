@@ -10,7 +10,6 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
-	engine "github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/scribes"
 )
 
@@ -42,15 +41,7 @@ func project(t *testing.T, files map[string]string) string {
 // goRewrites is what the detector's step rewrites in the folder here, keyed by path relative to it.
 func goRewrites(t *testing.T, detector detectors.Detector, dir string) map[string]string {
 	t.Helper()
-	command, err := engine.Here().Command()
-	if err != nil {
-		t.Fatal(err)
-	}
-	scanner, err := scribes.Serve(command, engine.Over)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer scanner.Close()
+	scanner := served(t)
 	steps := scribes.Steps(catalog.Frontend, scanner, []detectors.Detector{detector})
 	if len(steps) != 1 {
 		t.Fatalf("no step fixes %T", detector)

@@ -4,7 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	engine "github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/vue"
 	"github.com/jessegall/code-commandments/scribes"
 )
@@ -36,15 +35,7 @@ func (o *scriptedOracle) ResolveAll(queries []vue.TypeQuery) map[string]map[stri
 // relative to it.
 func rewrittenWith(t *testing.T, detector, strategy string, oracle vue.TypeOracle, dir string) map[string]string {
 	t.Helper()
-	command, err := engine.Here().Command()
-	if err != nil {
-		t.Fatal(err)
-	}
-	scanner, err := scribes.Serve(command, engine.Over)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer scanner.Close()
+	scanner := served(t)
 	codebase, err := scanner.Scan(scribes.Pass{Roots: []string{dir}, Scope: everywhere{}})
 	if err != nil {
 		t.Fatal(err)

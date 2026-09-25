@@ -14,7 +14,10 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/jessegall/code-commandments/bridge"
+	engine "github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php/shop"
+	"github.com/jessegall/code-commandments/scribes"
 )
 
 // record asks PHP again for every answer the tests hold the scribes to, and commits what it says.
@@ -44,9 +47,37 @@ var (
 	recorded    = map[string]answer{}
 )
 
+var (
+	bridgeOnce   sync.Once
+	bridgeServer *bridge.Server
+	bridgeErr    error
+)
+
+// served is a scanner over the one frontend bridge the package's tests share, started on first use.
+func served(t *testing.T) *scribes.Scanner {
+	t.Helper()
+	bridgeOnce.Do(func() {
+		command, err := engine.Here().Command()
+		if err != nil {
+			bridgeErr = err
+
+			return
+		}
+		bridgeServer, bridgeErr = bridge.Serve(command)
+	})
+	if bridgeErr != nil {
+		t.Fatal(bridgeErr)
+	}
+
+	return scribes.Over(bridgeServer, engine.Over)
+}
+
 func TestMain(m *testing.M) {
 	flag.Parse()
 	code := m.Run()
+	if bridgeServer != nil {
+		bridgeServer.Close()
+	}
 	if *record && code == 0 {
 		if err := writeAnswers(); err != nil {
 			os.Stderr.WriteString(err.Error() + "\n")

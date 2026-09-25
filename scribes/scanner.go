@@ -21,6 +21,7 @@ type Scanner struct {
 	drafts   Rewrites
 	codebase *engine.Codebase
 	frozen   map[string]bool
+	owned    bool
 }
 
 // Serve starts the bridge the command runs, serving, read by read.
@@ -29,8 +30,15 @@ func Serve(command []string, read Reader) (*Scanner, error) {
 	if err != nil {
 		return nil, err
 	}
+	scanner := Over(server, read)
+	scanner.owned = true
 
-	return &Scanner{server: server, read: read, frozen: map[string]bool{}}, nil
+	return scanner, nil
+}
+
+// Over reads through a bridge already serving, which the scanner shares and leaves serving when it closes.
+func Over(server *bridge.Server, read Reader) *Scanner {
+	return &Scanner{server: server, read: read, frozen: map[string]bool{}}
 }
 
 // Scan is the codebase under the pass's roots read through its drafts; the same drafts read the same codebase.
@@ -80,8 +88,12 @@ func (s *Scanner) IsFrozen(path string) bool {
 	return s.frozen[path]
 }
 
-// Close stops the bridge.
+// Close stops the bridge the scanner started; a shared one keeps serving.
 func (s *Scanner) Close() error {
+	if !s.owned {
+		return nil
+	}
+
 	return s.server.Close()
 }
 
