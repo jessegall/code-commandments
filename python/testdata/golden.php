@@ -147,3 +147,32 @@ foreach ($defs as [$def, $module]) {
 }
 
 $write('reach', $reach);
+
+// What each class is by name — an enum with its member keys, a TypedDict, a dataclass — and, for each of its
+// methods, the parameters annotated with a class the codebase owns.
+$declared = [];
+
+foreach ($codebase->modules() as $module) {
+    foreach ($module->nodes() as $node) {
+        if (! $node instanceof ClassDef) {
+            continue;
+        }
+
+        $owned = [];
+
+        foreach ($node->body->body as $member) {
+            if ($member instanceof FunctionDef) {
+                $owned[$member->name] = $codebase->ownedParameters($member, $node);
+            }
+        }
+
+        $declared[$symbol($node, $module) . '@' . $place($module, $node->start)] = [
+            'enum' => $codebase->enums()->isEnum($node->name) ? $node->memberValueKeys() : null,
+            'typedDict' => $codebase->typedDicts()->isTypedDict($node->name),
+            'dataclass' => $codebase->dataclasses()->named($node->name)->isSome(),
+            'owned' => (object) $owned,
+        ];
+    }
+}
+
+$write('declarations', $declared);

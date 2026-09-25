@@ -32,7 +32,7 @@ func fill(codebase *engine.Codebase) {
 				}
 			}
 			facts.Inherited = node.IsFunction() && program.IsOverride(node)
-			facts.Constant = node.isConstant()
+			facts.Constant = node.isConstant() || program.isEnumCase(node)
 			program.resolveType(facts.Declared, module)
 			program.resolveType(facts.Returns, module)
 		}
@@ -224,4 +224,9 @@ func (p *Program) fillRefs(module *Module) {
 			comment.Refs = append(comment.Refs, ref)
 		}
 	}
+}
+
+// isEnumCase says whether the expression reads a case of an enum the program declares: `Colour.RED`.
+func (p *Program) isEnumCase(node Node) bool {
+	return node.Kind() == "Attribute" && node.Child("value").Kind() == "Name" && p.IsEnum(node.Child("value").Name())
 }

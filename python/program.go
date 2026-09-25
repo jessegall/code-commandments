@@ -23,6 +23,7 @@ type Program struct {
 	flow     attributeFlow
 	packages packageGraph
 	reach    resourceReach
+	names    declarations
 }
 
 // Module is one Python file and the dotted name Python imports it by.

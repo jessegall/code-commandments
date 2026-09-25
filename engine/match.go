@@ -131,6 +131,19 @@ func (m Match) Name() string {
 	return m.node.Name
 }
 
+// Written is the node's source text: the bytes of its span, as the file spells them; empty for no node.
+func (m Match) Written() string {
+	if m.node == nil {
+		return ""
+	}
+	source, err := m.file.Source()
+	if err != nil {
+		return ""
+	}
+
+	return string(source[m.node.Span.Start:m.node.Span.End])
+}
+
 // Text is a literal's decoded string value; false when the node is no string literal.
 func (m Match) Text() (string, bool) {
 	if m.node == nil || m.node.Value == nil {
