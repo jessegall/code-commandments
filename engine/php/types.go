@@ -31,7 +31,7 @@ type Types struct {
 	traitsOf   map[string][]string
 
 	mutex  sync.Mutex
-	locals map[*contract.Node]map[string]string
+	locals map[scope]map[string]string
 }
 
 var resolvers sync.Map
@@ -57,7 +57,7 @@ func indexTypes(codebase *engine.Codebase) *Types {
 		element:    map[string]map[string]string{},
 		parentOf:   map[string]string{},
 		traitsOf:   map[string][]string{},
-		locals:     map[*contract.Node]map[string]string{},
+		locals:     map[scope]map[string]string{},
 	}
 	for _, file := range codebase.Of(contract.PHP).Files() {
 		for _, node := range file.Nodes() {
@@ -181,9 +181,23 @@ func (t *Types) TypeOf(expr engine.Match) string {
 	if !function.Exists() {
 		return ""
 	}
-	self := enclosingClassName(expr)
+
+	return t.typeIn(expr, function, enclosingClassName(expr))
+}
+
+// typeIn is the class the expression holds, read in the function as though it sat in the class.
+func (t *Types) typeIn(expr, function engine.Match, self string) string {
+	if !function.Exists() {
+		return ""
+	}
 
 	return t.resolve(expr, t.localTypes(function, self), self)
+}
+
+// scope is a function read as though it sat in a class: `$this` is that class.
+type scope struct {
+	function *contract.Node
+	self     string
 }
 
 // Fill writes what the engine fills for PHP: the `resolved` TypeOf answers for every expression inside a function,
@@ -373,10 +387,10 @@ func (t *Types) resolve(expr engine.Match, locals map[string]string, self string
 
 // localTypes is the class each variable of a function holds: what it captures, its parameters, then each
 // assignment in the order written, nested functions' included, the last one winning; then a `foreach` over a typed
-// collection field types its value. Read once per function, in the class of its first asker.
+// collection field types its value. Read once per function and class.
 func (t *Types) localTypes(function engine.Match, self string) map[string]string {
 	t.mutex.Lock()
-	cached, ok := t.locals[function.Node()]
+	cached, ok := t.locals[scope{function.Node(), self}]
 	t.mutex.Unlock()
 	if ok {
 		return cached
@@ -411,10 +425,10 @@ func (t *Types) localTypes(function engine.Match, self string) map[string]string
 	}
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	if cached, ok := t.locals[function.Node()]; ok {
+	if cached, ok := t.locals[scope{function.Node(), self}]; ok {
 		return cached
 	}
-	t.locals[function.Node()] = locals
+	t.locals[scope{function.Node(), self}] = locals
 
 	return locals
 }

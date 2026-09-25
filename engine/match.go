@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -238,6 +239,29 @@ func (m Match) IsDocumented() bool {
 	}
 
 	return false
+}
+
+// SameSyntax says whether two nodes are written alike: the same kinds in the same slots, with the same names,
+// literals, operators, modifiers and flags, child for child. Where they sit and how they are spaced is no part of it.
+func (m Match) SameSyntax(other Match) bool {
+	return m.Exists() && other.Exists() && sameSyntax(m.node, other.node)
+}
+
+func sameSyntax(a, b *contract.Node) bool {
+	if a.Kind != b.Kind || a.Field != b.Field || a.Name != b.Name || a.Literal != b.Literal || a.Operator != b.Operator ||
+		!slices.Equal(a.Modifiers, b.Modifiers) || !slices.Equal(a.Flags, b.Flags) || len(a.Children) != len(b.Children) {
+		return false
+	}
+	if (a.Value == nil) != (b.Value == nil) || (a.Value != nil && !a.Value.Equal(*b.Value)) {
+		return false
+	}
+	for i := range a.Children {
+		if !sameSyntax(a.Children[i], b.Children[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Span is the node's byte range in its file.

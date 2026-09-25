@@ -159,6 +159,11 @@ func (v *Value) UnmarshalJSON(data []byte) error {
 	return fmt.Errorf("a value is a string, a boolean or null, got %s", data)
 }
 
+// Equal says whether two values are the same value.
+func (v Value) Equal(other Value) bool {
+	return string(v.raw) == string(other.raw)
+}
+
 // IsNull says whether the value is the literal null.
 func (v Value) IsNull() bool {
 	return string(v.raw) == "null"

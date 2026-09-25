@@ -68,10 +68,12 @@ usort($questions, static fn (Question $a, Question $b): int => $a->name() <=> $b
 // The files the bridge writes, in its sorted order: a scan walks the filesystem's own order, and where two files
 // declare one class, the one parsed last is the one every answer reads.
 $paths = \CodeCommandments\PhpBridge\Sources::in([$root]);
-$codebase = Codebase::scan($paths);
-$files = $codebase->files();
 @mkdir($out, 0o755, true);
 foreach ($questions as $question) {
+    // A codebase of its own per question: the PHP engine memoises per codebase, and what one analysis caches (a
+    // function's local types, under the class that asked first) must not colour another's answers.
+    $codebase = Codebase::scan($paths);
+    $files = $codebase->files();
     $handle = fopen("{$out}/{$question->name()}.jsonl", 'w');
     foreach ($files as $file) {
         $relative = relative($file->path);
