@@ -1,0 +1,12 @@
+count: 0
+last-seen: line one line two
+muted: yes
+-----
+How often the judge nudge has fired this session.
+
+The block above the first divider is this file's state, one `name: value` per line:
+  count      nudges so far
+  last-seen  when the last one fired
+  muted      yes when the user silenced it
+
+Safe to delete — it regenerates.

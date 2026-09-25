@@ -1,0 +1,13 @@
+since: 2026-09-25
+-----
+src/A.php
+src/B.vue
+-----
+The files this session touched.
+
+The block above the first divider is this file's state, one `name: value` per line:
+  since  when the list began
+
+Between the dividers is the list: one touched path per line
+
+Safe to delete — the next edit starts it again.

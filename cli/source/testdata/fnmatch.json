@@ -1,0 +1,962 @@
+[
+    {
+        "pattern": "*.php",
+        "name": "a.php",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "*.php",
+        "name": "src\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "src\/sub\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "src",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "x\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "x\/y\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "abc",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "a\/c",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "tests\/alpha",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "tests\/delta",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "x*y",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "xzy",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "lib\/one\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "lib\/one\/two\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*.php",
+        "name": "deep\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "src\/a.php",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "src\/*",
+        "name": "src\/sub\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "src",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "x\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "x\/y\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "abc",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "a\/c",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "tests\/alpha",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "tests\/delta",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "x*y",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "xzy",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "lib\/one\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "lib\/one\/two\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/*",
+        "name": "deep\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "a.php",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "src\/a.php",
+        "pathname": false,
+        "want": true
+    },
+    {
+        "pattern": "src\/**",
+        "name": "src\/sub\/a.php",
+        "pathname": false,
+        "want": true
+    },
+    {
+        "pattern": "src\/**",
+        "name": "src",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "x\/generated",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "x\/y\/generated",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "generated",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "abc",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "a\/c",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "tests\/alpha",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "tests\/delta",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "x*y",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "xzy",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "lib\/one\/cache",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "lib\/one\/two\/cache",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "src\/**",
+        "name": "deep\/a.php",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "a.php",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "src\/a.php",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "src\/sub\/a.php",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "src",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "x\/generated",
+        "pathname": false,
+        "want": true
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "x\/y\/generated",
+        "pathname": false,
+        "want": true
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "generated",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "abc",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "a\/c",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "tests\/alpha",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "tests\/delta",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "x*y",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "xzy",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "lib\/one\/cache",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "lib\/one\/two\/cache",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "**\/generated",
+        "name": "deep\/a.php",
+        "pathname": false,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "src\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "src\/sub\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "src",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "x\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "x\/y\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "abc",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "a?c",
+        "name": "a\/c",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "tests\/alpha",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "tests\/delta",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "x*y",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "xzy",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "lib\/one\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "lib\/one\/two\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "a?c",
+        "name": "deep\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "src\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "src\/sub\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "src",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "x\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "x\/y\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "abc",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "a\/c",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "tests\/alpha",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "tests\/delta",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "x*y",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "xzy",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "lib\/one\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "lib\/one\/two\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[a-c]*",
+        "name": "deep\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "src\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "src\/sub\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "src",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "x\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "x\/y\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "abc",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "a\/c",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "tests\/alpha",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "tests\/delta",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "x*y",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "xzy",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "lib\/one\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "lib\/one\/two\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "tests\/[!a-c]*",
+        "name": "deep\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "src\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "src\/sub\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "src",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "x\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "x\/y\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "abc",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "a\/c",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "tests\/alpha",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "tests\/delta",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "x*y",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "xzy",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "lib\/one\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "lib\/one\/two\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "x\\*y",
+        "name": "deep\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "src\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "src\/sub\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "src",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "x\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "x\/y\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "abc",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "a\/c",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "tests\/alpha",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "tests\/delta",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "x*y",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "xzy",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "lib\/one\/cache",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "lib\/one\/two\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "lib\/*\/cache",
+        "name": "deep\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "a.php",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "*",
+        "name": "src\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "src\/sub\/a.php",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "src",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "*",
+        "name": "x\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "x\/y\/generated",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "generated",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "*",
+        "name": "abc",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "*",
+        "name": "a\/c",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "tests\/alpha",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "tests\/delta",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "x*y",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "*",
+        "name": "xzy",
+        "pathname": true,
+        "want": true
+    },
+    {
+        "pattern": "*",
+        "name": "lib\/one\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "lib\/one\/two\/cache",
+        "pathname": true,
+        "want": false
+    },
+    {
+        "pattern": "*",
+        "name": "deep\/a.php",
+        "pathname": true,
+        "want": false
+    }
+]
