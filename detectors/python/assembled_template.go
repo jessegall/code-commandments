@@ -34,18 +34,6 @@ func (AssembledTemplateDetector) Find(codebase *engine.Codebase) []engine.Match 
 		Where(engine.As(py.Node.IsEvaluated)).
 		Where(engine.As(py.Node.IsNewlineJoin)).
 		Where(engine.As(func(n py.Node) bool { return len(n.JoinedLines()) >= templateLines })).
-		Where(engine.As(hasFixedLines)).
+		Where(engine.As(func(n py.Node) bool { return n.FixedLineCount() >= templateFixedLines })).
 		Get()
-}
-
-// hasFixedLines says whether enough of a join's lines are text written out.
-func hasFixedLines(n py.Node) bool {
-	fixed := 0
-	for _, line := range n.JoinedLines() {
-		if line.IsFixedText() {
-			fixed++
-		}
-	}
-
-	return fixed >= templateFixedLines
 }

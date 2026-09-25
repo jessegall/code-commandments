@@ -25,21 +25,8 @@ func (PhantomNullableDetector) Sin() sins.Sin {
 func (PhantomNullableDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 	var findings []engine.Match
-	for _, match := range py.In(codebase).WhereClass().Get() {
-		class := py.Node{Match: match}
-		for _, field := range class.FieldNames() {
-			annotation, ok := class.AttributeAnnotation(field)
-			if !ok || class.ResetsToNone(field) {
-				continue
-			}
-			if _, optional := annotation.OptionalOf(); !optional {
-				continue
-			}
-			verdict := program.AttributeFlow(class, field)
-			if declaration := class.FieldDeclaration(field); verdict.Assume >= 1 && verdict.Guard == 0 && declaration.Exists() {
-				findings = append(findings, declaration.Match)
-			}
-		}
+	for _, class := range py.In(codebase).WhereClass().Get() {
+		findings = append(findings, matches(program.PhantomNullableFields(py.Node{Match: class}))...)
 	}
 
 	return findings

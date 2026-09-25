@@ -129,3 +129,22 @@ func (n Node) JoinedLines() []Node {
 func (n Node) IsFixedText() bool {
 	return n.Node().Literal == "string" || n.Kind() == "JoinedStr"
 }
+
+// RestatesCode says whether every content word of the comments above the statement is one the statement spells.
+func (n Node) RestatesCode() bool {
+	code := n.CodeWords()
+
+	return !slices.ContainsFunc(n.CommentWords(), func(word string) bool { return !slices.Contains(code, word) })
+}
+
+// FixedLineCount is how many of a join's lines are text written out.
+func (n Node) FixedLineCount() int {
+	fixed := 0
+	for _, line := range n.JoinedLines() {
+		if line.IsFixedText() {
+			fixed++
+		}
+	}
+
+	return fixed
+}

@@ -7,8 +7,6 @@ import (
 	py "github.com/jessegall/code-commandments/engine/python"
 	"github.com/jessegall/code-commandments/sins"
 	pysins "github.com/jessegall/code-commandments/sins/python"
-	"slices"
-	"strings"
 )
 
 // namedCallThreshold is how many sites must make the same call.
@@ -31,22 +29,5 @@ func (RepeatedNamedCallDetector) Find(codebase *engine.Codebase) []engine.Match 
 	program := py.In(codebase).Program
 	calls := py.In(codebase).WhereCall().Where(engine.As(py.Node.IsEvaluated)).Get()
 
-	return flatten(engine.RecurringBuckets(calls, func(match engine.Match) (string, bool) { return namedCallKey(program, py.Node{Match: match}) }, namedCallThreshold))
-}
-
-// namedCallKey is the call's target and the shape of what each of its keywords builds, when one of them builds
-// something and the target takes **kwargs.
-func namedCallKey(program *py.Program, call py.Node) (string, bool) {
-	keywords := slices.DeleteFunc(call.Keywords(), func(keyword py.Node) bool { return keyword.Name() == "" })
-	target, ok := program.TargetOf(call)
-	if !ok || !target.TakesKeywordRest() || !slices.ContainsFunc(keywords, func(keyword py.Node) bool { return keyword.Child("value").IsConstruction() }) {
-		return "", false
-	}
-	var slots []string
-	for _, keyword := range keywords {
-		slots = append(slots, keyword.Name()+"="+keyword.Child("value").ConstructionShape())
-	}
-	slices.Sort(slots)
-
-	return py.DeclarationOf(target) + "#" + strings.Join(slots, ","), true
+	return flatten(engine.RecurringBuckets(calls, func(match engine.Match) (string, bool) { return program.NamedCallKey(py.Node{Match: match}) }, namedCallThreshold))
 }

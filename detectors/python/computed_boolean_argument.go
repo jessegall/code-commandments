@@ -7,7 +7,6 @@ import (
 	py "github.com/jessegall/code-commandments/engine/python"
 	"github.com/jessegall/code-commandments/sins"
 	pysins "github.com/jessegall/code-commandments/sins/python"
-	"slices"
 )
 
 // computedCallers is how many callers must compute the flags from one object.
@@ -32,27 +31,6 @@ func (ComputedBooleanArgumentDetector) Find(codebase *engine.Codebase) []engine.
 	return py.In(codebase).
 		WhereMethodDeclaration().
 		Where(engine.As(py.Node.DecidesOnBoolsAlone)).
-		Where(engine.As(func(n py.Node) bool { return callersAllAskOneObject(program, n) })).
+		Where(engine.As(func(n py.Node) bool { return program.CallersAllAskOneObject(n, computedCallers) })).
 		Get()
-}
-
-// callersAllAskOneObject says whether two or more calls reach the method, one of them from outside its class, and
-// every one computes every argument from one and the same class of object.
-func callersAllAskOneObject(program *py.Program, method py.Node) bool {
-	class := method.Parent()
-	callers := program.CallersOf(method)
-	var subjects []string
-	fromOutside := false
-	for _, call := range callers {
-		subject, ok := call.ArgumentSubjectType()
-		if !ok {
-			return false
-		}
-		if !slices.Contains(subjects, subject) {
-			subjects = append(subjects, subject)
-		}
-		fromOutside = fromOutside || call.EnclosingFunction().Parent() != class
-	}
-
-	return fromOutside && len(callers) >= computedCallers && len(subjects) == 1
 }

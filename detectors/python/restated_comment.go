@@ -7,7 +7,6 @@ import (
 	py "github.com/jessegall/code-commandments/engine/python"
 	"github.com/jessegall/code-commandments/sins"
 	pysins "github.com/jessegall/code-commandments/sins/python"
-	"slices"
 )
 
 // restatedWords is how many content words a comment needs before it can be said to restate anything.
@@ -32,18 +31,11 @@ func (RestatedCommentDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(isInFunction)).
 		Reject(engine.As(py.Node.IsFunction)).
 		Where(engine.As(func(n py.Node) bool { return len(n.CommentWords()) >= restatedWords })).
-		Where(engine.As(restatesCode)).
+		Where(engine.As(py.Node.RestatesCode)).
 		Get()
 }
 
 // isInFunction says whether the statement sits in a def.
 func isInFunction(n py.Node) bool {
 	return n.EnclosingFunction().Exists()
-}
-
-// restatesCode says whether every content word of the comments above the statement is one the statement spells.
-func restatesCode(n py.Node) bool {
-	code := n.CodeWords()
-
-	return !slices.ContainsFunc(n.CommentWords(), func(word string) bool { return !slices.Contains(code, word) })
 }

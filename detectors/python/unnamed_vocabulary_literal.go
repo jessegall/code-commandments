@@ -25,18 +25,8 @@ func (UnnamedVocabularyLiteralDetector) Sin() sins.Sin {
 func (UnnamedVocabularyLiteralDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := py.In(codebase).Program
 	var findings []engine.Match
-	for _, match := range py.In(codebase).WhereCall().Where(engine.As(py.Node.IsEvaluated)).Get() {
-		call := py.Node{Match: match}
-		for _, argument := range call.Arguments() {
-			if _, named := program.ConstantFor(call, argument); named && argument.Node().Literal == "string" {
-				findings = append(findings, argument.Match)
-			}
-		}
-		for _, keyword := range call.Keywords() {
-			if _, named := program.ConstantFor(call, keyword.Child("value")); named && keyword.Child("value").Node().Literal == "string" {
-				findings = append(findings, keyword.Child("value").Match)
-			}
-		}
+	for _, call := range py.In(codebase).WhereCall().Where(engine.As(py.Node.IsEvaluated)).Get() {
+		findings = append(findings, matches(program.UnnamedVocabularyLiterals(py.Node{Match: call}))...)
 	}
 
 	return findings

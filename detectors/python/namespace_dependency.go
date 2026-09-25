@@ -38,26 +38,5 @@ func (NamespaceDependencyDetector) Sin() sins.Sin {
 
 // Find is every place the sin is committed: one per module and module it reaches, at its first import.
 func (d NamespaceDependencyDetector) Find(codebase *engine.Codebase) []engine.Match {
-	stack := engine.Layers(d.layers, ".", true)
-	if stack.IsEmpty() {
-		return nil
-	}
-	var findings []engine.Match
-	for _, module := range py.In(codebase).Program.Modules() {
-		from := stack.LayerOf(module.Name)
-		if from == "" {
-			continue
-		}
-		reached := map[string]bool{}
-		for _, imported := range module.Imports() {
-			target := imported.Module.Name
-			if stack.LayerOf(target) == "" || stack.MayReference(from, target) || reached[target] {
-				continue
-			}
-			reached[target] = true
-			findings = append(findings, imported.Statement.Match)
-		}
-	}
-
-	return findings
+	return matches(py.In(codebase).Program.LayerViolations(engine.Layers(d.layers, ".", true)))
 }
