@@ -1,7 +1,11 @@
 # The Roslyn bridge's output
 
+This shape is on its way out. The target every bridge moves to is the generic tree contract in
+[`contract/CONTRACT.md`](../../contract/CONTRACT.md): one tree, one stream framing, one set of type, symbol and
+comment fields for every language. Until this bridge writes it, this document is what it writes.
+
 `roslyn-bridge <path>...` writes JSON lines to stdout — one object per line, so a reader holds one file
-at a time however large the project. Version 2:
+at a time however large the project. Version 7:
 
 ```json
 {"version": 2}
