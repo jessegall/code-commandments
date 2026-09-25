@@ -17,7 +17,7 @@ import (
 // carries: the per-edit check asks only the rest.
 func TestTheDetectorsThatReadBeyondOneFileAreThePHPToolsOwn(t *testing.T) {
 	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("no php to ask the PHP tool's analysis")
+		t.Fatal("no php to ask the PHP tool's analysis")
 	}
 
 	repo, _ := filepath.Abs("..")
