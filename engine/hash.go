@@ -29,13 +29,36 @@ type HashRules interface {
 	Leaf(node Match) (string, bool)
 }
 
+// Unwrapping is what a language may add to its HashRules when a node is layout around another: C# braces around a
+// single statement, since `if (x) { break; }` is `if (x) break;`. The node reads as the one it wraps, wherever it
+// stands.
+type Unwrapping interface {
+	// Unwrap is the node this one reads as; false when it reads as itself.
+	Unwrap(node Match) (Match, bool)
+}
+
+// unwrapped is the node as the rules read it: what it wraps, when it is layout around another.
+func unwrapped(node Match, rules HashRules) Match {
+	unwrapping, ok := rules.(Unwrapping)
+	if !ok {
+		return node
+	}
+	for {
+		inner, ok := unwrapping.Unwrap(node)
+		if !ok {
+			return node
+		}
+		node = inner
+	}
+}
+
 // SyntaxHash is a formatting-blind fingerprint of the nodes, read from the tree and never from the source text,
 // so spacing, comments and quote style do not count. Normalising also blanks local names and data literals, for
 // type-2 clone detection, keeping what is called and which members are read.
 func SyntaxHash(nodes []Match, rules HashRules, normalize bool) string {
 	var hashed strings.Builder
 	for _, node := range nodes {
-		if rules.Counts(node) {
+		if node = unwrapped(node, rules); rules.Counts(node) {
 			hashed.WriteString(fingerprint(node, rules, normalize))
 		}
 	}
@@ -55,7 +78,7 @@ func SyntaxFingerprint(node Match, rules HashRules, normalize bool) string {
 func SyntaxWeight(nodes []Match, rules HashRules) int {
 	weight := 0
 	for _, node := range nodes {
-		if rules.Counts(node) {
+		if node = unwrapped(node, rules); rules.Counts(node) {
 			weight += rules.Weight(node) + SyntaxWeight(node.Children(), rules)
 		}
 	}
@@ -83,8 +106,8 @@ func fingerprint(node Match, rules HashRules, normalize bool) string {
 	}
 	parts = append(parts, facts.Operator, strings.Join(facts.Modifiers, " "), strings.Join(facts.Flags, " "))
 	for _, child := range node.Children() {
-		if rules.Counts(child) {
-			parts = append(parts, child.Node().Field+"="+fingerprint(child, rules, normalize))
+		if inner := unwrapped(child, rules); rules.Counts(inner) {
+			parts = append(parts, child.Node().Field+"="+fingerprint(inner, rules, normalize))
 		}
 	}
 

@@ -1,0 +1,5231 @@
+{
+    "Shop/Addresses/CountryCodes.cs@590:ClassDeclaration": {
+        "state": {
+            "field": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "field": []
+        },
+        "reads": {
+            "field": 0
+        },
+        "coupled": false
+    },
+    "Shop/Addresses/CountryCodes.cs@97:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Addresses/LabelPrinter.cs@189:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Addresses/LabelPrinter.cs@501:RecordDeclaration": {
+        "state": {
+            "Street": "global::System.String",
+            "City": "global::System.String",
+            "Postcode": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Street": [],
+            "City": [],
+            "Postcode": []
+        },
+        "reads": {
+            "Street": 0,
+            "City": 0,
+            "Postcode": 0
+        },
+        "coupled": false
+    },
+    "Shop/Addresses/PostcodeChecks.cs@100:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Addresses/Quotes.cs@27:ClassDeclaration": {
+        "state": {
+            "perKilometre": "global::System.Decimal"
+        },
+        "readsByMember": {
+            "Price": [
+                "perKilometre"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "perKilometre": []
+        },
+        "reads": {
+            "perKilometre": 3
+        },
+        "coupled": false
+    },
+    "Shop/Catalog/Products.cs@25:RecordDeclaration": {
+        "state": {
+            "Sku": "global::System.String",
+            "Title": "global::System.String",
+            "PriceCents": "global::System.Int32"
+        },
+        "readsByMember": {
+            "IsOnSale": [
+                "PriceCents"
+            ],
+            "FitsIn": [
+                "PriceCents"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Sku": [],
+            "Title": [],
+            "PriceCents": []
+        },
+        "reads": {
+            "Sku": 0,
+            "Title": 0,
+            "PriceCents": 2
+        },
+        "coupled": false
+    },
+    "Shop/Checkout/Carts.cs@26:ClassDeclaration": {
+        "state": {
+            "budgetCents": "global::System.Int32",
+            "RemainingBudget": "global::System.Int32",
+            "skus": "global::System.Collections.Generic.List<global::System.String>"
+        },
+        "readsByMember": {
+            "RemainingBudget": [
+                "budgetCents"
+            ],
+            "Add": [
+                "skus"
+            ],
+            "BackLink": [
+                "skus"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "budgetCents": [],
+            "RemainingBudget": [
+                "Shop/Checkout/Carts.cs@171:IdentifierName"
+            ],
+            "skus": [
+                "Shop/Checkout/Carts.cs@111:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "budgetCents": 1,
+            "RemainingBudget": 0,
+            "skus": 2
+        },
+        "coupled": false
+    },
+    "Shop/Documents/Barcodes.cs@220:ClassDeclaration": {
+        "state": {
+            "barcodes": "global::Shop.Documents.BarcodeSheet"
+        },
+        "readsByMember": {
+            "Top": [
+                "barcodes"
+            ],
+            "All": [
+                "barcodes"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "barcodes": []
+        },
+        "reads": {
+            "barcodes": 2
+        },
+        "coupled": false
+    },
+    "Shop/Documents/Barcodes.cs@27:RecordDeclaration": {
+        "state": {
+            "Id": "global::System.Guid",
+            "Recipient": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Id": [],
+            "Recipient": []
+        },
+        "reads": {
+            "Id": 0,
+            "Recipient": 0
+        },
+        "coupled": false
+    },
+    "Shop/Documents/Barcodes.cs@566:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Documents/Barcodes.cs@84:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Documents/Emails.cs@100:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Documents/Headings.cs@131:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Documents/Invoice.cs@209:ClassDeclaration": {
+        "state": {
+            "order": "global::Shop.Orders.Order",
+            "Title": "global::System.String"
+        },
+        "readsByMember": {
+            "Title": [
+                "order"
+            ],
+            "Lines": [
+                "order"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "order": [],
+            "Title": []
+        },
+        "reads": {
+            "order": 2,
+            "Title": 0
+        },
+        "coupled": false
+    },
+    "Shop/Documents/InvoiceArchive.cs@121:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Documents/LabelFooters.cs@89:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Documents/LabelTemplates.cs@104:ClassDeclaration": {
+        "state": {
+            "templates": "global::System.Collections.Generic.List<global::Shop.Documents.LabelTemplate>"
+        },
+        "readsByMember": {
+            "Named": [
+                "templates"
+            ],
+            "Largest": [
+                "templates"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "templates": [
+                "Shop/Documents/LabelTemplates.cs@193:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "templates": 2
+        },
+        "coupled": false
+    },
+    "Shop/Documents/LabelTemplates.cs@27:RecordDeclaration": {
+        "state": {
+            "Name": "global::System.String",
+            "WidthMm": "global::System.Int32",
+            "HeightMm": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Name": [],
+            "WidthMm": [],
+            "HeightMm": []
+        },
+        "reads": {
+            "Name": 0,
+            "WidthMm": 0,
+            "HeightMm": 0
+        },
+        "coupled": false
+    },
+    "Shop/Documents/LabelTemplates.cs@467:ClassDeclaration": {
+        "state": {
+            "shelf": "global::Shop.Documents.TemplateShelf"
+        },
+        "readsByMember": {
+            "Width": [
+                "shelf"
+            ],
+            "Area": [
+                "shelf"
+            ],
+            "Biggest": [
+                "shelf"
+            ],
+            "HasAny": [
+                "shelf"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "shelf": []
+        },
+        "reads": {
+            "shelf": 4
+        },
+        "coupled": false
+    },
+    "Shop/Documents/Layout.cs@215:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Documents/Layout.cs@529:ClassDeclaration": {
+        "state": {
+            "order": "global::Shop.Orders.Order"
+        },
+        "readsByMember": {
+            "Rows": [
+                "order"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "order": []
+        },
+        "reads": {
+            "order": 1
+        },
+        "coupled": false
+    },
+    "Shop/Documents/Layout.cs@687:ClassDeclaration": {
+        "state": {
+            "order": "global::Shop.Orders.Order"
+        },
+        "readsByMember": {
+            "Items": [
+                "order"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "order": []
+        },
+        "reads": {
+            "order": 1
+        },
+        "coupled": false
+    },
+    "Shop/Documents/PackingSlip.cs@47:ClassDeclaration": {
+        "state": {
+            "order": "global::Shop.Orders.Order",
+            "IsEmpty": "global::System.Boolean"
+        },
+        "readsByMember": {
+            "IsEmpty": [
+                "order"
+            ],
+            "Rows": [
+                "order"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "order": [],
+            "IsEmpty": []
+        },
+        "reads": {
+            "order": 2,
+            "IsEmpty": 0
+        },
+        "coupled": false
+    },
+    "Shop/Documents/Reprints.cs@27:ClassDeclaration": {
+        "state": {
+            "queued": "global::System.Collections.Generic.List<global::System.String>"
+        },
+        "readsByMember": {
+            "Queue": [
+                "queued"
+            ],
+            "QueueFor": [
+                "queued"
+            ],
+            "Cancel": [
+                "queued"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "queued": [
+                "Shop/Documents/Reprints.cs@101:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "queued": 5
+        },
+        "coupled": false
+    },
+    "Shop/Documents/Summaries.cs@98:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Gifts/GiftCards.cs@122:ClassDeclaration": {
+        "state": {
+            "balance": "global::System.Decimal"
+        },
+        "readsByMember": {
+            "Covers": [
+                "balance"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "balance": []
+        },
+        "reads": {
+            "balance": 1
+        },
+        "coupled": false
+    },
+    "Shop/Loyalty/Members.cs@166:ClassDeclaration": {
+        "state": {
+            "id": "global::System.String",
+            "points": "global::System.Int32",
+            "Id": "global::System.String",
+            "Points": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Id": [
+                "id"
+            ],
+            "Points": [
+                "points"
+            ],
+            "Redeem": [
+                "points"
+            ],
+            "Affordable": [
+                "points"
+            ],
+            "CanRedeem": [
+                "points"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "id": [],
+            "points": [],
+            "Id": [],
+            "Points": []
+        },
+        "reads": {
+            "id": 1,
+            "points": 4,
+            "Id": 0,
+            "Points": 0
+        },
+        "coupled": false
+    },
+    "Shop/Loyalty/PunchCards.cs@184:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Loyalty/PunchCards.cs@25:ClassDeclaration": {
+        "state": {
+            "Stamps": "global::System.Int32",
+            "Redeemed": "global::System.Int32",
+            "LastRedeemed": "global::System.DateOnly?"
+        },
+        "readsByMember": {},
+        "nullable": [
+            "LastRedeemed"
+        ],
+        "assigned": {
+            "Stamps": [],
+            "Redeemed": [],
+            "LastRedeemed": []
+        },
+        "reads": {
+            "Stamps": 0,
+            "Redeemed": 0,
+            "LastRedeemed": 0
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Broadcasts.cs@31:ClassDeclaration": {
+        "state": {
+            "subscribers": "global::System.Collections.Generic.IReadOnlyList<global::System.String>"
+        },
+        "readsByMember": {
+            "SendMessage": [
+                "subscribers"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "subscribers": []
+        },
+        "reads": {
+            "subscribers": 1
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Campaigns.cs@113:ClassDeclaration": {
+        "state": {
+            "Segments": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Notifications.CampaignSegment>"
+        },
+        "readsByMember": {
+            "Segment": [
+                "Segments"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Segments": [
+                "Shop/Notifications/Campaigns.cs@216:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "Segments": 1
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Campaigns.cs@31:RecordDeclaration": {
+        "state": {
+            "Name": "global::System.String",
+            "Emails": "global::System.Collections.Generic.IReadOnlyList<global::System.String>"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Name": [],
+            "Emails": []
+        },
+        "reads": {
+            "Name": 0,
+            "Emails": 0
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Campaigns.cs@324:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Notifications/ChannelNames.cs@148:ClassDeclaration": {
+        "state": {
+            "muted": "global::System.Collections.Generic.HashSet<global::System.String>"
+        },
+        "readsByMember": {
+            "Allows": [
+                "muted"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "muted": [
+                "Shop/Notifications/ChannelNames.cs@228:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "muted": 1
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/ChannelNames.cs@31:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Notifications/ChannelNames.cs@337:ClassDeclaration": {
+        "state": {
+            "router": "global::Shop.Notifications.NotifyRouter"
+        },
+        "readsByMember": {
+            "CanEmail": [
+                "router"
+            ],
+            "Textable": [
+                "router"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "router": []
+        },
+        "reads": {
+            "router": 2
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Channels.cs@100:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Notifications/Channels.cs@355:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Notifications/Channels.cs@488:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Notifications/DeliveredMail.cs@70:ClassDeclaration": {
+        "state": {
+            "customer": "global::System.String",
+            "Subject": "global::System.String"
+        },
+        "readsByMember": {
+            "Compose": [
+                "customer"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "customer": [],
+            "Subject": []
+        },
+        "reads": {
+            "customer": 1,
+            "Subject": 0
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Digests.cs@112:RecordDeclaration": {
+        "state": {
+            "CustomerId": "global::System.String",
+            "Headline": "global::System.String",
+            "OfferCount": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "CustomerId": [],
+            "Headline": [],
+            "OfferCount": []
+        },
+        "reads": {
+            "CustomerId": 0,
+            "Headline": 0,
+            "OfferCount": 0
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Digests.cs@194:ClassDeclaration": {
+        "state": {
+            "customerId": "global::System.String"
+        },
+        "readsByMember": {
+            "Empty": [
+                "customerId"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "customerId": []
+        },
+        "reads": {
+            "customerId": 1
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/InvoiceMailers.cs@116:ClassDeclaration": {
+        "state": {
+            "sent": "global::System.Collections.Generic.List<global::System.String>"
+        },
+        "readsByMember": {
+            "Send": [
+                "sent"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "sent": [
+                "Shop/Notifications/InvoiceMailers.cs@187:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "sent": 2
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/InvoiceMailers.cs@31:RecordDeclaration": {
+        "state": {
+            "Recipient": "global::System.String",
+            "Subject": "global::System.String",
+            "Amount": "global::System.Decimal"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Recipient": [],
+            "Subject": [],
+            "Amount": []
+        },
+        "reads": {
+            "Recipient": 0,
+            "Subject": 0,
+            "Amount": 0
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/InvoiceMailers.cs@363:ClassDeclaration": {
+        "state": {
+            "mailbox": "global::Shop.Notifications.Mailbox"
+        },
+        "readsByMember": {
+            "Deliver": [
+                "mailbox"
+            ],
+            "Remind": [
+                "mailbox"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "mailbox": []
+        },
+        "reads": {
+            "mailbox": 2
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/LastSent.cs@115:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Notifications/Mailer.cs@238:ClassDeclaration": {
+        "state": {
+            "customer": "global::System.String"
+        },
+        "readsByMember": {
+            "Compose": [
+                "customer"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "customer": []
+        },
+        "reads": {
+            "customer": 1
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Mailing.cs@247:ClassDeclaration": {
+        "state": {
+            "customers": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.Customer>"
+        },
+        "readsByMember": {
+            "Emails": [
+                "customers"
+            ],
+            "Addresses": [
+                "customers"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "customers": []
+        },
+        "reads": {
+            "customers": 2
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Outbox.cs@185:ClassDeclaration": {
+        "state": {
+            "waiting": "global::System.Collections.Generic.Queue<global::System.String>",
+            "send": "global::System.Action<global::System.String>"
+        },
+        "readsByMember": {
+            "Flush": [
+                "send",
+                "waiting"
+            ],
+            "FlushLoudly": [
+                "send",
+                "waiting"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "waiting": [],
+            "send": []
+        },
+        "reads": {
+            "waiting": 2,
+            "send": 2
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Promises.cs@127:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Notifications/Quiet.cs@164:ClassDeclaration": {
+        "state": {
+            "mode": "global::Shop.Notifications.DeliveryMode",
+            "IsQuiet": "global::System.Boolean"
+        },
+        "readsByMember": {
+            "IsQuiet": [
+                "mode"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "mode": [],
+            "IsQuiet": []
+        },
+        "reads": {
+            "mode": 1,
+            "IsQuiet": 0
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Quiet.cs@86:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Notifications/QuietHours.cs@224:ClassDeclaration": {
+        "state": {
+            "StartHour": "global::System.Int32?",
+            "EndHour": "global::System.Int32?",
+            "Channel": "global::System.String"
+        },
+        "readsByMember": {
+            "Silences": [
+                "EndHour",
+                "StartHour"
+            ]
+        },
+        "nullable": [
+            "StartHour",
+            "EndHour"
+        ],
+        "assigned": {
+            "StartHour": [],
+            "EndHour": [],
+            "Channel": [
+                "Shop/Notifications/QuietHours.cs@379:StringLiteralExpression"
+            ]
+        },
+        "reads": {
+            "StartHour": 2,
+            "EndHour": 2,
+            "Channel": 0
+        },
+        "coupled": true
+    },
+    "Shop/Notifications/QuietHours.cs@31:RecordDeclaration": {
+        "state": {
+            "From": "global::System.Int32",
+            "Until": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Contains": [
+                "From",
+                "Until"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "From": [],
+            "Until": []
+        },
+        "reads": {
+            "From": 3,
+            "Until": 3
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Receipts.cs@177:ClassDeclaration": {
+        "state": {
+            "mail": "global::System.Action<global::System.String, global::System.String>"
+        },
+        "readsByMember": {
+            "Send": [
+                "mail"
+            ],
+            "SendIfAddressed": [
+                "mail"
+            ],
+            "SendIn": [
+                "mail"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "mail": []
+        },
+        "reads": {
+            "mail": 3
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/ShippedMail.cs@253:ClassDeclaration": {
+        "state": {
+            "customer": "global::System.String"
+        },
+        "readsByMember": {
+            "Render": [
+                "customer"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "customer": []
+        },
+        "reads": {
+            "customer": 1
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/SmsAlerts.cs@104:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Notifications/SmsAlerts.cs@236:ClassDeclaration": {
+        "state": {
+            "gateway": "global::Shop.Notifications.SmsGateway"
+        },
+        "readsByMember": {
+            "Short": [
+                "gateway"
+            ],
+            "Long": [
+                "gateway"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "gateway": []
+        },
+        "reads": {
+            "gateway": 2
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/SmsAlerts.cs@31:RecordDeclaration": {
+        "state": {
+            "Phone": "global::System.String",
+            "Text": "global::System.String",
+            "Fallback": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Phone": [],
+            "Text": [],
+            "Fallback": []
+        },
+        "reads": {
+            "Phone": 0,
+            "Text": 0,
+            "Fallback": 0
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/SmsSettings.cs@102:ClassDeclaration": {
+        "state": {
+            "ApiKey": "global::System.String",
+            "Sender": "global::System.String"
+        },
+        "readsByMember": {
+            "IsConfigured": [
+                "ApiKey"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "ApiKey": [
+                "Shop/Notifications/SmsSettings.cs@208:SimpleMemberAccessExpression"
+            ],
+            "Sender": [
+                "Shop/Notifications/SmsSettings.cs@264:StringLiteralExpression"
+            ]
+        },
+        "reads": {
+            "ApiKey": 1,
+            "Sender": 0
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/SmsSettings.cs@346:ClassDeclaration": {
+        "state": {
+            "ApiKey": "global::System.String"
+        },
+        "readsByMember": {
+            "IsConfigured": [
+                "ApiKey"
+            ]
+        },
+        "nullable": [
+            "ApiKey"
+        ],
+        "assigned": {
+            "ApiKey": []
+        },
+        "reads": {
+            "ApiKey": 1
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Subscriptions.cs@286:ClassDeclaration": {
+        "state": {
+            "address": "global::System.String"
+        },
+        "readsByMember": {
+            "Address": [
+                "address"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "address": [
+                "Shop/Notifications/Subscriptions.cs@462:IdentifierName"
+            ]
+        },
+        "reads": {
+            "address": 1
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Subscriptions.cs@31:ClassDeclaration": {
+        "state": {
+            "members": "global::System.Collections.Generic.List<global::System.String>"
+        },
+        "readsByMember": {
+            "Join": [
+                "members"
+            ],
+            "Count": [
+                "members"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "members": [
+                "Shop/Notifications/Subscriptions.cs@109:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "members": 2
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Subscriptions.cs@620:ClassDeclaration": {
+        "state": {
+            "address": "global::System.String",
+            "list": "global::Shop.Notifications.MailingList"
+        },
+        "readsByMember": {
+            "Confirm": [
+                "address",
+                "list"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "address": [],
+            "list": []
+        },
+        "reads": {
+            "address": 1,
+            "list": 1
+        },
+        "coupled": false
+    },
+    "Shop/Notifications/Throttles.cs@98:ClassDeclaration": {
+        "state": {
+            "SentThisHour": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Allows": [
+                "SentThisHour"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "SentThisHour": []
+        },
+        "reads": {
+            "SentThisHour": 1
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Approvals.cs@485:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Approvals.cs@86:ClassDeclaration": {
+        "state": {
+            "approver": "global::System.String",
+            "next": "global::Shop.Orders.Approval?",
+            "Approver": "global::System.String",
+            "Next": "global::Shop.Orders.Approval"
+        },
+        "readsByMember": {
+            "Approver": [
+                "approver"
+            ],
+            "Next": [
+                "next"
+            ]
+        },
+        "nullable": [
+            "Next"
+        ],
+        "assigned": {
+            "approver": [],
+            "next": [],
+            "Approver": [
+                "Shop/Orders/Approvals.cs@188:IdentifierName"
+            ],
+            "Next": [
+                "Shop/Orders/Approvals.cs@236:IdentifierName"
+            ]
+        },
+        "reads": {
+            "approver": 1,
+            "next": 1,
+            "Approver": 0,
+            "Next": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Baskets.cs@258:RecordDeclaration": {
+        "state": {
+            "ShopperId": "global::System.String",
+            "Items": "global::System.Int32"
+        },
+        "readsByMember": {
+            "WithOneMore": [
+                "Items"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "ShopperId": [],
+            "Items": [
+                "Shop/Orders/Baskets.cs@472:AddExpression"
+            ]
+        },
+        "reads": {
+            "ShopperId": 0,
+            "Items": 1
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Baskets.cs@74:RecordDeclaration": {
+        "state": {
+            "ShopperId": "global::System.String",
+            "Items": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "ShopperId": [],
+            "Items": []
+        },
+        "reads": {
+            "ShopperId": 0,
+            "Items": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Checkout.cs@1175:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Checkout.cs@153:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Checkouts.cs@268:ClassDeclaration": {
+        "state": {
+            "Steps": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Steps": []
+        },
+        "reads": {
+            "Steps": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Checkouts.cs@410:ClassDeclaration": {
+        "state": {
+            "Attempts": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Attempts": []
+        },
+        "reads": {
+            "Attempts": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/CouponRedeem.cs@579:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/CouponRedeem.cs@68:ClassDeclaration": {
+        "state": {
+            "discounts": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>"
+        },
+        "readsByMember": {
+            "Percent": [
+                "discounts"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "discounts": [
+                "Shop/Orders/CouponRedeem.cs@160:ImplicitObjectCreationExpression"
+            ]
+        },
+        "reads": {
+            "discounts": 1
+        },
+        "coupled": false
+    },
+    "Shop/Orders/CurrencyMismatch.cs@24:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Customers.cs@24:RecordDeclaration": {
+        "state": {
+            "Name": "global::System.String",
+            "Email": "global::System.String?"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Name": [],
+            "Email": []
+        },
+        "reads": {
+            "Name": 0,
+            "Email": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Customers.cs@268:ClassDeclaration": {
+        "state": {
+            "all": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.Customer>"
+        },
+        "readsByMember": {
+            "Named": [
+                "all"
+            ],
+            "Existing": [
+                "all"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "all": []
+        },
+        "reads": {
+            "all": 2
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Customers.cs@707:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Discounting.cs@96:ClassDeclaration": {
+        "state": {
+            "subtotal": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Total": [
+                "subtotal"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "subtotal": []
+        },
+        "reads": {
+            "subtotal": 5
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Dispatch.cs@379:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Dispatch.cs@99:ClassDeclaration": {
+        "state": {
+            "paid": "global::System.Boolean",
+            "onHold": "global::System.Boolean",
+            "lines": "global::System.Int32",
+            "Paid": "global::System.Boolean",
+            "OnHold": "global::System.Boolean",
+            "Lines": "global::System.Int32",
+            "IsReady": "global::System.Boolean"
+        },
+        "readsByMember": {
+            "Paid": [
+                "paid"
+            ],
+            "OnHold": [
+                "onHold"
+            ],
+            "Lines": [
+                "lines"
+            ],
+            "IsReady": [
+                "Lines",
+                "OnHold",
+                "Paid"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "paid": [],
+            "onHold": [],
+            "lines": [],
+            "Paid": [
+                "Shop/Orders/Dispatch.cs@201:IdentifierName"
+            ],
+            "OnHold": [
+                "Shop/Orders/Dispatch.cs@242:IdentifierName"
+            ],
+            "Lines": [
+                "Shop/Orders/Dispatch.cs@283:IdentifierName"
+            ],
+            "IsReady": []
+        },
+        "reads": {
+            "paid": 1,
+            "onHold": 1,
+            "lines": 1,
+            "Paid": 1,
+            "OnHold": 1,
+            "Lines": 1,
+            "IsReady": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Fulfilment.cs@184:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Fulfilment.cs@412:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Fulfilment.cs@73:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/GiftMessages.cs@111:ClassDeclaration": {
+        "state": {
+            "Text": "global::System.String"
+        },
+        "readsByMember": {
+            "IsBlank": [
+                "Text"
+            ]
+        },
+        "nullable": [
+            "Text"
+        ],
+        "assigned": {
+            "Text": []
+        },
+        "reads": {
+            "Text": 1
+        },
+        "coupled": false
+    },
+    "Shop/Orders/GiftWrapping.cs@149:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/GiftWrapping.cs@432:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Gratuities.cs@24:ClassDeclaration": {
+        "state": {
+            "percent": "global::System.Decimal"
+        },
+        "readsByMember": {
+            "On": [
+                "percent"
+            ],
+            "TerminalCents": [
+                "percent"
+            ],
+            "Offered": [
+                "percent"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "percent": []
+        },
+        "reads": {
+            "percent": 3
+        },
+        "coupled": false
+    },
+    "Shop/Orders/InvoiceNumbers.cs@386:ClassDeclaration": {
+        "state": {
+            "year": "global::System.Int32",
+            "issued": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Next": [
+                "year"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "year": [],
+            "issued": []
+        },
+        "reads": {
+            "year": 1,
+            "issued": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/InvoiceNumbers.cs@73:ClassDeclaration": {
+        "state": {
+            "year": "global::System.Int32",
+            "issued": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Next": [
+                "year"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "year": [],
+            "issued": []
+        },
+        "reads": {
+            "year": 1,
+            "issued": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Invoicing.cs@207:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Lifecycle.cs@179:ClassDeclaration": {
+        "state": {
+            "status": "global::Shop.Orders.OrderStatus"
+        },
+        "readsByMember": {
+            "Ship": [
+                "status"
+            ],
+            "Pay": [
+                "status"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "status": [
+                "Shop/Orders/Lifecycle.cs@244:SimpleMemberAccessExpression",
+                "Shop/Orders/Lifecycle.cs@503:SimpleMemberAccessExpression",
+                "Shop/Orders/Lifecycle.cs@729:SimpleMemberAccessExpression"
+            ]
+        },
+        "reads": {
+            "status": 3
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Money.cs@148:RecordDeclaration": {
+        "state": {
+            "Cents": "global::System.Int64",
+            "Currency": "global::System.String"
+        },
+        "readsByMember": {
+            "Plus": [
+                "Cents",
+                "Currency"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Cents": [
+                "Shop/Orders/Money.cs@464:AddExpression"
+            ],
+            "Currency": []
+        },
+        "reads": {
+            "Cents": 1,
+            "Currency": 1
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Order.cs@24:ClassDeclaration": {
+        "state": {
+            "reference": "global::System.String",
+            "lines": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.OrderLine>",
+            "Reference": "global::System.String",
+            "Lines": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.OrderLine>"
+        },
+        "readsByMember": {
+            "Reference": [
+                "reference"
+            ],
+            "Lines": [
+                "lines"
+            ],
+            "Total": [
+                "Lines"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "reference": [],
+            "lines": [],
+            "Reference": [
+                "Shop/Orders/Order.cs@141:IdentifierName"
+            ],
+            "Lines": [
+                "Shop/Orders/Order.cs@206:IdentifierName"
+            ]
+        },
+        "reads": {
+            "reference": 1,
+            "lines": 1,
+            "Reference": 0,
+            "Lines": 1
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Order.cs@358:RecordDeclaration": {
+        "state": {
+            "Sku": "global::System.String",
+            "Quantity": "global::System.Int32",
+            "UnitPrice": "global::Shop.Orders.Money",
+            "Subtotal": "global::Shop.Orders.Money"
+        },
+        "readsByMember": {
+            "Subtotal": [
+                "Quantity",
+                "UnitPrice"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Sku": [],
+            "Quantity": [],
+            "UnitPrice": [],
+            "Subtotal": []
+        },
+        "reads": {
+            "Sku": 0,
+            "Quantity": 1,
+            "UnitPrice": 2,
+            "Subtotal": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/OrderCounter.cs@101:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/OrderNotes.cs@95:ClassDeclaration": {
+        "state": {
+            "Notes": "global::System.Collections.Generic.IEnumerable<global::System.String>",
+            "standard": "global::System.Collections.Generic.IEnumerable<global::System.String>"
+        },
+        "readsByMember": {
+            "Count": [
+                "Notes"
+            ],
+            "Printed": [
+                "Notes",
+                "standard"
+            ]
+        },
+        "nullable": [
+            "Notes"
+        ],
+        "assigned": {
+            "Notes": [],
+            "standard": [
+                "Shop/Orders/OrderNotes.cs@234:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "Notes": 2,
+            "standard": 1
+        },
+        "coupled": false
+    },
+    "Shop/Orders/OrderStages.cs@143:RecordDeclaration": {
+        "state": {
+            "Id": "global::System.String",
+            "Stage": "global::Shop.Orders.Stage",
+            "Note": "global::System.String"
+        },
+        "readsByMember": {
+            "Shipped": [
+                "Stage"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Id": [],
+            "Stage": [
+                "Shop/Orders/OrderStages.cs@303:SimpleMemberAccessExpression"
+            ],
+            "Note": [
+                "Shop/Orders/OrderStages.cs@325:StringLiteralExpression"
+            ]
+        },
+        "reads": {
+            "Id": 0,
+            "Stage": 1,
+            "Note": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/OrderStages.cs@344:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/OrderStages.cs@85:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/PaymentStates.cs@249:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/PaymentStates.cs@346:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/PaymentStates.cs@47:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/PaymentStates.cs@600:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/PaymentWebhooks.cs@101:RecordDeclaration": {
+        "state": {
+            "OrderId": "global::System.String",
+            "Status": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "OrderId": [],
+            "Status": []
+        },
+        "reads": {
+            "OrderId": 0,
+            "Status": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/PaymentWebhooks.cs@200:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/PaymentWebhooks.cs@407:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Payouts.cs@208:RecordDeclaration": {
+        "state": {
+            "SellerId": "global::System.String",
+            "Cents": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "SellerId": [],
+            "Cents": []
+        },
+        "reads": {
+            "SellerId": 0,
+            "Cents": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Payouts.cs@273:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Payouts.cs@96:RecordDeclaration": {
+        "state": {
+            "SellerId": "global::System.String",
+            "Cents": "global::System.Int32",
+            "BankReference": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "SellerId": [],
+            "Cents": [],
+            "BankReference": []
+        },
+        "reads": {
+            "SellerId": 0,
+            "Cents": 0,
+            "BankReference": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Receipts.cs@368:RecordDeclaration": {
+        "state": {
+            "OrderId": "global::System.String",
+            "TotalCents": "global::System.Int32",
+            "PaidOn": "global::System.DateOnly"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "OrderId": [],
+            "TotalCents": [],
+            "PaidOn": []
+        },
+        "reads": {
+            "OrderId": 0,
+            "TotalCents": 0,
+            "PaidOn": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Receipts.cs@454:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Receipts.cs@71:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/RefundDesk.cs@195:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/RefundWindows.cs@92:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Refunds.cs@246:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Refunds.cs@24:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/Returns.cs@68:ClassDeclaration": {
+        "state": {
+            "delivered": "global::System.DateOnly",
+            "today": "global::System.DateOnly",
+            "Closes": "global::System.Boolean"
+        },
+        "readsByMember": {
+            "Closes": [
+                "delivered",
+                "today"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "delivered": [],
+            "today": [],
+            "Closes": []
+        },
+        "reads": {
+            "delivered": 1,
+            "today": 1,
+            "Closes": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/StatusBadge.cs@24:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/StatusBadge.cs@281:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/StatusFeed.cs@222:ClassDeclaration": {
+        "state": {
+            "notify": "global::System.Action<global::System.String>"
+        },
+        "readsByMember": {
+            "Handle": [
+                "notify"
+            ],
+            "HandleParsed": [
+                "notify"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "notify": []
+        },
+        "reads": {
+            "notify": 4
+        },
+        "coupled": false
+    },
+    "Shop/Orders/Statuses.cs@231:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Orders/SupplierInvoices.cs@120:ClassDeclaration": {
+        "state": {
+            "Supplier": "global::Shop.Orders.InvoiceSupplier",
+            "SupplierId": "global::System.Guid",
+            "Amount": "global::System.Decimal"
+        },
+        "readsByMember": {
+            "PayTo": [
+                "Amount",
+                "Supplier"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Supplier": [],
+            "SupplierId": [],
+            "Amount": []
+        },
+        "reads": {
+            "Supplier": 2,
+            "SupplierId": 0,
+            "Amount": 1
+        },
+        "coupled": true
+    },
+    "Shop/Orders/SupplierInvoices.cs@24:RecordDeclaration": {
+        "state": {
+            "Id": "global::System.Guid",
+            "Name": "global::System.String",
+            "Iban": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Id": [],
+            "Name": [],
+            "Iban": []
+        },
+        "reads": {
+            "Id": 0,
+            "Name": 0,
+            "Iban": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/SupplierInvoices.cs@417:ClassDeclaration": {
+        "state": {
+            "Supplier": "global::Shop.Orders.InvoiceSupplier",
+            "Amount": "global::System.Decimal",
+            "Reference": "global::System.String"
+        },
+        "readsByMember": {
+            "Reference": [
+                "Amount",
+                "Supplier"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Supplier": [],
+            "Amount": [],
+            "Reference": []
+        },
+        "reads": {
+            "Supplier": 1,
+            "Amount": 1,
+            "Reference": 0
+        },
+        "coupled": false
+    },
+    "Shop/Orders/TillCounter.cs@193:ClassDeclaration": {
+        "state": {
+            "placed": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "placed": []
+        },
+        "reads": {
+            "placed": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Badges.cs@25:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/Badges.cs@265:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/CouponBooks.cs@25:RecordDeclaration": {
+        "state": {
+            "Code": "global::System.String",
+            "PercentOff": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Code": [],
+            "PercentOff": []
+        },
+        "reads": {
+            "Code": 0,
+            "PercentOff": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/CouponBooks.cs@490:ClassDeclaration": {
+        "state": {
+            "book": "global::Shop.Pricing.CouponBook"
+        },
+        "readsByMember": {
+            "PercentFor": [
+                "book"
+            ],
+            "Describe": [
+                "book"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "book": []
+        },
+        "reads": {
+            "book": 2
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/CouponBooks.cs@88:ClassDeclaration": {
+        "state": {
+            "byCode": "global::System.Collections.Generic.Dictionary<global::System.String, global::Shop.Pricing.CouponCode>"
+        },
+        "readsByMember": {
+            "Find": [
+                "byCode"
+            ],
+            "Get": [
+                "byCode"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "byCode": [
+                "Shop/Pricing/CouponBooks.cs@182:ImplicitObjectCreationExpression"
+            ]
+        },
+        "reads": {
+            "byCode": 2
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/CreditNotes.cs@25:RecordDeclaration": {
+        "state": {
+            "Sku": "global::System.String",
+            "Refunded": "global::System.Double"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Sku": [],
+            "Refunded": []
+        },
+        "reads": {
+            "Sku": 0,
+            "Refunded": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/CreditNotes.cs@264:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/CreditNotes.cs@90:ClassDeclaration": {
+        "state": {
+            "Total": "global::System.Decimal",
+            "total": "global::System.Decimal"
+        },
+        "readsByMember": {
+            "Total": [
+                "total"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Total": [],
+            "total": []
+        },
+        "reads": {
+            "Total": 0,
+            "total": 1
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Currencies.cs@225:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/DiscountCodes.cs@108:ClassDeclaration": {
+        "state": {
+            "Uses": "global::System.Int32?"
+        },
+        "readsByMember": {
+            "IsUnused": [
+                "Uses"
+            ]
+        },
+        "nullable": [
+            "Uses"
+        ],
+        "assigned": {
+            "Uses": []
+        },
+        "reads": {
+            "Uses": 1
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Discounts.cs@196:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/ExchangeRates.cs@108:ClassDeclaration": {
+        "state": {
+            "rates": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Decimal>",
+            "fetchedOn": "global::System.DateOnly"
+        },
+        "readsByMember": {
+            "ToBase": [
+                "rates"
+            ],
+            "IsStale": [
+                "fetchedOn"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "rates": [],
+            "fetchedOn": [
+                "Shop/Pricing/ExchangeRates.cs@221:SimpleMemberAccessExpression"
+            ]
+        },
+        "reads": {
+            "rates": 1,
+            "fetchedOn": 1
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/ExchangeRates.cs@519:ClassDeclaration": {
+        "state": {
+            "rates": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Decimal>",
+            "fetchedOn": "global::System.DateOnly"
+        },
+        "readsByMember": {
+            "RateFor": [
+                "rates"
+            ],
+            "IsStale": [
+                "fetchedOn"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "rates": [],
+            "fetchedOn": [
+                "Shop/Pricing/ExchangeRates.cs@666:SimpleMemberAccessExpression"
+            ]
+        },
+        "reads": {
+            "rates": 2,
+            "fetchedOn": 1
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Labels.cs@189:ClassDeclaration": {
+        "state": {
+            "labels": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>"
+        },
+        "readsByMember": {
+            "For": [
+                "labels"
+            ],
+            "Required": [
+                "labels"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "labels": []
+        },
+        "reads": {
+            "labels": 2
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/LoyaltyTiers.cs@76:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/PriceBoard.cs@240:ClassDeclaration": {
+        "state": {
+            "display": "global::Shop.Pricing.Display",
+            "pence": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Pence": [
+                "pence"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "display": [
+                "Shop/Pricing/PriceBoard.cs@424:IdentifierName"
+            ],
+            "pence": [
+                "Shop/Pricing/PriceBoard.cs@454:IdentifierName"
+            ]
+        },
+        "reads": {
+            "display": 0,
+            "pence": 1
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/PriceBoard.cs@25:ClassDeclaration": {
+        "state": {
+            "shown": "global::System.String"
+        },
+        "readsByMember": {
+            "Shown": [
+                "shown"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "shown": [
+                "Shop/Pricing/PriceBoard.cs@82:StringLiteralExpression",
+                "Shop/Pricing/PriceBoard.cs@132:IdentifierName"
+            ]
+        },
+        "reads": {
+            "shown": 1
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/PriceBooks.cs@182:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/PriceBooks.cs@25:ClassDeclaration": {
+        "state": {
+            "Currency": "global::System.String",
+            "PricesByProduct": "global::System.Collections.Generic.Dictionary<global::System.Int32, global::System.Decimal>"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Currency": [
+                "Shop/Pricing/PriceBooks.cs@101:StringLiteralExpression"
+            ],
+            "PricesByProduct": [
+                "Shop/Pricing/PriceBooks.cs@172:ImplicitObjectCreationExpression"
+            ]
+        },
+        "reads": {
+            "Currency": 0,
+            "PricesByProduct": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/PriceList.cs@185:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/PrizeDraws.cs@25:ClassDeclaration": {
+        "state": {
+            "entrants": "global::System.Collections.Generic.IReadOnlyList<global::System.String>"
+        },
+        "readsByMember": {
+            "Winner": [
+                "entrants"
+            ],
+            "RunnerUp": [
+                "entrants"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "entrants": []
+        },
+        "reads": {
+            "entrants": 4
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/PromotionRules.cs@66:RecordDeclaration": {
+        "state": {
+            "Code": "global::System.String",
+            "PercentOff": "global::System.Decimal",
+            "Publishes": "global::System.Boolean"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Code": [],
+            "PercentOff": [],
+            "Publishes": []
+        },
+        "reads": {
+            "Code": 0,
+            "PercentOff": 0,
+            "Publishes": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Promotions.cs@1286:RecordDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/Promotions.cs@1327:RecordDeclaration": {
+        "state": {
+            "Cents": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Cents": []
+        },
+        "reads": {
+            "Cents": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Promotions.cs@1385:RecordDeclaration": {
+        "state": {
+            "On": "global::System.DateOnly"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "On": []
+        },
+        "reads": {
+            "On": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Promotions.cs@237:ClassDeclaration": {
+        "state": {
+            "percent": "global::System.Int32",
+            "Percent": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Percent": [
+                "percent"
+            ],
+            "Discount": [
+                "Percent"
+            ],
+            "Label": [
+                "Percent"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "percent": [],
+            "Percent": [
+                "Shop/Pricing/Promotions.cs@329:IdentifierName"
+            ]
+        },
+        "reads": {
+            "percent": 1,
+            "Percent": 2
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Promotions.cs@495:ClassDeclaration": {
+        "state": {
+            "amount": "global::System.Int32",
+            "Amount": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Amount": [
+                "amount"
+            ],
+            "Discount": [
+                "Amount"
+            ],
+            "Label": [
+                "Amount"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "amount": [],
+            "Amount": [
+                "Shop/Pricing/Promotions.cs@584:IdentifierName"
+            ]
+        },
+        "reads": {
+            "amount": 1,
+            "Amount": 2
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Promotions.cs@758:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/Promotions.cs@93:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/Quotas.cs@80:RecordDeclaration": {
+        "state": {
+            "CustomerId": "global::System.String",
+            "Allowed": "global::System.Int32",
+            "Remaining": "global::System.Int32",
+            "used": "global::System.Int32",
+            "remaining": "global::System.Int32?"
+        },
+        "readsByMember": {
+            "Remaining": [
+                "Allowed",
+                "used"
+            ]
+        },
+        "nullable": [
+            "remaining"
+        ],
+        "assigned": {
+            "CustomerId": [],
+            "Allowed": [],
+            "Remaining": [],
+            "used": [],
+            "remaining": []
+        },
+        "reads": {
+            "CustomerId": 0,
+            "Allowed": 1,
+            "Remaining": 0,
+            "used": 1,
+            "remaining": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/RateCache.cs@211:ClassDeclaration": {
+        "state": {
+            "path": "global::System.String"
+        },
+        "readsByMember": {
+            "Store": [
+                "path"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "path": []
+        },
+        "reads": {
+            "path": 1
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/RateFeed.cs@137:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/Rounding.cs@132:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/Surcharges.cs@186:ClassDeclaration": {
+        "state": {
+            "settings": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>"
+        },
+        "readsByMember": {
+            "Rate": [
+                "settings"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "settings": []
+        },
+        "reads": {
+            "settings": 1
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/TaxTable.cs@72:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [
+            "rates"
+        ],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/TierImport.cs@214:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/Units.cs@128:RecordStructDeclaration": {
+        "state": {
+            "Value": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Value": []
+        },
+        "reads": {
+            "Value": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Units.cs@178:RecordStructDeclaration": {
+        "state": {
+            "Value": "global::System.Decimal"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Value": []
+        },
+        "reads": {
+            "Value": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Units.cs@25:RecordStructDeclaration": {
+        "state": {
+            "Value": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Value": []
+        },
+        "reads": {
+            "Value": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/Units.cs@388:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/Units.cs@74:RecordStructDeclaration": {
+        "state": {
+            "Value": "global::System.Decimal"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Value": []
+        },
+        "reads": {
+            "Value": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/VatSplits.cs@678:RecordDeclaration": {
+        "state": {
+            "Net": "global::System.Decimal",
+            "Vat": "global::System.Decimal"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Net": [],
+            "Vat": []
+        },
+        "reads": {
+            "Net": 0,
+            "Vat": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/VatSplits.cs@99:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Pricing/VolumeBands.cs@178:RecordDeclaration": {
+        "state": {
+            "MinimumQuantity": "global::System.Int32",
+            "DiscountPercent": "global::System.Decimal"
+        },
+        "readsByMember": {
+            "Covers": [
+                "MinimumQuantity"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "MinimumQuantity": [],
+            "DiscountPercent": []
+        },
+        "reads": {
+            "MinimumQuantity": 1,
+            "DiscountPercent": 0
+        },
+        "coupled": false
+    },
+    "Shop/Pricing/VolumeBands.cs@530:RecordDeclaration": {
+        "state": {
+            "From": "global::System.Int32",
+            "Percent": "global::System.Decimal"
+        },
+        "readsByMember": {
+            "Apply": [
+                "Percent"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "From": [],
+            "Percent": []
+        },
+        "reads": {
+            "From": 0,
+            "Percent": 1
+        },
+        "coupled": false
+    },
+    "Shop/Reports/Backfills.cs@135:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/Closures.cs@167:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/Closures.cs@92:RecordDeclaration": {
+        "state": {
+            "OrderId": "global::System.String",
+            "Status": "global::System.String",
+            "Cents": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "OrderId": [],
+            "Status": [],
+            "Cents": []
+        },
+        "reads": {
+            "OrderId": 0,
+            "Status": 0,
+            "Cents": 0
+        },
+        "coupled": false
+    },
+    "Shop/Reports/CreditSummaries.cs@46:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/DailySummary.cs@91:ClassDeclaration": {
+        "state": {
+            "orders": "global::System.Int32",
+            "refunds": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Render": [
+                "orders",
+                "refunds"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "orders": [],
+            "refunds": []
+        },
+        "reads": {
+            "orders": 1,
+            "refunds": 1
+        },
+        "coupled": false
+    },
+    "Shop/Reports/Damage.cs@119:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/ExportJobs.cs@78:RecordDeclaration": {
+        "state": {
+            "Path": "global::System.String",
+            "Format": "global::System.String"
+        },
+        "readsByMember": {
+            "Describe": [
+                "Format",
+                "Path"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Path": [],
+            "Format": [
+                "Shop/Reports/ExportJobs.cs@252:StringLiteralExpression"
+            ]
+        },
+        "reads": {
+            "Path": 1,
+            "Format": 1
+        },
+        "coupled": false
+    },
+    "Shop/Reports/Granularity.cs@139:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/Granularity.cs@74:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/PageReader.cs@158:InterfaceDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/PageReader.cs@238:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/PageReader.cs@85:RecordDeclaration": {
+        "state": {
+            "Rows": "global::System.Collections.Generic.IReadOnlyList<global::System.String>",
+            "NextOffset": "global::System.Int32?"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Rows": [],
+            "NextOffset": []
+        },
+        "reads": {
+            "Rows": 0,
+            "NextOffset": 0
+        },
+        "coupled": false
+    },
+    "Shop/Reports/PromotionReport.cs@102:ClassDeclaration": {
+        "state": {
+            "percent": "global::System.Int32",
+            "amount": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Summary": [
+                "amount",
+                "percent"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "percent": [],
+            "amount": []
+        },
+        "reads": {
+            "percent": 1,
+            "amount": 1
+        },
+        "coupled": false
+    },
+    "Shop/Reports/ReportKinds.cs@147:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/ReportKinds.cs@233:ClassDeclaration": {
+        "state": {
+            "runner": "global::Shop.Reports.ReportRunner"
+        },
+        "readsByMember": {
+            "Morning": [
+                "runner"
+            ],
+            "EndOfMonth": [
+                "runner"
+            ],
+            "Close": [
+                "runner"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "runner": []
+        },
+        "reads": {
+            "runner": 3
+        },
+        "coupled": false
+    },
+    "Shop/Reports/ReportKinds.cs@25:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/Rounding.cs@25:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/SalesReport.cs@1049:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/SalesReport.cs@226:ClassDeclaration": {
+        "state": {
+            "sales": "global::System.Collections.Generic.IReadOnlyList<(global::System.DateTime At, global::System.Int64 Cents)>"
+        },
+        "readsByMember": {
+            "Total": [
+                "sales"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "sales": []
+        },
+        "reads": {
+            "sales": 1
+        },
+        "coupled": false
+    },
+    "Shop/Reports/SalesReport.cs@510:ClassDeclaration": {
+        "state": {
+            "returns": "global::System.Collections.Generic.IReadOnlyList<(global::System.DateTime At, global::System.String Sku)>"
+        },
+        "readsByMember": {
+            "Count": [
+                "returns"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "returns": []
+        },
+        "reads": {
+            "returns": 1
+        },
+        "coupled": false
+    },
+    "Shop/Reports/SalesReport.cs@778:InterfaceDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/SalesReport.cs@868:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Reports/Snapshots.cs@74:ClassDeclaration": {
+        "state": {
+            "orders": "global::System.Int32",
+            "refunds": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Figures": [
+                "orders",
+                "refunds"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "orders": [],
+            "refunds": []
+        },
+        "reads": {
+            "orders": 2,
+            "refunds": 2
+        },
+        "coupled": false
+    },
+    "Shop/Returns/Claims.cs@122:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Returns/Claims.cs@47:RecordDeclaration": {
+        "state": {
+            "Serial": "global::System.String",
+            "Bought": "global::System.DateOnly",
+            "Fault": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Serial": [],
+            "Bought": [],
+            "Fault": []
+        },
+        "reads": {
+            "Serial": 0,
+            "Bought": 0,
+            "Fault": 0
+        },
+        "coupled": false
+    },
+    "Shop/Returns/ReturnInspections.cs@101:ClassDeclaration": {
+        "state": {
+            "Items": "global::System.Collections.Generic.List<global::Shop.Returns.InspectedItem>"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Items": [
+                "Shop/Returns/ReturnInspections.cs@184:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "Items": 0
+        },
+        "coupled": false
+    },
+    "Shop/Returns/ReturnInspections.cs@191:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Returns/ReturnInspections.cs@25:RecordDeclaration": {
+        "state": {
+            "Sku": "global::System.String",
+            "Damaged": "global::System.Boolean",
+            "Opened": "global::System.Boolean"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Sku": [],
+            "Damaged": [],
+            "Opened": []
+        },
+        "reads": {
+            "Sku": 0,
+            "Damaged": 0,
+            "Opened": 0
+        },
+        "coupled": false
+    },
+    "Shop/Rewards/Issuing.cs@238:ClassDeclaration": {
+        "state": {
+            "catalog": "global::Shop.Rewards.VoucherCatalog"
+        },
+        "readsByMember": {
+            "IssueTo": [
+                "catalog"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "catalog": []
+        },
+        "reads": {
+            "catalog": 1
+        },
+        "coupled": false
+    },
+    "Shop/Rewards/Vouchers.cs@110:ClassDeclaration": {
+        "state": {
+            "all": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Rewards.Voucher>",
+            "All": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Rewards.Voucher>"
+        },
+        "readsByMember": {
+            "All": [
+                "all"
+            ],
+            "Cheapest": [
+                "all"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "all": [],
+            "All": []
+        },
+        "reads": {
+            "all": 2,
+            "All": 0
+        },
+        "coupled": false
+    },
+    "Shop/Rewards/Vouchers.cs@56:RecordDeclaration": {
+        "state": {
+            "Code": "global::System.String",
+            "Cost": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Code": [],
+            "Cost": []
+        },
+        "reads": {
+            "Code": 0,
+            "Cost": 0
+        },
+        "coupled": false
+    },
+    "Shop/Search/Indexes.cs@177:ClassDeclaration": {
+        "state": {
+            "products": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Catalog.Product>"
+        },
+        "readsByMember": {
+            "Matching": [
+                "products"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "products": []
+        },
+        "reads": {
+            "products": 1
+        },
+        "coupled": false
+    },
+    "Shop/Search/Rankings.cs@165:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/CarrierCodes.cs@210:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/CarrierConfig.cs@89:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/CarrierDirectory.cs@1141:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/CarrierDirectory.cs@211:ClassDeclaration": {
+        "state": {
+            "accounts": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>"
+        },
+        "readsByMember": {
+            "Account": [
+                "accounts"
+            ],
+            "AccountOf": [
+                "accounts"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "accounts": []
+        },
+        "reads": {
+            "accounts": 2
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/CarrierLogos.cs@130:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/CarrierLogos.cs@67:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/CarrierPick.cs@472:ClassDeclaration": {
+        "state": {
+            "parcel": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "parcel": []
+        },
+        "reads": {
+            "parcel": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/CarrierPick.cs@81:ClassDeclaration": {
+        "state": {
+            "booked": "global::System.Collections.Generic.List<global::System.String>"
+        },
+        "readsByMember": {
+            "Book": [
+                "booked"
+            ],
+            "Count": [
+                "booked"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "booked": [
+                "Shop/Shipping/CarrierPick.cs@158:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "booked": 2
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Carriers.cs@211:ClassDeclaration": {
+        "state": {
+            "grams": "global::System.Int32",
+            "fragile": "global::System.Boolean",
+            "Surcharge": "global::Shop.Orders.Money"
+        },
+        "readsByMember": {
+            "Surcharge": [
+                "fragile",
+                "grams"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "grams": [],
+            "fragile": [],
+            "Surcharge": []
+        },
+        "reads": {
+            "grams": 2,
+            "fragile": 1,
+            "Surcharge": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Carriers.cs@627:ClassDeclaration": {
+        "state": {
+            "grams": "global::System.Int32",
+            "fragile": "global::System.Boolean",
+            "Name": "global::System.String",
+            "Surcharge": "global::Shop.Orders.Money"
+        },
+        "readsByMember": {
+            "Surcharge": [
+                "fragile",
+                "grams"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "grams": [],
+            "fragile": [],
+            "Name": [],
+            "Surcharge": []
+        },
+        "reads": {
+            "grams": 2,
+            "fragile": 1,
+            "Name": 0,
+            "Surcharge": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/ColdChain.cs@199:ClassDeclaration": {
+        "state": {
+            "parcels": "global::System.Collections.Generic.IEnumerable<(global::System.String Sku, global::System.Int32 Celsius)>"
+        },
+        "readsByMember": {
+            "Skus": [
+                "parcels"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "parcels": []
+        },
+        "reads": {
+            "parcels": 1
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/ColdChain.cs@626:ClassDeclaration": {
+        "state": {
+            "parcels": "global::System.Collections.Generic.IEnumerable<(global::System.String Sku, global::System.Int32 Celsius)>"
+        },
+        "readsByMember": {
+            "Thawed": [
+                "parcels"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "parcels": []
+        },
+        "reads": {
+            "parcels": 1
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Consignments.cs@26:ClassDeclaration": {
+        "state": {
+            "parcelWeights": "global::System.Collections.Generic.List<global::System.Decimal>"
+        },
+        "readsByMember": {
+            "TotalWeight": [
+                "parcelWeights"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "parcelWeights": []
+        },
+        "reads": {
+            "parcelWeights": 1
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/CourierAccounts.cs@107:ClassDeclaration": {
+        "state": {
+            "Courier": "global::System.String",
+            "CreditCents": "global::System.Int32",
+            "IsOverdrawn": "global::System.Boolean"
+        },
+        "readsByMember": {
+            "IsOverdrawn": [
+                "CreditCents"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Courier": [
+                "Shop/Shipping/CourierAccounts.cs@227:IdentifierName"
+            ],
+            "CreditCents": [
+                "Shop/Shipping/CourierAccounts.cs@258:IdentifierName"
+            ],
+            "IsOverdrawn": []
+        },
+        "reads": {
+            "Courier": 0,
+            "CreditCents": 1,
+            "IsOverdrawn": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/CourierBookings.cs@163:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/CourierBookings.cs@26:RecordDeclaration": {
+        "state": {
+            "Name": "global::System.String",
+            "Postcode": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Name": [],
+            "Postcode": []
+        },
+        "reads": {
+            "Name": 0,
+            "Postcode": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/CourierBookings.cs@313:ClassDeclaration": {
+        "state": {
+            "desk": "global::Shop.Shipping.CourierDesk"
+        },
+        "readsByMember": {
+            "Today": [
+                "desk"
+            ],
+            "Batch": [
+                "desk"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "desk": []
+        },
+        "reads": {
+            "desk": 2
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/CourierBookings.cs@86:RecordDeclaration": {
+        "state": {
+            "Reference": "global::System.String",
+            "Sender": "global::Shop.Shipping.Sender",
+            "Parcels": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Reference": [],
+            "Sender": [],
+            "Parcels": []
+        },
+        "reads": {
+            "Reference": 0,
+            "Sender": 0,
+            "Parcels": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Couriers.cs@313:RecordDeclaration": {
+        "state": {
+            "Name": "global::System.String",
+            "CutOff": "global::System.TimeOnly"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Name": [],
+            "CutOff": []
+        },
+        "reads": {
+            "Name": 0,
+            "CutOff": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Couriers.cs@569:RecordDeclaration": {
+        "state": {
+            "At": "global::System.TimeOnly"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "At": []
+        },
+        "reads": {
+            "At": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Crates.cs@239:ClassDeclaration": {
+        "state": {
+            "Lid": "global::Shop.Shipping.Lid"
+        },
+        "readsByMember": {},
+        "nullable": [
+            "Lid"
+        ],
+        "assigned": {
+            "Lid": []
+        },
+        "reads": {
+            "Lid": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Crates.cs@315:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/Crates.cs@343:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/Crates.cs@380:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/Crates.cs@416:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/Crates.cs@92:ClassDeclaration": {
+        "state": {
+            "IsScrewedCrate": "global::System.Boolean"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "IsScrewedCrate": []
+        },
+        "reads": {
+            "IsScrewedCrate": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/DeliverySlots.cs@202:ClassDeclaration": {
+        "state": {
+            "from": "global::System.DateTime",
+            "until": "global::System.DateTime",
+            "driver": "global::System.String",
+            "Driver": "global::System.String"
+        },
+        "readsByMember": {
+            "Driver": [
+                "driver"
+            ],
+            "Clashes": [
+                "from",
+                "until"
+            ],
+            "Window": [
+                "from",
+                "until"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "from": [],
+            "until": [],
+            "driver": [],
+            "Driver": []
+        },
+        "reads": {
+            "from": 2,
+            "until": 2,
+            "driver": 1,
+            "Driver": 0
+        },
+        "coupled": true
+    },
+    "Shop/Shipping/DeliverySlots.cs@26:RecordDeclaration": {
+        "state": {
+            "From": "global::System.DateTime",
+            "Until": "global::System.DateTime"
+        },
+        "readsByMember": {
+            "Overlaps": [
+                "From",
+                "Until"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "From": [],
+            "Until": []
+        },
+        "reads": {
+            "From": 1,
+            "Until": 1
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/DeliverySlots.cs@509:ClassDeclaration": {
+        "state": {
+            "window": "global::Shop.Shipping.TimeRange",
+            "driver": "global::System.String",
+            "Driver": "global::System.String"
+        },
+        "readsByMember": {
+            "Driver": [
+                "driver"
+            ],
+            "Clashes": [
+                "window"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "window": [],
+            "driver": [],
+            "Driver": []
+        },
+        "reads": {
+            "window": 1,
+            "driver": 1,
+            "Driver": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Dispatch.cs@210:ClassDeclaration": {
+        "state": {
+            "queue": "global::System.Collections.Generic.Queue<global::Shop.Shipping.Parcel>",
+            "send": "global::System.Func<global::Shop.Shipping.Parcel, global::System.Int32, global::System.Boolean>"
+        },
+        "readsByMember": {
+            "Run": [
+                "queue",
+                "send"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "queue": [],
+            "send": []
+        },
+        "reads": {
+            "queue": 2,
+            "send": 1
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/FreightZones.cs@26:ClassDeclaration": {
+        "state": {
+            "zoneByCountry": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>"
+        },
+        "readsByMember": {
+            "ZoneOf": [
+                "zoneByCountry"
+            ],
+            "Ships": [
+                "zoneByCountry"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "zoneByCountry": [
+                "Shop/Shipping/FreightZones.cs@122:ImplicitObjectCreationExpression"
+            ]
+        },
+        "reads": {
+            "zoneByCountry": 2
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Handover.cs@127:ClassDeclaration": {
+        "state": {
+            "scanLog": "global::System.Collections.Generic.List<global::System.String>"
+        },
+        "readsByMember": {
+            "Scanned": [
+                "scanLog"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "scanLog": []
+        },
+        "reads": {
+            "scanLog": 3
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Lockers.cs@74:ClassDeclaration": {
+        "state": {
+            "freeSlots": "global::System.Int32",
+            "open": "global::System.Boolean",
+            "IsAccepting": "global::System.Boolean"
+        },
+        "readsByMember": {
+            "Accepts": [
+                "freeSlots",
+                "open"
+            ],
+            "IsAccepting": [
+                "freeSlots",
+                "open"
+            ],
+            "Fits": [
+                "freeSlots",
+                "open"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "freeSlots": [],
+            "open": [],
+            "IsAccepting": []
+        },
+        "reads": {
+            "freeSlots": 3,
+            "open": 3,
+            "IsAccepting": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Manifests.cs@87:ClassDeclaration": {
+        "state": {
+            "expected": "global::System.Collections.Generic.IReadOnlyList<global::System.String>"
+        },
+        "readsByMember": {
+            "Covers": [
+                "expected"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "expected": []
+        },
+        "reads": {
+            "expected": 3
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/ParcelLabels.cs@98:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/ParcelSizes.cs@82:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/Parcels.cs@203:ClassDeclaration": {
+        "state": {
+            "Volume": "global::System.Int32",
+            "grams": "global::System.Int32",
+            "length": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Volume": [
+                "grams",
+                "length"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Volume": [],
+            "grams": [
+                "Shop/Shipping/Parcels.cs@564:IdentifierName"
+            ],
+            "length": [
+                "Shop/Shipping/Parcels.cs@593:IdentifierName"
+            ]
+        },
+        "reads": {
+            "Volume": 0,
+            "grams": 1,
+            "length": 1
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Parcels.cs@652:ClassDeclaration": {
+        "state": {
+            "FitsLetterbox": "global::System.Boolean",
+            "grams": "global::System.Int32",
+            "length": "global::System.Int32"
+        },
+        "readsByMember": {
+            "FitsLetterbox": [
+                "grams",
+                "length"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "FitsLetterbox": [],
+            "grams": [
+                "Shop/Shipping/Parcels.cs@1017:IdentifierName"
+            ],
+            "length": [
+                "Shop/Shipping/Parcels.cs@1046:IdentifierName"
+            ]
+        },
+        "reads": {
+            "FitsLetterbox": 0,
+            "grams": 1,
+            "length": 1
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Pickups.cs@376:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/Pickups.cs@72:RecordDeclaration": {
+        "state": {
+            "Courier": "global::System.String",
+            "Confirmation": "global::System.String",
+            "Note": "global::System.String",
+            "None": "global::Shop.Shipping.Pickup"
+        },
+        "readsByMember": {},
+        "nullable": [
+            "Note"
+        ],
+        "assigned": {
+            "Courier": [
+                "Shop/Shipping/Pickups.cs@348:StringLiteralExpression"
+            ],
+            "Confirmation": [
+                "Shop/Shipping/Pickups.cs@367:StringLiteralExpression"
+            ],
+            "Note": [],
+            "None": [
+                "Shop/Shipping/Pickups.cs@330:ImplicitObjectCreationExpression"
+            ]
+        },
+        "reads": {
+            "Courier": 0,
+            "Confirmation": 0,
+            "Note": 0,
+            "None": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/ServiceLevels.cs@118:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/ServiceLevels.cs@261:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/Surcharges.cs@96:ClassDeclaration": {
+        "state": {
+            "cents": "global::System.Int32"
+        },
+        "readsByMember": {
+            "For": [
+                "cents"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "cents": []
+        },
+        "reads": {
+            "cents": 1
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Tracking.cs@174:ClassDeclaration": {
+        "state": {
+            "Carrier": "global::System.String",
+            "lastScan": "global::System.String"
+        },
+        "readsByMember": {
+            "Where": [
+                "lastScan"
+            ]
+        },
+        "nullable": [
+            "lastScan"
+        ],
+        "assigned": {
+            "Carrier": [
+                "Shop/Shipping/Tracking.cs@310:SuppressNullableWarningExpression"
+            ],
+            "lastScan": [
+                "Shop/Shipping/Tracking.cs@369:IdentifierName"
+            ]
+        },
+        "reads": {
+            "Carrier": 0,
+            "lastScan": 1
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/TrackingLinks.cs@96:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/Webhooks.cs@299:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Shipping/Webhooks.cs@51:RecordDeclaration": {
+        "state": {
+            "Parcel": "global::System.String",
+            "Status": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Parcel": [],
+            "Status": []
+        },
+        "reads": {
+            "Parcel": 0,
+            "Status": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Weighings.cs@73:RecordStructDeclaration": {
+        "state": {
+            "Grams": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Grams": []
+        },
+        "reads": {
+            "Grams": 0
+        },
+        "coupled": false
+    },
+    "Shop/Shipping/Windows.cs@82:ClassDeclaration": {
+        "state": {
+            "opensAt": "global::System.Int32",
+            "closesAt": "global::System.Int32",
+            "Today": "(global::System.Int32, global::System.Int32)?"
+        },
+        "readsByMember": {
+            "Today": [
+                "closesAt",
+                "opensAt"
+            ]
+        },
+        "nullable": [
+            "Today"
+        ],
+        "assigned": {
+            "opensAt": [],
+            "closesAt": [],
+            "Today": []
+        },
+        "reads": {
+            "opensAt": 2,
+            "closesAt": 2,
+            "Today": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Aisles.cs@204:ClassDeclaration": {
+        "state": {
+            "Aisles": "global::System.Collections.Generic.Dictionary<global::System.String, global::Shop.Stock.StorageAisle>"
+        },
+        "readsByMember": {
+            "Find": [
+                "Aisles"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Aisles": [
+                "Shop/Stock/Aisles.cs@298:ImplicitObjectCreationExpression"
+            ]
+        },
+        "reads": {
+            "Aisles": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Aisles.cs@23:ClassDeclaration": {
+        "state": {
+            "Code": "global::System.String",
+            "FreeSlots": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Code": [
+                "Shop/Stock/Aisles.cs@98:StringLiteralExpression"
+            ],
+            "FreeSlots": []
+        },
+        "reads": {
+            "Code": 0,
+            "FreeSlots": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Aisles.cs@368:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/Arrivals.cs@204:ClassDeclaration": {
+        "state": {
+            "queue": "global::System.Collections.Generic.Queue<(global::System.String Sku, global::System.Int32 Units)>",
+            "stock": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>"
+        },
+        "readsByMember": {
+            "Book": [
+                "queue",
+                "stock"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "queue": [],
+            "stock": []
+        },
+        "reads": {
+            "queue": 1,
+            "stock": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Audits.cs@192:ClassDeclaration": {
+        "state": {
+            "shelf": "global::System.String",
+            "expected": "global::System.Int32",
+            "counted": "global::System.Int32",
+            "Details": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Object>"
+        },
+        "readsByMember": {
+            "Details": [
+                "counted",
+                "expected",
+                "shelf"
+            ],
+            "Labels": [
+                "counted",
+                "expected",
+                "shelf"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "shelf": [],
+            "expected": [],
+            "counted": [],
+            "Details": []
+        },
+        "reads": {
+            "shelf": 2,
+            "expected": 2,
+            "counted": 2,
+            "Details": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Audits.cs@99:InterfaceDeclaration": {
+        "state": {
+            "Details": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Object>"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Details": []
+        },
+        "reads": {
+            "Details": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Batches.cs@145:RecordDeclaration": {
+        "state": {
+            "Sku": "global::System.String",
+            "Units": "global::System.Int32",
+            "Condition": "global::Shop.Stock.BatchCondition"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Sku": [],
+            "Units": [],
+            "Condition": []
+        },
+        "reads": {
+            "Sku": 0,
+            "Units": 0,
+            "Condition": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Batches.cs@223:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/Batches.cs@76:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/BinImports.cs@23:RecordDeclaration": {
+        "state": {
+            "Aisle": "global::System.String",
+            "Level": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Aisle": [],
+            "Level": []
+        },
+        "reads": {
+            "Aisle": 0,
+            "Level": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/BinImports.cs@254:ClassDeclaration": {
+        "state": {
+            "rack": "global::Shop.Stock.RackMap"
+        },
+        "readsByMember": {
+            "Load": [
+                "rack"
+            ],
+            "Reload": [
+                "rack"
+            ],
+            "Corner": [
+                "rack"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "rack": []
+        },
+        "reads": {
+            "rack": 3
+        },
+        "coupled": false
+    },
+    "Shop/Stock/BinImports.cs@81:ClassDeclaration": {
+        "state": {
+            "taken": "global::System.Collections.Generic.HashSet<(global::System.Int32 Aisle, global::System.Int32 Level)>"
+        },
+        "readsByMember": {
+            "Claim": [
+                "taken"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "taken": [
+                "Shop/Stock/BinImports.cs@172:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "taken": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/BinLocations.cs@135:RecordDeclaration": {
+        "state": {
+            "Aisle": "global::System.String",
+            "Shelf": "global::System.Int32",
+            "Label": "global::System.String"
+        },
+        "readsByMember": {
+            "Label": [
+                "Aisle",
+                "Shelf"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Aisle": [],
+            "Shelf": [],
+            "Label": []
+        },
+        "reads": {
+            "Aisle": 1,
+            "Shelf": 1,
+            "Label": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/BinResolvers.cs@184:ClassDeclaration": {
+        "state": {
+            "bins": "global::Shop.Stock.IBinResolver"
+        },
+        "readsByMember": {
+            "Room": [
+                "bins"
+            ],
+            "Fits": [
+                "bins"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "bins": []
+        },
+        "reads": {
+            "bins": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/BinResolvers.cs@23:RecordDeclaration": {
+        "state": {
+            "Code": "global::System.String",
+            "Capacity": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Code": [],
+            "Capacity": []
+        },
+        "reads": {
+            "Code": 0,
+            "Capacity": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/BinResolvers.cs@84:InterfaceDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/BinSweeps.cs@23:ClassDeclaration": {
+        "state": {
+            "countsByBin": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Int32>"
+        },
+        "readsByMember": {
+            "Empty": [
+                "countsByBin"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "countsByBin": []
+        },
+        "reads": {
+            "countsByBin": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/CategoryPaths.cs@158:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/CategoryPaths.cs@95:RecordDeclaration": {
+        "state": {
+            "Name": "global::System.String",
+            "Parent": "global::Shop.Stock.Category?"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Name": [],
+            "Parent": []
+        },
+        "reads": {
+            "Name": 0,
+            "Parent": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Counters.cs@73:ClassDeclaration": {
+        "state": {
+            "units": "global::System.Int32",
+            "perCase": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Count": [
+                "perCase",
+                "units"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "units": [],
+            "perCase": []
+        },
+        "reads": {
+            "units": 2,
+            "perCase": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Counts.cs@92:ClassDeclaration": {
+        "state": {
+            "scanned": "global::System.Collections.Generic.IReadOnlyList<global::System.Int32>",
+            "expected": "global::System.Int32"
+        },
+        "readsByMember": {
+            "TallyAsync": [
+                "expected",
+                "scanned"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "scanned": [],
+            "expected": []
+        },
+        "reads": {
+            "scanned": 1,
+            "expected": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Holds.cs@92:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/ImportRows.cs@211:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/ImportRows.cs@644:RecordDeclaration": {
+        "state": {
+            "Sku": "global::System.String",
+            "Units": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Sku": [],
+            "Units": []
+        },
+        "reads": {
+            "Sku": 0,
+            "Units": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Ledgers.cs@200:ClassDeclaration": {
+        "state": {
+            "folder": "global::System.String"
+        },
+        "readsByMember": {
+            "Counts": [
+                "folder"
+            ],
+            "Reservations": [
+                "folder"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "folder": []
+        },
+        "reads": {
+            "folder": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Listings.cs@1232:ClassDeclaration": {
+        "state": {
+            "Page": "global::System.Int32",
+            "Size": "global::System.Int32",
+            "Descending": "global::System.Boolean"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Page": [
+                "Shop/Stock/Listings.cs@1460:IdentifierName"
+            ],
+            "Size": [
+                "Shop/Stock/Listings.cs@1481:IdentifierName"
+            ],
+            "Descending": [
+                "Shop/Stock/Listings.cs@1508:IdentifierName"
+            ]
+        },
+        "reads": {
+            "Page": 0,
+            "Size": 0,
+            "Descending": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Listings.cs@211:ClassDeclaration": {
+        "state": {
+            "skus": "global::System.Collections.Generic.IReadOnlyList<global::System.String>"
+        },
+        "readsByMember": {
+            "Page": [
+                "skus"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "skus": []
+        },
+        "reads": {
+            "skus": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Listings.cs@477:ClassDeclaration": {
+        "state": {
+            "backorders": "global::System.Collections.Generic.IReadOnlyList<(global::System.String Sku, global::System.Int32 Missing)>"
+        },
+        "readsByMember": {
+            "Page": [
+                "backorders"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "backorders": []
+        },
+        "reads": {
+            "backorders": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Listings.cs@927:ClassDeclaration": {
+        "state": {
+            "Page": "global::System.Int32",
+            "Size": "global::System.Int32",
+            "Descending": "global::System.Boolean"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Page": [
+                "Shop/Stock/Listings.cs@1163:IdentifierName"
+            ],
+            "Size": [
+                "Shop/Stock/Listings.cs@1184:IdentifierName"
+            ],
+            "Descending": [
+                "Shop/Stock/Listings.cs@1211:IdentifierName"
+            ]
+        },
+        "reads": {
+            "Page": 0,
+            "Size": 0,
+            "Descending": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Palletising.cs@123:ClassDeclaration": {
+        "state": {
+            "slotsFree": "global::System.Int32"
+        },
+        "readsByMember": {
+            "SlotsFor": [
+                "slotsFree"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "slotsFree": []
+        },
+        "reads": {
+            "slotsFree": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/PickLists.cs@79:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/Picking.cs@163:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/Reorders.cs@71:ClassDeclaration": {
+        "state": {
+            "dailySales": "global::System.Int32",
+            "leadDays": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Level": [
+                "dailySales",
+                "leadDays"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "dailySales": [
+                "Shop/Stock/Reorders.cs@452:IdentifierName"
+            ],
+            "leadDays": [
+                "Shop/Stock/Reorders.cs@488:IdentifierName"
+            ]
+        },
+        "reads": {
+            "dailySales": 1,
+            "leadDays": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Replenishment.cs@175:ClassDeclaration": {
+        "state": {
+            "onHand": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Int32>",
+            "minimum": "global::System.Int32"
+        },
+        "readsByMember": {
+            "ToOrder": [
+                "minimum",
+                "onHand"
+            ],
+            "Units": [
+                "minimum",
+                "onHand"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "onHand": [],
+            "minimum": []
+        },
+        "reads": {
+            "onHand": 2,
+            "minimum": 4
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Reservations.cs@196:ClassDeclaration": {
+        "state": {
+            "report": "global::System.Action<global::System.String, global::System.Int32>"
+        },
+        "readsByMember": {
+            "Report": [
+                "report"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "report": []
+        },
+        "reads": {
+            "report": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Restock.cs@23:RecordDeclaration": {
+        "state": {
+            "Sku": "global::System.String",
+            "OnHand": "global::System.Int32",
+            "Minimum": "global::System.Int32",
+            "Supplier": "global::System.String?"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Sku": [],
+            "OnHand": [],
+            "Minimum": [],
+            "Supplier": []
+        },
+        "reads": {
+            "Sku": 0,
+            "OnHand": 0,
+            "Minimum": 0,
+            "Supplier": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Restock.cs@277:ClassDeclaration": {
+        "state": {
+            "warehouses": "global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Collections.Generic.IReadOnlyList<global::Shop.Stock.Shelf>>"
+        },
+        "readsByMember": {
+            "Reorders": [
+                "warehouses"
+            ],
+            "ReordersFlat": [
+                "warehouses"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "warehouses": []
+        },
+        "reads": {
+            "warehouses": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/ShelfAudits.cs@216:ClassDeclaration": {
+        "state": {
+            "audit": "global::Shop.Stock.ShelfAudit"
+        },
+        "readsByMember": {
+            "Recount": [
+                "audit"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "audit": []
+        },
+        "reads": {
+            "audit": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/ShelfAudits.cs@23:ClassDeclaration": {
+        "state": {
+            "Counts": "global::System.Collections.Generic.List<(global::System.String Bin, global::System.Int32 Counted)>"
+        },
+        "readsByMember": {
+            "Discrepancy": [
+                "Counts"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Counts": [
+                "Shop/Stock/ShelfAudits.cs@117:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "Counts": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/ShelfNotes.cs@95:ClassDeclaration": {
+        "state": {
+            "Summary": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Summary": [
+                "Shop/Stock/ShelfNotes.cs@273:ConditionalExpression"
+            ]
+        },
+        "reads": {
+            "Summary": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/ShelfSensors.cs@23:ClassDeclaration": {
+        "state": {
+            "shelves": "global::System.Collections.Generic.List<global::System.String>"
+        },
+        "readsByMember": {
+            "Register": [
+                "shelves"
+            ],
+            "Reading": [
+                "shelves"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "shelves": [
+                "Shop/Stock/ShelfSensors.cs@99:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "shelves": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/ShelfSensors.cs@293:ClassDeclaration": {
+        "state": {
+            "shelf": "global::System.String",
+            "reading": "global::System.String"
+        },
+        "readsByMember": {
+            "Shelf": [
+                "shelf"
+            ],
+            "Reading": [
+                "reading"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "shelf": [
+                "Shop/Stock/ShelfSensors.cs@480:IdentifierName"
+            ],
+            "reading": [
+                "Shop/Stock/ShelfSensors.cs@618:InvocationExpression"
+            ]
+        },
+        "reads": {
+            "shelf": 1,
+            "reading": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Shelving.cs@123:ClassDeclaration": {
+        "state": {
+            "aisle": "global::Shop.Stock.Aisle"
+        },
+        "readsByMember": {
+            "NeedsPower": [
+                "aisle"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "aisle": []
+        },
+        "reads": {
+            "aisle": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Shelving.cs@62:EnumDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/Snapshots.cs@194:ClassDeclaration": {
+        "state": {
+            "folder": "global::System.String"
+        },
+        "readsByMember": {
+            "Load": [
+                "folder"
+            ],
+            "LoadOrEmpty": [
+                "folder"
+            ],
+            "LoadIfReadable": [
+                "folder"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "folder": []
+        },
+        "reads": {
+            "folder": 3
+        },
+        "coupled": false
+    },
+    "Shop/Stock/StockImport.cs@744:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/StockImport.cs@85:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/StockLevels.cs@84:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/StockMoves.cs@112:ClassDeclaration": {
+        "state": {
+            "lines": "global::System.Collections.Generic.List<global::System.String>"
+        },
+        "readsByMember": {
+            "Record": [
+                "lines"
+            ],
+            "RecordMove": [
+                "lines"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "lines": [
+                "Shop/Stock/StockMoves.cs@184:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "lines": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/StockMoves.cs@23:RecordDeclaration": {
+        "state": {
+            "Sku": "global::System.String",
+            "Quantity": "global::System.Int32",
+            "FromBin": "global::System.String",
+            "ToBin": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Sku": [],
+            "Quantity": [],
+            "FromBin": [],
+            "ToBin": []
+        },
+        "reads": {
+            "Sku": 0,
+            "Quantity": 0,
+            "FromBin": 0,
+            "ToBin": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/StockMoves.cs@462:ClassDeclaration": {
+        "state": {
+            "log": "global::Shop.Stock.MoveLog"
+        },
+        "readsByMember": {
+            "Move": [
+                "log"
+            ],
+            "Undo": [
+                "log"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "log": []
+        },
+        "reads": {
+            "log": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/StockZones.cs@134:ClassDeclaration": {
+        "state": {
+            "skusByZone": "global::System.Collections.Generic.Dictionary<global::System.String, global::System.Collections.Generic.List<global::System.String>>"
+        },
+        "readsByMember": {
+            "Place": [
+                "skusByZone"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "skusByZone": [
+                "Shop/Stock/StockZones.cs@231:ImplicitObjectCreationExpression"
+            ]
+        },
+        "reads": {
+            "skusByZone": 2
+        },
+        "coupled": false
+    },
+    "Shop/Stock/StockZones.cs@23:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/StockZones.cs@462:ClassDeclaration": {
+        "state": {
+            "map": "global::Shop.Stock.ZoneMap"
+        },
+        "readsByMember": {
+            "Dairy": [
+                "map"
+            ],
+            "Pallet": [
+                "map"
+            ],
+            "Returns": [
+                "map"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "map": []
+        },
+        "reads": {
+            "map": 3
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Suppliers.cs@225:InterfaceDeclaration": {
+        "state": {
+            "Name": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Name": []
+        },
+        "reads": {
+            "Name": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Totes.cs@23:RecordDeclaration": {
+        "state": {
+            "Sku": "global::System.String",
+            "Grams": "global::System.Int32"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Sku": [],
+            "Grams": []
+        },
+        "reads": {
+            "Sku": 0,
+            "Grams": 0
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Totes.cs@244:ClassDeclaration": {
+        "state": {},
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {},
+        "reads": {},
+        "coupled": false
+    },
+    "Shop/Stock/Totes.cs@490:ClassDeclaration": {
+        "state": {
+            "queue": "global::Shop.Stock.LabelQueue"
+        },
+        "readsByMember": {
+            "LabelAll": [
+                "queue"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "queue": []
+        },
+        "reads": {
+            "queue": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Totes.cs@718:ClassDeclaration": {
+        "state": {
+            "waiting": "global::System.Collections.Generic.Queue<global::Shop.Stock.ToteItem>"
+        },
+        "readsByMember": {
+            "Enqueue": [
+                "waiting"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "waiting": [
+                "Shop/Stock/Totes.cs@798:ImplicitObjectCreationExpression"
+            ]
+        },
+        "reads": {
+            "waiting": 1
+        },
+        "coupled": false
+    },
+    "Shop/Stock/Totes.cs@78:ClassDeclaration": {
+        "state": {
+            "Items": "global::System.Collections.Generic.List<global::Shop.Stock.ToteItem>"
+        },
+        "readsByMember": {
+            "TotalGrams": [
+                "Items"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Items": [
+                "Shop/Stock/Totes.cs@148:CollectionExpression"
+            ]
+        },
+        "reads": {
+            "Items": 1
+        },
+        "coupled": false
+    },
+    "Shop/Storefront/PageSlugs.cs@211:ClassDeclaration": {
+        "state": {
+            "pages": "global::System.Collections.Generic.IReadOnlyList<global::Shop.Storefront.ProductPage>"
+        },
+        "readsByMember": {
+            "Slugs": [
+                "pages"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "pages": []
+        },
+        "reads": {
+            "pages": 1
+        },
+        "coupled": false
+    },
+    "Shop/Storefront/ProductPages.cs@49:RecordDeclaration": {
+        "state": {
+            "Slug": "global::System.String",
+            "Heading": "global::System.String"
+        },
+        "readsByMember": {},
+        "nullable": [],
+        "assigned": {
+            "Slug": [],
+            "Heading": []
+        },
+        "reads": {
+            "Slug": 0,
+            "Heading": 0
+        },
+        "coupled": false
+    },
+    "Shop/Storefront/Shelves.cs@109:ClassDeclaration": {
+        "state": {
+            "items": "global::System.Collections.Generic.IReadOnlyList<T>",
+            "Count": "global::System.Int32"
+        },
+        "readsByMember": {
+            "Count": [
+                "items"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "items": [],
+            "Count": []
+        },
+        "reads": {
+            "items": 1,
+            "Count": 0
+        },
+        "coupled": false
+    },
+    "Shop/Warranty/Policies.cs@26:RecordDeclaration": {
+        "state": {
+            "Months": "global::System.Int32",
+            "CoveredFaults": "global::System.Collections.Generic.IReadOnlySet<global::System.String>"
+        },
+        "readsByMember": {
+            "Covers": [
+                "CoveredFaults"
+            ]
+        },
+        "nullable": [],
+        "assigned": {
+            "Months": [],
+            "CoveredFaults": []
+        },
+        "reads": {
+            "Months": 0,
+            "CoveredFaults": 1
+        },
+        "coupled": false
+    }
+}

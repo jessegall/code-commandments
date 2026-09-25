@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — the files changed since the last check (`Order.php`, `Clean.php`) breaks a rule. Fix it now, at its SOURCE, while the code is still in front of you:\n  • array-bag at <project>/src/Order.php:13\n    LOAD the skill `commandments-backend-value-objects` before fixing — load it even if you believe you already have.\n  • narrated-command at <project>/src/Order.php:7\n    LOAD the skill `commandments-backend-method-mood` before fixing — load it even if you believe you already have.\nRun `vendor/bin/commandments info <sin>` if a rule is not one you recognise. This check reads a file at a time, so it is not the whole picture — `judge` still is."}}
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — `Order.php`, changed since the last check, breaks a rule. Fix it now, at its SOURCE, while the code is still in front of you:\n  • array-bag at <project>/src/Order.php:13\n    LOAD the skill `commandments-backend-value-objects` before fixing — load it even if you believe you already have.\n  • narrated-command at <project>/src/Order.php:7\n    LOAD the skill `commandments-backend-method-mood` before fixing — load it even if you believe you already have.\nRun `vendor/bin/commandments info <sin>` if a rule is not one you recognise. This check reads a file at a time, so it is not the whole picture — `judge` still is."}}
 
 --- stderr
 

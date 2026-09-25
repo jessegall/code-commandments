@@ -49,8 +49,8 @@ echo implode("\n", $library->publish('` + repo + `'));`
 }
 
 func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
-	// C# is left out of every case until the Go side carries the C# skills (ticket 7).
 	for name, disabled := range map[string][]source.Language{
+		"every language":          nil,
 		"every language but C#":   {source.CSharp},
 		"no Python either":        {source.CSharp, source.Python},
 		"the backend only":        {source.CSharp, source.Python, source.Vue, source.TypeScript},

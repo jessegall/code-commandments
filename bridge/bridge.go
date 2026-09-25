@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"os/exec"
 	"sync"
 
@@ -33,14 +34,16 @@ func Once(command []string, paths ...string) (*contract.Stream, error) {
 	return contract.ReadAll(&out)
 }
 
-// Server is a bridge kept running with --serve, answering one request at a time from what it holds in memory.
+// Server is a bridge kept running, answering one request at a time: a process started with --serve, or a service
+// a session keeps up, reached over its socket.
 type Server struct {
-	command []string
-	process *exec.Cmd
-	input   io.WriteCloser
-	output  *contract.Reader
-	errs    *bytes.Buffer
-	mu      sync.Mutex
+	command    []string
+	process    *exec.Cmd
+	input      io.Writer
+	output     *contract.Reader
+	errs       *bytes.Buffer
+	connection net.Conn
+	mu         sync.Mutex
 }
 
 // Serve starts the bridge with --serve.
@@ -72,21 +75,33 @@ func (s *Server) Ask(request Request) (*contract.Stream, error) {
 		return nil, err
 	}
 	if _, err := s.input.Write(append(line, '\n')); err != nil {
-		return nil, Failed(s.command, err, s.errs.String())
+		return nil, Failed(s.command, err, s.stderr())
 	}
 	stream, err := s.output.Stream()
 	if err != nil {
-		return nil, Failed(s.command, err, s.errs.String())
+		return nil, Failed(s.command, err, s.stderr())
 	}
 
 	return stream, nil
 }
 
-// Close ends the bridge.
+// Close ends the bridge process, or lets go of the service's socket, which the session keeps up.
 func (s *Server) Close() error {
-	s.input.Close()
+	if s.connection != nil {
+		return s.connection.Close()
+	}
+	s.input.(io.Closer).Close()
 
 	return s.process.Wait()
+}
+
+// stderr is what the bridge process wrote to stderr; a service writes its own elsewhere.
+func (s *Server) stderr() string {
+	if s.errs == nil {
+		return ""
+	}
+
+	return s.errs.String()
 }
 
 // BridgeFailed is a bridge that exited or answered outside the contract, with what it wrote to stderr.

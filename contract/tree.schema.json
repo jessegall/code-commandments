@@ -140,7 +140,8 @@
       "properties": {
         "symbol": {"$ref": "#/$defs/symbolId"},
         "type": {"$ref": "#/$defs/symbolId"},
-        "name": {"type": "string", "minLength": 1}
+        "name": {"type": "string", "minLength": 1},
+        "parameters": {"type": "array", "items": {"type": "string", "minLength": 1}}
       },
       "required": ["symbol", "name"],
       "additionalProperties": false

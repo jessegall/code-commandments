@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
@@ -107,10 +108,10 @@ func commentMarkers(codebase *engine.Codebase) []Marker {
 	var markers []Marker
 	for _, file := range codebase.Files() {
 		for _, comment := range file.File.Comments {
-			if comment.Attached == nil {
+			marked, ok := markedBy(file, comment)
+			if !ok {
 				continue
 			}
-			marked := file.Match(*comment.Attached)
 			location := marked.Location()
 			words := strings.TrimSpace(commentDelimiters.ReplaceAllString(strings.TrimSpace(comment.Text), ""))
 			for _, found := range commentMarker.FindAllStringSubmatch(words, -1) {
@@ -127,6 +128,25 @@ func commentMarkers(codebase *engine.Codebase) []Marker {
 	}
 
 	return markers
+}
+
+// markedBy is the code a marker comment marks: the node it leads, or, for a comment on a line of its own that leads
+// no node, as above `: throw …` where the next token starts none, the first node written after it.
+func markedBy(file *engine.File, comment contract.Comment) (engine.Match, bool) {
+	if comment.Attached != nil {
+		return file.Match(*comment.Attached), true
+	}
+	if comment.Trailing {
+		return engine.Match{}, false
+	}
+	var next engine.Match
+	for _, node := range file.Match(0).Descendants() {
+		if start := node.Node().Span.Start; start >= comment.Span.End && (!next.Exists() || start < next.Node().Span.Start) {
+			next = node
+		}
+	}
+
+	return next, next.Exists()
 }
 
 // classOf is the type a node belongs to, itself when it is one, (file) outside any.

@@ -1,0 +1,25 @@
+package csharp
+
+import (
+	"github.com/jessegall/code-commandments/catalog"
+	"github.com/jessegall/code-commandments/sins"
+	skills "github.com/jessegall/code-commandments/skill/csharp"
+)
+
+// CoupledFields is a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields.
+type CoupledFields struct{}
+
+func init() {
+	sins.Register(catalog.CSharp, CoupledFields{})
+}
+
+// Definition is what the sin states about itself.
+func (CoupledFields) Definition() sins.Definition {
+	return sins.Definition{
+		Name:        "csharp-coupled-fields",
+		Skill:       skills.ValueObjects{},
+		Description: "a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields",
+		Rule:        "Fields that move as a unit are one type: hold the value object, not its parts; never keep a second copy of what a sibling field already holds.",
+		Suggestion:  "Fold the fields into one record (reuse one that already matches, if one exists) and drop a field that only mirrors a sibling's member.",
+	}
+}

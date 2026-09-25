@@ -27,12 +27,12 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     public const int Version = 7;
 
     /// <summary>How every type and member is written: fully qualified, `System.String` never `string`, `?` kept.</summary>
-    private static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
+    internal static readonly SymbolDisplayFormat Qualified = SymbolDisplayFormat.FullyQualifiedFormat
         .RemoveMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.UseSpecialTypes)
         .AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
     /// <summary>How a declared member is named: fully qualified, with its containing type and its parameters' types — as a call's resolved target names it.</summary>
-    private static readonly SymbolDisplayFormat Declared = Qualified
+    internal static readonly SymbolDisplayFormat Declared = Qualified
         .WithMemberOptions(SymbolDisplayMemberOptions.IncludeContainingType | SymbolDisplayMemberOptions.IncludeParameters)
         .WithParameterOptions(SymbolDisplayParameterOptions.IncludeType);
 
@@ -78,7 +78,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     /// missing there (CS0246, CS0234), or a global `using` anywhere in the project resolving to nothing — so a
     /// name may live in a reference the compilation lacks?
     /// </summary>
-    private bool IsBlind(SemanticModel model)
+    internal bool IsBlind(SemanticModel model)
     {
         blindGlobally ??= project.Trees.Any(tree => UnresolvedUsings(tree.GetRoot(), project.Model(tree)).Any(directive => directive.GlobalKeyword.IsKind(SyntaxKind.GlobalKeyword)));
 
@@ -92,7 +92,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     }
 
     /// <summary>The longest qualifier of <paramref name="cref"/> that resolves — <c>Shop.Orders</c> of <c>Shop.Orders.Gone</c>.</summary>
-    private static ISymbol? Owner(CrefSyntax cref, SemanticModel model)
+    internal static ISymbol? Owner(CrefSyntax cref, SemanticModel model)
     {
         var container = cref switch
         {
@@ -118,7 +118,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     }
 
     /// <summary>The `using` directives written in <paramref name="root"/> whose namespace or type resolves to nothing.</summary>
-    private static IEnumerable<UsingDirectiveSyntax> UnresolvedUsings(SyntaxNode root, SemanticModel model) => root
+    internal static IEnumerable<UsingDirectiveSyntax> UnresolvedUsings(SyntaxNode root, SemanticModel model) => root
         .DescendantNodes(node => node is CompilationUnitSyntax or BaseNamespaceDeclarationSyntax)
         .OfType<UsingDirectiveSyntax>()
         .Where(directive => directive.NamespaceOrType is { } target && model.GetSymbolInfo(target).Symbol is null);
@@ -191,7 +191,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
         json.WriteEndArray();
     }
 
-    private static bool IsComment(SyntaxTrivia trivia) => trivia.Kind() is SyntaxKind.SingleLineCommentTrivia
+    internal static bool IsComment(SyntaxTrivia trivia) => trivia.Kind() is SyntaxKind.SingleLineCommentTrivia
         or SyntaxKind.MultiLineCommentTrivia
         or SyntaxKind.SingleLineDocumentationCommentTrivia
         or SyntaxKind.MultiLineDocumentationCommentTrivia;
@@ -201,7 +201,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     /// punctuation code has (<c>total += rate</c>, <c>return order.Total()</c>)? Words alone parse as a
     /// declaration (<c>flush buffers</c>), and read as prose.
     /// </summary>
-    private static bool IsCode(SyntaxTrivia trivia)
+    internal static bool IsCode(SyntaxTrivia trivia)
     {
         var text = trivia.ToFullString();
         var body = trivia.Kind() switch
@@ -224,7 +224,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
             && statement.DescendantTokens().Any(token => token.IsKind(SyntaxKind.DotToken) || token.IsKind(SyntaxKind.OpenParenToken) || token.IsKind(SyntaxKind.OpenBracketToken) || SyntaxFacts.IsAssignmentExpressionOperatorToken(token.Kind()) || SyntaxFacts.IsBinaryExpressionOperatorToken(token.Kind()));
     }
 
-    private static string CommentKind(SyntaxTrivia trivia) => trivia.Kind() switch
+    internal static string CommentKind(SyntaxTrivia trivia) => trivia.Kind() switch
     {
         SyntaxKind.SingleLineCommentTrivia => "line",
         SyntaxKind.MultiLineCommentTrivia => "block",
@@ -266,7 +266,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     /// UTF-16 units from after the byte-order mark, a PHP reader counts bytes from the file's first, and
     /// the two part at the mark and at the first character outside ASCII.
     /// </summary>
-    private static int[] ByteOffsets(string text, int mark)
+    internal static int[] ByteOffsets(string text, int mark)
     {
         var offsets = new int[text.Length + 1];
         var total = mark;
@@ -283,7 +283,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     }
 
     /// <summary>The length of the UTF-8 byte-order mark <paramref name="path"/> opens with, which the parsed text drops.</summary>
-    private static int MarkLength(string path)
+    internal static int MarkLength(string path)
     {
         using var file = File.OpenRead(path);
         Span<byte> head = stackalloc byte[3];
@@ -295,7 +295,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     /// What part the node plays — a statement, an expression, a member or type declaration, a type, or
     /// anything else (a parameter, an argument, a clause) — as Roslyn's own class hierarchy says it.
     /// </summary>
-    private static string Role(SyntaxNode node) => node switch
+    internal static string Role(SyntaxNode node) => node switch
     {
         StatementSyntax => "statement",
         MemberDeclarationSyntax => "member",
@@ -391,7 +391,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     /// member or a <c>const</c>, as the right side of <c>x is Status.Paid</c> is, though it stands where
     /// a type could; or <c>typeof</c> a concrete type. <c>typeof(T)</c> over a type parameter varies.
     /// </summary>
-    private static bool IsConstant(ExpressionSyntax expression, SemanticModel model) =>
+    internal static bool IsConstant(ExpressionSyntax expression, SemanticModel model) =>
         model.GetConstantValue(expression).HasValue
         || model.GetSymbolInfo(expression).Symbol is IFieldSymbol { HasConstantValue: true }
         || (expression is TypeOfExpressionSyntax typeOf && model.GetTypeInfo(typeOf.Type).Type is not (null or ITypeParameterSymbol or IErrorTypeSymbol));
@@ -401,7 +401,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
     /// return — declare a type that admits null? What a <c>!</c> on it silences, read from the
     /// declaration, since the operand of a <c>!</c> reports the state after it.
     /// </summary>
-    private static bool IsDeclaredNullable(ExpressionSyntax operand, SemanticModel model)
+    internal static bool IsDeclaredNullable(ExpressionSyntax operand, SemanticModel model)
     {
         var declared = model.GetSymbolInfo(operand).Symbol switch
         {
@@ -546,7 +546,7 @@ public sealed class TreeWriter(Project project, IReadOnlySet<string>? written = 
         }
     }
 
-    private static bool ImplementsInterfaceMember(ISymbol member) =>
+    internal static bool ImplementsInterfaceMember(ISymbol member) =>
         member.ContainingType is { } type
         && type.AllInterfaces.Any(@interface => @interface.GetMembers().Any(candidate =>
             SymbolEqualityComparer.Default.Equals(type.FindImplementationForInterfaceMember(candidate), member)));

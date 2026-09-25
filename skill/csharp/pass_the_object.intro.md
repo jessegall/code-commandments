@@ -1,0 +1,2 @@
+When a method's first act is to resolve one parameter against another, the signature lies about what the
+method needs. The caller resolves once, where the id was born, and passes the object the method works on.

@@ -1,0 +1,4252 @@
+{
+    "methods": {
+        "global::Shop.Addresses.CountryCodes.Upper(global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Addresses.CountryCodes.CheckedUpper(global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Addresses.CountryCodes.Normalise(global::System.String)": {
+            "callers": [
+                "Shop/Addresses/CountryCodes.cs@229:InvocationExpression",
+                "Shop/Addresses/CountryCodes.cs@472:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Addresses.LabelPrinter.Print(global::System.String, global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Addresses.LabelPrinter.PrintFor(global::Shop.Addresses.Address)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Addresses.PostcodeChecks.HasPostcode(global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Addresses.PostcodeChecks.IsGiven(global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Addresses.PostcodeChecks.Shown(global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Addresses.Quotes.Price(global::System.String, global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Catalog.Product.IsOnSale(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Catalog.Product.FitsIn(global::Shop.Checkout.Cart)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Checkout.Cart.Add(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Checkout.Cart.BackLink(global::Shop.Storefront.ProductPage)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.BarcodeSheet.Encode(global::System.String)": {
+            "callers": [
+                "Shop/Documents/Barcodes.cs@349:InvocationExpression",
+                "Shop/Documents/Barcodes.cs@523:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.DispatchSheet.Top(global::Shop.Documents.Parcel)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.DispatchSheet.All(global::System.Collections.Generic.IEnumerable<global::Shop.Documents.Parcel>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.ParcelBarcodes.Encode(global::System.Guid)": {
+            "callers": [
+                "Shop/Documents/Barcodes.cs@769:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.ParcelBarcodes.Top(global::Shop.Documents.Parcel)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.ShippedEmail.Body(global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.ShippedEmail.Written(global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.ShippedEmail.Items(global::System.Collections.Generic.IEnumerable<global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Headings.Of(global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Headings.Lined(global::System.String, global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Headings.Joined(global::System.String[], global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Invoice.Lines()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.InvoiceArchive.NumberOf(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.InvoiceArchive.Contents(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.LabelPrinter.Footer(global::System.Uri)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.TemplateShelf.Named(global::System.String)": {
+            "callers": [
+                "Shop/Documents/LabelTemplates.cs@584:InvocationExpression",
+                "Shop/Documents/LabelTemplates.cs@715:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.TemplateShelf.Largest()": {
+            "callers": [
+                "Shop/Documents/LabelTemplates.cs@866:InvocationExpression",
+                "Shop/Documents/LabelTemplates.cs@928:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.LabelLayout.Width(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.LabelLayout.Area(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.LabelLayout.Biggest()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.LabelLayout.HasAny()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.LineLayout.Describe(global::System.Collections.Generic.IEnumerable<global::Shop.Orders.OrderLine>)": {
+            "callers": [
+                "Shop/Documents/Layout.cs@650:InvocationExpression",
+                "Shop/Documents/Layout.cs@807:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.DeliveryNote.Rows()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.ReturnForm.Items()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.PackingSlip.Rows()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Reprints.Queue(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Reprints.QueueFor(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Reprints.Cancel(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Summaries.Line(global::System.String, global::System.Int32, global::System.Boolean)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Summaries.CustomerLine(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Summaries.LedgerLine(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Documents.Summaries.Heading(global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Gifts.GiftCard.Covers(global::Shop.Rewards.Voucher)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Loyalty.Member.Redeem(global::Shop.Rewards.VoucherCatalog)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Loyalty.Member.Affordable(global::Shop.Rewards.VoucherCatalog)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Loyalty.Member.CanRedeem(global::Shop.Rewards.Voucher)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Loyalty.CardDesk.Redeem(global::Shop.Loyalty.PunchCard, global::System.DateOnly)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "card",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Broadcasts.SendMessage<TMessage>(TMessage)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Broadcasts.Send(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.CampaignPlan.Segment(global::System.String)": {
+            "callers": [
+                "Shop/Notifications/Campaigns.cs@499:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.CampaignSender.Send(global::Shop.Notifications.CampaignPlan, global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": true
+        },
+        "global::Shop.Notifications.NotifyRouter.Allows(global::System.String, global::System.String)": {
+            "callers": [
+                "Shop/Notifications/ChannelNames.cs@437:InvocationExpression",
+                "Shop/Notifications/ChannelNames.cs@635:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.OrderAlerts.CanEmail(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.OrderAlerts.Textable(global::System.Collections.Generic.IEnumerable<global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.ChannelCosts.CentsFor(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.ChannelCosts.HeaderLine(global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.DeliveredMail.Compose(global::Shop.Orders.Order)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.DigestBuilder.Empty()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Mailbox.Send(global::System.String, global::System.String, global::System.Decimal)": {
+            "callers": [
+                "Shop/Notifications/InvoiceMailers.cs@488:InvocationExpression",
+                "Shop/Notifications/InvoiceMailers.cs@727:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.InvoiceMailer.Deliver(global::Shop.Notifications.InvoiceMail)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.InvoiceMailer.Remind(global::Shop.Notifications.InvoiceMail)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.ReceiptMailer.Send(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.OrderMailer.Compose(global::Shop.Orders.Order, global::System.String, global::System.String)": {
+            "callers": [
+                "Shop/Notifications/Mailer.cs@836:InvocationExpression",
+                "Shop/Notifications/Mailer.cs@981:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.OrderMailer.Shipped(global::Shop.Orders.Order)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.OrderMailer.Delivered(global::Shop.Orders.Order)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Mailing.Emails()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Mailing.Addresses()": {
+            "callers": [],
+            "handedOut": true,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Outbox.Flush()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Outbox.FlushLoudly(global::System.IO.TextWriter)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.CustomerDesk.CanPromiseToday(global::Shop.Orders.Dispatchable)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.CustomerDesk.NeedsChasing(global::Shop.Orders.Dispatchable)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.HourSpan.Contains(global::System.Int32)": {
+            "callers": [
+                "Shop/Notifications/QuietHours.cs@475:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.QuietHours.Silences(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Receipts.Send(global::System.String?, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Receipts.SendIfAddressed(global::System.String?, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Receipts.SendIn(global::System.String?, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.ShippedMail.Render(global::Shop.Orders.Order)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.SmsGateway.Push(global::Shop.Notifications.Alert, global::System.String)": {
+            "callers": [
+                "Shop/Notifications/SmsAlerts.cs@357:InvocationExpression",
+                "Shop/Notifications/SmsAlerts.cs@428:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Alerts.Short(global::Shop.Notifications.Alert)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Alerts.Long(global::Shop.Notifications.Alert)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.SmsSettings.IsConfigured()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.SmsGateway.IsConfigured()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.MailingList.Join(global::System.String)": {
+            "callers": [
+                "Shop/Notifications/Subscriptions.cs@518:InvocationExpression",
+                "Shop/Notifications/Subscriptions.cs@722:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.MailingList.Count()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.NewsletterPreference.Address()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.NewsletterSignup.Confirm()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Notifications.Throttle.Allows(global::System.DateTimeOffset, global::System.DateTimeOffset)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Approval.Chain()": {
+            "callers": [
+                "Shop/Orders/Approvals.cs@919:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Approvals.Approvers(global::Shop.Orders.Approval)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Approvals.Signed(global::Shop.Orders.Approval)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "first",
+            "unpacks": false
+        },
+        "global::Shop.Orders.HeldBasket.WithOneMore()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Checkout.Charge(global::Shop.Orders.Order, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Checkout.ChargeFlat(global::Shop.Orders.Order, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Checkout.Greeting(global::Shop.Orders.Order, global::System.Boolean)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.EmptyOrder.For(global::Shop.Orders.Order)": {
+            "callers": [
+                "Shop/Orders/Checkout.cs@338:InvocationExpression",
+                "Shop/Orders/Checkout.cs@676:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.CouponRedeem.Percent(global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.CouponRedeem.Label(global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.CurrencyMismatch.For(global::Shop.Orders.Money, global::Shop.Orders.Money)": {
+            "callers": [
+                "Shop/Orders/Money.cs@383:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Customers.Named(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Customers.Existing(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.UnknownCustomer.Named(global::System.String)": {
+            "callers": [
+                "Shop/Orders/Customers.cs@652:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Discounting.Total(global::Shop.Pricing.Promotion)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Warehouse.Status(global::Shop.Orders.Dispatchable)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Warehouse.Label(global::Shop.Orders.Dispatchable)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.DeliveryStageRules.HasLeftTheWarehouse(global::Shop.Orders.DeliveryStage)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Fulfilment.Note(global::Shop.Orders.DeliveryStage)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Fulfilment.Noted(global::Shop.Orders.DeliveryStage)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.GiftMessage.IsBlank()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.WrapStation.Wrappable(global::System.Collections.Generic.IEnumerable<global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.WrapCounter.Count(global::System.Collections.Generic.IEnumerable<global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Gratuity.On(global::System.Decimal)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Gratuity.TerminalCents(global::System.Decimal)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Gratuity.Offered(global::System.Decimal)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.InvoiceNumbers.Next()": {
+            "callers": [
+                "Shop/Orders/InvoiceNumbers.cs@345:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.InvoiceNumbers.Formatted()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.CreditNoteNumbers.Next()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Invoicing.Bill(global::Shop.Orders.Order, global::System.Collections.Generic.List<global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "order",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Invoicing.BillFlat(global::Shop.Orders.Order, global::System.Collections.Generic.List<global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "order",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Invoicing.FirstBackordered(global::Shop.Orders.Order)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "order",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Lifecycle.Ship()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Lifecycle.Pay()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Money.Zero(global::System.String)": {
+            "callers": [
+                "Shop/Orders/Order.cs@281:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Money.Plus(global::Shop.Orders.Money)": {
+            "callers": [
+                "Shop/Orders/Order.cs@327:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Order.Total(global::System.String)": {
+            "callers": [
+                "Shop/Orders/Checkout.cs@418:InvocationExpression",
+                "Shop/Orders/Checkout.cs@730:InvocationExpression",
+                "Shop/Orders/Refunds.cs@907:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.OrderNumbering.Next()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.OrderNotes.Count()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.OrderNotes.Printed()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.StagedOrder.Shipped()": {
+            "callers": [
+                "Shop/Orders/OrderStages.cs@618:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Fulfilment2.Dispatch(global::Shop.Orders.StagedOrder)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Fulfilment2.Send(global::Shop.Orders.StagedOrder)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Fulfilment2.Annotate(global::Shop.Orders.StagedOrder, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.PaymentStatusRules.IsSettled(global::Shop.Orders.PaymentStatus)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.PaymentDesk.CanRefund(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.PaymentDesk.CanRefund(global::Shop.Orders.PaymentStatus)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.OrderStatusRules.IsSettled(global::Shop.Orders.OrderStatus)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.PaymentWebhooks.Settles(global::Shop.Orders.PaymentCallback)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.PaymentWebhooks.Settled(global::Shop.Orders.PaymentCallback)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.PaymentWebhooks.IsSigned(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Payouts.Queued(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Payouts.Queue(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Receipts.Footer(global::System.String, global::System.Int32, global::System.DateOnly)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.TypedReceipts.PaidToday(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.RefundDesk.Priority(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.RefundWindows.Days(global::System.Boolean)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.RefundWindows.DaysFor(global::System.Boolean)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Refunds.Amount(global::Shop.Orders.Order, global::System.Boolean, global::Shop.Orders.RefundReason)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "order",
+            "unpacks": false
+        },
+        "global::Shop.Orders.StatusBadge.Colour(global::Shop.Orders.OrderStatus)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.StatusBadge.ColourOf(global::Shop.Orders.OrderStatus)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.StatusFeed.Handle(global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.StatusFeed.HandleParsed(global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.StatusFeed.Channel(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.Statuses.Label(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.SupplierInvoice.PayTo()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Orders.TillCounter.Next()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Badges.Label(global::Shop.Pricing.Tier)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Badges.Colour(global::Shop.Pricing.Tier)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.CouponBook.Find(global::System.String)": {
+            "callers": [
+                "Shop/Pricing/CouponBooks.cs@610:InvocationExpression",
+                "Shop/Pricing/CouponBooks.cs@719:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.CouponBook.Get(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.CouponCounter.PercentFor(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.CouponCounter.Describe(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.CreditNote.Credit(global::System.Decimal)": {
+            "callers": [
+                "Shop/Pricing/CreditNotes.cs@512:InvocationExpression",
+                "Shop/Pricing/CreditNotes.cs@729:InvocationExpression",
+                "Shop/Reports/CreditSummaries.cs@295:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.CreditNoteBuilder.For(global::System.Collections.Generic.IReadOnlyList<global::Shop.Pricing.ReturnedLine>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.CreditNoteBuilder.Single(global::Shop.Pricing.ReturnedLine)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Currencies.Rate(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Decimal>, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.DiscountCode.IsUnused()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Discounts.Wholesale(global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.OrderLine>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Discounts.Retail(global::System.Collections.Generic.IReadOnlyList<global::Shop.Orders.OrderLine>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.ExchangeRates.ToBase(global::System.String, global::System.Decimal)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.ExchangeRates.IsStale(global::System.DateOnly)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.TaxRates.RateFor(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.TaxRates.IsStale(global::System.DateOnly)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Labels.For(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Labels.Required(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.LoyaltyTiers.Percent(global::System.Boolean, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.LoyaltyTiers.Welcome(global::System.Boolean)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Display.Show(global::System.String)": {
+            "callers": [
+                "Shop/Pricing/PriceBoard.cs@508:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Display.Shown()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.PriceBoard.Pence()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Quotes.Quote(global::Shop.Pricing.PriceBook, global::System.Int32, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": true
+        },
+        "global::Shop.Pricing.PriceList.Parse(global::System.String[])": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.PriceList.Comments(global::System.String[])": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.PrizeDraw.Winner(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.PrizeDraw.RunnerUp(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Promotion.Discount(global::System.Int32)": {
+            "callers": [
+                "Shop/Pricing/Promotions.cs@1087:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Promotion.Label()": {
+            "callers": [
+                "Shop/Pricing/Promotions.cs@1198:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.PercentOff.Discount(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.PercentOff.Label()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.AmountOff.Discount(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.AmountOff.Label()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.PromotionLabels.Label(global::Shop.Pricing.Promotion)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.PromotionLabels.Pay(global::Shop.Pricing.Promotion, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.PromotionLabels.Describe(global::Shop.Pricing.Promotion)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.CouponCheck.Explain(global::Shop.Pricing.CouponCheck)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Quota.Spend(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.RateCache.Store(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Decimal>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.RateFeed.Rate(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Rounding.ToNickel(global::System.Int64)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Surcharges.Rate()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.TaxTable.RateFor(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.TierImport.Read(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Units.Suffix<T>()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.Units.Band(global::System.Int32, global::System.Boolean, global::System.Boolean, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.VatSplits.Split(global::System.Decimal, global::System.Decimal, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.VatSplits.Divided(global::System.Decimal, global::System.Decimal)": {
+            "callers": [
+                "Shop/Pricing/VatSplits.cs@602:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.VatSplits.Labelled(global::System.Decimal, global::System.Decimal)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.VolumeBand.Covers(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Pricing.QuantityBreak.Apply(global::System.Decimal)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.Backfills.Repaired(global::System.Collections.Generic.IEnumerable<global::Shop.Orders.StagedOrder>, global::System.DateOnly, global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.DateOnly>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.Closures.Closed(global::System.Collections.Generic.IEnumerable<global::Shop.Reports.ExportRow>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.CreditSummary.Credited(global::System.Collections.Generic.IEnumerable<global::Shop.Pricing.ReturnedLine>, global::Shop.Pricing.CreditNote)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.DailySummary.Render(global::System.DateOnly)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.DamageReport.ToInspect(global::System.Collections.Generic.IEnumerable<global::Shop.Shipping.Package>, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.ExportJob.Describe()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.BucketFormats.FormatFor(global::Shop.Reports.Granularity)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.IPageSource.First()": {
+            "callers": [
+                "Shop/Reports/PageReader.cs@408:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.IPageSource.After(global::Shop.Reports.Page)": {
+            "callers": [
+                "Shop/Reports/PageReader.cs@433:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.PageReader.CountRows(global::Shop.Reports.IPageSource)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.PromotionReport.Count(global::System.Collections.Generic.IEnumerable<global::Shop.Pricing.Promotion>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.PromotionReport.Summary()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.ReportRunner.Run(global::System.String)": {
+            "callers": [
+                "Shop/Reports/ReportKinds.cs@319:InvocationExpression",
+                "Shop/Reports/ReportKinds.cs@418:InvocationExpression",
+                "Shop/Reports/ReportKinds.cs@507:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.ReportSchedule.Morning()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.ReportSchedule.EndOfMonth()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.ReportSchedule.Close()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.ReportRounding.Cents(global::System.Decimal)": {
+            "callers": [
+                "Shop/Reports/Rounding.cs@364:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.ReportRounding.Percent(global::System.Decimal, global::System.Decimal)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.SalesReport.Total(global::System.DateTime, global::System.DateTime, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.ReturnsReport.Count(global::System.String, global::System.DateTime, global::System.DateTime)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.IPeriodic.Sum(global::System.DateTime, global::System.DateTime, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.Refunds.Sum(global::System.DateTime, global::System.DateTime, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.Discounts.Sum(global::System.DateTime, global::System.DateTime, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Reports.DailySnapshot.Figures()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Returns.ClaimDesk.IsCovered(global::Shop.Returns.Claim, global::Shop.Warranty.WarrantyPolicy, global::System.DateOnly)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Returns.ClaimDesk.Stricter(global::Shop.Warranty.WarrantyPolicy, global::Shop.Warranty.WarrantyPolicy)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Returns.ReturnInspector.NeedsRestocking(global::Shop.Returns.ReturnParcel)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "parcel",
+            "unpacks": false
+        },
+        "global::Shop.Rewards.VoucherIssuer.IssueTo(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Rewards.VoucherCatalog.Cheapest(global::System.Int32)": {
+            "callers": [
+                "Shop/Loyalty/Members.cs@367:InvocationExpression",
+                "Shop/Rewards/Issuing.cs@399:InvocationExpression",
+                "Shop/Rewards/Vouchers.cs@452:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Rewards.VoucherCatalog.IssueTo(global::Shop.Loyalty.Member)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Search.SearchIndex.Matching(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Search.SearchIndex.Slugs(global::System.Collections.Generic.IEnumerable<global::Shop.Storefront.ProductPage>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Search.Rankings.Shown(global::Shop.Storefront.Shelf<global::Shop.Catalog.Product>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierCodes.TrackingUrl(global::System.String, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierConfig.For(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierDirectory.Account(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierDirectory.AccountOf(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierDirectory.Normalised(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.UnknownCarrier.Named(global::System.String)": {
+            "callers": [
+                "Shop/Shipping/CarrierDirectory.cs@742:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierLogos.LogoFor(global::Shop.Shipping.Courier)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierLogos.Logo(global::Shop.Shipping.Courier)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierLogos.TrackingHost(global::Shop.Shipping.Courier)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierPick.Book(global::System.String, global::System.String?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierPick.Count()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CarrierPick.Label(global::System.String)": {
+            "callers": [
+                "Shop/Shipping/CarrierPick.cs@285:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.ChilledParcels.Skus()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.ThawCheck.Thawed()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Consignment.TotalWeight()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CourierDesk.Book(global::Shop.Shipping.Booking, global::System.String)": {
+            "callers": [
+                "Shop/Shipping/CourierBookings.cs@436:InvocationExpression",
+                "Shop/Shipping/CourierBookings.cs@620:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Dispatcher.Today(global::Shop.Shipping.Booking)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Dispatcher.Batch(global::System.Collections.Generic.IEnumerable<global::Shop.Shipping.Booking>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CrateHandling.Instructions(global::Shop.Shipping.Package)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CrateHandling.Handling(global::Shop.Shipping.Package)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.CrateHandling.IsCrate(global::Shop.Shipping.Package)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.TimeRange.Overlaps(global::Shop.Shipping.TimeRange)": {
+            "callers": [
+                "Shop/Shipping/DeliverySlots.cs@367:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.DeliverySlot.Clashes(global::Shop.Shipping.DeliverySlot)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.DeliverySlot.Window()": {
+            "callers": [
+                "Shop/Shipping/DeliverySlots.cs@403:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.BookedSlot.Clashes(global::Shop.Shipping.BookedSlot)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Dispatch.Run(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.FreightZones.ZoneOf(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.FreightZones.Ships(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Handover.Scanned(global::Shop.Orders.StagedOrder, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Locker.Accepts()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Locker.Fits(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.ManifestCheck.Covers(global::System.String, global::System.Boolean)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.ParcelLabels.Marks(global::System.Collections.Generic.Dictionary<global::System.String, global::System.Collections.Generic.List<global::System.String>>, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.ParcelSizes.Of(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.ParcelSizes.Classed(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Pickups.Booked(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.TransitDays.For(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.IslandSurcharge.For(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Tracking.Scanned(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Tracking.Where()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.TrackingLinks.IsShowable(global::System.Uri)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Webhooks.Parcel(global::System.Text.Json.JsonElement)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Webhooks.Status(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Webhooks.Parse(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Webhooks.Field(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>, global::System.String)": {
+            "callers": [
+                "Shop/Shipping/Webhooks.cs@675:InvocationExpression",
+                "Shop/Shipping/Webhooks.cs@827:InvocationExpression",
+                "Shop/Shipping/Webhooks.cs@852:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Shipping.Weighing.Tare(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.StorageAisle.Reserve(global::System.Int32)": {
+            "callers": [
+                "Shop/Stock/Aisles.cs@980:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.FloorPlan.Find(global::System.String)": {
+            "callers": [
+                "Shop/Stock/Aisles.cs@529:InvocationExpression",
+                "Shop/Stock/Aisles.cs@725:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Slotting.Reserve(global::Shop.Stock.FloorPlan, global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": true
+        },
+        "global::Shop.Stock.Slotting.Resolve(global::Shop.Stock.FloorPlan, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Slotting.ReserveIn(global::Shop.Stock.StorageAisle, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Arrivals.Book()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.CountMismatch.Labels()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Batches.WrittenOff(global::System.Collections.Generic.IEnumerable<global::Shop.Stock.Batch>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Batches.Shelf(global::Shop.Stock.Batch)": {
+            "callers": [],
+            "handedOut": true,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.RackMap.Claim(global::System.Int32, global::System.Int32)": {
+            "callers": [
+                "Shop/Stock/BinImports.cs@419:InvocationExpression",
+                "Shop/Stock/BinImports.cs@551:InvocationExpression",
+                "Shop/Stock/BinImports.cs@672:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.BinImport.Load(global::System.Collections.Generic.IEnumerable<global::Shop.Stock.BinRow>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.BinImport.Reload(global::Shop.Stock.BinRow)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.BinImport.Corner()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.IBinResolver.Resolve(global::System.String)": {
+            "callers": [
+                "Shop/Stock/BinResolvers.cs@300:InvocationExpression",
+                "Shop/Stock/BinResolvers.cs@528:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Putaway.Room(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Putaway.Fits(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.BinSweep.Empty()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.CategoryPaths.Breadcrumb(global::Shop.Stock.Category)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.CategoryPaths.Indent(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ShelfCounter.Count(global::System.Boolean)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ShelfCount.TallyAsync()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Holds.Held(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ImportRows.Units(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ImportRows.UnitsOf(global::Shop.Stock.ImportRow)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ImportRows.OnHand(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Int32>, global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ImportRow.From(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Ledgers.Counts()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Ledgers.Reservations()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ShelfListing.Page(global::System.Int32, global::System.Int32, global::System.Boolean)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.BackorderListing.Page(global::System.Int32, global::System.Int32, global::System.Boolean)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.PalletPlan.SlotsFor(global::Shop.Shipping.Package)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.PickLists.Lines(global::System.Collections.Generic.List<global::System.String>?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.PickLists.GuardedLines(global::System.Collections.Generic.List<global::System.String>?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Picking.List(global::System.Collections.Generic.IReadOnlyDictionary<global::System.String, global::System.Int32>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ReorderPoint.Level()": {
+            "callers": [
+                "Shop/Stock/Reorders.cs@635:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ReorderPoint.Label()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Replenishment.ToOrder(global::System.Collections.Generic.IEnumerable<global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Replenishment.Units(global::System.Collections.Generic.IEnumerable<global::System.String>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Reservations.Report(global::System.String, global::System.Int32?)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Restock.Reorders()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Restock.ReordersFlat()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Restock.Reorder(global::System.String, global::Shop.Stock.Shelf)": {
+            "callers": [
+                "Shop/Stock/Restock.cs@1331:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ShelfAudit.Discrepancy(global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.AuditPlanner.Recount()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.SensorHub.Register(global::System.String)": {
+            "callers": [
+                "Shop/Stock/ShelfSensors.cs@534:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.SensorHub.Reading(global::System.String)": {
+            "callers": [
+                "Shop/Stock/ShelfSensors.cs@618:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ShelfSensor.Shelf()": {
+            "callers": [],
+            "handedOut": true,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ShelfSensor.Reading()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ShelfPlan.NeedsPower()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Snapshots.Load()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Snapshots.LoadOrEmpty()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Snapshots.LoadIfReadable()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.StockImport.Read(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.StockImport.ReadKeepingTheCause(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.StockLevels.Message(global::System.String, global::System.Int32)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.MoveLog.Record(global::Shop.Stock.StockMove, global::System.String)": {
+            "callers": [
+                "Shop/Stock/StockMoves.cs@571:InvocationExpression",
+                "Shop/Stock/StockMoves.cs@760:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.MoveLog.RecordMove(global::Shop.Stock.StockMove)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Mover.Move(global::Shop.Stock.StockMove)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Mover.Undo(global::Shop.Stock.StockMove)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ZoneMap.Place(global::System.String, global::System.String)": {
+            "callers": [
+                "Shop/Stock/StockZones.cs@544:InvocationExpression",
+                "Shop/Stock/StockZones.cs@665:InvocationExpression",
+                "Shop/Stock/StockZones.cs@778:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Receiving.Dairy(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Receiving.Pallet(global::System.String)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Receiving.Returns(global::System.String)": {
+            "callers": [],
+            "handedOut": true,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.Tote.TotalGrams()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ToteWeigher.Weigh(global::Shop.Stock.Tote)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "tote",
+            "unpacks": false
+        },
+        "global::Shop.Stock.ToteLabeller.LabelAll(global::Shop.Stock.Tote)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Stock.LabelQueue.Enqueue(global::Shop.Stock.ToteItem)": {
+            "callers": [
+                "Shop/Stock/Totes.cs@678:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Storefront.PageList.Slugs()": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Storefront.ProductPage.For(global::Shop.Catalog.Product)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Warranty.WarrantyPolicy.Covers(global::System.String)": {
+            "callers": [
+                "Shop/Returns/Claims.cs@242:InvocationExpression",
+                "Shop/Warranty/Policies.cs@302:InvocationExpression"
+            ],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        },
+        "global::Shop.Warranty.WarrantyPolicy.OpenClaims(global::System.Collections.Generic.IEnumerable<global::Shop.Returns.Claim>)": {
+            "callers": [],
+            "handedOut": false,
+            "envied": "",
+            "unpacks": false
+        }
+    },
+    "types": {
+        "global::Shop.Addresses.CountryCodes": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Addresses.AddressIncomplete": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Addresses.LabelPrinter": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Addresses.Address": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Addresses.PostcodeChecks": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Addresses.Quotes": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Catalog.Product": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Checkout.Cart": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.Parcel": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.BarcodeSheet": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.DispatchSheet": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.ParcelBarcodes": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.ShippedEmail": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.Headings": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.Invoice": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.InvoiceArchive": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.LabelPrinter": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.LabelTemplate": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.TemplateShelf": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.LabelLayout": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.LineLayout": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.DeliveryNote": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.ReturnForm": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.PackingSlip": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.Reprints": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Documents.Summaries": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Gifts.GiftCard": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Loyalty.Member": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Loyalty.PunchCard": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Loyalty.CardDesk": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.Broadcasts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.CampaignSegment": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.CampaignPlan": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.CampaignSender": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.NotifyChannel": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.NotifyRouter": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.OrderAlerts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.ContactChannel": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": true
+        },
+        "global::Shop.Notifications.NotificationHeaders": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.ChannelCosts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.DeliveredMail": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.Digest": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.DigestBuilder": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.InvoiceMail": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.Mailbox": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.InvoiceMailer": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.ReceiptMailer": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.OrderMailer": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.Mailing": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.Outbox": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.CustomerDesk": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.DeliveryMode": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Instant",
+                "Digest",
+                "Silent",
+                "Muted"
+            ],
+            "cased": true
+        },
+        "global::Shop.Notifications.Preferences": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.HourSpan": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.QuietHours": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.Receipts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.ShippedMail": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.Alert": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.SmsGateway": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.Alerts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.SmsSettings": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.MailingList": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.NewsletterPreference": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.NewsletterSignup": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Notifications.Throttle": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Approval": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Approvals": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Basket": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.HeldBasket": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Checkout": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.EmptyOrder": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.PaymentStep": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.CouponRedeem": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.CouponMissing": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.CurrencyMismatch": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Customer": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Customers": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.UnknownCustomer": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Discounting": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Dispatchable": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Warehouse": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.DeliveryStage": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Packed",
+                "Shipped",
+                "Delivered",
+                "Returned"
+            ],
+            "cased": true
+        },
+        "global::Shop.Orders.DeliveryStageRules": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Fulfilment": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.GiftMessage": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.WrapStation": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.WrapCounter": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Gratuity": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.InvoiceNumbers": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.CreditNoteNumbers": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Invoicing": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Lifecycle": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Money": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Order": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.OrderLine": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.OrderNumbering": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.OrderNotes": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Stage": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Open",
+                "Packed",
+                "Shipped"
+            ],
+            "cased": true
+        },
+        "global::Shop.Orders.StagedOrder": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Fulfilment2": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.PaymentState": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": true
+        },
+        "global::Shop.Orders.PaymentStatus": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Pending",
+                "Captured",
+                "Refunded"
+            ],
+            "cased": true
+        },
+        "global::Shop.Orders.PaymentStatusRules": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.PaymentDesk": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.PaymentCallback": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.OrderStatusRules": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.PaymentWebhooks": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Payout": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.PendingPayout": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Payouts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Receipts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.ReceiptFooter": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.TypedReceipts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.RefundDesk": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.RefundWindows": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.RefundReason": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Damaged",
+                "Late",
+                "Changed"
+            ],
+            "cased": true
+        },
+        "global::Shop.Orders.Refunds": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.ReturnWindow": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.OrderStatus": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Placed",
+                "Paid",
+                "Shipped",
+                "Delivered",
+                "Cancelled"
+            ],
+            "cased": true
+        },
+        "global::Shop.Orders.StatusBadge": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.StatusFeed": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Statuses": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.InvoiceSupplier": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.SupplierInvoice": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.Remittance": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Orders.TillCounter": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Tier": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Bronze",
+                "Silver",
+                "Gold",
+                "Platinum",
+                "Staff",
+                "Partner"
+            ],
+            "cased": true
+        },
+        "global::Shop.Pricing.Badges": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.CouponCode": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.CouponBook": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.CouponCounter": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.ReturnedLine": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.CreditNote": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.CreditNoteBuilder": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Currencies": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.DiscountCode": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Discounts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.ExchangeRates": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.TaxRates": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Labels": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.LoyaltyTiers": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Display": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.PriceBoard": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.PriceBook": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Quotes": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.PriceList": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.PrizeDraw": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.PromotionRule": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Promotion": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.PercentOff": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.AmountOff": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.PromotionLabels": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.CouponCheck": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.CouponCheck.Valid": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.CouponCheck.Expired": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Quota": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.RateCache": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.RateFeed": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Rounding": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Surcharges": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.TaxTable": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.TierImport": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Grams": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Litres": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Pieces": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Metres": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.Units": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.VatSplits": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.VatSplit": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.VolumeBand": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Pricing.QuantityBreak": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.Backfills": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.ExportRow": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.Closures": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.CreditSummary": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.DailySummary": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.DamageReport": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.ExportJob": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.Granularity": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Hourly",
+                "Daily",
+                "Monthly"
+            ],
+            "cased": true
+        },
+        "global::Shop.Reports.BucketFormats": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.Page": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.IPageSource": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.PageReader": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.PromotionReport": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.ReportKind": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.ReportRunner": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.ReportSchedule": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.ReportRounding": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.SalesReport": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.ReturnsReport": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.IPeriodic": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.Refunds": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.Discounts": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Reports.DailySnapshot": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Returns.Claim": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Returns.ClaimDesk": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Returns.InspectedItem": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Returns.ReturnParcel": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Returns.ReturnInspector": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Rewards.VoucherIssuer": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Rewards.Voucher": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Rewards.VoucherCatalog": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Search.SearchIndex": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Search.Rankings": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CarrierCodes": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CarrierConfig": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CarrierDirectory": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.UnknownCarrier": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Courier": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Postal",
+                "Express",
+                "Freight"
+            ],
+            "cased": true
+        },
+        "global::Shop.Shipping.CarrierLogos": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CarrierPick": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CarrierNotChosen": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.PostalCarrier": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CourierCarrier": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.ChilledParcels": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.ThawCheck": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Consignment": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CourierAccount": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Sender": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Booking": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CourierDesk": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Dispatcher": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.BookableCourier": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CutOff": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Package": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Crate": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Lid": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.ScrewLid": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.ClipLid": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CrateHandling": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.TimeRange": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.DeliverySlot": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.BookedSlot": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Dispatch": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.FreightZones": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Handover": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Locker": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.ManifestCheck": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.ParcelLabels": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.ParcelSizes": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Parcel": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Envelope": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Pickup": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Pickups": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.ServiceLevel": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": true
+        },
+        "global::Shop.Shipping.TransitDays": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.IslandSurcharge": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Tracking": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.TrackingLinks": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.CarrierEvent": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Webhooks": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.Weighing": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Shipping.PickupWindow": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.StorageAisle": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.FloorPlan": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Slotting": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Arrivals": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.IAuditFailure": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.CountMismatch": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.BatchCondition": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Sound",
+                "Damaged",
+                "Expired"
+            ],
+            "cased": true
+        },
+        "global::Shop.Stock.Batch": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Batches": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.BinRow": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.RackMap": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.BinImport": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.BinLocation": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.StorageBin": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.IBinResolver": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Putaway": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.BinSweep": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Category": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.CategoryPaths": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ShelfCounter": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ShelfCount": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Holds": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ImportRows": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ImportRow": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Ledgers": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ShelfListing": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.BackorderListing": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Warehouse": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Depot": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.PalletPlan": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.PickLists": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Picking": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ReorderPoint": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Replenishment": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Reservations": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Shelf": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Restock": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ShelfAudit": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.AuditPlanner": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ShelfNote": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.SensorHub": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ShelfSensor": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Aisle": {
+            "declared": true,
+            "record": false,
+            "enum": [
+                "Ambient",
+                "Chilled",
+                "Frozen"
+            ],
+            "cased": true
+        },
+        "global::Shop.Stock.ShelfPlan": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Snapshots": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.StockImport": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.StockFileUnreadable": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.StockLevels": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.StockMove": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.MoveLog": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Mover": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Zone": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ZoneMap": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Receiving": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ISupplier": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ToteItem": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.Tote": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ToteWeigher": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.ToteLabeller": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Stock.LabelQueue": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Storefront.PageList": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Storefront.ProductPage": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Storefront.Shelf<T>": {
+            "declared": true,
+            "record": false,
+            "enum": [],
+            "cased": false
+        },
+        "global::Shop.Warranty.WarrantyPolicy": {
+            "declared": true,
+            "record": true,
+            "enum": [],
+            "cased": false
+        }
+    }
+}

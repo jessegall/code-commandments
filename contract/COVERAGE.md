@@ -163,6 +163,7 @@ each line against the schema, and checks every span, line and comment against th
 | compile-time constants | `constant` | bridge | csharp (`"DIG-"`) |
 | `!` over a declared-nullable operand | `extras.csharp.forgivesNull` | bridge | csharp (`lastScan!` in `Tracking`; the `null!` beside it carries none) |
 | call and creation targets, joinable to declarations | `target` (original definition) and `symbol` | bridge | csharp (5 of 5 resolved) |
+| the parameter types a call fills, as bound there | `target.parameters` | bridge | csharp (`Where` over `string`s fills `Func<String, Boolean>`) |
 | members that override or implement | `inherited` | bridge | csharp (`CountMismatch.Details`, implementing `IAuditFailure`) |
 | test project files | `file.test` | bridge | — |
 | referenced-assembly types and their hierarchy | `program.symbols` | bridge | csharp |

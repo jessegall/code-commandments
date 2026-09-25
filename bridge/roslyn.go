@@ -1,0 +1,128 @@
+package bridge
+
+import (
+	"crypto/sha1"
+	"embed"
+	"encoding/hex"
+	"fmt"
+	"net"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
+)
+
+// roslyn is the script every run of the C# bridge goes through and the image it runs, carried in the binary: the
+// bridge itself is a prebuilt image, never built here, and .NET never runs on the host.
+//
+//go:embed roslyn/roslyn-in-docker.sh roslyn/IMAGE
+var roslyn embed.FS
+
+// RoslynImage is the image of the C# bridge this build runs, built once per release.
+func RoslynImage() string {
+	image, _ := roslyn.ReadFile("roslyn/IMAGE")
+
+	return strings.TrimSpace(string(image))
+}
+
+// Roslyn is the command that runs the C# bridge once as the generic tree over the roots, in a memory-capped
+// container of its image with the roots mounted read-only at their own paths. Without the image it fails, naming
+// the image and how it is built: the bridge is never built on demand.
+func Roslyn(roots ...string) ([]string, error) {
+	if exec.Command("docker", "image", "inspect", RoslynImage()).Run() != nil {
+		return nil, fmt.Errorf("the C# bridge image %s is not installed; it is built once per release, never on demand: docker build -t %s bridge/roslyn", RoslynImage(), RoslynImage())
+	}
+	script, err := roslynScript()
+	if err != nil {
+		return nil, err
+	}
+
+	return append(append([]string{"bash", script}, readOnly(roots)...), "--", "--tree"), nil
+}
+
+// RoslynService is the bridge the session keeps up for the project that holds every root, answering on its local
+// port; false when no session keeps one up for them, and a run starts its own.
+func RoslynService(roots ...string) (*Server, bool) {
+	out, err := exec.Command("docker", "ps", "--filter", "label=code-commandments.roslyn=service", "--format", `{{.Names}} {{.Label "code-commandments.project"}}`).Output()
+	if err != nil {
+		return nil, false
+	}
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		name, project, found := strings.Cut(line, " ")
+		if !found || !holdsAll(project, roots) {
+			continue
+		}
+		address, err := exec.Command("docker", "port", name, "7070/tcp").Output()
+		if err != nil {
+			continue
+		}
+		connection, err := net.Dial("tcp", strings.TrimSpace(strings.Split(string(address), "\n")[0]))
+		if err != nil {
+			continue
+		}
+
+		return &Server{command: []string{"docker", "port", name}, input: connection, output: contract.NewReader(connection), connection: connection}, true
+	}
+
+	return nil, false
+}
+
+// holdsAll says whether every root lies in the project.
+func holdsAll(project string, roots []string) bool {
+	for _, root := range roots {
+		absolute, err := filepath.Abs(root)
+		if err != nil || (absolute != project && !strings.HasPrefix(absolute, project+string(filepath.Separator))) {
+			return false
+		}
+	}
+
+	return project != ""
+}
+
+// readOnly is the folders the roots are in, each mounted read-only: a root that is a file is read from its folder.
+func readOnly(roots []string) []string {
+	var mounts []string
+	for _, root := range roots {
+		if strings.HasPrefix(root, "--") {
+			continue
+		}
+		folder, err := filepath.Abs(root)
+		if err != nil {
+			continue
+		}
+		if info, err := os.Stat(folder); err == nil && !info.IsDir() {
+			folder = filepath.Dir(folder)
+		}
+		mounts = append(mounts, folder+":ro")
+	}
+
+	return mounts
+}
+
+// roslynScript is the script written out beside the image name it reads, under the cache folder, keyed by what
+// the two hold.
+func roslynScript() (string, error) {
+	cache := os.Getenv("XDG_CACHE_HOME")
+	if cache == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		cache = filepath.Join(home, ".cache")
+	}
+	script, _ := roslyn.ReadFile("roslyn/roslyn-in-docker.sh")
+	image, _ := roslyn.ReadFile("roslyn/IMAGE")
+	sum := sha1.Sum(append(append([]byte{}, script...), image...))
+	folder := filepath.Join(cache, "code-commandments", "roslyn", hex.EncodeToString(sum[:])[:16])
+	if err := os.MkdirAll(folder, 0o755); err != nil {
+		return "", err
+	}
+	if err := os.WriteFile(filepath.Join(folder, "IMAGE"), image, 0o644); err != nil {
+		return "", err
+	}
+	path := filepath.Join(folder, "roslyn-in-docker.sh")
+
+	return path, os.WriteFile(path, script, 0o755)
+}
