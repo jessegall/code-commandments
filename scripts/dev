@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# Runs one command in the capped dev container: scripts/dev go test ./cli/...
+#
+# The machine enforces the cap (3 GB, no swap, 2 CPUs); GOMEMLIMIT is only a target inside it.
+# The checkout is mounted at its own path, so the paths the Roslyn bridge hands to the host's
+# docker (through the mounted socket) resolve there too. Go's module and build caches live in
+# named volumes shared by every checkout, so only the first run is slow; every other cache (the Python
+# bridge's venv among them) has a volume per image, so it never outlives the interpreter it was built by.
+set -euo pipefail
+
+memory=3g
+cpus=2
+
+fail() {
+    echo "scripts/dev: $*" >&2
+    exit 1
+}
+
+[ $# -gt 0 ] || fail "usage: scripts/dev <command> [args...]   e.g. scripts/dev go test ./cli/..."
+command -v docker > /dev/null || fail "docker is not installed; agent Go runs happen only in the capped dev container"
+docker info > /dev/null 2>&1 || fail "docker is not running; start it — there is no host fallback"
+
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)
+root=$(git -C "$here" rev-parse --show-toplevel)
+common=$(cd "$root" && cd "$(git rev-parse --git-common-dir)" && pwd -P)
+cwd=$(pwd -P)
+
+case "$cwd/" in
+    "$root"/*) ;;
+    *) fail "run it from inside the checkout ($root), not $cwd" ;;
+esac
+
+mypy=$(tr -d '[:space:]' < "$root/bridge/mypy/requirements.txt")
+tag=$({ cat "$root/docker/dev/Dockerfile"; echo "$mypy"; } | shasum -a 256 | cut -c1-16)
+image="code-commandments/dev:$tag"
+
+if ! docker image inspect "$image" > /dev/null 2>&1; then
+    echo "scripts/dev: building $image (once per change to docker/dev/Dockerfile)" >&2
+    docker build --quiet --build-arg MYPY="$mypy" -t "$image" - < "$root/docker/dev/Dockerfile" > /dev/null
+fi
+
+mounts=(-v "$root:$root" -v /var/run/docker.sock:/var/run/docker.sock)
+case "$common/" in
+    "$root"/*) ;;
+    *) mounts+=(-v "$common:$common") ;;
+esac
+
+# A temp folder the host sees at the same path: a test hands its temp files to the Roslyn bridge, whose
+# container the host's docker mounts them into.
+scratch=$(cd "$(mktemp -d "${TMPDIR:-/tmp}/commandments-dev.XXXXXX")" && pwd -P)
+trap 'rm -rf "$scratch"' EXIT
+mounts+=(-v "$scratch:$scratch")
+
+# The host's zone file, so a time a test sets and prints reads as it does on the host, even where a test
+# clears the environment.
+if [ -e /etc/localtime ]; then
+    mounts+=(-v "$(readlink -f /etc/localtime):/etc/localtime:ro")
+fi
+
+run() {
+    local terminal=-i
+    [ -t 0 ] && [ -t 1 ] && terminal=-it
+
+    docker run --rm "$terminal" --init \
+        --memory="$memory" --memory-swap="$memory" --cpus="$cpus" \
+        --label code-commandments.dev=run \
+        "${mounts[@]}" \
+        -v code-commandments-gomod:/root/go/pkg/mod \
+        -v code-commandments-gobuild:/root/go/build \
+        -v "code-commandments-cache-$tag:/root/.cache" \
+        -e GOCACHE=/root/go/build \
+        -e GOMEMLIMIT=3GiB -e GOMAXPROCS=2 -e GOFLAGS="-p=2 -parallel=2" \
+        -e TMPDIR="$scratch" \
+        -w "$cwd" \
+        "$image" "$@"
+}
+
+# The Go tests drive the PHP tool, which needs its composer dependencies; a fresh checkout has none. The lock
+# is not committed, so a worktree takes the main checkout's: the recorded answers were made against it.
+if [ ! -f "$root/vendor/autoload.php" ]; then
+    main=$(dirname "$common")
+    if [ ! -f "$root/composer.lock" ] && [ -f "$main/composer.lock" ]; then
+        cp "$main/composer.lock" "$root/composer.lock"
+    fi
+    echo "scripts/dev: installing the PHP tool's composer dependencies into $root/vendor" >&2
+    run composer --working-dir="$root" install --quiet --no-interaction >&2
+fi
+
+run "$@"
