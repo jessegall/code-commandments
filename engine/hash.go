@@ -53,8 +53,9 @@ func SyntaxWeight(nodes []Match, rules HashRules) int {
 	return weight
 }
 
-// fingerprint is one node's fingerprint: its kind and slot, its name unless normalising blanks it, its operator
-// and flags, its literal, and its counted children's.
+// fingerprint is one node's fingerprint: its kind, its name unless normalising blanks it, its operator and flags,
+// its literal, and each counted child's slot and fingerprint. A node's own slot is its parent's to say, so the
+// same expression reads alike wherever it stands.
 func fingerprint(node Match, rules HashRules, normalize bool) string {
 	if normalize && rules.IsName(node) && !rules.IsCallee(node) {
 		return "id"
@@ -63,14 +64,14 @@ func fingerprint(node Match, rules HashRules, normalize bool) string {
 		return literal
 	}
 	facts := node.Node()
-	parts := []string{facts.Kind, facts.Field}
+	parts := []string{facts.Kind}
 	if !normalize || !rules.Declares(node) {
 		parts = append(parts, facts.Name)
 	}
 	parts = append(parts, facts.Operator, strings.Join(facts.Flags, " "))
 	for _, child := range node.Children() {
 		if rules.Counts(child) {
-			parts = append(parts, fingerprint(child, rules, normalize))
+			parts = append(parts, child.Node().Field+"="+fingerprint(child, rules, normalize))
 		}
 	}
 

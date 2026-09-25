@@ -4,6 +4,7 @@
 package registry
 
 import (
+	_ "github.com/jessegall/code-commandments/detectors/python"
 	_ "github.com/jessegall/code-commandments/sins/python"
 	_ "github.com/jessegall/code-commandments/skill/python"
 )
