@@ -9,12 +9,8 @@ import (
 	"github.com/jessegall/code-commandments/prose"
 )
 
-var (
-	// markerComment is a fixture marker: a comment that is nothing but one.
-	markerComment = regexp.MustCompile(`^@(?:(?:sin|fixed|righteous)\s+\w+|example\s+\w+\s+(?:bad|good))$`)
-	// commentLead is what opens a `#` comment's body: the marker, Sphinx's `#:`, and one space.
-	commentLead = regexp.MustCompile(`^#:? ?`)
-)
+// commentLead is what opens a `#` comment's body: the marker, Sphinx's `#:`, and one space.
+var commentLead = regexp.MustCompile(`^#:? ?`)
 
 // commentWords is the words of a `#` comment, the marker and the space around them aside.
 func commentWords(comment contract.Comment) string {
@@ -34,7 +30,7 @@ func isCodeComment(comment contract.Comment) bool {
 
 // proseComments is the run of comments above the statement, fixture markers set aside.
 func (n Node) proseComments() []contract.Comment {
-	return slices.DeleteFunc(n.CommentsAbove(), func(comment contract.Comment) bool { return markerComment.MatchString(commentWords(comment)) })
+	return slices.DeleteFunc(n.CommentsAbove(), func(comment contract.Comment) bool { return prose.IsFixtureMarker(commentWords(comment)) })
 }
 
 // Prose is the prose written for the statement: the run of comments above it, as one text, and the docstring it
