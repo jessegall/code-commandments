@@ -1,0 +1,5 @@
+[
+    "shop.floor_plans.relabel@shop/floor_plans.py:20",
+    "shop.route_stops.Dispatcher.tick@shop/route_stops.py:30",
+    "shop.seat_maps.book@shop/seat_maps.py:19"
+]

@@ -16,6 +16,7 @@ use JesseGall\CodeCommandments\Py\FieldClumps;
 use JesseGall\CodeCommandments\Py\LookupEnvy;
 use JesseGall\CodeCommandments\Py\ModuleFile;
 use JesseGall\CodeCommandments\Py\OwnStateMask;
+use JesseGall\CodeCommandments\Py\ParamResolution;
 use JesseGall\CodeCommandments\Py\StructuralHash;
 use JesseGall\CodeCommandments\Py\Node\ClassDef;
 use JesseGall\CodeCommandments\Py\Node\FunctionDef;
@@ -232,3 +233,16 @@ foreach ($defs as [$def, $module]) {
 }
 
 $write('hashes', $hashes);
+
+// Which defs unpack their target from a container parameter that is only packaging.
+$resolution = new ParamResolution($codebase);
+$unpacks = [];
+
+foreach ($defs as [$def, $module]) {
+    if ($resolution->unpacksTargetFromContainerParam($def, $module)) {
+        $unpacks[] = $symbol($def, $module) . '@' . $place($module, $def->start);
+    }
+}
+
+sort($unpacks);
+$write('resolution', $unpacks);
