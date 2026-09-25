@@ -2,6 +2,7 @@ package catalog
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/format"
 	"io/fs"
@@ -14,8 +15,9 @@ import (
 // Module is the Go module every rule package lives in.
 const Module = "github.com/jessegall/code-commandments"
 
-// RuleRoots are the folders whose packages enrol rules from their init functions.
-var RuleRoots = []string{"sins", "skill", "detectors"}
+// RuleRoots are the folders whose packages enrol rules from their init functions: the sins, skills and detectors,
+// and the providers that publish one engine's facts for another's detectors.
+var RuleRoots = []string{"sins", "skill", "detectors", "published"}
 
 // Enrolment is the registry source that imports every rule package under root, so no hand-kept
 // list of rules exists: a new rule folder is found by the next go generate.
@@ -46,6 +48,9 @@ func Enrolment(root string) ([]byte, error) {
 func rulePackages(root, rules string) ([]string, error) {
 	var packages []string
 	base := filepath.Join(root, rules)
+	if _, err := os.Stat(base); errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
 	err := filepath.WalkDir(base, func(path string, entry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
