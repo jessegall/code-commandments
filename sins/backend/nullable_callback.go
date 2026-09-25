@@ -19,9 +19,13 @@ func (NullableCallback) Definition() sins.Definition {
 		Description: "Nullable callback normalised in the body instead of a Null Object default",
 		Rule:        `Default an optional callback to a Null Object in the signature; don't null-normalise a ` + "`" + `?callable` + "`" + ` in the body.`,
 		Suggestion:  "Create a reusable no-op invokable (`Invokable` + `NoOp`) and default the param to `new NoOp`.",
-		Scaffolds: []sins.Scaffold{
-			{Path: "Support/Invokable.php", Stub: "Invokable.php.stub", Target: sins.BackendRoot},
-			{Path: "Support/NoOp.php", Stub: "NoOp.php.stub", Target: sins.BackendRoot},
-		},
+	}
+}
+
+// Scaffolds are the helpers the fix reaches for, which scaffold generates into the project.
+func (NullableCallback) Scaffolds() []sins.Scaffold {
+	return []sins.Scaffold{
+		{Path: "Support/Invokable.php", Stub: "Invokable.php.stub"},
+		{Path: "Support/NoOp.php", Stub: "NoOp.php.stub"},
 	}
 }

@@ -71,7 +71,6 @@ func TestEveryBackendSinStatesWhatItsPhpTwinStates(t *testing.T) {
 			Skill:       definition.Skill,
 			Description: php.Description,
 			Rule:        php.Rule,
-			Scaffolds:   scaffolds(php),
 		}
 		if php.Suggestion != nil {
 			expected.Suggestion = *php.Suggestion
@@ -80,6 +79,13 @@ func TestEveryBackendSinStatesWhatItsPhpTwinStates(t *testing.T) {
 			expected.Requires = sins.Package{Name: php.Requires.Name, Ecosystem: sins.Ecosystem(php.Requires.Ecosystem)}
 		}
 		sameRule(t, name, rule, php.Unpublished, expected, definition)
+		var declared []sins.Scaffold
+		if scaffolding, ok := rule.(sins.Scaffolding); ok {
+			declared = scaffolding.Scaffolds()
+		}
+		if !reflect.DeepEqual(scaffolds(php), declared) {
+			t.Errorf("%s scaffolds %v, PHP %v", name, declared, scaffolds(php))
+		}
 	}
 	for name := range ported {
 		t.Errorf("Go sin %s has no PHP twin", name)
@@ -185,7 +191,7 @@ func references(php shop.SkillRule) []skill.Reference {
 func scaffolds(php shop.SinRule) []sins.Scaffold {
 	var scaffolds []sins.Scaffold
 	for _, each := range php.Scaffolds {
-		scaffolds = append(scaffolds, sins.Scaffold{Path: each.Path, Stub: each.Stub, Target: sins.ScaffoldTarget(each.Target)})
+		scaffolds = append(scaffolds, sins.Scaffold{Path: each.Path, Stub: each.Stub, Frontend: each.Target == "frontend"})
 	}
 
 	return scaffolds

@@ -23,27 +23,9 @@ type Definition struct {
 	Description string
 	Rule        string
 	Suggestion  string
-	// Scaffolds are the helpers the fix reaches for, which scaffold generates into the project.
-	Scaffolds []Scaffold
 	// Requires is the package the sin only exists in a project with; empty when it holds everywhere.
 	Requires Package
 }
-
-// Scaffold is one helper file a fix needs: where it goes and the stub it is written from.
-type Scaffold struct {
-	Path   string
-	Stub   string
-	Target ScaffoldTarget
-}
-
-// ScaffoldTarget is the source root a scaffold is written into.
-type ScaffoldTarget string
-
-// The source roots a scaffold can be written into.
-const (
-	BackendRoot  ScaffoldTarget = "backend"
-	FrontendRoot ScaffoldTarget = "frontend"
-)
 
 // Package is a dependency a project may declare.
 type Package struct {
