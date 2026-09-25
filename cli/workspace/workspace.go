@@ -78,6 +78,24 @@ func OfSession(fallback, sessionID string) Workspace {
 	return At(stated, sessionID)
 }
 
+// ProjectRoot is the project a command run from cwd works on: the repository cwd is in, unless the harness
+// names a project in CLAUDE_PROJECT_DIR that the repository is no checkout of.
+func ProjectRoot(cwd string) string {
+	root := git.Root(cwd)
+	project := os.Getenv("CLAUDE_PROJECT_DIR")
+
+	switch {
+	case project == "" && root == "":
+		return cwd
+	case project == "":
+		return root
+	case root != "" && git.BelongsTo(root, project):
+		return root
+	default:
+		return project
+	}
+}
+
 // Config is the path of the project config under dir.
 func Config(dir string) string {
 	return At(dir, "").Shared("config.php")
