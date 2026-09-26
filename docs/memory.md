@@ -16,6 +16,10 @@ Every run is under the agent limits, `GOMEMLIMIT=3GiB GOMAXPROCS=2`, on an Apple
   it holds, the heap once garbage is collected (and so bytes per node), and the heap's peak while every detector of
   the codebase's languages runs. `-heap <file>` writes a heap profile of the loaded codebase; `-each` reads a C#
   solution one project folder at a time.
+- `scripts/memory/judge.sh <snapshot>` judges the whole snapshot with every detector inside the capped dev
+  container (3 GB, no swap, 2 CPUs) under `GOMEMLIMIT=3GiB`, and prints the time, the load, the findings and the
+  container's peak memory as its cgroup counts it: the engine and the PHP, node and mypy bridges it runs. A run past
+  the cap is killed by the kernel. The Roslyn bridge runs in its own capped container.
 - `scripts/memory/peak.sh <command>` prints the command's peak physical footprint, compressed pages included, and
   kills it past 4 GiB. Resident set size is not used: macOS compresses a busy process's pages, and a Chronos load
   that held 3.7 GB showed 500 MiB resident. The bridges run as separate processes (PHP, node, and the Roslyn bridge
@@ -73,4 +77,28 @@ The compaction changes no finding: the per-project Chronos parity on the snapsho
 tool's findings. It also finds three more, all DanglingDocReference in test projects, whose verdict reads nothing
 but the reference facts the Roslyn bridge writes; this snapshot's restore output was made fresh in the capped
 container, where the kept PHP answer's snapshot carried the restore output of a built checkout.
+
+## Judging a whole solution
+
+Compaction alone leaves Chronos at about 1.8 GB of trees, so a C# solution is judged a project at a time. The
+Roslyn bridge is asked once for the whole solution; it compiles each project once, dependencies first, and streams
+them project by project. As the stream is read it is cut into one unit per project — a file belongs to the deepest
+folder above it holding a `.csproj` — each kept gzipped on disk, and each unit's summary is taken as it closes:
+every fact a rule asks of the whole program, as names, counts and flags (`engine/csharp/summary.go`). The summaries
+merge, and each unit is then read back alone and judged with the merged summary as its program, so a rule reading
+the program answers as it would over the whole solution. The rules that weigh candidates across the program
+(duplicates, data clumps, repeated guards and calls, converted and derived arguments) hand over a record per
+candidate, and decide over every unit's records once the last is read. Every other language is read whole, and
+every bridge's stream is decoded as it is written.
+
+`TestJudgingTheFixtureInHalvesFindsWhatJudgingItWholeFinds` holds this to the whole answer: the C# fixture judged in
+two halves finds, for every C# rule, exactly what the fixture judged whole finds.
+
+| Codebase | Commit | Files | Findings | Time | Peak memory in the capped dev container |
+|---|---|---|---|---|---|
+| smart-farmers-pos (PHP, Vue, TypeScript) | 8ca4e821c | 8,505 | 3,695 | 83 s (load 1.9) | 2,283,266,048 bytes (2.13 GiB) |
+| Chronos (C#, three Python scripts) | ac38efd04 | 14,790 | 15,789 | 590 s (load 6.3–9.1) | 1,106,927,616 bytes (1.03 GiB) |
+
+Before this work neither judged whole under the limit: smart-farmers-pos peaked at 3,312 MiB and Chronos was
+killed still loading at 4,117 MB.
 
