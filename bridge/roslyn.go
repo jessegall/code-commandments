@@ -4,12 +4,15 @@ import (
 	"crypto/sha1"
 	"embed"
 	"encoding/hex"
+	"encoding/xml"
 	"fmt"
+	"io/fs"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -110,7 +113,7 @@ func holdsAll(project string, roots []string) bool {
 
 // readOnly is the folders the roots are in, each mounted read-only: a root that is a file is read from its folder.
 func readOnly(roots []string) []string {
-	var mounts []string
+	var folders []string
 	for _, root := range roots {
 		if strings.HasPrefix(root, "--") {
 			continue
@@ -122,10 +125,88 @@ func readOnly(roots []string) []string {
 		if info, err := os.Stat(folder); err == nil && !info.IsDir() {
 			folder = filepath.Dir(folder)
 		}
-		mounts = append(mounts, folder+":ro")
+		folders = append(folders, folder)
+		folders = append(folders, referencedFolders(folder)...)
+	}
+	var mounts []string
+	for _, folder := range folders {
+		if !slices.ContainsFunc(folders, func(outer string) bool { return strings.HasPrefix(folder, outer+"/") }) && !slices.Contains(mounts, folder+":ro") {
+			mounts = append(mounts, folder+":ro")
+		}
 	}
 
 	return mounts
+}
+
+// referencedFolders is the folder of every project the projects at the root reference, however deep: the bridge
+// compiles a project with every project it references, which may stand outside the root.
+func referencedFolders(root string) []string {
+	pending := projectsAt(root)
+	seen := map[string]bool{}
+	var folders []string
+	for len(pending) > 0 {
+		project := pending[0]
+		pending = pending[1:]
+		if seen[project] {
+			continue
+		}
+		seen[project] = true
+		folders = append(folders, filepath.Dir(project))
+		pending = append(pending, projectReferences(project)...)
+	}
+
+	return folders
+}
+
+// projectsAt is every project under the folder, or the one it sits inside, as the bridge finds them.
+func projectsAt(folder string) []string {
+	var projects []string
+	filepath.WalkDir(folder, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if name := entry.Name(); entry.IsDir() && path != folder && (strings.HasPrefix(name, ".") || name == "bin" || name == "obj" || name == "node_modules") {
+			return filepath.SkipDir
+		}
+		if !entry.IsDir() && strings.HasSuffix(path, ".csproj") {
+			projects = append(projects, path)
+		}
+
+		return nil
+	})
+	above := folder
+	for len(projects) == 0 && filepath.Dir(above) != above {
+		above = filepath.Dir(above)
+		projects, _ = filepath.Glob(filepath.Join(above, "*.csproj"))
+	}
+
+	return projects
+}
+
+// projectReferences is the project files the project references, by their full paths.
+func projectReferences(project string) []string {
+	raw, err := os.ReadFile(project)
+	if err != nil {
+		return nil
+	}
+	var file struct {
+		Groups []struct {
+			References []struct {
+				Include string `xml:"Include,attr"`
+			} `xml:"ProjectReference"`
+		} `xml:"ItemGroup"`
+	}
+	if xml.Unmarshal(raw, &file) != nil {
+		return nil
+	}
+	var referenced []string
+	for _, group := range file.Groups {
+		for _, reference := range group.References {
+			referenced = append(referenced, filepath.Clean(filepath.Join(filepath.Dir(project), strings.ReplaceAll(reference.Include, `\`, "/"))))
+		}
+	}
+
+	return referenced
 }
 
 // roslynScript is the script written out beside the image name it reads, under the cache folder, keyed by what
