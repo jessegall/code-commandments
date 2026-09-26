@@ -25,9 +25,13 @@ func (n Node) typeSwitchArms() []Node {
 	if !n.IsTypeTest() {
 		return nil
 	}
+	function := n.EnclosingFunction()
+	if !function.Exists() {
+		return nil
+	}
 	subject := n.Arguments()[0].ExpressionHash()
 	var arms []Node
-	for _, test := range n.EnclosingFunction().ExpressionsIn() {
+	for _, test := range function.ExpressionsIn() {
 		arm := test.Parent()
 		if test.IsTypeTest() && test.Arguments()[0].ExpressionHash() == subject && arm.Kind() == "If" && arm.Child("test") == test && arm.isSwitchArm() {
 			arms = append(arms, arm)
