@@ -3,7 +3,6 @@
 package php
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -44,15 +43,12 @@ func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
 	if err != nil {
 		return nil, err
 	}
-	var out, failure bytes.Buffer
-	process := exec.Command(command[0], append(command[1:], arguments...)...)
-	process.Stdout = &out
-	process.Stderr = &failure
-	if err := process.Run(); err != nil {
-		return nil, errors.Join(fmt.Errorf("the PHP bridge failed: %w", err), errors.New(failure.String()))
+	stream, failure, ran, err := bridge.Run(command, arguments...)
+	if !ran {
+		return nil, errors.Join(fmt.Errorf("the PHP bridge failed: %w", err), errors.New(failure))
 	}
 
-	return contract.ReadAll(&out)
+	return stream, err
 }
 
 // Scan is the codebase the bridge reads at paths, as Codebase::scan reads it, with the facts the engine fills for

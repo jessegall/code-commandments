@@ -24,14 +24,37 @@ type Request struct {
 
 // Once runs the bridge over the paths and reads the stream it writes.
 func Once(command []string, paths ...string) (*contract.Stream, error) {
-	var out, errs bytes.Buffer
-	process := exec.Command(command[0], append(command[1:], paths...)...)
-	process.Stdout, process.Stderr = &out, &errs
-	if err := process.Run(); err != nil {
-		return nil, Failed(command, err, errs.String())
+	stream, errs, ran, err := Run(command, paths...)
+	if !ran {
+		return nil, Failed(command, err, errs)
 	}
 
-	return contract.ReadAll(&out)
+	return stream, err
+}
+
+// Run runs the command and reads the stream it writes as it writes it, so a large stream is never held as text as
+// well as read; with what it wrote to stderr, and whether it ran to a clean exit. A command that failed answers
+// why; one that ran answers the stream, or why it broke the contract.
+func Run(command []string, arguments ...string) (stream *contract.Stream, errs string, ran bool, err error) {
+	var failure bytes.Buffer
+	process := exec.Command(command[0], append(command[1:], arguments...)...)
+	process.Stderr = &failure
+	out, err := process.StdoutPipe()
+	if err != nil {
+		return nil, "", false, err
+	}
+	if err := process.Start(); err != nil {
+		return nil, failure.String(), false, err
+	}
+	stream, read := contract.ReadAll(out)
+	if read != nil {
+		io.Copy(io.Discard, out)
+	}
+	if err := process.Wait(); err != nil {
+		return nil, failure.String(), false, err
+	}
+
+	return stream, failure.String(), true, read
 }
 
 // Server is a bridge kept running, answering one request at a time: a process started with --serve, or a service
