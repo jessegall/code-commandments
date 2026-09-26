@@ -162,7 +162,8 @@ final class Bridge implements LocatedTool
     }
 
     /**
-     * The project files $project references, by their full paths.
+     * The project files $project references, by their full paths: every ProjectReference at any depth, in the
+     * MSBuild namespace an older project file declares or in none.
      *
      * @return list<string>
      */
@@ -173,7 +174,7 @@ final class Bridge implements LocatedTool
             return [];
         }
         $referenced = [];
-        foreach ($xml->xpath('//ProjectReference[@Include]') ?: [] as $reference) {
+        foreach ($xml->xpath("//*[local-name()='ProjectReference'][@Include]") ?: [] as $reference) {
             $path = dirname($project) . '/' . str_replace('\\', '/', (string) $reference['Include']);
             $referenced[] = self::normalised($path);
         }

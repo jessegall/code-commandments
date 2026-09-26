@@ -253,21 +253,26 @@ func TestTheProgramReadsWholeAsThePhpEngineReadsIt(t *testing.T) {
 		Types   map[string]goldenDeclaration `json:"types"`
 	}
 	golden(t, "program", &want)
-	calls := map[string][]string{}
+	tests := map[string]bool{}
 	for _, file := range codebase.Files() {
-		for _, match := range file.Match(0).Descendants() {
-			if call := (csharp.Node{Match: match}); call.IsCall() && call.Target().Exists() {
-				calls[call.Target().Symbol()] = append(calls[call.Target().Symbol()], at(call))
-			}
+		if file.Test {
+			tests[strings.TrimPrefix(file.Path, fixture.root+"/")] = true
 		}
 	}
 	methods := map[string]goldenMethod{}
 	for _, match := range csharp.In(codebase).WhereMethodDeclaration().Get() {
 		method := csharp.Node{Match: match}
-		callers := append([]string{}, calls[method.Symbol()]...)
-		sort.Strings(callers)
-		if parameters := method.Parameters(); len(parameters) > 0 && parameters[0].HasModifier("this") {
-			callers = want.Methods[method.Symbol()].Callers
+		callers := want.Methods[method.Symbol()].Callers
+		if parameters := method.Parameters(); len(parameters) == 0 || !parameters[0].HasModifier("this") {
+			outside := 0
+			for _, caller := range callers {
+				if file, _, _ := strings.Cut(caller, "@"); !tests[file] {
+					outside++
+				}
+			}
+			if calls := program.CallsTo(method).OutsideTests; calls != outside {
+				t.Errorf("%s: %d calls outside the tests, PHP's callers say %d", method.Symbol(), calls, outside)
+			}
 		}
 		methods[method.Symbol()] = goldenMethod{Callers: callers, HandedOut: program.IsHandedOut(method.Name()), Envied: method.EnviedParameter(program), Unpacks: method.UnpacksTargetFromContainerParam(program)}
 	}

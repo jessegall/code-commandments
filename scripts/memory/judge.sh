@@ -7,7 +7,9 @@
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd -P)"
 snapshot="$(cd "$1" && pwd -P)"
-out="$(mktemp -d "$root/.memory-scratch.XXXXXX")"
+# The run's files stay inside the checkout, which is all the dev container sees, in a folder git ignores.
+mkdir -p "$root/.memory-scratch"
+out="$(mktemp -d "$root/.memory-scratch/judge.XXXXXX")"
 trap 'rm -rf "$out"' EXIT
 packages="${NUGET_PACKAGES:-$HOME/.nuget/packages}"
 mounts=(--mount "$snapshot")

@@ -1,6 +1,7 @@
 package csharp_test
 
 import (
+	"maps"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -36,14 +37,14 @@ func TestJudgingTheFixtureInHalvesFindsWhatJudgingItWholeFinds(t *testing.T) {
 	}
 
 	for _, detector := range detectors.Of(catalog.CSharp) {
-		want := locations(detector.Find(whole))
-		var got []string
+		want := placed(detector, detector.Find(whole))
+		var got []place
 		if aggregating, isAggregating := detector.(detectors.Aggregating); isAggregating {
 			var records []detectors.Candidate
-			var at []string
+			var at []place
 			for _, part := range halves {
 				for _, candidate := range aggregating.Candidates(part) {
-					at = append(at, candidate.At.Location())
+					at = append(at, placed(detector, []engine.Match{candidate.At})...)
 					records = append(records, detectors.Candidate{Record: candidate.Record})
 				}
 			}
@@ -52,14 +53,63 @@ func TestJudgingTheFixtureInHalvesFindsWhatJudgingItWholeFinds(t *testing.T) {
 			}
 		} else {
 			for _, part := range halves {
-				got = append(got, locations(detector.Find(part))...)
+				got = append(got, placed(detector, detector.Find(part))...)
 			}
 		}
-		slices.Sort(got)
-		if !slices.Equal(got, want) {
-			t.Errorf("%s finds %v in halves, %v whole", catalog.Name(detector), got, want)
+		if found, whole := locations(got), locations(want); !slices.Equal(found, whole) {
+			t.Errorf("%s finds %v in halves, %v whole", catalog.Name(detector), found, whole)
+		}
+		if found, whole := twins(got), twins(want); !maps.EqualFunc(found, whole, slices.Equal) {
+			t.Errorf("%s names twins %v in halves, %v whole", catalog.Name(detector), found, whole)
 		}
 	}
+}
+
+// place is where a rule finds a sin, and the group its rule puts it in; none for a rule that groups nothing.
+type place struct {
+	at    string
+	group string
+}
+
+// placed is where each match stands, and the group the rule puts it in, read while its codebase is held.
+func placed(detector detectors.Detector, matches []engine.Match) []place {
+	grouped, groups := detector.(detectors.Grouped)
+	var places []place
+	for _, match := range matches {
+		held := place{at: match.Location()}
+		if groups && match.Exists() {
+			if key, keyed := grouped.GroupKey(match); keyed {
+				held.group = key
+			}
+		}
+		places = append(places, held)
+	}
+
+	return places
+}
+
+// twins is, for each place in a group, the other places of its group, sorted.
+func twins(places []place) map[string][]string {
+	members := map[string][]string{}
+	for _, held := range places {
+		if held.group != "" {
+			members[held.group] = append(members[held.group], held.at)
+		}
+	}
+	named := map[string][]string{}
+	for _, held := range places {
+		if held.group == "" {
+			continue
+		}
+		for _, member := range members[held.group] {
+			if member != held.at {
+				named[held.at] = append(named[held.at], member)
+			}
+		}
+		slices.Sort(named[held.at])
+	}
+
+	return named
 }
 
 // half is one of two parts of the stream, its files cut by the folder under the project they stand in.
@@ -90,10 +140,10 @@ func folderOf(path string) string {
 	return folder
 }
 
-func locations(matches []engine.Match) []string {
+func locations(places []place) []string {
 	var located []string
-	for _, match := range matches {
-		located = append(located, match.Location())
+	for _, held := range places {
+		located = append(located, held.at)
 	}
 	slices.Sort(located)
 

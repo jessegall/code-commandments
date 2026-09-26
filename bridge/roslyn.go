@@ -183,30 +183,31 @@ func projectsAt(folder string) []string {
 	return projects
 }
 
-// projectReferences is the project files the project references, by their full paths.
+// projectReferences is the project files the project references, by their full paths: every ProjectReference at
+// any depth, in the MSBuild namespace an older project file declares or in none.
 func projectReferences(project string) []string {
-	raw, err := os.ReadFile(project)
+	file, err := os.Open(project)
 	if err != nil {
 		return nil
 	}
-	var file struct {
-		Groups []struct {
-			References []struct {
-				Include string `xml:"Include,attr"`
-			} `xml:"ProjectReference"`
-		} `xml:"ItemGroup"`
-	}
-	if xml.Unmarshal(raw, &file) != nil {
-		return nil
-	}
+	defer file.Close()
 	var referenced []string
-	for _, group := range file.Groups {
-		for _, reference := range group.References {
-			referenced = append(referenced, filepath.Clean(filepath.Join(filepath.Dir(project), strings.ReplaceAll(reference.Include, `\`, "/"))))
+	decoder := xml.NewDecoder(file)
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return referenced
+		}
+		element, starts := token.(xml.StartElement)
+		if !starts || element.Name.Local != "ProjectReference" {
+			continue
+		}
+		for _, attribute := range element.Attr {
+			if attribute.Name.Local == "Include" {
+				referenced = append(referenced, filepath.Clean(filepath.Join(filepath.Dir(project), strings.ReplaceAll(attribute.Value, `\`, "/"))))
+			}
 		}
 	}
-
-	return referenced
 }
 
 // roslynScript is the script written out beside the image name it reads, under the cache folder, keyed by what

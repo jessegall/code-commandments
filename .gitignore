@@ -65,3 +65,6 @@ __pycache__/
 
 # The Go binary, built with `go build -o bin/commandments-go ./cmd/commandments`.
 /bin/commandments-go
+
+# What scripts/memory/judge.sh keeps while it runs, inside the checkout the dev container sees.
+/.memory-scratch/
