@@ -7,7 +7,8 @@
 # at its own path, a read-only one widened to the git repository that holds it, so a path reads the same inside the
 # container as outside and a project compiles with the projects it references; the NuGet cache is mounted the same
 # way, read-only, so a project's restored packages resolve where its assets file says. Two cores and 4 GB at most;
-# the container is named and labelled as the bridge's own, and removed when the run ends.
+# the container is named and labelled as the bridge's own, and stopped when the run, or the process that started it,
+# ends.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -40,6 +41,24 @@ while [ "$#" -gt 0 ] && [ "$1" != "--" ]; do
 done
 [ "$#" -gt 0 ] && shift
 
-exec docker run --rm -i --memory=4g --cpus=2 \
-    --name "code-commandments-roslyn-run-$$-$RANDOM" --label code-commandments.roslyn=run \
-    -e NUGET_PACKAGES="$packages" "${mounts[@]}" "$image" "$@"
+# A container outlives a docker client whose caller died, compiling for no one until it next reads a request: the
+# run keeps the client as its child and stops the container when it ends, however it ends, and when its caller does.
+name="code-commandments-roslyn-run-$$-$RANDOM"
+caller=$PPID
+# An asynchronous command reads /dev/null unless handed the run's input, kept on a descriptor of its own first.
+exec 3<&0
+docker run --rm -i --memory=4g --cpus=2 \
+    --name "$name" --label code-commandments.roslyn=run \
+    -e NUGET_PACKAGES="$packages" "${mounts[@]}" "$image" "$@" <&3 &
+client=$!
+exec 3<&-
+(
+    while kill -0 "$caller" 2> /dev/null; do
+        sleep 1
+    done
+    docker kill "$name"
+) < /dev/null > /dev/null 2>&1 &
+watcher=$!
+trap 'kill "$watcher" 2> /dev/null; kill -0 "$client" 2> /dev/null && docker kill "$name" > /dev/null 2>&1; true' EXIT
+trap 'exit 143' INT TERM HUP
+wait "$client"
