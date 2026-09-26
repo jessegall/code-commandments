@@ -4,6 +4,7 @@
 package repent
 
 import (
+	"fmt"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"strconv"
@@ -231,11 +232,12 @@ func preview(path string, converged scribes.Converged, file string, console cli.
 	return skipped(converged, console), nil
 }
 
-// skipped names the scribes that broke and answers the run's exit code.
+// skipped says why each scribe that broke broke, names them, and answers the run's exit code.
 func skipped(converged scribes.Converged, console cli.Console) int {
 	var names judge.Skipped
 
 	for _, step := range converged.Skipped {
+		console.Warn(fmt.Sprintf("⚠ %s failed and was skipped — everything else still ran: %v", step.Step, step.Err))
 		names = append(names, step.Step)
 	}
 
