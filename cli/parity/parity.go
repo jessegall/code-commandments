@@ -44,7 +44,8 @@ type Case struct {
 	Project string `json:"project,omitempty"`
 
 	// Setup are shell commands run in the project before the tool, e.g. to make it a git repository;
-	// $PARITY_PACKAGE names the package's own folder, to copy what the tool sees from its install, and
+	// $PARITY_PACKAGE names the package's own folder, to copy what the tool sees from an install (the stub
+	// testdata/installed.json), and
 	// $PARITY_TOOL the tool under test, to leave behind what an earlier run of it would.
 	Setup []string `json:"setup,omitempty"`
 
