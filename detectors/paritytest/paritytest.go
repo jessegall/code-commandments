@@ -23,20 +23,25 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Compare runs the engine's detectors in both tools over the project $COMMANDMENTS_PARITY names, the PHP ones through
+// Compare runs the engines' detectors in both tools over the project $COMMANDMENTS_PARITY names, the PHP ones through
 // the findings script, and fails for every finding only one of them makes. It skips the test without a project: a
 // real project is the parity check, not the suite. $COMMANDMENTS_PARITY_FINDINGS names a file the PHP findings are
 // kept in, read back on the next run, since the PHP half of a large project takes the longest.
 // $COMMANDMENTS_PARITY_EACH compares a solution project by project, one held at a time, so a solution too large to
-// hold whole is still compared; each tool then reads each project alone. The Go half asks one bridge, kept running for
+// hold whole is still compared; each tool then reads each project alone. $COMMANDMENTS_PARITY_ACCOUNTED names a file of
+// the one-sided findings whose cause is known, which then pass. The Go half asks one bridge, kept running for
 // every part, so its start-up and what it loads are paid once.
-func Compare(t *testing.T, rules catalog.Engine, findings string, command func(testing.TB, ...string) []string) {
+func Compare(t *testing.T, rules []catalog.Engine, findings string, command func(testing.TB, ...string) []string) {
 	t.Helper()
 	project := os.Getenv("COMMANDMENTS_PARITY")
 	if project == "" {
-		t.Skipf("set COMMANDMENTS_PARITY to a %s project to compare the engines on", rules.Label())
+		t.Skipf("set COMMANDMENTS_PARITY to a %s project to compare the engines on", rules[0].Label())
 	}
-	root, err := filepath.EvalSymlinks(project)
+	absolute, err := filepath.Abs(project)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := filepath.EvalSymlinks(absolute)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -67,22 +72,74 @@ func Compare(t *testing.T, rules catalog.Engine, findings string, command func(t
 			expected[line] = true
 		}
 	}
+	explained := accounted(t)
 	for _, finding := range sorted(expected) {
-		if !found[finding] {
+		if !found[finding] && !explained.pass("only PHP: "+finding) {
 			t.Errorf("only PHP: %s", finding)
 		}
 	}
 	for _, finding := range sorted(found) {
-		if !expected[finding] {
+		if !expected[finding] && !explained.pass("only Go: "+finding) {
 			t.Errorf("only Go:  %s", finding)
 		}
+	}
+	for _, stale := range explained.unused() {
+		t.Errorf("accounted for, but no longer found: %s", stale)
 	}
 	t.Logf("%d findings in PHP, %d in Go, over %d part(s)", len(expected), len(found), len(parts))
 }
 
+// explanations are the one-sided findings $COMMANDMENTS_PARITY_ACCOUNTED lists, each with its cause after a `#`: a
+// difference whose cause is known and written down passes, and one listed that no longer happens fails.
+type explanations map[string]bool
+
+// accounted reads the explanations the environment names; none when it names no file.
+func accounted(t *testing.T) explanations {
+	t.Helper()
+	listed := explanations{}
+	path := os.Getenv("COMMANDMENTS_PARITY_ACCOUNTED")
+	if path == "" {
+		return listed
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range strings.Split(string(raw), "\n") {
+		if finding, _, _ := strings.Cut(line, "#"); strings.TrimSpace(finding) != "" && !strings.HasPrefix(line, "#") {
+			listed[strings.TrimSpace(finding)] = false
+		}
+	}
+
+	return listed
+}
+
+// pass says whether the one-sided finding is accounted for, and marks it met.
+func (e explanations) pass(finding string) bool {
+	if _, listed := e[finding]; !listed {
+		return false
+	}
+	e[finding] = true
+
+	return true
+}
+
+// unused are the explanations no finding met.
+func (e explanations) unused() []string {
+	var unused []string
+	for finding, met := range e {
+		if !met {
+			unused = append(unused, finding)
+		}
+	}
+	slices.Sort(unused)
+
+	return unused
+}
+
 // goFindings is every finding the engine's Go detectors make in the part, read by the server, each as `path:line Sin`
 // under the root.
-func goFindings(t *testing.T, rules catalog.Engine, server *bridge.Server, root, part string) []string {
+func goFindings(t *testing.T, rules []catalog.Engine, server *bridge.Server, root, part string) []string {
 	t.Helper()
 	stream, err := server.Ask(bridge.Request{Paths: []string{part}})
 	if err != nil {
@@ -90,7 +147,11 @@ func goFindings(t *testing.T, rules catalog.Engine, server *bridge.Server, root,
 	}
 	codebase := engine.Load(stream)
 	var found []string
-	for _, detector := range detectors.Of(rules) {
+	var proven []detectors.Detector
+	for _, each := range rules {
+		proven = append(proven, detectors.Of(each)...)
+	}
+	for _, detector := range proven {
 		sin := strings.TrimSuffix(catalog.Name(detector), "Detector")
 		for _, finding := range detector.Find(codebase) {
 			if file := strings.TrimPrefix(finding.File(), root+"/"); walked(file) {

@@ -1,0 +1,31 @@
+# koel at 7f321705d7afc31a60181e8c6eab85c0220869bf: the findings only one tool makes, each with its cause. Every one
+# is PHP's hand-written TypeScript parser misreading code TypeScript's own parser and checker read right; see docs/parity.md.
+only PHP: resources/assets/js/components/artist/ArtistEventItem.spec.ts:9 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only PHP: resources/assets/js/components/layout/main-wrapper/sidebar/PlaylistSidebarItem.spec.ts:15 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only PHP: resources/assets/js/components/radio/EditRadioStationForm.spec.ts:13 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only PHP: resources/assets/js/components/user/UserCard.spec.ts:17 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/App.vue:157 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/components/auth/two-factor/TwoFactorAuthSettings.spec.ts:18 DuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/components/auth/two-factor/TwoFactorChallengeForm.spec.ts:10 DuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/components/auth/two-factor/TwoFactorManageActions.spec.ts:11 DuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/components/layout/main-wrapper/sidebar/Sidebar.vue:29 IndexAsKey  # PHP reads an iterable's type only from a written annotation
+only Go: resources/assets/js/components/playable/media-browser/MediaListView.vue:126 DuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/components/playable/playable-list/PlayableList.vue:236 DuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/components/utils/HookSlot.vue:2 IndexAsKey  # PHP reads an iterable's type only from a written annotation
+only Go: resources/assets/js/stores/albumStore.ts:98 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/stores/artistStore.ts:86 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/stores/playableStore.ts:205 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/stores/playableStore.ts:220 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/stores/podcastStore.ts:44 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:55 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:56 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:57 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:58 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:59 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:60 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:61 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:62 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:63 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:64 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:65 DefendedCertainField  # PHP loses the class after a semicolon-less import
+only Go: resources/assets/js/visualizers/asteroid/scripts/NoiseBlob.ts:66 DefendedCertainField  # PHP loses the class after a semicolon-less import
