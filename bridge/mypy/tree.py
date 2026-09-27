@@ -14,11 +14,12 @@ import json
 import os
 import sys
 import tokenize
+from dataclasses import dataclass
 from typing import Iterator
 
 from mypy.version import __version__ as MYPY_VERSION
 
-from session import Session, spans, states
+from session import ResolvedType, Session, TypedModule, spans, states
 
 OPERATORS = {
     ast.Add: "+", ast.Sub: "-", ast.Mult: "*", ast.Div: "/", ast.FloorDiv: "//", ast.Mod: "%", ast.Pow: "**",
@@ -30,9 +31,175 @@ OPERATORS = {
 SKIPPED = (ast.expr_context, ast.operator, ast.unaryop, ast.cmpop, ast.boolop)
 DEFINITIONS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
 
+ABSENT = object()
+"""A value the contract leaves out: distinct from `None`, which a `null` literal writes."""
+
+
+def written(pairs: tuple[tuple[str, object], ...]) -> dict[str, object]:
+    """The pairs present, in order, as the contract's object."""
+    return {key: value for key, value in pairs if value is not ABSENT}
+
+
+@dataclass(frozen=True)
+class Span:
+    """Where a node or a comment sits: `[start, end)` in bytes, and the line it starts on."""
+
+    start: int
+    end: int
+    line: int
+
+    def to_json(self) -> list[int]:
+        return [self.start, self.end, self.line]
+
+
+@dataclass(frozen=True)
+class Literal:
+    """What a literal is, and its value when the contract writes one — `None` for a `null`."""
+
+    kind: str
+    value: object = ABSENT
+
+
+@dataclass(frozen=True)
+class WrittenType:
+    """A type as an annotation writes it: a name, `None`, a union, a subscripted name, or something opaque."""
+
+    text: str
+    kind: str
+    name: str | None = None
+    members: tuple[WrittenType, ...] | None = None
+    args: tuple[WrittenType, ...] | None = None
+    nullable: bool = False
+
+    def to_json(self) -> dict[str, object]:
+        """The type as the contract writes it: a union's nullability, read off its members, after the rest."""
+        own = self.nullable and self.members is None
+        return written((
+            ("text", self.text),
+            ("kind", self.kind),
+            ("name", ABSENT if self.name is None else self.name),
+            ("members", ABSENT if self.members is None else [member.to_json() for member in self.members]),
+            ("args", ABSENT if self.args is None else [arg.to_json() for arg in self.args]),
+            ("nullable", True if own else ABSENT),
+            ("origin", "written"),
+            ("nullable", True if self.nullable and not own else ABSENT),
+        ))
+
+
+@dataclass(frozen=True)
+class Facts:
+    """What the contract says of a node beyond its shape: its name, literal, operator, flags, types, symbol and
+    the Python it keeps in `extras`."""
+
+    name: str | None = None
+    literal: Literal | None = None
+    operator: str | None = None
+    flags: tuple[str, ...] = ()
+    declared: WrittenType | None = None
+    returns: WrittenType | None = None
+    symbol: str | None = None
+    resolved: ResolvedType | None = None
+    extras: dict[str, object] | None = None
+
+    def pairs(self) -> tuple[tuple[str, object], ...]:
+        return (
+            ("name", ABSENT if self.name is None else self.name),
+            ("literal", ABSENT if self.literal is None else self.literal.kind),
+            ("value", ABSENT if self.literal is None else self.literal.value),
+            ("operator", ABSENT if self.operator is None else self.operator),
+            ("flags", list(self.flags) if self.flags else ABSENT),
+            ("declared", ABSENT if self.declared is None else self.declared.to_json()),
+            ("returns", ABSENT if self.returns is None else self.returns.to_json()),
+            ("symbol", ABSENT if self.symbol is None else self.symbol),
+            ("resolved", ABSENT if self.resolved is None else self.resolved.to_json()),
+            ("extras", ABSENT if self.extras is None else {"python": self.extras}),
+        )
+
+
+@dataclass(frozen=True)
+class Node:
+    """One node of the contract's tree, with its subtree."""
+
+    id: int
+    kind: str
+    role: str
+    span: Span
+    answers: tuple[str, ...] = ()
+    field: str | None = None
+    facts: Facts = Facts()
+    children: tuple[Node, ...] = ()
+
+    def to_json(self) -> dict[str, object]:
+        return written((
+            ("id", self.id),
+            ("kind", self.kind),
+            ("role", self.role),
+            ("is", list(self.answers) if self.answers else ABSENT),
+            ("span", self.span.to_json()),
+            ("field", ABSENT if self.field is None else self.field),
+            *self.facts.pairs(),
+            ("children", [child.to_json() for child in self.children] if self.children else ABSENT),
+        ))
+
+
+@dataclass(frozen=True)
+class Attachment:
+    """Where a comment belongs: the node it is attached to, when one owns it, and whether it trails code."""
+
+    owner: int | None
+    trailing: bool = False
+
+
+@dataclass(frozen=True)
+class Comment:
+    """One comment of a module as the contract writes it."""
+
+    id: int
+    kind: str
+    text: str
+    span: Span
+    attachment: Attachment
+    code: bool = False
+
+    def to_json(self) -> dict[str, object]:
+        return written((
+            ("id", self.id),
+            ("kind", self.kind),
+            ("text", self.text),
+            ("span", self.span.to_json()),
+            ("attached", ABSENT if self.attachment.owner is None else self.attachment.owner),
+            ("trailing", True if self.attachment.trailing else ABSENT),
+            ("extras", {"python": {"code": True}} if self.code else ABSENT),
+        ))
+
+
+@dataclass(frozen=True)
+class FileLine:
+    """One module as the stream's file line writes it."""
+
+    path: str
+    errors: int
+    context: bool
+    module: str
+    resolved: bool
+    root: Node
+    comments: tuple[Comment, ...]
+
+    def to_json(self) -> dict[str, object]:
+        return written((
+            ("path", self.path),
+            ("language", "python"),
+            ("errors", self.errors),
+            ("context", True if self.context else ABSENT),
+            ("module", self.module),
+            ("resolver", {"tool": "mypy", "ran": self.resolved}),
+            ("root", self.root.to_json()),
+            ("comments", [comment.to_json() for comment in self.comments]),
+        ))
+
 
 class TreeWriter:
-    def __init__(self, source: bytes, module: str, types: dict[tuple[int, int], dict]) -> None:
+    def __init__(self, source: bytes, module: str, types: dict[tuple[int, int], ResolvedType]) -> None:
         self.source = source
         self.module = module
         self.types = types
@@ -53,7 +220,7 @@ class TreeWriter:
     def line_of(self, offset: int) -> int:
         return self.source.count(b"\n", 0, offset) + 1
 
-    def span_of(self, node: ast.AST, children: list[dict]) -> tuple[int, int]:
+    def span_of(self, node: ast.AST, children: list[Node]) -> tuple[int, int]:
         """The node's byte span: its own position, from its first decorator, and reaching its last child, as a
         parameter reaches the default the contract nests under it."""
         if isinstance(node, ast.Module):
@@ -61,45 +228,39 @@ class TreeWriter:
         if hasattr(node, "lineno") and node.end_lineno is not None:
             start = self.offset(node.lineno, node.col_offset)
             end = self.offset(node.end_lineno, node.end_col_offset)
-            decorators = [child for child in children if child["field"] == "decorator_list"]
+            decorators = [child for child in children if child.field == "decorator_list"]
             if decorators:
-                start = self.source.rindex(b"@", 0, decorators[0]["span"][0])
-            return start, max([end, *(child["span"][1] for child in children)])
+                start = self.source.rindex(b"@", 0, decorators[0].span.start)
+            return start, max([end, *(child.span.end for child in children)])
         if children:
-            return children[0]["span"][0], children[-1]["span"][1]
+            return children[0].span.start, children[-1].span.end
         return -1, -1
 
-    def node(self, node: ast.AST, field: str | None, scope: list[str], floor: int = 0) -> dict:
+    def node(self, node: ast.AST, field: str | None, scope: list[str], floor: int = 0) -> Node:
         """The node and its subtree. $floor is where a node without a position of its own sits: the end of its
         previous sibling, or its parent's start."""
         identity = self.next
         self.next += 1
-        out: dict = {"id": identity, "kind": type(node).__name__, "role": self.role(node, field)}
+        role = self.role(node, field)
         placeholder = len(self.spans)
         self.spans.append((0, 0, identity))
         inner = scope + [node.name] if isinstance(node, DEFINITIONS) else scope
-        children = []
+        children: list[Node] = []
         after = self.offset(node.lineno, node.col_offset) if hasattr(node, "lineno") else floor
         for name, child in self.ordered(node):
             children.append(self.node(child, name, inner, after))
-            after = children[-1]["span"][1]
+            after = children[-1].span.end
         start, end = self.span_of(node, children)
         if start < 0:
             start = end = floor
         self.spans[placeholder] = (start, end, identity)
-        answers = self.neutral(node)
-        if answers:
-            out["is"] = answers
-        out["span"] = [start, end, self.line_of(start)]
-        if field is not None:
-            out["field"] = field
-        out.update(self.facts(node, field, scope, (start, end)))
-        if children:
-            out["children"] = children
+        answers = tuple(self.neutral(node))
+        span = Span(start, end, self.line_of(start))
+        facts = self.facts(node, field, scope, (start, end))
         docstring = ast.get_docstring(node, clean=False) if isinstance(node, (*DEFINITIONS, ast.Module)) else None
         if docstring is not None:
             self.docstrings.append((node.body[0].value, identity))
-        return out
+        return Node(identity, type(node).__name__, role, span, answers, field, facts, tuple(children))
 
     def ordered(self, node: ast.AST) -> list[tuple[str, ast.AST]]:
         """The node's children with their fields, in source order: `ast` keeps its own field order, which puts an
@@ -175,38 +336,40 @@ class TreeWriter:
         }
         return [name for name, yes in answers.items() if yes]
 
-    def facts(self, node: ast.AST, field: str | None, scope: list[str], span: tuple[int, int]) -> dict:
-        facts: dict = {}
-        name = self.name_of(node)
-        if name is not None:
-            facts["name"] = name
-        facts.update(self.literal(node))
-        operator = self.operator(node)
-        if operator is not None:
-            facts["operator"] = operator
-        flags = self.flags(node, field, span[0])
-        if flags:
-            facts["flags"] = flags
+    def facts(self, node: ast.AST, field: str | None, scope: list[str], span: tuple[int, int]) -> Facts:
+        declared = None
         if isinstance(node, ast.arg) and node.annotation is not None:
-            facts["declared"] = self.type(node.annotation)
+            declared = self.type(node.annotation)
         if isinstance(node, ast.AnnAssign):
-            facts["declared"] = self.type(node.annotation)
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.returns is not None:
-            facts["returns"] = self.type(node.returns)
-        if isinstance(node, DEFINITIONS):
-            facts["symbol"] = ".".join([self.module, *scope, node.name])
+            declared = self.type(node.annotation)
+        returns = self.type(node.returns) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.returns is not None else None
+        resolved = None
         if isinstance(node, ast.expr) and span in self.types:
-            facts["resolved"] = self.resolved(self.types[span])
+            resolved = self.types[span]
             self.joined.add(span)
+        return Facts(
+            name=self.name_of(node),
+            literal=self.literal(node),
+            operator=self.operator(node),
+            flags=tuple(self.flags(node, field, span[0])),
+            declared=declared,
+            returns=returns,
+            symbol=".".join([self.module, *scope, node.name]) if isinstance(node, DEFINITIONS) else None,
+            resolved=resolved,
+            extras=self.extras(node),
+        )
+
+    def extras(self, node: ast.AST) -> dict[str, object] | None:
+        """What the contract keeps of Python alone about the node, under `extras.python`."""
         if isinstance(node, ast.Compare) and len(node.ops) > 1:
-            facts["extras"] = {"python": {"operators": [OPERATORS[type(op)] for op in node.ops]}}
+            return {"operators": [OPERATORS[type(op)] for op in node.ops]}
         if isinstance(node, ast.ImportFrom) and node.level:
-            facts["extras"] = {"python": {"level": node.level}}
+            return {"level": node.level}
         if isinstance(node, ast.alias) and node.asname is not None:
-            facts["extras"] = {"python": {"as": node.asname}}
+            return {"as": node.asname}
         if isinstance(node, (ast.Global, ast.Nonlocal)):
-            facts["extras"] = {"python": {"names": list(node.names)}}
-        return facts
+            return {"names": list(node.names)}
+        return None
 
     def name_of(self, node: ast.AST) -> str | None:
         if isinstance(node, ast.Name):
@@ -227,25 +390,25 @@ class TreeWriter:
             return node.rest
         return None
 
-    def literal(self, node: ast.AST) -> dict:
+    def literal(self, node: ast.AST) -> Literal | None:
         if isinstance(node, ast.JoinedStr):
-            return {"literal": "interpolated"}
+            return Literal("interpolated")
         if not isinstance(node, ast.Constant):
-            return {}
+            return None
         value = node.value
         if isinstance(value, bool):
-            return {"literal": "bool", "value": value}
+            return Literal("bool", value)
         if value is None:
-            return {"literal": "null", "value": None}
+            return Literal("null", None)
         if value is Ellipsis:
-            return {"literal": "ellipsis"}
+            return Literal("ellipsis")
         if isinstance(value, bytes):
-            return {"literal": "bytes"}
+            return Literal("bytes")
         if isinstance(value, int):
-            return {"literal": "int", "value": str(value)}
+            return Literal("int", str(value))
         if isinstance(value, float):
-            return {"literal": "float", "value": repr(value)}
-        return {"literal": "string", "value": value}
+            return Literal("float", repr(value))
+        return Literal("string", value)
 
     def operator(self, node: ast.AST) -> str | None:
         if isinstance(node, (ast.BinOp, ast.AugAssign, ast.UnaryOp, ast.BoolOp)):
@@ -280,43 +443,29 @@ class TreeWriter:
             flags.append("group")
         return flags
 
-    def type(self, annotation: ast.expr) -> dict:
+    def type(self, annotation: ast.expr) -> WrittenType:
         text = ast.get_source_segment(self.source.decode(), annotation) or ast.unparse(annotation)
         if isinstance(annotation, ast.Constant) and annotation.value is None:
-            return {"text": text, "kind": "keyword", "name": "None", "nullable": True, "origin": "written"}
+            return WrittenType(text, "keyword", "None", nullable=True)
         if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
-            return {"text": text, "kind": "named", "name": annotation.value, "origin": "written"}
-        if isinstance(annotation, ast.BinOp) and isinstance(annotation.op, ast.BitOr):
-            members = self.union_members(annotation)
-            out = {"text": text, "kind": "union", "members": members, "origin": "written"}
-            if any(member.get("name") == "None" for member in members):
-                out["nullable"] = True
-            return out
+            return WrittenType(text, "named", annotation.value)
+        if is_union(annotation):
+            members = tuple(self.union_members(annotation))
+            return WrittenType(text, "union", members=members, nullable=any(member.name == "None" for member in members))
         if isinstance(annotation, ast.Subscript):
             base = self.type(annotation.value)
             items = annotation.slice.elts if isinstance(annotation.slice, ast.Tuple) else [annotation.slice]
-            return {"text": text, "kind": "named", "name": base["name"], "args": [self.type(item) for item in items], "origin": "written"}
+            return WrittenType(text, "named", base.name, args=tuple(self.type(item) for item in items))
         if isinstance(annotation, (ast.Name, ast.Attribute)):
-            return {"text": text, "kind": "named", "name": ast.unparse(annotation), "origin": "written"}
-        return {"text": text, "kind": "opaque", "origin": "written"}
+            return WrittenType(text, "named", ast.unparse(annotation))
+        return WrittenType(text, "opaque")
 
-    def union_members(self, annotation: ast.expr) -> list[dict]:
-        if isinstance(annotation, ast.BinOp) and isinstance(annotation.op, ast.BitOr):
+    def union_members(self, annotation: ast.expr) -> list[WrittenType]:
+        if is_union(annotation):
             return self.union_members(annotation.left) + self.union_members(annotation.right)
         return [self.type(annotation)]
 
-    def resolved(self, fact: dict) -> dict:
-        out: dict = {"text": fact["type"], "kind": "named" if "class" in fact else "opaque"}
-        if "class" in fact:
-            out["name"] = fact["class"]
-        if fact.get("nullable"):
-            out["nullable"] = True
-        if "constructs" in fact:
-            out["constructs"] = fact["constructs"]
-        out["origin"] = "compiler"
-        return out
-
-    def comments(self) -> list[dict]:
+    def comments(self) -> list[Comment]:
         found: list[tuple[int, int, str]] = []
         text = self.source.decode()
         lines = text.splitlines(keepends=True)
@@ -330,21 +479,21 @@ class TreeWriter:
             start = self.offset(literal.lineno, literal.col_offset)
             found.append((start, self.offset(literal.end_lineno, literal.end_col_offset), f"doc:{owner}"))
         self.comment_ends = {start: end for start, end, _ in found}
-        comments = []
+        comments: list[Comment] = []
         for start, end, kind in sorted(found):
-            comment = {"id": len(comments), "kind": "doc" if kind.startswith("doc") else "line",
-                       "text": self.source[start:end].decode(), "span": [start, end, self.line_of(start)]}
-            comment.update({"attached": int(kind[4:])} if kind.startswith("doc") else self.attachment(start, end))
-            if not kind.startswith("doc") and is_code(comment["text"][1:]):
-                comment["extras"] = {"python": {"code": True}}
-            comments.append(comment)
+            text = self.source[start:end].decode()
+            span = Span(start, end, self.line_of(start))
+            if kind.startswith("doc"):
+                comments.append(Comment(len(comments), "doc", text, span, Attachment(int(kind[4:]))))
+            else:
+                comments.append(Comment(len(comments), "line", text, span, self.attachment(start, end), is_code(text[1:])))
         return comments
 
-    def attachment(self, start: int, end: int) -> dict:
+    def attachment(self, start: int, end: int) -> Attachment:
         line_start = self.source.rfind(b"\n", 0, start) + 1
         if self.source[line_start:start].strip():
             owner = self.outermost(lambda s, e: line_start < e <= start)
-            return {"trailing": True} if owner is None else {"attached": owner, "trailing": True}
+            return Attachment(owner, trailing=True)
         after = end
         while True:
             while after < len(self.source) and self.source[after:after + 1] in (b" ", b"\t", b"\r", b"\n"):
@@ -353,7 +502,7 @@ class TreeWriter:
                 break
             after = self.comment_ends[after]
         owner = self.outermost(lambda s, e: s == after)
-        return {} if owner is None else {"attached": owner}
+        return Attachment(owner)
 
     def outermost(self, matches) -> int | None:
         for start, end, identity in self.spans:
@@ -361,6 +510,11 @@ class TreeWriter:
                 return identity
         return None
 
+
+
+def is_union(annotation: ast.expr) -> bool:
+    """Whether the annotation is written `A | B`."""
+    return isinstance(annotation, ast.BinOp) and isinstance(annotation.op, ast.BitOr)
 
 
 def is_code(words: str) -> bool:
@@ -421,16 +575,17 @@ def packages(path: str) -> list[str]:
     return found
 
 
-def unparsed(source: bytes) -> dict:
+def unparsed(source: bytes) -> Node:
     """The root of a file Python's parser refused: an empty module over the whole file."""
-    return {"id": 0, "kind": "Module", "role": "other", "span": [0, len(source), 1]}
+    return Node(0, "Module", "other", Span(0, len(source), 1))
 
 
 def stream(session: Session, paths: list[str], write: list[str], python: str | None) -> Iterator[dict]:
     """The contract's lines for the modules under $paths: the header, one file line each, the program, the trailer."""
     yield {"header": {"contract": "tree", "version": 2, "language": "python",
                       "bridge": {"name": "mypy-bridge", "version": MYPY_VERSION}, "roots": [os.path.realpath(p) for p in paths]}}
-    found, types, graph = session.checked(paths, python)
+    project = session.checked(paths, python)
+    found, types, graph = project.sources, project.types, project.graph
     judged = {os.path.realpath(p) for p in write}
     named = {os.path.realpath(s.path): s.module for s in found if s.path}
     checked = states(graph, set(named))
@@ -439,22 +594,19 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
     for path in python_files(paths):
         text = open(path, "rb").read()
         state = checked.get(path)
-        count, typed = spans(path, state, types) if state is not None else (0, {})
-        seen, resolved = seen + count, resolved + len(typed)
+        typed = spans(path, state, types) if state is not None else TypedModule(0, {})
+        seen, resolved = seen + typed.expressions, resolved + len(typed.by_span)
         module = named.get(path) or module_name(path)
-        writer = TreeWriter(text, module, typed)
-        line: dict = {"path": path, "language": "python", "errors": 0}
+        writer = TreeWriter(text, module, typed.by_span)
         try:
-            root = writer.node(ast.parse(text), None, [])
+            root, errors = writer.node(ast.parse(text), None, []), 0
         except SyntaxError:
-            line["errors"], root = 1, unparsed(text)
-        if write and path not in judged:
-            line["context"] = True
-        line.update({"module": module, "resolver": {"tool": "mypy", "ran": state is not None and state.tree is not None},
-                     "root": root, "comments": writer.comments() if not line["errors"] else []})
-        yield {"file": line}
+            root, errors = unparsed(text), 1
+        comments = tuple(writer.comments()) if not errors else ()
+        ran = state is not None and state.tree is not None
+        yield {"file": FileLine(path, errors, bool(write) and path not in judged, module, ran, root, comments)}
         files += 1
-        unjoined += sum(1 for span in typed if span not in writer.joined)
+        unjoined += sum(1 for span in typed.by_span if span not in writer.joined)
         folders += [folder for folder in packages(path) if folder not in folders]
     yield {"program": {"packages": sorted(folders)}}
     yield {"trailer": {"files": files, "resolution": {"expressions": seen, "typed": resolved, "unjoined": unjoined}}}
@@ -462,8 +614,13 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
 
 def emit(lines: Iterator[dict]) -> None:
     for line in lines:
-        sys.stdout.write(json.dumps(line, ensure_ascii=False, separators=(",", ":")) + "\n")
+        sys.stdout.write(json.dumps(line, ensure_ascii=False, separators=(",", ":"), default=to_json) + "\n")
     sys.stdout.flush()
+
+
+def to_json(record: FileLine) -> dict[str, object]:
+    """A line's record as the contract writes it."""
+    return record.to_json()
 
 
 def main(argv: list[str]) -> int:

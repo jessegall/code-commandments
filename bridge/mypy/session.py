@@ -6,6 +6,7 @@ by its span. tree.py writes them into the generic tree.
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 
 from mypy import build
 from mypy.find_sources import InvalidSourceList, create_source_list
@@ -64,6 +65,15 @@ def built(found: list[BuildSource], chosen: Options) -> FineGrainedBuildManager 
     return None
 
 
+@dataclass(frozen=True)
+class CheckedProject:
+    """A project as mypy checked it: its sources, the type of every expression, and each module's state by name."""
+
+    sources: list[BuildSource]
+    types: dict[Expression, Type]
+    graph: dict[str, State]
+
+
 class Session:
     """One project held checked in memory: built whole on the first request, then updated by the modules
     whose files changed since the last."""
@@ -73,7 +83,7 @@ class Session:
         self.manager: FineGrainedBuildManager | None = None
         self.stamps: dict[str, tuple[float, int]] = {}
 
-    def checked(self, paths: list[str], python: str | None) -> tuple[list[BuildSource], dict[Expression, Type], dict[str, State]]:
+    def checked(self, paths: list[str], python: str | None) -> CheckedProject:
         chosen = options(python)
         found = sources(paths, chosen)
         stamps = {s.path: stamp(s.path) for s in found if s.path}
@@ -86,8 +96,8 @@ class Session:
                 self.manager.update(changed, [])
         self.key, self.stamps = key, stamps
         if self.manager is None:
-            return found, {}, {}
-        return found, self.manager.manager.all_types, self.manager.graph
+            return CheckedProject(found, {}, {})
+        return CheckedProject(found, self.manager.manager.all_types, self.manager.graph)
 
 
 def line_starts(text: bytes) -> list[int]:
@@ -95,8 +105,40 @@ def line_starts(text: bytes) -> list[int]:
     return [0, *(at + 1 for at, byte in enumerate(text) if byte == 0x0A)]
 
 
-def described(typ: Type) -> dict[str, object] | None:
-    """What the contract says of one resolved type — none for `Any`, which resolved nothing."""
+@dataclass(frozen=True)
+class ResolvedType:
+    """One type mypy resolved: as mypy writes it, whether it admits `None`, the class it is an instance of, and the
+    class it builds when called — the last two only where the type has one."""
+
+    text: str
+    nullable: bool
+    instance_of: str | None = None
+    constructs: str | None = None
+
+    def to_json(self) -> dict[str, object]:
+        """The type as the contract writes it: named for its class when it has one, opaque otherwise."""
+        pairs = (
+            ("text", self.text),
+            ("kind", "named" if self.instance_of is not None else "opaque"),
+            ("name", self.instance_of),
+            ("nullable", True if self.nullable else None),
+            ("constructs", self.constructs),
+            ("origin", "compiler"),
+        )
+        return {key: value for key, value in pairs if value is not None}
+
+
+@dataclass(frozen=True)
+class TypedModule:
+    """How many of a module's expressions mypy typed, and what each typed one resolved to by its `[start, end)` byte
+    span; the first expression at a span wins."""
+
+    expressions: int
+    by_span: dict[tuple[int, int], ResolvedType]
+
+
+def described(typ: Type) -> ResolvedType | None:
+    """The type mypy resolved — none for `Any`, which resolved nothing."""
     proper = get_proper_type(typ)
     if isinstance(proper, AnyType):
         return None
@@ -106,12 +148,9 @@ def described(typ: Type) -> dict[str, object] | None:
         others = [get_proper_type(item) for item in proper.items if not isinstance(get_proper_type(item), NoneType)]
         nullable = len(others) < len(proper.items)
         present = others[0] if len(others) == 1 else proper
-    fact: dict[str, object] = {"type": str(typ), "nullable": nullable}
-    if isinstance(present, Instance):
-        fact["class"] = present.type.fullname
-    if isinstance(present, FunctionLike) and present.is_type_obj():
-        fact["constructs"] = present.type_object().fullname
-    return fact
+    instance_of = present.type.fullname if isinstance(present, Instance) else None
+    constructs = present.type_object().fullname if isinstance(present, FunctionLike) and present.is_type_obj() else None
+    return ResolvedType(str(typ), nullable, instance_of, constructs)
 
 
 def states(graph: dict[str, State], wanted: set[str]) -> dict[str, State]:
@@ -119,17 +158,16 @@ def states(graph: dict[str, State], wanted: set[str]) -> dict[str, State]:
     return {os.path.realpath(state.path): state for state in graph.values() if state.path and os.path.realpath(state.path) in wanted}
 
 
-def spans(path: str, state: State, types: dict[Expression, Type]) -> tuple[int, dict[tuple[int, int], dict[str, object]]]:
-    """How many of the module's expressions mypy typed, and what each typed one resolved to by its `[start, end)`
-    byte span; the first expression at a span wins."""
+def spans(path: str, state: State, types: dict[Expression, Type]) -> TypedModule:
+    """The module's expressions mypy typed, read by their byte spans."""
     written = [e for e in get_subexpressions(state.tree) if e in types] if state.tree is not None else []
     starts = line_starts(open(path, "rb").read())
-    found: dict[tuple[int, int], dict[str, object]] = {}
+    found: dict[tuple[int, int], ResolvedType] = {}
     for expression in written:
         if expression.line < 1 or expression.end_line is None or expression.end_column is None or expression.end_line > len(starts):
             continue
         span = (starts[expression.line - 1] + expression.column, starts[expression.end_line - 1] + expression.end_column)
-        fact = described(types[expression])
-        if fact is not None and span not in found:
-            found[span] = fact
-    return len(written), found
+        resolved = described(types[expression])
+        if resolved is not None and span not in found:
+            found[span] = resolved
+    return TypedModule(len(written), found)
