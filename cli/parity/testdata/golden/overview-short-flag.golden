@@ -8,9 +8,9 @@ Usage:
 Commands:
   judge            Scan a codebase and report its sins, grouped by the skill that fixes each. Exit
                    code 1 when sins are found, 3 when a rule could not run.
-  make             Scaffold a commandment of your own — a skill, a sin and a detector in
-                   `.commandments/custom/`, registered in your config, with the rest of the process
-                   printed for you.
+  make             Scaffold a commandment of your own — a rule naming its sin, and the skill that
+                   teaches the fix, in `.commandments/custom/`, turned on in your config, with the
+                   rest of the process printed for you.
   hints            Auto-fix the Spatie Data magic surface — rename non-`from…` object factories
                    to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the
                    `@method from(...)`/`collect(...)` docblock hints.
@@ -61,6 +61,8 @@ Hooks (wired automatically — you rarely run these by hand):
                   runs every registered handler, and answers in the journal's shape.
   journal-serve   Answer the agent journal's hooks from one running process, over the socket the
                   journal names in $JOURNAL_PLUGIN_SOCKET.
+  roslyn-serve    Keep the C# bridge running for this project, answering each run of the tool over a
+                  socket named for the project.
   hook            Run ONE hook class directly — the form every wired hook is written as, built-in
                   or a consumer's own $config->hook(...).
 

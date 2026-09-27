@@ -3,6 +3,6 @@ exit: 0
 [32m✓ No sins found in 0 files.[0m
 
 --- stderr
-⚠ 184 C# file(s) left unread — the C# bridge image ghcr.io/jessegall/code-commandments-roslyn:96f5eb3dad14f3e7 is not available (Docker is not running, or the image is not pulled), so C# is not judged; it is pulled, never built on this machine: docker pull ghcr.io/jessegall/code-commandments-roslyn:96f5eb3dad14f3e7
+⚠ 184 file(s) left unread — the C# bridge is not available (a development build has no release to fetch it from; name one in $COMMANDMENTS_ROSLYN), so C# is not judged; everything else is
 
 --- files

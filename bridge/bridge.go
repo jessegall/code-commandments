@@ -207,3 +207,22 @@ func (e *BridgeFailed) Error() string {
 func (e *BridgeFailed) Unwrap() error {
 	return e.Cause
 }
+
+// Unavailable is a bridge that cannot run on this machine: its language goes unjudged, and everything else is judged.
+type Unavailable interface {
+	error
+	unavailable()
+}
+
+// ToolchainMissing is a bridge whose language's own toolchain, the one thing it leans on, is not installed here.
+type ToolchainMissing struct {
+	Language string
+	Need     string
+}
+
+// Error says what to install, and what is and is not judged.
+func (e ToolchainMissing) Error() string {
+	return "the " + e.Language + " bridge needs " + e.Need + ", which is not installed here, so " + e.Language + " is not judged; everything else is"
+}
+
+func (ToolchainMissing) unavailable() {}

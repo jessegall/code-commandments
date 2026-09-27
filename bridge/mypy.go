@@ -2,10 +2,10 @@ package bridge
 
 import (
 	"embed"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
 )
@@ -31,6 +31,9 @@ func Mypy() ([]string, error) {
 		return []string{python, tree}, nil
 	}
 	python := filepath.Join(folder, "venv", "bin", "python")
+	if runtime.GOOS == "windows" {
+		python = filepath.Join(folder, "venv", "Scripts", "python.exe")
+	}
 	if _, err := os.Stat(filepath.Join(folder, "ready")); err == nil {
 		return []string{python, tree}, nil
 	}
@@ -43,12 +46,19 @@ func Mypy() ([]string, error) {
 func buildMypy(folder string) error {
 	python, err := exec.LookPath("python3")
 	if err != nil {
-		return fmt.Errorf("the Python bridge needs python3 on the PATH: %w", err)
+		python, err = exec.LookPath("python")
+	}
+	if err != nil {
+		return ToolchainMissing{Language: "Python", Need: "python3 on the PATH"}
 	}
 	venv := filepath.Join(folder, "venv")
+	pip := filepath.Join(venv, "bin", "pip")
+	if runtime.GOOS == "windows" {
+		pip = filepath.Join(venv, "Scripts", "pip.exe")
+	}
 	steps := [][]string{
 		{python, "-m", "venv", venv},
-		{filepath.Join(venv, "bin", "pip"), "install", "-q", "-r", filepath.Join(folder, "requirements.txt")},
+		{pip, "install", "-q", "-r", filepath.Join(folder, "requirements.txt")},
 	}
 	for _, step := range steps {
 		if out, err := exec.Command(step[0], step[1:]...).CombinedOutput(); err != nil {

@@ -1,7 +1,6 @@
 package fixture
 
 import (
-	"errors"
 	"maps"
 	"path/filepath"
 
@@ -19,7 +18,7 @@ import (
 func Curriculum(fixtures string) (render.Examples, error) {
 	csharp := filepath.Join(fixtures, "csharp")
 	if _, err := bridge.Roslyn(csharp); err != nil {
-		return nil, errors.New(bridge.RoslynMissing())
+		return nil, err
 	}
 	examples := render.Examples{}
 	for _, engine := range []struct {

@@ -1,6 +1,6 @@
-# A release, run only by a v* tag — and only Sir Jesse tags: the binaries for every platform with their SHA256SUMS
-# on the GitHub release, and the Roslyn bridge image, built for amd64 and arm64, pushed to the registry the binary
-# pulls it from. Nothing else publishes, and no agent pushes a tag.
+# A release, run only by a v* tag — and only Sir Jesse tags: the tool's binary for every platform and the C# bridge
+# beside it, each a plain executable a user runs with nothing else installed, with their SHA256SUMS, on the GitHub
+# release the tool fetches them from. Nothing else publishes, and no agent pushes a tag.
 name: Release
 
 on:
@@ -9,30 +9,43 @@ on:
 
 permissions:
   contents: write
-  packages: write
 
 jobs:
+  bridges:
+    strategy:
+      matrix:
+        include:
+          # A macOS bridge is published on macOS, whose signature the system requires to run it.
+          - runner: macos-latest
+            platforms: darwin/arm64 darwin/amd64
+          - runner: ubuntu-latest
+            platforms: linux/amd64 linux/arm64 windows/amd64 windows/arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Publish the C# bridge for each platform
+        run: for platform in ${{ matrix.platforms }}; do scripts/release/roslyn "$platform" dist; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bridges-${{ matrix.runner }}
+          path: dist/
+
   binaries:
+    needs: bridges
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Cross-compile, check and sum
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bridges-*
+          path: dist
+          merge-multiple: true
+      - name: Cross-compile, check every binary against its budget, and sum them all
         run: scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 scripts/release/build "$GITHUB_REF_NAME" dist
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
-
-  roslyn-image:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ github.token }}
-      - name: Build and push the Roslyn bridge image
-        run: docker buildx build --platform linux/amd64,linux/arm64 --tag "$(cat bridge/roslyn/IMAGE)" --push bridge/roslyn

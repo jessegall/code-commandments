@@ -3,7 +3,6 @@
 package frontend
 
 import (
-	"fmt"
 	"os/exec"
 	"path/filepath"
 
@@ -28,7 +27,7 @@ func Here() Bridge {
 func (b Bridge) Command() ([]string, error) {
 	node, err := exec.LookPath(b.Node)
 	if err != nil {
-		return nil, fmt.Errorf("the frontend bridge needs node, and %q is not on PATH: %w", b.Node, err)
+		return nil, bridge.ToolchainMissing{Language: "Vue and TypeScript", Need: b.Node + " on the PATH"}
 	}
 	folder, err := b.Sources.Folder()
 	if err != nil {

@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Publishes the C# bridge for one platform as a self-contained executable of a single file, so a user needs no .NET
+# to run it: roslyn-bridge-<os>-<arch>[.exe] in the release folder, beside the tool's own binaries, summed and budgeted
+# by scripts/release/check with them. It runs dotnet, so it runs where .NET may: a release runner, or on this machine
+# only inside the capped SDK container (docker run --rm --memory=4g --cpus=2 mcr.microsoft.com/dotnet/sdk:10.0), never
+# on the host. A macOS bridge is published on macOS, whose signature the system requires to run it.
+#   scripts/release/roslyn <os>/<arch> [out]
+set -euo pipefail
+
+platform="${1:?usage: scripts/release/roslyn <os>/<arch> [out]}"
+out="${2:-dist}"
+root="$(cd "$(dirname "$0")/../.." && pwd -P)"
+os="${platform%/*}"
+arch="${platform#*/}"
+
+case "$os" in
+    linux) rid=linux ;;
+    darwin) rid=osx ;;
+    windows) rid=win ;;
+    *) echo "scripts/release/roslyn: no bridge for $os" >&2; exit 1 ;;
+esac
+case "$arch" in
+    amd64) rid="$rid-x64" ;;
+    arm64) rid="$rid-arm64" ;;
+    *) echo "scripts/release/roslyn: no bridge for $arch" >&2; exit 1 ;;
+esac
+
+mkdir -p "$out"
+out="$(cd "$out" && pwd -P)"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+
+DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_PROCESSOR_COUNT=2 dotnet publish "$root/bridge/roslyn/Roslyn.Bridge.csproj" \
+    -c Release -r "$rid" --self-contained true -maxcpucount:1 -o "$work" \
+    -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true \
+    -p:DebugType=none -p:GenerateDocumentationFile=false > "$work.log" 2>&1 || { cat "$work.log" >&2; exit 1; }
+
+name="roslyn-bridge-$os-$arch"
+suffix=""
+[ "$os" = windows ] && suffix=".exe"
+cp "$work/roslyn-bridge$suffix" "$out/$name$suffix"
+chmod 755 "$out/$name$suffix"
+echo "published $name$suffix"

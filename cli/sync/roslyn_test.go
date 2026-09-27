@@ -2,6 +2,11 @@ package sync
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"net/http"
+	"net/http/httptest"
+	"runtime"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,20 +17,40 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// fakeDocker puts a docker on the PATH that logs every call and answers `image inspect` and `pull` as told, and
-// answers where its log is.
-func fakeDocker(t *testing.T, installed, pulls bool) string {
+// fakeRelease serves a release of the version holding a C# bridge for this platform, with the sum SHA256SUMS lists
+// for it (a wrong one when told), and answers what was asked of it.
+func fakeRelease(t *testing.T, sumMatches bool) *[]string {
 	t.Helper()
-	bin := t.TempDir()
-	log := filepath.Join(bin, "calls")
-	answer := map[bool]string{true: "0", false: "1"}
-	script := "#!/bin/sh\necho \"$*\" >> " + log + "\ncase \"$1\" in\n  image) exit " + answer[installed] + ";;\n  pull) exit " + answer[pulls] + ";;\nesac\n"
-	if err := os.WriteFile(filepath.Join(bin, "docker"), []byte(script), 0o755); err != nil {
-		t.Fatal(err)
+	name := "roslyn-bridge-" + runtime.GOOS + "-" + runtime.GOARCH
+	if runtime.GOOS == "windows" {
+		name += ".exe"
 	}
-	t.Setenv("PATH", bin)
+	content := []byte("#!/bin/sh\n")
+	sum := sha256.Sum256(content)
+	if !sumMatches {
+		sum = sha256.Sum256([]byte("another"))
+	}
+	var asked []string
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		asked = append(asked, request.URL.Path)
+		switch request.URL.Path {
+		case "/v9.9.9/SHA256SUMS":
+			writer.Write([]byte(hex.EncodeToString(sum[:]) + "  " + name + "\n"))
+		case "/v9.9.9/" + name:
+			writer.Write(content)
+		default:
+			http.NotFound(writer, request)
+		}
+	}))
+	t.Cleanup(server.Close)
+	t.Setenv("COMMANDMENTS_RELEASES", server.URL)
+	t.Setenv("COMMANDMENTS_ROSLYN", "")
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	released := bridge.Release
+	bridge.Release = "v9.9.9"
+	t.Cleanup(func() { bridge.Release = released })
 
-	return log
+	return &asked
 }
 
 func project(t *testing.T, files ...string) string {
@@ -43,39 +68,37 @@ func project(t *testing.T, files ...string) string {
 	return root
 }
 
-func calls(log string) string {
-	raw, _ := os.ReadFile(log)
-
-	return string(raw)
-}
-
-func TestSyncPullsTheCSharpImageForAProjectThatWritesCSharp(t *testing.T) {
-	log := fakeDocker(t, false, true)
+func TestSyncFetchesTheCSharpBridgeForAProjectThatWritesCSharp(t *testing.T) {
+	asked := fakeRelease(t, true)
 	var out bytes.Buffer
-	pullRoslyn(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
-	if !strings.Contains(calls(log), "pull --quiet "+bridge.RoslynImage()) || !strings.Contains(out.String(), "pulled the C# bridge image") {
-		t.Errorf("docker was called %q and sync said %q", calls(log), out.String())
+	fetchRoslyn(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
+	if len(*asked) != 2 || !strings.Contains(out.String(), "fetched the C# bridge for v9.9.9") {
+		t.Errorf("the release was asked %v and sync said %q", *asked, out.String())
+	}
+	out.Reset()
+	fetchRoslyn(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
+	if len(*asked) != 2 || strings.Contains(out.String(), "fetched") {
+		t.Errorf("a bridge already fetched was fetched again: %v, %q", *asked, out.String())
 	}
 }
 
-func TestSyncLeavesDockerAloneForAProjectWithoutCSharpOrWithTheImage(t *testing.T) {
-	log := fakeDocker(t, true, true)
-	pullRoslyn(project(t, "src/Cart.php"), config.Config{}, cli.Console{Out: &bytes.Buffer{}, Err: &bytes.Buffer{}})
-	if calls(log) != "" {
-		t.Errorf("a project with no C# called docker: %q", calls(log))
-	}
-	pullRoslyn(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &bytes.Buffer{}, Err: &bytes.Buffer{}})
-	if strings.Contains(calls(log), "pull") {
-		t.Errorf("an image already held was pulled again: %q", calls(log))
+func TestSyncFetchesNothingForAProjectWithoutCSharp(t *testing.T) {
+	asked := fakeRelease(t, true)
+	fetchRoslyn(project(t, "src/Cart.php"), config.Config{}, cli.Console{Out: &bytes.Buffer{}, Err: &bytes.Buffer{}})
+	if len(*asked) != 0 {
+		t.Errorf("a project with no C# fetched %v", *asked)
 	}
 }
 
-func TestAFailedPullSaysWhichImageCSharpNeeds(t *testing.T) {
-	fakeDocker(t, false, false)
+func TestABridgeWhoseSumDoesNotMatchIsNeverWritten(t *testing.T) {
+	fakeRelease(t, false)
 	var out bytes.Buffer
-	pullRoslyn(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
-	if !strings.Contains(out.String(), "docker pull "+bridge.RoslynImage()) {
+	fetchRoslyn(project(t, "Shop/Cart.cs"), config.Config{}, cli.Console{Out: &out, Err: &out})
+	if !strings.Contains(out.String(), "does not match its SHA256SUMS") || !strings.Contains(out.String(), "C# is not judged; everything else is") {
 		t.Errorf("sync said %q", out.String())
+	}
+	if _, fetched, err := bridge.RoslynExecutable(); fetched || err == nil {
+		t.Error("a bridge whose sum does not match was written")
 	}
 }
 

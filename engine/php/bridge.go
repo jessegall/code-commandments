@@ -29,7 +29,7 @@ func Here() Bridge {
 func (b Bridge) Command() ([]string, error) {
 	php, err := exec.LookPath(b.PHP)
 	if err != nil {
-		return nil, fmt.Errorf("the PHP bridge needs PHP, and %q is not on PATH: %w", b.PHP, err)
+		return nil, bridge.ToolchainMissing{Language: "PHP", Need: b.PHP + " on the PATH"}
 	}
 	folder, err := b.Sources.Folder()
 	if err != nil {

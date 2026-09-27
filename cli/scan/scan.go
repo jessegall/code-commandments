@@ -3,13 +3,16 @@
 package scan
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"slices"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/frontend"
@@ -116,6 +119,9 @@ func (s Sources) Load() (*engine.Codebase, error) {
 		walked := s.files(read.languages)
 
 		stream, err := read.stream(s.roots, walked)
+		if leftUnread(err, files) {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -177,12 +183,12 @@ var readers = []reader{
 }
 
 // csharp is the C# files read by the Roslyn bridge, which compiles every project under the roots so each type
-// resolves and writes only the files: through the bridge a session keeps up for them, else a capped container of
-// its prebuilt image. Without the image C# goes unjudged, and the run says so on STDERR, naming the image.
+// resolves and writes only the files: through the bridge a session keeps up for the project, else one of its own for
+// this run. Without a bridge it answers why, and the files go unread.
 func csharp(roots, files []string) (*contract.Stream, error) {
 	roots, files = resolved(roots), resolved(files)
-	server, err := roslyn(roots, files)
-	if server == nil {
+	server, err := roslyn(roots)
+	if err != nil {
 		return nil, err
 	}
 	defer server.Close()
@@ -190,20 +196,49 @@ func csharp(roots, files []string) (*contract.Stream, error) {
 	return server.Ask(bridge.Request{Paths: roots, Write: files})
 }
 
-// roslyn is the C# bridge for the roots: the one a session keeps up for them, else a capped container of its
-// prebuilt image. Without the image it is none, and the run says on STDERR that the files are left unread.
-func roslyn(roots, files []string) (*bridge.Server, error) {
-	if server, kept := bridge.RoslynService(roots...); kept {
-		return server, nil
+// roslyn is the C# bridge for the roots: the one a session keeps up for the project that holds them all, else one
+// started for this run, or why there is none; a machine with no .NET SDK is told once that C# is judged without the
+// frameworks' types.
+func roslyn(roots []string) (*bridge.Server, error) {
+	cwd, _ := os.Getwd()
+	project := workspace.ProjectRoot(cwd)
+	if within(project, roots) {
+		if server, kept := bridge.RoslynService(project); kept {
+			return server, nil
+		}
 	}
 	command, err := bridge.Roslyn(roots...)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "⚠ %d C# file(s) left unread — %s\n", len(files), bridge.RoslynMissing())
-
-		return nil, nil
+		return nil, err
+	}
+	if notice := bridge.RoslynNotice(); notice != "" {
+		fmt.Fprintf(os.Stderr, "⚠ %s\n", notice)
 	}
 
 	return bridge.Serve(command)
+}
+
+// leftUnread says, on STDERR, that a language's files go unread because its bridge cannot run on this machine, and
+// whether they do: every other language is still judged.
+func leftUnread(err error, files int) bool {
+	var unavailable bridge.Unavailable
+	if !errors.As(err, &unavailable) {
+		return false
+	}
+	fmt.Fprintf(os.Stderr, "⚠ %d file(s) left unread — %v\n", files, err)
+
+	return true
+}
+
+// within says whether every root lies in the project.
+func within(project string, roots []string) bool {
+	for _, root := range roots {
+		if root != project && !strings.HasPrefix(root, project+string(filepath.Separator)) {
+			return false
+		}
+	}
+
+	return project != ""
 }
 
 // resolved is each path absolute with its links resolved, as a container mounts it and the bridge names it.

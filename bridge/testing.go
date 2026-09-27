@@ -41,14 +41,15 @@ func TestMypyPython(t testing.TB) string {
 	return ""
 }
 
-// TestRoslyn is the C# bridge's command for a test over the roots, run in a container of its prebuilt image. It
-// skips the test when there is no Docker to run it in, and fails it when the image is not built.
+// TestRoslyn is the C# bridge's command for a test over the roots, run in a capped container of its image, as every
+// development run of it is. It skips the test when there is no Docker to run it in, and fails it when the image is not
+// built.
 func TestRoslyn(t testing.TB, roots ...string) []string {
 	t.Helper()
 	if exec.Command("docker", "info").Run() != nil {
 		t.Skip("no Docker to run the C# bridge in")
 	}
-	command, err := Roslyn(roots...)
+	command, err := roslynInDocker(roots)
 	if err != nil {
 		t.Fatal(err)
 	}

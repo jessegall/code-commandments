@@ -1,234 +1,249 @@
 package bridge
 
 import (
-	"embed"
-	"encoding/xml"
-	"errors"
+	"crypto/sha1"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"io/fs"
+	"io"
 	"net"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"slices"
+	"runtime"
 	"strings"
 	"time"
 
-	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// roslyn is the script every run of the C# bridge goes through and the image it runs, carried in the binary: the
-// bridge itself is a prebuilt image, never built here, and .NET never runs on the host.
-//
-//go:embed roslyn/roslyn-in-docker.sh roslyn/IMAGE
-var roslyn embed.FS
+// Release is the version this build was released as, stamped through main by the release build; a local build is dev,
+// and has no release to fetch a C# bridge from.
+var Release = "dev"
 
-// RoslynImage is the image of the C# bridge this build runs, built once per release.
-func RoslynImage() string {
-	image, _ := roslyn.ReadFile("roslyn/IMAGE")
+// releases is where a release's files are published, one folder per version.
+const releases = "https://github.com/jessegall/code-commandments/releases/download"
 
-	return strings.TrimSpace(string(image))
+// roslynVariable names the C# bridge to run instead of this release's own: an executable, or `docker` for the capped
+// image development and CI run it in.
+const roslynVariable = "COMMANDMENTS_ROSLYN"
+
+// dotnetVariable is how the bridge is told which .NET installation's reference packs to compile against.
+const dotnetVariable = "CODE_COMMANDMENTS_DOTNET_ROOT"
+
+// RoslynUnavailable is a run with no C# bridge to read C# with: C# goes unjudged, and everything else is judged.
+type RoslynUnavailable struct {
+	reason string
 }
 
-// RoslynMissing is what a run without the C# bridge says: that C# goes unjudged, which image it needs, and that
-// the image is pulled, never built on this machine.
-func RoslynMissing() string {
-	return fmt.Sprintf("the C# bridge image %s is not available (Docker is not running, or the image is not pulled), so C# is not judged; it is pulled, never built on this machine: docker pull %s", RoslynImage(), RoslynImage())
+// Error says why, and what is and is not judged.
+func (e RoslynUnavailable) Error() string {
+	return "the C# bridge is not available (" + e.reason + "), so C# is not judged; everything else is"
 }
 
-// RoslynInstalled says whether docker holds the C# bridge's image.
-func RoslynInstalled() bool {
-	return exec.Command("docker", "image", "inspect", RoslynImage()).Run() == nil
-}
+func (RoslynUnavailable) unavailable() {}
 
-// PullRoslyn pulls the C# bridge's image from the registry it is published to; it is never built here.
-func PullRoslyn() error {
-	if out, err := exec.Command("docker", "pull", "--quiet", RoslynImage()).CombinedOutput(); err != nil {
-		return fmt.Errorf("docker pull %s: %w: %s", RoslynImage(), err, strings.TrimSpace(string(out)))
-	}
-
-	return nil
-}
-
-// Roslyn is the command that runs the C# bridge once as the generic tree over the roots, in a memory-capped
-// container of its image with the roots mounted read-only at their own paths. Without the image it fails, naming
-// the image to pull: the bridge is never built on this machine.
+// Roslyn is the command that runs the C# bridge over the roots: the one $COMMANDMENTS_ROSLYN names, else this release's
+// own executable, fetched once into the cache beside the tool and checked against the release's SHA256SUMS, and never
+// built here. The .NET SDK found on this machine is named to it, for the reference packs a project's frameworks
+// resolve against.
 func Roslyn(roots ...string) ([]string, error) {
-	if !RoslynInstalled() {
-		return nil, errors.New(RoslynMissing())
+	switch named := os.Getenv(roslynVariable); named {
+	case "docker":
+		return roslynInDocker(roots)
+	case "":
+		executable, _, err := RoslynExecutable()
+		if err != nil {
+			return nil, err
+		}
+		nameDotnet()
+
+		return []string{executable}, nil
+	default:
+		nameDotnet()
+
+		return []string{named}, nil
 	}
-	script, err := roslynScript()
+}
+
+// RoslynExecutable is this release's C# bridge for this platform, in the cache folder the tool's own binary is kept
+// in, and whether this call fetched it: fetched on its first use and checked against the release's SHA256SUMS, a file
+// whose sum does not match never written.
+func RoslynExecutable() (executable string, fetched bool, err error) {
+	if Release == "dev" {
+		return "", false, RoslynUnavailable{"a development build has no release to fetch it from; name one in $" + roslynVariable}
+	}
+	name := "roslyn-bridge-" + runtime.GOOS + "-" + runtime.GOARCH
+	if runtime.GOOS == "windows" {
+		name += ".exe"
+	}
+	cache, err := binaryCache()
+	if err != nil {
+		return "", false, RoslynUnavailable{err.Error()}
+	}
+	executable = filepath.Join(cache, Release, name)
+	if _, err := os.Stat(executable); err == nil {
+		return executable, false, nil
+	}
+	if err := fetchChecked(name, executable); err != nil {
+		return "", false, RoslynUnavailable{err.Error()}
+	}
+
+	return executable, true, nil
+}
+
+// fetchChecked fetches the release's file into place, once its bytes match the sum SHA256SUMS lists for it.
+func fetchChecked(name, destination string) error {
+	base := strings.TrimRight(releases, "/")
+	if named := os.Getenv("COMMANDMENTS_RELEASES"); named != "" {
+		base = strings.TrimRight(named, "/")
+	}
+	base += "/" + url.PathEscape(Release)
+	sums, err := fetch(base + "/SHA256SUMS")
+	if err != nil {
+		return err
+	}
+	want, listed := sumOf(string(sums), name)
+	if !listed {
+		return fmt.Errorf("the %s release lists no %s", Release, name)
+	}
+	content, err := fetch(base + "/" + name)
+	if err != nil {
+		return err
+	}
+	if sum := sha256.Sum256(content); hex.EncodeToString(sum[:]) != want {
+		return fmt.Errorf("the %s fetched for %s does not match its SHA256SUMS, so it is not run", name, Release)
+	}
+	if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+		return err
+	}
+	draft := fmt.Sprintf("%s.%d", destination, os.Getpid())
+	if err := os.WriteFile(draft, content, 0o755); err != nil {
+		return err
+	}
+
+	return os.Rename(draft, destination)
+}
+
+// sumOf is the sum SHA256SUMS lists for the file.
+func sumOf(sums, name string) (string, bool) {
+	for _, line := range strings.Split(sums, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) == 2 && strings.TrimPrefix(fields[1], "*") == name {
+			return fields[0], true
+		}
+	}
+
+	return "", false
+}
+
+// fetch is the body at the address, which must answer 200.
+func fetch(address string) ([]byte, error) {
+	client := http.Client{Timeout: 5 * time.Minute}
+	response, err := client.Get(address)
 	if err != nil {
 		return nil, err
 	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%s answered %s", address, response.Status)
+	}
 
-	return append(append([]string{"bash", script}, readOnly(roots)...), "--"), nil
+	return io.ReadAll(response.Body)
 }
 
-// RoslynService is the bridge the session keeps up for the project that holds every root, answering on its local
-// port; false when no session keeps one up for them, and a run starts its own.
-func RoslynService(roots ...string) (*Server, bool) {
-	out, err := exec.Command("docker", "ps", "--filter", "label=code-commandments.roslyn=service", "--format", `{{.Names}} {{.Label "code-commandments.project"}}`).Output()
+// binaryCache is the folder a release's binaries are kept in, the tool's and its bridges', as the shim keeps them.
+func binaryCache() (string, error) {
+	cache := os.Getenv("XDG_CACHE_HOME")
+	if cache == "" && runtime.GOOS == "windows" {
+		cache = os.Getenv("LOCALAPPDATA")
+	}
+	if cache == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		cache = filepath.Join(home, ".cache")
+	}
+
+	return filepath.Join(cache, "code-commandments", "bin"), nil
+}
+
+// RoslynNotice is what a run says once when the bridge it runs will find no framework reference packs: that C# is
+// judged with the types that resolve without them, and what to install. Nothing for the development image, which
+// carries its own.
+func RoslynNotice() string {
+	if _, found := Dotnet(); found || os.Getenv(roslynVariable) == "docker" {
+		return ""
+	}
+
+	return "no .NET SDK is installed here, so C#'s framework types do not resolve and C# is judged with the types that resolve without them; install the .NET SDK to judge it whole"
+}
+
+// nameDotnet tells the bridge which .NET installation's reference packs to compile against, when this machine has one.
+func nameDotnet() {
+	if root, found := Dotnet(); found {
+		os.Setenv(dotnetVariable, root)
+	}
+}
+
+// Dotnet is the .NET SDK installed on this machine, by the folder whose packs hold the framework reference
+// assemblies: the one $DOTNET_ROOT names, the one the dotnet on the PATH belongs to, or one in a folder .NET's
+// installers use. A machine with none still judges C#, with the types that resolve without the frameworks.
+func Dotnet() (string, bool) {
+	var candidates []string
+	if root := os.Getenv("DOTNET_ROOT"); root != "" {
+		candidates = append(candidates, root)
+	}
+	if dotnet, err := exec.LookPath("dotnet"); err == nil {
+		if real, err := filepath.EvalSymlinks(dotnet); err == nil {
+			candidates = append(candidates, filepath.Dir(real))
+		}
+	}
+	candidates = append(candidates, dotnetFolders()...)
+	for _, root := range candidates {
+		if info, err := os.Stat(filepath.Join(root, "packs", "Microsoft.NETCore.App.Ref")); err == nil && info.IsDir() {
+			return root, true
+		}
+	}
+
+	return "", false
+}
+
+// dotnetFolders are the folders .NET's installers put it in on this platform, and the user's own.
+func dotnetFolders() []string {
+	home, _ := os.UserHomeDir()
+	switch runtime.GOOS {
+	case "windows":
+		return []string{filepath.Join(os.Getenv("ProgramFiles"), "dotnet"), filepath.Join(home, ".dotnet")}
+	case "darwin":
+		return []string{"/usr/local/share/dotnet", "/opt/homebrew/share/dotnet", filepath.Join(home, ".dotnet")}
+	default:
+		return []string{"/usr/share/dotnet", "/usr/lib/dotnet", "/usr/local/share/dotnet", "/opt/dotnet", filepath.Join(home, ".dotnet")}
+	}
+}
+
+// RoslynSocket is where the C# bridge a session keeps up for the project answers: a socket named for the project,
+// since a project's own path may be longer than a socket's may be, in /tmp, whose path is short wherever $TMPDIR points.
+func RoslynSocket(project string) string {
+	sum := sha1.Sum([]byte(project))
+	folder := "/tmp"
+	if runtime.GOOS == "windows" {
+		folder = os.TempDir()
+	}
+
+	return filepath.Join(folder, "code-commandments-roslyn-"+hex.EncodeToString(sum[:])[:12]+".sock")
+}
+
+// RoslynService is the bridge the session keeps up for the project, reached at its socket; false when no session
+// keeps one up for it, and a run starts its own.
+func RoslynService(project string) (*Server, bool) {
+	connection, err := net.DialTimeout("unix", RoslynSocket(project), 2*time.Second)
 	if err != nil {
 		return nil, false
 	}
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		name, project, found := strings.Cut(line, " ")
-		if !found || !holdsAll(project, roots) {
-			continue
-		}
-		connection, err := dialService(name)
-		if err != nil {
-			continue
-		}
 
-		return &Server{command: []string{"docker", "port", name}, input: connection, output: contract.NewReader(connection), connection: connection}, true
-	}
-
-	return nil, false
-}
-
-// dialService connects to a service container: at the port it publishes on the host's loopback, or, from a
-// container beside it (scripts/dev), at its own address on the network they share.
-func dialService(name string) (net.Conn, error) {
-	published, err := exec.Command("docker", "port", name, "7070/tcp").Output()
-	if err != nil {
-		return nil, err
-	}
-	if connection, err := net.Dial("tcp", strings.TrimSpace(strings.Split(string(published), "\n")[0])); err == nil {
-		return connection, nil
-	}
-	addresses, err := exec.Command("docker", "inspect", "--format", `{{range .NetworkSettings.Networks}}{{.IPAddress}} {{end}}`, name).Output()
-	if err != nil {
-		return nil, err
-	}
-	for _, address := range strings.Fields(string(addresses)) {
-		if connection, err := net.DialTimeout("tcp", net.JoinHostPort(address, "7070"), 2*time.Second); err == nil {
-			return connection, nil
-		}
-	}
-
-	return nil, fmt.Errorf("the C# bridge service %s answers on no address this process can reach", name)
-}
-
-// holdsAll says whether every root lies in the project.
-func holdsAll(project string, roots []string) bool {
-	for _, root := range roots {
-		absolute, err := filepath.Abs(root)
-		if err != nil || (absolute != project && !strings.HasPrefix(absolute, project+string(filepath.Separator))) {
-			return false
-		}
-	}
-
-	return project != ""
-}
-
-// readOnly is the folders the roots are in, each mounted read-only: a root that is a file is read from its folder.
-func readOnly(roots []string) []string {
-	var folders []string
-	for _, root := range roots {
-		if strings.HasPrefix(root, "--") {
-			continue
-		}
-		folder, err := filepath.Abs(root)
-		if err != nil {
-			continue
-		}
-		if info, err := os.Stat(folder); err == nil && !info.IsDir() {
-			folder = filepath.Dir(folder)
-		}
-		folders = append(folders, folder)
-		folders = append(folders, referencedFolders(folder)...)
-	}
-	var mounts []string
-	for _, folder := range folders {
-		if !slices.ContainsFunc(folders, func(outer string) bool { return strings.HasPrefix(folder, outer+"/") }) && !slices.Contains(mounts, folder+":ro") {
-			mounts = append(mounts, folder+":ro")
-		}
-	}
-
-	return mounts
-}
-
-// referencedFolders is the folder of every project the projects at the root reference, however deep: the bridge
-// compiles a project with every project it references, which may stand outside the root.
-func referencedFolders(root string) []string {
-	pending := projectsAt(root)
-	seen := map[string]bool{}
-	var folders []string
-	for len(pending) > 0 {
-		project := pending[0]
-		pending = pending[1:]
-		if seen[project] {
-			continue
-		}
-		seen[project] = true
-		folders = append(folders, filepath.Dir(project))
-		pending = append(pending, projectReferences(project)...)
-	}
-
-	return folders
-}
-
-// projectsAt is every project under the folder, or the one it sits inside, as the bridge finds them.
-func projectsAt(folder string) []string {
-	var projects []string
-	filepath.WalkDir(folder, func(path string, entry fs.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
-		if name := entry.Name(); entry.IsDir() && path != folder && (strings.HasPrefix(name, ".") || name == "bin" || name == "obj" || name == "node_modules") {
-			return filepath.SkipDir
-		}
-		if !entry.IsDir() && strings.HasSuffix(path, ".csproj") {
-			projects = append(projects, path)
-		}
-
-		return nil
-	})
-	above := folder
-	for len(projects) == 0 && filepath.Dir(above) != above {
-		above = filepath.Dir(above)
-		projects, _ = filepath.Glob(filepath.Join(above, "*.csproj"))
-	}
-
-	return projects
-}
-
-// projectReferences is the project files the project references, by their full paths: every ProjectReference at
-// any depth, in the MSBuild namespace an older project file declares or in none.
-func projectReferences(project string) []string {
-	file, err := os.Open(project)
-	if err != nil {
-		return nil
-	}
-	defer file.Close()
-	var referenced []string
-	decoder := xml.NewDecoder(file)
-	for {
-		token, err := decoder.Token()
-		if err != nil {
-			return referenced
-		}
-		element, starts := token.(xml.StartElement)
-		if !starts || element.Name.Local != "ProjectReference" {
-			continue
-		}
-		for _, attribute := range element.Attr {
-			if attribute.Name.Local == "Include" {
-				referenced = append(referenced, filepath.Clean(filepath.Join(filepath.Dir(project), strings.ReplaceAll(attribute.Value, `\`, "/"))))
-			}
-		}
-	}
-}
-
-// roslynLauncher is the script that starts the bridge's container, beside the image name it reads.
-var roslynLauncher = bundle.Embedded("roslyn", roslyn, "roslyn")
-
-// roslynScript is the launcher, written out under the cache folder.
-func roslynScript() (string, error) {
-	folder, err := roslynLauncher.Folder()
-
-	return filepath.Join(folder, "roslyn-in-docker.sh"), err
+	return &Server{command: []string{"roslyn-serve", project}, input: connection, output: contract.NewReader(connection), connection: connection}, true
 }

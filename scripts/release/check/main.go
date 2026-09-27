@@ -1,5 +1,5 @@
-// Command check vets a release folder the build wrote: every linux binary is static, no binary is over its budget in
-// scripts/release/size-budget.json, and SHA256SUMS lists them all. --record writes the sizes measured beside the
+// Command check vets a release folder the build wrote: every linux binary of the tool is static, no binary — the
+// tool's or a C# bridge's — is over its budget in scripts/release/size-budget.json, and SHA256SUMS lists them all. --record writes the sizes measured beside the
 // budgets, which only a person raises. Run from the repository root: go run ./scripts/release/check [--record] <dir>.
 package main
 
@@ -57,6 +57,11 @@ func check(dir, budgetPath string, record bool) ([]string, error) {
 	if len(binaries) == 0 {
 		return nil, fmt.Errorf("%s holds no commandments-* binaries", dir)
 	}
+	bridges, err := filepath.Glob(filepath.Join(dir, "roslyn-bridge-*"))
+	if err != nil {
+		return nil, err
+	}
+	binaries = append(binaries, bridges...)
 	budgets, err := readBudgets(budgetPath)
 	if err != nil {
 		return nil, err
@@ -70,6 +75,7 @@ func check(dir, budgetPath string, record bool) ([]string, error) {
 		}
 		budgets.Measured[platform] = info.Size()
 		problems = append(problems, overBudget(platform, info.Size(), budgets, budgetPath)...)
+		// A C# bridge is .NET's own executable, never static: its key is its whole name, so only the tool's are asked.
 		if linked := dynamicallyLinked(binary); strings.HasPrefix(platform, "linux-") && linked != "" {
 			problems = append(problems, fmt.Sprintf("%s is not static: %s", platform, linked))
 		}
@@ -102,7 +108,8 @@ func overBudget(platform string, size int64, budgets Budgets, budgetPath string)
 	return nil
 }
 
-// platformOf is the os-arch a binary is named for: commandments-linux-amd64 → linux-amd64.
+// platformOf is the key a binary's budget is kept under: the os-arch of the tool's own (commandments-linux-amd64 →
+// linux-amd64), the whole name of a C# bridge's (roslyn-bridge-linux-amd64).
 func platformOf(binary string) string {
 	return strings.TrimSuffix(strings.TrimPrefix(filepath.Base(binary), "commandments-"), ".exe")
 }

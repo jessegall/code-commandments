@@ -41,8 +41,11 @@ func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, err
 	if len(files) == 0 {
 		return nil, nil
 	}
-	server, err := roslyn(roots, files)
-	if server == nil {
+	server, err := roslyn(roots)
+	if leftUnread(err, len(files)) {
+		return nil, nil
+	}
+	if err != nil {
 		return nil, err
 	}
 	defer server.Close()

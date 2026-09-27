@@ -6,7 +6,8 @@
 # The machine enforces the cap (3 GB, no swap, 2 CPUs); GOMEMLIMIT is only a target inside it, set per process
 # at 1200MiB so the two a go test -p 2 runs feel the GC's pressure well before the kernel kills.
 # The checkout is mounted at its own path, so the paths the Roslyn bridge hands to the host's
-# docker (through the mounted socket) resolve there too. Go's module and build caches live in
+# docker (through the mounted socket) resolve there too: COMMANDMENTS_ROSLYN=docker runs the C# bridge in its capped
+# image, never .NET in the dev container or on the host. Go's module and build caches live in
 # named volumes shared by every checkout, so only the first run is slow; every other cache (the Python
 # bridge's venv among them) has a volume per image, so it never outlives the interpreter it was built by.
 set -euo pipefail
@@ -82,6 +83,7 @@ run() {
         -e GOCACHE=/root/go/build \
         -e GOMEMLIMIT=1200MiB -e GOMAXPROCS=2 -e GOFLAGS="-p=2 -parallel=2" \
         -e TMPDIR="$scratch" \
+        -e COMMANDMENTS_ROSLYN=docker \
         -w "$cwd" \
         "$image" "$@"
 }

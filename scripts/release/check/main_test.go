@@ -87,3 +87,29 @@ func TestALinuxBinaryThatNeedsALoaderFails(t *testing.T) {
 		t.Errorf("the release answers %v %v", problems, err)
 	}
 }
+
+// TestACSharpBridgeIsSummedAndHeldToItsOwnBudget holds a release's C# bridge to a budget of its own, under its whole
+// name, beside the tool's, and never asks it to be static: it is .NET's executable, not Go's.
+func TestACSharpBridgeIsSummedAndHeldToItsOwnBudget(t *testing.T) {
+	dir, budgets := release(t, "linux-amd64", 64<<20)
+	if err := os.WriteFile(filepath.Join(dir, "roslyn-bridge-linux-amd64"), make([]byte, 2048), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if problems, _ := check(dir, budgets, false); len(problems) != 1 || !strings.Contains(problems[0], "roslyn-bridge-linux-amd64 has no size budget") {
+		t.Fatalf("a bridge with no budget passes: %v", problems)
+	}
+	written, err := readBudgets(budgets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	written.Budget["roslyn-bridge-linux-amd64"] = 4096
+	if err := writeBudgets(budgets, written); err != nil {
+		t.Fatal(err)
+	}
+	if problems, err := check(dir, budgets, false); err != nil || len(problems) > 0 {
+		t.Fatalf("the release fails: %v %v", problems, err)
+	}
+	if sums, _ := os.ReadFile(filepath.Join(dir, "SHA256SUMS")); !strings.Contains(string(sums), "  roslyn-bridge-linux-amd64\n") {
+		t.Errorf("SHA256SUMS holds %q", sums)
+	}
+}

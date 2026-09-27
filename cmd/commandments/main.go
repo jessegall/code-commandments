@@ -5,6 +5,7 @@ package main
 import (
 	"os"
 
+	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/commands"
 )
@@ -13,5 +14,6 @@ import (
 var version = "dev"
 
 func main() {
+	bridge.Release = version
 	os.Exit(commands.Kernel(version).Run(os.Args[1:], cli.Console{Out: os.Stdout, Err: os.Stderr}))
 }

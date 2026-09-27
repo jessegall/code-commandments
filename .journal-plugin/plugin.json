@@ -3445,7 +3445,7 @@
             "restart": "always"
         },
         "roslyn": {
-            "run": "bridge/roslyn/roslyn-service.sh",
+            "run": "bin/commandments roslyn-serve",
             "restart": "always"
         }
     },

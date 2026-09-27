@@ -29,19 +29,25 @@ func removeHostRoslynBuilds(console cli.Console) {
 
 		return
 	}
-	console.Say("↻ removed the C# bridge the PHP tool built on this machine (" + builds + "): C# is read only in its image now.")
+	console.Say("↻ removed the C# bridge the PHP tool built on this machine (" + builds + "): C# is read by the bridge each release ships now.")
 }
 
-// pullRoslyn pulls the C# bridge's image for a project that writes C#, when docker does not hold it yet. It is never
-// built here; a pull that fails leaves C# unjudged, and says which image to pull.
-func pullRoslyn(root string, project config.Config, console cli.Console) {
-	if !project.Writes(source.CSharp) || len(source.FilesIn(root, "cs", source.Under(root, project.Excluded))) == 0 || bridge.RoslynInstalled() {
+// fetchRoslyn fetches this release's C# bridge for a project that writes C#, when the cache does not hold it yet, so
+// the first judge does not wait on it. It is never built here; a fetch that fails leaves C# unjudged, and says why.
+func fetchRoslyn(root string, project config.Config, console cli.Console) {
+	if !project.Writes(source.CSharp) || len(source.FilesIn(root, "cs", source.Under(root, project.Excluded))) == 0 || os.Getenv("COMMANDMENTS_ROSLYN") != "" {
 		return
 	}
-	if err := bridge.PullRoslyn(); err != nil {
-		console.Warn(bridge.RoslynMissing())
+	executable, fetched, err := bridge.RoslynExecutable()
+	if err != nil {
+		console.Warn(err.Error())
 
 		return
 	}
-	console.Say("↓ pulled the C# bridge image " + bridge.RoslynImage() + ".")
+	if fetched {
+		console.Say("↓ fetched the C# bridge for " + bridge.Release + " (" + executable + ").")
+	}
+	if notice := bridge.RoslynNotice(); notice != "" {
+		console.Warn(notice)
+	}
 }

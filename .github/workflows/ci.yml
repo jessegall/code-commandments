@@ -1,6 +1,6 @@
 # Every push and pull request: the Go suite, a release build held to its size budgets, and the memory gate over the
-# fixtures and a real codebase. Every Go command runs in the capped dev container (scripts/dev: 3 GB, 2 CPUs), and
-# the Roslyn bridge image is built here, in CI, never on a user's machine.
+# fixtures and a real codebase. Every Go command runs in the capped dev container (scripts/dev: 3 GB, 2 CPUs), which
+# runs the C# bridge in its image, built here; a user runs the bridge's own executable instead, and never needs Docker.
 name: CI
 
 on:

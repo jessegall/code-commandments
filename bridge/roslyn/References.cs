@@ -159,19 +159,21 @@ public static class References
     /// <summary>A framework's reference assemblies for $tfm, from the installed reference pack.</summary>
     private static IEnumerable<string> FrameworkPack(string framework, string tfm)
     {
-        var packs = Path.Combine(DotnetRoot(), "packs", $"{framework}.Ref");
-
-        if (!Directory.Exists(packs))
-        {
-            return [];
-        }
-
-        var reference = Directory.GetDirectories(packs)
-            .OrderByDescending(version => Version.TryParse(Path.GetFileName(version).Split('-')[0], out var parsed) ? parsed : new Version(0, 0))
+        var reference = PackVersions(framework)
             .Select(version => Path.Combine(version, "ref", tfm))
             .FirstOrDefault(Directory.Exists);
 
         return reference is null ? [] : Directory.EnumerateFiles(reference, "*.dll");
+    }
+
+    /// <summary>Every installed version of <paramref name="framework"/>'s reference pack, the newest first.</summary>
+    private static IEnumerable<string> PackVersions(string framework)
+    {
+        var packs = Path.Combine(DotnetRoot(), "packs", $"{framework}.Ref");
+
+        return Directory.Exists(packs)
+            ? Directory.GetDirectories(packs).OrderByDescending(version => Version.TryParse(Path.GetFileName(version).Split('-')[0], out var parsed) ? parsed : new Version(0, 0))
+            : [];
     }
 
     /// <summary>A package in the NuGet cache: the assemblies of the framework folder closest to $tfm.</summary>
@@ -192,11 +194,39 @@ public static class References
         return best is null ? [] : Directory.EnumerateFiles(Path.Combine(lib, best), "*.dll");
     }
 
-    /// <summary>The running runtime's own assemblies — used only when no project names its frameworks.</summary>
-    private static IEnumerable<string> Runtime() =>
-        ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? "").Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
+    /// <summary>
+    /// What compiles when no project names its frameworks: the running runtime's own assemblies, when it has them as
+    /// files; a self-contained bridge carries them inside itself, so there the newest framework reference pack.
+    /// </summary>
+    private static IEnumerable<string> Runtime()
+    {
+        var trusted = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") ?? "")
+            .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+            .Where(File.Exists)
+            .ToList();
 
-    /// <summary>The dotnet installation the bridge runs on: three levels above the runtime's own folder.</summary>
+        return trusted.Any(dll => Path.GetFileName(dll).Equals("System.Runtime.dll", StringComparison.OrdinalIgnoreCase)) ? trusted : NewestPack("Microsoft.NETCore.App");
+    }
+
+    /// <summary>The reference assemblies of <paramref name="framework"/>'s newest installed pack, for its newest framework.</summary>
+    private static IEnumerable<string> NewestPack(string framework)
+    {
+        var reference = PackVersions(framework)
+            .Select(version => Path.Combine(version, "ref"))
+            .Where(Directory.Exists)
+            .SelectMany(Directory.GetDirectories)
+            .OrderByDescending(folder => folder, StringComparer.Ordinal)
+            .FirstOrDefault();
+
+        return reference is null ? [] : Directory.EnumerateFiles(reference, "*.dll");
+    }
+
+    /// <summary>
+    /// The .NET installation whose reference packs the bridge compiles against: the one the tool found on this machine
+    /// and names in <c>CODE_COMMANDMENTS_DOTNET_ROOT</c>, else the one the bridge runs on, three levels above its runtime.
+    /// </summary>
     private static string DotnetRoot() =>
-        Path.GetFullPath(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "..", "..", ".."));
+        Environment.GetEnvironmentVariable("CODE_COMMANDMENTS_DOTNET_ROOT") is { Length: > 0 } found
+            ? found
+            : Path.GetFullPath(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "..", "..", ".."));
 }

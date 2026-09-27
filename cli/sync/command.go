@@ -101,7 +101,7 @@ func Sync(root string, console cli.Console) error {
 	removeLegacyArtifacts(root)
 	removeHostRoslynBuilds(console)
 	console.Warn(custom.Load(root).ClassWarnings()...)
-	pullRoslyn(root, project, console)
+	fetchRoslyn(root, project, console)
 
 	if converted := Migrate(workspace.At(root, "")); len(converted) > 0 {
 		console.Say("↻ session state upgraded — carried over " + strings.Join(converted, ", ") + ".")

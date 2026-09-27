@@ -28,7 +28,7 @@ Every run is under the agent limits, `GOMEMLIMIT=3GiB GOMAXPROCS=2`, on an Apple
 ## Baseline
 
 At 1a29061ff's engine, before any compaction. The C# bridge answered from one capped service container for the
-snapshot (`bridge/roslyn/roslyn-service.sh`), so each project's load is the engine's work and not a container start.
+snapshot (the service `roslyn-serve` keeps, in its capped image then), so each project's load is the engine's work and not a container start.
 
 | Codebase | Commit | Files | Nodes | Settled heap | Bytes/node | Peak heap judging | Peak footprint | Load |
 |---|---|---|---|---|---|---|---|---|

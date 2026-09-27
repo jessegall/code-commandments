@@ -9,6 +9,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/freeze"
 	"github.com/jessegall/code-commandments/cli/hints"
 	"github.com/jessegall/code-commandments/cli/hooks"
+	"github.com/jessegall/code-commandments/cli/roslyn"
 	"github.com/jessegall/code-commandments/cli/info"
 	"github.com/jessegall/code-commandments/cli/judge"
 	"github.com/jessegall/code-commandments/cli/layers"
@@ -42,6 +43,7 @@ func Kernel(version string) *cli.Kernel {
 		hooks.Dispatch{},
 		hooks.JournalHook{},
 		hooks.JournalServe{},
+		roslyn.Serve{},
 		hooks.JournalConfig{},
 		hooks.JournalScan{},
 		hooks.JournalSkills{},

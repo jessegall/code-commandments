@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Builds the release: one static binary per platform, stamped with the version, then checked and summed by
-# scripts/release/check — nothing is tagged, pushed or published here. Runs Go, so only in the dev container:
+# scripts/release/check with whatever C# bridges scripts/release/roslyn already put in the folder — nothing is tagged,
+# pushed or published here. Runs Go, so only in the dev container:
 #   scripts/dev scripts/release/build v5.0.0 [out]
 set -euo pipefail
 
