@@ -33,6 +33,11 @@ func (rules) Weight(node engine.Match) int {
 	if facts.Role == "statement" || facts.Role == "expression" || node.Is(engine.Block) || node.Is(engine.Catch) {
 		weight = 1
 	}
+	// A call of a plain name inside an expression weighs one more, as the PHP engine weighs it; a call that is a
+	// statement of its own does not.
+	if node.Kind() == "CallExpression" && node.Child("expression").Kind() == "Identifier" && node.Parent().Kind() != "ExpressionStatement" {
+		weight++
+	}
 	if node.Is(engine.Construction) {
 		weight++
 	}

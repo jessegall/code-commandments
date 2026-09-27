@@ -20,7 +20,7 @@ scripts/dev --mount "$snapshot" env GOMEMLIMIT=3GiB GOMAXPROCS=2 "$out/commandme
 
 # findings is a checklist's findings, one `file:line [Detector]` per line, sorted.
 findings() {
-    grep -o '`[^`]*:[0-9]*`.*\[[A-Za-z]*\]' "$1" | sed -E 's/^`([^`]*)`.*(\[[A-Za-z]*\])$/\1 \2/' | sort -u
+    grep -o '`[^`]*:[0-9]*`.*\[[A-Za-z]*Detector\]' "$1" | sed -E 's/^`([^`]*)`.*(\[[A-Za-z]*Detector\])$/\1 \2/' | sort -u
 }
 
 findings "$out/php.md" > "$out/php.txt"

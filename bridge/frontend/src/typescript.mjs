@@ -101,7 +101,7 @@ export class TypeScriptWriter {
         if (ts.isFunctionLike(node) && node.type) facts.returns = this.type(this.checker.getTypeFromTypeNode(node.type), 'written')
         const symbol = this.symbolOf(node)
         if (symbol) facts.symbol = symbol
-        if (typed(node)) {
+        if (this.tree.checked && typed(node)) {
             this.tree.expressions++
             const type = this.checker.getTypeAtLocation(node)
             if (!(type.flags & ts.TypeFlags.Any) && !isErrorType(type)) {

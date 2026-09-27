@@ -1,7 +1,11 @@
+/** How much source a file may hold for the checker to type its expressions: a larger one, generated code in practice, is read by its syntax alone. */
+const CHECKED_SOURCE = 1 << 20
+
 /** One file's nodes as they are numbered: pre-order ids, each node's byte span for attaching comments, and the resolver's counts. */
 export class Tree {
     constructor(source) {
         this.source = source
+        this.checked = source.text.length <= CHECKED_SOURCE
         this.next = 0
         this.spans = []
         this.expressions = 0

@@ -7,7 +7,8 @@ import { Program } from './program.mjs'
 import { Tree } from './tree.mjs'
 import { TypeScriptWriter } from './typescript.mjs'
 import { Sfc, VueWriter, scriptComments } from './vue.mjs'
-import { writeLine } from './json.mjs'
+import { once } from 'node:events'
+import { lineOf } from './json.mjs'
 
 const NAME = 'bridge/frontend'
 const VERSION = '1'
@@ -18,7 +19,7 @@ const LANGUAGES = { '.vue': 'vue', '.ts': 'typescript' }
  * The stream for one request: `paths` are scanned, `write` are judged (every other file is context), `renames` rewrite paths,
  * and `contents` is the text drafted for a file, read in place of the disk's; a drafted file under a folder is read too.
  */
-export function stream({ paths, write = [], renames = [], contents = {} }, emit) {
+export async function stream({ paths, write = [], renames = [], contents = {} }, emit) {
     const roots = paths.map((path) => realpathSync(resolve(path)))
     const judged = write.map((path) => realpathSync(resolve(path)))
     const drafted = Object.keys(contents).filter((path) => languageOf(path) && !existsSync(path) && roots.some((root) => path.startsWith(root + '/')))
@@ -28,21 +29,21 @@ export function stream({ paths, write = [], renames = [], contents = {} }, emit)
     const program = new Program(sources, new Map([...sfcs].map(([path, sfc]) => [path, sfc.checkedText()])), renames)
     const language = sfcs.size ? 'vue' : 'typescript'
     const totals = { expressions: 0, typed: 0, calls: 0, resolved: 0 }
-    emit({ header: { contract: 'tree', version: 1, language, bridge: { name: NAME, version: VERSION }, roots: roots.map((root) => program.shown(root)) } })
+    await emit({ header: { contract: 'tree', version: 1, language, bridge: { name: NAME, version: VERSION }, roots: roots.map((root) => program.shown(root)) } })
     for (const path of files) {
         const tree = new Tree(sources.get(path))
         const { root, found, errors } = sfcs.has(path) ? vueFile(tree, sfcs.get(path), program) : typeScriptFile(tree, program)
         const file = { path: program.shown(path), language: languageOf(path), errors }
         if (judged.length && !judged.some((each) => path === each || path.startsWith(each + '/'))) file.context = true
-        file.resolver = { tool: 'tsc', ran: true }
+        file.resolver = { tool: 'tsc', ran: tree.checked }
         file.root = root
         file.comments = tree.comments(found)
         if (tree.types.length) file.types = tree.types
-        emit({ file })
+        await emit({ file })
         for (const key of Object.keys(totals)) totals[key] += tree[key]
     }
-    if (program.aliases.length) emit({ program: { aliases: program.aliases.map(({ prefix, path }) => ({ prefix, path: program.shown(path) })) } })
-    emit({ trailer: { files: files.length, resolution: { ...totals, unjoined: 0 } } })
+    if (program.aliases.length) await emit({ program: { aliases: program.aliases.map(({ prefix, path }) => ({ prefix, path: program.shown(path) })) } })
+    await emit({ trailer: { files: files.length, resolution: { ...totals, unjoined: 0 } } })
 }
 
 function typeScriptFile(tree, program) {
@@ -98,26 +99,32 @@ function parse(argv) {
     return request
 }
 
-function main() {
+async function main() {
     const request = parse(process.argv.slice(2))
-    const write = (line) => writeLine(line, (text) => process.stdout.write(text))
+    // A line is written a piece at a time, waiting for the reader to take each: a reader parsing as it reads would
+    // otherwise leave the whole stream queued in this process's memory.
+    const write = async (line) => {
+        for (const piece of lineOf(line)) {
+            if (!process.stdout.write(piece)) await once(process.stdout, 'drain')
+        }
+    }
     if (!request.serve) {
         if (!request.paths.length) throw new Error(`usage: node ${NAME} [--write=PATH]... [--rename=FROM=TO]... PATH...`)
-        stream(request, write)
+        await stream(request, write)
         return
     }
     const lines = createInterface({ input: process.stdin })
+    let answering = Promise.resolve()
     lines.on('line', (line) => {
         if (!line.trim()) return
         const asked = JSON.parse(line)
-        stream({ paths: asked.paths ?? [], write: asked.write ?? [], renames: request.renames, contents: asked.contents ?? {} }, write)
+        answering = answering.then(() => stream({ paths: asked.paths ?? [], write: asked.write ?? [], renames: request.renames, contents: asked.contents ?? {} }, write)).catch(fail)
     })
 }
 
-try {
-    main()
-} catch (error) {
+function fail(error) {
     process.stderr.write(`${NAME}: ${error.stack ?? error}\n`)
     process.exit(1)
 }
 
+main().catch(fail)
