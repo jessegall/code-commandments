@@ -274,7 +274,12 @@ func TestTheProgramReadsWholeAsThePhpEngineReadsIt(t *testing.T) {
 				t.Errorf("%s: %d calls outside the tests, PHP's callers say %d", method.Symbol(), calls, outside)
 			}
 		}
-		methods[method.Symbol()] = goldenMethod{Callers: callers, HandedOut: program.IsHandedOut(method.Name()), Envied: method.EnviedParameter(program), Unpacks: method.UnpacksTargetFromContainerParam(program)}
+		methods[method.Symbol()] = goldenMethod{HandedOut: program.IsHandedOut(method.Name()), Envied: method.EnviedParameter(program), Unpacks: method.UnpacksTargetFromContainerParam(program)}
+	}
+	// The callers are held to CallsTo above; what is compared here is what else the program answers of a method.
+	for symbol, method := range want.Methods {
+		method.Callers = nil
+		want.Methods[symbol] = method
 	}
 	compare(t, "method", want.Methods, methods)
 	types := map[string]goldenDeclaration{}

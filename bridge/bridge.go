@@ -9,6 +9,7 @@ import (
 	"net"
 	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -47,9 +48,7 @@ func Run(command []string, arguments ...string) (stream *contract.Stream, errs s
 		return nil, failure.String(), false, err
 	}
 	stream, read := contract.ReadAll(out)
-	if read != nil {
-		io.Copy(io.Discard, out)
-	}
+	io.Copy(io.Discard, out)
 	if err := process.Wait(); err != nil {
 		return nil, failure.String(), false, err
 	}
@@ -64,7 +63,7 @@ type Server struct {
 	process    *exec.Cmd
 	input      io.Writer
 	output     *contract.Reader
-	errs       *bytes.Buffer
+	errs       *stderr
 	connection net.Conn
 	mu         sync.Mutex
 }
@@ -80,11 +79,14 @@ func Serve(command []string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	errs := &bytes.Buffer{}
-	process.Stderr = errs
+	pipe, err := process.StderrPipe()
+	if err != nil {
+		return nil, err
+	}
 	if err := process.Start(); err != nil {
 		return nil, Failed(command, err, "")
 	}
+	errs := readStderr(pipe)
 
 	return &Server{command: command, process: process, input: input, output: contract.NewReader(output), errs: errs}, nil
 }
@@ -144,6 +146,46 @@ func (s *Server) stderr() string {
 	}
 
 	return s.errs.String()
+}
+
+// stderr is a served bridge's stderr, read as the bridge writes it.
+type stderr struct {
+	mu   sync.Mutex
+	text bytes.Buffer
+	done chan struct{}
+}
+
+// readStderr reads the pipe until the bridge closes it.
+func readStderr(pipe io.Reader) *stderr {
+	errs := &stderr{done: make(chan struct{})}
+	go func() {
+		defer close(errs.done)
+		chunk := make([]byte, 32*1024)
+		for {
+			n, err := pipe.Read(chunk)
+			errs.mu.Lock()
+			errs.text.Write(chunk[:n])
+			errs.mu.Unlock()
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	return errs
+}
+
+// String is what the bridge wrote: all of it once the bridge has closed its stderr, else what it wrote in the
+// second it is given to, so a bridge that failed yet lives on cannot hold its caller.
+func (e *stderr) String() string {
+	select {
+	case <-e.done:
+	case <-time.After(time.Second):
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.text.String()
 }
 
 // BridgeFailed is a bridge that exited or answered outside the contract, with what it wrote to stderr.
