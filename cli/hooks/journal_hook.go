@@ -3,6 +3,7 @@ package hooks
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"io"
 	"net"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/dashboard"
@@ -252,25 +254,86 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	root := workspace.ProjectRoot(cwd)
 	started := stamp(root)
 
+	serve(listener, func() bool { return stamp(root) == started }, startAdviser(adviseNow))
+
+	return 0, nil
+}
+
+// serve answers each connection's gates at once and hands its moment to the adviser, so no gate ever waits on a
+// sin check, until a connection finds what it runs no longer current: that one it hangs up unanswered.
+func serve(listener net.Listener, current func() bool, advice *adviser) {
 	for {
 		connection, err := listener.Accept()
 		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				return
+			}
+
 			continue
 		}
 
-		if stamp(root) != started {
+		if !current() {
 			connection.Close()
 
-			return 0, nil
+			return
 		}
 
-		line, _ := bufio.NewReader(connection).ReadString('\n')
-		given := payloadOf([]byte(line))
+		go func() {
+			line, _ := bufio.NewReader(connection).ReadString('\n')
+			given := payloadOf([]byte(line))
 
-		connection.Write([]byte(AnswerNow(given).JSON() + "\n"))
-		connection.Close()
+			connection.Write([]byte(AnswerNow(given).JSON() + "\n"))
+			connection.Close()
 
-		adviseNow(given)
+			advice.add(given)
+		}()
+	}
+}
+
+// adviser works out each moment's advice on one goroutine of its own, in the order the moments came: the service
+// keeps answering while it works, and two checks of one file never run at once.
+type adviser struct {
+	mu      sync.Mutex
+	pending []map[string]any
+	wake    chan struct{}
+	advise  func(map[string]any)
+}
+
+// startAdviser is an adviser giving each moment to advise, its goroutine started.
+func startAdviser(advise func(map[string]any)) *adviser {
+	a := &adviser{wake: make(chan struct{}, 1), advise: advise}
+	go a.work()
+
+	return a
+}
+
+// add queues the moment's advice and wakes the worker.
+func (a *adviser) add(given map[string]any) {
+	a.mu.Lock()
+	a.pending = append(a.pending, given)
+	a.mu.Unlock()
+
+	select {
+	case a.wake <- struct{}{}:
+	default:
+	}
+}
+
+func (a *adviser) work() {
+	for range a.wake {
+		for {
+			a.mu.Lock()
+			if len(a.pending) == 0 {
+				a.mu.Unlock()
+
+				break
+			}
+			given := a.pending[0]
+			a.pending = a.pending[1:]
+			a.mu.Unlock()
+
+			a.advise(given)
+		}
 	}
 }
 

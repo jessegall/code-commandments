@@ -16,7 +16,7 @@ needs PHP and this package's own `vendor/`, which is where php-parser comes from
 |---|---|
 | `PATH` | a file, or a folder read for every `*.php` under it; `vendor/` and dot folders are skipped. Files are written sorted, each once |
 | `--write=PATH` | a file or folder that is judged. When any is given, every other file is written with `"context": true` |
-| `--autoload=FILE` | the scanned project's `vendor/autoload.php`, for reflecting outside symbols. Without it, the nearest `vendor/autoload.php` above the first path. With none found, no outside symbols are written |
+| `--autoload=FILE` | the scanned project's `vendor/autoload.php`, for reflecting outside symbols. Without it, the nearest `vendor/autoload.php` above the first path. With none found, only the outside symbols PHP itself declares (`Stringable`, `Countable`) are written |
 | `--rename=FROM=TO` | writes paths under `FROM` as under `TO`, so a committed test stream names no machine's own folders |
 | `--serve` | answers each stdin line `{"paths": [...], "write": [...], "contents": {...}}` with a whole stream, header to trailer. `contents` maps absolute paths to the text a rewrite has drafted for them, read in place of the disk; a `*.php` path in it under a requested folder that is not on disk is read too |
 
