@@ -15,7 +15,7 @@ scripts/dev --mount ../some-app go run ./engine/frontend/parity ../some-app
 ```
 
 - **The image** (`docker/dev/Dockerfile`): Go, PHP for the PHP bridge, composer for
-  the consumer test, node for the frontend bridge, Python with the pinned mypy, git
+  the consumer and shim tests, node for the frontend bridge, Python with the pinned mypy, git
   and the docker CLI. It is built on the first run and rebuilt
   only when the Dockerfile or the mypy pin changes.
 - **Inside**: `GOMEMLIMIT=1200MiB` per process (so the two a `-p=2` test run starts
@@ -29,14 +29,20 @@ scripts/dev --mount ../some-app go run ./engine/frontend/parity ../some-app
   beside the dev one. A folder outside the checkout needs `--mount` (read-only).
 - **No docker, no run**: `scripts/dev` fails and says so. There is no host fallback.
 
-`docker/dev/cap_test.go` proves the cap: it runs a child past 3 GB and expects the
-kernel's SIGKILL. Scripts and hooks in this repository that run Go call `scripts/dev`
+`docker/dev/cap_test.go` proves the cap: it has `scripts/dev` start a container of its
+own, runs a child past 3 GB in it and expects the kernel's SIGKILL. The kill lands in
+that container alone, never on another package's test running beside it at `-p 2`. Scripts and hooks in this repository that run Go call `scripts/dev`
 as well.
 
 ## The suite
 
 `scripts/dev go test ./the/packages/you/touched`, scoped while iterating; the whole
 suite is `scripts/dev go test ./...`, run package by package at `-p 2`.
+
+The suite needs no `composer install`: a fresh clone passes as it stands. A test that
+wants a composer-installed project has composer install one of its own in a temp folder
+(the shim test), and the parity cases that want an installed package copy the stub
+`cli/parity/testdata/installed.json`, which says in its own comment what it stands for.
 
 The PHP tool this one replaced left its answers behind as recordings, and the tests
 still hold the Go tool to them: the shop fixture's answers beside the fixture they

@@ -16,21 +16,26 @@ import (
 // fakeBinary stands in for a release binary: it says it ran, and with what.
 const fakeBinary = "#!/bin/sh\necho \"ran $*\"\n"
 
-// installed lays out a project that composer installed the package into at the version: the shim at its place under
-// vendor/, composer's own InstalledVersions and ClassLoader, and an installed.php naming the version.
+// installed lays out a project that composer installed the package into at the version: composer itself installs a
+// project with no dependencies, writing its own autoloader, then the shim takes its place under vendor/ and
+// installed.php names the version.
 func installed(t *testing.T, version string) (shim string) {
 	t.Helper()
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Skip("php is not on PATH")
+	for _, tool := range []string{"php", "composer"} {
+		if _, err := exec.LookPath(tool); err != nil {
+			t.Skipf("%s is not on PATH", tool)
+		}
 	}
 	project := t.TempDir()
+	write(t, filepath.Join(project, "composer.json"), `{"name": "acme/shop"}`)
+	install := exec.Command("composer", "install", "--quiet", "--no-interaction")
+	install.Dir, install.Env = project, append(os.Environ(), "COMPOSER_HOME="+t.TempDir())
+	if out, err := install.CombinedOutput(); err != nil {
+		t.Fatalf("composer install: %v\n%s", err, out)
+	}
 	vendor := filepath.Join(project, "vendor")
 	copyFile(t, filepath.Join("..", "..", "bin", "commandments"), filepath.Join(vendor, "jessegall", "code-commandments", "bin", "commandments"))
-	for _, file := range []string{"InstalledVersions.php", "ClassLoader.php"} {
-		copyFile(t, filepath.Join("..", "..", "vendor", "composer", file), filepath.Join(vendor, "composer", file))
-	}
 	write(t, filepath.Join(vendor, "composer", "installed.php"), `<?php return ['root' => ['name' => 'acme/shop', 'pretty_version' => 'dev-main', 'version' => 'dev-main', 'reference' => null, 'type' => 'project', 'install_path' => __DIR__ . '/../../', 'aliases' => [], 'dev' => true], 'versions' => ['jessegall/code-commandments' => ['pretty_version' => '`+version+`', 'version' => '`+strings.TrimPrefix(version, "v")+`.0', 'reference' => null, 'type' => 'library', 'install_path' => __DIR__ . '/../jessegall/code-commandments', 'aliases' => [], 'dev_requirement' => false]]];`)
-	write(t, filepath.Join(vendor, "autoload.php"), "<?php\nrequire __DIR__ . '/composer/ClassLoader.php';\nrequire __DIR__ . '/composer/InstalledVersions.php';\n")
 
 	return filepath.Join(vendor, "jessegall", "code-commandments", "bin", "commandments")
 }

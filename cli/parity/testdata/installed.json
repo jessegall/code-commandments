@@ -1,0 +1,9 @@
+{
+    "_comment": "A STUB, not composer's output. The parity cases that copy it into the backend fixture's vendor/composer/ were recorded beside the PHP tool's own install, which required jessegall/php-types and nikic/php-parser; this names those packages so the tool sees the install the goldens saw. Only each package's name, replace and provide are read (sins.Package.InstalledIn).",
+    "packages": [
+        {"name": "jessegall/php-types", "type": "library"},
+        {"name": "nikic/php-parser", "type": "library"}
+    ],
+    "dev": true,
+    "dev-package-names": []
+}

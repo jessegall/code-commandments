@@ -85,7 +85,7 @@
       "--dry-run"
     ],
     "setup": [
-      "mkdir -p vendor/composer && cp \"$PARITY_PACKAGE/vendor/composer/installed.json\" vendor/composer/installed.json"
+      "mkdir -p vendor/composer && cp \"$PARITY_PACKAGE/cli/parity/testdata/installed.json\" vendor/composer/installed.json"
     ]
   },
   {
@@ -98,7 +98,7 @@
       "--dry-run"
     ],
     "setup": [
-      "mkdir -p vendor/composer && cp \"$PARITY_PACKAGE/vendor/composer/installed.json\" vendor/composer/installed.json",
+      "mkdir -p vendor/composer && cp \"$PARITY_PACKAGE/cli/parity/testdata/installed.json\" vendor/composer/installed.json",
       "git init -q -b main && git add . && git -c user.email=t@t -c user.name=t commit -q -m start"
     ]
   },
