@@ -115,7 +115,7 @@ func TestTheImageNameIsTheOneTheBridgesSourcesAreBuiltAs(t *testing.T) {
 		hash.Write([]byte(file + "\n"))
 		hash.Write(source)
 	}
-	if want := "code-commandments/roslyn-bridge:" + hex.EncodeToString(hash.Sum(nil))[:16]; RoslynImage() != want {
+	if want := "ghcr.io/jessegall/code-commandments-roslyn:" + hex.EncodeToString(hash.Sum(nil))[:16]; RoslynImage() != want {
 		t.Errorf("bridge/roslyn/IMAGE names %s, but the sources are built as %s: write the new name there", RoslynImage(), want)
 	}
 }

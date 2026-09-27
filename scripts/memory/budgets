@@ -1,0 +1,8 @@
+# The memory each codebase CI judges may take, as the capped container's cgroup counts its peak, in bytes: the
+# measured peak plus a margin, raised only by hand. scripts/memory/gate.sh reads them; the container's 3 GB is the
+# hard cap above them all.
+# fixtures — tests/Fixtures, every engine: measured 387,801,088 (2026-09-27), budget 512 MiB.
+fixtures 536870912
+# koel — github.com/koel/koel at 7f321705d7afc31a60181e8c6eab85c0220869bf, PHP + Vue + TypeScript:
+# measured 2,237,571,072 (2026-09-27), budget 2.5 GiB.
+koel 2684354560

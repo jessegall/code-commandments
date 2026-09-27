@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Builds the release: one static binary per platform, stamped with the version, then checked and summed by
+# scripts/release/check — nothing is tagged, pushed or published here. Runs Go, so only in the dev container:
+#   scripts/dev scripts/release/build v5.0.0 [out]
+set -euo pipefail
+
+version="${1:?usage: scripts/release/build <version> [out]}"
+out="${2:-dist}"
+root="$(cd "$(dirname "$0")/../.." && pwd -P)"
+platforms=(linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64)
+
+cd "$root"
+mkdir -p "$out"
+for platform in "${platforms[@]}"; do
+    os="${platform%/*}"
+    arch="${platform#*/}"
+    binary="$out/commandments-$os-$arch"
+    [ "$os" = windows ] && binary="$binary.exe"
+    CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" GOFLAGS=-p=2 \
+        go build -trimpath -ldflags "-s -w -X main.version=$version" -o "$binary" ./cmd/commandments
+done
+go run ./scripts/release/check "$out"

@@ -1,0 +1,19 @@
+{
+    "note": "Each budget is the size a platform binary may reach, set at its first measured size plus 10%, rounded up to the next half MiB, and raised only by hand, never by the build. measured is what the last recorded build weighed.",
+    "budget": {
+        "darwin-amd64": 18874368,
+        "darwin-arm64": 17825792,
+        "linux-amd64": 18350080,
+        "linux-arm64": 17301504,
+        "windows-amd64": 18874368,
+        "windows-arm64": 17301504
+    },
+    "measured": {
+        "darwin-amd64": 16758720,
+        "darwin-arm64": 15758594,
+        "linux-amd64": 16572578,
+        "linux-arm64": 15532194,
+        "windows-amd64": 16926720,
+        "windows-arm64": 15618560
+    }
+}
