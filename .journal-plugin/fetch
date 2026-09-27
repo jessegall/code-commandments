@@ -1,0 +1,56 @@
+#!/bin/sh
+# Fetches the release binary the plugin pins in COMMANDMENTS_RELEASE into bin/commandments-release, checked against
+# the release's SHA256SUMS before it is written; any failure writes nothing and never builds. Needs only sh, curl and
+# sha256sum or shasum. COMMANDMENTS_RELEASES names another place to fetch releases from.
+set -eu
+
+refuse() {
+    echo "fetch: $*" >&2
+    exit 1
+}
+
+version="${COMMANDMENTS_RELEASE:-}"
+case "$version" in
+    v[0-9]*.[0-9]*.[0-9]*) ;;
+    *) refuse "COMMANDMENTS_RELEASE names no release (${version:-nothing}); pin a tagged version such as v5.0.0" ;;
+esac
+
+case "$(uname -s)" in
+    Darwin) os=darwin ;;
+    Linux) os=linux ;;
+    *) refuse "no release is built for $(uname -s)" ;;
+esac
+case "$(uname -m)" in
+    x86_64|amd64) arch=amd64 ;;
+    arm64|aarch64) arch=arm64 ;;
+    *) refuse "no release is built for $(uname -m)" ;;
+esac
+name="commandments-$os-$arch"
+
+command -v curl >/dev/null 2>&1 || refuse "curl is not on the PATH, so the $version release cannot be fetched"
+if command -v sha256sum >/dev/null 2>&1; then
+    digest() { sha256sum "$1"; }
+elif command -v shasum >/dev/null 2>&1; then
+    digest() { shasum -a 256 "$1"; }
+else
+    refuse "neither sha256sum nor shasum is on the PATH, so the fetched binary cannot be checked"
+fi
+
+root="$(cd "$(dirname "$0")/.." && pwd -P)"
+base="${COMMANDMENTS_RELEASES:-https://github.com/jessegall/code-commandments/releases/download}"
+base="${base%/}/$version"
+target="$root/bin/commandments-release"
+draft="$target.$$"
+trap 'rm -f "$draft"' EXIT
+
+sums="$(curl -fsSL "$base/SHA256SUMS")" || refuse "could not fetch $base/SHA256SUMS"
+wanted="$(printf '%s\n' "$sums" | awk -v name="$name" '$2 == name || $2 == "*" name { print $1; exit }')"
+[ -n "$wanted" ] || refuse "the $version release lists no $name"
+
+curl -fsSL -o "$draft" "$base/$name" || refuse "could not fetch $base/$name"
+[ "$(digest "$draft" | awk '{ print $1 }')" = "$wanted" ] ||
+    refuse "the $name fetched for $version does not match its SHA256SUMS, so it is not installed"
+
+chmod 755 "$draft"
+mv -f "$draft" "$target"
+echo "fetched $name $version, checked against its SHA256SUMS"
