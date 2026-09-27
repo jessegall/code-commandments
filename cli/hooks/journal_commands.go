@@ -22,6 +22,8 @@ const (
 	journalSettings = "JOURNAL_SETTINGS"
 	// journalProject names the project the plugin works for.
 	journalProject = "CLAUDE_PROJECT_DIR"
+	// journalPluginDir names the plugin's own folder, set by the journal for every command it runs for the plugin.
+	journalPluginDir = "JOURNAL_PLUGIN_DIR"
 	// judgedKey is the setting that lists the folders judged.
 	judgedKey = "folders_judged"
 	// skippedKey is the setting that lists the folders left out.
@@ -117,9 +119,13 @@ func renderSkills() (int, error) {
 	return len(published), err
 }
 
-// pluginRoot is the plugin folder the executable was installed into: the nearest folder above it that holds
-// a plugin manifest, else the folder above the executable's own.
+// pluginRoot is the plugin's folder: the one the journal names, else the nearest folder above the executable
+// that holds a plugin manifest, else the folder above the executable's own.
 func pluginRoot() string {
+	if dir := os.Getenv(journalPluginDir); dir != "" {
+		return dir
+	}
+
 	self, err := os.Executable()
 	if err != nil {
 		return "."
