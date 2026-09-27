@@ -7,6 +7,7 @@ import { Program } from './program.mjs'
 import { Tree } from './tree.mjs'
 import { TypeScriptWriter } from './typescript.mjs'
 import { Sfc, VueWriter, scriptComments } from './vue.mjs'
+import { writeLine } from './json.mjs'
 
 const NAME = 'bridge/frontend'
 const VERSION = '1'
@@ -99,7 +100,7 @@ function parse(argv) {
 
 function main() {
     const request = parse(process.argv.slice(2))
-    const write = (line) => process.stdout.write(JSON.stringify(line) + '\n')
+    const write = (line) => writeLine(line, (text) => process.stdout.write(text))
     if (!request.serve) {
         if (!request.paths.length) throw new Error(`usage: node ${NAME} [--write=PATH]... [--rename=FROM=TO]... PATH...`)
         stream(request, write)

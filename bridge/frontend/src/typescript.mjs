@@ -177,6 +177,18 @@ export class TypeScriptWriter {
     }
 
     type(type, origin, depth = 0) {
+        const key = `${origin}:${depth}`
+        const known = this.tree.described.get(type)?.get(key)
+        if (known) return known
+        const out = this.describe(type, origin, depth)
+        if (!this.tree.described.has(type)) this.tree.described.set(type, new Map())
+        this.tree.described.get(type).set(key, out)
+
+        return out
+    }
+
+    /** A type as the contract writes it, described afresh: its text, its shape to TYPE_DEPTH, and where it came from. */
+    describe(type, origin, depth) {
         const out = { text: this.checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation) }
         Object.assign(out, depth >= TYPE_DEPTH ? { kind: 'opaque' } : this.shape(type, origin, depth + 1))
         if (nullable(type)) out.nullable = true
