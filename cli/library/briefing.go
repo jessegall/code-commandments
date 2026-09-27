@@ -79,7 +79,7 @@ func Written(skills []skill.Skill, project config.Config) []skill.Skill {
 
 	for _, each := range skills {
 		for _, name := range each.Definition().Languages {
-			if language, known := languageOf(name); known && project.Writes(language) {
+			if language, known := LanguageOf(name); known && project.Writes(language) {
 				kept = append(kept, each)
 
 				break
@@ -90,8 +90,8 @@ func Written(skills []skill.Skill, project config.Config) []skill.Skill {
 	return kept
 }
 
-// languageOf reads a skill's language: its source value (`py`) or its config name (`python`).
-func languageOf(name string) (source.Language, bool) {
+// LanguageOf reads a skill's language: its source value (`py`) or its config name (`python`).
+func LanguageOf(name string) (source.Language, bool) {
 	for _, language := range source.Languages {
 		if string(language) == name || strings.EqualFold(language.Label(), name) || config.LanguageName(language) == name {
 			return language, true

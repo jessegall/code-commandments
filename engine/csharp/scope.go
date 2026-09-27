@@ -10,6 +10,7 @@ var commentKinds = map[string]string{"line": "Line", "block": "Block", "doc": "D
 
 func init() {
 	engine.NameScopes(contract.CSharp, scopeOf)
+	engine.RunBodiesAs(contract.CSharp, func(match engine.Match) bool { return Node{Match: match}.FunctionBody().Exists() })
 }
 
 // scopeOf names where a C# finding is: its Roslyn kind, and the name it declares or reads, an accessor answering

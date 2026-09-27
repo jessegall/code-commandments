@@ -420,3 +420,23 @@ var scopeNamers sync.Map
 func NameScopes(language contract.Language, namer func(Match) string) {
 	scopeNamers.Store(language, namer)
 }
+
+// bodyRunners say, for a language whose tree flags fewer function-likes than it counts, whether a node runs a body.
+var bodyRunners sync.Map
+
+// RunBodiesAs has every match in a file of the language say whether it runs a body of its own as runs says.
+func RunBodiesAs(language contract.Language, runs func(Match) bool) {
+	bodyRunners.Store(language, runs)
+}
+
+// RunsABody says whether the node runs a body of its own — a function, and whatever else its language counts as
+// one, as C# counts a property written `=> value`.
+func (m Match) RunsABody() bool {
+	if m.file != nil {
+		if runs, counted := bodyRunners.Load(m.file.Language()); counted {
+			return runs.(func(Match) bool)(m)
+		}
+	}
+
+	return m.Is(Function)
+}

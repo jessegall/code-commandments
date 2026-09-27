@@ -30,6 +30,11 @@ func (DataHintScribe) Name() string {
 	return "DataHintScribe"
 }
 
+// Summary is what the scribe does, for the README.
+func (DataHintScribe) Summary() string {
+	return "Brings a Spatie `Data` class's magic surface in line with the spatie-data skill: renames object factories to `from<Type>`, regenerates `@method` docblock lines, and adds `@method collect()` when used."
+}
+
 // dataClass is a Data class and the object factories it declares.
 type dataClass struct {
 	file      string

@@ -10,235 +10,235 @@ _255 sins across 63 skills._
 
 | Sin | What it flags |
 |---|---|
-| `BlankStringDefault` | A declaration typed as a TOTAL `string` defaulting to the blank, whose own scope then asks that name `=== ''` / `empty(...)` — the question is the proof that the blank is absence wearing a total type. |
-| `BlankStringOnTheWire` | A public field typed as a TOTAL `string` whose reader on the FAR SIDE asks it `=== ''`. |
-| `CancelledCoalesce` | A manufactured fake compared against itself — `($x ?? '') !== ''`. |
-| `ConditionalArraySpread` | Flags a conditional array-element spread — `...($x ? ['k' => $x] : [])` inside an array literal, or `array_merge($base, $cond ? [...] : [])` — the ternary-into-empty-array noise. |
-| `DeNulledFinder` | Detects a nullable finder whose result is de-nulled at every call site (≥2 sites); absence should be decided at the source, not re-checked everywhere. |
-| `ErasedNullObject` | A `new X` whose `__toString` renders `''`, written where the declared type is `string` — a default or a return. |
-| `NullableCallback` | A nullable callback (`?callable $cb = null`) that the body null-normalises before calling — `if ($cb !== null) { $cb(…); }`, `($cb ?? fn () => …)(…)`. |
-| `OptionAsNullable` | Detects `?Option`, `Option \| null`, and `unwrapOr(null)` collapsing absence; exempt in argument position, flagged only in return/assignment. |
+| `BlankStringDefault` | `string $x = ''` standing in for absence — then asked `$x === ''` |
+| `BlankStringOnTheWire` | A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean "missing" — only that reader knows the blank stands for absence. |
+| `CancelledCoalesce` | `??` cancelled by the comparison it sits in — `($x ?? '') !== ''` |
+| `ConditionalArraySpread` | An array built by spreading a conditional element — `...($x ? ['k' => $x] : [])` or `array_merge($base, $cond ? [...] : [])` — a ternary-and-empty-array trick that really just means "include this when the value is present." |
+| `DeNulledFinder` | A finder that returns `null` for both "missing" and "broken" instead of throwing — the kind of `?T` finder whose callers all end up de-nulling it. |
+| `ErasedNullObject` | A blank-rendering Null Object written into a `string` slot — coerced back to `''` |
+| `NullableCallback` | Nullable callback normalised in the body instead of a Null Object default |
+| `OptionAsNullable` | `Option<T>` used as if it were nullable — `?Option`, `Option \| null`, `unwrapOr(null)` |
 
 #### `backend/behaviour-per-method`
 
 | Sin | What it flags |
 |---|---|
-| `FlagArgument` | A method whose whole body is `if ($flag) {…} else {…}` on one of its own `bool` parameters — two methods sharing a name, and a call site that reads `render($order, true)`. |
+| `FlagArgument` | a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name |
 
 #### `backend/class-layout`
 
 | Sin | What it flags |
 |---|---|
-| `MemberAfterMethod` | Detects state declared below behaviour: a trait use, constant, property, property hook or enum case that sits after a method in the same class body. |
-| `MemberOutOfOrder` | Detects a head of class assembled in an ad-hoc order — a constant under a property, a public field under a private one, a derived hook above the fields it reads. |
+| `MemberAfterMethod` | A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it. |
+| `MemberOutOfOrder` | A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads |
 
 #### `backend/dependency-direction`
 
 | Sin | What it flags |
 |---|---|
-| `NamespaceCycle` | Two namespaces that reference each other — `App\Billing` reaching into `App\Orders` while `App\Orders` reaches back — so the pair is one unit wearing two names. |
-| `NamespaceDependency` | A reference OUT of a declared layer into a layer that layer may not use — the arrow pointing back up the stack, or sideways. |
+| `NamespaceCycle` | two namespaces that reference each other — neither can be read, tested or moved alone |
+| `NamespaceDependency` | a declared layer references a layer it may not use (the arrow points back up) |
 
 #### `backend/documentation`
 
 | Sin | What it flags |
 |---|---|
-| `ArchaeologyComment` | Detects comments describing history instead of present code. |
-| `BloatedDocblock` | A class whose docblock runs to multiple paragraphs. |
-| `CeremonyDocblock` | A docblock that only restates the typed signature — `@param Type $x` with no description on an already-typed parameter, plus maybe a bare `@return Type`. |
-| `DanglingDocReference` | A docblock cross-reference (`…` / `{@link …}`) that points at a FIRST-PARTY class the codebase does not declare — a name that was renamed or removed, its documentation left dangling. |
-| `InlineDocblock` | Detects a docblock crammed onto its delimiters — the whole thing on one line, or a block that opens or closes beside its text. |
-| `NegativeSpaceComment` | Detects comments that defend code against strawmen — a negation paired with a word like "random", "magic", or "coincidence", where the code should simply state what it IS. |
-| `RestatedComment` | Detects an inline comment that only narrates the statement it sits on: reduce the comment to its content words and the annotated statement's head to the words it spells (codeWords()), and flag when EVERY comment word is already one of them — a comment carrying a why brings a word the code lacks, so it survives. |
-| `StackedDocblock` | Detects a declaration wearing several docblocks. |
+| `ArchaeologyComment` | History/archaeology comments ("formerly / used to be / refactored / no longer an X / was extracted") |
+| `BloatedDocblock` | Multi-paragraph class docblock (class too big) |
+| `CeremonyDocblock` | Docblock that only restates the typed signature (`@param Type $x`, no description) |
+| `DanglingDocReference` | A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not exist in the codebase — documentation pointing at a name that was renamed or removed, never at what the code actually is |
+| `InlineDocblock` | A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content |
+| `NegativeSpaceComment` | A comment defending the code against a strawman ("not random", "no magic", "not a coincidence", "not dead code") |
+| `RestatedComment` | An inline comment that only spells the statement below it back in prose ("// save the order" over `$this->orders->save($order)`) |
+| `StackedDocblock` | Two or more docblocks stacked on one declaration — PHP reads only the last, so the ones above it are documentation nobody sees |
 
 #### `backend/enums-with-behaviour`
 
 | Sin | What it flags |
 |---|---|
-| `ConstClassEnum` | A class that is nothing but scalar constants — a closed set of values hand- rolled as `const STATUS_PENDING = 'pending'` instead of a native backed enum. |
-| `EnumCaseOrChain` | `$x === Status::Pending \|\| $x === Status::Paid` — a hand-rolled membership test against two-or-more cases of the same backed enum. |
-| `EnumValueMatch` | Detects `match`/`switch` over a backed enum's `->value` at a call site. |
-| `InArrayMirrorsEnum` | `in_array($x, ['a', 'b', …])` whose literals ARE an existing backed enum's case values — testing membership of a set the type already seals. |
-| `MatchDefaultReturnsNull` | A `match` whose `default` arm returns `null`/`false`/`[]` instead of throwing. |
-| `StringMatchMirrorsEnum` | Detects `match`/`switch` arm conditions that are string/int literals mirroring an existing backed enum's case values. |
-| `UnnamedVocabularyLiteral` | A raw string filling an argument the codebase ELSEWHERE fills from a named vocabulary — a `$this->expect('{')` beside a `$this->expect(Token::COLON)`, when `Token::BRACE_OPEN` already holds it. |
+| `ConstClassEnum` | A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum |
+| `EnumCaseOrChain` | `$x === Enum::A \|\| $x === Enum::B` — a hand-rolled case-group test |
+| `EnumValueMatch` | A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead. |
+| `InArrayMirrorsEnum` | `in_array($x, [literals])` whose literals mirror an existing enum's cases |
+| `MatchDefaultReturnsNull` | `match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing |
+| `StringMatchMirrorsEnum` | `match`/`switch` over string/int literals that mirror an existing backed enum's case values |
+| `UnnamedVocabularyLiteral` | A raw string in an argument the codebase elsewhere fills from a named vocabulary — `expect('{')` beside `expect(Token::COLON)`, where `Token::BRACE_OPEN` already names it |
 
 #### `backend/exceptions`
 
 | Sin | What it flags |
 |---|---|
-| `GenericException` | Throwing a generic SPL/base exception (`throw new \RuntimeException(...)`) instead of a named domain exception. |
-| `MessageAtThrow` | `throw new X("…message…")` — the failure described with a prose string at the throw site instead of a named factory carrying domain VALUES (`throw OrderNotFound::forId($id)`). |
-| `SwallowCatch` | A `catch` that swallows the failure into absence — an empty body, or whose only effect is `return null/false/[]`. |
-| `WrappingWithoutCause` | Throwing a new exception inside a `catch` without passing the caught one on as its cause (`previous`) — the original failure and its stack trace are dropped, so the wrapped error lies about where it came from. |
+| `GenericException` | `throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type |
+| `MessageAtThrow` | Message string built at the throw site (no domain values / named factory) |
+| `SwallowCatch` | `catch` whose only effect is `return null/false/[]`; empty catch (silent swallow) |
+| `WrappingWithoutCause` | Wrapping a caught exception without passing it as `previous`/cause |
 
 #### `backend/fix-at-the-source`
 
 | Sin | What it flags |
 |---|---|
-| `ConstructorSideEffect` | A constructor with a SIDE EFFECT — it calls a collaborator and throws the result away, so the call was made for what it DID: eager-loading a relation, writing a global default, narrowing a query builder the caller still holds. |
-| `DivergentTwin` | Flags a method that does the same job as another and does STRICTLY LESS of it. |
-| `DuplicateFunction` | Two-or-more functions/methods with an identical AST — the same code copy-pasted, down to a formatting-blind structural hash (spacing, newlines, and comments are ignored; only real code differences count). |
-| `ManufacturedFakeFill` | Detects filling an argument with a manufactured fake (empty string, zero, false) on absence; real defaults like `?? 'EUR'` are legitimate. |
-| `MutableStaticState` | A write to static state — a global with a namespace in front of it. |
-| `NearDuplicateFunction` | Two-or-more functions/methods with the same SHAPE but not identical text — the same control-flow skeleton differing only in variable names or literal values (a type-2 clone). |
+| `ConstructorSideEffect` | A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it. |
+| `DivergentTwin` | Two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other. |
+| `DuplicateFunction` | Copy-pasted code — two+ functions with an identical AST (formatting/comments aside) |
+| `ManufacturedFakeFill` | `?? <empty literal>` filling a required slot (manufactured fake) |
+| `MutableStaticState` | A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result. |
+| `NearDuplicateFunction` | Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone) |
 
 #### `backend/guard-clauses-and-flow`
 
 | Sin | What it flags |
 |---|---|
-| `CoalescedLoopSubject` | A `foreach` that decides in its own header whether it was HANDED anything to iterate — `foreach ($below[$id] ?? [] as $child)`, `$below` being a parameter. |
-| `DeepNesting` | An `if` nested three-deep — a pyramid of conditions. |
-| `IfElseLadder` | An `if`/`elseif` ladder of four-plus branches — a chain of conditions doing the job of a `match`, a method on the type, or polymorphic dispatch. |
-| `InlineThrow` | Detects `?? throw` buried in a call arg or dereference, not bare return statements. |
-| `LoopInvertedGuard` | A loop whose entire body is wrapped in one `if` — the iteration's real work pushed a level deep behind a condition. |
-| `NestedTernary` | A nested / chained ternary — `$a ? $b : ($c ? $d : $e)` — folds a branching decision into one unreadable expression where the operator precedence is a trap. |
-| `NonCountingFor` | A `for` that is not counting — its step ASSIGNS the next thing rather than advancing a counter, as in `for ($one = $r; $one !== null; $one = $one instanceof Traceable ? $one->getAbove() : null)`. |
-| `RedundantElse` | An `else` after an `if` branch that already exits (`return`/`throw`/`continue`/ `break`). |
-| `ShortCircuitStatement` | A short-circuit operator standing as a whole statement — `$node->isBuilt() && $node->built()->forget();`. |
-| `TernaryStatement` | A ternary standing as a whole statement — `$this->holds($id) ? array_push(…) : $gone[] = $id;`. |
+| `CoalescedLoopSubject` | `foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard |
+| `DeepNesting` | `if` nested 3-deep (a pyramid — hoist guards / extract) |
+| `IfElseLadder` | if/elseif ladder of 4+ branches (should be match/dispatch) |
+| `InlineThrow` | `?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression) |
+| `LoopInvertedGuard` | Loop body (multi-statement) wrapped in an `if` instead of `continue` guard |
+| `NestedTernary` | Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow) |
+| `NonCountingFor` | A `for` loop that looks like it's counting, but its step actually assigns the next item instead of incrementing a counter. |
+| `RedundantElse` | `else` after an `if` branch that already returns/throws (redundant) |
+| `ShortCircuitStatement` | a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise |
+| `TernaryStatement` | a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value |
 
 #### `backend/method-mood`
 
 | Sin | What it flags |
 |---|---|
-| `BareStatePredicate` | A `bool` about the object's OWN state, named as a bare verb — `binds()` where `isBound()` belongs. |
-| `NarratedCommand` | A command whose name narrates instead of ordering — `hides()` where `hide()` belongs. |
+| `BareStatePredicate` | A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs |
+| `NarratedCommand` | A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one |
 
 #### `backend/pass-the-object`
 
 | Sin | What it flags |
 |---|---|
-| `ComputedBooleanArgument` | A chooser taking only bool(s) that every caller computes off the SAME object — `CornerInset::of($editor->inZenMode() \|\| $editor->hasPanelOpen())`. |
-| `ConvertedArgument` | Flags a parameter declared in the wrong currency: the caller holds a value, converts it into the form the callee wants, and passes the conversion — `Raises::of(ClassAlias::of($interaction), …)`. |
-| `DerivedArgument` | Flags a call site that hands over a PROJECTION of a value rather than the value itself, where the callee could have derived it — `persist($request, $request->getShopChannelId())` wanted only `$request`. |
-| `ParamResolvedFromParam` | Detects methods unpacking a target from a container parameter; pass the resolved object, not the container plus a key. |
+| `ComputedBooleanArgument` | A parameter that's just true/false, computed by every caller from the same object it could be given instead. |
+| `ConvertedArgument` | A parameter typed as the already-converted form instead of the raw value, so every call site repeats the same conversion before calling it (e.g. `Raises::of(ClassAlias::of($interaction), …)`). |
+| `DerivedArgument` | Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object. |
+| `ParamResolvedFromParam` | Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly. |
 
 #### `backend/repeated-call-helper`
 
 | Sin | What it flags |
 |---|---|
-| `RepeatedGuard` | Flags a compound boolean guard (≥2 substantive conjuncts, at least one NOT a bare `instanceof` — pure-type chains are the repeated-type-guard's domain) that recurs in ≥2 places. |
-| `RepeatedNamedCall` | Flags a `with`-style (variadic-parameter) method — `copyWith(mixed ...$changes)` — called with the SAME named argument, carrying construction boilerplate, at $threshold+ sites that resolve to the SAME method (grouped by its declaring class, so inherited calls on subclasses of one base collapse into one group and unrelated classes stay separate). |
-| `RepeatedTypeGuard` | Flags a multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) that recurs VERBATIM in ≥2 places — a check copied instead of named. |
+| `RepeatedGuard` | The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name |
+| `RepeatedNamedCall` | The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type |
+| `RepeatedTypeGuard` | The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named |
 
 #### `backend/role-vocabulary`
 
 | Sin | What it flags |
 |---|---|
-| `NullableRegistryLookup` | Detects registries returning null on miss (`$this->items[$key] ?? null`) instead of throwing. |
+| `NullableRegistryLookup` | A keyed-store `get()` that returns `null` on a miss (should resolve-or-throw) |
 
 #### `backend/tell-dont-ask`
 
 | Sin | What it flags |
 |---|---|
-| `FeatureEnvy` | Exiled behaviour (feature envy) — a method that reaches THROUGH one other owned object's structure, iterating its collection, to do work that belongs ON that object (`$node->edges()`, not `EdgeDetector::detect($node)`). |
-| `KeyedLookupEnvy` | Feature envy through an indirect lookup — a method that uses an owned object's identity as a KEY to fetch data about it through a collaborator, then reads a fact back (`$this->registry->get($node->key)->reservedOutputNames`). |
-| `TypeSwitch` | A run of `instanceof` tests on the same subject, each deciding a different branch — the caller asking a value what it IS so it can decide what to do, when the value could simply be told. |
+| `FeatureEnvy` | Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object |
+| `KeyedLookupEnvy` | Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator |
+| `TypeSwitch` | two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do |
 
 #### `backend/templates`
 
 | Sin | What it flags |
 |---|---|
-| `AssembledTemplate` | Detects a fixed multi-line template built as an array of line fragments and joined with a newline. |
+| `AssembledTemplate` | A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it |
 
 #### `backend/type-honesty`
 
 | Sin | What it flags |
 |---|---|
-| `MaskedInvariant` | `$this->scratch?->call() ?? false` — defaulting a reach into the object's own TRANSIENT nullable state. |
-| `PhantomNullable` | A field typed `?T` whose value is always consumed as present (never guarded) per the ValueFlow provenance graph. |
-| `RedundantArrowReturnType` | An arrow function carrying a return type its own expression already proves — `fn (): string => $this->name` where `$name` IS a `string`. |
-| `ScratchStateRestore` | A method that SAVES one of its own properties to a local and RESTORES it afterwards — `$prev = $this->scope; … $this->scope = $prev;`. |
-| `PlaceholderFilledData` | A Data construction handing `''` to a slot typed as a required, non-nullable `string` — the envelope's TYPES stay honest while its VALUES are manufactured. |
-| `UselessPropertyHook` | A `get` hook whose body references no `$this` (and no `parent::`) — it computes nothing from the object, so the property is stored, not derived; the hook syntax is a lie usually copied from an interface's `{ get; }` (which a plain property satisfies). |
+| `MaskedInvariant` | Masked invariant — an own field read as `?->… ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible "not set yet". |
+| `PhantomNullable` | Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens |
+| `RedundantArrowReturnType` | An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property |
+| `ScratchStateRestore` | Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input |
+| `PlaceholderFilledData` | A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none |
+| `UselessPropertyHook` | A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax |
 
 #### `backend/value-objects`
 
 | Sin | What it flags |
 |---|---|
-| `ArrayBag` | An `array` read by string-literal keys — a structured bag that should be a typed value object. |
-| `ArrayReturnBag` | Detects multi-field string-keyed array returns (bags for value objects). |
-| `CoupledFields` | A class's own VALUE fields that are really ONE object. |
-| `DataClump` | The same three-or-more value parameters (`string $shopId, string $userId, string $channelId`) threaded through two-or-more signatures in different classes. |
-| `HandRolledWither` | A wither that rebuilds its object by re-spelling the WHOLE constructor field list (`return new self($this->a, $this->b, $changed, $this->d);`) instead of saying only what changes. |
-| `MutableValueObject` | A VALUE that can change after it is built. |
-| `PositionalTupleReturn` | Detects positional tuples — keyless arrays without types or names that callers must destructure by position. |
-| `RawDecodedArrayReturn` | Detects raw `json_decode(...)` arrays returned from boundaries. |
-| `FlatFieldCluster` | Flags a `#[TypeScript]` `Data` that spreads a value object flat across sibling scalar fields sharing a camelCase prefix — `wireType`/`wireLabel` that should be `wire: Wire{type, label}` — WHEN a small value object named for that prefix, whose fields ARE the flat remainders, already exists. |
+| `ArrayBag` | String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined. |
+| `ArrayReturnBag` | Returning a multi-field string-keyed array literal (a bag that should be a value object) |
+| `CoupledFields` | A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object. |
+| `DataClump` | The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object) |
+| `HandRolledWither` | A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class. |
+| `MutableValueObject` | A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing. |
+| `PositionalTupleReturn` | Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position |
+| `RawDecodedArrayReturn` | Returning a raw decoded boundary array (`json_decode(...)`) untyped |
+| `FlatFieldCluster` | A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`. |
 
 #### `backend/concurrent-state`
 
 | Sin | What it flags |
 |---|---|
-| `ConcurrentSubclass` | A class that `extends` the `jessegall/concurrent` package's `Concurrent` proxy — inheriting the thread-safe shared-state wrapper instead of composing it. |
+| `ConcurrentSubclass` | Class `extends Concurrent` instead of composing `Concurrent<self>` |
 
 #### `backend/laravel-idioms`
 
 | Sin | What it flags |
 |---|---|
-| `ConfigRead` | Reading configuration with `config(...)` inside a class instead of injecting a typed config object. |
-| `ContainerReach` | Reaching into the container with `app()`/`resolve()` from a class the container resolves — the dependency belongs in the constructor. |
-| `DeadConfigKey` | A key declared in `config/*.php` that nothing in the codebase names. |
-| `DeadEventWiring` | An `Event::listen(X::class, …)` whose event class nothing can fire: X is never constructed and never dispatched statically. |
-| `DuplicatedConfigDefault` | A read of a config key that supplies its OWN fallback while the config file already states one — `intOr('shop.realtime.port', 8086)` against `'port' => env('PORT', 8086)`. |
-| `FacadeCall` | Detects Laravel facade calls that hide dependencies; inject the underlying contract instead. |
-| `MassUpdateAtCallSite` | A mass `->update([...])` on an Eloquent model at a call site — an untyped array of attributes smuggling a mutation past the model's own methods. |
-| `ModelMutationAtCallSite` | Setting an Eloquent model's properties at a call site and then `->save()`-ing it — the mutation belongs behind an intention-revealing method on the model (`$order->markPaid()`), not smeared across the caller. |
-| `OrphanedBinding` | A `bind`/`singleton`/`scoped`/`instance` registration whose abstract nothing outside the registration ever names — no type-hint, no `app()`/`make()`, no mention at all. |
-| `RawRequestInput` | An untyped read off a Laravel request — `->input(...)`, `->get(...)`, `->query(...)`, `->post(...)` on a `Request`/`FormRequest`/MCP request. |
-| `RequestAccessorRecast` | A typed request accessor immediately re-flattened to a bare string — `$request->string($k)->toString()` or `(string) $request->string($k)`. |
+| `ConfigRead` | `config('…')` read inside a class |
+| `ContainerReach` | `app()`/`resolve()` reach inside a container-resolved class |
+| `DeadConfigKey` | A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt |
+| `DeadEventWiring` | An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring |
+| `DuplicatedConfigDefault` | A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently |
+| `FacadeCall` | Laravel facade call (`Cache::`, `Log::`, `Mail::` …) |
+| `MassUpdateAtCallSite` | Bare `$model->update([...])` mass-array update at a call site |
+| `ModelMutationAtCallSite` | Set-property-then-`save()` at a call site (should be an intention method) |
+| `OrphanedBinding` | A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor |
+| `RawRequestInput` | Raw `->input()/->get()/->query()/->post()` on a Request |
+| `RequestAccessorRecast` | Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class |
 
 #### `backend/page-objects`
 
 | Sin | What it flags |
 |---|---|
-| `ConstructorOrchestration` | A page object imperatively filling a public slot in its constructor. |
-| `InjectedServiceNotHidden` | Detects injected services in public properties without #[Hidden] on page objects; non-public properties are exempt. |
-| `ManualOutputTransform` | Flags a `Data` slot that hand-flattens one value object into a wire array — a getter hook, a `#[Computed]` method, or a constructor assignment — where a `#[WithTransformer]` should own the shape. |
-| `PageObjectMissingTypeScript` | Flags a page object — a `Data` that composes multiple nested `Data` AND travels back in a response — carrying no `#[TypeScript]`. |
-| `ServiceLocationInPageObject` | Detects page objects using service location (`app()`, `resolve()`) instead of injecting via `#[FromContainer]` attributes. |
-| `TransformerWithoutTsType` | Flags a custom `#[WithTransformer]` on a `Data` property with no paired `#[TypeScriptType]` / `#[LiteralTypeScriptType]`, so the generated TS keeps the PHP type while the wire carries the transformed shape. |
+| `ConstructorOrchestration` | A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place |
+| `InjectedServiceNotHidden` | A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type |
+| `ManualOutputTransform` | A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape |
+| `PageObjectMissingTypeScript` | A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked |
+| `ServiceLocationInPageObject` | A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]` |
+| `TransformerWithoutTsType` | A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type |
 
 #### `backend/route-actions`
 
 | Sin | What it flags |
 |---|---|
-| `BoundaryDuplicatedOperation` | Two entry points on DIFFERENT kinds of boundary — a console command and an MCP tool, a controller and a command — performing the same domain calls. |
-| `DanglingRouteName` | A `route('x')` / `to_route('x')` lookup whose name no registration mints. |
-| `DuplicateRouteAction` | Detects duplicate thin delegations to the same service across ≥2 controllers. |
-| `DuplicateRoute` | Detects two-or-more routes with the same verb+action bound to different URLs. |
-| `RouteDelegatesToController` | Detects a route action that thin-wraps another route action — a controller pass-through that creates redundant HTTP entry points. |
+| `BoundaryDuplicatedOperation` | The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift |
+| `DanglingRouteName` | A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500 |
+| `DuplicateRouteAction` | Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice |
+| `DuplicateRoute` | Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt) |
+| `RouteDelegatesToController` | A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one |
 
 #### `backend/spatie-data`
 
 | Sin | What it flags |
 |---|---|
-| `AllNullableData` | Detects Spatie Data classes where every field is nullable; make required fields non-nullable so `from()` fails on a real miss. |
-| `AllOptionalData` | Detects a `Data` class where EVERY promoted property is `T\|Optional` — the all-optional sibling of the all-nullable "god" DTO. |
-| `DataCollectionType` | Flags a `Data` property typed as `DataCollection` — it must be `array` (preferred) or `Collection` with `#[DataCollectionOf(X)]`. |
-| `DataMethodHintCollision` | A Spatie `Data` class with a `@method` docblock tag that re-declares a method the class ACTUALLY has, colliding with it (`@method static static fromCredential(...)` over a real `fromCredential()`). |
-| `HookMissingComputed` | Flags a get-only property hook on a `Data` class that lacks `#[Computed]`. |
-| `ManualHydrationLoop` | `<Data>::from(...)` called per item of a collection — inside a `foreach`/`for`/ `while` loop, or as an `array_map` callback. |
-| `ManualInputCast` | Flags a `Data` value-object property that is hand-built at EVERY `::from()` site (via the whole-program DataConstructions index), where a `#[WithCast]` / `Castable` should own the mapping once. |
-| `NestedTypeMissingTypeScript` | Flags a property on a `#[TypeScript]` Data whose nested Data/backed-enum type itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated frontend contract. |
-| `NewDataObject` | Detects `new Data(...)` instead of `::from(...)` — skips casts, name maps, nested hydration, and factories. |
-| `NonFinalData` | Detects non-final Spatie Data classes (DTOs are values, not bases). |
-| `NullToOptionalMap` | Flags a hand-rolled null→`Optional` map — an "absent" Optional (`new Optional` OR the preferred `Optional::create()`) sitting as a ternary fallback (`$x === null ? Optional::create() : Foo::from($x)`) or the right of a `??` (`expr() ?? Optional::create()`). |
-| `NullableWireObject` | Flags a nullable nested-object field (`T \| null`, T a `Data` subclass or enum) on a `#[TypeScript]` Data class, where `T \| Optional` belongs: on the wire `?T = null` ships `"field": null`, whereas `Optional` omits it — what the frontend's optional-chaining reads for "absent". |
-| `PreferOptionalCreate` | Flags a raw `new Optional` in a runtime expression and prefers Spatie's built-in `Optional::create()` factory. |
+| `AllNullableData` | All-nullable "god" DTO — every field `?T`/defaulted (type doesn't tell the truth) |
+| `AllOptionalData` | Every field of a `Data` object is `T\|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used |
+| `DataCollectionType` | A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration |
+| `DataMethodHintCollision` | `@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`) |
+| `HookMissingComputed` | A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it |
+| `ManualHydrationLoop` | Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()` |
+| `ManualInputCast` | A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once |
+| `NestedTypeMissingTypeScript` | A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it) |
+| `NewDataObject` | `new <Data subclass>` instead of `::from()` / a `fromX()` factory |
+| `NonFinalData` | Data class not `final` / props not `readonly` promoted |
+| `NullToOptionalMap` | A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T\|Optional` slot needs) |
+| `NullableWireObject` | A nested object on a `#[TypeScript]` Data is typed `T \| null` — it ships `null` on the wire where `T \| Optional` would OMIT it (what the frontend's `x?.` reads for "absent") |
+| `PreferOptionalCreate` | A raw `new Optional` is constructed in a runtime expression where Spatie's built-in `Optional::create()` factory reads clearer |
 
 #### `backend/spatie-data-hydration`
 
 | Sin | What it flags |
 |---|---|
-| `DataToArrayRoundtrip` | Flags `X::from(...)->toArray()` whose array result sits in a `::from` slot typed `X` (a nested `Data` or a `#[DataCollectionOf(X)]` element) that re-hydrates it — a build → array → build round-trip. |
-| `DerivedCollectionCast` | Flags `array_map(E::for(...), $xs)` filling a `#[DataCollectionOf(E)]` slot — a per-item DERIVATION the call site does by hand, where a `#[WithCast]`/`IterableItemCast` on the property should own it. |
-| `HandKeyRemap` | Flags `SomeData::from(['camelKey' => $src['snake_key'], …])` — a hand-written snake→camel key translation off one source array that a class-level `#[MapInputName(SnakeCaseMapper::class)]` + `::from($src)` owns once. |
-| `RedundantEnumUnwrap` | Flags an enum destructured to `->value` inside a `Data::from([...])` slot whose property is typed as that same enum (`'status' => $order->status->value`). |
-| `RedundantNativeCast` | Flags `Enum::from($x)` / `new DateTime($x)` / `Carbon::parse($x)` sitting in a `Data::from([...])` slot typed as that enum or a `DateTimeInterface` — the value Spatie auto-casts from the raw scalar, so the construction is ceremony. |
-| `RedundantNestedFrom` | Flags `X::from([array literal])` sitting in a parent `SomeData::from([...])` where the destination slot — a nested `Data` property or a `#[DataCollectionOf(X)]` element — auto-hydrates the array itself, so the wrapper is ceremony. |
+| `DataToArrayRoundtrip` | A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build |
+| `DerivedCollectionCast` | A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation |
+| `HandKeyRemap` | A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]` |
+| `RedundantEnumUnwrap` | An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum |
+| `RedundantNativeCast` | An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar |
+| `RedundantNestedFrom` | A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array |
 
 ### Csharp
 
@@ -246,140 +246,140 @@ _255 sins across 63 skills._
 
 | Sin | What it flags |
 |---|---|
-| `BlankStringDefault` | A `string` defaulted to `""` and then asked whether it is blank — absence spelled as a blank in a type that says the value is always there. |
-| `CancelledCoalesce` | A fallback compared against the value it falls back to — the C# twin of the PHP cancelled-coalesce and the Python cancelled-fallback rules. |
-| `DeNulledFinder` | A finder returning a nullable object whose every caller, two at least, asserts it is there — the twin of the backend's de-nulled-finder rule. |
-| `InventedDefault` | A missing value papered over with an invented `""`, `0` or `false` — the C# twin of Python's invented-default rule, in its hardened shape. |
-| `NullForgiven` | The null-forgiving `!` applied to what is declared nullable — a `T?` field, property, local, parameter or return, as the compiler resolves it. |
+| `BlankStringDefault` | a `string` parameter or property defaulted to `""` and then checked with `== ""` or `string.IsNullOrEmpty` — the blank is being used to mean "missing" |
+| `CancelledCoalesce` | a `??` fallback compared against the same value it falls back to — `(name ?? "") != ""` — so "missing" and "empty" end up in one branch without saying so |
+| `DeNulledFinder` | a finder returning a nullable object whose every caller asserts it is there — `Find(id)!`, `Find(id) ?? throw …` — a miss the finder should have refused itself |
+| `InventedDefault` | `F(x ?? "")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data |
+| `NullForgiven` | The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding |
 
 #### `csharp/behaviour-per-method`
 
 | Sin | What it flags |
 |---|---|
-| `FlagArgument` | A method whose whole body is a two-way branch on one of its `bool` parameters — the C# twin of the PHP and Python flag-argument rules. |
+| `FlagArgument` | a method whose whole body branches on a `bool` parameter — `if (compact) … else …` — two methods sharing one name |
 
 #### `csharp/class-layout`
 
 | Sin | What it flags |
 |---|---|
-| `MemberAfterMethod` | State declared below a constructor or a method — the C# twin of the PHP and Python member-after-method rules. |
-| `MemberOutOfOrder` | A constant declared below a type's per-object state — the C# twin of the PHP and Python member-out-of-order rules. |
+| `MemberAfterMethod` | a field, constant or stored property declared below a constructor or a method — the type's state hidden among its behaviour |
+| `MemberOutOfOrder` | a `const` or `static readonly` value declared below a field or a stored property — the top of the type read in no particular order |
 
 #### `csharp/dependency-direction`
 
 | Sin | What it flags |
 |---|---|
-| `NamespaceCycle` | Two of the project's namespaces that each use the other, found on the thinner direction — the twin of the backend's and Python's namespace-cycle rules. |
-| `NamespaceDependency` | A reference out of a declared layer into a namespace it did not declare it may use — the twin of the backend's and Python's namespace-dependency rules, over the namespaces the compiler resolved. |
+| `NamespaceCycle` | two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names |
+| `NamespaceDependency` | a reference out of a declared layer into a namespace that layer did not declare it may use |
 
 #### `csharp/documentation`
 
 | Sin | What it flags |
 |---|---|
-| `ArchaeologyComment` | A comment narrating the code's history — the C# twin of the PHP and Python archaeology-comment rules, read by the one shared reading of prose, narratesHistory. |
-| `BloatedDocblock` | A type's doc comment running to two or more paragraphs — the C# twin of the PHP and Python bloated-docblock rules. |
-| `CeremonyDocblock` | A doc comment that only repeats the signature it sits on — the C# twin of the PHP and Python ceremony-docblock rules. |
-| `DanglingDocReference` | A doc comment naming, in a `cref`, a type or member the project does not declare — the C# twin of the PHP and Python dangling-doc-reference rules. |
-| `NegativeSpaceComment` | A comment defending the code against a strawman — the C# twin of the PHP and Python negative-space-comment rules. |
-| `RestatedComment` | A comment narrating the statement below it — every word of it already spelled by the code. |
+| `ArchaeologyComment` | a comment that tells the code's past — `// formerly lived in CheckoutService`, `// refactored to use the cache` — describing a version nobody is reading |
+| `BloatedDocblock` | a type whose doc comment runs to two or more paragraphs — usually a sign the type does too much |
+| `CeremonyDocblock` | a doc comment whose every tag is empty or only repeats the signature — `<param name="order">The order.</param>`, an empty `<returns>` |
+| `DanglingDocReference` | a `<see cref>` that resolves to nothing from where it is written — a name the project no longer declares, or one spelled so it does not reach it |
+| `NegativeSpaceComment` | a comment defending the code against a reading nobody made — `// not magic, just a day`, `// deliberately not sorted` — saying what it is not instead of what it is |
+| `RestatedComment` | a comment above a statement whose every word the statement already spells — `// set the total to the order total` over `var total = order.Total;` |
 
 #### `csharp/duplication`
 
 | Sin | What it flags |
 |---|---|
-| `DuplicateMethod` | Two-or-more C# members with one body — methods, accessors and local functions alike — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not. |
-| `NearDuplicateMethod` | Two-or-more C# members with one control-flow skeleton that differ only in their local names or their string, number and character literals — a type-2 clone, one method waiting for a parameter. |
+| `DuplicateMethod` | Copy-pasted code — two+ C# methods, accessors or local functions with an identical body, formatting, comments and attributes aside |
+| `NearDuplicateMethod` | A near-copy — two+ C# methods, accessors or local functions with one control-flow skeleton that differ only in their local names or the literals they use (a key, a route, a message) |
 
 #### `csharp/enums`
 
 | Sin | What it flags |
 |---|---|
-| `ConstClassEnum` | A class of nothing but `const` strings or numbers, one of which is compared as a case somewhere — the C# twin of the PHP const-class-enum rule. |
-| `EnumCaseOrChain` | Two or more cases of one enum the codebase declares, tested together by `\|\|` or an `is … or …` pattern — the C# twin of the PHP enum-case-or-chain rule. |
-| `InArrayMirrorsEnum` | A membership test against strings written right there — `Contains` over an inline list, or an `is … or …` pattern — that all name members of one enum the codebase declares: the C# twin of the PHP in-array-mirrors-enum rule. |
-| `MatchDefaultReturnsNull` | A switch over an enum the codebase declares that names every member, its fallback answering nothing — the C# twin of the PHP match-default-returns-null rule. |
-| `StringMirrorsEnum` | A `switch` or an `if` ladder dispatching on two or more strings that all name members of one enum the codebase declares — the C# twin of the backend's string-match-mirrors-enum rule. |
-| `UnnamedVocabularyLiteral` | A raw string where the codebase elsewhere spells the same parameter by name — the twin of the backend's and Python's unnamed-vocabulary-literal rules, decided by constantNaming. |
+| `ConstClassEnum` | a class that holds nothing but `const` strings or numbers — a closed set of values written as constants instead of an `enum` |
+| `EnumCaseOrChain` | `s == Status.Paid \|\| s == Status.Refunded` (or `s is Status.Paid or Status.Refunded`) — a group of enum cases tested by hand at the call site |
+| `InArrayMirrorsEnum` | `new[] { "paid", "refunded" }.Contains(status)` or `status is "paid" or "refunded"` — a list of strings that repeats the members of an enum the code already has |
+| `MatchDefaultReturnsNull` | a `switch` that names every member of an enum, then answers `null`, `default` or `false` in its `_` arm — the one value that arm can see is a bug, and it is answered as if it were fine |
+| `StringMirrorsEnum` | A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text |
+| `UnnamedVocabularyLiteral` | a raw string handed to a parameter the codebase elsewhere fills from a named constant — `Expect("{")` beside `Expect(Token.Colon)`, where `Token.BraceOpen` already names it |
 
 #### `csharp/exceptions`
 
 | Sin | What it flags |
 |---|---|
-| `GenericThrow` | An exception that names no failure thrown with its description written at the throw — the C# twin of the backend's generic-exception and message-at-throw rules and Python's message-string raise. |
-| `SwallowedException` | A `catch` that catches everything and makes it vanish — the C# twin of the backend's and Python's swallowed-exception rules. |
-| `WrappingWithoutCause` | A new exception thrown from a catch without the caught one as its inner exception — the C# twin of the PHP and Python wrapping-without-cause rules. |
+| `GenericThrow` | `throw new Exception/InvalidOperationException("…")` — a failure that names nothing, described in prose at the throw site |
+| `SwallowedException` | A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish |
+| `WrappingWithoutCause` | a `catch` that throws a new exception without passing the caught one as its inner exception, so the original stack trace is lost |
 
 #### `csharp/fix-at-the-source`
 
 | Sin | What it flags |
 |---|---|
-| `ConstructorSideEffect` | A constructor that tells a collaborator it was handed to act and ignores the answer — the C# twin of the Python constructor-side-effect rule. |
-| `MutableStaticState` | A static field written from a method — the C# twin of the Python mutable-static-state rule. |
+| `ConstructorSideEffect` | a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it |
+| `MutableStaticState` | a `static` field that methods write to — state no instance owns, changed by whichever code ran last |
 
 #### `csharp/flow`
 
 | Sin | What it flags |
 |---|---|
-| `CoalescedLoopSubject` | A loop over a collection defaulted to empty in its own header — the C# twin of the PHP and Python coalesced-loop-subject rules. |
-| `DeepNesting` | An `if`, loop or `switch` that opens a fourth level of choices inside one C# method — the arrow the backend's and Python's nesting rules find, counted over every kind of choice C# writes. |
-| `InlineThrow` | A `?? throw` buried in a call's argument or receiver — the C# twin of the PHP inline-throw rule. |
-| `LoopWrappedInIf` | A loop whose whole body is one `if` around real work — the C# twin of the backend's and Python's loop-wrapped-in-if rules. |
-| `NestedTernary` | A conditional expression nested in another's branch — the C# twin of the PHP nested-ternary rule. |
-| `NonCountingFor` | A `for` whose step assigns the next item rather than moving a counter — the C# twin of the PHP non-counting-for rule. |
-| `RedundantElse` | An `else` after an `if` branch that already left — the twin of the backend's and Python's redundant-else rules. |
-| `SubjectLadder` | An `if`/`else if` ladder comparing one subject with constant after constant — the C# twin of the backend's and Python's ladder rules. |
+| `CoalescedLoopSubject` | a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header |
+| `DeepNesting` | An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops |
+| `InlineThrow` | a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work |
+| `LoopWrappedInIf` | A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition |
+| `NestedTernary` | a `?:` with another `?:` as one of its branches — several decisions packed into one expression |
+| `NonCountingFor` | a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count |
+| `RedundantElse` | An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing |
+| `SubjectLadder` | An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder. |
 
 #### `csharp/method-mood`
 
 | Sin | What it flags |
 |---|---|
-| `BareStatePredicate` | A `bool` about the object alone, named as a third-person claim — the C# twin of the PHP and Python bare-state-predicate rules. |
+| `BareStatePredicate` | a `bool` about the object's own state named as a claim — `Binds()`, `Spins` — where a question belongs |
 
 #### `csharp/pass-the-object`
 
 | Sin | What it flags |
 |---|---|
-| `ConvertedArgument` | A scalar parameter declared in the wrong currency — the twin of the backend's and Python's converted-argument rules. |
-| `DerivedArgument` | A call that hands over a projection of a value beside the value itself, or the value in pieces — the twin of the backend's and Python's derived-argument rules. |
-| `ParamResolvedFromParam` | A method that unpacks its target from a container parameter — the twin of the backend's and Python's param-resolved-from-param rules: it should take the resolved object, not the container plus a key. |
+| `ConvertedArgument` | a scalar parameter its callers keep filling with the same conversion — `ReceiptFor(order.Id.ToString())` call after call — because it asks for the converted form instead of the value |
+| `DerivedArgument` | a call that hands over an object and a projection of it — `Persist(request, request.ChannelId)` — or an object in three pieces, where the method could read them itself |
+| `ParamResolvedFromParam` | a method that takes a container and a key and first resolves one against the other — `Rename(Workflow workflow, string nodeId)` doing `workflow.Graph.Node(nodeId)` — when it only wanted what the key names |
 
 #### `csharp/repeated-call-helper`
 
 | Sin | What it flags |
 |---|---|
-| `RepeatedGuard` | The same compound condition about an object's data asked at two or more sites — the C# twin of the PHP and Python repeated-guard rules. |
-| `RepeatedNamedCall` | The same `with` copy of one record — the same members set to the same constants — at two or more sites: the C# twin of the PHP and Python repeated-named-call rules, whose copy-with-changes call C# writes as `with`. |
-| `RepeatedTypeGuard` | The same chain of two or more type checks at two or more sites — the C# twin of the PHP and Python repeated-type-guard rules. |
+| `RepeatedGuard` | the same compound condition — `order.Paid && !order.Cancelled` — written at two or more sites, a question with no name |
+| `RepeatedNamedCall` | the same `with` copy — `order with { Status = OrderStatus.Shipped }` — written at two or more sites, an operation the record never named |
+| `RepeatedTypeGuard` | the same chain of type checks — `node is Invocation call && call.Target is MemberAccess` — written at two or more sites, a shape with no name |
 
 #### `csharp/tell-dont-ask`
 
 | Sin | What it flags |
 |---|---|
-| `FeatureEnvy` | Exiled behaviour — the twin of the backend's and Python's feature-envy rules, decided by enviedParameter. |
-| `TypeSwitch` | A switch whose cases ask which of two or more of the codebase's own types a value is — the C# twin of the PHP and Python type-switch rules. |
+| `FeatureEnvy` | a method that loops another object's collection or writes its members, reaching into it more than into its own state — behaviour exiled from the object it works on |
+| `TypeSwitch` | `shape switch { Circle c => …, Square s => … }` — asking which of your own types a value is, to decide what to do with it |
 
 #### `csharp/templates`
 
 | Sin | What it flags |
 |---|---|
-| `AssembledTemplate` | Three or more lines written right there, two of them fixed text, joined with a newline — or written one `AppendLine` at a time on one builder, C#'s own way of taking a template apart: the C# twin of the PHP and Python assembled-template rules. |
+| `AssembledTemplate` | `string.Join("\n", new[] { "public class X", "{", "}" })` or `sb.AppendLine("…")` line after line — a multi-line text built from line fragments, so its shape cannot be seen in the source |
 
 #### `csharp/type-honesty`
 
 | Sin | What it flags |
 |---|---|
-| `PlaceholderFilledData` | A record the codebase declares, built with a blank string in a required `string` slot — the C# twin of the PHP and Python placeholder-filled-data rules. |
+| `PlaceholderFilledData` | `new Card(title, "")` — a record's required `string` filled with a blank so the record can be built, hiding a missing value no type check can see |
 
 #### `csharp/value-objects`
 
 | Sin | What it flags |
 |---|---|
-| `ArrayReturnBag` | A dictionary built with two or more fixed string keys, handed back by a member — the C# twin of the PHP array-return-bag rule. |
-| `CoupledFields` | A type whose own value fields are really one object — the twin of the backend's and Python's coupled-fields rules, decided by holdsCoupledFields. |
-| `DataClump` | The same three or more value parameters — by type and name — declared by members of two or more types: one clump of data threaded through the code instead of named. |
-| `DictionaryBag` | A string-keyed dictionary or JSON object read by keys written in the source — the C# twin of Python's dict-bag rule, and like it, found both where the key is read and where a lookup helper is handed the key — a dictionary the reading code owns, a parameter or a local. |
-| `MutableValueObject` | A record that changes after construction — a `set` accessor on it, or a write to its own state outside a constructor — the C# twin of the PHP mutable-value-object rule. |
-| `PositionalTupleReturn` | A member whose declared result is a tuple with unnamed slots — the C# twin of the PHP and Python positional-tuple-return rules. |
+| `ArrayReturnBag` | a method that returns `new Dictionary<string, object> { ["sku"] = …, ["qty"] = … }` — a record with fixed fields, handed back as a dictionary |
+| `CoupledFields` | a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields |
+| `DataClump` | The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own. |
+| `DictionaryBag` | A string-keyed dictionary or JSON object read by keys written in the source — `row["sku"]`, `json.GetProperty("name")` — a record nobody declared |
+| `MutableValueObject` | a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things |
+| `PositionalTupleReturn` | a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices |
 
 ### Frontend
 
@@ -387,28 +387,28 @@ _255 sins across 63 skills._
 
 | Sin | What it flags |
 |---|---|
-| `CompoundInlineComponent` | Detects compound UI primitives assembled inline (component root with ≥2 descendants sharing a prefix tag). |
-| `DeepDataReach` | Detects clusters of deep data reaches (e.g., `order.customer.name`, `order.customer.email`) sharing one nested object. |
-| `DeepNested` | A template nested far too deep; identifies the natural extraction boundary by climbing from the deep element up the single-child wrapper stack for a coherent unit. |
-| `DuplicateElement` | Detects identical template blocks (structural comparison, blind to formatting); only substantial blocks and the largest duplicate are flagged. |
-| `NearDuplicateElement` | Template blocks with one SKELETON that bind different data — the same tags, attribute names and nesting, with the values and text left out — within a template, across components, or as two components' whole templates. |
-| `PropDrilling` | Detects a prop threaded through ≥2 components unused. |
-| `PropMutation` | Detects component writing its own props (v-model or assignment); only bare prop writes are flagged, not shadowed locals. |
+| `CompoundInlineComponent` | A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component. |
+| `DeepDataReach` | A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop. |
+| `DeepNested` | Template markup nested far too deep — extract a subtree as its own component |
+| `DuplicateElement` | Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component |
+| `NearDuplicateElement` | Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates |
+| `PropDrilling` | A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further. |
+| `PropMutation` | A prop is written to — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op). |
 
 #### `frontend/vue-control-flow`
 
 | Sin | What it flags |
 |---|---|
-| `ControlFlowOnElement` | Detects structural directives (`v-if`/`v-else-if`/`v-else`/`v-for`) on real elements instead of `<template>` wrappers — mixes structure (what renders) with content. |
-| `IndexAsKey` | Detects `v-for` keyed by numeric index (`:key="index"`), which shifts when items insert/reorder, breaking Vue patching and state. |
-| `LoopWithCondition` | Detects `v-for` and `v-if`/`v-else-if` on the same element (Vue prioritizes if over for, causing correctness/performance issues). |
-| `SwitchCase` | Detects `v-if`/`v-else-if` chains testing the same value against different cases (switch as conditionals). |
+| `ControlFlowOnElement` | `v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>` |
+| `IndexAsKey` | `:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted |
+| `LoopWithCondition` | `v-for` and `v-if`/`v-else-if` on the same element — the condition is re-evaluated every iteration. |
+| `SwitchCase` | A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`) |
 
 #### `frontend/mirrored-server-type`
 
 | Sin | What it flags |
 |---|---|
-| `MirroredServerType` | Detects hand-written TypeScript types mirroring backend Spatie Data classes; the server should own the type and the frontend generate from it. |
+| `MirroredServerType` | A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes |
 
 ### Python
 
@@ -416,157 +416,157 @@ _255 sins across 63 skills._
 
 | Sin | What it flags |
 |---|---|
-| `BlankStringDefault` | A `str` parameter or field defaulting to the blank whose own scope then asks whether it is blank — the twin of the backend's BlankStringDefaultDetector. |
-| `CancelledFallback` | A default compared against itself — the twin of the backend's CancelledCoalesceDetector. |
-| `ConditionalSpread` | A conditional spread into an empty collection — the twin of the backend's ConditionalArraySpreadDetector. |
-| `InventedDefault` | `f(x or "")` — an empty scalar invented to fill an argument on absence. |
-| `NullableCallback` | A function taking a `None`-defaulted callable it then asks about — the twin of the backend's NullableCallbackDetector. |
+| `BlankStringDefault` | `x: str = ""` standing in for absence — then asked `x == ""`, `not x` or `if x:` in its own scope |
+| `CancelledFallback` | `(x or "") != ""` — a value defaulted to a blank only to be compared against that same blank, so a missing value and an empty one are treated the same without saying so. |
+| `ConditionalSpread` | `**({"k": v} if v else {})` / `*([x] if x else [])` — an entry is spread in only when present, using a conditional that turns absence into an empty collection. |
+| `InventedDefault` | `f(x or "")` — an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data |
+| `NullableCallback` | `cb: Callable \| None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op treated as if it might be missing. |
 
 #### `python/behaviour-per-method`
 
 | Sin | What it flags |
 |---|---|
-| `FlagArgument` | A function that is nothing but a choice on one of its own parameters — the twin of the backend's FlagArgumentDetector. |
+| `FlagArgument` | a function whose whole body branches on a `bool` parameter — or on whether an optional one was given — two functions sharing one name |
 
 #### `python/class-layout`
 
 | Sin | What it flags |
 |---|---|
-| `MemberAfterMethod` | Class-level state written below a method — the twin of the backend's MemberAfterMethodDetector. |
-| `MemberOutOfOrder` | A constant arriving below a field in a class's head — the twin of the backend's MemberOutOfOrderDetector. |
+| `MemberAfterMethod` | a constant, class attribute or field declared below a method — the class's state hidden among its behaviour |
+| `MemberOutOfOrder` | a constant declared below a field in the head of a class — the inventory read in an ad-hoc order |
 
 #### `python/dependency-direction`
 
 | Sin | What it flags |
 |---|---|
-| `NamespaceCycle` | Two packages importing each other — the twin of the backend's NamespaceCycleDetector. |
-| `NamespaceDependency` | An import out of a declared layer into a package it may not use — the twin of the backend's NamespaceDependencyDetector, over dotted package names. |
+| `NamespaceCycle` | two of the project's packages import each other — a cycle that makes them one package split under two names. |
+| `NamespaceDependency` | an import out of a declared layer into a package that layer did not declare it may use |
 
 #### `python/documentation`
 
 | Sin | What it flags |
 |---|---|
-| `ArchaeologyComment` | A comment or docstring about the code's past — the twin of the backend's ArchaeologyCommentDetector, reading the same phrases. |
-| `BloatedDocblock` | A class docstring that runs to an essay — the twin of the backend's BloatedDocblockDetector. |
-| `CeremonyDocblock` | A docstring that only repeats the annotations — the twin of the backend's CeremonyDocblockDetector. |
-| `DanglingDocReference` | A docstring cross-reference to a first-party name nothing declares — the twin of the backend's DanglingDocReferenceDetector. |
-| `NegativeSpaceComment` | A comment or docstring defending the code against a strawman — the twin of the backend's NegativeSpaceCommentDetector, reading the same phrases. |
-| `RestatedComment` | A comment that says nothing its statement does not — the twin of the backend's RestatedCommentDetector. |
+| `ArchaeologyComment` | a comment or docstring narrating the code's history — where it lived, what it replaced, what it no longer is |
+| `BloatedDocblock` | a class docstring of two or more paragraphs of prose — an essay that says the class does too much |
+| `CeremonyDocblock` | a docstring with no summary whose every entry restates the annotated signature — `order (Order):`, `:rtype: int` |
+| `DanglingDocReference` | a Sphinx cross-reference in a docstring (`:class:`shop.cart.Basket``) to a first-party name the codebase no longer declares |
+| `NegativeSpaceComment` | a comment or docstring defending the code against a misunderstanding nobody actually had — what it is not, rather than what it is. |
+| `RestatedComment` | a `#` comment that only narrates the statement below it — every word of it already spelled by the code |
 
 #### `python/duplication`
 
 | Sin | What it flags |
 |---|---|
-| `DuplicateFunction` | Two-or-more Python functions with one body — module functions and methods alike — compared by a formatting-blind fingerprint of the body alone, docstrings aside, so the copy that was renamed is caught with the one that was not. |
-| `NearDuplicateFunction` | Two-or-more Python functions with one control-flow skeleton that differ only in their local names or their string/number literals — a type-2 clone, one function waiting for a parameter. |
+| `DuplicateFunction` | Copy-pasted code — two+ Python functions or methods with an identical body, formatting, comments and docstrings aside |
+| `NearDuplicateFunction` | A near-copy — two+ Python functions or methods with one control-flow skeleton that differ only in their local names or the literals they use (a path, a key, a message) |
 
 #### `python/enums`
 
 | Sin | What it flags |
 |---|---|
-| `ConstantClassEnum` | A class of nothing but scalar constants — the twin of the backend's ConstClassEnumDetector. |
-| `EnumCaseOrChain` | An `or` chain testing one subject against several members of one enum the codebase declares — the twin of the backend's EnumCaseOrChainDetector. |
-| `EnumValueMatch` | A `match` over an enum's raw values at a call site — the twin of the backend's EnumValueMatchDetector. |
-| `InLiteralsMirrorsEnum` | An `in` test against literals that are all one declared enum's values — the twin of the backend's InArrayMirrorsEnumDetector. |
-| `MatchWildcardReturnsNone` | A `match` over an enum's members whose wildcard swallows the unhandled ones into nothing — the twin of the backend's MatchDefaultReturnsNullDetector. |
-| `StringMatchMirrorsEnum` | A `match` on loose strings that are one declared enum's values — the twin of the backend's StringMatchMirrorsEnumDetector. |
-| `UnnamedVocabularyLiteral` | A raw string where the codebase elsewhere spells the same parameter by name — the twin of the backend's UnnamedVocabularyLiteralDetector, decided by ConstantVocabulary. |
+| `ConstantClassEnum` | a class that is nothing but `PENDING = "pending"` constants — a closed set of values written out by hand instead of an `Enum` |
+| `EnumCaseOrChain` | `s == Status.PENDING or s == Status.LATE` — a group of an enum's members re-derived at the call site instead of named on the enum |
+| `EnumValueMatch` | `match status.value: case "paid": …` at a call site — the enum's raw values matched again where the enum could answer |
+| `InLiteralsMirrorsEnum` | `x in ("pending", "late")` whose literals are an existing enum's values — a group of its members spelled as raw strings at the call site |
+| `MatchWildcardReturnsNone` | a `match` over an enum's members whose `case _:` returns `None` — a member nobody handled answers nothing instead of failing |
+| `StringMatchMirrorsEnum` | `match raw: case "pending": …` whose cases are an existing enum's values — dispatching on loose strings the enum already seals |
+| `UnnamedVocabularyLiteral` | a raw string handed to a parameter the codebase elsewhere fills from a named constant — `expect("{")` beside `expect(Token.COLON)`, where `Token.BRACE_OPEN` already names it |
 
 #### `python/exceptions`
 
 | Sin | What it flags |
 |---|---|
-| `MessageStringRaise` | A builtin that names no failure raised with its description written at the raise — the Python twin of the backend's GenericExceptionDetector and MessageAtThrowDetector together. |
-| `RaiseWithoutCause` | A new exception raised from an `except` block without `from` — the twin of the backend's WrappingWithoutCauseDetector. |
-| `SwallowedException` | A handler that catches everything and makes it vanish — the Python twin of the backend's SwallowCatchDetector. |
+| `MessageStringRaise` | `raise Exception/RuntimeError("…")` — a failure that names nothing, described in prose at the raise site |
+| `RaiseWithoutCause` | `raise Other(...)` inside an `except` block with no `from` — the failure being handled left as an implicit context, never named as the cause |
+| `SwallowedException` | A bare `except:` or `except Exception` whose body only passes, continues or returns nothing — every failure, expected or not, made to vanish |
 
 #### `python/fix-at-the-source`
 
 | Sin | What it flags |
 |---|---|
-| `ConstructorSideEffect` | A class whose `__init__` acts on a collaborator and discards the result — the twin of the backend's ConstructorSideEffectDetector. |
-| `DivergentTwin` | A function that does the same job as another and strictly less of it — the twin of the backend's DivergentTwinDetector, read by the shared DivergentTwins over what each function reaches. |
-| `MutableStaticState` | A write to state no instance owns — the twin of the backend's MutableStaticStateDetector. |
+| `ConstructorSideEffect` | an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it. |
+| `DivergentTwin` | two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other. |
+| `MutableStaticState` | a `global` written from a function, or a class attribute set from a method — state no instance owns, changed by whoever ran last |
 
 #### `python/flow`
 
 | Sin | What it flags |
 |---|---|
-| `CoalescedLoopSubject` | A `for` that decides in its own header whether it was handed anything to walk — the twin of the backend's CoalescedLoopSubjectDetector. |
-| `ConditionalStatement` | A conditional expression standing as a whole statement, its value read by nothing — the twin of the backend's TernaryStatementDetector. |
-| `DeepNesting` | An `if`, loop or `match` that opens a fourth level of choices inside one function — the arrow the backend's DeepNestingDetector finds, counted over every kind of choice Python writes. |
-| `LoopWrappedInIf` | A loop whose whole body is one `if` around real work — the twin of the backend's LoopInvertedGuardDetector. |
-| `NestedConditional` | A conditional expression nested in another's branch, flagged once at its outermost — the twin of the backend's NestedTernaryDetector. |
-| `RedundantElse` | An `else:` after an `if` branch that already left — the twin of the backend's RedundantElseDetector. |
-| `ShortCircuitStatement` | An `and`/`or` standing as a whole statement, its value read by nothing — the twin of the backend's ShortCircuitStatementDetector. |
-| `SubjectLadder` | An `if`/`elif` chain testing one subject against constant after constant — the Python twin of the Vue SwitchCaseDetector, at the backend ladder's length: fewer rungs are an ordinary decision, not a dispatch. |
+| `CoalescedLoopSubject` | `for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard |
+| `ConditionalStatement` | a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an action, not a value. |
+| `DeepNesting` | An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops |
+| `LoopWrappedInIf` | A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition |
+| `NestedConditional` | `a if x else b if y else c` — a conditional expression inside another's branch, a branching decision folded into one line |
+| `RedundantElse` | An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing |
+| `ShortCircuitStatement` | a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is really acting as an `if`. |
+| `SubjectLadder` | An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant — a dispatch written as a ladder. |
 
 #### `python/method-mood`
 
 | Sin | What it flags |
 |---|---|
-| `BareStatePredicate` | A `bool` about the receiver named as a bare verb — the twin of the backend's BareStatePredicateDetector, over the same verb lexicon, read in snake_case. |
-| `NarratedCommand` | A command named in the third person — `def hides(self) -> None` — the twin of the backend's NarratedCommandDetector, over the same verb lexicon, read in snake_case. |
+| `BareStatePredicate` | a `bool` about the object's own state named as a bare verb — `binds()`, `spins` — where a question belongs |
+| `NarratedCommand` | a command named in the third person — `hides()`, `locks_for_night()` — where a call is an order, not a description of one |
 
 #### `python/pass-the-object`
 
 | Sin | What it flags |
 |---|---|
-| `ComputedBooleanArgument` | A method of bools every caller derives from one object — the twin of the backend's ComputedBooleanArgumentDetector. |
-| `ConvertedArgument` | A scalar parameter declared in the wrong currency — the twin of the backend's ConvertedArgumentDetector. |
-| `DerivedArgument` | A call that hands over a projection of a value beside the value itself, or the value in pieces — the twin of the backend's DerivedArgumentDetector. |
-| `ParamResolvedFromParam` | A function that unpacks its target from a container parameter — the twin of the backend's ParamResolvedFromParamDetector: it should take the resolved object, not the container plus a key. |
+| `ComputedBooleanArgument` | a method taking only bools that every caller computes from the same object — the decision re-derived at each call site |
+| `ConvertedArgument` | a scalar parameter its callers keep filling with the same conversion — `receipt_for(str(order.id))` call after call — because it asks for the converted form instead of the value |
+| `DerivedArgument` | a call that hands over an object and a projection of it — `persist(request, request.channel_id)` — or an object in three pieces, where the function could read them itself |
+| `ParamResolvedFromParam` | a function that takes a container and a key and first resolves one against the other — `def rename(workflow, node_id)` doing `workflow.graph.node(node_id)` — when it only wanted what the key names |
 
 #### `python/repeated-call-helper`
 
 | Sin | What it flags |
 |---|---|
-| `RepeatedGuard` | One compound condition written in two places — the twin of the backend's RepeatedGuardDetector. |
-| `RepeatedNamedCall` | One `**changes` function called with the same keyword, built the same way, at site after site — the twin of the backend's RepeatedNamedCallDetector. |
-| `RepeatedTypeGuard` | One `isinstance` narrowing written in two places — the twin of the backend's RepeatedTypeGuardDetector. |
+| `RepeatedGuard` | the same compound `and` condition recurs in 2+ places — it still counts even when reordered, or read through a local variable — and nobody has named it. |
+| `RepeatedNamedCall` | the same `**changes` call is built the same way with the same keyword at 2+ sites — an operation that has no name on the type it belongs to. |
+| `RepeatedTypeGuard` | the same multi-`isinstance` narrowing (`isinstance(x, A) and isinstance(x.y, B)`) is written in 2+ places — a check on a shape that nobody has named. |
 
 #### `python/role-vocabulary`
 
 | Sin | What it flags |
 |---|---|
-| `NullableRegistryLookup` | A store that returns `None` on a miss instead of raising — the twin of the backend's NullableRegistryLookupDetector: `.get(key)` on one of the object's own dict attributes, returned as it is. |
+| `NullableRegistryLookup` | a keyed store handing back `None` for a key it lacks — `return self._handlers.get(kind)` — so every caller decides what a miss means |
 
 #### `python/tell-dont-ask`
 
 | Sin | What it flags |
 |---|---|
-| `FeatureEnvy` | Exiled behaviour — the twin of the backend's FeatureEnvyDetector, decided by FeatureEnvy. |
-| `KeyedLookupEnvy` | Feature envy through a keyed lookup — the twin of the backend's KeyedLookupEnvyDetector, decided by LookupEnvy. |
-| `TypeSwitch` | An `isinstance` ladder over the codebase's own classes — the twin of the backend's TypeSwitchDetector. |
+| `FeatureEnvy` | a method that loops another object's collection or writes its fields, reaching into it more than into its own state — behaviour exiled from the object it works on |
+| `KeyedLookupEnvy` | a method that uses an object's key to fetch a fact about it through a collaborator — `self.registry.get(node.key).reserved` — treating the object as a key into its own data |
+| `TypeSwitch` | an `isinstance` ladder over classes the codebase owns — the value is asked what it is so the caller can decide what to do. |
 
 #### `python/templates`
 
 | Sin | What it flags |
 |---|---|
-| `AssembledTemplate` | A template assembled from line fragments — the twin of the backend's AssembledTemplateDetector. |
+| `AssembledTemplate` | a multi-line string built as a list of line fragments and `"\n".join(...)`-ed, instead of a triple-quoted f-string that shows its output |
 
 #### `python/type-honesty`
 
 | Sin | What it flags |
 |---|---|
-| `ConstantProperty` | A `@property` that never reads the object — the twin of the backend's UselessPropertyHookDetector. |
-| `MaskedInvariant` | A fake answer masking the object's own scratch state — the twin of the backend's MaskedInvariantDetector, decided by OwnStateMask. |
-| `PhantomNullable` | A field typed `X \| None` whose every read assumes it is there and none guards — the twin of the backend's PhantomNullableDetector, decided by the codebase's AttributeFlow. |
-| `PlaceholderFilledData` | A dataclass built with `""` in a field it requires as text — the twin of the backend's PlaceholderFilledDataDetector. |
-| `ScratchStateRestore` | A method saving and restoring its own attribute around the call — the twin of the backend's ScratchStateRestoreDetector. |
+| `ConstantProperty` | an `@property` whose body never reads `self` — `return "box"` — a stored value made to look like a computed one. |
+| `MaskedInvariant` | a literal answering for the object's own scratch state — `self.period.includes(day) if self.period else False` — where the field is only unset because an operation sets it part-way |
+| `PhantomNullable` | a field annotated `X \| None` that every read assumes is there and none guards — a `None` the design never has |
+| `PlaceholderFilledData` | `Card(title=…, body="")` — a dataclass field required as `str` handed the blank to satisfy the signature, a value the type cannot catch |
+| `ScratchStateRestore` | `previous = self.scope … self.scope = previous` — an attribute used as per-call scratch, saved and restored around the call |
 
 #### `python/value-objects`
 
 | Sin | What it flags |
 |---|---|
-| `CoupledFields` | A class whose own value fields are really one object — the twin of the backend's CoupledFieldsDetector, decided by FieldClumps. |
-| `DataClump` | The same three-or-more scalar parameters threaded through functions of two or more classes or modules — the Python twin of the backend's DataClumpDetector. |
-| `DictBag` | A dict-typed parameter or local read by string keys — the Python twin of the backend's ArrayBagDetector. |
-| `DictReturnBag` | A dict of two or more named fields handed back from a function — the twin of the backend's ArrayReturnBagDetector, with its exemptions: a spread, a nested payload, keys that name external things rather than fields, a JSON schema, a table of one class's members, the projection of one typed object, a `TypedDict` return, and a method whose contract is its base's or the language's. |
-| `HandRolledReplace` | A dataclass method rebuilding its own object field by field — the twin of the backend's HandRolledWitherDetector. |
-| `MutableValueObject` | A dataclass value written after it is built — the twin of the backend's MutableValueObjectDetector. |
-| `PositionalTupleReturn` | A tuple of different things handed back by position — the twin of the backend's PositionalTupleReturnDetector. |
-| `RawDecodedReturn` | A raw `json.loads(...)` handed back from a boundary — the twin of the backend's RawDecodedArrayReturnDetector. |
+| `CoupledFields` | a class whose own fields always travel together — assembled into one value again and again, guarded together, or one copying a sibling field's value — one concept held as several fields. |
+| `DataClump` | The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept with no type of its own. |
+| `DictBag` | A parameter typed as a dict read by string keys — `row["sku"]`, `row.get("quantity")` — a record nobody declared |
+| `DictReturnBag` | `return {"total": …, "tax": …}` — a record of several fields handed back as a dict its callers read by string key |
+| `HandRolledReplace` | `return Order(self.number, self.lines, self.note, "paid")` in a dataclass — every field re-listed to change one |
+| `MutableValueObject` | a dataclass whose own methods write the fields it was built from after construction — a value that changes under everyone holding it |
+| `PositionalTupleReturn` | `return net, vat, currency` — a bundle of different things the caller must unpack by position, where a reordering breaks silently |
+| `RawDecodedReturn` | `return json.loads(…)` — decoded text from outside handed on as bare dicts and lists, its shape known to no type |
 
 ### TypeScript
 
@@ -574,13 +574,13 @@ _255 sins across 63 skills._
 
 | Sin | What it flags |
 |---|---|
-| `DefendedCertainField` | An `?.` on one of the enclosing class's OWN fields, where that field is declared total — a guard against a case the type rules out. |
-| `FalselyOptionalField` | A field declared optional that is INITIALISED where it is declared. |
+| `DefendedCertainField` | An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out. |
+| `FalselyOptionalField` | A field declared optional (`x?: T`, `T \| null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen |
 
 #### `typescript/duplication`
 
 | Sin | What it flags |
 |---|---|
-| `DuplicateFunction` | Two-or-more TypeScript functions with one body — a `function`, a method and a `const` arrow alike, in a `.ts` module or a component's `<script>` — compared by a formatting-blind fingerprint of the body alone, so the copy that was renamed is caught with the one that was not. |
-| `NearDuplicateFunction` | Two-or-more TypeScript functions with one SHAPE but not one body — the same control flow, differing only in local names or string/number literals (a type-2 clone): each does the same thing to a different endpoint or key, and wants to be one function with a parameter. |
+| `DuplicateFunction` | Copy-pasted code — two+ TypeScript functions (a `function`, a method, a `const` arrow; in a `.ts` module or a component's script) with an identical body, formatting and comments aside |
+| `NearDuplicateFunction` | A near-copy — two+ TypeScript functions with one control-flow skeleton that differ only in their local names or the literals they use (an endpoint, a key, a label) |
 

@@ -3,6 +3,7 @@ package csharp_test
 import (
 	"testing"
 
+	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/csharp"
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 )
@@ -96,5 +97,35 @@ func TestAFindingIsScopedByItsKindAndTheNameItDeclares(t *testing.T) {
 	}
 	if scope := csharptest.First(t, codebase, "Shop/Cart.cs", "IfStatement").Scope(); scope != "IfStatement" {
 		t.Errorf("the if is scoped %q", scope)
+	}
+}
+
+const ledger = `namespace Shop;
+
+public sealed class Ledger
+{
+    public int Total => 3;
+
+    public int Count { get; }
+
+    public int Sum() => Total + Count;
+}
+`
+
+// TestAPropertyWrittenAsAnArrowRunsABody holds the engine's RunsABody to C#'s own count: a property written
+// `=> value` runs a body as a method does, where an auto-property runs none.
+func TestAPropertyWrittenAsAnArrowRunsABody(t *testing.T) {
+	codebase := csharptest.FromSource(t, map[string]string{"Shop/Ledger.cs": ledger})
+	runs := map[string]bool{}
+	for _, match := range codebase.Files()[0].Match(0).Descendants() {
+		if match.Is(engine.TypeDeclaration) || match.Name() == "" {
+			continue
+		}
+		runs[match.Kind()+" "+match.Name()] = runs[match.Kind()+" "+match.Name()] || match.RunsABody()
+	}
+	for declaration, want := range map[string]bool{"PropertyDeclaration Total": true, "PropertyDeclaration Count": false, "MethodDeclaration Sum": true} {
+		if runs[declaration] != want {
+			t.Errorf("%s runs a body: %v", declaration, runs[declaration])
+		}
 	}
 }

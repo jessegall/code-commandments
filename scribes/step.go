@@ -142,6 +142,8 @@ func (s DetectorStep) Run(pass Pass) (Rewrites, error) {
 // Maintainer regenerates what a codebase declares about itself, whether or not any sin was found.
 type Maintainer interface {
 	Name() string
+	// Summary is what the maintainer does, in a sentence, for the README.
+	Summary() string
 	Maintain(codebase *engine.Codebase, pass Pass) (Rewrites, error)
 }
 
@@ -150,6 +152,18 @@ var maintainers = map[catalog.Engine][]Maintainer{}
 // Maintains enrols a maintainer of one engine's files, from the maintainer's own file.
 func Maintains(engine catalog.Engine, maintainer Maintainer) {
 	maintainers[engine] = append(maintainers[engine], maintainer)
+}
+
+// Maintainers is every enrolled maintainer, engine by engine in curriculum order, then by name.
+func Maintainers() []Maintainer {
+	var all []Maintainer
+	for _, engine := range catalog.Engines {
+		enrolled := slices.Clone(maintainers[engine])
+		slices.SortFunc(enrolled, func(a, b Maintainer) int { return strings.Compare(a.Name(), b.Name()) })
+		all = append(all, enrolled...)
+	}
+
+	return all
 }
 
 // MaintenanceSteps is a step for each maintainer of the engine's files, over the scanner, by name.

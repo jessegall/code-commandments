@@ -74,6 +74,19 @@ func (l Language) Comment(text string) string {
 	}
 }
 
+// IsCommentLine says whether the line opens with a comment of this language, read off its delimiter, never its words.
+func (l Language) IsCommentLine(line string) bool {
+	opened := strings.TrimLeft(line, " \t\n\r\x00\x0B")
+	switch l {
+	case Vue:
+		return strings.HasPrefix(opened, "<!--")
+	case Python:
+		return strings.HasPrefix(opened, "#")
+	default:
+		return strings.HasPrefix(opened, "//") || strings.HasPrefix(opened, "/*") || strings.HasPrefix(opened, "*")
+	}
+}
+
 // Label is the language's name as a person writes it.
 func (l Language) Label() string {
 	switch l {

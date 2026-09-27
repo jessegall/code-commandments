@@ -9,8 +9,8 @@ declare(strict_types=1);
  * docs, the same contracts `ReadmeIsCurrentTest` and `GeneratedSkillsAreCurrentTest` enforce
  * in CI, just caught at commit time instead of after.
  *
- *   - README.md excerpts + README.{sins,scribes,skills}.md tables  ← Detectors\Catalog  (generate-readme.php)
- *   - skills/commandments/.../SKILL.md  ← Sins/ + Skills/ + fixtures  (generate-skills.php)
+ *   - README.md excerpts + README.{sins,scribes,skills}.md tables  ← the Go catalog  (generate-readme.php → cli/doc/readme)
+ *   - skills/commandments/.../SKILL.md  ← the Go catalog + fixtures  (generate-skills.php → skill/render/generate)
  *   - AGENTS.md + CLAUDE.md  ← Skills\Briefing + each Agent's instructions  (commandments sync)
  *
  * That last one is this package consuming ITSELF: `sync` publishes our own skills into
