@@ -29,11 +29,11 @@ func (Command) Help() help.Help {
 	return help.Of("Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file.").
 		Form("layers [path]", "propose today's shape: every namespace with what it already uses").
 		Form("layers [path] --floor", "propose only the bottom — what others depend on and that depends on nothing").
-		Form("layers [path] --write", "add the proposal to .commandments/config.php").
+		Form("layers [path] --write", "add the proposal to .commandments/config.json").
 		Form("layers add <Namespace> [--may-use=A,B]", "declare a new layer, or widen a declared one, in place").
 		Form("layers allow <Layer> <Target>", "one more arrow, in place").
 		Option("--floor", "propose only the bottom layer").
-		Option("--write", "write the proposal into .commandments/config.php").
+		Option("--write", "write the proposal into .commandments/config.json").
 		Option("--refresh", "with --write, regenerate a block that is already declared").
 		Option("--may-use=A,B", "with `add`, the namespaces the new layer may depend on").
 		Note("Once a stack is declared the proposal refuses to overwrite it — a GROWING codebase edits it " +

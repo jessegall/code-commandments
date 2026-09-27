@@ -1,87 +1,70 @@
 ---
 name: detector-engine
-description: The v4 fluent AST engine a Sin Detector queries — Codebase selectors, Query filters, the null-object AstNode/NodeMatch, the call graph (index/callersOf/ReceiverResolver), the variable trace, TypeName, and WHERE a new helper belongs (the layering rule). Read this when writing or changing a detector, or when you reach for a predicate the engine doesn't have yet.
+description: The Go engine a Sin Detector queries — engine.Codebase selectors, engine.Query filters, engine.Match, a language's decorator reached with engine.As, the call graph (php.IndexOf → CallersOf), the variable trace (php.Trace), and WHERE a new helper belongs (the layering rule). Read this when writing or changing a detector, or when you reach for a predicate the engine doesn't have yet.
 ---
 
-# The detector engine — query the AST fluently
+# The detector engine — query the tree fluently
 
-The engine lives in `src/Ast/`. A detector never touches nikic/php-parser directly;
-it composes a fluent query and reads the result. Everything reads as English.
+Every language reaches the engine the same way: its bridge parses it with the language's own parser and writes
+the generic tree (`contract/CONTRACT.md`), and `engine.Load` holds every stream as one `engine.Codebase`. A
+detector never touches a parser; it composes a query and reads the result.
 
-```php
-$codebase
-    ->whereMethod('input', 'get')              // a SELECTOR opens a Query
-    ->isUsedOn('Illuminate\\Http\\Request')    // FILTERS narrow it
-    ->reject(fn (AstNode $n) => $n->isInEnum())
-    ->get();                                    // a TERMINAL returns list<NodeMatch>
+```go
+php.In(codebase).                               // a language narrows the codebase
+	WhereKind("Expr_MethodCall").               // a SELECTOR opens a Query
+	Where(engine.As(laravel.Node.IsFacadeCall)). // FILTERS narrow it, one check per line
+	Reject(engine.As(php.Node.IsInEnum)).
+	Get()                                       // a TERMINAL returns []engine.Match
 ```
 
-## The three layers (and where a new helper goes)
+## The layers (and where a new helper goes)
 
-When a detector needs a predicate the engine lacks, **add it at the right layer** —
-never inline AST poking in the detector, never a name/suffix list.
+When a detector needs a predicate the engine lacks, **add it at the right layer** — never inline tree poking in
+the detector, never a name or suffix list.
 
-1. **`AstNode`** — language-level, codebase-agnostic predicates over ONE node and
-   its parents. `isThrow()`, `newClassName()`, `isInEnum()`, `coalesceRight()`,
-   `isReturnedValue()`, `isParameterDefault()`, `hasNestedArrayValue()`. The
-   null-object rule: the fluent navigators (`parent()`, `coalesceRight()`,
-   `coalesceLeft()`) never return null — each returns another `AstNode` whose
-   predicates are all false — so patterns read `$n->coalesceRight()->isThrow()` with
-   no `?->`. (Raw accessors like `enclosingClass(): ?ClassLike` /
-   `enclosingClassName(): ?string` CAN be null — they're not fluent navigators.)
-2. **`Codebase`** — whole-program queries that need the class graph. Selectors
-   (`whereMethod`, `whereNew`, `whereClass`, `whereClassExtending`,
-   `whereMethodDeclaration`, `whereStaticCall`, `whereFunction`, `whereParamType`,
-   `whereComment`, `whereAttribute`, and bare `where(\Closure)`), plus `extends()`,
-   `implements()` (the WHOLE contract graph — parent chain and interface-extends)
-   and the lazy `index()` (call graph). A `NodeMatch` asks the graph for its own
-   class: `$n->implementsInterface($fqcn)`, `$n->nameIsInherited()`.
-3. **`src/Ast/Support/`** — a framework/cross-cutting concept used by **≥2**
-   detectors (e.g. `ReceiverResolver`, `ChainResolver`). Rule-specific composition and
-   domain constants stay **in the detector**.
+1. **`engine.Match`** (`engine/match.go`) — what every language's node answers: navigation (`Parent`,
+   `Children`, `Child`, `ChildrenIn`, `Descendants`, `Closest`, `Root`, `EnclosingType`, `EnclosingFunction`),
+   reads (`Kind`, `Name`, `Text`, `Written`, `Is`, `Refers`, `Resolves`, `HasFlag`, `HasModifier`,
+   `Comments`, `IsDocumented`, `IsWithinLoop`, `SameSyntax`) and location (`Line`, `Location`, `Scope`,
+   `Span`). A navigator never answers nil: a missing parent is a match whose predicates are all false, so a
+   chain reads with no checks between.
+2. **A language's decorator** — `php.Node`, `typescript`, `vue`, `python`, `csharp`: the language's own
+   knowledge about ONE node, stated once (`php.Node` has ~200 predicates — skim before adding one). A
+   detector reaches one with `engine.As(php.Node.IsField)`, which the query hands the decorated node.
+3. **An analysis** — a whole-program concept used by **≥2** detectors, memoised per codebase and the single
+   home of its concept: `php.IndexOf` (call graph), `php.ExpressionType`/`ReceiverTypeOf` (types),
+   `php.ValueFlowOf`, `php.Trace`, `engine.Recurring`/`NearCopies`, `engine.DivergentTwins`, `engine.Layers`.
+   A third-party package's knowledge has its own package under the engine (`engine/php/laravel`,
+   `engine/php/spatie`, …). Rule-specific composition and constants stay **in the detector**.
+4. **The bridge** — when the tree does not carry a fact the detector needs (a resolved type, an outside
+   symbol), the bridge writes it and the contract documents it; the engine never guesses it back from text.
 
-> Smell test: if you're about to write `const SOMETHING_BASES = [...]` or
-> `str_ends_with($name, 'Data')`, stop — the AST/type already answers it. A name
-> check is a smell to justify, not a default. See `prefer_ast_over_name_checks`.
+> Smell test: if you're about to write a list of base-class names or `strings.HasSuffix(name, "Data")`, stop
+> — the tree or the resolved type already answers it. A name check is a smell to justify, not a default.
 
-## Query — `where` / `reject`, one check per line
+## Query — `Where` / `Reject`, one check per line
 
-`where(fn (AstNode $n): bool => …)` keeps matches that pass; `reject(...)` drops
-them. **One check per line** — split a compound predicate into several `where`s.
-Other filters: `isUsedOn($fqcn)`, `withinClass`/`notWithinClass`, `inProximityOf`.
-Terminals: `get(): list<NodeMatch>`, `locations()`, `count()`, `first()`.
-A `where` closure is actually handed a `NodeMatch` at runtime, so to use
-NodeMatch-only methods guard with `$n instanceof NodeMatch && $n->trace()`.
+`Where(check)` keeps matches that pass; `Reject(check)` drops them. **One check per line** — split a compound
+predicate into several. Terminals: `Get() []engine.Match`, `Locations()`, `Count()`, `First()`.
 
-## NodeMatch — a finding that knows where it is
+## The call graph — `php.IndexOf`
 
-`NodeMatch extends AstNode` and adds `file`, `line()`, `location()` (`path:line`),
-`near()`, and `trace()` (plus `span()`, `resultIsDeNulled()`,
-`receiverMutatedNearby()`). `scope()` (`Class::method`) is inherited from `AstNode`.
-A detector returns these.
-
-## The call graph — `Codebase::index()`
-
-`index()->callersOf($fqcn, $method)` returns every resolved call site of a method
-(receiver typed via `ReceiverResolver`: `$this`, a typed param, `$this->typedProp`).
-Used for measure-and-suppress detectors — e.g. flag a `?T` finder only when ≥2
-callers de-null its result (blast radius).
+`php.IndexOf(codebase).CallersOf(fqcn, method)` answers every resolved call site of a method (the receiver
+typed through `$this`, a typed parameter, a typed property). Used for measure-and-suppress detectors — e.g.
+flag a `?T` finder only when ≥2 callers de-null its result.
 
 ## The variable trace — follow a value's journey
 
-`$variableMatch->trace()` returns `list<Interaction>`, one per occurrence of that
-variable in its function, each an `InteractionKind` (Assigned, Argument,
-MethodCall, PropertyFetch, PropertyWrite, NullChecked, Coalesced, Nullsafe,
-Returned, Read). `Interaction::deNulls()` / `isWrite()` read the journey. This is
-the dataflow substrate — `resultIsDeNulled()` (blast radius) and
-`receiverMutatedNearby()` (model mutation) both use it; reach for it before
-hand-rolling a `NodeFinder` scan.
+`php.Trace(variable)` answers one `Interaction` per occurrence of the variable in its function, each of a kind
+(assigned, an argument, a method call on it, a property read or write, null-checked, coalesced, null-safe,
+returned, read). `Interaction.IsWrite()` and friends read the journey. Reach for it before hand-rolling a walk
+over a function's nodes.
 
-## TypeName
+## Testing a helper
 
-`TypeName::class($type)` / `nullableClass` / `isNullable` / `isNullableArray` read a
-class FQCN (or kind) out of a type declaration — builtins yield null. Names are
-resolved at parse time, so everything is fully-qualified.
+Each language has a source builder that parses through the real bridge — `frontendtest.FromSource`,
+`pythontest.FromSource`, `csharptest.FromSource` — and PHP answers are held to the frozen shop
+(`engine/php/shop`). Run Go only through `scripts/dev`, scoped to the package you touched.
 
 ## Related
 

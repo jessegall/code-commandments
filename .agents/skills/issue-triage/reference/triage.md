@@ -24,21 +24,20 @@ Read the issue body AND every comment.
 ## The flow
 
 1. `gh issue list --state open` → `gh issue view <n> --comments` → pick one, read the comments.
-2. Reproduce: a minimal fixture exercising the detector — `Codebase::fromString(...)` through
-   the detector in a quick test, or a `#[Sinful]`/`@sin` marker on the reported shape.
-3. Fix in `src/Detectors/{Backend,Frontend}/<Name>Detector.php` — or the shared engine helper
-   it composes (`src/Ast/`, `src/Vue/`, a per-package `*Node`), never a name list. If the sin's
-   wording was the problem, sharpen its `description` in `src/Sins/`.
-4. Add/extend the fixture + test. `vendor/bin/phpunit tests`.
-5. `composer readme` / `composer sins` if a description, the detector table, or the command
-   surface changed.
-6. Commit (no Co-Author) with `Closes #N`, new semver tag (patch=fix), push commit + tag →
-   [[releasing]].
-7. Propagate to consumers (per-consumer `composer update`, commit-only). Comment the resolution
-   on the issue; verify it auto-closed.
+2. Reproduce: a minimal test exercising the detector — the language's source builder
+   (`frontendtest.FromSource`, `pythontest.FromSource`, `csharptest.FromSource`) through the detector, or a
+   sin marker on the reported shape in the engine's fixture.
+3. Fix in `detectors/<engine>/` — or the shared engine helper it composes (the language's decorator in
+   `engine/<lang>`, an analysis, a package's own `engine/php/<pkg>`), never a name list. If the sin's wording
+   was the problem, sharpen its description in `sins/<engine>/`.
+4. Add/extend the fixture + test; `scripts/dev go test` the packages you touched.
+5. The pre-commit hook regenerates the generated documents (`composer sins` by hand).
+6. Commit on your branch (no attribution trailer) with `Closes #N` → [[releasing]]. Merging and tagging are
+   Sir Jesse's.
+7. Comment the resolution on the issue.
 
 ## Report-back
 
-Closing the issue IS the signal back: a real fix reaches every consumer on their next
-`composer update`; a "works as intended" close tells the reporter the finding stands and their
+Closing the issue IS the signal back: a real fix reaches every consumer on their first
+`composer update` after the release that carries it; a "works as intended" close tells the reporter the finding stands and their
 code is what must change. No manual relay needed.

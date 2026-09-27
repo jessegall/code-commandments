@@ -141,3 +141,28 @@ func TestAProjectsOwnSkillIsPublishedAndBriefedAsItsOwn(t *testing.T) {
 		t.Errorf("a skill for a language the project does not write is briefed")
 	}
 }
+
+// TestAPageASkillNoLongerShipsIsTakenAway holds a sync to publishing a skill as it stands: a reference page an
+// earlier version published and this one does not is removed, never left for an agent to read as current.
+func TestAPageASkillNoLongerShipsIsTakenAway(t *testing.T) {
+	project := t.TempDir()
+	if _, err := At(project, config.Config{}).Publish(); err != nil {
+		t.Fatal(err)
+	}
+	stale := filepath.Join(project, Dir, "commandments-backend-absence", "reference", "retired.md")
+	if err := os.MkdirAll(filepath.Dir(stale), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(stale, []byte("what the skill once said\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := At(project, config.Config{}).Publish(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(stale); err == nil {
+		t.Error("a page the skill no longer ships outlived the sync")
+	}
+	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-backend-absence", "SKILL.md")); err != nil {
+		t.Errorf("the skill itself is gone: %v", err)
+	}
+}

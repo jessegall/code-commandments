@@ -126,166 +126,132 @@ rows project from the registered sins.
 The single most-repeated mistake is hand-rolling logic that already exists. **Before you
 implement ANY feature — a detector, a predicate, a scribe, a helper, a type read, a "does
 X reference Y" walk — find it here first.** Reuse it; if it's genuinely missing, ADD it to
-the right layer (never inline in the detector). This is not a walk-only rule — it applies
-every time you start building.
+the right layer (never inline in the detector). This applies every time you start building.
 
-**`Codebase` (`src/Ast/Codebase.php`) — whole-program.** Selectors open a query:
-`whereClass`, `whereInterface`, `whereString` (a literal — the words a USER reads), `whereField`, `whereMethod`, `whereMethodDeclaration`, `whereNew`,
-`whereNewExtending`, `whereStaticCall`, `whereFunction`, `whereGetterHook`, `whereAssign`,
-`whereParamType`, `whereAttribute`, `whereComment`, `whereClassExtending`, `whereFile` (the shared
-`Files\FileQuery` — a rule judges a file's NAME, same selector on both engines), `where(Closure)`.
-Graph/resolve: `extends`, `implements` (the WHOLE contract graph — parent chain and interface-extends), `isEnum`, **`isValueType`** (value vs service — walks
-the chain), `classNamed` (a class decl), **`declarationMatch`** (ANY class-like incl. enum, with
-its file), `index()` (call graph → `callersOf`), `valueFlow()` (field-nil provenance).
+**`engine.Codebase` (`engine/codebase.go`) — whole-program, every language.** Selectors open a
+query: `Where`, `WhereKind`, `WhereIs` (a neutral kind: a construction, a block, a null-safe
+access …), `WhereNew`, `WhereCall`, `WhereFunction`, `WhereTypeDeclaration`, `WhereAssign`.
+`Declarations`, `Program` (the facts the bridge read outside the scan), `Files`, `Of` (one
+language). A language narrows it first: `php.In(codebase)`, `csharp.In(codebase)`, …
 
-**`Query` (`src/Ast/Query.php`).** `where`/`reject` (one check/line), `isUsedOn($fqcn)`,
-`withinClass`/`notWithinClass`, `inProximityOf`; terminals `get`/`locations`/`count`/`first`.
+**`engine.Query` (`engine/query.go`).** `Where`/`Reject` (one check per line), and the terminals
+`Get`/`Locations`/`Count`/`First`. A language's predicate joins in as `engine.As(php.Node.IsField)`.
 
-**`AstNode` / `NodeMatch` (`src/Ast/`) — per-node, ~120 predicates. Skim before adding one.**
-Navigation `parent`/`coalesceLeft`/`coalesceRight` (null-object, never null); reads
-`fields()` (→ `ClassField`), `publicFieldNames`, `constructorParams`, `arguments`,
-`enclosingClass(Name)`, `enclosingFunction(Name)`, `scope`, `asField`, `staticCallClass/Method`,
-`newClassName`, `callName`, `assignedPropertyName`; field-usage `selfPropertyGroupsAssembled`,
-`selfPropertiesTestedForAbsence`, `selfFieldNestedReachPairings`,
-`rewritesSelfPropertyOutsideConstructor`; predicates `isThrow`, `isInEnum`, `isWithinLoop`,
-`isNull`, `everyConstructorParamNullable`, `structuralHash`, … `NodeMatch` adds `line`,
-`location`, `near`, `span`, **`trace()`** (a variable's whole journey), `resultIsDeNulled`,
-`receiverMutatedNearby`.
+**`engine.Match` (`engine/match.go`) — one node, whatever the language.** Navigation `Parent`,
+`Children`, `Child`, `ChildrenIn`, `Descendants`, `Closest`, `Root`, `EnclosingType`,
+`EnclosingFunction`; reads `Kind`, `Name`, `Text`, `Written`, `Is`, `Refers`, `Resolves`,
+`HasFlag`, `HasModifier`, `CalleeName`, `Comments`, `CommentsAbove`, `IsDocumented`,
+`IsWithinLoop`, `SameSyntax`; location `Line`, `Location`, `Scope`, `Span`, `Source`.
 
-**`TypeName` (`src/Ast/TypeName.php`).** `class`, `nullableClass`, `isNullable`, `isNullableArray`,
-`render` (type→comparable string), `unionIncludes($fqcn)`.
+**A language's decorator — its own knowledge, stated once.** `php.Node` (~200 predicates:
+`IsField`, `IsDeeplyNestedIf`, `IsNamedConstructor`, `BreaksClassLayoutOrder`, …; skim before
+adding one), `typescript`, `vue` (an element's tag, directives, props), `python`, `csharp`. A
+package's own knowledge — Laravel, Spatie Data, jessegall/concurrent, php-types — lives in its
+own package under the engine (`engine/php/laravel`, `engine/php/spatie`, …), never in a general
+detector.
 
-**`Ast\Support\*` — cross-cutting analyses (memoised per codebase; each is the SINGLE home of its
-concept).** `TypeResolver` (`typeOf` — an expression's real type through the receiver chain +
-local assignments; `propertyTypeOf`, `collectionElementOf`, `declaringClassOf`), `ChainResolver`
-(a property/method chain's final type), `ReceiverResolver` (a call receiver's static type),
-`ValueFlow` (field null-flow verdict/explain), `Calls`, `FeatureEnvy`, `LookupEnvy`,
-`NullObjectDefault`, `OwnStateMask`, `Frozen`, `Enums`, `StructuralHash`, `PageObject`, `Negation`
-(a condition flipped — `!` in front, parenthesised only where that changes meaning), `Docblock`
-(`isInline`/`canonical`/`merge`/`foldable` — the SHAPE of a docblock),
-`ResponseSurface`, `RouteActions`, `DataClassShape`, `ParamResolution`, `Projection` (is an array
-literal the wire shape of a type that ALREADY exists, or an unborn one?). A package's own knowledge
-is on its decorator node (`Ast\{Spatie,Laravel,…}\*Node`), stated once.
+**Cross-cutting analyses — each the SINGLE home of its concept, memoised per codebase.** PHP:
+`php.IndexOf` (the call graph → callers), `php.TypesOf`/`ExpressionType`/`ReceiverTypeOf` (an
+expression's real type through the receiver chain and local assignments), `php.ValueFlowOf`
+(field null-flow), `php.Trace` (a variable's whole journey), `php.EnvyOf`/`LookupEnvyOf`,
+`php.NullObjectFor`, `php.Negation` (a condition flipped), the `php.Docblock*` family (the SHAPE
+of a docblock), `php.Printed`. Every engine: `engine.Recurring`/`NearCopies` (a recurrence across
+sites), `engine.DivergentTwins`, the syntax hash (`engine.SyntaxHash`, with each language's
+`HashRules`), `engine.Layers` (a declared layer stack). `published` carries the facts one engine
+publishes for another's detectors (a server type the frontend mirrors).
 
-**Rewriting:** one `Scribes\Writer` (all edits) over `Scribes\Draft`, each edit a `Scribes\Edit`
-(half-open `[start, end)`, the ONE `+1` off php-parser's inclusive end in `Scribe::replaceNode`);
-the root `Span` owns ALL offset math (incl. `blockOpener` — a new block wears the FILE's brace
-style, never the scribe's). `Span` is a shared primitive beside `Codebase`/`Detector`/`Located`,
-not a scribe concept — Ast, Vue, Detectors and Scribes all locate through it.
-Frontend mirror: `Vue\Codebase`→`Vue\Query`→`ElementMatch`, `Vue\Expr\Parser`.
+**Rewriting (`scribes/`):** one draft per file, each edit a half-open `[start, end)`
+(`scribes.Edit`), the source's offset math in `engine.Source`/`engine.Span` (incl.
+`BlockOpener` — a new block wears the FILE's brace style, never the scribe's). A scribe gathers
+what its fix needs from the finding's `engine.Match` and the codebase, never by scraping text.
 
 ## Commands
 
+The CLI documents itself (`commandments --help`, `commandments <verb> --help`), and the
+README's command table is projected from the same help. The ones you use while working here:
+
 | Command | Purpose |
 |---|---|
-| `bin/commandments judge [path] [--skill=NAME] [--sin=NAME] [--exclude=A,B] [--changes] [--branch[=BASE]] [--parallel=N]` | Scan a codebase; print sins grouped by the skill that fixes them, and write a `.commandments/sins.md` checklist. Non-zero exit when sins are found. `--changes` reports only sins in files changed/created in the working tree; `--branch[=BASE]` instead scopes to files new/changed on the current branch vs BASE (default `main`) — committed and uncommitted, via the merge-base, no worktree needed. The whole path is still parsed so cross-file detectors stay correct; only the output is scoped. `--parallel=N` runs the detectors across N forked workers (default 2, capped at CPU cores; `--parallel=1` = sequential, also the fallback where `pcntl` is unavailable). |
-| `bin/commandments judge --no-checklist` / `--checklist=FILE` | Print only / retarget the checklist file. |
-| `bin/commandments judge --list` | List every detector grouped by skill. |
-| `bin/commandments hints [path] [--changes\|--branch[=BASE]] [--dry-run[=FILE]]` | Auto-fix Spatie `Data` magic surface: rename non-`from…` object factories to `from<Type>` + rewrite call sites to `::from(...)`, and regenerate `@method from(...)`/`collect(...)` docblock hints. **Default applies; `--dry-run[=FILE]` previews a unified diff.** `--changes`/`--branch` scope to touched files but force **docblock-only** mode (no renames — a rename's call sites can live outside the scope); renaming is whole-tree only. |
-| `bin/commandments repent [path] [--changes\|--branch[=BASE]] [--dry-run[=FILE]] [--only=NAME]` | Auto-fix sins — the CLI verb that RUNS the **Scribes** (`src/Scribes/`; "scribe" is the code, `repent` is the command). Two kinds, one command: the maintenance Scribes over the PHP AST (Spatie Data hints; scope-aware) **and** the `Repentable` detectors' scribes — backend (drop a redundant arrow return type, hoist a stray member, regroup a class head, reshape a docblock) and frontend over the Vue components (extract a component, hoist a `v-if` chain to `<SwitchCase>`), each fed its own detector's findings. Default applies; `--dry-run[=FILE]` previews a unified diff; `--only=NAME` runs one rewriter (Scribe or frontend Detector name). (`hints` is the focused Data-only entry.) |
-| `bin/commandments report --reason="…" [--ref=PATH:LINE …] [--detector=NAME] [--title="…"] [--global]` | File a GitHub issue (via `gh`): a `[detector-report]` (false positive / wrong rule) when `--detector` is given, else a `[bug-report]`. A bug-report MUST carry its code origin — one or more repeatable `--ref=path:line` (or `path:start-end`); a bug spanning files references EACH, and every ref's source is read and injected into the issue. `--global` opts out only when the defect isn't tied to any file. **A broken/incorrect `repent` (auto-fix) result is itself a bug — report it, referencing both the source and the broken output.** (`--file=/--line=` remain as a single-ref alias.) |
-| `bin/commandments feature-request --title="…" --reason="…"` | File a `[feature-request]` GitHub issue proposing a new/changed rule (via `gh`). |
-| `bin/commandments layers [path] [--floor] [--write] [--refresh]` / `layers add <Namespace> [--may-use=A,B]` / `layers allow <Layer> <Target>` | Read the dependency stack the project ALREADY has and propose the layer declaration for it (`--write` adds it to `.commandments/config.php`, `--floor` proposes only the bottom). Once a stack is declared the proposal refuses to overwrite it — so a GROWING codebase edits it INCREMENTALLY instead: `add` declares a new layer (or widens one with `--may-use`), `allow` adds a single arrow, and `--write --refresh` regenerates the whole block from today's shape. Every edit goes through the AST ({@see Cli\Config\ConfigFile}) and replaces only the `->layer(...)` chain, keeping the config's own formatting and indentation — never text surgery on a file a formatter has touched. |
-| `bin/commandments make <Name> [--engine=backend\|frontend] [--skill=NAME] [--force]` | Scaffold a commandment a CONSUMER project owns: the three classes a rule is made of (a `Skill` that teaches it, a `Sin` that names it, a `Detector` that finds it) written into `.commandments/custom/`, the detector registered in the project's config through the AST ({@see Cli\Config\ConfigFile::registerDetector}), and the REST of the process printed — probe, calibrate, publish — because a scaffold is not a detector yet. `--skill` leniently matches an EXISTING skill (shipped or the project's own) and points the sin at it instead of writing a new one. The consumer-side twin of the package's own detector workflow; the published `writing-detectors` skill teaches it in full. |
-| `bin/commandments disable <sin>` / `enable <sin>` | Toggle a rule in the project's `.commandments/config.php`: resolve the sin id (lenient) to its `Sin` class and add/remove it in the `$config->disable(...)` call. Edited through the AST ({@see Cli\ConfigFile}), never text-scanned; the file stays valid PHP and the human's own `register`/`configure` lines are untouched. |
-| `bin/commandments install` | Wire a consumer: composer sync hook + the Claude Code hook suite (per-edit rule check, judge nudge, skill nudge) + gitignore, then sync. Every wired hook is stamped so re-wiring never touches the user's own hooks. Idempotent. |
-| `vendor/bin/phpunit tests` | The suite — unit tests + the fixture verifier (`FixtureDetectorTest`). |
+| `bin/commandments judge [path] [--sin=NAME] [--skill=NAME] [--changes\|--branch[=BASE]] [--parallel=N]` | Judge a tree: every engine over whatever the path holds; findings grouped by the skill that fixes them, and a checklist written for the session. `--changes`/`--branch` scope the report (the whole path is still read, so cross-file rules stay right); `--parallel` defaults to 2. Here, always scoped (rule 7). |
+| `bin/commandments repent [path] [--dry-run] [--only=NAME]` | Run the scribes: the auto-fixes of the `Repentable` detectors and the maintenance scribes. `--dry-run` previews a diff. |
+| `bin/commandments info <sin>` | What a rule flags, why, the fix, an example. |
+| `bin/commandments report --reason=… --ref=PATH:LINE` / `feature-request` | File a bug, a false positive, or a rule request through `gh`. |
+| `bin/commandments make <Name>` | Scaffold a consumer's own commandment in `.commandments/custom/`. |
+| `bin/commandments sync` | Publish the curriculum and the briefing, wire the hooks, migrate old state. Composer runs it after install and update. |
+| `bin/commandments roslyn-serve` / `journal-serve` | The services the agent journal keeps up: the C# bridge, kept warm; the hooks, answered from one process. |
 | `scripts/dev [--mount PATH]… <command>` | Run any Go build/test/vet/run/generate in the capped dev container (3 GB, no swap, 2 CPUs) — never Go on the host. See below. |
+| `scripts/dev go test ./the/packages/you/touched` | The suite, scoped while iterating (rule 1). |
 
-**🧾 A consumer writes commandments of its OWN — `.commandments/custom/`.** A project's own `Skill`s,
-`Sin`s, `Detector`s and `Package`s live beside its config, in the ONE folder under `.commandments/`
-that is neither generated nor session-scoped (so `sync` keeps it out of the folder's `.gitignore` —
-those are the project's source). It is deliberately NOT PSR-4 mapped: {@see Custom} discovers the
-classes BY FILE (require, then read the declaration list) and `Config::load` requires them before the
-config composes, so a `->detector(...)` line can name a class no autoloader knows. Nothing there
-auto-RUNS — a detector still earns its place in `$config->detector(...)` — but everything AROUND the
-run treats it as a first-class citizen: a project skill is published by `sync` through the very same
-{@see Skills\SkillRenderer} as a shipped one, projecting its own sins into its rules and checklist,
-and BRIEFED like one — {@see Skills\Catalog} discovers a project's skills beside the shipped set, so the
-consumer's CLAUDE.md tier lists name it (marked as the project's own) instead of leaving an agent unaware
-that the skill its finding points at exists (#443) — and `judge --list` lists a project's detectors beside the shipped set. It is also always named AS the
-project's: a finding from a project-local detector prints `[Name (custom)]` in the console and the
-checklist (with a note that the fix belongs in `.commandments/custom/`), and `report --detector=` refuses
-to file against it — the package cannot answer for a rule it does not ship ({@see Custom::owns} is the
-one ownership test: the class's file lives under the custom folder). **Never build a second,
-lesser mechanism for the custom side** — it is the same `Skill`/`Sin`/`Detector`, from a different
-folder.
+`bin/commandments` is the composer shim: in this checkout it runs `bin/commandments-go`, which
+`scripts/build` builds in the dev container; in a consumer it runs the release binary for the
+installed version, fetched once and checked against the release's `SHA256SUMS`.
 
-**📖 A command DOCUMENTS ITSELF — never hand-write a usage screen.** Every `Cli\Command` declares
-`help(): Help` beside the code that parses its flags — a one-line summary, one `->form(...)` per
-subcommand, one `->option(...)` per flag it reads, plus `->note(...)` for the longer prose (a
-`HookCommand` takes its summary straight from the hook's docblock; shared flags are `->adopt(...)`ed
-from their owner, e.g. `Scope::options()`). EVERY surface is projected from that: `commandments
---help` (the overview, grouped by `Help::section`), `commandments <verb> --help` / `help <verb>`
-(the page), a wrong invocation (`HelpScreen::usage($this, "why")` — the ONLY way to fail a command;
-never `fwrite(STDERR, "Usage: …")`), the README's command table, and the command references inside
-the skills. A skill that teaches a command embeds a block —
-`<!-- BEGIN: commands:make (auto-generated, run `composer sins`) -->` (comma-separate several verbs,
-or `commands:all`) — which `composer sins` fills from the live CLI; `HelpTest` fails if any skill
-block is stale or any command declares no help. So adding a subcommand means adding ONE `->form(...)`
-line, and it appears everywhere.
+**🧾 A consumer writes commandments of its OWN — `.commandments/custom/`.** A project's own skills
+(each a folder holding a `SKILL.md`) and detectors (each a rule file, `<Name>.json`: the engine it
+judges, the sin it finds, and the query that finds it, composed from the same selectors and checks a
+shipped detector composes in code — `rule/`) live beside its config, in the ONE folder under
+`.commandments/` that is neither generated nor session-scoped. `cli/custom` reads them. Nothing there
+auto-RUNS — a rule earns its place in the config — but everything around the run treats it as a
+first-class citizen: `sync` publishes a project skill through the same renderer as a shipped one and
+briefs it like one, `judge --list` lists its detectors beside the shipped set, and a finding from one
+is always named as the project's (`[Name (custom)]`); `report --detector=` refuses to file against it.
+**Never build a second, lesser mechanism for the custom side** — it is the same skill, sin and detector,
+from a different folder.
 
-**🤖 An AGENT is a class — `src/Agents/`.** The disciplines are documents, not one assistant's
-format, so they are published ONCE into the project's skill library (`.agents/skills/`,
-{@see Workspace::LIBRARY}) and every agent is pointed at it: Codex reads that folder natively, Claude
-Code gets a per-skill **symlink** into `.claude/skills/` ({@see Agents\SkillLink} — relative on POSIX,
-absolute on Windows whose `symlink` resolves a relative target against the process cwd, with a
-content-idempotent copy fallback where the filesystem has no links). An {@see Agents\Agent} states only
-what actually differs — the folder it discovers skills in, the file it reads instructions from, whether
-it `enforces()` via hooks — so a new assistant is a class, never a branch in `Sync`; the catalog is the
-agent twin of the sin/detector/skill ones, auto-enrolling like SKILLS (a project's own lives in
-`.commandments/custom/`, and `$config->disable(...)` turns one off). **Hooks stay Claude-only** — they
-need a harness event protocol and the `$CLAUDE_PROJECT_DIR` anchor — which is the difference between a
-discipline that is ENFORCED and one merely written down; say so rather than implying parity.
+**📖 A command DOCUMENTS ITSELF — never hand-write a usage screen.** Every command declares its
+`help.Help` beside the code that reads its flags (`cli/help`) — a one-line summary (`help.Of`), one
+`Form` per subcommand, one `Option` per flag, `Note` for longer prose, `Adopt` for flags a shared owner
+declares — and EVERY surface is projected from it: `commandments --help` (grouped by section),
+`commandments <verb> --help`, a wrong invocation (`help.Usage` — the only way to fail a command), the
+README's command table, and the command references inside the skills (a block
+`<!-- BEGIN: commands:make (auto-generated, run \`composer sins\`) -->`, filled by `cli/doc/refresh`).
+Adding a subcommand means adding ONE `Form`, and it appears everywhere.
+
+**🤖 An AGENT is a type — `cli/agents`.** The disciplines are documents, not one assistant's format, so
+they are published ONCE into the project's skill library (`.agents/skills/`) and every agent is pointed
+at it: Codex reads that folder natively, Claude Code gets a per-skill **symlink** into `.claude/skills/`
+(relative on POSIX, absolute on Windows, with a copy where the filesystem has no links). An agent states
+only what differs — the folder it discovers skills in, the file it reads instructions from, whether it
+enforces through hooks. **Hooks stay Claude-only** — they need a harness event protocol — which is the
+difference between a discipline that is ENFORCED and one merely written down; say so rather than
+implying parity.
 
 **🪞 THIS PACKAGE IS A CONSUMER OF ITSELF — the skills we ship are the skills we work under.**
-`skills/commandments/**` is the SOURCE; it is not a place any agent can load from. So `sync` runs on
-this repo too, publishing the curriculum into our own `.agents/skills/` and linking it where each
-agent looks — which is why a `judge` finding here can say "load `commandments-backend-absence`" and
-mean it. It is wired to stay current, never re-run by hand: `composer sins` regenerates the sources
-and republishes them, composer's `post-install-cmd`/`post-update-cmd` re-sync a fresh checkout,
-`composer skills` is the explicit verb, and the pre-commit hook lists `commandments sync` in its
-{@see GENERATORS} beside the other generators — because `AGENTS.md` and `CLAUDE.md` are OUR generated
-artifacts now ({@see Skills\Briefing} + each agent's `instructions()`), and an edit to the briefing
-must not be able to leave them stale. The package's own hand-written skills (`developing-features`,
-`writing-detectors`, …) live in that same library, symlinked into `.claude/skills/` and committed —
-one home, so they are not Claude-only either. **Whatever you add for a consumer, we get too: verify
-it HERE first.**
+`skills/commandments/**` is the rendered SOURCE; `sync` publishes it into our own `.agents/skills/` and
+links it where each agent looks, which is why a `judge` finding here can say "load
+`commandments-backend-absence`" and mean it. It stays current without being re-run by hand: the
+pre-commit hook (`scripts/hooks/pre-commit`) runs the generators and `sync` and re-stages what they
+change, `composer sins` does the same on demand, and composer's install and update re-sync a fresh
+checkout — because `AGENTS.md` and `CLAUDE.md` are generated here too. The package's own hand-written
+skills (`developing-features`, `writing-detectors`, …) live in that same library, committed.
+**Whatever you add for a consumer, we get too: verify it HERE first.** This repo's own config
+(`.commandments/config.json`) judges the bridges' own PHP, Python and C# sources.
 
-**⚙️ Where the executable is, is a FACT — {@see Support\Binary}, never a literal.** Every command we
-write INTO a project (a wired hook, a `checks` gate, the composer sync call) has to name a file that
-is really there. `vendor/bin/commandments` is right for a consumer and wrong for exactly one project
-— this one, because composer never shims a package's own `bin` into its own `vendor` — so hardcoding
-it meant every hook here failed on every tool call, silently. `Binary::in($root)` answers it once:
-the shim when present, the checkout's own `bin/` otherwise, and the shim as the fallback so wiring a
-project before its first `composer install` still writes the command that will work.
+**⚙️ Where the executable is, is a FACT — `cli/binary`, never a literal.** Every command we write INTO
+a project (a wired hook, the composer sync call) has to name a file that is really there.
+`vendor/bin/commandments` is right for a consumer and wrong for exactly one project — this one,
+because composer never shims a package's own `bin` into its own `vendor` — so `binary.In(root)` answers
+it once: the shim when present, the checkout's own `bin/commandments` otherwise.
 
-**📄 The briefing is `AGENTS.md`; `CLAUDE.md` imports it.** {@see Skills\Briefing} renders the canon,
-addressed to no agent in particular, into `AGENTS.md`; an agent that cannot read it declares its own
-file, and Claude's is `@AGENTS.md` plus what is true only there (the Skill tool, `TodoWrite`, hooks).
-The canon is written and verified BEFORE any pointer to it. Both go through {@see Agents\Instructions},
-which is the ONE rule about a file the user owns: **inject, never overwrite.** Markers are line-anchored
-(our own docs SHOW them, so a quoted one is prose), anything ambiguous — two blocks, a BEGIN with no
-END, an END above its BEGIN — REFUSES to write and says why, a file with no block is APPENDED to (never
-"after the first line", which lands inside front-matter or an open code fence), line endings/BOM are
-preserved, a path resolving outside the project is left alone, and sameness is decided by inode
-(`realpath` strings answer `false === false` on a fresh project and ignore case-insensitive collisions).
-Writes go through {@see Support\File::write} (temp + rename) under a per-project sync lock.
+**📄 The briefing is `AGENTS.md`; `CLAUDE.md` imports it.** The briefing renders the canon, addressed to
+no agent in particular, into `AGENTS.md`; Claude's file is `@AGENTS.md` plus what is true only there
+(the Skill tool, hooks). Both go through the ONE rule about a file the user owns (`cli/block`,
+`cli/agents`): **inject, never overwrite.** Markers are line-anchored (our own docs SHOW them, so a
+quoted one is prose), anything ambiguous — two blocks, a BEGIN with no END, an END above its BEGIN —
+REFUSES to write and says why, a file with no block is APPENDED to, line endings and a BOM are
+preserved, and a write goes through `cli/atomic` (temp + rename).
 
 **Every hook we wire is stamped `@code-commandments-managed`; `sync` strips only stamped hooks,
 so a user's own hooks are never touched.**
 
-**🗂 Session state is ONE format, and it NAMES itself — `Cli\State\`.** Every session-scoped state file
-(every hook {@see Hooks\Counter}, the touched-sources mark, the session names) is
-a {@see Cli\State\StateFile}: `name: value` lines, `-----`, the list the file keeps, `-----`, then the
-{@see Cli\State\Legend} that says what every value means and that deleting it is safe. Values are read
-and written BY NAME as PHP named arguments — `new State(count: 0)`, `$state->with(count: $n)`
-(underscores in code, dashes in the file) — and the legend is the SCHEMA: writing or reading a value it does not declare THROWS
-({@see Cli\State\UnknownValue}), so a typo can never land in a file under a name nothing reads back.
-**One feature = ONE file.** A count or a flag that belongs to a larger state lives INSIDE it, never in a
-file of its own: a count kept beside the state it belongs to outlives it, and the next one inherits it.
-A format change is carried across by {@see Cli\Migration}, run once from `sync` — what still has a
-reader is MOVED, and the heartbeats and the files of a removed feature are dropped.
+**🗂 Session state is ONE format, and it NAMES itself — `cli/state`.** Every session-scoped state file
+(every hook counter, the touched-sources mark, the session names) is `name: value` lines, `-----`, the
+list the file keeps, `-----`, then the legend that says what every value means and that deleting it is
+safe. Values are read and written BY NAME, and the legend is the SCHEMA: a name it does not declare is
+refused where it is written or read, so a typo can never land in a file nothing reads back. **One
+feature = ONE file.** A count or a flag that belongs to a larger state lives INSIDE it. A format change
+is carried across by the migration `sync` runs once (`cli/sync`) — what still has a reader is MOVED,
+and the files of a removed feature are dropped.
 
 **Fixing sins — the checklist workflow.** A full scan is slow (~30s on a large
 tree), so judge ONCE, then work the generated `.commandments/sins.md` line-by-line:
@@ -298,36 +264,32 @@ deletes the file).
 - **AST/semantic detection over name matching** — always; derive the answer from
   the AST / resolved type, never a class/method/variable name or a hardcoded list.
 - **Use the whole arsenal — detectors AND scribes.** Before hand-rolling a scan, reach for the
-  engine tools you already have: the call graph (`Codebase::index()` → `callersOf`), the
-  provenance/type engine (`TypeResolver::typeOf` — a value's real type through the receiver chain
-  and local assignments), the field-nil `ValueFlow`, the variable trace (`NodeMatch::trace()`), the
-  field reader (`AstNode::fields()`), and the receiver resolver. This applies to **Scribes too** —
-  a repenter has the same arsenal (each finding is a `NodeMatch`/`ElementMatch` with the full node,
-  `enclosingClass()`, `fields()`, the codebase via `NeedsCodebase`); compose the engine to gather
-  what the fix needs, never scrape source with a regex. A missing predicate is a signal to extend
-  the right engine layer.
+  engine tools you already have: the call graph (`php.IndexOf`), the type engine
+  (`php.ExpressionType`/`ReceiverTypeOf` — a value's real type through the receiver chain and local
+  assignments), the field-nil value flow (`php.ValueFlowOf`), the variable trace (`php.Trace`), the
+  field reader (`php.Fields`). This applies to **scribes too** — a scribe has the same arsenal (each
+  finding is an `engine.Match` with the whole codebase behind it); compose the engine to gather what
+  the fix needs, never scrape source with a regex. A missing predicate is a signal to extend the
+  right engine layer.
 - **🔧 FIX THE TOOL, NEVER WORK AROUND IT.** When an engine tool gives the wrong answer, the
   bug is in the TOOL — fix it at the source (with a regression test) so every detector that
   uses it benefits. A bespoke workaround inside one detector is a defect, not a solution: it
   hides the real bug, leaves every other caller broken, and rots the engine. If a tool in the
-  arsenal is broken, we repair the arsenal. (E.g. `TypeResolver` returning the literal
-  `'static'` for a `::for()` factory was fixed IN `TypeResolver`, not skirted in a caller.)
-- **A package's AST knowledge lives on its OWN decorator node.** Everything specific to a
-  third-party package (Spatie Data, Laravel/Eloquent/MCP, jessegall/concurrent, php-types
-  `Option`) is a `NodeMatch`/`ElementMatch` subclass under `Ast\{Laravel,Spatie,Concurrent,PhpTypes}\*Node`
-  — the FQCNs stated ONCE — and a detector reaches it by **type-hinting the node in a `where`
-  closure** (`->where(fn (LaravelNode $n) => $n->isFacadeCall())`); the shared {@see Query} base
-  injects it by reflecting the closure's parameter type (same trick as `Config::configure`), so it
-  works on both engines with no wiring. That package's sin + detector + skill live in a per-package
-  subfolder (`Backend/Laravel/`, …), auto-enrolled by the recursive catalogs ({@see Discovery}). A
-  general detector must NOT reference a package node — if it needs a package concept only as an
-  *exemption*, pull it from the node's single source, never redeclare the literal.
+  arsenal is broken, we repair the arsenal. (E.g. the PHP bridge listing no outside symbols for a
+  project with no autoloader, so `Stringable` was unknown, was fixed IN the bridge, not skirted in a
+  detector.)
+- **A package's knowledge lives in its OWN engine package.** Everything specific to a third-party
+  package (Spatie Data, Laravel/Eloquent, jessegall/concurrent, php-types `Option`) is stated ONCE in
+  its package under the engine (`engine/php/spatie`, `engine/php/laravel`, …), and a detector reaches
+  it the same way it reaches the language — `engine.As(spatienode.Node.IsDataClass)`. That package's
+  sins, detectors and skill live in a per-package folder (`detectors/backend/laravel/`, …). A general
+  detector must NOT reference a package's knowledge — if it needs a package concept only as an
+  *exemption*, take it from that package's single source, never redeclare the literal.
 - **Overlap is allowed — do NOT strip a detector to avoid it.** One piece of code
   can genuinely be several sins (e.g. set-property-then-`save()` is BOTH
   `ModelMutationAtCallSite` AND read-then-mutate `FeatureEnvy`). Two detectors
   firing on the same `file:line` is correct when both sins are real — each points
-  at a different skill/fix. `#[Sinful]` is `IS_REPEATABLE`: a fixture method may
-  carry multiple markers (and a detector may have more than 3 marked locations —
+  at a different skill/fix. A fixture site may carry several markers (and a detector may have more than 3 marked locations —
   ≥3 *diverse* is the floor, not a cap). Never weaken or delete a valid detection
   just because another detector also flags it; double-mark the fixture instead.
 

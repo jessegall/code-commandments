@@ -144,9 +144,11 @@ func copied(from, to string) bool {
 }
 
 // copiedFrom copies the folder from, in the file system files, into to, recursively, and says whether every
-// file arrived.
+// file arrived. The folder is the skill's as it stands: a file an earlier version published there and this one
+// does not, a reference page since dropped, is taken away rather than left for an agent to read as current.
 func copiedFrom(files fs.FS, from, to string) bool {
 	all := true
+	published := map[string]bool{}
 
 	err := fs.WalkDir(files, from, func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
@@ -164,6 +166,7 @@ func copiedFrom(files fs.FS, from, to string) bool {
 			return os.MkdirAll(target, 0o775)
 		}
 
+		published[target] = true
 		contents, err := fs.ReadFile(files, name)
 		if err != nil || os.WriteFile(target, contents, 0o644) != nil {
 			all = false
@@ -171,8 +174,19 @@ func copiedFrom(files fs.FS, from, to string) bool {
 
 		return nil
 	})
+	if err != nil {
+		return false
+	}
 
-	return err == nil && all
+	filepath.WalkDir(to, func(path string, entry fs.DirEntry, err error) error {
+		if err == nil && !entry.IsDir() && !published[path] {
+			os.Remove(path)
+		}
+
+		return nil
+	})
+
+	return all
 }
 
 func written(err error) bool {

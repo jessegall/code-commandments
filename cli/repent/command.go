@@ -56,7 +56,7 @@ func (Command) Help() help.Help {
 		Option("--dry-run[=FILE]", "preview the rewrite as a unified diff instead of applying it").
 		Option("--only=NAME", "run one rewriter only (alias: --sin=NAME)").
 		Option("--ignore-package-requirements", "keep package-gated scribes even if this project lacks the package").
-		Note("Rewrites only within the source roots `judge` reads (config.php's paths()), so it never touches " +
+		Note("Rewrites only within the source roots `judge` reads (the config's paths), so it never touches " +
 			"tests/ or anything judge would not flag. A broken or incorrect repent result is a BUG — report it with `commandments report`, referencing both the source and the broken output.").
 		Note("A rewriter that BREAKS is dropped so every other fix still applies — one bad scribe used to take " +
 			"the whole command down. The run then names it and exits 3, because it did not auto-fix everything " +

@@ -1,69 +1,67 @@
 ---
 name: writing-detectors
-description: How to author a v4 Sin Detector end-to-end — implement Detector (sin/find), AST/semantic over names, the fluent one-check-per-where style, TDD (red→green via Codebase::fromString), Catalog auto-discovery, the fixture proof, and validate-on-real-code. Read this BEFORE adding or changing a detector. Don't port v3 prophets 1:1.
+description: How to author a Sin Detector end-to-end in the Go engine — a type with Sin() and Find(), AST/semantic over names, the fluent one-check-per-Where style, registered in init(), proven by its engine's fixture, calibrated on real code. Read this BEFORE adding or changing a detector.
 ---
 
 # Writing a Sin Detector
 
-A detector is **thin**: it finds the sin and points at the skill that teaches the
-fix. No fix logic, no severity, no rubric — the skill teaches, the detector finds.
+A detector is **thin**: it finds the sin and names it; the sin points at the skill that teaches the fix. No fix
+logic, no severity, no rubric — the skill teaches, the detector finds.
 
-```php
-final class FacadeCallDetector implements Detector
-{
-    public function sin(): Sin { return new FacadeCall(); }   // the sin — carries its skill + description
+```go
+// DeepNestingDetector finds an if nested two ifs deep within its function.
+type DeepNestingDetector struct{}
 
-    public function find(Codebase $codebase): array                  // list<NodeMatch>
-    {
-        return $codebase
-            ->whereStaticCall()
-            ->where(fn (AstNode $n): bool => str_starts_with($n->staticCallClass() ?? '', self::FACADE_NS))
-            ->get();
-    }
+func init() { detectors.Register(catalog.Backend, DeepNestingDetector{}) }
+
+// Sin is the sin the detector finds.
+func (DeepNestingDetector) Sin() sins.Sin { return backendsins.DeepNesting{} }
+
+// Find is every if inside two or more ifs of its own function.
+func (DeepNestingDetector) Find(codebase *engine.Codebase) []engine.Match {
+	return php.In(codebase).
+		Where(engine.As(php.Node.IsDeeplyNestedIf)).
+		Get()
 }
 ```
 
-It auto-enrolls — `Detectors\Catalog::all()` globs `Backend/*Detector.php`. No list
-to register.
+It lives in `detectors/<engine>/`, its sin in `sins/<engine>/`, and it enrols itself: `init()` registers it,
+and `registry` imports every detector package. There is no list to add it to.
 
 ## The rules
 
-1. **AST/semantic over names — the cardinal rule.** Classify by what the AST/type
-   IS (extends/implements, attributes, constructor shape, resolved type), never by
-   a class/method/variable name, suffix, or a hardcoded base list. A name check is
-   a smell to justify. (See `prefer_ast_over_name_checks`.)
-2. **Compose the engine, don't poke the AST.** Use `Codebase` selectors + `Query`
-   filters. Missing a predicate? Add it to the right layer ([[detector-engine]]),
-   not inline in the detector.
-3. **One check per `where`/`reject` line.** Read it like a sentence.
-4. **Best-of-the-best only.** A detector must catch a real, principled
-   architectural sin with low false-positives. Skip crude heuristics (raw counts),
-   role-inference-by-name, and anything needing NL/semantic understanding — they
-   hurt the agent. Do **not** port the ~105 v3 prophets (`deprecated/`) one by one;
-   the v4 system is better. Curate. (See `v4_dont_port_prophets`.)
+1. **AST/semantic over names — the cardinal rule.** Classify by what the tree and the resolved types say
+   (extends/implements, attributes, constructor shape, resolved type), never by a class, method or variable
+   name, a suffix, or a hardcoded list. A name check is a smell to justify.
+2. **Compose the engine, don't poke the tree.** Use the `engine.Codebase` selectors, `engine.Query` and the
+   language's decorator predicates. Missing a predicate? Add it to the right layer ([[detector-engine]]), not
+   inline in the detector.
+3. **One check per `Where`/`Reject` line.** Read it like a sentence.
+4. **Best-of-the-best only.** A detector must catch a real, principled architectural sin with few false
+   positives. Skip crude heuristics (raw counts), role-inference-by-name, and anything needing
+   natural-language understanding. Curate.
 
 ## The cadence
 
-1. **Unit test first** (red → green). `Codebase::fromString($php)`, run the
-   detector, assert the matched `scope()`s. Cover the flag case AND the
-   look-alikes it must NOT flag.
-2. **Implement** the detector + any engine helper it needs.
-3. **Prove it in the fixture** ([[detector-fixtures]]): mark `#[Sinful(YourSin::class)]`
-   (name the SIN, not the detector) on ≥3 DIVERSE examples, keep a `#[Righteous]` twin it
-   must not flag, and write a `#[Fixed]` twin — the sinful code REPAIRED the way your
-   rule says. The `#[Fixed]` one is what the published skill shows as "Good", so it must
-   contain the construct your `rule`/`suggestion` names; a righteous exemption in its
-   place teaches the escape hatch instead of the fix.
-4. **Validate on real code.** Run `bin/commandments judge ../workflows/src
-   --sin=your-sin` and read the hits. Real false positives → tighten the
-   detector (a principled `reject`, not a name list) before shipping.
+1. **Unit test first** (red → green) where the engine has a source builder: `frontendtest.FromSource`,
+   `pythontest.FromSource`, `csharptest.FromSource` build a codebase through the real bridge. Cover the flag
+   case AND the look-alikes it must NOT flag. A backend detector is proven by the shop fixture directly.
+2. **Implement** the detector, its sin, and any engine helper it needs. A detector still being calibrated
+   carries `Unpublished()` — every catalog skips it — until its hits read clean.
+3. **Prove it in the fixture** ([[detector-fixtures]]): mark ≥3 DIVERSE examples with the SIN's name, keep a
+   righteous twin it must not flag, and write a fixed twin — the sinful code REPAIRED the way the rule says,
+   which the published skill shows as "Good". A backend fixture change needs its stream regenerated:
+   `scripts/dev go generate ./engine/php`, then `scripts/dev go test ./engine/php/shop`.
+4. **Validate on real code.** Build the tool (`scripts/build`) and read the hits:
+   `bin/commandments judge ../some-app/src --sin=your-sin --no-checklist`. A real false positive → tighten
+   the detector (a principled `Reject`, never a name list) before shipping.
 
 ## Pointing at the skill
 
-The `Sin` your detector returns (`sin(): Sin { return new YourSin(); }`) names the `Skill` class
-that teaches the fix (by FQCN) plus the one-line `description` the docs project from — `judge` prints
-that skill so the agent reads one skill and resolves the whole group. Keep the sin's `skill:` and
-`description:` accurate; the generated "when it fires" rows regenerate from them (`composer sins`).
+The sin your detector returns names the skill that teaches the fix plus the one-line description the docs
+project from — `judge` prints that skill, so the agent reads one skill and resolves the whole group. Keep the
+sin's skill and description accurate; the generated "when it fires" rows regenerate from them
+(`composer sins`, or the pre-commit hook).
 
 ## Related
 

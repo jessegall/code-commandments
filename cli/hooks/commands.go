@@ -39,7 +39,7 @@ func (Dispatch) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, nil
 }
 
-// Runner is `hook <Class>`: one hook run on its own.
+// Runner is `hook <Name>`: one hook run on its own.
 type Runner struct{}
 
 // Names are the verbs it answers to.
@@ -49,8 +49,8 @@ func (Runner) Names() []string {
 
 // Help documents it.
 func (Runner) Help() help.Help {
-	return help.Of("Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...).").
-		Form("hook <Class>", "instantiate that Hook and run it against the payload on stdin").
+	return help.Of("Run ONE hook directly, by name — the form every wired hook is written as.").
+		Form("hook <Name>", "run that hook against the payload on stdin").
 		In(help.Hooks)
 }
 
@@ -60,7 +60,7 @@ func (r Runner) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	hook, found := Named(class)
 	if !found {
-		return help.Usage(console.Err, r, "'"+trimSlash(class)+`' is not a runnable JesseGall\CodeCommandments\Hooks\Hook.`), nil
+		return help.Usage(console.Err, r, "'"+trimSlash(class)+"' is not one of the tool's hooks."), nil
 	}
 
 	return respond(hook, console), nil

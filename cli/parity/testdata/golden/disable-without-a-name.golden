@@ -4,7 +4,7 @@ exit: 2
 --- stderr
 ✗ Name the sin or skill to disable.
 
-commandments disable — Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched.
+commandments disable — Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it — or in a config.php from an earlier version, through its tree, so your own lines are untouched.
 Also answers to: enable
 
 Usage:

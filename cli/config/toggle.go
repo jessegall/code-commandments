@@ -21,7 +21,7 @@ func (Toggle) Names() []string {
 
 // Help documents it.
 func (Toggle) Help() help.Help {
-	return help.Of("Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched.").
+	return help.Of("Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it — or in a config.php from an earlier version, through its tree, so your own lines are untouched.").
 		Form("disable <sin|skill>", "turn a rule off — a skill silences every detector it teaches the fix for").
 		Form("enable <sin|skill>", "turn it back on").
 		Note("The argument is a sin id OR a skill slug (the --sin= / --skill= keys), matched leniently. Run " +

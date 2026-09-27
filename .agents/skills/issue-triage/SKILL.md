@@ -21,13 +21,15 @@ how to watch for and resolve them.
 
 ## Resolve a `[detector-report]`
 
-1. **Reproduce** — write the flagged shape as a quick fixture (`Codebase::fromString(...)`
-   through the detector, or a `#[Sinful]`/`@sin` marker) and confirm the detector (mis)fires.
+1. **Reproduce** — write the flagged shape as a quick test (the language's source builder, e.g.
+   `frontendtest.FromSource`, through the detector, or a sin marker in the fixture) and confirm the detector
+   (mis)fires.
 2. Decide: false positive (tighten/guard the detector — AST/semantics, see [[writing-detectors]]),
    wrong rule (adjust the rule/config), or correct-but-unclear (sharpen the sin's description).
 3. **Fix the detector + add a fixture** from the reported code (≥3 diverse + a righteous twin).
-4. **Release** (patch for a fix) and **close** the issue with a resolution comment — or, if the
-   finding is actually correct, **close with a reason** explaining why.
+4. **Commit** on your branch with `Closes #N` and a resolution comment on the issue — or, if the finding is
+   actually correct, **close it with a reason** explaining why. The fix reaches consumers in the next release
+   Sir Jesse tags.
 
 ## ⚖️ An issue is EVIDENCE, not a verdict
 
@@ -38,7 +40,7 @@ report tells you WHERE to look. It does not tell you what is true.
 
 So before you change a single line of a detector:
 
-- **Reproduce it yourself** (`Codebase::fromString(...)` through the detector). If it does not
+- **Reproduce it yourself** (the language's source builder, through the detector). If it does not
   fire on the shape as described, the report is wrong about its own code — say so and close it.
 - **Read the detector's actual predicate**, not the reporter's account of it. "The detector
   appears to fire on any class of 2+ consts" is a claim to CHECK, and the check is the source.

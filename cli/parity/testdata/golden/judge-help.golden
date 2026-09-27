@@ -4,7 +4,7 @@ commandments judge — Scan a codebase and report its sins, grouped by the skill
 
 Usage:
   commandments judge [path]  scan a path — or, with none, the source roots declared in
-                             .commandments/config.php
+                             .commandments/config.json
   commandments judge --list  list every detector, grouped by skill
 
 Options:
@@ -26,12 +26,12 @@ Options:
   --no-checklist                 print only, don't write the checklist file
   --benchmark                    time each detector and print the slowest
 
-  With no [path], judge scans the source roots declared by $config->paths(...) in
-  .commandments/config.php — auto-detected on first run from your composer.json PSR-4 map (plus
-  app/src), so scaffolding like database/, storage/ and config/ is not judged. Run `commandments
-  config reindex` to re-detect them, or pass an explicit [path] to scan it directly. Add
-  $config->exclude('app/Generated') to subtract a path from ANY run — the tree is still parsed (so
-  cross-file rules stay correct) but nothing in it is ever reported or rewritten.
+  With no [path], judge scans the source roots declared under "paths" in .commandments/config.json
+  — auto-detected on first run from your composer.json PSR-4 map (plus app/src), so scaffolding
+  like database/, storage/ and config/ is not judged. Run `commandments config reindex` to re-detect
+  them, or pass an explicit [path] to scan it directly. Add a path under "exclude" to subtract it
+  from ANY run — the tree is still parsed (so cross-file rules stay correct) but nothing in it is
+  ever reported or rewritten.
 
   A rule that BREAKS is skipped so the rest of the run survives — but the run is not green: it
   names the rules that could not run and exits 3 (rather than 0) when nothing else was found,

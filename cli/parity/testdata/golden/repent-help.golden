@@ -18,7 +18,7 @@ Options:
   --only=NAME                    run one rewriter only (alias: --sin=NAME)
   --ignore-package-requirements  keep package-gated scribes even if this project lacks the package
 
-  Rewrites only within the source roots `judge` reads (config.php's paths()), so it never touches
+  Rewrites only within the source roots `judge` reads (the config's paths), so it never touches
   tests/ or anything judge would not flag. A broken or incorrect repent result is a BUG — report
   it with `commandments report`, referencing both the source and the broken output.
 

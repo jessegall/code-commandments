@@ -1,80 +1,75 @@
 ---
 name: developing-features
-description: The playbook for building ANY feature in code-commandments itself (this maintenance project) — reuse the engine arsenal before writing anything, compose the fluent DSL (never NodeFinder/regex in a detector), put reusable logic on the right layer, gate a not-ready detector behind Unpublished and calibrate it clean before publishing, prove everything with tests. Read this BEFORE you start implementing a feature here.
+description: The playbook for building ANY feature in code-commandments itself (this maintenance project) — reuse the engine arsenal before writing anything, compose the fluent query (never a regex or a raw tree walk in a detector), put reusable logic on the right layer, gate a not-ready detector behind Unpublished() and calibrate it clean before publishing, prove everything with tests in the capped dev container. Read this BEFORE you start implementing a feature here.
 ---
 
 # Developing features in code-commandments
 
-This is the meta-skill for working ON this repo (not for a consumer project). It is the
-order of operations and the non-negotiables. For the specifics of a detector, a scribe, a
-fixture, or a release, defer to the focused skills linked at the end.
+This is the meta-skill for working ON this repo (not for a consumer project). It is the order of operations and
+the non-negotiables. For the specifics of a detector, a scribe, a fixture, or a release, defer to the focused
+skills linked at the end.
 
 ## 0. Before you write a line — REUSE
 
-The single most-repeated mistake here is re-deriving logic the engine already has. **Every
-feature starts by reading the arsenal** (CLAUDE.md → "The engine arsenal"): `Codebase`
-selectors + whole-program methods (`extends`, `isEnum`, `isValueType`, `declarationMatch`,
-`index()`/call graph, `valueFlow()`), the ~120 `AstNode`/`NodeMatch` predicates, `TypeName`,
-and the `Ast\Support\*` analyses (`TypeResolver`, `ChainResolver`, `ReceiverResolver`,
-`ValueFlow`, `FeatureEnvy`, …). If what you need is there, compose it. If it's close, EXTEND
-it. Only if it's genuinely absent do you add a new tool — **on the right layer, never inline**
-(see the layering rule in `detector-engine`). This is not a walk-only rule; it applies the
-moment you start building anything.
+The single most-repeated mistake here is re-deriving logic the engine already has. **Every feature starts by
+reading the arsenal** (CLAUDE.md → "The engine arsenal"): the `engine.Codebase` selectors, `engine.Match`, each
+language's decorator (`php.Node`'s ~200 predicates and the others), and the analyses (`php.IndexOf`,
+`php.ExpressionType`, `php.ValueFlowOf`, `php.Trace`, `engine.Recurring`, `engine.DivergentTwins`, …). If what
+you need is there, compose it. If it's close, EXTEND it. Only if it's genuinely absent do you add a new tool —
+**on the right layer, never inline** (see the layering rule in `detector-engine`).
 
 ## 1. Compose the engine — the two guardrails
 
-- **No hand-rolled parsing/rewriting.** Detect through `Codebase → Query → AstNode`; rewrite
-  through `Draft`/`Writer` with `Span` owning offset math. Banned in `Detectors`/`Scribes`/`Vue`:
-  `preg_*`, `strpos`/`strrpos`/`strstr`, `ctype_*` (NoRegexInParsingLayerTest).
-- **A detector composes the fluent DSL; it never `new NodeFinder()` and never hoards
-  `PhpParser\Node` type-juggling** (DetectorsComposeTheEngineTest: no NodeFinder in a detector,
-  ≤10 PhpParser imports). The moment you want a raw walk, a `type→string`, a `$this->x` reader,
-  an "is it reassigned" check — STOP: that is a reusable primitive. Put it on
-  `AstNode`/`TypeName`/`Codebase`/a `Support`, then compose it. Scribes rewrite through the one
-  canonical `Writer`, never a bespoke rewriter.
+- **No hand-rolled parsing or rewriting.** Every language arrives parsed by its own compiler; detect through
+  `engine.Codebase → engine.Query → engine.Match`, rewrite through the scribes' drafts with `engine.Source`
+  owning the offset math. A regex over code in a detector or a scribe is a missing engine tool. A fact the
+  tree lacks belongs in the bridge and the contract.
+- **A detector composes the query; it never walks the tree by hand.** The moment you want a raw walk, a
+  type-to-string, a field reader, an "is it reassigned" check — STOP: that is a reusable primitive. Put it on
+  the language's decorator or in an analysis, then compose it. Scribes rewrite through the one writer, never a
+  bespoke one.
 
 Write everything **with intent to reuse** — assume the next detector needs the same predicate.
 
 ## 2. TDD, then prove on the fixture
 
-Unit-test first (`Codebase::fromString(...)` → run the detector → assert `scope()`s), covering
-the flag case AND the look-alikes it must NOT flag. Then prove it on the self-checking fixture
-(`#[Sinful]`/`#[Righteous]` markers = the spec; ≥3 diverse + a righteous twin). See
-`writing-detectors` and `detector-fixtures`.
+Unit-test first through the language's source builder (`frontendtest.FromSource`, `pythontest.FromSource`,
+`csharptest.FromSource`), covering the flag case AND the look-alikes it must NOT flag. Then prove it on the
+self-checking fixture (the sin markers are the spec; ≥3 diverse + a righteous twin + a fix). See
+`writing-detectors` and `detector-fixtures`. Every Go build and test runs through `scripts/dev`, scoped to the
+packages you touched; .NET runs only in its capped container.
 
-## 3. Not ready to ship? Mark it `Unpublished` and CALIBRATE
+## 3. Not ready to ship? Mark it unpublished and CALIBRATE
 
-A new detector almost always needs several calibrate→tighten rounds. Have the detector class
-AND its sin implement `JesseGall\CodeCommandments\Unpublished` — both catalogs skip it, so it
-stays out of `judge`, the fixture verifier, the generated docs, and every release while you
-iterate. Unit-test it by instantiating it **directly**; calibrate by running it directly over a
-scanned real codebase (a scratchpad probe: `Codebase::scan($root)` →
-`new YourDetector()->find($cb)`; raise `-d memory_limit=3G` for large trees).
+A new detector almost always needs several calibrate→tighten rounds. Give the detector AND its sin the method
+`Unpublished()` (`catalog.Unpublished`) — every catalog skips it, so it stays out of `judge`, the fixture
+verifier, the generated docs, and every release while you iterate. Unit-test it by calling it **directly**;
+calibrate by running it over a scanned real codebase (a scratchpad probe:
+`scan.Walk([]string{root}, source.Excluded{}).Load()` → `YourDetector{}.Find(codebase)`), or build the tool and
+`bin/commandments judge ../some-app --sin=your-sin --no-checklist`.
 
-**Calibration is mandatory and it is where ideas die.** Read every hit against the
-architecture, never against what the target happens to do. Volume ≠ false positive. The ONLY
-thing that invalidates a detector is a genuine FP — a pattern *correct under the architecture*
-that gets flagged. Tighten with a principled `reject` (walk the chain — resolve the real type,
-classify value-vs-service, trace provenance — don't eyeball two files), or, if no AST signal
-separates the sin from a valid look-alike (the difference is only author intent), **cut that
-pattern.** When the hits read clean, delete `implements Unpublished`, add the fixtures, and it
-enrols itself.
+**Calibration is mandatory and it is where ideas die.** Read every hit against the architecture, never against
+what the target happens to do. Volume ≠ false positive. The ONLY thing that invalidates a detector is a genuine
+false positive — a pattern *correct under the architecture* that gets flagged. Tighten with a principled
+`Reject` (resolve the real type, classify value-vs-service, trace provenance — don't eyeball two files), or, if
+no tree signal separates the sin from a valid look-alike (the difference is only author intent), **cut that
+pattern.** When the hits read clean, delete `Unpublished()`, add the fixtures, and it enrols itself.
 
 ## 4. Ship it
 
-Regenerate docs (`composer sins` + `composer readme`), run the whole suite
-(`vendor/bin/phpunit tests` — the gate is phpunit; do NOT self-judge this repo), then
-commit/merge/tag/push per `releasing` (a new semver tag per commit; no
-Co-Authored-By trailer). Fix every sin/warning on files you touch.
+The pre-commit hook regenerates the skills, the README tables and the command references and re-stages them
+(`composer sins` does the same by hand). Run the tests of every package you touched through `scripts/dev`, then
+commit per `releasing` (no attribution trailer). Fix every finding on files you touch. Only Sir Jesse merges to
+main and tags a release.
 
 ## When to read what
 
 | Skill | For |
 |---|---|
-| `package-overview` | the two-engine architecture, where things live |
-| `detector-engine` | the fluent DSL + the layering rule (where a new helper goes) |
+| `package-overview` | the engines, the bridges, where things live |
+| `detector-engine` | the fluent query + the layering rule (where a new helper goes) |
 | `writing-detectors` | authoring a detector end-to-end |
-| `detector-fixtures` | the `#[Sinful]` fixture spec + diversity/righteous rules |
+| `detector-fixtures` | the fixture spec + diversity/righteous/fixed rules |
 | `writing-exemptions` | keeping a general rule general (the exemption registry) |
 | `issue-triage` | resolving inbound `[detector-report]`/`[bug-report]` issues |
-| `releasing` | commit/tag/push conventions |
+| `releasing` | commit, release build and tag conventions |

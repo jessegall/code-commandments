@@ -67,7 +67,7 @@ vendor/bin/commandments install
 ## Usage
 
 ```bash
-# scan. With no path, judge reads the source roots from .commandments/config.php
+# scan. With no path, judge reads the source roots from .commandments/config.json
 # (auto-detected from composer.json on the first run)
 vendor/bin/commandments judge
 vendor/bin/commandments judge src                  # or point it at a path
@@ -89,7 +89,7 @@ vendor/bin/commandments judge --list
 
 # read the dependency stack you already have, and propose the layer declaration for it
 vendor/bin/commandments layers                # print it
-vendor/bin/commandments layers --write        # add it to .commandments/config.php
+vendor/bin/commandments layers --write        # add it to .commandments/config.json
 vendor/bin/commandments layers --floor        # only the namespaces nothing of yours sits below
 
 # and as the codebase grows, edit the declared stack in place
@@ -122,12 +122,12 @@ Exit code is non-zero when sins are found.
 | `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
 | `commandments journal-serve` | Answer the agent journal's hooks from one running process, over the socket the journal names in $JOURNAL_PLUGIN_SOCKET. |
 | `commandments roslyn-serve` | Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project. |
-| `commandments journal-config` | Write the agent journal plugin's chosen switches into .commandments/config.php. |
+| `commandments journal-config` | Write the agent journal plugin's chosen switches into .commandments/config.json. |
 | `commandments journal-scan` | Scan the project for the folders to check and the ones to leave out, for the agent journal plugin. |
 | `commandments journal-skills` | Render the skills into the agent journal plugin's folder, for the journal to publish. |
-| `commandments hook <Class>` | Run ONE hook class directly — the form every wired hook is written as, built-in or a consumer's own $config->hook(...). |
-| `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.php — edited through the AST, so the file stays valid PHP and your own lines are untouched. |
-| `commandments config` | Inspect and manage .commandments/config.php — what is configured, and what is actually running. |
+| `commandments hook <Name>` | Run ONE hook directly, by name — the form every wired hook is written as. |
+| `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it — or in a config.php from an earlier version, through its tree, so your own lines are untouched. |
+| `commandments config` | Inspect and manage .commandments/config.json — what is configured, and what is actually running. |
 | `commandments layers [path]` | Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file. |
 | `commandments exemptions` | List the exemption tags — what a package registers to quiet a general rule on its own boundary types. |
 | `commandments info <sin\|detector>` | Explain one sin — what it flags, why it is a sin, how to fix it, and a worked example. |
@@ -143,51 +143,39 @@ projected from the command itself, so it is never out of date.
 Configuration is opt-out: silence a rule, tune a threshold, or add a detector of
 your own.
 
-A commented `.commandments/config.php` is scaffolded on install. It returns a
-closure given a `Config`; no framework required, the CLI loads the file itself:
+A `.commandments/config.json` is scaffolded on install, with a schema beside it
+(`config.schema.json`) so an editor completes every rule, sin and skill by name:
 
-```php
-<?php
-
-use JesseGall\CodeCommandments\Config;
-use JesseGall\CodeCommandments\Detectors\Backend\DataClumpDetector;
-use JesseGall\CodeCommandments\Detectors\Backend\Laravel\FacadeCallDetector;
-use JesseGall\CodeCommandments\Detectors\Frontend\DeepNestedDetector;
-use JesseGall\CodeCommandments\Sins\Backend\Spatie\NonFinalData;
-use JesseGall\CodeCommandments\Skills\Backend\ValueObjects;
-
-return function (Config $config): void {
-    $config
-        // The source roots judge and repent scan (auto-detected on first run).
-        ->paths('app', 'src')
-
-        // Silence a rule by its Sin class (drops the detector that finds it).
-        ->disable(NonFinalData::class)
-
-        // ...or by a specific Detector class.
-        ->disable(FacadeCallDetector::class)
-
-        // ...or by a whole Skill class (every detector that discipline teaches).
-        ->disable(ValueObjects::class)
-
-        // Add a detector that lives in YOUR codebase.
-        ->detector(\App\Commandments\NoRawSqlDetector::class)
-
-        // Tune thresholds. Setters chain, so several knobs fit in one closure.
-        ->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10)->maxRemaining(2))
-        ->configure(fn (DataClumpDetector $d) => $d->minClasses(3));
-};
+```json
+{
+    "$schema": "./config.schema.json",
+    "paths": ["app", "src"],
+    "exclude": ["app/Generated"],
+    "disable": {
+        "sins": ["backend/NonFinalData"],
+        "detectors": ["backend/FacadeCallDetector"],
+        "skills": ["backend/ValueObjects"],
+        "languages": ["python"]
+    },
+    "configure": {
+        "backend/DataClumpDetector": [{"minClasses": [3]}]
+    },
+    "detectors": ["NoRawSqlDetector"]
+}
 ```
 
-The scaffold also carries two menus, `$disabledSkills` and `$disabledSins`: every
-shipped skill and sin as a commented-out `disable()` argument. Remove the `//` to
-turn a rule off. New rules are appended on `composer update`; your edits are kept.
+- `paths`: the source roots judge and repent scan with no path given (auto-detected on first run).
+- `exclude`: paths never reported on nor rewritten; still parsed, so findings elsewhere stay right.
+- `disable`: rules turned off by their sin, their detector, or their whole skill — and whole
+  languages, agents or hooks.
+- `configure`: a shipped detector tuned, each step one of its methods with its arguments in order.
+- `detectors` / `packages`: your own rules and exemption packages from `.commandments/custom/`
+  (see [Developing detectors](#developing-detectors)), turned on.
 
-Each move is named for what it registers: `paths`, `disable`, `detector`,
-`configure`, `package` (see [Developing detectors](#developing-detectors)) and `hook`
-(see [Hooks](#hooks)). `configure` finds the detector by the
-closure's first parameter type. Run `commandments config` for a summary of what's
-in effect.
+`commandments disable <sin>` and `enable <sin>` edit the file for you, leaving the rest as you wrote
+it. Run `commandments config` for a summary of what's in effect. A project that still has a
+`config.php` from an earlier version has it turned into `config.json` on the next `composer update`
+(the original is kept as `config.php.bak`).
 
 ### Declaring your layers
 
@@ -196,12 +184,15 @@ only your project knows which way its arrows are meant to point, so
 `NamespaceDependencyDetector` stays completely inert until you say. Declare the
 stack top-down and each layer names what it may reach:
 
-```php
-$config->configure(fn (NamespaceDependencyDetector $d) => $d
-    ->layer('App\\Ui\\Tokens')
-    ->layer('App\\Ui\\Elements', mayUse: ['App\\Ui\\Tokens'])
-    ->layer('App\\Ui\\Shared',   mayUse: ['App\\Ui\\Elements', 'App\\Ui\\Tokens'])
-    ->layer('App\\Ui\\Pages',    mayUse: ['App\\Ui\\Shared', 'App\\Ui\\Elements']));
+```json
+"configure": {
+    "backend/NamespaceDependencyDetector": [
+        {"layer": ["App\\Ui\\Tokens"]},
+        {"layer": ["App\\Ui\\Elements", ["App\\Ui\\Tokens"]]},
+        {"layer": ["App\\Ui\\Shared", ["App\\Ui\\Elements", "App\\Ui\\Tokens"]]},
+        {"layer": ["App\\Ui\\Pages", ["App\\Ui\\Shared", "App\\Ui\\Elements"]]}
+    ]
+}
 ```
 
 Every reference out of a declared layer is then judged — `extends`, `implements`, a
@@ -217,8 +208,8 @@ a `catch`, an attribute. They are all the same arrow.
   `App\UiKit` is not inside `App\Ui`.
 
 You don't have to write any of that by hand. `commandments layers` reads the stack
-already implied by your code and prints the declaration; `--write` splices it into
-`config.php`, importing the detector and leaving your own lines untouched. What it
+already implied by your code and prints the declaration; `--write` adds it to
+`config.json`, leaving the rest of the file as you wrote it. What it
 proposes is today's shape, so everything already passing keeps passing — it costs
 nothing to adopt and refuses the *next* arrow pointing somewhere new.
 
@@ -264,7 +255,7 @@ once and every agent reads the same copy.
 
 `install` (and every `composer update`, via `sync`) writes the skills into your
 project's `.agents/skills/` library and points each agent at them. Nothing to
-configure: an agent enrols itself, and `$config->disable(\JesseGall\CodeCommandments\Agents\CodexAgent::class)`
+configure: an agent enrols itself, and `"disable": {"agents": ["CodexAgent"]}` in `.commandments/config.json`
 turns one off like any other rule.
 
 <!-- BEGIN: agents-table (auto-generated, run `composer readme`) -->
@@ -300,8 +291,7 @@ before risky commands and on stop. Under any other agent all of that is still av
 the skills, `AGENTS.md`, and `judge` / `repent` as ordinary CLI verbs — but nothing checks
 that the agent used them.
 
-One further gap: session state is scoped by `CLAUDE_CODE_SESSION_ID`
-([`Workspace`](src/Workspace.php)), so under another agent every run shares the
+One further gap: session state is scoped by `CLAUDE_CODE_SESSION_ID`, so under another agent every run shares the
 `default` session folder. Fine for one session at a time; concurrent runs would
 share a checklist.
 
@@ -355,41 +345,17 @@ alone, and a refusal — the shared-branch gate, for one — stops the tool call
 Its settings, in the journal's Plugins page, are a switch for every sin — named, with what it
 flags, grouped under the skill that teaches its fix — and a switch per language. They are generated
 from the registry by `composer readme`, so they never drift. Flipping one writes
-`.commandments/config.php` through `commandments journal-config`, the same `disable()` call you
-would edit by hand; your own lines in it are kept.
+`.commandments/config.json` through `commandments journal-config`, the same `disable` entry you
+would write by hand; the rest of the file is kept.
 
 While the plugin is installed, `install` and `sync` wire **no** Claude Code hooks of their own: the
 journal calls them. Take the plugin away and the next `composer update` wires them back.
 
-### Register your own hook
+### Turning hooks on and off
 
-Hooks are an open set, like detectors. Write a `Hook`, declare where it binds, and
-register it. It's wired and run exactly like a built-in, with the same stamp:
-
-```php
-use JesseGall\CodeCommandments\Cli\Hook;
-use JesseGall\CodeCommandments\Cli\HookBinding;
-use JesseGall\CodeCommandments\Cli\HookEvent;
-
-final class AnnounceOnStop extends Hook
-{
-    public function bindings(): array
-    {
-        return [new HookBinding('Stop')];
-    }
-
-    protected function onStop(HookEvent $event): int
-    {
-        // …your logic; use $this->block()/$this->inject()/$this->pass()
-        return $this->pass();
-    }
-}
-```
-
-```php
-// in .commandments/config.php
-$config->hook(\App\Hooks\AnnounceOnStop::class);
-```
+The hooks are the tool's own. Every project runs the default set; one that is off by default is turned on by
+name under `"hooks"` in `.commandments/config.json`, and any is turned off under `"disable": {"hooks": […]}` —
+the schema beside the config lists every one by name.
 
 ## How detectors are tested
 
@@ -460,49 +426,9 @@ become. The generated `## Bad → good` prefers `#[Fixed]` and falls back to
 
 ### Testing your own detectors
 
-The same harness proves the detectors you write. A custom detector declares where
-its marked fixture files live by implementing `HasFixture`:
-
-```php
-use JesseGall\CodeCommandments\Backend\Detector;
-use JesseGall\CodeCommandments\Testing\HasFixture;
-
-final class NoRawSqlDetector implements Detector, HasFixture
-{
-    // the directory of .php files carrying #[Sinful(NoRawSql::class)] / #[Righteous] markers
-    public function fixturePath(): string
-    {
-        return __DIR__ . '/fixtures';
-    }
-
-    // sin() + find() as usual …
-}
-```
-
-Then a one-class test hands your detectors to a `DeclaredFixture` and extends the
-shipped `FixtureTestCase`. You get the exact checks the package runs on itself:
-
-```php
-use JesseGall\CodeCommandments\Testing\DeclaredFixture;
-use JesseGall\CodeCommandments\Testing\Fixture;
-use JesseGall\CodeCommandments\Testing\FixtureTestCase;
-
-final class MyDetectorsTest extends FixtureTestCase
-{
-    protected function fixture(): Fixture
-    {
-        return new DeclaredFixture([
-            new NoRawSqlDetector(),
-            // a Frontend\Detector: .vue fixtures with <!-- @sin --> markers
-            new NoDatePickerDetector(),
-        ]);
-    }
-}
-```
-
-Frontend detectors work identically: point `fixturePath()` at a directory of
-`.vue` files with `<!-- @sin -->` markers. `DeclaredFixture` routes each detector
-to its engine.
+A rule of your own is proven the same way the shipped ones are calibrated: a probe file holding one example of
+every form it must catch and the near-misses it must not, judged with `--sin=<your-sin>`, then a scoped run
+over your real code read by eye. The `commandments-writing-detectors` skill walks through it.
 
 ## Skills
 
@@ -641,298 +567,42 @@ repenting.
 
 ## Developing detectors
 
-A rule of your own is three small classes: a **skill** that teaches the fix, a
-**detector** that finds the sin, and optionally your own **AST vocabulary**.
-Before you start, load the project skills via Claude Code's Skill tool:
-**`writing-detectors`**, **`detector-engine`**, **`detector-fixtures`**. The rule
-throughout: classify by what the AST/type **is**, never by a name or a hardcoded
-list.
+A rule of your own is data the binary runs: a `.json` file in `.commandments/custom/` naming the engine it
+judges, the sin it finds, and a query composed from the same selectors and checks every shipped detector
+composes — a **selector** opens it, **`where`** steps keep a node and **`reject`** steps drop one, one check
+each. Beside it, a skill of your own (a folder holding a `SKILL.md`) teaches the fix.
 
-A rule you own is marked as yours everywhere it is named: `judge` prints its
-findings as `[YourDetector (custom)]` (in the console and in `sins.md`, with a note
-in the section saying the fix belongs in `.commandments/custom/`), `judge --list`
-tags it, and `commandments report --detector=YourDetector` refuses to file — the
-package cannot answer for a rule it does not ship.
-
-### A skill
-
-The teaching half. Each skill is its own class under `Skills/{Backend,Frontend}/`
-(auto-discovered); `composer sins` renders it to a `SKILL.md`, with the bad→good
-block pulled from the fixture:
-
-```php
-namespace App\Commandments;
-
-use JesseGall\CodeCommandments\Skills\Skill;
-use JesseGall\CodeCommandments\Skills\Tier;
-
-final class VehicleAssembly extends Skill
+```json
 {
-    public function __construct()
-    {
-        parent::__construct(slug: 'vehicle-assembly', tier: Tier::Mandatory, order: 1);
-    }
-
-    public function title(): string       { return 'Vehicle assembly — wire the wheels'; }
-    public function trigger(): string     { return 'WHEN to build a vehicle clause: always through Vehicle::assemble(), which attaches its wheels and defaults.'; }
-    public function intro(): string       { return 'A clause is only whole once it has wheels — building one raw skips the assembler that attaches them.'; }
-    public function summary(): string     { return 'assemble clauses via Vehicle::assemble(); never `new` them raw.'; }
-    public function principle(): string   { return 'The assembler is the single place a clause becomes road-worthy: it wires the wheels, the defaults, the invariants. A raw `new` ships a clause that looks built but rolls on nothing.'; }
-}
-```
-
-### A detector
-
-A detector is a few lines of fluent AST query: a selector opens it, `where`/`reject`
-narrow it (one check per line), a terminal returns the matches. It references a
-**sin** (its own class under `Sins/`, which names the skill). `FacadeCallDetector`
-flags a Laravel facade call, then peels off every legitimate exception:
-
-```php
-namespace App\Commandments;
-
-use JesseGall\CodeCommandments\Ast\AstNode;
-use JesseGall\CodeCommandments\Ast\Codebase;
-// a PHP detector; a Vue one implements JesseGall\CodeCommandments\Frontend\Detector
-use JesseGall\CodeCommandments\Backend\Detector;
-use JesseGall\CodeCommandments\Sins\Sin;
-
-final class FacadeCallDetector implements Detector
-{
-    // the sin it points at (names the skill + description)
-    public function sin(): Sin { return new FacadeCall(); }
-
-    public function find(Codebase $codebase): array
-    {
-        return $codebase
-            // every `X::y(...)`
-            ->whereStaticCall()
-            // ...that's a facade
-            ->where(fn (AstNode $n) => $n->staticCallClassStartsWith('Illuminate\\Support\\Facades\\'))
-            // not `Mail::fake()`, a test double
-            ->reject(fn (AstNode $n) => $n->staticCallMethodIs('fake'))
-            // not in a route/config file
-            ->reject(fn (AstNode $n) => $n->isOutsideClass())
-            // not in a provider
-            ->reject(fn (AstNode $n) => $codebase->extends($n->enclosingClassName(), 'Illuminate\\Support\\ServiceProvider'))
-            ->get();
+    "engine": "backend",
+    "sin": {
+        "name": "raw-sql",
+        "description": "SQL written inline at a call site.",
+        "rule": "Queries go through the repository that owns the table.",
+        "skill": "no-raw-sql"
+    },
+    "find": {
+        "select": "call",
+        "where": [
+            {"resolves": "Illuminate\\Support\\Facades\\DB", "of": "child:class"},
+            {"nameIn": ["select", "statement", "unprepared"]}
+        ],
+        "reject": [
+            {"file": "*Repository.php"}
+        ]
     }
 }
 ```
 
-No list of facade names; it matches the framework's facade *namespace*, resolved
-from the file's imports.
+`commandments make <Name>` scaffolds both and turns the rule on in your config; the published
+**`commandments-writing-detectors`** skill teaches every selector and check, and the probe-then-calibrate
+discipline that proves a rule fires on what you meant — classify by what the code **is**, never by a name
+or a hardcoded list.
 
-A rule that only makes sense with a particular package declares that on its
-**sin**, via `RequiresPackage`. Without the package the rule is filtered out
-entirely (never runs, never shows in `--list`):
-
-```php
-namespace App\Commandments;
-
-use JesseGall\CodeCommandments\Ast\AstNode;
-use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Backend\Detector;
-use JesseGall\CodeCommandments\Sins\RequiresPackage;
-use JesseGall\CodeCommandments\Sins\Sin;
-
-// RequiresPackage lives on the SIN, not the detector
-final class RawCarbonParse extends Sin implements RequiresPackage
-{
-    public function __construct()
-    {
-        parent::__construct(
-            name: 'raw-carbon-parse',
-            skill: DateHandling::class,
-            description: 'Carbon::parse() on a raw string — build the date through a typed factory instead',
-            rule: 'Build dates with CarbonImmutable::createFromFormat(); never Carbon::parse() untrusted input.',
-        );
-    }
-
-    // a Composer name for a backend sin, an npm name for a frontend one
-    public function requiredPackage(): string { return 'nesbot/carbon'; }
-}
-
-final class RawCarbonParseDetector implements Detector
-{
-    public function sin(): Sin { return new RawCarbonParse(); }
-
-    public function find(Codebase $codebase): array
-    {
-        return $codebase
-            ->whereStaticCall()
-            ->where(fn (AstNode $n) => $n->staticCallClassStartsWith('Carbon\\'))
-            ->where(fn (AstNode $n) => $n->staticCallMethodIs('parse'))
-            ->get();
-    }
-}
-```
-
-### Your own AST vocabulary
-
-Want `$n->isBareVehicleClause()` to read like a built-in predicate? Subclass
-`NodeMatch`, add the domain predicate, and type-hint it in the `where` closure.
-Define as many decorator nodes as you like; each detector gets whichever it
-type-hints (the built-in `LaravelNode`, `SpatieDataNode`, … work the same way).
-The node also carries the `Codebase`, so a predicate can answer whole-program
-questions:
-
-```php
-namespace App\Commandments;
-
-use JesseGall\CodeCommandments\Ast\Codebase;
-use JesseGall\CodeCommandments\Ast\NodeMatch;
-use JesseGall\CodeCommandments\Backend\Detector;
-use JesseGall\CodeCommandments\Sins\Sin;
-
-// the node: a domain predicate composed from the engine's helpers
-final class VehicleNode extends NodeMatch
-{
-    public function isBareVehicleClause(): bool
-    {
-        // a `new App\Vehicles\…Clause(...)`, built raw, so it never declares its wheels
-        $class = $this->newClassName() ?? '';
-
-        return str_starts_with($class, 'App\\Vehicles\\') && str_ends_with($class, 'Clause');
-    }
-}
-
-// the sin: points at the VehicleAssembly skill above
-final class BareVehicleClause extends Sin
-{
-    public function __construct()
-    {
-        parent::__construct(
-            name: 'bare-vehicle-clause',
-            skill: VehicleAssembly::class,
-            description: 'A vehicle clause built with `new` — it never declares its wheels',
-            rule: 'Assemble a clause with `Vehicle::assemble()` so its wheels are wired; never `new` it raw.',
-        );
-    }
-}
-
-// the detector: composes the decorated node's predicate
-final class BareVehicleClauseDetector implements Detector
-{
-    public function sin(): Sin { return new BareVehicleClause(); }
-
-    public function find(Codebase $codebase): array
-    {
-        return $codebase
-            ->whereNew()
-            // reads like a built-in; the VehicleNode type-hint is all it takes,
-            // the engine injects the custom node via reflection
-            ->where(fn (VehicleNode $n) => $n->isBareVehicleClause())
-            ->get();
-    }
-}
-```
-
-### Teaching the engine about a package
-
-A general rule sometimes needs a framework fact (this class is a request handler,
-an entry point) so it doesn't false-positive on it, but it may not name the
-framework. A **`Package`** declares those facts as **exemptions**, keyed by a
-**tag**: the rule reads the tag, the package registers against it, and neither
-imports the other.
-
-The built-in tags (`Packages\Tags\*`), each with a **slug** you can pass to
-`exempt(...)` instead of the FQCN. Run `commandments exemptions` to print this
-list:
-
-| Tag (slug) | What it means | Read by (and what it exempts) |
-|---|---|---|
-| `Boundary` (`boundary`) | A framework **entry point**: an HTTP/RPC request, where raw input crosses into your domain. | **feature-envy** (don't move behaviour onto a request) · **pass-the-object** (a method taking one may unpack input from it). |
-| `ContractMethod` (`contract-method`) | A **method** a subclass must declare, whose shape the framework dictates (`rules`, `schema`, `casts`). | **near-duplicate** (the shared skeleton is inherent) · **array-return-bag** (the mandated array isn't a bag). |
-| `ArrayReturning` (`array-returning`) | A class whose whole job is handing the framework arrays (a `FormRequest`, an MCP tool). | **array-return-bag** (its array returns are contractual). |
-| `NoContainer` (`no-container`) | A type the framework instantiates itself, no DI (an Eloquent cast, a Spatie `DataPipe`/`Cast`). | **array-bag** (a loose array parameter is the framework's calling convention) · **container-reach** (with no DI, per-call `app()` is its only way to obtain collaborators). |
-| `CompositionRoot` (`composition-root`) | A service provider's `register()`/`boot()` — the composition root, where `config()` is wired into the typed objects it binds. | **config-read** (a provider can't inject its own config; reading it here is the wiring's job). |
-
-Register in `register()`: `classes()` for whole classes, `on(class, ...methods)`
-for specific methods, `methods()` for a name ignored everywhere:
-
-```php
-namespace App\Commandments;
-
-use JesseGall\CodeCommandments\Packages\Exemptions;
-use JesseGall\CodeCommandments\Packages\Package;
-use JesseGall\CodeCommandments\Packages\Tags\Association;
-use JesseGall\CodeCommandments\Packages\Tags\Boundary;
-use JesseGall\CodeCommandments\Packages\Tags\ContractMethod;
-
-final class AcmePackage extends Package
-{
-    public function register(Exemptions $exemptions): void
-    {
-        // any method taking one of these is a boundary; feature-envy et al. leave it alone
-        $exemptions->exempt(Boundary::class)
-            ->classes(\Acme\Rpc\Endpoint::class, \Acme\Rpc\Handler::class);
-
-        // an Acme handler's schema() is an array by contract
-        $exemptions->exempt(ContractMethod::class)
-            ->on(\Acme\Rpc\Handler::class, 'schema');
-
-        // a reference an ATTRIBUTE makes: #[BoundTo(X::class)] mandates both ends, so the
-        // name it carries is not a dependency this namespace chose — it draws no cycle arrow
-        $exemptions->exempt(Association::class)
-            ->attributes(\Acme\Attributes\BoundTo::class);
-    }
-}
-```
-
-`exempt('boundary')` equals `exempt(Boundary::class)`. The built-in
-`LaravelPackage` works exactly this way and auto-enrols; your own `Package` lives
-in your codebase, so register it in `.commandments/config.php`:
-
-```php
-// .commandments/config.php
-return fn (Config $config) => $config
-    ->package(\App\Commandments\AcmePackage::class);
-```
-
-### Your own exemption tags
-
-A tag is always an `Exemption`, so a custom one is its own subclass with a
-`slug()` (what packages register against) and a `description()` (what
-`commandments exemptions` prints):
-
-```php
-use JesseGall\CodeCommandments\Packages\Exemption;
-
-final class AcmeEntrypoint extends Exemption
-{
-    public function slug(): string        { return 'acme-entrypoint'; }
-    public function description(): string { return 'An Acme RPC endpoint — exempt from feature-envy.'; }
-}
-```
-
-Your detector reads it, any package registers against it, and neither imports the
-other. **Declare** each tag and WHAT to match it against (an `ExemptBy` scope); the
-engine applies the reject centrally, so `find()` just passes its results through
-`$this->exempt(...)` — no hand-written `Exemptions::has(...)`:
-
-```php
-use JesseGall\CodeCommandments\Packages\{AppliesExemptions, ExemptBy, Exemptable};
-
-final class AcmeFeatureEnvyDetector implements Detector, Exemptable
-{
-    use AppliesExemptions;
-
-    public function exemptions(): array
-    {
-        return [AcmeEntrypoint::class => [ExemptBy::EnclosingClass]];   // tag => where to match it
-    }
-
-    public function find(Codebase $codebase): array
-    {
-        return $this->exempt($codebase->whereMethodDeclaration()->where(/* … */)->get(), $codebase);
-    }
-}
-```
-
-`ExemptBy::EnclosingClass` matches the finding's class, `ExemptBy::EnclosingMethod`
-its class + method. A tag mapped to `[]` is one the detector enforces itself (a
-bespoke subject) — declared only so `commandments exemptions` still lists it.
+A rule you own is marked as yours everywhere it is named: `judge` prints its findings as
+`[YourDetector (custom)]` (in the console and in the checklist, with a note that the fix belongs in
+`.commandments/custom/`), `judge --list` tags it, and `commandments report --detector=YourDetector` refuses
+to file — the package cannot answer for a rule it does not ship.
 
 ## License
 

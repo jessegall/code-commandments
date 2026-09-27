@@ -146,7 +146,7 @@ func (JournalConfig) Names() []string {
 
 // Help documents it.
 func (JournalConfig) Help() help.Help {
-	return help.Of("Write the agent journal plugin's chosen switches into .commandments/config.php.").
+	return help.Of("Write the agent journal plugin's chosen switches into .commandments/config.json.").
 		Form("journal-config", "apply JOURNAL_SETTINGS to the project config (run by the journal plugin)")
 }
 

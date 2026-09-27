@@ -1,72 +1,69 @@
 ---
 name: writing-exemptions
-description: How a general detector stays framework-agnostic yet avoids false positives on framework types — the open exemption registry. A Package registers exemptions keyed by a tag (an Exemption subclass with a slug + description); a detector reads the tag via Exemptions::has and declares it via Exemptable. Read this when a general rule must not fire on a framework's boundary/contract/config type, or when adding a package's exemptions.
+description: How a general detector stays framework-agnostic yet avoids false positives on framework types — the open exemption registry (engine/php/packages). A Package registers exemptions keyed by a Tag (a slug and a description); a detector declares the tags it honours and where to match them (Exemptions()) and packages.Exempt drops what they excuse. Read this when a general rule must not fire on a framework's boundary/contract/config type, or when adding a package's exemptions.
 ---
 
 # Writing exemptions — keep a general rule general
 
-A *general* structural rule (feature-envy, array-bag, near-duplicate…) sometimes must
-know a fact about a **framework** — that a class is a request boundary, that a method's
-array shape is contractual, that a type is instantiated without a container — so it
-doesn't false-positive on it. But a general detector may **not** name a framework. The
-exemption registry is how the fact reaches the rule without either side importing the
-other.
+A *general* structural rule (feature-envy, array-bag, near-duplicate…) sometimes must know a fact about a
+**framework** — that a class is a request boundary, that a method's array shape is contractual, that a type is
+instantiated without a container — so it doesn't false-positive on it. But a general detector may **not** name
+a framework. The exemption registry (`engine/php/packages`) is how the fact reaches the rule without either
+side importing the other.
 
 ## The three pieces
 
-1. **A tag** — always an `Exemption` subclass (`src/Packages/Exemption.php`), with a
-   `slug()` and a `description()`. The built-ins live in `src/Packages/Tags/`
-   (`Boundary`, `ContractMethod`, `ArrayReturning`, `NoContainer`). A custom tag is your
-   OWN subclass — never a random class; `Exemption::resolve()` enforces that.
+1. **A tag** — a `packages.Tag`, a slug and a description. The shipped ones are in `tags.go` (`Boundary`,
+   `ContractMethod`, `ArrayReturning`, `NoContainer`, `Association`, `CompositionRoot`, `ControlSignal`) and
+   listed in `packages.Tags`.
 
-2. **A `Package`** (`src/Packages/*Package.php`, auto-enrolled) registers exemptions in
-   `register()`, building each tag's clause fluently:
+2. **A `Package`** registers exemptions in `Register`, building each tag's clause fluently, and is listed in
+   `packages.Shipped`:
 
-   ```php
-   $exemptions->exempt(Boundary::class)->classes(...LaravelNode::REQUEST_TYPES);
-   $exemptions->exempt(ContractMethod::class)->on(LaravelNode::FORM_REQUEST, 'rules');
+   ```go
+   exemptions.Exempt(Boundary).Classes(laravel.RequestTypes...)
+   exemptions.Exempt(ContractMethod).On(laravel.FormRequest, "rules")
    ```
-   `classes(...)` = whole classes (any method), `on(class, ...methods)` = specific
-   methods, `methods(...)` = a method name anywhere. FQCNs come from the package's
-   decorator node (`LaravelNode::*`) — stated ONCE, never re-declared in the package.
 
-3. **The detector DECLARES the tag + WHERE to match it** (an `ExemptBy` scope) and lets
-   `AppliesExemptions` apply the reject centrally — no hand-written `Exemptions::has(...)`:
-   ```php
-   final class FeatureEnvyDetector implements Detector, Exemptable
-   {
-       use AppliesExemptions;
+   `Classes(...)` = whole classes (any method), `On(class, methods...)` = specific methods, `Methods(...)` = a
+   method name anywhere, `Attributes(...)` = an attribute. The types come from the package's own engine package
+   (`engine/php/laravel`, `engine/php/spatie`) — stated ONCE, never re-declared in the `Package`.
 
-       public function exemptions(): array { return [Boundary::class => [ExemptBy::EnclosingClass]]; }
+3. **The detector DECLARES the tags it honours and WHERE to match them**, and lets `packages.Exempt` drop the
+   excused findings centrally:
 
-       public function find(Codebase $codebase): array
-       {
-           return $this->exempt($codebase->whereMethodDeclaration()->where(/* … */)->get(), $codebase);
-       }
+   ```go
+   // Exemptions excuses a class whose job is handing the framework arrays, and a method whose signature it dictates.
+   func (ArrayReturnBagDetector) Exemptions() []packages.Exemption {
+   	return []packages.Exemption{
+   		{Tag: packages.ArrayReturning, By: []packages.By{packages.EnclosingClass}},
+   		{Tag: packages.ContractMethod, By: []packages.By{packages.EnclosingMethod}},
+   	}
+   }
+
+   func (d ArrayReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
+   	return packages.Exempt(codebase, d, codebase.Where(…).Get())
    }
    ```
-   `ExemptBy::EnclosingClass` matches the finding's class, `ExemptBy::EnclosingMethod` its
-   class + method. A tag mapped to `[]` is enforced by the detector itself (a bespoke
-   subject — e.g. a param's resolved type) and declared only so `exemptions` lists it.
-   `exempt('boundary')` (the slug) is the same as `exempt(Boundary::class)`.
+
+   `EnclosingClass` matches the finding's class, `EnclosingMethod` its class and method. A tag declared with no
+   `By` is one the detector asks itself (a bespoke subject — e.g. a parameter's resolved type, through
+   `packages.Excuses`), declared only so `exemptions` lists it.
 
 ## Rules
 
-- **A general detector NEVER names a framework FQCN.** It reads a tag; a package supplies
-  the types. If it needs a framework concept only as an exemption, that's the registry.
-- **A package's FQCNs live once — on its decorator node** (`Ast\{Laravel,Spatie,…}\*Node`),
-  not re-declared in the `Package`. Pull `LaravelNode::FORM_REQUEST`, don't restate the literal.
-- **Declare what you read.** `implements Exemptable` so `commandments exemptions <detector>`
-  can show what quiets it, and the declaration can't drift from the `has()` calls.
-- **Every tag is describable + sluggable.** A custom exemption is an `Exemption` subclass
-  with `slug()` + `description()`; it then lists in `commandments exemptions` like a built-in.
+- **A general detector NEVER names a framework type.** It reads a tag; a package supplies the types. If it needs
+  a framework concept only as an exemption, that's the registry.
+- **A package's types live once — in its own engine package**, not re-declared in the `Package`. Use
+  `laravel.FormRequest`, don't restate the literal.
+- **Declare what you read.** `Exemptions()` is what `commandments exemptions <detector>` shows, so the
+  declaration can't drift from what quiets the rule.
 
 ## Verify
 
-- `commandments exemptions` lists every tag (built-in + detector-declared) with slug + description.
+- `commandments exemptions` lists every tag with its slug and description.
 - `commandments exemptions <sin|detector>` shows the tags one detector honours.
-- The exemption clause matching is unit-tested in `tests/Packages/ExemptionsTest.php`; a new
-  built-in tag or package registration is proven there.
+- Clause matching is unit-tested in `engine/php/packages`; a new tag or package registration is proven there.
 
 ## Related
 

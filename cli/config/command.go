@@ -27,7 +27,7 @@ func (Command) Names() []string {
 
 // Help documents it.
 func (Command) Help() help.Help {
-	return help.Of("Inspect and manage .commandments/config.php — what is configured, and what is actually running.").
+	return help.Of("Inspect and manage .commandments/config.json — what is configured, and what is actually running.").
 		Form("config", "the effective configuration: source roots, detectors running vs available, packages, skills").
 		Form("config reindex", "re-detect the source roots from composer.json and rewrite the config's paths()")
 }

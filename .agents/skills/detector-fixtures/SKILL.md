@@ -1,6 +1,6 @@
 ---
 name: detector-fixtures
-description: The self-checking Shop fixture that proves every detector — #[Sinful] markers ARE the test spec, SinfulMarkerVerifier checks missed/unexpected, and every detector must fire on ≥3 DIVERSE scenarios (different files, <60% class overlap, max-clique) plus have a righteous twin it must NOT flag. Read this when adding/adjusting a detector's fixtures or debugging a BackendFixtureTest failure.
+description: The self-checking fixture that proves every detector — the sin markers ARE the test spec, fixture.Fixture.Prove checks missed/unexpected/righteous/fixed, and every detector must fire on ≥3 DIVERSE scenarios (different files, <60% class overlap, max-clique) plus have a righteous twin it must NOT flag. Read this when adding/adjusting a detector's fixtures or debugging a fixture test failure.
 ---
 
 # The self-checking fixture — markers ARE the spec
@@ -19,16 +19,19 @@ public function badge(Order $order): string
 }
 ```
 
-## What the harness enforces (`tests/Detectors/Backend/BackendFixtureTest`, via `FixtureTestCase`)
+## What the harness enforces (`fixture.Fixture.Prove`)
 
-`SinfulMarkerVerifier` runs every detector in `Catalog::backend()` over the backend
-fixture (and `Catalog::frontend()` over `tests/Fixtures/frontend`) and, per
-detector, reports:
-- **missed** — a `#[Sinful]` it did NOT flag (a hole), and
-- **unexpected** — code it flagged that is NOT marked (a false positive, OR an
-  unmarked sin you forgot to mark).
+Each engine's fixture test runs every registered detector of that engine over its fixture —
+`engine/php/shop` over `tests/Fixtures/backend`, `detectors/frontend` over `tests/Fixtures/frontend`,
+`detectors/python` and `detectors/csharp` over theirs — and, per detector, reports:
+- **missed** — a sin marker it did NOT flag (a hole),
+- **unexpected** — code it flagged that is NOT marked (a false positive, OR an unmarked sin you forgot to
+  mark),
+- a flagged **righteous twin**, and a flagged **fix** (the published good example would still be the sin).
 
-Both must be empty. So the whole *unmarked* fixture is the false-positive guard.
+All must be empty. So the whole *unmarked* fixture is the false-positive guard. The backend fixture is read
+from its committed stream, so a change to it needs `scripts/dev go generate ./engine/php` before
+`scripts/dev go test ./engine/php/shop`.
 
 ## The ≥3-diverse-scenarios floor
 
@@ -107,14 +110,14 @@ Rules of thumb:
   renderer pairs on the class, so the reader gets one coherent before/after — and
   the collaborators wherever they honestly live.
 - **One scenario per sin per file.** Two classes in one file each holding a sin AND
-  its own repair is undecidable, and `FixedIsTheResolutionTest` fails it.
+  its own repair is undecidable, and the harness fails it.
 - Repair *that* scenario. A fix for a different method teaches nothing.
 - Show the construct the sin's own `rule`/`suggestion` names — if the rule says
   `#[WithCast]`, the fix must contain `#[WithCast]`.
 - Never let a resolution name something the fixture does not declare. A published
   fix calling a method nothing defines teaches a repair a reader cannot follow.
 - A resolution must also go unflagged, so `#[Fixed]` implies `#[Righteous]`, never
-  the reverse. `FixedIsTheResolutionTest` fails if a detector flags its own fix.
+  the reverse. The harness fails a detector that flags its own fix.
 
 ## `@example Name bad|good` — when the sin is not inside one declaration
 
@@ -136,15 +139,14 @@ namespace Shop.Rewards;
 
 Keep example files small and about one thing — the whole file is what the reader sees, so a file
 holding other rules' scenarios is the wrong one to point at; write a dedicated file. The fixture proves
-each half (`test_every_example_file_is_proven`): some Bad file holds the rule's sin marker, no Good file
+each half: some Bad file holds the rule's sin marker, no Good file
 does, and some Good file holds its `@fixed` or `@righteous`.
 
 ## Diagnostics
 
-A quick per-detector diversity/FP probe: scan the fixture (or workflows) with
-`Catalog::all()`, print each finding's `location()` + `scope()` + the source line,
-and compute the max-clique. (See the throwaway scripts under the scratchpad while
-authoring.) `bin/commandments judge tests/Fixtures/backend --sin=X` also works.
+A quick per-detector probe: in a throwaway test, run `YourDetector{}.Find(shop.Project(t))` (or the engine's
+own fixture codebase), print each finding's `Location()` + `Scope()`, and read them.
+`bin/commandments judge tests/Fixtures/backend --sin=X --no-checklist` also works.
 
 ## Related
 

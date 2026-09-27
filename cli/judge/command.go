@@ -48,7 +48,7 @@ func (Command) Names() []string {
 // Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.").
-		Form("judge [path]", "scan a path — or, with none, the source roots declared in .commandments/config.php").
+		Form("judge [path]", "scan a path — or, with none, the source roots declared in .commandments/config.json").
 		Form("judge --list", "list every detector, grouped by skill").
 		Option("--list", "list every detector grouped by the skill that fixes it, and run none of them").
 		Option("--skill=NAME", "only run detectors for one skill (group), e.g. spatie-data").
@@ -60,11 +60,11 @@ func (Command) Help() help.Help {
 		Option("--checklist=FILE", "write the checklist here (default: your session's sins/sins.md, in .commandments/sessions/<id>/ or the journal plugin's data folder)").
 		Option("--no-checklist", "print only, don't write the checklist file").
 		Option("--benchmark", "time each detector and print the slowest").
-		Note("With no [path], judge scans the source roots declared by $config->paths(...) in " +
-			".commandments/config.php — auto-detected on first run from your composer.json PSR-4 map (plus " +
+		Note("With no [path], judge scans the source roots declared under \"paths\" in " +
+			".commandments/config.json — auto-detected on first run from your composer.json PSR-4 map (plus " +
 			"app/src), so scaffolding like database/, storage/ and config/ is not judged. Run `commandments config " +
-			"reindex` to re-detect them, or pass an explicit [path] to scan it directly. Add " +
-			"$config->exclude('app/Generated') to subtract a path from ANY run — the tree is still parsed (so " +
+			"reindex` to re-detect them, or pass an explicit [path] to scan it directly. Add a path under " +
+			"\"exclude\" to subtract it from ANY run — the tree is still parsed (so " +
 			"cross-file rules stay correct) but nothing in it is ever reported or rewritten.").
 		Note("A rule that BREAKS is skipped so the rest of the run survives — but the run is not green: it " +
 			"names the rules that could not run and exits 3 (rather than 0) when nothing else was found, " +
