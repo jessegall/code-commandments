@@ -48,3 +48,24 @@ func TestAGenericFunctionWrittenTwiceIsADuplicate(t *testing.T) {
 		t.Errorf("the generic function written twice is found %d times", len(found))
 	}
 }
+
+// submit is a form's submit handler as smart-farmers-pos writes them, posting to route and reacting through methods
+// written in an object literal; onError is its error handler's body.
+func submit(route string, onError string) string {
+	return "export function submit (): void {\n  submitting.value = true\n\n  router.post(route('" + route + "'), form, {\n    preserveScroll: true,\n    onError (e) {\n" + onError + "    },\n    onSuccess () {\n      open.value = false\n      submitting.value = false\n    },\n  })\n}\n"
+}
+
+// TestAMethodInAnObjectLiteralIsReadWhole holds the tool to reading a method written in an object literal, body and
+// all, and what follows it, as TypeScript does: the PHP tool's parser stopped at the method's name and lost the rest
+// of the literal, so it weighed smart-farmers-pos's two EnrollDialog.vue handlers under the near-duplicate floor.
+func TestAMethodInAnObjectLiteralIsReadWhole(t *testing.T) {
+	handled := "      errors.value = e as Record<string, string>\n      submitting.value = false\n"
+	codebase := frontendtest.FromSource(t, map[string]string{"src/print.ts": submit("print-agents.store", handled), "src/relay.ts": submit("relay-agents.store", handled)})
+	if found := (typescript.NearDuplicateFunctionDetector{}).Find(codebase); len(found) != 2 {
+		t.Errorf("two handlers that differ in a route name are found %d times", len(found))
+	}
+	other := frontendtest.FromSource(t, map[string]string{"src/print.ts": submit("store", handled), "src/relay.ts": submit("store", "      submitting.value = false\n")})
+	if found := (typescript.DuplicateFunctionDetector{}).Find(other); len(found) > 0 {
+		t.Errorf("two handlers whose error handling differs are read as duplicates at %s", found[0].Location())
+	}
+}
