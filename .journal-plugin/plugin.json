@@ -25,42 +25,43 @@
         }
     },
     "requires": {
-        "php": {
-            "check": "php -v",
-            "hint": "code-commandments runs on PHP 8.4 or newer"
+        "curl": {
+            "check": "curl --version",
+            "hint": "curl fetches the checker's release binary into the plugin's own folder"
         },
-        "composer": {
-            "check": "composer --version",
-            "hint": "composer installs the checker inside the plugin's own folder"
+        "sha256sum": {
+            "check": "command -v sha256sum || command -v shasum",
+            "hint": "sha256sum or shasum checks the fetched binary against its release's SHA256SUMS"
         }
     },
     "env": {
-        "CLAUDE_PROJECT_DIR": "{project}"
+        "CLAUDE_PROJECT_DIR": "{project}",
+        "COMMANDMENTS_RELEASE": "v5.0.0"
     },
     "setup": [
         {
-            "name": "Install the checker in the plugin's folder",
-            "run": "composer install --no-interaction --no-progress --quiet"
+            "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
+            "run": "sh .journal-plugin/fetch"
         },
         {
-            "name": "Write the chosen switches into config.php",
-            "run": "bin/commandments journal-config"
+            "name": "Write the chosen switches into config.json",
+            "run": "bin/commandments-release journal-config"
         },
         {
             "name": "Check for sins, on demand",
-            "run": "journal check create \"Check for sins\" --set command=\".journal/plugins/code-commandments/bin/commandments judge\" --set every=0 --set failure=\"Code Commandments found {summary}\""
+            "run": "journal check create \"Check for sins\" --set command=\".journal/plugins/code-commandments/bin/commandments-release judge\" --set every=0 --set failure=\"Code Commandments found {summary}\""
         }
     ],
-    "refuse": "bin/commandments journal-hook",
+    "refuse": "bin/commandments-release journal-hook",
     "refuse_socket": "hooks",
     "reads": true,
     "refuse_seconds": 20,
     "on": {
-        "hook.PostToolUse": "bin/commandments journal-hook",
-        "hook.Stop": "bin/commandments journal-hook",
-        "hook.SessionStart": "bin/commandments journal-hook",
-        "hook.SubagentStart": "bin/commandments journal-hook",
-        "plugin.updated": "bin/commandments journal-config"
+        "hook.PostToolUse": "bin/commandments-release journal-hook",
+        "hook.Stop": "bin/commandments-release journal-hook",
+        "hook.SessionStart": "bin/commandments-release journal-hook",
+        "hook.SubagentStart": "bin/commandments-release journal-hook",
+        "plugin.updated": "bin/commandments-release journal-config"
     },
     "settings": {
         "folders_judged": {
@@ -3438,14 +3439,14 @@
         }
     },
     "skills": "journal-skills/.agents/skills",
-    "installed": "bin/commandments journal-scan",
+    "installed": "bin/commandments-release journal-scan",
     "services": {
         "hooks": {
-            "run": "bin/commandments journal-serve",
+            "run": "bin/commandments-release journal-serve",
             "restart": "always"
         },
         "roslyn": {
-            "run": "bin/commandments roslyn-serve",
+            "run": "bin/commandments-release roslyn-serve",
             "restart": "always"
         }
     },
