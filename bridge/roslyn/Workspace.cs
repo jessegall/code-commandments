@@ -69,7 +69,22 @@ public sealed class Workspace
         var roots = paths.Select(Path.GetFullPath).ToList();
         var asked = Sources.Under(roots).ToHashSet(StringComparer.Ordinal);
         var solution = Solution.Around(roots);
-        var owned = solution.Files().Concat(asked).Distinct().GroupBy(file => solution.Owner(file) ?? "").ToDictionary(group => group.Key, group => group.ToList());
+        var owned = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        var loose = new List<string>();
+
+        foreach (var file in solution.Files().Concat(asked).Distinct())
+        {
+            if (solution.Owner(file) is { } owner)
+            {
+                owned.TryAdd(owner, []);
+                owned[owner].Add(file);
+            }
+            else
+            {
+                loose.Add(file);
+            }
+        }
+
         var order = new List<string>();
         var reach = new Dictionary<string, List<string>>(StringComparer.Ordinal);
 
@@ -105,7 +120,7 @@ public sealed class Workspace
             }
         }
 
-        if (owned.TryGetValue("", out var loose))
+        if (loose.Count > 0)
         {
             var sources = loose.Select(Parse).ToList();
             WriteAsked(sources, CSharpCompilation.Create("loose", sources, References.Loose(loaded), Compiled), asked, false, write);

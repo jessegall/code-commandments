@@ -22,7 +22,7 @@ public sealed class ProjectFile
 
     private ProjectFile(string csproj)
     {
-        directory = Path.GetDirectoryName(csproj)!;
+        directory = Path.GetFullPath(Path.Combine(csproj, ".."));
         name = Path.GetFileNameWithoutExtension(csproj);
         paths = [csproj, .. BuildProps(directory)];
         documents = paths.Select(Load).ToArray();
@@ -80,7 +80,7 @@ public sealed class ProjectFile
 
             if (declared is not null)
             {
-                var from = Path.GetDirectoryName(paths[index])!;
+                var from = Path.GetFullPath(Path.Combine(paths[index], ".."));
                 var expanded = declared.Replace("$(MSBuildThisFileDirectory)", from + Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
 
                 return expanded.Contains('$') ? null : Path.GetFullPath(expanded, from);
@@ -89,7 +89,7 @@ public sealed class ProjectFile
 
         var enabled = documents.SelectMany(document => document.Descendants()).Any(element => element.Name.LocalName == "UseArtifactsOutput" && element.Value.Trim() == "true");
 
-        return enabled ? Path.Combine(Path.GetDirectoryName(paths.Length > 1 ? paths[1] : paths[0])!, "artifacts") : null;
+        return enabled ? Path.GetFullPath(Path.Combine(paths.Length > 1 ? paths[1] : paths[0], "..", "artifacts")) : null;
     }
 
     /// <summary>The projects this one references, as full paths.</summary>
@@ -100,18 +100,27 @@ public sealed class ProjectFile
     public IEnumerable<string> FrameworkReferences() => Included("FrameworkReference").Select(reference => reference.Id);
 
     /// <summary>The packages the project references, each with the version it asked for or the central one.</summary>
-    public IEnumerable<(string Id, string Version)> PackageReferences() =>
-        Included("PackageReference")
-            .Select(reference => (reference.Id, Version: reference.Version ?? central.GetValueOrDefault(reference.Id)))
-            .Where(reference => reference.Version is not null)
-            .Select(reference => (reference.Id, reference.Version!));
+    public IEnumerable<(string Id, string Version)> PackageReferences()
+    {
+        foreach (var reference in Included("PackageReference"))
+        {
+            if ((reference.Version ?? central.GetValueOrDefault(reference.Id)) is { } version)
+            {
+                yield return (reference.Id, version);
+            }
+        }
+    }
 
-    private IEnumerable<(string Id, string? Version)> Included(string item) =>
-        documents
-            .SelectMany(document => document.Descendants().Where(element => element.Name.LocalName == item))
-            .Select(element => (Id: element.Attribute("Include")?.Value, Version: Version(element)))
-            .Where(reference => reference.Id is not null)
-            .Select(reference => (reference.Id!, reference.Version));
+    private IEnumerable<(string Id, string? Version)> Included(string item)
+    {
+        foreach (var element in documents.SelectMany(document => document.Descendants().Where(element => element.Name.LocalName == item)))
+        {
+            if (element.Attribute("Include")?.Value is { } id)
+            {
+                yield return (id, Version(element));
+            }
+        }
+    }
 
     private static string? Version(XElement element) =>
         element.Attribute("Version")?.Value
@@ -130,7 +139,7 @@ public sealed class ProjectFile
         {
             yield return props;
 
-            props = ImportsItsParent(props) ? Nearest(Path.GetDirectoryName(Path.GetDirectoryName(props)!)!, "Directory.Build.props") : null;
+            props = ImportsItsParent(props) ? Nearest(Path.GetFullPath(Path.Combine(props, "..", "..")), "Directory.Build.props") : null;
         }
     }
 

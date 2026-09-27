@@ -347,7 +347,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
                     case SyntaxNode child:
                         fields.TryAdd(child, property.Name);
                         break;
-                    case IEnumerable items when property.PropertyType.IsGenericType && property.PropertyType.Name.Contains("SyntaxList"):
+                    case IEnumerable items when IsSyntaxList(property.PropertyType):
                         foreach (var item in items.OfType<SyntaxNode>())
                         {
                             fields.TryAdd(item, property.Name);
@@ -357,9 +357,9 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
                 }
             }
 
-            foreach (var child in parent.ChildNodes().Where(child => !fields.ContainsKey(child)))
+            if (parent.ChildNodes().FirstOrDefault(child => !fields.ContainsKey(child)) is { } unplaced)
             {
-                throw new InvalidOperationException($"{child.Kind()} fills no property of {parent.Kind()}");
+                throw UnplacedChild.Of(unplaced, parent);
             }
 
             return fields;
@@ -369,8 +369,11 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
         private static PropertyInfo[] PropertiesOf(Type syntax) => Properties.GetOrAdd(syntax, type => type
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(property => property.GetIndexParameters().Length == 0 && property.Name != "Parent")
-            .Where(property => typeof(SyntaxNode).IsAssignableFrom(property.PropertyType) || (property.PropertyType.IsGenericType && property.PropertyType.Name.Contains("SyntaxList")))
+            .Where(property => typeof(SyntaxNode).IsAssignableFrom(property.PropertyType) || IsSyntaxList(property.PropertyType))
             .ToArray());
+
+        /// <summary>Is <paramref name="type"/> one of Roslyn's lists of syntax — the property shape a node's children fill.</summary>
+        private static bool IsSyntaxList(Type type) => type.IsGenericType && type.Name.Contains("SyntaxList");
 
         private void Facts(Utf8JsonWriter json, SyntaxNode node)
         {
@@ -868,4 +871,10 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             }
         }
     }
+}
+
+/// <summary>A child node the writer found no property of its parent holding: the tree it would write would lose it.</summary>
+public sealed class UnplacedChild(string message) : Exception(message)
+{
+    public static UnplacedChild Of(SyntaxNode child, SyntaxNode parent) => new($"{child.Kind()} fills no property of {parent.Kind()}");
 }

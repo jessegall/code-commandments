@@ -24,7 +24,9 @@ public static class References
         var project = ProjectFile.Read(csproj);
         var assets = Path.Combine(project.Intermediate(), "project.assets.json");
 
-        return File.Exists(assets) ? FromAssets(assets) : FromProjectFile(project);
+        return File.Exists(assets) && Assets.Read(assets) is { } restored && restored.PlainTarget() is { } target
+            ? FromAssets(restored, target)
+            : FromProjectFile(project);
     }
 
     /// <summary>
@@ -85,35 +87,23 @@ public static class References
     }
 
     /// <summary>
-    /// What a restored project reaches, for the first framework it restored — a runtime-specific target
-    /// (<c>net8.0/linux-x64</c>) and a second framework of a multi-targeting project left aside, so one
-    /// compilation never mixes two frameworks' assemblies.
+    /// What a restored project reaches for <paramref name="target"/>, the first framework it restored that is not a
+    /// runtime-specific one (<c>net8.0/linux-x64</c>), so one compilation never mixes two frameworks' assemblies.
     /// </summary>
-    private static Reach FromAssets(string path)
+    private static Reach FromAssets(Assets assets, KeyValuePair<string, Dictionary<string, AssetsTarget>> target)
     {
-        using var assets = JsonDocument.Parse(File.ReadAllText(path));
-        var root = assets.RootElement;
-        var folders = root.GetProperty("packageFolders").EnumerateObject().Select(folder => folder.Name).ToList();
-        var libraries = root.GetProperty("libraries");
-        var target = root.GetProperty("targets").EnumerateObject().FirstOrDefault(candidate => !candidate.Name.Contains('/'));
-
-        if (target.Value.ValueKind != JsonValueKind.Object)
-        {
-            return new Reach("", ["Microsoft.NETCore.App"], []);
-        }
-
         var packages = new List<string>();
 
-        foreach (var package in target.Value.EnumerateObject())
+        foreach (var (name, package) in target.Value)
         {
-            if (!package.Value.TryGetProperty("compile", out var compile) || !libraries.TryGetProperty(package.Name, out var library) || !library.TryGetProperty("path", out var folder))
+            if (package.Compile is null || !assets.Libraries.TryGetValue(name, out var library) || library.Path is null)
             {
                 continue;
             }
 
-            foreach (var file in compile.EnumerateObject().Select(entry => entry.Name).Where(name => name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
+            foreach (var file in package.Compile.Keys.Where(file => file.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)))
             {
-                var found = folders.Select(cache => Path.Combine(cache, folder.GetString()!, file)).FirstOrDefault(File.Exists);
+                var found = assets.PackageFolders.Keys.Select(cache => Path.Combine(cache, library.Path, file)).FirstOrDefault(File.Exists);
 
                 if (found is not null)
                 {
@@ -122,22 +112,7 @@ public static class References
             }
         }
 
-        return new Reach(target.Name, Frameworks(root, target.Name).ToList(), packages);
-    }
-
-    private static IEnumerable<string> Frameworks(JsonElement root, string tfm)
-    {
-        var frameworks = new List<string> { "Microsoft.NETCore.App" };
-
-        if (root.TryGetProperty("project", out var project)
-            && project.TryGetProperty("frameworks", out var declared)
-            && declared.TryGetProperty(tfm, out var target)
-            && target.TryGetProperty("frameworkReferences", out var references))
-        {
-            frameworks.AddRange(references.EnumerateObject().Select(reference => reference.Name));
-        }
-
-        return frameworks.Distinct(StringComparer.OrdinalIgnoreCase);
+        return new Reach(target.Key, assets.FrameworksOf(target.Key).ToList(), packages);
     }
 
     /// <summary>What an unrestored project reaches: its SDK's frameworks, and its direct packages from the NuGet cache.</summary>
@@ -230,3 +205,43 @@ public static class References
             ? found
             : Path.GetFullPath(Path.Combine(RuntimeEnvironment.GetRuntimeDirectory(), "..", "..", ".."));
 }
+
+/// <summary>
+/// The part of NuGet's project.assets.json the bridge reads: the folders packages are cached in, where each library
+/// lives, what each restored framework's packages compile against, and the shared frameworks each references.
+/// </summary>
+internal sealed record Assets(
+    Dictionary<string, JsonElement> PackageFolders,
+    Dictionary<string, AssetsLibrary> Libraries,
+    Dictionary<string, Dictionary<string, AssetsTarget>> Targets,
+    AssetsProject? Project)
+{
+    private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
+
+    /// <summary>The assets file at <paramref name="path"/>, or none when it is not one.</summary>
+    public static Assets? Read(string path) => JsonSerializer.Deserialize<Assets>(File.ReadAllText(path), Options);
+
+    /// <summary>The first framework restored for no runtime in particular, or none when every one names a runtime.</summary>
+    public KeyValuePair<string, Dictionary<string, AssetsTarget>>? PlainTarget() =>
+        Targets.Where(target => !target.Key.Contains('/')).Select(target => (KeyValuePair<string, Dictionary<string, AssetsTarget>>?)target).FirstOrDefault();
+
+    /// <summary>The shared frameworks <paramref name="tfm"/> compiles against: .NET's own, and the ones the project references.</summary>
+    public IEnumerable<string> FrameworksOf(string tfm)
+    {
+        var referenced = Project?.Frameworks?.GetValueOrDefault(tfm)?.FrameworkReferences?.Keys ?? Enumerable.Empty<string>();
+
+        return referenced.Prepend("Microsoft.NETCore.App").Distinct(StringComparer.OrdinalIgnoreCase);
+    }
+}
+
+/// <summary>A library the assets file lists: a package, by the folder it is cached in; a project reference has none.</summary>
+internal sealed record AssetsLibrary(string? Path);
+
+/// <summary>A package of a restored framework: the files it compiles against, when it has any.</summary>
+internal sealed record AssetsTarget(Dictionary<string, JsonElement>? Compile);
+
+/// <summary>The project the assets were restored for: its frameworks, by name.</summary>
+internal sealed record AssetsProject(Dictionary<string, AssetsFramework>? Frameworks);
+
+/// <summary>One restored framework of the project: the shared frameworks it references, by name.</summary>
+internal sealed record AssetsFramework(Dictionary<string, JsonElement>? FrameworkReferences);
