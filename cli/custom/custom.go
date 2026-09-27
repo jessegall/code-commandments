@@ -140,13 +140,15 @@ func (p Project) Warnings(project config.Config) []string {
 	return append(warnings, p.ClassWarnings()...)
 }
 
-// ClassWarnings name each PHP class the PHP tool's `make` left in the custom folder, which the binary skips.
+// ClassWarnings name each PHP class the PHP tool left in the custom folder — a detector, sin, skill or agent — which the
+// binary skips.
 func (p Project) ClassWarnings() []string {
 	var warnings []string
 
 	for _, class := range p.Classes {
 		warnings = append(warnings, "⚠ "+class+" is a PHP class the binary cannot run, and was skipped — "+
-			"write it as a rule with `commandments make`, then delete the class.")
+			"a detector and its sin become a rule (`commandments make`), a skill a folder holding a SKILL.md; "+
+			"then delete the class. docs/parity.md, \"Migrating from the PHP tool\", says how, and what an agent class becomes.")
 	}
 
 	return warnings

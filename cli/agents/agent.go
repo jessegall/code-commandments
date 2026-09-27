@@ -52,6 +52,23 @@ func ForProject(project config.Config) []Agent {
 	})
 }
 
+// Unshipped warns of each agent the project's config turns on that the tool does not ship, which sync skips: a config
+// from the PHP tool could turn on an agent of the project's own.
+func Unshipped(project config.Config) []string {
+	var warnings []string
+
+	for _, name := range project.Agents {
+		if slices.ContainsFunc(All(), func(agent Agent) bool { return agent.Class() == name }) {
+			continue
+		}
+
+		warnings = append(warnings, "⚠ config.json turns on the agent "+name+", which the tool does not ship, and it was skipped — "+
+			"docs/parity.md, \"Migrating from the PHP tool\", says what becomes of it.")
+	}
+
+	return warnings
+}
+
 // base answers what an agent that differs in nothing answers.
 type base struct{}
 

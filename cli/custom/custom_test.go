@@ -87,7 +87,7 @@ func TestEverythingTheBinaryCannotRunIsNamed(t *testing.T) {
 
 	warnings := strings.Join(loaded.Warnings(config.Config{Detectors: []string{"Gone"}}), "\n")
 
-	for _, said := range []string{"could not be loaded", "  Gone", "Broken: a sin needs a name", "NoRawSqlDetector.php is a PHP class", "commandments make"} {
+	for _, said := range []string{"could not be loaded", "  Gone", "Broken: a sin needs a name", "NoRawSqlDetector.php is a PHP class", "commandments make", "SKILL.md", "Migrating from the PHP tool"} {
 		if !strings.Contains(warnings, said) {
 			t.Errorf("%q not said in\n%s", said, warnings)
 		}

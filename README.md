@@ -273,9 +273,10 @@ and adds only what is true in that harness. Both are **injected, never overwritt
 a block between markers, appended if your file has none, and every other line of
 your own left exactly as it was.
 
-Your project writes its own agent the same way it writes its own rules — an
-`Agents\Agent` subclass in `.commandments/custom/`, discovered beside the shipped
-ones.
+These two are the agents the tool ships, and a project cannot add one of its own. An
+agent that reads `AGENTS.md` or `.agents/skills/` already gets the canon and the
+skills where they are; a project that wrote an `Agents\Agent` subclass for the PHP
+tool finds what becomes of it in [docs/parity.md](docs/parity.md#migrating-from-the-php-tool).
 
 ### Hooks are Claude Code only
 

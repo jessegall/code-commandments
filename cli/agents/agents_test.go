@@ -116,6 +116,14 @@ func TestAProjectTurnsAnAgentOffInItsConfig(t *testing.T) {
 	}
 }
 
+func TestAnAgentTheToolDoesNotShipIsSaidToBeSkipped(t *testing.T) {
+	warnings := Unshipped(config.Config{Agents: []string{"ClaudeAgent", "CursorAgent"}})
+
+	if len(warnings) != 1 || !strings.Contains(warnings[0], "CursorAgent, which the tool does not ship") {
+		t.Errorf("%q", warnings)
+	}
+}
+
 func ptr(text string) *string {
 	return &text
 }

@@ -2,7 +2,8 @@
 
 The Go tool replaces the PHP tool only if it judges a codebase the way the PHP tool does. This page records that
 check on real codebases, one per language the tool reads, each pinned to a commit: how many findings each tool
-makes, every finding only one of them makes, and why.
+makes, every finding only one of them makes, and why — and, last, every difference that is no PHP bug, with what a
+project that relied on the PHP tool does now.
 
 ## How it is checked
 
@@ -77,3 +78,56 @@ there is on the frontend. koel's 28 one-sided findings are listed, each with its
   by a call of a plain name weighs one more.
 - The PHP bridge's class loader required files that do not exist; a probe for a class the parser lacks is no
   failure (`TestAProbeForAClassTheParserLacksIsNoFailure`).
+
+## Migrating from the PHP tool
+
+Every difference left between the two tools that is not a PHP bug is listed here: what the PHP tool did, why the Go
+tool does otherwise, and what a project that relied on it does now.
+
+### `make`'s entry in the help overview
+
+The PHP tool summarised `make` as scaffolding "a skill, a sin and a detector in `.commandments/custom/`, registered in
+your config"; the Go tool says "a rule naming its sin, and the skill that teaches the fix, in `.commandments/custom/`,
+turned on in your config". `make` writes what the Go tool runs — a `<Name>.json` rule and, for a new subject, a
+`skills/<slug>/SKILL.md` — where the PHP tool wrote three PHP classes, so the PHP summary would describe files the Go
+tool never writes. Every other line of the overview is the PHP tool's, and the CLI parity cases hold `make`'s line
+exactly as the Go tool prints it. Nothing changes for a project: `commandments make <Name>` is run as before.
+
+### A project's own PHP detectors, sins and skills
+
+The PHP tool loaded the classes its `make` wrote into `.commandments/custom/` — a `Detector`, a `Sin` and a `Skill`
+subclass — and ran them against its own engine. That engine is PHP and is gone with the PHP tool, so the Go tool cannot
+run them: it reads a project's own rules as data. Every `.php` file left in `.commandments/custom/` is skipped, and
+`judge` and `sync` name each one with what it becomes, so no rule is dropped in silence. A detector the config still
+turns on is named as one that could not be loaded.
+
+To carry one over:
+
+1. `commandments make <Name>` scaffolds `.commandments/custom/<Name>.json` and turns it on in `config.json`.
+2. Write the detector's query as the rule's `find`: a selector, then one `where` or `reject` check per condition
+   (README, "Developing detectors"; the `commandments-writing-detectors` skill lists every selector and check). The
+   sin's name, description and rule go in the rule's `sin`.
+3. Move the skill's text into `.commandments/custom/skills/<name>/SKILL.md`, the name the rule's `sin.skill` points
+   at. The page `sync` last generated from the class, `.agents/skills/commandments-<engine>-<name>/SKILL.md`, front
+   matter and all, is the text to start from.
+4. Check the rule finds what the class found with `commandments judge --sin=<name>`, then delete the classes.
+
+A check the rule language cannot express is a `commandments feature-request` for the selector or check it needs.
+
+### A project's own agents
+
+The PHP tool let a project add an agent of its own: an `Agents\Agent` subclass in `.commandments/custom/`, naming
+the folder that agent discovers skills in and the file it reads instructions from, turned on by name in the config.
+The Go tool ships Claude Code and Codex as types of its own and reads no agent from a project, so the README no longer
+offers one. Building agents from a project's data is a feature of its own, not taken with the switch. A class left in
+`.commandments/custom/` is skipped and named like any other PHP class there, and an `agents` entry in `config.json`
+that names neither `ClaudeAgent` nor `CodexAgent` is skipped, and `sync` says so.
+
+What a project does instead:
+
+- An agent that reads `AGENTS.md` or `.agents/skills/` — Codex, Cursor, Copilot and the rest of the `AGENTS.md`
+  ecosystem — needs nothing: `sync` writes both for every project.
+- An agent that looks elsewhere is pointed there by the project itself — a link from the folder it reads to
+  `.agents/skills/`, an import of `AGENTS.md` in its own instructions file — or asked for with
+  `commandments feature-request`, so the tool ships it as it ships the two.
+- Then delete the class, and the name from `agents` in `config.json`.

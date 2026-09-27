@@ -210,6 +210,17 @@ func lookIn(env []string, program string) (string, bool) {
 	return "", false
 }
 
+// TestSyncNamesAnAgentTheToolDoesNotShip holds sync to saying that an agent a config from the PHP tool turned on is
+// skipped — a project's own agent is never dropped in silence.
+func TestSyncNamesAnAgentTheToolDoesNotShip(t *testing.T) {
+	c := newConsumer(t)
+	c.write(".commandments/config.json", `{"agents": ["CursorAgent"]}`+"\n")
+
+	if synced := c.run(0, "commandments", "sync"); !strings.Contains(synced, "the agent CursorAgent, which the tool does not ship") {
+		t.Errorf("sync said\n%s", synced)
+	}
+}
+
 // TestSyncNamesAPhpRuleTheBinaryCannotRun holds sync to saying, as judge does, that a detector the PHP tool's make
 // scaffolded is still a PHP class the binary skips — the switch must not drop a project's own rule in silence.
 func TestSyncNamesAPhpRuleTheBinaryCannotRun(t *testing.T) {
