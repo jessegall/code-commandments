@@ -50,7 +50,7 @@ func (RoslynUnavailable) unavailable() {}
 func Roslyn(roots ...string) ([]string, error) {
 	switch named := os.Getenv(roslynVariable); named {
 	case "docker":
-		return roslynInDocker(roots)
+		return RoslynInDocker(roots)
 	case "":
 		executable, _, err := RoslynExecutable()
 		if err != nil {

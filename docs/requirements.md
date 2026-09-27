@@ -10,7 +10,7 @@ the language it reads — the one a project in that language already has. Nothin
 | PHP | `php` 8.3 or later on the `PATH` | the PHP bridge, with the php-parser it loads; a project's own `vendor/autoload.php`, when there is one, for the classes outside the scan |
 | Vue, TypeScript | `node` 18 or later on the `PATH` | the frontend bridge, one bundled script with TypeScript's own compiler inside |
 | Python | `python3` 3.10 or later on the `PATH`, with `venv` and `pip`, and the network once | the Python bridge; its first run builds it a virtual environment with the pinned mypy, under the cache folder |
-| C# | nothing | the C# bridge, a self-contained executable for your platform, fetched from the release on the first C# judge beside the tool and checked against `SHA256SUMS`; it is never built on your machine |
+| C# | `curl` on the `PATH`, and the network once, for the first C# judge (macOS, Windows 10 and later, and nearly every Linux ship it); no .NET | the C# bridge, a self-contained executable for your platform, fetched with `curl` from the release on the first C# judge beside the tool and checked against `SHA256SUMS`; it is never built on your machine |
 
 ## When something is missing
 
@@ -21,7 +21,7 @@ every other language is judged as usual:
 ⚠ 12 file(s) left unread — the Python bridge needs python3 on the PATH, which is not installed here, so Python is not judged; everything else is
 ```
 
-C# needs nothing installed, but reads the framework's types from a .NET SDK when one is: the reference packs of the
+C# needs no .NET installed, but reads the framework's types from a .NET SDK when one is: the reference packs of the
 SDK that `$DOTNET_ROOT` names, that the `dotnet` on the `PATH` belongs to, or that sits in a folder .NET's installers
 use. Without an SDK, C# is still judged, with every type that resolves without the framework's (the project's own,
 and its restored NuGet packages), and the run says so once:
@@ -30,10 +30,11 @@ and its restored NuGet packages), and the run says so once:
 ⚠ no .NET SDK is installed here, so C#'s framework types do not resolve and C# is judged with the types that resolve without them; install the .NET SDK to judge it whole
 ```
 
-A C# bridge that cannot be fetched — no network on the first C# judge, or a download whose sum does not match — leaves
-C# unjudged the same way, saying why. A build of the tool from source has no release to fetch from; name a bridge in
-`$COMMANDMENTS_ROSLYN` (this repository's own development sets `COMMANDMENTS_ROSLYN=docker`, which runs it in a capped
-container of its image).
+A C# bridge that cannot be fetched — no `curl`, no network on the first C# judge, or a download whose sum does not
+match — leaves C# unjudged the same way, saying why. The tool fetches through `curl` rather than its own HTTP client:
+Go's client and TLS would grow the tool by a fifth, past its size budget, for this one download. A build of the tool
+from source has no release to fetch from; name a bridge in `$COMMANDMENTS_ROSLYN` (this repository's own development
+sets `COMMANDMENTS_ROSLYN=docker`, which runs it in a capped container of its image).
 
 ## Kept warm
 

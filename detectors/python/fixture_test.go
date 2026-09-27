@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	pydetectors "github.com/jessegall/code-commandments/detectors/python"
@@ -21,7 +22,7 @@ func shop(t *testing.T) *engine.Codebase {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stream, err := bridge.Once(bridge.TestMypy(t), root)
+	stream, err := bridge.Once(bridgetest.Mypy(t), root)
 	if err != nil {
 		t.Fatal(err)
 	}

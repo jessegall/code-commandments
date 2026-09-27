@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/python"
 )
@@ -24,7 +25,7 @@ var fixture struct {
 // shop is the Python fixture's codebase, or the test skipped when no mypy is at hand.
 func shopFixture(t *testing.T) *python.Codebase {
 	t.Helper()
-	command := bridge.TestMypy(t)
+	command := bridgetest.Mypy(t)
 	fixture.once.Do(func() {
 		fixture.root, fixture.err = filepath.Abs("../../tests/Fixtures/python")
 		stream, err := bridge.Once(command, fixture.root)

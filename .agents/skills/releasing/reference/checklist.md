@@ -7,5 +7,5 @@
 4. Fix every finding on the files you touched.
 5. Commit on your own branch — no attribution trailer.
 6. A release build can be tried locally without publishing anything:
-   `scripts/dev scripts/release/build v0.0.0-try dist` (the Go binaries, checked against their budgets).
+   `scripts/dev scripts/release/build v0.0.0-try dist --tool-only` (the Go binaries, checked against their budgets).
 7. Merging to main and tagging `v*` are Sir Jesse's; the tag runs the release workflow.

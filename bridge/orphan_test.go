@@ -1,6 +1,7 @@
-package bridge
+package bridge_test
 
 import (
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,7 +18,7 @@ func TestABridgeContainerStopsWhenTheRunThatStartedItDies(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	command := TestRoslyn(t, root)
+	command := bridgetest.Roslyn(t, root)
 	caller := exec.Command("sh", append([]string{"-c", `exec 3<&0; "$@" <&3 & wait`, "sh"}, append(command, "--serve")...)...)
 	// The bridge's input stays open after its caller dies, as it does while a bridge busy compiling reads none of it:
 	// only stopping the container ends the run.

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/csharp"
 )
@@ -29,7 +30,7 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 			t.Fatal(err)
 		}
 	}
-	stream, err := bridge.Once(bridge.TestRoslyn(t, root), root)
+	stream, err := bridge.Once(bridgetest.Roslyn(t, root), root)
 	if err != nil {
 		t.Fatal(err)
 	}

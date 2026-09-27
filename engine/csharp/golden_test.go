@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/csharp"
 )
@@ -31,7 +32,7 @@ func shop(t *testing.T) *engine.Codebase {
 	if err != nil {
 		t.Fatal(err)
 	}
-	command := bridge.TestRoslyn(t, root)
+	command := bridgetest.Roslyn(t, root)
 	fixture.once.Do(func() {
 		fixture.root, fixture.err = filepath.EvalSymlinks(root)
 		if fixture.err != nil {

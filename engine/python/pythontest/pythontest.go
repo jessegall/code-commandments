@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/engine"
 	_ "github.com/jessegall/code-commandments/engine/python"
 )
@@ -29,7 +30,7 @@ func FromSource(t testing.TB, sources map[string]string) *engine.Codebase {
 			t.Fatal(err)
 		}
 	}
-	stream, err := bridge.Once(bridge.TestMypy(t), root)
+	stream, err := bridge.Once(bridgetest.Mypy(t), root)
 	if err != nil {
 		t.Fatal(err)
 	}

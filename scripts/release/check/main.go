@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -28,12 +29,13 @@ type Budgets struct {
 func main() {
 	arguments := os.Args[1:]
 	record := slices.Contains(arguments, "--record")
-	arguments = slices.DeleteFunc(arguments, func(argument string) bool { return argument == "--record" })
+	toolOnly := slices.Contains(arguments, "--tool-only")
+	arguments = slices.DeleteFunc(arguments, func(argument string) bool { return argument == "--record" || argument == "--tool-only" })
 	if len(arguments) != 1 {
-		fmt.Fprintln(os.Stderr, "usage: check [--record] <dir>")
+		fmt.Fprintln(os.Stderr, "usage: check [--record] [--tool-only] <dir>")
 		os.Exit(2)
 	}
-	problems, err := check(arguments[0], budgetFile, record)
+	problems, err := check(arguments[0], budgetFile, record, toolOnly)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "✗", err)
 		os.Exit(1)
@@ -47,9 +49,10 @@ func main() {
 	fmt.Println("✓ every binary is within its budget, the linux ones static; SHA256SUMS written")
 }
 
-// check vets the binaries in dir against the budgets at budgetPath and writes their SHA256SUMS; recording, it writes
+// check vets the binaries in dir against the budgets at budgetPath and writes their SHA256SUMS: every budgeted binary
+// must be there, the C# bridges too unless toolOnly says the folder holds the tool's alone; recording, it writes
 // the sizes measured into the budgets' file. It answers every problem found.
-func check(dir, budgetPath string, record bool) ([]string, error) {
+func check(dir, budgetPath string, record, toolOnly bool) ([]string, error) {
 	binaries, err := filepath.Glob(filepath.Join(dir, "commandments-*"))
 	if err != nil {
 		return nil, err
@@ -85,6 +88,7 @@ func check(dir, budgetPath string, record bool) ([]string, error) {
 		}
 		sums = append(sums, sum+"  "+filepath.Base(binary))
 	}
+	problems = append(problems, missing(dir, budgets, toolOnly)...)
 	if err := os.WriteFile(filepath.Join(dir, "SHA256SUMS"), []byte(strings.Join(sums, "\n")+"\n"), 0o644); err != nil {
 		return nil, err
 	}
@@ -93,6 +97,29 @@ func check(dir, budgetPath string, record bool) ([]string, error) {
 	}
 
 	return problems, nil
+}
+
+// missing is the problem with every budgeted binary the release lacks: a platform's tool, or, unless toolOnly, its
+// C# bridge.
+func missing(dir string, budgets Budgets, toolOnly bool) []string {
+	var problems []string
+	for _, key := range slices.Sorted(maps.Keys(budgets.Budget)) {
+		name := "commandments-" + key
+		if strings.HasPrefix(key, "roslyn-bridge-") {
+			if toolOnly {
+				continue
+			}
+			name = key
+		}
+		if strings.Contains(key, "windows-") {
+			name += ".exe"
+		}
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			problems = append(problems, name+" is budgeted but missing from the release")
+		}
+	}
+
+	return problems
 }
 
 // overBudget is the problem with a binary's size: a platform with no budget, or one it has outgrown.

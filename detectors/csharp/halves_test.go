@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/detectors"
@@ -24,7 +25,7 @@ func TestJudgingTheFixtureInHalvesFindsWhatJudgingItWholeFinds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stream, err := bridge.Once(bridge.TestRoslyn(t, root), root)
+	stream, err := bridge.Once(bridgetest.Roslyn(t, root), root)
 	if err != nil {
 		t.Fatal(err)
 	}

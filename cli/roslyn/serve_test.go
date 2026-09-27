@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/cli/roslyn"
 )
 
@@ -24,7 +25,7 @@ func TestARunAsksTheBridgeTheSessionKeepsUp(t *testing.T) {
 		t.Fatal("a service answers before one is kept up")
 	}
 
-	server, err := bridge.Serve(bridge.TestRoslyn(t, root))
+	server, err := bridge.Serve(bridgetest.Roslyn(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}

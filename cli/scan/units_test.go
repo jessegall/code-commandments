@@ -5,7 +5,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/engine"
@@ -17,7 +17,7 @@ func TestASolutionIsCutIntoOneUnitPerProject(t *testing.T) {
 		t.Fatal(err)
 	}
 	root, _ = filepath.EvalSymlinks(root)
-	bridge.TestRoslyn(t, root)
+	bridgetest.Roslyn(t, root)
 	sources := scan.Walk([]string{root}, source.Excluded{}).Only(source.CSharp)
 
 	var completed [][]string

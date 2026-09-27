@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 )
 
 // TestALoneBinaryJudgesAsTheCheckoutDoes builds the binary as a release does — its source paths trimmed and its
@@ -15,7 +15,7 @@ import (
 // fixtures' languages need, and the fixtures copied out. It judges them exactly as a plain build run from the
 // checkout does, so nothing the binary reads lives anywhere but inside it.
 func TestALoneBinaryJudgesAsTheCheckoutDoes(t *testing.T) {
-	python := bridge.TestMypyPython(t)
+	python := bridgetest.MypyPython(t)
 	bin := t.TempDir()
 	lone := filepath.Join(bin, "commandments")
 	if out, err := exec.Command("go", "build", "-trimpath", "-ldflags", "-X main.version=v0.0.0-lone", "-o", lone, ".").CombinedOutput(); err != nil {

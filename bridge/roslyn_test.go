@@ -1,8 +1,10 @@
-package bridge
+package bridge_test
 
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,7 +19,7 @@ func TestTheRoslynBridgeWritesAValidTreeOfTheCSharpFixture(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	stream, err := Once(TestRoslyn(t, root), root)
+	stream, err := bridge.Once(bridgetest.Roslyn(t, root), root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,13 +51,13 @@ func TestAServedRoslynBridgeMarksTheFilesItWasNotAskedToWriteAsContext(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	server, err := Serve(TestRoslyn(t, root))
+	server, err := bridge.Serve(bridgetest.Roslyn(t, root))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer server.Close()
 	written := filepath.Join(root, "Shop/Orders/GiftWrapping.cs")
-	stream, err := server.Ask(Request{Paths: []string{root}, Write: []string{written}})
+	stream, err := server.Ask(bridge.Request{Paths: []string{root}, Write: []string{written}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +78,7 @@ func TestTheRoslynBridgeWritesAnExpressionNestedDeeperThanTheSerializersDefault(
 	if err := os.WriteFile(filepath.Join(root, "Banner.cs"), []byte(source), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	stream, err := Once(TestRoslyn(t, root), root)
+	stream, err := bridge.Once(bridgetest.Roslyn(t, root), root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -91,7 +93,7 @@ func TestTheRoslynBridgeWritesATypeItCouldNotResolveInsideAnotherAsOpaque(t *tes
 	if err := os.WriteFile(filepath.Join(root, "Shelf.cs"), []byte(source), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Once(TestRoslyn(t, root), root); err != nil {
+	if _, err := bridge.Once(bridgetest.Roslyn(t, root), root); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -115,7 +117,7 @@ func TestTheImageNameIsTheOneTheBridgesSourcesAreBuiltAs(t *testing.T) {
 		hash.Write([]byte(file + "\n"))
 		hash.Write(source)
 	}
-	if want := "ghcr.io/jessegall/code-commandments-roslyn:" + hex.EncodeToString(hash.Sum(nil))[:16]; RoslynImage() != want {
-		t.Errorf("bridge/roslyn/IMAGE names %s, but the sources are built as %s: write the new name there", RoslynImage(), want)
+	if want := "ghcr.io/jessegall/code-commandments-roslyn:" + hex.EncodeToString(hash.Sum(nil))[:16]; bridge.RoslynImage() != want {
+		t.Errorf("bridge/roslyn/IMAGE names %s, but the sources are built as %s: write the new name there", bridge.RoslynImage(), want)
 	}
 }

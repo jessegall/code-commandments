@@ -5,12 +5,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"github.com/jessegall/code-commandments/engine/csharp"
 )
 
 func TestTheBridgeScansCSharpIntoACodebase(t *testing.T) {
-	bridge.TestRoslyn(t, os.TempDir())
+	bridgetest.Roslyn(t, os.TempDir())
 	root, err := filepath.EvalSymlinks(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -26,4 +26,3 @@ func TestTheBridgeScansCSharpIntoACodebase(t *testing.T) {
 		t.Errorf("the scan holds %d types, not the Cart", types)
 	}
 }
-

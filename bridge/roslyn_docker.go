@@ -29,9 +29,9 @@ func RoslynImage() string {
 	return strings.TrimSpace(string(image))
 }
 
-// roslynInDocker is the command that runs the C# bridge once over the roots in a capped container of its image, the
+// RoslynInDocker is the command that runs the C# bridge once over the roots in a capped container of its image, the
 // roots mounted read-only at their own paths. Without the image it fails, naming how to build it.
-func roslynInDocker(roots []string) ([]string, error) {
+func RoslynInDocker(roots []string) ([]string, error) {
 	if exec.Command("docker", "image", "inspect", RoslynImage()).Run() != nil {
 		return nil, RoslynUnavailable{"its development image " + RoslynImage() + " is not built: docker build -t " + RoslynImage() + " bridge/roslyn"}
 	}

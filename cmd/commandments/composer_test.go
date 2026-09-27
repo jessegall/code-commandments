@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 )
 
 // TestAComposerInstallJudgesAsTheCheckoutDoes installs the package the way a consumer does — composer, from a
@@ -20,7 +20,7 @@ func TestAComposerInstallJudgesAsTheCheckoutDoes(t *testing.T) {
 			t.Skipf("%s is not on PATH", tool)
 		}
 	}
-	python := bridge.TestMypyPython(t)
+	python := bridgetest.MypyPython(t)
 	released := filepath.Join(t.TempDir(), "commandments")
 	if out, err := exec.Command("go", "build", "-trimpath", "-ldflags", "-X main.version=9.9.9", "-o", released, ".").CombinedOutput(); err != nil {
 		t.Fatalf("build: %v\n%s", err, out)
@@ -33,7 +33,7 @@ func TestAComposerInstallJudgesAsTheCheckoutDoes(t *testing.T) {
 
 	shipped := t.TempDir()
 	copyFile(t, filepath.Join("..", "..", "bin", "commandments"), filepath.Join(shipped, "bin", "commandments"))
-	write(t, filepath.Join(shipped, "composer.json"), `{"name": "jessegall/code-commandments", "type": "library", "bin": ["bin/commandments"], "require": {"php": ">=8.2"}}`)
+	copyFile(t, filepath.Join("..", "..", "composer.json"), filepath.Join(shipped, "composer.json"))
 
 	project := t.TempDir()
 	write(t, filepath.Join(project, "composer.json"), `{

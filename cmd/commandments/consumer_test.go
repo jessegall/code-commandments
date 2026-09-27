@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 )
 
 // consumer is a project the binary works in with no PHP anywhere on its PATH: only git, the binary itself,
@@ -24,7 +24,7 @@ type consumer struct {
 func newConsumer(t *testing.T) consumer {
 	t.Helper()
 
-	python := bridge.TestMypyPython(t)
+	python := bridgetest.MypyPython(t)
 
 	bin := t.TempDir()
 	binary := filepath.Join(bin, "commandments")

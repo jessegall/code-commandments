@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -41,7 +42,7 @@ func writeBudget(t *testing.T, platform string, budget int64) string {
 
 func TestAStaticBinaryWithinItsBudgetPassesAndIsSummed(t *testing.T) {
 	dir, budgets := release(t, "linux-amd64", 64<<20)
-	problems, err := check(dir, budgets, true)
+	problems, err := check(dir, budgets, true, false)
 	if err != nil || len(problems) > 0 {
 		t.Fatalf("the release fails: %v %v", problems, err)
 	}
@@ -57,7 +58,7 @@ func TestAStaticBinaryWithinItsBudgetPassesAndIsSummed(t *testing.T) {
 
 func TestABinaryOverItsBudgetFails(t *testing.T) {
 	dir, budgets := release(t, "darwin-arm64", 1024)
-	problems, err := check(dir, budgets, false)
+	problems, err := check(dir, budgets, false, false)
 	if err != nil || len(problems) != 1 || !strings.Contains(problems[0], "over its budget") {
 		t.Errorf("the release answers %v %v", problems, err)
 	}
@@ -65,8 +66,8 @@ func TestABinaryOverItsBudgetFails(t *testing.T) {
 
 func TestABinaryWithNoBudgetFails(t *testing.T) {
 	dir, _ := release(t, "windows-amd64", 0)
-	problems, err := check(dir, writeBudget(t, "linux-amd64", 64<<20), false)
-	if err != nil || len(problems) != 1 || !strings.Contains(problems[0], "has no size budget") {
+	problems, err := check(dir, writeBudget(t, "linux-amd64", 64<<20), false, false)
+	if err != nil || !slices.ContainsFunc(problems, func(problem string) bool { return strings.Contains(problem, "windows-amd64 has no size budget") }) {
 		t.Errorf("the release answers %v %v", problems, err)
 	}
 }
@@ -82,7 +83,7 @@ func TestALinuxBinaryThatNeedsALoaderFails(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "commandments-linux-amd64"), content, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	problems, err := check(dir, writeBudget(t, "linux-amd64", 64<<20), false)
+	problems, err := check(dir, writeBudget(t, "linux-amd64", 64<<20), false, false)
 	if err != nil || len(problems) != 1 || !strings.Contains(problems[0], "is not static") {
 		t.Errorf("the release answers %v %v", problems, err)
 	}
@@ -95,7 +96,7 @@ func TestACSharpBridgeIsSummedAndHeldToItsOwnBudget(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "roslyn-bridge-linux-amd64"), make([]byte, 2048), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if problems, _ := check(dir, budgets, false); len(problems) != 1 || !strings.Contains(problems[0], "roslyn-bridge-linux-amd64 has no size budget") {
+	if problems, _ := check(dir, budgets, false, false); len(problems) != 1 || !strings.Contains(problems[0], "roslyn-bridge-linux-amd64 has no size budget") {
 		t.Fatalf("a bridge with no budget passes: %v", problems)
 	}
 	written, err := readBudgets(budgets)
@@ -106,10 +107,30 @@ func TestACSharpBridgeIsSummedAndHeldToItsOwnBudget(t *testing.T) {
 	if err := writeBudgets(budgets, written); err != nil {
 		t.Fatal(err)
 	}
-	if problems, err := check(dir, budgets, false); err != nil || len(problems) > 0 {
+	if problems, err := check(dir, budgets, false, false); err != nil || len(problems) > 0 {
 		t.Fatalf("the release fails: %v %v", problems, err)
 	}
 	if sums, _ := os.ReadFile(filepath.Join(dir, "SHA256SUMS")); !strings.Contains(string(sums), "  roslyn-bridge-linux-amd64\n") {
 		t.Errorf("SHA256SUMS holds %q", sums)
+	}
+}
+
+// TestABudgetedBridgeMissingFromTheReleaseFails holds a release to every binary it budgets: a C# bridge a platform is
+// budgeted for and the folder lacks fails it, unless the folder is declared the tool's alone.
+func TestABudgetedBridgeMissingFromTheReleaseFails(t *testing.T) {
+	dir, budgets := release(t, "linux-amd64", 64<<20)
+	written, err := readBudgets(budgets)
+	if err != nil {
+		t.Fatal(err)
+	}
+	written.Budget["roslyn-bridge-linux-amd64"] = 4096
+	if err := writeBudgets(budgets, written); err != nil {
+		t.Fatal(err)
+	}
+	if problems, _ := check(dir, budgets, false, false); len(problems) != 1 || !strings.Contains(problems[0], "roslyn-bridge-linux-amd64 is budgeted but missing") {
+		t.Errorf("a release missing its bridge answers %v", problems)
+	}
+	if problems, err := check(dir, budgets, false, true); err != nil || len(problems) > 0 {
+		t.Errorf("the tool's binaries alone fail: %v %v", problems, err)
 	}
 }

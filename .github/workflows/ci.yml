@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Cross-compile, check and sum
-        run: scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 scripts/release/build "ci-${GITHUB_SHA::12}" dist
+        run: scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 scripts/release/build "ci-${GITHUB_SHA::12}" dist --tool-only
       - uses: actions/upload-artifact@v4
         with:
           name: commandments-${{ github.sha }}

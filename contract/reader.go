@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"slices"
-	"testing"
 )
 
 // SupportedVersions are the contract versions this package reads.
@@ -35,7 +35,11 @@ type Stream struct {
 // checksSchema says whether each line is checked against tree.schema.json before it is decoded: in every test, where
 // the streams of every bridge pass through, and never in a run, where checking would read each line twice — once
 // into a generic tree many times the size of the typed one — and a line is still refused a field it does not know.
-var checksSchema = testing.Testing()
+// A test binary is told by the flags `go test` registers, read when a stream is, so the tool never links Go's
+// testing package to ask.
+func checksSchema() bool {
+	return flag.Lookup("test.v") != nil
+}
 
 // Reader reads a stream line by line and refuses one that breaks the contract.
 type Reader struct {
@@ -70,7 +74,7 @@ func (r *Reader) Next() (Line, error) {
 	}
 	r.number++
 	raw := r.scanner.Bytes()
-	if checksSchema {
+	if checksSchema() {
 		if err := Validate(raw); err != nil {
 			return Line{}, fmt.Errorf("line %d: %w", r.number, err)
 		}
@@ -214,7 +218,6 @@ func (r *Reader) acceptTrailer(trailer *Trailer) error {
 	return nil
 }
 
-// link numbers a file's nodes, gives each its parent, and checks what the schema cannot.
 // resolveTypes puts the type each node names in the file's types back on the node, as a node that writes it inline
 // holds it; the table is not kept once read.
 func resolveTypes(file *File) error {
@@ -243,6 +246,7 @@ func resolveTypes(file *File) error {
 	return err
 }
 
+// link numbers a file's nodes, gives each its parent, and checks what the schema cannot.
 func link(file *File) error {
 	file.nodes = nil
 	var walk func(node, parent *Node) error

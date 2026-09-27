@@ -32,7 +32,7 @@ sha256 93c91a8b16c2d0a740a482493907e7e545128ffde71e6abf9b0ac5d3c2859e4a
 === created .agents/skills/commandments-backend-concurrent-state/reference/detectors.md
 sha256 b4cb157fee5cc4f1809331139cdf75a67d44d72d449445c26928bf84d343bb65
 === created .agents/skills/commandments-backend-dependency-direction/SKILL.md
-sha256 58816eef8765df5cd4c89fcef988bd4301ff81b4d3a29c446aa0ca36bfcf5a59
+sha256 efc29f006df2f05c40e9c35d6c78023ade000caf21f265923e1b5f945f6829ec
 === created .agents/skills/commandments-backend-dependency-direction/reference/detectors.md
 sha256 23a6e94feb5b25b8fc44ec9dfb4e4c658e3fa288ffacce78fd634b98ecceec2d
 === created .agents/skills/commandments-backend-dependency-direction/reference/examples.md
@@ -148,7 +148,7 @@ sha256 72e695dfb6506f0284d050f46a7d0495c5e763395078a28a297a53062aea0578
 === created .agents/skills/commandments-backend-tell-dont-ask/reference/examples.md
 sha256 91e9295a62173e44b51900fc860684ddbe2f3fc1eea434094242ce4bb1888de8
 === created .agents/skills/commandments-backend-templates/SKILL.md
-sha256 3c60524124d9d556920a6a0060945ecc70780cb2a11ed5d84768d8c6ce9859e1
+sha256 c7e3561298d58de9f1da360f4e4fea1fb0b8f652b8e4e1d4d2705b324a40a759
 === created .agents/skills/commandments-backend-templates/reference/detectors.md
 sha256 172d0beeb842bb0c0d7d70c4bfc1b82f735384a3bd93b2cb972e2fb8f7393509
 === created .agents/skills/commandments-backend-type-honesty/SKILL.md
@@ -190,7 +190,7 @@ sha256 852570a5d1af58aec83795c44687bfb51c03b4c024c74e090fa4894fc9161550
 === created .agents/skills/commandments-csharp-class-layout/reference/examples.md
 sha256 0e8106bd2509b81e909a547991fc17ea9c937f37e4f84ff080ec20dc102edb4d
 === created .agents/skills/commandments-csharp-dependency-direction/SKILL.md
-sha256 f7b0e4aa42fa15551b6945c64e57a259ff41042f021c188c48ab86c679546192
+sha256 6585ea7ea7ee08761f669b04a7752b04d6ff84c335b174792c63e2c0c7fe422d
 === created .agents/skills/commandments-csharp-dependency-direction/reference/detectors.md
 sha256 5f2d2ddcdaee2d7d22e0a31ae136f4270e64c65d9d47453add660058ca38c7bc
 === created .agents/skills/commandments-csharp-dependency-direction/reference/examples.md
@@ -334,7 +334,7 @@ sha256 f0488f7525c2a19f2c4c64dc840a5bfce8c173c76d1e0ae429749b313c0dcc24
 === created .agents/skills/commandments-python-class-layout/reference/examples.md
 sha256 d339a80d14e535a73e9335726b604cf9b43c45035ec6245d41d8f9d893c8bde9
 === created .agents/skills/commandments-python-dependency-direction/SKILL.md
-sha256 e175e2bb41270426719a18c6d53062994f747ef42a542af8c9c39369e55af935
+sha256 b1af0b05a21929814067d42b3c4ed22a5b45a62a2576a78ab4bd4647c6d1d5c3
 === created .agents/skills/commandments-python-dependency-direction/evals/triggers.json
 sha256 4add8755fb0231cc1ab2438b571f8771da6e1ddd5cada17f16dbf827c8cbc0d7
 === created .agents/skills/commandments-python-dependency-direction/reference/detectors.md

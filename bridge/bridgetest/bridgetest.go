@@ -1,20 +1,24 @@
-package bridge
+// Package bridgetest holds what a test needs of the bridges: a command for each, and the skips when the machine has
+// no way to run one. Only tests import it, so the tool itself never carries Go's testing package.
+package bridgetest
 
 import (
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
+
+	"github.com/jessegall/code-commandments/bridge"
 )
 
-// TestMypy is the Python bridge's command for a test, run by an interpreter that already has mypy:
+// Mypy is the Python bridge's command for a test, run by an interpreter that already has mypy:
 // $COMMANDMENTS_MYPY_PYTHON, else the one the PHP tool built, so a test never installs anything. It skips the
 // test when there is none.
-func TestMypy(t testing.TB) []string {
+func Mypy(t testing.TB) []string {
 	t.Helper()
-	t.Setenv("COMMANDMENTS_MYPY_PYTHON", TestMypyPython(t))
+	t.Setenv("COMMANDMENTS_MYPY_PYTHON", MypyPython(t))
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
-	command, err := Mypy()
+	command, err := bridge.Mypy()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,9 +26,9 @@ func TestMypy(t testing.TB) []string {
 	return command
 }
 
-// TestMypyPython is an interpreter that already has mypy: $COMMANDMENTS_MYPY_PYTHON, else one a bridge built under
+// MypyPython is an interpreter that already has mypy: $COMMANDMENTS_MYPY_PYTHON, else one a bridge built under
 // the cache folder. It skips the test when there is none.
-func TestMypyPython(t testing.TB) string {
+func MypyPython(t testing.TB) string {
 	t.Helper()
 	if python := os.Getenv("COMMANDMENTS_MYPY_PYTHON"); python != "" {
 		return python
@@ -41,15 +45,15 @@ func TestMypyPython(t testing.TB) string {
 	return ""
 }
 
-// TestRoslyn is the C# bridge's command for a test over the roots, run in a capped container of its image, as every
+// Roslyn is the C# bridge's command for a test over the roots, run in a capped container of its image, as every
 // development run of it is. It skips the test when there is no Docker to run it in, and fails it when the image is not
 // built.
-func TestRoslyn(t testing.TB, roots ...string) []string {
+func Roslyn(t testing.TB, roots ...string) []string {
 	t.Helper()
 	if exec.Command("docker", "info").Run() != nil {
 		t.Skip("no Docker to run the C# bridge in")
 	}
-	command, err := roslynInDocker(roots)
+	command, err := bridge.RoslynInDocker(roots)
 	if err != nil {
 		t.Fatal(err)
 	}

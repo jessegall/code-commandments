@@ -1,6 +1,8 @@
-package bridge
+package bridge_test
 
 import (
+	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"path/filepath"
 	"testing"
 
@@ -17,7 +19,7 @@ func fixture(t *testing.T, path string) string {
 }
 
 func TestTheMypyBridgeWritesAValidTreeOfThePythonFixture(t *testing.T) {
-	stream, err := Once(TestMypy(t), fixture(t, ""))
+	stream, err := bridge.Once(bridgetest.Mypy(t), fixture(t, ""))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,13 +63,13 @@ func inSourceOrder(t *testing.T, file *contract.File) {
 }
 
 func TestAServedBridgeAnswersEachRequestWithAWholeStream(t *testing.T) {
-	server, err := Serve(TestMypy(t))
+	server, err := bridge.Serve(bridgetest.Mypy(t))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer server.Close()
 	cli := fixture(t, "shop/cli.py")
-	first, err := server.Ask(Request{Paths: []string{fixture(t, "")}, Write: []string{cli}})
+	first, err := server.Ask(bridge.Request{Paths: []string{fixture(t, "")}, Write: []string{cli}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,7 +78,7 @@ func TestAServedBridgeAnswersEachRequestWithAWholeStream(t *testing.T) {
 			t.Errorf("%s: context is %v", file.Path, file.Context)
 		}
 	}
-	second, err := server.Ask(Request{Paths: []string{cli}})
+	second, err := server.Ask(bridge.Request{Paths: []string{cli}})
 	if err != nil {
 		t.Fatal(err)
 	}
