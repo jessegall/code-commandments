@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -86,5 +88,61 @@ func TestThePluginRefusesAPinThatIsNoRelease(t *testing.T) {
 	out, err := fetchRun(t, root, "main", "http://127.0.0.1:1")
 	if err == nil || !strings.Contains(out, "names no release (main)") {
 		t.Errorf("the fetch said %q (%v)", out, err)
+	}
+}
+
+// manifest is the part of the plugin's plugin.json that says what an install needs and runs.
+type manifest struct {
+	Requires map[string]any                  `json:"requires"`
+	Env      map[string]string               `json:"env"`
+	Setup    []struct{ Run string }          `json:"setup"`
+	Refuse   string                          `json:"refuse"`
+	On       map[string]string               `json:"on"`
+	Install  string                          `json:"installed"`
+	Services map[string]struct{ Run string } `json:"services"`
+}
+
+// commands is every command the journal runs for the plugin.
+func (m manifest) commands() []string {
+	commands := []string{m.Refuse, m.Install}
+	for _, step := range m.Setup {
+		commands = append(commands, step.Run)
+	}
+	for _, command := range m.On {
+		commands = append(commands, command)
+	}
+	for _, service := range m.Services {
+		commands = append(commands, service.Run)
+	}
+
+	return commands
+}
+
+// TestThePluginNeedsOnlyTheBinaryItFetches holds the plugin to the release rule: an install needs no PHP, composer,
+// Go or Docker, fetches the release it pins, and every command it runs is that fetched binary.
+func TestThePluginNeedsOnlyTheBinaryItFetches(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "..", ".journal-plugin", "plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plugin manifest
+	if err := json.Unmarshal(content, &plugin); err != nil {
+		t.Fatal(err)
+	}
+
+	if pinned := plugin.Env["COMMANDMENTS_RELEASE"]; !regexp.MustCompile(`^v\d+\.\d+\.\d+$`).MatchString(pinned) {
+		t.Errorf("the plugin pins %q, no release", pinned)
+	}
+	for _, tool := range []string{"php", "composer", "go", "docker"} {
+		if _, ok := plugin.Requires[tool]; ok {
+			t.Errorf("the plugin requires %s", tool)
+		}
+	}
+	runsTheBinary := regexp.MustCompile(`^(bin/commandments-release |sh \.journal-plugin/fetch$|journal check create .*\.journal/plugins/code-commandments/bin/commandments-release )`)
+	forbidden := regexp.MustCompile(`\b(composer|php|go|docker)\b|scripts/(build|dev)|bin/commandments( |$)`)
+	for _, command := range plugin.commands() {
+		if !runsTheBinary.MatchString(command) || forbidden.MatchString(command) {
+			t.Errorf("the plugin runs %q, not the binary it fetches", command)
+		}
 	}
 }

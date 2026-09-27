@@ -11,7 +11,22 @@ permissions:
   contents: write
 
 jobs:
+  # The journal plugin fetches the release its manifest pins, so a tag whose checkout pins another would install a
+  # binary that is not its own.
+  pin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: The journal plugin pins this release
+        run: |
+          pinned="$(jq -r .env.COMMANDMENTS_RELEASE .journal-plugin/plugin.json)"
+          if [ "$pinned" != "$GITHUB_REF_NAME" ]; then
+            echo ".journal-plugin/plugin.json pins $pinned in COMMANDMENTS_RELEASE, not $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+
   bridges:
+    needs: pin
     strategy:
       matrix:
         include:
