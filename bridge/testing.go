@@ -12,21 +12,7 @@ import (
 // test when there is none.
 func TestMypy(t testing.TB) []string {
 	t.Helper()
-	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
-	if python == "" {
-		home, _ := os.UserHomeDir()
-		built, _ := filepath.Glob(filepath.Join(home, ".cache/code-commandments/mypy-bridge/*/venv/bin/python"))
-		for _, candidate := range built {
-			if exec.Command(candidate, "-c", "import mypy").Run() == nil {
-				python = candidate
-				break
-			}
-		}
-	}
-	if python == "" {
-		t.Skip("no Python with mypy: set COMMANDMENTS_MYPY_PYTHON")
-	}
-	t.Setenv("COMMANDMENTS_MYPY_PYTHON", python)
+	t.Setenv("COMMANDMENTS_MYPY_PYTHON", TestMypyPython(t))
 	t.Setenv("XDG_CACHE_HOME", t.TempDir())
 	command, err := Mypy()
 	if err != nil {
@@ -34,6 +20,25 @@ func TestMypy(t testing.TB) []string {
 	}
 
 	return command
+}
+
+// TestMypyPython is an interpreter that already has mypy: $COMMANDMENTS_MYPY_PYTHON, else one a bridge built under
+// the cache folder. It skips the test when there is none.
+func TestMypyPython(t testing.TB) string {
+	t.Helper()
+	if python := os.Getenv("COMMANDMENTS_MYPY_PYTHON"); python != "" {
+		return python
+	}
+	home, _ := os.UserHomeDir()
+	built, _ := filepath.Glob(filepath.Join(home, ".cache", "code-commandments", "mypy-tree", "*", "venv", "bin", "python"))
+	for _, candidate := range built {
+		if exec.Command(candidate, "-c", "import mypy").Run() == nil {
+			return candidate
+		}
+	}
+	t.Skip("no Python with mypy: set COMMANDMENTS_MYPY_PYTHON")
+
+	return ""
 }
 
 // TestRoslyn is the C# bridge's command for a test over the roots, run in a container of its prebuilt image. It

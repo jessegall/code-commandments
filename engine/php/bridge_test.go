@@ -193,7 +193,11 @@ func TestServingAnswersEveryRequestWithAWholeStream(t *testing.T) {
 	needsPHP(t)
 	folder := written(t, map[string]string{"A.php": "<?php class A {}\n", "B.php": "<?php class B {}\n"})
 	a, b := filepath.Join(folder, "A.php"), filepath.Join(folder, "B.php")
-	command := exec.Command("php", Here().Script, "--serve")
+	bridge, err := Here().Command()
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := exec.Command(bridge[0], append(bridge[1:], "--serve")...)
 	command.Stdin = strings.NewReader(`{"paths": ["` + a + `"]}` + "\n" + `{"paths": ["` + folder + `"], "write": ["` + b + `"]}` + "\n")
 	out, err := command.Output()
 	if err != nil {

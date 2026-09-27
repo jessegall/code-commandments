@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/jessegall/code-commandments/bridge"
 )
 
 // consumer is a project the binary works in with no PHP anywhere on its PATH: only git, the binary itself,
@@ -22,23 +24,7 @@ type consumer struct {
 func newConsumer(t *testing.T) consumer {
 	t.Helper()
 
-	python := os.Getenv("COMMANDMENTS_MYPY_PYTHON")
-	if python == "" {
-		home, _ := os.UserHomeDir()
-		built, _ := filepath.Glob(filepath.Join(home, ".cache/code-commandments/mypy-bridge/*/venv/bin/python"))
-
-		for _, candidate := range built {
-			if exec.Command(candidate, "-c", "import mypy").Run() == nil {
-				python = candidate
-
-				break
-			}
-		}
-	}
-
-	if python == "" {
-		t.Fatal("no Python with mypy to read the project with: set COMMANDMENTS_MYPY_PYTHON")
-	}
+	python := bridge.TestMypyPython(t)
 
 	bin := t.TempDir()
 	binary := filepath.Join(bin, "commandments")

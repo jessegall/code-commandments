@@ -59,14 +59,14 @@ final class Bridge implements LocatedTool
     }
 
     /**
-     * What a run without the bridge says: that C# goes unjudged, which image it needs, and how that image is built.
+     * What a run without the bridge says: that C# goes unjudged, which image it needs, and that it is pulled, never
+     * built on this machine.
      */
     public static function missing(): string
     {
         $image = self::image();
-        $source = (string) realpath(self::SOURCE);
 
-        return "the C# bridge image {$image} is not available (Docker is not running, or the image is not installed), so C# is not judged; it is built once per release, never on demand: docker build -t {$image} {$source}";
+        return "the C# bridge image {$image} is not available (Docker is not running, or the image is not pulled), so C# is not judged; it is pulled, never built on this machine: docker pull {$image}";
     }
 
     /**

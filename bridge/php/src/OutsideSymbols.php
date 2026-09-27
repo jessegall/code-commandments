@@ -31,9 +31,7 @@ final class OutsideSymbols
         if ($autoload === null) {
             return;
         }
-        if (realpath($autoload) !== realpath(__DIR__ . '/../../../vendor/autoload.php')) {
-            require_once $autoload;
-        }
+        require_once $autoload;
         foreach ($referenced as $class) {
             $this->add($class);
         }

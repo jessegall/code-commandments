@@ -7,34 +7,36 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Bridge is bridge/php: a PHP script, and the PHP that runs it.
+// Bridge is bridge/php: its sources, and the PHP that runs them.
 type Bridge struct {
-	Script string
-	PHP    string
+	Sources bundle.Bundle
+	PHP     string
 }
 
-// Here is the bridge in this checkout, run by the php on PATH.
+// Here is the bridge this binary carries, run by the php on PATH.
 func Here() Bridge {
-	_, source, _, _ := runtime.Caller(0)
-
-	return Bridge{Script: filepath.Join(filepath.Dir(source), "..", "..", "bridge", "php", "bridge.php"), PHP: "php"}
+	return Bridge{Sources: bridge.PHP, PHP: "php"}
 }
 
-// Command is the command that runs the bridge: the PHP found on PATH, and the script.
+// Command is the command that runs the bridge: the PHP found on PATH, and the script written out of the binary.
 func (b Bridge) Command() ([]string, error) {
 	php, err := exec.LookPath(b.PHP)
 	if err != nil {
 		return nil, fmt.Errorf("the PHP bridge needs PHP, and %q is not on PATH: %w", b.PHP, err)
 	}
+	folder, err := b.Sources.Folder()
+	if err != nil {
+		return nil, err
+	}
 
-	return []string{php, b.Script}, nil
+	return []string{php, filepath.Join(folder, "bridge.php")}, nil
 }
 
 // Stream is the stream the bridge writes for its arguments: paths, and any of its flags.

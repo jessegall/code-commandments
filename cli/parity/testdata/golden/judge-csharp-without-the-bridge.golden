@@ -3,6 +3,6 @@ exit: 0
 [32m✓ No sins found in 0 files.[0m
 
 --- stderr
-⚠ 184 C# file(s) left unread — the C# bridge image code-commandments/roslyn-bridge:96f5eb3dad14f3e7 is not available (Docker is not running, or the image is not installed), so C# is not judged; it is built once per release, never on demand: docker build -t code-commandments/roslyn-bridge:96f5eb3dad14f3e7 <package>/bridge/roslyn
+⚠ 184 C# file(s) left unread — the C# bridge image code-commandments/roslyn-bridge:96f5eb3dad14f3e7 is not available (Docker is not running, or the image is not pulled), so C# is not judged; it is pulled, never built on this machine: docker pull code-commandments/roslyn-bridge:96f5eb3dad14f3e7
 
 --- files

@@ -76,7 +76,7 @@ func TestAFileOutsideWriteOnlyInforms(t *testing.T) {
 // TestTheBridgeShipsVuesDeclarations checks that each Vue package typing a ref is beside the bundle and tracked by git,
 // so a project with no vue installed, this checkout's own tests included, still reads a ref's value type.
 func TestTheBridgeShipsVuesDeclarations(t *testing.T) {
-	shipped := filepath.Join(filepath.Dir(Here().Script), "types", "node_modules")
+	shipped := filepath.Join("..", "..", "bridge", "frontend", "dist", "types", "node_modules")
 	for _, name := range []string{"vue", "@vue/runtime-dom", "@vue/runtime-core", "@vue/reactivity", "@vue/shared"} {
 		manifest := filepath.Join(shipped, name, "package.json")
 		text, err := os.ReadFile(manifest)
@@ -119,7 +119,11 @@ func TestServeAnswersEachRequestWithAWholeStream(t *testing.T) {
 	if _, err := exec.LookPath("node"); err != nil {
 		t.Skip("node is not on PATH")
 	}
-	command := exec.Command("node", Here().Script, "--serve")
+	bridge, err := Here().Command()
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := exec.Command(bridge[0], append(bridge[1:], "--serve")...)
 	in, _ := command.StdinPipe()
 	out, _ := command.StdoutPipe()
 	if err := command.Start(); err != nil {

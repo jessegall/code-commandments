@@ -1,21 +1,20 @@
 package bridge
 
 import (
-	"crypto/sha1"
 	"embed"
-	"encoding/hex"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/fs"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/contract"
 )
 
@@ -32,18 +31,18 @@ func RoslynImage() string {
 	return strings.TrimSpace(string(image))
 }
 
-// RoslynMissing is what a run without the C# bridge says, as the PHP tool's Bridge::missing says it: that C# goes
-// unjudged, which image it needs, and how that image is built.
+// RoslynMissing is what a run without the C# bridge says: that C# goes unjudged, which image it needs, and that
+// the image is pulled, never built on this machine.
 func RoslynMissing() string {
-	return fmt.Sprintf("the C# bridge image %s is not available (Docker is not running, or the image is not installed), so C# is not judged; it is built once per release, never on demand: docker build -t %s %s", RoslynImage(), RoslynImage(), roslynSource())
+	return fmt.Sprintf("the C# bridge image %s is not available (Docker is not running, or the image is not pulled), so C# is not judged; it is pulled, never built on this machine: docker pull %s", RoslynImage(), RoslynImage())
 }
 
 // Roslyn is the command that runs the C# bridge once as the generic tree over the roots, in a memory-capped
 // container of its image with the roots mounted read-only at their own paths. Without the image it fails, naming
-// the image and how it is built: the bridge is never built on demand.
+// the image to pull: the bridge is never built on this machine.
 func Roslyn(roots ...string) ([]string, error) {
 	if exec.Command("docker", "image", "inspect", RoslynImage()).Run() != nil {
-		return nil, fmt.Errorf("the C# bridge image %s is not installed; it is built once per release, never on demand: docker build -t %s bridge/roslyn", RoslynImage(), RoslynImage())
+		return nil, errors.New(RoslynMissing())
 	}
 	script, err := roslynScript()
 	if err != nil {
@@ -210,35 +209,12 @@ func projectReferences(project string) []string {
 	}
 }
 
-// roslynScript is the script written out beside the image name it reads, under the cache folder, keyed by what
-// the two hold.
+// roslynLauncher is the script that starts the bridge's container, beside the image name it reads.
+var roslynLauncher = bundle.Embedded("roslyn", roslyn, "roslyn")
+
+// roslynScript is the launcher, written out under the cache folder.
 func roslynScript() (string, error) {
-	cache := os.Getenv("XDG_CACHE_HOME")
-	if cache == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
-		cache = filepath.Join(home, ".cache")
-	}
-	script, _ := roslyn.ReadFile("roslyn/roslyn-in-docker.sh")
-	image, _ := roslyn.ReadFile("roslyn/IMAGE")
-	sum := sha1.Sum(append(append([]byte{}, script...), image...))
-	folder := filepath.Join(cache, "code-commandments", "roslyn", hex.EncodeToString(sum[:])[:16])
-	if err := os.MkdirAll(folder, 0o755); err != nil {
-		return "", err
-	}
-	if err := os.WriteFile(filepath.Join(folder, "IMAGE"), image, 0o644); err != nil {
-		return "", err
-	}
-	path := filepath.Join(folder, "roslyn-in-docker.sh")
+	folder, err := roslynLauncher.Folder()
 
-	return path, os.WriteFile(path, script, 0o755)
-}
-
-// roslynSource is the folder the C# bridge image is built from, in the checkout this build came from.
-func roslynSource() string {
-	_, source, _, _ := runtime.Caller(0)
-
-	return filepath.Join(filepath.Dir(source), "roslyn")
+	return filepath.Join(folder, "roslyn-in-docker.sh"), err
 }

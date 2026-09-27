@@ -1,6 +1,7 @@
 package info
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine/php/packages"
 	"github.com/jessegall/code-commandments/skill"
+	"github.com/jessegall/code-commandments/skills"
 )
 
 // width is how wide a paragraph is laid out.
@@ -139,15 +141,15 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 }
 
 // published is the skill's examples, else its SKILL.md: each from the project's published copy first,
-// else the package's source.
+// else the copy the binary carries.
 func published(teaching skill.Definition) string {
 	cwd, _ := os.Getwd()
-	library := workspace.At(consumerRoot(cwd), "").LibraryDir() + "/" + teaching.ID()
-	source := cli.PackageRoot() + "/skills/commandments/" + teaching.Slug
+	library := os.DirFS(workspace.At(consumerRoot(cwd), "").LibraryDir() + "/" + teaching.ID())
+	carried, _ := fs.Sub(skills.Files, "commandments/"+teaching.Slug)
 
 	for _, relative := range []string{"reference/examples.md", "SKILL.md"} {
-		for _, dir := range []string{library, source} {
-			if raw, err := os.ReadFile(dir + "/" + relative); err == nil {
+		for _, dir := range []fs.FS{library, carried} {
+			if raw, err := fs.ReadFile(dir, relative); err == nil {
 				return string(raw)
 			}
 		}

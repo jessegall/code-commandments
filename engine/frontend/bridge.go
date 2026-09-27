@@ -6,36 +6,36 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
-//go:generate npm --prefix ../../bridge/frontend run build
-
-// Bridge is bridge/frontend: its bundled script, and the node that runs it.
+// Bridge is bridge/frontend: its built script, and the node that runs it.
 type Bridge struct {
-	Script string
-	Node   string
+	Sources bundle.Bundle
+	Node    string
 }
 
-// Here is the bridge in this checkout, run by the node on PATH.
+// Here is the bridge this binary carries, run by the node on PATH.
 func Here() Bridge {
-	_, source, _, _ := runtime.Caller(0)
-
-	return Bridge{Script: filepath.Join(filepath.Dir(source), "..", "..", "bridge", "frontend", "dist", "bridge.mjs"), Node: "node"}
+	return Bridge{Sources: bridge.Frontend, Node: "node"}
 }
 
-// Command is the command that runs the bridge: the node found on PATH, and the script.
+// Command is the command that runs the bridge: the node found on PATH, and the script written out of the binary.
 func (b Bridge) Command() ([]string, error) {
 	node, err := exec.LookPath(b.Node)
 	if err != nil {
 		return nil, fmt.Errorf("the frontend bridge needs node, and %q is not on PATH: %w", b.Node, err)
 	}
+	folder, err := b.Sources.Folder()
+	if err != nil {
+		return nil, err
+	}
 
-	return []string{node, b.Script}, nil
+	return []string{node, filepath.Join(folder, "bridge.mjs")}, nil
 }
 
 // Stream is the stream the bridge writes for its arguments: paths, and any of its flags.

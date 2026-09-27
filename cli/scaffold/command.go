@@ -15,6 +15,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/sins"
+	"github.com/jessegall/code-commandments/stubs"
 )
 
 // frontendRoot is where a frontend helper goes.
@@ -189,7 +190,7 @@ func find(dir, name string) (string, bool) {
 }
 
 func render(helper sins.Scaffold, namespace string) string {
-	stub, _ := os.ReadFile(cli.PackageRoot() + "/stubs/" + helper.Stub)
+	stub, _ := stubs.Files.ReadFile(helper.Stub)
 
 	return strings.ReplaceAll(string(stub), "{namespace}", namespace)
 }

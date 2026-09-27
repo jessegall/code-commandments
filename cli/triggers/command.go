@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
-	"os"
 	"os/exec"
 	"slices"
 	"sort"
@@ -17,6 +16,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/layout"
 	"github.com/jessegall/code-commandments/skill"
+	"github.com/jessegall/code-commandments/skills"
 )
 
 // floor is the share of its own prompts a description must pull.
@@ -99,7 +99,7 @@ func selected(query string) ([]set, error) {
 			continue
 		}
 
-		raw, err := os.ReadFile(cli.PackageRoot() + "/skills/commandments/" + definition.Slug + "/evals/triggers.json")
+		raw, err := skills.Files.ReadFile("commandments/" + definition.Slug + "/evals/triggers.json")
 		if err != nil {
 			continue
 		}
