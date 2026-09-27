@@ -70,3 +70,6 @@ __pycache__/
 
 # What scripts/memory/judge.sh keeps while it runs, inside the checkout the dev container sees.
 /.memory-scratch/
+
+# What scripts/plugin/prove builds and installs from.
+/.plugin-proof/

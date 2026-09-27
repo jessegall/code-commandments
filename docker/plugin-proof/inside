@@ -1,0 +1,83 @@
+#!/bin/sh
+# Runs inside the plugin-proof container (scripts/plugin/prove): installs the agent journal from /journal-source, then
+# the plugin from /proof/plugin.git with its release served from /proof/release, and judges a small Python project with
+# what the plugin wired. Any step that does not hold stops the proof, saying which.
+set -eu
+
+fail() {
+    echo "✗ $*" >&2
+    exit 1
+}
+
+pass() {
+    echo "✓ $*"
+}
+
+for tool in go php composer docker dotnet; do
+    if command -v "$tool" >/dev/null 2>&1; then
+        fail "$tool is on the PATH; the proof needs a machine without it"
+    fi
+done
+pass "no go, php, composer, docker or dotnet on the PATH"
+
+export PYTHONDONTWRITEBYTECODE=1
+git config --global user.email proof@example.com
+git config --global user.name proof
+git config --global init.defaultBranch main
+
+project=/project
+mkdir -p "$project/.claude"
+cd "$project"
+git init -q
+python3 /journal-source/install.py "$project" >/tmp/journal-install.log 2>&1 || { cat /tmp/journal-install.log; fail "the journal did not install"; }
+journal() {
+    python3 "$project/.journal/journal.py" "$@"
+}
+
+COMMANDMENTS_RELEASES=file:///proof/release journal plugin install file:///proof/plugin.git --ref main --yes >/tmp/plugin-install.log 2>&1 ||
+    { tail -30 /tmp/plugin-install.log; fail "the plugin did not install"; }
+plugin="$project/.journal/plugins/code-commandments"
+binary="$plugin/bin/commandments-release"
+pass "journal plugin install ran the plugin's setup"
+
+[ -x "$binary" ] || fail "no binary at $binary"
+pinned="$(sed -n 's/.*"COMMANDMENTS_RELEASE": "\([^"]*\)".*/\1/p' "$plugin/.journal-plugin/plugin.json")"
+"$binary" --version | grep -q "$pinned" || fail "the fetched binary is not $pinned: $("$binary" --version)"
+pass "fetched the $pinned binary, checked against its SHA256SUMS"
+
+[ -n "$(ls "$plugin/journal-skills/.agents/skills")" ] || fail "no skills were rendered into the plugin's folder"
+pass "rendered $(ls "$plugin/journal-skills/.agents/skills" | wc -l | tr -d ' ') skills into the plugin's folder"
+[ -f "$project/.commandments/config.json" ] || fail "journal-config wrote no .commandments/config.json"
+pass "wrote the plugin's switches into .commandments/config.json"
+journal check all | grep -q "Check for sins" || fail "the Check for sins check was not filed"
+pass "filed the Check for sins check"
+
+printf '.journal/\n.claude/\n.agents/\n.commandments/\nAGENTS.md\nCLAUDE.md\n' >.gitignore
+git add -A
+git commit -qm "The project before the edit"
+mkdir -p shop
+cat >shop/exports.py <<'PYTHON'
+def export_row(writer, payload: dict) -> None:
+    writer.writerow([str(payload.get("sku") or ""), payload["name"], payload["price"]])
+PYTHON
+
+moment='{"event": "hook.PostToolUse", "project": "/project", "agent": {"cwd": "/project", "session": "proof"}, "tool": {"name": "Write", "file": "/project/shop/exports.py"}}'
+answer="$(cd "$plugin" && printf '%s' "$moment" | JOURNAL_PLUGIN_DIR="$plugin" CLAUDE_PROJECT_DIR="$project" "$binary" journal-hook)" ||
+    fail "the plugin's journal-hook failed: $answer"
+printf '%s' "$answer" | grep -q 'sin-found' || fail "the hook raised no sin for the edit: $answer"
+pass "the plugin's PostToolUse hook raised the sins the edit made"
+
+if judged="$(cd "$project" && "$binary" judge --changes --parallel=2 --no-checklist 2>&1)"; then
+    fail "judge found no sin in shop/exports.py: $judged"
+fi
+printf '%s' "$judged" | grep -q 'InventedDefaultDetector' || fail "judge did not read the Python file: $judged"
+pass "judged shop/exports.py: $(printf '%s' "$judged" | grep -o '[0-9]* sins' | tail -1)"
+
+(cd "$project" && CLAUDE_PROJECT_DIR="$project" "$binary" roslyn-serve >/tmp/roslyn.log 2>&1) &
+server=$!
+sleep 3
+kill -0 "$server" 2>/dev/null || fail "the C# service ended in a project with no C#: $(cat /tmp/roslyn.log)"
+grep -q 'no C# to judge' /tmp/roslyn.log || fail "the C# service did not say why it keeps no bridge: $(cat /tmp/roslyn.log)"
+kill "$server"
+wait "$server" 2>/dev/null || true
+pass "the C# service keeps no bridge in a project with no C#"

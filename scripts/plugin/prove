@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Proves the journal plugin installs and judges on a machine with nothing but python3, git, ps and curl: no Go, no PHP,
+# no composer, no Docker. Builds this checkout's linux binary as the release plugin.json pins, in the capped dev
+# container, sums it into a local release, and installs the committed HEAD as a plugin with the agent journal inside a
+# container capped at 2 GB and 2 CPUs (docker/plugin-proof). Commits, tags and publishes nothing.
+#   scripts/plugin/prove                     the journal cloned from its repository
+#   AGENT_JOURNAL_SOURCE=../agent-journal/src scripts/plugin/prove   a local journal package
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/../.." && pwd -P)"
+cd "$root"
+work="$root/.plugin-proof"
+version="$(sed -n 's/.*"COMMANDMENTS_RELEASE": "\([^"]*\)".*/\1/p' .journal-plugin/plugin.json)"
+case "$(docker info --format '{{.Architecture}}')" in
+    x86_64|amd64) arch=amd64 ;;
+    aarch64|arm64) arch=arm64 ;;
+    *) echo "scripts/plugin/prove: no release is built for $(docker info --format '{{.Architecture}}')" >&2; exit 1 ;;
+esac
+
+rm -rf "$work"
+mkdir -p "$work/release/$version"
+scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 GOOS=linux GOARCH="$arch" CGO_ENABLED=0 \
+    go build -trimpath -ldflags "-s -w -X main.version=$version" -o ".plugin-proof/release/$version/commandments-linux-$arch" ./cmd/commandments
+(cd "$work/release/$version" && { sha256sum "commandments-linux-$arch" 2>/dev/null || shasum -a 256 "commandments-linux-$arch"; } >SHA256SUMS)
+
+git init -q --bare "$work/plugin.git"
+git push -q "$work/plugin.git" HEAD:refs/heads/main
+if [ -n "$(git status --porcelain)" ]; then
+    echo "scripts/plugin/prove: the working tree has changes; the proof installs the committed HEAD" >&2
+fi
+
+journal="${AGENT_JOURNAL_SOURCE:-}"
+if [ -z "$journal" ]; then
+    git clone -q --depth 1 https://github.com/jessegall/agent-journal "$work/agent-journal"
+    journal="$work/agent-journal/src"
+fi
+journal="$(cd "$journal" && pwd -P)"
+
+docker build -q -t code-commandments-plugin-proof docker/plugin-proof >/dev/null
+docker run --rm --memory=2g --memory-swap=2g --cpus=2 \
+    -v "$work:/proof:ro" -v "$journal:/journal-source:ro" \
+    code-commandments-plugin-proof plugin-proof
