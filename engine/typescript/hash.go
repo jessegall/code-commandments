@@ -23,6 +23,15 @@ func (rules) Counts(node engine.Match) bool {
 	return node.Kind() != "TemplateSpan"
 }
 
+// Mark sets an optional chain apart from a plain one, as the PHP engine does: `a?.b` guards what `a.b` assumes.
+func (rules) Mark(node engine.Match) string {
+	if node.Is(engine.NullSafe) {
+		return "?."
+	}
+
+	return ""
+}
+
 // Unwrap reads a value cast with `as` as the value, as the PHP engine does: the cast names a type, not code.
 func (rules) Unwrap(node engine.Match) (engine.Match, bool) {
 	if node.Kind() != "AsExpression" {

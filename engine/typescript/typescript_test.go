@@ -172,3 +172,12 @@ func TestUndefinedReadsAsTheConstantItIs(t *testing.T) {
 		t.Error("undefined reads as one more name")
 	}
 }
+
+// TestAnOptionalChainIsNoCopyOfAPlainOne holds a body reading a?.b apart from one reading a.b, as the PHP engine
+// holds them: smart-farmers-pos's two stock counters differ only there.
+func TestAnOptionalChainIsNoCopyOfAPlainOne(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"chains.ts": "export function a (v: { s?: number[] }) {\n  return v?.s\n}\n\nexport function b (v: { s?: number[] }) {\n  return v.s\n}\n"})
+	if typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "a")).BodyShape() == typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "b")).BodyShape() {
+		t.Error("an optional chain reads as a plain one")
+	}
+}

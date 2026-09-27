@@ -37,6 +37,13 @@ type Unwrapping interface {
 	Unwrap(node Match) (Match, bool)
 }
 
+// Marking is what a language may add to its HashRules when what a node is, not what it holds, tells two spellings
+// apart: TypeScript's `a?.b` and `a.b`.
+type Marking interface {
+	// Mark is what sets the node apart; empty when nothing does.
+	Mark(node Match) string
+}
+
 // unwrapped is the node as the rules read it: what it wraps, when it is layout around another.
 func unwrapped(node Match, rules HashRules) Match {
 	unwrapping, ok := rules.(Unwrapping)
@@ -105,6 +112,11 @@ func fingerprint(node Match, rules HashRules, normalize bool) string {
 		parts = append(parts, facts.Name)
 	}
 	parts = append(parts, facts.Operator, strings.Join(facts.Modifiers, " "), strings.Join(facts.Flags, " "))
+	if marking, ok := rules.(Marking); ok {
+		if mark := marking.Mark(node); mark != "" {
+			parts = append(parts, mark)
+		}
+	}
 	for _, child := range node.Children() {
 		if inner := unwrapped(child, rules); rules.Counts(inner) {
 			parts = append(parts, child.Node().Field+"="+fingerprint(inner, rules, normalize))
