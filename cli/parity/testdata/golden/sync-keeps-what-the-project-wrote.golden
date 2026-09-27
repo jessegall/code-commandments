@@ -467,7 +467,7 @@ sha256 99a0880fb31cd8a9223ffbbe3fe77c44175a777fdbeda820a55ff5402377f8d2
 === created .agents/skills/commandments-writing-detectors/SKILL.md
 sha256 271240bfcf4c435b7a23ebe0c1d26dbc2a7b414e96d03d4014d8ca552a49be52
 === created .agents/skills/commandments/SKILL.md
-sha256 dfbdd2c16a9625918010b2838269c24ef63f833c28e4e66c2821a5bace810a1d
+sha256 635382798ab36769f0a38a67058bc411e3b44f236a2c657c8af9f670ce91d61a
 === changed .agents/skills/mine/SKILL.md
 sha256 3fd30542fe3f61b14bd4a4b2dc0b6fb30fa6f63ebce52dd1778aaa8c4dc02cff
 === created .claude/settings.json
@@ -1251,11 +1251,12 @@ catch — it can become a rule that judges every file from then on. Scaffold it:
 `vendor/bin/commandments make <Name>` (add `--engine=frontend` for a rule over
 your frontend sources — a Vue component or a TypeScript module)
 
-That writes the three classes a commandment is made of — the skill that teaches
-it, the sin that names it, the detector that finds it — into
-`.commandments/custom/`, registers the detector in this project's config, and
-prints the rest of the process. The folder is committed like any other source:
-these are the project's rules. **Load the `commandments-writing-detectors`
+That writes the rule a commandment is — `<Name>Detector.json`, naming the sin
+and the query that finds it — into `.commandments/custom/`, with the skill that
+teaches the fix (`skills/<slug>/SKILL.md`) when no existing one does, turns the
+rule on in this project's config, and prints the rest of the process. The
+folder is committed like any other source: these are the project's rules.
+**Load the `commandments-writing-detectors`
 skill before you write one** — it lists the engine predicates that already
 exist (hand-rolling one that does is the usual first mistake) and teaches the
 probe-then-calibrate discipline that proves a detector fires on what you meant.

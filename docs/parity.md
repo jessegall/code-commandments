@@ -88,10 +88,20 @@ tool does otherwise, and what a project that relied on it does now.
 
 The PHP tool summarised `make` as scaffolding "a skill, a sin and a detector in `.commandments/custom/`, registered in
 your config"; the Go tool says "a rule naming its sin, and the skill that teaches the fix, in `.commandments/custom/`,
-turned on in your config". `make` writes what the Go tool runs — a `<Name>.json` rule and, for a new subject, a
-`skills/<slug>/SKILL.md` — where the PHP tool wrote three PHP classes, so the PHP summary would describe files the Go
-tool never writes. Every other line of the overview is the PHP tool's, and the CLI parity cases hold `make`'s line
+turned on in your config". `make` writes what the Go tool runs — a `<Name>Detector.json` rule and, for a new
+subject, a `skills/<slug>/SKILL.md` — where the PHP tool wrote three PHP classes, so the PHP summary would describe
+files the Go tool never writes. Every other line of the overview is the PHP tool's, and the CLI parity cases hold `make`'s line
 exactly as the Go tool prints it. Nothing changes for a project: `commandments make <Name>` is run as before.
+
+### What the briefing says `make` writes
+
+The briefing `sync` publishes into a project's `AGENTS.md` and its `commandments` skill said, from the PHP tool, that
+`make` "writes the three classes a commandment is made of — the skill that teaches it, the sin that names it, the
+detector that finds it — into `.commandments/custom/`, registers the detector in this project's config". The Go tool's
+briefing says `make` writes the `<Name>Detector.json` rule, with the skill that teaches the fix when no existing one
+does, and turns the rule on — for the reason `make`'s own summary differs: the PHP wording tells an agent to look for
+files the Go tool never writes. Nothing changes for a project: the next `sync` rewrites the block it keeps in
+`AGENTS.md`, and the rest of the file is left as it was.
 
 ### A project's own PHP detectors, sins and skills
 
@@ -103,7 +113,7 @@ turns on is named as one that could not be loaded.
 
 To carry one over:
 
-1. `commandments make <Name>` scaffolds `.commandments/custom/<Name>.json` and turns it on in `config.json`.
+1. `commandments make <Name>` scaffolds `.commandments/custom/<Name>Detector.json` and turns it on in `config.json`.
 2. Write the detector's query as the rule's `find`: a selector, then one `where` or `reject` check per condition
    (README, "Developing detectors"; the `commandments-writing-detectors` skill lists every selector and check). The
    sin's name, description and rule go in the rule's `sin`.

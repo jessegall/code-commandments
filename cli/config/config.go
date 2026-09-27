@@ -29,7 +29,8 @@ type Config struct {
 	Packages []string
 	// Hooks are the hooks the project turns on beyond the ones every project runs.
 	Hooks []string
-	// Agents are the agents the project turns on beyond the ones every project runs.
+	// Agents are the agents a config from the PHP tool turned on by name; the tool ships none beyond the ones every
+	// project runs, so sync skips and names each.
 	Agents []string
 	// Configurators tune shipped detectors.
 	Configurators []Configurator

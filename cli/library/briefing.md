@@ -144,11 +144,12 @@ catch — it can become a rule that judges every file from then on. Scaffold it:
 `{{binary}} make <Name>` (add `--engine=frontend` for a rule over
 your frontend sources — a Vue component or a TypeScript module)
 
-That writes the three classes a commandment is made of — the skill that teaches
-it, the sin that names it, the detector that finds it — into
-`.commandments/custom/`, registers the detector in this project's config, and
-prints the rest of the process. The folder is committed like any other source:
-these are the project's rules. **Load the `commandments-writing-detectors`
+That writes the rule a commandment is — `<Name>Detector.json`, naming the sin
+and the query that finds it — into `.commandments/custom/`, with the skill that
+teaches the fix (`skills/<slug>/SKILL.md`) when no existing one does, turns the
+rule on in this project's config, and prints the rest of the process. The
+folder is committed like any other source: these are the project's rules.
+**Load the `commandments-writing-detectors`
 skill before you write one** — it lists the engine predicates that already
 exist (hand-rolling one that does is the usual first mistake) and teaches the
 probe-then-calibrate discipline that proves a detector fires on what you meant.
