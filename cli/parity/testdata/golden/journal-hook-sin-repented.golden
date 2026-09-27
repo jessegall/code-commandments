@@ -61,15 +61,5 @@ Between the dividers is the list: one finding per line: the file, a tab, then th
 
 Safe to delete — the findings still standing are named once more.
 
-=== changed .commandments/sessions/640d8/.touched-sources
-marked-at: <time>
------
-Code-commandments — where the `edits` watcher has looked up to.
-
-The block above the first divider is this file's state, one `name: value` per line:
-  marked-at  the unix time of the last look; a judged file newer than this is one a tool has changed since
-
-Safe to delete — it regenerates.
-
 === changed plugin-data/sins.json
 []

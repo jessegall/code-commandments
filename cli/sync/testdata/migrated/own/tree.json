@@ -1,0 +1,8 @@
+{
+ ".commandments/.state-format": "format: 5\n-----\nWhich format code-commandments writes its session state files in. It exists so an upgrade can convert what is already on disk exactly once.\n\nThe block above the first divider is this file's state, one `name: value` per line:\n  format  the state-file format this project has been brought up to\n\nSafe to delete \u2014 the conversion simply runs again on the next `composer update`.\n",
+ ".commandments/sessions/a/sins/sins-2.md": ".commandments/sessions/a/sins-2.md",
+ ".commandments/sessions/a/sins/sins.md": ".commandments/sessions/a/sins.md",
+ ".commandments/sessions/b/kept.txt": ".commandments/sessions/b/kept.txt",
+ ".commandments/sessions/b/sins.md": ".commandments/sessions/b/sins.md",
+ ".commandments/sessions/b/sins/sins.md": ".commandments/sessions/b/sins/sins.md"
+}

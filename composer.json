@@ -1,6 +1,6 @@
 {
     "name": "jessegall/code-commandments",
-    "description": "An architecture compiler for PHP — single-concern discipline prophets that judge a codebase against a configurable style and architecture spec",
+    "description": "An architecture compiler — judges a PHP, Vue, TypeScript, Python and C# codebase against architectural disciplines and points every violation at the skill that fixes it",
     "keywords": [
         "laravel",
         "code-quality",
@@ -20,31 +20,17 @@
         }
     ],
     "require": {
-        "php": "^8.4",
-        "jessegall/php-types": "^1.14",
-        "nikic/php-parser": "^5.0"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^10.0|^11.0"
-    },
-    "autoload": {
-        "psr-4": {
-            "JesseGall\\CodeCommandments\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "JesseGall\\CodeCommandments\\Tests\\": "tests/"
-        }
+        "php": "^8.4"
     },
     "scripts": {
-        "readme": "@php scripts/generate-readme.php",
+        "readme": "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./cli/doc/readme",
         "sins": [
-            "@php scripts/generate-skills.php",
-            "@php bin/commandments-php sync"
+            "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./skill/render/generate",
+            "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./cli/doc/refresh",
+            "@php bin/commandments sync"
         ],
+        "skills": "@php bin/commandments sync",
         "judge": "@php bin/commandments judge",
-        "skills": "@php bin/commandments-php sync",
         "post-install-cmd": [
             "scripts/build",
             "@php bin/commandments sync"

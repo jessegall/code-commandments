@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — `Order.php`, changed since the last check, breaks a rule. Fix it now, at its SOURCE, while the code is still in front of you:\n  • array-bag at <project>/src/Order.php:13\n    LOAD the skill `commandments-backend-value-objects` before fixing — load it even if you believe you already have.\n  • narrated-command at <project>/src/Order.php:7\n    LOAD the skill `commandments-backend-method-mood` before fixing — load it even if you believe you already have.\nRun `vendor/bin/commandments info <sin>` if a rule is not one you recognise. This check reads a file at a time, so it is not the whole picture — `judge` still is."}}
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — `Order.php`, changed since the last check, breaks a rule. Fix it now, at its SOURCE, while the code is still in front of you:\n  • array-bag at <project>/src/Order.php:13\n    LOAD the skill `commandments-backend-value-objects` before fixing — load it even if you believe you already have.\n  • narrated-command at <project>/src/Order.php:7\n    LOAD the skill `commandments-backend-method-mood` before fixing — load it even if you believe you already have.\nRun `commandments info <sin>` if a rule is not one you recognise. This check reads a file at a time, so it is not the whole picture — `judge` still is."}}
 
 --- stderr
 
@@ -15,14 +15,4 @@ Code-commandments — the findings the per-edit check has already named this ses
 Between the dividers is the list: one finding per line: the file, a tab, then the finding as it was named
 
 Safe to delete — the findings still standing are named once more.
-
-=== changed .commandments/sessions/640d8/.touched-sources
-marked-at: <time>
------
-Code-commandments — where the `edits` watcher has looked up to.
-
-The block above the first divider is this file's state, one `name: value` per line:
-  marked-at  the unix time of the last look; a judged file newer than this is one a tool has changed since
-
-Safe to delete — it regenerates.
 

@@ -14,8 +14,9 @@ scripts/dev go generate ./registry
 scripts/dev --mount ../some-app go run ./engine/frontend/parity ../some-app
 ```
 
-- **The image** (`docker/dev/Dockerfile`): PHP and composer, Go, node, Python with
-  the pinned mypy, git and the docker CLI. It is built on the first run and rebuilt
+- **The image** (`docker/dev/Dockerfile`): Go, PHP for the PHP bridge, composer for
+  the consumer test, node for the frontend bridge, Python with the pinned mypy, git
+  and the docker CLI. It is built on the first run and rebuilt
   only when the Dockerfile or the mypy pin changes.
 - **Inside**: `GOMEMLIMIT=1200MiB` per process (so the two a `-p=2` test run starts
   feel GC pressure before the 3 GB kill), `GOMAXPROCS=2`, and `go` builds and tests with
@@ -26,15 +27,19 @@ scripts/dev --mount ../some-app go run ./engine/frontend/parity ../some-app
   folder. The host's docker socket is mounted too, so the Roslyn bridge a test
   starts gets paths the host can mount, and runs in its own capped container
   beside the dev one. A folder outside the checkout needs `--mount` (read-only).
-- **PHP dependencies**: a checkout without `vendor/` has it installed in the
-  container on the first run. A worktree takes the main checkout's `composer.lock`,
-  which the recorded answers were made against.
 - **No docker, no run**: `scripts/dev` fails and says so. There is no host fallback.
 
 `docker/dev/cap_test.go` proves the cap: it runs a child past 3 GB and expects the
 kernel's SIGKILL. Scripts and hooks in this repository that run Go call `scripts/dev`
 as well.
 
-## The PHP suite
+## The suite
 
-`vendor/bin/phpunit tests`, scoped to the tests you touched while iterating.
+`scripts/dev go test ./the/packages/you/touched`, scoped while iterating; the whole
+suite is `scripts/dev go test ./...`, run package by package at `-p 2`.
+
+The PHP tool this one replaced left its answers behind as recordings, and the tests
+still hold the Go tool to them: the shop fixture's answers beside the fixture they
+are about (`engine/php/testdata/oracle`), the scribes' rewrites, and the real
+codebases' findings (`docs/parity.md`). Nothing records them again: a new rule is
+proven by its fixture's markers alone.

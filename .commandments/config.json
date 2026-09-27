@@ -1,0 +1,9 @@
+{
+    "$schema": "./config.schema.json",
+    "paths": [
+        "bridge/php/bridge.php",
+        "bridge/php/src",
+        "bridge/mypy",
+        "bridge/roslyn"
+    ]
+}

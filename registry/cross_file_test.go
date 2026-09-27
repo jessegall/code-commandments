@@ -1,8 +1,7 @@
 package registry_test
 
 import (
-	"os/exec"
-	"path/filepath"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -14,22 +13,11 @@ import (
 
 // TestTheDetectorsThatReadBeyondOneFileAreThePHPToolsOwn holds the detectors that read beyond one file to the PHP
 // tool's own CrossFileSet, for every engine the binary carries: a WholeTree verdict, a recurrence grouped across files,
-// or a CrossFile reach the analysis finds. The per-edit check asks only the rest.
+// or a CrossFile reach the analysis finds, recorded in testdata/cross-file.txt. The per-edit check asks only the rest.
 func TestTheDetectorsThatReadBeyondOneFileAreThePHPToolsOwn(t *testing.T) {
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Fatal("no php to ask the PHP tool's analysis")
-	}
-
-	repo, _ := filepath.Abs("..")
-	script := `require '` + repo + `/vendor/autoload.php';
-$set = \JesseGall\CodeCommandments\Detectors\CrossFileSet::over(\JesseGall\CodeCommandments\Ast\Codebase::scan(['` + repo + `/src']));
-foreach (\JesseGall\CodeCommandments\Detectors\Catalog::all() as $detector) {
-    if ($set->has($detector)) { echo get_class($detector), "\n"; }
-}`
-
-	out, err := exec.Command("php", "-d", "memory_limit=2G", "-r", script).Output()
+	out, err := os.ReadFile("testdata/cross-file.txt")
 	if err != nil {
-		t.Fatalf("php: %v", err)
+		t.Fatal(err)
 	}
 
 	carried := map[catalog.Engine]bool{}

@@ -169,9 +169,27 @@ func TestAnAnonymousClassLendsItsMembersNoSymbol(t *testing.T) {
 	}
 }
 
+// TestAProjectWithNoAutoloaderStillKnowsPhpsOwnClasses holds the bridge to listing a built-in interface a class
+// implements when the project has no vendor/autoload.php, so what overrides it is known (the frozen shop's
+// BlankText::__toString), and to listing nothing else there: the bridge's own php-parser is no project's.
+func TestAProjectWithNoAutoloaderStillKnowsPhpsOwnClasses(t *testing.T) {
+	folder := written(t, map[string]string{"Blank.php": "<?php\nnamespace Shop;\nfinal class Blank implements \\Stringable {\n    public function __toString(): string { return ''; }\n}\nfinal class Ask extends \\PhpParser\\Node\\Expr\\MethodCall {}\n"})
+	stream := bridged(t, folder)
+	if stream.Program == nil {
+		t.Fatal("no outside symbols")
+	}
+	var listed []string
+	for _, symbol := range stream.Program.Symbols {
+		listed = append(listed, symbol.Symbol)
+	}
+	if !slices.Contains(listed, "Stringable") || slices.ContainsFunc(listed, func(symbol string) bool { return strings.HasPrefix(symbol, "PhpParser") }) {
+		t.Errorf("listed %v", listed)
+	}
+}
+
 func TestOutsideSymbolsAreClosed(t *testing.T) {
 	folder := written(t, map[string]string{"Uses.php": "<?php\nnamespace Shop;\nfinal class Ask extends \\PhpParser\\Node\\Expr\\MethodCall {}\n"})
-	stream := bridged(t, "--autoload=../../vendor/autoload.php", folder)
+	stream := bridged(t, "--autoload=../../bridge/php/parser/autoload.php", folder)
 	if stream.Program == nil {
 		t.Fatal("no outside symbols")
 	}

@@ -18,7 +18,8 @@ import (
 	"github.com/jessegall/code-commandments/scribes/repent"
 )
 
-// answer is one file the PHP tool's repent rewrote in a fixture: by one step alone, or by the whole chain ("*").
+// answer is one file the PHP tool's repent rewrote in a fixture, as it stood when the PHP tool last ran (the frozen
+// fixtures beside its answers): by one step alone, or by the whole chain ("*").
 type answer struct {
 	Fixture string `json:"fixture"`
 	Step    string `json:"step"`
@@ -35,7 +36,7 @@ func (everywhere) IsScoped() bool       { return false }
 
 // answers is the PHP tool's rewrites, keyed by fixture, then step, then path.
 func answers(t *testing.T) map[string]map[string]map[string]answer {
-	file, err := os.Open(filepath.Join(shop.Testdata(), "repent.jsonl.gz"))
+	file, err := os.Open(filepath.Join(shop.Oracle(), "repent.jsonl.gz"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,8 +70,12 @@ func answers(t *testing.T) map[string]map[string]map[string]answer {
 
 func TestEveryPortedStepRewritesEachFixtureAsThePHPToolDoes(t *testing.T) {
 	answered := answers(t)
+	frozen, err := shop.Frozen()
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, fixture := range []string{"backend", "frontend"} {
-		root, err := filepath.EvalSymlinks(filepath.Join(shop.Repository(), "tests", "Fixtures", fixture))
+		root, err := filepath.EvalSymlinks(filepath.Join(frozen, fixture))
 		if err != nil {
 			t.Fatal(err)
 		}

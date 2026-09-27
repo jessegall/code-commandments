@@ -3,9 +3,7 @@ package backend
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -53,7 +51,7 @@ func TestDataHintRewritesEachHintsProjectAsThePHPToolDoes(t *testing.T) {
 				scoped = append(scoped, filepath.Join(dir, name))
 			}
 
-			want := hintAnswer(t, project, dir, scoped)
+			want := hintAnswer(t, project, dir)
 			codebase, err := php.Here().Scan(dir)
 			if err != nil {
 				t.Fatal(err)
@@ -75,27 +73,13 @@ func TestDataHintRewritesEachHintsProjectAsThePHPToolDoes(t *testing.T) {
 	}
 }
 
-// hintAnswer is what PHP's DataHintScribe rewrites in the project, by path: asked live when recording, else as
-// recorded.
-func hintAnswer(t *testing.T, project hintProject, dir string, scoped []string) map[string]string {
+// hintAnswer is what PHP's DataHintScribe rewrote in the project, by path, as recorded.
+func hintAnswer(t *testing.T, project hintProject, dir string) map[string]string {
 	t.Helper()
-	key := project.key()
-	if *record {
-		live := phpHints(t, dir, scoped)
-		relative := map[string]string{}
-		for path, content := range live {
-			relative[strings.TrimPrefix(path, dir+"/")] = content
-		}
-		recordedHintsMu.Lock()
-		recordedHints[key] = relative
-		recordedHintsMu.Unlock()
-
-		return live
-	}
 	hintAnswersOnce.Do(loadHintAnswers)
-	relative, ok := hintAnswers[key]
+	relative, ok := hintAnswers[project.key()]
 	if !ok {
-		t.Fatalf("PHP's hints for %s are not recorded: run go generate ./scribes/backend", project.name)
+		t.Fatalf("PHP's hints for %s are not recorded", project.name)
 	}
 	answer := map[string]string{}
 	for path, content := range relative {
@@ -119,30 +103,6 @@ func (p hintProject) key() string {
 	}
 
 	return hex.EncodeToString(hash.Sum(nil))
-}
-
-// phpHints is what PHP's DataHintScribe rewrites in the project, restricted to scoped when it names files.
-func phpHints(t *testing.T, dir string, scoped []string) map[string]string {
-	t.Helper()
-	probe := `require $argv[1];
-use JesseGall\CodeCommandments\Cli\Scope\Scope;
-$scoped = json_decode($argv[3], true);
-$scope = $scoped === null ? Scope::everything() : Scope::restrictedTo($scoped);
-echo json_encode((new JesseGall\CodeCommandments\Scribes\Backend\DataHintScribe())->rewrites(JesseGall\CodeCommandments\Ast\Codebase::scan($argv[2]), $scope));`
-	root, _ := filepath.Abs(filepath.Join("..", ".."))
-	scopedJSON, _ := json.Marshal(scoped)
-	out, err := exec.Command("php", "-r", probe, filepath.Join(root, "vendor", "autoload.php"), dir, string(scopedJSON)).Output()
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := map[string]string{}
-	if strings.TrimSpace(string(out)) != "[]" {
-		if err := json.Unmarshal(out, &want); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	return want
 }
 
 var hintProjects = []hintProject{

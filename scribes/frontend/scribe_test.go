@@ -1,9 +1,7 @@
 package frontend
 
 import (
-	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -58,35 +56,12 @@ func goRewrites(t *testing.T, detector detectors.Detector, dir string) map[strin
 	return relative
 }
 
-// phpRewrites is what PHP's frontend detector step for the detector class rewrites in the folder, asked live.
-func phpRewrites(t *testing.T, detectorClass, dir string) map[string]string {
-	t.Helper()
-	probe := `require $argv[1];
-$step = new JesseGall\CodeCommandments\Scribes\Frontend\DetectorStep(new $argv[2]());
-$out = [];
-foreach ($step->run([$argv[3]], JesseGall\CodeCommandments\Cli\Scope\Scope::everything()) as $path => $content) { $out[substr($path, strlen($argv[3]) + 1)] = $content; }
-echo json_encode((object) $out);`
-	root, _ := filepath.Abs(filepath.Join("..", ".."))
-	command := exec.Command("php", "-r", probe, filepath.Join(root, "vendor", "autoload.php"), `JesseGall\CodeCommandments\Detectors\Frontend\`+detectorClass, dir)
-	command.Dir = dir
-	out, err := command.Output()
-	if err != nil {
-		t.Fatalf("%v: %s", err, out)
-	}
-	want := map[string]string{}
-	if err := json.Unmarshal(out, &want); err != nil {
-		t.Fatal(err)
-	}
-
-	return want
-}
-
 // sameAsPHP runs the detector's step over the files and holds its rewrite byte for byte equal to what PHP's step
 // rewrote, as recorded; it answers the rewrite.
 func sameAsPHP(t *testing.T, detector detectors.Detector, detectorClass string, files map[string]string) map[string]string {
 	t.Helper()
 	dir := project(t, files)
-	want := phpAnswer(t, detectorClass, files, dir)
+	want := phpAnswer(t, detectorClass, files)
 	got := goRewrites(t, detector, dir)
 	if len(got) != len(want) {
 		t.Fatalf("rewrote %v, PHP %v", keys(got), keys(want))

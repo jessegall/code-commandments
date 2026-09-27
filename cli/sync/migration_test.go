@@ -1,9 +1,9 @@
 package sync
 
 import (
+	"encoding/json"
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -25,46 +25,36 @@ var sessionFiles = []string{
 	".commandments/sessions/b/kept.txt",
 }
 
+// TestTheStateMigratesAsThePHPToolMigratesIt holds the migration to what the PHP tool did and left for each case,
+// recorded under testdata/migrated/<case>: the lines it printed and the files it left.
 func TestTheStateMigratesAsThePHPToolMigratesIt(t *testing.T) {
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Fatal("no php to migrate with the PHP tool")
-	}
-
-	for name, journal := range map[string]bool{"the tool's own folder": false, "the journal's folder": true} {
+	for name, journal := range map[string]bool{"own": false, "journal": true} {
 		t.Run(name, func(t *testing.T) {
-			php, golang := t.TempDir(), t.TempDir()
-
-			for _, root := range []string{php, golang} {
-				for _, file := range sessionFiles {
-					must(t, os.MkdirAll(filepath.Dir(filepath.Join(root, file)), 0o755))
-					must(t, os.WriteFile(filepath.Join(root, file), []byte(file), 0o644))
-				}
-
-				if journal {
-					must(t, os.MkdirAll(filepath.Join(root, ".journal"), 0o755))
-				}
+			root := t.TempDir()
+			for _, file := range sessionFiles {
+				must(t, os.MkdirAll(filepath.Dir(filepath.Join(root, file)), 0o755))
+				must(t, os.WriteFile(filepath.Join(root, file), []byte(file), 0o644))
+			}
+			if journal {
+				must(t, os.MkdirAll(filepath.Join(root, ".journal"), 0o755))
 			}
 
-			repo, _ := filepath.Abs("../..")
-			script := `require '` + repo + `/vendor/autoload.php';
-echo implode("\n", (new \JesseGall\CodeCommandments\Cli\Migration(\JesseGall\CodeCommandments\Workspace::at($argv[1])))->run());`
+			done := strings.Join(Migrate(workspace.At(root, "")), "\n")
 
-			out, err := exec.Command("php", "-r", script, "--", php).CombinedOutput()
-			if err != nil {
-				t.Fatalf("php: %v\n%s", err, out)
+			recorded := filepath.Join("testdata", "migrated", name)
+			said, _ := os.ReadFile(filepath.Join(recorded, "answer"))
+			if done != string(said) {
+				t.Errorf("did\n%s\nthe PHP tool did\n%s", done, said)
 			}
 
-			done := strings.Join(Migrate(workspace.At(golang, "")), "\n")
-
-			if done != string(out) {
-				t.Errorf("did\n%s\nthe PHP tool did\n%s", done, out)
-			}
-
-			if want, got := tree(php), tree(golang); !reflect.DeepEqual(got, want) {
+			var want map[string]string
+			left, _ := os.ReadFile(filepath.Join(recorded, "tree.json"))
+			must(t, json.Unmarshal(left, &want))
+			if got := tree(root); !reflect.DeepEqual(got, want) {
 				t.Errorf("left\n%v\nthe PHP tool left\n%v", got, want)
 			}
 
-			if again := Migrate(workspace.At(golang, "")); len(again) != 0 {
+			if again := Migrate(workspace.At(root, "")); len(again) != 0 {
 				t.Errorf("migrated twice: %v", again)
 			}
 		})

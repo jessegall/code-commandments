@@ -2,34 +2,19 @@ package jsonfile
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 )
 
+// TestAFileIsWrittenBackAsThePHPToolWritesIt holds a read and write-back to what the PHP tool wrote for the same
+// document, recorded in testdata/written.json.
 func TestAFileIsWrittenBackAsThePHPToolWritesIt(t *testing.T) {
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Fatal("no php to write with the PHP tool")
-	}
-
 	document := `{"name":"acme/app","autoload":{"psr-4":{"App\\":"src/"}},"extra":{},"scripts":{"test":"phpunit","post-install-cmd":["@php artisan x"]},` +
 		`"config":{"allow-plugins":{"a/b":true},"platform":{"php":"8.3"},"sort-packages":false,"process-timeout":0},"note":"ünïcode / slash","none":null,"list":[]}`
 
-	php, golang := filepath.Join(t.TempDir(), "composer.json"), filepath.Join(t.TempDir(), "composer.json")
-
-	for _, path := range []string{php, golang} {
-		if err := os.WriteFile(path, []byte(document), 0o644); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	repo, _ := filepath.Abs("../..")
-	script := `require '` + repo + `/vendor/autoload.php';
-$file = new \JesseGall\CodeCommandments\Support\JsonFile($argv[1]);
-$file->write($file->read());`
-
-	if out, err := exec.Command("php", "-r", script, "--", php).CombinedOutput(); err != nil {
-		t.Fatalf("php: %v\n%s", err, out)
+	golang := filepath.Join(t.TempDir(), "composer.json")
+	if err := os.WriteFile(golang, []byte(document), 0o644); err != nil {
+		t.Fatal(err)
 	}
 
 	object, read := Read(golang)
@@ -41,7 +26,7 @@ $file->write($file->read());`
 		t.Fatal(err)
 	}
 
-	want, _ := os.ReadFile(php)
+	want, _ := os.ReadFile("testdata/written.json")
 	got, _ := os.ReadFile(golang)
 
 	if string(got) != string(want) {

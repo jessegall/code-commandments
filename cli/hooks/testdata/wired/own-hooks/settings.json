@@ -1,0 +1,53 @@
+{
+    "model": "opus",
+    "hooks": {
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "./mine.sh"
+                    }
+                ]
+            },
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                    }
+                ]
+            }
+        ],
+        "PreToolUse": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                    }
+                ]
+            }
+        ],
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                    }
+                ]
+            }
+        ],
+        "PostToolUse": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                    }
+                ]
+            }
+        ]
+    }
+}

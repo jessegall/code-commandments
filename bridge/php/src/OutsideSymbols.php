@@ -15,12 +15,16 @@ use ReflectionUnionType;
 
 /**
  * The declarations the scan names but does not hold, reflected through the scanned project's autoloader. Closed: every
- * ancestor, trait and member type of a listed declaration is listed too.
+ * ancestor, trait and member type of a listed declaration is listed too. A project with no autoloader still has PHP's
+ * own classes (`Stringable`, `Countable`), so those are listed without one; nothing else is, so the bridge's own
+ * php-parser never stands in for a class the project would load.
  */
 final class OutsideSymbols
 {
     /** @var array<string, array> */
     private array $symbols = [];
+
+    private readonly bool $internalOnly;
 
     /**
      * @param  array<string, string>  $declared  class-likes the scan declares, never reflected
@@ -28,10 +32,10 @@ final class OutsideSymbols
      */
     public function __construct(?string $autoload, private readonly array $declared, array $referenced)
     {
-        if ($autoload === null) {
-            return;
+        $this->internalOnly = $autoload === null;
+        if ($autoload !== null) {
+            require_once $autoload;
         }
-        require_once $autoload;
         foreach ($referenced as $class) {
             $this->add($class);
         }
@@ -50,6 +54,9 @@ final class OutsideSymbols
             return;
         }
         $reflection = new ReflectionClass($class);
+        if ($this->internalOnly && ! $reflection->isInternal()) {
+            return;
+        }
         $symbol = ['symbol' => $reflection->getName(), 'kind' => $this->kind($reflection), 'name' => $reflection->getShortName()];
         $this->symbols[$key] = &$symbol;
         $parent = $reflection->getParentClass();

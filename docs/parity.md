@@ -9,13 +9,14 @@ makes, every finding only one of them makes, and why.
 - `scripts/memory/snapshot.sh <checkout> <commit> <out>` pins a codebase at one commit, archived without touching the
   checkout's working copy; for a C# solution it adds the restore output, made in a capped container
   (`--memory=4g --cpus=2`), never on the host.
-- `scripts/parity.sh <snapshot>` judges the snapshot once with each tool — `bin/commandments-php` and the Go binary
-  built from the same checkout — at `--parallel=2` inside the capped dev container, and prints each finding only one
-  of them makes as `file:line [Detector]`.
-- A C# solution too large to hold whole is compared one project at a time by the C# parity test against the PHP
-  tool's recorded findings (`engine/csharp/testdata/chronos.findings.each.gz`); koel's frontend is compared the same
-  way against `engine/frontend/testdata/koel.findings.gz`, with its one-sided findings listed in
-  `engine/frontend/testdata/koel.accounted`. The recipe for each is in `detectors/*/parity_test.go`.
+- Each tool judged the snapshot once — the PHP tool and the Go binary built from the same checkout — at
+  `--parallel=2` inside the capped dev container, and each finding only one of them made was listed as
+  `file:line [Detector]`. The script that did it left with the PHP tool.
+- A C# solution too large to hold whole was compared one project at a time by the C# parity test against the PHP
+  tool's recorded findings (`engine/csharp/testdata/chronos.findings.each.gz`); koel's frontend the same way against
+  `engine/frontend/testdata/koel.findings.gz`, with its one-sided findings listed in
+  `engine/frontend/testdata/koel.accounted`. Those recordings stay, so `detectors/*/parity_test.go` still holds the Go
+  tool to them.
 
 A difference is settled in one of two ways. A Go bug is fixed in Go. A PHP bug — the PHP tool misreading code that
 the language's own parser reads right — is left in the PHP tool, which this switch deletes, and the Go behaviour it

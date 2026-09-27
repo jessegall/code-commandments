@@ -44,7 +44,8 @@ type Case struct {
 	Project string `json:"project,omitempty"`
 
 	// Setup are shell commands run in the project before the tool, e.g. to make it a git repository;
-	// $PARITY_PACKAGE names the package's own folder, to copy what the PHP tool sees from its install.
+	// $PARITY_PACKAGE names the package's own folder, to copy what the tool sees from its install, and
+	// $PARITY_TOOL the tool under test, to leave behind what an earlier run of it would.
 	Setup []string `json:"setup,omitempty"`
 
 	// Env is added to the fixed environment every case runs under.
@@ -151,7 +152,7 @@ func Run(c Case, repo, scratch string, command ...string) (Result, error) {
 
 	for _, line := range c.Setup {
 		setup := exec.Command("sh", "-c", line)
-		setup.Dir, setup.Env = project, append(env, "PARITY_PACKAGE="+repo)
+		setup.Dir, setup.Env = project, append(env, "PARITY_PACKAGE="+repo, "PARITY_TOOL="+command[0])
 
 		if out, err := setup.CombinedOutput(); err != nil {
 			return Result{}, fmt.Errorf("setup %q: %w\n%s", line, err, out)
@@ -227,12 +228,14 @@ func digested(files map[string]string, folders []string) map[string]string {
 }
 
 // written lists what changed between two snapshots, in path order: each created or changed file with its
-// contents, each deleted file by name.
+// contents, each deleted file by name. A file whose only change is the moment stamped in it did not change: a run
+// in the same second as its setup rewrites the same stamp, one a second later a new one, and which it is says
+// nothing about the tool.
 func written(before, after map[string]string) string {
 	var paths []string
 
 	for path, contents := range after {
-		if was, existed := before[path]; !existed || was != contents {
+		if was, existed := before[path]; !existed || unixStamp.ReplaceAllString(was, "") != unixStamp.ReplaceAllString(contents, "") {
 			paths = append(paths, path)
 		}
 	}

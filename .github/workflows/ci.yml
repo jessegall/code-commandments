@@ -5,7 +5,7 @@ name: CI
 
 on:
   push:
-    branches: [main, go-rewrire]
+    branches: [main, go-rewrite]
   pull_request:
 
 permissions:

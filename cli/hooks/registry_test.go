@@ -2,7 +2,6 @@ package hooks
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -15,61 +14,45 @@ return function ($config): void {
 };
 `
 
+// TestHooksAreWiredAsThePHPToolWiresThem holds the wiring to what the PHP tool wrote for each case, recorded under
+// testdata/wired/<case>: whether it wired anything, and the settings file it left.
 func TestHooksAreWiredAsThePHPToolWiresThem(t *testing.T) {
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Fatal("no php to wire with the PHP tool")
-	}
-
 	for name, settings := range map[string]*string{
-		"no settings file": nil,
-		"the user's own hooks beside an old one of ours": ptr(`{"model": "opus", "hooks": {"Stop": [{"hooks": [{"type": "command", "command": "./mine.sh"}, {"type": "command", "command": "php vendor/bin/commandments judge-reminder"}]}], "PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "x # @code-commandments-managed"}]}]}}`),
-		"already wired": nil,
+		"no-settings":   nil,
+		"own-hooks":     ptr(`{"model": "opus", "hooks": {"Stop": [{"hooks": [{"type": "command", "command": "./mine.sh"}, {"type": "command", "command": "php vendor/bin/commandments judge-reminder"}]}], "PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "x # @code-commandments-managed"}]}]}}`),
+		"already-wired": nil,
 	} {
 		t.Run(name, func(t *testing.T) {
-			php, golang := t.TempDir(), t.TempDir()
+			root := t.TempDir()
+			must(t, os.MkdirAll(filepath.Join(root, ".commandments"), 0o755))
+			must(t, os.WriteFile(filepath.Join(root, ".commandments", "config.php"), []byte(withoutCodex), 0o644))
+			must(t, os.WriteFile(filepath.Join(root, "composer.json"), []byte("{}"), 0o644))
 
-			for _, root := range []string{php, golang} {
-				must(t, os.MkdirAll(filepath.Join(root, ".commandments"), 0o755))
-				must(t, os.WriteFile(filepath.Join(root, ".commandments", "config.php"), []byte(withoutCodex), 0o644))
-				must(t, os.WriteFile(filepath.Join(root, "composer.json"), []byte("{}"), 0o644))
-
-				if settings != nil {
-					must(t, os.MkdirAll(filepath.Join(root, ".claude"), 0o755))
-					must(t, os.WriteFile(filepath.Join(root, ".claude", "settings.json"), []byte(*settings), 0o644))
-				}
+			if settings != nil {
+				must(t, os.MkdirAll(filepath.Join(root, ".claude"), 0o755))
+				must(t, os.WriteFile(filepath.Join(root, ".claude", "settings.json"), []byte(*settings), 0o644))
 			}
 
-			repo, _ := filepath.Abs("../..")
-			script := `require '` + repo + `/vendor/autoload.php';
-echo \JesseGall\CodeCommandments\Hooks\HookRegistry::wire($argv[1]) ? 'wired' : 'unchanged';`
-
 			times := 1
-			if name == "already wired" {
+			if name == "already-wired" {
 				times = 2
 			}
 
-			var want string
 			var wired bool
-
 			for range times {
-				out, err := exec.Command("php", "-r", script, "--", php).CombinedOutput()
-				if err != nil {
-					t.Fatalf("php: %v\n%s", err, out)
-				}
-
-				want = string(out)
-
-				wired, err = Wire(golang)
+				var err error
+				wired, err = Wire(root)
 				must(t, err)
 			}
 
-			if (want == "wired") != wired {
+			recorded := filepath.Join("testdata", "wired", name)
+			want, _ := os.ReadFile(filepath.Join(recorded, "answer"))
+			if (string(want) == "wired") != wired {
 				t.Errorf("wired %v, the PHP tool %s", wired, want)
 			}
 
-			phpFile, _ := os.ReadFile(filepath.Join(php, ".claude", "settings.json"))
-			goFile, _ := os.ReadFile(filepath.Join(golang, ".claude", "settings.json"))
-
+			phpFile, _ := os.ReadFile(filepath.Join(recorded, "settings.json"))
+			goFile, _ := os.ReadFile(filepath.Join(root, ".claude", "settings.json"))
 			if string(goFile) != string(phpFile) {
 				t.Errorf("wrote\n%s\nthe PHP tool wrote\n%s", goFile, phpFile)
 			}

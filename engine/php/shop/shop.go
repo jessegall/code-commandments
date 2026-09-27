@@ -1,5 +1,7 @@
-// Package shop holds the Go port of the PHP analyses to the PHP engine's own answers on the backend shop fixture:
-// the fixture's stream and the oracle's answers are generated once and committed, so a parity test runs without PHP.
+// Package shop holds the PHP analyses to the answers the PHP engine gave on the backend shop fixture before it was
+// removed. Those answers are about the fixture as it read it, kept beside them in testdata/oracle/fixtures.tar.gz with
+// the backend and frontend fixtures of that day, so the live fixtures stay free to grow: the oracle's stream is that
+// frozen shop's, and Project, what the fixture's own markers are checked against, is the live fixture's.
 package shop
 
 import (
@@ -19,6 +21,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/jessegall/code-commandments/bridge/bundle"
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -43,10 +46,9 @@ func Testdata() string {
 	return filepath.Join(Repository(), "engine", "php", "testdata")
 }
 
-// inputs are what the committed files are generated from, folders and files: the fixtures, the PHP tool the oracle
-// asks (its engine, and the rules whose findings and definitions it records), the manifest that requires php-parser,
-// the bridge and the oracle. A change to any makes them stale.
-var inputs = []string{"tests/Fixtures/backend", "tests/Fixtures/frontend", "src", "composer.json", "bridge/php", "bridge/frontend/dist", "engine/php/oracle"}
+// inputs are what the committed streams are generated from: the live fixture and the bridges that read it. The
+// oracle's answers are the PHP engine's last word and are never generated again.
+var inputs = []string{"tests/Fixtures/backend", "bridge/php", "bridge/frontend/dist"}
 
 // Digest is the hash of every source the committed files are generated from.
 func Digest() (string, error) {
@@ -84,13 +86,35 @@ func DigestOf(inputs ...string) (string, error) {
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
+// Frozen is the folder the fixtures the PHP engine answered about are unpacked to, once per version of them: its
+// backend and frontend folders.
+var Frozen = sync.OnceValues(func() (string, error) {
+	archive, err := os.ReadFile(filepath.Join(Oracle(), "fixtures.tar.gz"))
+	if err != nil {
+		return "", err
+	}
+
+	return bundle.Archived("shop", archive).Folder()
+})
+
+// Oracle is where the PHP engine's answers are committed, beside the fixtures they are about.
+func Oracle() string {
+	return filepath.Join(Testdata(), "oracle")
+}
+
 var loaded = sync.OnceValues(func() (*engine.Codebase, error) {
-	stream, err := readStream("shop.jsonl.gz")
+	stream, err := readStream(filepath.Join("oracle", "shop.jsonl.gz"))
+	if err != nil {
+		return nil, err
+	}
+	frozen, err := Frozen()
 	if err != nil {
 		return nil, err
 	}
 
-	return engine.New(readFixture, stream), nil
+	return engine.New(func(path string) ([]byte, error) {
+		return os.ReadFile(filepath.Join(frozen, "backend", strings.TrimPrefix(path, Root+"/")))
+	}, stream), nil
 })
 
 var project = sync.OnceValues(func() (*engine.Codebase, error) {
@@ -104,6 +128,25 @@ var project = sync.OnceValues(func() (*engine.Codebase, error) {
 	}
 
 	return engine.New(readFixture, backend, frontend), nil
+})
+
+var oracleProject = sync.OnceValues(func() (*engine.Codebase, error) {
+	backend, err := readStream(filepath.Join("oracle", "shop.jsonl.gz"))
+	if err != nil {
+		return nil, err
+	}
+	frontend, err := readStream(filepath.Join("oracle", "shop-frontend.jsonl.gz"))
+	if err != nil {
+		return nil, err
+	}
+	frozen, err := Frozen()
+	if err != nil {
+		return nil, err
+	}
+
+	return engine.New(func(path string) ([]byte, error) {
+		return os.ReadFile(filepath.Join(frozen, "backend", strings.TrimPrefix(path, Root+"/")))
+	}, backend, frontend), nil
 })
 
 // readStream reads a committed stream of the shop.
@@ -140,7 +183,7 @@ func readFixture(path string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(Fixture(), strings.TrimPrefix(path, Root+"/")))
 }
 
-// Project is the whole shop as judge reads it: its PHP beside its frontend, so a rule reading what one side
+// Project is the whole live shop as judge reads it: its PHP beside its frontend, so a rule reading what one side
 // publishes for the other sees both.
 func Project(t testing.TB) *engine.Codebase {
 	t.Helper()
@@ -152,7 +195,18 @@ func Project(t testing.TB) *engine.Codebase {
 	return codebase
 }
 
-// Codebase is the shop, read from the committed stream once per test binary.
+// OracleProject is the whole shop the PHP engine answered about, its PHP beside its frontend.
+func OracleProject(t testing.TB) *engine.Codebase {
+	t.Helper()
+	codebase, err := oracleProject()
+	if err != nil {
+		t.Fatalf("the oracle's shop streams do not load: %v", err)
+	}
+
+	return codebase
+}
+
+// Codebase is the shop the PHP engine answered about, read from the oracle's stream once per test binary.
 func Codebase(t testing.TB) *engine.Codebase {
 	t.Helper()
 	codebase, err := loaded()
@@ -175,7 +229,7 @@ type Answer struct {
 // Answers is every answer the PHP engine gave to the question.
 func Answers(t testing.TB, question string) []Answer {
 	t.Helper()
-	handle, err := os.Open(filepath.Join(Testdata(), "answers", question+".jsonl.gz"))
+	handle, err := os.Open(filepath.Join(Oracle(), "answers", question+".jsonl.gz"))
 	if err != nil {
 		t.Fatalf("no answers to %s (run go generate ./engine/php): %v", question, err)
 	}

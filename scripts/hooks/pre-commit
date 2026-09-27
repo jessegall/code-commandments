@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Keeps every generated artifact current in the commit: each generator runs, and whatever it rewrote is staged again.
+# A generated file is a projection — the README tables, the skills, the command references, the briefing — so a
+# commit can never carry its source without it.
+#
+# Register it once (writes .git/hooks/pre-commit → this script):
+#   scripts/hooks/pre-commit --install
+#
+# Another generated artifact? Add a line to GENERATORS: the command, then the paths it writes.
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+if [ "${1:-}" = "--install" ]; then
+    hooks="$(git rev-parse --git-common-dir)/hooks"
+    mkdir -p "$hooks"
+    # The hook is shared by every worktree of the clone, so it runs whichever entry the checked-out tree has.
+    cat > "$hooks/pre-commit" <<'HOOK'
+#!/usr/bin/env bash
+top="$(git rev-parse --show-toplevel)"
+if [ -x "$top/scripts/hooks/pre-commit" ]; then
+    exec "$top/scripts/hooks/pre-commit"
+fi
+exec php "$top/scripts/hooks/PreCommit.php"
+HOOK
+    chmod +x "$hooks/pre-commit"
+    echo "✓ pre-commit hook installed (runs scripts/hooks/pre-commit)"
+    exit 0
+fi
+
+GENERATORS=(
+    "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./cli/doc/readme|README.md README.sins.md README.scribes.md README.skills.md"
+    "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./skill/render/generate|skills/commandments"
+    "scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go run ./cli/doc/refresh|README.md skills"
+    "bin/commandments sync|AGENTS.md CLAUDE.md .gitignore"
+)
+
+restaged=()
+for generator in "${GENERATORS[@]}"; do
+    command="${generator%%|*}"
+    if ! errors="$($command 2>&1 > /dev/null)"; then
+        echo "✗ $command failed" >&2
+        echo "$errors" >&2
+        exit 1
+    fi
+    for path in ${generator#*|}; do
+        if ! git diff --quiet -- "$path"; then
+            git add -- "$path"
+            restaged+=("$path")
+        fi
+    done
+done
+
+if [ ${#restaged[@]} -gt 0 ]; then
+    echo "↻ regenerated and re-staged: ${restaged[*]}"
+fi

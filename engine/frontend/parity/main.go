@@ -1,6 +1,5 @@
 // Command parity prints what the Go frontend detectors find under a path, its PHP read too for what the server
-// publishes, one `file:line [Detector]` a line, sorted: the form scripts/frontend-parity.sh compares against the
-// PHP tool's checklist.
+// publishes, one `file:line [Detector]` a line, sorted: the form a scan's findings are compared in.
 package main
 
 import (

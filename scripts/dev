@@ -86,15 +86,4 @@ run() {
         "$image" "$@"
 }
 
-# The Go tests drive the PHP tool, which needs its composer dependencies; a fresh checkout has none. The lock
-# is not committed, so a worktree takes the main checkout's: the recorded answers were made against it.
-if [ ! -f "$root/vendor/autoload.php" ]; then
-    main=$(dirname "$common")
-    if [ ! -f "$root/composer.lock" ] && [ -f "$main/composer.lock" ]; then
-        cp "$main/composer.lock" "$root/composer.lock"
-    fi
-    echo "scripts/dev: installing the PHP tool's composer dependencies into $root/vendor" >&2
-    run composer --working-dir="$root" install --quiet --no-interaction >&2
-fi
-
 run "$@"

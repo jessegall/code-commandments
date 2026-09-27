@@ -51,7 +51,7 @@ func shop(t *testing.T) *engine.Codebase {
 	return fixture.codebase
 }
 
-// golden is what the PHP engine answered for the analysis, written by testdata/golden.php.
+// golden is what the PHP engine answered for the analysis, recorded before it was removed.
 func golden(t *testing.T, analysis string, into any) {
 	t.Helper()
 	raw, err := os.ReadFile(filepath.Join("testdata", "golden", analysis+".json"))

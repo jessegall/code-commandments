@@ -1,10 +1,12 @@
-// Command record runs the PHP tool over every parity case and writes what it printed as the case's golden.
+// Command record runs the tool built from this checkout over every parity case and writes what it printed as the
+// case's golden. The goldens recorded before the switch are the PHP tool's, which the tool matched.
 // Run it from the repository root, in the dev container: `scripts/dev go run ./cli/parity/record [case-name...]`.
 package main
 
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 
@@ -24,6 +26,18 @@ func record(only []string) error {
 		return err
 	}
 
+	built, err := os.MkdirTemp("", "parity-tool-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(built)
+	binary := filepath.Join(built, "commandments")
+	build := exec.Command("go", "build", "-o", binary, "./cmd/commandments")
+	build.Dir = repo
+	if out, err := build.CombinedOutput(); err != nil {
+		return fmt.Errorf("build: %w\n%s", err, out)
+	}
+
 	cases, err := parity.Cases(filepath.Join(repo, parity.CasesDir))
 	if err != nil {
 		return err
@@ -39,7 +53,7 @@ func record(only []string) error {
 			return err
 		}
 
-		result, err := parity.Run(c, repo, scratch, "php", filepath.Join(repo, "bin", "commandments-php"))
+		result, err := parity.Run(c, repo, scratch, binary)
 		os.RemoveAll(scratch)
 
 		if err != nil {

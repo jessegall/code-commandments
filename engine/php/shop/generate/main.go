@@ -1,6 +1,6 @@
-// Command generate writes engine/php/testdata: the shop's stream through the bridge, the PHP engine's answers
-// through the oracle, both gzipped, what every backend rule states about itself, what the PHP tool reads in comment text, what its repent rewrites in each fixture, and the digest of the sources
-// they came from.
+// Command generate writes the shop's streams in engine/php/testdata, gzipped, through the PHP and frontend bridges:
+// the live fixture's, with the digest of the sources they came from, and the frozen fixture's the PHP engine's
+// answers in testdata/oracle are about. The answers themselves are never written again.
 package main
 
 import (
@@ -22,68 +22,14 @@ func main() {
 }
 
 func generate() error {
-	testdata := shop.Testdata()
-	answers := filepath.Join(testdata, "answers")
-	if err := os.RemoveAll(answers); err != nil {
+	if err := streams(shop.Fixture(), shop.Testdata()); err != nil {
 		return err
 	}
-	if err := os.MkdirAll(answers, 0o755); err != nil {
-		return err
-	}
-	stream, err := run("php", filepath.Join(shop.Repository(), "bridge", "php", "bridge.php"), "--rename="+shop.Fixture()+"="+shop.Root, shop.Fixture())
+	frozen, err := shop.Frozen()
 	if err != nil {
 		return err
 	}
-	if err := zipped(filepath.Join(testdata, "shop.jsonl.gz"), stream); err != nil {
-		return err
-	}
-	frontend, err := run("node", filepath.Join(shop.Repository(), "bridge", "frontend", "dist", "bridge.mjs"), "--rename="+shop.Fixture()+"="+shop.Root, shop.Fixture())
-	if err != nil {
-		return err
-	}
-	if err := zipped(filepath.Join(testdata, "shop-frontend.jsonl.gz"), frontend); err != nil {
-		return err
-	}
-	written, err := os.MkdirTemp("", "oracle")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(written)
-	if _, err := run("php", filepath.Join(shop.Repository(), "engine", "php", "oracle", "oracle.php"), shop.Fixture(), written); err != nil {
-		return err
-	}
-	questions, err := filepath.Glob(filepath.Join(written, "*.jsonl"))
-	if err != nil {
-		return err
-	}
-	for _, question := range questions {
-		lines, err := os.ReadFile(question)
-		if err != nil {
-			return err
-		}
-		if err := zipped(filepath.Join(answers, filepath.Base(question)+".gz"), lines); err != nil {
-			return err
-		}
-	}
-	definitions, err := run("php", filepath.Join(shop.Repository(), "engine", "php", "oracle", "definitions.php"))
-	if err != nil {
-		return err
-	}
-	if err := zipped(filepath.Join(testdata, "definitions.json.gz"), definitions); err != nil {
-		return err
-	}
-	prose, err := run("php", filepath.Join(shop.Repository(), "engine", "php", "oracle", "prose.php"), shop.Fixture())
-	if err != nil {
-		return err
-	}
-	if err := zipped(filepath.Join(testdata, "prose.json.gz"), prose); err != nil {
-		return err
-	}
-	repent, err := run("php", filepath.Join(shop.Repository(), "engine", "php", "oracle", "repent.php"), shop.Fixture(), filepath.Join(shop.Repository(), "tests", "Fixtures", "frontend"))
-	if err != nil {
-		return err
-	}
-	if err := zipped(filepath.Join(testdata, "repent.jsonl.gz"), repent); err != nil {
+	if err := streams(filepath.Join(frozen, "backend"), shop.Oracle()); err != nil {
 		return err
 	}
 	digest, err := shop.Digest()
@@ -91,7 +37,24 @@ func generate() error {
 		return err
 	}
 
-	return os.WriteFile(filepath.Join(testdata, "shop.digest"), []byte(digest+"\n"), 0o644)
+	return os.WriteFile(filepath.Join(shop.Testdata(), "shop.digest"), []byte(digest+"\n"), 0o644)
+}
+
+// streams writes the fixture's backend and frontend streams into the folder, its paths renamed under the shop's root.
+func streams(fixture, folder string) error {
+	backend, err := run("php", filepath.Join(shop.Repository(), "bridge", "php", "bridge.php"), "--rename="+fixture+"="+shop.Root, fixture)
+	if err != nil {
+		return err
+	}
+	if err := zipped(filepath.Join(folder, "shop.jsonl.gz"), backend); err != nil {
+		return err
+	}
+	frontend, err := run("node", filepath.Join(shop.Repository(), "bridge", "frontend", "dist", "bridge.mjs"), "--rename="+fixture+"="+shop.Root, fixture)
+	if err != nil {
+		return err
+	}
+
+	return zipped(filepath.Join(folder, "shop-frontend.jsonl.gz"), frontend)
 }
 
 func run(name string, arguments ...string) ([]byte, error) {

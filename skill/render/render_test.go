@@ -1,36 +1,24 @@
 package render_test
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
 
+	"github.com/jessegall/code-commandments/fixture"
 	_ "github.com/jessegall/code-commandments/registry"
 	"github.com/jessegall/code-commandments/skill"
 	"github.com/jessegall/code-commandments/skill/render"
 )
 
-// golden is the worked examples the PHP fixtures carve, written by testdata/examples.php.
-func golden(t *testing.T) render.Examples {
-	t.Helper()
-	raw, err := os.ReadFile(filepath.Join("testdata", "examples.json"))
+// TestEverySkillRendersAsItIsPublished holds every skill's documents, rendered from the examples the fixtures carve,
+// to the files published under skills/commandments, byte for byte.
+func TestEverySkillRendersAsItIsPublished(t *testing.T) {
+	examples, err := fixture.Curriculum(filepath.Join("..", "..", "tests", "Fixtures"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var examples render.Examples
-	if err := json.Unmarshal(raw, &examples); err != nil {
-		t.Fatal(err)
-	}
-
-	return examples
-}
-
-// TestEverySkillRendersAsItIsPublished holds every skill's documents, rendered from the examples the PHP fixtures
-// carve, to the files the PHP generator wrote under skills/commandments, byte for byte.
-func TestEverySkillRendersAsItIsPublished(t *testing.T) {
-	examples := golden(t)
 	for _, teaching := range skill.All() {
 		slug := teaching.Definition().Slug
 		folder := filepath.Join("..", "..", "skills", "commandments", slug)

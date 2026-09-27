@@ -3,6 +3,7 @@
 *
 !.gitignore
 !config.php
+!config.json
 !custom/
 !custom/**
 

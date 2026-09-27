@@ -11,5 +11,5 @@ import (
 // TestTheGoDetectorsFindWhatThePHPOnesFind runs both engines' Python detectors over the project $COMMANDMENTS_PARITY
 // names and fails for every finding only one of them makes.
 func TestTheGoDetectorsFindWhatThePHPOnesFind(t *testing.T) {
-	paritytest.Compare(t, []catalog.Engine{catalog.Python}, "../../engine/python/testdata/findings.php", func(t testing.TB, _ ...string) []string { return bridge.TestMypy(t) })
+	paritytest.Compare(t, []catalog.Engine{catalog.Python}, func(t testing.TB, _ ...string) []string { return bridge.TestMypy(t) })
 }

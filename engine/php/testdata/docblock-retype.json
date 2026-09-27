@@ -1,0 +1,16 @@
+[
+    "/** @var array<int, NodeData> $nodes */",
+    "/**\n * @param array<int, NodeData> $nodes the nodes\n * @param ?\\Spatie\\LaravelData\\DataCollection $others\n */",
+    "/**\n * @param ?array ...$others\n */",
+    "/** @var DataCollection */",
+    "/** @var array<string, DataCollection<string, X>> $rows */",
+    "/**\r\n * @var array<int, Row>\r\n */",
+    "/** @var MyDataCollection $rows */",
+    "yes",
+    "yes",
+    "no",
+    "no",
+    "no",
+    "yes",
+    "no"
+]

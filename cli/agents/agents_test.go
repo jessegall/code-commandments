@@ -3,7 +3,6 @@ package agents
 import (
 	"errors"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -12,52 +11,30 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 )
 
-// injectedByPHP runs the PHP tool's own Instructions over the file and answers what it left there.
-func injectedByPHP(t *testing.T, path, root, name, body string) string {
-	t.Helper()
-
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Fatal("no php to inject with the PHP tool")
-	}
-
-	repo, _ := filepath.Abs("../..")
-	script := `require '` + repo + `/vendor/autoload.php';
-(new \JesseGall\CodeCommandments\Agents\Instructions($argv[1], $argv[2]))->inject($argv[3], $argv[4]);`
-
-	if out, err := exec.Command("php", "-r", script, "--", path, root, name, body).CombinedOutput(); err != nil {
-		t.Fatalf("php: %v\n%s", err, out)
-	}
-
-	contents, _ := os.ReadFile(path)
-
-	return string(contents)
-}
-
+// TestInstructionsAreInjectedAsThePHPToolInjectsThem holds the injection to what the PHP tool's own Instructions left
+// for each document, recorded as testdata/injected/<case>.md.
 func TestInstructionsAreInjectedAsThePHPToolInjectsThem(t *testing.T) {
 	block := "<!-- BEGIN: briefing (auto-generated, run `composer update`) -->\nold\n<!-- END: briefing -->"
 
 	for name, document := range map[string]*string{
-		"no file":                 nil,
-		"a file with no block":    ptr("# Mine\n\nMy own words.\n"),
-		"a stale block":           ptr("# Mine\n\n" + block + "\n\nAfter.\n"),
-		"windows line endings":    ptr("# Mine\r\n\r\n" + strings.ReplaceAll(block, "\n", "\r\n") + "\r\n"),
-		"a byte-order mark":       ptr(bom + "# Mine\n\n" + block + "\n"),
-		"no trailing newline":     ptr("# Mine"),
-		"a block quoted in prose": ptr("# Mine\n\nWrite `<!-- END: briefing -->` to close it.\n"),
+		"no-file":              nil,
+		"no-block":             ptr("# Mine\n\nMy own words.\n"),
+		"stale-block":          ptr("# Mine\n\n" + block + "\n\nAfter.\n"),
+		"windows-line-endings": ptr("# Mine\r\n\r\n" + strings.ReplaceAll(block, "\n", "\r\n") + "\r\n"),
+		"byte-order-mark":      ptr(bom + "# Mine\n\n" + block + "\n"),
+		"no-trailing-newline":  ptr("# Mine"),
+		"quoted-block":         ptr("# Mine\n\nWrite `<!-- END: briefing -->` to close it.\n"),
 	} {
 		t.Run(name, func(t *testing.T) {
-			php, golang := t.TempDir(), t.TempDir()
-
-			for _, dir := range []string{php, golang} {
-				if document != nil {
-					must(t, os.WriteFile(filepath.Join(dir, "AGENTS.md"), []byte(*document), 0o644))
-				}
+			golang := t.TempDir()
+			if document != nil {
+				must(t, os.WriteFile(filepath.Join(golang, "AGENTS.md"), []byte(*document), 0o644))
 			}
 
-			want := injectedByPHP(t, filepath.Join(php, "AGENTS.md"), php, "briefing", "\nThe canon.\n\n")
+			want, _ := os.ReadFile(filepath.Join("testdata", "injected", name+".md"))
 			must(t, InstructionsAt(filepath.Join(golang, "AGENTS.md"), golang).Inject("briefing", "\nThe canon.\n\n"))
 
-			if got, _ := os.ReadFile(filepath.Join(golang, "AGENTS.md")); string(got) != want {
+			if got, _ := os.ReadFile(filepath.Join(golang, "AGENTS.md")); string(got) != string(want) {
 				t.Errorf("injected\n%q\nthe PHP tool injected\n%q", got, want)
 			}
 		})

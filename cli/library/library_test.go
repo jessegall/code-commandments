@@ -3,9 +3,9 @@ package library
 import (
 	"io/fs"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -14,83 +14,55 @@ import (
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
-// publishedByPHP runs the PHP tool's own Library over a fresh project that does not write the languages,
-// and answers the ids it published.
-func publishedByPHP(t *testing.T, project string, disabled []source.Language) []string {
-	t.Helper()
-
-	if _, err := exec.LookPath("php"); err != nil {
-		t.Fatal("no php to publish the PHP tool's library with")
-	}
-
-	repo, err := filepath.Abs("../..")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var cases []string
-	for _, language := range disabled {
-		cases = append(cases, `\JesseGall\CodeCommandments\Language::from('`+string(language)+`')`)
-	}
-
-	script := `require '` + repo + `/vendor/autoload.php';
-$library = new \JesseGall\CodeCommandments\Skills\Library(
-    \JesseGall\CodeCommandments\Workspace::at('` + project + `'),
-    new \JesseGall\CodeCommandments\Languages(` + strings.Join(cases, ", ") + `),
-);
-echo implode("\n", $library->publish('` + repo + `'));`
-
-	out, err := exec.Command("php", "-r", script).CombinedOutput()
-	if err != nil {
-		t.Fatalf("php: %v\n%s", err, out)
-	}
-
-	return strings.Split(string(out), "\n")
-}
-
+// TestTheLibraryPublishesWhatThePHPToolPublishes holds the library to what the PHP tool published for each set of
+// languages a project writes, recorded under testdata/published: the ids it named and the files it wrote. What a
+// skill says is the tool's own and is not pinned here.
 func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 	for name, disabled := range map[string][]source.Language{
-		"every language":          nil,
-		"every language but C#":   {source.CSharp},
-		"no Python either":        {source.CSharp, source.Python},
-		"the backend only":        {source.CSharp, source.Python, source.Vue, source.TypeScript},
-		"the frontend and Python": {source.CSharp, source.PHP},
+		"every-language":      nil,
+		"no-csharp":           {source.CSharp},
+		"no-python":           {source.CSharp, source.Python},
+		"backend-only":        {source.CSharp, source.Python, source.Vue, source.TypeScript},
+		"frontend-and-python": {source.CSharp, source.PHP},
 	} {
 		t.Run(name, func(t *testing.T) {
-			php, golang := t.TempDir(), t.TempDir()
-
-			for _, project := range []string{php, golang} {
-				if err := os.WriteFile(filepath.Join(project, "composer.json"), []byte("{}"), 0o644); err != nil {
-					t.Fatal(err)
-				}
+			project := t.TempDir()
+			if err := os.WriteFile(filepath.Join(project, "composer.json"), []byte("{}"), 0o644); err != nil {
+				t.Fatal(err)
 			}
 
-			wantIDs := publishedByPHP(t, php, disabled)
-
-			ids, err := At(golang, config.Config{DisabledLanguages: disabled}).Publish()
+			ids, err := At(project, config.Config{DisabledLanguages: disabled}).Publish()
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if !reflect.DeepEqual(ids, wantIDs) {
-				t.Errorf("published\n%v\nthe PHP tool published\n%v", ids, wantIDs)
+			if want := recorded(t, name+".ids"); !reflect.DeepEqual(ids, want) {
+				t.Errorf("published\n%v\nthe PHP tool published\n%v", ids, want)
 			}
 
-			want, got := tree(t, php), tree(t, golang)
-
-			for path, contents := range want {
-				if got[path] != contents {
-					t.Errorf("%s differs from the PHP tool's", path)
-				}
+			var paths []string
+			for path := range tree(t, project) {
+				paths = append(paths, path)
 			}
+			slices.Sort(paths)
 
-			for path := range got {
-				if _, published := want[path]; !published {
-					t.Errorf("%s is not one the PHP tool publishes", path)
-				}
+			if want := recorded(t, name+".paths"); !reflect.DeepEqual(paths, want) {
+				t.Errorf("wrote\n%v\nthe PHP tool wrote\n%v", paths, want)
 			}
 		})
 	}
+}
+
+// recorded is a list the PHP tool left in testdata/published, a line an entry.
+func recorded(t *testing.T, name string) []string {
+	t.Helper()
+
+	contents, err := os.ReadFile(filepath.Join("testdata", "published", name))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return strings.Split(strings.TrimSuffix(string(contents), "\n"), "\n")
 }
 
 func TestASkillTheLastSyncPublishedAndThisOneDoesNotIsTakenAway(t *testing.T) {

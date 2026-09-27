@@ -11,7 +11,8 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// Every expression php-parser's standard printer writes, against the Go port on the same parsed items.
+// Every expression php-parser's standard printer writes, as the bridge carries it, against the Go port on the same
+// parsed items.
 func TestConstantExpressionsPrintAsPhpParserPrintsThem(t *testing.T) {
 	source := `<?php
 namespace App;
@@ -39,7 +40,7 @@ $ast = (new PhpParser\NodeTraverser(new PhpParser\NodeVisitor\NameResolver()))->
 $items = (new PhpParser\NodeFinder())->findFirstInstanceOf($ast, PhpParser\Node\Expr\Array_::class)->items;
 $printer = new PhpParser\PrettyPrinter\Standard();
 echo json_encode(array_map(fn ($item) => $printer->prettyPrintExpr($item->value), $items));`
-	out, err := exec.Command("php", "-r", probe, filepath.Join(repository(t), "vendor", "autoload.php"), path).Output()
+	out, err := exec.Command("php", "-r", probe, filepath.Join(repository(t), "bridge", "php", "parser", "autoload.php"), path).Output()
 	if err != nil {
 		t.Fatal(err)
 	}
