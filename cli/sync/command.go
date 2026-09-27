@@ -11,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/agents"
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/library"
@@ -46,7 +47,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	root := ConsumerRoot(cwd)
 	if root == "" {
-		return help.Usage(console.Err, c, "no composer.json at or above "+cwd+" — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in."), nil
+		return help.Usage(console.Err, c, "no composer.json or git repository at or above "+cwd+" — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in."), nil
 	}
 
 	release := hold(workspace.At(root, "").Shared(".sync.lock"))
@@ -98,6 +99,9 @@ func Sync(root string, console cli.Console) error {
 	}
 
 	removeLegacyArtifacts(root)
+	removeHostRoslynBuilds(console)
+	console.Warn(custom.Load(root).ClassWarnings()...)
+	pullRoslyn(root, project, console)
 
 	if converted := Migrate(workspace.At(root, "")); len(converted) > 0 {
 		console.Say("↻ session state upgraded — carried over " + strings.Join(converted, ", ") + ".")

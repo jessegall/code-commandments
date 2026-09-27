@@ -257,3 +257,19 @@ final class Till
 		t.Fatalf("the call's target is %+v", call.Target)
 	}
 }
+
+// TestAProbeForAClassTheParserLacksIsNoFailure holds the bridge's php-parser loader to answering a class it does not
+// have as absent, as composer's does: requiring a file that is not there is fatal, and a scanned project asking after
+// a class php-parser dropped (`Stmt\Throw_`) cut the bridge's stream short.
+func TestAProbeForAClassTheParserLacksIsNoFailure(t *testing.T) {
+	needsPHP(t)
+	command, err := Here().Command()
+	if err != nil {
+		t.Fatal(err)
+	}
+	loader := filepath.Join(filepath.Dir(command[1]), "parser", "autoload.php")
+	out, err := exec.Command("php", "-r", `require $argv[1]; var_dump(class_exists('PhpParser\Node\Stmt\Throw_'));`, loader).CombinedOutput()
+	if err != nil || strings.TrimSpace(string(out)) != "bool(false)" {
+		t.Errorf("the probe answered %q (%v)", out, err)
+	}
+}

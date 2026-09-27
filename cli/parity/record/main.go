@@ -39,7 +39,7 @@ func record(only []string) error {
 			return err
 		}
 
-		result, err := parity.Run(c, repo, scratch, "php", filepath.Join(repo, "bin", "commandments"))
+		result, err := parity.Run(c, repo, scratch, "php", filepath.Join(repo, "bin", "commandments-php"))
 		os.RemoveAll(scratch)
 
 		if err != nil {

@@ -2,7 +2,7 @@ exit: 2
 --- stdout
 
 --- stderr
-✗ no composer.json at or above <project> — there is no project here to wire.
+✗ no composer.json or git repository at or above <project> — there is no project here to wire.
 
 commandments install — Wire a consumer project up once — the composer sync hook, every agent it supports (skills, AGENTS.md, and under Claude Code the hook suite) and .gitignore — then sync.
 

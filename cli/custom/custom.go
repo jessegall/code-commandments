@@ -137,6 +137,13 @@ func (p Project) Warnings(project config.Config) []string {
 		warnings = append(warnings, "⚠ .commandments/custom/"+reason)
 	}
 
+	return append(warnings, p.ClassWarnings()...)
+}
+
+// ClassWarnings name each PHP class the PHP tool's `make` left in the custom folder, which the binary skips.
+func (p Project) ClassWarnings() []string {
+	var warnings []string
+
 	for _, class := range p.Classes {
 		warnings = append(warnings, "⚠ "+class+" is a PHP class the binary cannot run, and was skipped — "+
 			"write it as a rule with `commandments make`, then delete the class.")

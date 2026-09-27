@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Builds bin/commandments-go for this machine — the binary the checkout's bin/commandments runs — in the capped dev
+# container, since Go never runs on the host here. Composer runs it before every sync; run it by hand after a pull.
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd -P)"
+os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+case "$(uname -m)" in
+    x86_64|amd64) arch=amd64 ;;
+    arm64|aarch64) arch=arm64 ;;
+    *) echo "scripts/build: no build for $(uname -m)" >&2; exit 1 ;;
+esac
+
+cd "$root"
+exec scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 \
+    go build -trimpath -o bin/commandments-go ./cmd/commandments

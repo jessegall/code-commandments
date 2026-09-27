@@ -3,71 +3,153 @@
 
 declare(strict_types=1);
 
-use JesseGall\CodeCommandments\Cli\Kernel;
+/*
+ | The tool is one Go binary per platform; this script only finds it and hands it the run — its arguments, its
+ | streams and its exit code. $COMMANDMENTS_GO_BINARY names one to run. In the package's own checkout it is the one
+ | the capped dev container built beside this script. Installed with composer, it is the release binary of the
+ | installed version, fetched once into the cache folder and checked against the release's SHA256SUMS before it
+ | ever runs; $COMMANDMENTS_RELEASES names another place to fetch releases from.
+ */
 
-$toBytes = static function (string $limit): int {
-    $limit = trim($limit);
-    $value = (int) $limit;
+const RELEASES = 'https://github.com/jessegall/code-commandments/releases/download';
 
-    return match (strtolower(substr($limit, -1))) {
-        'g' => $value * 1024 * 1024 * 1024,
-        'm' => $value * 1024 * 1024,
-        'k' => $value * 1024,
-        default => $value,
-    };
-};
+const PACKAGE = 'jessegall/code-commandments';
 
-// COMMANDMENTS_ENGINE=go hands the whole run to the Go binary, its streams and exit code the run's own:
-// $COMMANDMENTS_GO_BINARY when set, else bin/commandments-go beside this script, else `go run` over the
-// checkout's cmd/commandments. The package's own checkout (the one with scripts/dev) never runs Go on the
-// host: without a built binary it stops and names the capped build that makes one.
-if (getenv('COMMANDMENTS_ENGINE') === 'go') {
-    $binary = getenv('COMMANDMENTS_GO_BINARY') ?: __DIR__ . '/commandments-go';
-
-    if (! is_file($binary) && is_file(dirname(__DIR__) . '/scripts/dev')) {
-        $os = strtolower(PHP_OS_FAMILY);
-        $arch = ['x86_64' => 'amd64', 'aarch64' => 'arm64'][php_uname('m')] ?? php_uname('m');
-        fwrite(STDERR, "No Go binary at {$binary}, and Go never runs on the host here. Build it in the capped dev container:\n"
-            . "  scripts/dev env GOOS={$os} GOARCH={$arch} CGO_ENABLED=0 go build -o bin/commandments-go ./cmd/commandments\n");
-        exit(1);
-    }
-
-    $command = is_file($binary)
-        ? [$binary, ...array_slice($argv, 1)]
-        : ['go', 'run', dirname(__DIR__) . '/cmd/commandments', ...array_slice($argv, 1)];
-    $process = proc_open($command, [STDIN, STDOUT, STDERR], $pipes);
-
-    exit($process === false ? 1 : proc_close($process));
+/**
+ * Stops the run, saying why on standard error.
+ */
+function refuse(string $why): never
+{
+    fwrite(STDERR, "commandments: {$why}\n");
+    exit(1);
 }
 
-(static function (array $argv) use ($toBytes): void {
-    // Parsing a whole codebase into ASTs (and bucketing its nodes) is memory-hungry;
-    // lift the default 128M ceiling so a large source tree doesn't abort mid-scan.
-    // Default 2G; override with `--memory=4G` (or `--memory=-1` for no limit). An
-    // operator's already-higher limit (or an unlimited -1) is respected.
-    $requested = '2G';
-    foreach ($argv as $arg) {
-        if (str_starts_with($arg, '--memory=')) {
-            $requested = trim(substr($arg, 9)) ?: $requested;
+/**
+ * The platform's release name: darwin-arm64, linux-amd64, windows-amd64.exe.
+ */
+function platform(): string
+{
+    $os = ['Darwin' => 'darwin', 'Linux' => 'linux', 'Windows' => 'windows'][PHP_OS_FAMILY] ?? null;
+    $arch = ['x86_64' => 'amd64', 'amd64' => 'amd64', 'AMD64' => 'amd64', 'arm64' => 'arm64', 'aarch64' => 'arm64', 'ARM64' => 'arm64'][php_uname('m')] ?? null;
+
+    if ($os === null || $arch === null) {
+        refuse('no release is built for ' . PHP_OS_FAMILY . ' on ' . php_uname('m') . '; build one with scripts/release/build, and name it in COMMANDMENTS_GO_BINARY');
+    }
+
+    return "{$os}-{$arch}" . ($os === 'windows' ? '.exe' : '');
+}
+
+/**
+ * The version composer installed this package at.
+ */
+function installedVersion(): string
+{
+    $autoload = $GLOBALS['_composer_autoload_path'] ?? dirname(__DIR__, 3) . '/autoload.php';
+
+    if (is_file($autoload)) {
+        require_once $autoload;
+    }
+
+    if (! class_exists(\Composer\InstalledVersions::class) || ! \Composer\InstalledVersions::isInstalled(PACKAGE)) {
+        refuse('cannot tell which version of ' . PACKAGE . ' composer installed; name a binary in COMMANDMENTS_GO_BINARY');
+    }
+
+    $version = (string) \Composer\InstalledVersions::getPrettyVersion(PACKAGE);
+
+    if (! preg_match('/^v?\d+\.\d+\.\d+/', $version)) {
+        refuse("{$version} is no release, so there is no binary to fetch for it; require a tagged version, or name a binary in COMMANDMENTS_GO_BINARY");
+    }
+
+    return $version;
+}
+
+/**
+ * The cache folder the binaries are kept in.
+ */
+function cacheFolder(): string
+{
+    $cache = getenv('XDG_CACHE_HOME') ?: (PHP_OS_FAMILY === 'Windows' ? getenv('LOCALAPPDATA') : (getenv('HOME') . '/.cache'));
+
+    return rtrim((string) $cache, '/\\') . '/code-commandments/bin';
+}
+
+/**
+ * The body at the URL, or the run stopped naming it.
+ */
+function fetch(string $url): string
+{
+    $body = @file_get_contents($url, false, stream_context_create(['http' => ['follow_location' => 1, 'timeout' => 60]]));
+
+    if ($body === false) {
+        refuse("could not fetch {$url}");
+    }
+
+    return $body;
+}
+
+/**
+ * The release binary of the version, fetched into the cache on its first run and checked against the release's
+ * SHA256SUMS; a binary whose sum does not match is never written.
+ */
+function released(string $version): string
+{
+    $name = 'commandments-' . platform();
+    $binary = cacheFolder() . "/{$version}/{$name}";
+
+    if (is_file($binary)) {
+        return $binary;
+    }
+
+    $base = rtrim(getenv('COMMANDMENTS_RELEASES') ?: RELEASES, '/') . '/' . rawurlencode($version);
+    $sums = [];
+
+    foreach (explode("\n", fetch("{$base}/SHA256SUMS")) as $line) {
+        if (preg_match('/^([0-9a-f]{64})\s+\*?(\S+)$/', trim($line), $sum) === 1) {
+            $sums[$sum[2]] = $sum[1];
         }
     }
 
-    $current = trim((string) ini_get('memory_limit'));
-    if ($requested === '-1') {
-        ini_set('memory_limit', '-1');
-    } elseif ($current !== '-1' && $toBytes($current) < $toBytes($requested)) {
-        ini_set('memory_limit', $requested);
+    if (! isset($sums[$name])) {
+        refuse("the {$version} release lists no {$name}");
     }
 
-    foreach ([
-        __DIR__ . '/../vendor/autoload.php',   // run from the package
-        __DIR__ . '/../../../autoload.php',     // run as vendor/bin in a consumer
-    ] as $autoload) {
-        if (is_file($autoload)) {
-            require $autoload;
-            break;
+    $content = fetch("{$base}/{$name}");
+
+    if (! hash_equals($sums[$name], hash('sha256', $content))) {
+        refuse("the {$name} fetched for {$version} does not match its SHA256SUMS, so it is not run");
+    }
+
+    @mkdir(dirname($binary), 0755, true);
+    $draft = $binary . '.' . getmypid();
+    file_put_contents($draft, $content);
+    chmod($draft, 0755);
+    rename($draft, $binary);
+
+    return $binary;
+}
+
+/**
+ * The binary this run hands itself to.
+ */
+function binary(): string
+{
+    if ($named = getenv('COMMANDMENTS_GO_BINARY')) {
+        return $named;
+    }
+
+    if (is_file(dirname(__DIR__) . '/scripts/dev')) {
+        $built = __DIR__ . '/commandments-go';
+
+        if (! is_file($built)) {
+            refuse("no binary at {$built}, and Go never runs on the host here. Build it in the capped dev container: scripts/build");
         }
+
+        return $built;
     }
 
-    exit(new Kernel()->run($argv));
-})($argv);
+    return released(installedVersion());
+}
+
+$process = proc_open([binary(), ...array_slice($argv, 1)], [STDIN, STDOUT, STDERR], $pipes);
+
+exit($process === false ? 1 : proc_close($process));

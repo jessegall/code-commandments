@@ -37,11 +37,25 @@ func RoslynMissing() string {
 	return fmt.Sprintf("the C# bridge image %s is not available (Docker is not running, or the image is not pulled), so C# is not judged; it is pulled, never built on this machine: docker pull %s", RoslynImage(), RoslynImage())
 }
 
+// RoslynInstalled says whether docker holds the C# bridge's image.
+func RoslynInstalled() bool {
+	return exec.Command("docker", "image", "inspect", RoslynImage()).Run() == nil
+}
+
+// PullRoslyn pulls the C# bridge's image from the registry it is published to; it is never built here.
+func PullRoslyn() error {
+	if out, err := exec.Command("docker", "pull", "--quiet", RoslynImage()).CombinedOutput(); err != nil {
+		return fmt.Errorf("docker pull %s: %w: %s", RoslynImage(), err, strings.TrimSpace(string(out)))
+	}
+
+	return nil
+}
+
 // Roslyn is the command that runs the C# bridge once as the generic tree over the roots, in a memory-capped
 // container of its image with the roots mounted read-only at their own paths. Without the image it fails, naming
 // the image to pull: the bridge is never built on this machine.
 func Roslyn(roots ...string) ([]string, error) {
-	if exec.Command("docker", "image", "inspect", RoslynImage()).Run() != nil {
+	if !RoslynInstalled() {
 		return nil, errors.New(RoslynMissing())
 	}
 	script, err := roslynScript()

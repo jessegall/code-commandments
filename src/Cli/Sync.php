@@ -88,7 +88,7 @@ final class Sync implements Command
         $consumer = ConsumerRoot::from(getcwd() ?: '.');
 
         if ($consumer === null) {
-            return HelpScreen::usage($this, 'no composer.json at or above ' . getcwd() . ' — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in.');
+            return HelpScreen::usage($this, 'no composer.json or git repository at or above ' . getcwd() . ' — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in.');
         }
 
         $lock = $this->lock($consumer);

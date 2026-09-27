@@ -1,0 +1,127 @@
+package main
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"testing"
+)
+
+// fakeBinary stands in for a release binary: it says it ran, and with what.
+const fakeBinary = "#!/bin/sh\necho \"ran $*\"\n"
+
+// installed lays out a project that composer installed the package into at the version: the shim at its place under
+// vendor/, composer's own InstalledVersions and ClassLoader, and an installed.php naming the version.
+func installed(t *testing.T, version string) (shim string) {
+	t.Helper()
+	if _, err := exec.LookPath("php"); err != nil {
+		t.Skip("php is not on PATH")
+	}
+	project := t.TempDir()
+	vendor := filepath.Join(project, "vendor")
+	copyFile(t, filepath.Join("..", "..", "bin", "commandments"), filepath.Join(vendor, "jessegall", "code-commandments", "bin", "commandments"))
+	for _, file := range []string{"InstalledVersions.php", "ClassLoader.php"} {
+		copyFile(t, filepath.Join("..", "..", "vendor", "composer", file), filepath.Join(vendor, "composer", file))
+	}
+	write(t, filepath.Join(vendor, "composer", "installed.php"), `<?php return ['root' => ['name' => 'acme/shop', 'pretty_version' => 'dev-main', 'version' => 'dev-main', 'reference' => null, 'type' => 'project', 'install_path' => __DIR__ . '/../../', 'aliases' => [], 'dev' => true], 'versions' => ['jessegall/code-commandments' => ['pretty_version' => '`+version+`', 'version' => '`+strings.TrimPrefix(version, "v")+`.0', 'reference' => null, 'type' => 'library', 'install_path' => __DIR__ . '/../jessegall/code-commandments', 'aliases' => [], 'dev_requirement' => false]]];`)
+	write(t, filepath.Join(vendor, "autoload.php"), "<?php\nrequire __DIR__ . '/composer/ClassLoader.php';\nrequire __DIR__ . '/composer/InstalledVersions.php';\n")
+
+	return filepath.Join(vendor, "jessegall", "code-commandments", "bin", "commandments")
+}
+
+// release serves the version's release: the binary for this platform, and SHA256SUMS listing sum for it.
+func release(t *testing.T, version, binary, sum string) *httptest.Server {
+	t.Helper()
+	name := "commandments-" + runtime.GOOS + "-" + runtime.GOARCH
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/" + version + "/SHA256SUMS":
+			w.Write([]byte(sum + "  " + name + "\n"))
+		case "/" + version + "/" + name:
+			w.Write([]byte(binary))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	return server
+}
+
+func sumOf(content string) string {
+	sum := sha256.Sum256([]byte(content))
+
+	return hex.EncodeToString(sum[:])
+}
+
+// shimRun runs the shim with the arguments, fetching releases from base into the cache.
+func shimRun(t *testing.T, shim, base, cache string, args ...string) (string, error) {
+	t.Helper()
+	command := exec.Command("php", append([]string{shim}, args...)...)
+	command.Env = append(os.Environ(), "COMMANDMENTS_RELEASES="+base, "XDG_CACHE_HOME="+cache, "COMMANDMENTS_GO_BINARY=")
+	out, err := command.CombinedOutput()
+
+	return string(out), err
+}
+
+// TestTheShimFetchesTheInstalledReleaseChecksItAndRunsIt holds the composer install's one job: the release binary of
+// the installed version for this platform, fetched once, checked against SHA256SUMS, then run with the arguments —
+// and run again from the cache with the release out of reach.
+func TestTheShimFetchesTheInstalledReleaseChecksItAndRunsIt(t *testing.T) {
+	shim := installed(t, "v9.9.9")
+	server := release(t, "v9.9.9", fakeBinary, sumOf(fakeBinary))
+	cache := t.TempDir()
+	if out, err := shimRun(t, shim, server.URL, cache, "judge", "src"); err != nil || strings.TrimSpace(out) != "ran judge src" {
+		t.Fatalf("the shim said %q (%v)", out, err)
+	}
+	server.Close()
+	if out, err := shimRun(t, shim, server.URL, cache, "info", "array-bag"); err != nil || strings.TrimSpace(out) != "ran info array-bag" {
+		t.Errorf("the cached binary did not run: %q (%v)", out, err)
+	}
+}
+
+func TestTheShimRefusesABinaryWhoseSumDiffers(t *testing.T) {
+	shim := installed(t, "v9.9.9")
+	server := release(t, "v9.9.9", fakeBinary, sumOf("another binary"))
+	cache := t.TempDir()
+	out, err := shimRun(t, shim, server.URL, cache, "judge")
+	if err == nil || !strings.Contains(out, "does not match its SHA256SUMS") {
+		t.Errorf("the shim said %q (%v)", out, err)
+	}
+	if written, _ := filepath.Glob(filepath.Join(cache, "code-commandments", "bin", "*", "*")); len(written) > 0 {
+		t.Errorf("the refused binary was kept: %v", written)
+	}
+}
+
+func TestTheShimNamesADevelopmentVersionAsNoRelease(t *testing.T) {
+	shim := installed(t, "dev-main")
+	out, err := shimRun(t, shim, "http://127.0.0.1:1", t.TempDir(), "judge")
+	if err == nil || !strings.Contains(out, "dev-main is no release") {
+		t.Errorf("the shim said %q (%v)", out, err)
+	}
+}
+
+func copyFile(t *testing.T, from, to string) {
+	t.Helper()
+	content, err := os.ReadFile(from)
+	if err != nil {
+		t.Fatal(err)
+	}
+	write(t, to, string(content))
+}
+
+func write(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}

@@ -33,7 +33,7 @@ final class Install implements Command
         $consumer = ConsumerRoot::from(getcwd() ?: '.');
 
         if ($consumer === null) {
-            return HelpScreen::usage($this, 'no composer.json at or above ' . getcwd() . ' — there is no project here to wire.');
+            return HelpScreen::usage($this, 'no composer.json or git repository at or above ' . getcwd() . ' — there is no project here to wire.');
         }
 
         $wired = new ComposerScripts($consumer)->ensure();

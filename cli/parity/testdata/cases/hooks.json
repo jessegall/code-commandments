@@ -294,7 +294,7 @@
    "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
    "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
    "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php",
-   "echo '{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Order.php\"}}' | php \"$PARITY_PACKAGE/bin/commandments\" hooks > /dev/null"
+   "echo '{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Order.php\"}}' | php \"$PARITY_PACKAGE/bin/commandments-php\" hooks > /dev/null"
   ],
   "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Order.php\"}}",
   "env": {
@@ -310,7 +310,7 @@
   "setup": [
    "git init -q && git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init",
    "mkdir -p .commandments && printf '%s\\n' '<?php' 'return function ($config): void {' '    $config->paths(\"src\");' '};' > .commandments/config.php",
-   "mkdir -p src && printf '<?php\\n' > src/Clean.php && touch -t 200001010000 src/Clean.php && echo '{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Clean.php\"}}' | php \"$PARITY_PACKAGE/bin/commandments\" hooks > /dev/null",
+   "mkdir -p src && printf '<?php\\n' > src/Clean.php && touch -t 200001010000 src/Clean.php && echo '{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"src/Clean.php\"}}' | php \"$PARITY_PACKAGE/bin/commandments-php\" hooks > /dev/null",
    "mkdir -p src && printf '%s\\n' '<?php' '' 'namespace App;' '' 'final class Order' '{' '    public function hides(): void' '    {' '    }' '' '    public function total(array $data): int' '    {' '        return $data[\"total\"] ?? 0;' '    }' '}' > src/Order.php"
   ],
   "stdin": "{\"hook_event_name\":\"PostToolUse\",\"session_id\":\"s1\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"sed -i x src/Order.php\"}}",

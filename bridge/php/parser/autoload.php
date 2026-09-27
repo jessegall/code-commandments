@@ -8,8 +8,10 @@
 declare(strict_types=1);
 
 spl_autoload_register(static function (string $class): void {
-    if (str_starts_with($class, 'PhpParser\\')) {
-        require __DIR__ . '/lib/' . str_replace('\\', '/', $class) . '.php';
+    $file = __DIR__ . '/lib/' . str_replace('\\', '/', $class) . '.php';
+
+    if (str_starts_with($class, 'PhpParser\\') && is_file($file)) {
+        require $file;
     }
 });
 

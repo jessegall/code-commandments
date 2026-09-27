@@ -209,3 +209,14 @@ func lookIn(env []string, program string) (string, bool) {
 
 	return "", false
 }
+
+// TestSyncNamesAPhpRuleTheBinaryCannotRun holds sync to saying, as judge does, that a detector the PHP tool's make
+// scaffolded is still a PHP class the binary skips — the switch must not drop a project's own rule in silence.
+func TestSyncNamesAPhpRuleTheBinaryCannotRun(t *testing.T) {
+	c := newConsumer(t)
+	c.write(".commandments/custom/NoRawSqlDetector.php", "<?php\n\nfinal class NoRawSqlDetector {}\n")
+
+	if synced := c.run(0, "commandments", "sync"); !strings.Contains(synced, "NoRawSqlDetector.php is a PHP class the binary cannot run") {
+		t.Errorf("sync said\n%s", synced)
+	}
+}
