@@ -142,12 +142,14 @@ export const { a, b: [c] } = { a: 1, b: [2] }
 	}
 }
 
-// TestABodyWeighsWhatThePhpEngineWeighs holds BodyWeight to the PHP engine's own weights for the same bodies: a called
-// plain name weighs one more, as it did not, which left worldwatchmarket's context hooks a point under the near-duplicate
-// floor.
+// TestABodyWeighsWhatThePhpEngineWeighs holds BodyWeight to the PHP engine's own weights for the same bodies, each
+// measured there: a declaration initialised by a call of a plain name weighs one more, as it did not, which left
+// worldwatchmarket's context hooks a point under the near-duplicate floor.
 func TestABodyWeighsWhatThePhpEngineWeighs(t *testing.T) {
 	for body, php := range map[string]int{"const c = f(C)": 6, "const c = x.f(C)": 6, "const c = f(C)(D)": 8, "const c = new F(C)": 6, "if (c === null) {\n    y()\n  }": 9,
-		"y(A)": 5, "y()": 4, "const c = f()": 5, "const c = f(A, B)": 7, "const c = `${x}: y ${z}`": 3, "const c = v as T": 3} {
+		"y(A)": 5, "y()": 4, "const c = f()": 5, "const c = f(A, B)": 7, "const c = `${x}: y ${z}`": 3, "const c = v as T": 3,
+		"return f(C)": 5, "const c = 1 + f(C)": 7, "if (f(C)) {\n    y()\n  }": 9, "const c = g(route('x'))": 8,
+		"router.post(route('x'), {}, { preserveScroll: true })": 11} {
 		codebase := frontendtest.FromSource(t, map[string]string{"weight.ts": "export function a () {\n  " + body + "\n}\n"})
 		if weight := typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "a")).BodyWeight(); weight != php {
 			t.Errorf("%q weighs %d, the PHP engine %d", body, weight, php)
