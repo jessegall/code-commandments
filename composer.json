@@ -41,17 +41,17 @@
         "readme": "@php scripts/generate-readme.php",
         "sins": [
             "@php scripts/generate-skills.php",
-            "@php bin/commandments sync"
+            "@php bin/commandments-php sync"
         ],
         "judge": "@php bin/commandments judge",
-        "skills": "@php bin/commandments sync",
+        "skills": "@php bin/commandments-php sync",
         "post-install-cmd": [
             "scripts/build",
-            "@php bin/commandments sync"
+            "@php bin/commandments-php sync"
         ],
         "post-update-cmd": [
             "scripts/build",
-            "@php bin/commandments sync"
+            "@php bin/commandments-php sync"
         ]
     },
     "config": {

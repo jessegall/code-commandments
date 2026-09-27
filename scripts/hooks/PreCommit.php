@@ -30,7 +30,7 @@ const GENERATORS = [
     ['run' => ['scripts/generate-readme.php'], 'paths' => ['README.md', 'README.sins.md', 'README.scribes.md', 'README.skills.md']],
     ['run' => ['scripts/generate-skills.php'], 'paths' => ['skills/commandments']],
     ['run' => ['scripts/refresh-command-docs.php'], 'paths' => ['README.md', 'skills']],
-    ['run' => ['bin/commandments', 'sync'], 'paths' => ['AGENTS.md', 'CLAUDE.md', '.gitignore']],
+    ['run' => ['bin/commandments-php', 'sync'], 'paths' => ['AGENTS.md', 'CLAUDE.md', '.gitignore']],
 ];
 
 $root = rtrim((string) shell_exec('git rev-parse --show-toplevel 2>/dev/null'), "\n");
