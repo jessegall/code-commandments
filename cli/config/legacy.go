@@ -1,12 +1,14 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/engine"
@@ -27,6 +29,10 @@ func ReadPHP(path string) (Config, error) {
 	}
 
 	stream, err := php.Here().Stream(path)
+	var missing bridge.ToolchainMissing
+	if errors.As(err, &missing) {
+		return Config{}, fmt.Errorf("this project's settings are in %s, which only php reads, and php is not on the PATH here: run `commandments sync` where php is installed to turn it into config.json", path)
+	}
 	if err != nil {
 		return Config{}, err
 	}

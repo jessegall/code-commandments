@@ -5,9 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
@@ -139,19 +137,22 @@ func sumOf(sums, name string) (string, bool) {
 	return "", false
 }
 
-// fetch is the body at the address, which must answer 200.
+// fetch is the body at the address, which must answer with success, through the curl every platform the tool ships
+// for has: linking Go's own HTTP client and TLS would grow the tool by a fifth for this one download.
 func fetch(address string) ([]byte, error) {
-	client := http.Client{Timeout: 5 * time.Minute}
-	response, err := client.Get(address)
+	curl, err := exec.LookPath("curl")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetching it needs curl on the PATH")
 	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%s answered %s", address, response.Status)
+	var failure strings.Builder
+	command := exec.Command(curl, "--fail", "--silent", "--show-error", "--location", "--max-time", "300", address)
+	command.Stderr = &failure
+	body, err := command.Output()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s", address, strings.TrimSpace(failure.String()))
 	}
 
-	return io.ReadAll(response.Body)
+	return body, nil
 }
 
 // binaryCache is the folder a release's binaries are kept in, the tool's and its bridges', as the shim keeps them.

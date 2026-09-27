@@ -36,6 +36,21 @@ disagrees with is held by a Go regression test, so it cannot drift back.
 Every finding only one tool makes is a PHP bug. None is a Go bug left standing: each Go bug the runs found was fixed
 in Go before this table was taken.
 
+## C# on a user's machine, with no Docker
+
+A released tool runs the C# bridge's own executable, fetched from the release on the first C# judge and checked
+against `SHA256SUMS` (docs/requirements.md). It was proven in a container standing in for a user's machine — the
+release's `commandments-linux-arm64` and `roslyn-bridge-linux-arm64` served as a release, installed as the shim
+installs them, and no Docker and no Go toolchain inside — against the findings of the Docker bridge development runs:
+
+| Codebase | Docker bridge | .NET SDK installed | No .NET at all |
+|---|---:|---:|---:|
+| tests/Fixtures/csharp (its layers written as config.json) | 195 | 195, identical | 135, and one notice |
+| worldwatchmarket/dullahan at 3631af46 | 92 | 92, identical | 71, and one notice |
+
+With no .NET installed the framework's types do not resolve, so the rules that read them find less; the run says so
+once, and judges the project's own types and its restored packages as usual.
+
 ## The PHP bugs, and the Go tests that hold the right answer
 
 | PHP bug | Where it shows | Go test |
