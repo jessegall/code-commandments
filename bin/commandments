@@ -7,8 +7,9 @@ declare(strict_types=1);
  | The tool is one Go binary per platform; this script only finds it and hands it the run — its arguments, its
  | streams and its exit code. $COMMANDMENTS_GO_BINARY names one to run. In the package's own checkout it is the one
  | the capped dev container built beside this script. Installed with composer, it is the release binary of the
- | installed version, fetched once into the cache folder and checked against the release's SHA256SUMS before it
- | ever runs; $COMMANDMENTS_RELEASES names another place to fetch releases from.
+ | installed version, or of the release $COMMANDMENTS_RELEASE pins, fetched once into the cache folder and checked
+ | against the release's SHA256SUMS before it ever runs; $COMMANDMENTS_RELEASES names another place to fetch
+ | releases from.
  */
 
 const RELEASES = 'https://github.com/jessegall/code-commandments/releases/download';
@@ -54,10 +55,16 @@ function installedVersion(): string
         refuse('cannot tell which version of ' . PACKAGE . ' composer installed; name a binary in COMMANDMENTS_GO_BINARY');
     }
 
-    $version = (string) \Composer\InstalledVersions::getPrettyVersion(PACKAGE);
+    return tagged((string) \Composer\InstalledVersions::getPrettyVersion(PACKAGE), 'require a tagged version, or name a binary in COMMANDMENTS_GO_BINARY');
+}
 
+/**
+ * The version, when it names a release; the run stopped saying what to do instead when it does not.
+ */
+function tagged(string $version, string $instead): string
+{
     if (! preg_match('/^v?\d+\.\d+\.\d+/', $version)) {
-        refuse("{$version} is no release, so there is no binary to fetch for it; require a tagged version, or name a binary in COMMANDMENTS_GO_BINARY");
+        refuse("{$version} is no release, so there is no binary to fetch for it; {$instead}");
     }
 
     return $version;
@@ -135,6 +142,10 @@ function binary(): string
 {
     if ($named = getenv('COMMANDMENTS_GO_BINARY')) {
         return $named;
+    }
+
+    if ($pinned = getenv('COMMANDMENTS_RELEASE')) {
+        return released(tagged($pinned, 'pin a tagged version such as v5.0.0 in COMMANDMENTS_RELEASE'));
     }
 
     if (is_file(dirname(__DIR__) . '/scripts/dev')) {

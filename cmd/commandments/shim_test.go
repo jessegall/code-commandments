@@ -112,6 +112,61 @@ func TestTheShimNamesADevelopmentVersionAsNoRelease(t *testing.T) {
 	}
 }
 
+// checkout lays out the package's own tree — the shim beside a dev-built binary, with scripts/dev — as a journal
+// plugin or a composer source install clones it.
+func checkout(t *testing.T) (shim string) {
+	t.Helper()
+	if _, err := exec.LookPath("php"); err != nil {
+		t.Skip("php is not on PATH")
+	}
+	root := t.TempDir()
+	write(t, filepath.Join(root, "scripts", "dev"), "#!/bin/sh\n")
+	copyFile(t, filepath.Join("..", "..", "bin", "commandments"), filepath.Join(root, "bin", "commandments"))
+	write(t, filepath.Join(root, "bin", "commandments-go"), "#!/bin/sh\necho dev-built\n")
+	os.Chmod(filepath.Join(root, "bin", "commandments-go"), 0o755)
+
+	return filepath.Join(root, "bin", "commandments")
+}
+
+// pinnedRun runs the shim with COMMANDMENTS_RELEASE pinning the version.
+func pinnedRun(t *testing.T, shim, version, base, cache string, args ...string) (string, error) {
+	t.Helper()
+	command := exec.Command("php", append([]string{shim}, args...)...)
+	command.Env = append(os.Environ(), "COMMANDMENTS_RELEASE="+version, "COMMANDMENTS_RELEASES="+base, "XDG_CACHE_HOME="+cache, "COMMANDMENTS_GO_BINARY=")
+	out, err := command.CombinedOutput()
+
+	return string(out), err
+}
+
+// TestAPinnedReleaseRunsAheadOfTheDevBuiltBinary holds a checkout that pins a release to that release: fetched,
+// checked against SHA256SUMS and run, though the tree holds scripts/dev and a dev-built binary.
+func TestAPinnedReleaseRunsAheadOfTheDevBuiltBinary(t *testing.T) {
+	shim := checkout(t)
+	server := release(t, "v9.9.9", fakeBinary, sumOf(fakeBinary))
+	if out, err := pinnedRun(t, shim, "v9.9.9", server.URL, t.TempDir(), "judge", "src"); err != nil || strings.TrimSpace(out) != "ran judge src" {
+		t.Errorf("the shim said %q (%v)", out, err)
+	}
+}
+
+// TestAPinnedReleaseWhoseSumDiffersNeverFallsBackToTheDevBinary holds the pin closed: a binary whose sum does not
+// match is refused and nothing else runs in its place.
+func TestAPinnedReleaseWhoseSumDiffersNeverFallsBackToTheDevBinary(t *testing.T) {
+	shim := checkout(t)
+	server := release(t, "v9.9.9", fakeBinary, sumOf("another binary"))
+	out, err := pinnedRun(t, shim, "v9.9.9", server.URL, t.TempDir(), "judge")
+	if err == nil || !strings.Contains(out, "does not match its SHA256SUMS") || strings.Contains(out, "dev-built") {
+		t.Errorf("the shim said %q (%v)", out, err)
+	}
+}
+
+func TestAPinThatIsNoReleaseIsRefused(t *testing.T) {
+	shim := checkout(t)
+	out, err := pinnedRun(t, shim, "main", "http://127.0.0.1:1", t.TempDir(), "judge")
+	if err == nil || !strings.Contains(out, "main is no release") || strings.Contains(out, "dev-built") {
+		t.Errorf("the shim said %q (%v)", out, err)
+	}
+}
+
 func copyFile(t *testing.T, from, to string) {
 	t.Helper()
 	content, err := os.ReadFile(from)
