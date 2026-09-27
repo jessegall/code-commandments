@@ -33,8 +33,13 @@ func TestARunPastTheCapIsKilledByTheMachine(t *testing.T) {
 	if err := exec.Command("docker", "info").Run(); err != nil {
 		t.Skip("docker is not reachable: scripts/dev cannot start a container")
 	}
+	dev := filepath.Join("..", "..", "scripts", "dev")
+	// Read so Go's test cache watches the script: a change to its cap runs the hog again rather than replaying a pass.
+	if _, err := os.ReadFile(dev); err != nil {
+		t.Fatalf("scripts/dev: %v", err)
+	}
 	script := "go test -c -o /tmp/dev.test . && COMMANDMENTS_DEV_HOG=1 exec /tmp/dev.test -test.run='^TestARunPastTheCapIsKilledByTheMachine$'"
-	out, err := exec.Command(filepath.Join("..", "..", "scripts", "dev"), "sh", "-c", script).CombinedOutput()
+	out, err := exec.Command(dev, "sh", "-c", script).CombinedOutput()
 	if !strings.Contains(string(out), started) {
 		t.Fatalf("the hog never started: %v\n%s", err, out)
 	}
