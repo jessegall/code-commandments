@@ -44,6 +44,9 @@ type File struct {
 	Resolver *Resolver `json:"resolver,omitempty"`
 	Root     *Node     `json:"root"`
 	Comments []Comment `json:"comments"`
+	// Types are the distinct types the file's nodes resolve to, each said once and named by a node's resolvedType, so
+	// a type every expression shares is not written again for each; the reader puts each back on its nodes.
+	Types []*Type `json:"types,omitempty"`
 
 	nodes []*Node
 }
@@ -104,6 +107,8 @@ type Node struct {
 	Children []*Node  `json:"children,omitempty"`
 	Name     string   `json:"name,omitempty"`
 	Resolved *Type    `json:"resolved,omitempty"`
+	// ResolvedType is the index in the file's types of the type the node resolves to, in place of resolved.
+	ResolvedType *int `json:"resolvedType,omitempty"`
 	*Facts
 
 	parent *Node

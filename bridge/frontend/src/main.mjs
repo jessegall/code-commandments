@@ -36,6 +36,7 @@ export function stream({ paths, write = [], renames = [], contents = {} }, emit)
         file.resolver = { tool: 'tsc', ran: true }
         file.root = root
         file.comments = tree.comments(found)
+        if (tree.types.length) file.types = tree.types
         emit({ file })
         for (const key of Object.keys(totals)) totals[key] += tree[key]
     }

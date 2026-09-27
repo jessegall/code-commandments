@@ -9,6 +9,18 @@ export class Tree {
         this.calls = 0
         this.resolved = 0
         this.names = 0
+        this.types = []
+        this.typeIndexes = new Map()
+    }
+
+    /** The index in the file's `types` of the checker's `type`, described by `describe` the first time the file meets it. */
+    typeIndex(type, describe) {
+        if (!this.typeIndexes.has(type)) {
+            this.typeIndexes.set(type, this.types.length)
+            this.types.push(describe())
+        }
+
+        return this.typeIndexes.get(type)
     }
 
     /** The next id, for a node over the UTF-16 range `[start, end)`. */

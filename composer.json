@@ -47,11 +47,11 @@
         "skills": "@php bin/commandments-php sync",
         "post-install-cmd": [
             "scripts/build",
-            "@php bin/commandments-php sync"
+            "@php bin/commandments sync"
         ],
         "post-update-cmd": [
             "scripts/build",
-            "@php bin/commandments-php sync"
+            "@php bin/commandments sync"
         ]
     },
     "config": {

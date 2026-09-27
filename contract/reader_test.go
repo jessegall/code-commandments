@@ -109,3 +109,25 @@ func TestTheSchemaAloneRefusesWhatDecodingWouldAccept(t *testing.T) {
 		t.Fatalf("the schema refuses a valid file line: %v", err)
 	}
 }
+
+// TestATypeSaidOnceIsPutBackOnEveryNodeThatNamesIt holds the reader to a file's type table: each node naming a type
+// by resolvedType resolves to it as if written inline, and an index past the table is refused.
+func TestATypeSaidOnceIsPutBackOnEveryNodeThatNamesIt(t *testing.T) {
+	file := `{"file": {"path": "/abs/src/cart.ts", "language": "typescript", "errors": 0, "root": {"id": 0, "kind": "SourceFile", "role": "other", "span": [0, 30, 1], "children": [` +
+		`{"id": 1, "kind": "Identifier", "role": "expression", "span": [0, 4, 1], "field": "statements", "resolvedType": 0},` +
+		`{"id": 2, "kind": "Identifier", "role": "expression", "span": [5, 9, 1], "field": "statements", "resolvedType": 0}]}, "comments": [],` +
+		`"types": [{"text": "string", "kind": "keyword", "name": "string", "origin": "compiler"}]}}`
+	read, err := ReadAll(strings.NewReader(stream("typescript", file, trailer("1"))))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range []int{1, 2} {
+		node, _ := read.Files[0].Node(id)
+		if node.Resolved == nil || node.Resolved.Text != "string" || node.ResolvedType != nil {
+			t.Errorf("node %d resolves to %+v", id, node.Resolved)
+		}
+	}
+	if _, err := ReadAll(strings.NewReader(stream("typescript", strings.Replace(file, `"resolvedType": 0}]`, `"resolvedType": 1}]`, 1), trailer("1")))); err == nil {
+		t.Error("a node naming a type the file does not hold is read")
+	}
+}

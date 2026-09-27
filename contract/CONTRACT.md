@@ -96,6 +96,7 @@ such fact.
 | `resolver` | a bridge resolver exists for the language | `{"tool", "ran"}`: the resolver (`roslyn`, `mypy`, `tsc`) and whether it ran on this file |
 | `root` | always | the file's root node |
 | `comments` | always | every comment in the file, in source order (see *Comments*) |
+| `types` | a node names its type by `resolvedType` | the distinct types the file's nodes resolve to, each said once: a type thousands of expressions share is written one time, and the reader puts it back on each node |
 
 The engine reads the file's bytes itself: `path` is where they are, and every span indexes into them.
 A node's source text is the bytes of its span, so no node repeats it.
@@ -122,6 +123,7 @@ Every syntax node, nested as the language nests them. Tokens, whitespace and com
 | `declared` | declarations with a written type; a catch clause | the type the source declares for a parameter, property, field or variable, or the type a catch catches (a union when it catches several) (see *Types*) |
 | `returns` | function-likes with a written return type | the declared return type |
 | `resolved` | expressions the resolver typed | the type the compiler or checker gives the expression |
+| `resolvedType` | in place of `resolved` | the index in the file's `types` of that type; a reader treats it as `resolved` |
 | `symbol` | declarations | the declaration's symbol id (see *Symbols*) |
 | `refers` | names and imports that resolve | the symbol id the name names — a class name its class, an import binding what it imports — whether or not that declaration is in the scan |
 | `target` | calls and constructions that resolve | the declaration called (see *Symbols*) |

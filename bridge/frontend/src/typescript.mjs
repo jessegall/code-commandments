@@ -106,7 +106,7 @@ export class TypeScriptWriter {
             const type = this.checker.getTypeAtLocation(node)
             if (!(type.flags & ts.TypeFlags.Any) && !isErrorType(type)) {
                 this.tree.typed++
-                facts.resolved = this.type(type, 'compiler')
+                facts.resolvedType = this.tree.typeIndex(type, () => this.type(type, 'compiler'))
             }
         }
         const refers = this.refersOf(node)

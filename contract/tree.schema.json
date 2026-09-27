@@ -51,7 +51,8 @@
           "additionalProperties": false
         },
         "root": {"$ref": "#/$defs/node"},
-        "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}}
+        "comments": {"type": "array", "items": {"$ref": "#/$defs/comment"}},
+        "types": {"type": "array", "items": {"$ref": "#/$defs/type"}}
       },
       "required": ["path", "language", "errors", "root", "comments"],
       "additionalProperties": false
@@ -90,6 +91,7 @@
         "declared": {"$ref": "#/$defs/type"},
         "returns": {"$ref": "#/$defs/type"},
         "resolved": {"$ref": "#/$defs/type"},
+        "resolvedType": {"type": "integer", "minimum": 0},
         "symbol": {"$ref": "#/$defs/symbolId"},
         "refers": {"$ref": "#/$defs/symbolId"},
         "target": {"$ref": "#/$defs/target"},

@@ -178,6 +178,9 @@ func (r *Reader) acceptFile(file *File) error {
 	if r.program {
 		return fmt.Errorf("%s comes after the program line, which follows every file", file.Path)
 	}
+	if err := resolveTypes(file); err != nil {
+		return fmt.Errorf("%s: %w", file.Path, err)
+	}
 	if err := link(file); err != nil {
 		return fmt.Errorf("%s: %w", file.Path, err)
 	}
@@ -212,6 +215,34 @@ func (r *Reader) acceptTrailer(trailer *Trailer) error {
 }
 
 // link numbers a file's nodes, gives each its parent, and checks what the schema cannot.
+// resolveTypes puts the type each node names in the file's types back on the node, as a node that writes it inline
+// holds it; the table is not kept once read.
+func resolveTypes(file *File) error {
+	var walk func(node *Node) error
+	walk = func(node *Node) error {
+		if node == nil {
+			return nil
+		}
+		if node.ResolvedType != nil {
+			if *node.ResolvedType < 0 || *node.ResolvedType >= len(file.Types) {
+				return fmt.Errorf("node %d resolves to type %d, and the file names %d", node.ID, *node.ResolvedType, len(file.Types))
+			}
+			node.Resolved, node.ResolvedType = file.Types[*node.ResolvedType], nil
+		}
+		for _, child := range node.Children {
+			if err := walk(child); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+	err := walk(file.Root)
+	file.Types = nil
+
+	return err
+}
+
 func link(file *File) error {
 	file.nodes = nil
 	var walk func(node, parent *Node) error
