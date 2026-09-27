@@ -20,3 +20,16 @@ func TestAnIterableTypedOnlyByInferenceIsKnownAsAnArray(t *testing.T) {
 		t.Errorf("the index key over an inferred array is found %d times", len(found))
 	}
 }
+
+// TestAnIndexedAccessToAnObjectTypeIsNoArray holds IndexAsKey to the type an indexed access names: a prop typed
+// Page['urlTypes'], which is { [key: string]: string }, is iterated by key, not index. The PHP tool took any type
+// ending in `]` for an array (smart-farmers-pos's ReviewFeeds/Form.vue).
+func TestAnIndexedAccessToAnObjectTypeIsNoArray(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{
+		"src/Form.vue": "<template>\n  <template v-for=\"(label, value) in urlTypes\" :key=\"value\">\n    <li>{{ label }}</li>\n  </template>\n</template>\n\n" +
+			"<script lang=\"ts\" setup>\ntype Page = { urlTypes: { [key: string]: string } }\n\ndefineProps<{ urlTypes: Page['urlTypes'] }>()\n</script>\n",
+	})
+	if found := (frontend.IndexAsKeyDetector{}).Find(codebase); len(found) > 0 {
+		t.Errorf("a key over an object is read as an index at %s", found[0].Location())
+	}
+}
