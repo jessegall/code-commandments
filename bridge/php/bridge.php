@@ -12,9 +12,16 @@ namespace CodeCommandments\PhpBridge;
 ini_set('memory_limit', '-1');
 
 require __DIR__ . '/parser/autoload.php';
+require __DIR__ . '/src/BadRequest.php';
 require __DIR__ . '/src/Request.php';
 require __DIR__ . '/src/Sources.php';
+require __DIR__ . '/src/Nullability.php';
+require __DIR__ . '/src/WrittenType.php';
+require __DIR__ . '/src/NodeSpan.php';
+require __DIR__ . '/src/Attachment.php';
+require __DIR__ . '/src/Comment.php';
 require __DIR__ . '/src/TreeWriter.php';
+require __DIR__ . '/src/ParsedFile.php';
 require __DIR__ . '/src/OutsideSymbols.php';
 require __DIR__ . '/src/Stream.php';
 

@@ -9,7 +9,9 @@ use RecursiveIteratorIterator;
 use RecursiveCallbackFilterIterator;
 use SplFileInfo;
 
-/** The .php files a set of paths holds, sorted, each once; vendor and dot folders are not the project's own. */
+/**
+ * The .php files a set of paths holds, sorted, each once; vendor and dot folders are not the project's own.
+ */
 final class Sources
 {
     /**

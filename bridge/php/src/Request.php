@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace CodeCommandments\PhpBridge;
 
-use InvalidArgumentException;
 
-/** What one stream is asked for: the paths to parse, the ones judged, and how the stream names them. */
+/**
+ * What one stream is asked for: the paths to parse, the ones judged, and how the stream names them.
+ */
 final readonly class Request
 {
     /**
@@ -24,7 +25,9 @@ final readonly class Request
         public array $contents = [],
     ) {}
 
-    /** @param  list<string>  $arguments */
+    /**
+     * @param  list<string>  $arguments
+     */
     public static function fromArguments(array $arguments): self
     {
         $paths = [];
@@ -38,22 +41,24 @@ final readonly class Request
                 str_starts_with($argument, '--write=') => $write[] = self::absolute(substr($argument, 8)),
                 str_starts_with($argument, '--autoload=') => $autoload = self::absolute(substr($argument, 11)),
                 str_starts_with($argument, '--rename=') => $renames += self::rename(substr($argument, 9)),
-                str_starts_with($argument, '--') => throw new InvalidArgumentException("unknown flag {$argument}"),
+                str_starts_with($argument, '--') => throw BadRequest::forFlag($argument),
                 default => $paths[] = self::absolute($argument),
             };
         }
         if ($paths === [] && ! $serve) {
-            throw new InvalidArgumentException('usage: bridge.php [--write=PATH]... [--autoload=FILE] [--rename=FROM=TO]... [--serve] PATH...');
+            throw BadRequest::forNothingToRead();
         }
 
         return new self($paths, $write, $autoload, $renames, $serve);
     }
 
-    /** @param  array{paths?: list<string>, write?: list<string>, contents?: array<string, string>}  $request */
+    /**
+     * @param  array{paths?: list<string>, write?: list<string>, contents?: array<string, string>}  $request
+     */
     public function answering(array $request): self
     {
         if (($request['paths'] ?? []) === []) {
-            throw new InvalidArgumentException('a request names no paths');
+            throw BadRequest::forNoPaths();
         }
 
         return new self(
@@ -66,7 +71,9 @@ final readonly class Request
         );
     }
 
-    /** Whether the stream judges $file, or only reads it to resolve into. */
+    /**
+     * Whether the stream judges $file, or only reads it to resolve into.
+     */
     public function judges(string $file): bool
     {
         if ($this->write === []) {
@@ -81,7 +88,9 @@ final readonly class Request
         return false;
     }
 
-    /** $path as the stream names it. */
+    /**
+     * $path as the stream names it.
+     */
     public function shown(string $path): string
     {
         foreach ($this->renames as $from => $to) {
@@ -97,18 +106,20 @@ final readonly class Request
     {
         $real = realpath($path);
         if ($real === false) {
-            throw new InvalidArgumentException("no such path {$path}");
+            throw BadRequest::forMissingPath($path);
         }
 
         return $real;
     }
 
-    /** @return array<string, string> */
+    /**
+     * @return array<string, string>
+     */
     private static function rename(string $pair): array
     {
         $parts = explode('=', $pair, 2);
         if (count($parts) !== 2) {
-            throw new InvalidArgumentException("--rename takes FROM=TO, not {$pair}");
+            throw BadRequest::forRename($pair);
         }
 
         return [self::absolute($parts[0]) . '/' => rtrim($parts[1], '/') . '/'];

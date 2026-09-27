@@ -21,7 +21,9 @@ use ReflectionUnionType;
  */
 final class OutsideSymbols
 {
-    /** @var array<string, array> */
+    /**
+     * @var array<string, array>
+     */
     private array $symbols = [];
 
     private readonly bool $internalOnly;
@@ -41,7 +43,9 @@ final class OutsideSymbols
         }
     }
 
-    /** @return list<array> */
+    /**
+     * @return list<array>
+     */
     public function all(): array
     {
         return array_values($this->symbols);
@@ -61,7 +65,11 @@ final class OutsideSymbols
         $this->symbols[$key] = &$symbol;
         $parent = $reflection->getParentClass();
         $ancestry = [
-            'extends' => $reflection->isInterface() ? $reflection->getInterfaceNames() : ($parent === false ? [] : [$parent->getName()]),
+            'extends' => match (true) {
+                $reflection->isInterface() => $reflection->getInterfaceNames(),
+                $parent === false => [],
+                default => [$parent->getName()],
+            },
             'implements' => $reflection->isInterface() ? [] : $reflection->getInterfaceNames(),
             'uses' => $reflection->getTraitNames(),
         ];
@@ -93,7 +101,9 @@ final class OutsideSymbols
         }
     }
 
-    /** @return list<array> */
+    /**
+     * @return list<array>
+     */
     private function methods(ReflectionClass $reflection): array
     {
         $members = [];
@@ -130,7 +140,9 @@ final class OutsideSymbols
         return $members;
     }
 
-    /** @return list<array> */
+    /**
+     * @return list<array>
+     */
     private function properties(ReflectionClass $reflection): array
     {
         $members = [];
@@ -152,7 +164,9 @@ final class OutsideSymbols
         return $members;
     }
 
-    /** @return list<array> */
+    /**
+     * @return list<array>
+     */
     private function constants(ReflectionClass $reflection): array
     {
         $members = [];
@@ -174,7 +188,9 @@ final class OutsideSymbols
         return $members;
     }
 
-    /** @return list<string> */
+    /**
+     * @return list<string>
+     */
     private function modifiers(ReflectionMethod|ReflectionProperty|ReflectionClassConstant $member): array
     {
         return array_keys(array_filter([
