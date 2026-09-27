@@ -119,13 +119,11 @@ func renderSkills() (int, error) {
 	return len(published), err
 }
 
-// pluginRoot is the plugin's folder: the one the journal names, else the nearest folder above the executable
-// that holds a plugin manifest, else the folder above the executable's own.
+// pluginRoot is the plugin's folder: the nearest folder above the executable that holds a plugin manifest, as the
+// binary the plugin fetches into its own bin/ does, else the one the journal names, else the folder above the
+// executable's own. The executable comes first because the journal runs a plugin's setup from a staging copy while
+// JOURNAL_PLUGIN_DIR already names its final folder, which it clears before moving the copy in.
 func pluginRoot() string {
-	if dir := os.Getenv(journalPluginDir); dir != "" {
-		return dir
-	}
-
 	self, err := os.Executable()
 	if err != nil {
 		return "."
@@ -137,6 +135,10 @@ func pluginRoot() string {
 		if _, err := os.Stat(filepath.Join(dir, ".journal-plugin", "plugin.json")); err == nil {
 			return dir
 		}
+	}
+
+	if dir := os.Getenv(journalPluginDir); dir != "" {
+		return dir
 	}
 
 	return filepath.Dir(filepath.Dir(self))
