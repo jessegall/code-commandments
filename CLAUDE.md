@@ -1,87 +1,67 @@
 # code-commandments — guide for AI agents
 
-**code-commandments is a compiler for architecture.** It judges a PHP **and** Vue
-codebase against a set of architectural disciplines and reports each violation
-("sin") as a `file:line` that points at the skill which teaches the fix.
+**code-commandments is a compiler for architecture.** It judges a PHP, Vue, TypeScript,
+Python and C# codebase against a set of architectural disciplines and reports each
+violation ("sin") as a `file:line` that points at the skill which teaches the fix. It is
+one static Go binary; each language brings only a small bridge that parses it.
 
-Two layers:
+Three layers:
 
-- **Skills** (`skills/commandments/{backend,frontend}/<slug>/`) — the teaching layer,
-  one per architectural subject, split by engine. Backend: `backend/absence`,
-  `backend/value-objects`, `backend/spatie-data`, `backend/laravel-idioms`,
-  `backend/fix-at-the-source`, … Frontend: `frontend/vue-components`,
-  `frontend/vue-control-flow`. The engine-prefixed slug is what a detector's `Sin`
-  points at. The source of truth for what good looks like.
-- **Sin Detectors** (`src/Detectors/`) — thin finders over a fluent AST engine
-  (`src/Ast/`). Each detector finds ONE sin and names the skill that fixes it; it
-  has no fix logic. Auto-discovered by `Detectors\Catalog`.
+- **Skills** (`skill/<engine>/`, rendered into `skills/commandments/<engine>/<slug>/`) —
+  the teaching layer, one per architectural subject, split by engine: `backend/absence`,
+  `backend/value-objects`, `frontend/vue-components`, `python/absence`, `csharp/flow`, …
+  The engine-prefixed slug is what a sin points at. The source of truth for what good
+  looks like.
+- **Sins** (`sins/<engine>/`) — each its own type: the name, the skill slug that fixes it,
+  and the one-line description the docs project from.
+- **Sin Detectors** (`detectors/<engine>/`) — thin finders over the engine
+  (`engine/`). Each detector finds ONE sin and names it; it has no fix logic. Each
+  registers itself in its `init()` (`detectors.Register`), and `registry` imports them all.
 
-Detectors are proven against a self-checking fixture (`tests/Fixtures/shop`) where
-`#[Sinful(Detector::class)]` markers ARE the test spec.
+Detectors are proven against a self-checking fixture per engine (`tests/Fixtures/backend`,
+`frontend`, `python`, `csharp`) where the markers — `#[Sinful(Sin::class)]` in PHP, a
+`<!-- @sin Name -->` comment in Vue, a `# @sin Name` or `// @sin Name` comment in Python and C# — ARE the test spec.
 
-### Two front-ends, ONE detector DSL — non-negotiable
+### One engine, a bridge per language — non-negotiable
 
-There are two parse engines: the **backend** AST over PHP (`src/Ast/`, php-parser)
-and the **frontend** AST over Vue `.vue` SFCs (`src/Vue/`, our own tokenizer — built
-from scratch, no Node). They parse different languages, but a detector
-**MUST read the same** either way: a frontend detector composes the **exact same
-fluent query syntax** as a backend one — a selector opens a `Query`, `where`/`reject`
-narrow it (one check per line), a terminal returns rich matches that know their
-`file:line`. Same shape, same rules (AST/semantic over names; compose the engine,
-never poke the tree), just over Vue `Element`s instead of PHP nodes. If a frontend
-detector doesn't look like a backend detector, the engine is wrong — fix the engine,
-not the detector. (Frontend scope is the `frontend.canon`, sibling to `backend.canon`.)
+Every language reaches the engine the same way: its **bridge** parses it with the
+language's own parser (php-parser for PHP, TypeScript's compiler for Vue and TypeScript,
+mypy for Python, Roslyn for C#) and writes the **generic tree** (`contract/CONTRACT.md`):
+one node shape, one set of type, symbol and comment facts. The engine loads every stream
+into one `engine.Codebase`, and a detector reads it through the **same fluent query**
+whatever the language — a selector opens a `Query`, `Where`/`Reject` narrow it (one check
+per line), `Get` returns `engine.Match`es that know their `file:line`. A language's own
+knowledge lives on its decorator (`php.Node`, `typescript`, `vue`, `python`, `csharp`),
+reached with `engine.As(php.Node.IsDeeplyNestedIf)`. If one engine's detector doesn't read
+like another's, the engine is wrong — fix the engine, not the detector.
 
-**The two engines are the SAME system; ONLY the detection/parse algorithm differs.**
-Backend and frontend each have a codebase, a fluent query, detectors, scribes, a
-canon, and a self-checking fixture — and that is not a coincidence to maintain by
-hand, it is the architecture. Everything that is NOT "how do I parse / how do I
-detect / how do I fix" must be engine-agnostic and operate on base types: the CLI
-commands (`judge`, `scribe`) don't care backend-vs-frontend, the runner/report work
-on the abstract `Finding` (already just strings), the fixture harness
-({@see FixtureTestCase}) and the diversity engine ({@see Diversity}) are shared, the
-canon is one mechanism (`backend.canon` / `frontend.canon`). **NEVER write the same
-machinery twice for the two engines — if something is backend-only today, abstract it
-behind a base type so the frontend reuses it; do not copy it.** When you reach for
-copy-paste between engines, stop: the shared thing belongs in a base class / shared
-`Testing`/`Cli` component, parameterised by the one hook that genuinely differs.
-
-**Everything the backend does, the frontend does the same way.** A frontend detector
-follows the identical process: build it AST-first, prove it on the `.vue` self-
-checking fixture (`tests/Fixtures/shop-frontend`), calibrate on a real `.vue`
-codebase, and curate. The Vue side has the matching layers — `Vue\Codebase` →
-`Vue\Query` → `Vue\ElementMatch` (the template AST), `Vue\Expr\*` (a real JS-
-expression AST: lexer + Pratt parser over binding/interpolation expressions), the
-`Frontend\Detector` base (sibling of `Backend\Detector`, both extend the root
-`Detector`), `Detectors\Frontend\*` detectors, and `Scribes\Frontend\*` scribes
-(backend scribes live in `Scribes\Backend\*`). Keep that symmetry: a thing
-belongs in the `Backend`/`Frontend` folder of its concern.
+**The engines are the SAME system; ONLY the parse differs.** Everything that is not "how do
+I parse / how do I detect / how do I fix" is engine-agnostic: the CLI (`cli/`), the report
+and checklist, the fixture harness (`fixture/`), the recurrence and twin analyses
+(`engine/recurrence.go`, `engine/twins.go`), the syntax hash (`engine/hash.go`, with each
+language's `HashRules`), the scribes' writer (`scribes/`). **NEVER write the same machinery
+twice for two engines** — lift it into `engine/` or a shared package, parameterised by the
+one hook that genuinely differs. A thing belongs in the engine folder of its concern:
+`engine/<lang>`, `detectors/<lang>`, `sins/<lang>`, `skill/<lang>`, `scribes/<lang>`.
 
 ### 🚫 NO regex for structure — build an engine tool instead
 
-Reaching for a regex to read code structure (a member chain, a method call, a
-binding, an equality, nesting depth) is almost always the wrong choice — it's the
-hack the backend never makes (it has php-parser). The frontend has its OWN parsers:
-the `Vue\` tokenizer for templates and `Vue\Expr\Parser` for the JS inside bindings.
-**Parse it into the AST and query the AST.** If the predicate you need isn't there,
-add a tool to the engine (a method on `Element` / `Expr`, a selector on the
-`Query`/`Codebase`) so detectors compose it fluently — never scrape it with a regex
-in the detector. Regex is for genuine text/delimiter scanning only (splitting `{{ }}`
-delimiters, lexing tokens) — not for understanding the code. A regex over an
-expression is a smell that the engine is missing a tool; write the tool.
-
-The `#[Sinful]` markers fixture is the spec for backend; the `<!-- @sin Detector -->`
-comment fixture is the spec for frontend. Lean on the fixtures + a focused unit test
-per mechanism, exactly like the backend.
+Reaching for a regex to read code structure (a member chain, a method call, a binding, an
+equality, nesting depth) is the wrong choice: every language arrives parsed by its own
+compiler. **Query the tree.** If the predicate you need isn't there, add it to the engine —
+a method on the language's decorator, a selector on `engine.Codebase` — so detectors
+compose it fluently. If the bridge doesn't carry a fact the detector needs, add it to the
+bridge and the contract. Regex is for genuine text scanning only (splitting delimiters,
+reading a comment's words) — not for understanding the code.
 
 ## ⚠️ Building or changing a detector? LOAD THESE SKILLS FIRST — mandatory
 
 Before you write or touch any detector, load these via the **Skill tool**:
 
 1. **`writing-detectors`** — author a `Detector` end-to-end (start here).
-2. **`detector-engine`** — the fluent AST DSL (`Codebase` → `Query` →
-   `AstNode`/`NodeMatch`), the call graph, the variable trace, and where a new
-   helper belongs (the layering rule).
+2. **`detector-engine`** — the fluent query (`engine.Codebase` → `engine.Query` →
+   `engine.Match`, a language's decorator), the call graph, the variable trace, and where
+   a new helper belongs (the layering rule).
 3. **`detector-fixtures`** — the self-checking fixture: `#[Sinful]` = spec, `#[Fixed]` =
    the RESOLUTION the docs publish as "Good" — **and every declaration it moved behaviour
    into**, since a fix showing only the call site that got thinner teaches a reader to call
@@ -91,7 +71,8 @@ Before you write or touch any detector, load these via the **Skill tool**:
 
 They encode the cardinal rules: **AST/semantic signals over name/suffix matching**
 (a name check is a smell to justify); **one check per `where()`/`reject()` line**;
-TDD (red → green via `Codebase::fromString`); ≥3 genuinely-different fixtures plus
+TDD (red → green through the language's test builder, e.g. `frontendtest.FromSource`);
+≥3 genuinely-different fixtures plus
 a righteous twin it must NOT flag; and **validate on a real codebase for false
 positives** before shipping. Curate the best detectors — don't pad.
 
@@ -122,24 +103,23 @@ detector is not viable — cut it. For example, a named constructor like
 would flag it can't tell the two apart and isn't viable. Calibrate every time, not
 "later".
 
-**Calibrating a detector that isn't ready to ship? Mark it `Unpublished`.** A new
-detector often needs several calibrate→tighten rounds before it's clean. Have its
-detector class (and its sin) implement the marker interface
-`JesseGall\CodeCommandments\Unpublished` — both `Detectors\Catalog` and `Sins\Catalog`
-skip anything implementing it, so it stays out of `judge`, the fixture verifier, the
-generated docs (`SKILL.md`/README), and every release while you iterate. Build it and
-unit-test it by instantiating the detector **directly** (not through the catalog), and
-calibrate by running it directly over a scanned consumer codebase (a throwaway probe
-under the scratchpad — `Codebase::scan($root)` → `new YourDetector()->find($cb)`). When
-its hits read clean on real code, delete the `implements Unpublished`, add the ≥3-diverse
-fixtures + righteous twin, and it enrols itself. The marker lives ON the class — there is
-no second list, and a half-built rule can never leak into a tagged release.
+**Calibrating a detector that isn't ready to ship? Mark it unpublished.** A new detector
+often needs several calibrate→tighten rounds before it's clean. Give its detector (and
+its sin) the method `Unpublished()` — `catalog.Unpublished` — and every catalog skips it,
+so it stays out of `judge`, the fixture verifier, the generated docs (`SKILL.md`/README)
+and every release while you iterate. Unit-test it by calling the detector **directly**,
+and calibrate by running it directly over a scanned consumer codebase (a throwaway probe
+under the scratchpad — `scan.Walk([]string{root}, source.Excluded{}).Load()` →
+`YourDetector{}.Find(codebase)`). When its hits read clean on real code, delete the
+method, add the ≥3-diverse fixtures + righteous twin, and it enrols itself. The marker
+lives ON the type — there is no second list, and a half-built rule can never leak into a
+tagged release.
 
-📍 **Sins are first-class.** Each sin is its OWN class under `src/Sins/{backend,frontend}/`
-(name + skill slug + description), discovered by `Sins\Catalog` — the sin twin of
-`Detectors\Catalog`. A detector *references* its sin (`sin(): Sin { return new ArrayBag(); }`),
-never declares one inline. `judge --sin=<name>` filters to it (the retired `--detector`).
-The generated `SKILL.md` "when it fires" rows project from the registered sins.
+📍 **Sins are first-class.** Each sin is its OWN type under `sins/<engine>/` (name + skill
+slug + description), registered like a detector. A detector *references* its sin
+(`func (ArrayBagDetector) Sin() sins.Sin { return backendsins.ArrayBag{} }`), never declares
+one inline. `judge --sin=<name>` filters to it. The generated `SKILL.md` "when it fires"
+rows project from the registered sins.
 
 ## The engine arsenal — CHECK THIS BEFORE YOU IMPLEMENT ANYTHING
 

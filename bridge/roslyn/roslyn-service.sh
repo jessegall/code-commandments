@@ -22,7 +22,7 @@ mounts=(-v "$project:$project:ro")
 docker rm -f "$name" > /dev/null 2>&1 || true
 docker run -d --rm --memory=4g --cpus=2 --name "$name" \
     --label code-commandments.roslyn=service --label "code-commandments.project=$project" \
-    -p 127.0.0.1::7070 -e NUGET_PACKAGES="$packages" "${mounts[@]}" "$image" --tree --listen 7070 > /dev/null
+    -p 127.0.0.1::7070 -e NUGET_PACKAGES="$packages" "${mounts[@]}" "$image" --listen 7070 > /dev/null
 
 trap 'docker stop "$name" > /dev/null 2>&1 || true' EXIT INT TERM
 docker wait "$name" > /dev/null &

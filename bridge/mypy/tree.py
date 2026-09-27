@@ -1,9 +1,9 @@
 """A Python project as one generic tree stream (contract/CONTRACT.md), typed by mypy.
 
 `python tree.py <path>...` writes the stream for every module under the paths. `python tree.py --serve` answers one
-JSON request per stdin line ({"paths", "write", "python"}, as bridge.py takes it) with a full stream, header to
+JSON request per stdin line ({"paths", "write", "python"}) with a full stream, header to
 trailer, holding the checked project in memory between requests. A module outside `write` informs the types and is
-written with `context: true`. Types come from bridge.py's mypy session, joined to nodes by exact span.
+written with `context: true`. Types come from session.py's mypy session, joined to nodes by exact span.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from typing import Iterator
 
 from mypy.version import __version__ as MYPY_VERSION
 
-from bridge import Session, spans, states
+from session import Session, spans, states
 
 OPERATORS = {
     ast.Add: "+", ast.Sub: "-", ast.Mult: "*", ast.Div: "/", ast.FloorDiv: "//", ast.Mod: "%", ast.Pow: "**",

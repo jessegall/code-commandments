@@ -12,7 +12,7 @@ namespace CodeCommandments.Bridge;
 
 /// <summary>
 /// Writes a run as the generic tree (contract/CONTRACT.md): a header, a line per file, the outside declarations the
-/// files reach, and a trailer. It reads the compiler exactly as <see cref="TreeWriter"/> does; only the shape differs.
+/// files reach, and a trailer. It reads the compiler through <see cref="Readings"/>.
 /// It streams: one project at a time, each node written straight through as it is read, nothing of a project kept
 /// once its files are written but the plain text of the outside declarations it reached.
 /// </summary>
@@ -20,7 +20,10 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
 {
     public const int Version = 3;
 
-    /// <summary>How a line is written: as deep as the version-7 writer goes, since a long chain of expressions nests past 64.</summary>
+    /// <summary>The bridge's own version, which the header names beside the contract's.</summary>
+    private const string BridgeVersion = "8";
+
+    /// <summary>How a line is written: deep enough for a long chain of expressions, which nests past 64.</summary>
     private static readonly JsonWriterOptions Json = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping, MaxDepth = 1000 };
 
     /// <summary>The outside declarations the files reach, as the program line writes them.</summary>
@@ -42,7 +45,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             json.WriteString("language", "csharp");
             json.WriteStartObject("bridge");
             json.WriteString("name", "roslyn-bridge");
-            json.WriteString("version", TreeWriter.Version.ToString());
+            json.WriteString("version", BridgeVersion);
             json.WriteEndObject();
             json.WriteStartArray("roots");
 
@@ -85,7 +88,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
     /// <summary>A line for each of the project's files that exists.</summary>
     private void WriteProject(Stream output, Project project)
     {
-        var readings = new TreeWriter(project);
+        var readings = new Readings(project);
 
         foreach (var tree in project.Trees.Where(tree => File.Exists(tree.FilePath)))
         {
@@ -129,7 +132,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             return;
         }
 
-        var id = original.ToDisplayString(TreeWriter.Qualified);
+        var id = original.ToDisplayString(Readings.Qualified);
 
         if (outside.ContainsKey(id))
         {
@@ -140,8 +143,8 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             id,
             original.TypeKind switch { TypeKind.Interface => "interface", TypeKind.Enum => "enum", TypeKind.Struct => "struct", _ => "class" },
             original.Name,
-            original.BaseType?.OriginalDefinition.ToDisplayString(TreeWriter.Qualified),
-            original.Interfaces.Select(face => face.OriginalDefinition.ToDisplayString(TreeWriter.Qualified)).ToList());
+            original.BaseType?.OriginalDefinition.ToDisplayString(Readings.Qualified),
+            original.Interfaces.Select(face => face.OriginalDefinition.ToDisplayString(Readings.Qualified)).ToList());
 
         if (original.BaseType is { } parent)
         {
@@ -188,13 +191,13 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
     }
 
     /// <summary>One file's line: its nodes numbered in pre-order, then its comments attached to them.</summary>
-    private sealed class FileWriter(ContractWriter run, TreeWriter readings, Project project, SyntaxTree tree, SemanticModel model)
+    private sealed class FileWriter(ContractWriter run, Readings readings, Project project, SyntaxTree tree, SemanticModel model)
     {
         private static readonly ConcurrentDictionary<Type, PropertyInfo[]> Properties = new();
 
         private readonly string text = tree.GetText().ToString();
 
-        private readonly int[] bytes = TreeWriter.ByteOffsets(tree.GetText().ToString(), TreeWriter.MarkLength(tree.FilePath));
+        private readonly int[] bytes = Readings.ByteOffsets(tree.GetText().ToString(), Readings.MarkLength(tree.FilePath));
 
         private readonly List<(int Start, int End, int Id)> spans = [];
 
@@ -299,7 +302,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             BaseNamespaceDeclarationSyntax => "other",
             LocalFunctionStatementSyntax or AccessorDeclarationSyntax => "member",
             PatternSyntax => "pattern",
-            _ => TreeWriter.Role(node),
+            _ => Readings.Role(node),
         };
 
         private static List<string> Neutral(SyntaxNode node)
@@ -407,7 +410,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             Target(json, node);
             Refers(json, node);
 
-            if (node is PostfixUnaryExpressionSyntax { RawKind: (int)SyntaxKind.SuppressNullableWarningExpression } forgiven && TreeWriter.IsDeclaredNullable(forgiven.Operand, model))
+            if (node is PostfixUnaryExpressionSyntax { RawKind: (int)SyntaxKind.SuppressNullableWarningExpression } forgiven && Readings.IsDeclaredNullable(forgiven.Operand, model))
             {
                 json.WriteStartObject("extras");
                 json.WriteStartObject("csharp");
@@ -417,7 +420,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             }
         }
 
-        /// <summary>The name a declaration or an identifier carries, as <see cref="TreeWriter"/> reads it.</summary>
+        /// <summary>The name a declaration or an identifier carries.</summary>
         private static string? Name(SyntaxNode node) => node switch
         {
             BaseTypeDeclarationSyntax type => type.Identifier.ValueText,
@@ -513,9 +516,9 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
 
             if (declared is not null)
             {
-                json.WriteString("symbol", declared.OriginalDefinition.ToDisplayString(TreeWriter.Declared));
+                json.WriteString("symbol", declared.OriginalDefinition.ToDisplayString(Readings.Declared));
 
-                if (node is MemberDeclarationSyntax && (declared.IsOverride || TreeWriter.ImplementsInterfaceMember(declared)))
+                if (node is MemberDeclarationSyntax && (declared.IsOverride || Readings.ImplementsInterfaceMember(declared)))
                 {
                     json.WriteBoolean("inherited", true);
                 }
@@ -560,7 +563,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
                 Type(json, "resolved", type, "compiler");
             }
 
-            if (TreeWriter.IsConstant(expression, model))
+            if (Readings.IsConstant(expression, model))
             {
                 json.WriteBoolean("constant", true);
             }
@@ -587,14 +590,14 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             run.resolved++;
             var original = (method.ReducedFrom ?? method).OriginalDefinition;
             json.WriteStartObject("target");
-            json.WriteString("symbol", original.ToDisplayString(TreeWriter.Declared));
-            json.WriteString("type", original.ContainingType.ToDisplayString(TreeWriter.Qualified));
+            json.WriteString("symbol", original.ToDisplayString(Readings.Declared));
+            json.WriteString("type", original.ContainingType.ToDisplayString(Readings.Qualified));
             json.WriteString("name", original.Name);
             json.WriteStartArray("parameters");
 
             foreach (var parameter in method.Parameters)
             {
-                json.WriteStringValue(parameter.Type.ToDisplayString(TreeWriter.Qualified));
+                json.WriteStringValue(parameter.Type.ToDisplayString(Readings.Qualified));
             }
 
             json.WriteEndArray();
@@ -612,7 +615,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
 
             if (model.GetSymbolInfo(node).Symbol is INamedTypeSymbol named)
             {
-                json.WriteString("refers", named.OriginalDefinition.ToDisplayString(TreeWriter.Qualified));
+                json.WriteString("refers", named.OriginalDefinition.ToDisplayString(Readings.Qualified));
                 run.Remember(named);
             }
         }
@@ -633,7 +636,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
         }
 
         /// <summary>Does <paramref name="type"/> have a spelling, and every part of it?</summary>
-        private static bool IsSpelled(ITypeSymbol type) => type.ToDisplayString(TreeWriter.Qualified).Length > 0 && type switch
+        private static bool IsSpelled(ITypeSymbol type) => type.ToDisplayString(Readings.Qualified).Length > 0 && type switch
         {
             IErrorTypeSymbol => true,
             IArrayTypeSymbol array => IsSpelled(array.ElementType),
@@ -645,7 +648,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
         private void Type(Utf8JsonWriter json, ITypeSymbol type, string origin)
         {
             json.WriteStartObject();
-            json.WriteString("text", type.ToDisplayString(TreeWriter.Qualified));
+            json.WriteString("text", type.ToDisplayString(Readings.Qualified));
 
             switch (type)
             {
@@ -675,7 +678,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
                     break;
                 case INamedTypeSymbol named:
                     json.WriteString("kind", "named");
-                    json.WriteString("name", named.OriginalDefinition.ToDisplayString(TreeWriter.Qualified.WithGenericsOptions(SymbolDisplayGenericsOptions.None)));
+                    json.WriteString("name", named.OriginalDefinition.ToDisplayString(Readings.Qualified.WithGenericsOptions(SymbolDisplayGenericsOptions.None)));
 
                     if (named.TypeArguments.Length > 0)
                     {
@@ -713,7 +716,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
         /// <summary>Every comment in the file, in order, attached to the node it leads or trails.</summary>
         private void WriteComments(Utf8JsonWriter json)
         {
-            var found = tree.GetRoot().DescendantTrivia(descendIntoTrivia: false).Where(TreeWriter.IsComment).ToList();
+            var found = tree.GetRoot().DescendantTrivia(descendIntoTrivia: false).Where(Readings.IsComment).ToList();
             var commentEnds = new Dictionary<int, int>();
 
             foreach (var trivia in found)
@@ -729,7 +732,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
                 var (start, end) = (bytes[trivia.FullSpan.Start], bytes[Trimmed(trivia)]);
                 json.WriteStartObject();
                 json.WriteNumber("id", id);
-                json.WriteString("kind", TreeWriter.CommentKind(trivia));
+                json.WriteString("kind", Readings.CommentKind(trivia));
                 json.WriteString("text", text[trivia.FullSpan.Start..Trimmed(trivia)]);
                 json.WriteStartArray("span");
                 json.WriteNumberValue(start);
@@ -743,7 +746,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
                     WriteRefs(json, documentation);
                 }
 
-                if (TreeWriter.IsCode(trivia))
+                if (Readings.IsCode(trivia))
                 {
                     json.WriteStartObject("extras");
                     json.WriteStartObject("csharp");
@@ -787,18 +790,18 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             {
                 var info = model.GetSymbolInfo(cref);
                 var symbol = info.Symbol ?? info.CandidateSymbols.FirstOrDefault();
-                var owner = symbol is null ? TreeWriter.Owner(cref, model) : null;
+                var owner = symbol is null ? Readings.Owner(cref, model) : null;
                 json.WriteStartObject();
                 json.WriteString("text", cref.ToString());
 
                 if (symbol is not null)
                 {
-                    json.WriteString("symbol", symbol.ToDisplayString(TreeWriter.Declared));
+                    json.WriteString("symbol", symbol.ToDisplayString(Readings.Declared));
                 }
 
                 if (owner is not null)
                 {
-                    json.WriteString("owner", owner.ToDisplayString(TreeWriter.Qualified));
+                    json.WriteString("owner", owner.ToDisplayString(Readings.Qualified));
                 }
 
                 if (owner?.Locations.Any(location => location.IsInSource) == true)

@@ -6,7 +6,7 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Bridge is bridge/roslyn, a prebuilt image run with --tree: the service a session keeps up, or a memory-capped
+// Bridge is bridge/roslyn, a prebuilt image writing the generic tree: the service a session keeps up, or a memory-capped
 // container of its own for one run, the paths it reads mounted there. .NET never runs on the host.
 type Bridge struct{}
 

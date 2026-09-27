@@ -12,7 +12,7 @@ import (
 
 // mypy is the Python bridge's sources, carried in the binary and written out beside the environment they run in.
 //
-//go:embed mypy/tree.py mypy/bridge.py mypy/requirements.txt
+//go:embed mypy/tree.py mypy/session.py mypy/requirements.txt
 var mypy embed.FS
 
 // mypyTree is the bridge's sources, written out as a folder the virtual environment is built in beside them.

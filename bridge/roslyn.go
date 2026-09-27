@@ -63,7 +63,7 @@ func Roslyn(roots ...string) ([]string, error) {
 		return nil, err
 	}
 
-	return append(append([]string{"bash", script}, readOnly(roots)...), "--", "--tree"), nil
+	return append(append([]string{"bash", script}, readOnly(roots)...), "--"), nil
 }
 
 // RoslynService is the bridge the session keeps up for the project that holds every root, answering on its local

@@ -1,16 +1,11 @@
-"""The types of a Python project as mypy resolves them, written as JSON lines for the PHP engine.
-
-`python bridge.py <path>...` types every module under the paths once. `python bridge.py --serve` answers one
-JSON request per stdin line with the same lines, holding the checked project in memory between requests so a
-later one re-checks only the modules whose files changed. CONTRACT.md beside this file is the output format.
+"""The types of a Python project as mypy resolves them: one session holding the checked project in memory
+between requests, so a later one re-checks only the modules whose files changed, and each expression's type read
+by its span. tree.py writes them into the generic tree.
 """
 
 from __future__ import annotations
 
-import json
 import os
-import sys
-from typing import Iterator
 
 from mypy import build
 from mypy.find_sources import InvalidSourceList, create_source_list
@@ -22,9 +17,6 @@ from mypy.options import Options
 from mypy.server.subexpr import get_subexpressions
 from mypy.server.update import FineGrainedBuildManager
 from mypy.types import AnyType, FunctionLike, Instance, NoneType, ProperType, Type, UnionType, get_proper_type
-
-VERSION = 2
-
 
 def options(python: str | None) -> Options:
     """How mypy reads a consumer's project: every body checked, imports it cannot find left untyped, and the
@@ -141,38 +133,3 @@ def spans(path: str, state: State, types: dict[Expression, Type]) -> tuple[int, 
         if fact is not None and span not in found:
             found[span] = fact
     return len(written), found
-
-
-def typed(session: Session, paths: list[str], write: list[str], python: str | None) -> Iterator[dict[str, object]]:
-    """The contract's lines for the modules under $paths: the version, one line per file, the resolution."""
-    yield {"version": VERSION}
-    found, types, graph = session.checked(paths, python)
-    wanted = {os.path.realpath(p) for p in write} if write else {os.path.realpath(s.path) for s in found if s.path}
-    seen = resolved = 0
-    for path, state in states(graph, wanted).items():
-        count, typed_spans = spans(path, state, types)
-        seen += count
-        resolved += len(typed_spans)
-        yield {"path": path, "types": [{"start": start, "end": end, **fact} for (start, end), fact in sorted(typed_spans.items())]}
-    yield {"resolution": {"expressions": seen, "typed": resolved}}
-
-
-def emit(lines: Iterator[dict[str, object]]) -> None:
-    for line in lines:
-        sys.stdout.write(json.dumps(line, separators=(",", ":")) + "\n")
-    sys.stdout.flush()
-
-
-def main(argv: list[str]) -> int:
-    session = Session()
-    if "--serve" in argv:
-        for request in sys.stdin:
-            asked = json.loads(request)
-            emit(typed(session, asked.get("paths", []), asked.get("write", []), asked.get("python")))
-        return 0
-    emit(typed(session, [arg for arg in argv if not arg.startswith("--")], [], None))
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
