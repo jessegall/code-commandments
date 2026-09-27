@@ -17,8 +17,19 @@ var hashing engine.HashRules = rules{}
 // declaresName are the declarations whose own name normalising leaves out: two names for one body are one code.
 var declaresName = []string{"VariableDeclaration", "Parameter", "BindingElement", "FunctionDeclaration"}
 
-func (rules) Counts(engine.Match) bool {
-	return true
+// Counts leaves out what the PHP engine reads as part of one node: the spans of a template literal, which is one
+// literal.
+func (rules) Counts(node engine.Match) bool {
+	return node.Kind() != "TemplateSpan"
+}
+
+// Unwrap reads a value cast with `as` as the value, as the PHP engine does: the cast names a type, not code.
+func (rules) Unwrap(node engine.Match) (engine.Match, bool) {
+	if node.Kind() != "AsExpression" {
+		return engine.Match{}, false
+	}
+
+	return node.Child("expression"), true
 }
 
 // Weight counts statements, blocks, catch clauses and expressions, but not a member's or a declaration's name,
@@ -46,7 +57,7 @@ func (rules) Weight(node engine.Match) int {
 }
 
 func (rules) IsName(node engine.Match) bool {
-	if node.Kind() != "Identifier" {
+	if node.Kind() != "Identifier" || isUndefined(node) {
 		return false
 	}
 	if node.Node().Field == "name" {
@@ -67,6 +78,9 @@ func (rules) IsCallee(node engine.Match) bool {
 // Literal reads a literal as its kind and value, a string or number blanked in a shape; a template reads
 // whole, as its source.
 func (rules) Literal(m engine.Match, shape bool) (string, bool) {
+	if isUndefined(m) {
+		return "lit:undefined", true
+	}
 	node := m.Node()
 	if node.Literal == "" {
 		return "", false
@@ -180,4 +194,10 @@ func (n Node) IsFunction() bool {
 	}
 
 	return false
+}
+
+// isUndefined says whether the node is `undefined`: a value, as `null` is, though TypeScript's tree spells it as a
+// name — the PHP engine reads it as the constant it is, never blanked as data.
+func isUndefined(node engine.Match) bool {
+	return node.Kind() == "Identifier" && node.Name() == "undefined" && node.Node().Field != "name"
 }

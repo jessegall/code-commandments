@@ -147,10 +147,28 @@ export const { a, b: [c] } = { a: 1, b: [2] }
 // floor.
 func TestABodyWeighsWhatThePhpEngineWeighs(t *testing.T) {
 	for body, php := range map[string]int{"const c = f(C)": 6, "const c = x.f(C)": 6, "const c = f(C)(D)": 8, "const c = new F(C)": 6, "if (c === null) {\n    y()\n  }": 9,
-		"y(A)": 5, "y()": 4, "const c = f()": 5, "const c = f(A, B)": 7} {
+		"y(A)": 5, "y()": 4, "const c = f()": 5, "const c = f(A, B)": 7, "const c = `${x}: y ${z}`": 3, "const c = v as T": 3} {
 		codebase := frontendtest.FromSource(t, map[string]string{"weight.ts": "export function a () {\n  " + body + "\n}\n"})
 		if weight := typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "a")).BodyWeight(); weight != php {
 			t.Errorf("%q weighs %d, the PHP engine %d", body, weight, php)
 		}
+	}
+}
+
+// TestACastReadsAsTheValueCast holds two bodies that differ only in the type a value is cast to to one shape, as the PHP
+// engine reads them: worldwatchmarket's requireRatioAttr and requireSideAttr are one function written twice.
+func TestACastReadsAsTheValueCast(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"casts.ts": "export function a () {\n  return v as Ratio\n}\n\nexport function b () {\n  return v as Side\n}\n"})
+	if typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "a")).BodyShape() != typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "b")).BodyShape() {
+		t.Error("two casts to different types read as different code")
+	}
+}
+
+// TestUndefinedReadsAsTheConstantItIs holds a body answering undefined apart from one answering a name, as the PHP
+// engine holds them: worldwatchmarket's two lookup helpers differ only there.
+func TestUndefinedReadsAsTheConstantItIs(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"answers.ts": "export function a (key: string) {\n  return key.length ? key : undefined\n}\n\nexport function b (key: string) {\n  return key.length ? key : key\n}\n"})
+	if typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "a")).BodyShape() == typescript.Of(frontendtest.Named(t, codebase, "FunctionDeclaration", "b")).BodyShape() {
+		t.Error("undefined reads as one more name")
 	}
 }

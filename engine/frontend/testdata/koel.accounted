@@ -4,7 +4,6 @@ only PHP: resources/assets/js/components/artist/ArtistEventItem.spec.ts:9 NearDu
 only PHP: resources/assets/js/components/layout/main-wrapper/sidebar/PlaylistSidebarItem.spec.ts:15 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
 only PHP: resources/assets/js/components/radio/EditRadioStationForm.spec.ts:13 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
 only PHP: resources/assets/js/components/user/UserCard.spec.ts:17 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
-only Go: resources/assets/js/App.vue:157 NearDuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
 only Go: resources/assets/js/components/auth/two-factor/TwoFactorAuthSettings.spec.ts:18 DuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
 only Go: resources/assets/js/components/auth/two-factor/TwoFactorChallengeForm.spec.ts:10 DuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports
 only Go: resources/assets/js/components/auth/two-factor/TwoFactorManageActions.spec.ts:11 DuplicateFunction  # PHP misreads angle-bracket assertions (<T>x) and loses declarations after semicolon-less imports

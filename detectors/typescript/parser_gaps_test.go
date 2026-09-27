@@ -40,9 +40,9 @@ func TestAnAngleBracketAssertionKeepsWhatFollowsIt(t *testing.T) {
 }
 
 // TestAGenericFunctionWrittenTwiceIsADuplicate holds the tool to reading a function with a type parameter as the one
-// function it is: the PHP tool missed smart-farmers-pos's resolve<T>, written the same in two components.
+// function it is, written the same in two files.
 func TestAGenericFunctionWrittenTwiceIsADuplicate(t *testing.T) {
-	resolve := "export function resolve<T> (value: T | (() => T)): T {\n  return typeof value === 'function' ? (value as () => T)() : value\n}\n"
+	resolve := "export function resolve<T> (value: T | (() => T), fallback: T): T {\n  if (value === undefined) {\n    return fallback\n  }\n  const resolved = typeof value === 'function' ? (value as () => T)() : value\n  return resolved ?? fallback\n}\n"
 	codebase := frontendtest.FromSource(t, map[string]string{"src/builder.ts": resolve, "src/item.ts": resolve})
 	if found := (typescript.DuplicateFunctionDetector{}).Find(codebase); len(found) != 2 {
 		t.Errorf("the generic function written twice is found %d times", len(found))
