@@ -121,7 +121,7 @@ public static class References
         var tfm = project.TargetFramework();
         var frameworks = new List<string> { "Microsoft.NETCore.App" };
 
-        if (project.Sdk.Equals("Microsoft.NET.Sdk.Web", StringComparison.OrdinalIgnoreCase))
+        if (project.IsWeb())
         {
             frameworks.Add("Microsoft.AspNetCore.App");
         }

@@ -169,6 +169,26 @@ func TestAnAnonymousClassLendsItsMembersNoSymbol(t *testing.T) {
 	}
 }
 
+// TestAClassTheProjectsLoaderFailsOnIsSaidOnTheStream holds the bridge to saying which class the scanned project's own
+// autoloader threw on, and why, on the program line, where it had been dropped unseen.
+func TestAClassTheProjectsLoaderFailsOnIsSaidOnTheStream(t *testing.T) {
+	folder := written(t, map[string]string{"Cart.php": "<?php\nnamespace Shop;\nfinal class Cart extends \\Acme\\Broken {}\n"})
+	if err := os.MkdirAll(filepath.Join(folder, "vendor"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	loader := "<?php\nspl_autoload_register(function (string $class): void {\n    if ($class === 'Acme\\\\Broken') {\n        throw new RuntimeException('the file is not there');\n    }\n});\n"
+	if err := os.WriteFile(filepath.Join(folder, "vendor", "autoload.php"), []byte(loader), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stream := bridged(t, folder)
+	if stream.Program == nil || len(stream.Program.Unreadable) != 1 {
+		t.Fatalf("the program line says %+v", stream.Program)
+	}
+	if unreadable := stream.Program.Unreadable[0]; unreadable.Symbol != `Acme\Broken` || unreadable.Reason != "the file is not there" {
+		t.Errorf("the unreadable class is %+v", unreadable)
+	}
+}
+
 // TestAProjectWithNoAutoloaderStillKnowsPhpsOwnClasses holds the bridge to listing a built-in interface a class
 // implements when the project has no vendor/autoload.php, so what overrides it is known (the frozen shop's
 // BlankText::__toString), and to listing nothing else there: the bridge's own php-parser is no project's.

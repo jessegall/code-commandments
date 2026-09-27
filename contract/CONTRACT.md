@@ -284,6 +284,7 @@ language through this one list.
 | key | what |
 |---|---|
 | `symbols` | declarations outside the scanned files (see below). A PHP bridge reflects them from the installed vendor packages, a C# bridge reads them from the referenced assemblies. The engine can reach neither, so without them a hierarchy and a call chain stop at the edge of the scan |
+| `unreadable` | `[{"symbol", "reason"}]`: classes the scan names that the scanned project's own loader failed on (a PHP autoloader that throws), and its message. Each stays outside the scan — a hierarchy or a chain through it stops there — and the tool says so, rather than dropping it unseen |
 | `packages` | the folders the language treats as packages (Python: folders holding `__init__.py`), absolute |
 | `aliases` | TypeScript and Vue: `[{"prefix", "path"}]`, the module path aliases the bridge resolved imports through |
 

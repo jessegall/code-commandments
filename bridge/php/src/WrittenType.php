@@ -21,14 +21,19 @@ final readonly class WrittenType implements JsonSerializable
         public Nullability $nullability,
     ) {}
 
-    public static function named(string $name): self
+    public static function named(string $name, Nullability $nullability): self
     {
-        return new self('named', $name, null, Nullability::None);
+        return new self('named', $name, null, $nullability);
     }
 
-    public static function keyword(string $keyword): self
+    /**
+     * A keyword type; unmarked, `null` and `mixed` admit null by what they are.
+     */
+    public static function keyword(string $keyword, Nullability $nullability): self
     {
-        return new self('keyword', $keyword, null, in_array(strtolower($keyword), ['null', 'mixed'], true) ? Nullability::Admitted : Nullability::None);
+        $admitted = $nullability === Nullability::None && in_array(strtolower($keyword), ['null', 'mixed'], true);
+
+        return new self('keyword', $keyword, null, $admitted ? Nullability::Admitted : $nullability);
     }
 
     /**
@@ -39,14 +44,6 @@ final readonly class WrittenType implements JsonSerializable
         $admitsNull = array_filter($members, static fn (WrittenType $member): bool => $member->nullability->admitsNull()) !== [];
 
         return new self($kind, null, $members, $admitsNull ? Nullability::Admitted : Nullability::None);
-    }
-
-    /**
-     * The type written `?T`: the same type, admitting null.
-     */
-    public function markedNullable(): self
-    {
-        return new self($this->kind, $this->name, $this->members, Nullability::Marked);
     }
 
     /**

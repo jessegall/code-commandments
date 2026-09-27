@@ -22,15 +22,17 @@ namespaces live in one project, the compiler never stops a reference going the w
 
 ### Declare the stack
 
-The direction is declared once, in the project's `.commandments/config.php`, each layer naming the layers
-it may use:
+The direction is declared once, in the project's `.commandments/config.json`, each layer naming the layers
+it may use — here the domain uses only itself, the application its domain, and the web layer both:
 
-```php
-$config->configure(fn (\JesseGall\CodeCommandments\Detectors\CSharp\NamespaceDependencyDetector $d) => $d
-    ->layer('Shop.Domain')                                         // the business: itself only
-    ->layer('Shop.Application', mayUse: ['Shop.Domain'])           // use cases over the domain
-    ->layer('Shop.Web', mayUse: ['Shop.Application', 'Shop.Domain'])
-);
+```json
+"configure": {
+    "csharp/NamespaceDependencyDetector": [
+        {"layer": ["Shop.Domain"]},
+        {"layer": ["Shop.Application", ["Shop.Domain"]]},
+        {"layer": ["Shop.Web", ["Shop.Application", "Shop.Domain"]]}
+    ]
+}
 ```
 
 ### What is judged

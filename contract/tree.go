@@ -340,9 +340,17 @@ type CSharpComment struct {
 
 // Program holds the facts about the whole program that no file carries.
 type Program struct {
-	Symbols  []OutsideSymbol `json:"symbols,omitempty"`
-	Packages []string        `json:"packages,omitempty"`
-	Aliases  []Alias         `json:"aliases,omitempty"`
+	Symbols    []OutsideSymbol    `json:"symbols,omitempty"`
+	Unreadable []UnreadableSymbol `json:"unreadable,omitempty"`
+	Packages   []string           `json:"packages,omitempty"`
+	Aliases    []Alias            `json:"aliases,omitempty"`
+}
+
+// UnreadableSymbol is a class the scan names that the scanned project's own loader failed on, and why: it stays
+// outside the scan, said rather than dropped.
+type UnreadableSymbol struct {
+	Symbol string `json:"symbol"`
+	Reason string `json:"reason"`
 }
 
 // OutsideSymbol is a declaration outside the scanned files.

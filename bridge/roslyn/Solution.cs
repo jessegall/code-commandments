@@ -36,12 +36,14 @@ public sealed class Solution
 
     /// <summary>The project <paramref name="file"/> belongs to — none for a file outside every project.</summary>
     public string? Owner(string file) =>
-        projects.Keys
-            .Where(csproj => file.StartsWith(Path.GetDirectoryName(csproj)! + Path.DirectorySeparatorChar, StringComparison.Ordinal))
-            .MaxBy(csproj => Path.GetDirectoryName(csproj)!.Length);
+        projects
+            .Where(project => file.StartsWith(project.Value.Folder + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            .OrderByDescending(project => project.Value.Folder.Length)
+            .Select(project => project.Key)
+            .FirstOrDefault();
 
     /// <summary>The source files of every project found — what compiles, though only the asked files are written.</summary>
-    public IReadOnlyList<string> Files() => Sources.Under(projects.Keys.Select(csproj => Path.GetDirectoryName(csproj)!));
+    public IReadOnlyList<string> Files() => Sources.Under(projects.Values.Select(project => project.Folder));
 
     /// <summary>The projects under <paramref name="root"/>, or the one it sits inside.</summary>
     private static IEnumerable<string> Found(string root)
@@ -56,14 +58,16 @@ public sealed class Solution
     /// <summary>The project file in the nearest folder above <paramref name="path"/> that holds one.</summary>
     private static IEnumerable<string> Enclosing(string path)
     {
-        for (var directory = Directory.Exists(path) ? path : Path.GetDirectoryName(path); directory is not null; directory = Path.GetDirectoryName(directory))
-        {
-            var csproj = Directory.EnumerateFiles(directory, "*.csproj").FirstOrDefault();
+        var directory = Directory.Exists(path) ? path : Path.GetDirectoryName(path);
 
-            if (csproj is not null)
+        while (directory is not null)
+        {
+            if (Directory.EnumerateFiles(directory, "*.csproj").FirstOrDefault() is { } csproj)
             {
                 return [csproj];
             }
+
+            directory = Path.GetDirectoryName(directory);
         }
 
         return [];

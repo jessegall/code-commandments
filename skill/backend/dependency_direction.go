@@ -28,7 +28,7 @@ func (DependencyDirection) Definition() skill.Definition {
 		Tier:      skill.KeepInMind,
 		Order:     17,
 		Title:     "Dependency direction — a layer may only reach DOWN",
-		Trigger:   "Which layer may know about which. When a project declares its layers (`$config->configure(fn (NamespaceDependencyDetector $d) => $d->layer('App\\\\Ui\\\\Elements')->layer('App\\\\Ui\\\\Shared', mayUse: ['App\\\\Ui\\\\Elements']))`), every reference OUT of a declared layer must point at a layer it is allowed to use — down the stack, never back up and never sideways. Read this before adding an import, a type hint, a `new`, or a static call that crosses a namespace boundary, before moving a class between namespaces, and when deciding where a new class belongs.",
+		Trigger:   "Which layer may know about which. When a project declares its layers (under `configure` in `.commandments/config.json`: `{\"layer\": [\"App\\\\Ui\\\\Shared\", [\"App\\\\Ui\\\\Elements\"]]}`), every reference OUT of a declared layer must point at a layer it is allowed to use — down the stack, never back up and never sideways. Read this before adding an import, a type hint, a `new`, or a static call that crosses a namespace boundary, before moving a class between namespaces, and when deciding where a new class belongs.",
 		Intro:     dependencyDirectionIntro,
 		Summary:   `a declared layer may only reference the layers it declared it may use — down the stack, never back up, never sideways; the direction is enforced from the project's own layer declaration.`,
 		Principle: dependencyDirectionPrinciple,

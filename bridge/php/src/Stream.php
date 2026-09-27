@@ -39,9 +39,10 @@ final readonly class Stream
             $referenced += $file->writer->referenced;
             $declared += $file->writer->declared;
         }
-        $symbols = (new OutsideSymbols($this->autoload(), $declared, $referenced))->all();
-        if ($symbols !== []) {
-            $this->line($out, ['program' => ['symbols' => $symbols]]);
+        $outside = new OutsideSymbols($this->autoload(), $declared, $referenced);
+        $program = array_filter(['symbols' => $outside->all(), 'unreadable' => $outside->unreadable()]);
+        if ($program !== []) {
+            $this->line($out, ['program' => $program]);
         }
         $this->line($out, ['trailer' => ['files' => count($files)]]);
     }

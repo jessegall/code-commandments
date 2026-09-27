@@ -26,13 +26,12 @@ public static class GlobalUsings
     private static string Derived(string csproj)
     {
         var project = ProjectFile.Read(csproj);
-        var web = project.Sdk.Equals("Microsoft.NET.Sdk.Web", StringComparison.OrdinalIgnoreCase);
         var namespaces = new List<string>();
 
         if (project.ImplicitUsings())
         {
             namespaces.AddRange(Sdk);
-            namespaces.AddRange(web ? Web : []);
+            namespaces.AddRange(project.IsWeb() ? Web : []);
         }
 
         namespaces.AddRange(project.Usings());

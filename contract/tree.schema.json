@@ -252,6 +252,12 @@
       "type": "object",
       "properties": {
         "symbols": {"type": "array", "items": {"$ref": "#/$defs/outsideSymbol"}},
+        "unreadable": {"type": "array", "items": {
+          "type": "object",
+          "properties": {"symbol": {"$ref": "#/$defs/symbolId"}, "reason": {"type": "string"}},
+          "required": ["symbol", "reason"],
+          "additionalProperties": false
+        }},
         "packages": {"type": "array", "items": {"$ref": "#/$defs/absolutePath"}},
         "aliases": {"type": "array", "items": {
           "type": "object",

@@ -26,6 +26,11 @@ final class OutsideSymbols
      */
     private array $symbols = [];
 
+    /**
+     * @var array<string, UnreadableSymbol>
+     */
+    private array $unreadable = [];
+
     private readonly bool $internalOnly;
 
     /**
@@ -49,6 +54,14 @@ final class OutsideSymbols
     public function all(): array
     {
         return array_values($this->symbols);
+    }
+
+    /**
+     * @return list<UnreadableSymbol>
+     */
+    public function unreadable(): array
+    {
+        return array_values($this->unreadable);
     }
 
     private function add(string $class): void
@@ -96,7 +109,9 @@ final class OutsideSymbols
     {
         try {
             return class_exists($class) || interface_exists($class) || trait_exists($class) || enum_exists($class);
-        } catch (\Throwable) {
+        } catch (\Throwable $failure) {
+            $this->unreadable[strtolower(ltrim($class, '\\'))] = new UnreadableSymbol(ltrim($class, '\\'), $failure->getMessage());
+
             return false;
         }
     }

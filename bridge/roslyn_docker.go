@@ -3,7 +3,6 @@ package bridge
 import (
 	"embed"
 	"encoding/xml"
-	"errors"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -34,7 +33,7 @@ func RoslynImage() string {
 // roots mounted read-only at their own paths. Without the image it fails, naming how to build it.
 func roslynInDocker(roots []string) ([]string, error) {
 	if exec.Command("docker", "image", "inspect", RoslynImage()).Run() != nil {
-		return nil, errors.New("the C# bridge image " + RoslynImage() + " is not built: docker build -t " + RoslynImage() + " bridge/roslyn")
+		return nil, RoslynUnavailable{"its development image " + RoslynImage() + " is not built: docker build -t " + RoslynImage() + " bridge/roslyn"}
 	}
 	script, err := roslynScript()
 	if err != nil {

@@ -13,27 +13,32 @@ public sealed class ProjectFile
 
     private readonly Dictionary<string, string> central;
 
-    private readonly string directory;
-
     private readonly string name;
 
     /// <summary>The file each of <see cref="documents"/> was read from, in the same order.</summary>
     private readonly string[] paths;
 
+    /// <summary>The SDK the project names, without a version — `Microsoft.NET.Sdk.Web` — or none for a project of the
+    /// old format, which names no SDK.</summary>
+    public string? Sdk { get; }
+
+    /// <summary>The folder the project file sits in, its full path.</summary>
+    public string Folder { get; }
+
     private ProjectFile(string csproj)
     {
-        directory = Path.GetFullPath(Path.Combine(csproj, ".."));
+        Folder = Path.GetFullPath(Path.Combine(csproj, ".."));
         name = Path.GetFileNameWithoutExtension(csproj);
-        paths = [csproj, .. BuildProps(directory)];
+        paths = [csproj, .. BuildProps(Folder)];
         documents = paths.Select(Load).ToArray();
-        central = CentralVersions(Nearest(directory, "Directory.Packages.props"));
-        Sdk = (documents[0].Root?.Attribute("Sdk")?.Value ?? "").Split('/')[0];
+        central = CentralVersions(Nearest(Folder, "Directory.Packages.props"));
+        Sdk = documents[0].Root?.Attribute("Sdk")?.Value.Split('/')[0];
     }
 
-    /// <summary>The SDK the project names, without a version — `Microsoft.NET.Sdk.Web`.</summary>
-    public string Sdk { get; }
-
     public static ProjectFile Read(string csproj) => new(csproj);
+
+    /// <summary>Is the project a web project — built on `Microsoft.NET.Sdk.Web`, whose framework and usings it brings?</summary>
+    public bool IsWeb() => string.Equals(Sdk, "Microsoft.NET.Sdk.Web", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>The framework the project targets — the first a multi-targeting one names, never a property it could not expand.</summary>
     public string TargetFramework() =>
@@ -65,7 +70,7 @@ public sealed class ProjectFile
     /// The folder MSBuild writes the project's restore output and generated sources to: <c>obj/</c> beside
     /// it, or <c>obj/&lt;project&gt;</c> under the solution's artifacts folder when it uses that layout.
     /// </summary>
-    public string Intermediate() => Artifacts() is { } artifacts ? Path.Combine(artifacts, "obj", name) : Path.Combine(directory, "obj");
+    public string Intermediate() => Artifacts() is { } artifacts ? Path.Combine(artifacts, "obj", name) : Path.Combine(Folder, "obj");
 
     /// <summary>
     /// The artifacts folder the solution declares — <c>ArtifactsPath</c>, read relative to the file that
@@ -94,7 +99,7 @@ public sealed class ProjectFile
 
     /// <summary>The projects this one references, as full paths.</summary>
     public IEnumerable<string> ProjectReferences() =>
-        Included("ProjectReference").Select(reference => Path.GetFullPath(Path.Combine(directory, reference.Id.Replace('\\', Path.DirectorySeparatorChar))));
+        Included("ProjectReference").Select(reference => Path.GetFullPath(Path.Combine(Folder, reference.Id.Replace('\\', Path.DirectorySeparatorChar))));
 
     /// <summary>The shared frameworks the project references by name.</summary>
     public IEnumerable<string> FrameworkReferences() => Included("FrameworkReference").Select(reference => reference.Id);
@@ -150,7 +155,9 @@ public sealed class ProjectFile
     /// <summary>The file named <paramref name="name"/> in <paramref name="directory"/> or the nearest directory above it.</summary>
     private static string? Nearest(string? directory, string name)
     {
-        for (var current = directory; current is not null; current = Path.GetDirectoryName(current))
+        var current = directory;
+
+        while (current is not null)
         {
             var candidate = Path.Combine(current, name);
 
@@ -158,6 +165,8 @@ public sealed class ProjectFile
             {
                 return candidate;
             }
+
+            current = Path.GetDirectoryName(current);
         }
 
         return null;

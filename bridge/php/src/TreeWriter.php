@@ -397,7 +397,7 @@ final class TreeWriter
     private function type(Node $type): WrittenType
     {
         if ($type instanceof Node\NullableType) {
-            return $this->type($type->type)->markedNullable();
+            return $this->spelled($type->type, Nullability::Marked);
         }
         if ($type instanceof Node\UnionType) {
             return WrittenType::combined('union', array_map($this->type(...), $type->types));
@@ -405,13 +405,22 @@ final class TreeWriter
         if ($type instanceof Node\IntersectionType) {
             return WrittenType::combined('intersection', array_map($this->type(...), $type->types));
         }
+
+        return $this->spelled($type, Nullability::None);
+    }
+
+    /**
+     * A type spelled by one name: a class, named as the file names it, or a keyword.
+     */
+    private function spelled(Node $type, Nullability $nullability): WrittenType
+    {
         if ($type instanceof Node\Name && ! $type->isSpecialClassName()) {
             $this->referenced[$type->toLowerString()] = $type->toString();
 
-            return WrittenType::named($type->toString());
+            return WrittenType::named($type->toString(), $nullability);
         }
 
-        return WrittenType::keyword($type->toString());
+        return WrittenType::keyword($type->toString(), $nullability);
     }
 
     /**

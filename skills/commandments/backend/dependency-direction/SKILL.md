@@ -1,6 +1,6 @@
 ---
 name: commandments-backend-dependency-direction
-description: "Which layer may know about which. When a project declares its layers (`$config->configure(fn (NamespaceDependencyDetector $d) => $d->layer('App\\\\Ui\\\\Elements')->layer('App\\\\Ui\\\\Shared', mayUse: ['App\\\\Ui\\\\Elements']))`), every reference OUT of a declared layer must point at a layer it is allowed to use — down the stack, never back up and never sideways. Read this before adding an import, a type hint, a `new`, or a static call that crosses a namespace boundary, before moving a class between namespaces, and when deciding where a new class belongs."
+description: "Which layer may know about which. When a project declares its layers (under `configure` in `.commandments/config.json`: `{\"layer\": [\"App\\\\Ui\\\\Shared\", [\"App\\\\Ui\\\\Elements\"]]}`), every reference OUT of a declared layer must point at a layer it is allowed to use — down the stack, never back up and never sideways. Read this before adding an import, a type hint, a `new`, or a static call that crosses a namespace boundary, before moving a class between namespaces, and when deciding where a new class belongs."
 ---
 
 # Dependency direction — a layer may only reach DOWN
@@ -23,16 +23,19 @@ it compiles, the tests pass. The cost lands later — you cannot extract, reuse,
 isolation, or reason about the low layer without dragging the high one along, and by
 then the cycle has a dozen strands.
 
-So the direction is **declared**, once, in the project's `.commandments/config.php` —
+So the direction is **declared**, once, in the project's `.commandments/config.json` —
 each layer names the layers it may use — and every reference out of a declared layer
-is judged against it:
+is judged against it. Here the primitives may use only themselves, the shared layer is
+composed from the primitives, and the domain knows nothing about the UI:
 
-```php
-$config->configure(fn (NamespaceDependencyDetector $d) => $d
-    ->layer('App\\Ui\\Elements')                                // primitives: itself only
-    ->layer('App\\Ui\\Shared', mayUse: ['App\\Ui\\Elements'])   // composed FROM primitives
-    ->layer('App\\Domain')                                      // knows nothing about UI
-);
+```json
+"configure": {
+    "backend/NamespaceDependencyDetector": [
+        {"layer": ["App\\Ui\\Elements"]},
+        {"layer": ["App\\Ui\\Shared", ["App\\Ui\\Elements"]]},
+        {"layer": ["App\\Domain"]}
+    ]
+}
 ```
 
 Read it as the stack, top-down: a layer may reach the layers it listed, and nothing

@@ -24,9 +24,9 @@ An array of line fragments joined with a newline has neither property:
 - The **delimiters come apart.** `'/**'` and `' */'` are separate elements with the body between
   them, so a docblock is not visibly a docblock — it is three unrelated strings that happen to be
   adjacent.
-- The **indentation is spelled**, not laid out. `'    $config->disable('` asks the reader to count
+- The **indentation is spelled**, not laid out. `'    $router->middleware('` asks the reader to count
   characters inside a quote instead of seeing alignment.
-- The **escapes fight the interpolation.** `"\${$var} = function (Config \$config): void {"` has to
+- The **escapes fight the interpolation.** `"\${$var} = function (Router \$router): void {"` has to
   be decoded before you know what it emits.
 - The **join is somewhere else.** `implode("\n", $lines)` can be ten lines away, so nothing at the
   array itself says these are LINES at all. Change the separator and every element silently means
@@ -43,8 +43,8 @@ return <<<PHP
     /**
      * {$purpose}
      */
-    \${$var} = function (Config \$config): void {
-        \$config->disable(
+    \${$var} = function (Router \$router): void {
+        \$router->middleware(
     {$body}
         );
     };

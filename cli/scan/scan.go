@@ -136,6 +136,7 @@ func (s Sources) Load() (*engine.Codebase, error) {
 	}
 
 	codebase := engine.Load(streams...)
+	sayUnreadable(streams)
 
 	if len(s.byLanguage[source.PHP]) > 0 {
 		php.TypesOf(codebase).Fill(codebase)
@@ -216,6 +217,19 @@ func roslyn(roots []string) (*bridge.Server, error) {
 	}
 
 	return bridge.Serve(command)
+}
+
+// sayUnreadable says, on STDERR, which classes the scanned project's own loader failed on: each stays outside the
+// scan, and the run says why rather than letting it vanish.
+func sayUnreadable(streams []*contract.Stream) {
+	for _, stream := range streams {
+		if stream.Program == nil {
+			continue
+		}
+		for _, unreadable := range stream.Program.Unreadable {
+			fmt.Fprintf(os.Stderr, "⚠ %s could not be loaded by the project's own loader (%s), so it is read as outside the scan\n", unreadable.Symbol, unreadable.Reason)
+		}
+	}
 }
 
 // leftUnread says, on STDERR, that a language's files go unread because its bridge cannot run on this machine, and

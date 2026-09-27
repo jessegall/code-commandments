@@ -23,15 +23,18 @@ the cycle is still there, only hidden.
 
 ### Declare the stack
 
-The direction is declared once, in the project's `.commandments/config.php`, each layer naming the layers
-it may use:
+The direction is declared once, in the project's `.commandments/config.json`, each layer naming the layers
+it may use — here the primitives use only themselves, the shared layer is built from them, and the domain
+knows nothing about the UI:
 
-```php
-$config->configure(fn (\JesseGall\CodeCommandments\Detectors\Python\NamespaceDependencyDetector $d) => $d
-    ->layer('shop.ui.elements')                                  // primitives: itself only
-    ->layer('shop.ui.shared', mayUse: ['shop.ui.elements'])      // built from the primitives
-    ->layer('shop.domain')                                       // knows nothing about the UI
-);
+```json
+"configure": {
+    "python/NamespaceDependencyDetector": [
+        {"layer": ["shop.ui.elements"]},
+        {"layer": ["shop.ui.shared", ["shop.ui.elements"]]},
+        {"layer": ["shop.domain"]}
+    ]
+}
 ```
 
 ### What is judged
