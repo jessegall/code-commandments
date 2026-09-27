@@ -8,10 +8,14 @@ import (
 	"errors"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -28,6 +32,7 @@ func (Serve) Names() []string {
 func (Serve) Help() help.Help {
 	return help.Of("Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project.").
 		Form("roslyn-serve", "serve until the bridge stops (started by the journal as a plugin service)").
+		Note("A project with no C# to judge keeps no bridge: the service waits until it is stopped, fetching and starting nothing.").
 		In(help.Hooks)
 }
 
@@ -35,6 +40,18 @@ func (Serve) Help() help.Help {
 func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 	cwd, _ := os.Getwd()
 	project := workspace.ProjectRoot(cwd)
+
+	settings, err := config.Load(project)
+	if err != nil {
+		return 0, err
+	}
+	if !settings.Holds(project, source.CSharp) {
+		stopped := stopSignals()
+		console.Say(project + " has no C# to judge, so no C# bridge is kept up for it.")
+		<-stopped
+
+		return 0, nil
+	}
 
 	command, err := bridge.Roslyn(project)
 	if err != nil {
@@ -111,4 +128,13 @@ func answer(connection net.Conn, server *bridge.Server) error {
 
 		return nil
 	})
+}
+
+// stopSignals is where the session's stop arrives: a service with nothing to serve waits on it rather than ending, so
+// the journal does not start it again.
+func stopSignals() <-chan os.Signal {
+	stopped := make(chan os.Signal, 1)
+	signal.Notify(stopped, syscall.SIGTERM, os.Interrupt)
+
+	return stopped
 }

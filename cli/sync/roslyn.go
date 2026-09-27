@@ -35,7 +35,7 @@ func removeHostRoslynBuilds(console cli.Console) {
 // fetchRoslyn fetches this release's C# bridge for a project that writes C#, when the cache does not hold it yet, so
 // the first judge does not wait on it. It is never built here; a fetch that fails leaves C# unjudged, and says why.
 func fetchRoslyn(root string, project config.Config, console cli.Console) {
-	if !project.Writes(source.CSharp) || len(source.FilesIn(root, "cs", source.Under(root, project.Excluded))) == 0 || os.Getenv("COMMANDMENTS_ROSLYN") != "" {
+	if !project.Holds(root, source.CSharp) || os.Getenv("COMMANDMENTS_ROSLYN") != "" {
 		return
 	}
 	executable, fetched, err := bridge.RoslynExecutable()

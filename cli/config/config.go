@@ -220,3 +220,8 @@ func (c Config) IsJudged(root, file string) bool {
 func (c Config) Writes(language source.Language) bool {
 	return !slices.Contains(c.DisabledLanguages, language)
 }
+
+// Holds says whether the project writes the language and has a file of it under root, outside what it leaves out.
+func (c Config) Holds(root string, language source.Language) bool {
+	return c.Writes(language) && len(source.FilesIn(root, string(language), source.Under(root, c.Excluded))) > 0
+}
