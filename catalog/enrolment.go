@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"go/ast"
 	"go/format"
+	"go/parser"
+	"go/token"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -61,7 +64,7 @@ func rulePackages(root, rules string) ([]string, error) {
 		if name := entry.Name(); name == "testdata" || strings.HasPrefix(name, "_") || strings.HasPrefix(name, ".") {
 			return filepath.SkipDir
 		}
-		if holds, err := holdsGo(path); err != nil || !holds {
+		if enrols, err := enrolsRules(path); err != nil || !enrols {
 			return err
 		}
 		relative, err := filepath.Rel(root, path)
@@ -76,15 +79,26 @@ func rulePackages(root, rules string) ([]string, error) {
 	return packages, err
 }
 
-// holdsGo says whether a folder holds a Go source file that is not a test.
-func holdsGo(dir string) (bool, error) {
+// enrolsRules says whether a folder's package enrols something when imported: one of its source files, tests aside,
+// declares an init function. A folder under a rule root that only renders, generates or helps a test is not one.
+func enrolsRules(dir string) (bool, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return false, err
 	}
 	for _, entry := range entries {
-		if name := entry.Name(); !entry.IsDir() && strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go") {
-			return true, nil
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), filepath.Join(dir, name), nil, parser.SkipObjectResolution)
+		if err != nil {
+			return false, err
+		}
+		for _, declaration := range file.Decls {
+			if function, ok := declaration.(*ast.FuncDecl); ok && function.Recv == nil && function.Name.Name == "init" {
+				return true, nil
+			}
 		}
 	}
 

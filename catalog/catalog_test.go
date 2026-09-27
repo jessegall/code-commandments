@@ -74,26 +74,32 @@ func TestNameIsTheShortTypeName(t *testing.T) {
 	}
 }
 
+// TestEnrolmentImportsEveryRuleFolderOnly holds the registry to the packages that enrol a rule when imported —
+// an init function among their sources — never a renderer, a command or a test helper sitting beside them.
 func TestEnrolmentImportsEveryRuleFolderOnly(t *testing.T) {
 	root := t.TempDir()
-	write := func(path string) {
+	write := func(path, source string) {
 		full := filepath.Join(root, path)
 		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(full, []byte("package x\n"), 0o644); err != nil {
+		if err := os.WriteFile(full, []byte(source), 0o644); err != nil {
 			t.Fatal(err)
 		}
 	}
-	write("sins/sin.go")
-	write("sins/backend/array_bag.go")
-	write("detectors/backend/laravel/facade.go")
-	write("detectors/backend/testdata/toy.go")
-	write("detectors/_draft/draft.go")
-	write("skill/backend/absence/SKILL.md")
-	write("skill/python/flow/flow_test.go")
-	write("published/published.go")
-	write("published/spatie/spatie.go")
+	enrols := "package x\n\nfunc init() {}\n"
+	write("sins/sin.go", enrols)
+	write("sins/backend/array_bag.go", enrols)
+	write("detectors/backend/laravel/facade.go", enrols)
+	write("detectors/backend/testdata/toy.go", enrols)
+	write("detectors/_draft/draft.go", enrols)
+	write("detectors/paritytest/paritytest.go", "package paritytest\n\nfunc Compare() {}\n")
+	write("skill/backend/absence/SKILL.md", "")
+	write("skill/python/flow/flow_test.go", enrols)
+	write("skill/render/render.go", "package render\n\nfunc Documents() {}\n")
+	write("skill/render/generate/main.go", "package main\n\nfunc main() {}\n")
+	write("published/published.go", enrols)
+	write("published/spatie/spatie.go", enrols)
 
 	source, err := catalog.Enrolment(root)
 	if err != nil {

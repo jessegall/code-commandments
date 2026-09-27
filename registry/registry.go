@@ -11,7 +11,6 @@ import (
 	_ "github.com/jessegall/code-commandments/detectors/backend/spatie"
 	_ "github.com/jessegall/code-commandments/detectors/csharp"
 	_ "github.com/jessegall/code-commandments/detectors/frontend"
-	_ "github.com/jessegall/code-commandments/detectors/paritytest"
 	_ "github.com/jessegall/code-commandments/detectors/python"
 	_ "github.com/jessegall/code-commandments/detectors/typescript"
 	_ "github.com/jessegall/code-commandments/published/spatie"
