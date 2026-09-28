@@ -217,6 +217,9 @@ func TestThePluginNeedsOnlyTheBinaryItFetches(t *testing.T) {
 	if pinned := plugin.Env["COMMANDMENTS_RELEASE"]; !regexp.MustCompile(`^v\d+\.\d+\.\d+$`).MatchString(pinned) {
 		t.Errorf("the plugin pins %q, no release", pinned)
 	}
+	if _, ok := plugin.Requires["curl"]; !ok {
+		t.Error("the plugin does not require the curl its fetch runs")
+	}
 	for _, tool := range []string{"php", "composer", "go", "docker"} {
 		if _, ok := plugin.Requires[tool]; ok {
 			t.Errorf("the plugin requires %s", tool)

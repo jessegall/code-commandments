@@ -8,8 +8,6 @@ import (
 	"errors"
 	"net"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
@@ -46,7 +44,7 @@ func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 	if !settings.Holds(project, source.CSharp) {
-		stopped := stopSignals()
+		stopped := cli.StopSignals()
 		console.Say(project + " has no C# to judge, so no C# bridge is kept up for it.")
 		<-stopped
 
@@ -128,13 +126,4 @@ func answer(connection net.Conn, server *bridge.Server) error {
 
 		return nil
 	})
-}
-
-// stopSignals is where the session's stop arrives: a service with nothing to serve waits on it rather than ending, so
-// the journal does not start it again.
-func stopSignals() <-chan os.Signal {
-	stopped := make(chan os.Signal, 1)
-	signal.Notify(stopped, syscall.SIGTERM, os.Interrupt)
-
-	return stopped
 }

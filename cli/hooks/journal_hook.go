@@ -231,7 +231,8 @@ func (JournalServe) Help() help.Help {
 }
 
 // Run serves until what it runs changes: then it hangs up unanswered, so the caller runs the command
-// itself, and ends, so the journal starts it again on the new code.
+// itself, and ends, so the journal starts it again on the new code. A socket it cannot listen on, as a Windows
+// binary cannot on MSYS2's, leaves it waiting for the stop, so the journal does not start it again.
 func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	path := os.Getenv(pluginSocket)
 	if path == "" {
@@ -242,9 +243,11 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	listener, err := net.Listen("unix", path)
 	if err != nil {
-		console.Warn("Cannot listen on " + path + ": " + err.Error())
+		stopped := cli.StopSignals()
+		console.Warn("Cannot listen on " + path + ": " + err.Error() + "; the journal runs each hook as a process of its own until this service is stopped.")
+		<-stopped
 
-		return 1, nil
+		return 0, nil
 	}
 
 	defer listener.Close()
