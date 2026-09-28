@@ -103,6 +103,14 @@ the schema an editor checks a rule file by — and the help overview lists the c
 given differs from the PHP tool's. Every other line of the overview, and every other file `sync` and `install` write,
 is the PHP tool's. Nothing changes for a project: a rule it already has runs as before.
 
+### What the journal plugin queues
+
+The PHP tool queued each nudge and raise as `--env '<env>' <command>` in the one queue the journal named. The journal
+now runs a queued line in the environment of the file it is in and refuses a line that names one, so every such line
+was dropped and no Sin found mark reached a chat. The Go tool queues bare commands in the queue of the moment's
+environment, `code-commandments.<env>.queue` beside the one the journal names. Nothing changes for a project: the
+marks and nudges arrive where they were meant to.
+
 ### Colour where no terminal reads it
 
 The PHP tool coloured its output wherever it went, so a log or a pipe held raw escape codes around every finding. The
