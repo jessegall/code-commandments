@@ -79,7 +79,6 @@ var declaring = map[string]bool{"ClassDef": true, "FunctionDef": true, "AsyncFun
 
 func init() {
 	engine.NameScopes(contract.Python, scopeOf)
-	engine.ListAs(contract.Python, engine.Lists{Arguments: engine.InFields("args", "keywords"), Members: engine.InFields("body")})
 }
 
 // scopeOf names where a Python finding is: a statement by its kind and the name it declares, an

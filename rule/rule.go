@@ -93,6 +93,13 @@ type Step struct {
 	Lines         *Bounds  `json:"lines,omitempty"`
 	Members       *Tally   `json:"members,omitempty"`
 	Complexity    *Bounds  `json:"complexity,omitempty"`
+	Extends       string   `json:"extends,omitempty"`
+	ExtendsAny    string   `json:"extendsAny,omitempty"`
+	Implements    string   `json:"implements,omitempty"`
+	TypeKind      string   `json:"typeKind,omitempty"`
+	HasAnnotation string   `json:"hasAnnotation,omitempty"`
+	ReturnType    string   `json:"returnType,omitempty"`
+	ParameterType string   `json:"parameterType,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
@@ -358,7 +365,8 @@ func (s Step) checks() int {
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Documented != nil, s.File != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
-		s.Lines != nil, s.Members != nil, s.Complexity != nil} {
+		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "",
+		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != ""} {
 		if set {
 			count++
 		}
@@ -386,6 +394,10 @@ func (s *Step) prepare() error {
 		return s.compile(s.NameMatches)
 	case s.TextMatches != "":
 		return s.compile(s.TextMatches)
+	case s.ReturnType != "":
+		s.pattern = typeGlob(s.ReturnType)
+	case s.ParameterType != "":
+		s.pattern = typeGlob(s.ParameterType)
 	}
 
 	for _, nested := range s.nested() {
@@ -416,6 +428,10 @@ func (s Step) valid() error {
 
 	if s.Is != "" && !slices.Contains(engine.Neutrals, engine.Neutral(s.Is)) {
 		return fmt.Errorf("is %q is no neutral kind: %s", s.Is, neutralList())
+	}
+
+	if s.TypeKind != "" && !slices.Contains(engine.TypeKinds, s.TypeKind) {
+		return fmt.Errorf("typeKind %q is none of %s", s.TypeKind, strings.Join(engine.TypeKinds, ", "))
 	}
 
 	if s.NameCase != "" && cases[s.NameCase] == nil {
@@ -582,9 +598,55 @@ func (s Step) check(match engine.Match) bool {
 		return subject.Is(engine.TypeDeclaration) && s.Members.holds(s.Members.tally(subject))
 	case s.Complexity != nil:
 		return s.Complexity.holds(subject.Complexity())
+	case s.Extends != "":
+		return slices.ContainsFunc(subject.Extends(), func(parent engine.Match) bool { return parent.Names(s.Extends) })
+	case s.ExtendsAny != "":
+		return subject.Is(engine.TypeDeclaration) && namesAny(subject.Lineage(), s.ExtendsAny)
+	case s.Implements != "":
+		return subject.Is(engine.TypeDeclaration) && namesAny(subject.Contracts(), s.Implements)
+	case s.TypeKind != "":
+		return subject.TypeKind() == s.TypeKind
+	case s.HasAnnotation != "":
+		return subject.IsAnnotated(s.HasAnnotation)
+	case s.ReturnType != "":
+		return s.typed(subject.ReturnType())
+	case s.ParameterType != "":
+		return s.typed(subject.ParameterType())
 	}
 
 	return false
+}
+
+// namesAny says whether any of the symbols is the type want names.
+func namesAny(symbols []string, want string) bool {
+	return slices.ContainsFunc(symbols, func(symbol string) bool { return engine.NamesType(symbol, want) })
+}
+
+// typed says whether a written type matches the step's pattern: as it is written, its spaces closed up, or as
+// the type it names resolves; no type written matches nothing.
+func (s Step) typed(written engine.Match) bool {
+	if !written.Exists() {
+		return false
+	}
+
+	if s.pattern.MatchString(strings.Join(strings.Fields(written.Written()), " ")) {
+		return true
+	}
+
+	refers := strings.TrimPrefix(written.Refers(), `\`)
+
+	return refers != "" && s.pattern.MatchString(refers)
+}
+
+// typeGlob reads a pattern over types, where `*` is any run of characters and nothing else is special, so `?*`
+// is PHP's nullable type.
+func typeGlob(pattern string) *regexp.Regexp {
+	parts := strings.Split(pattern, "*")
+	for i, part := range parts {
+		parts[i] = regexp.QuoteMeta(part)
+	}
+
+	return regexp.MustCompile("^" + strings.Join(parts, ".*") + "$")
 }
 
 // tally counts the nodes below the node that pass the count's step.

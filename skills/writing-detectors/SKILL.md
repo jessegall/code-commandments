@@ -59,6 +59,12 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `"namespaceLike": "App\\Http\\*"` | the namespace, package or module it is declared in matches the glob |
 | `"layer": "App\\Domain"` | it sits in that layer of the stack the project declares (backend, Python, C#) |
 | `"hasModifier": "static"` / `"hasFlag": "..."` | it carries it |
+| `"typeKind": "interface"` | a type declaration declares a `class`, `interface`, `enum`, `trait`, `record`, `struct` or `protocol` |
+| `"extends": "Controller"` | a type declaration names the type among the ones it extends directly |
+| `"extendsAny": "Exception"` | the type is anywhere in its chain of parents, followed through the scan and the declarations outside it the language knows |
+| `"implements": "ShouldQueue"` | it honours the contract: its own, its parents', and the contracts those extend |
+| `"hasAnnotation": "Route"` | a declaration carries the attribute or decorator |
+| `"returnType": "?*"` / `"parameterType": "array"` | a function's written return type / a parameter's written type matches the pattern, as written or as the type it names resolves |
 | `"withinLoop": true` | it sits inside a loop (or not, with `false`) |
 | `"documented": false` | it carries a doc comment (or not) |
 | `"file": "*Repository.php"` | its file, or any tail of the path, matches the glob |
@@ -78,6 +84,14 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 Any step can judge a **related** node instead with `"of"`: `parent`, `enclosingFunction`,
 `enclosingType`, `closest:<kind>` (the nearest node above it of a neutral kind), `root` (its file's
 root), or `child:<field>`.
+
+A **type name** — in `extends`, `extendsAny`, `implements` and `hasAnnotation` — is matched by the symbol it
+resolves to when it is qualified (`App\\Http\\Controller`, `shop.models.Base`, `N.IOther`), and by its last
+part when it is bare (`Controller`). A type the scan cannot resolve is matched by what it says. In C#,
+`Serializable` also names `SerializableAttribute`. Python declares no contracts apart from its bases, so
+`implements` there reads the class's whole chain of parents, where its ABCs and Protocols are. A **type
+pattern** has one wildcard, `*`: a `?` is itself, so `?*` is PHP's nullable type, and a function or
+parameter with no type written matches no pattern — reject `"*"` to find the untyped ones.
 
 Every size takes `atLeast`, `atMost` or both, and both are inclusive.
 

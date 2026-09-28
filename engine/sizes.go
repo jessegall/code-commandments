@@ -1,52 +1,11 @@
 package engine
 
-import (
-	"strings"
-	"sync"
-
-	"github.com/jessegall/code-commandments/contract"
-)
-
-// Lists are where a language keeps the lists every language has, which its tree files under fields of its own.
-type Lists struct {
-	// Arguments are what a call is handed, each once, named, spread and unpacked ones alike.
-	Arguments func(Match) []Match
-	// Members are what a type declaration declares directly: its methods, fields, constants and nested types.
-	Members func(Match) []Match
-}
-
-// lists are the lists of each language that registered them.
-var lists sync.Map
-
-// ListAs has every match in a file of the language read its arguments and members as the lists say.
-func ListAs(language contract.Language, read Lists) {
-	lists.Store(language, read)
-}
-
-// InFields reads the children filling any of the fields, in source order.
-func InFields(fields ...string) func(Match) []Match {
-	return func(match Match) []Match {
-		var filling []Match
-		for _, child := range match.Children() {
-			for _, field := range fields {
-				if child.node.Field == field {
-					filling = append(filling, child)
-				}
-			}
-		}
-
-		return filling
-	}
-}
+import "strings"
 
 // Arguments are what the call is handed, in source order; none for a node that is no call or a language that
 // registered no lists.
 func (m Match) Arguments() []Match {
-	if read, listed := m.lists(); listed && read.Arguments != nil {
-		return read.Arguments(m)
-	}
-
-	return nil
+	return m.listed(func(read Lists) func(Match) []Match { return read.Arguments })
 }
 
 // Members are what the type declaration declares directly, in source order: never a nested type's own.
@@ -55,24 +14,7 @@ func (m Match) Members() []Match {
 		return nil
 	}
 
-	if read, listed := m.lists(); listed && read.Members != nil {
-		return read.Members(m)
-	}
-
-	return nil
-}
-
-func (m Match) lists() (Lists, bool) {
-	if m.file == nil {
-		return Lists{}, false
-	}
-
-	read, listed := lists.Load(m.file.Language())
-	if !listed {
-		return Lists{}, false
-	}
-
-	return read.(Lists), true
+	return m.listed(func(read Lists) func(Match) []Match { return read.Members })
 }
 
 // Parameters are the parameters the function declares, in source order, each once: a variadic or a
