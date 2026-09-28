@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"testing"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
@@ -34,41 +33,6 @@ type Result struct {
 // Passed says whether the detector flagged exactly what its markers mark.
 func (r Result) Passed() bool {
 	return len(r.Missed)+len(r.Unexpected)+len(r.FlaggedRighteous)+len(r.FlaggedFixed) == 0
-}
-
-// Prove fails the test unless every detector flags exactly its marked sins, leaves its righteous
-// twin and its fixes alone, and fires on at least MinScenarios mutually diverse findings — and the
-// fixture's own markers are sound.
-func (f Fixture) Prove(t testing.TB) {
-	t.Helper()
-	if len(f.Detectors) == 0 {
-		t.Error("no detectors were verified against the fixture")
-	}
-	for _, result := range f.Verify() {
-		f.report(t, result)
-	}
-	for _, name := range f.WithoutRighteous() {
-		t.Errorf("%s has no @righteous twin — add one good example of what it must leave alone", name)
-	}
-	for _, unknown := range f.UnknownResolutions() {
-		t.Error(unknown)
-	}
-	for _, ambiguous := range f.Ambiguous() {
-		t.Errorf("%s: a file holds two sinful classes and two resolutions for one sin, so which repair answers which is undecidable — split the scenarios into separate fixture files", ambiguous)
-	}
-	for _, detector := range f.Detectors {
-		f.proveDiversity(t, detector)
-	}
-	for detector, deepest := range f.ChainDepths() {
-		if deepest < MinChainFiles {
-			t.Errorf("%s is a chain detector but its deepest finding crosses only %d file(s); it must follow a value through %d or more", detector, deepest, MinChainFiles)
-		}
-	}
-	for detector, widest := range f.RecurrenceSpans() {
-		if widest < MinRecurrenceFiles {
-			t.Errorf("%s is a recurrence detector but its widest group touches only %d file(s); mark one recurring group across two classes or files, not twice in one", detector, widest)
-		}
-	}
 }
 
 // MinChainFiles is how many files a chain detector's deepest finding must cross.
@@ -123,38 +87,6 @@ func (f Fixture) RecurrenceSpans() map[string]int {
 	}
 
 	return spans
-}
-
-// report fails the test for each way a detector's findings missed its markers.
-func (f Fixture) report(t testing.TB, result Result) {
-	t.Helper()
-	if len(result.Missed) > 0 {
-		t.Errorf("%s missed marked sins: %v", result.Detector, result.Missed)
-	}
-	if len(result.FlaggedRighteous) > 0 {
-		t.Errorf("%s flagged its righteous twin, code it must leave alone: %v", result.Detector, result.FlaggedRighteous)
-	}
-	if len(result.FlaggedFixed) > 0 {
-		t.Errorf("%s flagged its own #[Fixed] resolution, so the published good example still is the sin: %v", result.Detector, result.FlaggedFixed)
-	}
-	if len(result.Unexpected) > 0 {
-		t.Errorf("%s flagged unmarked code (a false positive, or an unmarked sin): %v", result.Detector, result.Unexpected)
-	}
-}
-
-// proveDiversity fails the test unless the detector fires on MinScenarios mutually diverse findings.
-func (f Fixture) proveDiversity(t testing.TB, detector detectors.Detector) {
-	t.Helper()
-	scenarios, err := f.Scenarios(detector)
-	if err != nil {
-		t.Error(err)
-
-		return
-	}
-	if largest := LargestDiverseGroup(scenarios); largest < MinScenarios {
-		t.Errorf("%s: needs ≥%d mutually-DIVERSE scenarios (different files, <%.0f%% overlap) but the largest diverse group of its %d finding(s) is %d. Add genuinely different cases, not copies.",
-			catalog.Name(detector), MinScenarios, MaxSimilarity, len(scenarios), largest)
-	}
 }
 
 // Verify runs each detector over the fixture and sorts every finding: on a mark of its sin (hit), on

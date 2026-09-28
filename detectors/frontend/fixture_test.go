@@ -9,6 +9,7 @@ import (
 	bridge "github.com/jessegall/code-commandments/engine/frontend"
 	"github.com/jessegall/code-commandments/engine/php"
 	"github.com/jessegall/code-commandments/fixture"
+	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
@@ -25,9 +26,9 @@ func TestTheFrontendFixtureProvesEveryDetector(t *testing.T) {
 		t.Fatal(err)
 	}
 	codebase := engine.Load(frontend, server)
-	fixture.Fixture{
+	fixturetest.Prove(t, fixture.Fixture{
 		Codebase:  codebase,
 		Detectors: append(detectors.Of(catalog.Frontend), detectors.Of(catalog.TypeScript)...),
 		Resolver:  fixture.FileScenarios,
-	}.Prove(t)
+	})
 }

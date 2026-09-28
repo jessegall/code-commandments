@@ -8,6 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/detectors/backend"
 	"github.com/jessegall/code-commandments/engine/php/shop"
 	"github.com/jessegall/code-commandments/fixture"
+	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
@@ -34,7 +35,7 @@ func tuned(t *testing.T, registered []detectors.Detector) []detectors.Detector {
 }
 
 func TestEveryBackendDetectorProvesItselfOnTheShop(t *testing.T) {
-	fixture.Fixture{Codebase: shop.Project(t), Detectors: tuned(t, detectors.Of(catalog.Backend))}.Prove(t)
+	fixturetest.Prove(t, fixture.Fixture{Codebase: shop.Project(t), Detectors: tuned(t, detectors.Of(catalog.Backend))})
 }
 
 func TestEveryBackendDetectorFlagsWhatItsPhpTwinFlags(t *testing.T) {

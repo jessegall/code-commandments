@@ -12,6 +12,7 @@ import (
 	csdetectors "github.com/jessegall/code-commandments/detectors/csharp"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
+	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
@@ -49,7 +50,7 @@ func configured() []detectors.Detector {
 }
 
 func TestEveryCSharpDetectorFlagsExactlyWhatTheFixtureMarks(t *testing.T) {
-	fixture.Fixture{Codebase: shop(t), Detectors: configured(), Known: detectors.Of(catalog.CSharp), Resolver: fixture.FileScenarios}.Prove(t)
+	fixturetest.Prove(t, fixture.Fixture{Codebase: shop(t), Detectors: configured(), Known: detectors.Of(catalog.CSharp), Resolver: fixture.FileScenarios})
 }
 
 func TestEverySinTheFixtureMarksHasADetector(t *testing.T) {

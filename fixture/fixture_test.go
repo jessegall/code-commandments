@@ -11,6 +11,7 @@ import (
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/fixture"
+	"github.com/jessegall/code-commandments/fixture/fixturetest"
 	"github.com/jessegall/code-commandments/sins"
 )
 
@@ -141,7 +142,7 @@ func TestTheMarkersAreReadFromAttributesAndComments(t *testing.T) {
 }
 
 func TestTheHarnessPassesADetectorThatFlagsExactlyItsMarks(t *testing.T) {
-	proving(t, LoopedNewDetector{}).Prove(t)
+	fixturetest.Prove(t, proving(t, LoopedNewDetector{}))
 }
 
 func TestTheHarnessFailsADetectorThatMissesAMark(t *testing.T) {
@@ -303,7 +304,7 @@ func (r *recorder) Errorf(format string, args ...any) {
 // prove runs Prove on a recorder and answers what it failed for.
 func prove(proving fixture.Fixture) []string {
 	proven := &recorder{}
-	proving.Prove(proven)
+	fixturetest.Prove(proven, proving)
 
 	return proven.failures
 }
