@@ -50,8 +50,14 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `"is": "loop"` | it answers the neutral kind |
 | `"kind": "Expr_StaticCall"` | it is the language's own kind |
 | `"name": "select"` / `"nameIn": [...]` | its name — a call's or an access's is its name child's — is it |
+| `"nameLike": "get*"` / `"nameMatches": "^(get\|set)[A-Z]"` | its name matches the glob (`*`, `?`) / the regular expression |
+| `"nameCase": "snake"` | its name, less a leading `$` or `_`, is written `camel`, `pascal`, `snake`, `upper` or `kebab` case |
 | `"text": "..."` | a literal's text is exactly it |
+| `"textLike": "*where id*"` / `"textMatches": "(?i)^select"` | a literal's text matches the glob / the regular expression |
 | `"resolves": "App\\Models\\User"` | what its name refers to, resolved, is that |
+| `"resolvesLike": "App\\Models\\*"` | what its name refers to, resolved, matches the glob |
+| `"namespaceLike": "App\\Http\\*"` | the namespace, package or module it is declared in matches the glob |
+| `"layer": "App\\Domain"` | it sits in that layer of the stack the project declares (backend, Python, C#) |
 | `"hasModifier": "static"` / `"hasFlag": "..."` | it carries it |
 | `"withinLoop": true` | it sits inside a loop (or not, with `false`) |
 | `"documented": false` | it carries a doc comment (or not) |
@@ -60,6 +66,12 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 
 Any step can judge a **related** node instead with `"of"`: `parent`, `enclosingFunction`,
 `enclosingType`, or `child:<field>`.
+
+A glob matches the whole name: `*` is any run of characters, `?` one, and a backslash is itself, so a
+PHP class is written as it reads. A regular expression is Go's (RE2) and matches anywhere unless it is
+anchored. A `layer` step reads the layers the config declares for the engine's
+`NamespaceDependencyDetector` (`commandments layers` proposes them), so a rule can speak of a layer
+without repeating its namespaces; with none declared it finds nothing.
 
 A rule the binary cannot run says why when `judge` starts — the file, and which part is wrong.
 
@@ -97,7 +109,7 @@ positive directive the fix follows).
 
 The cardinal rule. Derive the answer from what a node is and what its name resolves to — the neutral
 kind, the language's kind, the class a call reaches. **Never** from a class, method or variable name, a
-suffix, or a hardcoded list. `name`, `nameIn` and `file` exist because a call has to be named at some
+suffix, or a hardcoded list. The name, text and `file` checks exist because a call has to be named at some
 point; reach for them last, and never as a list of the exceptions you happened to meet. Names lie, and a
 rule built on one fires on the wrong code the first time somebody renames well.
 

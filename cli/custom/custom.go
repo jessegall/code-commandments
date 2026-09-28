@@ -107,7 +107,7 @@ func (p Project) Enabled(project config.Config) []detectors.Detector {
 
 	for _, own := range p.Rules {
 		if slices.Contains(project.Detectors, own.Name()) && !project.Disables(config.Rule{Kind: config.Detector, Name: own.Name()}) {
-			enabled = append(enabled, own)
+			enabled = append(enabled, own.WithLayers(project.Layers(own.Engine())))
 		}
 	}
 
