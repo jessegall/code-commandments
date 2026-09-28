@@ -274,7 +274,8 @@ func Forgotten() Announced {
 }
 
 // Settle records what the moment changed: the touched sins not announced before are found, and a sin
-// announced for the edited file that the file no longer holds is repented.
+// announced for the edited file that the file no longer holds is repented, as is every sin announced for a file
+// that is gone, deleted by a shell command the plugin sees no file of.
 func (a Announced) Settle(root string, edited *string, marks []SinMark) ([]SinMark, []string) {
 	var files []string
 	now := map[string][]SinMark{}
@@ -294,6 +295,18 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) ([]SinMa
 
 		if _, seen := now[judged]; !seen {
 			files = append(files, judged)
+		}
+	}
+
+	gone := map[string]bool{}
+	for _, file := range a.files.Keys() {
+		if _, seen := now[file]; seen || file == judged {
+			continue
+		}
+
+		if _, err := os.Stat(filepath.Join(root, file)); os.IsNotExist(err) {
+			gone[file] = true
+			files = append(files, file)
 		}
 	}
 
@@ -321,7 +334,7 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) ([]SinMa
 		kept := jsonfile.NewObject()
 
 		for _, id := range before.Keys() {
-			if _, holding := holds[id]; file != judged || holding {
+			if _, holding := holds[id]; file != judged && !gone[file] || holding {
 				value, _ := before.Get(id)
 				kept.Set(id, value)
 			}
