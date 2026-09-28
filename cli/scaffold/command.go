@@ -14,6 +14,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/listing"
 	"github.com/jessegall/code-commandments/sins"
 	"github.com/jessegall/code-commandments/stubs"
 )
@@ -161,17 +162,9 @@ func existingOf(cwd, target string, helper sins.Scaffold) (string, bool) {
 	return find(cwd+"/"+frontendRoot, filepath.Base(helper.Path))
 }
 
-// find is the first file named name under dir, in the order its folders list their entries.
+// find is the first file named name under dir, in the order the PHP tool met its folders' entries.
 func find(dir, name string) (string, bool) {
-	folder, err := os.Open(dir)
-	if err != nil {
-		return "", false
-	}
-
-	names, _ := folder.Readdirnames(-1)
-	folder.Close()
-
-	for _, entry := range names {
+	for _, entry := range listing.Of(dir) {
 		path := dir + "/" + entry
 		info, err := os.Stat(path)
 

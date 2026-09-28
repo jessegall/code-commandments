@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -26,7 +27,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "✗ The skills cannot be generated:", err)
 		os.Exit(1)
 	}
-	stale, written, err := generate(examples, check)
+	stale, written, err := generate(examples, published, check)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "✗", err)
 		os.Exit(1)
@@ -48,15 +49,16 @@ func main() {
 	os.Exit(1)
 }
 
-// generate writes each skill's documents where they differ, and removes a reference document the skill no longer
+// generate writes each skill's documents under into where they differ, in name order, and removes a reference document the skill no longer
 // generates — nothing else writes there, so a leftover would be published and read as current. Checking, it writes
 // nothing and answers what it would have changed.
-func generate(examples render.Examples, check bool) (stale []string, written int, err error) {
+func generate(examples render.Examples, into string, check bool) (stale []string, written int, err error) {
 	for _, teaching := range skill.All() {
 		slug := teaching.Definition().Slug
-		folder := filepath.Join(published, slug)
+		folder := filepath.Join(into, slug)
 		documents := render.Documents(teaching, examples)
-		for name, rendered := range documents {
+		for _, name := range slices.Sorted(maps.Keys(documents)) {
+			rendered := documents[name]
 			path := filepath.Join(folder, name)
 			if current, _ := os.ReadFile(path); string(current) == rendered {
 				continue

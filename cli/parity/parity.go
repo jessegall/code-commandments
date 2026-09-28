@@ -286,6 +286,10 @@ func guarded(tool string) string {
 	return "#!/bin/sh\necho 'parity: the real " + tool + " is out of reach' >&2\nexit 97\n"
 }
 
+// recordedZone is the zone the PHP tool's goldens were recorded in, Europe/Amsterdam, spelled as a POSIX rule
+// so a machine without zone data reads it too: a setup's `touch -t` means the same moment everywhere.
+const recordedZone = "CET-1CEST,M3.5.0,M10.5.0/3"
+
 // environment is the fixed world every case runs in, so nothing of the machine running it leaks in.
 func environment(c Case, home, path string) []string {
 	env := map[string]string{
@@ -294,6 +298,7 @@ func environment(c Case, home, path string) []string {
 		"COLUMNS":        "80",
 		"TERM":           "dumb",
 		"LANG":           "C.UTF-8",
+		"TZ":             recordedZone,
 		"XDG_CACHE_HOME": cache(),
 	}
 

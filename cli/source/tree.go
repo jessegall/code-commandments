@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/listing"
 )
 
 var (
@@ -54,19 +56,11 @@ func walk(root string, excluded Excluded, wanted func(string) bool) []string {
 	return descend(root, excluded, wanted, nil)
 }
 
-// descend collects the wanted files under dir in the order the directory lists them, going into each
-// folder as it is met, as PHP's recursive directory iterator does; the report's twins and the dashboard
+// descend collects the wanted files under dir in the order the PHP tool met them (listing.Of), going into
+// each folder as it is met, as PHP's recursive directory iterator does; the report's twins and the dashboard
 // keep that order.
 func descend(dir string, excluded Excluded, wanted func(string) bool, files []string) []string {
-	folder, err := os.Open(dir)
-	if err != nil {
-		return files
-	}
-
-	names, _ := folder.Readdirnames(-1)
-	folder.Close()
-
-	for _, name := range names {
+	for _, name := range listing.Of(dir) {
 		path := dir + "/" + name
 		info, err := os.Stat(path)
 

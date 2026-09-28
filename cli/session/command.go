@@ -317,12 +317,7 @@ func describe(key string, session Session, known bool, names []workspace.Pair) s
 
 // size is a file's size as PHP printed it: bytes under a kilobyte, else kilobytes to one decimal.
 func size(file string) string {
-	info, err := os.Stat(file)
-	bytes := int64(0)
-
-	if err == nil {
-		bytes = info.Size()
-	}
+	bytes := sizeOf(file)
 
 	if bytes < 1024 {
 		return strconv.FormatInt(bytes, 10) + "B"
@@ -331,6 +326,21 @@ func size(file string) string {
 	kilobytes := math.Round(float64(bytes)/1024*10) / 10
 
 	return strconv.FormatFloat(kilobytes, 'f', -1, 64) + "K"
+}
+
+// sizeOf is a file's length, or a folder's as APFS, where the PHP tool was recorded, reports it: 64 bytes
+// and 32 more for each entry, since a folder's own size is otherwise the filesystem's to choose.
+func sizeOf(path string) int64 {
+	info, err := os.Stat(path)
+
+	switch {
+	case err != nil:
+		return 0
+	case info.IsDir():
+		return 64 + 32*int64(len(folder.Entries(path)))
+	}
+
+	return info.Size()
 }
 
 // modifiedAt is when the path last changed, in UTC as PHP's default zone prints it.
