@@ -75,7 +75,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 2, nil
 	}
 
-	if err := write(blueprint); err != nil {
+	if err := write(blueprint, root); err != nil {
 		return 0, err
 	}
 
@@ -138,7 +138,7 @@ func existing(blueprint Blueprint, force bool) []string {
 	return clash
 }
 
-func write(blueprint Blueprint) error {
+func write(blueprint Blueprint, root string) error {
 	if err := os.MkdirAll(blueprint.Dir, 0o775); err != nil {
 		return err
 	}
@@ -153,7 +153,11 @@ func write(blueprint Blueprint) error {
 		}
 	}
 
-	return os.WriteFile(blueprint.RuleFile(), []byte(RuleStub(blueprint)), 0o644)
+	if err := os.WriteFile(blueprint.RuleFile(), []byte(RuleStub(blueprint)), 0o644); err != nil {
+		return err
+	}
+
+	return custom.WriteSchema(root)
 }
 
 func report(blueprint Blueprint, registered bool, root string, console cli.Console) {

@@ -12,6 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	_ "github.com/jessegall/code-commandments/registry"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 // run runs make in a fresh project and answers the project, what it said and its exit code.
@@ -52,6 +53,12 @@ func TestANewCommandmentIsARuleAndItsSkillTurnedOn(t *testing.T) {
 	loaded := custom.Load(root)
 	if len(loaded.Rules) != 1 || len(loaded.Unreadable) != 0 || loaded.Rules[0].Sin().Definition().Slug() != "no-raw-sql" || string(loaded.Rules[0].Engine()) != "python" {
 		t.Fatalf("the scaffold is not a rule the binary runs: %+v", loaded)
+	}
+
+	written, _ := os.ReadFile(filepath.Join(root, ".commandments/custom/NoRawSqlDetector.json"))
+	if schema, err := os.ReadFile(custom.SchemaPath(root)); err != nil || !bytes.Equal(schema, rule.Schema()) ||
+		!strings.Contains(string(written), `"$schema": "../rule.schema.json"`) {
+		t.Errorf("the rule names no schema an editor can read: %v\n%s", err, written)
 	}
 
 	project, _ := config.Load(root)

@@ -3,6 +3,8 @@ package make
 import (
 	"encoding/json"
 	"strings"
+
+	"github.com/jessegall/code-commandments/cli/custom"
 )
 
 // SkillStub is a new skill's SKILL.md: its front matter, and the sections a finding sends a reader to.
@@ -27,7 +29,8 @@ func SkillStub(b Blueprint) string {
 // RuleStub is the rule: its engine, its sin, and a query that finds nothing until it is written.
 func RuleStub(b Blueprint) string {
 	rule := map[string]any{
-		"engine": string(b.Engine),
+		"$schema": custom.SchemaReference,
+		"engine":  string(b.Engine),
 		"sin": map[string]any{
 			"name":        b.ID,
 			"description": "TODO — the symptom, in one line.",

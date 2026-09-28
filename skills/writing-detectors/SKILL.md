@@ -206,25 +206,48 @@ suffix, or a hardcoded list. The name, text and `file` checks exist because a ca
 point; reach for them last, and never as a list of the exceptions you happened to meet. Names lie, and a
 rule built on one fires on the wrong code the first time somebody renames well.
 
+## See what a rule reads before you write it
+
+A query names what the tree holds, so read the tree first:
+
+```bash
+vendor/bin/commandments rule explain app/Http/OrderController.php --line=42
+```
+
+prints every node starting on line 42 — its kind, the neutral kinds it answers, the field it fills, its
+name, its text and what it resolves to — which is exactly what `select` and each check can see. Then
+watch the query while you write it, without turning the rule on:
+
+```bash
+vendor/bin/commandments rule try NoRawSql app/
+```
+
 ## Prove it fires — a rule nobody has watched is a guess
 
-A rule that parses is not a rule that works. **Write a probe**: a throwaway file under a scanned path
-holding one example of every form you mean to catch **plus the near-misses you must NOT catch**.
+A rule that parses is not a rule that works. **Write samples**: files under
+`.commandments/custom/samples/` holding every form you mean to catch **and the near-misses you must NOT
+catch**, each marked by a comment above it:
 
 ```php
-// src/ProbeNoRawSql.php  — delete after
-DB::select('select * from orders');          // must fire
-DB::unprepared($sql);                        // must fire
-Order::query()->where('id', $id)->get();     // must NOT fire — the query builder
-$this->select($columns);                     // must NOT fire — not the DB facade
+// .commandments/custom/samples/RawSql.php
+// @sin NoRawSqlDetector
+DB::select('select * from orders');
+// @sin NoRawSqlDetector
+DB::unprepared($sql);
+// @righteous NoRawSqlDetector
+Order::query()->where('id', $id)->get();
+// @righteous NoRawSqlDetector
+$this->select($columns);
 ```
 
 ```bash
-vendor/bin/commandments judge src --sin=<your-sin> --no-checklist
+vendor/bin/commandments rule prove
 ```
 
-Confirm **exactly** the intended lines are flagged — not "some lines". Then delete the probe. The
-near-misses are the whole point: a rule that fires on everything is not a rule.
+holds every rule to its marks: it fails a rule that misses a `@sin`, flags a `@righteous` twin or a
+`@fixed` fix, or flags anything unmarked. The samples stay — they are the rule's spec, and `rule prove`
+runs again whenever the rule changes. The near-misses are the whole point: a rule that fires on
+everything is not a rule.
 
 ## Calibrate on real code — before you trust it
 
@@ -254,15 +277,16 @@ instead of solving it. Let the skill teach the reader.
 3. **Write the teaching first.** If you can't state what good looks like, the rule doesn't know what
    it's looking for either.
 4. Name the sin: the symptom, and the rule as a positive directive.
-5. Write the query — a selector, then one check per step.
-6. **Probe it.** Every form you mean to catch, plus the near-misses.
+5. Write the query — a selector, then one check per step — reading the tree with `rule explain` and
+   watching it with `rule try`.
+6. **Prove it.** Samples marking every form you mean to catch and the near-misses, then `rule prove`.
 7. **Calibrate** on real code. Tighten, or cut.
 8. `vendor/bin/commandments sync` — publishes your skill so the agent can load what the finding points
    at.
 
 ## Reference
 
-<!-- BEGIN: commands:make (auto-generated, run `composer sins`) -->
+<!-- BEGIN: commands:make,rule (auto-generated, run `composer sins`) -->
 | Command | Does |
 |---|---|
 | `commandments make <Name>` | scaffold a backend (PHP) commandment and turn it on |
@@ -271,5 +295,9 @@ instead of solving it. Let the skill teach the reader.
 | `commandments make <Name> --engine=python` | scaffold a Python one instead |
 | `commandments make <Name> --engine=csharp` | scaffold a C# one instead |
 | `commandments make <Name> --skill=NAME` | point the sin at an EXISTING skill (shipped or your own) instead of writing a new one |
+| `commandments rule explain <file> [--line=N]` | print the tree a rule reads in the file: every node's line, kind, neutral kinds, field, name and what it resolves to |
+| `commandments rule try <Rule> <path>` | run one rule over the path without turning it on, and print each match with its line |
+| `commandments rule prove [path]` | check every rule of the project flags exactly the code its samples mark, and nothing else |
+| `commandments rule schema` | print the JSON Schema of a rule file |
 
-<!-- END: commands:make -->
+<!-- END: commands:make,rule -->

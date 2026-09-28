@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
@@ -99,6 +100,29 @@ func (p Project) skill(slug string) (skill.Skill, bool) {
 	}
 
 	return skill.Slugged(slug)
+}
+
+// Named is the project's rule the name means, leniently: its own name, or that name less its Detector suffix,
+// in any case.
+func (p Project) Named(name string) (rule.Rule, bool) {
+	wanted := catalog.Normalise(strings.TrimSuffix(name, "Detector"))
+	for _, own := range p.Rules {
+		if catalog.Normalise(strings.TrimSuffix(own.Name(), "Detector")) == wanted {
+			return own, true
+		}
+	}
+
+	return rule.Rule{}, false
+}
+
+// Read reads the rule file at the path, finding its sin's skill among the project's own and the shipped ones.
+func (p Project) Read(path string) (rule.Rule, error) {
+	text, err := os.ReadFile(path)
+	if err != nil {
+		return rule.Rule{}, err
+	}
+
+	return rule.Parse(strings.TrimSuffix(filepath.Base(path), ".json"), text, p.skill)
 }
 
 // Enabled are the project's rules its config turns on, less any it disables.

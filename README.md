@@ -132,6 +132,7 @@ Exit code is non-zero when sins are found.
 | `commandments disable <sin\|skill>` | Toggle a rule in the project's .commandments/config.json, leaving the rest of the file as you wrote it — or in a config.php from an earlier version, through its tree, so your own lines are untouched. |
 | `commandments config` | Inspect and manage .commandments/config.json — what is configured, and what is actually running. |
 | `commandments layers [path]` | Read the dependency stack this project ALREADY has and propose the layer declaration for it — the rule is inert until one is declared, and nobody writes that from a blank file. |
+| `commandments rule explain <file> [--line=N]` | Work on a rule of your own: see the tree it reads, try it on a path, prove it on the samples that mark it, and print the schema an editor checks it by. |
 | `commandments exemptions` | List the exemption tags — what a package registers to quiet a general rule on its own boundary types. |
 | `commandments info <sin\|detector>` | Explain one sin — what it flags, why it is a sin, how to fix it, and a worked example. |
 | `commandments trigger-eval` | Measure whether skill descriptions pull their own skill in — and stay out of their neighbours'. |

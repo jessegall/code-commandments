@@ -70,6 +70,10 @@ func Sync(root string, console cli.Console) error {
 		return err
 	}
 
+	if err := custom.WriteSchema(root); err != nil {
+		return err
+	}
+
 	lib := library.At(root, project)
 
 	published, err := lib.Publish()
