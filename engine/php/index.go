@@ -2,6 +2,7 @@ package php
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -70,4 +71,58 @@ func StaticCallClass(call engine.Match) string {
 	}
 
 	return class.Name()
+}
+
+// FunctionCallersOf are the calls of a function: naming it whole, or by its short name from its own namespace, which
+// PHP resolves to it before any global function of that name, or, for a global function, from a namespace that
+// declares none of that name, where PHP falls back to it.
+func (i *Index) FunctionCallersOf(function engine.Match) []engine.Match {
+	qualified := strings.TrimSuffix(function.Node().Symbol, "()")
+	namespace, short := "", qualified
+	if at := strings.LastIndex(qualified, `\`); at >= 0 {
+		namespace, short = qualified[:at], qualified[at+1:]
+	}
+
+	var calls []engine.Match
+	for _, call := range functionCalls(function.Codebase())[strings.ToLower(short)] {
+		name := call.Child("name")
+
+		switch name.Kind() {
+		case "Name_FullyQualified":
+			if strings.EqualFold(name.Name(), qualified) {
+				calls = append(calls, call)
+			}
+		case "Name":
+			if strings.EqualFold(call.Namespace(), namespace) || namespace == "" && !declaresFunction(call, short) {
+				calls = append(calls, call)
+			}
+		}
+	}
+
+	return calls
+}
+
+// declaresFunction says whether the call's own namespace declares a function of the short name, which PHP calls
+// before falling back to the global one.
+func declaresFunction(call engine.Match, short string) bool {
+	return len(call.Codebase().Declarations(call.Namespace()+`\`+short+"()")) > 0
+}
+
+// functionCalls are the codebase's calls of a function by name, by the last part of that name in lower case, as
+// PHP spells a function's name in any case.
+func functionCalls(codebase *engine.Codebase) map[string][]engine.Match {
+	return engine.Analysis(codebase, "php-function-calls", func(codebase *engine.Codebase) map[string][]engine.Match {
+		byName := map[string][]engine.Match{}
+		for _, call := range codebase.WhereCall().Get() {
+			if call.Kind() != "Expr_FuncCall" {
+				continue
+			}
+
+			name := call.Child("name").Name()
+			short := strings.ToLower(name[strings.LastIndex(name, `\`)+1:])
+			byName[short] = append(byName[short], call)
+		}
+
+		return byName
+	})
 }

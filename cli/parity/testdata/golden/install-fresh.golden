@@ -466,7 +466,7 @@ sha256 506c78b8f2c04d83b36c09d3eab8803c6f83d549637833253836a26572efec80
 === created .agents/skills/commandments-typescript-duplication/reference/examples.md
 sha256 99a0880fb31cd8a9223ffbbe3fe77c44175a777fdbeda820a55ff5402377f8d2
 === created .agents/skills/commandments-writing-detectors/SKILL.md
-sha256 271240bfcf4c435b7a23ebe0c1d26dbc2a7b414e96d03d4014d8ca552a49be52
+sha256 813fadfdcb7410a81cc5c37cc07a533665a15ad41790ed40c546dda89fd37ee5
 === created .agents/skills/commandments/SKILL.md
 sha256 635382798ab36769f0a38a67058bc411e3b44f236a2c657c8af9f670ce91d61a
 === created .claude/settings.json

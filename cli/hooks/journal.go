@@ -8,6 +8,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -276,7 +277,7 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) ([]SinMa
 	now := map[string][]SinMark{}
 
 	for _, mark := range marks {
-		file := relative(root, mark.Match.File())
+		file := source.Relative(root, mark.Match.File())
 		if _, seen := now[file]; !seen {
 			files = append(files, file)
 		}
@@ -286,7 +287,7 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) ([]SinMa
 
 	judged := ""
 	if edited != nil {
-		judged = relative(root, *edited)
+		judged = source.Relative(root, *edited)
 
 		if _, seen := now[judged]; !seen {
 			files = append(files, judged)
@@ -411,19 +412,6 @@ func raises(root string, found []SinMark, repented []string) []Raise {
 	}
 
 	return raised
-}
-
-// relative is the file under root, both resolved.
-func relative(root, file string) string {
-	if real, err := filepath.EvalSymlinks(root); err == nil {
-		root = real
-	}
-
-	if real, err := filepath.EvalSymlinks(file); err == nil {
-		file = real
-	}
-
-	return strings.ReplaceAll(file, strings.TrimRight(root, "/")+"/", "")
 }
 
 func firstOf(values ...any) any {

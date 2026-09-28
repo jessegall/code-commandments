@@ -16,38 +16,37 @@ type Predicate struct {
 	Holds func(Match) bool
 }
 
-// predicates are each language's own checks a rule may name.
-var predicates = struct {
-	sync.Mutex
-	of map[contract.Language][]Predicate
-}{of: map[contract.Language][]Predicate{}}
+// offered are each language's own checks a rule may name. A language offers them from its package's init, one
+// package after another, so an offer is never made while another is.
+var offered sync.Map
 
-// Predicates offers the checks of a language's own to rules, under their public names.
-func Predicates(language contract.Language, offered ...Predicate) {
-	predicates.Lock()
-	defer predicates.Unlock()
+// Offers has the language offer its own checks to rules, under their public names.
+func Offers(language contract.Language, predicates ...Predicate) {
+	held, _ := offered.Load(language)
+	previous, _ := held.([]Predicate)
 
-	predicates.of[language] = append(predicates.of[language], offered...)
+	offered.Store(language, append(slices.Clone(previous), predicates...))
 }
 
-// PredicatesOf are the checks of the language's own a rule may name, by name.
+// PredicatesOf are the checks the language offers a rule, by name.
 func PredicatesOf(language contract.Language) []Predicate {
-	predicates.Lock()
-	defer predicates.Unlock()
+	held, _ := offered.Load(language)
+	predicates, _ := held.([]Predicate)
 
-	offered := slices.Clone(predicates.of[language])
-	slices.SortFunc(offered, func(a, b Predicate) int { return strings.Compare(a.Name, b.Name) })
+	sorted := slices.Clone(predicates)
+	slices.SortFunc(sorted, func(a, b Predicate) int { return strings.Compare(a.Name, b.Name) })
 
-	return offered
+	return sorted
 }
 
 // PredicateOf is the language's own check of the name.
 func PredicateOf(language contract.Language, name string) (Predicate, bool) {
-	for _, predicate := range PredicatesOf(language) {
-		if predicate.Name == name {
-			return predicate, true
-		}
+	predicates := PredicatesOf(language)
+
+	at := slices.IndexFunc(predicates, func(predicate Predicate) bool { return predicate.Name == name })
+	if at < 0 {
+		return Predicate{}, false
 	}
 
-	return Predicate{}, false
+	return predicates[at], true
 }

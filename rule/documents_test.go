@@ -1,7 +1,6 @@
 package rule_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine"
@@ -47,49 +46,43 @@ func TestARuleReadsCommentsCopiesAndTests(t *testing.T) {
 	codebases := map[string]*engine.Codebase{
 		"backend": phpProject(t, billing),
 		"python": pythontest.FromSource(t, map[string]string{
-			"shop/billing.py": strings.Join([]string{
-				"def total(lines):",
-				`    """Totals the lines.`,
-				"",
-				"    .. deprecated:: 2.0",
-				"       Use sum_up.",
-				"",
-				"    Args:",
-				"        lines: the lines.",
-				"",
-				"    :raises ValueError: when empty.",
-				`    """`,
-				"    return sum(lines)",
-				"",
-				"# TODO: remove",
-				"def sum_up(lines):",
-				"    return sum(lines)",
-				"",
-			}, "\n"),
+			"shop/billing.py": `def total(lines):
+    """Totals the lines.
+
+    .. deprecated:: 2.0
+       Use sum_up.
+
+    Args:
+        lines: the lines.
+
+    :raises ValueError: when empty.
+    """
+    return sum(lines)
+
+# TODO: remove
+def sum_up(lines):
+    return sum(lines)
+`,
 			"tests/test_billing.py": "def test_total():\n    assert True\n",
 		}),
 		"typescript": frontendtest.FromSource(t, map[string]string{
-			"src/billing.ts": strings.Join([]string{
-				"/**",
-				" * @deprecated use sum",
-				" */",
-				"export function total(lines: number[]) { return lines.length; }",
-				"// TODO: later",
-				"export function sum(lines: number[]) { return lines.length; }",
-				"",
-			}, "\n"),
+			"src/billing.ts": `/**
+ * @deprecated use sum
+ */
+export function total(lines: number[]) { return lines.length; }
+// TODO: later
+export function sum(lines: number[]) { return lines.length; }
+`,
 			"src/billing.spec.ts": "export function check() { return 1; }\n",
 		}),
-		"csharp": csharptest.FromSource(t, map[string]string{"Billing.cs": strings.Join([]string{
-			"class Billing {",
-			"    /// <summary>Totals.</summary>",
-			"    /// <param name=\"a\">A.</param>",
-			"    int Total(int a) { return a + 1; }",
-			"    // TODO: go",
-			"    int Sum(int a) { return a + 1; }",
-			"}",
-			"",
-		}, "\n")}),
+		"csharp": csharptest.FromSource(t, map[string]string{"Billing.cs": `class Billing {
+    /// <summary>Totals.</summary>
+    /// <param name="a">A.</param>
+    int Total(int a) { return a + 1; }
+    // TODO: go
+    int Sum(int a) { return a + 1; }
+}
+`}),
 	}
 
 	for _, each := range []typed{

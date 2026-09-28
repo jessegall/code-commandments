@@ -46,6 +46,8 @@ Commands:
   layers           Read the dependency stack this project ALREADY has and propose the layer
                    declaration for it — the rule is inert until one is declared, and nobody writes
                    that from a blank file.
+  rule             Work on a rule of your own: see the tree it reads, try it on a path, prove it on
+                   the samples that mark it, and print the schema an editor checks it by.
   exemptions       List the exemption tags — what a package registers to quiet a general rule on
                    its own boundary types.
   info             Explain one sin — what it flags, why it is a sin, how to fix it, and a worked

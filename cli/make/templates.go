@@ -3,9 +3,9 @@ package make
 import (
 	"embed"
 	"encoding/json"
+	"fmt"
 	"path"
 	"slices"
-	"sort"
 	"strings"
 )
 
@@ -29,22 +29,31 @@ type TemplateSin struct {
 	Rule        string `json:"rule"`
 }
 
-// Templates are every ready rule, by name.
+// Templates are every ready rule, by name. They ship inside the binary, so one that cannot be read is a defect of
+// the build, never of the project, and stops it at once.
 func Templates() []Template {
-	entries, _ := shipped.ReadDir("templates")
+	entries, err := shipped.ReadDir("templates")
+	if err != nil {
+		panic(fmt.Errorf("the shipped templates cannot be listed: %w", err))
+	}
 
 	var templates []Template
 	for _, entry := range entries {
-		text, _ := shipped.ReadFile(path.Join("templates", entry.Name()))
+		text, err := shipped.ReadFile(path.Join("templates", entry.Name()))
+		if err != nil {
+			panic(fmt.Errorf("the shipped template %s cannot be read: %w", entry.Name(), err))
+		}
 
 		var template Template
-		if json.Unmarshal(text, &template) == nil {
-			template.Name = strings.TrimSuffix(entry.Name(), ".json")
-			templates = append(templates, template)
+		if err := json.Unmarshal(text, &template); err != nil {
+			panic(fmt.Errorf("the shipped template %s is no template: %w", entry.Name(), err))
 		}
+
+		template.Name = strings.TrimSuffix(entry.Name(), ".json")
+		templates = append(templates, template)
 	}
 
-	sort.Slice(templates, func(i, j int) bool { return templates[i].Name < templates[j].Name })
+	slices.SortFunc(templates, func(a, b Template) int { return strings.Compare(a.Name, b.Name) })
 
 	return templates
 }

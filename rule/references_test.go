@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/scan"
@@ -127,40 +126,34 @@ func TestARuleFollowsCallsAndReferences(t *testing.T) {
 
 func TestReferencesReadTheSameInEveryLanguage(t *testing.T) {
 	codebases := map[string]*engine.Codebase{
-		"python": pythontest.FromSource(t, map[string]string{"build.py": strings.Join([]string{
-			"class Report:",
-			"    pass",
-			"",
-			"def build(rows, unused_arg):",
-			"    make(rows, 1, key=\"x\")",
-			"    return Report()",
-			"",
-			"def make(a, b, key=None):",
-			"    return a + b",
-			"",
-			"def stale():",
-			"    return 1",
-			"",
-		}, "\n")}),
-		"typescript": frontendtest.FromSource(t, map[string]string{"src/build.ts": strings.Join([]string{
-			"class Report {}",
-			"export function build(rows: number[]) {",
-			"    make(rows, 1);",
-			"    return new Report();",
-			"}",
-			"function make(a: number[], b: number) { return a; }",
-			"function stale() { return 1; }",
-			"",
-		}, "\n")}),
-		"csharp": csharptest.FromSource(t, map[string]string{"Orders.cs": strings.Join([]string{
-			"class Report {}",
-			"class Orders {",
-			"    Report Build(int rows, int unused) { Make(rows, 1); return new Report(); }",
-			"    int Make(int a, int b) => a + b;",
-			"    int Stale() => 1;",
-			"}",
-			"",
-		}, "\n")}),
+		"python": pythontest.FromSource(t, map[string]string{"build.py": `class Report:
+    pass
+
+def build(rows, unused_arg):
+    make(rows, 1, key="x")
+    return Report()
+
+def make(a, b, key=None):
+    return a + b
+
+def stale():
+    return 1
+`}),
+		"typescript": frontendtest.FromSource(t, map[string]string{"src/build.ts": `class Report {}
+export function build(rows: number[]) {
+    make(rows, 1);
+    return new Report();
+}
+function make(a: number[], b: number) { return a; }
+function stale() { return 1; }
+`}),
+		"csharp": csharptest.FromSource(t, map[string]string{"Orders.cs": `class Report {}
+class Orders {
+    Report Build(int rows, int unused) { Make(rows, 1); return new Report(); }
+    int Make(int a, int b) => a + b;
+    int Stale() => 1;
+}
+`}),
 	}
 
 	for _, each := range []typed{

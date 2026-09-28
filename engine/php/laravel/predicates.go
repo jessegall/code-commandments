@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	engine.Predicates(contract.PHP,
+	engine.Offers(contract.PHP,
 		engine.Predicate{Name: "facadeCall", Says: "it is a static call on a Laravel facade", Holds: func(m engine.Match) bool { return Node{Match: m}.IsFacadeCall() }},
 	)
 }

@@ -1,11 +1,9 @@
 package engine
 
-import "strings"
-
 // DocTags are the tags the declaration's documentation carries, each by its bare name, as its language writes
 // them; none for a language that registered no reading.
 func (m Match) DocTags() []string {
-	if read := m.lists().DocTags; read != nil && m.node != nil {
+	if read := m.grammar().DocTags; read != nil && m.node != nil {
 		return read(m)
 	}
 
@@ -24,35 +22,10 @@ func (m Match) DocComments() []string {
 	return texts
 }
 
-// AtTags are the tags a PHPDoc or JSDoc comment carries: each line that opens with `@` names one, its bare name
-// the word after the `@`.
-func AtTags(comment string) []string {
-	var tags []string
-	for _, line := range strings.Split(comment, "\n") {
-		line = strings.TrimLeft(strings.TrimSpace(line), "/*")
-		word, _, _ := strings.Cut(strings.TrimSpace(line), " ")
-		if name, tagged := strings.CutPrefix(word, "@"); tagged && name != "" {
-			tags = append(tags, strings.TrimRight(name, "{}"))
-		}
-	}
-
-	return tags
-}
-
-// AtTagsOf reads the tags of a declaration's PHPDoc or JSDoc comments.
-func AtTagsOf(declaration Match) []string {
-	var tags []string
-	for _, comment := range declaration.DocComments() {
-		tags = append(tags, AtTags(comment)...)
-	}
-
-	return tags
-}
-
 // BodyHash is the formatting-blind fingerprint of the function's body, as its language takes it; empty for a node
 // without one.
 func (m Match) BodyHash() string {
-	if read := m.lists().BodyHash; read != nil && m.Is(Function) {
+	if read := m.grammar().BodyHash; read != nil && m.Is(Function) {
 		return read(m)
 	}
 
@@ -95,7 +68,7 @@ func (m Match) IsTest() bool {
 		return true
 	}
 
-	read := m.lists().TestFile
+	read := m.grammar().TestFile
 
 	return read != nil && read(m.file.Judged())
 }

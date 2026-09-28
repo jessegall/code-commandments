@@ -78,22 +78,20 @@ func TestARuleJudgesWhereANodeSits(t *testing.T) {
 }
 
 func TestTopLevelCodeIsWhatRunsWhenAFileLoads(t *testing.T) {
-	module := pythontest.FromSource(t, map[string]string{"jobs.py": strings.Join([]string{
-		"import os",
-		"",
-		"setup()",
-		"",
-		"def run():",
-		"    go()",
-		"",
-		"class Job:",
-		"    limit = compute()",
-		"",
-		"for a in rows:",
-		"    for b in a:",
-		"        use(b)",
-		"",
-	}, "\n")})
+	module := pythontest.FromSource(t, map[string]string{"jobs.py": `import os
+
+setup()
+
+def run():
+    go()
+
+class Job:
+    limit = compute()
+
+for a in rows:
+    for b in a:
+        use(b)
+`})
 
 	for query, want := range map[string]string{
 		`{"select": "call", "where": [{"topLevel": true}]}`:                            "[3 13]",
@@ -105,16 +103,14 @@ func TestTopLevelCodeIsWhatRunsWhenAFileLoads(t *testing.T) {
 		}
 	}
 
-	script := frontendtest.FromSource(t, map[string]string{"src/boot.ts": strings.Join([]string{
-		"start();",
-		"",
-		"export function run(): void {",
-		"    go();",
-		"}",
-		"",
-		"const later = () => stop();",
-		"",
-	}, "\n")})
+	script := frontendtest.FromSource(t, map[string]string{"src/boot.ts": `start();
+
+export function run(): void {
+    go();
+}
+
+const later = () => stop();
+`})
 
 	if got := found(t, "typescript", `{"select": "call", "where": [{"topLevel": true}]}`, script); got != "[1]" {
 		t.Errorf("typescript top-level calls: found %s, want [1]", got)

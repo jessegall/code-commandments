@@ -5,7 +5,7 @@ import "strings"
 // Arguments are what the call is handed, in source order; none for a node that is no call or a language that
 // registered no lists.
 func (m Match) Arguments() []Match {
-	return m.listed(func(read Lists) func(Match) []Match { return read.Arguments })
+	return m.listed(m.grammar().Arguments)
 }
 
 // Members are what the type declaration declares directly, in source order: never a nested type's own.
@@ -14,7 +14,7 @@ func (m Match) Members() []Match {
 		return nil
 	}
 
-	return m.listed(func(read Lists) func(Match) []Match { return read.Members })
+	return m.listed(m.grammar().Members)
 }
 
 // Parameters are the parameters the function declares, in source order, each once: a variadic or a
@@ -24,7 +24,7 @@ func (m Match) Parameters() []Match {
 		return nil
 	}
 
-	return m.listed(func(read Lists) func(Match) []Match { return read.Parameters })
+	return m.listed(m.grammar().Parameters)
 }
 
 // DeclaringFunction is the function whose own parameter the parameter is; no node for a parameter of a
@@ -51,7 +51,10 @@ func (m Match) Lines() int {
 		return 1
 	}
 
-	return 1 + strings.Count(strings.TrimRight(string(source[m.node.Span.Start:m.node.Span.End]), "\n"), "\n")
+	text := Source(source)
+	last := m.node.Span.Start + len(strings.TrimRight(string(text[m.node.Span.Start:m.node.Span.End]), "\n"))
+
+	return text.LineAt(last) - text.LineAt(m.node.Span.Start) + 1
 }
 
 // Complexity is how many ways through the node there are, counted as one and a way more for every branch,

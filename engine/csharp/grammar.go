@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	engine.ListAs(contract.CSharp, engine.Lists{
+	engine.ReadAs(contract.CSharp, engine.Grammar{
 		Arguments:   arguments,
 		Members:     engine.InFields("Members"),
 		Parameters:  parameters,
@@ -24,18 +24,17 @@ func init() {
 		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
 		Implicit: engine.KindIn("ConstructorDeclaration", "DestructorDeclaration", "OperatorDeclaration",
 			"ConversionOperatorDeclaration"),
-		Overrides: func(member engine.Match) bool { return Node{Match: member}.IsInherited() },
-		Continues: func(branch engine.Match) bool {
-			return branch.Kind() == "IfStatement" && branch.Parent().Kind() == "ElseClause"
+		Inherited: func(member engine.Match) bool { return Node{Match: member}.IsInherited() },
+		NamespaceOf: func(symbol string) string {
+			member, _, _ := strings.Cut(strings.TrimPrefix(symbol, "global::"), "(")
+
+			return engine.Before(member, ".")
 		},
+		AnnotationNames: func(name string) []string { return []string{name, name + "Attribute"} },
+		Labels:          func(name engine.Match) bool { return name.Parent().Kind() == "NameColon" || name.Parent().Kind() == "NameEquals" },
+		Continues:       func(branch engine.Match) bool { return Node{Match: branch}.IsElseIf() },
 	})
 
-	engine.Predicates(contract.CSharp,
-		engine.Predicate{Name: "inherited", Says: "the member overrides or implements another, decided against the whole hierarchy", Holds: func(m engine.Match) bool { return Node{Match: m}.IsInherited() }},
-		engine.Predicate{Name: "inOverride", Says: "it sits in a member that overrides or implements a contract, whose signature the contract decided", Holds: func(m engine.Match) bool { return Node{Match: m}.IsWithinOverride() }},
-		engine.Predicate{Name: "buildingAnObject", Says: "it feeds straight into an object being created in the same function", Holds: func(m engine.Match) bool { return Node{Match: m}.IsBuildingAnObject() }},
-		engine.Predicate{Name: "inNamedConstructor", Says: "the function around it builds an instance of its own type", Holds: func(m engine.Match) bool { return Node{Match: m}.IsWithinNamedConstructor() }},
-	)
 }
 
 // xmlTags are the elements a declaration's XML doc comments open, each once where it opens: `summary`, `param`,

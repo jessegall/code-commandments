@@ -122,8 +122,8 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"extendsAny": "Exception"}` | the type is anywhere in its chain of parents, followed through the scan and the declarations outside it the language knows |
 | `{"implements": "ShouldQueue"}` | it honours the contract: its own, its parents', and the contracts those extend |
 | `{"hasAnnotation": "Route"}` | a declaration carries the attribute or decorator |
-| `{"returnType": "?*"}` | a function's written return type matches the pattern, as written or as the type it names resolves |
-| `{"parameterType": "array"}` | a parameter's written type matches the pattern, as written or as the type it names resolves |
+| `{"returnType": "?*"}` | a function's written return type matches the pattern, spaces dropped, or the type it names resolves to; it reads the text, so `?*` finds PHP's `?int` and `*\|null` finds `int\|null` |
+| `{"parameterType": "array"}` | a parameter's written type matches the pattern, read as returnType reads one |
 
 **Its language's own**
 
@@ -181,8 +181,9 @@ part when it is bare (`Controller`). A type the scan cannot resolve is matched b
 `Serializable` also names `SerializableAttribute`. Python writes its contracts among its bases, so
 `implements` there reads the bases that are a `Protocol` or an abstract base class — inheriting `abc.ABC`
 or made by `ABCMeta` — and a plain base is only `extends`. A **type
-pattern** has one wildcard, `*`: a `?` is itself, so `?*` is PHP's nullable type, and a function or
-parameter with no type written matches no pattern — reject `"*"` to find the untyped ones.
+pattern** has one wildcard, `*`: a `?` is itself, so `?*` is PHP's `?int`. It reads the type as written,
+so a type spelt as a union is matched as one — `*|null`, `* | None` — and a function or parameter with no
+type written matches no pattern: reject `"*"` to find the untyped ones.
 
 `unused` never flags what the language itself calls or binds — a constructor, a magic or dunder method,
 Python's `self` — nor a member a supertype dictates, nor a parameter of a declaration with no body. It

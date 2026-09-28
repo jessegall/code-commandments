@@ -127,32 +127,28 @@ func TestALayerIsNamedInTheCaseItsLanguageReadsIt(t *testing.T) {
 }
 
 func TestTheChecksHoldAtTheirEdgesInPythonAndTypeScript(t *testing.T) {
-	python := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/boxes.py": strings.Join([]string{
-		"class Outer:",
-		"    class Inner:",
-		"        def hidden(self):",
-		"            pass",
-		"",
-		"    def shown(self, *args, **kwargs):",
-		"        return [x for x in args]",
-		"",
-		"def build():",
-		"    return Outer.Inner()",
-		"",
-		"def lonely(a, b=None, *, c):",
-		"    return a",
-		"",
-	}, "\n")})
+	python := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/boxes.py": `class Outer:
+    class Inner:
+        def hidden(self):
+            pass
 
-	typescript := frontendtest.FromSource(t, map[string]string{"src/box.ts": strings.Join([]string{
-		"export class Box {",
-		"    static make(size?: number): Box { return new Box(); }",
-		"    open(): void { this.close?.(); }",
-		"    close(): void {}",
-		"}",
-		"const made = Box.make(1);",
-		"",
-	}, "\n")})
+    def shown(self, *args, **kwargs):
+        return [x for x in args]
+
+def build():
+    return Outer.Inner()
+
+def lonely(a, b=None, *, c):
+    return a
+`})
+
+	typescript := frontendtest.FromSource(t, map[string]string{"src/box.ts": `export class Box {
+    static make(size?: number): Box { return new Box(); }
+    open(): void { this.close?.(); }
+    close(): void {}
+}
+const made = Box.make(1);
+`})
 
 	for _, each := range []typed{
 		// a nested class's members are its own
@@ -184,18 +180,16 @@ func TestTheChecksHoldAtTheirEdgesInPythonAndTypeScript(t *testing.T) {
 }
 
 func TestAFrontendRuleReadsAComponentsScript(t *testing.T) {
-	component := frontendtest.FromSource(t, map[string]string{"src/Cart.vue": strings.Join([]string{
-		"<template>",
-		"  <button @click=\"add\">Add</button>",
-		"</template>",
-		"",
-		"<script setup lang=\"ts\">",
-		"function add(item: string, count: number, note: string): void {",
-		"    console.log(item);",
-		"}",
-		"</script>",
-		"",
-	}, "\n")})
+	component := frontendtest.FromSource(t, map[string]string{"src/Cart.vue": `<template>
+  <button @click="add">Add</button>
+</template>
+
+<script setup lang="ts">
+function add(item: string, count: number, note: string): void {
+    console.log(item);
+}
+</script>
+`})
 
 	for query, want := range map[string]string{
 		`{"select": "call", "where": [{"name": "log"}, {"descendant": {"name": "console"}}]}`: "[7]",
@@ -211,17 +205,15 @@ func TestAFrontendRuleReadsAComponentsScript(t *testing.T) {
 }
 
 func TestTheChecksHoldAtTheirEdgesInCSharp(t *testing.T) {
-	built := csharptest.FromSource(t, map[string]string{"Shelf.cs": strings.Join([]string{
-		"using System;",
-		"using System.Collections.Generic;",
-		"[SerializableAttribute] class Shelf : List<int>, IDisposable {",
-		"    public void Dispose() { }",
-		"    int Count(int a, int b = 1, params int[] rest) => a;",
-		"    void Walk() { foreach (var x in this) { foreach (var y in this) { foreach (var z in this) { Console.WriteLine(z); } } } }",
-		"}",
-		"record Point(int X, int Y);",
-		"",
-	}, "\n")})
+	built := csharptest.FromSource(t, map[string]string{"Shelf.cs": `using System;
+using System.Collections.Generic;
+[SerializableAttribute] class Shelf : List<int>, IDisposable {
+    public void Dispose() { }
+    int Count(int a, int b = 1, params int[] rest) => a;
+    void Walk() { foreach (var x in this) { foreach (var y in this) { foreach (var z in this) { Console.WriteLine(z); } } } }
+}
+record Point(int X, int Y);
+`})
 
 	for query, want := range map[string]string{
 		// an attribute named whole, Attribute and all, or without it
@@ -242,7 +234,7 @@ func TestTheChecksHoldAtTheirEdgesInCSharp(t *testing.T) {
 	}
 }
 
-func TestTheReviewedEdgesHold(t *testing.T) {
+func TestGlobsPathsAndTypePatternsMatchWhatTheySay(t *testing.T) {
 	built := phpCodebase(t, "Script.php", "<?php\n\n$sql = <<<SQL\nselect *\nfrom users where id = 1\nSQL;\n\nfunction pick(int | string $id): int|null { return null; }\n")
 
 	for query, want := range map[string]string{

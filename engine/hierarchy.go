@@ -9,22 +9,22 @@ import (
 
 // Extends are the nodes naming the types the type declaration extends directly, in source order.
 func (m Match) Extends() []Match {
-	return m.listed(func(read Lists) func(Match) []Match { return read.Extends })
+	return m.listed(m.grammar().Extends)
 }
 
 // Implements are the nodes naming the contracts the type declaration honours directly, in source order.
 func (m Match) Implements() []Match {
-	return m.listed(func(read Lists) func(Match) []Match { return read.Implements })
+	return m.listed(m.grammar().Implements)
 }
 
 // Annotations are the nodes naming each attribute or decorator the declaration carries, in source order.
 func (m Match) Annotations() []Match {
-	return m.listed(func(read Lists) func(Match) []Match { return read.Annotations })
+	return m.listed(m.grammar().Annotations)
 }
 
 // TypeKind is what kind of type the type declaration declares, one of TypeKinds; empty for any other node.
 func (m Match) TypeKind() string {
-	if read := m.lists().TypeKind; read != nil && m.Is(TypeDeclaration) {
+	if read := m.grammar().TypeKind; read != nil && m.Is(TypeDeclaration) {
 		return read(m)
 	}
 
@@ -33,7 +33,7 @@ func (m Match) TypeKind() string {
 
 // ReturnType is the node the function's return type is written as; no node when none is written.
 func (m Match) ReturnType() Match {
-	if read := m.lists().ReturnType; read != nil && m.Is(Function) {
+	if read := m.grammar().ReturnType; read != nil && m.Is(Function) {
 		return read(m)
 	}
 
@@ -42,18 +42,23 @@ func (m Match) ReturnType() Match {
 
 // ParameterType is the node the parameter's type is written as; no node when none is written.
 func (m Match) ParameterType() Match {
-	if read := m.lists().ParameterType; read != nil && m.Is(Parameter) {
+	if read := m.grammar().ParameterType; read != nil && m.Is(Parameter) {
 		return read(m)
 	}
 
 	return Match{}
 }
 
-// IsAnnotated says whether an attribute or decorator the declaration carries names the type; in C#, where
-// `[Serializable]` is SerializableAttribute, a name without its Attribute suffix names it too.
+// IsAnnotated says whether an attribute or decorator the declaration carries names the type, by any name its
+// language lets one be written by: `[Serializable]` is SerializableAttribute in C#.
 func (m Match) IsAnnotated(want string) bool {
+	names := []string{want}
+	if read := m.grammar().AnnotationNames; read != nil {
+		names = read(want)
+	}
+
 	for _, annotation := range m.Annotations() {
-		if annotation.Names(want) || m.file.Language() == contract.CSharp && annotation.Names(want+"Attribute") {
+		if slices.ContainsFunc(names, annotation.Names) {
 			return true
 		}
 	}

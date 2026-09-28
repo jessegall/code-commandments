@@ -11,7 +11,7 @@ import (
 
 func init() {
 	for _, language := range []contract.Language{contract.Vue, contract.TypeScript} {
-		engine.ListAs(language, engine.Lists{
+		engine.ReadAs(language, engine.Grammar{
 			Arguments:     engine.InFields("arguments"),
 			Members:       engine.InFields("members"),
 			Parameters:    engine.InFields("parameters"),
@@ -22,19 +22,19 @@ func init() {
 			ReturnType:    engine.InField("type"),
 			ParameterType: engine.InField("type"),
 			Constructs:    engine.OfKind("NewExpression", "expression"),
-			DocTags:       engine.AtTagsOf,
+			DocTags:       jsDocTags,
 			BodyHash:      func(function engine.Match) string { return typescript.Of(function).BodyHash() },
 			TestFile:      testFile,
 			Implicit:      engine.KindIn("Constructor"),
+			NamespaceOf:   func(symbol string) string { return engine.Before(symbol, "#") },
+			Labels: func(name engine.Match) bool {
+				return name.Parent().Kind() == "PropertyAssignment" && name.Node().Field == "name"
+			},
 			Continues: func(branch engine.Match) bool {
 				return branch.Kind() == "IfStatement" && branch.Node().Field == "elseStatement"
 			},
 		})
 
-		engine.Predicates(language,
-			engine.Predicate{Name: "optional", Says: "a field or parameter may be missing: written `x?`, or typed to admit null or undefined", Holds: func(m engine.Match) bool { return typescript.Of(m).IsOptional() }},
-			engine.Predicate{Name: "absence", Says: "it is the literal null or undefined", Holds: func(m engine.Match) bool { return typescript.Of(m).IsAbsence() }},
-		)
 	}
 }
 
@@ -83,4 +83,29 @@ func decorators(declaration engine.Match) []engine.Match {
 	}
 
 	return names
+}
+
+// atTags are the tags a JSDoc comment carries: each line that opens with `@` names one, its bare name
+// the word after the `@`.
+func atTags(comment string) []string {
+	var tags []string
+	for _, line := range strings.Split(comment, "\n") {
+		line = strings.TrimLeft(strings.TrimSpace(line), "/*")
+		word, _, _ := strings.Cut(strings.TrimSpace(line), " ")
+		if name, tagged := strings.CutPrefix(word, "@"); tagged && name != "" {
+			tags = append(tags, strings.TrimRight(name, "{}"))
+		}
+	}
+
+	return tags
+}
+
+// jsDocTags are the tags of a declaration's JSDoc comments.
+func jsDocTags(declaration engine.Match) []string {
+	var tags []string
+	for _, comment := range declaration.DocComments() {
+		tags = append(tags, atTags(comment)...)
+	}
+
+	return tags
 }

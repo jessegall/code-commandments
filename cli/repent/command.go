@@ -185,7 +185,7 @@ func apply(path string, converged scribes.Converged, space workspace.Workspace, 
 	console.Write("\033[32m✓ Repented " + strconv.Itoa(len(written)) + " " + files + ".\033[0m\n")
 
 	for _, file := range written {
-		console.Write("  " + relative(file, path) + "\n")
+		console.Write("  " + source.Relative(path, file) + "\n")
 	}
 
 	if err := scaffoldConstructs(converged.Files, written, console); err != nil {
@@ -285,12 +285,4 @@ func scaffoldConstructs(files scribes.Rewrites, written []string, console cli.Co
 	}
 
 	return nil
-}
-
-func relative(path, base string) string {
-	if rest, under := strings.CutPrefix(path, base+"/"); under {
-		return rest
-	}
-
-	return path
 }

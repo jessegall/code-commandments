@@ -42,7 +42,7 @@ func Schema() []byte {
 		"definitions":          definitions,
 		"properties": object{
 			"$schema": object{"type": "string"},
-			"engine":  object{"enum": []string{"backend", "frontend", "typescript", "python", "csharp"}, "description": "The engine the rule judges."},
+			"engine":  object{"enum": engineNames(), "description": "The engine the rule judges."},
 			"sin": object{
 				"type":                 "object",
 				"required":             []string{"name", "skill"},
@@ -146,12 +146,13 @@ var countKeys = map[string]string{
 	"field":      "count only the children filling this field",
 }
 
-// closedValues are the keys whose value is one of a few.
-var closedValues = map[string]any{
+// closedValues are the keys whose value is one of a few, and those few: the one list the parser checks a value
+// against, the schema offers, and a slip of the keyboard is matched with.
+var closedValues = map[string][]string{
 	"is":       neutralNames(),
 	"typeKind": engine.TypeKinds,
-	"nameCase": []string{"camel", "pascal", "snake", "upper", "kebab"},
-	"position": []string{"first", "last", "only"},
+	"nameCase": {"camel", "pascal", "snake", "upper", "kebab"},
+	"position": {"first", "last", "only"},
 }
 
 // checkNamed is the catalog's check of the key.

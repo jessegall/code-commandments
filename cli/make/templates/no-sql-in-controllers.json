@@ -5,6 +5,6 @@
         "rule": "Query through the model or a repository, and keep the controller to the request and the response."
     },
     "find": {
-        "backend": {"select": "literal", "where": [{"textMatches": "(?i)^\\s*(select|insert|update|delete)\\s"}, {"inside": {"extendsAny": "Controller"}}]}
+        "backend": {"select": "literal", "where": [{"textMatches": "(?i)^\\s*(select|insert|update|delete)\\s"}, {"inside": {"extendsAny": "Illuminate\\Routing\\Controller"}}]}
     }
 }

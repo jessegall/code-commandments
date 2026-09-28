@@ -5,7 +5,6 @@ package rules
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -136,7 +135,7 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 
 	found := tried.Find(codebase)
 	for _, match := range found {
-		console.Write(fmt.Sprintf("%s:%d  %s\n", relative(root, match.File()), match.Line(), sourceLine(match)))
+		console.Write(fmt.Sprintf("%s:%d  %s\n", match.Judged(), match.Line(), sourceLine(match)))
 	}
 
 	console.Write(fmt.Sprintf("%d match(es) of %s in %s\n", len(found), tried.Name(), path))
@@ -211,7 +210,7 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 			{"flagged its fix at", result.FlaggedFixed},
 		} {
 			for _, place := range reason.places {
-				console.Write("    " + reason.says + " " + relative(root, place) + "\n")
+				console.Write("    " + reason.says + " " + source.Relative(root, place) + "\n")
 			}
 		}
 	}
@@ -219,7 +218,7 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 	for _, marker := range markers {
 		if !slices.ContainsFunc(proven, marker.Naming) {
 			failed = true
-			console.Write("\033[31m✗\033[0m " + relative(root, marker.Location) + " marks " + marker.Name + ", which is no rule of the project\n")
+			console.Write("\033[31m✗\033[0m " + source.Relative(root, marker.Location) + " marks " + marker.Name + ", which is no rule of the project\n")
 		}
 	}
 
@@ -336,13 +335,4 @@ func sourceLine(match engine.Match) string {
 	}
 
 	return strings.TrimSpace(lines[match.Line()-1])
-}
-
-// relative is the path from the project root, when it lies inside it.
-func relative(root, path string) string {
-	if inside, err := filepath.Rel(root, path); err == nil && !strings.HasPrefix(inside, "..") {
-		return inside
-	}
-
-	return path
 }

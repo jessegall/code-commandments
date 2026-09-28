@@ -78,37 +78,31 @@ func TestARuleBoundsTheSizeOfANode(t *testing.T) {
 }
 
 func TestSizesReadTheSameInEveryLanguage(t *testing.T) {
-	python := pythontest.FromSource(t, map[string]string{"cart.py": strings.Join([]string{
-		"class Cart:",
-		"    limit = 3",
-		"",
-		"    def add(self, item, *more, qty=1, **extra):",
-		"        save(item, *more, qty=qty)",
-		"",
-		"    def clear(self):",
-		"        pass",
-		"",
-	}, "\n")})
+	python := pythontest.FromSource(t, map[string]string{"cart.py": `class Cart:
+    limit = 3
 
-	typescript := frontendtest.FromSource(t, map[string]string{"src/cart.ts": strings.Join([]string{
-		"export class Cart {",
-		"    limit = 3;",
-		"    add(item: string, ...more: string[]): void {",
-		"        save(item, ...more);",
-		"    }",
-		"}",
-		"",
-	}, "\n")})
+    def add(self, item, *more, qty=1, **extra):
+        save(item, *more, qty=qty)
 
-	csharp := csharptest.FromSource(t, map[string]string{"Cart.cs": strings.Join([]string{
-		"class Cart",
-		"{",
-		"    int limit;",
-		"    void Add(int a, params int[] more) { Save(a, b: more); }",
-		"    void Save(int a, int[] b) { }",
-		"}",
-		"",
-	}, "\n")})
+    def clear(self):
+        pass
+`})
+
+	typescript := frontendtest.FromSource(t, map[string]string{"src/cart.ts": `export class Cart {
+    limit = 3;
+    add(item: string, ...more: string[]): void {
+        save(item, ...more);
+    }
+}
+`})
+
+	csharp := csharptest.FromSource(t, map[string]string{"Cart.cs": `class Cart
+{
+    int limit;
+    void Add(int a, params int[] more) { Save(a, b: more); }
+    void Save(int a, int[] b) { }
+}
+`})
 
 	for _, each := range []struct{ engine, query, want string }{
 		{"python", `{"select": "function", "where": [{"parameters": {"atLeast": 5}}]}`, "[4]"},

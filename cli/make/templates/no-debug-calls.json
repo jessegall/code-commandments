@@ -7,8 +7,8 @@
     "find": {
         "backend": {"select": "call", "where": [{"nameIn": ["dd", "dump", "ddd", "var_dump", "print_r", "ray"]}]},
         "python": {"select": "call", "where": [{"nameIn": ["print", "breakpoint", "set_trace"]}]},
-        "typescript": {"select": "call", "where": [{"nameIn": ["log", "debug", "trace", "dir"]}, {"descendant": {"name": "console"}}]},
-        "frontend": {"select": "call", "where": [{"nameIn": ["log", "debug", "trace", "dir"]}, {"descendant": {"name": "console"}}]},
-        "csharp": {"select": "call", "where": [{"nameIn": ["WriteLine", "Write"]}, {"descendant": {"name": "Console"}}]}
+        "typescript": {"select": "call", "where": [{"nameIn": ["log", "debug", "trace", "dir"]}, {"descendant": {"name": "console"}, "of": "child:expression"}]},
+        "frontend": {"select": "call", "where": [{"nameIn": ["log", "debug", "trace", "dir"]}, {"descendant": {"name": "console"}, "of": "child:expression"}]},
+        "csharp": {"select": "call", "where": [{"nameIn": ["WriteLine", "Write"]}, {"descendant": {"name": "Console"}, "of": "child:Expression"}]}
     }
 }

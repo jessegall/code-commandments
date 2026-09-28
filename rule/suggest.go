@@ -6,11 +6,8 @@ import (
 	"strings"
 )
 
-// written are the types a rule file is written in, whose keys a misspelt one is compared with.
-var written = []reflect.Type{
-	reflect.TypeFor[file](), reflect.TypeFor[sinFile](), reflect.TypeFor[find](), reflect.TypeFor[Step](),
-	reflect.TypeFor[Bounds](), reflect.TypeFor[Count](), reflect.TypeFor[Argued](), reflect.TypeFor[Nesting](),
-}
+// outer are the types a rule file is written in around its steps, whose shapes the schema spells out by hand.
+var outer = []reflect.Type{reflect.TypeFor[file](), reflect.TypeFor[sinFile](), reflect.TypeFor[find]()}
 
 // jsonKeys are the keys a type is written with, an embedded type's among them.
 func jsonKeys(written reflect.Type) []string {
@@ -33,6 +30,11 @@ func jsonKeys(written reflect.Type) []string {
 
 // knownKeys are every key a rule file may use.
 func knownKeys() []string {
+	written := slices.Clone(outer)
+	for shape := range shapes {
+		written = append(written, shape)
+	}
+
 	var known []string
 	for _, each := range written {
 		for _, key := range jsonKeys(each) {

@@ -51,20 +51,18 @@ func TestARuleMatchesNamesAndTextByPattern(t *testing.T) {
 }
 
 func TestANameCaseTellsTheStylesApart(t *testing.T) {
-	cart := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/cart.py": strings.Join([]string{
-		"MAX_ITEMS = 3",
-		"",
-		"class Cart:",
-		"    def add_item(self, item):",
-		"        return item",
-		"",
-		"    def _hidden(self):",
-		"        return 1",
-		"",
-		"    def camelCase(self):",
-		"        return 2",
-		"",
-	}, "\n")})
+	cart := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/cart.py": `MAX_ITEMS = 3
+
+class Cart:
+    def add_item(self, item):
+        return item
+
+    def _hidden(self):
+        return 1
+
+    def camelCase(self):
+        return 2
+`})
 
 	for query, want := range map[string]string{
 		`{"select": "function", "where": [{"nameCase": "snake"}]}`:          "[4 7]",

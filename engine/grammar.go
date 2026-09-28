@@ -7,8 +7,9 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 )
 
-// Lists are where a language keeps what every language has but its tree files in a place of its own.
-type Lists struct {
+// Grammar is how a language holds what every language has in a place of its own: where its tree files a call's
+// arguments or a type's parents, which declarations the language itself calls, what its test files are named.
+type Grammar struct {
 	// Arguments are the values a call is handed, each once, named, spread and unpacked ones alike.
 	Arguments func(Match) []Match
 	// Members are what a type declaration declares directly: its methods, fields, constants and nested types.
@@ -42,9 +43,15 @@ type Lists struct {
 	// Implicit says whether the language itself calls a declaration or binds a parameter, so no code of the
 	// project names it: a constructor, a magic or dunder method, Python's self.
 	Implicit func(Match) bool
-	// Overrides says whether a member overrides or implements another, as the language's compiler decides it, beside
-	// what the declared supertypes show.
-	Overrides func(Match) bool
+	// NamespaceOf is the namespace part of a declaration's symbol, in the spelling of the language.
+	NamespaceOf func(symbol string) string
+	// AnnotationNames are the names an annotation of the name may be written by, the name itself among them.
+	AnnotationNames func(name string) []string
+	// Inherited says whether a member overrides or implements another, as the language's compiler decides it,
+	// beside what the declared supertypes show.
+	Inherited func(Match) bool
+	// Labels says whether a name labels rather than reads, as a named argument's label does.
+	Labels func(Match) bool
 	// Continues says whether a branch continues the one it sits in rather than nesting inside it: an else-if.
 	Continues func(Match) bool
 }
@@ -52,12 +59,12 @@ type Lists struct {
 // TypeKinds are the kinds of type every language's declarations are told apart by.
 var TypeKinds = []string{"class", "interface", "enum", "trait", "record", "struct", "protocol"}
 
-// lists are the lists of each language that registered them.
-var lists sync.Map
+// grammars are the grammar of each language that registered one.
+var grammars sync.Map
 
-// ListAs has every match in a file of the language read what Lists names as read says.
-func ListAs(language contract.Language, read Lists) {
-	lists.Store(language, read)
+// ReadAs has every match in a file of the language read as the grammar says.
+func ReadAs(language contract.Language, read Grammar) {
+	grammars.Store(language, read)
 }
 
 // InFields reads the children filling any of the fields, in source order.
@@ -108,24 +115,24 @@ func Kinds(words map[string]string) func(Match) string {
 	}
 }
 
-func (m Match) lists() Lists {
+func (m Match) grammar() Grammar {
 	if m.file == nil {
-		return Lists{}
+		return Grammar{}
 	}
 
-	read, listed := lists.Load(m.file.Language())
+	read, listed := grammars.Load(m.file.Language())
 	if !listed {
-		return Lists{}
+		return Grammar{}
 	}
 
-	return read.(Lists)
+	return read.(Grammar)
 }
 
-// listed reads a list the node's language registered; none when it registered none.
-func (m Match) listed(list func(Lists) func(Match) []Match) []Match {
-	if read := list(m.lists()); read != nil && m.node != nil {
-		return read(m)
+// listed reads a list of the node's with its language's reading; none when the language registered none.
+func (m Match) listed(read func(Match) []Match) []Match {
+	if read == nil || m.node == nil {
+		return nil
 	}
 
-	return nil
+	return read(m)
 }

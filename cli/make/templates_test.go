@@ -9,6 +9,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 	"github.com/jessegall/code-commandments/rule"
 	"github.com/jessegall/code-commandments/skill"
 )
@@ -17,6 +18,8 @@ import (
 const controller = `<?php
 
 namespace App\Http;
+
+use Illuminate\Routing\Controller;
 
 class OrdersController extends Controller
 {
@@ -80,12 +83,12 @@ func TestEveryTemplateFlagsWhatItNames(t *testing.T) {
 	}
 
 	for name, want := range map[string]string{
-		"no-debug-calls":        "[10]",
-		"no-todo-comments":      "[7]",
-		"max-parameters":        "[7]",
+		"no-debug-calls":        "[12]",
+		"no-todo-comments":      "[9]",
+		"max-parameters":        "[9]",
 		"max-function-length":   "[]",
-		"max-nesting":           "[14]",
-		"no-sql-in-controllers": "[11]",
+		"max-nesting":           "[16]",
+		"no-sql-in-controllers": "[13]",
 	} {
 		template, known := TemplateNamed(name)
 		if !known {
@@ -125,4 +128,13 @@ func lines(matches []engine.Match) string {
 	}
 
 	return fmt.Sprint(found)
+}
+
+func TestADebugCallIsOneMadeOnTheConsole(t *testing.T) {
+	template, _ := TemplateNamed("no-debug-calls")
+	script := frontendtest.FromSource(t, map[string]string{"src/debug.ts": "console.log(1);\nlog(console);\n"})
+
+	if got := lines(ready(t, template, TypeScript).Find(script)); got != "[1]" {
+		t.Errorf("found %s, want [1]", got)
+	}
 }

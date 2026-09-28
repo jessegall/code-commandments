@@ -15,11 +15,8 @@ var protocols = []string{"typing.Protocol", "typing_extensions.Protocol"}
 // abstractions are the classes a class inherits from to be an abstract base: its contract, for whoever subclasses it.
 var abstractions = []string{"abc.ABC"}
 
-// enumerations are the classes an enumeration inherits from, however far up.
-var enumerations = []string{"enum.Enum", "enum.IntEnum", "enum.StrEnum", "enum.Flag", "enum.IntFlag"}
-
 func init() {
-	engine.ListAs(contract.Python, engine.Lists{
+	engine.ReadAs(contract.Python, engine.Grammar{
 		Arguments:     values,
 		Members:       members,
 		Parameters:    parameters,
@@ -35,16 +32,10 @@ func init() {
 		BodyHash:      func(def engine.Match) string { return Node{Match: def}.BodyHash() },
 		TestFile:      testFile,
 		Implicit:      implicit,
-		Continues:     func(branch engine.Match) bool { return branch.HasFlag("elif") },
+		NamespaceOf:   func(symbol string) string { return engine.Before(symbol, ".") },
+		Continues:     func(branch engine.Match) bool { return Node{Match: branch}.IsElif() },
 	})
 
-	engine.Predicates(contract.Python,
-		engine.Predicate{Name: "constructor", Says: "it is a class's __init__", Holds: func(m engine.Match) bool { return Node{Match: m}.IsConstructorDeclaration() }},
-		engine.Predicate{Name: "evaluated", Says: "it is an expression the code evaluates, outside every type annotation", Holds: func(m engine.Match) bool { return Node{Match: m}.IsEvaluated() }},
-		engine.Predicate{Name: "returnedValue", Says: "it is what a return statement returns", Holds: func(m engine.Match) bool { return Node{Match: m}.IsReturnedValue() }},
-		engine.Predicate{Name: "typeNarrowingGuard", Says: "it is an outermost `and` of two or more isinstance checks", Holds: func(m engine.Match) bool { return Node{Match: m}.IsTypeNarrowingGuard() }},
-		engine.Predicate{Name: "inNamedConstructor", Says: "it sits in a named constructor, where loose data becomes the class", Holds: func(m engine.Match) bool { return Node{Match: m}.IsWithinNamedConstructor() }},
-	)
 }
 
 // testFile says whether a Python file is a test's, as pytest collects them: `test_*.py`, `*_test.py`, a
@@ -145,8 +136,8 @@ func decorators(definition engine.Match) []engine.Match {
 	return names
 }
 
-// classKind is a protocol for a class listing Protocol among its bases, an enum for one inheriting from an
-// enumeration, and a class otherwise.
+// classKind is a protocol for a class listing Protocol among its bases, an enum for one the program knows as an
+// enum, and a class otherwise.
 func classKind(class engine.Match) string {
 	for _, base := range class.Extends() {
 		if slices.ContainsFunc(protocols, base.Names) {
@@ -154,10 +145,8 @@ func classKind(class engine.Match) string {
 		}
 	}
 
-	for _, ancestor := range class.Lineage() {
-		if slices.Contains(enumerations, ancestor) {
-			return "enum"
-		}
+	if Of(class.Codebase()).IsEnum(class.Name()) {
+		return "enum"
 	}
 
 	return "class"
@@ -205,9 +194,7 @@ func bases(class engine.Match) []engine.Match {
 // the first parameter of a method, self or cls, that a static method does not take.
 func implicit(declaration engine.Match) bool {
 	if declaration.Is(engine.Function) {
-		name := declaration.Name()
-
-		return len(name) > 4 && strings.HasPrefix(name, "__") && strings.HasSuffix(name, "__")
+		return Node{Match: declaration}.IsDunder()
 	}
 
 	method := declaration.DeclaringFunction()

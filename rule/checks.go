@@ -82,8 +82,8 @@ var Checks = []Group{
 		{"extendsAny", `{"extendsAny": "Exception"}`, "the type is anywhere in its chain of parents, followed through the scan and the declarations outside it the language knows"},
 		{"implements", `{"implements": "ShouldQueue"}`, "it honours the contract: its own, its parents', and the contracts those extend"},
 		{"hasAnnotation", `{"hasAnnotation": "Route"}`, "a declaration carries the attribute or decorator"},
-		{"returnType", `{"returnType": "?*"}`, "a function's written return type matches the pattern, as written or as the type it names resolves"},
-		{"parameterType", `{"parameterType": "array"}`, "a parameter's written type matches the pattern, as written or as the type it names resolves"},
+		{"returnType", `{"returnType": "?*"}`, "a function's written return type matches the pattern, spaces dropped, or the type it names resolves to; it reads the text, so `?*` finds PHP's `?int` and `*|null` finds `int|null`"},
+		{"parameterType", `{"parameterType": "array"}`, "a parameter's written type matches the pattern, read as returnType reads one"},
 	}},
 	{"Its language's own", []Check{
 		{"php", `{"php": "facadeCall"}`, "PHP's own check of the name holds — one of the checks listed below"},
@@ -101,6 +101,29 @@ var ownLanguages = []contract.Language{contract.PHP, contract.Python, contract.C
 type Target struct {
 	Key   string
 	Means string
+}
+
+// Takes says whether the target is the one an "of" value names: the key itself, or its prefix and a word after.
+func (t Target) Takes(of string) bool {
+	if prefix, pattern := strings.CutSuffix(t.Key, "<kind>"); pattern {
+		return strings.HasPrefix(of, prefix) && len(of) > len(prefix)
+	}
+
+	if prefix, pattern := strings.CutSuffix(t.Key, "<field>"); pattern {
+		return strings.HasPrefix(of, prefix) && len(of) > len(prefix)
+	}
+
+	return of == t.Key
+}
+
+// targetKeys are the keys of every target, as a rule may write them.
+func targetKeys() []string {
+	var keys []string
+	for _, target := range Targets {
+		keys = append(keys, target.Key)
+	}
+
+	return keys
 }
 
 // Targets are every node "of" can name.

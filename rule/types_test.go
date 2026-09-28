@@ -45,50 +45,44 @@ type typed struct{ engine, query, want string }
 func TestARuleReadsTypesAndTheirHierarchy(t *testing.T) {
 	codebases := map[string]*engine.Codebase{
 		"backend": phpCodebase(t, "Controllers.php", controllers),
-		"python": pythontest.FromSource(t, map[string]string{"shop.py": strings.Join([]string{
-			"from enum import Enum",
-			"from typing import Protocol",
-			"",
-			"class Shows(Protocol):",
-			"    def show(self) -> str: ...",
-			"",
-			"class Base:",
-			"    pass",
-			"",
-			"@dataclass",
-			"class Order(Base):",
-			"    def total(self, rate: float, count) -> int | None:",
-			"        return None",
-			"",
-			"class Special(Order):",
-			"    pass",
-			"",
-			"class Color(Enum):",
-			"    RED = 1",
-			"",
-		}, "\n")}),
-		"typescript": frontendtest.FromSource(t, map[string]string{"src/order.ts": strings.Join([]string{
-			"export interface Shows extends Other {}",
-			"interface Other {}",
-			"class Base {}",
-			"export class Order extends Base implements Shows {",
-			"    @Watch() total(rate: number, count): string | null { return null; }",
-			"}",
-			"enum Color { Red }",
-			"",
-		}, "\n")}),
-		"csharp": csharptest.FromSource(t, map[string]string{"Order.cs": strings.Join([]string{
-			"namespace N;",
-			"[Serializable] class Order : Base, IShows { string? Total(int rate) => null; }",
-			"class Base : IOther {}",
-			"interface IShows : IOther {}",
-			"interface IOther {}",
-			"enum E { A }",
-			"record R(int X);",
-			"struct S {}",
-			"class Special : Order {}",
-			"",
-		}, "\n")}),
+		"python": pythontest.FromSource(t, map[string]string{"shop.py": `from enum import Enum
+from typing import Protocol
+
+class Shows(Protocol):
+    def show(self) -> str: ...
+
+class Base:
+    pass
+
+@dataclass
+class Order(Base):
+    def total(self, rate: float, count) -> int | None:
+        return None
+
+class Special(Order):
+    pass
+
+class Color(Enum):
+    RED = 1
+`}),
+		"typescript": frontendtest.FromSource(t, map[string]string{"src/order.ts": `export interface Shows extends Other {}
+interface Other {}
+class Base {}
+export class Order extends Base implements Shows {
+    @Watch() total(rate: number, count): string | null { return null; }
+}
+enum Color { Red }
+`}),
+		"csharp": csharptest.FromSource(t, map[string]string{"Order.cs": `namespace N;
+[Serializable] class Order : Base, IShows { string? Total(int rate) => null; }
+class Base : IOther {}
+interface IShows : IOther {}
+interface IOther {}
+enum E { A }
+record R(int X);
+struct S {}
+class Special : Order {}
+`}),
 	}
 
 	for _, each := range []typed{

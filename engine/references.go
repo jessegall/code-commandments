@@ -8,7 +8,7 @@ import (
 
 // Constructed is the node naming the type the construction creates; no node for anything else.
 func (m Match) Constructed() Match {
-	if read := m.lists().Constructs; read != nil && m.node != nil {
+	if read := m.grammar().Constructs; read != nil && m.node != nil {
 		return read(m)
 	}
 
@@ -24,7 +24,7 @@ func (m Match) Referrers() []Match {
 	}
 
 	found := referrers(m.file.Codebase())[m.node.Symbol]
-	if read := m.lists().Callers; read != nil {
+	if read := m.grammar().Callers; read != nil {
 		found = append(found, read(m)...)
 	}
 
@@ -56,7 +56,7 @@ func (m Match) isAbove(below Match) bool {
 // IsImplicit says whether the language itself calls the declaration or binds the parameter: a constructor, a magic
 // or dunder method, Python's self and cls.
 func (m Match) IsImplicit() bool {
-	read := m.lists().Implicit
+	read := m.grammar().Implicit
 
 	return read != nil && m.node != nil && read(m)
 }
@@ -64,7 +64,7 @@ func (m Match) IsImplicit() bool {
 // Overrides says whether the function is a member its type owes a supertype: its language's compiler says so, or one
 // of the same name is declared by a type it extends or a contract it honours, in the scan or outside it, so a call
 // through the supertype reaches it.
-func (m Match) Overrides() bool {
+func (m Match) IsOverride() bool {
 	owner := m.Parent()
 	for !owner.Is(TypeDeclaration) && owner.Exists() && !owner.Is(Function) {
 		owner = owner.Parent()
@@ -74,7 +74,7 @@ func (m Match) Overrides() bool {
 		return false
 	}
 
-	if read := m.lists().Overrides; read != nil && read(m) {
+	if read := m.grammar().Inherited; read != nil && read(m) {
 		return true
 	}
 
@@ -114,12 +114,13 @@ var promotions = []string{"public", "protected", "private", "readonly"}
 // function type, of a member a supertype dictates, bound by the language, or promoted to a property — is not unread. A name that selects a member or labels an argument (`this.name`, `name:`) is no read.
 func (m Match) IsUnread() bool {
 	function := m.DeclaringFunction()
-	if !function.Exists() || m.IsImplicit() || function.Overrides() || slices.ContainsFunc(promotions, m.HasModifier) {
+	if !function.Exists() || m.IsImplicit() || function.IsOverride() || slices.ContainsFunc(promotions, m.HasModifier) {
 		return false
 	}
 
 	for _, below := range function.Descendants() {
-		if below.Is(Identifier) && below.Name() == m.Name() && below.node != m.node && !m.isAbove(below) && !below.isSelector() {
+		if below.Is(Identifier) && below.Name() == m.Name() && below.node != m.node && !m.isAbove(below) &&
+			!below.isSelector() && !below.isShadowed(function) {
 			return false
 		}
 	}
@@ -127,10 +128,28 @@ func (m Match) IsUnread() bool {
 	return true
 }
 
-// isSelector says whether the name selects or labels rather than reads: it fills a name slot, as a member
-// access's member and an argument's label do.
+// isSelector says whether the name selects or labels rather than reads: a member access's member, not its
+// receiver, or a label its language writes by a name, such as a named argument's.
 func (m Match) isSelector() bool {
-	return m.node.Field == "name" || m.node.Field == "Name"
+	if parent := m.Parent(); parent.Is(MemberAccess) && parent.Children()[0].node != m.node {
+		return true
+	}
+
+	read := m.grammar().Labels
+
+	return read != nil && read(m)
+}
+
+// isShadowed says whether a function between the name and the one given declares a parameter of the name, so the
+// name reads that parameter instead.
+func (m Match) isShadowed(outer Match) bool {
+	for ancestor := m.Parent(); ancestor.Exists() && ancestor.node != outer.node; ancestor = ancestor.Parent() {
+		if ancestor.Is(Function) && slices.ContainsFunc(ancestor.Parameters(), func(parameter Match) bool { return parameter.Name() == m.Name() }) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // referrers indexes every node of the codebase by the symbol it refers to, the declaration its call reaches, and

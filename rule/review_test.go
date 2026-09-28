@@ -1,7 +1,6 @@
 package rule_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine"
@@ -10,49 +9,43 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// The cases the review of the rule language found wrong, each held right.
-func TestWhatTheReviewFoundStaysFixed(t *testing.T) {
+// Each language's bases, parameters and receivers read as the language writes them.
+func TestBasesParametersAndReceiversReadAsTheirLanguageWritesThem(t *testing.T) {
 	csharp := csharptest.FromSource(t, map[string]string{
-		"Shop.cs": strings.Join([]string{
-			"interface IA { }",
-			"interface IB : IA { }",
-			"class C : IB { }",
-			"class K {",
-			"    string name = \"\";",
-			"    void F(string name) { Use(this.name); }",
-			"    void Use(string s) { System.Console.WriteLine(s); }",
-			"}",
-			"interface IShape { int Area(int scale); }",
-			"record Point(int X, int Y);",
-			"",
-		}, "\n"),
+		"Shop.cs": `interface IA { }
+interface IB : IA { }
+class C : IB { }
+class K {
+    string name = "";
+    void F(string name) { Use(this.name); }
+    void Use(string s) { System.Console.WriteLine(s); }
+}
+interface IShape { int Area(int scale); }
+record Point(int X, int Y);
+`,
 		"Helpers.cs": "static class Helpers { public static int Do() => 1; }\nclass User { public int X() => Helpers.Do(); }\n",
 	})
 
-	python := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/kinds.py": strings.Join([]string{
-		"from typing import Generic, Protocol, TypeVar",
-		"T = TypeVar(\"T\")",
-		"class Shows(Protocol[T]):",
-		"    pass",
-		"class Repo(Generic[T]):",
-		"    pass",
-		"class Users(Repo[int]):",
-		"    pass",
-		"class Empty:",
-		"    \"\"\"Nothing here.\"\"\"",
-		"    pass",
-		"",
-	}, "\n")})
+	python := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/kinds.py": `from typing import Generic, Protocol, TypeVar
+T = TypeVar("T")
+class Shows(Protocol[T]):
+    pass
+class Repo(Generic[T]):
+    pass
+class Users(Repo[int]):
+    pass
+class Empty:
+    """Nothing here."""
+    pass
+`})
 
-	typescript := frontendtest.FromSource(t, map[string]string{"src/each.ts": strings.Join([]string{
-		"export function each(items: number[], visit: (item: number) => void): void {",
-		"    items.forEach(visit);",
-		"}",
-		"export class Account {",
-		"    constructor(private owner: string) {}",
-		"}",
-		"",
-	}, "\n")})
+	typescript := frontendtest.FromSource(t, map[string]string{"src/each.ts": `export function each(items: number[], visit: (item: number) => void): void {
+    items.forEach(visit);
+}
+export class Account {
+    constructor(private owner: string) {}
+}
+`})
 
 	for _, each := range []typed{
 		// an interface's own bases are what it extends, and a class honours them through it
@@ -81,18 +74,16 @@ func TestWhatTheReviewFoundStaysFixed(t *testing.T) {
 
 // What the language itself calls, and what a supertype dictates, is never unused.
 func TestWhatTheLanguageCallsIsNeverUnused(t *testing.T) {
-	php := phpCodebase(t, "Shape.php", strings.Join([]string{
-		"<?php",
-		"namespace App;",
-		"interface Shape { public function area(int $scale): int; }",
-		"final class Square implements Shape {",
-		"    public function __construct() {}",
-		"    public function __toString(): string { return 'square'; }",
-		"    public function area(int $scale): int { return 4; }",
-		"    public function lonely(): int { return 1; }",
-		"}",
-		"",
-	}, "\n"))
+	php := phpCodebase(t, "Shape.php", `<?php
+namespace App;
+interface Shape { public function area(int $scale): int; }
+final class Square implements Shape {
+    public function __construct() {}
+    public function __toString(): string { return 'square'; }
+    public function area(int $scale): int { return 4; }
+    public function lonely(): int { return 1; }
+}
+`)
 
 	for query, want := range map[string]string{
 		`{"select": "function", "where": [{"unused": true}]}`:  "[8]",
@@ -103,17 +94,15 @@ func TestWhatTheLanguageCallsIsNeverUnused(t *testing.T) {
 		}
 	}
 
-	python := pythontest.FromSource(t, map[string]string{"shapes.py": strings.Join([]string{
-		"class Square:",
-		"    def __init__(self):",
-		"        self.side = 2",
-		"    def __repr__(self):",
-		"        return 'square'",
-		"    @staticmethod",
-		"    def make(size):",
-		"        return 1",
-		"",
-	}, "\n")})
+	python := pythontest.FromSource(t, map[string]string{"shapes.py": `class Square:
+    def __init__(self):
+        self.side = 2
+    def __repr__(self):
+        return 'square'
+    @staticmethod
+    def make(size):
+        return 1
+`})
 
 	for query, want := range map[string]string{
 		`{"select": "function", "where": [{"unused": true}]}`:  "[6]",
@@ -157,19 +146,17 @@ func TestAnElseIfLadderIsNoNesting(t *testing.T) {
 
 // A Python class honours its Protocol and abstract bases as contracts; a plain base it only inherits from.
 func TestAPythonContractIsAProtocolOrAnAbstractBase(t *testing.T) {
-	python := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/contracts.py": strings.Join([]string{
-		"from abc import ABC, ABCMeta",
-		"from typing import Protocol",
-		"class Shows(Protocol): ...",
-		"class Store(ABC): ...",
-		"class Meta(metaclass=ABCMeta): ...",
-		"class Plain: ...",
-		"class Cart(Shows, Plain): ...",
-		"class Shop(Store): ...",
-		"class Deep(Shop): ...",
-		"class Styled(Meta): ...",
-		"",
-	}, "\n")})
+	python := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/contracts.py": `from abc import ABC, ABCMeta
+from typing import Protocol
+class Shows(Protocol): ...
+class Store(ABC): ...
+class Meta(metaclass=ABCMeta): ...
+class Plain: ...
+class Cart(Shows, Plain): ...
+class Shop(Store): ...
+class Deep(Shop): ...
+class Styled(Meta): ...
+`})
 
 	for query, want := range map[string]string{
 		`{"select": "type-declaration", "where": [{"implements": "Shows"}]}`: "[7]",

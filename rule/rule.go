@@ -5,6 +5,7 @@ package rule
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
@@ -202,8 +203,7 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 
 	engine := catalog.Engine(read.Engine)
 	if _, known := languages[engine]; !known {
-		return Rule{}, fmt.Errorf("%s: engine %q is none of backend, frontend, typescript, python, csharp%s", name, read.Engine,
-			didYouMean(read.Engine, []string{"backend", "frontend", "typescript", "python", "csharp"}))
+		return Rule{}, fmt.Errorf("%s: %s", name, noneOf("engine", read.Engine, engineNames()))
 	}
 
 	if read.Sin.Name == "" || read.Sin.Skill == "" {
@@ -394,6 +394,21 @@ func selector(named string) (func(*engine.Codebase) *engine.Query, error) {
 	return func(c *engine.Codebase) *engine.Query { return c.WhereIs(engine.Neutral(named)) }, nil
 }
 
+// noneOf says a key's value is none of the ones it may take, naming the nearest when it is a slip of the keyboard.
+func noneOf(key, value string, allowed []string) string {
+	return fmt.Sprintf("%s %q is none of %s%s", key, value, strings.Join(allowed, ", "), didYouMean(value, allowed))
+}
+
+// engineNames are the names of every engine a rule may judge.
+func engineNames() []string {
+	var names []string
+	for _, engine := range catalog.Engines {
+		names = append(names, string(engine))
+	}
+
+	return names
+}
+
 func neutralList() string {
 	return strings.Join(neutralNames(), ", ")
 }
@@ -493,17 +508,10 @@ func (s Step) valid() error {
 		return fmt.Errorf("is %q is no neutral kind: %s%s", s.Is, neutralList(), didYouMean(s.Is, neutralNames()))
 	}
 
-	if s.TypeKind != "" && !slices.Contains(engine.TypeKinds, s.TypeKind) {
-		return fmt.Errorf("typeKind %q is none of %s%s", s.TypeKind, strings.Join(engine.TypeKinds, ", "), didYouMean(s.TypeKind, engine.TypeKinds))
-	}
-
-	if s.NameCase != "" && cases[s.NameCase] == nil {
-		return fmt.Errorf("nameCase %q is none of camel, pascal, snake, upper, kebab%s", s.NameCase,
-			didYouMean(s.NameCase, []string{"camel", "pascal", "snake", "upper", "kebab"}))
-	}
-
-	if s.Position != "" && !slices.Contains([]string{"first", "last", "only"}, s.Position) {
-		return fmt.Errorf("position %q is none of first, last, only%s", s.Position, didYouMean(s.Position, []string{"first", "last", "only"}))
+	for key, value := range map[string]string{"typeKind": s.TypeKind, "nameCase": s.NameCase, "position": s.Position} {
+		if allowed := closedValues[key]; value != "" && !slices.Contains(allowed, value) {
+			return errors.New(noneOf(key, value, allowed))
+		}
 	}
 
 	if err := s.validSizes(); err != nil {
@@ -522,10 +530,8 @@ func (s Step) valid() error {
 		return fmt.Errorf("of %q names no neutral kind: %s%s", s.Of, neutralList(), didYouMean(closest, neutralNames()))
 	}
 
-	if !slices.Contains([]string{"", "parent", "enclosingFunction", "enclosingType", "root"}, s.Of) &&
-		!strings.HasPrefix(s.Of, "child:") && !strings.HasPrefix(s.Of, "closest:") {
-		return fmt.Errorf("of %q is none of parent, enclosingFunction, enclosingType, root, closest:<kind>, child:<field>%s", s.Of,
-			didYouMean(s.Of, []string{"parent", "enclosingFunction", "enclosingType", "root"}))
+	if s.Of != "" && !slices.ContainsFunc(Targets, func(target Target) bool { return target.Takes(s.Of) }) {
+		return errors.New(noneOf("of", s.Of, targetKeys()))
 	}
 
 	return nil
@@ -743,7 +749,7 @@ func unused(declaration engine.Match) bool {
 	case declaration.Is(engine.Parameter):
 		return declaration.IsUnread()
 	case declaration.Is(engine.Function), declaration.Is(engine.TypeDeclaration):
-		return declaration.Node().Symbol != "" && !declaration.IsImplicit() && !declaration.Overrides() && len(declaration.Referrers()) == 0
+		return declaration.Node().Symbol != "" && !declaration.IsImplicit() && !declaration.IsOverride() && len(declaration.Referrers()) == 0
 	}
 
 	return false

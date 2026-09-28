@@ -93,6 +93,16 @@ subject, a `skills/<slug>/SKILL.md` — where the PHP tool wrote three PHP class
 files the Go tool never writes. Every other line of the overview is the PHP tool's, and the CLI parity cases hold `make`'s line
 exactly as the Go tool prints it. Nothing changes for a project: `commandments make <Name>` is run as before.
 
+### The `rule` command, and what `sync` publishes of the writing-detectors skill
+
+The PHP tool had no `rule` command: a PHP detector was a class, proven by a fixture and run by `judge`. The Go tool's
+rules are data, so it gives their author the tools a class had from its IDE — `rule explain` shows the tree a rule reads,
+`rule try` runs one without turning it on, `rule prove` holds each to the samples that mark it, and `rule schema` prints
+the schema an editor checks a rule file by — and the help overview lists the command. The writing-detectors skill that
+`sync` publishes teaches those tools and every check a rule step can make, so the digest of the skills a project is
+given differs from the PHP tool's. Every other line of the overview, and every other file `sync` and `install` write,
+is the PHP tool's. Nothing changes for a project: a rule it already has runs as before.
+
 ### What the briefing says `make` writes
 
 The briefing `sync` publishes into a project's `AGENTS.md` and its `commandments` skill said, from the PHP tool, that

@@ -13,7 +13,7 @@ func (m Match) Ancestors() []Match {
 // IsContinuation says whether the branch continues the one it sits in rather than nesting inside it: an else-if,
 // however its language's tree holds one.
 func (m Match) IsContinuation() bool {
-	read := m.lists().Continues
+	read := m.grammar().Continues
 
 	return read != nil && m.node != nil && read(m)
 }

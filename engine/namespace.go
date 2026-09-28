@@ -1,10 +1,6 @@
 package engine
 
-import (
-	"strings"
-
-	"github.com/jessegall/code-commandments/contract"
-)
+import "strings"
 
 // Namespace is the namespace or module the node is declared in, as its language spells one: `Shop\Orders` in
 // PHP, `shop.orders` in Python, `Shop.Orders` in C#, the file's path in TypeScript and Vue. It is read from the
@@ -20,7 +16,12 @@ func (m Match) Namespace() string {
 		symbol = firstSymbolOf(m.Root())
 	}
 
-	return namespaceOf(m.file.Language(), symbol)
+	read := m.grammar().NamespaceOf
+	if read == nil || symbol == "" {
+		return ""
+	}
+
+	return read(symbol)
 }
 
 // outermostSymbol is the symbol of the outermost type or function around the node, itself included.
@@ -47,26 +48,9 @@ func firstSymbolOf(root Match) string {
 	return ""
 }
 
-// namespaceOf is the namespace part of a declaration's symbol, in the spelling of its language.
-func namespaceOf(language contract.Language, symbol string) string {
-	switch language {
-	case contract.PHP:
-		symbol, _, _ = strings.Cut(symbol, "::")
-
-		return before(strings.TrimSuffix(symbol, "()"), `\`)
-	case contract.CSharp:
-		symbol, _, _ = strings.Cut(strings.TrimPrefix(symbol, "global::"), "(")
-
-		return before(symbol, ".")
-	case contract.TypeScript, contract.Vue:
-		return before(symbol, "#")
-	default:
-		return before(symbol, ".")
-	}
-}
-
-// before is what precedes the last separator, or nothing when there is none.
-func before(symbol, separator string) string {
+// Before is what precedes the last separator, or nothing when there is none: the namespace part of a symbol whose
+// language separates its parts so.
+func Before(symbol, separator string) string {
 	at := strings.LastIndex(symbol, separator)
 	if at < 0 {
 		return ""

@@ -81,8 +81,10 @@ type jsonConfig struct {
 	path string
 }
 
-// layered is the detector a project declares its layers on.
-var layered = Rule{Detector, catalog.Backend, "NamespaceDependencyDetector"}
+// layered is the detector a project declares an engine's layers on.
+func layered(engine catalog.Engine) Rule {
+	return Rule{Detector, engine, "NamespaceDependencyDetector"}
+}
 
 func (jsonConfig) Name() string {
 	return ".commandments/config.json"
@@ -172,7 +174,7 @@ func (j jsonConfig) Layers() ([]Layer, error) {
 		return nil, err
 	}
 
-	return layersOf(config), nil
+	return layersOf(config, catalog.Backend), nil
 }
 
 func (j jsonConfig) RewriteLayers(layers []Layer) (bool, error) {
@@ -245,11 +247,11 @@ func (j jsonConfig) root() string {
 }
 
 // layersOf are the layers the config's layer() calls on the dependency detector declare.
-func layersOf(config Config) []Layer {
+func layersOf(config Config, engine catalog.Engine) []Layer {
 	var layers []Layer
 
 	for _, configurator := range config.Configurators {
-		if configurator.Target != layered {
+		if configurator.Target != layered(engine) {
 			continue
 		}
 
@@ -280,7 +282,12 @@ func layersOf(config Config) []Layer {
 	return layers
 }
 
+// asList is the value as a list: a list as it is, a lone name as a list of one.
 func asList(value any) []any {
+	if name, named := value.(string); named {
+		return []any{name}
+	}
+
 	items, _ := value.([]any)
 
 	return items
@@ -307,7 +314,7 @@ func withLayers(configurators []Configurator, layers []Layer) []Configurator {
 	}
 
 	for i, configurator := range configurators {
-		if configurator.Target != layered {
+		if configurator.Target != layered(catalog.Backend) {
 			continue
 		}
 
@@ -317,7 +324,7 @@ func withLayers(configurators []Configurator, layers []Layer) []Configurator {
 		return configurators
 	}
 
-	return append(configurators, Configurator{Target: layered, Calls: calls})
+	return append(configurators, Configurator{Target: layered(catalog.Backend), Calls: calls})
 }
 
 // Switches are the edits the agent journal's settings make: a language on or off, and the folders judged
