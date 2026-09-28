@@ -25,7 +25,7 @@ var Release = "dev"
 const releases = "https://github.com/jessegall/code-commandments/releases/download"
 
 // roslynVariable names the C# bridge to run instead of this release's own: an executable, or `docker` for the capped
-// image development and CI run it in.
+// image development runs it in.
 const roslynVariable = "COMMANDMENTS_ROSLYN"
 
 // dotnetVariable is how the bridge is told which .NET installation's reference packs to compile against.

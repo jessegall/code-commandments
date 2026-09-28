@@ -48,4 +48,29 @@ The PHP tool this one replaced left its answers behind as recordings, and the te
 still hold the Go tool to them: the shop fixture's answers beside the fixture they
 are about (`engine/php/testdata/oracle`), the scribes' rewrites, and the real
 codebases' findings (`docs/parity.md`). Nothing records them again: a new rule is
-proven by its fixture's markers alone.
+proven by its fixture's markers alone. They were recorded on macOS, so every walk lists
+a folder in the order APFS does (`listing`), whatever filesystem it runs on.
+
+## Before a release
+
+There is no CI pipeline; the gate is run by hand, in `scripts/dev`, on a fresh clone of
+the branch being released:
+
+```
+scripts/dev env GOMEMLIMIT=3GiB GOMAXPROCS=2 go test -p 2 -parallel 2 -timeout 60m ./...
+```
+
+The memory gate is run by hand too. `scripts/memory/gate.sh <name> <snapshot>` judges a
+snapshot in the capped container and fails when the run is killed or its peak passes
+the budget `scripts/memory/budgets` records under that name:
+
+```
+docker build -t "$(cat bridge/roslyn/IMAGE)" bridge/roslyn
+scripts/memory/gate.sh fixtures tests/Fixtures
+git clone --filter=blob:none https://github.com/koel/koel.git /tmp/koel-checkout
+scripts/memory/snapshot.sh /tmp/koel-checkout 7f321705d7afc31a60181e8c6eab85c0220869bf /tmp/koel
+scripts/memory/gate.sh koel /tmp/koel
+```
+
+`.github/workflows/release.yml` is the one workflow left: a `v*` tag builds, sums and
+publishes the binaries the shim and the journal plugin fetch.

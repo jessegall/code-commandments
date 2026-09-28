@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Judges a snapshot in the capped dev container, as judge.sh does, and fails when the run is killed — the container's
 # 3 GB is the hard cap — or when its cgroup peak passes the budget scripts/memory/budgets records under <name>, so a
-# change that grows the memory a real codebase costs fails CI before it reaches anyone.
+# change that grows the memory a real codebase costs fails before a release. Run by hand (CONTRIBUTING.md).
 # Usage: scripts/memory/gate.sh <name> <snapshot>
 set -euo pipefail
 

@@ -13,7 +13,7 @@ import (
 	"github.com/jessegall/code-commandments/bridge/bundle"
 )
 
-// The C# bridge as this repository's development and CI run it: a prebuilt image in a container capped at 4 GB and
+// The C# bridge as development in this repository runs it: a prebuilt image in a container capped at 4 GB and
 // two cores, chosen with COMMANDMENTS_ROSLYN=docker (scripts/dev sets it), so .NET never runs on a developer's host.
 // A released tool never comes here: it runs the bridge's own executable (roslyn.go).
 
@@ -22,7 +22,7 @@ import (
 //go:embed roslyn/roslyn-in-docker.sh roslyn/IMAGE
 var roslyn embed.FS
 
-// RoslynImage is the image development and CI run the C# bridge in, built from bridge/roslyn and never published.
+// RoslynImage is the image development runs the C# bridge in, built from bridge/roslyn and never published.
 func RoslynImage() string {
 	image, _ := roslyn.ReadFile("roslyn/IMAGE")
 
