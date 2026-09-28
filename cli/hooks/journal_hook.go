@@ -83,21 +83,53 @@ func adviseNow(given map[string]any) {
 	}
 }
 
-// adviseDetached works the advice out in a run of its own, so the journal is not kept waiting on it.
+// adviseDetached works the advice out in a run of its own, so the journal is not kept waiting on it. The run reads
+// the moment from a file it inherits, never from a pipe: a pipe is fed by this process, which answers and ends at
+// once, so the run would read nothing and advise nothing.
 func adviseDetached(raw []byte) {
 	self, err := os.Executable()
 	if err != nil {
 		return
 	}
 
+	moment, err := momentFile(raw)
+	if err != nil {
+		return
+	}
+	defer moment.Close()
+
 	run := exec.Command(self, "journal-hook")
-	run.Stdin = strings.NewReader(string(raw))
+	run.Stdin = moment
 	run.Env = append(os.Environ(), advising+"=1")
 	detach(run)
 
 	if run.Start() == nil {
 		run.Process.Release()
 	}
+}
+
+// momentFile is the moment written to a file and opened from its start, for a run to inherit as its input. Its name
+// is gone from the disk before the run reads it, so nothing is left behind.
+func momentFile(raw []byte) (*os.File, error) {
+	file, err := os.CreateTemp("", "commandments-moment-*")
+	if err != nil {
+		return nil, err
+	}
+	defer os.Remove(file.Name())
+
+	if _, err := file.Write(raw); err != nil {
+		file.Close()
+
+		return nil, err
+	}
+
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		file.Close()
+
+		return nil, err
+	}
+
+	return file, nil
 }
 
 func every(Hook) bool { return true }
