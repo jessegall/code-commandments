@@ -46,8 +46,15 @@ func shipped(slug string) (skill.Skill, bool) {
 func codebase(t *testing.T) *engine.Codebase {
 	t.Helper()
 
-	path := filepath.Join(t.TempDir(), "Orders.php")
-	if err := os.WriteFile(path, []byte(orders), 0o644); err != nil {
+	return phpCodebase(t, "Orders.php", orders)
+}
+
+// phpCodebase is the codebase of one PHP file holding the source.
+func phpCodebase(t *testing.T, name, source string) *engine.Codebase {
+	t.Helper()
+
+	path := filepath.Join(t.TempDir(), name)
+	if err := os.WriteFile(path, []byte(source), 0o644); err != nil {
 		t.Fatal(err)
 	}
 

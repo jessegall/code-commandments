@@ -58,7 +58,7 @@ type find struct {
 	Reject []Step `json:"reject,omitempty"`
 }
 
-// Step is one check of a rule's query, on the node itself or, with Of or Descendant, on one related to it.
+// Step is one check of a rule's query, on the node itself or, with Of or a nested step, on one related to it.
 type Step struct {
 	Is            string   `json:"is,omitempty"`
 	Kind          string   `json:"kind,omitempty"`
@@ -79,14 +79,26 @@ type Step struct {
 	WithinLoop    *bool    `json:"withinLoop,omitempty"`
 	Documented    *bool    `json:"documented,omitempty"`
 	File          string   `json:"file,omitempty"`
+	Position      string   `json:"position,omitempty"`
+	TopLevel      *bool    `json:"topLevel,omitempty"`
 	Of            string   `json:"of,omitempty"`
 	Descendant    *Step    `json:"descendant,omitempty"`
+	Inside        *Step    `json:"inside,omitempty"`
+	Next          *Step    `json:"next,omitempty"`
+	Previous      *Step    `json:"previous,omitempty"`
+	NestedAtLeast *Nesting `json:"nestedAtLeast,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
 
 	// layers are the layers the project declares for the rule's engine, which a layer step looks its name up in.
 	layers *engine.LayerStack
+}
+
+// Nesting is a step counted: the node and the nodes above it that pass it, at least Count of them.
+type Nesting struct {
+	Step
+	Count int `json:"count"`
 }
 
 // layered are the engines a project declares dependency layers for, and how each spells a namespace: the
@@ -180,20 +192,52 @@ func withLayers(steps []Step, stack *engine.LayerStack) []Step {
 	copied := make([]Step, len(steps))
 
 	for i, step := range steps {
-		step.layers = stack
-		if step.Descendant != nil {
-			step.Descendant = &withLayers([]Step{*step.Descendant}, stack)[0]
-		}
-
-		copied[i] = step
+		copied[i] = step.withLayers(stack)
 	}
 
 	return copied
 }
 
+// withLayers is a copy of the step, and of every step nested in it, that looks layers up in the stack.
+func (s Step) withLayers(stack *engine.LayerStack) Step {
+	s.layers = stack
+
+	for _, nested := range []**Step{&s.Descendant, &s.Inside, &s.Next, &s.Previous} {
+		if *nested != nil {
+			copied := (*nested).withLayers(stack)
+			*nested = &copied
+		}
+	}
+
+	if s.NestedAtLeast != nil {
+		counted := *s.NestedAtLeast
+		counted.Step = counted.Step.withLayers(stack)
+		s.NestedAtLeast = &counted
+	}
+
+	return s
+}
+
+// nested are the steps nested in this one.
+func (s *Step) nested() []*Step {
+	var nested []*Step
+
+	for _, step := range []*Step{s.Descendant, s.Inside, s.Next, s.Previous} {
+		if step != nil {
+			nested = append(nested, step)
+		}
+	}
+
+	if s.NestedAtLeast != nil {
+		nested = append(nested, &s.NestedAtLeast.Step)
+	}
+
+	return nested
+}
+
 // usesLayers says whether the step, or one nested in it, is a layer step.
 func (s Step) usesLayers() bool {
-	return s.Layer != "" || (s.Descendant != nil && s.Descendant.usesLayers())
+	return s.Layer != "" || slices.ContainsFunc(s.nested(), (*Step).usesLayers)
 }
 
 // Name is the detector's name: the rule file's.
@@ -256,7 +300,8 @@ func (s Step) checks() int {
 	for _, set := range []bool{s.Is != "", s.Kind != "", s.Name != "", s.NameIn != nil, s.NameLike != "",
 		s.NameMatches != "", s.NameCase != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
-		s.Documented != nil, s.File != "", s.Descendant != nil} {
+		s.Documented != nil, s.File != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
+		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil} {
 		if set {
 			count++
 		}
@@ -284,8 +329,12 @@ func (s *Step) prepare() error {
 		return s.compile(s.NameMatches)
 	case s.TextMatches != "":
 		return s.compile(s.TextMatches)
-	case s.Descendant != nil:
-		return s.Descendant.prepare()
+	}
+
+	for _, nested := range s.nested() {
+		if err := nested.prepare(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -316,8 +365,21 @@ func (s Step) valid() error {
 		return fmt.Errorf("nameCase %q is none of camel, pascal, snake, upper, kebab", s.NameCase)
 	}
 
-	if s.Of != "" && s.Of != "parent" && s.Of != "enclosingFunction" && s.Of != "enclosingType" && !strings.HasPrefix(s.Of, "child:") {
-		return fmt.Errorf("of %q is none of parent, enclosingFunction, enclosingType, child:<field>", s.Of)
+	if s.Position != "" && !slices.Contains([]string{"first", "last", "only"}, s.Position) {
+		return fmt.Errorf("position %q is none of first, last, only", s.Position)
+	}
+
+	if s.NestedAtLeast != nil && s.NestedAtLeast.Count < 1 {
+		return fmt.Errorf("nestedAtLeast needs a count of 1 or more, and %s has %d", s.describe(), s.NestedAtLeast.Count)
+	}
+
+	if closest, found := strings.CutPrefix(s.Of, "closest:"); found && !slices.Contains(engine.Neutrals, engine.Neutral(closest)) {
+		return fmt.Errorf("of %q names no neutral kind: %s", s.Of, neutralList())
+	}
+
+	if !slices.Contains([]string{"", "parent", "enclosingFunction", "enclosingType", "root"}, s.Of) &&
+		!strings.HasPrefix(s.Of, "child:") && !strings.HasPrefix(s.Of, "closest:") {
+		return fmt.Errorf("of %q is none of parent, enclosingFunction, enclosingType, root, closest:<kind>, child:<field>", s.Of)
 	}
 
 	return nil
@@ -378,11 +440,58 @@ func (s Step) check(match engine.Match) bool {
 		return subject.IsDocumented() == *s.Documented
 	case s.File != "":
 		return inFile(s.File, subject.File())
+	case s.Position != "":
+		return atPosition(subject, s.Position)
+	case s.TopLevel != nil:
+		return topLevel(subject) == *s.TopLevel
 	case s.Descendant != nil:
 		return slices.ContainsFunc(subject.Descendants(), s.Descendant.check)
+	case s.Inside != nil:
+		return slices.ContainsFunc(subject.Ancestors(), s.Inside.check)
+	case s.Next != nil:
+		return s.Next.check(subject.Next())
+	case s.Previous != nil:
+		return s.Previous.check(subject.Previous())
+	case s.NestedAtLeast != nil:
+		return s.NestedAtLeast.depth(subject) >= s.NestedAtLeast.Count
 	}
 
 	return false
+}
+
+// depth counts the node and the nodes above it that pass the step. A closure does not start the count again:
+// nesting is what a reader sees.
+func (n Nesting) depth(match engine.Match) int {
+	count := 0
+
+	for _, node := range append([]engine.Match{match}, match.Ancestors()...) {
+		if n.check(node) {
+			count++
+		}
+	}
+
+	return count
+}
+
+// atPosition says whether the node is first, last or the only one among its siblings; an only one is also
+// the first and the last.
+func atPosition(match engine.Match, position string) bool {
+	first, last := !match.Previous().Exists(), !match.Next().Exists()
+
+	switch position {
+	case "first":
+		return first
+	case "last":
+		return last
+	default:
+		return first && last
+	}
+}
+
+// topLevel says whether the node sits outside every function, closures included, and every type: code that
+// runs when its file is loaded.
+func topLevel(match engine.Match) bool {
+	return !match.Closest(engine.Function).Exists() && !match.EnclosingType().Exists()
 }
 
 // nameOf is the name a reader gives the node: its own, or, for a call, the name it calls.
@@ -430,6 +539,10 @@ func (s Step) subject(match engine.Match) engine.Match {
 		return match.EnclosingFunction()
 	case s.Of == "enclosingType":
 		return match.EnclosingType()
+	case s.Of == "root":
+		return match.Root()
+	case strings.HasPrefix(s.Of, "closest:"):
+		return match.Closest(engine.Neutral(strings.TrimPrefix(s.Of, "closest:")))
 	case strings.HasPrefix(s.Of, "child:"):
 		return match.Child(strings.TrimPrefix(s.Of, "child:"))
 	default:

@@ -62,10 +62,20 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `"withinLoop": true` | it sits inside a loop (or not, with `false`) |
 | `"documented": false` | it carries a doc comment (or not) |
 | `"file": "*Repository.php"` | its file, or any tail of the path, matches the glob |
+| `"topLevel": true` | it sits outside every function, closures too, and every type — code that runs when its file loads |
+| `"position": "first"` | it is the `first`, `last` or `only` one of its siblings (an only one is also first and last) |
 | `"descendant": {step}` | some node inside it passes the step |
+| `"inside": {step}` | some node above it, up to the file's root, passes the step |
+| `"next": {step}` / `"previous": {step}` | the sibling right after / before it passes the step |
+| `"nestedAtLeast": {step, "count": 3}` | it and the nodes above it that pass the step number at least `count` |
 
 Any step can judge a **related** node instead with `"of"`: `parent`, `enclosingFunction`,
-`enclosingType`, or `child:<field>`.
+`enclosingType`, `closest:<kind>` (the nearest node above it of a neutral kind), `root` (its file's
+root), or `child:<field>`.
+
+A node's **siblings** fill the same field of the same parent: a statement's are the other statements
+of its block, an argument's the call's other arguments. `nestedAtLeast` counts through closures, since
+nesting is what a reader sees: a loop in a closure in a loop is two loops deep.
 
 A glob matches the whole name: `*` is any run of characters, `?` one, and a backslash is itself, so a
 PHP class is written as it reads. A regular expression is Go's (RE2) and matches anywhere unless it is
