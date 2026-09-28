@@ -12,6 +12,9 @@ import (
 // protocols are the classes a class lists among its bases to declare itself a protocol.
 var protocols = []string{"typing.Protocol", "typing_extensions.Protocol"}
 
+// abstractions are the classes a class inherits from to be an abstract base: its contract, for whoever subclasses it.
+var abstractions = []string{"abc.ABC"}
+
 // enumerations are the classes an enumeration inherits from, however far up.
 var enumerations = []string{"enum.Enum", "enum.IntEnum", "enum.StrEnum", "enum.Flag", "enum.IntFlag"}
 
@@ -21,6 +24,7 @@ func init() {
 		Members:       members,
 		Parameters:    parameters,
 		Extends:       bases,
+		Implements:    contracts,
 		Annotations:   decorators,
 		TypeKind:      classKind,
 		ReturnType:    engine.InField("returns"),
@@ -214,4 +218,39 @@ func implicit(declaration engine.Match) bool {
 	declared := method.Parameters()
 
 	return len(declared) > 0 && declared[0].Node() == declaration.Node()
+}
+
+// contracts are the bases a class honours as contracts rather than inherits from: a Protocol, or an abstract base
+// class, one inheriting abc.ABC or made by the ABCMeta metaclass.
+func contracts(class engine.Match) []engine.Match {
+	var honoured []engine.Match
+	for _, base := range bases(class) {
+		if isContract(class, base.Named()) {
+			honoured = append(honoured, base)
+		}
+	}
+
+	return honoured
+}
+
+// isContract says whether the class the symbol names is a Protocol or an abstract base class.
+func isContract(from engine.Match, symbol string) bool {
+	for _, declaration := range from.Codebase().Declarations(symbol) {
+		if declaration.Is(engine.TypeDeclaration) && (classKind(declaration) == "protocol" || isAbstract(declaration)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isAbstract says whether the class is an abstract base: it inherits abc.ABC or its metaclass is ABCMeta.
+func isAbstract(class engine.Match) bool {
+	for _, keyword := range class.ChildrenIn("keywords") {
+		if keyword.Name() == "metaclass" && keyword.Child("value").Names("abc.ABCMeta") {
+			return true
+		}
+	}
+
+	return slices.ContainsFunc(class.Lineage(), func(ancestor string) bool { return slices.Contains(abstractions, ancestor) })
 }

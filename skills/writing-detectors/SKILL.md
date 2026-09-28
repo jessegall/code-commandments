@@ -178,8 +178,9 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 A **type name** — in `extends`, `extendsAny`, `implements` and `hasAnnotation` — is matched by the symbol it
 resolves to when it is qualified (`App\Http\Controller`, `shop.models.Base`, `N.IOther`), and by its last
 part when it is bare (`Controller`). A type the scan cannot resolve is matched by what it says. In C#,
-`Serializable` also names `SerializableAttribute`. Python declares no contracts apart from its bases, so
-`implements` there reads the class's whole chain of parents, where its ABCs and Protocols are. A **type
+`Serializable` also names `SerializableAttribute`. Python writes its contracts among its bases, so
+`implements` there reads the bases that are a `Protocol` or an abstract base class — inheriting `abc.ABC`
+or made by `ABCMeta` — and a plain base is only `extends`. A **type
 pattern** has one wildcard, `*`: a `?` is itself, so `?*` is PHP's nullable type, and a function or
 parameter with no type written matches no pattern — reject `"*"` to find the untyped ones.
 
@@ -297,7 +298,10 @@ vendor/bin/commandments rule prove
 
 holds every rule to its marks: it fails a rule that misses a `@sin`, flags a `@righteous` twin or a
 `@fixed` fix, or flags anything unmarked. The samples stay — they are the rule's spec, and `rule prove`
-runs again whenever the rule changes. The near-misses are the whole point: a rule that fires on
+runs again whenever the rule changes. A rule no sample marks with `@sin` fails too — a rule shown to flag
+nothing has been shown nothing — and so does a mark naming no rule. A check that reads across files —
+`unused`, `calledFrom`, `duplicated`, `layer` — sees only the samples there, so prove it on samples that
+hold both ends, and calibrate it on the real tree. The near-misses are the whole point: a rule that fires on
 everything is not a rule.
 
 ## Calibrate on real code — before you trust it

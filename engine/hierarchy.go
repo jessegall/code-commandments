@@ -151,13 +151,8 @@ func (m Match) Lineage() []string {
 }
 
 // Contracts is every contract the type declaration honours: its own and its lineage's, and the contracts those
-// extend. In a language that declares no contracts apart, Python, a contract is a type it inherits from, so its
-// contracts are its lineage.
+// extend.
 func (m Match) Contracts() []string {
-	if m.lists().Implements == nil {
-		return m.Lineage()
-	}
-
 	direct := named(m.Implements())
 	for _, ancestor := range m.Lineage() {
 		direct = append(direct, m.implementsOf(ancestor)...)

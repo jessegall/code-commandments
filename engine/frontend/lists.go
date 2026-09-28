@@ -47,13 +47,13 @@ func testFile(file string) bool {
 		engine.InFolderNamed(file, "__tests__", "tests", "test")
 }
 
-// heritage reads the types a declaration's clause of the keyword names: `extends` or `implements`. The tree
-// keeps no fact of which a clause is, so its first token says.
+// heritage reads the types a declaration's clause of the keyword names: `extends` or `implements`, the clause's
+// operator.
 func heritage(keyword string) func(engine.Match) []engine.Match {
 	return func(declaration engine.Match) []engine.Match {
 		var named []engine.Match
 		for _, clause := range declaration.ChildrenIn("heritageClauses") {
-			if !strings.HasPrefix(clause.Written(), keyword) {
+			if clause.Node().Operator != keyword {
 				continue
 			}
 

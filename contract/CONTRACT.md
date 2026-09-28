@@ -117,7 +117,7 @@ Every syntax node, nested as the language nests them. Tokens, whitespace and com
 | `name` | declarations, names, identifiers, members, elements, attributes | the name as written (`add`, `Cart`, `self`, `div`) |
 | `literal` | literals | `string`, `int`, `float`, `bool`, `null`, `undefined`, `bytes`, `ellipsis`, `interpolated`, `format` |
 | `value` | literals the language folds, static attributes | the decoded value: a string without quotes or escapes, `true`/`false`, `null`. An `int` or `float` is a decimal string, so no width is lost |
-| `operator` | binary, unary, assignment, update expressions | the operator token: `==`, `??`, `+=`, `!`, `not`, `await`, `instanceof` |
+| `operator` | binary, unary, assignment, update expressions; a TypeScript heritage clause | the operator token: `==`, `??`, `+=`, `!`, `not`, `await`, `instanceof`; a heritage clause's keyword, `extends` or `implements` |
 | `modifiers` | the node carries any | the modifier keywords written on it: `public`, `static`, `readonly`, `final`, `abstract`, `override`, `async`, `const`, `partial`, `out`. In source order where the parser keeps it, otherwise the language's own order. A language's implicit default (TS `public`) is not written |
 | `flags` | the node has any | syntax facts that are not modifier keywords (see *Flags*) |
 | `declared` | declarations with a written type; a catch clause | the type the source declares for a parameter, property, field or variable, or the type a catch catches (a union when it catches several) (see *Types*) |

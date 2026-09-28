@@ -115,7 +115,7 @@ func TestARuleReadsTypesAndTheirHierarchy(t *testing.T) {
 
 		{"python", `{"select": "type-declaration", "where": [{"extends": "Base"}]}`, "[10]"},
 		{"python", `{"select": "type-declaration", "where": [{"extendsAny": "Base"}]}`, "[10 15]"},
-		{"python", `{"select": "type-declaration", "where": [{"implements": "Base"}]}`, "[10 15]"},
+		{"python", `{"select": "type-declaration", "where": [{"implements": "Base"}]}`, "[]"},
 		{"python", `{"select": "type-declaration", "where": [{"typeKind": "protocol"}]}`, "[4]"},
 		{"python", `{"select": "type-declaration", "where": [{"typeKind": "enum"}]}`, "[18]"},
 		{"python", `{"select": "type-declaration", "where": [{"typeKind": "class"}]}`, "[7 10 15]"},

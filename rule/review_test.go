@@ -154,3 +154,32 @@ func TestAnElseIfLadderIsNoNesting(t *testing.T) {
 		t.Errorf("csharp: found %s, want [8]", got)
 	}
 }
+
+// A Python class honours its Protocol and abstract bases as contracts; a plain base it only inherits from.
+func TestAPythonContractIsAProtocolOrAnAbstractBase(t *testing.T) {
+	python := pythontest.FromSource(t, map[string]string{"shop/__init__.py": "", "shop/contracts.py": strings.Join([]string{
+		"from abc import ABC, ABCMeta",
+		"from typing import Protocol",
+		"class Shows(Protocol): ...",
+		"class Store(ABC): ...",
+		"class Meta(metaclass=ABCMeta): ...",
+		"class Plain: ...",
+		"class Cart(Shows, Plain): ...",
+		"class Shop(Store): ...",
+		"class Deep(Shop): ...",
+		"class Styled(Meta): ...",
+		"",
+	}, "\n")})
+
+	for query, want := range map[string]string{
+		`{"select": "type-declaration", "where": [{"implements": "Shows"}]}`: "[7]",
+		`{"select": "type-declaration", "where": [{"implements": "Store"}]}`: "[8 9]",
+		`{"select": "type-declaration", "where": [{"implements": "Meta"}]}`:  "[10]",
+		`{"select": "type-declaration", "where": [{"implements": "Plain"}]}`: "[]",
+		`{"select": "type-declaration", "where": [{"extendsAny": "Plain"}]}`: "[7]",
+	} {
+		if got := found(t, "python", query, python); got != want {
+			t.Errorf("%s: found %s, want %s", query, got, want)
+		}
+	}
+}

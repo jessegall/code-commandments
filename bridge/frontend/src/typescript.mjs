@@ -87,6 +87,7 @@ export class TypeScriptWriter {
         if (ts.isAwaitExpression(node)) facts.operator = 'await'
         if (ts.isDeleteExpression(node)) facts.operator = 'delete'
         if (ts.isVoidExpression(node)) facts.operator = 'void'
+        if (ts.isHeritageClause(node)) facts.operator = ts.tokenToString(node.token)
         const modifiers = (ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined) ?? []
         if (modifiers.length) facts.modifiers = modifiers.map((modifier) => ts.tokenToString(modifier.kind))
         const flags = flagsOf(node, modifiers)
