@@ -29,6 +29,10 @@ var typeDeclarations = map[string]bool{"InterfaceDeclaration": true, "TypeAliasD
 func init() {
 	engine.NameScopes(contract.Vue, scopeOf)
 	engine.NameScopes(contract.TypeScript, scopeOf)
+
+	for _, language := range []contract.Language{contract.Vue, contract.TypeScript} {
+		engine.ListAs(language, engine.Lists{Arguments: engine.InFields("arguments"), Members: engine.InFields("members")})
+	}
 }
 
 // scopeOf names where a frontend finding is: an element by its tag, a type by its name, a declaration by

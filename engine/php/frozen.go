@@ -7,6 +7,7 @@ import (
 
 func init() {
 	engine.Freezes(contract.PHP, declaresFrozen)
+	engine.ListAs(contract.PHP, engine.Lists{Arguments: engine.InFields("args"), Members: engine.InFields("stmts")})
 }
 
 // declaresFrozen says whether an attribute group of the file opens with #[Frozen], whatever the spacing inside it.

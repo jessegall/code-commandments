@@ -64,6 +64,12 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `"file": "*Repository.php"` | its file, or any tail of the path, matches the glob |
 | `"topLevel": true` | it sits outside every function, closures too, and every type — code that runs when its file loads |
 | `"position": "first"` | it is the `first`, `last` or `only` one of its siblings (an only one is also first and last) |
+| `"parameters": {"atLeast": 5}` | a function declares that many parameters — a variadic, a defaulted one and Python's `self` count once each |
+| `"arguments": {"atLeast": 4}` | a call or construction is handed that many arguments — a named or a spread one counts once |
+| `"lines": {"atLeast": 40}` | it spans that many lines, its first and last among them |
+| `"members": {"is": "function", "atLeast": 20}` | a type declares that many members directly that pass the step (every member, with no check) |
+| `"complexity": {"atLeast": 10}` | one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `\|\|` are not counted, and a function inside it is its own count |
+| `"count": {"descendant": {step}, "atLeast": 4}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children |
 | `"descendant": {step}` | some node inside it passes the step |
 | `"inside": {step}` | some node above it, up to the file's root, passes the step |
 | `"next": {step}` / `"previous": {step}` | the sibling right after / before it passes the step |
@@ -72,6 +78,8 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 Any step can judge a **related** node instead with `"of"`: `parent`, `enclosingFunction`,
 `enclosingType`, `closest:<kind>` (the nearest node above it of a neutral kind), `root` (its file's
 root), or `child:<field>`.
+
+Every size takes `atLeast`, `atMost` or both, and both are inclusive.
 
 A node's **siblings** fill the same field of the same parent: a statement's are the other statements
 of its block, an argument's the call's other arguments. `nestedAtLeast` counts through closures, since

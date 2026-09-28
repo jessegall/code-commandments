@@ -87,6 +87,12 @@ type Step struct {
 	Next          *Step    `json:"next,omitempty"`
 	Previous      *Step    `json:"previous,omitempty"`
 	NestedAtLeast *Nesting `json:"nestedAtLeast,omitempty"`
+	Counts        *Count   `json:"count,omitempty"`
+	Parameters    *Bounds  `json:"parameters,omitempty"`
+	Arguments     *Bounds  `json:"arguments,omitempty"`
+	Lines         *Bounds  `json:"lines,omitempty"`
+	Members       *Tally   `json:"members,omitempty"`
+	Complexity    *Bounds  `json:"complexity,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
@@ -99,6 +105,27 @@ type Step struct {
 type Nesting struct {
 	Step
 	Count int `json:"count"`
+}
+
+// Bounds are the least and the most a size may be; either may be left out, not both.
+type Bounds struct {
+	AtLeast *int `json:"atLeast,omitempty"`
+	AtMost  *int `json:"atMost,omitempty"`
+}
+
+// Count counts the nodes below one that pass a step: its descendants, or its children, those filling one
+// field when Field names it.
+type Count struct {
+	Descendant *Step  `json:"descendant,omitempty"`
+	Child      *Step  `json:"child,omitempty"`
+	Field      string `json:"field,omitempty"`
+	Bounds
+}
+
+// Tally counts the members of a type that pass its step, or every member when it makes no check.
+type Tally struct {
+	Step
+	Bounds
 }
 
 // layered are the engines a project declares dependency layers for, and how each spells a namespace: the
@@ -215,6 +242,23 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 		s.NestedAtLeast = &counted
 	}
 
+	if s.Counts != nil {
+		counted := *s.Counts
+		for _, nested := range []**Step{&counted.Descendant, &counted.Child} {
+			if *nested != nil {
+				copied := (*nested).withLayers(stack)
+				*nested = &copied
+			}
+		}
+		s.Counts = &counted
+	}
+
+	if s.Members != nil {
+		tally := *s.Members
+		tally.Step = tally.Step.withLayers(stack)
+		s.Members = &tally
+	}
+
 	return s
 }
 
@@ -230,6 +274,18 @@ func (s *Step) nested() []*Step {
 
 	if s.NestedAtLeast != nil {
 		nested = append(nested, &s.NestedAtLeast.Step)
+	}
+
+	if s.Counts != nil {
+		for _, step := range []*Step{s.Counts.Descendant, s.Counts.Child} {
+			if step != nil {
+				nested = append(nested, step)
+			}
+		}
+	}
+
+	if s.Members != nil && s.Members.Step.checks() > 0 {
+		nested = append(nested, &s.Members.Step)
 	}
 
 	return nested
@@ -301,7 +357,8 @@ func (s Step) checks() int {
 		s.NameMatches != "", s.NameCase != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Documented != nil, s.File != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
-		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil} {
+		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
+		s.Lines != nil, s.Members != nil, s.Complexity != nil} {
 		if set {
 			count++
 		}
@@ -369,6 +426,10 @@ func (s Step) valid() error {
 		return fmt.Errorf("position %q is none of first, last, only", s.Position)
 	}
 
+	if err := s.validSizes(); err != nil {
+		return err
+	}
+
 	if s.NestedAtLeast != nil && s.NestedAtLeast.Count < 1 {
 		return fmt.Errorf("nestedAtLeast needs a count of 1 or more, and %s has %d", s.describe(), s.NestedAtLeast.Count)
 	}
@@ -383,6 +444,61 @@ func (s Step) valid() error {
 	}
 
 	return nil
+}
+
+// validSizes checks every size the step bounds is bounded honestly, and a count says what it counts.
+func (s Step) validSizes() error {
+	named := map[string]*Bounds{}
+
+	for name, bounds := range map[string]*Bounds{"parameters": s.Parameters, "arguments": s.Arguments, "lines": s.Lines,
+		"complexity": s.Complexity} {
+		if bounds != nil {
+			named[name] = bounds
+		}
+	}
+
+	if s.Counts != nil {
+		named["count"] = &s.Counts.Bounds
+
+		if (s.Counts.Descendant == nil) == (s.Counts.Child == nil) {
+			return fmt.Errorf("a count counts descendants or children, one of them: %s", s.describe())
+		}
+
+		if s.Counts.Field != "" && s.Counts.Child == nil {
+			return fmt.Errorf("a count's field narrows its children, and %s counts descendants", s.describe())
+		}
+	}
+
+	if s.Members != nil {
+		named["members"] = &s.Members.Bounds
+	}
+
+	for name, bounds := range named {
+		if err := bounds.valid(name); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// valid checks the bounds bound something, below zero nowhere, and leave room between them.
+func (b Bounds) valid(size string) error {
+	switch {
+	case b.AtLeast == nil && b.AtMost == nil:
+		return fmt.Errorf("%s needs atLeast, atMost or both", size)
+	case b.AtLeast != nil && *b.AtLeast < 0, b.AtMost != nil && *b.AtMost < 0:
+		return fmt.Errorf("%s cannot be bounded below zero", size)
+	case b.AtLeast != nil && b.AtMost != nil && *b.AtLeast > *b.AtMost:
+		return fmt.Errorf("%s at least %d and at most %d leaves nothing", size, *b.AtLeast, *b.AtMost)
+	}
+
+	return nil
+}
+
+// holds says whether the size lies within the bounds.
+func (b Bounds) holds(size int) bool {
+	return (b.AtLeast == nil || size >= *b.AtLeast) && (b.AtMost == nil || size <= *b.AtMost)
 }
 
 func (s Step) describe() string {
@@ -454,9 +570,55 @@ func (s Step) check(match engine.Match) bool {
 		return s.Previous.check(subject.Previous())
 	case s.NestedAtLeast != nil:
 		return s.NestedAtLeast.depth(subject) >= s.NestedAtLeast.Count
+	case s.Counts != nil:
+		return s.Counts.holds(s.Counts.tally(subject))
+	case s.Parameters != nil:
+		return subject.Is(engine.Function) && s.Parameters.holds(len(subject.Parameters()))
+	case s.Arguments != nil:
+		return (subject.Is(engine.Call) || subject.Is(engine.Construction)) && s.Arguments.holds(len(subject.Arguments()))
+	case s.Lines != nil:
+		return s.Lines.holds(subject.Lines())
+	case s.Members != nil:
+		return subject.Is(engine.TypeDeclaration) && s.Members.holds(s.Members.tally(subject))
+	case s.Complexity != nil:
+		return s.Complexity.holds(subject.Complexity())
 	}
 
 	return false
+}
+
+// tally counts the nodes below the node that pass the count's step.
+func (c Count) tally(match engine.Match) int {
+	counted, step := match.Descendants(), c.Descendant
+
+	if c.Child != nil {
+		counted, step = match.Children(), c.Child
+
+		if c.Field != "" {
+			counted = match.ChildrenIn(c.Field)
+		}
+	}
+
+	count := 0
+	for _, node := range counted {
+		if step.check(node) {
+			count++
+		}
+	}
+
+	return count
+}
+
+// tally counts the type's members that pass the step, every one when it makes no check.
+func (t Tally) tally(match engine.Match) int {
+	count := 0
+	for _, member := range match.Members() {
+		if t.Step.checks() == 0 || t.check(member) {
+			count++
+		}
+	}
+
+	return count
 }
 
 // depth counts the node and the nodes above it that pass the step. A closure does not start the count again:
