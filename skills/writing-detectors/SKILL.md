@@ -43,59 +43,101 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 `bail-out`, `expression-statement`, `self-reference` — or `kind:<Kind>`, a language's own node kind
 (`kind:Expr_MethodCall`) when no neutral kind says it.
 
-**A step's one check:**
+**A step's one check** — every one there is, generated from the tool itself:
+
+<!-- BEGIN: rule-checks (auto-generated, run `composer sins`) -->
+**What it is and what it is called**
 
 | Check | Keeps the node when |
 |---|---|
-| `"is": "loop"` | it answers the neutral kind |
-| `"kind": "Expr_StaticCall"` | it is the language's own kind |
-| `"name": "select"` / `"nameIn": [...]` | its name — a call's or an access's is its name child's — is it |
-| `"nameLike": "get*"` / `"nameMatches": "^(get\|set)[A-Z]"` | its name matches the glob (`*`, `?`) / the regular expression |
-| `"nameCase": "snake"` | its name, less a leading `$` or `_`, is written `camel`, `pascal`, `snake`, `upper` or `kebab` case |
-| `"text": "..."` | a literal's text is exactly it |
-| `"textLike": "*where id*"` / `"textMatches": "(?i)^select"` | a literal's text matches the glob / the regular expression |
-| `"resolves": "App\\Models\\User"` | what its name refers to, resolved, is that |
-| `"resolvesLike": "App\\Models\\*"` | what its name refers to, resolved, matches the glob |
-| `"namespaceLike": "App\\Http\\*"` | the namespace, package or module it is declared in matches the glob |
-| `"layer": "App\\Domain"` | it sits in that layer of the stack the project declares (backend, Python, C#) |
-| `"hasModifier": "static"` / `"hasFlag": "..."` | it carries it |
-| `"typeKind": "interface"` | a type declaration declares a `class`, `interface`, `enum`, `trait`, `record`, `struct` or `protocol` |
-| `"extends": "Controller"` | a type declaration names the type among the ones it extends directly |
-| `"extendsAny": "Exception"` | the type is anywhere in its chain of parents, followed through the scan and the declarations outside it the language knows |
-| `"implements": "ShouldQueue"` | it honours the contract: its own, its parents', and the contracts those extend |
-| `"hasAnnotation": "Route"` | a declaration carries the attribute or decorator |
-| `"returnType": "?*"` / `"parameterType": "array"` | a function's written return type / a parameter's written type matches the pattern, as written or as the type it names resolves |
-| `"withinLoop": true` | it sits inside a loop (or not, with `false`) |
-| `"documented": false` | it carries a doc comment (or not) |
-| `"file": "*Repository.php"` | its file, or any tail of the path, matches the glob |
-| `"topLevel": true` | it sits outside every function, closures too, and every type — code that runs when its file loads |
-| `"position": "first"` | it is the `first`, `last` or `only` one of its siblings (an only one is also first and last) |
-| `"parameters": {"atLeast": 5}` | a function declares that many parameters — a variadic, a defaulted one and Python's `self` count once each |
-| `"arguments": {"atLeast": 4}` | a call or construction is handed that many arguments — a named or a spread one counts once |
-| `"lines": {"atLeast": 40}` | it spans that many lines, its first and last among them |
-| `"members": {"is": "function", "atLeast": 20}` | a type declares that many members directly that pass the step (every member, with no check) |
-| `"complexity": {"atLeast": 10}` | one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `\|\|` are not counted, and a function inside it is its own count |
-| `"count": {"descendant": {step}, "atLeast": 4}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children |
-| `"calls": {step}` | a call of its own — not one inside a function nested in it — passes the step |
-| `"argument": {"at": 0, step}` | the argument at that place passes the step; a negative `at` counts from the end, `-1` the last, and none there passes nothing |
-| `"constructs": "Date*"` | a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class |
-| `"unused": true` | nothing refers to it: a function or type from outside itself, through the names and calls the scan resolves and its language's call graph; a parameter, by its name read in its function |
-| `"calledFrom": "app/Http/*"` | something referring to it — a call, most often — sits in a file the glob matches |
-| `"commentLike": "*TODO*"` | a comment on it, or in the run of comments directly above it, matches the glob |
-| `"docTag": "deprecated"` | its documentation carries the tag: `@tag` in PHPDoc and JSDoc, an XML element in C#, a Sphinx field or directive or a Google/NumPy section in a Python docstring |
-| `"duplicated": {"atLeast": 2}` | that many functions of the codebase, it among them, have its body, read from the tree, blind to spacing and comments |
-| `"testCode": true` | it is test code, as its bridge marks it or its language names test files |
-| `"descendant": {step}` | some node inside it passes the step |
-| `"inside": {step}` | some node above it, up to the file's root, passes the step |
-| `"next": {step}` / `"previous": {step}` | the sibling right after / before it passes the step |
-| `"nestedAtLeast": {step, "count": 3}` | it and the nodes above it that pass the step number at least `count` |
+| `{"is": "loop"}` | it answers the neutral kind |
+| `{"kind": "Expr_StaticCall"}` | it is the language's own kind |
+| `{"name": "select"}` | its name — a call's or an access's is its name child's — is it |
+| `{"nameIn": ["select", "statement"]}` | its name is one of them |
+| `{"nameLike": "get*"}` | its name matches the glob, `*` any run of characters and `?` one |
+| `{"nameMatches": "^(get\|set)[A-Z]"}` | its name matches the regular expression |
+| `{"nameCase": "snake"}` | its name, less a leading `$` or `_`, is written `camel`, `pascal`, `snake`, `upper` or `kebab` case |
+| `{"hasModifier": "static"}` | it carries the modifier |
+| `{"hasFlag": "byRef"}` | it carries the flag its language's tree sets |
 
-Any step can judge a **related** node instead with `"of"`: `parent`, `enclosingFunction`,
-`enclosingType`, `closest:<kind>` (the nearest node above it of a neutral kind), `root` (its file's
-root), or `child:<field>`.
+**What it says**
+
+| Check | Keeps the node when |
+|---|---|
+| `{"text": "select * from users"}` | a literal's text is exactly it |
+| `{"textLike": "*where id*"}` | a literal's text matches the glob |
+| `{"textMatches": "(?i)^select"}` | a literal's text matches the regular expression |
+| `{"commentLike": "*TODO*"}` | a comment on it, or in the run of comments directly above it, matches the glob |
+| `{"docTag": "deprecated"}` | its documentation carries the tag: `@tag` in PHPDoc and JSDoc, an XML element in C#, a Sphinx field or directive or a Google/NumPy section in a Python docstring |
+| `{"documented": false}` | it carries a doc comment, or not with `false` |
+
+**What it refers to**
+
+| Check | Keeps the node when |
+|---|---|
+| `{"resolves": "App\\Models\\User"}` | what its name refers to, resolved, is that |
+| `{"resolvesLike": "App\\Models\\*"}` | what its name refers to, resolved, matches the glob |
+| `{"calls": {"name": "dd"}}` | a call of its own — not one inside a function nested in it — passes the step |
+| `{"argument": {"at": 0, "is": "literal"}}` | the argument at that place passes the step; a negative `at` counts from the end, `-1` the last, and none there passes nothing |
+| `{"constructs": "Date*"}` | a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class |
+| `{"unused": true}` | nothing refers to it: a function or type from outside itself, through the names and calls the scan resolves and its language's call graph; a parameter, by its name read in its function |
+| `{"calledFrom": "app/Http/*"}` | something referring to it — a call, most often — sits in a file the glob matches |
+
+**Where it sits**
+
+| Check | Keeps the node when |
+|---|---|
+| `{"file": "*Repository.php"}` | its file, or any tail of the path, matches the glob |
+| `{"namespaceLike": "App\\Http\\*"}` | the namespace, package or module it is declared in matches the glob |
+| `{"layer": "App\\Domain"}` | it sits in that layer of the stack the project declares (backend, Python, C#) |
+| `{"testCode": true}` | it is test code, as its bridge marks it or its language names test files |
+| `{"topLevel": true}` | it sits outside every function, closures too, and every type — code that runs when its file loads |
+| `{"withinLoop": true}` | it sits inside a loop, or not with `false` |
+| `{"position": "first"}` | it is the `first`, `last` or `only` one of its siblings (an only one is also first and last) |
+| `{"descendant": {"is": "return"}}` | some node inside it passes the step |
+| `{"inside": {"is": "catch"}}` | some node above it, up to the file's root, passes the step |
+| `{"next": {"is": "return"}}` | the sibling right after it passes the step |
+| `{"previous": {"is": "branch"}}` | the sibling right before it passes the step |
+| `{"nestedAtLeast": {"is": "loop", "count": 3}}` | it and the nodes above it that pass the step number at least `count` |
+
+**How big it is**
+
+| Check | Keeps the node when |
+|---|---|
+| `{"parameters": {"atLeast": 5}}` | a function declares that many parameters — a variadic, a defaulted one and Python's `self` count once each |
+| `{"arguments": {"atLeast": 4}}` | a call or construction is handed that many arguments — a named or a spread one counts once |
+| `{"lines": {"atLeast": 40}}` | it spans that many lines, its first and last among them |
+| `{"members": {"is": "function", "atLeast": 20}}` | a type declares that many members directly that pass the step (every member, with no check) |
+| `{"complexity": {"atLeast": 10}}` | one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `\|\|` are not counted, and a function inside it is its own count |
+| `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children |
+| `{"duplicated": {"atLeast": 2}}` | that many functions of the codebase, it among them, have its body, read from the tree, blind to spacing and comments |
+
+**Its type**
+
+| Check | Keeps the node when |
+|---|---|
+| `{"typeKind": "interface"}` | a type declaration declares a `class`, `interface`, `enum`, `trait`, `record`, `struct` or `protocol` |
+| `{"extends": "Controller"}` | a type declaration names the type among the ones it extends directly |
+| `{"extendsAny": "Exception"}` | the type is anywhere in its chain of parents, followed through the scan and the declarations outside it the language knows |
+| `{"implements": "ShouldQueue"}` | it honours the contract: its own, its parents', and the contracts those extend |
+| `{"hasAnnotation": "Route"}` | a declaration carries the attribute or decorator |
+| `{"returnType": "?*"}` | a function's written return type matches the pattern, as written or as the type it names resolves |
+| `{"parameterType": "array"}` | a parameter's written type matches the pattern, as written or as the type it names resolves |
+
+**What `"of"` can name**
+
+| Target | The step judges |
+|---|---|
+| `parent` | the node whose children hold it |
+| `enclosingFunction` | the named function it sits in; a closure is passed over |
+| `enclosingType` | the type declaration it sits in |
+| `closest:<kind>` | the nearest node above it of the neutral kind, such as `closest:loop` |
+| `root` | its file's root |
+| `child:<field>` | its child filling the field, such as `child:class` |
+<!-- END: rule-checks -->
 
 A **type name** — in `extends`, `extendsAny`, `implements` and `hasAnnotation` — is matched by the symbol it
-resolves to when it is qualified (`App\\Http\\Controller`, `shop.models.Base`, `N.IOther`), and by its last
+resolves to when it is qualified (`App\Http\Controller`, `shop.models.Base`, `N.IOther`), and by its last
 part when it is bare (`Controller`). A type the scan cannot resolve is matched by what it says. In C#,
 `Serializable` also names `SerializableAttribute`. Python declares no contracts apart from its bases, so
 `implements` there reads the class's whole chain of parents, where its ABCs and Protocols are. A **type

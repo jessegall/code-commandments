@@ -11,6 +11,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/block"
+	"github.com/jessegall/code-commandments/rule"
 )
 
 const (
@@ -110,7 +111,17 @@ func Refresh(document string, kernel *cli.Kernel) (string, error) {
 		}
 	}
 
-	return document, nil
+	return refreshChecks(document)
+}
+
+// refreshChecks renders the `rule-checks` block a document embeds from the rule language's catalog.
+func refreshChecks(document string) (string, error) {
+	replaced, found, err := block.Replace(document, "rule-checks", "\n"+rule.Reference())
+	if err != nil || !found {
+		return document, err
+	}
+
+	return replaced, nil
 }
 
 func blockNames(document string) []string {

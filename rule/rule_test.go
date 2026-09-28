@@ -105,7 +105,7 @@ func TestARuleTheToolCannotRunSaysWhy(t *testing.T) {
 		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "calls"}}`:                                               "select \"calls\"",
 		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"name": "a", "kind": "b"}]}}`:         "makes 2",
 		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"name": "a", "of": "grandparent"}]}}`: "of \"grandparent\"",
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call"}, "extra": 1}`:                                    "unknown field \"extra\"",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call"}, "extra": 1}`:                                    "no check or key is called \"extra\"",
 	} {
 		if _, err := rule.Parse("X", []byte(written), shipped); err == nil || !strings.Contains(err.Error(), reason) {
 			t.Errorf("%s: %v", written, err)

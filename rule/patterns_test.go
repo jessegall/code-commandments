@@ -132,3 +132,25 @@ func TestALayerStepOnAnEngineWithoutLayersIsRefused(t *testing.T) {
 		t.Errorf("a frontend layer step: %v", err)
 	}
 }
+
+func TestASlipOfTheKeyboardIsNamedWithWhatWasMeant(t *testing.T) {
+	for written, hint := range map[string]string{
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "function", "where": [{"nameLke": "a*"}]}}`:                 `did you mean "nameLike"?`,
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "function", "where": [{"isd": "loop"}]}}`:                   `did you mean "is"?`,
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "fucntion"}}`:                                               `did you mean "function"?`,
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"is": "lop"}]}}`:                         `did you mean "loop"?`,
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"is": "loop", "of": "parnt"}]}}`:         `did you mean "parent"?`,
+		`{"engine": "bakend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call"}}`:                                                    `did you mean "backend"?`,
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "type-declaration", "where": [{"typeKind": "interfase"}]}}`: `did you mean "interface"?`,
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "function", "where": [{"parameters": {"atLest": 3}}]}}`:     `did you mean "atLeast"?`,
+	} {
+		if _, err := rule.Parse("X", []byte(written), shipped); err == nil || !strings.Contains(err.Error(), hint) {
+			t.Errorf("%s: %v, want %q", written, err, hint)
+		}
+	}
+
+	written := `{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"zzzzzzzz": 1}]}}`
+	if _, err := rule.Parse("X", []byte(written), shipped); err == nil || strings.Contains(err.Error(), "did you mean") {
+		t.Errorf("a key near nothing is suggested nothing: %v", err)
+	}
+}
