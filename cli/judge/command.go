@@ -261,15 +261,6 @@ func selectFrom(list []detectors.Detector, skill, sin string) []detectors.Detect
 	return kept
 }
 
-// engineLanguages are the languages each engine's rules read.
-var engineLanguages = map[catalog.Engine][]source.Language{
-	catalog.Backend:    {source.PHP},
-	catalog.Frontend:   {source.Vue, source.TypeScript},
-	catalog.TypeScript: {source.Vue, source.TypeScript},
-	catalog.Python:     {source.Python},
-	catalog.CSharp:     {source.CSharp},
-}
-
 // publishers are the languages whose facts an engine's rules read beside their own: the frontend asks
 // what the server publishes, and the backend what the frontend reads back.
 var publishers = map[catalog.Engine][]source.Language{
@@ -285,7 +276,7 @@ func languagesFor(selected []detectors.Detector, project config.Config) []source
 	for _, detector := range selected {
 		engine, _ := detectors.EngineOf(detector)
 
-		for _, language := range append(slices.Clone(engineLanguages[engine]), publishers[engine]...) {
+		for _, language := range append(slices.Clone(source.OfEngine(engine)), publishers[engine]...) {
 			if project.Writes(language) && !slices.Contains(languages, language) {
 				languages = append(languages, language)
 			}
@@ -303,7 +294,7 @@ func scannedLanguages(selected []detectors.Detector) []source.Language {
 	for _, detector := range selected {
 		engine, _ := detectors.EngineOf(detector)
 
-		for _, language := range engineLanguages[engine] {
+		for _, language := range source.OfEngine(engine) {
 			if !slices.Contains(languages, language) {
 				languages = append(languages, language)
 			}

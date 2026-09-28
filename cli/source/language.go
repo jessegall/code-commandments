@@ -128,3 +128,17 @@ func Real(path string) string {
 
 	return resolved
 }
+
+// engines are the languages each engine's rules read.
+var engines = map[catalog.Engine][]Language{
+	catalog.Backend:    {PHP},
+	catalog.Frontend:   {Vue, TypeScript},
+	catalog.TypeScript: {Vue, TypeScript},
+	catalog.Python:     {Python},
+	catalog.CSharp:     {CSharp},
+}
+
+// OfEngine are the languages the engine's rules read.
+func OfEngine(engine catalog.Engine) []Language {
+	return engines[engine]
+}

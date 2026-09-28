@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -21,9 +22,6 @@ import (
 	"github.com/jessegall/code-commandments/fixture"
 	"github.com/jessegall/code-commandments/rule"
 )
-
-// Samples is the folder under the custom folder whose files a project marks for `rule prove`.
-const Samples = "samples"
 
 // Command is `rule`.
 type Command struct{}
@@ -42,7 +40,7 @@ func (Command) Help() help.Help {
 		Form("rule schema", "print the JSON Schema of a rule file").
 		Option("--line=N", "with `explain`, only the nodes that start on line N, each with what it holds").
 		Note("<Rule> is a rule of `.commandments/custom/` by its name — `NoRawSql` or `NoRawSqlDetector` — or the path of a rule file anywhere.").
-		Note("A sample marks the code a rule must flag with a comment above it, `// @sin NoRawSqlDetector` (`#` in Python), the code it must leave alone with `@righteous NoRawSqlDetector`, and its fix with `@fixed NoRawSqlDetector`. `rule prove` reads `.commandments/custom/samples/` unless given a path, and fails when a rule misses a mark or flags anything unmarked.")
+		Note("A sample marks the code a rule must flag with a comment above it — `// @sin NoRawSqlDetector`, `# @sin …` in Python, `<!-- @sin … -->` in a Vue template — the code it must leave alone with `@righteous NoRawSqlDetector`, and its fix with `@fixed NoRawSqlDetector`. `rule prove` reads `.commandments/custom/samples/` unless given a path, and fails when a rule misses a mark, flags anything unmarked, has no `@sin` mark at all, or cannot be read, and when a mark names no rule of the project.")
 }
 
 // Run answers the form the arguments name.
@@ -85,13 +83,17 @@ func (c Command) explain(in *cli.Input, console cli.Console) (int, error) {
 		line = parsed
 	}
 
+	if info, err := os.Stat(path); err != nil || !info.Mode().IsRegular() || !source.Judges(path) {
+		return console.Refuse(path + " is no file the tool reads — name one source file: PHP, Vue, TypeScript, Python or C#."), nil
+	}
+
 	codebase, err := scan.OneFile(path).Load()
 	if err != nil {
 		return 0, err
 	}
 
 	if len(codebase.Files()) == 0 {
-		return console.Refuse(path + " is no file a language the tool judges is written in."), nil
+		return console.Refuse(path + " holds nothing the tool could read."), nil
 	}
 
 	root := codebase.Files()[0].Match(0)
@@ -127,7 +129,7 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 
 	tried = tried.WithLayers(project.Layers(tried.Engine()))
 
-	codebase, err := scan.Walk([]string{path}, source.Excluded{}).Load()
+	codebase, err := scan.Walk([]string{path}, source.Under(root, project.Excluded)).Only(source.OfEngine(tried.Engine())...).Load()
 	if err != nil {
 		return 0, err
 	}
@@ -142,16 +144,17 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 	return 0, nil
 }
 
-// prove checks every rule of the project against the markers of its samples.
+// prove checks every rule of the project against the markers of its samples: each flags exactly the code marked
+// @sin for it, and has such a mark; and every mark names a rule of the project.
 func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, error) {
-	path := filepath.Join(workspace.CustomDir(root), Samples)
+	path := workspace.SamplesDir(root)
 	if given, named := in.Argument(1); named {
 		path = given
 	}
 
 	own := custom.Load(root)
 	for _, reason := range own.Unreadable {
-		console.Warn("⚠ .commandments/custom/" + reason)
+		console.Warn("\033[31m✗\033[0m .commandments/custom/" + reason)
 	}
 
 	if len(own.Rules) == 0 {
@@ -162,31 +165,41 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 		return console.Refuse("No samples at " + path + " — write files there that mark what each rule must flag with `@sin <Rule>`."), nil
 	}
 
-	codebase, err := scan.Walk([]string{path}, source.Excluded{}).Load()
-	if err != nil {
-		return 0, err
-	}
-
 	project, err := config.Load(root)
 	if err != nil {
 		return 0, err
 	}
 
 	var proven []detectors.Detector
+	var languages []source.Language
 	for _, each := range own.Rules {
 		proven = append(proven, each.WithLayers(project.Layers(each.Engine())))
+		languages = append(languages, source.OfEngine(each.Engine())...)
 	}
 
-	failed := false
-	for _, result := range (fixture.Fixture{Codebase: codebase, Detectors: proven}).Verify() {
-		if result.Passed() {
+	codebase, err := scan.Walk([]string{path}, source.Excluded{}).Only(languages...).Load()
+	if err != nil {
+		return 0, err
+	}
+
+	markers := fixture.Markers(codebase)
+	failed := len(own.Unreadable) > 0
+
+	for at, result := range (fixture.Fixture{Codebase: codebase, Detectors: proven}).Verify() {
+		unmarked := len(fixture.Marking(markers, fixture.Sinful, proven[at])) == 0
+		if result.Passed() && !unmarked {
 			console.Write("\033[32m✓\033[0m " + result.Detector + "\n")
+			warnUntwinned(markers, proven[at], console)
 
 			continue
 		}
 
 		failed = true
 		console.Write("\033[31m✗\033[0m " + result.Detector + "\n")
+
+		if unmarked {
+			console.Write("    no sample marks what it must flag — mark one with `@sin " + result.Detector + "`\n")
+		}
 
 		for _, reason := range []struct {
 			says   string
@@ -203,11 +216,26 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 		}
 	}
 
+	for _, marker := range markers {
+		if !slices.ContainsFunc(proven, marker.Naming) {
+			failed = true
+			console.Write("\033[31m✗\033[0m " + relative(root, marker.Location) + " marks " + marker.Name + ", which is no rule of the project\n")
+		}
+	}
+
 	if failed {
 		return cli.Refused, nil
 	}
 
 	return 0, nil
+}
+
+// warnUntwinned says when no sample marks a look-alike the rule must leave alone: a rule proven only on what it
+// flags has not been shown to leave anything be.
+func warnUntwinned(markers []fixture.Marker, rule detectors.Detector, console cli.Console) {
+	if len(fixture.Marking(markers, fixture.Righteous, rule)) == 0 {
+		console.Write("    \033[33m⚠\033[0m no `@righteous` look-alike shows it leaves anything alone\n")
+	}
 }
 
 // ruleNamed is the rule a name means: a file when it names one, else a rule of the project's own.
@@ -230,7 +258,12 @@ func ruleNamed(own custom.Project, named string) (rule.Rule, error) {
 		unreadable = "\nand cannot read:\n  " + strings.Join(own.Unreadable, "\n  ")
 	}
 
-	return rule.Rule{}, fmt.Errorf("no rule %q in .commandments/custom/ — the project has: %s%s", named, strings.Join(names, ", "), unreadable)
+	has := "none"
+	if len(names) > 0 {
+		has = strings.Join(names, ", ")
+	}
+
+	return rule.Rule{}, fmt.Errorf("no rule %q in .commandments/custom/ — the project has %s%s", named, has, unreadable)
 }
 
 // Tree is the node and everything below it, a line each, indented by depth; with a line, only the nodes starting

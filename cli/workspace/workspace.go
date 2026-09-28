@@ -106,6 +106,14 @@ func JSONConfig(dir string) string {
 	return At(dir, "").Shared("config.json")
 }
 
+// Samples is the folder under the custom folder holding the samples a project marks for its rules to be proven on.
+const Samples = "samples"
+
+// SamplesDir is the folder of the samples the project's own rules are proven on, under dir.
+func SamplesDir(dir string) string {
+	return CustomDir(dir) + "/" + Samples
+}
+
 // CustomDir is the folder of the project's own commandments under dir.
 func CustomDir(dir string) string {
 	return At(dir, "").Shared(Custom)
@@ -113,7 +121,7 @@ func CustomDir(dir string) string {
 
 // CustomFiles are the PHP files of the project's own commandments, sorted.
 func CustomFiles(dir string) []string {
-	files := source.FilesIn(CustomDir(dir), "php", source.Excluded{})
+	files := source.FilesIn(CustomDir(dir), "php", source.Under(CustomDir(dir), []string{Samples}))
 	sort.Strings(files)
 
 	return files

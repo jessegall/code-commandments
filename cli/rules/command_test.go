@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/custom"
 	_ "github.com/jessegall/code-commandments/registry"
 )
 
@@ -120,8 +121,41 @@ func TestProveHoldsEachRuleToTheSamplesMarks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if said, code := run(t, root, "prove"); code != 0 {
+	if said, code := run(t, root, "prove"); code != 0 || strings.Contains(said, "no `@righteous`") {
 		t.Errorf("every rule proven: %d\n%s", code, said)
+	}
+}
+
+func TestProveFailsWhatProvesNothing(t *testing.T) {
+	for name, files := range map[string]map[string]string{
+		"a rule no sample marks": {".commandments/custom/NoEchoDetector.json": ruleFlagging("no-echo", "echo_it")},
+		"a mark naming no rule":  {".commandments/custom/samples/Typo.php": "<?php\n// @sin NoDumDetector\necho_it(1);\n"},
+		"a rule it cannot read":  {".commandments/custom/BrokenDetector.json": "{"},
+	} {
+		root := project(t)
+		if err := os.Remove(filepath.Join(root, ".commandments/custom/NoRenderDetector.json")); err != nil {
+			t.Fatal(err)
+		}
+
+		for path, contents := range files {
+			if err := os.WriteFile(filepath.Join(root, path), []byte(contents), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		if said, code := run(t, root, "prove"); code != cli.Refused {
+			t.Errorf("%s passed: %d\n%s", name, code, said)
+		}
+	}
+}
+
+func TestExplainRefusesWhatIsNoSourceFile(t *testing.T) {
+	root := project(t)
+
+	for _, path := range []string{".commandments/custom/samples", "README.md", "missing.php"} {
+		if said, code := run(t, root, "explain", path); code != cli.Refused || !strings.Contains(said, "no file the tool reads") {
+			t.Errorf("%s: %d\n%s", path, code, said)
+		}
 	}
 }
 
@@ -139,5 +173,11 @@ func TestAFormNotGivenSaysWhich(t *testing.T) {
 		if said, code := run(t, project(t), args...); code != 2 || !strings.Contains(said, "rule") {
 			t.Errorf("%v: %d\n%s", args, code, said)
 		}
+	}
+}
+
+func TestASampleIsNoLeftoverClass(t *testing.T) {
+	if classes := custom.Load(project(t)).Classes; len(classes) != 0 {
+		t.Errorf("samples read as the PHP tool's leftover classes: %v", classes)
 	}
 }

@@ -271,6 +271,16 @@ func keys(detector detectors.Detector) []string {
 	return []string{catalog.Name(detector), catalog.Name(detector.Sin()), detector.Sin().Definition().Name}
 }
 
+// Marking are the markers with the tag that name the detector, by its own name, its sin's type or its sin's name.
+func Marking(markers []Marker, tag Tag, detector detectors.Detector) []Marker {
+	return tagged(markers, tag, detector)
+}
+
+// Naming says whether the marker names the detector, by any name a marker may give it.
+func (m Marker) Naming(detector detectors.Detector) bool {
+	return m.Names(keys(detector)...)
+}
+
 // tagged is every marker with the tag that names the detector.
 func tagged(markers []Marker, tag Tag, detector detectors.Detector) []Marker {
 	names := keys(detector)
