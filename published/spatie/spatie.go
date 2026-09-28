@@ -16,7 +16,8 @@ func init() {
 	published.Register(Contracts{})
 }
 
-// Contracts publishes the Data classes of the codebase's PHP and where their generated types are written.
+// Contracts publishes the Data classes of the codebase's PHP and where their generated types are written: where the
+// transformer's config says, and wherever its manifest shows it has written.
 type Contracts struct{}
 
 func (Contracts) Contracts(codebase *engine.Codebase) []published.Contract {
@@ -37,6 +38,10 @@ func (Contracts) Contracts(codebase *engine.Codebase) []published.Contract {
 		})
 	}
 	if output := spatie.TransformerOutputIn(codebase); output != "" {
+		contracts = append(contracts, published.GeneratedTypes{Location: output})
+	}
+
+	for _, output := range spatie.TransformerOutputsBeside(codebase) {
 		contracts = append(contracts, published.GeneratedTypes{Location: output})
 	}
 

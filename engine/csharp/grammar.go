@@ -31,8 +31,10 @@ func init() {
 			return engine.Before(member, ".")
 		},
 		AnnotationNames: func(name string) []string { return []string{name, name + "Attribute"} },
-		Labels:          func(name engine.Match) bool { return name.Parent().Kind() == "NameColon" || name.Parent().Kind() == "NameEquals" },
-		Continues:       func(branch engine.Match) bool { return Node{Match: branch}.IsElseIf() },
+		Labels: func(name engine.Match) bool {
+			return name.Parent().Kind() == "NameColon" || name.Parent().Kind() == "NameEquals"
+		},
+		Continues: func(branch engine.Match) bool { return Node{Match: branch}.IsElseIf() },
 	})
 
 }

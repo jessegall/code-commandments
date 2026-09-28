@@ -1,12 +1,16 @@
 package spatie_test
 
 import (
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/engine/php"
+	enginespatie "github.com/jessegall/code-commandments/engine/php/spatie"
 	"github.com/jessegall/code-commandments/published"
 	"github.com/jessegall/code-commandments/published/spatie"
 )
@@ -46,4 +50,41 @@ func evaluated(path string) string {
 	}
 
 	return real
+}
+
+// TestTheTransformersOutputIsKnownByTheManifestItWrites holds a project whose transformer is configured where the scan
+// never reads: the folder holding its manifest is its output, and only that folder.
+func TestTheTransformersOutputIsKnownByTheManifestItWrites(t *testing.T) {
+	root := t.TempDir()
+	for path, contents := range map[string]string{
+		"resources/js/types/typescript-transformer-manifest.json": `{"App/Data/index.ts": "abc"}`,
+		"resources/js/types/App/Data/index.ts":                    "export type Order = { id: number, total: number };\n",
+		"resources/js/pages/Order.ts":                             "export type Order = { id: number, total: number };\n",
+	} {
+		file := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(file, []byte(contents), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	codebase, err := scan.Walk([]string{root}, source.Excluded{}).Load()
+	if err != nil {
+		t.Skip(err)
+	}
+
+	outputs := enginespatie.TransformerOutputsBeside(codebase)
+	types := evaluated(filepath.Join(root, "resources/js/types"))
+	if len(outputs) != 1 || evaluated(outputs[0]) != types {
+		t.Fatalf("the transformer's output is %v, want %s", outputs, types)
+	}
+
+	generated := published.GeneratedTypes{Location: outputs[0]}
+	for path, covered := range map[string]bool{"resources/js/types/App/Data/index.ts": true, "resources/js/pages/Order.ts": false} {
+		if got := generated.Covers(filepath.Join(filepath.Dir(outputs[0]), strings.TrimPrefix(path, "resources/js/"))); got != covered {
+			t.Errorf("%s: covered %v, want %v", path, got, covered)
+		}
+	}
 }
