@@ -67,10 +67,19 @@ func (m Match) Names(want string) bool {
 	return NamesType(m.Named(), want)
 }
 
-// Named is the type the node names: the symbol it resolves to, else its name, else what it says.
+// Named is the type the node names: the symbol it resolves to, or the class its compiler says calling it builds,
+// else its name, else what it says.
 func (m Match) Named() string {
+	if m.node == nil {
+		return ""
+	}
+
 	if refers := m.Refers(); refers != "" {
 		return refers
+	}
+
+	if resolved := m.node.Resolved; resolved != nil && resolved.Constructs != "" {
+		return resolved.Constructs
 	}
 
 	if name := m.Name(); name != "" {
@@ -95,10 +104,15 @@ func NamesType(symbol, want string) bool {
 	return LastPart(symbol) == want
 }
 
-// BareSymbol is the symbol less a leading `\` or global::, and a TypeScript symbol less the file it is in.
+// BareSymbol is the symbol less a leading `\` or global::, a TypeScript symbol less the file it is in, and a
+// generic type less its type arguments: List<T> is List.
 func BareSymbol(symbol string) string {
 	if _, name, inFile := strings.Cut(symbol, "#"); inFile {
 		symbol = name
+	}
+
+	if at := strings.IndexAny(symbol, "<`"); at > 0 {
+		symbol = symbol[:at]
 	}
 
 	return strings.TrimPrefix(strings.TrimPrefix(symbol, "global::"), `\`)

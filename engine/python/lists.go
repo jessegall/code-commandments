@@ -78,13 +78,18 @@ func values(call engine.Match) []engine.Match {
 	return handed
 }
 
-// constructed is the class a call creates an instance of: its callee, when that resolves to a class.
+// constructed is the class a call creates an instance of: its callee, when mypy says calling it builds one, or
+// when it resolves to a class.
 func constructed(call engine.Match) engine.Match {
 	if !call.Is(engine.Call) {
 		return engine.Match{}
 	}
 
 	callee := call.Child("func")
+	if resolved := callee.Node().Resolved; resolved != nil && resolved.Constructs != "" {
+		return callee
+	}
+
 	symbol := callee.Refers()
 	if symbol == "" {
 		return engine.Match{}

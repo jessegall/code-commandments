@@ -56,3 +56,11 @@ func (s LayerStack) within(name, prefix string) bool {
 
 	return prefix == "" || name == prefix || strings.HasPrefix(name, prefix+s.separator)
 }
+
+// InLayer says whether the name sits in the layer: the declared layer it falls in is that one, spelt as its
+// language compares names.
+func (s LayerStack) InLayer(name, layer string) bool {
+	found := s.LayerOf(name)
+
+	return found != "" && s.within(found, layer) && s.within(layer, found)
+}

@@ -587,7 +587,9 @@ func (s Step) check(match engine.Match) bool {
 	case s.NameIn != nil:
 		return slices.Contains(s.NameIn, nameOf(subject))
 	case s.NameLike != "", s.NameMatches != "":
-		return s.pattern.MatchString(nameOf(subject))
+		name := nameOf(subject)
+
+		return name != "" && s.pattern.MatchString(name)
 	case s.NameCase != "":
 		return cases[s.NameCase].MatchString(bare(nameOf(subject)))
 	case s.Text != nil:
@@ -607,7 +609,7 @@ func (s Step) check(match engine.Match) bool {
 	case s.NamespaceLike != "":
 		return s.pattern.MatchString(subject.Namespace())
 	case s.Layer != "":
-		return s.layers != nil && s.layers.LayerOf(subject.Namespace()) == strings.Trim(s.Layer, `\`)
+		return s.layers != nil && s.layers.InLayer(subject.Namespace(), s.Layer)
 	case s.HasModifier != "":
 		return subject.HasModifier(s.HasModifier)
 	case s.HasFlag != "":
