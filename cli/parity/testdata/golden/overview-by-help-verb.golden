@@ -66,6 +66,7 @@ Hooks (wired automatically — you rarely run these by hand):
                   journal names in $JOURNAL_PLUGIN_SOCKET.
   roslyn-serve    Keep the C# bridge running for this project, answering each run of the tool over a
                   socket named for the project.
+  has-csharp      Say whether this project has C# to judge: exit 0 when it has, 1 when it has none.
   hook            Run ONE hook directly, by name — the form every wired hook is written as.
 
 Global options:

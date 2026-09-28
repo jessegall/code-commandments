@@ -45,6 +45,7 @@ func Kernel(version string) *cli.Kernel {
 		hooks.JournalHook{},
 		hooks.JournalServe{},
 		roslyn.Serve{},
+		roslyn.HasCSharp{},
 		hooks.JournalConfig{},
 		hooks.JournalScan{},
 		hooks.JournalSkills{},

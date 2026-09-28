@@ -11,10 +11,7 @@ import (
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli"
-	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/help"
-	"github.com/jessegall/code-commandments/cli/source"
-	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
 )
 
@@ -36,14 +33,11 @@ func (Serve) Help() help.Help {
 
 // Run serves the project's C# bridge until it stops, then ends, so the journal starts it again.
 func (s Serve) Run(in *cli.Input, console cli.Console) (int, error) {
-	cwd, _ := os.Getwd()
-	project := workspace.ProjectRoot(cwd)
-
-	settings, err := config.Load(project)
+	project, holds, err := csharpHere()
 	if err != nil {
 		return 0, err
 	}
-	if !settings.Holds(project, source.CSharp) {
+	if !holds {
 		stopped := cli.StopSignals()
 		console.Say(project + " has no C# to judge, so no C# bridge is kept up for it.")
 		<-stopped

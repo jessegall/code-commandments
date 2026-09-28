@@ -103,6 +103,12 @@ the schema an editor checks a rule file by — and the help overview lists the c
 given differs from the PHP tool's. Every other line of the overview, and every other file `sync` and `install` write,
 is the PHP tool's. Nothing changes for a project: a rule it already has runs as before.
 
+### `has-csharp` in the help overview
+
+The PHP tool kept no C# bridge up, so it had no need to say whether a project has C#. The journal plugin keeps one up
+as a service, and the journal asks `has-csharp` before it starts it, so a project with no C# starts none and lists
+none as running; the help overview lists the verb. Nothing changes for a project.
+
 ### What the briefing says `make` writes
 
 The briefing `sync` publishes into a project's `AGENTS.md` and its `commandments` skill said, from the PHP tool, that
