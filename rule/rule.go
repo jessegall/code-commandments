@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"path"
 	"regexp"
 	"slices"
 	"strings"
@@ -121,6 +120,9 @@ type Step struct {
 
 	// layers are the layers the project declares for the rule's engine, which a layer step looks its name up in.
 	layers *engine.LayerStack
+
+	// predicate is the language's own check the step names, found once when the rule is read.
+	predicate func(engine.Match) bool
 }
 
 // Nesting is a step counted: the node and the nodes above it that pass it, at least Count of them.
@@ -192,6 +194,10 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		}
 
 		return Rule{}, fmt.Errorf("%s: %w", name, err)
+	}
+
+	if decoder.More() {
+		return Rule{}, fmt.Errorf("%s: the rule is one JSON object, and more follows it", name)
 	}
 
 	engine := catalog.Engine(read.Engine)
@@ -437,18 +443,22 @@ func (s *Step) prepare() error {
 		s.pattern = glob(strings.TrimPrefix(s.ResolvesLike, `\`))
 	case s.NamespaceLike != "":
 		s.pattern = glob(strings.TrimPrefix(s.NamespaceLike, `\`))
+	case s.File != "":
+		s.pattern = pathGlob(s.File)
+	case s.CalledFrom != "":
+		s.pattern = pathGlob(s.CalledFrom)
 	case s.NameMatches != "":
 		return s.compile(s.NameMatches)
 	case s.TextMatches != "":
 		return s.compile(s.TextMatches)
 	case s.ReturnType != "":
-		s.pattern = typeGlob(s.ReturnType)
+		s.pattern = typeGlob(strings.Join(strings.Fields(s.ReturnType), ""))
 	case s.ParameterType != "":
-		s.pattern = typeGlob(s.ParameterType)
+		s.pattern = typeGlob(strings.Join(strings.Fields(s.ParameterType), ""))
 	case s.Constructs != "":
 		s.pattern = glob(strings.TrimPrefix(s.Constructs, `\`))
 	case s.CommentLike != "":
-		s.pattern = regexp.MustCompile("(?s)" + glob(s.CommentLike).String())
+		s.pattern = glob(s.CommentLike)
 	case s.CommentMatches != "":
 		return s.compile(s.CommentMatches)
 	}
@@ -498,6 +508,10 @@ func (s Step) valid() error {
 
 	if err := s.validSizes(); err != nil {
 		return err
+	}
+
+	if s.Members != nil && s.Members.Step.checks() == 0 && s.Members.Step.Of != "" {
+		return fmt.Errorf("a members step that makes no check counts every member, so its of %q judges nothing", s.Members.Step.Of)
 	}
 
 	if s.NestedAtLeast != nil && s.NestedAtLeast.Count < 1 {
@@ -616,7 +630,9 @@ func (s Step) check(match engine.Match) bool {
 
 		return refers != "" && s.pattern.MatchString(strings.TrimPrefix(refers, `\`))
 	case s.NamespaceLike != "":
-		return s.pattern.MatchString(subject.Namespace())
+		namespace := subject.Namespace()
+
+		return namespace != "" && s.pattern.MatchString(namespace)
 	case s.Layer != "":
 		return s.layers != nil && s.layers.InLayer(subject.Namespace(), s.Layer)
 	case s.HasModifier != "":
@@ -628,7 +644,7 @@ func (s Step) check(match engine.Match) bool {
 	case s.Documented != nil:
 		return subject.IsDocumented() == *s.Documented
 	case s.File != "":
-		return inFile(s.File, subject.File())
+		return inFile(s.pattern, subject.Judged())
 	case s.Position != "":
 		return atPosition(subject, s.Position)
 	case s.TopLevel != nil:
@@ -674,11 +690,11 @@ func (s Step) check(match engine.Match) bool {
 	case s.Unused != nil:
 		return unused(subject) == *s.Unused
 	case s.CalledFrom != "":
-		return slices.ContainsFunc(subject.Referrers(), func(caller engine.Match) bool { return inFile(s.CalledFrom, caller.File()) })
+		return slices.ContainsFunc(subject.Referrers(), func(caller engine.Match) bool { return inFile(s.pattern, caller.Judged()) })
 	case s.Calls != nil:
 		return slices.ContainsFunc(subject.OwnDescendants(), func(below engine.Match) bool { return below.Is(engine.Call) && s.Calls.check(below) })
 	case s.Argument != nil:
-		return s.Argument.passes(subject.Arguments())
+		return (subject.Is(engine.Call) || subject.Is(engine.Construction)) && s.Argument.passes(subject.Arguments())
 	case s.CommentLike != "", s.CommentMatches != "":
 		return s.commented(subject)
 	case s.DocTag != "":
@@ -690,10 +706,7 @@ func (s Step) check(match engine.Match) bool {
 	case s.TestCode != nil:
 		return subject.IsTest() == *s.TestCode
 	case s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "":
-		language, name := s.own()
-		predicate, offered := engine.PredicateOf(language, name)
-
-		return offered && predicate.Holds(subject)
+		return s.predicate != nil && s.predicate(subject)
 	}
 
 	return false
@@ -723,13 +736,14 @@ func (s Step) namesPattern(named engine.Match) bool {
 }
 
 // unused says whether nothing refers to the declaration: to a function or type from outside it, to a parameter
-// by reading its name. Anything else, or a declaration the tool cannot name, is not judged unused.
+// by reading its name. What the language itself calls or binds, a member a supertype dictates, anything else,
+// and a declaration the tool cannot name are not judged unused.
 func unused(declaration engine.Match) bool {
 	switch {
 	case declaration.Is(engine.Parameter):
-		return !declaration.IsRead()
+		return declaration.IsUnread()
 	case declaration.Is(engine.Function), declaration.Is(engine.TypeDeclaration):
-		return declaration.Node().Symbol != "" && len(declaration.Referrers()) == 0
+		return declaration.Node().Symbol != "" && !declaration.IsImplicit() && !declaration.Overrides() && len(declaration.Referrers()) == 0
 	}
 
 	return false
@@ -769,7 +783,12 @@ func (s *Step) ownChecks(judged []contract.Language) error {
 			return fmt.Errorf("a %s check needs a rule that judges %s", language, language)
 		}
 
-		if _, offered := engine.PredicateOf(language, name); !offered {
+		predicate, offered := engine.PredicateOf(language, name)
+		if offered {
+			s.predicate = predicate.Holds
+		}
+
+		if !offered {
 			var names []string
 			for _, predicate := range engine.PredicatesOf(language) {
 				names = append(names, predicate.Name)
@@ -804,14 +823,15 @@ func namesAny(symbols []string, want string) bool {
 	return slices.ContainsFunc(symbols, func(symbol string) bool { return engine.NamesType(symbol, want) })
 }
 
-// typed says whether a written type matches the step's pattern: as it is written, its spaces closed up, or as
+// typed says whether a written type matches the step's pattern: as it is written, its spaces and the pattern's
+// dropped, or as
 // the type it names resolves; no type written matches nothing.
 func (s Step) typed(written engine.Match) bool {
 	if !written.Exists() {
 		return false
 	}
 
-	if s.pattern.MatchString(strings.Join(strings.Fields(written.Written()), " ")) {
+	if s.pattern.MatchString(strings.Join(strings.Fields(written.Written()), "")) {
 		return true
 	}
 
@@ -865,13 +885,19 @@ func (t Tally) tally(match engine.Match) int {
 	return count
 }
 
-// depth counts the node and the nodes above it that pass the step. A closure does not start the count again:
-// nesting is what a reader sees.
+// depth counts the node and the nodes above it that pass the step, within its function: a function around it
+// ends the count, unless functions are what is counted. An else-if continues its if rather than nesting in it, so
+// it adds nothing.
 func (n Nesting) depth(match engine.Match) int {
 	count := 0
 
 	for _, node := range append([]engine.Match{match}, match.Ancestors()...) {
-		if n.check(node) {
+		passes := n.check(node)
+		if node.Is(engine.Function) && !passes && node.Node() != match.Node() {
+			break
+		}
+
+		if passes && !node.IsContinuation() {
 			count++
 		}
 	}
@@ -919,7 +945,7 @@ func bare(name string) string {
 // other character stands for itself, a backslash too, so a PHP name reads as it is written.
 func glob(pattern string) *regexp.Regexp {
 	var expression strings.Builder
-	expression.WriteString("^")
+	expression.WriteString("(?s)^")
 
 	for _, character := range pattern {
 		switch character {
@@ -929,6 +955,34 @@ func glob(pattern string) *regexp.Regexp {
 			expression.WriteString(".")
 		default:
 			expression.WriteString(regexp.QuoteMeta(string(character)))
+		}
+	}
+
+	expression.WriteString("$")
+
+	return regexp.MustCompile(expression.String())
+}
+
+// pathGlob reads a pattern over paths as .gitignore does: `*` and `?` stay within one folder, `**` crosses any
+// number of them.
+func pathGlob(pattern string) *regexp.Regexp {
+	var expression strings.Builder
+	expression.WriteString("^")
+
+	for at := 0; at < len(pattern); at++ {
+		switch {
+		case strings.HasPrefix(pattern[at:], "**/"):
+			expression.WriteString("(.*/)?")
+			at += 2
+		case strings.HasPrefix(pattern[at:], "**"):
+			expression.WriteString(".*")
+			at++
+		case pattern[at] == '*':
+			expression.WriteString("[^/]*")
+		case pattern[at] == '?':
+			expression.WriteString("[^/]")
+		default:
+			expression.WriteString(regexp.QuoteMeta(pattern[at : at+1]))
 		}
 	}
 
@@ -957,11 +1011,11 @@ func (s Step) subject(match engine.Match) engine.Match {
 }
 
 // inFile says whether the file's path, or any tail of it, matches the glob.
-func inFile(glob, file string) bool {
+func inFile(pattern *regexp.Regexp, file string) bool {
 	segments := strings.Split(strings.ReplaceAll(file, `\`, "/"), "/")
 
 	for i := range segments {
-		if matched, _ := path.Match(glob, strings.Join(segments[i:], "/")); matched {
+		if pattern.MatchString(strings.Join(segments[i:], "/")) {
 			return true
 		}
 	}

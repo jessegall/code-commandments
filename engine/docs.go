@@ -1,9 +1,6 @@
 package engine
 
-import (
-	"path"
-	"strings"
-)
+import "strings"
 
 // DocTags are the tags the declaration's documentation carries, each by its bare name, as its language writes
 // them; none for a language that registered no reading.
@@ -88,7 +85,7 @@ func bodies(c *Codebase) map[string]int {
 }
 
 // IsTest says whether the node is test code: in a file its bridge marks as a test's, such as one of a C# test
-// project, or one its language's conventions name so.
+// project, or one its language's conventions name so, read from the folder the scan was pointed at.
 func (m Match) IsTest() bool {
 	if m.file == nil {
 		return false
@@ -100,19 +97,5 @@ func (m Match) IsTest() bool {
 
 	read := m.lists().TestFile
 
-	return read != nil && read(m.file.Path)
-}
-
-// InFolderNamed says whether a folder on the path has one of the names.
-func InFolderNamed(file string, names ...string) bool {
-	folders := strings.Split(path.Dir(strings.ReplaceAll(file, `\`, "/")), "/")
-	for _, folder := range folders {
-		for _, name := range names {
-			if folder == name {
-				return true
-			}
-		}
-	}
-
-	return false
+	return read != nil && read(m.file.Judged())
 }

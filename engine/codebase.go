@@ -19,6 +19,8 @@ type Codebase struct {
 	files    []*File
 	read     func(path string) ([]byte, error)
 	analyses sync.Map
+	// scanned are the folders and files the scan was pointed at, which a path is judged from.
+	scanned []string
 }
 
 // Filler fills the facts the engine owns for one language, once every file of the codebase has been read.

@@ -10,8 +10,17 @@ func (m Match) Ancestors() []Match {
 	return above
 }
 
+// IsContinuation says whether the branch continues the one it sits in rather than nesting inside it: an else-if,
+// however its language's tree holds one.
+func (m Match) IsContinuation() bool {
+	read := m.lists().Continues
+
+	return read != nil && m.node != nil && read(m)
+}
+
 // Siblings are the nodes filling the same field of the same parent as this one, itself among them, in
-// source order: a statement's are the statements of its block, an argument's the call's other arguments.
+// source order: a statement's are the statements of its block. A value a language wraps as an argument, as PHP's
+// Arg and C#'s Argument do, is its wrapper's only child.
 func (m Match) Siblings() []Match {
 	if m.node == nil {
 		return nil

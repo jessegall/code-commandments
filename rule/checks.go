@@ -51,10 +51,10 @@ var Checks = []Group{
 		{"argument", `{"argument": {"at": 0, "is": "literal"}}`, "the argument at that place passes the step; a negative `at` counts from the end, `-1` the last, and none there passes nothing"},
 		{"constructs", `{"constructs": "Date*"}`, "a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class"},
 		{"unused", `{"unused": true}`, "nothing refers to it: a function or type from outside itself, through the names and calls the scan resolves and its language's call graph; a parameter, by its name read in its function"},
-		{"calledFrom", `{"calledFrom": "app/Http/*"}`, "something referring to it — a call, most often — sits in a file the glob matches"},
+		{"calledFrom", `{"calledFrom": "app/Http/**"}`, "something referring to it — a call, most often — sits in a file the glob matches, read as `file` reads one"},
 	}},
 	{"Where it sits", []Check{
-		{"file", `{"file": "*Repository.php"}`, "its file, or any tail of the path, matches the glob"},
+		{"file", `{"file": "*Repository.php"}`, "its path from the folder judged, or any tail of it, matches the glob: `*` stays within a folder and `**` crosses them, as in .gitignore"},
 		{"namespaceLike", `{"namespaceLike": "App\\Http\\*"}`, "the namespace, package or module it is declared in matches the glob"},
 		{"layer", `{"layer": "App\\Domain"}`, "it sits in that layer of the stack the project declares (backend, Python, C#)"},
 		{"testCode", `{"testCode": true}`, "it is test code, as its bridge marks it or its language names test files"},

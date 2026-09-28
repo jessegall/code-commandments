@@ -11,6 +11,7 @@ func init() {
 	engine.ListAs(contract.CSharp, engine.Lists{
 		Arguments:   arguments,
 		Members:     engine.InFields("Members"),
+		Parameters:  parameters,
 		Extends:     func(declaration engine.Match) []engine.Match { return basesWhere(declaration, false) },
 		Implements:  func(declaration engine.Match) []engine.Match { return basesWhere(declaration, true) },
 		Annotations: attributes,
@@ -21,6 +22,12 @@ func init() {
 		Constructs:    engine.OfKind("ObjectCreationExpression", "Type"),
 		DocTags:       xmlTags,
 		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
+		Implicit: engine.KindIn("ConstructorDeclaration", "DestructorDeclaration", "OperatorDeclaration",
+			"ConversionOperatorDeclaration"),
+		Overrides: func(member engine.Match) bool { return Node{Match: member}.IsInherited() },
+		Continues: func(branch engine.Match) bool {
+			return branch.Kind() == "IfStatement" && branch.Parent().Kind() == "ElseClause"
+		},
 	})
 
 	engine.Predicates(contract.CSharp,
@@ -66,16 +73,14 @@ func arguments(match engine.Match) []engine.Match {
 // base class and its interfaces in one list, so what each names says which it is; an interface's bases are the
 // interfaces it extends.
 func basesWhere(declaration engine.Match, interfaces bool) []engine.Match {
+	extendsAll := declaration.TypeKind() == "interface"
+	if extendsAll && interfaces {
+		return nil
+	}
+
 	var named []engine.Match
 	for _, base := range declaration.Child("BaseList").ChildrenIn("Types") {
-		written := base.Child("Type")
-		isInterface := declaration.TypeKind() != "interface" && namesInterface(written)
-
-		if declaration.TypeKind() == "interface" {
-			isInterface = !interfaces
-		}
-
-		if isInterface == interfaces {
+		if written := base.Child("Type"); extendsAll || namesInterface(written) == interfaces {
 			named = append(named, written)
 		}
 	}
@@ -103,4 +108,15 @@ func attributes(declaration engine.Match) []engine.Match {
 	}
 
 	return names
+}
+
+// parameters are the parameters a member, local function or lambda declares: in its parameter list, or the one a
+// lambda written `x => …` takes.
+func parameters(function engine.Match) []engine.Match {
+	declared := function.ChildrenIn("Parameter")
+	for _, parameter := range (Node{Match: function}).Parameters() {
+		declared = append(declared, parameter.Match)
+	}
+
+	return declared
 }

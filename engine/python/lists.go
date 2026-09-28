@@ -18,8 +18,9 @@ var enumerations = []string{"enum.Enum", "enum.IntEnum", "enum.StrEnum", "enum.F
 func init() {
 	engine.ListAs(contract.Python, engine.Lists{
 		Arguments:     values,
-		Members:       engine.InFields("body"),
-		Extends:       engine.InFields("bases"),
+		Members:       members,
+		Parameters:    parameters,
+		Extends:       bases,
 		Annotations:   decorators,
 		TypeKind:      classKind,
 		ReturnType:    engine.InField("returns"),
@@ -29,6 +30,8 @@ func init() {
 		DocTags:       docTags,
 		BodyHash:      func(def engine.Match) string { return Node{Match: def}.BodyHash() },
 		TestFile:      testFile,
+		Implicit:      implicit,
+		Continues:     func(branch engine.Match) bool { return branch.HasFlag("elif") },
 	})
 
 	engine.Predicates(contract.Python,
@@ -154,4 +157,61 @@ func classKind(class engine.Match) string {
 	}
 
 	return "class"
+}
+
+// parameters are the parameters a def or lambda declares.
+func parameters(function engine.Match) []engine.Match {
+	var declared []engine.Match
+	for _, parameter := range (Node{Match: function}).Parameters() {
+		declared = append(declared, parameter.Match)
+	}
+
+	return declared
+}
+
+// members are what a class body declares: its statements less a docstring and a bare pass, which declare nothing.
+func members(class engine.Match) []engine.Match {
+	var declared []engine.Match
+	for at, statement := range class.ChildrenIn("body") {
+		if _, docstring := statement.Child("value").Text(); statement.Kind() == "Pass" || at == 0 && statement.Kind() == "Expr" && docstring {
+			continue
+		}
+
+		declared = append(declared, statement)
+	}
+
+	return declared
+}
+
+// bases are the classes a class inherits from, each by what it names: a generic base, Repo[User], names Repo.
+func bases(class engine.Match) []engine.Match {
+	var named []engine.Match
+	for _, base := range class.ChildrenIn("bases") {
+		if base.Kind() == "Subscript" {
+			base = base.Child("value")
+		}
+
+		named = append(named, base)
+	}
+
+	return named
+}
+
+// implicit says whether Python itself calls the def or binds the parameter: a dunder method such as __init__, or
+// the first parameter of a method, self or cls, that a static method does not take.
+func implicit(declaration engine.Match) bool {
+	if declaration.Is(engine.Function) {
+		name := declaration.Name()
+
+		return len(name) > 4 && strings.HasPrefix(name, "__") && strings.HasSuffix(name, "__")
+	}
+
+	method := declaration.DeclaringFunction()
+	if !method.Parent().Is(engine.TypeDeclaration) || method.IsAnnotated("staticmethod") {
+		return false
+	}
+
+	declared := method.Parameters()
+
+	return len(declared) > 0 && declared[0].Node() == declaration.Node()
 }

@@ -2,9 +2,13 @@ package rule_test
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/engine/csharp/csharptest"
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
@@ -62,8 +66,9 @@ func TestTheChecksHoldAtTheirEdges(t *testing.T) {
 		// a cycle of parents ends, each class in its own lineage
 		`{"select": "type-declaration", "where": [{"extendsAny": "Loop1"}]}`: "[9 10]",
 		`{"select": "type-declaration", "where": [{"extendsAny": "Base"}]}`:  "[6 7]",
-		// nesting counts through a closure; a call inside a closure is the closure's own
-		`{"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 2}}]}`: "[18]",
+		// a closure starts nesting again; a call inside a closure is the closure's own
+		`{"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 2}}]}`: "[]",
+		`{"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 1}}]}`: "[16 18]",
 		`{"select": "function", "where": [{"calls": {"name": "helper"}}]}`:             "[17]",
 		`{"select": "function", "where": [{"calls": {"name": "step"}}]}`:               "[14]",
 		// a function only calling itself is unused; one called through $this is not; a closure is not judged
@@ -155,7 +160,8 @@ func TestTheChecksHoldAtTheirEdgesInPythonAndTypeScript(t *testing.T) {
 		{"python", `{"select": "type-declaration", "where": [{"members": {"atLeast": 3}}]}`, "[]"},
 		// starred, keyword-only and defaulted parameters count once each, self among them
 		{"python", `{"select": "function", "where": [{"parameters": {"atLeast": 3}}]}`, "[6 12]"},
-		{"python", `{"select": "parameter", "where": [{"unused": true}]}`, "[3 6 6 12 12]"},
+		// self is Python's to bind, never the method's to read
+		{"python", `{"select": "parameter", "where": [{"unused": true}]}`, "[6 12 12]"},
 		{"python", `{"select": "call", "where": [{"constructs": "Inner"}]}`, "[10]"},
 		{"python", `{"select": "call", "where": [{"constructs": "shop.boxes.Outer.Inner"}]}`, "[10]"},
 		{"python", `{"select": "function", "where": [{"topLevel": true}]}`, "[9 12]"},
@@ -231,6 +237,78 @@ func TestTheChecksHoldAtTheirEdgesInCSharp(t *testing.T) {
 		`{"select": "function", "where": [{"complexity": {"atLeast": 4}}]}`:            "[6]",
 	} {
 		if got := found(t, "csharp", query, built); got != want {
+			t.Errorf("%s: found %s, want %s", query, got, want)
+		}
+	}
+}
+
+func TestTheReviewedEdgesHold(t *testing.T) {
+	built := phpCodebase(t, "Script.php", "<?php\n\n$sql = <<<SQL\nselect *\nfrom users where id = 1\nSQL;\n\nfunction pick(int | string $id): int|null { return null; }\n")
+
+	for query, want := range map[string]string{
+		// a glob's * runs across lines
+		`{"select": "literal", "where": [{"textLike": "*where id*"}]}`: "[3]",
+		// a file in no namespace has none to match
+		`{"select": "function", "where": [{"namespaceLike": "*"}]}`: "[]",
+		// spaces in a written type and in the pattern are both dropped
+		`{"select": "function", "where": [{"returnType": "int | null"}]}`:     "[8]",
+		`{"select": "parameter", "where": [{"parameterType": "int|string"}]}`: "[8]",
+	} {
+		if got := found(t, "backend", query, built); got != want {
+			t.Errorf("%s: found %s, want %s", query, got, want)
+		}
+	}
+
+	project := phpProject(t, map[string]string{
+		"app/Http/Controllers/Orders.php": "<?php\nnamespace App\\Http\\Controllers;\nfunction show() { return \\App\\Models\\count_orders(); }\n",
+		"app/Models/Counts.php":           "<?php\nnamespace App\\Models;\nfunction count_orders() { return 1; }\n",
+	})
+	for pattern, want := range map[string]string{"app/Http/**": "[Counts.php:3]", "app/Http/*": "[]", "Http/**/*.php": "[Counts.php:3]"} {
+		if got := foundAt(t, "backend", `{"select": "function", "where": [{"calledFrom": "`+pattern+`"}]}`, project); got != want {
+			t.Errorf("called from %s: found %s, want %s", pattern, got, want)
+		}
+	}
+
+	for written, reason := range map[string]string{
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call"}} {"extra": 1}`:                                                        "more follows it",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "type-declaration", "where": [{"members": {"of": "parent", "atLeast": 1}}]}}`: "judges nothing",
+	} {
+		if _, err := rule.Parse("X", []byte(written), shipped); err == nil || !strings.Contains(err.Error(), reason) {
+			t.Errorf("%s: %v, want %q", written, err, reason)
+		}
+	}
+}
+
+func TestAPathIsReadFromTheFolderJudged(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "tests", "shop")
+	for path, contents := range map[string]string{
+		"src/Cart.php":            "<?php\nfunction add() {}\n",
+		"tests/Unit/CartTest.php": "<?php\nfunction test_add() {}\n",
+	} {
+		file := filepath.Join(root, path)
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(file, []byte(contents), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	project, err := scan.Walk([]string{root}, source.Excluded{}).Load()
+	if err != nil {
+		t.Fatalf("the PHP bridge cannot run here: %v", err)
+	}
+
+	// a checkout under a folder named tests is not test code; only what lies under the project's own is
+	for query, want := range map[string]string{
+		`{"select": "function", "where": [{"testCode": true}]}`:         "[CartTest.php:2]",
+		`{"select": "function", "where": [{"testCode": false}]}`:        "[Cart.php:2]",
+		`{"select": "function", "where": [{"file": "shop/src/*.php"}]}`: "[Cart.php:2]",
+		`{"select": "function", "where": [{"file": "src/*.php"}]}`:      "[Cart.php:2]",
+		`{"select": "function", "where": [{"file": "tests/*.php"}]}`:    "[]",
+		`{"select": "function", "where": [{"file": "tests/**/*.php"}]}`: "[CartTest.php:2]",
+	} {
+		if got := foundAt(t, "backend", query, project); got != want {
 			t.Errorf("%s: found %s, want %s", query, got, want)
 		}
 	}

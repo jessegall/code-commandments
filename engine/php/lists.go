@@ -11,6 +11,7 @@ func init() {
 	engine.ListAs(contract.PHP, engine.Lists{
 		Arguments:     values,
 		Members:       engine.InFields("stmts"),
+		Parameters:    engine.InFields("params"),
 		Extends:       engine.InFields("extends"),
 		Implements:    engine.InFields("implements"),
 		Annotations:   attributes,
@@ -22,6 +23,8 @@ func init() {
 		DocTags:       engine.AtTagsOf,
 		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
 		TestFile:      testFile,
+		Implicit:      magic,
+		Continues:     engine.KindIn("Stmt_ElseIf"),
 	})
 
 	engine.Predicates(contract.PHP,
@@ -38,11 +41,14 @@ func testFile(path string) bool {
 	return strings.HasSuffix(path, "Test.php") || engine.InFolderNamed(path, "tests", "test")
 }
 
-// values are the values a call's arguments hand it, named and unpacked ones alike.
+// values are the values a call's arguments hand it, named and unpacked ones alike; a first-class callable's
+// `(...)` hands none.
 func values(call engine.Match) []engine.Match {
 	var handed []engine.Match
 	for _, argument := range call.ChildrenIn("args") {
-		handed = append(handed, argument.Child("value"))
+		if value := argument.Child("value"); value.Exists() {
+			handed = append(handed, value)
+		}
 	}
 
 	return handed
@@ -72,8 +78,9 @@ func callers(function engine.Match) []engine.Match {
 	return nil
 }
 
-// functionCallers are the calls of a function: naming it whole, or, from its own namespace, by its short name,
-// which PHP resolves to it before any global function of that name.
+// functionCallers are the calls of a function: naming it whole, or by its short name from its own namespace, which
+// PHP resolves to it before any global function of that name, or, for a global function, from a namespace that
+// declares none of that name, where PHP falls back to it.
 func functionCallers(function engine.Match) []engine.Match {
 	qualified := strings.TrimSuffix(function.Node().Symbol, "()")
 	namespace, short := "", qualified
@@ -91,13 +98,19 @@ func functionCallers(function engine.Match) []engine.Match {
 				calls = append(calls, call)
 			}
 		case "Name":
-			if strings.EqualFold(call.Namespace(), namespace) {
+			if strings.EqualFold(call.Namespace(), namespace) || namespace == "" && !declaresFunction(call, short) {
 				calls = append(calls, call)
 			}
 		}
 	}
 
 	return calls
+}
+
+// declaresFunction says whether the call's own namespace declares a function of the short name, which PHP calls
+// before falling back to the global one.
+func declaresFunction(call engine.Match, short string) bool {
+	return len(call.Codebase().Declarations(call.Namespace()+`\`+short+"()")) > 0
 }
 
 // functionCalls are the codebase's calls of a function by name, by the last part of that name in lower case, as
@@ -129,4 +142,10 @@ func attributes(declaration engine.Match) []engine.Match {
 	}
 
 	return names
+}
+
+// magic says whether PHP itself calls the method: a constructor, a destructor or any other magic method, each named
+// with two leading underscores.
+func magic(declaration engine.Match) bool {
+	return declaration.Kind() == "Stmt_ClassMethod" && strings.HasPrefix(declaration.Name(), "__")
 }

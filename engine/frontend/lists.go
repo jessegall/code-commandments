@@ -14,6 +14,7 @@ func init() {
 		engine.ListAs(language, engine.Lists{
 			Arguments:     engine.InFields("arguments"),
 			Members:       engine.InFields("members"),
+			Parameters:    engine.InFields("parameters"),
 			Extends:       heritage("extends"),
 			Implements:    heritage("implements"),
 			Annotations:   decorators,
@@ -24,6 +25,10 @@ func init() {
 			DocTags:       engine.AtTagsOf,
 			BodyHash:      func(function engine.Match) string { return typescript.Of(function).BodyHash() },
 			TestFile:      testFile,
+			Implicit:      engine.KindIn("Constructor"),
+			Continues: func(branch engine.Match) bool {
+				return branch.Kind() == "IfStatement" && branch.Node().Field == "elseStatement"
+			},
 		})
 
 		engine.Predicates(language,

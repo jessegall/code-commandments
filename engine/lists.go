@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"slices"
 	"sync"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -12,6 +13,9 @@ type Lists struct {
 	Arguments func(Match) []Match
 	// Members are what a type declaration declares directly: its methods, fields, constants and nested types.
 	Members func(Match) []Match
+	// Parameters are the parameters a function declares itself, never those of a function type written in its
+	// signature.
+	Parameters func(Match) []Match
 	// Extends are the nodes naming the types a type declaration extends directly.
 	Extends func(Match) []Match
 	// Implements are the nodes naming the contracts a type declaration honours directly.
@@ -35,6 +39,14 @@ type Lists struct {
 	BodyHash func(Match) string
 	// TestFile says whether a file is test code by its path, as the language's conventions name one.
 	TestFile func(path string) bool
+	// Implicit says whether the language itself calls a declaration or binds a parameter, so no code of the
+	// project names it: a constructor, a magic or dunder method, Python's self.
+	Implicit func(Match) bool
+	// Overrides says whether a member overrides or implements another, as the language's compiler decides it, beside
+	// what the declared supertypes show.
+	Overrides func(Match) bool
+	// Continues says whether a branch continues the one it sits in rather than nesting inside it: an else-if.
+	Continues func(Match) bool
 }
 
 // TypeKinds are the kinds of type every language's declarations are told apart by.
@@ -79,6 +91,13 @@ func OfKind(kind, field string) func(Match) Match {
 		}
 
 		return match.Child(field)
+	}
+}
+
+// KindIn says whether a node is of one of the kinds.
+func KindIn(kinds ...string) func(Match) bool {
+	return func(match Match) bool {
+		return slices.Contains(kinds, match.Kind())
 	}
 }
 

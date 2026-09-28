@@ -136,6 +136,7 @@ func (s Sources) Load() (*engine.Codebase, error) {
 	}
 
 	codebase := engine.Load(streams...)
+	codebase.Scanned(s.roots...)
 	sayUnreadable(streams)
 
 	if len(s.byLanguage[source.PHP]) > 0 {

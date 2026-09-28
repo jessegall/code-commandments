@@ -102,7 +102,9 @@ func fieldsOf(shape reflect.Type, properties object) {
 			property["description"] = "The node the step judges in place of the one it is on: parent, enclosingFunction, enclosingType, root, closest:<kind> or child:<field>."
 		}
 
-		if check, found := checkNamed(key); found && field.Type.Kind() != reflect.Int {
+		if says, counting := countKeys[key]; counting && shape == reflect.TypeFor[Count]() {
+			property["description"] = says
+		} else if check, found := checkNamed(key); found && field.Type.Kind() != reflect.Int {
 			property["description"] = check.Keeps
 			property["examples"] = []json.RawMessage{json.RawMessage(check.Example)}
 		}
@@ -135,6 +137,13 @@ func typeOf(written reflect.Type) object {
 	default:
 		return object{"type": "string"}
 	}
+}
+
+// countKeys are what a count's own keys mean, which are not the checks of the same name.
+var countKeys = map[string]string{
+	"descendant": "count the descendants that pass this step",
+	"child":      "count the children that pass this step",
+	"field":      "count only the children filling this field",
 }
 
 // closedValues are the keys whose value is one of a few.

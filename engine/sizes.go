@@ -18,20 +18,26 @@ func (m Match) Members() []Match {
 }
 
 // Parameters are the parameters the function declares, in source order, each once: a variadic or a
-// defaulted one, and Python's self, alike.
+// defaulted one, and Python's self, alike. A callback type written in its signature declares its own.
 func (m Match) Parameters() []Match {
 	if !m.Is(Function) {
 		return nil
 	}
 
-	var declared []Match
-	for _, below := range m.Descendants() {
-		if below.Is(Parameter) && below.Closest(Function).node == m.node {
-			declared = append(declared, below)
+	return m.listed(func(read Lists) func(Match) []Match { return read.Parameters })
+}
+
+// DeclaringFunction is the function whose own parameter the parameter is; no node for a parameter of a
+// declaration with no body to run, such as an interface's method, or of a function type.
+func (m Match) DeclaringFunction() Match {
+	function := m.Closest(Function)
+	for _, declared := range function.Parameters() {
+		if declared.node == m.node {
+			return function
 		}
 	}
 
-	return declared
+	return Match{}
 }
 
 // Lines is how many lines the node spans, its first and its last among them.

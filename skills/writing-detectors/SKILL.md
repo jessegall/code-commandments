@@ -82,13 +82,13 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"argument": {"at": 0, "is": "literal"}}` | the argument at that place passes the step; a negative `at` counts from the end, `-1` the last, and none there passes nothing |
 | `{"constructs": "Date*"}` | a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class |
 | `{"unused": true}` | nothing refers to it: a function or type from outside itself, through the names and calls the scan resolves and its language's call graph; a parameter, by its name read in its function |
-| `{"calledFrom": "app/Http/*"}` | something referring to it — a call, most often — sits in a file the glob matches |
+| `{"calledFrom": "app/Http/**"}` | something referring to it — a call, most often — sits in a file the glob matches, read as `file` reads one |
 
 **Where it sits**
 
 | Check | Keeps the node when |
 |---|---|
-| `{"file": "*Repository.php"}` | its file, or any tail of the path, matches the glob |
+| `{"file": "*Repository.php"}` | its path from the folder judged, or any tail of it, matches the glob: `*` stays within a folder and `**` crosses them, as in .gitignore |
 | `{"namespaceLike": "App\\Http\\*"}` | the namespace, package or module it is declared in matches the glob |
 | `{"layer": "App\\Domain"}` | it sits in that layer of the stack the project declares (backend, Python, C#) |
 | `{"testCode": true}` | it is test code, as its bridge marks it or its language names test files |
@@ -183,21 +183,27 @@ part when it is bare (`Controller`). A type the scan cannot resolve is matched b
 pattern** has one wildcard, `*`: a `?` is itself, so `?*` is PHP's nullable type, and a function or
 parameter with no type written matches no pattern — reject `"*"` to find the untyped ones.
 
-`unused` knows only the code it scans: a controller action a route calls, a listener the framework
-dispatches, a method a parent type declares, or a function another project imports all look unused, so
-pair it with a `reject` for them (`{"hasAnnotation": ...}`, `{"extendsAny": ...}`, `{"file": ...}`).
+`unused` never flags what the language itself calls or binds — a constructor, a magic or dunder method,
+Python's `self` — nor a member a supertype dictates, nor a parameter of a declaration with no body. It
+knows only the code it scans, though: a controller action a route calls, a listener the framework
+dispatches, or a function another project imports looks unused, so pair it with a `reject` for them
+(`{"hasAnnotation": ...}`, `{"extendsAny": ...}`, `{"file": ...}`).
+
+**Paths** — `file`, `calledFrom` and `testCode` — are read from the folder the scan was pointed at, its
+own name included (`src/Cart.php` for `judge src`), never from where the project sits on the disk.
 
 **Test code** is a file C#'s bridge marks as a test project's, and elsewhere a file the language's test
 runner collects: PHP's `*Test.php`, Python's `test_*.py`, `*_test.py` and `conftest.py`, a frontend
 `*.test.*` or `*.spec.*`, and in every language a file under a `tests` or `test` folder (`__tests__`
-too, in the frontend). C# deprecation is the `[Obsolete]` attribute, which `hasAnnotation` finds, and a
+too, in the frontend) of the tree judged. C# deprecation is the `[Obsolete]` attribute, which `hasAnnotation` finds, and a
 Python docstring is no comment, so `commentLike` does not read one: `docTag` does.
 
 Every size takes `atLeast`, `atMost` or both, and both are inclusive.
 
 A node's **siblings** fill the same field of the same parent: a statement's are the other statements
-of its block, an argument's the call's other arguments. `nestedAtLeast` counts through closures, since
-nesting is what a reader sees: a loop in a closure in a loop is two loops deep.
+of its block. `nestedAtLeast` counts within one function: a closure starts the count again, unless
+functions are what it counts, and an else-if continues its if rather than nesting in it, however its
+language's tree holds one.
 
 A glob matches the whole name: `*` is any run of characters, `?` one, and a backslash is itself, so a
 PHP class is written as it reads. A regular expression is Go's (RE2) and matches anywhere unless it is

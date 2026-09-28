@@ -111,11 +111,31 @@ func BareSymbol(symbol string) string {
 		symbol = name
 	}
 
-	if at := strings.IndexAny(symbol, "<`"); at > 0 {
-		symbol = symbol[:at]
+	return strings.TrimPrefix(strings.TrimPrefix(withoutTypeArguments(symbol), "global::"), `\`)
+}
+
+// withoutTypeArguments is the symbol less every type argument list and generic arity it carries, wherever it
+// stands: N.Outer<T>.Inner is N.Outer.Inner, System.Action`1 is System.Action.
+func withoutTypeArguments(symbol string) string {
+	var kept strings.Builder
+	depth, arity := 0, false
+
+	for _, character := range symbol {
+		switch {
+		case character == '<':
+			depth++
+		case character == '>' && depth > 0:
+			depth--
+		case character == '`' && depth == 0:
+			arity = true
+		case arity && character >= '0' && character <= '9':
+		case depth == 0:
+			arity = false
+			kept.WriteRune(character)
+		}
 	}
 
-	return strings.TrimPrefix(strings.TrimPrefix(symbol, "global::"), `\`)
+	return kept.String()
 }
 
 // LastPart is the symbol's last segment, after its last `\` or `.`.
@@ -178,12 +198,16 @@ func (m Match) supertypesOf(symbol string, inScan func(Match) []Match, outside f
 		return nil
 	}
 
-	if declarations := m.file.Codebase().Declarations(symbol); len(declarations) > 0 {
-		var supertypes []string
-		for _, declaration := range declarations {
+	var supertypes []string
+	declared := false
+	for _, declaration := range m.file.Codebase().Declarations(symbol) {
+		if declaration.file.Language() == m.file.Language() {
+			declared = true
 			supertypes = append(supertypes, named(inScan(declaration))...)
 		}
+	}
 
+	if declared {
 		return supertypes
 	}
 
