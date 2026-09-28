@@ -16,6 +16,7 @@ func init() {
 			"EnumDeclaration": "enum", "RecordDeclaration": "record", "RecordStructDeclaration": "record", "StructDeclaration": "struct"}),
 		ReturnType:    engine.InField("ReturnType"),
 		ParameterType: engine.InField("Type"),
+		Constructs:    engine.OfKind("ObjectCreationExpression", "Type"),
 	})
 }
 

@@ -76,6 +76,11 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `"members": {"is": "function", "atLeast": 20}` | a type declares that many members directly that pass the step (every member, with no check) |
 | `"complexity": {"atLeast": 10}` | one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `\|\|` are not counted, and a function inside it is its own count |
 | `"count": {"descendant": {step}, "atLeast": 4}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children |
+| `"calls": {step}` | a call of its own — not one inside a function nested in it — passes the step |
+| `"argument": {"at": 0, step}` | the argument at that place passes the step; a negative `at` counts from the end, `-1` the last, and none there passes nothing |
+| `"constructs": "Date*"` | a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class |
+| `"unused": true` | nothing refers to it: a function or type from outside itself, through the names and calls the scan resolves and its language's call graph; a parameter, by its name read in its function |
+| `"calledFrom": "app/Http/*"` | something referring to it — a call, most often — sits in a file the glob matches |
 | `"descendant": {step}` | some node inside it passes the step |
 | `"inside": {step}` | some node above it, up to the file's root, passes the step |
 | `"next": {step}` / `"previous": {step}` | the sibling right after / before it passes the step |
@@ -92,6 +97,10 @@ part when it is bare (`Controller`). A type the scan cannot resolve is matched b
 `implements` there reads the class's whole chain of parents, where its ABCs and Protocols are. A **type
 pattern** has one wildcard, `*`: a `?` is itself, so `?*` is PHP's nullable type, and a function or
 parameter with no type written matches no pattern — reject `"*"` to find the untyped ones.
+
+`unused` knows only the code it scans: a controller action a route calls, a listener the framework
+dispatches, a method a parent type declares, or a function another project imports all look unused, so
+pair it with a `reject` for them (`{"hasAnnotation": ...}`, `{"extendsAny": ...}`, `{"file": ...}`).
 
 Every size takes `atLeast`, `atMost` or both, and both are inclusive.
 

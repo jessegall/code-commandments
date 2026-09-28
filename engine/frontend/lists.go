@@ -18,6 +18,7 @@ func init() {
 			TypeKind:      engine.Kinds(map[string]string{"ClassDeclaration": "class", "ClassExpression": "class", "InterfaceDeclaration": "interface", "EnumDeclaration": "enum"}),
 			ReturnType:    engine.InField("type"),
 			ParameterType: engine.InField("type"),
+			Constructs:    engine.OfKind("NewExpression", "expression"),
 		})
 	}
 }

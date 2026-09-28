@@ -56,28 +56,25 @@ func (m Match) Complexity() int {
 	}
 
 	count := 1
-	for _, below := range m.Descendants() {
-		if !below.Is(Branch) && !below.Is(Loop) && !below.Is(Catch) {
-			continue
+	for _, below := range m.OwnDescendants() {
+		if below.Is(Branch) || below.Is(Loop) || below.Is(Catch) {
+			count++
 		}
-
-		if function := below.Closest(Function); function.Exists() && function.node != m.node && m.isAbove(function) {
-			continue
-		}
-
-		count++
 	}
 
 	return count
 }
 
-// isAbove says whether the node sits somewhere below this one.
-func (m Match) isAbove(below Match) bool {
-	for ancestor := below.Parent(); ancestor.Exists(); ancestor = ancestor.Parent() {
-		if ancestor.node == m.node {
-			return true
+// OwnDescendants are the nodes below this one that run as part of it, in pre-order: a function nested in it is
+// among them, but what that function holds is its own.
+func (m Match) OwnDescendants() []Match {
+	var own []Match
+	for _, child := range m.Children() {
+		own = append(own, child)
+		if !child.Is(Function) {
+			own = append(own, child.OwnDescendants()...)
 		}
 	}
 
-	return false
+	return own
 }

@@ -64,11 +64,11 @@ func (m Match) IsAnnotated(want string) bool {
 // Names says whether the node names the type: by the symbol it resolves to when want is qualified, and
 // otherwise by that symbol's last part, or, when it resolves to none, by the last part of what it says.
 func (m Match) Names(want string) bool {
-	return NamesType(m.named(), want)
+	return NamesType(m.Named(), want)
 }
 
-// named is the type the node names: the symbol it resolves to, else its name, else what it says.
-func (m Match) named() string {
+// Named is the type the node names: the symbol it resolves to, else its name, else what it says.
+func (m Match) Named() string {
 	if refers := m.Refers(); refers != "" {
 		return refers
 	}
@@ -83,7 +83,7 @@ func (m Match) named() string {
 // NamesType says whether the symbol is the type want names: the whole symbol when want is qualified, its last
 // part when want is bare. A leading `\` and C#'s global:: are no part of either.
 func NamesType(symbol, want string) bool {
-	symbol, want = bareSymbol(symbol), bareSymbol(want)
+	symbol, want = BareSymbol(symbol), BareSymbol(want)
 	if symbol == "" || want == "" {
 		return false
 	}
@@ -92,11 +92,11 @@ func NamesType(symbol, want string) bool {
 		return symbol == want
 	}
 
-	return lastPart(symbol) == want
+	return LastPart(symbol) == want
 }
 
-// bareSymbol is the symbol less a leading `\` or global::, and a TypeScript symbol less the file it is in.
-func bareSymbol(symbol string) string {
+// BareSymbol is the symbol less a leading `\` or global::, and a TypeScript symbol less the file it is in.
+func BareSymbol(symbol string) string {
 	if _, name, inFile := strings.Cut(symbol, "#"); inFile {
 		symbol = name
 	}
@@ -104,8 +104,8 @@ func bareSymbol(symbol string) string {
 	return strings.TrimPrefix(strings.TrimPrefix(symbol, "global::"), `\`)
 }
 
-// lastPart is the symbol's last segment, after its last `\` or `.`.
-func lastPart(symbol string) string {
+// LastPart is the symbol's last segment, after its last `\` or `.`.
+func LastPart(symbol string) string {
 	return symbol[strings.LastIndexAny(symbol, `\.`)+1:]
 }
 
@@ -208,7 +208,7 @@ func outsideSymbols(c *Codebase, language contract.Language) map[string]contract
 func named(nodes []Match) []string {
 	names := make([]string, 0, len(nodes))
 	for _, node := range nodes {
-		names = append(names, node.named())
+		names = append(names, node.Named())
 	}
 
 	return names

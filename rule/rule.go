@@ -100,6 +100,11 @@ type Step struct {
 	HasAnnotation string   `json:"hasAnnotation,omitempty"`
 	ReturnType    string   `json:"returnType,omitempty"`
 	ParameterType string   `json:"parameterType,omitempty"`
+	Constructs    string   `json:"constructs,omitempty"`
+	Unused        *bool    `json:"unused,omitempty"`
+	CalledFrom    string   `json:"calledFrom,omitempty"`
+	Calls         *Step    `json:"calls,omitempty"`
+	Argument      *Argued  `json:"argument,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
@@ -127,6 +132,13 @@ type Count struct {
 	Child      *Step  `json:"child,omitempty"`
 	Field      string `json:"field,omitempty"`
 	Bounds
+}
+
+// Argued is a step on one of a call's arguments: the one At places from the first, or from the last when At is
+// negative, -1 being the last.
+type Argued struct {
+	Step
+	At int `json:"at"`
 }
 
 // Tally counts the members of a type that pass its step, or every member when it makes no check.
@@ -236,7 +248,7 @@ func withLayers(steps []Step, stack *engine.LayerStack) []Step {
 func (s Step) withLayers(stack *engine.LayerStack) Step {
 	s.layers = stack
 
-	for _, nested := range []**Step{&s.Descendant, &s.Inside, &s.Next, &s.Previous} {
+	for _, nested := range []**Step{&s.Descendant, &s.Inside, &s.Next, &s.Previous, &s.Calls} {
 		if *nested != nil {
 			copied := (*nested).withLayers(stack)
 			*nested = &copied
@@ -266,6 +278,12 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 		s.Members = &tally
 	}
 
+	if s.Argument != nil {
+		argued := *s.Argument
+		argued.Step = argued.Step.withLayers(stack)
+		s.Argument = &argued
+	}
+
 	return s
 }
 
@@ -273,7 +291,7 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 func (s *Step) nested() []*Step {
 	var nested []*Step
 
-	for _, step := range []*Step{s.Descendant, s.Inside, s.Next, s.Previous} {
+	for _, step := range []*Step{s.Descendant, s.Inside, s.Next, s.Previous, s.Calls} {
 		if step != nil {
 			nested = append(nested, step)
 		}
@@ -293,6 +311,10 @@ func (s *Step) nested() []*Step {
 
 	if s.Members != nil && s.Members.Step.checks() > 0 {
 		nested = append(nested, &s.Members.Step)
+	}
+
+	if s.Argument != nil {
+		nested = append(nested, &s.Argument.Step)
 	}
 
 	return nested
@@ -366,7 +388,8 @@ func (s Step) checks() int {
 		s.Documented != nil, s.File != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "",
-		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != ""} {
+		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
+		s.CalledFrom != "", s.Calls != nil, s.Argument != nil} {
 		if set {
 			count++
 		}
@@ -398,6 +421,8 @@ func (s *Step) prepare() error {
 		s.pattern = typeGlob(s.ReturnType)
 	case s.ParameterType != "":
 		s.pattern = typeGlob(s.ParameterType)
+	case s.Constructs != "":
+		s.pattern = glob(strings.TrimPrefix(s.Constructs, `\`))
 	}
 
 	for _, nested := range s.nested() {
@@ -612,9 +637,69 @@ func (s Step) check(match engine.Match) bool {
 		return s.typed(subject.ReturnType())
 	case s.ParameterType != "":
 		return s.typed(subject.ParameterType())
+	case s.Constructs != "":
+		return s.constructs(subject)
+	case s.Unused != nil:
+		return unused(subject) == *s.Unused
+	case s.CalledFrom != "":
+		return slices.ContainsFunc(subject.Referrers(), func(caller engine.Match) bool { return inFile(s.CalledFrom, caller.File()) })
+	case s.Calls != nil:
+		return slices.ContainsFunc(subject.OwnDescendants(), func(below engine.Match) bool { return below.Is(engine.Call) && s.Calls.check(below) })
+	case s.Argument != nil:
+		return s.Argument.passes(subject.Arguments())
 	}
 
 	return false
+}
+
+// constructs says whether the construction creates an instance of a type the pattern names, or, on anything
+// else, whether a construction of its own does. A qualified pattern is matched by the whole symbol the type
+// resolves to, a bare one by its last part.
+func (s Step) constructs(subject engine.Match) bool {
+	for _, below := range append([]engine.Match{subject}, subject.OwnDescendants()...) {
+		if created := below.Constructed(); created.Exists() && s.namesPattern(created) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// namesPattern says whether the type the node names matches the step's pattern.
+func (s Step) namesPattern(named engine.Match) bool {
+	symbol := engine.BareSymbol(named.Named())
+	if !strings.ContainsAny(s.Constructs, `\.`) {
+		symbol = engine.LastPart(symbol)
+	}
+
+	return s.pattern.MatchString(symbol)
+}
+
+// unused says whether nothing refers to the declaration: to a function or type from outside it, to a parameter
+// by reading its name. Anything else, or a declaration the tool cannot name, is not judged unused.
+func unused(declaration engine.Match) bool {
+	switch {
+	case declaration.Is(engine.Parameter):
+		return !declaration.IsRead()
+	case declaration.Is(engine.Function), declaration.Is(engine.TypeDeclaration):
+		return declaration.Node().Symbol != "" && len(declaration.Referrers()) == 0
+	}
+
+	return false
+}
+
+// passes says whether the argument at the position passes the step; none there passes nothing.
+func (a Argued) passes(arguments []engine.Match) bool {
+	at := a.At
+	if at < 0 {
+		at += len(arguments)
+	}
+
+	if at < 0 || at >= len(arguments) {
+		return false
+	}
+
+	return a.check(arguments[at])
 }
 
 // namesAny says whether any of the symbols is the type want names.
