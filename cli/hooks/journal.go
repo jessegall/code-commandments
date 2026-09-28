@@ -43,15 +43,6 @@ func MomentOf(given map[string]any) Moment {
 	}
 }
 
-// Addressed is the journal command, sent to the moment's environment when it names one.
-func (m Moment) Addressed(command string) string {
-	if m.Env == nil {
-		return command
-	}
-
-	return "--env " + shellQuote(*m.Env) + " " + command
-}
-
 // IsPostToolUse says whether the moment follows a tool call.
 func (m Moment) IsPostToolUse() bool {
 	return m.Event == "PostToolUse"
@@ -171,7 +162,19 @@ func QueueFromEnvironment() (Queue, bool) {
 	return Queue{path}, path != ""
 }
 
-// Tell appends a nudge for what the advice says and a raise for each event it raises.
+// For is the queue of the moment's environment: the journal runs each line in the environment its file belongs to
+// and refuses a line that names one, so a moment of an environment is queued in that environment's own file,
+// beside the queue the journal named. A moment of none, or of a name no file can carry, keeps the queue as named.
+func (q Queue) For(moment Moment) Queue {
+	if moment.Env == nil || *moment.Env == "" || filepath.Base(*moment.Env) != *moment.Env || *moment.Env == ".." {
+		return q
+	}
+
+	return Queue{filepath.Join(filepath.Dir(q.path), workspace.JournalPlugin+"."+*moment.Env+".queue")}
+}
+
+// Tell appends to the moment's queue a nudge for what the advice says and a raise for each event it raises, each a
+// bare journal command the journal runs as the plugin.
 func (q Queue) Tell(advice JournalAnswer, moment Moment) error {
 	var commands []string
 
@@ -192,7 +195,7 @@ func (q Queue) Tell(advice JournalAnswer, moment Moment) error {
 		return nil
 	}
 
-	file, err := os.OpenFile(q.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
+	file, err := os.OpenFile(q.For(moment).path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o666)
 	if err != nil {
 		return err
 	}
@@ -201,7 +204,7 @@ func (q Queue) Tell(advice JournalAnswer, moment Moment) error {
 
 	var text strings.Builder
 	for _, command := range commands {
-		text.WriteString(moment.Addressed(command) + "\n")
+		text.WriteString(command + "\n")
 	}
 
 	_, err = file.WriteString(text.String())
