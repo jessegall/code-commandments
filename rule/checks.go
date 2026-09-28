@@ -3,6 +3,9 @@ package rule
 import (
 	"fmt"
 	"strings"
+
+	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/engine"
 )
 
 // Check is one check a step can make: the key that names it, a step making it, and the node it keeps.
@@ -82,7 +85,17 @@ var Checks = []Group{
 		{"returnType", `{"returnType": "?*"}`, "a function's written return type matches the pattern, as written or as the type it names resolves"},
 		{"parameterType", `{"parameterType": "array"}`, "a parameter's written type matches the pattern, as written or as the type it names resolves"},
 	}},
+	{"Its language's own", []Check{
+		{"php", `{"php": "facadeCall"}`, "PHP's own check of the name holds — one of the checks listed below"},
+		{"python", `{"python": "constructor"}`, "Python's own check of the name holds"},
+		{"csharp", `{"csharp": "inherited"}`, "C#'s own check of the name holds"},
+		{"typescript", `{"typescript": "optional"}`, "TypeScript's own check of the name holds"},
+		{"vue", `{"vue": "component"}`, "a Vue component's own check of the name holds — its template's, and its script's TypeScript ones"},
+	}},
 }
+
+// ownLanguages are the languages whose own checks a step may name, in the order the reference lists them.
+var ownLanguages = []contract.Language{contract.PHP, contract.Python, contract.CSharp, contract.TypeScript, contract.Vue}
 
 // Target is a node a step can judge in place of the one it is on, with "of".
 type Target struct {
@@ -114,7 +127,15 @@ func Reference() string {
 		reference.WriteString("\n")
 	}
 
-	reference.WriteString("**What `\"of\"` can name**\n\n| Target | The step judges |\n|---|---|\n")
+	reference.WriteString("**Each language's own checks**, named under its key — a small set that grows on request, each name kept when the code behind it changes:\n\n| Check | Keeps the node when |\n|---|---|\n")
+
+	for _, language := range ownLanguages {
+		for _, predicate := range engine.PredicatesOf(language) {
+			fmt.Fprintf(&reference, "| `{\"%s\": \"%s\"}` | %s |\n", language, predicate.Name, cell(predicate.Says))
+		}
+	}
+
+	reference.WriteString("\n**What `\"of\"` can name**\n\n| Target | The step judges |\n|---|---|\n")
 
 	for _, target := range Targets {
 		fmt.Fprintf(&reference, "| `%s` | %s |\n", target.Key, cell(target.Means))

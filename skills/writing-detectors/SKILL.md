@@ -125,6 +125,44 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"returnType": "?*"}` | a function's written return type matches the pattern, as written or as the type it names resolves |
 | `{"parameterType": "array"}` | a parameter's written type matches the pattern, as written or as the type it names resolves |
 
+**Its language's own**
+
+| Check | Keeps the node when |
+|---|---|
+| `{"php": "facadeCall"}` | PHP's own check of the name holds — one of the checks listed below |
+| `{"python": "constructor"}` | Python's own check of the name holds |
+| `{"csharp": "inherited"}` | C#'s own check of the name holds |
+| `{"typescript": "optional"}` | TypeScript's own check of the name holds |
+| `{"vue": "component"}` | a Vue component's own check of the name holds — its template's, and its script's TypeScript ones |
+
+**Each language's own checks**, named under its key — a small set that grows on request, each name kept when the code behind it changes:
+
+| Check | Keeps the node when |
+|---|---|
+| `{"php": "coalesce"}` | it is a `??` expression |
+| `{"php": "constructor"}` | it declares a constructor |
+| `{"php": "facadeCall"}` | it is a static call on a Laravel facade |
+| `{"php": "inDataClass"}` | it sits in a Spatie Data class |
+| `{"php": "inNamedConstructor"}` | the function around it builds an instance of its own class |
+| `{"php": "inPageObject"}` | it sits in a Data class that is a page object |
+| `{"php": "returnedValue"}` | it is the value a return statement returns |
+| `{"php": "typeNarrowingGuard"}` | it is an outermost `&&` of two or more instanceof checks |
+| `{"python": "constructor"}` | it is a class's __init__ |
+| `{"python": "evaluated"}` | it is an expression the code evaluates, outside every type annotation |
+| `{"python": "inNamedConstructor"}` | it sits in a named constructor, where loose data becomes the class |
+| `{"python": "returnedValue"}` | it is what a return statement returns |
+| `{"python": "typeNarrowingGuard"}` | it is an outermost `and` of two or more isinstance checks |
+| `{"csharp": "buildingAnObject"}` | it feeds straight into an object being created in the same function |
+| `{"csharp": "inNamedConstructor"}` | the function around it builds an instance of its own type |
+| `{"csharp": "inOverride"}` | it sits in a member that overrides or implements a contract, whose signature the contract decided |
+| `{"csharp": "inherited"}` | the member overrides or implements another, decided against the whole hierarchy |
+| `{"typescript": "absence"}` | it is the literal null or undefined |
+| `{"typescript": "optional"}` | a field or parameter may be missing: written `x?`, or typed to admit null or undefined |
+| `{"vue": "absence"}` | it is the literal null or undefined |
+| `{"vue": "component"}` | the element's tag names a component: it starts upper-case |
+| `{"vue": "optional"}` | a field or parameter may be missing: written `x?`, or typed to admit null or undefined |
+| `{"vue": "templateRoot"}` | the element is the template's only top-level element |
+
 **What `"of"` can name**
 
 | Target | The step judges |

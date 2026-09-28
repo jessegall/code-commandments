@@ -110,6 +110,11 @@ type Step struct {
 	DocTag         string   `json:"docTag,omitempty"`
 	Duplicated     *Bounds  `json:"duplicated,omitempty"`
 	TestCode       *bool    `json:"testCode,omitempty"`
+	PHP            string   `json:"php,omitempty"`
+	Python         string   `json:"python,omitempty"`
+	CSharp         string   `json:"csharp,omitempty"`
+	TypeScript     string   `json:"typescript,omitempty"`
+	Vue            string   `json:"vue,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
@@ -211,6 +216,10 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 	for _, steps := range [][]Step{read.Find.Where, read.Find.Reject} {
 		for i := range steps {
 			if err := steps[i].prepare(); err != nil {
+				return Rule{}, fmt.Errorf("%s: %w", name, err)
+			}
+
+			if err := steps[i].ownChecks(languages[engine]); err != nil {
 				return Rule{}, fmt.Errorf("%s: %w", name, err)
 			}
 
@@ -404,7 +413,7 @@ func (s Step) checks() int {
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
 		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil,
-		s.TestCode != nil} {
+		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != ""} {
 		if set {
 			count++
 		}
@@ -680,6 +689,11 @@ func (s Step) check(match engine.Match) bool {
 		return copies > 0 && s.Duplicated.holds(copies)
 	case s.TestCode != nil:
 		return subject.IsTest() == *s.TestCode
+	case s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "":
+		language, name := s.own()
+		predicate, offered := engine.PredicateOf(language, name)
+
+		return offered && predicate.Holds(subject)
 	}
 
 	return false
@@ -733,6 +747,45 @@ func (a Argued) passes(arguments []engine.Match) bool {
 	}
 
 	return a.check(arguments[at])
+}
+
+// own is the language whose own check the step names, and the check's name; no language for any other step.
+func (s Step) own() (contract.Language, string) {
+	for language, name := range map[contract.Language]string{contract.PHP: s.PHP, contract.Python: s.Python,
+		contract.CSharp: s.CSharp, contract.TypeScript: s.TypeScript, contract.Vue: s.Vue} {
+		if name != "" {
+			return language, name
+		}
+	}
+
+	return "", ""
+}
+
+// ownChecks checks each language's own check the step, or one nested in it, names: the rule's engine must judge
+// that language, and the language must offer the check.
+func (s *Step) ownChecks(judged []contract.Language) error {
+	if language, name := s.own(); language != "" {
+		if !slices.Contains(judged, language) {
+			return fmt.Errorf("a %s check needs a rule that judges %s", language, language)
+		}
+
+		if _, offered := engine.PredicateOf(language, name); !offered {
+			var names []string
+			for _, predicate := range engine.PredicatesOf(language) {
+				names = append(names, predicate.Name)
+			}
+
+			return fmt.Errorf("%s offers no check %q: it offers %s%s", language, name, strings.Join(names, ", "), didYouMean(name, names))
+		}
+	}
+
+	for _, nested := range s.nested() {
+		if err := nested.ownChecks(judged); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // commented says whether a comment on the node, or in the run directly above it, matches the step's pattern.
