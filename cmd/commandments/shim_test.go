@@ -43,7 +43,13 @@ func installed(t *testing.T, version string) (shim string) {
 // release serves the version's release: the binary for this platform, and SHA256SUMS listing sum for it.
 func release(t *testing.T, version, binary, sum string) *httptest.Server {
 	t.Helper()
-	name := "commandments-" + runtime.GOOS + "-" + runtime.GOARCH
+
+	return releaseOf(t, version, "commandments-"+runtime.GOOS+"-"+runtime.GOARCH, binary, sum)
+}
+
+// releaseOf serves the version's release holding the one binary named, and SHA256SUMS listing sum for it.
+func releaseOf(t *testing.T, version, name, binary, sum string) *httptest.Server {
+	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/" + version + "/SHA256SUMS":

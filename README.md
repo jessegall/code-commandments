@@ -64,6 +64,9 @@ composer require --dev jessegall/code-commandments
 vendor/bin/commandments install
 ```
 
+It runs on macOS, Linux and Windows, and needs PHP 8.3 and composer to install; the
+[platforms](docs/requirements.md#platforms) say what each way of installing it needs.
+
 ## Usage
 
 ```bash
@@ -337,11 +340,15 @@ package as a journal plugin and the two share one chain instead of wiring two:
 journal plugin install <path-or-url-to-this-package>
 ```
 
-The install needs only `curl` and `sha256sum` or `shasum`: no PHP, no composer, no Go and no Docker. Its
+The install needs only `sh`, `curl` and `sha256sum` or `shasum`: no PHP, no composer, no Go and no Docker. Its
 setup runs `.journal-plugin/fetch`, which fetches the release binary the manifest pins in
 `COMMANDMENTS_RELEASE`, checks it against the release's `SHA256SUMS` and writes it to
 `bin/commandments-release`; every hook, service and check runs that binary. A sum that does not match, or a
 release that cannot be fetched, fails the install, and nothing is ever built.
+
+It installs wherever the journal runs: macOS and Linux, and Windows under WSL, where it is Linux, or under
+MSYS2, where it fetches the Windows binary as `bin/commandments-release.exe`. Cygwin is refused, and
+[docs/requirements.md](docs/requirements.md#platforms) says why and what each platform needs.
 
 The plugin declares `.journal-plugin/plugin.json`. On install it files `commandments judge` as a
 journal **check**, so a failing judge files a notification and is told to the agent, and the next

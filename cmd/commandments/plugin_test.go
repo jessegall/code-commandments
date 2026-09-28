@@ -27,14 +27,27 @@ func pluginFolder(t *testing.T) (root string) {
 	return root
 }
 
-// fetchRun runs the plugin's fetch script with the version pinned, fetching releases from base.
-func fetchRun(t *testing.T, root, version, base string) (string, error) {
+// fetchRun runs the plugin's fetch script with the version pinned, fetching releases from base, in the environment
+// given on top of this one's.
+func fetchRun(t *testing.T, root, version, base string, env ...string) (string, error) {
 	t.Helper()
 	command := exec.Command("sh", filepath.Join(root, ".journal-plugin", "fetch"))
-	command.Env = append(os.Environ(), "COMMANDMENTS_RELEASE="+version, "COMMANDMENTS_RELEASES="+base)
+	command.Env = append(append(os.Environ(), "COMMANDMENTS_RELEASE="+version, "COMMANDMENTS_RELEASES="+base), env...)
 	out, err := command.CombinedOutput()
 
 	return string(out), err
+}
+
+// posing is the PATH under which uname names the system and machine given, as it does on a host this one is not.
+func posing(t *testing.T, system, machine string) string {
+	t.Helper()
+	stubs := t.TempDir()
+	uname := "#!/bin/sh\ncase \"$1\" in\n    -s) echo '" + system + "' ;;\n    -m) echo '" + machine + "' ;;\n    *) exit 1 ;;\nesac\n"
+	if err := os.WriteFile(filepath.Join(stubs, "uname"), []byte(uname), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	return "PATH=" + stubs + string(os.PathListSeparator) + os.Getenv("PATH")
 }
 
 // fetched is every file the fetch left in the plugin's bin folder.
@@ -91,6 +104,75 @@ func TestThePluginRefusesAPinThatIsNoRelease(t *testing.T) {
 	}
 }
 
+// TestThePluginFetchesTheWindowsBinaryUnderMSYS2 holds the fetch on Windows, where the journal runs under MSYS2: the
+// release's .exe for the machine Windows names, checked against SHA256SUMS, written as the
+// bin/commandments-release.exe MSYS2 runs for bin/commandments-release.
+func TestThePluginFetchesTheWindowsBinaryUnderMSYS2(t *testing.T) {
+	for _, host := range []struct {
+		system string
+		env    []string
+		name   string
+	}{
+		{"MINGW64_NT-10.0-19045", []string{"PROCESSOR_ARCHITECTURE=AMD64", "PROCESSOR_ARCHITEW6432="}, "commandments-windows-amd64.exe"},
+		{"MSYS_NT-10.0-22631", []string{"PROCESSOR_ARCHITECTURE=AMD64", "PROCESSOR_ARCHITEW6432=ARM64"}, "commandments-windows-arm64.exe"},
+		{"MINGW64_NT-10.0-26100", []string{"PROCESSOR_ARCHITECTURE=ARM64", "PROCESSOR_ARCHITEW6432="}, "commandments-windows-arm64.exe"},
+	} {
+		t.Run(host.system, func(t *testing.T) {
+			root := pluginFolder(t)
+			server := releaseOf(t, "v9.9.9", host.name, fakeBinary, sumOf(fakeBinary))
+			if out, err := fetchRun(t, root, "v9.9.9", server.URL, append(host.env, posing(t, host.system, "x86_64"))...); err != nil {
+				t.Fatalf("the fetch said %q (%v)", out, err)
+			}
+			binary := filepath.Join(root, "bin", "commandments-release.exe")
+			if files := fetched(t, root); len(files) != 1 || files[0] != binary {
+				t.Fatalf("the fetch left %v, not %s", files, binary)
+			}
+			if content, _ := os.ReadFile(binary); string(content) != fakeBinary {
+				t.Errorf("the fetched binary is %q", content)
+			}
+		})
+	}
+}
+
+func TestThePluginRefusesAWindowsBinaryWhoseSumDiffers(t *testing.T) {
+	root := pluginFolder(t)
+	server := releaseOf(t, "v9.9.9", "commandments-windows-amd64.exe", fakeBinary, sumOf("another binary"))
+	out, err := fetchRun(t, root, "v9.9.9", server.URL, "PROCESSOR_ARCHITECTURE=AMD64", "PROCESSOR_ARCHITEW6432=", posing(t, "MINGW64_NT-10.0-19045", "x86_64"))
+	if err == nil || !strings.Contains(out, "does not match its SHA256SUMS") {
+		t.Errorf("the fetch said %q (%v)", out, err)
+	}
+	if files := fetched(t, root); len(files) > 0 {
+		t.Errorf("the refused binary was kept: %v", files)
+	}
+}
+
+// TestThePluginRefusesCygwin holds the fetch to fail closed under Cygwin, which hands the Windows binary paths it
+// cannot open, so no plugin is installed whose hooks cannot find the project.
+func TestThePluginRefusesCygwin(t *testing.T) {
+	root := pluginFolder(t)
+	server := releaseOf(t, "v9.9.9", "commandments-windows-amd64.exe", fakeBinary, sumOf(fakeBinary))
+	out, err := fetchRun(t, root, "v9.9.9", server.URL, "PROCESSOR_ARCHITECTURE=AMD64", posing(t, "CYGWIN_NT-10.0-22631", "x86_64"))
+	if err == nil || !strings.Contains(out, "run the journal under WSL or MSYS2") {
+		t.Errorf("the fetch said %q (%v)", out, err)
+	}
+	if files := fetched(t, root); len(files) > 0 {
+		t.Errorf("a binary was written: %v", files)
+	}
+}
+
+// TestThePluginFetchesTheLinuxBinaryUnderWSL holds the fetch on Windows under WSL, which is Linux to it.
+func TestThePluginFetchesTheLinuxBinaryUnderWSL(t *testing.T) {
+	root := pluginFolder(t)
+	server := releaseOf(t, "v9.9.9", "commandments-linux-arm64", fakeBinary, sumOf(fakeBinary))
+	if out, err := fetchRun(t, root, "v9.9.9", server.URL, "PROCESSOR_ARCHITECTURE=AMD64", posing(t, "Linux", "aarch64")); err != nil {
+		t.Fatalf("the fetch said %q (%v)", out, err)
+	}
+	binary := filepath.Join(root, "bin", "commandments-release")
+	if files := fetched(t, root); len(files) != 1 || files[0] != binary {
+		t.Errorf("the fetch left %v, not %s", files, binary)
+	}
+}
+
 // manifest is the part of the plugin's plugin.json that says what an install needs and runs.
 type manifest struct {
 	Requires map[string]any                  `json:"requires"`
@@ -119,7 +201,9 @@ func (m manifest) commands() []string {
 }
 
 // TestThePluginNeedsOnlyTheBinaryItFetches holds the plugin to the release rule: an install needs no PHP, composer,
-// Go or Docker, fetches the release it pins, and every command it runs is that fetched binary.
+// Go or Docker, fetches the release it pins, and every command it runs is that fetched binary. A command names it
+// bin/commandments-release on every platform: the journal runs each through /bin/sh and has no command per OS, and
+// MSYS2, which it runs under on Windows beside WSL, runs the bin/commandments-release.exe the fetch writes there.
 func TestThePluginNeedsOnlyTheBinaryItFetches(t *testing.T) {
 	content, err := os.ReadFile(filepath.Join("..", "..", ".journal-plugin", "plugin.json"))
 	if err != nil {
@@ -139,7 +223,7 @@ func TestThePluginNeedsOnlyTheBinaryItFetches(t *testing.T) {
 		}
 	}
 	runsTheBinary := regexp.MustCompile(`^(bin/commandments-release |sh \.journal-plugin/fetch$|journal check create .*\.journal/plugins/code-commandments/bin/commandments-release )`)
-	forbidden := regexp.MustCompile(`\b(composer|php|go|docker)\b|scripts/(build|dev)|bin/commandments( |$)`)
+	forbidden := regexp.MustCompile(`\b(composer|php|go|docker)\b|scripts/(build|dev)|bin/commandments( |$)|\.exe\b`)
 	for _, command := range plugin.commands() {
 		if !runsTheBinary.MatchString(command) || forbidden.MatchString(command) {
 			t.Errorf("the plugin runs %q, not the binary it fetches", command)

@@ -1,7 +1,9 @@
 #!/bin/sh
 # Fetches the release binary the plugin pins in COMMANDMENTS_RELEASE into bin/commandments-release, checked against
 # the release's SHA256SUMS before it is written; any failure writes nothing and never builds. Needs only sh, curl and
-# sha256sum or shasum. COMMANDMENTS_RELEASES names another place to fetch releases from.
+# sha256sum or shasum. COMMANDMENTS_RELEASES names another place to fetch releases from. On Windows the journal runs
+# under WSL, which is Linux here, or MSYS2, which takes the Windows binary as bin/commandments-release.exe, the file
+# MSYS2 runs for bin/commandments-release.
 set -eu
 
 refuse() {
@@ -15,17 +17,26 @@ case "$version" in
     *) refuse "COMMANDMENTS_RELEASE names no release (${version:-nothing}); pin a tagged version such as v5.0.0" ;;
 esac
 
+machine="$(uname -m)"
+suffix=""
 case "$(uname -s)" in
     Darwin) os=darwin ;;
     Linux) os=linux ;;
+    CYGWIN*) refuse "Cygwin hands a Windows program its own /cygdrive paths, which the Windows binary cannot open; run the journal under WSL or MSYS2" ;;
+    MINGW*|MSYS*)
+        # An x64 MSYS2 reports x86_64 on an ARM64 Windows too; Windows itself names the machine.
+        os=windows
+        machine="${PROCESSOR_ARCHITEW6432:-${PROCESSOR_ARCHITECTURE:-$machine}}"
+        suffix=".exe"
+        ;;
     *) refuse "no release is built for $(uname -s)" ;;
 esac
-case "$(uname -m)" in
-    x86_64|amd64) arch=amd64 ;;
-    arm64|aarch64) arch=arm64 ;;
-    *) refuse "no release is built for $(uname -m)" ;;
+case "$machine" in
+    x86_64|amd64|AMD64) arch=amd64 ;;
+    arm64|aarch64|ARM64) arch=arm64 ;;
+    *) refuse "no release is built for $machine" ;;
 esac
-name="commandments-$os-$arch"
+name="commandments-$os-$arch$suffix"
 
 command -v curl >/dev/null 2>&1 || refuse "curl is not on the PATH, so the $version release cannot be fetched"
 if command -v sha256sum >/dev/null 2>&1; then
@@ -39,7 +50,7 @@ fi
 root="$(cd "$(dirname "$0")/.." && pwd -P)"
 base="${COMMANDMENTS_RELEASES:-https://github.com/jessegall/code-commandments/releases/download}"
 base="${base%/}/$version"
-target="$root/bin/commandments-release"
+target="$root/bin/commandments-release$suffix"
 draft="$target.$$"
 trap 'rm -f "$draft"' EXIT
 

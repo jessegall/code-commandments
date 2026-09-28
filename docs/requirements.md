@@ -12,6 +12,28 @@ the language it reads — the one a project in that language already has. Nothin
 | Python | `python3` 3.10 or later on the `PATH`, with `venv` and `pip`, and the network once | the Python bridge; its first run builds it a virtual environment with the pinned mypy, under the cache folder |
 | C# | `curl` on the `PATH`, and the network once, for the first C# judge (macOS, Windows 10 and later, and nearly every Linux ship it); no .NET | the C# bridge, a self-contained executable for your platform, fetched with `curl` from the release on the first C# judge beside the tool and checked against `SHA256SUMS`; it is never built on your machine |
 
+## Platforms
+
+The release carries the tool for macOS, Linux and Windows, each on amd64 and arm64. It is installed one of two
+ways, and each needs its own few things beside the languages above:
+
+| Installed through | Runs on | What the machine needs |
+|---|---|---|
+| Composer, `composer require --dev jessegall/code-commandments` | macOS, Linux and Windows, natively | PHP 8.3 or later and composer; the shim fetches the binary for the platform on its first run, checked against `SHA256SUMS`, into its cache (`$XDG_CACHE_HOME`, else `%LOCALAPPDATA%` on Windows and `~/.cache` elsewhere) |
+| The agent journal, `journal plugin install` | macOS and Linux; Windows under WSL or MSYS2 | `sh`, `curl`, and `sha256sum` or `shasum`; no PHP, composer, Go or Docker |
+
+The journal runs every command of a plugin through `/bin/sh`, with a Python that has `fcntl`, so on Windows it runs
+only on a POSIX system, and the plugin runs where it does:
+
+- **WSL** is the way to run it on Windows. The plugin sees Linux there: it fetches the Linux binary and needs what
+  Linux needs.
+- **MSYS2** brings `sh`, `curl` and `sha256sum`. The plugin fetches the Windows binary as
+  `bin/commandments-release.exe`, which MSYS2 runs for `bin/commandments-release`, and MSYS2 hands it the project's
+  paths in the form Windows reads. The journal's hook socket is MSYS2's own, which a Windows program cannot answer,
+  so each hook runs as a process of its own: every hook still runs, each a little slower than under WSL.
+- **Cygwin** is refused at install. It hands a Windows program its own `/cygdrive` paths, which the Windows binary
+  cannot open, so the hooks could never find the project.
+
 ## When something is missing
 
 A language whose toolchain is not installed is left unjudged, and the run says so once, naming what to install;
