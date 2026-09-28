@@ -15,5 +15,5 @@ var version = "dev"
 
 func main() {
 	bridge.Release = version
-	os.Exit(commands.Kernel(version).Run(os.Args[1:], cli.Console{Out: os.Stdout, Err: os.Stderr}))
+	os.Exit(commands.Kernel(version).Run(os.Args[1:], cli.Console{Out: cli.Coloured(os.Stdout), Err: cli.Coloured(os.Stderr)}))
 }

@@ -300,6 +300,8 @@ func environment(c Case, home, path string) []string {
 		"LANG":           "C.UTF-8",
 		"TZ":             recordedZone,
 		"XDG_CACHE_HOME": cache(),
+		// The PHP tool coloured its output into a pipe too, so the goldens hold colour: the Go tool is asked for it.
+		"CLICOLOR_FORCE": "1",
 	}
 
 	for key, value := range c.Env {

@@ -103,6 +103,13 @@ the schema an editor checks a rule file by — and the help overview lists the c
 given differs from the PHP tool's. Every other line of the overview, and every other file `sync` and `install` write,
 is the PHP tool's. Nothing changes for a project: a rule it already has runs as before.
 
+### Colour where no terminal reads it
+
+The PHP tool coloured its output wherever it went, so a log or a pipe held raw escape codes around every finding. The
+Go tool colours only a terminal, drops colour elsewhere, and honours the two common switches: `NO_COLOR` turns colour
+off everywhere, `CLICOLOR_FORCE=1` asks for it without a terminal. The CLI parity cases set `CLICOLOR_FORCE`, so they
+compare the coloured output the PHP tool recorded. Nothing changes for a project: a terminal is coloured as before.
+
 ### `has-csharp` in the help overview
 
 The PHP tool kept no C# bridge up, so it had no need to say whether a project has C#. The journal plugin keeps one up
