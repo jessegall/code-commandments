@@ -1,6 +1,8 @@
 package csharp
 
 import (
+	"strings"
+
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -17,7 +19,30 @@ func init() {
 		ReturnType:    engine.InField("ReturnType"),
 		ParameterType: engine.InField("Type"),
 		Constructs:    engine.OfKind("ObjectCreationExpression", "Type"),
+		DocTags:       xmlTags,
+		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
 	})
+}
+
+// xmlTags are the elements a declaration's XML doc comments open, each once where it opens: `summary`, `param`,
+// `exception`. Deprecation in C# is the [Obsolete] attribute, which hasAnnotation finds.
+func xmlTags(declaration engine.Match) []string {
+	var tags []string
+	for _, comment := range declaration.DocComments() {
+		for _, line := range strings.Split(comment, "\n") {
+			line = strings.TrimSpace(strings.TrimLeft(strings.TrimSpace(line), "/"))
+			if !strings.HasPrefix(line, "<") || strings.HasPrefix(line, "</") {
+				continue
+			}
+
+			name := strings.FieldsFunc(line[1:], func(r rune) bool { return r == ' ' || r == '>' || r == '/' })
+			if len(name) > 0 {
+				tags = append(tags, name[0])
+			}
+		}
+	}
+
+	return tags
 }
 
 // arguments are the expressions a call, object creation or indexer is handed.

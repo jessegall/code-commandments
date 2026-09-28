@@ -105,6 +105,10 @@ type Step struct {
 	CalledFrom    string   `json:"calledFrom,omitempty"`
 	Calls         *Step    `json:"calls,omitempty"`
 	Argument      *Argued  `json:"argument,omitempty"`
+	CommentLike   string   `json:"commentLike,omitempty"`
+	DocTag        string   `json:"docTag,omitempty"`
+	Duplicated    *Bounds  `json:"duplicated,omitempty"`
+	TestCode      *bool    `json:"testCode,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
@@ -389,7 +393,8 @@ func (s Step) checks() int {
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
-		s.CalledFrom != "", s.Calls != nil, s.Argument != nil} {
+		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.DocTag != "", s.Duplicated != nil,
+		s.TestCode != nil} {
 		if set {
 			count++
 		}
@@ -423,6 +428,8 @@ func (s *Step) prepare() error {
 		s.pattern = typeGlob(s.ParameterType)
 	case s.Constructs != "":
 		s.pattern = glob(strings.TrimPrefix(s.Constructs, `\`))
+	case s.CommentLike != "":
+		s.pattern = regexp.MustCompile("(?s)" + glob(s.CommentLike).String())
 	}
 
 	for _, nested := range s.nested() {
@@ -492,7 +499,7 @@ func (s Step) validSizes() error {
 	named := map[string]*Bounds{}
 
 	for name, bounds := range map[string]*Bounds{"parameters": s.Parameters, "arguments": s.Arguments, "lines": s.Lines,
-		"complexity": s.Complexity} {
+		"complexity": s.Complexity, "duplicated": s.Duplicated} {
 		if bounds != nil {
 			named[name] = bounds
 		}
@@ -647,6 +654,16 @@ func (s Step) check(match engine.Match) bool {
 		return slices.ContainsFunc(subject.OwnDescendants(), func(below engine.Match) bool { return below.Is(engine.Call) && s.Calls.check(below) })
 	case s.Argument != nil:
 		return s.Argument.passes(subject.Arguments())
+	case s.CommentLike != "":
+		return s.commented(subject)
+	case s.DocTag != "":
+		return slices.ContainsFunc(subject.DocTags(), func(tag string) bool { return strings.EqualFold(tag, strings.TrimPrefix(s.DocTag, "@")) })
+	case s.Duplicated != nil:
+		copies := subject.Copies()
+
+		return copies > 0 && s.Duplicated.holds(copies)
+	case s.TestCode != nil:
+		return subject.IsTest() == *s.TestCode
 	}
 
 	return false
@@ -700,6 +717,17 @@ func (a Argued) passes(arguments []engine.Match) bool {
 	}
 
 	return a.check(arguments[at])
+}
+
+// commented says whether a comment on the node, or in the run directly above it, matches the step's glob.
+func (s Step) commented(subject engine.Match) bool {
+	for _, comment := range append(subject.Comments(), subject.CommentsAbove()...) {
+		if s.pattern.MatchString(comment.Text) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // namesAny says whether any of the symbols is the type want names.

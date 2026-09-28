@@ -19,7 +19,15 @@ func init() {
 		ParameterType: engine.InField("type"),
 		Constructs:    constructed,
 		Callers:       callers,
+		DocTags:       engine.AtTagsOf,
+		BodyHash:      func(function engine.Match) string { return Node{Match: function}.BodyHash() },
+		TestFile:      testFile,
 	})
+}
+
+// testFile says whether a PHP file is a test's: PHPUnit's `*Test.php`, or any file under a tests folder.
+func testFile(path string) bool {
+	return strings.HasSuffix(path, "Test.php") || engine.InFolderNamed(path, "tests", "test")
 }
 
 // values are the values a call's arguments hand it, named and unpacked ones alike.

@@ -1,10 +1,12 @@
 package frontend
 
 import (
+	"path"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/engine/typescript"
 )
 
 func init() {
@@ -19,8 +21,20 @@ func init() {
 			ReturnType:    engine.InField("type"),
 			ParameterType: engine.InField("type"),
 			Constructs:    engine.OfKind("NewExpression", "expression"),
+			DocTags:       engine.AtTagsOf,
+			BodyHash:      func(function engine.Match) string { return typescript.Of(function).BodyHash() },
+			TestFile:      testFile,
 		})
 	}
+}
+
+// testFile says whether a frontend file is a test's: `*.test.*` or `*.spec.*`, as Vitest and Jest collect them,
+// or any file under a __tests__ or tests folder.
+func testFile(file string) bool {
+	name := path.Base(strings.ReplaceAll(file, `\`, "/"))
+
+	return strings.Contains(name, ".test.") || strings.Contains(name, ".spec.") ||
+		engine.InFolderNamed(file, "__tests__", "tests", "test")
 }
 
 // heritage reads the types a declaration's clause of the keyword names: `extends` or `implements`. The tree

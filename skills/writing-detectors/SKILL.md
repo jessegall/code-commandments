@@ -81,6 +81,10 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `"constructs": "Date*"` | a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class |
 | `"unused": true` | nothing refers to it: a function or type from outside itself, through the names and calls the scan resolves and its language's call graph; a parameter, by its name read in its function |
 | `"calledFrom": "app/Http/*"` | something referring to it — a call, most often — sits in a file the glob matches |
+| `"commentLike": "*TODO*"` | a comment on it, or in the run of comments directly above it, matches the glob |
+| `"docTag": "deprecated"` | its documentation carries the tag: `@tag` in PHPDoc and JSDoc, an XML element in C#, a Sphinx field or directive or a Google/NumPy section in a Python docstring |
+| `"duplicated": {"atLeast": 2}` | that many functions of the codebase, it among them, have its body, read from the tree, blind to spacing and comments |
+| `"testCode": true` | it is test code, as its bridge marks it or its language names test files |
 | `"descendant": {step}` | some node inside it passes the step |
 | `"inside": {step}` | some node above it, up to the file's root, passes the step |
 | `"next": {step}` / `"previous": {step}` | the sibling right after / before it passes the step |
@@ -101,6 +105,12 @@ parameter with no type written matches no pattern — reject `"*"` to find the u
 `unused` knows only the code it scans: a controller action a route calls, a listener the framework
 dispatches, a method a parent type declares, or a function another project imports all look unused, so
 pair it with a `reject` for them (`{"hasAnnotation": ...}`, `{"extendsAny": ...}`, `{"file": ...}`).
+
+**Test code** is a file C#'s bridge marks as a test project's, and elsewhere a file the language's test
+runner collects: PHP's `*Test.php`, Python's `test_*.py`, `*_test.py` and `conftest.py`, a frontend
+`*.test.*` or `*.spec.*`, and in every language a file under a `tests` or `test` folder (`__tests__`
+too, in the frontend). C# deprecation is the `[Obsolete]` attribute, which `hasAnnotation` finds, and a
+Python docstring is no comment, so `commentLike` does not read one: `docTag` does.
 
 Every size takes `atLeast`, `atMost` or both, and both are inclusive.
 

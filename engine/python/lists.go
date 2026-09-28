@@ -1,7 +1,9 @@
 package python
 
 import (
+	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -24,7 +26,45 @@ func init() {
 		ParameterType: engine.InField("annotation"),
 		Constructs:    constructed,
 		Callers:       callers,
+		DocTags:       docTags,
+		BodyHash:      func(def engine.Match) string { return Node{Match: def}.BodyHash() },
+		TestFile:      testFile,
 	})
+}
+
+// testFile says whether a Python file is a test's, as pytest collects them: `test_*.py`, `*_test.py`, a
+// conftest.py, or any file under a tests folder.
+func testFile(file string) bool {
+	name := filepath.Base(file)
+
+	return strings.HasPrefix(name, "test_") || strings.HasSuffix(name, "_test.py") || name == "conftest.py" ||
+		engine.InFolderNamed(file, "tests", "test")
+}
+
+// docTags are the tags a docstring carries: each Sphinx field (`:param x:`, `:deprecated:`) and directive
+// (`.. deprecated::`) by its name, and each Google or NumPy section (`Args:`, `Raises:`) by its heading in lower case.
+func docTags(definition engine.Match) []string {
+	text, documented := Node{Match: definition}.Docstring()
+	if !documented {
+		return nil
+	}
+
+	var tags []string
+	for _, line := range strings.Split(text, "\n") {
+		line = strings.TrimSpace(line)
+
+		switch {
+		case strings.HasPrefix(line, ".. ") && strings.Contains(line, "::"):
+			tags = append(tags, strings.TrimSpace(strings.TrimPrefix(line[:strings.Index(line, "::")], ".. ")))
+		case strings.HasPrefix(line, ":") && strings.Count(line, ":") >= 2:
+			name, _, _ := strings.Cut(strings.TrimPrefix(line, ":"), ":")
+			tags = append(tags, strings.Fields(name + " x")[0])
+		case section.MatchString(line):
+			tags = append(tags, strings.ToLower(strings.TrimSuffix(line, ":")))
+		}
+	}
+
+	return tags
 }
 
 // values are the values a call is handed: its positional arguments, starred ones included, then its keyword

@@ -29,6 +29,12 @@ type Lists struct {
 	// Callers are the calls reaching a function that its language's call graph finds beyond the symbols the tree
 	// resolves, such as a method sent to a receiver whose type the graph works out.
 	Callers func(Match) []Match
+	// DocTags are the tags a declaration's documentation carries, each by its bare name: `deprecated`, `param`.
+	DocTags func(Match) []string
+	// BodyHash is the formatting-blind fingerprint of a function's body; empty for a node without one.
+	BodyHash func(Match) string
+	// TestFile says whether a file is test code by its path, as the language's conventions name one.
+	TestFile func(path string) bool
 }
 
 // TypeKinds are the kinds of type every language's declarations are told apart by.
