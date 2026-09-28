@@ -3,6 +3,7 @@ package bridge_test
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jessegall/code-commandments/contract"
 )
@@ -120,4 +122,72 @@ func TestTheImageNameIsTheOneTheBridgesSourcesAreBuiltAs(t *testing.T) {
 	if want := "ghcr.io/jessegall/code-commandments-roslyn:" + hex.EncodeToString(hash.Sum(nil))[:16]; bridge.RoslynImage() != want {
 		t.Errorf("bridge/roslyn/IMAGE names %s, but the sources are built as %s: write the new name there", bridge.RoslynImage(), want)
 	}
+}
+
+func TestTheRoslynBridgeGivenAPathItCannotSeeSaysSoAndExitsWithinSeconds(t *testing.T) {
+	root := t.TempDir()
+	command := bridgetest.Roslyn(t, root)
+	gone := filepath.Join(root, "gone")
+	start := time.Now()
+	errs, ran, _ := bounded(t, time.Minute, func() (string, bool) {
+		_, errs, ran, _ := bridge.Run(command, gone)
+
+		return errs, ran
+	})
+	if ran {
+		t.Fatal("the bridge exited cleanly over a path that is not there")
+	}
+	if want := "roslyn-bridge: there is no file or folder at " + gone + " to read"; strings.TrimSpace(errs) != want {
+		t.Errorf("the bridge said %q, not the one line %q", errs, want)
+	}
+	if took := time.Since(start); took > 30*time.Second {
+		t.Errorf("the bridge took %s to fail", took)
+	}
+}
+
+func TestAServedRoslynBridgeAskedForAPathItCannotSeeSaysSoAndExitsWithinSeconds(t *testing.T) {
+	root := t.TempDir()
+	server, err := bridge.Serve(bridgetest.Roslyn(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	gone := filepath.Join(root, "gone")
+	start := time.Now()
+	asked, closed, _ := bounded(t, time.Minute, func() (string, bool) {
+		_, asked := server.Ask(bridge.Request{Paths: []string{gone}})
+		closed := server.Close()
+
+		return fmt.Sprint(asked), closed == nil
+	})
+	if !strings.Contains(asked, "roslyn-bridge: there is no file or folder at "+gone+" to read") {
+		t.Errorf("the served bridge answered %q, not why it failed", asked)
+	}
+	if closed {
+		t.Error("the served bridge exited cleanly after a request it could not read")
+	}
+	if took := time.Since(start); took > 30*time.Second {
+		t.Errorf("the served bridge took %s to fail", took)
+	}
+}
+
+// bounded runs the call, failing the test rather than waiting past the limit for it.
+func bounded(t *testing.T, limit time.Duration, call func() (string, bool)) (string, bool, bool) {
+	t.Helper()
+	type answer struct {
+		text string
+		ok   bool
+	}
+	answered := make(chan answer, 1)
+	go func() {
+		text, ok := call()
+		answered <- answer{text, ok}
+	}()
+	select {
+	case got := <-answered:
+		return got.text, got.ok, true
+	case <-time.After(limit):
+		t.Fatalf("the bridge was still running after %s", limit)
+	}
+
+	return "", false, false
 }

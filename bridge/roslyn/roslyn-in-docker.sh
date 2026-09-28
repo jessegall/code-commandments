@@ -47,7 +47,7 @@ name="code-commandments-roslyn-run-$$-$RANDOM"
 caller=$PPID
 # An asynchronous command reads /dev/null unless handed the run's input, kept on a descriptor of its own first.
 exec 3<&0
-docker run --rm -i --memory=4g --cpus=2 \
+docker run --rm -i --init --memory=4g --cpus=2 \
     --name "$name" --label code-commandments.roslyn=run \
     -e NUGET_PACKAGES="$packages" "${mounts[@]}" "$image" "$@" <&3 &
 client=$!

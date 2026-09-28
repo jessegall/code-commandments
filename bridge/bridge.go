@@ -3,12 +3,18 @@ package bridge
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"os/exec"
+	"strings"
 	"sync"
+	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -37,8 +43,13 @@ func Once(command []string, paths ...string) (*contract.Stream, error) {
 // well as read; with what it wrote to stderr, and whether it ran to a clean exit. A command that failed answers
 // why; one that ran answers the stream, or why it broke the contract.
 func Run(command []string, arguments ...string) (stream *contract.Stream, errs string, ran bool, err error) {
+	limit, err := quietLimit()
+	if err != nil {
+		return nil, "", false, err
+	}
 	var failure bytes.Buffer
-	process := exec.Command(command[0], append(command[1:], arguments...)...)
+	process, stop := launch(command, arguments...)
+	defer stop()
 	process.Stderr = &failure
 	out, err := process.StdoutPipe()
 	if err != nil {
@@ -47,10 +58,18 @@ func Run(command []string, arguments ...string) (stream *contract.Stream, errs s
 	if err := process.Start(); err != nil {
 		return nil, failure.String(), false, err
 	}
-	stream, read := contract.ReadAll(out)
-	io.Copy(io.Discard, out)
-	if err := process.Wait(); err != nil {
-		return nil, failure.String(), false, err
+	output := watch(out, limit, func() {
+		stop()
+		out.Close()
+	})
+	stream, read := contract.ReadAll(output)
+	io.Copy(io.Discard, output)
+	exited := process.Wait()
+	if output.silent.Load() {
+		return nil, failure.String(), false, Silent{For: limit}
+	}
+	if exited != nil {
+		return nil, failure.String(), false, exited
 	}
 
 	return stream, failure.String(), true, read
@@ -65,12 +84,17 @@ type Server struct {
 	output     *contract.Reader
 	errs       *stderr
 	connection net.Conn
+	stop       func()
 	mu         sync.Mutex
 }
 
 // Serve starts the bridge with --serve.
 func Serve(command []string) (*Server, error) {
-	process := exec.Command(command[0], append(command[1:], "--serve")...)
+	limit, err := quietLimit()
+	if err != nil {
+		return nil, err
+	}
+	process, cancel := launch(command, "--serve")
 	input, err := process.StdinPipe()
 	if err != nil {
 		return nil, err
@@ -84,11 +108,17 @@ func Serve(command []string) (*Server, error) {
 		return nil, err
 	}
 	if err := process.Start(); err != nil {
+		cancel()
+
 		return nil, Failed(command, err, "")
 	}
 	errs := readStderr(pipe)
+	stop := func() {
+		cancel()
+		output.Close()
+	}
 
-	return &Server{command: command, process: process, input: input, output: contract.NewReader(output), errs: errs}, nil
+	return &Server{command: command, process: process, input: input, output: contract.NewReader(watch(output, limit, stop)), errs: errs, stop: stop}, nil
 }
 
 // Ask sends one request and reads the whole stream the bridge answers with.
@@ -111,7 +141,8 @@ func (s *Server) Ask(request Request) (*contract.Stream, error) {
 }
 
 // AskEach sends one request and hands each line of the stream the bridge answers with to each, as it arrives, with
-// the bytes it was read from: an answer too large to hold whole is read this way.
+// the bytes it was read from: an answer too large to hold whole is read this way. An error each returns is its own,
+// never the bridge's failure.
 func (s *Server) AskEach(request Request, each func(line contract.Line, raw []byte) error) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -122,19 +153,31 @@ func (s *Server) AskEach(request Request, each func(line contract.Line, raw []by
 	if _, err := s.input.Write(append(line, '\n')); err != nil {
 		return Failed(s.command, err, s.stderr())
 	}
-	if err := s.output.Each(each); err != nil {
-		return Failed(s.command, err, s.stderr())
+	var refused error
+	read := s.output.Each(func(line contract.Line, raw []byte) error {
+		refused = each(line, raw)
+
+		return refused
+	})
+	if refused != nil {
+		return refused
+	}
+	if read != nil {
+		return Failed(s.command, read, s.stderr())
 	}
 
 	return nil
 }
 
-// Close ends the bridge process, or lets go of the service's socket, which the session keeps up.
+// Close ends the bridge process, or lets go of the service's socket, which the session keeps up. A bridge that does
+// not end when its input does is stopped a grace later.
 func (s *Server) Close() error {
 	if s.connection != nil {
 		return s.connection.Close()
 	}
 	s.input.(io.Closer).Close()
+	lingering := time.AfterFunc(grace, s.stop)
+	defer lingering.Stop()
 
 	return s.process.Wait()
 }
@@ -206,6 +249,99 @@ func (e *BridgeFailed) Error() string {
 
 func (e *BridgeFailed) Unwrap() error {
 	return e.Cause
+}
+
+// Reason is why the bridge failed, in one line: the silence it was stopped for, else the first line it wrote to
+// stderr, else what ended the read.
+func (e *BridgeFailed) Reason() string {
+	var silent Silent
+	if errors.As(e.Cause, &silent) {
+		return silent.Error()
+	}
+	if said, _, _ := strings.Cut(strings.TrimSpace(e.Stderr), "\n"); said != "" {
+		return said
+	}
+
+	return e.Cause.Error()
+}
+
+// quietVariable names how long a bridge may stay silent while it is read, as a Go duration; 0 waits for ever.
+const quietVariable = "COMMANDMENTS_BRIDGE_QUIET"
+
+// quiet is how long a bridge may stay silent while it is read when $COMMANDMENTS_BRIDGE_QUIET names no other: over
+// a hundred times the longest the C# bridge was measured to think between two lines, 1.8 s across the whole of a
+// 14,307-file solution.
+const quiet = 5 * time.Minute
+
+// grace is how long a bridge asked to end is given before it is killed.
+const grace = 10 * time.Second
+
+// quietLimit is how long a bridge may stay silent while it is read.
+func quietLimit() (time.Duration, error) {
+	named := os.Getenv(quietVariable)
+	if named == "" {
+		return quiet, nil
+	}
+	limit, err := time.ParseDuration(named)
+	if err != nil || limit < 0 {
+		return 0, fmt.Errorf("$%s is %q, not a duration such as 10m (0 waits for ever)", quietVariable, named)
+	}
+
+	return limit, nil
+}
+
+// launch is the bridge's process, and what stops it: asked to end with SIGTERM, so a launcher script stops the
+// container it started, and killed when it has not ended a grace later.
+func launch(command []string, arguments ...string) (*exec.Cmd, context.CancelFunc) {
+	running, stop := context.WithCancel(context.Background())
+	process := exec.CommandContext(running, command[0], append(command[1:], arguments...)...)
+	process.Cancel = func() error {
+		return process.Process.Signal(syscall.SIGTERM)
+	}
+	process.WaitDelay = grace
+
+	return process, stop
+}
+
+// Silent is a bridge that wrote nothing for as long as a read may wait, so it was taken for hung and stopped.
+type Silent struct {
+	For time.Duration
+}
+
+func (e Silent) Error() string {
+	return fmt.Sprintf("it wrote nothing for %s, so it was taken for hung and stopped ($%s sets how long a bridge may stay silent)", e.For, quietVariable)
+}
+
+// watched is a bridge's output, read with a limit on how long one read may wait: past it the bridge is stopped and
+// the read ends Silent. Only the wait inside a read counts, so a caller that takes its time between reads, or
+// between requests to a served bridge, never stops one that is answering.
+type watched struct {
+	source io.Reader
+	limit  time.Duration
+	stop   func()
+	silent atomic.Bool
+}
+
+// watch reads the source with the limit, stopping the bridge when a read waits past it; a limit of 0 waits for ever.
+func watch(source io.Reader, limit time.Duration, stop func()) *watched {
+	return &watched{source: source, limit: limit, stop: stop}
+}
+
+func (w *watched) Read(p []byte) (int, error) {
+	if w.limit == 0 {
+		return w.source.Read(p)
+	}
+	timer := time.AfterFunc(w.limit, func() {
+		w.silent.Store(true)
+		w.stop()
+	})
+	n, err := w.source.Read(p)
+	timer.Stop()
+	if w.silent.Load() {
+		return n, Silent{For: w.limit}
+	}
+
+	return n, err
 }
 
 // Unavailable is a bridge that cannot run on this machine: its language goes unjudged, and everything else is judged.

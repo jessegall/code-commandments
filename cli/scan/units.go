@@ -35,7 +35,8 @@ type unit struct {
 }
 
 // CSharpUnits reads the C# sources as units, handing each to complete, read as a codebase of its own without the
-// program line that closes the stream, as soon as the stream has passed it. None without the bridge.
+// program line that closes the stream, as soon as the stream has passed it. None without the bridge, or with one that
+// fails.
 func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, error) {
 	roots, files := resolved(s.roots), resolved(s.byLanguage[source.CSharp])
 	if len(files) == 0 {
@@ -55,11 +56,15 @@ func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, err
 	}
 	units := &Units{folder: folder}
 	cutter := &cutter{units: units, owners: map[string]string{}, complete: complete}
-	err = server.AskEach(bridge.Request{Paths: roots, Write: files}, cutter.take)
-	if err == nil {
-		err = cutter.close()
+	if err := server.AskEach(bridge.Request{Paths: roots, Write: files}, cutter.take); err != nil {
+		units.Close()
+		if failed := bridge.RoslynFailure(err); leftUnread(failed, len(files)) {
+			return nil, nil
+		}
+
+		return nil, err
 	}
-	if err != nil {
+	if err := cutter.close(); err != nil {
 		units.Close()
 
 		return nil, err

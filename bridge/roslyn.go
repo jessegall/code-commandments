@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -42,6 +43,29 @@ func (e RoslynUnavailable) Error() string {
 }
 
 func (RoslynUnavailable) unavailable() {}
+
+// RoslynFailed is a C# bridge that started and then failed: C# goes unjudged, and everything else is judged.
+type RoslynFailed struct {
+	reason string
+}
+
+// RoslynFailure is the bridge's failure as C# left unjudged: a bridge that failed is RoslynFailed, saying why in one
+// line; any other error is itself.
+func RoslynFailure(err error) error {
+	var failed *BridgeFailed
+	if !errors.As(err, &failed) {
+		return err
+	}
+
+	return RoslynFailed{failed.Reason()}
+}
+
+// Error says why, and what is and is not judged.
+func (e RoslynFailed) Error() string {
+	return "the C# bridge failed: " + e.reason + ", so C# is not judged; everything else is"
+}
+
+func (RoslynFailed) unavailable() {}
 
 // Roslyn is the command that runs the C# bridge over the roots: the one $COMMANDMENTS_ROSLYN names, else this release's
 // own executable, fetched once into the cache beside the tool and checked against the release's SHA256SUMS, and never
@@ -241,10 +265,17 @@ func RoslynSocket(project string) string {
 // RoslynService is the bridge the session keeps up for the project, reached at its socket; false when no session
 // keeps one up for it, and a run starts its own.
 func RoslynService(project string) (*Server, bool) {
+	limit, err := quietLimit()
+	if err != nil {
+		return nil, false
+	}
 	connection, err := net.DialTimeout("unix", RoslynSocket(project), 2*time.Second)
 	if err != nil {
 		return nil, false
 	}
+	stop := func() {
+		connection.Close()
+	}
 
-	return &Server{command: []string{"roslyn-serve", project}, input: connection, output: contract.NewReader(connection), connection: connection}, true
+	return &Server{command: []string{"roslyn-serve", project}, input: connection, output: contract.NewReader(watch(connection, limit, stop)), connection: connection, stop: stop}, true
 }

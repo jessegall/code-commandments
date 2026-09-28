@@ -185,7 +185,7 @@ var readers = []reader{
 
 // csharp is the C# files read by the Roslyn bridge, which compiles every project under the roots so each type
 // resolves and writes only the files: through the bridge a session keeps up for the project, else one of its own for
-// this run. Without a bridge it answers why, and the files go unread.
+// this run. Without a bridge, or with one that fails, it answers why, and the files go unread.
 func csharp(roots, files []string) (*contract.Stream, error) {
 	roots, files = resolved(roots), resolved(files)
 	server, err := roslyn(roots)
@@ -193,13 +193,17 @@ func csharp(roots, files []string) (*contract.Stream, error) {
 		return nil, err
 	}
 	defer server.Close()
+	stream, err := server.Ask(bridge.Request{Paths: roots, Write: files})
+	if err != nil {
+		return nil, bridge.RoslynFailure(err)
+	}
 
-	return server.Ask(bridge.Request{Paths: roots, Write: files})
+	return stream, nil
 }
 
 // roslyn is the C# bridge for the roots: the one a session keeps up for the project that holds them all, else one
-// started for this run, or why there is none; a machine with no .NET SDK is told once that C# is judged without the
-// frameworks' types.
+// started for this run, or why there is none, a bridge that fails to start among them; a machine with no .NET SDK is
+// told once that C# is judged without the frameworks' types.
 func roslyn(roots []string) (*bridge.Server, error) {
 	cwd, _ := os.Getwd()
 	project := workspace.ProjectRoot(cwd)
@@ -215,8 +219,12 @@ func roslyn(roots []string) (*bridge.Server, error) {
 	if notice := bridge.RoslynNotice(); notice != "" {
 		fmt.Fprintf(os.Stderr, "⚠ %s\n", notice)
 	}
+	server, err := bridge.Serve(command)
+	if err != nil {
+		return nil, bridge.RoslynFailure(err)
+	}
 
-	return bridge.Serve(command)
+	return server, nil
 }
 
 // sayUnreadable says, on STDERR, which classes the scanned project's own loader failed on: each stays outside the

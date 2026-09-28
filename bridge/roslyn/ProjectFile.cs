@@ -192,5 +192,21 @@ public sealed class ProjectFile
         return versions;
     }
 
-    private static XDocument Load(string path) => XDocument.Load(path);
+    private static XDocument Load(string path)
+    {
+        try
+        {
+            return XDocument.Load(path);
+        }
+        catch (System.Xml.XmlException error)
+        {
+            throw MalformedProjectFile.At(path, error);
+        }
+    }
+}
+
+/// <summary>A project or props file that is not well-formed XML, named by its path.</summary>
+public sealed class MalformedProjectFile(string message, Exception cause) : Exception(message, cause)
+{
+    public static MalformedProjectFile At(string path, System.Xml.XmlException cause) => new($"{path} is not well-formed XML: {cause.Message}", cause);
 }

@@ -58,6 +58,19 @@ Go's client and TLS would grow the tool by a fifth, past its size budget, for th
 from source has no release to fetch from; name a bridge in `$COMMANDMENTS_ROSLYN` (this repository's own development
 sets `COMMANDMENTS_ROSLYN=docker`, which runs it in a capped container of its image).
 
+A C# bridge that fails once it has started leaves C# unjudged too, with the one line it gave for why, and everything
+else is judged:
+
+```
+⚠ 212 file(s) left unread — the C# bridge failed: roslyn-bridge: there is no file or folder at /src/Shop to read, so C# is not judged; everything else is
+```
+
+No bridge is waited on for ever. The C# bridge writes each file as it compiles it; over a 14,307-file solution the
+longest it was measured to go without writing was 1.8 seconds. A bridge that writes nothing for five minutes while it
+is read is taken for hung and stopped: the C# bridge's language is left unjudged, as above, and any other bridge's
+run ends saying so. `$COMMANDMENTS_BRIDGE_QUIET` sets another limit, as a Go duration (`15m`), and `0` waits for
+ever.
+
 ## Kept warm
 
 In a session where the agent journal runs the tool as a plugin, `commandments roslyn-serve` keeps the C# bridge running
