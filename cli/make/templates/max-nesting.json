@@ -1,0 +1,10 @@
+{
+    "summary": "a loop nested three loops deep",
+    "sin": {
+        "description": "A loop is nested three loops deep.",
+        "rule": "Move the inner loops into functions named for what they do, or into the type that holds the collection."
+    },
+    "find": {
+        "*": {"select": "loop", "where": [{"nestedAtLeast": {"is": "loop", "count": 3}}]}
+    }
+}

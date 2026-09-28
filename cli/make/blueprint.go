@@ -71,6 +71,8 @@ type Blueprint struct {
 	Slug     string
 	NewSkill bool
 	Dir      string
+	// From is the ready rule the commandment starts from; nil starts it from a query that finds nothing.
+	From *Template
 }
 
 // Of plans a commandment named name, taught by the skill slug; newSkill writes that skill too.

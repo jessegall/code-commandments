@@ -26,22 +26,31 @@ func SkillStub(b Blueprint) string {
 		"TODO — the code as it is flagged, then as it should be.\n"
 }
 
-// RuleStub is the rule: its engine, its sin, and a query that finds nothing until it is written.
+// RuleStub is the rule: its engine, its sin, and a query that finds nothing until it is written, or the ready
+// rule it starts from.
 func RuleStub(b Blueprint) string {
+	var find any = map[string]any{
+		"select": "call",
+		"where":  []any{map[string]any{"name": "TODO-the-call-this-rule-flags"}},
+		"reject": []any{},
+	}
+	description, directive := "TODO — the symptom, in one line.", "TODO — the positive directive the fix follows."
+
+	if b.From != nil {
+		find, _ = b.From.Query(b.Engine)
+		description, directive = b.From.Sin.Description, b.From.Sin.Rule
+	}
+
 	rule := map[string]any{
 		"$schema": custom.SchemaReference,
 		"engine":  string(b.Engine),
 		"sin": map[string]any{
 			"name":        b.ID,
-			"description": "TODO — the symptom, in one line.",
-			"rule":        "TODO — the positive directive the fix follows.",
+			"description": description,
+			"rule":        directive,
 			"skill":       b.Slug,
 		},
-		"find": map[string]any{
-			"select": "call",
-			"where":  []any{map[string]any{"name": "TODO-the-call-this-rule-flags"}},
-			"reject": []any{},
-		},
+		"find": find,
 	}
 
 	var text strings.Builder

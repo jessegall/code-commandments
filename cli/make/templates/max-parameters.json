@@ -1,0 +1,10 @@
+{
+    "summary": "a function declaring five parameters or more",
+    "sin": {
+        "description": "A function declares five parameters or more.",
+        "rule": "Give the values that travel together a type of their own, and pass that."
+    },
+    "find": {
+        "*": {"select": "function", "where": [{"parameters": {"atLeast": 5}}]}
+    }
+}

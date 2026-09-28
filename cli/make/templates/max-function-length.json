@@ -1,0 +1,10 @@
+{
+    "summary": "a function spanning forty lines or more",
+    "sin": {
+        "description": "A function spans forty lines or more.",
+        "rule": "Split it into named steps, each a function of its own."
+    },
+    "find": {
+        "*": {"select": "function", "where": [{"lines": {"atLeast": 40}}]}
+    }
+}

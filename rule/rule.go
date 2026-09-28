@@ -60,55 +60,56 @@ type find struct {
 
 // Step is one check of a rule's query, on the node itself or, with Of or a nested step, on one related to it.
 type Step struct {
-	Is            string   `json:"is,omitempty"`
-	Kind          string   `json:"kind,omitempty"`
-	Name          string   `json:"name,omitempty"`
-	NameIn        []string `json:"nameIn,omitempty"`
-	NameLike      string   `json:"nameLike,omitempty"`
-	NameMatches   string   `json:"nameMatches,omitempty"`
-	NameCase      string   `json:"nameCase,omitempty"`
-	Text          *string  `json:"text,omitempty"`
-	TextLike      string   `json:"textLike,omitempty"`
-	TextMatches   string   `json:"textMatches,omitempty"`
-	Resolves      string   `json:"resolves,omitempty"`
-	ResolvesLike  string   `json:"resolvesLike,omitempty"`
-	NamespaceLike string   `json:"namespaceLike,omitempty"`
-	Layer         string   `json:"layer,omitempty"`
-	HasModifier   string   `json:"hasModifier,omitempty"`
-	HasFlag       string   `json:"hasFlag,omitempty"`
-	WithinLoop    *bool    `json:"withinLoop,omitempty"`
-	Documented    *bool    `json:"documented,omitempty"`
-	File          string   `json:"file,omitempty"`
-	Position      string   `json:"position,omitempty"`
-	TopLevel      *bool    `json:"topLevel,omitempty"`
-	Of            string   `json:"of,omitempty"`
-	Descendant    *Step    `json:"descendant,omitempty"`
-	Inside        *Step    `json:"inside,omitempty"`
-	Next          *Step    `json:"next,omitempty"`
-	Previous      *Step    `json:"previous,omitempty"`
-	NestedAtLeast *Nesting `json:"nestedAtLeast,omitempty"`
-	Counts        *Count   `json:"count,omitempty"`
-	Parameters    *Bounds  `json:"parameters,omitempty"`
-	Arguments     *Bounds  `json:"arguments,omitempty"`
-	Lines         *Bounds  `json:"lines,omitempty"`
-	Members       *Tally   `json:"members,omitempty"`
-	Complexity    *Bounds  `json:"complexity,omitempty"`
-	Extends       string   `json:"extends,omitempty"`
-	ExtendsAny    string   `json:"extendsAny,omitempty"`
-	Implements    string   `json:"implements,omitempty"`
-	TypeKind      string   `json:"typeKind,omitempty"`
-	HasAnnotation string   `json:"hasAnnotation,omitempty"`
-	ReturnType    string   `json:"returnType,omitempty"`
-	ParameterType string   `json:"parameterType,omitempty"`
-	Constructs    string   `json:"constructs,omitempty"`
-	Unused        *bool    `json:"unused,omitempty"`
-	CalledFrom    string   `json:"calledFrom,omitempty"`
-	Calls         *Step    `json:"calls,omitempty"`
-	Argument      *Argued  `json:"argument,omitempty"`
-	CommentLike   string   `json:"commentLike,omitempty"`
-	DocTag        string   `json:"docTag,omitempty"`
-	Duplicated    *Bounds  `json:"duplicated,omitempty"`
-	TestCode      *bool    `json:"testCode,omitempty"`
+	Is             string   `json:"is,omitempty"`
+	Kind           string   `json:"kind,omitempty"`
+	Name           string   `json:"name,omitempty"`
+	NameIn         []string `json:"nameIn,omitempty"`
+	NameLike       string   `json:"nameLike,omitempty"`
+	NameMatches    string   `json:"nameMatches,omitempty"`
+	NameCase       string   `json:"nameCase,omitempty"`
+	Text           *string  `json:"text,omitempty"`
+	TextLike       string   `json:"textLike,omitempty"`
+	TextMatches    string   `json:"textMatches,omitempty"`
+	Resolves       string   `json:"resolves,omitempty"`
+	ResolvesLike   string   `json:"resolvesLike,omitempty"`
+	NamespaceLike  string   `json:"namespaceLike,omitempty"`
+	Layer          string   `json:"layer,omitempty"`
+	HasModifier    string   `json:"hasModifier,omitempty"`
+	HasFlag        string   `json:"hasFlag,omitempty"`
+	WithinLoop     *bool    `json:"withinLoop,omitempty"`
+	Documented     *bool    `json:"documented,omitempty"`
+	File           string   `json:"file,omitempty"`
+	Position       string   `json:"position,omitempty"`
+	TopLevel       *bool    `json:"topLevel,omitempty"`
+	Of             string   `json:"of,omitempty"`
+	Descendant     *Step    `json:"descendant,omitempty"`
+	Inside         *Step    `json:"inside,omitempty"`
+	Next           *Step    `json:"next,omitempty"`
+	Previous       *Step    `json:"previous,omitempty"`
+	NestedAtLeast  *Nesting `json:"nestedAtLeast,omitempty"`
+	Counts         *Count   `json:"count,omitempty"`
+	Parameters     *Bounds  `json:"parameters,omitempty"`
+	Arguments      *Bounds  `json:"arguments,omitempty"`
+	Lines          *Bounds  `json:"lines,omitempty"`
+	Members        *Tally   `json:"members,omitempty"`
+	Complexity     *Bounds  `json:"complexity,omitempty"`
+	Extends        string   `json:"extends,omitempty"`
+	ExtendsAny     string   `json:"extendsAny,omitempty"`
+	Implements     string   `json:"implements,omitempty"`
+	TypeKind       string   `json:"typeKind,omitempty"`
+	HasAnnotation  string   `json:"hasAnnotation,omitempty"`
+	ReturnType     string   `json:"returnType,omitempty"`
+	ParameterType  string   `json:"parameterType,omitempty"`
+	Constructs     string   `json:"constructs,omitempty"`
+	Unused         *bool    `json:"unused,omitempty"`
+	CalledFrom     string   `json:"calledFrom,omitempty"`
+	Calls          *Step    `json:"calls,omitempty"`
+	Argument       *Argued  `json:"argument,omitempty"`
+	CommentLike    string   `json:"commentLike,omitempty"`
+	CommentMatches string   `json:"commentMatches,omitempty"`
+	DocTag         string   `json:"docTag,omitempty"`
+	Duplicated     *Bounds  `json:"duplicated,omitempty"`
+	TestCode       *bool    `json:"testCode,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
@@ -402,7 +403,7 @@ func (s Step) checks() int {
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
-		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.DocTag != "", s.Duplicated != nil,
+		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil,
 		s.TestCode != nil} {
 		if set {
 			count++
@@ -439,6 +440,8 @@ func (s *Step) prepare() error {
 		s.pattern = glob(strings.TrimPrefix(s.Constructs, `\`))
 	case s.CommentLike != "":
 		s.pattern = regexp.MustCompile("(?s)" + glob(s.CommentLike).String())
+	case s.CommentMatches != "":
+		return s.compile(s.CommentMatches)
 	}
 
 	for _, nested := range s.nested() {
@@ -665,7 +668,7 @@ func (s Step) check(match engine.Match) bool {
 		return slices.ContainsFunc(subject.OwnDescendants(), func(below engine.Match) bool { return below.Is(engine.Call) && s.Calls.check(below) })
 	case s.Argument != nil:
 		return s.Argument.passes(subject.Arguments())
-	case s.CommentLike != "":
+	case s.CommentLike != "", s.CommentMatches != "":
 		return s.commented(subject)
 	case s.DocTag != "":
 		return slices.ContainsFunc(subject.DocTags(), func(tag string) bool { return strings.EqualFold(tag, strings.TrimPrefix(s.DocTag, "@")) })
@@ -730,7 +733,7 @@ func (a Argued) passes(arguments []engine.Match) bool {
 	return a.check(arguments[at])
 }
 
-// commented says whether a comment on the node, or in the run directly above it, matches the step's glob.
+// commented says whether a comment on the node, or in the run directly above it, matches the step's pattern.
 func (s Step) commented(subject engine.Match) bool {
 	for _, comment := range append(subject.Comments(), subject.CommentsAbove()...) {
 		if s.pattern.MatchString(comment.Text) {

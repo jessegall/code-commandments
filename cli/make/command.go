@@ -31,8 +31,10 @@ func (Command) Help() help.Help {
 		Form("make <Name> --engine=python", "scaffold a Python one instead").
 		Form("make <Name> --engine=csharp", "scaffold a C# one instead").
 		Form("make <Name> --skill=NAME", "point the sin at an EXISTING skill (shipped or your own) instead of writing a new one").
+		Form("make <Name> --from=<template>", "start from a ready rule to adapt: "+templateNames()).
 		Option("--engine=backend|frontend|typescript|python|csharp", "which engine the rule judges (default: backend)").
 		Option("--skill=NAME", "the skill that teaches the fix — a lenient name/slug match against the existing skills, or a new slug to create one").
+		Option("--from=<template>", "the ready rule to start from, its query written for the engine").
 		Option("--force", "overwrite files that already exist").
 		Note("A rule is data the binary runs: `<Name>Detector.json` names its engine, its sin and a query — a " +
 			"selector, then `where` and `reject` steps of one check each. A new skill is `skills/<slug>/SKILL.md`, " +
@@ -68,6 +70,19 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	query, _ := in.Option("skill")
 	blueprint := plan(name, engine, query, root)
+
+	if from, set := in.Option("from"); set {
+		template, known := TemplateNamed(from)
+		if !known {
+			return help.Usage(console.Err, c, "no template `"+from+"` — the ready rules are "+templateNames()+"."), nil
+		}
+
+		if _, written := template.Query(engine); !written {
+			return help.Usage(console.Err, c, "the `"+from+"` template is written for "+engineList(template.Engines())+", not --engine="+string(engine)+"."), nil
+		}
+
+		blueprint.From = &template
+	}
 
 	if clash := existing(blueprint, in.HasFlag("force")); len(clash) > 0 {
 		console.Warn("Already there — pass --force to overwrite:\n  " + strings.Join(clash, "\n  "))

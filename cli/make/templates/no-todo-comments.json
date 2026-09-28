@@ -1,0 +1,10 @@
+{
+    "summary": "a function carrying a TODO or FIXME comment",
+    "sin": {
+        "description": "A function carries a TODO or FIXME left for later.",
+        "rule": "Do the work now, or file it where work is tracked and delete the comment."
+    },
+    "find": {
+        "*": {"select": "function", "where": [{"descendant": {"commentMatches": "(?i)\\b(TODO|FIXME)\\b"}}]}
+    }
+}

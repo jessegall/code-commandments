@@ -37,6 +37,7 @@ var Checks = []Group{
 		{"textLike", `{"textLike": "*where id*"}`, "a literal's text matches the glob"},
 		{"textMatches", `{"textMatches": "(?i)^select"}`, "a literal's text matches the regular expression"},
 		{"commentLike", `{"commentLike": "*TODO*"}`, "a comment on it, or in the run of comments directly above it, matches the glob"},
+		{"commentMatches", `{"commentMatches": "(?i)\\b(TODO|FIXME)\\b"}`, "a comment on it, or in the run of comments directly above it, matches the regular expression"},
 		{"docTag", `{"docTag": "deprecated"}`, "its documentation carries the tag: `@tag` in PHPDoc and JSDoc, an XML element in C#, a Sphinx field or directive or a Google/NumPy section in a Python docstring"},
 		{"documented", `{"documented": false}`, "it carries a doc comment, or not with `false`"},
 	}},

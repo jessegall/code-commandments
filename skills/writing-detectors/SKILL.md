@@ -68,6 +68,7 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"textLike": "*where id*"}` | a literal's text matches the glob |
 | `{"textMatches": "(?i)^select"}` | a literal's text matches the regular expression |
 | `{"commentLike": "*TODO*"}` | a comment on it, or in the run of comments directly above it, matches the glob |
+| `{"commentMatches": "(?i)\\b(TODO\|FIXME)\\b"}` | a comment on it, or in the run of comments directly above it, matches the regular expression |
 | `{"docTag": "deprecated"}` | its documentation carries the tag: `@tag` in PHPDoc and JSDoc, an XML element in C#, a Sphinx field or directive or a Google/NumPy section in a Python docstring |
 | `{"documented": false}` | it carries a doc comment, or not with `false` |
 
@@ -174,7 +175,13 @@ A rule the binary cannot run says why when `judge` starts — the file, and whic
 vendor/bin/commandments make NoRawSql                    # a backend rule and a skill of its own
 vendor/bin/commandments make NoRawSql --engine=python     # another engine
 vendor/bin/commandments make NoRawSql --skill=absence     # taught by a skill that already exists
+vendor/bin/commandments make NoDebug --from=no-debug-calls # start from a ready rule and adapt it
 ```
+
+The ready rules are `no-debug-calls`, `no-todo-comments`, `max-parameters`, `max-function-length`,
+`max-nesting` and `no-sql-in-controllers`, each written for every engine it makes sense in. One is a
+starting point, not a verdict: read its query, change the numbers and names to the project's, and prove
+it on samples of your own.
 
 That writes `NoRawSqlDetector.json` and, when the skill is new, `skills/no-raw-sql/SKILL.md` into
 `.commandments/custom/`, turns the rule on under `detectors` in `.commandments/config.json`, and prints
@@ -295,6 +302,7 @@ instead of solving it. Let the skill teach the reader.
 | `commandments make <Name> --engine=python` | scaffold a Python one instead |
 | `commandments make <Name> --engine=csharp` | scaffold a C# one instead |
 | `commandments make <Name> --skill=NAME` | point the sin at an EXISTING skill (shipped or your own) instead of writing a new one |
+| `commandments make <Name> --from=<template>` | start from a ready rule to adapt: max-function-length, max-nesting, max-parameters, no-debug-calls, no-sql-in-controllers, no-todo-comments |
 | `commandments rule explain <file> [--line=N]` | print the tree a rule reads in the file: every node's line, kind, neutral kinds, field, name and what it resolves to |
 | `commandments rule try <Rule> <path>` | run one rule over the path without turning it on, and print each match with its line |
 | `commandments rule prove [path]` | check every rule of the project flags exactly the code its samples mark, and nothing else |
