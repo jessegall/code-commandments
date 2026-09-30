@@ -381,3 +381,11 @@ A subagent that drew a design, wrote the code or ran the research keeps what it 
 A name is how the user and the chat tell subagents apart and how they are messaged later; an id or a task line is not a name. Start the dispatch's description with the name, a colon, then the task, such as "Dr. Einstein: profile the slow hooks" or "Coco Rams: draw the plan card". A designer can borrow from famous designers, a researcher from famous scientists, mixed up for fun.
 
 <!-- END: agent-journal law -->
+
+<!-- journal rules -->
+# Rules
+
+- Never run .NET on the host; only in a memory-capped Docker container
+- Always scope judge with --changes or --branch; full scans only for parity runs
+- Never merge anything into main; Sir Jesse merges go-rewrite to main himself
+<!-- /journal rules -->
