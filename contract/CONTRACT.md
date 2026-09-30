@@ -114,7 +114,7 @@ Every syntax node, nested as the language nests them. Tokens, whitespace and com
 | `span` | always | `[start, end, line]`: `[start, end)` in UTF-8 bytes into the file, a byte order mark counted, trivia excluded; `line` the 1-based line `start` is on |
 | `field` | always, but on the root | the slot this node fills in its parent: `var`, `args`, `test`, `body`. A list slot repeats the same field on each item, in order |
 | `children` | it has any | its child nodes, in source order |
-| `name` | declarations, names, identifiers, members, elements, attributes | the name as written (`add`, `Cart`, `self`, `div`) |
+| `name` | declarations, names, identifiers, members, elements, attributes | the name as written (`add`, `Cart`, `self`, `div`); never empty, so a key written as `""` and a name a syntax error left missing carry none |
 | `literal` | literals | `string`, `int`, `float`, `bool`, `null`, `undefined`, `bytes`, `ellipsis`, `interpolated`, `format` |
 | `value` | literals the language folds, static attributes | the decoded value: a string without quotes or escapes, `true`/`false`, `null`. An `int` or `float` is a decimal string, so no width is lost |
 | `operator` | binary, unary, assignment, update expressions; a TypeScript heritage clause | the operator token: `==`, `??`, `+=`, `!`, `not`, `await`, `instanceof`; a heritage clause's keyword, `extends` or `implements` |
@@ -203,7 +203,7 @@ canonical `text`, because detectors match that text directly (a C#
 | `name` | `named`, `keyword`, `parameter` | the fully qualified class name, the keyword, or the parameter's name: `Shop\Money`, `shop.money.Money`, `int`, `T` |
 | `args` | generics, arrays | the type arguments in order; an array's element |
 | `members` | `union`, `intersection`, `tuple` | the member types in order, as written |
-| `fields` | `object` | `[{"name", "type", "optional"?}]`, an object type's fields |
+| `fields` | `object` | `[{"name", "type", "optional"?}]`, an object type's fields, each named by its key as written, which may be `""` |
 | `parameters` | `function` | the parameter types in order |
 | `returns` | `function` | the return type |
 | `value` | `literal` | the literal's value, decoded as a node's `value` is |

@@ -299,12 +299,17 @@ function neutral(node) {
 }
 
 function nameOf(node) {
-    if (ts.isIdentifier(node) || ts.isPrivateIdentifier(node)) return node.text
+    if (ts.isIdentifier(node) || ts.isPrivateIdentifier(node)) return written(node.text)
     if (node.kind === ts.SyntaxKind.Constructor) return 'constructor'
     const name = node.name
-    if (name && (ts.isIdentifier(name) || ts.isPrivateIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name))) return name.text
+    if (name && (ts.isIdentifier(name) || ts.isPrivateIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name))) return written(name.text)
 
     return undefined
+}
+
+/** A name as written, or undefined for an empty one: the key `""`, or the identifier a parse error left missing. */
+function written(text) {
+    return text === '' ? undefined : text
 }
 
 function literal(node) {
@@ -353,7 +358,7 @@ function namesItsScope(node) {
 
 function declaredName(node) {
     if (node.kind === ts.SyntaxKind.Constructor) return 'constructor'
-    if (node.name && (ts.isIdentifier(node.name) || ts.isPrivateIdentifier(node.name) || ts.isStringLiteral(node.name))) return node.name.text
+    if (node.name && (ts.isIdentifier(node.name) || ts.isPrivateIdentifier(node.name) || ts.isStringLiteral(node.name))) return written(node.name.text)
     if (isDefaultExport(node)) return 'default'
 
     return undefined

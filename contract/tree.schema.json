@@ -114,7 +114,7 @@
         "members": {"type": "array", "items": {"$ref": "#/$defs/type"}},
         "fields": {"type": "array", "items": {
           "type": "object",
-          "properties": {"name": {"type": "string", "minLength": 1}, "type": {"$ref": "#/$defs/type"}, "optional": {"const": true}},
+          "properties": {"name": {"type": "string"}, "type": {"$ref": "#/$defs/type"}, "optional": {"const": true}},
           "required": ["name", "type"],
           "additionalProperties": false
         }},
