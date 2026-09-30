@@ -8,5 +8,6 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`duplicate-element`** — Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component — `DuplicateElementDetector`
 - **`inline-case-views`** — A dispatch whose cases each render a whole view inline — one component doing a job per case — `InlineCaseViewsDetector`
 - **`near-duplicate-element`** — Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates — `NearDuplicateElementDetector`
+- **`oversized-component`** — A component whose template renders more elements than the project's declared budget — one component doing several jobs — `ComponentBudgetDetector`
 - **`prop-drilling`** — A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further. — `PropDrillingDetector`
 - **`prop-mutation`** — A prop is written to — `v-model` bound to it, or `@event="prop = …"` — but props are read-only (a build error or a silent no-op). — `PropMutationDetector`

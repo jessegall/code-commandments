@@ -21,6 +21,11 @@ func (c *Codebase) WhereElement() *engine.Query {
 	return c.WhereKind("Element")
 }
 
+// WhereComponent opens a query over every component, each the root of its .vue file.
+func (c *Codebase) WhereComponent() *engine.Query {
+	return c.WhereKind("Component")
+}
+
 // Component is the component a .vue file of the codebase holds; false for a path it holds none at.
 func (c *Codebase) Component(path string) (Component, bool) {
 	for _, file := range c.Files() {

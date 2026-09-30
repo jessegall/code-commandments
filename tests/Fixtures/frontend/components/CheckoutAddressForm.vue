@@ -8,7 +8,7 @@ const form = useForm({ name: '', email: '', city: '' });
 </script>
 
 <template>
-  <form class="address-form" @submit.prevent="form.post('/checkout/address')">
+  <!-- @righteous OversizedComponent --><form class="address-form" @submit.prevent="form.post('/checkout/address')">
     <header class="address-form__header">
       <h2 class="address-form__title">Shipping address</h2>
     </header>

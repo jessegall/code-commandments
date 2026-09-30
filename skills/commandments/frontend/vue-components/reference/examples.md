@@ -296,6 +296,111 @@ Markup with one skeleton repeated 2+ times — the same tags, attributes and nes
 </article>
 ```
 
+### oversized-component
+
+A component whose template renders more elements than the project's declared budget — one component doing several jobs
+
+```vue
+----------[ Bad ]----------
+
+<!-- @sin OversizedComponent --><section class="account">
+  <header class="account__header">
+    <h1 class="account__title">My account</h1>
+    <span class="account__id">#{{ customer.id }}</span>
+  </header>
+
+  <div class="account__profile">
+    <h2 class="account__section">Profile</h2>
+    <!-- Righteous: a LONE deep reach (one field off customer.profile) is no cluster. -->
+    <p class="account__name">{{ customer.profile.displayName }}</p>
+    <p class="account__handle">{{ customer.handle }}</p>
+  </div>
+
+  <div class="account__contact">
+    <h2 class="account__section">Contact</h2>
+    <p class="account__email">{{ customer.email }}</p>
+    <p class="account__phone">{{ customer.phone }}</p>
+  </div>
+
+  <!-- A cluster: customer.billing read in three fields → extract <AccountBilling :billing>. -->
+  <!-- @sin DeepDataReach -->
+  <div class="account__billing">
+    <h2 class="account__section">Billing</h2>
+    <p class="account__plan">{{ customer.billing.plan }}</p>
+    <p class="account__amount">{{ customer.billing.amount }}</p>
+    <p class="account__renews">{{ customer.billing.renewsAt }}</p>
+  </div>
+
+  <div class="account__preferences">
+    <h2 class="account__section">Preferences</h2>
+    <ul class="account__prefs">
+      <!-- @sin ControlFlowOnElement -->
+      <li v-for="pref in customer.preferences" :key="pref.id" class="account__pref">
+        <span class="account__pref-name">{{ pref.label }}</span>
+        <span class="account__pref-value">{{ pref.enabled }}</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="account__orders">
+    <h2 class="account__section">Recent orders</h2>
+    <ul class="account__order-list">
+      <!-- @sin IndexAsKey -->
+      <template v-for="(order, index) in orders" :key="index">
+        <li class="account__order">{{ order.reference }}</li>
+      </template>
+    </ul>
+  </div>
+
+  <div class="account__addresses">
+    <h2 class="account__section">Addresses</h2>
+    <ul class="account__address-list">
+      <!-- @fixed IndexAsKey -->
+      <!-- @righteous IndexAsKey -->
+      <template v-for="(address, index) in customer.addresses" :key="address.id">
+        <li class="account__address">{{ address.line }}</li>
+      </template>
+    </ul>
+  </div>
+
+  <footer class="account__footer">
+    <button class="account__save" type="button">Save changes</button>
+    <button class="account__signout" type="button">Sign out</button>
+  </footer>
+</section>
+
+----------[ Good ]----------
+
+<!-- in AccountIdentity.vue -->
+<dl class="identity">
+  <dt>Name</dt>
+  <dd>{{ customer.handle }}</dd>
+  <dt>Email</dt>
+  <dd><a :href="`mailto:${customer.email}`">{{ customer.email }}</a></dd>
+</dl>
+
+<!-- in AccountPlan.vue -->
+<aside class="plan">
+  <strong>{{ billing.plan }}</strong>
+  <small>{{ billing.amount }}, renews {{ billing.renewsAt }}</small>
+</aside>
+
+<!-- in AccountHistory.vue -->
+<ol class="history">
+  <template v-for="order in orders" :key="order.reference">
+    <li>{{ order.reference }}</li>
+  </template>
+</ol>
+
+<!-- in AccountOverview.vue -->
+<section class="account">
+  <h1 class="account__title">My account</h1>
+  <AccountIdentity :customer="customer" />
+  <AccountPlan :billing="customer.billing" />
+  <AccountHistory :orders="orders" />
+</section>
+```
+
 ### prop-drilling
 
 A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further.

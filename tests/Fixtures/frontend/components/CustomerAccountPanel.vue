@@ -5,7 +5,7 @@ defineProps<{ customer: Customer; orders: CustomerOrder[] }>();
 </script>
 
 <template>
-  <section class="account">
+  <!-- @sin OversizedComponent --><section class="account">
     <header class="account__header">
       <h1 class="account__title">My account</h1>
       <span class="account__id">#{{ customer.id }}</span>

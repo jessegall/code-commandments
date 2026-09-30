@@ -5,7 +5,7 @@ defineProps<{ storefront: Storefront }>();
 </script>
 
 <template>
-  <header class="hero">
+  <!-- @sin OversizedComponent --><header class="hero">
     <div class="hero__bar">
       <span class="hero__name">{{ storefront.name }}</span>
       <span class="hero__status">{{ storefront.open }}</span>

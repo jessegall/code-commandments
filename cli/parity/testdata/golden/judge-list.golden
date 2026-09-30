@@ -165,6 +165,7 @@ exit: 0
   MutableValueObjectDetector
   PositionalTupleReturnDetector
 [1;33mfrontend/vue-components[0m
+  ComponentBudgetDetector
   CompoundInlineComponentDetector
   DeepDataReachDetector
   DeepNestedDetector

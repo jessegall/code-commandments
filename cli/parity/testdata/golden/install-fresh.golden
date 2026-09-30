@@ -300,11 +300,11 @@ sha256 85d7b36a19ed1620c215e3e46b1eee833991088b395bcbbc3619bcbb1fd2275f
 === created .agents/skills/commandments-frontend-mirrored-server-type/reference/examples.md
 sha256 53fbe76ec0bbadca68e21997b5397e78f44f083a84a70c8839bb5ddb15eac2be
 === created .agents/skills/commandments-frontend-vue-components/SKILL.md
-sha256 c567cb2a4211c58df37fd07d9eb9d4ee990999e9a7fabb1226a364035b1546d0
+sha256 8f99100d8be55e3a7e57d3d34a0722dd21c0bf0dedf106f49014e93a6a25f661
 === created .agents/skills/commandments-frontend-vue-components/reference/detectors.md
-sha256 f820cda53dd33c86f037e94cf1a123207545b5bfd924be8dd11df74f0c73dda2
+sha256 374e8c6c079483d1238a24f9bdae8340b28839654612528dbaa220cdcf6fd556
 === created .agents/skills/commandments-frontend-vue-components/reference/examples.md
-sha256 15fb82ed1bcd0dc5e37eda1a104c9331bc1dc517dd25d1b4a660b80350a6c93c
+sha256 01b8802ad60fdb9b0ea4cfb3f52121dc0b7517c718e01d3f0526dd39e91972dd
 === created .agents/skills/commandments-frontend-vue-control-flow/SKILL.md
 sha256 2e7a446e99982b7a5f219b48222f21e667d525bf2c6b0cebac16658a12852369
 === created .agents/skills/commandments-frontend-vue-control-flow/reference/detectors.md

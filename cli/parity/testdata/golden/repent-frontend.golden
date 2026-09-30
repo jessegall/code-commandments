@@ -259,7 +259,7 @@ defineProps<{ customer: Customer; orders: CustomerOrder[] }>();
 </script>
 
 <template>
-  <section class="account">
+  <!-- @sin OversizedComponent --><section class="account">
     <header class="account__header">
       <h1 class="account__title">My account</h1>
       <span class="account__id">#{{ customer.id }}</span>
@@ -498,7 +498,7 @@ defineProps<{ order: Order; history: OrderEvent[] }>();
 </script>
 
 <template>
-  <article class="order-detail">
+  <!-- @sin OversizedComponent --><article class="order-detail">
     <header class="order-detail__header">
       <h1 class="order-detail__title">Order #{{ order.id }}</h1>
       <time class="order-detail__date">{{ order.placedAt }}</time>
@@ -1005,7 +1005,7 @@ defineProps<{ storefront: Storefront }>();
 </script>
 
 <template>
-  <header class="hero">
+  <!-- @sin OversizedComponent --><header class="hero">
     <div class="hero__bar">
       <span class="hero__name">{{ storefront.name }}</span>
       <span class="hero__status">{{ storefront.open }}</span>

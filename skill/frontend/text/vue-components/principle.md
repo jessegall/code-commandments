@@ -19,3 +19,17 @@ two or more of its cases each render a whole view inline, the component is doing
 such case its own component, named for the case, and let the dispatch only pick one:
 `<template #packing><ShipmentPacking :parcels="shipment.parcels" :packer="shipment.packer" /></template>`.
 A case that renders a line or a single element stays inline; only a case that is a view of its own leaves.
+
+How many jobs one component may hold is a call the project makes, not one the tree can: a card's header, body
+and footer and a message bubble's quote, files, reactions and actions all look alike to a parser. So the project
+**declares its budget** — how many elements a component's template may render, `<template>` wrappers aside — and
+a component past it is split into single-purpose children the parent only composes. Nothing is judged until the
+budget is declared:
+
+```json
+"configure": {
+    "frontend/ComponentBudgetDetector": [
+        {"elements": [50]}
+    ]
+}
+```

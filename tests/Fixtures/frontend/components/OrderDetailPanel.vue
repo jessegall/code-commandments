@@ -5,7 +5,7 @@ defineProps<{ order: Order; history: OrderEvent[] }>();
 </script>
 
 <template>
-  <article class="order-detail">
+  <!-- @sin OversizedComponent --><article class="order-detail">
     <header class="order-detail__header">
       <h1 class="order-detail__title">Order #{{ order.id }}</h1>
       <time class="order-detail__date">{{ order.placedAt }}</time>

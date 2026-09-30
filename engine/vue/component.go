@@ -17,6 +17,11 @@ type Component struct {
 	engine.Match
 }
 
+// Decorate is the component a query's match is: the root of a .vue file.
+func (Component) Decorate(m engine.Match) Component {
+	return Component{m}
+}
+
 // ComponentOf is the component a node of a .vue file belongs to; no node outside one.
 func ComponentOf(m engine.Match) Component {
 	if root := m.Root(); root.Kind() == "Component" {
@@ -126,6 +131,16 @@ func (c Component) Template() engine.Match {
 	}
 
 	return engine.Match{}
+}
+
+// Size is how many elements the component's template renders, a <template> wrapper never one of them.
+func (c Component) Size() int {
+	size := 0
+	for _, element := range c.TemplateElements() {
+		size += element.Rendered()
+	}
+
+	return size
 }
 
 // TemplateLines is how many lines the component's template spans.

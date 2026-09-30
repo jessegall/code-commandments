@@ -1,6 +1,6 @@
 ---
 name: commandments-frontend-vue-components
-description: "Extract a component when template markup REPEATS identically, or when an element in a large template reaches DEEP into nested data (data.user.firstName). Repeated markup is one component waiting to be born; a deep reach is a child that knows too much about the data shape and wants the mid-object as a prop. A dispatch (`<SwitchCase>` or a `v-if` chain on one subject) whose cases each render a whole view inline is a component doing a job per case. Read this BEFORE copy-pasting a block of template, reaching `a.b.c` in a sizeable component, or writing a whole view inside a dispatch case."
+description: "Extract a component when template markup REPEATS identically, or when an element in a large template reaches DEEP into nested data (data.user.firstName). Repeated markup is one component waiting to be born; a deep reach is a child that knows too much about the data shape and wants the mid-object as a prop. A dispatch (`<SwitchCase>` or a `v-if` chain on one subject) whose cases each render a whole view inline is a component doing a job per case, and a template past the project's declared element budget is one doing several. Read this BEFORE copy-pasting a block of template, reaching `a.b.c` in a sizeable component, or writing a whole view inside a dispatch case."
 ---
 
 # Vue components — extract repetition, deep reaches and dispatched views
@@ -35,6 +35,20 @@ such case its own component, named for the case, and let the dispatch only pick 
 `<template #packing><ShipmentPacking :parcels="shipment.parcels" :packer="shipment.packer" /></template>`.
 A case that renders a line or a single element stays inline; only a case that is a view of its own leaves.
 
+How many jobs one component may hold is a call the project makes, not one the tree can: a card's header, body
+and footer and a message bubble's quote, files, reactions and actions all look alike to a parser. So the project
+**declares its budget** — how many elements a component's template may render, `<template>` wrappers aside — and
+a component past it is split into single-purpose children the parent only composes. Nothing is judged until the
+budget is declared:
+
+```json
+"configure": {
+    "frontend/ComponentBudgetDetector": [
+        {"elements": [50]}
+    ]
+}
+```
+
 ## Rules
 
 - [ ] Lift a compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`) assembled inline into its own named component.
@@ -45,6 +59,7 @@ A case that renders a line or a single element stays inline; only a case that is
 - [ ] Give each case of a dispatch that renders a whole view its own component; the dispatch only picks one.
 - [ ] Extract markup that repeats with different data into one component, and pass what differs as props.
       _Make the shared skeleton a component; each place that repeated it renders the component with its own data._
+- [ ] Split a component past the project's element budget into single-purpose children; the parent only composes them.
 - [ ] Don't thread a prop through a component that doesn't use it; provide/inject it, or give the child the data directly.
 - [ ] Never write a prop. For two-way state use `defineModel`; otherwise emit an `update:` event and let the parent own the value.
 
@@ -113,18 +128,18 @@ A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a
 </Dialog>
 ```
 
-The other 7 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 8 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `vendor/bin/commandments judge --skill=frontend/vue-components` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`, `inline-case-views`, `near-duplicate-element`, `prop-drilling`, `prop-mutation`.
+- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`, `inline-case-views`, `near-duplicate-element`, `oversized-component`, `prop-drilling`, `prop-mutation`.
 - `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `compound-inline-component`, `deep-data-reach`, `deep-nested`, `duplicate-element`. Review it with `--dry-run` first.
 - `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

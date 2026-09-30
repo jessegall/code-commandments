@@ -2456,6 +2456,19 @@
             ],
             "detail": true
         },
+        "sin_oversized-component": {
+            "title": "OversizedComponent",
+            "help": "A component whose template renders more elements than the project's declared budget — one component doing several jobs",
+            "type": "flag",
+            "default": "true",
+            "group": "frontend/vue-components",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
+        },
         "sin_prop-drilling": {
             "title": "PropDrilling",
             "help": "A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further.",

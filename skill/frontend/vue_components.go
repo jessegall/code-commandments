@@ -26,7 +26,7 @@ func (VueComponents) Definition() skill.Definition {
 		Tier:      skill.KeepInMind,
 		Order:     15,
 		Title:     "Vue components — extract repetition, deep reaches and dispatched views",
-		Trigger:   "Extract a component when template markup REPEATS identically, or when an element in a large template reaches DEEP into nested data (data.user.firstName). Repeated markup is one component waiting to be born; a deep reach is a child that knows too much about the data shape and wants the mid-object as a prop. A dispatch (`<SwitchCase>` or a `v-if` chain on one subject) whose cases each render a whole view inline is a component doing a job per case. Read this BEFORE copy-pasting a block of template, reaching `a.b.c` in a sizeable component, or writing a whole view inside a dispatch case.",
+		Trigger:   "Extract a component when template markup REPEATS identically, or when an element in a large template reaches DEEP into nested data (data.user.firstName). Repeated markup is one component waiting to be born; a deep reach is a child that knows too much about the data shape and wants the mid-object as a prop. A dispatch (`<SwitchCase>` or a `v-if` chain on one subject) whose cases each render a whole view inline is a component doing a job per case, and a template past the project's declared element budget is one doing several. Read this BEFORE copy-pasting a block of template, reaching `a.b.c` in a sizeable component, or writing a whole view inside a dispatch case.",
 		Intro:     vueComponentsIntro,
 		Summary:   "extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop.",
 		Principle: vueComponentsPrinciple,

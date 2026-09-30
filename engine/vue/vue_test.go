@@ -113,6 +113,22 @@ func TestADispatchKnowsWhichCasesRenderAView(t *testing.T) {
 	}
 }
 
+// TestAComponentMeasuresWhatItsTemplateRenders holds a component to the elements its template renders, a
+// <template> wrapper never one of them, whatever it wraps and however deep.
+func TestAComponentMeasuresWhatItsTemplateRenders(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"Sized.vue": `<template>
+  <section><h1>t</h1><template v-if="a"><p>x</p><template v-for="i in list" :key="i"><b>{{ i }}</b></template></template></section>
+  <footer />
+</template>`})
+	component := vue.ComponentOf(frontendtest.Named(t, codebase, "Element", "section"))
+	if size := component.Size(); size != 5 {
+		t.Errorf("the template renders %d elements, not 5", size)
+	}
+	if rendered := vue.Of(frontendtest.Named(t, codebase, "Element", "section")).Rendered(); rendered != 4 {
+		t.Errorf("the section renders %d elements, not 4", rendered)
+	}
+}
+
 func TestAFingerprintIgnoresFormattingAndAShapeIgnoresValues(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"List.vue": `<template>
   <div>

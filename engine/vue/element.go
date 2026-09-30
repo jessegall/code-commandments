@@ -180,6 +180,19 @@ func (e Element) Size() int {
 	return size
 }
 
+// Rendered is how many elements its subtree renders, itself included: a <template> renders only what it holds.
+func (e Element) Rendered() int {
+	rendered := 0
+	if !e.IsTemplate() {
+		rendered = 1
+	}
+	for _, child := range e.Elements() {
+		rendered += child.Rendered()
+	}
+
+	return rendered
+}
+
 // Expressions is the data the element itself reads: every directive's value but a v-for's and a slot's,
 // and each interpolation among its children. A statement-bodied handler is each of its statements.
 func (e Element) Expressions() []typescript.Node {
