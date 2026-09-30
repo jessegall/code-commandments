@@ -134,9 +134,13 @@ func scanners(t *testing.T) (*scribes.Scanner, *scribes.Scanner) {
 
 func TestTheWholeChainRewritesEachFixtureAsThePHPToolDoes(t *testing.T) {
 	answered := answers(t)
+	frozen, err := shop.Frozen()
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, fixture := range []string{"backend", "frontend"} {
 		t.Run(fixture, func(t *testing.T) {
-			root, err := filepath.EvalSymlinks(filepath.Join(shop.Repository(), "tests", "Fixtures", fixture))
+			root, err := filepath.EvalSymlinks(filepath.Join(frozen, fixture))
 			if err != nil {
 				t.Fatal(err)
 			}
