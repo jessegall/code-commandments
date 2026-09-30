@@ -1,7 +1,7 @@
 exit: 1
 --- stdout
 
-[1;33mfrontend/vue-components[0m  (29)
+[1;33mfrontend/vue-components[0m  (32)
   [1;36m↳ LOAD the skill `commandments-frontend-vue-components` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mcomponents/AccountMenu.vue:25[0m  <NotificationBell>  [2m[PropDrillingDetector][0m
@@ -26,6 +26,7 @@ exit: 1
   [36mcomponents/FilterSidebar.vue:26[0m  <fieldset>  [2m[DuplicateElementDetector][0m
     [2m↳ same shape as: components/FilterSidebar.vue:20[0m
   [36mcomponents/InventoryFilterPanel.vue:16[0m  <Sheet>  [2m[CompoundInlineComponentDetector][0m
+  [36mcomponents/MediaPreview.vue:7[0m  <SwitchCase>  [2m[InlineCaseViewsDetector][0m
   [36mcomponents/OrderDetailPanel.vue:17[0m  <section>  [2m[DeepDataReachDetector][0m
   [36mcomponents/OrderLineItems.vue:16[0m  <tr>  [2m[DuplicateElementDetector][0m
     [2m↳ same shape as: components/OrderLineItems.vue:21[0m
@@ -38,8 +39,10 @@ exit: 1
   [36mcomponents/ProductReviewList.vue:17[0m  <article>  [2m[DuplicateElementDetector][0m
     [2m↳ same shape as: components/ProductReviewList.vue:8[0m
   [36mcomponents/ReaderPairingPanel.vue:16[0m  <Dialog>  [2m[CompoundInlineComponentDetector][0m
+  [36mcomponents/RefundWizard.vue:12[0m  <template>  [2m[InlineCaseViewsDetector][0m
   [36mcomponents/SettingsAccordionCard.vue:16[0m  <div>  [2m[DeepNestedDetector][0m
   [36mcomponents/SettingsAccordionCard.vue:47[0m  <Collapsible>  [2m[PropMutationDetector][0m
+  [36mcomponents/ShipmentTracker.vue:7[0m  <SwitchCase>  [2m[InlineCaseViewsDetector][0m
   [36mcomponents/ShippingAddressPage.vue:11[0m  <section>  [2m[NearDuplicateElementDetector][0m
     [2m↳ same shape as: components/BillingAddressPage.vue:10[0m
   [36mcomponents/StockTables.vue:14[0m  <tbody>  [2m[NearDuplicateElementDetector][0m
@@ -47,14 +50,14 @@ exit: 1
   [36mcomponents/StockTables.vue:28[0m  <tbody>  [2m[NearDuplicateElementDetector][0m
     [2m↳ same shape as: components/StockTables.vue:14[0m
   [36mcomponents/StorefrontHero.vue:16[0m  <div>  [2m[DeepDataReachDetector][0m
-  [32m↳ auto-fixable: vendor/bin/commandments repent --repent=latest --sin=duplicate-element[0m
-  [32m↳ auto-fixable: vendor/bin/commandments repent --repent=latest --sin=deep-nested[0m
-  [32m↳ auto-fixable: vendor/bin/commandments repent --repent=latest --sin=deep-data-reach[0m
-  [32m↳ auto-fixable: vendor/bin/commandments repent --repent=latest --sin=compound-inline-component[0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=duplicate-element[0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=deep-nested[0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=deep-data-reach[0m
+  [32m↳ auto-fixable: commandments repent --repent=latest --sin=compound-inline-component[0m
 
-[1m29 sins[0m across 1 skill.
+[1m32 sins[0m across 1 skill.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
-[2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
+[2m↳ don't recognise a rule above? `commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
 --- stderr
 

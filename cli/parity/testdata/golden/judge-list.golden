@@ -169,6 +169,7 @@ exit: 0
   DeepDataReachDetector
   DeepNestedDetector
   DuplicateElementDetector
+  InlineCaseViewsDetector
   NearDuplicateElementDetector
   PropDrillingDetector
   PropMutationDetector

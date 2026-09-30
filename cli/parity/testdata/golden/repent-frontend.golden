@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-[32m✓ Repented 32 files.[0m
+[32m✓ Repented 33 files.[0m
   <project>/components/CustomerAccountPanel.vue
   <project>/components/OrderDetailPanel.vue
   <project>/components/OrderStatusBadge.vue
@@ -11,6 +11,7 @@ exit: 0
   <project>/components/StorefrontHero.vue
   <project>/components/AccountMenu.vue
   <project>/components/OrderLineItems.vue
+  <project>/components/RefundWizard.vue
   <project>/components/ProductCell.vue
   <project>/components/FilterInventorySheet.vue
   <project>/components/OrderSummaryCard.vue
@@ -42,37 +43,13 @@ exit: 0
 Could not resolve a PSR-4 source root from composer.json (run from the project root).
 
 --- files
-=== created .commandments/config.php
-<?php
-
-declare(strict_types=1);
-
-use JesseGall\CodeCommandments\Config;
-
-/*
- | code-commandments configuration.
- |
- | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to
- |             adjust scope, or run `commandments config reindex`).
- | exclude() — subtract explicit paths ON TOP of paths(): a dir or file listed here is never a
- |             target (never reported, never rewritten), e.g. $config->exclude('app/Generated').
- | disable() — silence a rule by its Sin, Detector, or whole Skill class, or a Claude Code
- |             hook by its class (or use `commandments disable/enable <sin>`). The
- |             $disabledSkills / $disabledSins / $disabledHooks menus below list every one.
- |
- | Extend it inside the closure:
- |   $config->detector(\App\Commandments\NoRawSqlDetector::class);        — add your own finder
- |   $config->package(\App\Commandments\MyFrameworkPackage::class);       — register its exemptions
- |   $config->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10));  — tune a threshold
- */
-
-return function (Config $config): void {
-    $config->paths('.');
-
-    $config->disable(
-        // \JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,
-    );
-};
+=== created .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "paths": [
+        "."
+    ]
+}
 
 === created .commandments/sessions/61bdc/.repent-feedback-count
 count: 1
@@ -846,6 +823,47 @@ function submit() {}
     <!-- @righteous CompoundInlineComponent -->
     <ReaderPairingDialog v-model:open="open" :form="form" @submit="submit" />
   </section>
+</template>
+
+=== changed components/RefundWizard.vue
+<script setup lang="ts">
+import { ref } from "vue";
+
+defineProps<{ reasons: string[]; total: string }>();
+const step = ref("reason");
+const chosen = ref("");
+</script>
+
+<template>
+  <!-- @sin InlineCaseViews -->
+  <!-- @sin SwitchCase -->
+  <SwitchCase :value="step">
+      <template #reason>
+    <form class="reason" @submit.prevent="step = 'review'">
+      <fieldset>
+        <legend>Why are you returning it?</legend>
+        <template v-for="reason in reasons" :key="reason">
+          <label><input v-model="chosen" type="radio" :value="reason" />{{ reason }}</label>
+        </template>
+      </fieldset>
+      <button type="submit">Next</button>
+    </form>
+  </template>
+      <template #review>
+    <div class="review">
+      <dl>
+        <dt>Reason</dt>
+        <dd><q>{{ chosen }}</q></dd>
+        <dt>Refund</dt>
+        <dd><b>{{ total }}</b></dd>
+      </dl>
+      <menu><button @click="step = 'done'">Confirm</button></menu>
+    </div>
+  </template>
+      <template #default>
+    <p>Your refund is on its way.</p>
+  </template>
+  </SwitchCase>
 </template>
 
 === created components/ReviewCardSection.vue

@@ -9,37 +9,13 @@ exit: 0
 --- stderr
 
 --- files
-=== created .commandments/config.php
-<?php
-
-declare(strict_types=1);
-
-use JesseGall\CodeCommandments\Config;
-
-/*
- | code-commandments configuration.
- |
- | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to
- |             adjust scope, or run `commandments config reindex`).
- | exclude() — subtract explicit paths ON TOP of paths(): a dir or file listed here is never a
- |             target (never reported, never rewritten), e.g. $config->exclude('app/Generated').
- | disable() — silence a rule by its Sin, Detector, or whole Skill class, or a Claude Code
- |             hook by its class (or use `commandments disable/enable <sin>`). The
- |             $disabledSkills / $disabledSins / $disabledHooks menus below list every one.
- |
- | Extend it inside the closure:
- |   $config->detector(\App\Commandments\NoRawSqlDetector::class);        — add your own finder
- |   $config->package(\App\Commandments\MyFrameworkPackage::class);       — register its exemptions
- |   $config->configure(fn (DeepNestedDetector $d) => $d->maxDepth(10));  — tune a threshold
- */
-
-return function (Config $config): void {
-    $config->paths('.');
-
-    $config->disable(
-        // \JesseGall\CodeCommandments\Sins\Backend\SwallowCatch::class,
-    );
-};
+=== created .commandments/config.json
+{
+    "$schema": "./config.schema.json",
+    "paths": [
+        "."
+    ]
+}
 
 === created out.diff
 --- a/<project>/components/CustomerAccountPanel.vue
@@ -383,6 +359,37 @@ return function (Config $config): void {
 +      </template>
      </tbody>
    </table>
+ </template>
+--- a/<project>/components/RefundWizard.vue
++++ b/<project>/components/RefundWizard.vue
+@@ -9,7 +9,8 @@
+ <template>
+   <!-- @sin InlineCaseViews -->
+   <!-- @sin SwitchCase -->
+-  <template v-if="step === 'reason'">
++  <SwitchCase :value="step">
++      <template #reason>
+     <form class="reason" @submit.prevent="step = 'review'">
+       <fieldset>
+         <legend>Why are you returning it?</legend>
+@@ -20,7 +21,7 @@
+       <button type="submit">Next</button>
+     </form>
+   </template>
+-  <template v-else-if="step === 'review'">
++      <template #review>
+     <div class="review">
+       <dl>
+         <dt>Reason</dt>
+@@ -31,7 +32,8 @@
+       <menu><button @click="step = 'done'">Confirm</button></menu>
+     </div>
+   </template>
+-  <template v-else>
++      <template #default>
+     <p>Your refund is on its way.</p>
+   </template>
++  </SwitchCase>
  </template>
 --- a/<project>/components/ProductCell.vue
 +++ b/<project>/components/ProductCell.vue

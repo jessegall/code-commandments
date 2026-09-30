@@ -7,9 +7,10 @@ exit: 0
 
 [33mWhy it is a sin[0m
 
-  Two forms of one rule: **a chunk of template that repeats, or that reaches deep into
-  data, is a component trying to get out.** Pull it into its own file, pass it what it
-  needs as props, and use it by name.
+  Three forms of one rule: **a chunk of template that repeats, that reaches deep into
+  data, or that is one case of a dispatch rendering a whole view, is a component trying to
+  get out.** Pull it into its own file, pass it what it needs as props, and use it by
+  name.
 
 [33mHow to fix it[0m
 
