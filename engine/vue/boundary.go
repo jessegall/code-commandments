@@ -34,3 +34,15 @@ func (e Element) IsExtractable() bool {
 		e.Height() >= componentLevels &&
 		!slices.Contains(tableBound, strings.ToLower(e.Tag()))
 }
+
+// HoldsView says whether the element renders a whole view: it, or an element below it, could stand as a component
+// of its own. A <template> renders only what it holds, so it is never the view itself.
+func (e Element) HoldsView() bool {
+	for _, candidate := range append([]Element{e}, e.DescendantElements()...) {
+		if !candidate.IsTemplate() && candidate.IsExtractable() {
+			return true
+		}
+	}
+
+	return false
+}

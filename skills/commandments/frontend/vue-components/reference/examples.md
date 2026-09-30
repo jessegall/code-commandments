@@ -1,4 +1,4 @@
-# Vue components — extract repetition and deep reaches — worked examples
+# Vue components — extract repetition, deep reaches and dispatched views — worked examples
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
@@ -175,6 +175,73 @@ Identical markup (3+ elements) repeated 2+ times — within a template or across
     <p class="review-body">{{ review.body }}</p>
   </article>
 </template>
+```
+
+### inline-case-views
+
+A dispatch whose cases each render a whole view inline — one component doing a job per case
+
+```vue
+----------[ Bad ]----------
+
+<SwitchCase :value="shipment.stage">
+  <template #packing>
+    <section class="stage">
+      <h3>Packing</h3>
+      <ul class="parcels">
+        <template v-for="parcel in shipment.parcels" :key="parcel.id">
+          <li>
+            <span class="label">{{ parcel.label }}</span>
+            <span class="kilos">{{ parcel.kilos }} kg</span>
+          </li>
+        </template>
+      </ul>
+      <p class="note">Packed by {{ shipment.packer }}</p>
+    </section>
+  </template>
+  <template #in_transit>
+    <article class="transit">
+      <header>
+        <strong>{{ shipment.carrier }}</strong>
+        <time>{{ shipment.eta }}</time>
+      </header>
+      <ol class="stops">
+        <template v-for="stop in shipment.stops" :key="stop">
+          <li><em>{{ stop }}</em></li>
+        </template>
+      </ol>
+    </article>
+  </template>
+  <template #default>
+    <p>Delivered</p>
+  </template>
+</SwitchCase>
+
+----------[ Good ]----------
+
+<!-- in ShipmentTracker.vue -->
+<SwitchCase :value="shipment.stage">
+  <template #packing><ShipmentPacking :parcels="shipment.parcels" :packer="shipment.packer" /></template>
+  <template #in_transit><ShipmentInTransit :carrier="shipment.carrier" :eta="shipment.eta" :stops="shipment.stops" /></template>
+  <template #default><p>Delivered</p></template>
+</SwitchCase>
+
+<!-- in ShipmentPacking.vue -->
+<section class="packing">
+  <h3>Packing</h3>
+  <template v-for="parcel in parcels" :key="parcel.id">
+    <p class="parcel"><span>{{ parcel.label }}</span> <span>{{ parcel.kilos }} kg</span></p>
+  </template>
+  <footer>Packed by {{ packer }}</footer>
+</section>
+
+<!-- in ShipmentInTransit.vue -->
+<article class="in-transit">
+  <h4>{{ carrier }}, arriving <time>{{ eta }}</time></h4>
+  <template v-for="stop in stops" :key="stop">
+    <span class="stop">{{ stop }}</span>
+  </template>
+</article>
 ```
 
 ### near-duplicate-element

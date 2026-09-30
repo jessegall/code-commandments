@@ -13,3 +13,9 @@ mid-chain: look back **up** to the natural boundary — the top of the wrapper s
 — and lift THAT. Name it for what it is: `{Item}List` / `{Item}ListItem` for a list, `{Object}Section` for a
 panel, the compound's purpose (`PairReaderDialog`) for an inline primitive. The point is always one coherent
 unit out, props in.
+
+When a template **dispatches** — a `<SwitchCase>` on a value, or a `v-if` chain re-testing one subject — and
+two or more of its cases each render a whole view inline, the component is doing one job per case. Give each
+such case its own component, named for the case, and let the dispatch only pick one:
+`<template #packing><ShipmentPacking :parcels="shipment.parcels" :packer="shipment.packer" /></template>`.
+A case that renders a line or a single element stays inline; only a case that is a view of its own leaves.

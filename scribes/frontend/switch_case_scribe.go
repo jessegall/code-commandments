@@ -60,5 +60,5 @@ func switchCase(chain vue.SwitchCaseChain, span engine.Span) string {
 		slots = append(slots, indent+"    <template #"+branch.Slot()+">"+stripped+"</template>")
 	}
 
-	return "<SwitchCase :value=\"" + chain.Subject + "\">\n" + strings.Join(slots, "\n") + "\n" + indent + "</SwitchCase>"
+	return "<" + vue.SwitchCaseTag + " :value=\"" + chain.Subject + "\">\n" + strings.Join(slots, "\n") + "\n" + indent + "</" + vue.SwitchCaseTag + ">"
 }

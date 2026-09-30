@@ -8,6 +8,9 @@ import (
 // switchCases is how many equality branches a chain needs before it is a dispatch on one value.
 const switchCases = 2
 
+// SwitchCaseTag is the tag of the published <SwitchCase>, which renders the one slot its value names.
+const SwitchCaseTag = "SwitchCase"
+
 // EqualityTest is a condition that tests one subject against a literal: status === 'paid'.
 type EqualityTest struct {
 	Subject string
@@ -94,4 +97,44 @@ func equality(directive Directive) (EqualityTest, bool) {
 	}
 
 	return EqualityTest{Subject: subject.Source(), Key: key.LiteralValue()}, true
+}
+
+// IsSwitchCase says whether the element is the published <SwitchCase>.
+func (e Element) IsSwitchCase() bool {
+	return e.Tag() == SwitchCaseTag
+}
+
+// IsDispatch says whether the element is one decision on a value: a <SwitchCase>, or the head of a chain of
+// conditionals re-testing one subject.
+func (e Element) IsDispatch() bool {
+	return e.IsSwitchCase() || e.HeadsSwitchCase()
+}
+
+// Cases is each case a dispatch renders: a <SwitchCase>'s slots, or a chain's branches; none for any other element.
+func (e Element) Cases() []Element {
+	if e.IsSwitchCase() {
+		return e.Elements()
+	}
+	chain, ok := e.SwitchCaseChain()
+	if !ok {
+		return nil
+	}
+	cases := make([]Element, 0, len(chain.Branches))
+	for _, branch := range chain.Branches {
+		cases = append(cases, branch.Element)
+	}
+
+	return cases
+}
+
+// ViewCases is the cases of a dispatch that each render a whole view.
+func (e Element) ViewCases() []Element {
+	var views []Element
+	for _, dispatched := range e.Cases() {
+		if dispatched.HoldsView() {
+			views = append(views, dispatched)
+		}
+	}
+
+	return views
 }

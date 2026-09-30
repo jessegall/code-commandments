@@ -1,0 +1,6 @@
+# The frontend fixture: the findings only one tool makes, each with its cause. The PHP half was recorded before the
+# PHP tool was retired, so a rule or a fixture file written since has no PHP finding to match.
+only Go: components/MediaPreview.vue:7 InlineCaseViews  # a rule written after the PHP tool was retired
+only Go: components/RefundWizard.vue:12 InlineCaseViews  # a rule written after the PHP tool was retired
+only Go: components/ShipmentTracker.vue:7 InlineCaseViews  # a rule written after the PHP tool was retired
+only Go: components/RefundWizard.vue:12 SwitchCase  # a fixture file written after the PHP tool was retired

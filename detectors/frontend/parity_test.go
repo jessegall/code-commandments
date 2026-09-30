@@ -25,10 +25,11 @@ func TestTheGoDetectorsFindWhatThePHPOnesFind(t *testing.T) {
 }
 
 // TestTheGoDetectorsFindWhatThePHPOnesFoundInTheFixture compares both tools over the frontend fixture, against the
-// PHP findings kept in testdata/fixture.findings: a committed half that needs no PHP to read back.
+// PHP findings kept in testdata/fixture.findings: a committed half that needs no PHP to read back. What only one
+// tool finds is written down with its cause in testdata/fixture.accounted.
 func TestTheGoDetectorsFindWhatThePHPOnesFoundInTheFixture(t *testing.T) {
 	t.Setenv("COMMANDMENTS_PARITY", "../../tests/Fixtures/frontend")
 	t.Setenv("COMMANDMENTS_PARITY_FINDINGS", "testdata/fixture.findings")
-	t.Setenv("COMMANDMENTS_PARITY_ACCOUNTED", "")
+	t.Setenv("COMMANDMENTS_PARITY_ACCOUNTED", "testdata/fixture.accounted")
 	paritytest.Compare(t, []catalog.Engine{catalog.Frontend, catalog.TypeScript}, served)
 }

@@ -77,6 +77,42 @@ func TestAChainReTestingOneSubjectIsASwitchCase(t *testing.T) {
 	}
 }
 
+// TestADispatchKnowsWhichCasesRenderAView holds a dispatch to its cases: a <SwitchCase>'s slots and a chain's
+// branches, and among them only those holding a subtree that could be a component of its own.
+func TestADispatchKnowsWhichCasesRenderAView(t *testing.T) {
+	view := `<section><h3>t</h3><ul><li><b>a</b></li><li><i>b</i></li></ul></section>`
+	codebase := frontendtest.FromSource(t, map[string]string{"Cases.vue": `<template>
+  <SwitchCase :value="kind">
+    <template #big>` + view + `</template>
+    <template #small><p>x</p></template>
+    <template #default><Other /></template>
+  </SwitchCase>
+  <template v-if="step === 'a'">` + view + `</template>
+  <template v-else-if="step === 'b'"><p>y</p></template>
+  <Layout><template #main>` + view + `</template></Layout>
+</template>`})
+	switchCase := vue.Of(frontendtest.Named(t, codebase, "Element", "SwitchCase"))
+	if !switchCase.IsDispatch() || len(switchCase.Cases()) != 3 || len(switchCase.ViewCases()) != 1 {
+		t.Errorf("the SwitchCase dispatches %d cases, %d of them views", len(switchCase.Cases()), len(switchCase.ViewCases()))
+	}
+	var chain vue.Element
+	for _, element := range vue.In(codebase).WhereElement().Get() {
+		if vue.Of(element).Has(vue.If) {
+			chain = vue.Of(element)
+		}
+	}
+	if !chain.IsDispatch() || len(chain.Cases()) != 2 || len(chain.ViewCases()) != 1 {
+		t.Errorf("the chain dispatches %d cases, %d of them views", len(chain.Cases()), len(chain.ViewCases()))
+	}
+	layout := vue.Of(frontendtest.Named(t, codebase, "Element", "Layout"))
+	if layout.IsDispatch() || len(layout.Cases()) != 0 {
+		t.Error("a layout's named slots are taken for a dispatch")
+	}
+	if !layout.HoldsView() || vue.Of(frontendtest.Named(t, codebase, "Element", "Other")).HoldsView() {
+		t.Error("a view is not told from a lone component")
+	}
+}
+
 func TestAFingerprintIgnoresFormattingAndAShapeIgnoresValues(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"List.vue": `<template>
   <div>
