@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.48.3",
+    "version": "1.49.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.149.0",
@@ -36,7 +36,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v5.2.3"
+        "COMMANDMENTS_RELEASE": "v5.3.0"
     },
     "setup": [
         {
@@ -2420,6 +2420,19 @@
         "sin_duplicate-element": {
             "title": "DuplicateElement",
             "help": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component",
+            "type": "flag",
+            "default": "true",
+            "group": "frontend/vue-components",
+            "when": [
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_inline-case-views": {
+            "title": "InlineCaseViews",
+            "help": "A dispatch whose cases each render a whole view inline — one component doing a job per case",
             "type": "flag",
             "default": "true",
             "group": "frontend/vue-components",
