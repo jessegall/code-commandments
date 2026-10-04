@@ -7,6 +7,7 @@ namespace CodeCommandments\PhpBridge;
 use PhpParser\ErrorHandler\Collecting;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
+use PhpParser\Parser;
 use PhpParser\ParserFactory;
 
 /**
@@ -33,8 +34,9 @@ final readonly class Stream
         ]]);
         $referenced = [];
         $declared = [];
+        $parser = (new ParserFactory())->createForNewestSupportedVersion();
         foreach ($files as $path) {
-            $file = $this->parsed($path);
+            $file = $this->parsed($path, $parser);
             $this->line($out, ['file' => $file]);
             $referenced += $file->writer->referenced;
             $declared += $file->writer->declared;
@@ -47,11 +49,10 @@ final readonly class Stream
         $this->line($out, ['trailer' => ['files' => count($files)]]);
     }
 
-    private function parsed(string $path): ParsedFile
+    private function parsed(string $path, Parser $parser): ParsedFile
     {
         $code = $this->request->contents[$path] ?? file_get_contents($path);
         $errors = new Collecting();
-        $parser = (new ParserFactory())->createForNewestSupportedVersion();
         $statements = $parser->parse($code, $errors) ?? [];
         $statements = (new NodeTraverser(new NameResolver($errors)))->traverse($statements);
         $writer = new TreeWriter($code);

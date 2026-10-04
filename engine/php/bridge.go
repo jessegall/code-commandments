@@ -25,7 +25,12 @@ func Here() Bridge {
 	return Bridge{Sources: bridge.PHP, PHP: "php"}
 }
 
-// Command is the command that runs the bridge: the PHP found on PATH, and the script written out of the binary.
+// quiet are the settings the bridge runs under: a coverage or debugging extension the user's PHP loads, pcov or
+// Xdebug, instruments every call the parse makes and has nothing to record, and a PHP without one ignores them.
+var quiet = []string{"-d", "pcov.enabled=0", "-d", "xdebug.mode=off"}
+
+// Command is the command that runs the bridge: the PHP found on PATH, quieted, and the script written out of the
+// binary.
 func (b Bridge) Command() ([]string, error) {
 	php, err := exec.LookPath(b.PHP)
 	if err != nil {
@@ -36,7 +41,7 @@ func (b Bridge) Command() ([]string, error) {
 		return nil, err
 	}
 
-	return []string{php, filepath.Join(folder, "bridge.php")}, nil
+	return append(append([]string{php}, quiet...), filepath.Join(folder, "bridge.php")), nil
 }
 
 // Stream is the stream the bridge writes for its arguments: paths, and any of its flags.

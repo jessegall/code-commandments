@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace CodeCommandments\PhpBridge;
 
-use Closure;
 use PhpParser\ErrorHandler\Collecting;
 use PhpParser\Modifiers;
 use PhpParser\Node;
@@ -43,6 +42,16 @@ final class TreeWriter
      * @var array<int, true> the offsets a zero-width node stands at
      */
     private array $emptyStatements = [];
+
+    /**
+     * @var array<int, int>|null
+     */
+    private ?array $starting = null;
+
+    /**
+     * @var array<int, int>|null
+     */
+    private ?array $ending = null;
 
     public function __construct(private readonly string $code) {}
 
@@ -125,7 +134,8 @@ final class TreeWriter
             $this->emptyStatements[$start] = true;
         }
         $out = ['id' => $id, 'kind' => $node->getType(), 'role' => $this->role($node, $field, $parent)];
-        $is = $this->neutral($node);
+        $literal = $this->literal($node);
+        $is = $this->neutral($node, $literal);
         if ($is !== []) {
             $out['is'] = $is;
         }
@@ -134,7 +144,7 @@ final class TreeWriter
         if ($node instanceof Node\Stmt\ClassLike) {
             $class = $node->namespacedName?->toString();
         }
-        $out += $this->facts($node, $parent, $class);
+        $out += $this->facts($node, $parent, $class, $literal);
         $children = [];
         foreach ($node->getSubNodeNames() as $name) {
             $value = $node->$name;
@@ -165,49 +175,92 @@ final class TreeWriter
     }
 
     /**
+     * @param array<string, mixed> $literal the node's literal facts, as literal() gives them
+     *
      * @return list<string>
      */
-    private function neutral(Node $node): array
+    private function neutral(Node $node, array $literal): array
     {
-        $answers = [
-            'function' => $node instanceof Node\FunctionLike && ! ($node instanceof Node\Stmt\ClassMethod && $node->stmts === null),
-            'type-declaration' => $node instanceof Node\Stmt\ClassLike,
-            'parameter' => $node instanceof Node\Param,
-            'branch' => $node instanceof Node\Stmt\If_ || $node instanceof Node\Stmt\ElseIf_ || $node instanceof Node\Stmt\Switch_
-                || $node instanceof Node\Expr\Match_ || $node instanceof Node\Expr\Ternary,
-            'loop' => $node instanceof Node\Stmt\For_ || $node instanceof Node\Stmt\Foreach_ || $node instanceof Node\Stmt\While_ || $node instanceof Node\Stmt\Do_,
-            'return' => $node instanceof Node\Stmt\Return_,
-            'throw' => $node instanceof Node\Expr\Throw_,
-            'bail-out' => $node instanceof Node\Stmt\Return_ || $node instanceof Node\Stmt\Break_ || $node instanceof Node\Stmt\Continue_
-                || ($node instanceof Node\Stmt\Expression && $node->expr instanceof Node\Expr\Throw_),
-            'expression-statement' => $node instanceof Node\Stmt\Expression,
-            'call' => $node instanceof Node\Expr\MethodCall || $node instanceof Node\Expr\NullsafeMethodCall || $node instanceof Node\Expr\StaticCall || $node instanceof Node\Expr\FuncCall,
-            'construction' => $node instanceof Node\Expr\New_,
-            'member-access' => $node instanceof Node\Expr\PropertyFetch || $node instanceof Node\Expr\NullsafePropertyFetch || $node instanceof Node\Expr\StaticPropertyFetch || $node instanceof Node\Expr\ClassConstFetch,
-            'null-safe' => $node instanceof Node\Expr\NullsafeMethodCall || $node instanceof Node\Expr\NullsafePropertyFetch,
-            'self-reference' => ($node instanceof Node\Expr\Variable && $node->name === 'this')
-                || ($node instanceof Node\Name && $node->isSpecialClassName()),
-            'identifier' => $node instanceof Node\Expr\Variable && $node->name !== 'this',
-            'assignment' => $node instanceof Node\Expr\Assign || $node instanceof Node\Expr\AssignOp || $node instanceof Node\Expr\AssignRef,
-            'comparison' => $node instanceof Node\Expr\BinaryOp\Identical || $node instanceof Node\Expr\BinaryOp\NotIdentical || $node instanceof Node\Expr\BinaryOp\Equal
-                || $node instanceof Node\Expr\BinaryOp\NotEqual || $node instanceof Node\Expr\BinaryOp\Smaller || $node instanceof Node\Expr\BinaryOp\Greater
-                || $node instanceof Node\Expr\BinaryOp\SmallerOrEqual || $node instanceof Node\Expr\BinaryOp\GreaterOrEqual,
-            'literal' => $node instanceof Node\Scalar || $this->literal($node) !== [],
-            'import' => $node instanceof Node\Stmt\Use_ || $node instanceof Node\Stmt\GroupUse,
-            'catch' => $node instanceof Node\Stmt\Catch_,
-        ];
+        $is = [];
+        if ($node instanceof Node\FunctionLike && ! ($node instanceof Node\Stmt\ClassMethod && $node->stmts === null)) {
+            $is[] = 'function';
+        }
+        if ($node instanceof Node\Stmt\ClassLike) {
+            $is[] = 'type-declaration';
+        }
+        if ($node instanceof Node\Param) {
+            $is[] = 'parameter';
+        }
+        if ($node instanceof Node\Stmt\If_ || $node instanceof Node\Stmt\ElseIf_ || $node instanceof Node\Stmt\Switch_
+            || $node instanceof Node\Expr\Match_ || $node instanceof Node\Expr\Ternary) {
+            $is[] = 'branch';
+        }
+        if ($node instanceof Node\Stmt\For_ || $node instanceof Node\Stmt\Foreach_ || $node instanceof Node\Stmt\While_ || $node instanceof Node\Stmt\Do_) {
+            $is[] = 'loop';
+        }
+        if ($node instanceof Node\Stmt\Return_) {
+            $is[] = 'return';
+        }
+        if ($node instanceof Node\Expr\Throw_) {
+            $is[] = 'throw';
+        }
+        if ($node instanceof Node\Stmt\Return_ || $node instanceof Node\Stmt\Break_ || $node instanceof Node\Stmt\Continue_
+            || ($node instanceof Node\Stmt\Expression && $node->expr instanceof Node\Expr\Throw_)) {
+            $is[] = 'bail-out';
+        }
+        if ($node instanceof Node\Stmt\Expression) {
+            $is[] = 'expression-statement';
+        }
+        if ($node instanceof Node\Expr\MethodCall || $node instanceof Node\Expr\NullsafeMethodCall || $node instanceof Node\Expr\StaticCall || $node instanceof Node\Expr\FuncCall) {
+            $is[] = 'call';
+        }
+        if ($node instanceof Node\Expr\New_) {
+            $is[] = 'construction';
+        }
+        if ($node instanceof Node\Expr\PropertyFetch || $node instanceof Node\Expr\NullsafePropertyFetch || $node instanceof Node\Expr\StaticPropertyFetch || $node instanceof Node\Expr\ClassConstFetch) {
+            $is[] = 'member-access';
+        }
+        if ($node instanceof Node\Expr\NullsafeMethodCall || $node instanceof Node\Expr\NullsafePropertyFetch) {
+            $is[] = 'null-safe';
+        }
+        if (($node instanceof Node\Expr\Variable && $node->name === 'this') || ($node instanceof Node\Name && $node->isSpecialClassName())) {
+            $is[] = 'self-reference';
+        }
+        if ($node instanceof Node\Expr\Variable && $node->name !== 'this') {
+            $is[] = 'identifier';
+        }
+        if ($node instanceof Node\Expr\Assign || $node instanceof Node\Expr\AssignOp || $node instanceof Node\Expr\AssignRef) {
+            $is[] = 'assignment';
+        }
+        if ($node instanceof Node\Expr\BinaryOp\Identical || $node instanceof Node\Expr\BinaryOp\NotIdentical || $node instanceof Node\Expr\BinaryOp\Equal
+            || $node instanceof Node\Expr\BinaryOp\NotEqual || $node instanceof Node\Expr\BinaryOp\Smaller || $node instanceof Node\Expr\BinaryOp\Greater
+            || $node instanceof Node\Expr\BinaryOp\SmallerOrEqual || $node instanceof Node\Expr\BinaryOp\GreaterOrEqual) {
+            $is[] = 'comparison';
+        }
+        if ($node instanceof Node\Scalar || $literal !== []) {
+            $is[] = 'literal';
+        }
+        if ($node instanceof Node\Stmt\Use_ || $node instanceof Node\Stmt\GroupUse) {
+            $is[] = 'import';
+        }
+        if ($node instanceof Node\Stmt\Catch_) {
+            $is[] = 'catch';
+        }
 
-        return array_keys(array_filter($answers));
+        return $is;
     }
 
-    private function facts(Node $node, ?Node $parent, ?string $class): array
+    /**
+     * @param array<string, mixed> $literal the node's literal facts, as literal() gives them
+     */
+    private function facts(Node $node, ?Node $parent, ?string $class, array $literal): array
     {
         $facts = [];
         $name = $this->nameOf($node);
         if ($name !== null) {
             $facts['name'] = $name;
         }
-        $facts += $this->literal($node);
+        $facts += $literal;
         $operator = $this->operator($node);
         if ($operator !== null) {
             $facts['operator'] = $operator;
@@ -321,6 +374,9 @@ final class TreeWriter
             $node instanceof Node\Expr\Closure, $node instanceof Node\Expr\ArrowFunction => $node->static ? Modifiers::STATIC : 0,
             default => 0,
         };
+        if ($flags === 0) {
+            return [];
+        }
         $order = [Modifiers::PUBLIC, Modifiers::PROTECTED, Modifiers::PRIVATE, Modifiers::PUBLIC_SET, Modifiers::PROTECTED_SET,
             Modifiers::PRIVATE_SET, Modifiers::STATIC, Modifiers::ABSTRACT, Modifiers::FINAL, Modifiers::READONLY];
 
@@ -493,12 +549,10 @@ final class TreeWriter
 
     private function attachment(int $start, int $end): Attachment
     {
-        $lineStart = strrpos(substr($this->code, 0, $start), "\n");
+        $lineStart = $start === 0 ? false : strrpos($this->code, "\n", $start - 1 - strlen($this->code));
         $lineStart = $lineStart === false ? 0 : $lineStart + 1;
         if (trim(substr($this->code, $lineStart, $start - $lineStart)) !== '') {
-            $owner = $this->outermost(fn (NodeSpan $span): bool => $span->id !== 0 && $span->end <= $start && $span->end > $lineStart);
-
-            return new Attachment($owner, true);
+            return new Attachment($this->firstEndingWithin($lineStart, $start), true);
         }
         // A comment closing its block belongs to the empty statement php-parser stands at the end of the block's last comment.
         $next = $end;
@@ -511,9 +565,7 @@ final class TreeWriter
             }
             $next = $this->commentEnds[$after];
         }
-        $owner = $this->outermost(fn (NodeSpan $span): bool => $span->id !== 0 && $span->start === $next);
-
-        return new Attachment($owner, false);
+        return new Attachment($this->firstStartingAt()[$next] ?? null, false);
     }
 
     private function emptyStatementAt(int $at): bool
@@ -521,14 +573,58 @@ final class TreeWriter
         return isset($this->emptyStatements[$at]);
     }
 
-    private function outermost(Closure $matches): ?int
+    /**
+     * The first node, in the order the tree was written, that ends after `$after` and no later than `$until`: the
+     * outermost node a comment trails on its line.
+     */
+    private function firstEndingWithin(int $after, int $until): ?int
     {
-        foreach ($this->spans as $span) {
-            if ($matches($span)) {
-                return $span->id;
+        $ending = $this->firstEndingAt();
+        $first = null;
+        for ($at = $after + 1; $at <= $until; $at++) {
+            if (isset($ending[$at]) && ($first === null || $ending[$at] < $first)) {
+                $first = $ending[$at];
             }
         }
 
-        return null;
+        return $first;
+    }
+
+    /**
+     * The first node, in the order the tree was written, to start at each offset, the file's root left out.
+     *
+     * @return array<int, int>
+     */
+    private function firstStartingAt(): array
+    {
+        if ($this->starting === null) {
+            $this->starting = [];
+            foreach ($this->spans as $span) {
+                if ($span->id !== 0 && ! isset($this->starting[$span->start])) {
+                    $this->starting[$span->start] = $span->id;
+                }
+            }
+        }
+
+        return $this->starting;
+    }
+
+    /**
+     * The first node, in the order the tree was written, to end at each offset, the file's root left out.
+     *
+     * @return array<int, int>
+     */
+    private function firstEndingAt(): array
+    {
+        if ($this->ending === null) {
+            $this->ending = [];
+            foreach ($this->spans as $span) {
+                if ($span->id !== 0 && ! isset($this->ending[$span->end])) {
+                    $this->ending[$span->end] = $span->id;
+                }
+            }
+        }
+
+        return $this->ending;
     }
 }

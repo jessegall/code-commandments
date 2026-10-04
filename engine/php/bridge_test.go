@@ -305,7 +305,7 @@ func TestAProbeForAClassTheParserLacksIsNoFailure(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	loader := filepath.Join(filepath.Dir(command[1]), "parser", "autoload.php")
+	loader := filepath.Join(filepath.Dir(command[len(command)-1]), "parser", "autoload.php")
 	out, err := exec.Command("php", "-r", `require $argv[1]; var_dump(class_exists('PhpParser\Node\Stmt\Throw_'));`, loader).CombinedOutput()
 	if err != nil || strings.TrimSpace(string(out)) != "bool(false)" {
 		t.Errorf("the probe answered %q (%v)", out, err)
