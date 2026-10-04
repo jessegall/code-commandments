@@ -6,7 +6,7 @@ exit: 0
 --- files
 === created .commandments/sessions/640d8/.authored-files
 -----
-lib/Order.php
+<project>/lib/Order.php
 -----
 Code-commandments — the judged files this session changed, so the judge reminder counts only its own.
 

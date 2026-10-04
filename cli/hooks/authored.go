@@ -37,8 +37,12 @@ func AuthoredIn(space workspace.Workspace) Authored {
 	return Authored{state.At(space.Path(".authored-files"), authoredLegend), state.At(space.Path(".authored-stamps"), stampsLegend)}
 }
 
-// Wrote records a file a writer tool changed.
-func (a Authored) Wrote(file string) {
+// Wrote records a file a writer tool changed, a relative path read from root.
+func (a Authored) Wrote(root, file string) {
+	if !filepath.IsAbs(file) {
+		file = filepath.Join(root, file)
+	}
+
 	if resolved, err := filepath.EvalSymlinks(file); err == nil {
 		a.add([]string{resolved})
 	}

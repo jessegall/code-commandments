@@ -7,7 +7,6 @@ exit: 0
 --- files
 === changed .commandments/sessions/640d8/.authored-files
 -----
-src/Clean.php
 <project>/src/Clean.php
 <project>/src/Order.php
 -----

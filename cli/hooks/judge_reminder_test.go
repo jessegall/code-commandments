@@ -30,7 +30,7 @@ func TestTheJudgeReminderCountsOnlyTheFilesTheSessionChanged(t *testing.T) {
 
 	mine := filepath.Join(root, "src", "Mine.php")
 	os.WriteFile(mine, []byte("<?php\n"), 0o666)
-	JudgeReminder{}.Handle(NewEvent(map[string]any{"hook_event_name": "PostToolUse", "session_id": "writer", "tool_name": "Write", "tool_input": map[string]any{"file_path": mine}}, root))
+	JudgeReminder{}.Handle(NewEvent(map[string]any{"hook_event_name": "PostToolUse", "session_id": "writer", "tool_name": "Write", "tool_input": map[string]any{"file_path": "src/Mine.php"}}, root))
 
 	shell := map[string]any{"session_id": "writer", "tool_name": "Bash", "tool_input": map[string]any{"command": "sed -i x src/Shell.php"}}
 	JudgeReminder{}.Handle(NewEvent(with(shell, "PreToolUse"), root))
