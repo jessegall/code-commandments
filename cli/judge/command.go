@@ -187,7 +187,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	judgement.Findings = keep(asWalked(judgement.Findings, sources.GivenOf()), options.exclude, targets)
 
 	if space.IsJournalDriven() {
-		if err := dashboard.Record(space, judgement.Findings, targets.Files()); err != nil {
+		if err := dashboard.Record(space, judgement.Findings, judgedPaths(targets, sources)); err != nil {
 			return 0, err
 		}
 	}
@@ -342,6 +342,21 @@ func sourceRoots(options options) ([]string, error) {
 	}
 
 	return config.DeclaredRoots(options.path)
+}
+
+// judgedPaths is each file the run judged, by its absolute real path: its scope's files, or every file it walked.
+func judgedPaths(targets scope.Scope, sources scan.Sources) map[string]bool {
+	if files := targets.Files(); files != nil {
+		return files
+	}
+
+	walked := map[string]bool{}
+
+	for file := range sources.GivenOf() {
+		walked[file] = true
+	}
+
+	return walked
 }
 
 // asWalked names every finding's file, location and twins by the path its file was walked as.

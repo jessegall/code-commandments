@@ -54,14 +54,15 @@ func StoredOf(finding engine.Finding, root string) Stored {
 	return Stored{finding.Sin, finding.Skill, path, file, line, finding.Scope}
 }
 
-// Record keeps the run's findings: every finding in a file this run judged is replaced, the rest kept, and
-// the dashboard is drawn again. judged is nil for an unscoped run, which replaces everything.
+// Record keeps the run's findings: every finding in a file this run judged is replaced, the rest kept while their
+// file is still there, and the dashboard is drawn again. judged is each file the run judged, by its absolute real
+// path; nil replaces everything.
 func Record(space workspace.Workspace, findings []engine.Finding, judged map[string]bool) error {
 	var all []Stored
 
 	if judged != nil {
 		for _, stored := range storedIn(space) {
-			if !judged[stored.Path] {
+			if !judged[stored.Path] && exists(stored.Path) {
 				all = append(all, stored)
 			}
 		}
@@ -90,6 +91,13 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 	}
 
 	return atomic.Write(space.Cache(File), dashboard)
+}
+
+// exists says whether the file a stored finding is in is still there.
+func exists(path string) bool {
+	_, err := os.Stat(path)
+
+	return err == nil
 }
 
 func storedIn(space workspace.Workspace) []Stored {
