@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/state"
@@ -19,11 +20,17 @@ var authoredLegend = &state.Legend{
 	Safe:  "the reminder stays silent until the session changes a judged file again",
 }
 
-// stampsLegend says what the stamps taken before a shell command are.
+// tick is how far before a command's start a file's time may fall and still be its own: a filesystem stamps a write
+// from a coarse clock, so a file written just after the precise start can read a moment earlier.
+const tick = 20 * time.Millisecond
+
+// stampsLegend says what is taken as a shell command starts.
 var stampsLegend = &state.Legend{
-	About: "Code-commandments — the changed judged files and their times when the session's last shell command started.",
-	List:  "a file path, a tab, then its modification time in nanoseconds",
-	Safe:  "the next shell command's changes are not counted as the session's",
+	About:     "Code-commandments — when the session's last shell command started, and the changed judged files and their times then.",
+	Variables: []state.Variable{{Name: "started_at", Meaning: "unix nanoseconds when the hook was handed the command; a changed file modified since is one it wrote"}},
+	Defaults:  state.New(state.Int("started_at", 0)),
+	List:      "a file path, a tab, then its modification time in nanoseconds",
+	Safe:      "the next shell command's changes are not counted as the session's",
 }
 
 // Authored are the judged files a session changed since the tree was last clean.
@@ -48,22 +55,27 @@ func (a Authored) Wrote(root, file string) {
 	}
 }
 
-// Before takes the times of the changed files as a shell command starts.
-func (a Authored) Before(root string) {
+// Before takes a shell command's start: when the hook was handed it, and the changed files and their times. Under
+// the journal this runs off the hook's path, often after a quick command has written, so the start time is what
+// tells such a write from what came before.
+func (a Authored) Before(started time.Time, root string) {
 	var lines []string
 
 	for file := range git.Status(root).Changed {
 		lines = append(lines, file+"\t"+strconv.FormatInt(modified(file), 10))
 	}
 
-	a.stamps.Write(a.stamps.Read().WithItems(lines))
+	a.stamps.Write(a.stamps.Read().With(state.Int("started_at", int(started.UnixNano()))).WithItems(lines))
 }
 
-// After records the changed files the shell command wrote: new since it started, or written again.
+// After records the changed files the shell command wrote: each modified since it started, or new or written again
+// since its stamps were taken, which also catches a write that keeps an older time (tar, cp -p, touch -t).
 func (a Authored) After(root string) {
+	taken := a.stamps.Read()
+	started := int64(taken.Int("started_at", 0))
 	before := map[string]string{}
 
-	for _, line := range a.stamps.Read().Items() {
+	for _, line := range taken.Items() {
 		file, stamp, _ := strings.Cut(line, "\t")
 		before[file] = stamp
 	}
@@ -71,7 +83,8 @@ func (a Authored) After(root string) {
 	var wrote []string
 
 	for file := range git.Status(root).Changed {
-		if before[file] != strconv.FormatInt(modified(file), 10) {
+		stamp := modified(file)
+		if (started != 0 && stamp >= started-int64(tick)) || before[file] != strconv.FormatInt(stamp, 10) {
 			wrote = append(wrote, file)
 		}
 	}

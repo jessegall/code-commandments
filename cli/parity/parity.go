@@ -340,7 +340,7 @@ var versionRow = regexp.MustCompile("(code-commandments\x1b\\[0m  )\\S+")
 var hashedIdentity = regexp.MustCompile(`"[0-9a-f]{40}":`)
 
 // unixStamp is a state value that holds the moment it was written, in unix seconds.
-var unixStamp = regexp.MustCompile(`(?m)^(marked-at): \d{9,}$`)
+var unixStamp = regexp.MustCompile(`(?m)^(marked-at|started-at): \d{9,}$`)
 
 // normalise replaces what differs between two runs of the same case: where the project and the package
 // live, and the installed version.

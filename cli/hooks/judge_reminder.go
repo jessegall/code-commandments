@@ -43,7 +43,7 @@ func (JudgeReminder) Handle(event Event) Response {
 	switch event.Name() {
 	case "PreToolUse":
 		if !event.IsGitCommit() {
-			AuthoredIn(event.Workspace()).Before(git.Root(event.Root))
+			AuthoredIn(event.Workspace()).Before(event.Received(), git.Root(event.Root))
 
 			return Silent()
 		}

@@ -7,7 +7,9 @@ import (
 	"io"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
@@ -19,6 +21,35 @@ var settledStatuses = []string{"completed", "done", "failed", "cancelled", "canc
 type Event struct {
 	payload map[string]any
 	Root    string
+}
+
+// receivedKey is where a payload carries when the hook was handed it: work done later, off the hook's path, still
+// knows when the moment happened.
+const receivedKey = "commandments_received"
+
+// Stamped is the payload marked with when the hook was handed it, now.
+func Stamped(payload map[string]any) map[string]any {
+	payload[receivedKey] = strconv.FormatInt(time.Now().UnixNano(), 10)
+
+	return payload
+}
+
+// stampOf is when the hook was handed the payload, in unix nanoseconds; zero when it was not stamped.
+func stampOf(payload map[string]any) int64 {
+	stamp, _ := payload[receivedKey].(string)
+	nanoseconds, _ := strconv.ParseInt(stamp, 10, 64)
+
+	return nanoseconds
+}
+
+// Received is when the hook was handed the moment: the stamp it carries, else now, for a hook that runs before
+// the moment goes on.
+func (e Event) Received() time.Time {
+	if stamp := stampOf(e.payload); stamp != 0 {
+		return time.Unix(0, stamp)
+	}
+
+	return time.Now()
 }
 
 // NewEvent is the moment the payload describes, in the project at root.

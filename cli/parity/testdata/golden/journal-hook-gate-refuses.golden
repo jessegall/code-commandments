@@ -6,9 +6,13 @@ exit: 0
 
 --- files
 === created .commandments/sessions/640d8/.authored-stamps
+started-at: <time>
 -----
 -----
-Code-commandments — the changed judged files and their times when the session's last shell command started.
+Code-commandments — when the session's last shell command started, and the changed judged files and their times then.
+
+The block above the first divider is this file's state, one `name: value` per line:
+  started-at  unix nanoseconds when the hook was handed the command; a changed file modified since is one it wrote
 
 Between the dividers is the list: a file path, a tab, then its modification time in nanoseconds
 

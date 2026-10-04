@@ -57,10 +57,12 @@ func (JournalHook) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
+	given = Stamped(given)
 	console.Write(AnswerNow(given).JSON() + "\n")
 
 	if _, queued := QueueFromEnvironment(); queued {
-		adviseDetached(raw)
+		stamped, _ := json.Marshal(given)
+		adviseDetached(stamped)
 	}
 
 	return 0, nil
@@ -315,7 +317,7 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 
 		go func() {
 			line, _ := bufio.NewReader(connection).ReadString('\n')
-			given := payloadOf([]byte(line))
+			given := Stamped(payloadOf([]byte(line)))
 
 			connection.Write([]byte(AnswerNow(given).JSON() + "\n"))
 			connection.Close()

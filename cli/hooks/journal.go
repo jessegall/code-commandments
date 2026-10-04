@@ -3,6 +3,7 @@ package hooks
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -17,6 +18,8 @@ type Moment struct {
 	Event, Cwd                   string
 	Session, Tool, Command, File *string
 	Env                          *string
+	// Received is when the hook was handed the moment, in unix nanoseconds; zero when it was not stamped.
+	Received int64
 }
 
 // MomentOf reads the journal's payload.
@@ -33,13 +36,14 @@ func MomentOf(given map[string]any) Moment {
 	}
 
 	return Moment{
-		Event:   strings.TrimPrefix(event, "hook."),
-		Cwd:     asText(cwd),
-		Session: textOrNil(agent["session"]),
-		Tool:    textOrNil(firstOf(tool["name"], data["tool"])),
-		Command: textOrNil(firstOf(tool["command"], data["command"])),
-		File:    textOrNil(firstOf(tool["file"], data["file"])),
-		Env:     textOrNil(given["env"]),
+		Event:    strings.TrimPrefix(event, "hook."),
+		Cwd:      asText(cwd),
+		Session:  textOrNil(agent["session"]),
+		Tool:     textOrNil(firstOf(tool["name"], data["tool"])),
+		Command:  textOrNil(firstOf(tool["command"], data["command"])),
+		File:     textOrNil(firstOf(tool["file"], data["file"])),
+		Env:      textOrNil(given["env"]),
+		Received: stampOf(given),
 	}
 }
 
@@ -67,6 +71,10 @@ func (m Moment) HookPayload() map[string]any {
 
 	if m.Tool != nil {
 		payload["tool_name"] = *m.Tool
+	}
+
+	if m.Received != 0 {
+		payload[receivedKey] = strconv.FormatInt(m.Received, 10)
 	}
 
 	return payload
