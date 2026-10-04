@@ -20,7 +20,7 @@ func Run(roots []string, scope scribes.Scope, given []detectors.Detector, only s
 		return scribes.Converged{}, err
 	}
 	defer backend.Close()
-	vue, err := serve(frontend.Here().Command, frontend.Over)
+	vue, err := serve(frontend.Here().Cached().Command, frontend.Over)
 	if err != nil {
 		return scribes.Converged{}, err
 	}

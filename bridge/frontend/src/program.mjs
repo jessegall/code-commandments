@@ -35,15 +35,28 @@ export class Program {
         this.renames = renames
         this.virtual = new Map([...scripts].map(([path, text]) => [path + VIRTUAL, text]))
         const root = projectRoot(commonRoot([...sources.keys()]))
+        this.root = root
         this.aliases = aliasesOf(root)
         this.options = this.optionsFor(root)
         this.host = this.hostFor()
-        const names = [...sources.keys()].map((path) => (scripts.has(path) ? path + VIRTUAL : path))
-        this.program = ts.createProgram(names, this.options, this.host)
-        this.checker = this.program.getTypeChecker()
+        this.names = [...sources.keys()].map((path) => (scripts.has(path) ? path + VIRTUAL : path))
         /** Each type the checker gives, as the contract describes it, by origin and depth: one checker, so one description. */
         this.described = new Map()
         this.texts = new Map()
+    }
+
+    /** The TypeScript program over every scanned file, built the first time a file needs it. */
+    get program() {
+        this.built ??= ts.createProgram(this.names, this.options, this.host)
+
+        return this.built
+    }
+
+    /** The program's type checker. */
+    get checker() {
+        this.checking ??= this.program.getTypeChecker()
+
+        return this.checking
     }
 
     /** The type as the checker prints it, whole, printed once: the text is the type's own, wherever it is met. */
@@ -64,6 +77,15 @@ export class Program {
         if (!found) return undefined
 
         return this.shown(resolve(found.resolvedFileName))
+    }
+
+    /** The real file an import specifier reaches from `fileName`, a `.vue` file by its own name; none when it reaches none. */
+    resolveAbsolute(specifier, fileName) {
+        const found = ts.resolveModuleName(specifier, fileName, this.options, this.host, this.resolutions).resolvedModule
+        if (!found) return undefined
+        const real = resolve(found.resolvedFileName)
+
+        return this.virtual.has(real) ? real.slice(0, -VIRTUAL.length) : real
     }
 
     /** A file's name as the stream writes it: its real path, renamed. */

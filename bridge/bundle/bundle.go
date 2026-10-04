@@ -67,7 +67,7 @@ func (b Bundle) Folder() (string, error) {
 		return "", err
 	}
 	sum := sha1.Sum(key)
-	cache, err := cacheFolder()
+	cache, err := CacheFolder()
 	if err != nil {
 		return "", err
 	}
@@ -105,8 +105,8 @@ func (b Bundle) Folder() (string, error) {
 	return folder, nil
 }
 
-// cacheFolder is $XDG_CACHE_HOME, else ~/.cache.
-func cacheFolder() (string, error) {
+// CacheFolder is $XDG_CACHE_HOME, else ~/.cache.
+func CacheFolder() (string, error) {
 	if cache := os.Getenv("XDG_CACHE_HOME"); cache != "" {
 		return cache, nil
 	}

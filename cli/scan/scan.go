@@ -171,7 +171,7 @@ var readers = []reader{
 		return php.Here().Stream(files...)
 	}},
 	{languages: []source.Language{source.Vue, source.TypeScript}, stream: func(_, files []string) (*contract.Stream, error) {
-		return frontend.Here().Stream(files...)
+		return frontend.Here().Cached().Stream(files...)
 	}},
 	{languages: []source.Language{source.CSharp}, stream: csharp, bridgeOrder: true},
 	{languages: []source.Language{source.Python}, stream: func(_, files []string) (*contract.Stream, error) {

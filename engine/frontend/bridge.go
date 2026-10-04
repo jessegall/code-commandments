@@ -12,10 +12,13 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Bridge is bridge/frontend: its built script, and the node that runs it.
+// Bridge is bridge/frontend: its built script, the node that runs it, and the folder it keeps each file's tree in.
 type Bridge struct {
 	Sources bundle.Bundle
 	Node    string
+	// Trees is where the bridge keeps each file's tree between runs, to write again while nothing it was made from
+	// has changed; none when empty.
+	Trees string
 }
 
 // Here is the bridge this binary carries, run by the node on PATH.
@@ -34,7 +37,23 @@ func (b Bridge) Command() ([]string, error) {
 		return nil, err
 	}
 
-	return []string{node, filepath.Join(folder, "bridge.mjs")}, nil
+	command := []string{node, filepath.Join(folder, "bridge.mjs")}
+	if b.Trees != "" {
+		command = append(command, "--cache="+b.Trees)
+	}
+
+	return command, nil
+}
+
+// Cached is the bridge keeping each file's tree in the user's cache folder, beside the bundles written out there.
+func (b Bridge) Cached() Bridge {
+	cache, err := bundle.CacheFolder()
+	if err != nil {
+		return b
+	}
+	b.Trees = filepath.Join(cache, "code-commandments", "trees")
+
+	return b
 }
 
 // Stream is the stream the bridge writes for its arguments: paths, and any of its flags.
