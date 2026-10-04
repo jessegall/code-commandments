@@ -179,23 +179,33 @@ export class TypeScriptWriter {
 
     type(type, origin, depth = 0) {
         const key = `${origin}:${depth}`
-        const known = this.tree.described.get(type)?.get(key)
+        const known = this.program.described.get(type)?.get(key)
         if (known) return known
         const out = this.describe(type, origin, depth)
-        if (!this.tree.described.has(type)) this.tree.described.set(type, new Map())
-        this.tree.described.get(type).set(key, out)
+        if (!this.program.described.has(type)) this.program.described.set(type, new Map())
+        this.program.described.get(type).set(key, out)
 
         return out
     }
 
     /** A type as the contract writes it, described afresh: its text, its shape to TYPE_DEPTH, and where it came from. */
     describe(type, origin, depth) {
-        const out = { text: this.checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation) }
+        const out = { text: this.program.printed(type) }
         Object.assign(out, depth >= TYPE_DEPTH ? { kind: 'opaque' } : this.shape(type, origin, depth + 1))
         if (nullable(type)) out.nullable = true
         out.origin = origin
 
         return out
+    }
+
+    /**
+     * A property's name as the code writes it. A key that is a unique symbol, or a private name, is held by TypeScript
+     * under a name carrying an id of the order it checked in (`__@Marker@37836`), so it is written as the code spells it.
+     */
+    fieldName(property) {
+        const held = String(property.escapedName)
+
+        return held.startsWith('__@') || held.startsWith('__#') ? this.checker.symbolToString(property) : property.getName()
     }
 
     shape(type, origin, depth) {
@@ -230,7 +240,7 @@ export class TypeScriptWriter {
         }
         if (type.objectFlags & ts.ObjectFlags.Anonymous || type.objectFlags & ts.ObjectFlags.Mapped) {
             const fields = type.getProperties().map((property) => {
-                const field = { name: property.getName(), type: this.type(this.checker.getTypeOfSymbol(property), origin, depth) }
+                const field = { name: this.fieldName(property), type: this.type(this.checker.getTypeOfSymbol(property), origin, depth) }
                 if (property.flags & ts.SymbolFlags.Optional) field.optional = true
 
                 return field

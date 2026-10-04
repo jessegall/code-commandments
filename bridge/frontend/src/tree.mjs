@@ -15,7 +15,6 @@ export class Tree {
         this.names = 0
         this.types = []
         this.typeIndexes = new Map()
-        this.described = new Map()
     }
 
     /** The index in the file's `types` of the checker's `type`, described by `describe` the first time the file meets it. */

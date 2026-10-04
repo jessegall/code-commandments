@@ -7,8 +7,14 @@ const CHUNK = 1 << 20
  */
 export function* lineOf(value) {
     let held = ''
-    for (const text of tokens(value, false)) {
-        held += text
+    const pending = [{ item: value, inArray: false }]
+    while (pending.length) {
+        const next = pending.pop()
+        if (typeof next === 'string') {
+            held += next
+        } else {
+            held += written(next.item, next.inArray, pending)
+        }
         if (held.length >= CHUNK) {
             yield held
             held = ''
@@ -17,33 +23,30 @@ export function* lineOf(value) {
     yield held + '\n'
 }
 
-/** The JSON text of `item`, a token at a time; `inArray` says whether an unwritable value stands as `null`. */
-function* tokens(item, inArray) {
-    if (item === undefined || typeof item === 'function' || typeof item === 'symbol') {
-        if (inArray) yield 'null'
-        return
-    }
-    if (item === null || typeof item !== 'object' || typeof item.toJSON === 'function') {
-        yield JSON.stringify(item)
-        return
-    }
+/**
+ * The JSON text `item` opens with, its members left on `pending` to be written after it, last first so they come
+ * off in order; `inArray` says whether an unwritable value stands as `null`. One loop over an explicit stack, where a
+ * generator per level would hand every token up through every level above it.
+ */
+function written(item, inArray, pending) {
+    if (item === undefined || typeof item === 'function' || typeof item === 'symbol') return inArray ? 'null' : ''
+    if (item === null || typeof item !== 'object' || typeof item.toJSON === 'function') return JSON.stringify(item)
     if (Array.isArray(item)) {
-        yield '['
-        for (let at = 0; at < item.length; at++) {
-            if (at) yield ','
-            yield* tokens(item[at], true)
+        pending.push(']')
+        for (let at = item.length - 1; at >= 0; at--) {
+            pending.push({ item: item[at], inArray: true })
+            if (at) pending.push(',')
         }
-        yield ']'
-        return
+
+        return '['
     }
-    yield '{'
-    let first = true
-    for (const [key, each] of Object.entries(item)) {
-        if (each === undefined || typeof each === 'function' || typeof each === 'symbol') continue
-        if (!first) yield ','
-        first = false
-        yield JSON.stringify(key) + ':'
-        yield* tokens(each, false)
+    const entries = Object.entries(item).filter(([, each]) => each !== undefined && typeof each !== 'function' && typeof each !== 'symbol')
+    pending.push('}')
+    for (let at = entries.length - 1; at >= 0; at--) {
+        const [key, each] = entries[at]
+        pending.push({ item: each, inArray: false })
+        pending.push((at ? ',' : '') + JSON.stringify(key) + ':')
     }
-    yield '}'
+
+    return '{'
 }

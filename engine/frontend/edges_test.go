@@ -1,8 +1,10 @@
 package frontend_test
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 )
 
@@ -91,6 +93,47 @@ func TestABrokenSourceKeepsTheContract(t *testing.T) {
 	for _, file := range codebase.Files() {
 		if file.Errors == 0 {
 			t.Errorf("%s parses, so it tests nothing", file.Path)
+		}
+	}
+}
+
+// TestASymbolKeyIsNamedAsTheCodeWritesIt holds a field whose key is a symbol to the name the code spells it with:
+// TypeScript keeps such a key under a name carrying the id of the order it checked in, which no stream may write.
+func TestASymbolKeyIsNamedAsTheCodeWritesIt(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"marked.ts": `
+declare const marker: unique symbol
+export const marked = { [marker]: 1, [Symbol.iterator]: function* () { yield 2 }, plain: 3 }
+export const read = marked
+`})
+	names := map[string]bool{}
+	var collect func(*contract.Type)
+	collect = func(typed *contract.Type) {
+		if typed == nil {
+			return
+		}
+		for _, field := range typed.Fields {
+			names[field.Name] = true
+			collect(field.Type)
+		}
+		for _, each := range append(append(append([]*contract.Type{}, typed.Args...), typed.Members...), typed.Parameters...) {
+			collect(each)
+		}
+		collect(typed.Returns)
+		collect(typed.Element)
+	}
+	for _, file := range codebase.Files() {
+		for _, node := range file.Nodes() {
+			collect(node.Resolved)
+		}
+	}
+	for _, want := range []string{"[marker]", "[Symbol.iterator]", "plain"} {
+		if !names[want] {
+			t.Errorf("no field is named %s among %v", want, names)
+		}
+	}
+	for name := range names {
+		if strings.HasPrefix(name, "__@") || strings.HasPrefix(name, "__#") {
+			t.Errorf("a field is named by the checker's order: %s", name)
 		}
 	}
 }

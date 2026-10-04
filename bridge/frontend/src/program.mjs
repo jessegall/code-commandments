@@ -41,6 +41,16 @@ export class Program {
         const names = [...sources.keys()].map((path) => (scripts.has(path) ? path + VIRTUAL : path))
         this.program = ts.createProgram(names, this.options, this.host)
         this.checker = this.program.getTypeChecker()
+        /** Each type the checker gives, as the contract describes it, by origin and depth: one checker, so one description. */
+        this.described = new Map()
+        this.texts = new Map()
+    }
+
+    /** The type as the checker prints it, whole, printed once: the text is the type's own, wherever it is met. */
+    printed(type) {
+        if (!this.texts.has(type)) this.texts.set(type, this.checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation))
+
+        return this.texts.get(type)
     }
 
     /** The source file TypeScript checked for a scanned path. */
@@ -50,7 +60,7 @@ export class Program {
 
     /** The absolute file an import specifier reaches from `fileName`, as the stream names it. */
     resolve(specifier, fileName) {
-        const found = ts.resolveModuleName(specifier, fileName, this.options, this.host).resolvedModule
+        const found = ts.resolveModuleName(specifier, fileName, this.options, this.host, this.resolutions).resolvedModule
         if (!found) return undefined
 
         return this.shown(resolve(found.resolvedFileName))
@@ -101,9 +111,12 @@ export class Program {
 
     hostFor() {
         const host = ts.createCompilerHost(this.options, true)
-        const { fileExists, readFile, getSourceFile } = host
+        const { fileExists, readFile, getSourceFile, directoryExists } = host
         const text = (name) => this.virtual.get(name) ?? this.unscanned(name) ?? (name.endsWith('.vue') ? undefined : this.sources.get(name)?.text)
-        host.fileExists = (name) => text(name) !== undefined || fileExists.call(host, name)
+        const exists = remembered((name) => fileExists.call(host, name))
+        host.fileExists = (name) => text(name) !== undefined || exists(name)
+        if (directoryExists) host.directoryExists = remembered((name) => directoryExists.call(host, name))
+        this.resolutions = ts.createModuleResolutionCache(host.getCurrentDirectory(), (name) => host.getCanonicalFileName(name), this.options)
         host.readFile = (name) => text(name) ?? readFile.call(host, name)
         host.getSourceFile = (name, version, onError, create) => {
             const known = text(name)
@@ -114,10 +127,10 @@ export class Program {
 
         if (existsSync(SHIPPED)) {
             host.resolveModuleNameLiterals = (literals, containingFile, redirected, options) => literals.map((literal) => {
-                const found = ts.resolveModuleName(literal.text, containingFile, options, host, undefined, redirected)
+                const found = ts.resolveModuleName(literal.text, containingFile, options, host, this.resolutions, redirected)
                 if (found.resolvedModule || literal.text.startsWith('.')) return found
 
-                return ts.resolveModuleName(literal.text, resolve(SHIPPED, 'index.ts'), options, host, undefined, redirected)
+                return ts.resolveModuleName(literal.text, resolve(SHIPPED, 'index.ts'), options, host, this.resolutions, redirected)
             })
         }
 
@@ -125,6 +138,17 @@ export class Program {
     }
 }
 
+
+/** `ask` answered once for each name: a run reads a folder that does not change under it. */
+function remembered(ask) {
+    const answers = new Map()
+
+    return (name) => {
+        if (!answers.has(name)) answers.set(name, ask(name))
+
+        return answers.get(name)
+    }
+}
 
 /** The compiler options the nearest tsconfig.json above `root` sets, its referenced projects' paths merged in. */
 function configured(root) {
