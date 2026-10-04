@@ -14,10 +14,13 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// Bridge is bridge/php: its sources, and the PHP that runs them.
+// Bridge is bridge/php: its sources, the PHP that runs them, and the folder it keeps each file's tree in.
 type Bridge struct {
 	Sources bundle.Bundle
 	PHP     string
+	// Trees is where the bridge keeps each file's tree between runs, to write again while the file is unchanged;
+	// none when empty.
+	Trees string
 }
 
 // Here is the bridge this binary carries, run by the php on PATH.
@@ -41,7 +44,21 @@ func (b Bridge) Command() ([]string, error) {
 		return nil, err
 	}
 
-	return append(append([]string{php}, quiet...), filepath.Join(folder, "bridge.php")), nil
+	command := append(append([]string{php}, quiet...), filepath.Join(folder, "bridge.php"))
+	if b.Trees != "" {
+		command = append(command, "--cache="+b.Trees)
+	}
+
+	return command, nil
+}
+
+// Cached is the bridge keeping each file's tree in the user's cache folder, beside the bundles written out there.
+func (b Bridge) Cached() Bridge {
+	if trees, err := bundle.TreesFolder("php"); err == nil {
+		b.Trees = trees
+	}
+
+	return b
 }
 
 // Stream is the stream the bridge writes for its arguments: paths, and any of its flags.

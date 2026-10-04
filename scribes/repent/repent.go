@@ -15,7 +15,7 @@ import (
 // Run sweeps the chain for the detectors given over the roots, narrowed to the steps or sins only names when it
 // names any, and returns what it settled on. It writes nothing.
 func Run(roots []string, scope scribes.Scope, given []detectors.Detector, only string) (scribes.Converged, error) {
-	backend, err := serve(php.Here().Command, php.Over)
+	backend, err := serve(php.Here().Cached().Command, php.Over)
 	if err != nil {
 		return scribes.Converged{}, err
 	}

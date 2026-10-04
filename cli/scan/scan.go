@@ -168,7 +168,7 @@ type reader struct {
 // readers are the bridges, each with the languages it reads.
 var readers = []reader{
 	{languages: []source.Language{source.PHP}, stream: func(_, files []string) (*contract.Stream, error) {
-		return php.Here().Stream(files...)
+		return php.Here().Cached().Stream(files...)
 	}},
 	{languages: []source.Language{source.Vue, source.TypeScript}, stream: func(_, files []string) (*contract.Stream, error) {
 		return frontend.Here().Cached().Stream(files...)

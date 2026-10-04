@@ -24,6 +24,7 @@ require __DIR__ . '/src/TreeWriter.php';
 require __DIR__ . '/src/ParsedFile.php';
 require __DIR__ . '/src/UnreadableSymbol.php';
 require __DIR__ . '/src/OutsideSymbols.php';
+require __DIR__ . '/src/TreeCache.php';
 require __DIR__ . '/src/Stream.php';
 
 try {

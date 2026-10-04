@@ -105,6 +105,16 @@ func (b Bundle) Folder() (string, error) {
 	return folder, nil
 }
 
+// TreesFolder is where a language's bridge keeps each file's tree between runs, beside the bundles written out.
+func TreesFolder(language string) (string, error) {
+	cache, err := CacheFolder()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(cache, "code-commandments", "trees", language), nil
+}
+
 // CacheFolder is $XDG_CACHE_HOME, else ~/.cache.
 func CacheFolder() (string, error) {
 	if cache := os.Getenv("XDG_CACHE_HOME"); cache != "" {

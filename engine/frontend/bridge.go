@@ -47,11 +47,9 @@ func (b Bridge) Command() ([]string, error) {
 
 // Cached is the bridge keeping each file's tree in the user's cache folder, beside the bundles written out there.
 func (b Bridge) Cached() Bridge {
-	cache, err := bundle.CacheFolder()
-	if err != nil {
-		return b
+	if trees, err := bundle.TreesFolder("frontend"); err == nil {
+		b.Trees = trees
 	}
-	b.Trees = filepath.Join(cache, "code-commandments", "trees")
 
 	return b
 }
