@@ -324,7 +324,7 @@ The wired hooks — one dispatcher entry per Claude Code event, each fanning out
 <!-- BEGIN: hooks-table (auto-generated, run `composer readme`) -->
 | Hook | Events | What it does |
 |---|---|---|
-| `JudgeReminder` | `Stop, PreToolUse/Bash` | Nudges you to `judge` what you changed — before a risky Bash command, and on stop. |
+| `JudgeReminder` | `Stop, PreToolUse/Bash, PostToolUse/Bash, PostToolUse/Edit, PostToolUse/Write, PostToolUse/MultiEdit` | Nudges you to `judge` what you changed — before a risky Bash command, and on stop. |
 | `SharedBranchGate` | `PreToolUse/Bash` | Refuses `git pull --rebase` while other worktrees stand on the branch — it rewrites the commits they are built on. |
 | `ModelChoiceReminder` | `PreToolUse/Agent` | Asks for an explicit model when an agent is dispatched without one, since an unnamed model inherits the dispatcher's. |
 | `SessionReset` | `SessionStart` | On a fresh session (startup/clear) wipes lingering hook counters and prunes stale session folders. |

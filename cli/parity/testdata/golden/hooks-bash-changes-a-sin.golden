@@ -5,6 +5,18 @@ exit: 0
 --- stderr
 
 --- files
+=== changed .commandments/sessions/640d8/.authored-files
+-----
+src/Clean.php
+<project>/src/Clean.php
+<project>/src/Order.php
+-----
+Code-commandments — the judged files this session changed, so the judge reminder counts only its own.
+
+Between the dividers is the list: one absolute file path per line
+
+Safe to delete — the reminder stays silent until the session changes a judged file again.
+
 === changed .commandments/sessions/640d8/.reported-findings
 -----
 <project>/src/Order.php	array-bag at <project>/src/Order.php:13

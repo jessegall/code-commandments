@@ -5,3 +5,12 @@ exit: 0
 --- stderr
 
 --- files
+=== created .commandments/sessions/640d8/.authored-stamps
+-----
+-----
+Code-commandments — the changed judged files and their times when the session's last shell command started.
+
+Between the dividers is the list: a file path, a tab, then its modification time in nanoseconds
+
+Safe to delete — the next shell command's changes are not counted as the session's.
+

@@ -4,6 +4,16 @@ exit: 0
 --- stderr
 
 --- files
+=== created .commandments/sessions/640d8/.authored-files
+-----
+lib/Order.php
+-----
+Code-commandments — the judged files this session changed, so the judge reminder counts only its own.
+
+Between the dividers is the list: one absolute file path per line
+
+Safe to delete — the reminder stays silent until the session changes a judged file again.
+
 === created .commandments/sessions/640d8/.touched-sources
 marked-at: <time>
 -----

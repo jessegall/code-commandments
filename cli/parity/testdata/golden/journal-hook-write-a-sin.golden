@@ -1,10 +1,20 @@
 exit: 0
 --- stdout
-{"whisper":"Code Commandments — the edit you just made to `Order.php` breaks a rule. Fix it now, at its SOURCE, while the code is still in front of you:\n  • array-bag at <project>/src/Order.php:13\n    LOAD the skill `commandments-backend-value-objects` before fixing — load it even if you believe you already have.\n  • narrated-command at <project>/src/Order.php:7\n    LOAD the skill `commandments-backend-method-mood` before fixing — load it even if you believe you already have.\nRun `vendor/bin/commandments info <sin>` if a rule is not one you recognise. This check reads a file at a time, so it is not the whole picture — `judge` still is.","raise":[{"event":"sin-found","brief":"array-bag at src/Order.php:13","open":"sins/sin/array-bag/src/Order.php"},{"event":"sin-found","brief":"narrated-command at src/Order.php:7","open":"sins/sin/narrated-command/src/Order.php"}]}
+{"whisper":"Code Commandments — the edit you just made to `Order.php` breaks a rule. Fix it now, at its SOURCE, while the code is still in front of you:\n  • array-bag at <project>/src/Order.php:13\n    LOAD the skill `commandments-backend-value-objects` before fixing — load it even if you believe you already have.\n  • narrated-command at <project>/src/Order.php:7\n    LOAD the skill `commandments-backend-method-mood` before fixing — load it even if you believe you already have.\nRun `commandments info <sin>` if a rule is not one you recognise. This check reads a file at a time, so it is not the whole picture — `judge` still is.","raise":[{"event":"sin-found","brief":"array-bag at src/Order.php:13","open":"sins/sin/array-bag/src/Order.php"},{"event":"sin-found","brief":"narrated-command at src/Order.php:7","open":"sins/sin/narrated-command/src/Order.php"}]}
 
 --- stderr
 
 --- files
+=== created .commandments/sessions/640d8/.authored-files
+-----
+src/Order.php
+-----
+Code-commandments — the judged files this session changed, so the judge reminder counts only its own.
+
+Between the dividers is the list: one absolute file path per line
+
+Safe to delete — the reminder stays silent until the session changes a judged file again.
+
 === created .commandments/sessions/640d8/.reported-findings
 -----
 <project>/src/Order.php	array-bag at <project>/src/Order.php:13

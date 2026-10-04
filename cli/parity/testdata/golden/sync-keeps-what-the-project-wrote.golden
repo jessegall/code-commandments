@@ -493,7 +493,7 @@ sha256 3fd30542fe3f61b14bd4a4b2dc0b6fb30fa6f63ebce52dd1778aaa8c4dc02cff
                 ]
             }
         ],
-        "SessionStart": [
+        "PostToolUse": [
             {
                 "hooks": [
                     {
@@ -503,7 +503,7 @@ sha256 3fd30542fe3f61b14bd4a4b2dc0b6fb30fa6f63ebce52dd1778aaa8c4dc02cff
                 ]
             }
         ],
-        "PostToolUse": [
+        "SessionStart": [
             {
                 "hooks": [
                     {

@@ -20,7 +20,7 @@
                 ]
             }
         ],
-        "SessionStart": [
+        "PostToolUse": [
             {
                 "hooks": [
                     {
@@ -30,7 +30,7 @@
                 ]
             }
         ],
-        "PostToolUse": [
+        "SessionStart": [
             {
                 "hooks": [
                     {

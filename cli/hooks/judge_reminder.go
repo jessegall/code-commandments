@@ -34,7 +34,7 @@ func (JudgeReminder) Summary() string {
 	return "Nudges you to `judge` what you changed — before a risky Bash command, and on stop."
 }
 func (JudgeReminder) Bindings() []Binding {
-	return []Binding{{"Stop", ""}, {"PreToolUse", "Bash"}}
+	return append([]Binding{{"Stop", ""}, {"PreToolUse", "Bash"}, {"PostToolUse", "Bash"}}, bound("PostToolUse", writers)...)
 }
 func (JudgeReminder) SpeaksToSubagents()   {}
 func (JudgeReminder) QuietWhileWorkPends() {}
@@ -43,13 +43,25 @@ func (JudgeReminder) Handle(event Event) Response {
 	switch event.Name() {
 	case "PreToolUse":
 		if !event.IsGitCommit() {
+			AuthoredIn(event.Workspace()).Before(git.Root(event.Root))
+
 			return Silent()
 		}
 
 		if reason, due := Reminder(event, "before you commit"); due {
 			return Injecting(event.Name(), reason, false)
 		}
-	case "PostToolUse", "UserPromptSubmit", "SessionStart", "MessageDisplay", "PreCompact", "PostCompact", "SubagentStop":
+	case "PostToolUse":
+		authored := AuthoredIn(event.Workspace())
+
+		if event.IsTool("Bash") {
+			authored.After(git.Root(event.Root))
+		} else if event.FilePath() != "" {
+			authored.Wrote(event.FilePath())
+		}
+
+		return Silent()
+	case "UserPromptSubmit", "SessionStart", "MessageDisplay", "PreCompact", "PostCompact", "SubagentStop":
 		return Silent()
 	default:
 		if reason, due := Reminder(event, "before you wrap up"); due {
@@ -61,7 +73,7 @@ func (JudgeReminder) Handle(event Event) Response {
 }
 
 // Reminder is what the agent is reminded of, lead first, and whether it is due: the worklist judge left
-// open, else the batch of changed files once per commit it sits on.
+// open, else the batch of files the session changed itself, once per commit it sits on.
 func Reminder(event Event, lead string) (string, bool) {
 	root := git.Root(event.Root)
 	if root == "" {
@@ -76,14 +88,18 @@ func Reminder(event Event, lead string) (string, bool) {
 
 	tree := git.Status(root)
 	marker := space.Path(".judge-reminded")
+	authored := AuthoredIn(event.Workspace())
 
 	if len(tree.Changed) == 0 {
 		os.Remove(marker)
+		authored.Clear()
 
 		return "", false
 	}
 
-	if storedHead(marker) == tree.Head {
+	mine := authored.Among(tree.Changed)
+
+	if len(mine) == 0 || storedHead(marker) == tree.Head {
 		return "", false
 	}
 
@@ -91,11 +107,11 @@ func Reminder(event Event, lead string) (string, bool) {
 	os.WriteFile(marker, []byte(tree.Head+"\n"+batchSeparator+"\n"+batchExplanation+"\n"), 0o666)
 
 	noun := "files"
-	if len(tree.Changed) == 1 {
+	if len(mine) == 1 {
 		noun = "file"
 	}
 
-	return "Code Commandments — " + lead + ": you've changed " + strconv.Itoa(len(tree.Changed)) + " judged " + noun + " since the last commit. " +
+	return "Code Commandments — " + lead + ": you've changed " + strconv.Itoa(len(mine)) + " judged " + noun + " since the last commit. " +
 		"Consider running `" + binary.Invocation(root) + " judge --changes` to confirm they conform, and fix any " +
 		"sin at its SOURCE (don't launder a finding with a default/cast/null-check). This is a one-time " +
 		"nudge for this batch — if you've already judged, or these changes aren't worth a scan, just say " +

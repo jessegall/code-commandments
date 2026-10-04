@@ -1,16 +1,6 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"Code Commandments — before you commit: you've changed 1 judged file since the last commit. Consider running `vendor/bin/commandments judge --changes` to confirm they conform, and fix any sin at its SOURCE (don't launder a finding with a default/cast/null-check). This is a one-time nudge for this batch — if you've already judged, or these changes aren't worth a scan, just say so and carry on."}}
 
 --- stderr
 
 --- files
-=== created .commandments/sessions/640d8/.judge-reminded
-946db6384b9a2ab0eae3dbad50791e8ed667700e
------
-Batch marker for the code-commandments judge reminder (`commandments judge-reminder`, wired as
-Stop + PreToolUse hooks). The line above the separator is the commit it last reminded at: a
-batch is the work on top of one commit, so it nudges once per batch to run `judge`, silent
-until the next commit, and clears itself when the tree is clean. Safe to delete — it
-regenerates, at most costing you one extra nudge.
-
