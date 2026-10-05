@@ -11,8 +11,10 @@ func (c *Codebase) Scanned(roots ...string) {
 }
 
 // Judged is the file's path from the folder its scan was pointed at, that folder's own name included: `src/Cart.php`
-// for a scan of `src`, whatever lies above it on the disk. A rule reads a path this way, so where the project is
-// checked out never changes what it finds. With no scan recorded, the paths its bridge was asked for stand in.
+// for a scan of `src`, whatever lies above it on the disk. A scan pointed at one file reads it from that file's
+// folder, as a scan of the folder would. A rule reads a path this way, so where the project is checked out, and
+// whether it was pointed at the file or its folder, never changes what it finds. With no scan recorded, the paths
+// its bridge was asked for stand in.
 func (f *File) Judged() string {
 	path := filepath.ToSlash(f.Path)
 	best := ""
@@ -33,6 +35,9 @@ func (f *File) Judged() string {
 
 	if best == "" {
 		return path
+	}
+	if best == path {
+		best = filepath.ToSlash(filepath.Dir(best))
 	}
 
 	return strings.TrimPrefix(path, strings.TrimSuffix(filepath.ToSlash(filepath.Dir(best)), "/")+"/")
