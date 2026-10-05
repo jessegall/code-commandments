@@ -339,6 +339,8 @@ type Switches interface {
 	JudgeFolders(folders []string) error
 	// SkipFolders makes the folders the paths left out.
 	SkipFolders(folders []string) error
+	// RunWith makes judge run that many detectors at once when no --parallel says; false when it already did.
+	RunWith(parallel int) (bool, error)
 }
 
 func (j jsonConfig) DisableLanguage(language source.Language) (bool, error) {
@@ -377,6 +379,19 @@ func (j jsonConfig) JudgeFolders(folders []string) error {
 
 func (j jsonConfig) SkipFolders(folders []string) error {
 	return j.setFolders(func(config *Config) *[]string { return &config.Excluded }, folders)
+}
+
+func (j jsonConfig) RunWith(parallel int) (bool, error) {
+	if _, err := j.Scaffold(DetectRoots(j.root())); err != nil {
+		return false, err
+	}
+
+	return j.edit(func(config *Config) bool {
+		changed := config.Parallel != parallel
+		config.Parallel = parallel
+
+		return changed
+	})
 }
 
 func (j jsonConfig) setFolders(list func(*Config) *[]string, folders []string) error {

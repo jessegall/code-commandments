@@ -26,6 +26,7 @@ type document struct {
 	Packages  []string                      `json:"packages,omitempty"`
 	Hooks     []string                      `json:"hooks,omitempty"`
 	Agents    []string                      `json:"agents,omitempty"`
+	Parallel  int                           `json:"parallel,omitempty"`
 	Configure map[string][]map[string][]any `json:"configure,omitempty"`
 }
 
@@ -60,7 +61,7 @@ func ReadJSON(path string) (Config, error) {
 }
 
 func (d document) config() (Config, error) {
-	config := Config{Paths: d.Paths, Excluded: d.Exclude, Detectors: d.Detectors, Packages: d.Packages, Hooks: d.Hooks, Agents: d.Agents}
+	config := Config{Paths: d.Paths, Excluded: d.Exclude, Detectors: d.Detectors, Packages: d.Packages, Hooks: d.Hooks, Agents: d.Agents, Parallel: d.Parallel}
 
 	if d.Disable != nil {
 		languages, err := languagesNamed(d.Disable.Languages)
@@ -190,7 +191,7 @@ func literal(value any) (any, error) {
 
 // JSON is the config as config.json writes it, naming the schema beside it.
 func (c Config) JSON() []byte {
-	written := document{Schema: "./" + SchemaFile, Paths: c.Paths, Exclude: c.Excluded, Detectors: c.Detectors, Packages: c.Packages, Hooks: c.Hooks, Agents: c.Agents}
+	written := document{Schema: "./" + SchemaFile, Paths: c.Paths, Exclude: c.Excluded, Detectors: c.Detectors, Packages: c.Packages, Hooks: c.Hooks, Agents: c.Agents, Parallel: c.Parallel}
 
 	if len(c.Disabled) > 0 || len(c.DisabledLanguages) > 0 {
 		written.Disable = &disabled{}

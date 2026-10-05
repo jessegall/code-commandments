@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"os"
 	"path/filepath"
@@ -28,6 +29,8 @@ const (
 	judgedKey = "folders_judged"
 	// skippedKey is the setting that lists the folders left out.
 	skippedKey = "folders_skipped"
+	// parallelKey is the setting that says how many detectors judge runs at once.
+	parallelKey = "judge_parallel"
 	// skillsFolder is where the plugin renders the skills for the journal to publish.
 	skillsFolder = "journal-skills"
 )
@@ -227,6 +230,14 @@ func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 	if _, set := chosen[skippedKey]; set {
 		if err := editor.SkipFolders(folders(chosen, skippedKey)); err != nil {
 			return 0, err
+		}
+	}
+
+	if parallel, err := strconv.Atoi(strings.TrimSpace(fmt.Sprint(chosen[parallelKey]))); err == nil && parallel >= 1 {
+		if did, err := editor.RunWith(parallel); err != nil {
+			return 0, err
+		} else if did {
+			changed++
 		}
 	}
 

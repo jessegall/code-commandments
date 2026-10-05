@@ -100,9 +100,9 @@ func TestAWorktreesFindingsAreNeverTheProjects(t *testing.T) {
 	space := workspace.At(root, "")
 	helper := filepath.Join(root, ".claude", "worktrees", "main-helper")
 	for folder, files := range map[string]map[string]string{
-		helper:                    {".git": "gitdir: /repo/.git/worktrees/main-helper\n"},
+		helper:                       {".git": "gitdir: /repo/.git/worktrees/main-helper\n"},
 		filepath.Join(helper, "src"): {"Worker.php": "<?php\n"},
-		filepath.Join(root, "src"): {"Own.php": "<?php\n"},
+		filepath.Join(root, "src"):   {"Own.php": "<?php\n"},
 	} {
 		if err := os.MkdirAll(folder, 0o755); err != nil {
 			t.Fatal(err)

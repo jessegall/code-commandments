@@ -32,6 +32,8 @@ type Config struct {
 	// Agents are the agents a config from the PHP tool turned on by name; the tool ships none beyond the ones every
 	// project runs, so sync skips and names each.
 	Agents []string
+	// Parallel is how many detectors judge runs at once when no --parallel says; 0 leaves judge's own default.
+	Parallel int
 	// Configurators tune shipped detectors.
 	Configurators []Configurator
 }

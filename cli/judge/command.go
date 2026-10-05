@@ -139,6 +139,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 }
 
 func (c Command) judge(options options, selected []detectors.Detector, judged config.Config, targets scope.Scope, space workspace.Workspace, console cli.Console) (int, error) {
+	if !options.parallelGiven && judged.Parallel > 0 {
+		options.parallel = judged.Parallel
+	}
+
 	if targets.IsEmpty() {
 		deleteChecklist(options.checklist)
 
@@ -495,8 +499,10 @@ type options struct {
 	exclude   []string
 	checklist []string
 	parallel  int
-	benchmark bool
-	ignore    bool
+	// parallelGiven says whether --parallel was given, so the project's own setting does not overrule it.
+	parallelGiven bool
+	benchmark     bool
+	ignore        bool
 }
 
 func optionsOf(in *cli.Input, space workspace.Workspace) options {
@@ -508,8 +514,9 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 	skill, _ := in.Option("skill")
 	sin, _ := in.Option("sin")
 	parallel := defaultParallel
+	value, parallelGiven := in.Option("parallel")
 
-	if value, set := in.Option("parallel"); set {
+	if parallelGiven {
 		parallel = cli.Intval(value)
 	}
 
@@ -525,15 +532,16 @@ func optionsOf(in *cli.Input, space workspace.Workspace) options {
 	}
 
 	return options{
-		path:      strings.TrimRight(path, "/"),
-		pathGiven: given,
-		skill:     skill,
-		sin:       sin,
-		list:      in.HasFlag("list"),
-		exclude:   in.List("exclude"),
-		checklist: targets,
-		parallel:  max(1, parallel),
-		benchmark: in.HasFlag("benchmark"),
-		ignore:    in.HasFlag("ignore-package-requirements"),
+		path:          strings.TrimRight(path, "/"),
+		pathGiven:     given,
+		skill:         skill,
+		sin:           sin,
+		list:          in.HasFlag("list"),
+		exclude:       in.List("exclude"),
+		checklist:     targets,
+		parallel:      max(1, parallel),
+		parallelGiven: parallelGiven,
+		benchmark:     in.HasFlag("benchmark"),
+		ignore:        in.HasFlag("ignore-package-requirements"),
 	}
 }

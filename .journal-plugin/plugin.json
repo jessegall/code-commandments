@@ -78,6 +78,13 @@
             "default": "",
             "group": "Folders"
         },
+        "judge_parallel": {
+            "title": "Rules judged at once",
+            "help": "How many detectors the check runs side by side. More finish sooner but use more cores and memory.",
+            "type": "number",
+            "default": "2",
+            "group": "Performance"
+        },
         "language_php": {
             "title": "PHP",
             "help": "Enables PHP sin detection",
