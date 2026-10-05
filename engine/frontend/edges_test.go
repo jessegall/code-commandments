@@ -1,6 +1,7 @@
 package frontend_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -135,5 +136,33 @@ export const read = marked
 		if strings.HasPrefix(name, "__@") || strings.HasPrefix(name, "__#") {
 			t.Errorf("a field is named by the checker's order: %s", name)
 		}
+	}
+}
+
+// TestALargeTypeIsPrintedShortAndDescribedWhole holds a type whose whole print runs past a kilobyte to the checker's
+// truncated print, while its fields still say it whole: a library's object type printed whole, and each type inside
+// it printed whole again, made a 38 KB component a 410 MB line no reader could take.
+func TestALargeTypeIsPrintedShortAndDescribedWhole(t *testing.T) {
+	var fields strings.Builder
+	for i := range 120 {
+		fmt.Fprintf(&fields, "  field%03d: { nested%03d: string; other%03d: number }\n", i, i, i)
+	}
+	codebase := frontendtest.FromSource(t, map[string]string{"options.ts": "export declare const typed: {\n" + fields.String() + "}\nexport const read = typed\n"})
+	var widest *contract.Type
+	for _, file := range codebase.Files() {
+		for _, node := range file.Nodes() {
+			if typed := node.Resolved; typed != nil && len(typed.Fields) == 120 {
+				widest = typed
+			}
+		}
+	}
+	if widest == nil {
+		t.Fatal("no type with its 120 fields was written")
+	}
+	if len(widest.Text) > 1024 || !strings.Contains(widest.Text, "...") {
+		t.Errorf("the type's text runs %d characters: %.80s", len(widest.Text), widest.Text)
+	}
+	if len(widest.Fields[0].Type.Fields) != 2 {
+		t.Errorf("a field's own type lost its fields: %+v", widest.Fields[0].Type)
 	}
 }

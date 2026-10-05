@@ -6,6 +6,9 @@ import { aliasesOf, projectRoot } from './aliases.mjs'
 import { Source } from './source.mjs'
 import { Sfc } from './vue.mjs'
 
+/** The longest text a type is printed with in whole; past it the checker's own truncated print stands. */
+const PRINTED = 1024
+
 /** Vue's own declarations, shipped beside the bundle: what a bare import resolves to when the project has none installed. */
 const SHIPPED = resolve(dirname(fileURLToPath(import.meta.url)), 'types')
 
@@ -59,9 +62,17 @@ export class Program {
         return this.checking
     }
 
-    /** The type as the checker prints it, whole, printed once: the text is the type's own, wherever it is met. */
+    /**
+     * The type as the checker prints it, printed once: the text is the type's own, wherever it is met. A type whose
+     * whole print runs past PRINTED is printed as the checker truncates it, ending in `...`: a library's object type
+     * prints to a megabyte, and each type inside it to as much again, while its fields and members say it whole.
+     */
     printed(type) {
-        if (!this.texts.has(type)) this.texts.set(type, this.checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation))
+        if (!this.texts.has(type)) {
+            const short = this.checker.typeToString(type)
+            const whole = short.includes('...') ? this.checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation) : short
+            this.texts.set(type, whole.length > PRINTED ? short : whole)
+        }
 
         return this.texts.get(type)
     }
