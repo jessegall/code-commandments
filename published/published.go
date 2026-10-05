@@ -98,9 +98,12 @@ func (g GeneratedTypes) Covers(file string) bool {
 	return file == location || strings.HasPrefix(file, location+string(filepath.Separator))
 }
 
+// separators are the characters a name's spelling may put between its words.
+var separators = strings.NewReplacer("_", "", "-", "")
+
 // canonical folds a name's spelling: order_id, order-id and orderId read alike.
 func canonical(name string) string {
-	return strings.ToLower(strings.NewReplacer("_", "", "-", "").Replace(name))
+	return strings.ToLower(separators.Replace(name))
 }
 
 func canonicalSet(names []string) map[string]bool {

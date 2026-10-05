@@ -22,6 +22,7 @@ type ConfigKeys struct {
 var configKeys = php.Memoised(func(codebase *engine.Codebase) *ConfigKeys {
 	keys := &ConfigKeys{declared: map[*contract.Node]string{}, files: map[string]bool{}, defaults: map[string]bool{}}
 	var declaredKeys []string
+	vendored := vendorConfigs{}
 	for _, file := range php.In(codebase).Files() {
 		root := file.Match(0)
 		for _, node := range root.Descendants() {
@@ -36,19 +37,20 @@ var configKeys = php.Memoised(func(codebase *engine.Codebase) *ConfigKeys {
 				}
 			}
 		}
-		prefix := configPrefixOf(file.Path)
+		prefix := vendored.prefixOf(file.Path)
 		if returned := returnedArray(root); prefix != "" && returned.Exists() {
 			declaredKeys = append(declaredKeys, keys.collect(returned, prefix)...)
 		}
 	}
+	read := map[string]bool{}
+	for _, literal := range keys.literals {
+		if file, _, dotted := strings.Cut(literal, "."); dotted {
+			read[file] = true
+		}
+	}
 	for _, key := range declaredKeys {
 		file, _, _ := strings.Cut(key, ".")
-		if keys.files[file] {
-			continue
-		}
-		if slices.ContainsFunc(keys.literals, func(literal string) bool { return strings.HasPrefix(literal, file+".") }) {
-			keys.files[file] = true
-		}
+		keys.files[file] = read[file]
 	}
 
 	return keys
@@ -82,21 +84,37 @@ func (k *ConfigKeys) isRead(key string) bool {
 	})
 }
 
-// configPrefixOf is the key prefix a file in a config folder declares, unless a vendor package publishes a config of
+// vendorConfigs is, per project root, the config names its vendor packages publish.
+type vendorConfigs map[string]map[string]bool
+
+// prefixOf is the key prefix a file in a config folder declares, unless a vendor package publishes a config of
 // that name.
-func configPrefixOf(path string) string {
+func (v vendorConfigs) prefixOf(path string) string {
 	if filepath.Base(filepath.Dir(path)) != "config" {
 		return ""
 	}
 	name := strings.TrimSuffix(filepath.Base(path), ".php")
-	root := filepath.Dir(filepath.Dir(path))
-	for _, pattern := range []string{"vendor/*/*/config/", "vendor/*/*/src/config/"} {
-		if published, _ := filepath.Glob(filepath.Join(root, pattern, name+".php")); len(published) > 0 {
-			return ""
-		}
+	if v.publishedIn(filepath.Dir(filepath.Dir(path)))[name] {
+		return ""
 	}
 
 	return name
+}
+
+func (v vendorConfigs) publishedIn(root string) map[string]bool {
+	if names, ok := v[root]; ok {
+		return names
+	}
+	names := map[string]bool{}
+	for _, pattern := range []string{"vendor/*/*/config/*.php", "vendor/*/*/src/config/*.php"} {
+		published, _ := filepath.Glob(filepath.Join(root, pattern))
+		for _, file := range published {
+			names[strings.TrimSuffix(filepath.Base(file), ".php")] = true
+		}
+	}
+	v[root] = names
+
+	return names
 }
 
 func returnedArray(root engine.Match) engine.Match {
@@ -148,6 +166,32 @@ func statesADefault(value engine.Match) bool {
 	return false
 }
 
+// construction is how the project's own code makes its classes: the ones a constructor takes, and the ones built
+// by hand with every class each extends.
+type construction struct {
+	injected map[string]bool
+	built    map[string]bool
+}
+
+var constructions = php.Memoised(func(codebase *engine.Codebase) *construction {
+	made := &construction{injected: map[string]bool{}, built: map[string]bool{}}
+	program := php.ProgramOf(codebase)
+	for _, param := range php.In(codebase).WhereKind("Param").Where(func(m engine.Match) bool { return php.EnclosingFunctionName(m) == "__construct" }).Get() {
+		for _, name := range php.Written(param.Node().Declared).Names() {
+			made.injected[name] = true
+		}
+	}
+	for _, creation := range php.In(codebase).WhereKind("Expr_New").Get() {
+		built := php.Node{Match: creation}.NewClassName()
+		made.built[built] = true
+		for _, ancestor := range program.Ancestors(built) {
+			made.built[ancestor] = true
+		}
+	}
+
+	return made
+})
+
 // ContainerResolves says whether the container builds the class: something takes it in a constructor, or nothing
 // builds it or a subclass by hand.
 func ContainerResolves(codebase *engine.Codebase, class string) bool {
@@ -155,17 +199,7 @@ func ContainerResolves(codebase *engine.Codebase, class string) bool {
 		return false
 	}
 	want := strings.TrimLeft(class, `\`)
-	injected := php.In(codebase).WhereKind("Param").Where(func(m engine.Match) bool {
-		return slices.Contains(php.Written(m.Node().Declared).Names(), want) && php.EnclosingFunctionName(m) == "__construct"
-	}).Count() > 0
-	if injected {
-		return true
-	}
-	program := php.ProgramOf(codebase)
+	made := constructions.Of(codebase)
 
-	return php.In(codebase).WhereKind("Expr_New").Where(func(m engine.Match) bool {
-		built := php.Node{Match: m}.NewClassName()
-
-		return built == want || program.Extends(built, want)
-	}).Count() == 0
+	return made.injected[want] || !made.built[want]
 }
