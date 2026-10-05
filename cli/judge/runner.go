@@ -7,6 +7,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/custom"
 	"io"
 	"runtime"
+	"runtime/debug"
 	"slices"
 	"sync"
 
@@ -95,7 +96,7 @@ func try(task Task, warn io.Writer) (result attempt) {
 		}
 
 		warning.Lock()
-		fmt.Fprintf(warn, "⚠ %s failed and was skipped — everything else still ran: %v\n", name, failure)
+		fmt.Fprintf(warn, "⚠ %s failed and was skipped — everything else still ran: %v\n%s\n", name, failure, debug.Stack())
 		warning.Unlock()
 
 		result = attempt{skipped: name}

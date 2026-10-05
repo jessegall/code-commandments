@@ -294,7 +294,7 @@ func groupPrefix(group engine.Match) string {
 }
 
 func isGroupCall(node engine.Match) bool {
-	return routeCallName(node) == "group"
+	return isRouteChainCall(node, "group")
 }
 
 func isResourceRegistration(node engine.Match) bool {

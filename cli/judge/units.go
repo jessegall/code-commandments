@@ -2,6 +2,7 @@ package judge
 
 import (
 	"fmt"
+	"runtime/debug"
 	"slices"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -104,7 +105,9 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 // candidatesOf is the rule's candidates in the codebase, or what it failed with.
 func candidatesOf(rule detectors.Detector, codebase *engine.Codebase) (candidates []detectors.Candidate, failure any) {
 	defer func() {
-		failure = recover()
+		if recovered := recover(); recovered != nil {
+			failure = fmt.Sprintf("%v\n%s", recovered, debug.Stack())
+		}
 	}()
 
 	return rule.(detectors.Aggregating).Candidates(codebase), nil
