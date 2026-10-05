@@ -1,11 +1,12 @@
 exit: 0
 --- stdout
-[1mNamespace layers[0m — 60 namespaces
+[1mNamespace layers[0m — 62 namespaces
 
-  [32m20[0m are depended on but depend on nothing of yours — the floor your stack rests on
+  [32m21[0m are depended on but depend on nothing of yours — the floor your stack rests on
       Shop\Authoring
       Shop\Billing
       Shop\Contracts
+      Shop\Courier\Manifest
       Shop\Domain
       Shop\Events
       Shop\Exceptions
@@ -14,8 +15,7 @@ exit: 0
       Shop\Http\Pages\FlatCluster
       Shop\Http\Pages\RepeatedCall
       Shop\Inertia
-      Shop\Labels
-      … and 8 more
+      … and 9 more
 
   [33m28[0m sit in a cycle — declared below as they stand, each permitting the other:
       Shop\Enums  ->  Shop\Shipping
@@ -24,12 +24,13 @@ exit: 0
       Shop\Warranty  ->  Shop\Claims
     [2mrun `commandments judge --sin=namespace-cycle` for the exact arrows to cut[0m
 
-  Proposed declaration — today's shape, held (60 namespaces):
+  Proposed declaration — today's shape, held (62 namespaces):
 
     $config->configure(fn (NamespaceDependencyDetector $detector) => $detector
         ->layer('Shop\\Authoring')
         ->layer('Shop\\Billing')
         ->layer('Shop\\Contracts')
+        ->layer('Shop\\Courier\\Manifest')
         ->layer('Shop\\Domain')
         ->layer('Shop\\Events')
         ->layer('Shop\\Exceptions')
@@ -57,6 +58,7 @@ exit: 0
         ->layer('Shop\\Support', mayUse: ['Shop\\Exceptions'])
         ->layer('Shop\\Ui\\Shared', mayUse: ['Shop\\Ui\\Pages', 'Shop\\Ui\\Tokens'])
         ->layer('Shop\\Audit', mayUse: ['Shop\\Docs'])
+        ->layer('Shop\\Courier\\Adapter', mayUse: ['Shop\\Courier\\Manifest', 'Shop\\Dispatch'])
         ->layer('Shop\\Kiosk', mayUse: ['Shop\\Support', 'Shop\\Support\\Text'])
         ->layer('Shop\\Ui\\Elements', mayUse: ['Shop\\Ui\\Shared', 'Shop\\Ui\\Tokens'])
         ->layer('Shop\\Catalog', mayUse: ['Shop\\Data', 'Shop\\Enums', 'Shop\\Models', 'Shop\\Repositories'])

@@ -306,7 +306,7 @@ sha256 374e8c6c079483d1238a24f9bdae8340b28839654612528dbaa220cdcf6fd556
 === created .agents/skills/commandments-frontend-vue-components/reference/examples.md
 sha256 01b8802ad60fdb9b0ea4cfb3f52121dc0b7517c718e01d3f0526dd39e91972dd
 === created .agents/skills/commandments-frontend-vue-control-flow/SKILL.md
-sha256 2e7a446e99982b7a5f219b48222f21e667d525bf2c6b0cebac16658a12852369
+sha256 c5f7a397bed70ccbdd9ad878e245b64e66d959a2f678b91e2b025e57f004becc
 === created .agents/skills/commandments-frontend-vue-control-flow/reference/detectors.md
 sha256 cf8762933d2c807c4872e1558093d0f5797dca893320011a92d4210efc8aa656
 === created .agents/skills/commandments-frontend-vue-control-flow/reference/examples.md
