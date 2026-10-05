@@ -8,6 +8,24 @@ func (m Match) Arguments() []Match {
 	return m.listed(m.grammar().Arguments)
 }
 
+// InheritedMembers are the members the type declaration takes from its parents and the traits its class uses, as the
+// scan declares them, nearest first: a member declared outside the scan is not among them.
+func (m Match) InheritedMembers() []Match {
+	if !m.Is(TypeDeclaration) || m.file == nil {
+		return nil
+	}
+	var inherited []Match
+	for _, supplier := range append(m.Lineage(), m.UsedTraits()...) {
+		for _, declaration := range m.file.Codebase().Declarations(supplier) {
+			if declaration.file.Language() == m.file.Language() {
+				inherited = append(inherited, declaration.Members()...)
+			}
+		}
+	}
+
+	return inherited
+}
+
 // Members are what the type declaration declares directly, in source order: never a nested type's own.
 func (m Match) Members() []Match {
 	if !m.Is(TypeDeclaration) {

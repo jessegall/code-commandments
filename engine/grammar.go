@@ -21,6 +21,16 @@ type Grammar struct {
 	Extends func(Match) []Match
 	// Implements are the nodes naming the contracts a type declaration honours directly.
 	Implements func(Match) []Match
+	// WritesAttribute says whether a markup element writes the attribute, plain or bound.
+	WritesAttribute func(Match, string) bool
+	// DeclaredName is the name a declaration that carries none gives what it declares: a PHP property statement's
+	// one property.
+	DeclaredName func(Match) string
+	// Traits are the nodes naming the traits or mixins a type declaration uses directly.
+	Traits func(Match) []Match
+	// ClassOf is the class a node that declares none is about: the one it names, constructs or holds a value of;
+	// empty when the language cannot tell.
+	ClassOf func(Match) string
 	// Annotations are the nodes naming each attribute or decorator a declaration carries.
 	Annotations func(Match) []Match
 	// TypeKind is what kind of type a type declaration declares, in the neutral words of TypeKinds.

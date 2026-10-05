@@ -148,17 +148,55 @@ func LastPart(symbol string) string {
 	return symbol[strings.LastIndexAny(symbol, `\.`)+1:]
 }
 
-// Lineage is every type the type declaration extends, nearest first: through the declarations the codebase
-// holds and the ones its language's program names outside the scan. A type neither says anything about ends
-// its line, and a type met twice is followed once.
+// Class is the class the node is about: the one a type declaration declares, else the one it names, constructs or
+// holds a value of, as its language tells; empty when it is about none.
+func (m Match) Class() string {
+	if m.node == nil {
+		return ""
+	}
+	if m.Is(TypeDeclaration) {
+		return m.Identity()
+	}
+	if read := m.grammar().ClassOf; read != nil {
+		return read(m)
+	}
+
+	return m.Refers()
+}
+
+// Traits are the nodes naming the traits the type declaration uses directly, in source order.
+func (m Match) Traits() []Match {
+	return m.listed(m.grammar().Traits)
+}
+
+// Lineage is every type the node's class extends, nearest first: a type declaration's own, or the class the node
+// names, constructs or holds a value of. It reads through the declarations the codebase holds and the ones its
+// language's program names outside the scan. A type neither says anything about ends its line, and a type met
+// twice is followed once.
 func (m Match) Lineage() []string {
+	if !m.Is(TypeDeclaration) {
+		return m.climb(m.extendsOf(m.Class()), m.extendsOf)
+	}
+
 	return m.climb(named(m.Extends()), m.extendsOf)
 }
 
-// Contracts is every contract the type declaration honours: its own and its lineage's, and the contracts those
+// Parents are the types the node's class extends directly.
+func (m Match) Parents() []string {
+	if !m.Is(TypeDeclaration) {
+		return m.extendsOf(m.Class())
+	}
+
+	return named(m.Extends())
+}
+
+// Contracts is every contract the node's class honours: its own and its lineage's, and the contracts those
 // extend.
 func (m Match) Contracts() []string {
 	direct := named(m.Implements())
+	if !m.Is(TypeDeclaration) {
+		direct = m.implementsOf(m.Class())
+	}
 	for _, ancestor := range m.Lineage() {
 		direct = append(direct, m.implementsOf(ancestor)...)
 	}
@@ -188,13 +226,32 @@ func (m Match) extendsOf(symbol string) []string {
 	return m.supertypesOf(symbol, Match.Extends, func(outside contract.OutsideSymbol) []string { return outside.Extends })
 }
 
+// UsedTraits is every trait the node's class uses: its own, its lineage's, and the traits those use.
+func (m Match) UsedTraits() []string {
+	class := m.Class()
+	if class == "" {
+		return nil
+	}
+	direct := m.usesOf(class)
+	for _, ancestor := range m.Lineage() {
+		direct = append(direct, m.usesOf(ancestor)...)
+	}
+
+	return m.climb(direct, m.usesOf)
+}
+
+// usesOf are the traits the symbol's declaration uses directly, in the scan or outside it.
+func (m Match) usesOf(symbol string) []string {
+	return m.supertypesOf(symbol, Match.Traits, func(outside contract.OutsideSymbol) []string { return outside.Uses })
+}
+
 // implementsOf are the contracts the symbol's declaration honours directly, in the scan or outside it.
 func (m Match) implementsOf(symbol string) []string {
 	return m.supertypesOf(symbol, Match.Implements, func(outside contract.OutsideSymbol) []string { return outside.Implements })
 }
 
 func (m Match) supertypesOf(symbol string, inScan func(Match) []Match, outside func(contract.OutsideSymbol) []string) []string {
-	if m.file == nil {
+	if m.file == nil || symbol == "" {
 		return nil
 	}
 

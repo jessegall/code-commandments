@@ -96,6 +96,9 @@ type Step struct {
 	Extends        string   `json:"extends,omitempty"`
 	ExtendsAny     string   `json:"extendsAny,omitempty"`
 	Implements     string   `json:"implements,omitempty"`
+	Uses           string   `json:"uses,omitempty"`
+	HasAttribute   string   `json:"hasAttribute,omitempty"`
+	All            []Step   `json:"all,omitempty"`
 	TypeKind       string   `json:"typeKind,omitempty"`
 	HasAnnotation  string   `json:"hasAnnotation,omitempty"`
 	ReturnType     string   `json:"returnType,omitempty"`
@@ -154,10 +157,12 @@ type Argued struct {
 	At int `json:"at"`
 }
 
-// Tally counts the members of a type that pass its step, or every member when it makes no check.
+// Tally counts the members of a type that pass its step, or every member when it makes no check; with Inherited,
+// the members its parents and traits declare in the scan too.
 type Tally struct {
 	Step
 	Bounds
+	Inherited bool `json:"inherited,omitempty"`
 }
 
 // layered are the engines a project declares dependency layers for, and how each spells a namespace: the
@@ -342,6 +347,10 @@ func (s *Step) nested() []*Step {
 		nested = append(nested, &s.Argument.Step)
 	}
 
+	for i := range s.All {
+		nested = append(nested, &s.All[i])
+	}
+
 	return nested
 }
 
@@ -431,7 +440,7 @@ func (s Step) checks() int {
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Documented != nil, s.File != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
-		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "",
+		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.HasAttribute != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
 		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil,
 		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != ""} {
@@ -678,11 +687,17 @@ func (s Step) check(match engine.Match) bool {
 	case s.Complexity != nil:
 		return s.Complexity.holds(subject.Complexity())
 	case s.Extends != "":
-		return slices.ContainsFunc(subject.Extends(), func(parent engine.Match) bool { return parent.Names(s.Extends) })
+		return namesAny(subject.Parents(), s.Extends)
 	case s.ExtendsAny != "":
-		return subject.Is(engine.TypeDeclaration) && namesAny(subject.Lineage(), s.ExtendsAny)
+		return namesAny(subject.Lineage(), s.ExtendsAny)
 	case s.Implements != "":
-		return subject.Is(engine.TypeDeclaration) && namesAny(subject.Contracts(), s.Implements)
+		return namesAny(subject.Contracts(), s.Implements)
+	case s.Uses != "":
+		return namesAny(subject.UsedTraits(), s.Uses)
+	case s.HasAttribute != "":
+		return subject.WritesAttribute(s.HasAttribute)
+	case s.All != nil:
+		return !slices.ContainsFunc(s.All, func(step Step) bool { return !step.check(subject) })
 	case s.TypeKind != "":
 		return subject.TypeKind() == s.TypeKind
 	case s.HasAnnotation != "":
@@ -882,7 +897,11 @@ func (c Count) tally(match engine.Match) int {
 // tally counts the type's members that pass the step, every one when it makes no check.
 func (t Tally) tally(match engine.Match) int {
 	count := 0
-	for _, member := range match.Members() {
+	members := match.Members()
+	if t.Inherited {
+		members = append(members, match.InheritedMembers()...)
+	}
+	for _, member := range members {
 		if t.Step.checks() == 0 || t.check(member) {
 			count++
 		}
@@ -934,7 +953,7 @@ func topLevel(match engine.Match) bool {
 
 // nameOf is the name a reader gives the node: its own, or, for a call, the name it calls.
 func nameOf(match engine.Match) string {
-	if name := match.Name(); name != "" {
+	if name := match.DeclaredName(); name != "" {
 		return name
 	}
 

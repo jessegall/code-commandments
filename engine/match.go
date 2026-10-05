@@ -213,6 +213,27 @@ func (m Match) Name() string {
 	return m.node.Name
 }
 
+// WritesAttribute says whether the node is a markup element that writes the attribute, plain or bound: `data-dusk`
+// or `:data-dusk`.
+func (m Match) WritesAttribute(name string) bool {
+	read := m.grammar().WritesAttribute
+
+	return m.node != nil && read != nil && read(m, name)
+}
+
+// DeclaredName is the node's name, or, for a declaration that carries none, the name of the one thing it declares:
+// a PHP property statement declaring one property is named after it.
+func (m Match) DeclaredName() string {
+	if name := m.Name(); name != "" || m.node == nil {
+		return name
+	}
+	if read := m.grammar().DeclaredName; read != nil {
+		return read(m)
+	}
+
+	return ""
+}
+
 // Written is the node's source text: the bytes of its span, as the file spells them; empty for no node.
 func (m Match) Written() string {
 	if m.node == nil {

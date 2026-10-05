@@ -41,6 +41,13 @@ func (e Element) IsComponent() bool {
 	return e.IsElement() && e.HasFlag("component")
 }
 
+// Writes says whether the element writes the attribute, plain or bound: `data-dusk` or `:data-dusk`.
+func (e Element) Writes(name string) bool {
+	_, plain := e.WrittenAttribute(name)
+
+	return e.IsElement() && (plain || e.Binding(name).Exists())
+}
+
 // formControls are the HTML elements that keep what a user enters in themselves.
 var formControls = []string{"input", "select", "textarea"}
 

@@ -97,6 +97,7 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"position": "first"}` | it is the `first`, `last` or `only` one of its siblings (an only one is also first and last) |
 | `{"descendant": {"is": "return"}}` | some node inside it passes the step |
 | `{"inside": {"is": "catch"}}` | some node above it, up to the file's root, passes the step |
+| `{"all": [{"name": "store"}, {"hasModifier": "public"}]}` | it passes every step listed, as one node: a public `store`, where a step alone makes one check |
 | `{"next": {"is": "return"}}` | the sibling right after it passes the step |
 | `{"previous": {"is": "branch"}}` | the sibling right before it passes the step |
 | `{"nestedAtLeast": {"is": "loop", "count": 3}}` | it and the nodes above it that pass the step number at least `count` |
@@ -108,7 +109,7 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"parameters": {"atLeast": 5}}` | a function declares that many parameters — a variadic, a defaulted one and Python's `self` count once each |
 | `{"arguments": {"atLeast": 4}}` | a call or construction is handed that many arguments — a named or a spread one counts once |
 | `{"lines": {"atLeast": 40}}` | it spans that many lines, its first and last among them |
-| `{"members": {"is": "function", "atLeast": 20}}` | a type declares that many members directly that pass the step (every member, with no check) |
+| `{"members": {"is": "function", "atLeast": 20}}` | a type declares that many members directly that pass the step (every member, with no check); with `"inherited": true`, the members its parents and traits declare in the scan count too |
 | `{"complexity": {"atLeast": 10}}` | one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `\|\|` are not counted, and a function inside it is its own count |
 | `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children |
 | `{"duplicated": {"atLeast": 2}}` | that many functions of the codebase, it among them, have its body, read from the tree, blind to spacing and comments |
@@ -118,10 +119,12 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | Check | Keeps the node when |
 |---|---|
 | `{"typeKind": "interface"}` | a type declaration declares a `class`, `interface`, `enum`, `trait`, `record`, `struct` or `protocol` |
-| `{"extends": "Controller"}` | a type declaration names the type among the ones it extends directly |
-| `{"extendsAny": "Exception"}` | the type is anywhere in its chain of parents, followed through the scan and the declarations outside it the language knows |
-| `{"implements": "ShouldQueue"}` | it honours the contract: its own, its parents', and the contracts those extend |
+| `{"extends": "Controller"}` | its class extends the type directly. Its class is the one a type declaration declares, else the one the node names (`X`, `X::class`), constructs (`new X`) or holds a value of (`$this->service`, a typed parameter) |
+| `{"extendsAny": "Exception"}` | the type is anywhere in its class's chain of parents, followed through the scan and the declarations outside it the language knows |
+| `{"implements": "ShouldQueue"}` | its class honours the contract: its own, its parents', and the contracts those extend |
+| `{"uses": "AsAction"}` | its class uses the trait: itself, through a parent, or through a trait it uses |
 | `{"hasAnnotation": "Route"}` | a declaration carries the attribute or decorator |
+| `{"hasAttribute": "data-dusk"}` | a template element writes the attribute, plain or bound: `data-dusk` or `:data-dusk` |
 | `{"returnType": "?*"}` | a function's written return type matches the pattern, spaces dropped, or the type it names resolves to; it reads the text, so `?*` finds PHP's `?int` and `*\|null` finds `int\|null` |
 | `{"parameterType": "array"}` | a parameter's written type matches the pattern, read as returnType reads one |
 
@@ -159,7 +162,7 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"typescript": "absence"}` | it is the literal null or undefined |
 | `{"typescript": "optional"}` | a field or parameter may be missing: written `x?`, or typed to admit null or undefined |
 | `{"vue": "absence"}` | it is the literal null or undefined |
-| `{"vue": "component"}` | the element's tag names a component: it starts upper-case |
+| `{"vue": "component"}` | the element is a component, as Vue's compiler resolves its tag: `<Foo>`, `<my-widget>`, `<component :is>`, `<transition>` |
 | `{"vue": "optional"}` | a field or parameter may be missing: written `x?`, or typed to admit null or undefined |
 | `{"vue": "templateRoot"}` | the element is the template's only top-level element |
 

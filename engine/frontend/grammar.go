@@ -7,6 +7,7 @@ import (
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/typescript"
+	"github.com/jessegall/code-commandments/engine/vue"
 )
 
 func init() {
@@ -23,6 +24,9 @@ func init() {
 			ParameterType: engine.InField("type"),
 			Constructs:    engine.OfKind("NewExpression", "expression"),
 			DocTags:       jsDocTags,
+			WritesAttribute: func(element engine.Match, name string) bool {
+				return vue.Of(element).Writes(name)
+			},
 			BodyHash:      func(function engine.Match) string { return typescript.Of(function).BodyHash() },
 			TestFile:      testFile,
 			Implicit:      engine.KindIn("Constructor"),
