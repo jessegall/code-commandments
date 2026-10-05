@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/atomic"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/sins"
@@ -56,20 +57,23 @@ func StoredOf(finding engine.Finding, root string) Stored {
 
 // Record keeps the run's findings: every finding in a file this run judged is replaced, the rest kept while their
 // file is still there, and the dashboard is drawn again. judged is each file the run judged, by its absolute real
-// path; nil replaces everything.
+// path; nil replaces everything. A finding in a git worktree checked out inside the project is a helper's, judged
+// for the agent editing it, and is never the project's to keep.
 func Record(space workspace.Workspace, findings []engine.Finding, judged map[string]bool) error {
 	var all []Stored
 
 	if judged != nil {
 		for _, stored := range storedIn(space) {
-			if !judged[stored.Path] && exists(stored.Path) {
+			if !judged[stored.Path] && exists(stored.Path) && !source.InWorktree(space.Root(), stored.Path) {
 				all = append(all, stored)
 			}
 		}
 	}
 
 	for _, finding := range findings {
-		all = append(all, StoredOf(finding, space.Root()))
+		if stored := StoredOf(finding, space.Root()); !source.InWorktree(space.Root(), stored.Path) {
+			all = append(all, stored)
+		}
 	}
 
 	if all == nil {

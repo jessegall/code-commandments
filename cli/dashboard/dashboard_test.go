@@ -89,3 +89,51 @@ func TestARunReplacesOnlyTheFindingsOfTheFilesItJudged(t *testing.T) {
 		t.Errorf("once Gone.php is deleted the store keeps %v", got)
 	}
 }
+
+// TestAWorktreesFindingsAreNeverTheProjects holds the store to the project's own code: a finding a helper's edit in
+// a git worktree inside the project brought is not kept, and one already kept is dropped on the next run.
+func TestAWorktreesFindingsAreNeverTheProjects(t *testing.T) {
+	root, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	space := workspace.At(root, "")
+	helper := filepath.Join(root, ".claude", "worktrees", "main-helper")
+	for folder, files := range map[string]map[string]string{
+		helper:                    {".git": "gitdir: /repo/.git/worktrees/main-helper\n"},
+		filepath.Join(helper, "src"): {"Worker.php": "<?php\n"},
+		filepath.Join(root, "src"): {"Own.php": "<?php\n"},
+	} {
+		if err := os.MkdirAll(folder, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		for name, content := range files {
+			if err := os.WriteFile(filepath.Join(folder, name), []byte(content), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	found := func(path string) engine.Finding {
+		return engine.Finding{Skill: "backend/absence", Sin: "a-sin", File: path, Location: path + ":1", Scope: "S"}
+	}
+	worker, own := filepath.Join(helper, "src", "Worker.php"), filepath.Join(root, "src", "Own.php")
+
+	if err := Record(space, []engine.Finding{found(worker), found(own)}, map[string]bool{worker: true, own: true}); err != nil {
+		t.Fatal(err)
+	}
+	if kept := storedIn(space); len(kept) != 1 || kept[0].Path != own {
+		t.Errorf("a run keeps %+v", kept)
+	}
+
+	stale := []Stored{StoredOf(found(worker), root), StoredOf(found(own), root)}
+	written, _ := json.Marshal(stale)
+	if err := os.WriteFile(space.Cache(findingsFile), written, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := Record(space, nil, map[string]bool{}); err != nil {
+		t.Fatal(err)
+	}
+	if kept := storedIn(space); len(kept) != 1 || kept[0].Path != own {
+		t.Errorf("the next run keeps %+v", kept)
+	}
+}

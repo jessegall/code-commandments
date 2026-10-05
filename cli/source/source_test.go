@@ -69,3 +69,37 @@ func TestAFileIsReadByItsExtension(t *testing.T) {
 		t.Error("the TypeScript compiler's other forms and JavaScript read as TypeScript")
 	}
 }
+
+// TestAWorktreeInsideTheProjectIsNoneOfItsSource holds the walk to the project's own code: a helper's git worktree
+// checked out inside it is left out, while a submodule and a repository of its own are read.
+func TestAWorktreeInsideTheProjectIsNoneOfItsSource(t *testing.T) {
+	root := t.TempDir()
+	for file, content := range map[string]string{
+		"src/A.php":                              "<?php\n",
+		".claude/worktrees/main-helper/.git":     "gitdir: /repo/.git/worktrees/main-helper\n",
+		".claude/worktrees/main-helper/src/B.php": "<?php\n",
+		"tools/helper/.git":                      "gitdir: /repo/.git/worktrees/helper\n",
+		"tools/helper/C.php":                     "<?php\n",
+		"modules/lib/.git":                       "gitdir: ../../.git/modules/lib\n",
+		"modules/lib/D.php":                      "<?php\n",
+		"platform/.git/HEAD":                     "ref: refs/heads/main\n",
+		"platform/E.php":                         "<?php\n",
+	} {
+		os.MkdirAll(filepath.Join(root, filepath.Dir(file)), 0o755)
+		os.WriteFile(filepath.Join(root, file), []byte(content), 0o644)
+	}
+
+	var got []string
+	for _, file := range Sources(root, Excluded{}) {
+		relative, _ := filepath.Rel(root, file)
+		got = append(got, relative)
+	}
+	slices.Sort(got)
+
+	if want := []string{"modules/lib/D.php", "platform/E.php", "src/A.php"}; !slices.Equal(got, want) {
+		t.Errorf("sources %v", got)
+	}
+	if !InWorktree(root, filepath.Join(root, "tools/helper/C.php")) || InWorktree(root, filepath.Join(root, "modules/lib/D.php")) {
+		t.Error("InWorktree")
+	}
+}

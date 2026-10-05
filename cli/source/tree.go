@@ -96,7 +96,7 @@ func Reaches(root, file string, excluded Excluded) bool {
 }
 
 // descends says whether a walk goes into the folder: not a link, not hidden, not a dependency or build
-// folder, not a virtual environment, not excluded.
+// folder, not a git worktree checked out inside the project, not a virtual environment, not excluded.
 func descends(directory string, excluded Excluded) bool {
 	name := filepath.Base(directory)
 
@@ -118,7 +118,34 @@ func descends(directory string, excluded Excluded) bool {
 		return false
 	}
 
-	return !isBuildOutput(directory) && !excluded.Covers(directory)
+	return !isBuildOutput(directory) && !IsWorktree(directory) && !excluded.Covers(directory)
+}
+
+// IsWorktree says whether the folder is a git worktree checked out inside the project, a helper's copy of it: its
+// .git is a file naming a worktree of a repository. A submodule's .git file names a module, and a repository of its
+// own has a .git folder; both are the project's code.
+func IsWorktree(directory string) bool {
+	pointer, err := os.ReadFile(filepath.Join(directory, ".git"))
+
+	return err == nil && strings.Contains(filepath.ToSlash(string(pointer)), "/worktrees/")
+}
+
+// InWorktree says whether the file lies in a git worktree checked out below the project's root.
+func InWorktree(root, file string) bool {
+	if real, err := filepath.EvalSymlinks(root); err == nil {
+		root = real
+	}
+	if real, err := filepath.EvalSymlinks(file); err == nil {
+		file = real
+	}
+	root = filepath.Clean(root)
+	for folder := filepath.Dir(filepath.Clean(file)); folder != root && strings.HasPrefix(folder, root+string(filepath.Separator)); folder = filepath.Dir(folder) {
+		if IsWorktree(folder) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func isBuildOutput(directory string) bool {
