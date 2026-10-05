@@ -24,6 +24,7 @@ type Sources struct {
 	byLanguage map[source.Language][]string
 	roots      []string
 	tooLarge   []string
+	read       func(bridge string)
 }
 
 // largestSource is the most source a file may hold and still be read: past it a file is generated or minified, and
@@ -104,7 +105,7 @@ func (s Sources) Count(languages ...source.Language) int {
 
 // Only are the sources of these languages alone.
 func (s Sources) Only(languages ...source.Language) Sources {
-	kept := Sources{byLanguage: map[source.Language][]string{}, roots: s.roots, tooLarge: s.tooLarge}
+	kept := Sources{byLanguage: map[source.Language][]string{}, roots: s.roots, tooLarge: s.tooLarge, read: s.read}
 
 	for language, files := range s.byLanguage {
 		if slices.Contains(languages, language) {
@@ -113,6 +114,25 @@ func (s Sources) Only(languages ...source.Language) Sources {
 	}
 
 	return kept
+}
+
+// Reporting is these sources telling each, as Load finishes reading a language through its bridge, the bridge's name.
+func (s Sources) Reporting(each func(bridge string)) Sources {
+	s.read = each
+
+	return s
+}
+
+// Bridges is how many bridges Load runs: one for each reader with files to read.
+func (s Sources) Bridges() int {
+	count := 0
+	for _, read := range readers {
+		if s.Count(read.languages...) > 0 {
+			count++
+		}
+	}
+
+	return count
 }
 
 // Load streams every language's files through its bridge and loads the streams into one codebase, with
@@ -131,6 +151,9 @@ func (s Sources) Load() (*engine.Codebase, error) {
 		walked := s.files(read.languages)
 
 		stream, err := read.stream(s.roots, walked)
+		if s.read != nil {
+			s.read(read.name)
+		}
 		if leftUnread(err, files) {
 			continue
 		}

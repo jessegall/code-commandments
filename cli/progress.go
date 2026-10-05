@@ -12,38 +12,66 @@ import (
 const barWidth = 24
 
 // Progress is a carriage-return bar drawn on stderr, so it never mixes into findings or a checklist on
-// stdout. It is silent unless its stream is an interactive terminal: piped runs, hooks, CI and tests see
-// nothing.
+// stdout. It is silent unless its stream is an interactive terminal, or a journal check reads the run: there it
+// writes a plain `judging 37/257` line each time the share done moves, which the check reads as its progress.
+// Other piped runs, hooks, CI and tests see nothing.
 type Progress struct {
 	stream     io.Writer
 	enabled    bool
+	plain      bool
 	total      int
 	current    int
+	before     int
 	lastFilled int
+	lastShare  int
 	active     bool
 }
 
-// NewProgress draws on stream, and only when stream is a terminal.
+// journalCheck names the variable the journal sets for a check it runs, its report's file.
+const journalCheck = "JOURNAL_REPORT"
+
+// NewProgress draws on stream when it is a terminal, and writes plain lines when a journal check reads it.
 func NewProgress(stream io.Writer) *Progress {
-	return &Progress{stream: stream, enabled: isTerminal(stream), total: 1, lastFilled: -1}
+	terminal := isTerminal(stream)
+	plain := !terminal && os.Getenv(journalCheck) != ""
+
+	return &Progress{stream: stream, enabled: terminal || plain, plain: plain, total: 1, lastFilled: -1, lastShare: -1}
 }
 
 // Status shows an opaque line for a phase whose progress cannot be counted, overwritten by the next one.
 func (p *Progress) Status(message string) {
-	if !p.enabled {
+	if !p.enabled || p.plain {
 		return
 	}
 
 	fmt.Fprintf(p.stream, "\r\033[2K\033[2m%s\033[0m", message)
 }
 
-// Start begins a bar of total steps.
+// Expect counts steps that come before the bar starts, each read with Step, into the bar Start draws: the
+// languages a run reads before it judges.
+func (p *Progress) Expect(steps int) {
+	p.before = steps
+}
+
+// Step moves one of the steps Expect counted, labelled with what it was.
+func (p *Progress) Step(phase, label string) {
+	if !p.enabled {
+		return
+	}
+
+	p.active = true
+	p.total = max(1, p.before)
+	p.current = min(p.total, p.current+1)
+	p.render(phase, label)
+}
+
+// Start begins a bar of total steps, after the steps Expect counted.
 func (p *Progress) Start(total int) {
 	if !p.enabled {
 		return
 	}
 
-	p.total, p.current, p.lastFilled, p.active = max(1, total), 0, -1, true
+	p.total, p.current, p.lastFilled, p.active = max(1, p.before+total), min(p.current, p.before), -1, true
 	p.render("judging", "")
 }
 
@@ -87,7 +115,9 @@ func (p *Progress) Finish() {
 		return
 	}
 
-	fmt.Fprint(p.stream, "\r\033[2K")
+	if !p.plain {
+		fmt.Fprint(p.stream, "\r\033[2K")
+	}
 	p.active = false
 }
 
@@ -96,6 +126,14 @@ func (p *Progress) filled() int {
 }
 
 func (p *Progress) render(phase, label string) {
+	if p.plain {
+		if share := p.current * 100 / p.total; share != p.lastShare {
+			p.lastShare = share
+			fmt.Fprintf(p.stream, "%s %d/%d\n", phase, p.current, p.total)
+		}
+
+		return
+	}
 	filled := p.filled()
 	bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
 
