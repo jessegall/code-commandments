@@ -21,8 +21,9 @@ var authoredLegend = &state.Legend{
 }
 
 // tick is how far before a command's start a file's time may fall and still be its own: a filesystem stamps a write
-// from a coarse clock, so a file written just after the precise start can read a moment earlier.
-const tick = 20 * time.Millisecond
+// from a coarse clock, so a file written just after the precise start can read earlier: by a kernel tick, by more
+// in a loaded virtual machine, by up to a second on HFS+, which keeps whole seconds.
+const tick = time.Second
 
 // stampsLegend says what is taken as a shell command starts.
 var stampsLegend = &state.Legend{
