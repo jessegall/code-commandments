@@ -23,7 +23,12 @@ import (
 type Sources struct {
 	byLanguage map[source.Language][]string
 	roots      []string
+	tooLarge   []string
 }
+
+// largestSource is the most source a file may hold and still be read: past it a file is generated or minified, and
+// its tree outgrows the line a stream carries it in.
+const largestSource = 2 << 20
 
 // Given is each walked file's resolved path, back to the path it was walked as: a bridge answers with
 // resolved paths, and a report names a file the way the run was asked for it.
@@ -68,6 +73,11 @@ func Walk(roots []string, excluded source.Excluded) Sources {
 			}
 
 			seen[file] = true
+			if info, err := os.Stat(file); err == nil && info.Size() > largestSource {
+				sources.tooLarge = append(sources.tooLarge, file)
+
+				continue
+			}
 			language := source.OfFile(file)
 			sources.byLanguage[language] = append(sources.byLanguage[language], file)
 		}
@@ -94,7 +104,7 @@ func (s Sources) Count(languages ...source.Language) int {
 
 // Only are the sources of these languages alone.
 func (s Sources) Only(languages ...source.Language) Sources {
-	kept := Sources{byLanguage: map[source.Language][]string{}, roots: s.roots}
+	kept := Sources{byLanguage: map[source.Language][]string{}, roots: s.roots, tooLarge: s.tooLarge}
 
 	for language, files := range s.byLanguage {
 		if slices.Contains(languages, language) {
@@ -109,6 +119,7 @@ func (s Sources) Only(languages ...source.Language) Sources {
 // the facts the engine fills for PHP filled.
 func (s Sources) Load() (*engine.Codebase, error) {
 	var streams []*contract.Stream
+	sayTooLarge(s.tooLarge)
 
 	for _, read := range readers {
 		files := s.Count(read.languages...)
@@ -238,6 +249,13 @@ func sayUnreadable(streams []*contract.Stream) {
 		for _, unreadable := range stream.Program.Unreadable {
 			fmt.Fprintf(os.Stderr, "⚠ %s could not be loaded by the project's own loader (%s), so it is read as outside the scan\n", unreadable.Symbol, unreadable.Reason)
 		}
+	}
+}
+
+// sayTooLarge names, on STDERR, each file left unread for its size; every other file is still judged.
+func sayTooLarge(files []string) {
+	for _, file := range files {
+		fmt.Fprintf(os.Stderr, "⚠ %s is left unread: it holds more than %d MB of source, a generated or minified file's size; exclude it in the config\n", file, largestSource>>20)
 	}
 }
 

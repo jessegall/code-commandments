@@ -40,6 +40,9 @@ func written(t *testing.T, files map[string]string) string {
 		t.Fatal(err)
 	}
 	for name, source := range files {
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(folder, name)), 0o755); err != nil {
+			t.Fatal(err)
+		}
 		if err := os.WriteFile(filepath.Join(folder, name), []byte(source), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -204,6 +207,23 @@ func TestAProjectWithNoAutoloaderStillKnowsPhpsOwnClasses(t *testing.T) {
 	}
 	if !slices.Contains(listed, "Stringable") || slices.ContainsFunc(listed, func(symbol string) bool { return strings.HasPrefix(symbol, "PhpParser") }) {
 		t.Errorf("listed %v", listed)
+	}
+}
+
+// TestAnAutoloaderThatDoesNotLoadHereLeavesTheStreamWhole holds the bridge to its stream when the project's
+// autoloader requires a file only another machine has, as a path repository inside a Docker stack does: the
+// warning stays off the stream, and the files are read with PHP's own declarations alone.
+func TestAnAutoloaderThatDoesNotLoadHereLeavesTheStreamWhole(t *testing.T) {
+	folder := written(t, map[string]string{
+		"vendor/autoload.php": "<?php\nrequire __DIR__ . '/../../elsewhere/helpers.php';\n",
+		"src/Blank.php":       "<?php\nnamespace Shop;\nfinal class Blank implements \\Stringable {\n    public function __toString(): string { return ''; }\n}\n",
+	})
+	stream := bridged(t, filepath.Join(folder, "src"))
+	if len(stream.Files) != 1 || stream.Program == nil {
+		t.Fatalf("the stream holds %d files and outside symbols %v", len(stream.Files), stream.Program)
+	}
+	if !slices.ContainsFunc(stream.Program.Symbols, func(symbol contract.OutsideSymbol) bool { return symbol.Symbol == "Stringable" }) {
+		t.Errorf("PHP's own Stringable is not listed: %v", stream.Program.Symbols)
 	}
 }
 

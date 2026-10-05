@@ -10,6 +10,8 @@ namespace CodeCommandments\PhpBridge;
 
 // One file's tree is encoded whole, and a generated file can hold more than PHP's default limit allows.
 ini_set('memory_limit', '-1');
+// The stream is the bridge's output alone: a warning the scanned project's code raises goes to STDERR.
+ini_set('display_errors', 'stderr');
 
 require __DIR__ . '/parser/autoload.php';
 require __DIR__ . '/src/BadRequest.php';

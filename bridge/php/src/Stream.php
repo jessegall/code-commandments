@@ -108,6 +108,25 @@ final readonly class Stream
     }
 
     /**
+     * Whether the autoloader loads on this machine, tried in a PHP of its own: one that requires a file only another
+     * machine has dies where no handler can catch it, and the run then reads PHP's own declarations alone.
+     */
+    private function loads(string $autoload): bool
+    {
+        $tried = proc_open([PHP_BINARY, '-d', 'display_errors=stderr', '-r', 'require $argv[1];', $autoload], [1 => ['file', PHP_OS_FAMILY === 'Windows' ? 'NUL' : '/dev/null', 'w'], 2 => ['pipe', 'w']], $pipes);
+        if ($tried === false) {
+            return false;
+        }
+        $failure = trim((string) stream_get_contents($pipes[2]));
+        if (proc_close($tried) === 0) {
+            return true;
+        }
+        fwrite(STDERR, "the project's autoloader at {$autoload} does not load here, so only PHP's own declarations are read: {$failure}\n");
+
+        return false;
+    }
+
+    /**
      * The line naming the symbols the files reach outside the scan, as kept for the same names when it was, written
      * after the files; no line when they reach none.
      *
@@ -121,10 +140,11 @@ final readonly class Stream
         $key = $kept?->programKey($autoload, $declared, $referenced);
         $line = $key === null ? null : $kept->program($key);
         if ($line === null) {
-            $outside = new OutsideSymbols($autoload, $declared, $referenced);
+            $loads = $autoload !== null && $this->loads($autoload);
+            $outside = new OutsideSymbols($loads ? $autoload : null, $declared, $referenced);
             $program = array_filter(['symbols' => $outside->all(), 'unreadable' => $outside->unreadable()]);
             $line = $program === [] ? '' : $this->encoded(['program' => $program]);
-            if ($key !== null) {
+            if ($key !== null && ($loads || $autoload === null)) {
                 $kept->keepProgram($key, $line);
             }
         }
