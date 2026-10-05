@@ -161,6 +161,27 @@ function binary(): string
     return released(installedVersion());
 }
 
-$process = proc_open([binary(), ...array_slice($argv, 1)], [STDIN, STDOUT, STDERR], $pipes);
+/**
+ * Records the binary for bin/hook, which runs a hook through it without starting PHP: only one resolved
+ * without the environment naming another.
+ */
+function remember(string $binary): void
+{
+    $record = __DIR__ . '/.binary';
+
+    if (getenv('COMMANDMENTS_GO_BINARY') || getenv('COMMANDMENTS_RELEASE') || @file_get_contents($record) === $binary) {
+        return;
+    }
+
+    $draft = $record . '.' . getmypid();
+
+    if (@file_put_contents($draft, $binary) !== false) {
+        @rename($draft, $record);
+    }
+}
+
+$binary = binary();
+remember($binary);
+$process = proc_open([$binary, ...array_slice($argv, 1)], [STDIN, STDOUT, STDERR], $pipes);
 
 exit($process === false ? 1 : proc_close($process));

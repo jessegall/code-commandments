@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 
@@ -99,14 +100,18 @@ func Wire(root string) (bool, error) {
 	return true, jsonfile.Write(path, file)
 }
 
-// Command is the command every wired hook runs: the project's executable, dispatching the moment — through
-// PHP where the project installs the tool with composer, else the binary on the PATH.
+// Command is the command every wired hook runs: the project's executable, dispatching the moment. Where the
+// project installs the tool with composer, the launcher runs the binary the shim last ran, without PHP's start-up;
+// on Windows, which may have no sh, the shim runs it. Elsewhere it is the binary on the PATH.
 func Command(root string) string {
 	if !binary.ThroughPHP(root) {
 		return binary.Name + " hooks " + Stamp
 	}
+	if runtime.GOOS == "windows" {
+		return `php "$CLAUDE_PROJECT_DIR/` + binary.In(root) + `" hooks ` + Stamp
+	}
 
-	return `php "$CLAUDE_PROJECT_DIR/` + binary.In(root) + `" hooks ` + Stamp
+	return `sh "$CLAUDE_PROJECT_DIR/` + binary.Launcher(root) + `" hooks ` + Stamp
 }
 
 // moment is one event the suite is wired on, narrowed to a tool or not.

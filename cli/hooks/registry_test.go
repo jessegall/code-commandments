@@ -16,7 +16,7 @@ return function ($config): void {
 
 // TestHooksAreWiredAsThePHPToolWiresThem holds the wiring to what the PHP tool wrote for each case, recorded under
 // testdata/wired/<case>: whether it wired anything, and the settings file it left.
-func TestHooksAreWiredAsThePHPToolWiresThem(t *testing.T) {
+func TestHooksAreWiredThroughTheLauncher(t *testing.T) {
 	for name, settings := range map[string]*string{
 		"no-settings":   nil,
 		"own-hooks":     ptr(`{"model": "opus", "hooks": {"Stop": [{"hooks": [{"type": "command", "command": "./mine.sh"}, {"type": "command", "command": "php vendor/bin/commandments judge-reminder"}]}], "PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "x # @code-commandments-managed"}]}]}}`),

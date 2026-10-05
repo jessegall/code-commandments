@@ -1,0 +1,12 @@
+#!/bin/sh
+# Runs a hook straight through the binary the shim beside this script last handed itself to, without PHP's
+# start-up. The shim runs it instead when it has recorded none, when that binary is gone, or when the
+# environment names another one.
+here=$(dirname "$0")
+
+if [ -z "$COMMANDMENTS_GO_BINARY$COMMANDMENTS_RELEASE" ] && [ -r "$here/.binary" ]; then
+    binary=$(cat "$here/.binary")
+    [ -x "$binary" ] && exec "$binary" "$@"
+fi
+
+exec php "$here/commandments" "$@"

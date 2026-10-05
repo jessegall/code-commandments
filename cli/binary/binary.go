@@ -42,6 +42,16 @@ func In(root string) string {
 	return candidates[0]
 }
 
+// Launcher is the script of the project at root that runs a hook without starting PHP, relative to it: in the
+// package composer installs where the project runs the shim, else in the checkout's own bin/.
+func Launcher(root string) string {
+	if In(root) == Shim {
+		return "vendor/jessegall/code-commandments/bin/hook"
+	}
+
+	return "bin/hook"
+}
+
 // Shim is how a project that installs the tool with composer runs it, as every command the tool prints
 // names it there.
 const Shim = "vendor/bin/commandments"

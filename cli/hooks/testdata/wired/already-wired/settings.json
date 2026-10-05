@@ -5,7 +5,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                        "command": "sh \"$CLAUDE_PROJECT_DIR/vendor/jessegall/code-commandments/bin/hook\" hooks # @code-commandments-managed"
                     }
                 ]
             }
@@ -15,7 +15,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                        "command": "sh \"$CLAUDE_PROJECT_DIR/vendor/jessegall/code-commandments/bin/hook\" hooks # @code-commandments-managed"
                     }
                 ]
             }
@@ -25,7 +25,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                        "command": "sh \"$CLAUDE_PROJECT_DIR/vendor/jessegall/code-commandments/bin/hook\" hooks # @code-commandments-managed"
                     }
                 ]
             }
@@ -35,7 +35,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                        "command": "sh \"$CLAUDE_PROJECT_DIR/vendor/jessegall/code-commandments/bin/hook\" hooks # @code-commandments-managed"
                     }
                 ]
             }

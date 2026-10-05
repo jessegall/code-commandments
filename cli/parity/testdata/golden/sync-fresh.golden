@@ -476,7 +476,7 @@ sha256 635382798ab36769f0a38a67058bc411e3b44f236a2c657c8af9f670ce91d61a
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                        "command": "sh \"$CLAUDE_PROJECT_DIR/vendor/jessegall/code-commandments/bin/hook\" hooks # @code-commandments-managed"
                     }
                 ]
             }
@@ -486,7 +486,7 @@ sha256 635382798ab36769f0a38a67058bc411e3b44f236a2c657c8af9f670ce91d61a
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                        "command": "sh \"$CLAUDE_PROJECT_DIR/vendor/jessegall/code-commandments/bin/hook\" hooks # @code-commandments-managed"
                     }
                 ]
             }
@@ -496,7 +496,7 @@ sha256 635382798ab36769f0a38a67058bc411e3b44f236a2c657c8af9f670ce91d61a
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                        "command": "sh \"$CLAUDE_PROJECT_DIR/vendor/jessegall/code-commandments/bin/hook\" hooks # @code-commandments-managed"
                     }
                 ]
             }
@@ -506,7 +506,7 @@ sha256 635382798ab36769f0a38a67058bc411e3b44f236a2c657c8af9f670ce91d61a
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "php \"$CLAUDE_PROJECT_DIR/vendor/bin/commandments\" hooks # @code-commandments-managed"
+                        "command": "sh \"$CLAUDE_PROJECT_DIR/vendor/jessegall/code-commandments/bin/hook\" hooks # @code-commandments-managed"
                     }
                 ]
             }

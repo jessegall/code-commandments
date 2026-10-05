@@ -65,6 +65,8 @@ __pycache__/
 
 # The Go binary, built with `go build -o bin/commandments-go ./cmd/commandments`.
 /bin/commandments-go
+# The binary the shim last ran, recorded for bin/hook.
+/bin/.binary
 # The release binary the journal plugin's .journal-plugin/fetch writes.
 /bin/commandments-release
 
