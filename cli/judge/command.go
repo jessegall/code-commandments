@@ -1,6 +1,7 @@
 package judge
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -68,7 +69,8 @@ func (Command) Help() help.Help {
 			"cross-file rules stay correct) but nothing in it is ever reported or rewritten.").
 		Note("A rule that BREAKS is skipped so the rest of the run survives — but the run is not green: it " +
 			"names the rules that could not run and exits 3 (rather than 0) when nothing else was found, " +
-			"because a run missing a rule has not judged what that rule judges.").
+			"because a run missing a rule has not judged what that rule judges. A bridge that stops partway " +
+			"is treated the same: the files it read and every other language are judged, and the run names it.").
 		Note("Judge writes a Markdown checklist into your session folder (the run prints the exact path). " +
 			"A full scan is slow, so judge ONCE and work that file line-by-line, deleting each line as you fix its sin; re-run judge at the end to confirm. Files marked @code-commandments-generated are skipped — they are regenerated, not hand-authored.")
 }
@@ -158,6 +160,10 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	codebase, err := sources.Only(slices.DeleteFunc(slices.Clone(languages), func(language source.Language) bool { return language == source.CSharp })...).Load()
 	parseSeconds := time.Since(parsing).Seconds()
+	var incomplete scan.Incomplete
+	if errors.As(err, &incomplete) {
+		err = nil
+	}
 	if err != nil {
 		progress.Finish()
 
@@ -171,6 +177,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	}
 
 	judgement := c.run(tasks, options, progress, parseSeconds, console)
+	judgement.Skipped = joined(judgement.Skipped, incomplete.Bridges...)
 	csharpFiles := 0
 
 	if len(byProject) > 0 {

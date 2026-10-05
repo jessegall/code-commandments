@@ -119,6 +119,7 @@ func (s Sources) Only(languages ...source.Language) Sources {
 // the facts the engine fills for PHP filled.
 func (s Sources) Load() (*engine.Codebase, error) {
 	var streams []*contract.Stream
+	var incomplete Incomplete
 	sayTooLarge(s.tooLarge)
 
 	for _, read := range readers {
@@ -134,7 +135,8 @@ func (s Sources) Load() (*engine.Codebase, error) {
 			continue
 		}
 		if err != nil {
-			return nil, err
+			stream = partly(stream, err, files)
+			incomplete.Bridges = append(incomplete.Bridges, "the "+read.name+" bridge")
 		}
 		if stream == nil {
 			continue
@@ -153,8 +155,34 @@ func (s Sources) Load() (*engine.Codebase, error) {
 	if len(s.byLanguage[source.PHP]) > 0 {
 		php.TypesOf(codebase).Fill(codebase)
 	}
+	if len(incomplete.Bridges) > 0 {
+		return codebase, incomplete
+	}
 
 	return codebase, nil
+}
+
+// Incomplete is a load a bridge broke off: the codebase holds every other language, and what the broken bridge
+// wrote before it stopped.
+type Incomplete struct {
+	Bridges []string
+}
+
+func (i Incomplete) Error() string {
+	return strings.Join(i.Bridges, ", ") + " stopped before it read every file"
+}
+
+// partly is what a broken bridge read before it stopped, said on STDERR with why, so every other file is still
+// judged; nothing when it stopped before its header.
+func partly(stream *contract.Stream, err error, files int) *contract.Stream {
+	if stream == nil || stream.Header.Language == "" {
+		fmt.Fprintf(os.Stderr, "⚠ %d file(s) left unread, every other language is still judged — %v\n", files, err)
+
+		return nil
+	}
+	fmt.Fprintf(os.Stderr, "⚠ %d of %d file(s) left unread, the rest is still judged — %v\n", files-len(stream.Files), files, err)
+
+	return stream
 }
 
 func (s Sources) files(languages []source.Language) []string {
@@ -171,6 +199,7 @@ func (s Sources) files(languages []source.Language) []string {
 // reader with nothing to read them with answers no stream. A stream is put in walk order, unless the reader keeps
 // the order its bridge answers in, as the PHP tool keeps C#'s, project by project.
 type reader struct {
+	name        string
 	languages   []source.Language
 	stream      func(roots, files []string) (*contract.Stream, error)
 	bridgeOrder bool
@@ -178,14 +207,14 @@ type reader struct {
 
 // readers are the bridges, each with the languages it reads.
 var readers = []reader{
-	{languages: []source.Language{source.PHP}, stream: func(_, files []string) (*contract.Stream, error) {
+	{name: "PHP", languages: []source.Language{source.PHP}, stream: func(_, files []string) (*contract.Stream, error) {
 		return php.Here().Cached().Stream(files...)
 	}},
-	{languages: []source.Language{source.Vue, source.TypeScript}, stream: func(_, files []string) (*contract.Stream, error) {
+	{name: "frontend", languages: []source.Language{source.Vue, source.TypeScript}, stream: func(_, files []string) (*contract.Stream, error) {
 		return frontend.Here().Cached().Stream(files...)
 	}},
-	{languages: []source.Language{source.CSharp}, stream: csharp, bridgeOrder: true},
-	{languages: []source.Language{source.Python}, stream: func(_, files []string) (*contract.Stream, error) {
+	{name: "C#", languages: []source.Language{source.CSharp}, stream: csharp, bridgeOrder: true},
+	{name: "Python", languages: []source.Language{source.Python}, stream: func(_, files []string) (*contract.Stream, error) {
 		command, err := bridge.Mypy()
 		if err != nil {
 			return nil, err

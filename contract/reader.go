@@ -96,7 +96,8 @@ func ReadAll(r io.Reader) (*Stream, error) {
 }
 
 // Stream reads the next whole stream, header to trailer. A served bridge answers each request with one, back
-// to back on the same output, so each call starts a new stream where the last one ended.
+// to back on the same output, so each call starts a new stream where the last one ended. A stream that breaks after
+// its header is answered as far as it was read, with why it broke.
 func (r *Reader) Stream() (*Stream, error) {
 	stream := &Stream{}
 	err := r.Each(func(line Line, _ []byte) error {
@@ -113,11 +114,11 @@ func (r *Reader) Stream() (*Stream, error) {
 
 		return nil
 	})
-	if err != nil {
+	if err != nil && stream.Header.Contract == "" {
 		return nil, err
 	}
 
-	return stream, nil
+	return stream, err
 }
 
 // Each reads the next whole stream a line at a time, handing each line to each as it is read, with the bytes it

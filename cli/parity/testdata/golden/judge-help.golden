@@ -35,7 +35,8 @@ Options:
 
   A rule that BREAKS is skipped so the rest of the run survives — but the run is not green: it
   names the rules that could not run and exits 3 (rather than 0) when nothing else was found,
-  because a run missing a rule has not judged what that rule judges.
+  because a run missing a rule has not judged what that rule judges. A bridge that stops partway is
+  treated the same: the files it read and every other language are judged, and the run names it.
 
   Judge writes a Markdown checklist into your session folder (the run prints the exact path). A full
   scan is slow, so judge ONCE and work that file line-by-line, deleting each line as you fix its

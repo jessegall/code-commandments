@@ -243,7 +243,7 @@ func commandsFor(findings []engine.Finding, commands map[string]string) []string
 	return listed
 }
 
-// Skipped are the rules that broke and could not run.
+// Skipped are the rules that broke and could not run, and the bridges that stopped before they read every file.
 type Skipped []string
 
 // skippedConsequence is what a skipped rule costs the run.
@@ -274,10 +274,10 @@ func (s Skipped) Markdown() string {
 }
 
 func (s Skipped) headline() string {
-	rules := "rules"
+	parts := "parts"
 	if len(s) == 1 {
-		rules = "rule"
+		parts = "part"
 	}
 
-	return strconv.Itoa(len(s)) + " " + rules + " could not run: " + strings.Join(s, ", ")
+	return strconv.Itoa(len(s)) + " " + parts + " of the run could not finish: " + strings.Join(s, ", ")
 }

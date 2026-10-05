@@ -69,7 +69,7 @@ func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
 	}
 	stream, failure, ran, err := bridge.Run(command, arguments...)
 	if !ran {
-		return nil, errors.Join(fmt.Errorf("the PHP bridge failed: %w", err), errors.New(failure))
+		return stream, errors.Join(fmt.Errorf("the PHP bridge failed: %w", err), errors.New(failure))
 	}
 
 	return stream, err

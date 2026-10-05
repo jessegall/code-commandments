@@ -29,11 +29,12 @@ type Request struct {
 	Contents map[string]string `json:"contents,omitempty"`
 }
 
-// Once runs the bridge over the paths and reads the stream it writes.
+// Once runs the bridge over the paths and reads the stream it writes; a bridge that fails answers why, with the stream
+// as far as it wrote it.
 func Once(command []string, paths ...string) (*contract.Stream, error) {
 	stream, errs, ran, err := Run(command, paths...)
 	if !ran {
-		return nil, Failed(command, err, errs)
+		return stream, Failed(command, err, errs)
 	}
 
 	return stream, err
@@ -41,7 +42,8 @@ func Once(command []string, paths ...string) (*contract.Stream, error) {
 
 // Run runs the command and reads the stream it writes as it writes it, so a large stream is never held as text as
 // well as read; with what it wrote to stderr, and whether it ran to a clean exit. A command that failed answers
-// why; one that ran answers the stream, or why it broke the contract.
+// why; one that ran answers the stream, or why it broke the contract. Either way the stream is answered as far as it
+// was read.
 func Run(command []string, arguments ...string) (stream *contract.Stream, errs string, ran bool, err error) {
 	limit, err := quietLimit()
 	if err != nil {
@@ -66,10 +68,10 @@ func Run(command []string, arguments ...string) (stream *contract.Stream, errs s
 	io.Copy(io.Discard, output)
 	exited := process.Wait()
 	if output.silent.Load() {
-		return nil, failure.String(), false, Silent{For: limit}
+		return stream, failure.String(), false, Silent{For: limit}
 	}
 	if exited != nil {
-		return nil, failure.String(), false, exited
+		return stream, failure.String(), false, exited
 	}
 
 	return stream, failure.String(), true, read
