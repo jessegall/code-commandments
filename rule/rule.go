@@ -3,6 +3,7 @@
 package rule
 
 import (
+	"path"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -98,6 +99,7 @@ type Step struct {
 	Implements     string   `json:"implements,omitempty"`
 	Uses           string   `json:"uses,omitempty"`
 	HasAttribute   string   `json:"hasAttribute,omitempty"`
+	Sibling        string   `json:"sibling,omitempty"`
 	All            []Step   `json:"all,omitempty"`
 	TypeKind       string   `json:"typeKind,omitempty"`
 	HasAnnotation  string   `json:"hasAnnotation,omitempty"`
@@ -147,6 +149,7 @@ type Count struct {
 	Descendant *Step  `json:"descendant,omitempty"`
 	Child      *Step  `json:"child,omitempty"`
 	Field      string `json:"field,omitempty"`
+	Distinct   string `json:"distinct,omitempty"`
 	Bounds
 }
 
@@ -440,7 +443,7 @@ func (s Step) checks() int {
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Documented != nil, s.File != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
-		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.HasAttribute != "",
+		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.HasAttribute != "", s.Sibling != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
 		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil,
 		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != ""} {
@@ -481,6 +484,8 @@ func (s *Step) prepare() error {
 		s.pattern = typeGlob(strings.Join(strings.Fields(s.ParameterType), ""))
 	case s.Constructs != "":
 		s.pattern = glob(strings.TrimPrefix(s.Constructs, `\`))
+	case isGlob(s.Extends), isGlob(s.ExtendsAny), isGlob(s.Implements), isGlob(s.Uses):
+		s.pattern = glob(strings.TrimPrefix(s.Extends+s.ExtendsAny+s.Implements+s.Uses, `\`))
 	case s.CommentLike != "":
 		s.pattern = glob(s.CommentLike)
 	case s.CommentMatches != "":
@@ -541,6 +546,10 @@ func (s Step) valid() error {
 
 	if s.Of != "" && !slices.ContainsFunc(Targets, func(target Target) bool { return target.Takes(s.Of) }) {
 		return errors.New(noneOf("of", s.Of, targetKeys()))
+	}
+
+	if s.Counts != nil && s.Counts.Distinct != "" && !slices.ContainsFunc(Targets, func(target Target) bool { return target.Takes(s.Counts.Distinct) }) {
+		return errors.New(noneOf("distinct", s.Counts.Distinct, targetKeys()))
 	}
 
 	return nil
@@ -639,9 +648,9 @@ func (s Step) check(match engine.Match) bool {
 
 		return isText && s.pattern.MatchString(text)
 	case s.Resolves != "":
-		return strings.TrimPrefix(subject.Refers(), `\`) == strings.TrimPrefix(s.Resolves, `\`)
+		return strings.TrimPrefix(resolved(subject), `\`) == strings.TrimPrefix(s.Resolves, `\`)
 	case s.ResolvesLike != "":
-		refers := subject.Refers()
+		refers := resolved(subject)
 
 		return refers != "" && s.pattern.MatchString(strings.TrimPrefix(refers, `\`))
 	case s.NamespaceLike != "":
@@ -687,15 +696,17 @@ func (s Step) check(match engine.Match) bool {
 	case s.Complexity != nil:
 		return s.Complexity.holds(subject.Complexity())
 	case s.Extends != "":
-		return namesAny(subject.Parents(), s.Extends)
+		return s.namesAny(subject.Parents(), s.Extends)
 	case s.ExtendsAny != "":
-		return namesAny(subject.Lineage(), s.ExtendsAny)
+		return s.namesAny(subject.Lineage(), s.ExtendsAny)
 	case s.Implements != "":
-		return namesAny(subject.Contracts(), s.Implements)
+		return s.namesAny(subject.Contracts(), s.Implements)
 	case s.Uses != "":
-		return namesAny(subject.UsedTraits(), s.Uses)
+		return s.namesAny(subject.UsedTraits(), s.Uses)
 	case s.HasAttribute != "":
 		return subject.WritesAttribute(s.HasAttribute)
+	case s.Sibling != "":
+		return hasSibling(subject, s.Sibling)
 	case s.All != nil:
 		return !slices.ContainsFunc(s.All, func(step Step) bool { return !step.check(subject) })
 	case s.TypeKind != "":
@@ -840,8 +851,52 @@ func (s Step) commented(subject engine.Match) bool {
 }
 
 // namesAny says whether any of the symbols is the type want names.
-func namesAny(symbols []string, want string) bool {
-	return slices.ContainsFunc(symbols, func(symbol string) bool { return engine.NamesType(symbol, want) })
+// namesAny says whether one of the symbols is the type the step names: by name, or, for a glob such as `*Service`,
+// by its whole name or its last part matching it.
+func (s Step) namesAny(symbols []string, want string) bool {
+	if !isGlob(want) {
+		return slices.ContainsFunc(symbols, func(symbol string) bool { return engine.NamesType(symbol, want) })
+	}
+
+	return slices.ContainsFunc(symbols, func(symbol string) bool {
+		symbol = strings.TrimPrefix(symbol, `\`)
+
+		return s.pattern.MatchString(symbol) || s.pattern.MatchString(engine.LastPart(symbol))
+	})
+}
+
+// hasSibling says whether a file the scan read sits beside the node's file and matches the pattern, `{folder}`
+// standing for the name of the folder they share: `{folder}.php` beside migrations/v2/*.php is migrations/v2/v2.php.
+func hasSibling(node engine.Match, pattern string) bool {
+	if node.Codebase() == nil {
+		return false
+	}
+	own := node.Judged()
+	folder := path.Dir(own)
+	wanted := glob(strings.ReplaceAll(pattern, "{folder}", path.Base(folder)))
+	for _, file := range node.Codebase().Files() {
+		judged := file.Judged()
+		if judged != own && path.Dir(judged) == folder && wanted.MatchString(path.Base(judged)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isGlob says whether a type the step names is a pattern rather than a name.
+func isGlob(want string) bool {
+	return strings.ContainsAny(want, "*?[")
+}
+
+// resolved is the symbol the node refers to, else the class it is about: a variable or a property holds a value of
+// one, which is the class it resolves to.
+func resolved(node engine.Match) string {
+	if refers := node.Refers(); refers != "" {
+		return refers
+	}
+
+	return node.Class()
 }
 
 // typed says whether a written type matches the step's pattern: as it is written, its spaces and the pattern's
@@ -885,8 +940,18 @@ func (c Count) tally(match engine.Match) int {
 	}
 
 	count := 0
+	seen := map[string]bool{}
 	for _, node := range counted {
-		if step.check(node) {
+		if !step.check(node) {
+			continue
+		}
+		if c.Distinct == "" {
+			count++
+
+			continue
+		}
+		if written := (Step{Of: c.Distinct}).subject(node).Written(); written != "" && !seen[written] {
+			seen[written] = true
 			count++
 		}
 	}
@@ -972,20 +1037,40 @@ func glob(pattern string) *regexp.Regexp {
 	var expression strings.Builder
 	expression.WriteString("(?s)^")
 
-	for _, character := range pattern {
-		switch character {
+	for at := 0; at < len(pattern); at++ {
+		switch pattern[at] {
 		case '*':
 			expression.WriteString(".*")
 		case '?':
 			expression.WriteString(".")
+		case '[':
+			at = writeBracket(&expression, pattern, at)
 		default:
-			expression.WriteString(regexp.QuoteMeta(string(character)))
+			expression.WriteString(regexp.QuoteMeta(pattern[at : at+1]))
 		}
 	}
 
 	expression.WriteString("$")
 
 	return regexp.MustCompile(expression.String())
+}
+
+// writeBracket writes the character class a pattern opens at `at`, `[0-9]` or `[!a-z]` for any but those, and
+// answers where the pattern goes on after it; a bracket never closed stands for itself.
+func writeBracket(expression *strings.Builder, pattern string, at int) int {
+	end := strings.IndexByte(pattern[at+1:], ']')
+	if end < 1 {
+		expression.WriteString(regexp.QuoteMeta("["))
+
+		return at
+	}
+	class := pattern[at+1 : at+1+end]
+	if strings.HasPrefix(class, "!") {
+		class = "^" + class[1:]
+	}
+	expression.WriteString("[" + strings.ReplaceAll(class, `\`, `\\`) + "]")
+
+	return at + 1 + end
 }
 
 // pathGlob reads a pattern over paths as .gitignore does: `*` and `?` stay within one folder, `**` crosses any
@@ -1006,6 +1091,8 @@ func pathGlob(pattern string) *regexp.Regexp {
 			expression.WriteString("[^/]*")
 		case pattern[at] == '?':
 			expression.WriteString("[^/]")
+		case pattern[at] == '[':
+			at = writeBracket(&expression, pattern, at)
 		default:
 			expression.WriteString(regexp.QuoteMeta(pattern[at : at+1]))
 		}

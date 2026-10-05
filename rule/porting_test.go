@@ -2,7 +2,12 @@ package rule_test
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
+
+	"github.com/jessegall/code-commandments/cli/scan"
+	"github.com/jessegall/code-commandments/cli/source"
 
 	"github.com/jessegall/code-commandments/engine/frontend/frontendtest"
 	"github.com/jessegall/code-commandments/rule"
@@ -99,5 +104,83 @@ func TestARuleReadsAnAttributeATemplateElementWrites(t *testing.T) {
 	}
 	if got := fmt.Sprint(lines(found.Find(codebase))); got != "[5]" {
 		t.Errorf("the inputs without a dusk selector are at %s", got)
+	}
+}
+
+// TestARuleMatchesClassesByPatternAndFilesByTheirNeighbours holds the second round of transportklok's port: a
+// receiver's class by a glob or as that exact class, receivers counted once each, a file's neighbour, and globs
+// with character classes.
+func TestARuleMatchesClassesByPatternAndFilesByTheirNeighbours(t *testing.T) {
+	root := t.TempDir()
+	for path, source := range map[string]string{
+		"app/Billing.php": `<?php
+
+namespace App;
+
+class FormRequest {}
+
+final class RequestState extends FormRequest {}
+
+final class InvoiceService
+{
+    public function create(): void {}
+
+    public function update(): void {}
+}
+
+final class LedgerService
+{
+    public function create(): void {}
+}
+
+final class Pages
+{
+    public function __construct(private InvoiceService $invoices, private LedgerService $ledger) {}
+
+    public function one(RequestState $state, FormRequest $plain): void
+    {
+        $this->invoices->create();
+        $this->invoices->update();
+        $state->validate();
+        $plain->validate();
+    }
+
+    public function two(): void
+    {
+        $this->invoices->create();
+        $this->ledger->create();
+    }
+}
+`,
+		"migrations/v12/AddTotals.php": "<?php\n\nnamespace Migrations\\V12;\n\nfinal class AddTotals {}\n",
+		"migrations/v12/v12.php":        "<?php\n\nnamespace Migrations\\V12;\n\nfinal class Helper {}\n",
+		"migrations/vnext/Draft.php":    "<?php\n\nnamespace Migrations\\Next;\n\nfinal class Draft {}\n",
+	} {
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, path), []byte(source), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	codebase, err := scan.Walk([]string{root}, source.Excluded{}).Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for query, want := range map[string]string{
+		`{"select": "call", "where": [{"resolvesLike": "*Service", "of": "child:var"}]}`:                                      "[27 28 35 36]",
+		`{"select": "call", "where": [{"name": "validate"}, {"resolves": "App\\RequestState", "of": "child:var"}]}`:             "[29]",
+		`{"select": "call", "where": [{"name": "validate"}, {"extendsAny": "*Request", "of": "child:var"}]}`:                    "[29]",
+		`{"select": "function", "where": [{"count": {"descendant": {"all": [{"is": "call"}, {"nameIn": ["create", "update"]}]}, "distinct": "child:var", "atMost": 1}}, {"count": {"descendant": {"all": [{"is": "call"}, {"nameIn": ["create", "update"]}]}, "atLeast": 1}}]}`: "[25]",
+		`{"select": "type-declaration", "where": [{"file": "**/migrations/v[0-9]*/*"}, {"sibling": "{folder}.php"}]}`:          "[5]",
+	} {
+		written := `{"engine": "backend", "sin": {"name": "ported", "description": "a ported rule", "skill": "backend/laravel-idioms"}, "find": ` + query + `}`
+		found, err := rule.Parse("PortedDetector", []byte(written), shipped)
+		if err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+		if got := fmt.Sprint(lines(found.Find(codebase))); got != want {
+			t.Errorf("%s: found %s, want %s", query, got, want)
+		}
 	}
 }

@@ -76,8 +76,8 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 
 | Check | Keeps the node when |
 |---|---|
-| `{"resolves": "App\\Models\\User"}` | what its name refers to, resolved, is that |
-| `{"resolvesLike": "App\\Models\\*"}` | what its name refers to, resolved, matches the glob |
+| `{"resolves": "App\\Models\\User"}` | what its name refers to, resolved, is that — or, for a value that names nothing (a variable, a property), the class it holds: that exact class, not one extending it |
+| `{"resolvesLike": "App\\Models\\*"}` | what its name refers to, resolved, matches the glob, or the class a value holds does: `{"resolvesLike": "*Service", "of": "child:var"}` is a receiver of any *Service |
 | `{"calls": {"name": "dd"}}` | a call of its own — not one inside a function nested in it — passes the step |
 | `{"argument": {"at": 0, "is": "literal"}}` | the argument at that place passes the step; a negative `at` counts from the end, `-1` the last, and none there passes nothing |
 | `{"constructs": "Date*"}` | a construction, or on anything else one of its own, creates an instance of a type the glob names — in Python, a call of a class |
@@ -111,7 +111,7 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"lines": {"atLeast": 40}}` | it spans that many lines, its first and last among them |
 | `{"members": {"is": "function", "atLeast": 20}}` | a type declares that many members directly that pass the step (every member, with no check); with `"inherited": true`, the members its parents and traits declare in the scan count too |
 | `{"complexity": {"atLeast": 10}}` | one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `\|\|` are not counted, and a function inside it is its own count |
-| `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children |
+| `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children; with `"distinct": "child:var"` (any target `of` takes), the counted nodes whose target is written the same count once: `atMost: 1` is one receiver |
 | `{"duplicated": {"atLeast": 2}}` | that many functions of the codebase, it among them, have its body, read from the tree, blind to spacing and comments |
 
 **Its type**
@@ -120,11 +120,12 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 |---|---|
 | `{"typeKind": "interface"}` | a type declaration declares a `class`, `interface`, `enum`, `trait`, `record`, `struct` or `protocol` |
 | `{"extends": "Controller"}` | its class extends the type directly. Its class is the one a type declaration declares, else the one the node names (`X`, `X::class`), constructs (`new X`) or holds a value of (`$this->service`, a typed parameter) |
-| `{"extendsAny": "Exception"}` | the type is anywhere in its class's chain of parents, followed through the scan and the declarations outside it the language knows |
+| `{"extendsAny": "Exception"}` | the type is anywhere in its class's chain of parents, followed through the scan and the declarations outside it the language knows; a glob (`*Service`, `[A-Z]*Repository`) matches a parent's whole name or its last part |
 | `{"implements": "ShouldQueue"}` | its class honours the contract: its own, its parents', and the contracts those extend |
 | `{"uses": "AsAction"}` | its class uses the trait: itself, through a parent, or through a trait it uses |
 | `{"hasAnnotation": "Route"}` | a declaration carries the attribute or decorator |
 | `{"hasAttribute": "data-dusk"}` | a template element writes the attribute, plain or bound: `data-dusk` or `:data-dusk` |
+| `{"sibling": "{folder}.php"}` | a file the scan read sits beside its file and matches the glob, `{folder}` standing for the name of the folder they share |
 | `{"returnType": "?*"}` | a function's written return type matches the pattern, spaces dropped, or the type it names resolves to; it reads the text, so `?*` finds PHP's `?int` and `*\|null` finds `int\|null` |
 | `{"parameterType": "array"}` | a parameter's written type matches the pattern, read as returnType reads one |
 
