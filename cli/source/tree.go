@@ -17,8 +17,14 @@ var (
 	// skippedSuffixes end the name of a folder a package installer made.
 	skippedSuffixes = []string{".egg-info"}
 
-	// buildOutputs are where a C# project compiles to, beside its .csproj.
-	buildOutputs = []string{"bin", "obj"}
+	// buildOutputs are the folders a build writes to, by the file beside them that says a build lives there: a C#
+	// project's .csproj, a JavaScript package's package.json, and Laravel's artisan, whose public folder holds only
+	// what the asset build compiled.
+	buildOutputs = map[string][]string{
+		"*.csproj":     {"bin", "obj"},
+		"package.json": {"dist", "build"},
+		"artisan":      {"public"},
+	}
 )
 
 // virtualEnvironment marks a Python virtual environment's folder.
@@ -116,11 +122,14 @@ func descends(directory string, excluded Excluded) bool {
 }
 
 func isBuildOutput(directory string) bool {
-	if !slices.Contains(buildOutputs, filepath.Base(directory)) {
-		return false
+	for marker, folders := range buildOutputs {
+		if !slices.Contains(folders, filepath.Base(directory)) {
+			continue
+		}
+		if found, _ := filepath.Glob(filepath.Join(filepath.Dir(directory), marker)); len(found) > 0 {
+			return true
+		}
 	}
 
-	projects, _ := filepath.Glob(filepath.Join(filepath.Dir(directory), "*.csproj"))
-
-	return len(projects) > 0
+	return false
 }

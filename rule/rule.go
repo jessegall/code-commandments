@@ -100,6 +100,7 @@ type Step struct {
 	Uses           string   `json:"uses,omitempty"`
 	HasAttribute   string   `json:"hasAttribute,omitempty"`
 	Sibling        string   `json:"sibling,omitempty"`
+	IsA            string   `json:"isA,omitempty"`
 	All            []Step   `json:"all,omitempty"`
 	TypeKind       string   `json:"typeKind,omitempty"`
 	HasAnnotation  string   `json:"hasAnnotation,omitempty"`
@@ -443,7 +444,7 @@ func (s Step) checks() int {
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Documented != nil, s.File != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
-		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.HasAttribute != "", s.Sibling != "",
+		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
 		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil,
 		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != ""} {
@@ -484,8 +485,8 @@ func (s *Step) prepare() error {
 		s.pattern = typeGlob(strings.Join(strings.Fields(s.ParameterType), ""))
 	case s.Constructs != "":
 		s.pattern = glob(strings.TrimPrefix(s.Constructs, `\`))
-	case isGlob(s.Extends), isGlob(s.ExtendsAny), isGlob(s.Implements), isGlob(s.Uses):
-		s.pattern = glob(strings.TrimPrefix(s.Extends+s.ExtendsAny+s.Implements+s.Uses, `\`))
+	case isGlob(s.Extends), isGlob(s.ExtendsAny), isGlob(s.Implements), isGlob(s.Uses), isGlob(s.IsA):
+		s.pattern = glob(strings.TrimPrefix(s.Extends+s.ExtendsAny+s.Implements+s.Uses+s.IsA, `\`))
 	case s.CommentLike != "":
 		s.pattern = glob(s.CommentLike)
 	case s.CommentMatches != "":
@@ -703,6 +704,8 @@ func (s Step) check(match engine.Match) bool {
 		return s.namesAny(subject.Contracts(), s.Implements)
 	case s.Uses != "":
 		return s.namesAny(subject.UsedTraits(), s.Uses)
+	case s.IsA != "":
+		return s.namesAny(append(append([]string{subject.Class()}, subject.Lineage()...), subject.Contracts()...), s.IsA)
 	case s.HasAttribute != "":
 		return subject.WritesAttribute(s.HasAttribute)
 	case s.Sibling != "":
@@ -865,18 +868,21 @@ func (s Step) namesAny(symbols []string, want string) bool {
 	})
 }
 
-// hasSibling says whether a file the scan read sits beside the node's file and matches the pattern, `{folder}`
-// standing for the name of the folder they share: `{folder}.php` beside migrations/v2/*.php is migrations/v2/v2.php.
+// hasSibling says whether a file the scan read matches the pattern, read from the node's folder, `{folder}` standing
+// for that folder's name: `{folder}.php` beside migrations/v2/*.php is migrations/v2/v2.php, and `../{folder}.php`
+// beside fresh/orders/Helper.php is fresh/orders.php.
 func hasSibling(node engine.Match, pattern string) bool {
 	if node.Codebase() == nil {
 		return false
 	}
 	own := node.Judged()
 	folder := path.Dir(own)
-	wanted := glob(strings.ReplaceAll(pattern, "{folder}", path.Base(folder)))
+	pattern = strings.ReplaceAll(pattern, "{folder}", path.Base(folder))
+	where := path.Clean(path.Join(folder, path.Dir(pattern)))
+	wanted := glob(path.Base(pattern))
 	for _, file := range node.Codebase().Files() {
 		judged := file.Judged()
-		if judged != own && path.Dir(judged) == folder && wanted.MatchString(path.Base(judged)) {
+		if judged != own && path.Dir(judged) == where && wanted.MatchString(path.Base(judged)) {
 			return true
 		}
 	}

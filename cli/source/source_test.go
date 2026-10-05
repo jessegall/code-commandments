@@ -37,6 +37,8 @@ func TestTheWalkSkipsWhatIsNeverSourceAndWhatTheProjectExcluded(t *testing.T) {
 		"vendor/x.php", "node_modules/y.ts", ".hidden/z.php", "pkg.egg-info/p.py",
 		"venv/pyvenv.cfg", "venv/lib/q.py", "app/app.csproj", "app/bin/Out.cs", "app/Keep.cs",
 		"generated/G.php", "legacy/old/L.php",
+		"web/package.json", "web/dist/bundle.js", "web/src/order-form.js", "web/src/Cart.tsx",
+		"site/artisan", "site/public/build/app.js", "site/resources/js/menu.mjs",
 	} {
 		os.MkdirAll(filepath.Join(root, filepath.Dir(file)), 0o755)
 		os.WriteFile(filepath.Join(root, file), nil, 0o644)
@@ -50,7 +52,7 @@ func TestTheWalkSkipsWhatIsNeverSourceAndWhatTheProjectExcluded(t *testing.T) {
 	}
 
 	slices.Sort(got)
-	want := []string{"app/Keep.cs", "src/A.php", "src/E.cs", "src/b.vue", "src/c.ts", "src/d.py"}
+	want := []string{"app/Keep.cs", "site/resources/js/menu.mjs", "src/A.php", "src/E.cs", "src/b.vue", "src/c.ts", "src/d.py", "web/src/Cart.tsx", "web/src/order-form.js"}
 
 	if !slices.Equal(got, want) {
 		t.Errorf("sources %v", got)
@@ -63,5 +65,7 @@ func TestAFileIsReadByItsExtension(t *testing.T) {
 		t.Error("OfFile")
 	case !Judges("a.ts") || Judges("a.md"):
 		t.Error("Judges")
+	case OfFile("form.js") != TypeScript || OfFile("Cart.tsx") != TypeScript || OfFile("config.mjs") != TypeScript || !Judges("form.jsx"):
+		t.Error("the TypeScript compiler's other forms and JavaScript read as TypeScript")
 	}
 }

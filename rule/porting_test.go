@@ -184,3 +184,44 @@ final class Pages
 		}
 	}
 }
+
+// TestARuleReadsAParentFoldersFileAndTheClassItself holds the third round of transportklok's port: a helper's
+// migration one folder up, and a class that is the type or extends it.
+func TestARuleReadsAParentFoldersFileAndTheClassItself(t *testing.T) {
+	root := t.TempDir()
+	for path, source := range map[string]string{
+		"migrations/fresh/orders.php":        "<?php\n\nnamespace Migrations;\n\nfinal class Orders {}\n",
+		"migrations/fresh/orders/Helper.php": "<?php\n\nnamespace Migrations\\Orders;\n\nfinal class Helper {}\n",
+		"migrations/fresh/stray/Helper.php":  "<?php\n\nnamespace Migrations\\Stray;\n\nfinal class Helper {}\n",
+		"app/Requests.php":                   "<?php\n\nnamespace App;\n\nclass Request {}\n\nfinal class StoreRequest extends Request {}\n\nfinal class Other {}\n",
+	} {
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, path)), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(root, path), []byte(source), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	codebase, err := scan.Walk([]string{root}, source.Excluded{}).Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for query, want := range map[string]string{
+		`{"select": "type-declaration", "where": [{"file": "**/fresh/*/*"}, {"sibling": "../{folder}.php"}]}`: "[5]",
+		`{"select": "type-declaration", "where": [{"isA": "App\\Request"}]}`:                                   "[5 7]",
+		`{"select": "type-declaration", "where": [{"extendsAny": "App\\Request"}]}`:                            "[7]",
+	} {
+		written := `{"engine": "backend", "sin": {"name": "ported", "description": "a ported rule", "skill": "backend/laravel-idioms"}, "find": ` + query + `}`
+		found, err := rule.Parse("PortedDetector", []byte(written), shipped)
+		if err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+		var at []string
+		for _, match := range found.Find(codebase) {
+			at = append(at, fmt.Sprintf("%s:%d", filepath.Base(match.File()), match.Line()))
+		}
+		if got := fmt.Sprint(lines(found.Find(codebase))); got != want {
+			t.Errorf("%s: found %v, want lines %s", query, at, want)
+		}
+	}
+}

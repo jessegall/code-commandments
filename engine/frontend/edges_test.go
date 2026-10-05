@@ -2,6 +2,7 @@ package frontend_test
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -164,5 +165,24 @@ func TestALargeTypeIsPrintedShortAndDescribedWhole(t *testing.T) {
 	}
 	if len(widest.Fields[0].Type.Fields) != 2 {
 		t.Errorf("a field's own type lost its fields: %+v", widest.Fields[0].Type)
+	}
+}
+
+// TestAJavaScriptFileIsReadAsTheCompilerReadsIt holds the bridge to the files TypeScript's compiler reads beside a
+// .ts: JavaScript, and the module and JSX forms, each written as TypeScript.
+func TestAJavaScriptFileIsReadAsTheCompilerReadsIt(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{
+		"src/order-form.js": "export function total(lines) {\n  return lines.reduce((sum, line) => sum + line.price, 0)\n}\n",
+		"src/config.mjs":    "export const currency = 'EUR'\n",
+		"src/Cart.tsx":      "export const Cart = (props: { count: number }) => props.count\n",
+	})
+	read := map[string]contract.Language{}
+	for _, file := range codebase.Files() {
+		read[filepath.Base(file.Path)] = file.Language()
+	}
+	for _, name := range []string{"order-form.js", "config.mjs", "Cart.tsx"} {
+		if read[name] != contract.TypeScript {
+			t.Errorf("%s is read as %q, among %v", name, read[name], read)
+		}
 	}
 }

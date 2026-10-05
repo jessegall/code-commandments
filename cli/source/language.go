@@ -3,6 +3,7 @@
 package source
 
 import (
+	"slices"
 	"path/filepath"
 	"strings"
 
@@ -24,10 +25,17 @@ const (
 // Languages is every language, in the order they are declared.
 var Languages = []Language{PHP, Vue, TypeScript, Python, CSharp}
 
+// extensions are the extensions each language's files carry beyond its own: TypeScript's compiler reads the
+// module and JSX forms, and JavaScript, as one language.
+var extensions = map[Language][]string{
+	TypeScript: {"tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"},
+}
+
 // OfFile is the language of the file at path; anything unrecognised reads as PHP.
 func OfFile(path string) Language {
+	extension := strings.TrimPrefix(filepath.Ext(path), ".")
 	for _, language := range []Language{Vue, TypeScript, Python, CSharp} {
-		if strings.HasSuffix(path, "."+string(language)) {
+		if extension == string(language) || slices.Contains(extensions[language], extension) {
 			return language
 		}
 	}
@@ -40,7 +48,7 @@ func Judges(path string) bool {
 	extension := strings.TrimPrefix(filepath.Ext(path), ".")
 
 	for _, language := range Languages {
-		if extension == string(language) {
+		if extension == string(language) || slices.Contains(extensions[language], extension) {
 			return true
 		}
 	}

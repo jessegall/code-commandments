@@ -14,7 +14,7 @@ import { TreeCache } from './cache.mjs'
 const NAME = 'bridge/frontend'
 const VERSION = '1'
 const SKIPPED_FOLDERS = new Set(['vendor', 'node_modules', 'site-packages', '__pycache__'])
-const LANGUAGES = { '.vue': 'vue', '.ts': 'typescript' }
+const LANGUAGES = { '.vue': 'vue', ...Object.fromEntries(['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs'].map((extension) => [extension, 'typescript'])) }
 /** The mark a file read only for context carries, where its record puts it. */
 const CONTEXT = ',"context":true'
 /** How large a line is gathered to be kept. */

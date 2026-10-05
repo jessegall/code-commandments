@@ -123,9 +123,10 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"extendsAny": "Exception"}` | the type is anywhere in its class's chain of parents, followed through the scan and the declarations outside it the language knows; a glob (`*Service`, `[A-Z]*Repository`) matches a parent's whole name or its last part |
 | `{"implements": "ShouldQueue"}` | its class honours the contract: its own, its parents', and the contracts those extend |
 | `{"uses": "AsAction"}` | its class uses the trait: itself, through a parent, or through a trait it uses |
+| `{"isA": "Illuminate\\Http\\Request"}` | its class is the type, extends it or honours it, as PHP's `instanceof` reads it; a glob matches any of them |
 | `{"hasAnnotation": "Route"}` | a declaration carries the attribute or decorator |
 | `{"hasAttribute": "data-dusk"}` | a template element writes the attribute, plain or bound: `data-dusk` or `:data-dusk` |
-| `{"sibling": "{folder}.php"}` | a file the scan read sits beside its file and matches the glob, `{folder}` standing for the name of the folder they share |
+| `{"sibling": "{folder}.php"}` | a file the scan read matches the pattern, read from its file's folder: `{folder}.php` beside it, `../{folder}.php` one folder up, `{folder}` standing for the name of that folder |
 | `{"returnType": "?*"}` | a function's written return type matches the pattern, spaces dropped, or the type it names resolves to; it reads the text, so `?*` finds PHP's `?int` and `*\|null` finds `int\|null` |
 | `{"parameterType": "array"}` | a parameter's written type matches the pattern, read as returnType reads one |
 
