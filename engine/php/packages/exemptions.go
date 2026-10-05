@@ -8,9 +8,10 @@ import (
 	"github.com/jessegall/code-commandments/engine/php"
 )
 
-// Ancestry answers whether a class is another, extends it or implements it.
+// Ancestry answers whether a class is another, extends it or implements it, and whether it uses a trait.
 type Ancestry interface {
 	IsA(class, base string) bool
+	Uses(class, trait string) bool
 }
 
 // Clause is what one tag excuses: whole classes, methods of a class, methods by name anywhere, and attributes.
@@ -81,7 +82,7 @@ func (c *Clause) MatchesAttribute(ancestry Ancestry, attribute string) bool {
 }
 
 func isA(ancestry Ancestry, class string, bases []string) bool {
-	return slices.ContainsFunc(bases, func(base string) bool { return ancestry.IsA(class, base) })
+	return slices.ContainsFunc(bases, func(base string) bool { return ancestry.IsA(class, base) || ancestry.Uses(class, base) })
 }
 
 // Exemptions is every clause the packages in force registered, by tag.
@@ -121,7 +122,7 @@ type Package interface {
 }
 
 // Shipped is every package the tool knows by itself.
-var Shipped = []Package{Laravel{}, Spatie{}}
+var Shipped = []Package{Laravel{}, Spatie{}, LaravelActions{}}
 
 // For is what the shipped packages and the project's own register.
 func For(consumers ...Package) *Exemptions {

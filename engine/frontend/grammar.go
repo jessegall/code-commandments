@@ -40,7 +40,7 @@ func init() {
 
 // testFile says whether a frontend file is a test's: `*.test.*` or `*.spec.*`, as Vitest and Jest collect them,
 // or any file under a __tests__ or tests folder.
-func testFile(file string) bool {
+func testFile(file, _ string) bool {
 	name := path.Base(strings.ReplaceAll(file, `\`, "/"))
 
 	return strings.Contains(name, ".test.") || strings.Contains(name, ".spec.") ||

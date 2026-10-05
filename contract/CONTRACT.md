@@ -185,6 +185,7 @@ A list drawn from this closed set. Each appears only where the language has the 
 | `generator` | a function that yields |
 | `short-ternary` | a PHP `?:` |
 | `shorthand` | a Vue directive written `:x`, `@x` or `#x` |
+| `component` | a Vue template element its compiler resolves to a component, not a native tag: `<Foo>`, `<my-widget>`, `<component :is>`, `<transition>` |
 | `nullable-sugar` | a type written `?T` rather than `T\|null` |
 | `group` | a Python `except*` |
 | `step` | an expression in a `for` loop's step list |

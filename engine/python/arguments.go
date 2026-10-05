@@ -298,12 +298,13 @@ func (p *Program) UnnamedVocabularyLiterals(call Node) []Node {
 	return literals
 }
 
-// LayerViolations is the first import each module makes into each module its declared layer may not use.
+// LayerViolations is the first import each module makes into each module its declared layer may not use; a test
+// module, which exercises its layer from outside it, is no part of the layer.
 func (p *Program) LayerViolations(stack engine.LayerStack) []Node {
 	var violations []Node
 	for _, module := range p.modules {
 		from := stack.LayerOf(module.Name)
-		if from == "" {
+		if from == "" || module.File.Match(0).IsTest() {
 			continue
 		}
 		reached := map[string]bool{}

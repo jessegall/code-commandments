@@ -91,10 +91,7 @@ func (t *Types) Callee(call engine.Match) (owner, method string) {
 	case "Expr_StaticCall":
 		class, name := call.Child("class"), call.Child("name")
 		if isName(class) {
-			receiver = class.Name()
-			if receiver == "self" || receiver == "static" {
-				receiver = EnclosingClassName(call)
-			}
+			receiver = namedClass(call, class)
 		}
 		if name.Kind() == "Identifier" {
 			method = name.Name()
@@ -113,6 +110,15 @@ func (t *Types) Callee(call engine.Match) (owner, method string) {
 	}
 
 	return owner, method
+}
+
+// namedClass is the class a call's class name names, self and static read as the class the call is written in.
+func namedClass(call, class engine.Match) string {
+	if name := class.Name(); name != "self" && name != "static" {
+		return name
+	}
+
+	return EnclosingClassName(call)
 }
 
 // CallName is the member a call names: `__construct` for a construction.
@@ -298,4 +304,41 @@ func fetchPath(expr engine.Match) (string, bool) {
 	}
 
 	return "", false
+}
+
+// ParameterFilled is the parameter of the called method an argument fills: the one it names, else the one at its
+// place; no node when the program does not declare the method, or it takes no such parameter. A new of self or
+// static reaches the constructor of the class it is written in, which Callee, answering as the PHP tool did, leaves
+// unresolved.
+func ParameterFilled(codebase *engine.Codebase, argument engine.Match) engine.Match {
+	call := argument.Parent()
+	types := TypesOf(codebase)
+	owner, method := types.Callee(call)
+	if class := call.Child("class"); owner == "" && call.Kind() == "Expr_New" && isName(class) {
+		owner, method = types.DeclaringClassOfMethod(namedClass(call, class), "__construct"), "__construct"
+	}
+	declaration, ok := ProgramOf(codebase).Declaration(owner)
+	if owner == "" || !ok {
+		return engine.Match{}
+	}
+	function, ok := Method(declaration, method)
+	if !ok {
+		return engine.Match{}
+	}
+	parameters := function.ChildrenIn("params")
+	if name := argument.Child("name"); name.Exists() {
+		for _, parameter := range parameters {
+			if parameter.Child("var").Name() == name.Name() {
+				return parameter
+			}
+		}
+
+		return engine.Match{}
+	}
+	position := slices.IndexFunc(Arguments(call), func(each engine.Match) bool { return each.Node() == argument.Node() })
+	if position < 0 || position >= len(parameters) {
+		return engine.Match{}
+	}
+
+	return parameters[position]
 }

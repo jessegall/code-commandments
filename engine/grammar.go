@@ -38,8 +38,10 @@ type Grammar struct {
 	DocTags func(Match) []string
 	// BodyHash is the formatting-blind fingerprint of a function's body; empty for a node without one.
 	BodyHash func(Match) string
-	// TestFile says whether a file is test code by its path, as the language's conventions name one.
-	TestFile func(path string) bool
+	// TestFile says whether a file is test code, as the language's conventions name one: by its path as judged,
+	// relative to the folder the scan was pointed at, and by its absolute path, where the project's own settings
+	// for its tests are found.
+	TestFile func(judged, path string) bool
 	// Implicit says whether the language itself calls a declaration or binds a parameter, so no code of the
 	// project names it: a constructor, a magic or dunder method, Python's self.
 	Implicit func(Match) bool

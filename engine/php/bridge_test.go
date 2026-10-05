@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/jessegall/code-commandments/contract"
+	"github.com/jessegall/code-commandments/engine"
 )
 
 const fixture = "../../tests/Fixtures/backend"
@@ -224,6 +225,20 @@ func TestAnAutoloaderThatDoesNotLoadHereLeavesTheStreamWhole(t *testing.T) {
 	}
 	if !slices.ContainsFunc(stream.Program.Symbols, func(symbol contract.OutsideSymbol) bool { return symbol.Symbol == "Stringable" }) {
 		t.Errorf("PHP's own Stringable is not listed: %v", stream.Program.Symbols)
+	}
+}
+
+// TestAMethodAnOutsideInterfaceDeclaresIsAnOverride holds OverridesMethod to a contract the scan does not hold,
+// read through the project's autoloader, as Laravel's Arrayable::toArray is (#608).
+func TestAMethodAnOutsideInterfaceDeclaresIsAnOverride(t *testing.T) {
+	folder := written(t, map[string]string{"Visitor.php": "<?php\nnamespace Shop;\nfinal class Visitor extends \\PhpParser\\NodeVisitorAbstract implements \\PhpParser\\NodeVisitor {\n    public function enterNode(\\PhpParser\\Node $node) { return null; }\n    public function visited(): int { return 0; }\n}\n"})
+	program := ProgramOf(engine.Load(bridged(t, "--autoload=../../bridge/php/parser/autoload.php", folder)))
+
+	if !program.OverridesMethod(`Shop\Visitor`, "enterNode") {
+		t.Error("a method the outside interface declares is not taken for an override")
+	}
+	if program.OverridesMethod(`Shop\Visitor`, "visited") {
+		t.Error("a method of the class's own is taken for an override")
 	}
 }
 

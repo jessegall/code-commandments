@@ -5,7 +5,6 @@ package vue
 import (
 	"slices"
 	"strings"
-	"unicode"
 
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/engine/typescript"
@@ -36,11 +35,28 @@ func (e Element) Tag() string {
 	return e.Name()
 }
 
-// IsComponent says whether the tag names a component: an element whose tag starts upper-case.
+// IsComponent says whether the element is a component, as Vue's compiler resolves its tag: `<Foo>`, `<my-widget>`,
+// `<component :is>` or a built-in such as `<transition>`, never a native element.
 func (e Element) IsComponent() bool {
-	tag := []rune(e.Tag())
+	return e.IsElement() && e.HasFlag("component")
+}
 
-	return e.IsElement() && len(tag) > 0 && unicode.IsUpper(tag[0])
+// formControls are the HTML elements that keep what a user enters in themselves.
+var formControls = []string{"input", "select", "textarea"}
+
+// HoldsState says whether the element, or any element below it, keeps state of its own between renders: a
+// component, a slot, a form control, or an element bound with v-model or given a ref.
+func (e Element) HoldsState() bool {
+	for _, element := range append([]Element{e}, e.DescendantElements()...) {
+		if element.IsComponent() || element.Tag() == "slot" || slices.Contains(formControls, element.Tag()) {
+			return true
+		}
+		if _, ref := element.WrittenAttribute("ref"); ref || element.Has(Model) || element.Binding("ref").Exists() {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Directives is every directive written on the element, in order.

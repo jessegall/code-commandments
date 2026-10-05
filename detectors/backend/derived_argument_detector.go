@@ -40,7 +40,7 @@ func (DerivedArgumentDetector) Find(codebase *engine.Codebase) []engine.Match {
 			}
 			continue
 		}
-		if buildsItsOwnType(call) {
+		if buildsItsOwnType(codebase, call, owner, method) {
 			continue
 		}
 		for position := range php.Arguments(call) {
@@ -84,7 +84,7 @@ func redundantPositions(codebase *engine.Codebase, call engine.Match, owner, met
 	var hashes []string
 	for position, argument := range php.Arguments(call) {
 		subject := subjectOf(argument)
-		if !subject.Exists() || describesItself(codebase, subject, call) || wouldInvertADependency(codebase, owner, subject, call) {
+		if !subject.Exists() || describesItself(codebase, subject, call) || wouldInvertADependency(codebase, owner, subject, call) || adapts(codebase, owner, subject, call) {
 			continue
 		}
 		declared := types.ParamTypeOf(owner, method, position)
@@ -134,11 +134,31 @@ func wouldInvertADependency(codebase *engine.Codebase, owner string, subject, ca
 	return namespaces.Of(codebase).WouldCloseACycle(owner, php.TypesOf(codebase).TypeOf(subject))
 }
 
-// buildsItsOwnType says whether the call is a new of the class it is written in.
-func buildsItsOwnType(call engine.Match) bool {
-	built := (php.Node{Match: call}).NewClassName()
+// adapts says whether the call maps the subject onto the callee across two namespaces that know nothing of each
+// other, from a third that knows both: handing the callee the subject's type would couple them.
+func adapts(codebase *engine.Codebase, owner string, subject, call engine.Match) bool {
+	caller := php.EnclosingClassName(call)
+	if !(php.Node{Match: call}).EnclosingFunctionLike().Exists() || caller == "" {
+		return false
+	}
 
-	return built != "" && built == php.EnclosingClassName(call)
+	return namespaces.Of(codebase).WouldCoupleIndependent(caller, owner, php.TypesOf(codebase).TypeOf(subject))
+}
+
+// buildsItsOwnType says whether the call builds the class it is written in: a new of it, or a call to one of its own
+// named constructors, as one named constructor hands its parts to another.
+func buildsItsOwnType(codebase *engine.Codebase, call engine.Match, owner, method string) bool {
+	self := php.EnclosingClassName(call)
+	if built := (php.Node{Match: call}).NewClassName(); built != "" {
+		return built == self
+	}
+	declaration, ok := php.ProgramOf(codebase).Class(self)
+	if call.Kind() != "Expr_StaticCall" || owner != self || !ok {
+		return false
+	}
+	constructor, ok := php.Method(declaration, method)
+
+	return ok && (php.Node{Match: constructor}).IsNamedConstructor()
 }
 
 // subjectOf is the object a positional argument is derived from: a variable or class passed whole, or the one

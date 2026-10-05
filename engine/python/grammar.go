@@ -38,13 +38,19 @@ func init() {
 
 }
 
-// testFile says whether a Python file is a test's, as pytest collects them: `test_*.py`, `*_test.py`, a
-// conftest.py, or any file under a tests folder.
-func testFile(file string) bool {
+// testFile says whether a Python file is a test's, as pytest collects them: by the project's own python_files, else
+// `test_*.py` and `*_test.py`; a conftest.py, or any file under a tests folder.
+func testFile(file, path string) bool {
 	name := filepath.Base(file)
+	if name == "conftest.py" || engine.InFolderNamed(file, "tests", "test") {
+		return true
+	}
 
-	return strings.HasPrefix(name, "test_") || strings.HasSuffix(name, "_test.py") || name == "conftest.py" ||
-		engine.InFolderNamed(file, "tests", "test")
+	return slices.ContainsFunc(pytestFilesFor(path), func(pattern string) bool {
+		matched, _ := filepath.Match(pattern, name)
+
+		return matched
+	})
 }
 
 // docTags are the tags a docstring carries: each Sphinx field (`:param x:`, `:deprecated:`) and directive

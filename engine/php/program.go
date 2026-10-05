@@ -177,6 +177,18 @@ func (p *Program) HasSubclass(class string) bool {
 	return p.subclassed[strings.TrimLeft(class, `\`)]
 }
 
+// Uses says whether the class, or a class it extends, uses the trait.
+func (p *Program) Uses(class, trait string) bool {
+	users := p.UsersOfTrait(trait)
+	for _, each := range append([]string{strings.TrimLeft(class, `\`)}, p.Ancestors(class)...) {
+		if slices.Contains(users, each) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // UsersOfTrait is every class-like that uses the trait, in the order the program declares them.
 func (p *Program) UsersOfTrait(trait string) []string {
 	return p.traitUsers[strings.TrimLeft(trait, `\`)]

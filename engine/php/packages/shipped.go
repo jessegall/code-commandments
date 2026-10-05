@@ -1,6 +1,7 @@
 package packages
 
 import (
+	"github.com/jessegall/code-commandments/engine/php/actions"
 	"github.com/jessegall/code-commandments/engine/php/laravel"
 	"github.com/jessegall/code-commandments/engine/php/spatie"
 )
@@ -31,4 +32,12 @@ type Spatie struct{}
 // Register adds what Spatie Data excuses.
 func (Spatie) Register(exemptions *Exemptions) {
 	exemptions.Exempt(NoContainer).Classes(spatie.NoContainerContracts...)
+}
+
+// LaravelActions excuses an action's rules(), the validation the package runs, as FormRequest::rules is.
+type LaravelActions struct{}
+
+// Register adds what lorisleiva/laravel-actions excuses.
+func (LaravelActions) Register(exemptions *Exemptions) {
+	exemptions.Exempt(ContractMethod).On(actions.AsAction, "rules")
 }

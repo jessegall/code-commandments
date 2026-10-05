@@ -10,7 +10,7 @@ exit: 0
   [36mPython detectors .....[0m 66 running  ·  66 available
   [36mC# detectors .........[0m 54 running  ·  54 available
   [36mCustom detectors .....[0m 0
-  [36mExemption packages ...[0m 2 built-in  ·  0 registered
+  [36mExemption packages ...[0m 3 built-in  ·  0 registered
   [36mSkills ...............[0m 64
 
   [2mRun `commandments config reindex` to re-detect the source roots.[0m

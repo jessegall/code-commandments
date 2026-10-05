@@ -68,6 +68,18 @@ func (g *NamespaceGraph) WouldCloseACycle(referrer, target string) bool {
 	return from != "" && to != "" && from != to && g.references[to][from]
 }
 
+// WouldCoupleIndependent says whether a reference from the referrer's namespace to the target's, asked of code in the
+// caller's namespace, would join two namespaces that reference each other in neither direction: the caller then
+// sits in a third namespace that references both, an adapter mapping one onto the other.
+func (g *NamespaceGraph) WouldCoupleIndependent(caller, referrer, target string) bool {
+	at, from, to := php.NamespaceOf(caller), php.NamespaceOf(referrer), php.NamespaceOf(target)
+	if at == "" || from == "" || to == "" || at == from || at == to || from == to {
+		return false
+	}
+
+	return !g.references[from][to] && !g.references[to][from] && g.references[at][from] && g.references[at][to]
+}
+
 // declaresAnAssociation says whether the reference names one end of a two-way association a package declares: an
 // ORM relation call's argument, or a binding attribute's.
 func declaresAnAssociation(codebase *engine.Codebase, reference php.Node) bool {

@@ -18,6 +18,6 @@ func (IndexAsKey) Definition() sins.Definition {
 		Name:        "index-as-key",
 		Skill:       frontendskill.VueControlFlow{},
 		Description: "`:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted",
-		Rule:        "Key a `v-for` by a stable identity (`:key=\"item.id\"`), never the loop index.",
+		Rule:        "Key a `v-for` by a stable identity (`:key=\"item.id\"`), never the loop index — unless plain strings or numbers are rendered as markup that keeps no state, where the place is their only identity.",
 	}
 }

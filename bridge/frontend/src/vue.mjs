@@ -80,6 +80,7 @@ export class VueWriter {
             }
             case dom.NodeTypes.ELEMENT: {
                 const out = this.markup(node, 'Element', 'children', { name: node.tag })
+                if (node.tagType === dom.ElementTypes.COMPONENT) out.flags = ['component']
                 const resolves = this.component(node.tag)
                 if (resolves) out.resolves = resolves
                 const children = [...node.props.map((prop) => this.prop(prop)), ...node.children.flatMap((child) => this.template(child))]

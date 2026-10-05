@@ -64,7 +64,7 @@ exit: 0
 +
  import type { Order, OrderEvent } from '@/types';
  
- defineProps<{ order: Order; history: OrderEvent[] }>();
+ defineProps<{ order: Order; history: OrderEvent[]; notes: string[] }>();
 @@ -14,12 +16,7 @@
  
      <!-- A cluster: order.customer read in three fields → extract <OrderCustomer :customer>. -->

@@ -36,7 +36,7 @@ func init() {
 }
 
 // testFile says whether a PHP file is a test's: PHPUnit's `*Test.php`, or any file under a tests folder.
-func testFile(path string) bool {
+func testFile(path, _ string) bool {
 	return strings.HasSuffix(path, "Test.php") || engine.InFolderNamed(path, "tests", "test")
 }
 

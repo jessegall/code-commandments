@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Order, OrderEvent } from '@/types';
 
-defineProps<{ order: Order; history: OrderEvent[] }>();
+defineProps<{ order: Order; history: OrderEvent[]; notes: string[] }>();
 </script>
 
 <template>
@@ -52,6 +52,10 @@ defineProps<{ order: Order; history: OrderEvent[] }>();
           <li class="history-row">{{ event.label }}</li>
         </template>
       </ol>
+      <!-- @righteous IndexAsKey -->
+      <template v-for="(note, index) in notes" :key="index">
+        <p class="history-note">{{ note }}</p>
+      </template>
     </section>
 
     <footer class="order-detail__totals">

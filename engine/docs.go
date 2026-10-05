@@ -70,5 +70,5 @@ func (m Match) IsTest() bool {
 
 	read := m.grammar().TestFile
 
-	return read != nil && read(m.file.Judged())
+	return read != nil && read(m.file.Judged(), m.file.Path)
 }

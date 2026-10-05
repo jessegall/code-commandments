@@ -86,7 +86,7 @@
         "modifiers": {"$ref": "#/$defs/names"},
         "flags": {"type": "array", "uniqueItems": true, "items": {"enum": [
           "variadic", "keywords", "by-ref", "promoted", "keyword-only", "optional", "spread", "named", "async",
-          "generator", "short-ternary", "shorthand", "nullable-sugar", "group", "step", "elif"
+          "generator", "short-ternary", "shorthand", "nullable-sugar", "group", "step", "elif", "component"
         ]}},
         "declared": {"$ref": "#/$defs/type"},
         "returns": {"$ref": "#/$defs/type"},
