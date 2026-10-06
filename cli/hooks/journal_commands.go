@@ -60,12 +60,22 @@ func (JournalScan) Help() help.Help {
 		Form("journal-scan", "answer the detected folders as settings (run by the journal plugin)")
 }
 
-// Run answers the detected settings.
+// Run answers the settings: the folders the project's config already judges and leaves out, detected only where it
+// names none, so applying them back, as an upgrade does, never drops a folder the project chose.
 func (JournalScan) Run(in *cli.Input, console cli.Console) (int, error) {
 	project := journalProjectRoot()
+	judged, skipped := config.DetectRoots(project), config.BuiltFolders(project)
+	if own, err := config.Load(project); err == nil {
+		if len(own.Paths) > 0 {
+			judged = own.Paths
+		}
+		if len(own.Excluded) > 0 {
+			skipped = own.Excluded
+		}
+	}
 	settings := jsonfile.NewObject(
-		judgedKey, strings.Join(config.DetectRoots(project), "\n"),
-		skippedKey, strings.Join(config.BuiltFolders(project), "\n"),
+		judgedKey, strings.Join(judged, "\n"),
+		skippedKey, strings.Join(skipped, "\n"),
 	)
 
 	for _, language := range source.Languages {

@@ -2,6 +2,10 @@ package hooks
 
 import (
 	"bytes"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli"
@@ -27,5 +31,49 @@ func TestThePluginsSettingSaysHowManyRulesJudgeRunsAtOnce(t *testing.T) {
 	}
 	if judged.Parallel != 4 {
 		t.Errorf("the config runs %d detectors at once: %s", judged.Parallel, out.String())
+	}
+}
+
+// TestAnUpgradeKeepsTheFoldersTheProjectChose holds journal-scan to the project's own config: the folders it answers
+// are the ones the config already judges and leaves out, so journal-config applying them back keeps every one.
+func TestAnUpgradeKeepsTheFoldersTheProjectChose(t *testing.T) {
+	project := t.TempDir()
+	t.Setenv(journalProject, project)
+	t.Setenv(journalPluginDir, t.TempDir())
+	for _, folder := range []string{"src", ".venv", "src/web/dist"} {
+		if err := os.MkdirAll(filepath.Join(project, folder), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	written := `{"paths": ["src"], "exclude": ["src/web/dist", "src/web/dist-demo", ".claude/worktrees", ".venv"]}`
+	if err := os.MkdirAll(filepath.Join(project, ".commandments"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(project, ".commandments", "config.json"), []byte(written), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var scanned, errs bytes.Buffer
+	if _, err := (JournalScan{}).Run(&cli.Input{}, cli.Console{Out: &scanned, Err: &errs}); err != nil {
+		t.Fatalf("%v: %s", err, errs.String())
+	}
+	var answer struct {
+		Settings map[string]any `json:"settings"`
+	}
+	if err := json.Unmarshal(scanned.Bytes(), &answer); err != nil {
+		t.Fatalf("%v: %s", err, scanned.String())
+	}
+	chosen, _ := json.Marshal(answer.Settings)
+	t.Setenv(journalSettings, string(chosen))
+	if _, err := (JournalConfig{}).Run(&cli.Input{}, cli.Console{Out: &bytes.Buffer{}, Err: &errs}); err != nil {
+		t.Fatalf("%v: %s", err, errs.String())
+	}
+
+	kept, err := config.Load(project)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []string{"src/web/dist", "src/web/dist-demo", ".claude/worktrees", ".venv"}; !slices.Equal(kept.Excluded, want) {
+		t.Errorf("the upgrade leaves out %v", kept.Excluded)
 	}
 }
