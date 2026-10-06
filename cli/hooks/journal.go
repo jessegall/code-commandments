@@ -18,6 +18,9 @@ type Moment struct {
 	Event, Cwd                   string
 	Session, Tool, Command, File *string
 	Env                          *string
+	// Queue is the file the journal runs the moment's environment's lines from, as the payload's plugin.queue names
+	// it; empty from a journal that names none.
+	Queue string
 	// Received is when the hook was handed the moment, in unix nanoseconds; zero when it was not stamped.
 	Received int64
 }
@@ -27,6 +30,7 @@ func MomentOf(given map[string]any) Moment {
 	tool, _ := given["tool"].(map[string]any)
 	data, _ := given["data"].(map[string]any)
 	agent, _ := given["agent"].(map[string]any)
+	plugin, _ := given["plugin"].(map[string]any)
 	event := asText(given["event"])
 
 	cwd := firstOf(agent["cwd"], given["project"])
@@ -43,6 +47,7 @@ func MomentOf(given map[string]any) Moment {
 		Command:  textOrNil(firstOf(tool["command"], data["command"])),
 		File:     textOrNil(firstOf(tool["file"], data["file"])),
 		Env:      textOrNil(given["env"]),
+		Queue:    asText(plugin["queue"]),
 		Received: stampOf(given),
 	}
 }
@@ -171,9 +176,13 @@ func QueueFromEnvironment() (Queue, bool) {
 }
 
 // For is the queue of the moment's environment: the journal runs each line in the environment its file belongs to
-// and refuses a line that names one, so a moment of an environment is queued in that environment's own file,
-// beside the queue the journal named. A moment of none, or of a name no file can carry, keeps the queue as named.
+// and refuses a line that names one, so a moment of an environment is queued in that environment's own file. The
+// payload names that file as plugin.queue; a journal that names none had it beside the queue it named. A moment of
+// no environment, or of a name no file can carry, keeps the queue as named.
 func (q Queue) For(moment Moment) Queue {
+	if moment.Queue != "" {
+		return Queue{moment.Queue}
+	}
 	if moment.Env == nil || *moment.Env == "" || filepath.Base(*moment.Env) != *moment.Env || *moment.Env == ".." {
 		return q
 	}

@@ -49,3 +49,30 @@ func TestAdviceOfNoEnvironmentKeepsTheQueueTheJournalNamed(t *testing.T) {
 		t.Errorf("queued %q", got)
 	}
 }
+
+// TestAdviceIsQueuedWhereThePayloadSays holds the answer to the queue the journal names for the moment's own
+// environment in plugin.queue: a helper's edit in its worktree is answered in the helper's environment, never in
+// the one the service started in, whose queue $JOURNAL_QUEUE named.
+func TestAdviceIsQueuedWhereThePayloadSays(t *testing.T) {
+	whisper := "Code Commandments — the edit breaks a rule."
+	folder := t.TempDir()
+	named, helpers := filepath.Join(folder, "code-commandments.queue"), filepath.Join(folder, "helper", "code-commandments.queue")
+	if err := os.MkdirAll(filepath.Dir(helpers), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	answer := JournalAnswer{Whisper: &whisper, Raises: []Raise{{Event: "sin-resolved", Brief: "array-bag at src/A.vue:3"}}}
+	moment := MomentOf(map[string]any{"event": "hook.PostToolUse", "env": "main-mies-buildwright", "plugin": map[string]any{"queue": helpers}})
+
+	if err := (Queue{named}).Tell(answer, moment); err != nil {
+		t.Fatal(err)
+	}
+
+	if written, _ := os.ReadFile(helpers); !strings.Contains(string(written), "sin-resolved") {
+		t.Errorf("the helper's queue holds %q", written)
+	}
+	for _, other := range []string{named, filepath.Join(folder, "code-commandments.main-mies-buildwright.queue")} {
+		if _, err := os.Stat(other); !os.IsNotExist(err) {
+			t.Errorf("%s was written: %v", filepath.Base(other), err)
+		}
+	}
+}
