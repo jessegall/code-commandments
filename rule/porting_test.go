@@ -225,3 +225,17 @@ func TestARuleReadsAParentFoldersFileAndTheClassItself(t *testing.T) {
 		}
 	}
 }
+
+// TestARuleReadsTheTextATemplateShows holds a template's text to the words a reader sees, its whitespace collapsed,
+// so a rule judges a paragraph or a heading as it judges an attribute's value; an interpolation stays its own node.
+func TestARuleReadsTheTextATemplateShows(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"src/DumpStart.vue": "<template>\n  <section>\n    <h2>Start a dump</h2>\n    <p class=\"dump-context\">Mixed is fine.\n      The agent sorts it {{ later }}.</p>\n  </section>\n</template>\n\n<script setup lang=\"ts\">\nconst later = 'later'\n</script>\n"})
+	written := `{"engine": "frontend", "sin": {"name": "plain-text", "description": "viewer text", "skill": "frontend/vue-components"}, "find": {"select": "kind:Text", "where": [{"textMatches": "^Mixed is fine\\. The agent sorts it$"}]}}`
+	found, err := rule.Parse("PlainViewerTextDetector", []byte(written), shipped)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := fmt.Sprint(lines(found.Find(codebase))); got != "[4]" {
+		t.Errorf("the paragraph's text is found at %s", got)
+	}
+}

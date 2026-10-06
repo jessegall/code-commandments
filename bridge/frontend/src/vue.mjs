@@ -72,7 +72,7 @@ export class VueWriter {
                 this.comment(node)
                 return []
             case dom.NodeTypes.TEXT:
-                return node.content.trim() === '' ? [] : [this.markup(node, 'Text', 'children')]
+                return node.content.trim() === '' ? [] : [this.markup(node, 'Text', 'children', { value: node.content.replace(/\s+/g, ' ').trim() })]
             case dom.NodeTypes.INTERPOLATION: {
                 const out = this.markup(node, 'Interpolation', 'children')
                 out.children = this.expression(node.content, 'value')
