@@ -135,25 +135,32 @@ func (s Sources) Bridges() int {
 	return count
 }
 
-// Load streams every language's files through its bridge and loads the streams into one codebase, with
-// the facts the engine fills for PHP filled.
+// bridgesAtOnce is how many bridges Load runs side by side: each is a process of its own, and two keep the scan
+// within two cores.
+const bridgesAtOnce = 2
+
+// bridged is what one reader's bridge answered.
+type bridged struct {
+	reader int
+	stream *contract.Stream
+	err    error
+}
+
+// Load streams every language's files through its bridge, two bridges at a time, and loads the streams into one
+// codebase in the readers' order, with the facts the engine fills for PHP filled.
 func (s Sources) Load() (*engine.Codebase, error) {
 	var streams []*contract.Stream
 	var incomplete Incomplete
 	sayTooLarge(s.tooLarge)
 
-	for _, read := range readers {
-		files := s.Count(read.languages...)
-		if files == 0 {
+	answered := s.bridge()
+	for index, read := range readers {
+		answer, ran := answered[index]
+		if !ran {
 			continue
 		}
-
-		walked := s.files(read.languages)
-
-		stream, err := read.stream(s.roots, walked)
-		if s.read != nil {
-			s.read(read.name)
-		}
+		files := s.Count(read.languages...)
+		stream, err := answer.stream, answer.err
 		if leftUnread(err, files) {
 			continue
 		}
@@ -166,7 +173,7 @@ func (s Sources) Load() (*engine.Codebase, error) {
 		}
 
 		if !read.bridgeOrder {
-			bridge.InWalkOrder(stream, walked)
+			bridge.InWalkOrder(stream, s.files(read.languages))
 		}
 		streams = append(streams, stream)
 	}
@@ -186,6 +193,38 @@ func (s Sources) Load() (*engine.Codebase, error) {
 }
 
 // Incomplete is a load a bridge broke off: the codebase holds every other language, and what the broken bridge
+
+// bridge runs the bridge of every reader with files to read, bridgesAtOnce at a time, and tells each one's name as it
+// finishes; the answers are keyed by the reader's place in readers.
+func (s Sources) bridge() map[int]bridged {
+	finished := make(chan bridged)
+	slots := make(chan struct{}, bridgesAtOnce)
+	running := 0
+	for index, read := range readers {
+		if s.Count(read.languages...) == 0 {
+			continue
+		}
+		running++
+		go func() {
+			slots <- struct{}{}
+			defer func() { <-slots }()
+			stream, err := read.stream(s.roots, s.files(read.languages))
+			finished <- bridged{index, stream, err}
+		}()
+	}
+
+	answered := map[int]bridged{}
+	for range running {
+		answer := <-finished
+		if s.read != nil {
+			s.read(readers[answer.reader].name)
+		}
+		answered[answer.reader] = answer
+	}
+
+	return answered
+}
+
 // wrote before it stopped.
 type Incomplete struct {
 	Bridges []string
