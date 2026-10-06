@@ -149,7 +149,7 @@ func adapts(codebase *engine.Codebase, owner string, subject, call engine.Match)
 // named constructors, as one named constructor hands its parts to another.
 func buildsItsOwnType(codebase *engine.Codebase, call engine.Match, owner, method string) bool {
 	self := php.EnclosingClassName(call)
-	if built := (php.Node{Match: call}).NewClassName(); built != "" {
+	if built := (php.Node{Match: call}).ConstructedClass(); built != "" {
 		return built == self
 	}
 	declaration, ok := php.ProgramOf(codebase).Class(self)

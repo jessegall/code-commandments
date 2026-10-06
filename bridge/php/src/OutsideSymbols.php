@@ -99,6 +99,7 @@ final class OutsideSymbols
             $symbol['modifiers'] = $modifiers;
         }
         $members = [...$this->constants($reflection), ...$this->properties($reflection), ...$this->methods($reflection)];
+        $members = [...$members, ...$this->documentedMethods($reflection, array_column($members, 'name'))];
         if ($members !== []) {
             $symbol['members'] = $members;
         }
@@ -229,7 +230,64 @@ final class OutsideSymbols
         };
     }
 
-    private function type(ReflectionType $type): array
+    /**
+     * The methods the class's docblock declares with `@method` and the class does not, a facade's calls among them,
+     * each with the type the tag documents it to return.
+     *
+     * @param  list<string>  $declared
+     * @return list<array>
+     */
+    private function documentedMethods(ReflectionClass $reflection, array $declared): array
+    {
+        $doc = $reflection->getDocComment();
+        if ($doc === false || ! preg_match_all('/@method\s+(static\s+)?([^\s(]+)\s+(\w+)\s*\(/', $doc, $tags, PREG_SET_ORDER)) {
+            return [];
+        }
+        $members = [];
+        foreach ($tags as [, $static, $returns, $name]) {
+            if (in_array($name, $declared, true)) {
+                continue;
+            }
+            $declared[] = $name;
+            $members[] = [
+                'symbol' => "{$reflection->getName()}::{$name}()",
+                'name' => $name,
+                'kind' => 'method',
+                'modifiers' => trim($static) === '' ? ['public'] : ['public', 'static'],
+                'documented' => $this->documentedType($returns, $reflection->getName()),
+            ];
+        }
+
+        return $members;
+    }
+
+    /**
+     * The type a docblock writes, as the class it is written in reads it: a name, a builtin, a union of them, or, for a
+     * shape no reflected type has (`array<int, Order>`), its text alone.
+     */
+    private function documentedType(string $written, string $self): OutsideType
+    {
+        $parts = explode('|', $written);
+        if (count($parts) > 1) {
+            return new OutsideType($written, 'union', 'documented', members: array_map(fn (string $part) => $this->documentedType($part, $self), $parts));
+        }
+        $nullable = str_starts_with($written, '?');
+        $name = ltrim($written, '?\\');
+        if (in_array(strtolower($name), ['static', 'self', '$this'], true)) {
+            $name = $self;
+        }
+        if (! preg_match('/^[A-Za-z_][A-Za-z0-9_\\\\]*$/', $name)) {
+            return new OutsideType($written, 'opaque', 'documented', nullable: $nullable);
+        }
+        if (in_array(strtolower($name), OutsideType::BUILTINS, true)) {
+            return new OutsideType($written, 'keyword', 'documented', strtolower($name), nullable: $nullable);
+        }
+        $this->add($name);
+
+        return new OutsideType(($nullable ? '?' : '') . '\\' . $name, 'named', 'documented', $name, nullable: $nullable);
+    }
+
+    private function type(ReflectionType $type): OutsideType
     {
         if ($type instanceof ReflectionNamedType) {
             $name = $type->getName();
@@ -238,23 +296,12 @@ final class OutsideSymbols
                 $this->add($name);
             }
             $nullable = $type->allowsNull() && ! in_array($name, ['null', 'mixed'], true);
-            $out = ['text' => ($nullable ? '?' : '') . ($named ? '\\' : '') . $name, 'kind' => $named ? 'named' : 'keyword', 'name' => $name];
-            if ($type->allowsNull()) {
-                $out['nullable'] = true;
-            }
 
-            return $out + ['origin' => 'written'];
+            return new OutsideType(($nullable ? '?' : '') . ($named ? '\\' : '') . $name, $named ? 'named' : 'keyword', 'written', $name, nullable: $type->allowsNull());
         }
         $members = array_map($this->type(...), $type->getTypes());
-        $out = [
-            'text' => implode($type instanceof ReflectionUnionType ? '|' : '&', array_column($members, 'text')),
-            'kind' => $type instanceof ReflectionIntersectionType ? 'intersection' : 'union',
-            'members' => $members,
-        ];
-        if ($type->allowsNull()) {
-            $out['nullable'] = true;
-        }
+        $joined = implode($type instanceof ReflectionUnionType ? '|' : '&', array_map(fn (OutsideType $member) => $member->text, $members));
 
-        return $out + ['origin' => 'written'];
+        return new OutsideType($joined, $type instanceof ReflectionIntersectionType ? 'intersection' : 'union', 'written', members: $members, nullable: $type->allowsNull());
     }
 }

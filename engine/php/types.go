@@ -61,8 +61,51 @@ func indexTypes(codebase *engine.Codebase) *Types {
 			}
 		}
 	}
+	if program, wrote := codebase.Program(contract.PHP); wrote {
+		for _, symbol := range program.Symbols {
+			types.indexOutside(symbol)
+		}
+	}
 
 	return types
+}
+
+// indexOutside records what a declaration outside the scan says of its members, as the project's autoloader let the
+// bridge read it: each method's return type, written or documented by an @method tag as a facade's are, its
+// parameters' types, and each property's type. A declaration the scan holds keeps what the scan says.
+func (t *Types) indexOutside(symbol contract.OutsideSymbol) {
+	class := symbol.Symbol
+	if _, scanned := t.program.Declaration(class); scanned {
+		return
+	}
+	if len(symbol.Extends) > 0 && symbol.Kind == "class" {
+		t.parentOf[class] = symbol.Extends[0]
+	}
+	t.traitsOf[class] = append(t.traitsOf[class], symbol.Uses...)
+	for _, member := range symbol.Members {
+		switch member.Kind {
+		case "method":
+			returns := member.Returns
+			if returns == nil {
+				returns = member.Documented
+			}
+			set(t.returnType, class, member.Name, typeName(Written(returns)))
+			var nullable []bool
+			var written []string
+			variadic := false
+			for _, parameter := range member.Parameters {
+				declared := Written(parameter.Declared)
+				nullable = append(nullable, parameter.Declared == nil || declared.IsNullable())
+				written = append(written, declared.SimpleName())
+				variadic = variadic || slices.Contains(parameter.Flags, "variadic")
+			}
+			set(t.nullable, class, member.Name, nullable)
+			set(t.paramType, class, member.Name, written)
+			set(t.variadic, class, member.Name, variadic)
+		case "property":
+			set(t.fieldType, class, member.Name, typeName(Written(member.Declared)))
+		}
+	}
 }
 
 func (t *Types) index(declaration engine.Match) {

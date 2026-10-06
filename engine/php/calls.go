@@ -86,7 +86,7 @@ func (t *Types) Callee(call engine.Match) (owner, method string) {
 	switch call.Kind() {
 	case "Expr_New":
 		if class := call.Child("class"); isName(class) {
-			receiver, method = class.Name(), "__construct"
+			receiver, method = namedClass(call, class), "__construct"
 		}
 	case "Expr_StaticCall":
 		class, name := call.Child("class"), call.Child("name")

@@ -6,6 +6,7 @@ package shop
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
@@ -47,7 +48,7 @@ func Testdata() string {
 }
 
 // inputs are what the committed streams are generated from: the live fixture and the bridges that read it. The
-// oracle's answers are the PHP engine's last word and are never generated again.
+// oracle's answers are the PHP engine's last word, never generated again; Amend rewrites one where Go knows more.
 var inputs = []string{"tests/Fixtures/backend", "bridge/php", "bridge/frontend/dist"}
 
 // Digest is the hash of every source the committed files are generated from.
@@ -295,7 +296,7 @@ func Parity(t *testing.T, question string, ask func(answer Answer, node engine.M
 	t.Helper()
 	answers := Answers(t, question)
 	var divergences []string
-	for _, answer := range answers {
+	for i, answer := range answers {
 		node, ok := Node(t, answer)
 		if !ok {
 			divergences = append(divergences, fmt.Sprintf("%s %v %s: the Go tree has no such node", answer.File, answer.Span, answer.Kind))
@@ -306,12 +307,43 @@ func Parity(t *testing.T, question string, ask func(answer Answer, node engine.M
 			t.Fatal(err)
 		}
 		if !sameJSON(got, answer.Answer) {
+			answers[i].Answer = got
 			divergences = append(divergences, fmt.Sprintf("%s:%d %s ask %s: PHP %s, Go %s", answer.File, node.Line(), answer.Kind, answer.Ask, answer.Answer, got))
 		}
+	}
+	if len(divergences) > 0 && os.Getenv(Amend) == question {
+		amend(t, question, answers)
+		t.Logf("%d of %d answers to %s now say what Go says:\n%s", len(divergences), len(answers), question, strings.Join(divergences, "\n"))
+
+		return
 	}
 	if len(divergences) > 0 {
 		shown := divergences[:min(len(divergences), 40)]
 		t.Fatalf("%d of %d answers to %s differ from PHP:\n%s", len(divergences), len(answers), question, strings.Join(shown, "\n"))
+	}
+}
+
+// Amend is the environment variable that names the one question whose differing answers Parity writes over with
+// Go's, where the port deliberately knows more than the PHP engine did; every other question stays strict.
+const Amend = "COMMANDMENTS_AMEND_ORACLE"
+
+// amend writes the question's answers back to the oracle, each in the order and shape it was read.
+func amend(t *testing.T, question string, answers []Answer) {
+	t.Helper()
+	var written bytes.Buffer
+	zipped := gzip.NewWriter(&written)
+	for _, answer := range answers {
+		line, err := json.Marshal(answer)
+		if err != nil {
+			t.Fatal(err)
+		}
+		zipped.Write(append(line, '\n'))
+	}
+	if err := zipped.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(Oracle(), "answers", question+".jsonl.gz"), written.Bytes(), 0o644); err != nil {
+		t.Fatal(err)
 	}
 }
 

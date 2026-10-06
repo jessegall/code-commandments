@@ -37,6 +37,16 @@ func (n Node) NewClassName() string {
 	return n.Child("class").Name()
 }
 
+// ConstructedClass is the class a new constructs, `new self` and `new static` read as the class it is written in;
+// empty for anything else.
+func (n Node) ConstructedClass() string {
+	if n.NewClassName() == "" {
+		return ""
+	}
+
+	return namedClass(n.Match, n.Child("class"))
+}
+
 // IsThrownWithMessage says whether the node constructs the exception a throw throws, handing it a message string.
 func (n Node) IsThrownWithMessage() bool {
 	if n.Kind() != "Expr_New" || !n.Up().IsThrow() {
