@@ -3,7 +3,16 @@
     "version": "1.58.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
-    "journal": "2.149.0",
+    "journal": "2.253.14",
+    "fits": {
+        "languages": [
+            "PHP",
+            "Python",
+            "TypeScript",
+            "Vue",
+            "C#"
+        ]
+    },
     "events": {
         "sin-found": {
             "title": "Sin found",
