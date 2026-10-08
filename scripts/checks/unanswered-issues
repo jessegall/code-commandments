@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Fails while an open issue on this repository waits for an answer: one with no comment from the repository's owner.
+# The journal runs it as a check; it lists each waiting issue in $JOURNAL_REPORT, grouped by who opened it, so an
+# issue from anyone but the owner is marked to be handled with care.
+set -euo pipefail
+
+owner=$(gh repo view --json owner --jq .owner.login)
+report=${JOURNAL_REPORT:-$(mktemp)}
+
+gh issue list --state open --limit 200 --json number,title,author,url,comments --jq "
+  [.[] | select([.comments[].author.login] | index(\"$owner\") | not)]
+  | {
+      title: \"GitHub issues waiting for an answer\",
+      summary: \"\(length) open issue(s) have no reply from $owner\",
+      findings: [.[] | {
+        name: \"#\(.number)\",
+        where: .url,
+        text: .title,
+        group: (if .author.login == \"$owner\" then \"Opened by $owner\" else \"Opened by \(.author.login), handle with care\" end)
+      }]
+    }" > "$report"
+
+waiting=$(python3 -I -c 'import json, sys; print(len(json.load(open(sys.argv[1]))["findings"]))' "$report")
+if [ "$waiting" -gt 0 ]; then
+  python3 -I -c 'import json, sys; [print(f["name"], f["text"], "-", f["group"]) for f in json.load(open(sys.argv[1]))["findings"]]' "$report"
+  exit 1
+fi
+
+echo "Every open issue has an answer."
