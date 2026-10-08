@@ -55,6 +55,15 @@ func MomentOf(given map[string]any) Moment {
 	}
 }
 
+// Environment is the name of the environment the moment happened in, when it names one a file name can carry.
+func (m Moment) Environment() (string, bool) {
+	if m.Env == nil || *m.Env == "" || filepath.Base(*m.Env) != *m.Env || *m.Env == ".." {
+		return "", false
+	}
+
+	return *m.Env, true
+}
+
 // IsPostToolUse says whether the moment follows a tool call.
 func (m Moment) IsPostToolUse() bool {
 	return m.Event == "PostToolUse"
@@ -193,11 +202,13 @@ func (q Queue) For(moment Moment) Queue {
 	if moment.Queue != "" {
 		return Queue{moment.Queue}
 	}
-	if moment.Env == nil || *moment.Env == "" || filepath.Base(*moment.Env) != *moment.Env || *moment.Env == ".." {
+
+	env, named := moment.Environment()
+	if !named {
 		return q
 	}
 
-	return Queue{filepath.Join(filepath.Dir(q.path), workspace.JournalPlugin+"."+*moment.Env+".queue")}
+	return Queue{filepath.Join(filepath.Dir(q.path), workspace.JournalPlugin+"."+env+".queue")}
 }
 
 // Tell appends to the moment's queue a nudge for what the advice says and a raise for each event it raises, each a
@@ -284,10 +295,14 @@ type Announced struct {
 	path  string
 }
 
-// AnnouncedIn is the record kept in the plugin's data folder; an older record that listed sins without
-// their identity proves nothing and starts over.
-func AnnouncedIn(folder string) Announced {
+// AnnouncedIn is the record kept in the plugin's data folder for the moment's environment, whose chat shows the
+// sins it announced and whose queue settles them, so a moment in another environment's checkout never repents them;
+// an older record that listed sins without their identity proves nothing and starts over.
+func AnnouncedIn(folder string, moment Moment) Announced {
 	path := filepath.Join(folder, "sins.json")
+	if env, named := moment.Environment(); named {
+		path = filepath.Join(folder, "sins."+env+".json")
+	}
 	files := jsonfile.NewObject()
 
 	if read, ok := jsonfile.Read(path); ok {

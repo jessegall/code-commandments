@@ -207,7 +207,7 @@ func settled(moment Moment, root string, marks []SinMark) Settlement {
 	}
 
 	dashboard.Record(workspace.At(root, ""), findings, judged)
-	return AnnouncedIn(data).Settle(root, moment.File, marks)
+	return AnnouncedIn(data, moment).Settle(root, moment.File, marks)
 }
 
 // resolved is the file with its links resolved, a relative one read from the folder the moment happened in.
