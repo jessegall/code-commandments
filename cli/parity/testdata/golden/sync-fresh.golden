@@ -467,7 +467,7 @@ sha256 99a0880fb31cd8a9223ffbbe3fe77c44175a777fdbeda820a55ff5402377f8d2
 === created .agents/skills/commandments-writing-detectors/SKILL.md
 sha256 be3d6e228abc265f26e6256d8a2b91088a139dae96390d6e91b78df221e69b93
 === created .agents/skills/commandments/SKILL.md
-sha256 635382798ab36769f0a38a67058bc411e3b44f236a2c657c8af9f670ce91d61a
+sha256 1fc96d95113c8d32fff33f3a3b21ba7974720be12de65e63c2467b1cbfafdae3
 === created .claude/settings.json
 {
     "hooks": {
@@ -1067,6 +1067,9 @@ This is the rule the detectors exist to serve. Honour it on EVERY fix:
   it gets fixed upstream instead of silently ignored, ALWAYS referencing the code:
   `vendor/bin/commandments report --detector=NAME --reason="…" --ref=PATH:LINE`
   (repeat `--ref` for EVERY file involved — a bug spanning files references each).
+  The issue is public and names only each file and its lines; add `--share-code`
+  (the referenced lines alone, secrets masked) ONLY when the project's owner has
+  agreed its code may be published. Describe the shape in `--reason` instead.
   Design-smell detectors REQUIRE a `--best-design="…"`: the cleanest design you can
   conceive for this code. It is the litmus — a report is valid ONLY if the flagged
   code already IS that design; if you can name anything cleaner, that design is the
