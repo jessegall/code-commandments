@@ -3,11 +3,12 @@
 package rule
 
 import (
-	"path"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -80,6 +81,7 @@ type Step struct {
 	WithinLoop     *bool    `json:"withinLoop,omitempty"`
 	Documented     *bool    `json:"documented,omitempty"`
 	File           string   `json:"file,omitempty"`
+	FileMatches    string   `json:"fileMatches,omitempty"`
 	Position       string   `json:"position,omitempty"`
 	TopLevel       *bool    `json:"topLevel,omitempty"`
 	Of             string   `json:"of,omitempty"`
@@ -442,7 +444,7 @@ func (s Step) checks() int {
 	for _, set := range []bool{s.Is != "", s.Kind != "", s.Name != "", s.NameIn != nil, s.NameLike != "",
 		s.NameMatches != "", s.NameCase != "", s.Text != nil, s.TextLike != "", s.TextMatches != "", s.Resolves != "",
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
-		s.Documented != nil, s.File != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
+		s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
@@ -473,6 +475,8 @@ func (s *Step) prepare() error {
 		s.pattern = glob(strings.TrimPrefix(s.NamespaceLike, `\`))
 	case s.File != "":
 		s.pattern = pathGlob(s.File)
+	case s.FileMatches != "":
+		return s.compile(s.FileMatches)
 	case s.CalledFrom != "":
 		s.pattern = pathGlob(s.CalledFrom)
 	case s.NameMatches != "":
@@ -670,6 +674,8 @@ func (s Step) check(match engine.Match) bool {
 		return subject.IsDocumented() == *s.Documented
 	case s.File != "":
 		return inFile(s.pattern, subject.Judged())
+	case s.FileMatches != "":
+		return s.pattern.MatchString(filepath.ToSlash(subject.Judged()))
 	case s.Position != "":
 		return atPosition(subject, s.Position)
 	case s.TopLevel != nil:

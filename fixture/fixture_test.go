@@ -135,6 +135,7 @@ func TestTheMarkersAreReadFromAttributesAndComments(t *testing.T) {
 		`sin Doubled Toy\Second /toy/Twice.php:26`,
 		`fixed Doubled Toy\Second /toy/Twice.php:32`,
 		`sin LoopedNew (file) /toy/batches.php:11`,
+		`sin Misplaced (file) /toy/placement.php:1`,
 	}
 	if !slices.Equal(read, want) {
 		t.Fatalf("got\n%s", strings.Join(read, "\n"))

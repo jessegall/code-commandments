@@ -293,12 +293,14 @@ func TestAPathIsReadFromTheFolderJudged(t *testing.T) {
 
 	// a checkout under a folder named tests is not test code; only what lies under the project's own is
 	for query, want := range map[string]string{
-		`{"select": "function", "where": [{"testCode": true}]}`:         "[CartTest.php:2]",
-		`{"select": "function", "where": [{"testCode": false}]}`:        "[Cart.php:2]",
-		`{"select": "function", "where": [{"file": "shop/src/*.php"}]}`: "[Cart.php:2]",
-		`{"select": "function", "where": [{"file": "src/*.php"}]}`:      "[Cart.php:2]",
-		`{"select": "function", "where": [{"file": "tests/*.php"}]}`:    "[]",
-		`{"select": "function", "where": [{"file": "tests/**/*.php"}]}`: "[CartTest.php:2]",
+		`{"select": "function", "where": [{"testCode": true}]}`:                                   "[CartTest.php:2]",
+		`{"select": "function", "where": [{"testCode": false}]}`:                                  "[Cart.php:2]",
+		`{"select": "function", "where": [{"file": "shop/src/*.php"}]}`:                           "[Cart.php:2]",
+		`{"select": "function", "where": [{"file": "src/*.php"}]}`:                                "[Cart.php:2]",
+		`{"select": "function", "where": [{"file": "tests/*.php"}]}`:                              "[]",
+		`{"select": "function", "where": [{"file": "tests/**/*.php"}]}`:                           "[CartTest.php:2]",
+		`{"select": "function", "where": [{"fileMatches": "(^|/)(src|lib)/[A-Z][a-z]+\\.php$"}]}`: "[Cart.php:2]",
+		`{"select": "function", "where": [{"fileMatches": "(Spec|Test)\\.php$"}]}`:                "[CartTest.php:2]",
 	} {
 		if got := foundAt(t, "backend", query, project); got != want {
 			t.Errorf("%s: found %s, want %s", query, got, want)
