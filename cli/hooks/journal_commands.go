@@ -15,6 +15,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/library"
 	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/sins"
 )
 
@@ -291,6 +292,10 @@ func folders(chosen map[string]any, key string) []string {
 }
 
 func journalProjectRoot() string {
+	if project, named := workspace.JournalProject(); named {
+		return project
+	}
+
 	if project := os.Getenv(journalProject); project != "" {
 		return project
 	}

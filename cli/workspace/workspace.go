@@ -78,6 +78,18 @@ func OfSession(fallback, sessionID string) Workspace {
 	return At(stated, sessionID)
 }
 
+// JournalProject is the project the agent journal runs a plugin command for, named by its .journal folder in
+// JOURNAL_ROOT: the journal runs a service and its when from the plugin's own folder, which is no part of the
+// project. A command the journal did not start names none.
+func JournalProject() (string, bool) {
+	record := os.Getenv("JOURNAL_ROOT")
+	if record == "" {
+		return "", false
+	}
+
+	return filepath.Dir(filepath.Clean(record)), true
+}
+
 // ProjectRoot is the project a command run from cwd works on: the repository cwd is in, unless the harness
 // names a project in CLAUDE_PROJECT_DIR that the repository is no checkout of.
 func ProjectRoot(cwd string) string {
