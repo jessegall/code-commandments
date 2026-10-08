@@ -26,6 +26,9 @@ func (Dispatch) Help() help.Help {
 // Run answers the moment on stdin with every hook the project keeps, merged.
 func (Dispatch) Run(in *cli.Input, console cli.Console) (int, error) {
 	event := eventOnStdin()
+	if stepsAside(event) {
+		return 0, nil
+	}
 
 	var responses []Response
 	for _, hook := range ForProject(event.Root) {
@@ -92,12 +95,21 @@ func (s Single) Run(in *cli.Input, console cli.Console) (int, error) {
 
 func respond(hook Hook, console cli.Console) int {
 	event := eventOnStdin()
+	if stepsAside(event) {
+		return 0
+	}
 
 	if response := Answer(hook, event); !response.IsSilent() {
 		console.Write(response.JSON(event.Name()))
 	}
 
 	return 0
+}
+
+// stepsAside says whether a hook the package wired leaves the moment to the journal plugin: where the plugin is
+// installed it runs every handler itself, so a default hook a user kept answers nothing rather than run them twice.
+func stepsAside(event Event) bool {
+	return workspace.At(event.Root, "").IsJournalDriven()
 }
 
 // eventOnStdin is the moment the harness wrote on stdin, in the project the command runs for.
