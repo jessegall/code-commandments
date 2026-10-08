@@ -169,7 +169,8 @@ func (JournalConfig) Names() []string {
 // Help documents it.
 func (JournalConfig) Help() help.Help {
 	return help.Of("Write the agent journal plugin's chosen switches into .commandments/config.json.").
-		Form("journal-config", "apply JOURNAL_SETTINGS to the project config (run by the journal plugin)")
+		Form("journal-config", "apply JOURNAL_SETTINGS to the project config (run by the journal plugin)").
+		Option("--keep-folders", "apply the switches but leave the folders the config judges and leaves out as they are: the plugin's setup, where the journal's stored folders may be older than the project's config")
 }
 
 // Run writes each chosen switch, renders the skills again, and notifies how many switches changed.
@@ -232,13 +233,15 @@ func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 		}
 	}
 
-	if judged := folders(chosen, judgedKey); len(judged) > 0 {
+	keep := in.HasFlag("keep-folders")
+
+	if judged := folders(chosen, judgedKey); len(judged) > 0 && !keep {
 		if err := editor.JudgeFolders(judged); err != nil {
 			return 0, err
 		}
 	}
 
-	if _, set := chosen[skippedKey]; set {
+	if _, set := chosen[skippedKey]; set && !keep {
 		if err := editor.SkipFolders(folders(chosen, skippedKey)); err != nil {
 			return 0, err
 		}

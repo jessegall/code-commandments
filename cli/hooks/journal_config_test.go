@@ -77,3 +77,38 @@ func TestAnUpgradeKeepsTheFoldersTheProjectChose(t *testing.T) {
 		t.Errorf("the upgrade leaves out %v", kept.Excluded)
 	}
 }
+
+// TestThePluginsSetupLeavesTheProjectsFoldersAlone holds the setup step to the switches: on an upgrade the journal
+// runs it with the folders it stored at install, which may be older than the config, so the folders the project
+// judges and leaves out are kept until journal-scan has read them back.
+func TestThePluginsSetupLeavesTheProjectsFoldersAlone(t *testing.T) {
+	project := t.TempDir()
+	t.Setenv(journalProject, project)
+	t.Setenv(journalPluginDir, t.TempDir())
+	for _, folder := range []string{"platform/app", "mobile/src"} {
+		if err := os.MkdirAll(filepath.Join(project, folder), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.MkdirAll(filepath.Join(project, ".commandments"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	written := `{"paths": ["platform/app"], "exclude": ["platform/vendor"]}`
+	if err := os.WriteFile(filepath.Join(project, ".commandments", "config.json"), []byte(written), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(journalSettings, `{"folders_judged": "mobile/src", "folders_skipped": "", "judge_parallel": "2"}`)
+
+	var errs bytes.Buffer
+	if _, err := (JournalConfig{}).Run(cli.InputOf("journal-config", "--keep-folders"), cli.Console{Out: &bytes.Buffer{}, Err: &errs}); err != nil {
+		t.Fatalf("%v: %s", err, errs.String())
+	}
+
+	kept, err := config.Load(project)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(kept.Paths, []string{"platform/app"}) || !slices.Equal(kept.Excluded, []string{"platform/vendor"}) {
+		t.Errorf("the setup left paths %v and exclude %v", kept.Paths, kept.Excluded)
+	}
+}

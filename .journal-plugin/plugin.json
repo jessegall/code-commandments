@@ -54,7 +54,7 @@
         },
         {
             "name": "Write the chosen switches into config.json",
-            "run": "bin/commandments-release journal-config"
+            "run": "bin/commandments-release journal-config --keep-folders"
         },
         {
             "name": "Check for sins, on demand",
