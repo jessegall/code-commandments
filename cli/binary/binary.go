@@ -56,11 +56,12 @@ func Launcher(root string) string {
 // names it there.
 const Shim = "vendor/bin/commandments"
 
-// Invocation is the command a person or an agent types in the project at root to run the tool: the
-// composer shim where the project installs it through PHP, else the binary from the PATH.
+// Invocation is the command a person or an agent types in the project at root to run the tool: the PHP entry
+// point it has where the project installs it through PHP, the shim in a consumer and the package's own bin/ in its
+// checkout, else the binary from the PATH.
 func Invocation(root string) string {
 	if ThroughPHP(root) {
-		return Shim
+		return In(root)
 	}
 
 	return Name
