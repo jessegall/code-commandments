@@ -13,7 +13,7 @@ const barWidth = 24
 
 // Progress is a carriage-return bar drawn on stderr, so it never mixes into findings or a checklist on
 // stdout. It is silent unless its stream is an interactive terminal, or a journal check reads the run: there it
-// writes a plain `judging 37/257` line each time the share done moves, which the check reads as its progress.
+// writes a plain `detector 37/257` line each time the share done moves, which the check reads as its progress.
 // Other piped runs, hooks, CI and tests see nothing.
 type Progress struct {
 	stream     io.Writer
@@ -53,9 +53,16 @@ func (p *Progress) Expect(steps int) {
 	p.before = steps
 }
 
-// Step moves one of the steps Expect counted, labelled with what it was.
+// Step moves one of the steps Expect counted, labelled with what it was. A journal check is only told what was
+// read: its bar counts the detectors alone, so the reading of languages never holds it at a share of its own.
 func (p *Progress) Step(phase, label string) {
 	if !p.enabled {
+		return
+	}
+
+	if p.plain {
+		fmt.Fprintf(p.stream, "%s %s\n", phase, label)
+
 		return
 	}
 
@@ -65,9 +72,16 @@ func (p *Progress) Step(phase, label string) {
 	p.render(phase, label)
 }
 
-// Start begins a bar of total steps, after the steps Expect counted.
+// Start begins a bar of total steps, after the steps Expect counted; a journal check's bar counts the total alone.
 func (p *Progress) Start(total int) {
 	if !p.enabled {
+		return
+	}
+
+	if p.plain {
+		p.total, p.current, p.lastShare, p.active = max(1, total), 0, -1, true
+		p.render("judging", "")
+
 		return
 	}
 
@@ -129,7 +143,7 @@ func (p *Progress) render(phase, label string) {
 	if p.plain {
 		if share := p.current * 100 / p.total; share != p.lastShare {
 			p.lastShare = share
-			fmt.Fprintf(p.stream, "%s %d/%d\n", phase, p.current, p.total)
+			fmt.Fprintf(p.stream, "%s %d/%d\n", counting(phase), p.current, p.total)
 		}
 
 		return
@@ -150,4 +164,13 @@ func isTerminal(stream io.Writer) bool {
 	info, err := file.Stat()
 
 	return err == nil && info.Mode()&os.ModeCharDevice != 0
+}
+
+// counting is the word a journal check's line counts in: judging is one detector a step, so it says detector.
+func counting(phase string) string {
+	if phase == "judging" {
+		return "detector"
+	}
+
+	return phase
 }
