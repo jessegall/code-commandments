@@ -442,3 +442,26 @@ func decidesBlankness(codebase *engine.Codebase, class, method string, seen map[
 
 	return false
 }
+
+// IsFallbackOfAFirstMatch says whether the returned expression is the last resort of a function that first returns
+// a value it found another way: a first-match dispatch whose lookup answers only when nothing matched, not a keyed
+// store's get.
+func (n Node) IsFallbackOfAFirstMatch() bool {
+	function := n.EnclosingFunctionLike()
+	own := n.Parent().Location()
+
+	for _, statement := range function.ChildrenIn("stmts") {
+		for _, returned := range withDescendants(statement) {
+			value := Node{Match: returned.Child("expr")}
+			if returned.Kind() != "Stmt_Return" || !value.Exists() || value.IsNull() || returned.Location() == own {
+				continue
+			}
+
+			if (Node{Match: returned}).EnclosingFunctionLike().Location() == function.Location() {
+				return true
+			}
+		}
+	}
+
+	return false
+}
