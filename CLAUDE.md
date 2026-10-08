@@ -292,7 +292,7 @@ is carried across by the migration `sync` runs once (`cli/sync`) — what still 
 and the files of a removed feature are dropped.
 
 **Fixing sins — the checklist workflow.** A full scan is slow (~30s on a large
-tree), so judge ONCE, then work the generated `.commandments/sins.md` line-by-line:
+tree), so judge ONCE, then work the checklist it writes (the run prints its path) line-by-line:
 read the section's skill, fix the sin at `file:line`, **delete that line**, repeat.
 Don't re-run judge between fixes — re-run only at the end to confirm (a clean run
 deletes the file).
