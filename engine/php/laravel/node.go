@@ -27,6 +27,7 @@ const (
 	ConsoleCommand   = `Illuminate\Console\Command`
 	AuthGuard        = `Illuminate\Contracts\Auth\Guard`
 	AuthUserProvider = `Illuminate\Contracts\Auth\UserProvider`
+	Arrayable        = `Illuminate\Contracts\Support\Arrayable`
 )
 
 var (

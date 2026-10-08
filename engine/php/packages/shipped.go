@@ -18,7 +18,8 @@ func (Laravel) Register(exemptions *Exemptions) {
 		On(laravel.McpTool, "rules", "schema").
 		On(laravel.Model, "casts").
 		On(laravel.AuthGuard, "user").
-		On(laravel.AuthUserProvider, "retrieveById", "retrieveByToken", "retrieveByCredentials")
+		On(laravel.AuthUserProvider, "retrieveById", "retrieveByToken", "retrieveByCredentials").
+		On(laravel.Arrayable, "toArray")
 	exemptions.Exempt(ArrayReturning).Classes(laravel.FormRequest, laravel.McpRequest, laravel.McpTool)
 	exemptions.Exempt(NoContainer).Classes(laravel.CastContracts...)
 	exemptions.Exempt(Association).Methods(laravel.RelationMethods...)
