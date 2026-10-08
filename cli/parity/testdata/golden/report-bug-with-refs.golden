@@ -23,48 +23,15 @@ jessegall/code-commandments
 **Report:**
 wrong
 
-**Where:** `src/A.php:5`
+**Where:** `A.php:5`
 
-**Code** (`src/A.php:5`):
-
-```php
-  2  
-  3  class A
-  4  {
-→ 5      private string $password = "███████";
-  6      private string $plain = "visible";
-  7  }
-```
-
-**Where:** `src/B.vue:2-3`
-
-**Code** (`src/B.vue:2-3`):
-
-```vue
-  1  <template>
-→ 2    <div>
-→ 3      <span>{{ x }}</span>
-  4    </div>
-  5  </template>
-```
+**Where:** `B.vue:2-3`
 
 **Where:** `missing.ts:9`
 
-**Where:** `src/A.php`
+**Where:** `A.php`
 
-**Code** (`src/A.php`):
-
-```php
-  1  <?php
-  2  
-  3  class A
-  4  {
-  5      private string $password = "███████";
-  6      private string $plain = "visible";
-  7  }
-```
-
-_Filed via `commandments report` from a consumer project._
+_Filed via `commandments report` from a consumer project, on code-commandments dev._
 
 ----
 

@@ -31,20 +31,9 @@ jessegall/code-commandments
 The dict is the wire format itself.
 
 
-**Where:** `src/A.php:5`
+**Where:** `A.php:5`
 
-**Code** (`src/A.php:5`):
-
-```php
-  2  
-  3  class A
-  4  {
-→ 5      private string $password = "███████";
-  6      private string $plain = "visible";
-  7  }
-```
-
-_Filed via `commandments report` from a consumer project._
+_Filed via `commandments report` from a consumer project, on code-commandments dev._
 
 ----
 

@@ -37,7 +37,7 @@ Keep the dict: it is the payload json.dumps writes.
 > cleanest design. If the design above differs from the flagged code at all, THAT design is
 > the owed fix — close this report; the fix is still owed.
 
-_Filed via `commandments report` from a consumer project._
+_Filed via `commandments report` from a consumer project, on code-commandments dev._
 
 ----
 

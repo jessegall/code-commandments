@@ -15,8 +15,10 @@ Usage:
 
 Options:
   --reason="…"          what is wrong (required)
-  --ref=PATH:LINE       the code this is about — repeatable, and PATH:START-END works; the source
-                        is read and injected into the issue
+  --ref=PATH:LINE       the code this is about — repeatable, and PATH:START-END works; the issue
+                        names the file and its lines
+  --share-code          also show the referenced lines (those alone, secrets masked) — only when
+                        the project's owner agrees its code may be public
   --detector=NAME       the detector that fired — makes this a false-positive report
   --best-design="…"     the cleanest design you can conceive for the flagged code; REQUIRED by
                         design-smell detectors
