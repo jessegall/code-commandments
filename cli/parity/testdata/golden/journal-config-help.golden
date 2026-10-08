@@ -6,6 +6,11 @@ Usage:
   commandments journal-config  apply JOURNAL_SETTINGS to the project config (run by the journal
                                plugin)
 
+Options:
+  --keep-folders  apply the switches but leave the folders the config judges and leaves out as they
+                  are: the plugin's setup, where the journal's stored folders may be older than the
+                  project's config
+
 --- stderr
 
 --- files
