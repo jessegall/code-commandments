@@ -2,6 +2,6 @@ exit: 2
 --- stdout
 
 --- stderr
-Not a directory: nope
+Nothing to judge at nope
 
 --- files

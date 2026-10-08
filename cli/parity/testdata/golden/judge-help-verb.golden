@@ -3,8 +3,8 @@ exit: 0
 commandments judge — Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.
 
 Usage:
-  commandments judge [path]  scan a path — or, with none, the source roots declared in
-                             .commandments/config.json
+  commandments judge [path]  scan a folder, or one file read with the folder it sits in — or, with
+                             none, the source roots declared in .commandments/config.json
   commandments judge --list  list every detector, grouped by skill
 
 Options:
