@@ -26,7 +26,7 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 
 	found := AnnouncedIn(data).Settle(root, &file, marks)
 	raised := found.Raises(root)
-	if len(found.Found) != 1 || len(raised) != 1 || raised[0].Key != marks[0].Key() || len(found.Settles()) != 0 {
+	if len(found.Found) != 1 || len(raised) != 1 || raised[0].Key != marks[0].Key(root) || len(found.Settles()) != 0 {
 		t.Fatalf("the sinful edit raised %+v and settles %v", raised, found.Settles())
 	}
 

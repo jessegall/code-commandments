@@ -359,11 +359,11 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) Settleme
 		var holdOrder []string
 
 		for _, mark := range now[file] {
-			if _, seen := holds[mark.ID()]; !seen {
-				holdOrder = append(holdOrder, mark.ID())
+			if _, seen := holds[mark.ID(root)]; !seen {
+				holdOrder = append(holdOrder, mark.ID(root))
 			}
 
-			holds[mark.ID()] = mark
+			holds[mark.ID(root)] = mark
 		}
 
 		kept := jsonfile.NewObject()
@@ -461,7 +461,7 @@ func (s Settlement) Raises(root string) []Raise {
 	var raised []Raise
 
 	for _, mark := range s.Found {
-		raised = append(raised, Raise{"sin-found", mark.ShownFrom(root), dashboard.Opening(dashboard.StoredOf(mark.Finding(), root)), mark.Key()})
+		raised = append(raised, Raise{"sin-found", mark.ShownFrom(root), dashboard.Opening(dashboard.StoredOf(mark.Finding(), root)), mark.Key(root)})
 	}
 
 	if len(s.Repented) > 0 {

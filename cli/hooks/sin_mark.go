@@ -8,6 +8,7 @@ import (
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/git"
+	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -38,15 +39,15 @@ func (m SinMark) Finding() engine.Finding {
 	}
 }
 
-// ID is the mark's identity: its sin, its file and the text of the line it flags, so a sin moved by an edit
-// above it is still the same sin.
-func (m SinMark) ID() string {
-	return fmt.Sprintf("%x", sha1.Sum([]byte(m.Rule.Sin().Definition().Name+"\x00"+m.Match.File()+"\x00"+m.flaggedText())))
+// ID is the mark's identity: its sin, its file under root and the text of the line it flags, so a sin moved by
+// an edit above it is still the same sin, and the same sin in another checkout of the project too.
+func (m SinMark) ID(root string) string {
+	return fmt.Sprintf("%x", sha1.Sum([]byte(m.Rule.Sin().Definition().Name+"\x00"+source.Relative(root, m.Match.File())+"\x00"+m.flaggedText())))
 }
 
 // Key is the key the mark's chat mark is raised and settled by.
-func (m SinMark) Key() string {
-	return markKey(m.ID())
+func (m SinMark) Key(root string) string {
+	return markKey(m.ID(root))
 }
 
 // Found is the mark as the check names it: the sin and where.
