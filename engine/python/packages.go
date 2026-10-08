@@ -15,7 +15,8 @@ type packageGraph struct {
 }
 
 // PackageArrows is every import from one package of the program into another, as dependency arrows between
-// their folders; a package is a folder whose __init__.py the program holds.
+// their folders; a package is a folder whose __init__.py the program holds. A test module draws none: it reaches
+// across packages to drive them, which makes it no dependency of the package it sits in.
 func (p *Program) PackageArrows() engine.DependencyArrows {
 	p.packages.once.Do(func() {
 		packages := map[string]bool{}
@@ -26,7 +27,7 @@ func (p *Program) PackageArrows() engine.DependencyArrows {
 		}
 		for _, module := range p.modules {
 			from := filepath.Dir(module.File.Path)
-			if !packages[from] {
+			if !packages[from] || module.File.Match(0).IsTest() {
 				continue
 			}
 			for _, imported := range module.Imports() {
