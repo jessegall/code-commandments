@@ -33,7 +33,7 @@ A name is how the user and the chat tell subagents apart and how they are messag
 ## Rules
 
 - Never run .NET on the host; only in a memory-capped Docker container
-- Always scope judge with --changes or --branch; full scans only for parity runs
+- Always scope judge with --changes or --branch, the briefing's judge src too
 - Never merge anything into main; Sir Jesse merges go-rewrite to main himself
 
 <!-- END: agent-journal, form 2 -->
