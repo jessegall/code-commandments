@@ -44,6 +44,11 @@ func (m SinMark) ID() string {
 	return fmt.Sprintf("%x", sha1.Sum([]byte(m.Rule.Sin().Definition().Name+"\x00"+m.Match.File()+"\x00"+m.flaggedText())))
 }
 
+// Key is the key the mark's chat mark is raised and settled by.
+func (m SinMark) Key() string {
+	return markKey(m.ID())
+}
+
 // Found is the mark as the check names it: the sin and where.
 func (m SinMark) Found() string {
 	return m.Rule.Sin().Definition().Name + " at " + m.Match.Location()

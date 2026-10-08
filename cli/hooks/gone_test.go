@@ -9,7 +9,7 @@ import (
 )
 
 // TestASinOfAFileThatIsGoneIsRepented holds a shell deletion to what an edit would say: every sin announced for a
-// file that no longer exists is repented, and a file still there keeps what was announced for it.
+// file that no longer exists is repented and its chat mark settled, and a file still there keeps what was announced for it.
 func TestASinOfAFileThatIsGoneIsRepented(t *testing.T) {
 	root, data := t.TempDir(), t.TempDir()
 	if err := os.MkdirAll(filepath.Join(root, "src"), 0o755); err != nil {
@@ -24,9 +24,13 @@ func TestASinOfAFileThatIsGoneIsRepented(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	found, repented := AnnouncedIn(data).Settle(root, nil, nil)
-	if len(found) != 0 || !slices.Equal(repented, []string{"array-bag at src/Gone.php:3"}) {
-		t.Errorf("found %v, repented %v", found, repented)
+	settlement := AnnouncedIn(data).Settle(root, nil, nil)
+	if len(settlement.Found) != 0 || !slices.Equal(settlement.Repented, []Repented{{"a1", "array-bag at src/Gone.php:3"}}) {
+		t.Errorf("found %v, repented %v", settlement.Found, settlement.Repented)
+	}
+
+	if !slices.Equal(settlement.Settles(), []string{"sin:a1"}) {
+		t.Errorf("settles %v", settlement.Settles())
 	}
 
 	kept, _ := os.ReadFile(filepath.Join(data, "sins.json"))

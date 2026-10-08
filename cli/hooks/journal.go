@@ -13,6 +13,9 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
+// settledAs is the word a settled sin's chat mark turns green with.
+const settledAs = "fixed"
+
 // Moment is one moment the agent journal hands its plugin: which hook fired, for which session and tool.
 type Moment struct {
 	Event, Cwd                   string
@@ -85,9 +88,10 @@ func (m Moment) HookPayload() map[string]any {
 	return payload
 }
 
-// Raise is an event the plugin raises on the journal's bus, with its brief and the dashboard page it opens.
+// Raise is an event the plugin raises on the journal's bus, with its brief, the dashboard page it opens and the
+// key a later settlement names its chat mark by.
 type Raise struct {
-	Event, Brief, Open string
+	Event, Brief, Open, Key string
 }
 
 func (r Raise) object() *jsonfile.Object {
@@ -96,14 +100,20 @@ func (r Raise) object() *jsonfile.Object {
 		raised.Set("open", r.Open)
 	}
 
+	if r.Key != "" {
+		raised.Set("key", r.Key)
+	}
+
 	return raised
 }
 
 // JournalAnswer is what the plugin answers the journal for one moment: a reason to refuse the call, a
-// whisper for the agent, and the events it raises.
+// whisper for the agent, the events it raises, and the keys of the chat marks it settles as fixed. The journal
+// reads a settlement only from the queue, so the answer it waits on carries none.
 type JournalAnswer struct {
 	Refuse, Whisper *string
 	Raises          []Raise
+	Settles         []string
 }
 
 // JSON is the answer as the journal reads it, leaving out what it does not say.
@@ -205,7 +215,15 @@ func (q Queue) Tell(advice JournalAnswer, moment Moment) error {
 			command += " --open " + shellQuote(raise.Open)
 		}
 
+		if raise.Key != "" {
+			command += " --key " + shellQuote(raise.Key)
+		}
+
 		commands = append(commands, command)
+	}
+
+	for _, key := range advice.Settles {
+		commands = append(commands, "plugin settle "+workspace.JournalPlugin+" "+shellQuote(key)+" --how "+shellQuote(settledAs))
 	}
 
 	if len(commands) == 0 {
@@ -293,7 +311,7 @@ func Forgotten() Announced {
 // Settle records what the moment changed: the touched sins not announced before are found, and a sin
 // announced for the edited file that the file no longer holds is repented, as is every sin announced for a file
 // that is gone, deleted by a shell command the plugin sees no file of.
-func (a Announced) Settle(root string, edited *string, marks []SinMark) ([]SinMark, []string) {
+func (a Announced) Settle(root string, edited *string, marks []SinMark) Settlement {
 	var files []string
 	now := map[string][]SinMark{}
 
@@ -386,12 +404,12 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) ([]SinMa
 
 	a.keep()
 
-	var repented []string
+	var repented []Repented
 	for _, id := range resolvedIDs {
-		repented = append(repented, resolved[id])
+		repented = append(repented, Repented{id, resolved[id]})
 	}
 
-	return found, repented
+	return Settlement{found, repented}
 }
 
 // keep writes the record, less the files that hold no sin; a record of none is an empty list, as PHP writes it.
@@ -431,20 +449,51 @@ func (a Announced) keep() {
 	}
 }
 
-// raises are the events a settlement raises: a sin found, each opening its page on the dashboard, and the
-// sins repented together.
-func raises(root string, found []SinMark, repented []string) []Raise {
+// Settlement is what one moment changed in the announced sins: the sins found, and the sins repented.
+type Settlement struct {
+	Found    []SinMark
+	Repented []Repented
+}
+
+// Raises are the events the settlement raises: a sin found, each opening its page on the dashboard under the key
+// its chat mark is settled by, and the sins repented together.
+func (s Settlement) Raises(root string) []Raise {
 	var raised []Raise
 
-	for _, mark := range found {
-		raised = append(raised, Raise{"sin-found", mark.ShownFrom(root), dashboard.Opening(dashboard.StoredOf(mark.Finding(), root))})
+	for _, mark := range s.Found {
+		raised = append(raised, Raise{"sin-found", mark.ShownFrom(root), dashboard.Opening(dashboard.StoredOf(mark.Finding(), root)), mark.Key()})
 	}
 
-	if len(repented) > 0 {
-		raised = append(raised, Raise{Event: "sin-resolved", Brief: strings.Join(repented, "\n")})
+	if len(s.Repented) > 0 {
+		var shown []string
+		for _, sin := range s.Repented {
+			shown = append(shown, sin.Shown)
+		}
+
+		raised = append(raised, Raise{Event: "sin-resolved", Brief: strings.Join(shown, "\n")})
 	}
 
 	return raised
+}
+
+// Settles are the keys of the chat marks the repented sins were found under.
+func (s Settlement) Settles() []string {
+	var keys []string
+	for _, sin := range s.Repented {
+		keys = append(keys, markKey(sin.ID))
+	}
+
+	return keys
+}
+
+// Repented is a sin announced before that the code no longer holds: its identity and how it was shown.
+type Repented struct {
+	ID, Shown string
+}
+
+// markKey is the key a sin's chat mark is raised and settled by: its identity, which an edit above it does not change.
+func markKey(id string) string {
+	return "sin:" + id
 }
 
 func firstOf(values ...any) any {

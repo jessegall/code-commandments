@@ -1,3 +1,4 @@
 nudge create 'Code Commandments — the edit — it breaks a rule that is described at such lengt…' --brief 'Code Commandments — the edit: it breaks a rule that is described at such length that its first line runs well past eighty characters. · • it'\''s here · and here'
-plugin raise code-commandments 'sin-found' 'array-bag at src/A.php:3' --open 'sins/x'
+plugin raise code-commandments 'sin-found' 'array-bag at src/A.php:3' --open 'sins/x' --key 'sin:a1'
 plugin raise code-commandments 'sin-resolved' 'a · b'
+plugin settle code-commandments 'sin:b2' --how 'fixed'

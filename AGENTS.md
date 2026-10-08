@@ -22,9 +22,9 @@ Use the most specific available agent type whose declared purpose matches the as
 
 Everything a tool returns stays in the context for good and is paid for on every turn after it. Search before you read, read the range you need, and cap output with grep, head or tail. Read a whole file only when you need all of it.
 
-**L4 — Follow-up work goes back to the subagent that did the first part; never start a fresh one on work another already holds.**
+**L4 — Related work goes back to the helper or subagent that already worked on it; never start a fresh one on work another already knows.**
 
-A subagent that drew a design, wrote the code or ran the research keeps what it learned. When the user asks for a change to its work, continue that subagent with a message rather than dispatching a new one that has to rediscover everything; start fresh only when the earlier one is gone or the new work is unrelated.
+A helper or subagent that drew a design, wrote the code or ran the research keeps what it learned. When new work changes its work, is related to it or touches the same code, send it there with a message (SendMessage, journal helper say) rather than dispatching a new one that has to rediscover everything; start fresh only when the earlier one is gone or the new work is unrelated.
 
 **L5 — Every subagent dispatch names the agent: a human name, a little quirky, that fits its role.**
 

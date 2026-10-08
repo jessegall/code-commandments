@@ -8,14 +8,18 @@ import (
 )
 
 // TestAdviceIsQueuedInTheMomentsEnvironment holds the queue to what the journal runs: bare commands, recorded in
-// testdata/queued, in the queue of the moment's environment beside the one the journal named. A line naming an
+// testdata/queued, a found sin raised under its key and a repented one settled by it, in the queue of the moment's environment beside the one the journal named. A line naming an
 // environment is refused, so none does.
 func TestAdviceIsQueuedInTheMomentsEnvironment(t *testing.T) {
 	whisper := "Code Commandments — the edit: it breaks a rule that is described at such length that its first line runs well past eighty characters.\n  • it's here\n\n    and here"
 	folder := t.TempDir()
 	named := filepath.Join(folder, "code-commandments.queue")
 
-	answer := JournalAnswer{Whisper: &whisper, Raises: []Raise{{"sin-found", "array-bag at src/A.php:3", "sins/x"}, {Event: "sin-resolved", Brief: "a\nb"}}}
+	answer := JournalAnswer{
+		Whisper: &whisper,
+		Raises:  []Raise{{"sin-found", "array-bag at src/A.php:3", "sins/x", "sin:a1"}, {Event: "sin-resolved", Brief: "a\nb"}},
+		Settles: []string{"sin:b2"},
+	}
 
 	if err := (Queue{named}).Tell(answer, MomentOf(map[string]any{"event": "hook.PostToolUse", "env": "o'brien"})); err != nil {
 		t.Fatal(err)

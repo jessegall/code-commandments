@@ -179,19 +179,19 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 		return answer
 	}
 
-	answer.Raises = append(answer.Raises, raised(moment, event.Root, merged.Activity)...)
+	settlement := settled(moment, event.Root, merged.Activity)
+	answer.Raises = append(answer.Raises, settlement.Raises(event.Root)...)
+	answer.Settles = settlement.Settles()
 
 	return answer
 }
 
-// raised settles what the edit found and repented against the sins already announced, kept in the plugin's
+// settled is what the edit found and repented against the sins already announced, kept in the plugin's
 // data folder and shown on its dashboard; with no folder, every touched sin is new.
-func raised(moment Moment, root string, marks []SinMark) []Raise {
+func settled(moment Moment, root string, marks []SinMark) Settlement {
 	data := os.Getenv(pluginData)
 	if data == "" {
-		found, repented := Forgotten().Settle(root, moment.File, marks)
-
-		return raises(root, found, repented)
+		return Forgotten().Settle(root, moment.File, marks)
 	}
 
 	var findings []engine.Finding
@@ -207,9 +207,7 @@ func raised(moment Moment, root string, marks []SinMark) []Raise {
 	}
 
 	dashboard.Record(workspace.At(root, ""), findings, judged)
-	found, repented := AnnouncedIn(data).Settle(root, moment.File, marks)
-
-	return raises(root, found, repented)
+	return AnnouncedIn(data).Settle(root, moment.File, marks)
 }
 
 // resolved is the file with its links resolved, a relative one read from the folder the moment happened in.
