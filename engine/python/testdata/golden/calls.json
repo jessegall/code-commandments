@@ -4059,7 +4059,11 @@
         "extendsOutside": false
     },
     "shop.support_tickets.TicketMeta.to_dict": {
-        "callers": [],
+        "callers": [
+            "shop/escalations.py:12",
+            "shop/support_desk.py:7",
+            "shop/support_tickets.py:36"
+        ],
         "override": false,
         "overridden": false,
         "extendsOutside": false
@@ -4211,7 +4215,9 @@
         "extendsOutside": false
     },
     "shop.till_drawers.Float.is_short": {
-        "callers": [],
+        "callers": [
+            "shop/till_drawers.py:36"
+        ],
         "override": false,
         "overridden": false,
         "extendsOutside": false

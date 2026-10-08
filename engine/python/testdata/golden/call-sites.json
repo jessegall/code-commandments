@@ -263,6 +263,11 @@
         },
         "literalKey": false
     },
+    "shop/escalations.py@414-440": {
+        "target": "shop.support_tickets.TicketMeta.to_dict",
+        "arguments": {},
+        "literalKey": false
+    },
     "shop/events.py@448-466": {
         "target": "shop.events.Listener.handle",
         "arguments": {
@@ -817,6 +822,11 @@
         },
         "literalKey": false
     },
+    "shop/support_desk.py@247-277": {
+        "target": "shop.support_tickets.TicketMeta.to_dict",
+        "arguments": {},
+        "literalKey": false
+    },
     "shop/support_tickets.py@1067-1115": {
         "target": "shop.support_tickets.RoutedTicket.evolve",
         "arguments": {
@@ -831,6 +841,11 @@
         },
         "literalKey": false
     },
+    "shop/support_tickets.py@1084-1114": {
+        "target": "shop.support_tickets.TicketMeta.to_dict",
+        "arguments": {},
+        "literalKey": false
+    },
     "shop/tax_contexts.py@710-728": {
         "target": "shop.tax_contexts.Pricer.price",
         "arguments": {
@@ -842,6 +857,13 @@
         "target": "shop.till_drawers.FloatBook.float_for",
         "arguments": {
             "drawer": "shift.drawer"
+        },
+        "literalKey": false
+    },
+    "shop/till_drawers.py@721-778": {
+        "target": "shop.till_drawers.Float.is_short",
+        "arguments": {
+            "counted": "shift.counted"
         },
         "literalKey": false
     },

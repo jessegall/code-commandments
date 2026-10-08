@@ -167,6 +167,24 @@ func (p *Program) PassesLiteralKey(call Node) bool {
 	})
 }
 
+// ReadsForwardedKeywords says whether the key read's mapping is a parameter every call that can reach its def, through
+// the methods it overrides too, fills with the caller's own **kwargs: a generic funnel's keyword arguments handed on unchanged, a mapping no record declares.
+func (p *Program) ReadsForwardedKeywords(read Node) bool {
+	base, ok := read.StringKeyBase()
+	if !ok || base.Kind() != "Name" {
+		return false
+	}
+	calls := p.DispatchedCallersOf(read.EnclosingFunction())
+
+	return len(calls) > 0 && !slices.ContainsFunc(calls, func(call Node) bool {
+		bound, ok := p.ArgumentsAt(call)
+		handed := bound[base.Name()]
+		rest := call.EnclosingFunction().Child("args").Child("kwarg")
+
+		return !ok || handed.Kind() != "Name" || !rest.Exists() || handed.Name() != rest.Name()
+	})
+}
+
 // KeyParameters is the def's parameters it reads another by as a key: `key` in `row[key]` or `row.get(key)`, or a
 // parameter a loop walks whose items are keys so.
 func (n Node) KeyParameters() []string {

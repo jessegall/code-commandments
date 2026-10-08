@@ -28,6 +28,7 @@ func (DictBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		WhereExpression().
 		Where(engine.As(py.Node.IsDictKeyRead)).
 		Reject(engine.As(py.Node.IsWithinNamedConstructor)).
+		Reject(engine.As(program.ReadsForwardedKeywords)).
 		Get()
 	throughHelper := py.In(codebase).
 		WhereCall().

@@ -15,6 +15,9 @@ func (p *Program) Callee(call Node) (Node, bool) {
 		return Node{}, false
 	}
 	callee := call.Child("func")
+	if callee.Kind() == "Attribute" && callee.Child("value").Kind() == "Call" {
+		return p.calledOnResult(callee)
+	}
 	if callee.Kind() == "Name" {
 		if nested, ok := nestedIn(callee.Name(), call); ok {
 			return nested, true
@@ -40,6 +43,22 @@ func (p *Program) Callee(call Node) (Node, bool) {
 	}
 
 	return p.MethodOf(class, member)
+}
+
+// calledOnResult is the method a call names on another call's result, `self.guard().kept(…)`: the class the inner
+// call's def declares it returns, and the method of that name it declares or inherits.
+func (p *Program) calledOnResult(callee Node) (Node, bool) {
+	inner, ok := p.Callee(callee.Child("value"))
+	module := p.ModuleOf(inner)
+	if !ok || module == nil || !inner.Child("returns").Exists() {
+		return Node{}, false
+	}
+	class, ok := p.ClassNamed(inner.Child("returns"), module)
+	if !ok {
+		return Node{}, false
+	}
+
+	return p.MethodOf(class, callee.Name())
 }
 
 // nestedIn is the def named name that a function enclosing the node declares in its own body: the nearest

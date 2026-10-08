@@ -76,6 +76,45 @@ func (p *Program) IsOverride(method Node) bool {
 	return false
 }
 
+// DispatchedCallersOf is every call that can reach the method: its own, and those of every method of a base class
+// it overrides, which reach it when the object is of its class.
+func (p *Program) DispatchedCallersOf(method Node) []Node {
+	calls := slices.Clone(p.CallersOf(method))
+	for _, overridden := range p.overriddenBy(method) {
+		calls = append(calls, p.CallersOf(overridden)...)
+	}
+
+	return calls
+}
+
+// overriddenBy is every method of the same name a base class of the method's class declares, its bases' bases too.
+func (p *Program) overriddenBy(method Node) []Node {
+	var found []Node
+	seen := map[string]bool{}
+	classes := []Node{method.Parent()}
+	for len(classes) > 0 {
+		class := classes[0]
+		classes = classes[1:]
+		home := p.homes[class.Node()]
+		if class.Kind() != "ClassDef" || home == nil || seen[class.Location()] {
+			continue
+		}
+		seen[class.Location()] = true
+		for _, base := range class.ChildrenIn("bases") {
+			parent, ok := p.ClassNamed(base, home)
+			if !ok {
+				continue
+			}
+			if declared, ok := p.MethodOf(parent, method.Name()); ok {
+				found = append(found, declared)
+			}
+			classes = append(classes, parent)
+		}
+	}
+
+	return found
+}
+
 // refersTo is the symbol id an import alias or a name at the top of its module names: a def or class of the
 // codebase, or what an import binds, whether or not the scan holds it. A name a function binds for itself
 // refers to its own local, which has no id.
