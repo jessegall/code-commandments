@@ -49,7 +49,7 @@ func (Command) Names() []string {
 // Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run.").
-		Form("judge [path]", "scan a path — or, with none, the source roots declared in .commandments/config.json").
+		Form("judge [path]", "scan a folder, or one file read with the folder it sits in — or, with none, the source roots declared in .commandments/config.json").
 		Form("judge --list", "list every detector, grouped by skill").
 		Option("--list", "list every detector grouped by the skill that fixes it, and run none of them").
 		Option("--skill=NAME", "only run detectors for one skill (group), e.g. spatie-data").
@@ -89,10 +89,16 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return list(cwd, console)
 	}
 
-	if info, err := os.Stat(options.path); err != nil || !info.IsDir() {
-		console.Warn("Not a directory: " + options.path)
+	info, err := os.Stat(options.path)
+	if err != nil {
+		console.Warn("Nothing to judge at " + options.path)
 
 		return 2, nil
+	}
+
+	file := ""
+	if !info.IsDir() {
+		file, options.path = options.path, filepath.Dir(options.path)
 	}
 
 	project, err := config.Load(cwd)
@@ -133,6 +139,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		console.Warn(err.Error())
 
 		return 2, nil
+	}
+
+	if file != "" {
+		targets = targets.NarrowedTo(file)
 	}
 
 	return c.judge(options, selected, judged, targets, space, console)

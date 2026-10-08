@@ -95,6 +95,25 @@ func RestrictedTo(files []string) Scope {
 	return Scope{files: canonical(set), scoped: true, restrictions: always("", nil)}
 }
 
+// NarrowedTo is the scope narrowed to the one file `judge <file>` names: it alone is a target, and only when the
+// scope already took it in.
+func (s Scope) NarrowedTo(file string) Scope {
+	real, err := resolve(file)
+	if err != nil {
+		real = file
+	}
+
+	if s.scoped && !s.files[real] {
+		s.files = map[string]bool{}
+
+		return s
+	}
+
+	s.files, s.scoped = map[string]bool{real: true}, true
+
+	return s
+}
+
 // And is this scope further narrowed by a restriction.
 func (s Scope) And(restriction FileScope) Scope {
 	s.restrictions = append(slices.Clone(s.restrictions), restriction)
