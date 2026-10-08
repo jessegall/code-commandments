@@ -34,5 +34,6 @@ func (d ContainerReachDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(php.Node.FirstArgIsClassLiteral)).
 		Reject(engine.As(php.Node.IsEnclosingClassResolution)).
 		Where(func(n engine.Match) bool { return laravelnode.ContainerResolves(codebase, php.EnclosingClassName(n)) }).
+		Reject(engine.Match.IsTest).
 		Get())
 }

@@ -28,5 +28,6 @@ func (FacadeCallDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(laravelnode.Node.InServiceProvider)).
 		Reject(engine.As(laravelnode.Node.IsEloquentCast)).
 		Reject(engine.As(laravelnode.Node.InQueuedJobHook)).
+		Reject(engine.Match.IsTest).
 		Get()
 }

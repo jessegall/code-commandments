@@ -28,5 +28,6 @@ func (d ConfigReadDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return packages.Exempt(codebase, d, php.In(codebase).
 		Where(engine.As(func(n php.Node) bool { return n.CallsFunction("config") })).
 		Where(engine.As(php.Node.IsEnclosedInClass)).
+		Reject(engine.Match.IsTest).
 		Get())
 }
