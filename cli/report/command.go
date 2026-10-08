@@ -21,11 +21,16 @@ var hedges = []string{
 	" pre-existing", " baseline", " migration-scoped",
 }
 
-// footer closes every issue the tool files.
-const footer = "\n_Filed via `commandments report` from a consumer project._\n"
+// filedBy closes every issue the tool files: the verb that filed it and the release it ran, so a report is always
+// read against the code that made it.
+func filedBy(verb, version string) string {
+	return "\n_Filed via `commandments " + verb + "` from a consumer project, on code-commandments " + version + "._\n"
+}
 
-// Command is `report`: a bug in the tool, or a finding that is a false positive.
-type Command struct{}
+// Command is `report`: a bug in the tool, or a finding that is a false positive. Version is the release it runs.
+type Command struct {
+	Version string
+}
 
 // Names are the verbs it answers to.
 func (Command) Names() []string {
@@ -61,7 +66,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	if detector, named := in.Option("detector"); named {
-		return detectorReport(in, detector, reason, refs, console), nil
+		return detectorReport(in, detector, reason, refs, c.Version, console), nil
 	}
 
 	if len(refs) == 0 && !in.HasFlag("global") {
@@ -78,10 +83,10 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		title = summarise(reason)
 	}
 
-	return File("[bug-report] "+title, "**Report:**\n"+reason+"\n"+render(refs)+footer, console), nil
+	return File("[bug-report] "+title, "**Report:**\n"+reason+"\n"+render(refs)+filedBy("report", c.Version), console), nil
 }
 
-func detectorReport(in *cli.Input, detector, reason string, refs []Reference, console cli.Console) int {
+func detectorReport(in *cli.Input, detector, reason string, refs []Reference, version string, console cli.Console) int {
 	if own, found := ownRule(detector); found {
 		console.Warn("✋ "+detector+" is THIS project's own rule — it lives in .commandments/custom/, not in the",
 			"  package (.commandments/custom/"+catalog.Name(own)+".json). Nothing upstream can fix it: tighten the rule there",
@@ -133,7 +138,7 @@ func detectorReport(in *cli.Input, detector, reason string, refs []Reference, co
 			"> the owed fix — close this report; the fix is still owed.\n"
 	}
 
-	return File("[detector-report] "+detector, body+render(refs)+footer, console)
+	return File("[detector-report] "+detector, body+render(refs)+filedBy("report", version), console)
 }
 
 // requiresBestDesign says whether the detector, or its sin, is a design smell a report must answer with the

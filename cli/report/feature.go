@@ -6,7 +6,9 @@ import (
 )
 
 // FeatureRequest is `feature-request`: propose a new or changed rule.
-type FeatureRequest struct{}
+type FeatureRequest struct {
+	Version string
+}
 
 // Names are the verbs it answers to.
 func (FeatureRequest) Names() []string {
@@ -30,7 +32,7 @@ func (f FeatureRequest) Run(in *cli.Input, console cli.Console) (int, error) {
 		return help.Usage(console.Err, f, "--title and --reason are both required."), nil
 	}
 
-	body := "**Proposal:**\n" + reason + "\n\n_Filed via `commandments feature-request` from a consumer project._\n"
+	body := "**Proposal:**\n" + reason + "\n" + filedBy("feature-request", f.Version)
 
 	return File("[feature-request] "+title, body, console), nil
 }
