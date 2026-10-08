@@ -26,5 +26,6 @@ func (MutableValueObjectDetector) Find(codebase *engine.Codebase) []engine.Match
 	return py.In(codebase).
 		WhereClass().
 		Where(engine.As(py.Node.IsValueWrittenAfterConstruction)).
+		Reject(engine.As(py.Node.ComparesByIdentity)).
 		Get()
 }

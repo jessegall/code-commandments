@@ -90,6 +90,14 @@ func (n Node) IsDataclass() bool {
 	return n.IsDecoratedWith("dataclass", "dataclasses.dataclass")
 }
 
+// ComparesByIdentity says whether the dataclass gives up the value equality a dataclass is given, `eq=False` on its
+// decorator, so it is an entity known by its identity rather than a value.
+func (n Node) ComparesByIdentity() bool {
+	return slices.ContainsFunc(n.Decorators(), func(decorator Node) bool {
+		return decorator.Kind() == "Call" && slices.Contains([]string{"dataclass", "dataclasses.dataclass"}, decorator.Child("func").DottedName()) && decorator.Keyword("eq").IsFalse()
+	})
+}
+
 // Initializer is the class's __init__; no node when it declares none.
 func (n Node) Initializer() Node {
 	for _, member := range n.ChildrenIn("body") {

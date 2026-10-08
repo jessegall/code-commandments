@@ -201,6 +201,11 @@ func (n Node) Keyword(name string) Node {
 	return Node{}
 }
 
+// IsFalse says whether the expression is the literal False.
+func (n Node) IsFalse() bool {
+	return n.Kind() == "Constant" && n.Node().Literal == "bool" && n.Written() == "False"
+}
+
 // IsNone says whether the expression is the literal None.
 func (n Node) IsNone() bool {
 	return n.Kind() == "Constant" && n.Node().Literal == "null"
