@@ -8,14 +8,6 @@ import (
 	"strings"
 )
 
-const (
-	// before is how many lines a snippet shows above the line it is about.
-	before = 3
-
-	// after is how many lines it shows below a single line; a range shows before as many.
-	after = 24
-)
-
 // Reference is the code a report is about: a file, and a line or a range of lines in it.
 type Reference struct {
 	Path  string
@@ -33,6 +25,12 @@ func (r Reference) Label() string {
 	default:
 		return r.Path + ":" + strconv.Itoa(r.Start) + "-" + strconv.Itoa(r.End)
 	}
+}
+
+// Shown is the reference as an issue names it: the file's own name and its lines, never the folders that would map
+// out the reporter's project.
+func (r Reference) Shown() string {
+	return Reference{filepath.Base(r.Path), r.Start, r.End}.Label()
 }
 
 // ParseReference reads `path`, `path:line` or `path:start-end`; a suffix that is no line keeps the whole
@@ -81,49 +79,29 @@ func digits(text string) (int, bool) {
 	return number, err == nil
 }
 
-// Snippet is the file's code around the reference, numbered, the referenced lines marked and every secret
-// masked, as a fenced block; false when the file cannot be read or is empty.
+// Snippet is the referenced lines alone, numbered, with every secret masked, as a fenced block: never the code
+// around them, and nothing for a reference to a whole file; false when there are no lines to show.
 func Snippet(ref Reference) (string, bool) {
 	raw, err := os.ReadFile(ref.Path)
-	if err != nil || len(raw) == 0 {
+	if err != nil || len(raw) == 0 || ref.Start == 0 {
 		return "", false
 	}
 
 	lines := strings.Split(strings.TrimSuffix(string(raw), "\n"), "\n")
-	from := max(1, ref.Start)
-	to := max(from, ref.End, from)
-	start := max(1, from-before)
-	below := after
-
-	if ref.End != 0 {
-		below = before
+	from := ref.Start
+	to := min(len(lines), max(from, ref.End))
+	if from > len(lines) {
+		return "", false
 	}
 
-	end := min(len(lines), to+below)
-	width := len(strconv.Itoa(end))
+	width := len(strconv.Itoa(to))
 	var rows []string
 
-	for n := start; n <= end; n++ {
-		marker := " "
-		if ref.Start != 0 && n >= from && n <= to {
-			marker = "→"
-		}
-
-		rows = append(rows, fmt.Sprintf("%s %*d  %s", marker, width, n, Redact(strings.TrimSuffix(lines[n-1], "\r"))))
+	for n := from; n <= to; n++ {
+		rows = append(rows, fmt.Sprintf("%*d  %s", width, n, Redact(strings.TrimSuffix(lines[n-1], "\r"))))
 	}
 
-	return "**Code** (`" + where(ref) + "`):\n\n```" + fence(ref.Path) + "\n" + strings.Join(rows, "\n") + "\n```\n", true
-}
-
-func where(ref Reference) string {
-	switch {
-	case ref.Start == 0:
-		return ref.Path
-	case ref.End > ref.Start:
-		return ref.Path + ":" + strconv.Itoa(ref.Start) + "-" + strconv.Itoa(ref.End)
-	default:
-		return ref.Path + ":" + strconv.Itoa(ref.Start)
-	}
+	return "**Code** (`" + ref.Shown() + "`):\n\n```" + fence(ref.Path) + "\n" + strings.Join(rows, "\n") + "\n```\n", true
 }
 
 func fence(path string) string {

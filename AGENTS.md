@@ -69,6 +69,9 @@ This is the rule the detectors exist to serve. Honour it on EVERY fix:
   it gets fixed upstream instead of silently ignored, ALWAYS referencing the code:
   `bin/commandments report --detector=NAME --reason="…" --ref=PATH:LINE`
   (repeat `--ref` for EVERY file involved — a bug spanning files references each).
+  The issue is public and names only each file and its lines; add `--share-code`
+  (the referenced lines alone, secrets masked) ONLY when the project's owner has
+  agreed its code may be published. Describe the shape in `--reason` instead.
   Design-smell detectors REQUIRE a `--best-design="…"`: the cleanest design you can
   conceive for this code. It is the litmus — a report is valid ONLY if the flagged
   code already IS that design; if you can name anything cleaner, that design is the

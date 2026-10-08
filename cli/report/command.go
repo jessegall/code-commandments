@@ -43,7 +43,8 @@ func (Command) Help() help.Help {
 		Form(`report --reason="…" --ref=PATH:LINE`, "a [bug-report] — a defect in the tool, pointing at the code it happened on").
 		Form(`report --detector=NAME --reason="…" --ref=PATH:LINE`, "a [detector-report] — this finding is a false positive").
 		Option(`--reason="…"`, "what is wrong (required)").
-		Option("--ref=PATH:LINE", "the code this is about — repeatable, and PATH:START-END works; the source is read and injected into the issue").
+		Option("--ref=PATH:LINE", "the code this is about — repeatable, and PATH:START-END works; the issue names the file and its lines").
+		Option("--share-code", "also show the referenced lines (those alone, secrets masked) — only when the project's owner agrees its code may be public").
 		Option("--detector=NAME", "the detector that fired — makes this a false-positive report").
 		Option(`--best-design="…"`, "the cleanest design you can conceive for the flagged code; REQUIRED by design-smell detectors").
 		Option(`--title="…"`, "the issue title (default: the reason's first line)").
@@ -83,7 +84,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		title = summarise(reason)
 	}
 
-	return File("[bug-report] "+title, "**Report:**\n"+reason+"\n"+render(refs)+filedBy("report", c.Version), console), nil
+	return File("[bug-report] "+title, "**Report:**\n"+reason+"\n"+render(refs, in.HasFlag("share-code"))+filedBy("report", c.Version), console), nil
 }
 
 func detectorReport(in *cli.Input, detector, reason string, refs []Reference, version string, console cli.Console) int {
@@ -138,7 +139,7 @@ func detectorReport(in *cli.Input, detector, reason string, refs []Reference, ve
 			"> the owed fix — close this report; the fix is still owed.\n"
 	}
 
-	return File("[detector-report] "+detector, body+render(refs)+filedBy("report", version), console)
+	return File("[detector-report] "+detector, body+render(refs, in.HasFlag("share-code"))+filedBy("report", version), console)
 }
 
 // requiresBestDesign says whether the detector, or its sin, is a design smell a report must answer with the
@@ -195,11 +196,17 @@ func references(in *cli.Input) []Reference {
 	return refs
 }
 
-func render(refs []Reference) string {
+// render names each reference by its file and lines, and shows the referenced lines only when the reporter
+// shares them: a project's code is never published without its owner's word.
+func render(refs []Reference, share bool) string {
 	var out strings.Builder
 
 	for _, ref := range refs {
-		out.WriteString("\n**Where:** `" + ref.Label() + "`\n")
+		out.WriteString("\n**Where:** `" + ref.Shown() + "`\n")
+
+		if !share {
+			continue
+		}
 
 		if code, read := Snippet(ref); read {
 			out.WriteString("\n" + code)
