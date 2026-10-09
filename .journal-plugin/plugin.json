@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.64.1",
+    "version": "1.64.2",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.261.0",
@@ -45,7 +45,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v5.18.1"
+        "COMMANDMENTS_RELEASE": "v5.18.2"
     },
     "setup": [
         {

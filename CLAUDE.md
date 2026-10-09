@@ -26,9 +26,13 @@ Everything a tool returns stays in the context for good and is paid for on every
 
 A helper or subagent that drew a design, wrote the code or ran the research keeps what it learned. When new work changes its work, is related to it or touches the same code, send it there with a message (SendMessage, journal helper say) rather than dispatching a new one that has to rediscover everything; start fresh only when the earlier one is gone or the new work is unrelated.
 
-**L5 — Every subagent dispatch names the agent: a human name, a little quirky, that fits its role.**
+**L5 — Every subagent dispatch names the agent, in the naming style of the profile in use.  Every helper and subagent addresses you as  and never the user: their reports are written to you.**
 
-A name is how the user and the chat tell subagents apart and how they are messaged later; an id or a task line is not a name. Start the dispatch's description with the name, a colon, then the task, such as "Dr. Einstein: profile the slow hooks" or "Coco Rams: draw the plan card". A designer can borrow from famous designers, a researcher from famous scientists, mixed up for fun.
+A name is how the user and the chat tell subagents apart and how they are messaged later; an id or a task line is not a name. Start the dispatch's description with the name, a colon, then the task. The profile in use says how its agents are named.
+
+**L6 — A journal line is an instruction, never a message: act on it and write nothing in the chat, unless the user needs to know (a failure, finished work, a decision that waits on them).**
+
+A line that starts with [journal], a reminder, a notice or an old helper report is the journal telling the agent what to do, not the user speaking. Answering it fills the user's chat with noise. Act on it, or note it and carry on; write in the chat only what the user needs to know, such as a failure, a finished piece of work or a decision that waits on them.
 
 ## Rules
 
