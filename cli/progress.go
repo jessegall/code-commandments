@@ -13,7 +13,8 @@ const barWidth = 24
 
 // Progress is a carriage-return bar drawn on stderr, so it never mixes into findings or a checklist on
 // stdout. It is silent unless its stream is an interactive terminal, or a journal check reads the run: there it
-// writes a plain `detector 37/257` line each time the share done moves, which the check reads as its progress.
+// writes a plain `reading 120/983` or `detector 37/257` line each time the share done moves, which the check reads as
+// its progress.
 // Other piped runs, hooks, CI and tests see nothing.
 type Progress struct {
 	stream     io.Writer
@@ -47,29 +48,10 @@ func (p *Progress) Status(message string) {
 	fmt.Fprintf(p.stream, "\r\033[2K\033[2m%s\033[0m", message)
 }
 
-// Expect counts steps that come before the bar starts, each read with Step, into the bar Start draws: the
-// languages a run reads before it judges.
+// Expect counts the steps that come before the bar starts, tracked through Phase, into the bar Start draws: the
+// files a run reads before it judges.
 func (p *Progress) Expect(steps int) {
 	p.before = steps
-}
-
-// Step moves one of the steps Expect counted, labelled with what it was. A journal check is only told what was
-// read: its bar counts the detectors alone, so the reading of languages never holds it at a share of its own.
-func (p *Progress) Step(phase, label string) {
-	if !p.enabled {
-		return
-	}
-
-	if p.plain {
-		fmt.Fprintf(p.stream, "%s %s\n", phase, label)
-
-		return
-	}
-
-	p.active = true
-	p.total = max(1, p.before)
-	p.current = min(p.total, p.current+1)
-	p.render(phase, label)
 }
 
 // Start begins a bar of total steps, after the steps Expect counted; a journal check's bar counts the total alone.

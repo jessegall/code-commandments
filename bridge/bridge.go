@@ -32,7 +32,12 @@ type Request struct {
 // Once runs the bridge over the paths and reads the stream it writes; a bridge that fails answers why, with the stream
 // as far as it wrote it.
 func Once(command []string, paths ...string) (*contract.Stream, error) {
-	stream, errs, ran, err := Run(command, paths...)
+	return OnceTallied(command, func() {}, paths...)
+}
+
+// OnceTallied runs the bridge over the paths as Once does, telling tally of each file the moment the stream holds it.
+func OnceTallied(command []string, tally func(), paths ...string) (*contract.Stream, error) {
+	stream, errs, ran, err := RunTallied(command, tally, paths...)
 	if !ran {
 		return stream, Failed(command, err, errs)
 	}
@@ -45,6 +50,11 @@ func Once(command []string, paths ...string) (*contract.Stream, error) {
 // why; one that ran answers the stream, or why it broke the contract. Either way the stream is answered as far as it
 // was read.
 func Run(command []string, arguments ...string) (stream *contract.Stream, errs string, ran bool, err error) {
+	return RunTallied(command, func() {}, arguments...)
+}
+
+// RunTallied runs the command as Run does, telling tally of each file the moment the stream holds it.
+func RunTallied(command []string, tally func(), arguments ...string) (stream *contract.Stream, errs string, ran bool, err error) {
 	limit, err := quietLimit()
 	if err != nil {
 		return nil, "", false, err
@@ -64,7 +74,7 @@ func Run(command []string, arguments ...string) (stream *contract.Stream, errs s
 		stop()
 		out.Close()
 	})
-	stream, read := contract.ReadAll(output)
+	stream, read := contract.NewReader(output).Tallied(tally)
 	io.Copy(io.Discard, output)
 	exited := process.Wait()
 	if output.silent.Load() {
@@ -125,6 +135,11 @@ func Serve(command []string) (*Server, error) {
 
 // Ask sends one request and reads the whole stream the bridge answers with.
 func (s *Server) Ask(request Request) (*contract.Stream, error) {
+	return s.AskTallied(request, func() {})
+}
+
+// AskTallied sends one request as Ask does, telling tally of each file the moment the answer holds it.
+func (s *Server) AskTallied(request Request, tally func()) (*contract.Stream, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	line, err := json.Marshal(request)
@@ -134,7 +149,7 @@ func (s *Server) Ask(request Request) (*contract.Stream, error) {
 	if _, err := s.input.Write(append(line, '\n')); err != nil {
 		return nil, Failed(s.command, err, s.stderr())
 	}
-	stream, err := s.output.Stream()
+	stream, err := s.output.Tallied(tally)
 	if err != nil {
 		return nil, Failed(s.command, err, s.stderr())
 	}

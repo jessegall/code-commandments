@@ -56,12 +56,17 @@ func (b Bridge) Cached() Bridge {
 
 // Stream is the stream the bridge writes for its arguments: paths, and any of its flags.
 func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
+	return b.StreamTallied(func() {}, arguments...)
+}
+
+// StreamTallied is the stream the bridge writes for its arguments, telling tally of each file the moment it is read.
+func (b Bridge) StreamTallied(tally func(), arguments ...string) (*contract.Stream, error) {
 	command, err := b.Command()
 	if err != nil {
 		return nil, err
 	}
 
-	return bridge.Once(command, arguments...)
+	return bridge.OnceTallied(command, tally, arguments...)
 }
 
 // Scan is the codebase the bridge reads at paths.

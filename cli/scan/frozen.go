@@ -40,7 +40,7 @@ func streamOf(language source.Language, files ...string) (*contract.Stream, erro
 	for _, read := range readers {
 		for _, reads := range read.languages {
 			if reads == language {
-				return read.stream([]string{filepath.Dir(files[0])}, files)
+				return read.stream([]string{filepath.Dir(files[0])}, files, func() {})
 			}
 		}
 	}

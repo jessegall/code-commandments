@@ -1,6 +1,7 @@
 package scan
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -13,7 +14,7 @@ import (
 )
 
 // TestTheBridgesRunTwoAtATime holds the load to running every bridge with files to read, never more than two at
-// once, and telling each one's name as it finishes.
+// once, and counting every file any of them reads, out of every file they will.
 func TestTheBridgesRunTwoAtATime(t *testing.T) {
 	root := t.TempDir()
 	for _, file := range []string{"Order.php", "order.py", "Order.cs"} {
@@ -23,7 +24,10 @@ func TestTheBridgesRunTwoAtATime(t *testing.T) {
 	}
 	var lock sync.Mutex
 	running, most := 0, 0
-	bridge := func(_, _ []string) (*contract.Stream, error) {
+	bridge := func(_, files []string, tally func()) (*contract.Stream, error) {
+		for range files {
+			tally()
+		}
 		lock.Lock()
 		running++
 		most = max(most, running)
@@ -44,15 +48,15 @@ func TestTheBridgesRunTwoAtATime(t *testing.T) {
 	t.Cleanup(func() { readers = whole })
 
 	var told []string
-	if _, err := Walk([]string{root}, source.Excluded{}).Reporting(func(name string) { told = append(told, name) }).Load(); err != nil {
+	report := func(done, total int) { told = append(told, fmt.Sprintf("%d/%d", done, total)) }
+	if _, err := Walk([]string{root}, source.Excluded{}).Reporting(report).Load(); err != nil {
 		t.Fatal(err)
 	}
 
 	if most != bridgesAtOnce {
 		t.Errorf("%d bridges ran at once, want %d", most, bridgesAtOnce)
 	}
-	slices.Sort(told)
-	if !slices.Equal(told, []string{"C#", "PHP", "Python"}) {
+	if !slices.Equal(told, []string{"1/3", "2/3", "3/3"}) {
 		t.Errorf("the load told %v", told)
 	}
 }

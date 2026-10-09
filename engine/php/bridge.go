@@ -63,11 +63,16 @@ func (b Bridge) Cached() Bridge {
 
 // Stream is the stream the bridge writes for its arguments: paths, and any of its flags.
 func (b Bridge) Stream(arguments ...string) (*contract.Stream, error) {
+	return b.StreamTallied(func() {}, arguments...)
+}
+
+// StreamTallied is the stream the bridge writes for its arguments, telling tally of each file the moment it is read.
+func (b Bridge) StreamTallied(tally func(), arguments ...string) (*contract.Stream, error) {
 	command, err := b.Command()
 	if err != nil {
 		return nil, err
 	}
-	stream, failure, ran, err := bridge.Run(command, arguments...)
+	stream, failure, ran, err := bridge.RunTallied(command, tally, arguments...)
 	if !ran {
 		return stream, errors.Join(fmt.Errorf("the PHP bridge failed: %w", err), errors.New(failure))
 	}

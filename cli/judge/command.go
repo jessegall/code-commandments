@@ -173,8 +173,8 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	whole, byProject := wholeAndByProject(selected)
 
 	read := sources.Only(slices.DeleteFunc(slices.Clone(languages), func(language source.Language) bool { return language == source.CSharp })...)
-	progress.Expect(read.Bridges())
-	codebase, err := read.Reporting(func(bridge string) { progress.Step("reading", bridge) }).Load()
+	progress.Expect(read.Bridged())
+	codebase, err := read.Reporting(progress.Phase("reading")).Load()
 	parseSeconds := time.Since(parsing).Seconds()
 	var incomplete scan.Incomplete
 	if errors.As(err, &incomplete) {

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -24,7 +25,7 @@ type Sources struct {
 	byLanguage map[source.Language][]string
 	roots      []string
 	tooLarge   []string
-	read       func(bridge string)
+	read       func(done, total int)
 }
 
 // largestSource is the most source a file may hold and still be read: past it a file is generated or minified, and
@@ -116,20 +117,19 @@ func (s Sources) Only(languages ...source.Language) Sources {
 	return kept
 }
 
-// Reporting is these sources telling each, as Load finishes reading a language through its bridge, the bridge's name.
-func (s Sources) Reporting(each func(bridge string)) Sources {
+// Reporting is these sources telling each, as Load's bridges read every file, how many of the files they read are
+// read so far, and of how many.
+func (s Sources) Reporting(each func(done, total int)) Sources {
 	s.read = each
 
 	return s
 }
 
-// Bridges is how many bridges Load runs: one for each reader with files to read.
-func (s Sources) Bridges() int {
+// Bridged is how many files Load hands its bridges to read.
+func (s Sources) Bridged() int {
 	count := 0
 	for _, read := range readers {
-		if s.Count(read.languages...) > 0 {
-			count++
-		}
+		count += s.Count(read.languages...)
 	}
 
 	return count
@@ -192,14 +192,13 @@ func (s Sources) Load() (*engine.Codebase, error) {
 	return codebase, nil
 }
 
-// Incomplete is a load a bridge broke off: the codebase holds every other language, and what the broken bridge
-
-// bridge runs the bridge of every reader with files to read, bridgesAtOnce at a time, and tells each one's name as it
-// finishes; the answers are keyed by the reader's place in readers.
+// bridge runs the bridge of every reader with files to read, bridgesAtOnce at a time, and tells each file any of them
+// reads as it reads it; the answers are keyed by the reader's place in readers.
 func (s Sources) bridge() map[int]bridged {
 	finished := make(chan bridged)
 	slots := make(chan struct{}, bridgesAtOnce)
 	running := 0
+	tally := s.tally()
 	for index, read := range readers {
 		if s.Count(read.languages...) == 0 {
 			continue
@@ -208,7 +207,7 @@ func (s Sources) bridge() map[int]bridged {
 		go func() {
 			slots <- struct{}{}
 			defer func() { <-slots }()
-			stream, err := read.stream(s.roots, s.files(read.languages))
+			stream, err := read.stream(s.roots, s.files(read.languages), tally)
 			finished <- bridged{index, stream, err}
 		}()
 	}
@@ -216,15 +215,13 @@ func (s Sources) bridge() map[int]bridged {
 	answered := map[int]bridged{}
 	for range running {
 		answer := <-finished
-		if s.read != nil {
-			s.read(readers[answer.reader].name)
-		}
 		answered[answer.reader] = answer
 	}
 
 	return answered
 }
 
+// Incomplete is a load a bridge broke off: the codebase holds every other language, and what the broken bridge
 // wrote before it stopped.
 type Incomplete struct {
 	Bridges []string
@@ -247,6 +244,23 @@ func partly(stream *contract.Stream, err error, files int) *contract.Stream {
 	return stream
 }
 
+// tally is told each file a bridge reads, from any of the bridges at once, and tells the count to whoever Reporting
+// named; nothing is told when none was.
+func (s Sources) tally() func() {
+	if s.read == nil {
+		return func() {}
+	}
+	var lock sync.Mutex
+	done, total := 0, s.Bridged()
+
+	return func() {
+		lock.Lock()
+		defer lock.Unlock()
+		done++
+		s.read(min(done, total), total)
+	}
+}
+
 func (s Sources) files(languages []source.Language) []string {
 	var files []string
 
@@ -263,40 +277,40 @@ func (s Sources) files(languages []source.Language) []string {
 type reader struct {
 	name        string
 	languages   []source.Language
-	stream      func(roots, files []string) (*contract.Stream, error)
+	stream      func(roots, files []string, tally func()) (*contract.Stream, error)
 	bridgeOrder bool
 }
 
 // readers are the bridges, each with the languages it reads.
 var readers = []reader{
-	{name: "PHP", languages: []source.Language{source.PHP}, stream: func(_, files []string) (*contract.Stream, error) {
-		return php.Here().Cached().Stream(files...)
+	{name: "PHP", languages: []source.Language{source.PHP}, stream: func(_, files []string, tally func()) (*contract.Stream, error) {
+		return php.Here().Cached().StreamTallied(tally, files...)
 	}},
-	{name: "frontend", languages: []source.Language{source.Vue, source.TypeScript}, stream: func(_, files []string) (*contract.Stream, error) {
-		return frontend.Here().Cached().Stream(files...)
+	{name: "frontend", languages: []source.Language{source.Vue, source.TypeScript}, stream: func(_, files []string, tally func()) (*contract.Stream, error) {
+		return frontend.Here().Cached().StreamTallied(tally, files...)
 	}},
 	{name: "C#", languages: []source.Language{source.CSharp}, stream: csharp, bridgeOrder: true},
-	{name: "Python", languages: []source.Language{source.Python}, stream: func(_, files []string) (*contract.Stream, error) {
+	{name: "Python", languages: []source.Language{source.Python}, stream: func(_, files []string, tally func()) (*contract.Stream, error) {
 		command, err := bridge.Mypy()
 		if err != nil {
 			return nil, err
 		}
 
-		return bridge.Once(command, files...)
+		return bridge.OnceTallied(command, tally, files...)
 	}},
 }
 
 // csharp is the C# files read by the Roslyn bridge, which compiles every project under the roots so each type
 // resolves and writes only the files: through the bridge a session keeps up for the project, else one of its own for
 // this run. Without a bridge, or with one that fails, it answers why, and the files go unread.
-func csharp(roots, files []string) (*contract.Stream, error) {
+func csharp(roots, files []string, tally func()) (*contract.Stream, error) {
 	roots, files = resolved(roots), resolved(files)
 	server, err := roslyn(roots)
 	if err != nil {
 		return nil, err
 	}
 	defer server.Close()
-	stream, err := server.Ask(bridge.Request{Paths: roots, Write: files})
+	stream, err := server.AskTallied(bridge.Request{Paths: roots, Write: files}, tally)
 	if err != nil {
 		return nil, bridge.RoslynFailure(err)
 	}

@@ -99,6 +99,12 @@ func ReadAll(r io.Reader) (*Stream, error) {
 // to back on the same output, so each call starts a new stream where the last one ended. A stream that breaks after
 // its header is answered as far as it was read, with why it broke.
 func (r *Reader) Stream() (*Stream, error) {
+	return r.Tallied(func() {})
+}
+
+// Tallied reads the next whole stream as Stream does, telling tally of each file the moment it is read: how a long
+// read is counted while it runs.
+func (r *Reader) Tallied(tally func()) (*Stream, error) {
 	stream := &Stream{}
 	err := r.Each(func(line Line, _ []byte) error {
 		switch {
@@ -106,6 +112,7 @@ func (r *Reader) Stream() (*Stream, error) {
 			stream.Header = *line.Header
 		case line.File != nil:
 			stream.Files = append(stream.Files, line.File)
+			tally()
 		case line.Program != nil:
 			stream.Program = line.Program
 		case line.Trailer != nil:
