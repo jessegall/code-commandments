@@ -1,6 +1,10 @@
 package typescript
 
-import "github.com/jessegall/code-commandments/engine"
+import (
+	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
+)
 
 // Binds is the declaration in this top-level statement that binds the name: a variable of a const/let/var
 // statement, a function or class of that name, or an import binding; no node when it binds no such name.
@@ -101,6 +105,19 @@ func (n Node) boundNames() []string {
 // object type.
 func (n Node) IsObjectType() bool {
 	return n.Kind() == "InterfaceDeclaration" || (n.Kind() == "TypeAliasDeclaration" && n.Child("type").Kind() == "TypeLiteral")
+}
+
+// Namespace is the dotted name of the namespaces the declaration sits in, outermost first: App.Data for a type inside
+// `declare namespace App.Data { … }`; empty outside any.
+func (n Node) Namespace() string {
+	var names []string
+	for at := n.Parent(); at.Exists(); at = at.Parent() {
+		if at.Kind() == "ModuleDeclaration" {
+			names = append([]string{at.Name()}, names...)
+		}
+	}
+
+	return strings.Join(names, ".")
 }
 
 // FieldNames is the names of the members an object type declares itself, in order.

@@ -49,6 +49,14 @@ type TypeContract struct {
 	Name     string
 	Fields   []string
 	Optional []string
+	// Namespace is the server type's namespace, dotted as a generator declares it: App.Data for App\Data.
+	Namespace string
+}
+
+// GeneratedAs says whether a frontend type is this one as a generator wrote it: the same name, declared inside the
+// namespace that mirrors the server type's own, as spatie/typescript-transformer writes every Data class.
+func (c TypeContract) GeneratedAs(name, namespace string) bool {
+	return namespace != "" && name == c.Name && namespace == c.Namespace
 }
 
 func (TypeContract) published() {}

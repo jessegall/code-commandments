@@ -4,6 +4,7 @@ package spatie
 
 import (
 	"slices"
+	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
@@ -32,9 +33,10 @@ func (Contracts) Contracts(codebase *engine.Codebase) []published.Contract {
 			continue
 		}
 		contracts = append(contracts, published.TypeContract{
-			Name:     php.ShortName(php.EnclosingClassName(class)),
-			Fields:   fields,
-			Optional: spatie.Node{Match: class}.OptionalPublicFieldNames(),
+			Name:      php.ShortName(php.EnclosingClassName(class)),
+			Fields:    fields,
+			Optional:  spatie.Node{Match: class}.OptionalPublicFieldNames(),
+			Namespace: strings.ReplaceAll(php.NamespaceOf(php.EnclosingClassName(class)), `\`, "."),
 		})
 	}
 	if output := spatie.TransformerOutputIn(codebase); output != "" {

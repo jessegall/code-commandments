@@ -39,6 +39,9 @@ func (MirroredServerTypeDetector) Find(codebase *engine.Codebase) []engine.Match
 		Reject(func(t engine.Match) bool {
 			return slices.ContainsFunc(generated, func(g published.GeneratedTypes) bool { return g.Covers(t.File()) })
 		}).
+		Reject(engine.As(func(t typescript.Node) bool {
+			return slices.ContainsFunc(contracts, func(c published.TypeContract) bool { return c.GeneratedAs(t.Name(), t.Namespace()) })
+		})).
 		Where(engine.As(func(t typescript.Node) bool {
 			return slices.ContainsFunc(contracts, func(c published.TypeContract) bool { return c.MirroredBy(t.Name(), t.FieldNames()) })
 		})).
