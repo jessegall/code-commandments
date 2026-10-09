@@ -28,3 +28,30 @@ func TestForwardedKeywordArgumentsAreNoDictBag(t *testing.T) {
 		t.Error("a hand-built dict read by a fixed key was not flagged")
 	}
 }
+
+// TestKeywordsForwardedThroughAClassAttributeAreNoDictBag holds the funnel that calls a hook on the class a class
+// attribute holds, `self.resource.unfilled(data)` with `resource = Trigger` set by each subclass: the call reaches
+// the hook through the attribute's class, so the mapping the override reads is the funnel's own **data, also when
+// the base holds a placeholder class that declares no such hook.
+func TestKeywordsForwardedThroughAClassAttributeAreNoDictBag(t *testing.T) {
+	resources := "class Resource:\n    @classmethod\n    def unfilled(cls, data: dict) -> list:\n        return []\n\n\n" +
+		"class Trigger(Resource):\n    @classmethod\n    def unfilled(cls, data: dict) -> list:\n        return [\"fact\"] if data.get(\"when\") == \"state\" else []\n\n\n"
+	controllers := "class Triggers(Controller):\n    resource = Trigger\n"
+	for name, controller := range map[string]string{
+		"assigned":  "class Controller:\n    resource = Resource\n\n    def create(self, title: str, **data) -> list:\n        return self.resource.unfilled(data)\n\n\n",
+		"annotated": "class Controller:\n    resource: type[Resource]\n\n    def create(self, title: str, **data) -> list:\n        return self.resource.unfilled(data)\n\n\n",
+	} {
+		source := resources + controller + controllers
+		if found := (pydetectors.DictBagDetector{}).Find(pythontest.FromSource(t, map[string]string{"controllers.py": source})); len(found) != 0 {
+			t.Errorf("%s: a hook reached through the class attribute was flagged at %v", name, found[0].Location())
+		}
+	}
+	placeholder := "class Resource:\n    pass\n\n\n" +
+		"class Shape:\n    @classmethod\n    def unfilled(cls, data: dict) -> list:\n        return []\n\n\n" +
+		"class Trigger(Shape, Resource):\n    @classmethod\n    def unfilled(cls, data: dict) -> list:\n        return [\"fact\"] if data.get(\"when\") == \"state\" else []\n\n\n" +
+		"class Controller:\n    resource = Resource\n\n    def create(self, title: str, **data) -> list:\n        return self.resource.unfilled(data)\n\n\n" +
+		controllers
+	if found := (pydetectors.DictBagDetector{}).Find(pythontest.FromSource(t, map[string]string{"controllers.py": placeholder})); len(found) != 0 {
+		t.Errorf("a hook only the subclass's held class declares was flagged at %v", found[0].Location())
+	}
+}

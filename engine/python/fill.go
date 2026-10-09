@@ -76,10 +76,11 @@ func (p *Program) IsOverride(method Node) bool {
 	return false
 }
 
-// DispatchedCallersOf is every call that can reach the method: its own, and those of every method of a base class
-// it overrides, which reach it when the object is of its class.
+// DispatchedCallersOf is every call that can reach the method: its own, those of every method of a base class it
+// overrides, which reach it when the object is of its class, and those that reach it through the class a class
+// attribute holds.
 func (p *Program) DispatchedCallersOf(method Node) []Node {
-	calls := slices.Clone(p.CallersOf(method))
+	calls := append(slices.Clone(p.CallersOf(method)), p.HeldCallersOf(method)...)
 	for _, overridden := range p.overriddenBy(method) {
 		calls = append(calls, p.CallersOf(overridden)...)
 	}

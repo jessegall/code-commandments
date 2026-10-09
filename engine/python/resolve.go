@@ -92,6 +92,9 @@ func (p *Program) classOf(owner string, node Node, module *Module) (Node, bool) 
 		if !ok {
 			return Node{}, false
 		}
+		if held, ok := p.heldClass(class, path[1], map[Node]bool{}); ok {
+			return held, true
+		}
 		annotation, ok := class.AttributeAnnotation(path[1])
 		if !ok {
 			return Node{}, false
@@ -165,6 +168,50 @@ func (p *Program) methodOf(class Node, name string, seen map[Node]bool) (Node, b
 	}
 
 	return Node{}, false
+}
+
+// heldClass is the class a class attribute holds, the class itself rather than an instance of it: `resource =
+// Trigger` in the class body, or `resource: type[Trigger]`, declared by the class or the first of its bases to
+// declare it.
+func (p *Program) heldClass(class Node, attribute string, seen map[Node]bool) (Node, bool) {
+	home := p.homes[class.Node()]
+	if seen[class] || home == nil {
+		return Node{}, false
+	}
+	seen[class] = true
+	for _, member := range class.ChildrenIn("body") {
+		if held, ok := member.HeldClassSpelling(attribute); ok {
+			return p.ClassNamed(held, home)
+		}
+	}
+	for _, base := range class.ChildrenIn("bases") {
+		if parent, ok := p.ClassNamed(base, home); ok {
+			if held, ok := p.heldClass(parent, attribute, seen); ok {
+				return held, true
+			}
+		}
+	}
+
+	return Node{}, false
+}
+
+// HeldClassSpelling is how a class-body statement spells the class it binds the attribute to: the name assigned in
+// `attribute = Trigger`, or the X of `attribute: type[X]`. Whether that spelling names a class is the program's to
+// say.
+func (statement Node) HeldClassSpelling(attribute string) (Node, bool) {
+	targets := statement.ChildrenIn("targets")
+	if statement.Kind() == "Assign" && len(targets) == 1 && targets[0].Kind() == "Name" && targets[0].Name() == attribute {
+		return statement.Child("value"), true
+	}
+	annotation := statement.Child("annotation")
+	if statement.Kind() != "AnnAssign" || statement.Child("target").Name() != attribute || annotation.Kind() != "Subscript" {
+		return Node{}, false
+	}
+	if held := annotation.Child("value").DottedName(); held != "type" && held != "typing.Type" && held != "Type" {
+		return Node{}, false
+	}
+
+	return annotation.Child("slice"), true
 }
 
 // AnnotationOf is the annotation name carries in the function: as one of its parameters, or as a local it

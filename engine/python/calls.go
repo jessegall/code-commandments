@@ -6,24 +6,32 @@ import (
 	"sync"
 )
 
-// callGraph is which evaluated calls reach each def, and the def each one reaches.
+// callGraph is which evaluated calls reach each def, and the def each one reaches; and which calls reach a def only
+// on an object of one of its subclasses, through the class a class attribute holds there.
 type callGraph struct {
 	once         sync.Once
 	callers      map[Node][]Node
 	targets      map[Node]Node
 	throughClass map[Node]bool
+	held         map[Node][]Node
 }
 
 // graph is the program's call graph, built once over every call the code evaluates.
 func (p *Program) graph() *callGraph {
 	p.calls.once.Do(func() {
-		p.calls.callers, p.calls.targets, p.calls.throughClass = map[Node][]Node{}, map[Node]Node{}, map[Node]bool{}
+		p.calls.callers, p.calls.targets, p.calls.throughClass, p.calls.held = map[Node][]Node{}, map[Node]Node{}, map[Node]bool{}, map[Node][]Node{}
+		heirs := p.heirs()
 		for _, module := range p.modules {
 			for _, call := range module.Nodes() {
 				if !call.IsCall() || !call.IsEvaluated() {
 					continue
 				}
 				target, ok := p.Callee(call)
+				for _, reached := range p.heldTargets(call, heirs) {
+					if !ok || reached != target {
+						p.calls.held[reached] = append(p.calls.held[reached], call)
+					}
+				}
 				if !ok {
 					continue
 				}
@@ -43,6 +51,69 @@ func (p *Program) graph() *callGraph {
 // CallersOf is every call that reaches the def.
 func (p *Program) CallersOf(def Node) []Node {
 	return p.graph().callers[def]
+}
+
+// HeldCallersOf is every call that reaches the method through the class a class attribute holds on an object of a
+// subclass, `self.resource.unfilled(data)` where a subclass sets `resource = Trigger`.
+func (p *Program) HeldCallersOf(method Node) []Node {
+	return p.graph().held[method]
+}
+
+// heldTargets is the methods a `self.<attribute>.<method>(…)` call reaches through the class the attribute holds: on
+// an object of the calling def's own class, and of each subclass that inherits the calling def, the method that class
+// holds declares or inherits.
+func (p *Program) heldTargets(call Node, heirs map[Node][]Node) []Node {
+	callee := call.Child("func")
+	owner := callee.Child("value")
+	function := call.EnclosingFunction()
+	if callee.Kind() != "Attribute" || owner.Kind() != "Attribute" || owner.Child("value").DottedName() != "self" || function.Parent().Kind() != "ClassDef" {
+		return nil
+	}
+	var reached []Node
+	for _, class := range append([]Node{function.Parent()}, heirs[function.Parent()]...) {
+		if inherited, ok := p.MethodOf(class, function.Name()); !ok || inherited != function {
+			continue
+		}
+		held, ok := p.heldClass(class, owner.Name(), map[Node]bool{})
+		if !ok {
+			continue
+		}
+		if method, ok := p.MethodOf(held, callee.Name()); ok && !slices.Contains(reached, method) {
+			reached = append(reached, method)
+		}
+	}
+
+	return reached
+}
+
+// heirs is every class's subclasses, theirs too, in the program.
+func (p *Program) heirs() map[Node][]Node {
+	direct := map[Node][]Node{}
+	for _, module := range p.modules {
+		for _, class := range module.Nodes() {
+			if class.Kind() != "ClassDef" {
+				continue
+			}
+			for _, base := range class.ChildrenIn("bases") {
+				if parent, ok := p.ClassNamed(base, module); ok {
+					direct[parent] = append(direct[parent], class)
+				}
+			}
+		}
+	}
+	every := map[Node][]Node{}
+	for class := range direct {
+		seen := map[Node]bool{class: true}
+		for waiting := slices.Clone(direct[class]); len(waiting) > 0; waiting = waiting[1:] {
+			if heir := waiting[0]; !seen[heir] {
+				seen[heir] = true
+				every[class] = append(every[class], heir)
+				waiting = append(waiting, direct[heir]...)
+			}
+		}
+	}
+
+	return every
 }
 
 // TargetOf is the def an evaluated call reaches; none when it cannot be resolved.
@@ -106,7 +177,17 @@ func (p *Program) ExtendsOutside(method Node) bool {
 // reading can place.
 func (p *Program) ArgumentsAt(call Node) (map[string]Node, bool) {
 	target, ok := p.TargetOf(call)
-	if !ok || slices.ContainsFunc(call.Arguments(), func(argument Node) bool { return argument.Kind() == "Starred" }) {
+	if !ok {
+		return nil, false
+	}
+
+	return p.ArgumentsFor(call, target)
+}
+
+// ArgumentsFor is what each parameter of the target receives at the call, as ArgumentsAt binds them: for a call that
+// reaches a def other than the one it names, an override or the method a held class declares.
+func (p *Program) ArgumentsFor(call, target Node) (map[string]Node, bool) {
+	if slices.ContainsFunc(call.Arguments(), func(argument Node) bool { return argument.Kind() == "Starred" }) {
 		return nil, false
 	}
 	if slices.ContainsFunc(call.Keywords(), func(keyword Node) bool { return keyword.Name() == "" }) {
@@ -174,10 +255,11 @@ func (p *Program) ReadsForwardedKeywords(read Node) bool {
 	if !ok || base.Kind() != "Name" {
 		return false
 	}
-	calls := p.DispatchedCallersOf(read.EnclosingFunction())
+	reader := read.EnclosingFunction()
+	calls := p.DispatchedCallersOf(reader)
 
 	return len(calls) > 0 && !slices.ContainsFunc(calls, func(call Node) bool {
-		bound, ok := p.ArgumentsAt(call)
+		bound, ok := p.ArgumentsFor(call, reader)
 		handed := bound[base.Name()]
 		rest := call.EnclosingFunction().Child("args").Child("kwarg")
 
