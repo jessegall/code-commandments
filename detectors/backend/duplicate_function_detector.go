@@ -27,14 +27,15 @@ func (DuplicateFunctionDetector) GroupKey(finding engine.Match) (string, bool) {
 	return key, key != ""
 }
 
-// Find is every sizeable method, guarded accessors, self-seeding factories, one-return bodies and deprecated ones
-// aside, whose body another method repeats.
+// Find is every sizeable method, guarded accessors, self-seeding factories, constructors that only forward to the
+// parent, one-return bodies and deprecated ones aside, whose body another method repeats.
 func (d DuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	candidates := php.In(codebase).
 		WhereKind("Stmt_ClassMethod").
 		Where(engine.As(func(n php.Node) bool { return n.BodyNodeCount() >= minBodyNodes })).
 		Reject(engine.As(php.Node.IsGuardedAccessor)).
 		Reject(engine.As(php.Node.IsSelfSeedingFactory)).
+		Reject(engine.As(php.Node.IsParentForwardingConstructor)).
 		Reject(engine.As(php.Node.IsSoleReturnExpression)).
 		Reject(engine.As(php.Node.IsDeprecated)).
 		Get()

@@ -164,6 +164,29 @@ func isThrowingGuard(statement engine.Match) bool {
 	})
 }
 
+// IsParentForwardingConstructor says whether the node is a constructor whose whole body hands its own parameters,
+// as they came, to the parent's constructor: a subclass that declares one only to promote or narrow its own
+// parameters, the shared initialisation already written once in the parent.
+func (n Node) IsParentForwardingConstructor() bool {
+	body := n.ChildrenIn("stmts")
+	if n.Kind() != "Stmt_ClassMethod" || !strings.EqualFold(n.Name(), "__construct") || len(body) != 1 {
+		return false
+	}
+	call := body[0].Child("expr")
+	class := call.Child("class")
+	if body[0].Kind() != "Stmt_Expression" || call.Kind() != "Expr_StaticCall" || !isName(class) || !strings.EqualFold(class.Name(), "parent") || !strings.EqualFold(call.Child("name").Name(), "__construct") {
+		return false
+	}
+	var parameters []string
+	for _, parameter := range n.ChildrenIn("params") {
+		parameters = append(parameters, parameter.Child("var").Name())
+	}
+
+	return !slices.ContainsFunc(Arguments(call), func(argument engine.Match) bool {
+		return !slices.Contains(parameters, variableName(argument.Child("value")))
+	})
+}
+
 // IsSelfSeedingFactory says whether the node declares a static method that makes a new self or static, sets fields
 // on it, and returns it.
 func (n Node) IsSelfSeedingFactory() bool {
