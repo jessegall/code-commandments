@@ -1,47 +1,5 @@
 # code-commandments — guide for AI agents
 
-<!-- BEGIN: agent-journal, form 2 (auto-generated, run `journal upgrade`) -->
-
-## Where the journal comes first
-
-The journal's lines come first on how you report, how you carry on and what you say in the chat. This file's own safety and deploy rules still stand. The user's own word comes before both.
-
-## The journal's law
-
-These rules ship with the journal and cannot be switched off.
-
-**L1 — Every subagent dispatch names its model and chooses the least expensive model that reliably fits the work.**
-
-Use a fast, economical model for mechanical work with a known answer, a capable general model for careful implementation, and the strongest model only when the task turns on difficult judgement. Inheriting the orchestrator's model is not a model choice. If the dispatch API cannot accept a model, that operation is exempt.
-
-**L2 — Every subagent is bound to a concrete job; never dispatch a generic or default agent.**
-
-Use the most specific available agent type whose declared purpose matches the assignment. On providers without agent types, give the dispatch a concrete task name and bounded prompt. If no suitable specialization exists, keep the work in the main agent instead of manufacturing an unscoped helper.
-
-**L3 — Read narrowly: grep for the line, sed a range, head the file; never print a whole file or long output you do not need.**
-
-Everything a tool returns stays in the context for good and is paid for on every turn after it. Search before you read, read the range you need, and cap output with grep, head or tail. Read a whole file only when you need all of it.
-
-**L4 — Related work goes back to the helper or subagent that already worked on it; never start a fresh one on work another already knows.**
-
-A helper or subagent that drew a design, wrote the code or ran the research keeps what it learned. When new work changes its work, is related to it or touches the same code, send it there with a message (SendMessage, journal helper say) rather than dispatching a new one that has to rediscover everything; start fresh only when the earlier one is gone or the new work is unrelated.
-
-**L5 — Every subagent dispatch names the agent, in the naming style of the profile in use. Name it after a distinguished historical figure with a gentle twist on their trade, such as Dr. Einstein for a profiler or Lady Lovelace for a programmer. Every helper and subagent addresses you as Alfred and never the user: their reports are written to you.**
-
-A name is how the user and the chat tell subagents apart and how they are messaged later; an id or a task line is not a name. Start the dispatch's description with the name, a colon, then the task. The profile in use says how its agents are named.
-
-**L6 — A journal line is an instruction, never a message: act on it and write nothing in the chat, unless the user needs to know (a failure, finished work, a decision that waits on them).**
-
-A line that starts with [journal], a reminder, a notice or an old helper report is the journal telling the agent what to do, not the user speaking. Answering it fills the user's chat with noise. Act on it, or note it and carry on; write in the chat only what the user needs to know, such as a failure, a finished piece of work or a decision that waits on them.
-
-## Rules
-
-- Never run .NET on the host; only in a memory-capped Docker container
-- Always scope judge with --changes or --branch, the briefing's judge src too
-- Never merge anything into main; Sir Jesse merges go-rewrite to main himself
-
-<!-- END: agent-journal, form 2 -->
-
 **code-commandments is a compiler for architecture.** It judges a PHP, Vue, TypeScript,
 Python and C# codebase against a set of architectural disciplines and reports each
 violation ("sin") as a `file:line` that points at the skill which teaches the fix. It is
@@ -375,9 +333,3 @@ before risky commands and on stop. That is a property of this agent alone — un
 agent with no hook protocol the same disciplines are documents you are asked to follow,
 and nothing checks that you did.
 <!-- END: code-commandments skills -->
-
-
-
-
-
-

@@ -3,6 +3,7 @@ package hooks
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -362,7 +363,7 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) Settleme
 
 	var found []SinMark
 	var resolvedIDs []string
-	resolved := map[string]string{}
+	resolved := map[string]announcement{}
 
 	for _, file := range files {
 		before := jsonfile.NewObject()
@@ -390,27 +391,38 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) Settleme
 			}
 		}
 
+		var leaving []string
 		for _, id := range before.Keys() {
-			if _, stays := kept.Get(id); stays {
-				continue
-			}
-
-			if _, listed := resolved[id]; !listed {
-				value, _ := before.Get(id)
-				resolved[id] = asText(value)
-				resolvedIDs = append(resolvedIDs, id)
+			if _, stays := kept.Get(id); !stays {
+				leaving = append(leaving, id)
 			}
 		}
 
 		for _, id := range holdOrder {
 			mark := holds[id]
 
-			if _, announced := before.Get(id); mark.Touched && !announced {
-				found = append(found, mark)
+			if _, announced := before.Get(id); !mark.Touched || announced {
+				continue
+			}
 
-				if _, has := kept.Get(id); !has {
-					kept.Set(id, mark.ShownFrom(root))
-				}
+			if at := slices.IndexFunc(leaving, func(left string) bool { return announcedIn(before, left).Shown == mark.ShownFrom(root) }); at >= 0 {
+				kept.Set(id, announcement{mark.ShownFrom(root), announcedIn(before, leaving[at]).Key}.written(id))
+				leaving = slices.Delete(leaving, at, at+1)
+
+				continue
+			}
+
+			found = append(found, mark)
+
+			if _, has := kept.Get(id); !has {
+				kept.Set(id, mark.ShownFrom(root))
+			}
+		}
+
+		for _, id := range leaving {
+			if _, listed := resolved[id]; !listed {
+				resolved[id] = announcedIn(before, id)
+				resolvedIDs = append(resolvedIDs, id)
 			}
 		}
 
@@ -421,7 +433,7 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) Settleme
 
 	var repented []Repented
 	for _, id := range resolvedIDs {
-		repented = append(repented, Repented{id, resolved[id]})
+		repented = append(repented, Repented{resolved[id].Key, resolved[id].Shown})
 	}
 
 	return Settlement{found, repented}
@@ -446,8 +458,8 @@ func (a Announced) keep() {
 
 		ids := jsonfile.NewObject()
 		for _, id := range sins.Keys() {
-			shown, _ := sins.Get(id)
-			ids.Set(id, asText(shown))
+			entry, _ := sins.Get(id)
+			ids.Set(id, entry)
 		}
 
 		record.Set(file, ids)
@@ -495,15 +507,50 @@ func (s Settlement) Raises(root string) []Raise {
 func (s Settlement) Settles() []string {
 	var keys []string
 	for _, sin := range s.Repented {
-		keys = append(keys, markKey(sin.ID))
+		keys = append(keys, sin.Key)
 	}
 
 	return keys
 }
 
-// Repented is a sin announced before that the code no longer holds: its identity and how it was shown.
+// Repented is a sin announced before that the code no longer holds: the key its chat mark was raised under, and how
+// it was shown.
 type Repented struct {
-	ID, Shown string
+	Key, Shown string
+}
+
+// announcement is a sin the record holds: how it was shown, and the key its chat mark was raised under. A sin whose
+// own line was edited while it stayed is the same sin under a new identity, and keeps the mark it was first raised
+// under.
+type announcement struct {
+	Shown, Key string
+}
+
+// announcedIn is the sin the file's record holds under the identity: its shown text alone, raised under its own
+// identity's key, or the shown text beside the key it kept through an edit.
+func announcedIn(record *jsonfile.Object, id string) announcement {
+	value, _ := record.Get(id)
+	if entry, carried := value.(*jsonfile.Object); carried {
+		shown, _ := entry.Get("shown")
+		key, _ := entry.Get("key")
+
+		return announcement{asText(shown), asText(key)}
+	}
+
+	return announcement{asText(value), markKey(id)}
+}
+
+// written is the sin as the record holds it under the identity: its shown text alone while its key is that
+// identity's own.
+func (a announcement) written(id string) any {
+	if a.Key == markKey(id) {
+		return a.Shown
+	}
+	entry := jsonfile.NewObject()
+	entry.Set("shown", a.Shown)
+	entry.Set("key", a.Key)
+
+	return entry
 }
 
 // markKey is the key a sin's chat mark is raised and settled by: its identity, which an edit above it does not change.

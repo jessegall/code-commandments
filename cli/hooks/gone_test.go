@@ -25,7 +25,7 @@ func TestASinOfAFileThatIsGoneIsRepented(t *testing.T) {
 	}
 
 	settlement := AnnouncedIn(data, Moment{}).Settle(root, nil, nil)
-	if len(settlement.Found) != 0 || !slices.Equal(settlement.Repented, []Repented{{"a1", "array-bag at src/Gone.php:3"}}) {
+	if len(settlement.Found) != 0 || !slices.Equal(settlement.Repented, []Repented{{"sin:a1", "array-bag at src/Gone.php:3"}}) {
 		t.Errorf("found %v, repented %v", settlement.Found, settlement.Repented)
 	}
 
