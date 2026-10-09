@@ -65,12 +65,13 @@ export class Program {
     /**
      * The type as the checker prints it, printed once: the text is the type's own, wherever it is met. A type whose
      * whole print runs past PRINTED is printed as the checker truncates it, ending in `...`: a library's object type
-     * prints to a megabyte, and each type inside it to as much again, while its fields and members say it whole.
+     * prints to a megabyte, and each type inside it to as much again, while its fields and members say it whole. The
+     * longer print is bounded at twice PRINTED, so the checker stops building a type it was never going to keep.
      */
     printed(type) {
         if (!this.texts.has(type)) {
             const short = this.checker.typeToString(type)
-            const whole = short.includes('...') ? this.checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation) : short
+            const whole = short.includes('...') ? this.checker.writeType(type, undefined, undefined, undefined, 2 * PRINTED) : short
             this.texts.set(type, whole.length > PRINTED ? short : whole)
         }
 
