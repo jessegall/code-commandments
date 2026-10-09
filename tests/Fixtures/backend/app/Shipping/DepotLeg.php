@@ -1,13 +1,9 @@
 <?php
 
-namespace Shop\Shipping\Legs;
+namespace Shop\Shipping;
 
 use JesseGall\CodeCommandments\Sins\Backend\DuplicateFunction;
 use JesseGall\CodeCommandments\Testing\Righteous;
-use Shop\Shipping\Consignment;
-use Shop\Shipping\DeliveryWindow;
-use Shop\Shipping\DepotChooser;
-use Shop\Shipping\Zone;
 
 /**
  * A leg that ends at a depot.

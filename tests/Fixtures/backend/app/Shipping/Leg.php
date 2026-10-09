@@ -1,10 +1,6 @@
 <?php
 
-namespace Shop\Shipping\Legs;
-
-use Shop\Shipping\Consignment;
-use Shop\Shipping\DeliveryWindow;
-use Shop\Shipping\Zone;
+namespace Shop\Shipping;
 
 /**
  * One stretch of a consignment's journey, between two zones within a delivery window.
