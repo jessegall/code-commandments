@@ -25,10 +25,14 @@ func (p *Program) AttributeFlow(class Node, attribute string) engine.FlowVerdict
 	return engine.FlowVerdict{Assume: own.Assume + typed.Assume, Guard: own.Guard + typed.Guard}
 }
 
-// tallyReads reads every evaluated attribute access once.
+// tallyReads reads every evaluated attribute access of the code once. A test's reads are left out: a test indexes the
+// field of an object it built itself, which says nothing of whether the code assumes the field set.
 func (p *Program) tallyReads() {
 	p.flow.own, p.flow.typed = map[Node]map[string]engine.FlowVerdict{}, map[string]map[string]engine.FlowVerdict{}
 	for _, module := range p.modules {
+		if module.File.Match(0).IsTest() {
+			continue
+		}
 		for _, read := range module.Nodes() {
 			if read.Kind() != "Attribute" || !read.IsEvaluated() {
 				continue
