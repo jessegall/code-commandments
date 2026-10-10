@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.64.11",
+    "version": "1.64.12",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -46,7 +46,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v5.18.11"
+        "COMMANDMENTS_RELEASE": "v5.18.12"
     },
     "setup": [
         {
@@ -3496,12 +3496,12 @@
         },
         "roslyn": {
             "run": "bin/commandments-release roslyn-serve",
-            "when": "bin/commandments-release has-csharp",
+            "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-csharp",
             "restart": "always"
         },
         "mypy": {
             "run": "bin/commandments-release mypy-serve",
-            "when": "bin/commandments-release has-python",
+            "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-python",
             "restart": "always"
         }
     },
