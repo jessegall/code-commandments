@@ -156,7 +156,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	if targets.IsEmpty() {
 		deleteChecklist(options.checklist)
 
-		return console.Say("\033[32m✓ No changed files to judge.\033[0m"), nil
+		return choseNone(targets, console), nil
 	}
 
 	roots, err := sourceRoots(options)
@@ -221,12 +221,16 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		deleteChecklist(options.checklist)
 
 		scanned := judgedFiles(sources, csharpFiles, scannedLanguages(selected))
-		files := "files"
-		if scanned == 1 {
-			files = "file"
+		chosen := scanned
+		if targets.IsScoped() {
+			chosen = sources.Within(targets, scannedLanguages(selected)...)
+		}
+		if targets.IsScoped() && chosen == 0 {
+			return choseNone(targets, console), nil
 		}
 
-		console.Say("\033[32m✓ No sins found in " + strconv.Itoa(scanned) + " " + files + ".\033[0m")
+		console.Say("\033[32m✓ No sins found in " + judgedCount(targets, chosen, scanned) + ".\033[0m")
+		console.Say(unseenNote(targets)...)
 
 		if skipped.IsEmpty() {
 			return 0, nil
@@ -239,12 +243,56 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	report := NewReport(options.path, judgement.Findings, c.Fixable, c.Scaffoldable, skipped)
 	console.Say(report.Console())
+	console.Say(unseenNote(targets)...)
 
 	for _, target := range options.checklist {
 		write(target, report.Checklist(), space, console)
 	}
 
 	return 1, nil
+}
+
+// chosenNoneInUnseen is the exit of a scoped run that chose no file while repositories under its path went unread:
+// an error, never a clean pass, for the files it was meant to judge were never chosen.
+const chosenNoneInUnseen = 2
+
+// choseNone says that a scoped run chose no file to judge, and why; with repositories under the path it never looked
+// into, that is an error, for their changes are the ones a reader most likely meant.
+func choseNone(targets scope.Scope, console cli.Console) int {
+	if len(targets.Unseen()) == 0 {
+		return console.Say("\033[32m✓ Nothing to judge: no source file under the path is among " + targets.ChosenBy() + ".\033[0m")
+	}
+	console.Warn("✗ Nothing was judged: no source file under the path is among " + targets.ChosenBy() + ". Only the repository the path lies in was asked; the repositories under it were not: " + strings.Join(targets.Unseen(), ", ") + ". Name one: --branch=<repo>:<branch> or --pr=<repo>#<n>.")
+
+	return chosenNoneInUnseen
+}
+
+// judgedCount names the files a clean run judged: every file it read, or, scoped, the ones its scope chose of them.
+func judgedCount(targets scope.Scope, chosen, scanned int) string {
+	files := strconv.Itoa(chosen) + " " + plural(chosen, "file", "files")
+	if !targets.IsScoped() {
+		return files
+	}
+
+	return files + ", " + targets.ChosenBy() + ", of " + strconv.Itoa(scanned) + " read"
+}
+
+// unseenNote names the repositories under the path that a scoped run never looked into; nothing when it looked into
+// all.
+func unseenNote(targets scope.Scope) []string {
+	if len(targets.Unseen()) == 0 {
+		return nil
+	}
+
+	return []string{"Not looked into: " + strings.Join(targets.Unseen(), ", ") + ", repositories of their own under the path; name one with --branch=<repo>:<branch> or --pr=<repo>#<n>."}
+}
+
+func plural(count int, one, many string) string {
+	if count == 1 {
+		return one
+	}
+
+	return many
 }
 
 // run runs the tasks across the workers, or one by one and timed under --benchmark.

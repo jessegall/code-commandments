@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-[32m✓ No changed files to judge.[0m
+[32m✓ Nothing to judge: no source file under the path is among the files changed in the working tree.[0m
 
 --- stderr
 

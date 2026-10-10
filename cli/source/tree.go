@@ -84,6 +84,31 @@ func descend(dir string, excluded Excluded, wanted func(string) bool, files []st
 	return files
 }
 
+// Repositories are the git repositories checked out in folders beneath path that a walk of it reaches, each a folder
+// holding a .git of its own beside the history path lies in: a workspace's independent checkouts. A worktree a helper
+// checked out is none of the project's and is never reached.
+func Repositories(path string, excluded Excluded) []string {
+	var found []string
+	var look func(dir string)
+	look = func(dir string) {
+		for _, name := range listing.Of(dir) {
+			child := dir + "/" + name
+			if info, err := os.Stat(child); err != nil || !info.IsDir() || !descends(child, excluded) {
+				continue
+			}
+			if _, err := os.Stat(filepath.Join(child, ".git")); err == nil {
+				found = append(found, child)
+			}
+			look(child)
+		}
+	}
+	if info, err := os.Stat(path); err == nil && info.IsDir() {
+		look(path)
+	}
+
+	return found
+}
+
 // Reaches says whether a walk from root would come down to file: no folder between them is skipped.
 func Reaches(root, file string, excluded Excluded) bool {
 	for directory := filepath.Dir(file); strings.HasPrefix(directory, root+"/"); directory = filepath.Dir(directory) {

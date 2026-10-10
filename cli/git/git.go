@@ -230,6 +230,26 @@ func ChangedVsBranch(root, base string) (changed map[string]bool, ok bool) {
 	return pathSet(root, tracked+"\n"+untracked), true
 }
 
+// ChangedOn are the judged files the head branch changed since it left base, in the repository at root; ok is false
+// when the two share no history or either is unknown there. Checked out, the head's working tree counts too, as
+// ChangedVsBranch reads it; any other head is read from its commits alone.
+func ChangedOn(root, base, head string) (changed map[string]bool, ok bool) {
+	if head == CurrentBranch(root) {
+		return ChangedVsBranch(root, base)
+	}
+	mergeBase := ask(root, "merge-base", base, head)
+	if mergeBase == "" {
+		return nil, false
+	}
+
+	return pathSet(root, run(root, "diff", "--name-only", "--diff-filter=d", mergeBase, head)), true
+}
+
+// Listed are the judged files among paths relative to the repository at root, as pathSet resolves them.
+func Listed(root string, relative []string) map[string]bool {
+	return pathSet(root, strings.Join(relative, "\n"))
+}
+
 // ChangedLinesOf are the lines of file that differ from HEAD; every line, for a file git does not track.
 func ChangedLinesOf(root, file string) ChangedLines {
 	if ask(root, "ls-files", "--", file) == "" {

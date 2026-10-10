@@ -105,6 +105,18 @@ func (s Sources) Count(languages ...source.Language) int {
 	return count
 }
 
+// Within is how many files of the languages the target takes in.
+func (s Sources) Within(target interface{ Includes(string) bool }, languages ...source.Language) int {
+	count := 0
+	for _, file := range s.files(languages) {
+		if target.Includes(file) {
+			count++
+		}
+	}
+
+	return count
+}
+
 // Only are the sources of these languages alone.
 func (s Sources) Only(languages ...source.Language) Sources {
 	kept := Sources{byLanguage: map[source.Language][]string{}, roots: s.roots, tooLarge: s.tooLarge, read: s.read}
