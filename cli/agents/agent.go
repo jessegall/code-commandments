@@ -25,8 +25,8 @@ type Agent interface {
 	InstructionsFile() string
 	// BlockName names the block sync keeps in that file.
 	BlockName() string
-	// Instructions are what that block says.
-	Instructions() string
+	// Instructions are what that block says in the project at root.
+	Instructions(root string) string
 	// Ignored are the lines it adds to the project's .gitignore, each under its comment.
 	Ignored() []Ignored
 	// Enforces says whether it checks the disciplines through hooks rather than only reading them.
@@ -76,7 +76,7 @@ func (base) SkillsDir() string         { return "" }
 func (base) CommandsDir() string       { return "" }
 func (base) InstructionsFile() string  { return "" }
 func (base) BlockName() string         { return "" }
-func (base) Instructions() string      { return "" }
+func (base) Instructions(string) string { return "" }
 func (base) Ignored() []Ignored        { return nil }
 func (base) Enforces() bool            { return false }
 func (base) Wire(string) (bool, error) { return false, nil }

@@ -135,3 +135,24 @@ func must(t *testing.T, err error) {
 		t.Fatal(err)
 	}
 }
+
+// TestClaudesBlockNamesWhatEnforcesTheDisciplines holds the block to the project it is written into: where the agent
+// journal runs the plugin, the plugin enforces the disciplines and the package's hooks step aside, so the block says
+// so; anywhere else the hooks wired into .claude/settings.json do.
+func TestClaudesBlockNamesWhatEnforcesTheDisciplines(t *testing.T) {
+	plain, driven := t.TempDir(), t.TempDir()
+	manifest := filepath.Join(driven, ".journal", "plugins", "code-commandments", ".journal-plugin", "plugin.json")
+	if err := os.MkdirAll(filepath.Dir(manifest), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(manifest, []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if block := (Claude{}).Instructions(plain); !strings.Contains(block, "Hooks are wired into") || strings.Contains(block, "{{enforced}}") {
+		t.Errorf("a project with the package's own hooks reads:\n%s", block)
+	}
+	if block := (Claude{}).Instructions(driven); !strings.Contains(block, "journal's\ncode-commandments plugin judges") || strings.Contains(block, "Hooks are wired into") {
+		t.Errorf("a project the journal drives reads:\n%s", block)
+	}
+}

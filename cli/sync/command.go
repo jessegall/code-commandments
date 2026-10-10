@@ -145,7 +145,7 @@ func wire(root string, agent agents.Agent, lib library.Library, published []stri
 		instructions := agents.InstructionsAt(filepath.Join(root, file), root)
 
 		if !instructions.SameFileAs(canon) {
-			warn(console, instructions.Inject(agent.BlockName(), agent.Instructions()))
+			warn(console, instructions.Inject(agent.BlockName(), agent.Instructions(root)))
 		}
 	}
 
