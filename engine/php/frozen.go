@@ -1,12 +1,14 @@
 package php
 
 import (
+	"bytes"
+
 	"github.com/jessegall/code-commandments/contract"
 	"github.com/jessegall/code-commandments/engine"
 )
 
 func init() {
-	engine.Freezes(contract.PHP, declaresFrozen)
+	engine.Freezes(contract.PHP, declaresFrozen, func(_ string, source []byte) bool { return bytes.Contains(source, []byte("Frozen")) })
 }
 
 // declaresFrozen says whether an attribute group of the file opens with #[Frozen], whatever the spacing inside it.

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/contract"
@@ -20,11 +21,16 @@ var frozenTag = regexp.MustCompile(`(?i)@frozen\b`)
 // Freezer says whether a file's own syntax declares it frozen, beyond a comment that says so.
 type Freezer func(*File) bool
 
-var freezers = map[contract.Language]Freezer{}
+var freezers = map[contract.Language][]Freezer{}
 
-// Freezes enrols the freezer of one language, from that language's own package.
-func Freezes(language contract.Language, freezer Freezer) {
-	freezers[language] = freezer
+// hints say from a file's text alone that one of the freezers may answer for it, so the file is parsed to be asked.
+var hints []func(path string, source []byte) bool
+
+// Freezes enrols a freezer of one language, from that language's own package or a package of it, with the hint that
+// says from a file's text that the freezer may answer for it.
+func Freezes(language contract.Language, freezer Freezer, hint func(path string, source []byte) bool) {
+	freezers[language] = append(freezers[language], freezer)
+	hints = append(hints, hint)
 }
 
 // IsFrozen says whether the file is read but never a target: a comment declares it frozen, its language's own
@@ -35,8 +41,10 @@ func (f *File) IsFrozen() bool {
 		return false
 	}
 	language := languageOfPath(f.Path)
-	if freezer, declared := freezers[language]; declared && freezer(f) {
-		return true
+	for _, freezer := range freezers[language] {
+		if freezer(f) {
+			return true
+		}
 	}
 	if language == contract.PHP {
 		for _, comment := range f.File.Comments {
@@ -59,9 +67,11 @@ func (f *File) IsFrozen() bool {
 // MayBeFrozen says whether a file could be frozen at all: its text names a freeze, or it is C#, which a build
 // may write. A file it rules out need not be parsed to be asked.
 func MayBeFrozen(path string, source []byte) bool {
-	return languageOfPath(path) == contract.CSharp ||
-		bytes.Contains(bytes.ToLower(source), []byte("frozen")) ||
-		bytes.Contains(source, []byte(GeneratedMarker))
+	if languageOfPath(path) == contract.CSharp || bytes.Contains(bytes.ToLower(source), []byte("frozen")) || bytes.Contains(source, []byte(GeneratedMarker)) {
+		return true
+	}
+
+	return slices.ContainsFunc(hints, func(hint func(string, []byte) bool) bool { return hint(path, source) })
 }
 
 // FreezeReadsATree says whether the file's language declares a freeze in its syntax, so asking needs its parsed
