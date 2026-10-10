@@ -59,8 +59,8 @@ pattern.** When the hits read clean, delete `Unpublished()`, add the fixtures, a
 
 The pre-commit hook regenerates the skills, the README tables and the command references and re-stages them
 (`composer sins` does the same by hand). Run the tests of every package you touched through `scripts/dev`, then
-commit per `releasing` (no attribution trailer). Fix every finding on files you touch. Only Sir Jesse merges to
-main and tags a release.
+commit per `releasing` (no attribution trailer). Fix every finding on files you touch. A fix is released once its
+gate is green, without asking.
 
 ## When to read what
 
