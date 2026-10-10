@@ -15,7 +15,7 @@ func TestAMissingBridgeStopsTheCurriculumNamingIt(t *testing.T) {
 	t.Setenv("PATH", t.TempDir())
 	t.Setenv("COMMANDMENTS_ROSLYN", "docker")
 	_, err := fixture.Curriculum(t.TempDir())
-	if err == nil || !strings.Contains(err.Error(), "docker build -t "+bridge.RoslynImage()) {
+	if err == nil || !strings.Contains(err.Error(), bridge.RoslynImage()+" is not built: scripts/roslyn-image") {
 		t.Errorf("without docker the curriculum answers %v", err)
 	}
 }

@@ -8,10 +8,14 @@ Usage:
                                     preview a unified diff instead, to the screen or a file
 
 Options:
-  --changes         only files changed in the working tree (alias: --git)
-  --branch[=BASE]   only files new/changed on this branch vs BASE (default: main)
-  --repent[=ID]     only the files listed in a past run's checklist (bare: the latest)
-  --dry-run[=FILE]  preview the rewrite as a unified diff instead of applying it
+  --changes                   only files changed in the working tree (alias: --git)
+  --branch[=BASE]             only files new/changed on this branch vs BASE (default: main)
+  --branch=REPO:[BASE..]HEAD  only files HEAD changed since it left BASE (default: main) in the
+                              repository REPO, a folder under the path with its own .git
+  --pr=REPO#N                 only the files pull request N changes in the repository REPO, asked of
+                              GitHub with gh
+  --repent[=ID]               only the files listed in a past run's checklist (bare: the latest)
+  --dry-run[=FILE]            preview the rewrite as a unified diff instead of applying it
 
   A scoped run (--changes/--branch) is forced to docblock-only: a rename's call sites can live
   outside the scope, so renaming is whole-tree only. `repent` runs this as one of its scribes;
