@@ -165,7 +165,7 @@ func TestAServedBridgeThatLingersAfterItsInputEndsIsStopped(t *testing.T) {
 func TestTheBridgeServiceThatStaysSilentIsLetGo(t *testing.T) {
 	t.Setenv(quietVariable, "2s")
 	project := t.TempDir()
-	listener, err := net.Listen("unix", RoslynSocket(project))
+	listener, err := net.Listen("unix", ServiceSocket("roslyn", project))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func TestTheBridgeServiceThatStaysSilentIsLetGo(t *testing.T) {
 		bufio.NewReader(connection).ReadBytes('\n')
 		time.Sleep(30 * time.Second)
 	}()
-	server, kept := RoslynService(project)
+	server, kept := Service("roslyn", project)
 	if !kept {
 		t.Fatal("the service was not reached")
 	}

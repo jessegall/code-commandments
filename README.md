@@ -125,7 +125,9 @@ Exit code is non-zero when sins are found.
 | `commandments journal-hook` | The agent journal's entry point — reads one journal hook payload from stdin, runs every registered handler, and answers in the journal's shape. |
 | `commandments journal-serve` | Answer the agent journal's hooks from one running process, over the socket the journal names in $JOURNAL_PLUGIN_SOCKET. |
 | `commandments roslyn-serve` | Keep the C# bridge running for this project, answering each run of the tool over a socket named for the project. |
+| `commandments mypy-serve` | Keep the Python bridge running for this project, answering each run of the tool over a socket named for the project. |
 | `commandments has-csharp` | Say whether this project has C# to judge: exit 0 when it has, 1 when it has none. |
+| `commandments has-python` | Say whether this project has Python to judge: exit 0 when it has, 1 when it has none. |
 | `commandments journal-config` | Write the agent journal plugin's chosen switches into .commandments/config.json. |
 | `commandments journal-scan` | Scan the project for the folders to check and the ones to leave out, for the agent journal plugin. |
 | `commandments journal-skills` | Render the skills into the agent journal plugin's folder, for the journal to publish. |

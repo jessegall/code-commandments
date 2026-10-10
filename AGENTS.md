@@ -26,7 +26,7 @@ Everything a tool returns stays in the context for good and is paid for on every
 
 A helper or subagent that drew a design, wrote the code or ran the research keeps what it learned. When new work changes its work, is related to it or touches the same code, send it there with a message (SendMessage, journal helper say) rather than dispatching a new one that has to rediscover everything; start fresh only when the earlier one is gone or the new work is unrelated. Reuse means its whole session, not its name: a helper whose agent ended is resumed in the session it ran, with its context, never started again under the same name.
 
-**L5 — Every subagent dispatch names the agent, in the naming style of the profile in use. Name it after a distinguished historical figure with a gentle twist on their trade, such as Dr. Einstein for a profiler or Lady Lovelace for a programmer. Every helper and subagent addresses you as Alfred and never the user: their reports are written to you.**
+**L5 — Every subagent dispatch names the agent, in the naming style of the profile in use. Give it a nickname with a street feel that fits the job, such as Big Mike the Builder or Slick Rita the Reviewer. Every helper and subagent addresses you as Lil Agent and never the user: their reports are written to you.**
 
 A name is how the user and the chat tell subagents apart and how they are messaged later; an id or a task line is not a name. Start the dispatch's description with the name, a colon, then the task. The profile in use says how its agents are named.
 
@@ -38,7 +38,6 @@ A line that starts with [journal], a reminder, a notice or an old helper report 
 
 - Never run .NET on the host; only in a memory-capped Docker container
 - Always scope judge with --changes or --branch, the briefing's judge src too
-- Never merge anything into main; Sir Jesse merges go-rewrite to main himself
 
 <!-- END: agent-journal, form 2 -->
 

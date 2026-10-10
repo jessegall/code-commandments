@@ -15,7 +15,7 @@ import (
 	makecommand "github.com/jessegall/code-commandments/cli/make"
 	"github.com/jessegall/code-commandments/cli/repent"
 	"github.com/jessegall/code-commandments/cli/report"
-	"github.com/jessegall/code-commandments/cli/roslyn"
+	"github.com/jessegall/code-commandments/cli/service"
 	"github.com/jessegall/code-commandments/cli/rules"
 	"github.com/jessegall/code-commandments/cli/scaffold"
 	"github.com/jessegall/code-commandments/cli/session"
@@ -44,8 +44,10 @@ func Kernel(version string) *cli.Kernel {
 		hooks.Dispatch{},
 		hooks.JournalHook{},
 		hooks.JournalServe{},
-		roslyn.Serve{},
-		roslyn.HasCSharp{},
+		service.Serve{Bridge: service.CSharp},
+		service.Serve{Bridge: service.Python},
+		service.Has{Bridge: service.CSharp},
+		service.Has{Bridge: service.Python},
 		hooks.JournalConfig{},
 		hooks.JournalScan{},
 		hooks.JournalSkills{},

@@ -3498,6 +3498,11 @@
             "run": "bin/commandments-release roslyn-serve",
             "when": "bin/commandments-release has-csharp",
             "restart": "always"
+        },
+        "mypy": {
+            "run": "bin/commandments-release mypy-serve",
+            "when": "bin/commandments-release has-python",
+            "restart": "always"
         }
     },
     "dashboards": [

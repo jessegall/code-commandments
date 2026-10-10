@@ -1,21 +1,17 @@
 package bridge
 
 import (
-	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"net"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
-	"github.com/jessegall/code-commandments/contract"
 )
 
 // Release is the version this build was released as, stamped through main by the release build; a local build is dev,
@@ -250,32 +246,3 @@ func dotnetFolders() []string {
 	}
 }
 
-// RoslynSocket is where the C# bridge a session keeps up for the project answers: a socket named for the project,
-// since a project's own path may be longer than a socket's may be, in /tmp, whose path is short wherever $TMPDIR points.
-func RoslynSocket(project string) string {
-	sum := sha1.Sum([]byte(project))
-	folder := "/tmp"
-	if runtime.GOOS == "windows" {
-		folder = os.TempDir()
-	}
-
-	return filepath.Join(folder, "code-commandments-roslyn-"+hex.EncodeToString(sum[:])[:12]+".sock")
-}
-
-// RoslynService is the bridge the session keeps up for the project, reached at its socket; false when no session
-// keeps one up for it, and a run starts its own.
-func RoslynService(project string) (*Server, bool) {
-	limit, err := quietLimit()
-	if err != nil {
-		return nil, false
-	}
-	connection, err := net.DialTimeout("unix", RoslynSocket(project), 2*time.Second)
-	if err != nil {
-		return nil, false
-	}
-	stop := func() {
-		connection.Close()
-	}
-
-	return &Server{command: []string{"roslyn-serve", project}, input: connection, output: contract.NewReader(watch(connection, limit, stop)), connection: connection, stop: stop}, true
-}

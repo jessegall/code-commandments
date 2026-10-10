@@ -317,14 +317,7 @@ var readers = []reader{
 		return frontend.Here().Cached().StreamTallied(tally, files...)
 	}},
 	{name: "C#", languages: []source.Language{source.CSharp}, stream: csharp, bridgeOrder: true},
-	{name: "Python", languages: []source.Language{source.Python}, stream: func(_, files []string, tally func()) (*contract.Stream, error) {
-		command, err := bridge.Mypy()
-		if err != nil {
-			return nil, err
-		}
-
-		return bridge.OnceTallied(command, tally, files...)
-	}},
+	{name: "Python", languages: []source.Language{source.Python}, stream: python},
 }
 
 // csharp is the C# files read by the Roslyn bridge, which compiles every project under the roots so each type
@@ -345,16 +338,40 @@ func csharp(roots, files []string, tally func()) (*contract.Stream, error) {
 	return stream, nil
 }
 
+// python is the Python files read by the mypy bridge: through the warm session a journal keeps up for the project, so
+// a hook typing one edited file loads nothing mypy already holds, else in a run of its own.
+func python(roots, files []string, tally func()) (*contract.Stream, error) {
+	if server, kept := keptFor("mypy", resolved(roots)); kept {
+		defer server.Close()
+		if stream, err := server.AskTallied(bridge.Request{Paths: resolved(files), Write: resolved(files)}, tally); err == nil {
+			return stream, nil
+		}
+	}
+	command, err := bridge.Mypy()
+	if err != nil {
+		return nil, err
+	}
+
+	return bridge.OnceTallied(command, tally, files...)
+}
+
+// keptFor is the bridge of the kind a session keeps up for the project the run works on, when every root lies in it.
+func keptFor(kind string, roots []string) (*bridge.Server, bool) {
+	cwd, _ := os.Getwd()
+	project := workspace.ProjectRoot(cwd)
+	if !within(project, roots) {
+		return nil, false
+	}
+
+	return bridge.Service(kind, project)
+}
+
 // roslyn is the C# bridge for the roots: the one a session keeps up for the project that holds them all, else one
 // started for this run, or why there is none, a bridge that fails to start among them; a machine with no .NET SDK is
 // told once that C# is judged without the frameworks' types.
 func roslyn(roots []string) (*bridge.Server, error) {
-	cwd, _ := os.Getwd()
-	project := workspace.ProjectRoot(cwd)
-	if within(project, roots) {
-		if server, kept := bridge.RoslynService(project); kept {
-			return server, nil
-		}
+	if server, kept := keptFor("roslyn", roots); kept {
+		return server, nil
 	}
 	command, err := bridge.Roslyn(roots...)
 	if err != nil {

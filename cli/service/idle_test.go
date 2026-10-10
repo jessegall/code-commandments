@@ -1,4 +1,4 @@
-package roslyn
+package service
 
 import (
 	"os"
@@ -44,7 +44,7 @@ func TestAProjectWithNoCSharpKeepsNoBridge(t *testing.T) {
 	out := &lockedBuffer{}
 	ended := make(chan int, 1)
 	go func() {
-		code, _ := Serve{}.Run(&cli.Input{}, cli.Console{Out: out, Err: out})
+		code, _ := Serve{Bridge: CSharp}.Run(&cli.Input{}, cli.Console{Out: out, Err: out})
 		ended <- code
 	}()
 
