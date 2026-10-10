@@ -33,7 +33,7 @@ func RoslynImage() string {
 // roots mounted read-only at their own paths. Without the image it fails, naming how to build it.
 func RoslynInDocker(roots []string) ([]string, error) {
 	if exec.Command("docker", "image", "inspect", RoslynImage()).Run() != nil {
-		return nil, RoslynUnavailable{"its development image " + RoslynImage() + " is not built: docker build -t " + RoslynImage() + " bridge/roslyn"}
+		return nil, RoslynUnavailable{"its development image " + RoslynImage() + " is not built: scripts/roslyn-image"}
 	}
 	script, err := roslynScript()
 	if err != nil {

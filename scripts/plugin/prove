@@ -37,6 +37,9 @@ fi
 journal="$(cd "$journal" && pwd -P)"
 
 docker build -q -t code-commandments-plugin-proof docker/plugin-proof >/dev/null
+# The proof image it replaced is left untagged; it goes, with the build's own cache.
+docker image prune --force --filter "label=code-commandments.proof" >/dev/null 2>&1
+docker builder prune --force >/dev/null 2>&1
 docker run --rm --memory=2g --memory-swap=2g --cpus=2 \
     -v "$work:/proof:ro" -v "$journal:/journal-source:ro" \
     code-commandments-plugin-proof plugin-proof

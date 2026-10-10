@@ -15,6 +15,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"time"
 )
 
 // Bundle is a folder of sources the binary carries.
@@ -112,7 +113,10 @@ func TreesFolder(language string) (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(cache, "code-commandments", "trees", language), nil
+	folder := filepath.Join(cache, "code-commandments", "trees", language)
+	sweep(folder, time.Now())
+
+	return folder, nil
 }
 
 // CacheFolder is $XDG_CACHE_HOME, else ~/.cache.

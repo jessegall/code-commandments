@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Builds the C# bridge's development image, the tag bridge/roslyn/IMAGE names, and clears what it replaces: the older
+# tags of that image and the build's own cache, so images never pile up on the machine.
+set -euo pipefail
+
+root="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
+image="$(cat "$root/bridge/roslyn/IMAGE")"
+repository="${image%:*}"
+
+docker build --quiet -t "$image" "$root/bridge/roslyn" > /dev/null
+for old in $(docker images --format '{{.Repository}}:{{.Tag}}' "$repository" | grep -vx "$image"); do
+    docker rmi "$old" > /dev/null 2>&1 || true
+done
+docker builder prune --force > /dev/null 2>&1 || true
+
+echo "$image"

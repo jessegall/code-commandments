@@ -49,6 +49,12 @@ image="code-commandments/dev:$tag"
 if ! docker image inspect "$image" > /dev/null 2>&1; then
     echo "scripts/dev: building $image (once per change to docker/dev/Dockerfile)" >&2
     docker build --quiet --build-arg MYPY="$mypy" -t "$image" - < "$root/docker/dev/Dockerfile" > /dev/null
+    # The image it replaces goes, with the cache volume only that image used, and the build's own cache.
+    for old in $(docker images --format '{{.Tag}}' code-commandments/dev | grep -vx "$tag"); do
+        docker rmi "code-commandments/dev:$old" > /dev/null 2>&1
+        docker volume rm "code-commandments-cache-$old" > /dev/null 2>&1
+    done
+    docker builder prune --force > /dev/null 2>&1
 fi
 
 mounts=(-v "$root:$root" -v /var/run/docker.sock:/var/run/docker.sock ${extra[@]+"${extra[@]}"})
@@ -87,5 +93,15 @@ run() {
         -w "$cwd" \
         "$image" "$@"
 }
+
+# Go's build cache only grows, an entry for every build of every checkout and clone; once a day it is emptied
+# when it has passed its bound (in MB), and the next run builds what it needs again. The day is kept beside the
+# repository's own git data, so a run on any other day starts no extra container.
+cacheBound=4096
+trimmed="$common/commandments-dev-trimmed"
+if [ -z "$(find "$trimmed" -mmin -1440 2>/dev/null)" ]; then
+    run sh -c "[ \"\$(du -sm /root/go/build | cut -f1)\" -le $cacheBound ] || go clean -cache" > /dev/null 2>&1 || true
+    touch "$trimmed"
+fi
 
 run "$@"

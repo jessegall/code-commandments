@@ -15,7 +15,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 image="$(cat "$here/IMAGE")"
 
 if ! docker image inspect "$image" > /dev/null 2>&1; then
-    echo "the C# bridge image $image is not installed. It is built once per release, never on demand: docker build -t $image bridge/roslyn" >&2
+    echo "the C# bridge image $image is not installed. It is built once per release, never on demand: scripts/roslyn-image" >&2
     exit 3
 fi
 
