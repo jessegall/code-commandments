@@ -88,8 +88,8 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 
 | Check | Keeps the node when |
 |---|---|
-| `{"file": "*Repository.php"}` | its path from the folder judged, or any tail of it, matches the glob: `*` stays within a folder and `**` crosses them, as in .gitignore |
-| `{"fileMatches": "(^\|/)pages/.*(Create\|Edit)\\.vue$"}` | its path from the folder judged matches the regular expression, for paths a glob cannot say, such as alternatives |
+| `{"file": "*Repository.php"}` | its path from the project (the repository it lies in, else the folder judged), or any tail of it, matches the glob: `*` stays within a folder and `**` crosses them, as in .gitignore |
+| `{"fileMatches": "(^\|/)pages/.*(Create\|Edit)\\.vue$"}` | its path from the project (the repository it lies in, else the folder judged) matches the regular expression, for paths a glob cannot say, such as alternatives |
 | `{"namespaceLike": "App\\Http\\*"}` | the namespace, package or module it is declared in matches the glob |
 | `{"layer": "App\\Domain"}` | it sits in that layer of the stack the project declares (backend, Python, C#) |
 | `{"testCode": true}` | it is test code, as its bridge marks it or its language names test files |

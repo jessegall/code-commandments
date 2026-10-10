@@ -673,9 +673,9 @@ func (s Step) check(match engine.Match) bool {
 	case s.Documented != nil:
 		return subject.IsDocumented() == *s.Documented
 	case s.File != "":
-		return inFile(s.pattern, subject.Judged())
+		return inFile(s.pattern, subject.FromProject())
 	case s.FileMatches != "":
-		return s.pattern.MatchString(filepath.ToSlash(subject.Judged()))
+		return s.pattern.MatchString(filepath.ToSlash(subject.FromProject()))
 	case s.Position != "":
 		return atPosition(subject, s.Position)
 	case s.TopLevel != nil:
@@ -731,7 +731,7 @@ func (s Step) check(match engine.Match) bool {
 	case s.Unused != nil:
 		return unused(subject) == *s.Unused
 	case s.CalledFrom != "":
-		return slices.ContainsFunc(subject.Referrers(), func(caller engine.Match) bool { return inFile(s.pattern, caller.Judged()) })
+		return slices.ContainsFunc(subject.Referrers(), func(caller engine.Match) bool { return inFile(s.pattern, caller.FromProject()) })
 	case s.Calls != nil:
 		return slices.ContainsFunc(subject.OwnDescendants(), func(below engine.Match) bool { return below.Is(engine.Call) && s.Calls.check(below) })
 	case s.Argument != nil:

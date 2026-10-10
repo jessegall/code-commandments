@@ -22,9 +22,9 @@ Use the most specific available agent type whose declared purpose matches the as
 
 Everything a tool returns stays in the context for good and is paid for on every turn after it. Search before you read, read the range you need, and cap output with grep, head or tail. Read a whole file only when you need all of it.
 
-**L4 — Related work goes back to the helper or subagent that already worked on it; never start a fresh one on work another already knows.**
+**L4 — Related work goes back to the helper or subagent that already worked on it, in its own session; never start a fresh one on work another already knows.**
 
-A helper or subagent that drew a design, wrote the code or ran the research keeps what it learned. When new work changes its work, is related to it or touches the same code, send it there with a message (SendMessage, journal helper say) rather than dispatching a new one that has to rediscover everything; start fresh only when the earlier one is gone or the new work is unrelated.
+A helper or subagent that drew a design, wrote the code or ran the research keeps what it learned. When new work changes its work, is related to it or touches the same code, send it there with a message (SendMessage, journal helper say) rather than dispatching a new one that has to rediscover everything; start fresh only when the earlier one is gone or the new work is unrelated. Reuse means its whole session, not its name: a helper whose agent ended is resumed in the session it ran, with its context, never started again under the same name.
 
 **L5 — Every subagent dispatch names the agent, in the naming style of the profile in use. Name it after a distinguished historical figure with a gentle twist on their trade, such as Dr. Einstein for a profiler or Lady Lovelace for a programmer. Every helper and subagent addresses you as Alfred and never the user: their reports are written to you.**
 

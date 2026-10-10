@@ -21,6 +21,8 @@ type Codebase struct {
 	analyses sync.Map
 	// scanned are the folders and files the scan was pointed at, which a path is judged from.
 	scanned []string
+	// project is the folder the scan was read in, which a rule's path pattern is read from.
+	project string
 }
 
 // Filler fills the facts the engine owns for one language, once every file of the codebase has been read.

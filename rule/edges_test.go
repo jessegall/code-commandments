@@ -307,3 +307,38 @@ func TestAPathIsReadFromTheFolderJudged(t *testing.T) {
 		}
 	}
 }
+
+// TestAPathPatternReadsFromTheProjectWhateverTheDepthJudged holds a rule's path patterns to the repository the scan
+// was read in: judged from the project's app folder or from deep inside it, a file is named by its path from the
+// project, so a pattern that names a folder above the one judged still finds it.
+func TestAPathPatternReadsFromTheProjectWhateverTheDepthJudged(t *testing.T) {
+	project := t.TempDir()
+	for path, contents := range map[string]string{
+		".git/HEAD":                      "ref: refs/heads/main\n",
+		"app/Actions/Trips/GetTrips.php": "<?php\nfunction trips() {}\n",
+		"app/Models/Trip.php":            "<?php\nfunction trip() {}\n",
+	} {
+		file := filepath.Join(project, path)
+		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(file, []byte(contents), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, judged := range []string{"app", "app/Actions", "app/Actions/Trips"} {
+		codebase, err := scan.Walk([]string{filepath.Join(project, judged)}, source.Excluded{}).Load()
+		if err != nil {
+			t.Fatalf("the PHP bridge cannot run here: %v", err)
+		}
+		for query, want := range map[string]string{
+			`{"select": "function", "where": [{"fileMatches": "^app/Actions/"}]}`: "[GetTrips.php:2]",
+			`{"select": "function", "where": [{"file": "app/Actions/**/*.php"}]}`: "[GetTrips.php:2]",
+		} {
+			if got := foundAt(t, "backend", query, codebase); got != want {
+				t.Errorf("judged from %s, %s: found %s, want %s", judged, query, got, want)
+			}
+		}
+	}
+}

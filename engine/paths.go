@@ -69,6 +69,37 @@ func (m Match) Judged() string {
 	return m.file.Judged()
 }
 
+// Rooted records the project the scan was read in, the folder a rule's path pattern is read from.
+func (c *Codebase) Rooted(project string) {
+	c.project = project
+}
+
+// FromProject is the file's path from the project the scan was read in, `app/Actions/Trips/GetTrips.php` whatever
+// folder the scan was pointed at, so a rule's path pattern names the same files from any depth. With no project
+// recorded, or for a file outside it, it is the path Judged reads.
+func (f *File) FromProject() string {
+	path := filepath.ToSlash(f.Path)
+	if f.codebase.project == "" {
+		return f.Judged()
+	}
+	for _, spelt := range spellings(f.codebase.project) {
+		if spelt = strings.TrimSuffix(filepath.ToSlash(spelt), "/"); strings.HasPrefix(path, spelt+"/") {
+			return strings.TrimPrefix(path, spelt+"/")
+		}
+	}
+
+	return f.Judged()
+}
+
+// FromProject is the path of the node's file from the project the scan was read in, as File.FromProject reads it.
+func (m Match) FromProject() string {
+	if m.file == nil {
+		return ""
+	}
+
+	return m.file.FromProject()
+}
+
 // InFolderNamed says whether a folder on the path has one of the names.
 func InFolderNamed(file string, names ...string) bool {
 	folders := strings.Split(filepath.ToSlash(filepath.Dir(file)), "/")

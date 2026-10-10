@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/jessegall/code-commandments/bridge"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/contract"
@@ -180,6 +181,7 @@ func (s Sources) Load() (*engine.Codebase, error) {
 
 	codebase := engine.Load(streams...)
 	codebase.Scanned(s.roots...)
+	codebase.Rooted(s.project())
 	sayUnreadable(streams)
 
 	if len(s.byLanguage[source.PHP]) > 0 {
@@ -259,6 +261,19 @@ func (s Sources) tally() func() {
 		done++
 		s.read(min(done, total), total)
 	}
+}
+
+// project is the repository the first root lies in, the folder a rule's path pattern is read from; none outside one.
+func (s Sources) project() string {
+	if len(s.roots) == 0 {
+		return ""
+	}
+	root, err := filepath.Abs(s.roots[0])
+	if err != nil {
+		return ""
+	}
+
+	return git.Root(root)
 }
 
 func (s Sources) files(languages []source.Language) []string {
