@@ -45,7 +45,9 @@ You are the builder here: you do the work yourself. A helper or a subagent is fo
 ## Rules
 
 - Never run .NET on the host; only in a memory-capped Docker container
-- Always scope judge with --changes or --branch, the briefing's judge src too
+- Always scope judge with --changes, --branch or a path, never the whole project
+- Always run everything in the memory-capped dev container, tests included
+- Never run the full test suite, not even to release
 
 <!-- END: agent-journal, form 2 -->
 
@@ -75,6 +77,8 @@ uncommitted work, `--branch` for what differs from main, or a path to judge that
 slow, so it writes a checklist (the run prints the path) and THAT file, not repeated scans, is how
 you work: top to bottom, one line at a time — read that section's skill, fix the sin at its
 source, delete the line. Re-run only when the file is empty, and keep going until a run is clean.
+Where your harness raises each sin as you change a file, those marks cover what you changed and
+nothing else: a tree you have not touched is judged only by asking.
 
 **Don't recognise a rule?** `bin/commandments info <sin>` prints what it flags, why, how it is fixed and
 a worked example — the detector name off the checklist works. Guessing at a rule you have not read

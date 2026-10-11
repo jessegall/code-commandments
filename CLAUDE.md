@@ -191,7 +191,7 @@ README's command table is projected from the same help. The ones you use while w
 
 | Command | Purpose |
 |---|---|
-| `bin/commandments judge [path] [--sin=NAME] [--skill=NAME] [--changes\|--branch[=BASE]] [--parallel=N]` | Judge a tree: every engine over whatever the path holds; findings grouped by the skill that fixes them, and a checklist written for the session. `--changes`/`--branch` scope the report (the whole path is still read, so cross-file rules stay right); `--parallel` defaults to 2. Here, always scoped (rule 7). |
+| `bin/commandments judge [path] [--sin=NAME] [--skill=NAME] [--changes\|--branch[=BASE]] [--parallel=N]` | Judge a tree: every engine over whatever the path holds; findings grouped by the skill that fixes them, and a checklist written for the session. `--changes`/`--branch` scope the report (the whole path is still read, so cross-file rules stay right); `--parallel` defaults to 2. Here, always scoped — a flag, or a path (rule 7). |
 | `bin/commandments repent [path] [--dry-run] [--only=NAME]` | Run the scribes: the auto-fixes of the `Repentable` detectors and the maintenance scribes. `--dry-run` previews a diff. |
 | `bin/commandments info <sin>` | What a rule flags, why, the fix, an example. |
 | `bin/commandments report --reason=… --ref=PATH:LINE` / `feature-request` | File a bug, a false positive, or a rule request through `gh`. |
