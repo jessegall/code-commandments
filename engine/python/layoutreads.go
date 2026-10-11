@@ -15,7 +15,7 @@ var constantName = regexp.MustCompile(`^_*[A-Z][A-Z0-9_]*$`)
 // enum's, whose members are its values.
 func (p *Program) membersAbove(n Node) ([]Node, bool) {
 	class := n.Parent()
-	if class.Kind() != "ClassDef" || n.Node().Field != "body" || p.IsEnum(class.Name()) {
+	if class.Kind() != "ClassDef" || n.Node().Field != "body" || p.IsEnumClass(class) {
 		return nil, false
 	}
 	body := class.ChildrenIn("body")

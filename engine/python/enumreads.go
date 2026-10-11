@@ -84,7 +84,7 @@ func (p *Program) caseTest(n Node) (Node, string) {
 func (p *Program) isMemberOf(n Node) bool {
 	owner := n.Child("value")
 
-	return n.Kind() == "Attribute" && owner.Kind() == "Name" && p.IsEnum(owner.DottedName())
+	return n.Kind() == "Attribute" && owner.Kind() == "Name" && p.IsEnum(owner)
 }
 
 // IsInsideOr says whether the expression is an operand of an `or`.
@@ -203,20 +203,22 @@ func (n Node) patternKey() string {
 
 // memberCaseClasses is the one or more names the cases of a match test members of, `Colour` for `case
 // Colour.RED`, when every alternative but the wildcard is such a member; empty otherwise.
-func (n Node) memberCaseClasses() []string {
+func (n Node) memberCaseClasses() []Node {
 	var alternatives []Node
 	for _, match := range n.ChildrenIn("cases") {
 		if !match.isWildcardCase() {
 			alternatives = append(alternatives, match.Child("pattern").alternatives()...)
 		}
 	}
-	var classes []string
+	var classes []Node
+	var named []string
 	for _, pattern := range alternatives {
 		member := pattern.Child("value")
 		if pattern.Kind() != "MatchValue" || member.Kind() != "Attribute" || member.Child("value").Kind() != "Name" {
 			return nil
 		}
-		if owner := member.Child("value").DottedName(); !slices.Contains(classes, owner) {
+		if owner := member.Child("value"); !slices.Contains(named, owner.DottedName()) {
+			named = append(named, owner.DottedName())
 			classes = append(classes, owner)
 		}
 	}

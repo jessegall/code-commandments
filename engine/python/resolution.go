@@ -2,7 +2,6 @@ package python
 
 import (
 	"slices"
-	"strings"
 )
 
 // keyTypes is the scalar types that read as a lookup key: an identity, not a collaborator.
@@ -43,7 +42,7 @@ func (p *Program) UnpacksTargetFromContainerParam(def Node) bool {
 func (p *Program) isContainer(annotation Node) bool {
 	spelled := annotation.DottedName()
 
-	return spelled != "" && p.DeclaresClass(spelled) && !p.IsEnum(spelled[strings.LastIndex(spelled, ".")+1:])
+	return spelled != "" && p.DeclaresClass(spelled) && !p.IsEnum(annotation)
 }
 
 // resolvedAgainst is the name the lookup resolves one of the keys against, `workflow` in

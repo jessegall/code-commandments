@@ -296,5 +296,5 @@ func (p *Program) fillRefs(module *Module) {
 
 // isEnumCase says whether the expression reads a case of an enum the program declares: `Colour.RED`.
 func (p *Program) isEnumCase(node Node) bool {
-	return node.Kind() == "Attribute" && node.Child("value").Kind() == "Name" && p.IsEnum(node.Child("value").Name())
+	return node.Kind() == "Attribute" && node.Child("value").Kind() == "Name" && p.IsEnum(node.Child("value"))
 }

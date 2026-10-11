@@ -151,7 +151,7 @@ func classKind(class engine.Match) string {
 		}
 	}
 
-	if Of(class.Codebase()).IsEnum(class.Name()) {
+	if Of(class.Codebase()).IsEnumClass(Node{Match: class}) {
 		return "enum"
 	}
 

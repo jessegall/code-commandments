@@ -24,8 +24,8 @@ func TestEveryClassIsDeclaredAsThePHPEngineReadsIt(t *testing.T) {
 		if unrecorded(want, key) {
 			continue
 		}
-		got := declared{TypedDict: program.IsTypedDict(class.Name()), Owned: map[string][]string{}}
-		if program.IsEnum(class.Name()) {
+		got := declared{TypedDict: program.IsTypedDictClass(class), Owned: map[string][]string{}}
+		if program.IsEnumClass(class) {
 			got.Enum = class.MemberValueKeys()
 			if got.Enum == nil {
 				got.Enum = []string{}

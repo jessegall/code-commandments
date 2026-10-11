@@ -123,7 +123,7 @@ func (p *Program) isValue(annotation Node) bool {
 	spelled := annotation.SpelledType()
 	_, dataclass := p.Dataclass(annotation)
 
-	return slices.Contains(scalars, spelled) || p.IsEnum(spelled) || dataclass
+	return slices.Contains(scalars, spelled) || p.IsEnum(annotation) || dataclass
 }
 
 // AttributesTestedForAbsence is the class's own attributes its body compares to None with `is` or `is not`.

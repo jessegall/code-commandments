@@ -558,7 +558,7 @@
         "owned": {}
     },
     "shop.delivery_windows.DeliveryWindow@shop/delivery_windows.py:7": {
-        "enum": [],
+        "enum": null,
         "typedDict": false,
         "dataclass": true,
         "owned": {}
@@ -1423,7 +1423,9 @@
         "dataclass": false,
         "owned": {
             "__init__": [],
-            "move": [],
+            "move": [
+                "zone"
+            ],
             "described": []
         }
     },
@@ -1433,12 +1435,14 @@
         "dataclass": false,
         "owned": {
             "__init__": [],
-            "start": [],
+            "start": [
+                "zone"
+            ],
             "slip": []
         }
     },
     "shop.picking_waves.Zone@shop/picking_waves.py:4": {
-        "enum": [],
+        "enum": null,
         "typedDict": false,
         "dataclass": false,
         "owned": {}
@@ -2373,7 +2377,7 @@
         }
     },
     "shop.tax_bands.TaxBand@shop/tax_bands.py:6": {
-        "enum": [],
+        "enum": null,
         "typedDict": false,
         "dataclass": true,
         "owned": {}

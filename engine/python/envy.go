@@ -2,7 +2,6 @@ package python
 
 import (
 	"slices"
-	"strings"
 )
 
 // EnviedParameter is the parameter a method envies: one other object it was handed that it reaches through more
@@ -285,5 +284,5 @@ func (p *Program) isEnumField(key Node) bool {
 		return false
 	}
 
-	return p.IsEnum(resolved.Name[strings.LastIndex(resolved.Name, ".")+1:])
+	return p.IsEnumSymbol(resolved.Name)
 }

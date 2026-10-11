@@ -130,7 +130,7 @@ func (n Node) IsReturnedValue() bool {
 func (p *Program) IsInTypedDictFunction(n Node) bool {
 	returns := n.EnclosingFunction().Child("returns")
 
-	return returns.Exists() && p.IsTypedDict(returns.DottedName())
+	return returns.Exists() && p.IsTypedDict(returns)
 }
 
 // IsInContractMethod says whether the expression sits in a def whose shape a contract sets: a dunder, or an

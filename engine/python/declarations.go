@@ -19,6 +19,11 @@ type declarations struct {
 	typedDicts map[string]bool
 }
 
+// symbolOf is the class's own qualified name, which no other class shares however many spell it alike.
+func symbolOf(class Node) string {
+	return class.Node().Symbol
+}
+
 func (p *Program) declared() *declarations {
 	p.names.once.Do(func() {
 		p.names.enums = map[string]bool{}
@@ -35,7 +40,7 @@ func (p *Program) declared() *declarations {
 			known = len(p.names.enums)
 			for _, class := range classes {
 				if slices.ContainsFunc(append(class.ChildrenIn("bases"), class.decoratorArguments()...), p.isEnumBase) {
-					p.names.enums[class.Name()] = true
+					p.names.enums[symbolOf(class)] = true
 				}
 			}
 		}
@@ -44,7 +49,7 @@ func (p *Program) declared() *declarations {
 				p.names.values = append(p.names.values, class.MemberValueKeys())
 			}
 			if slices.ContainsFunc(class.ChildrenIn("bases"), isTypedDictBase) {
-				p.names.typedDicts[class.Name()] = true
+				p.names.typedDicts[symbolOf(class)] = true
 			}
 		}
 	})
@@ -54,8 +59,26 @@ func (p *Program) declared() *declarations {
 
 // IsEnum says whether the program declares an enum by the name: a class whose base, or the call a decorator
 // makes, is a standard enum or another enum of the program.
-func (p *Program) IsEnum(name string) bool {
-	return p.declared().enums[name]
+func (p *Program) IsEnum(spelled Node) bool {
+	declared, ok := p.ClassNamed(spelled, p.ModuleOf(spelled))
+
+	return ok && p.declared().enums[symbolOf(declared)]
+}
+
+// IsEnumSymbol says whether the enum is the one the bridge already resolved a reference to: a resolved name is
+// an identity rather than a spelling, so it needs no module to read it in.
+func (p *Program) IsEnumSymbol(symbol string) bool {
+	return p.declared().enums[symbol]
+}
+
+// IsTypedDictClass says whether the class itself is a TypedDict, asked of the declaration rather than of a name.
+func (p *Program) IsTypedDictClass(class Node) bool {
+	return class.Kind() == "ClassDef" && p.declared().typedDicts[symbolOf(class)]
+}
+
+// IsEnumClass says whether the class itself is an enum, asked of the declaration rather than of a name.
+func (p *Program) IsEnumClass(class Node) bool {
+	return class.Kind() == "ClassDef" && p.declared().enums[symbolOf(class)]
 }
 
 // EnumsHoldAll says whether all the literal keys name members of one enum.
@@ -73,8 +96,10 @@ func (p *Program) EnumsHoldAll(keys []string) bool {
 }
 
 // IsTypedDict says whether the program declares a TypedDict by the name.
-func (p *Program) IsTypedDict(name string) bool {
-	return p.declared().typedDicts[name]
+func (p *Program) IsTypedDict(spelled Node) bool {
+	declared, ok := p.ClassNamed(spelled, p.ModuleOf(spelled))
+
+	return ok && p.declared().typedDicts[symbolOf(declared)]
 }
 
 // Dataclass is the dataclass the node spells, read in the module that wrote it: a name is resolved to the
@@ -88,12 +113,18 @@ func (p *Program) Dataclass(spelled Node) (Node, bool) {
 	return class, true
 }
 
-// isEnumBase says whether the base names a standard enum or an enum the program declares.
+// isEnumBase says whether the base names a standard enum, or an enum the program declares — the one its own
+// module resolves the name to, never any class that happens to spell it the same.
 func (p *Program) isEnumBase(base Node) bool {
 	dotted := base.DottedName()
 	named := dotted[strings.LastIndex(dotted, ".")+1:]
+	if slices.Contains(enumRoots, named) {
+		return true
+	}
 
-	return slices.Contains(enumRoots, named) || p.names.enums[named]
+	declared, ok := p.ClassNamed(base, p.ModuleOf(base))
+
+	return ok && p.names.enums[symbolOf(declared)]
 }
 
 func isTypedDictBase(base Node) bool {
@@ -153,7 +184,7 @@ func (p *Program) OwnedParameters(method, host Node) []string {
 	for at, parameter := range method.Parameters() {
 		annotation := parameter.Child("annotation").DottedName()
 		short := annotation[strings.LastIndex(annotation, ".")+1:]
-		if at > 0 && annotation != "" && short != host.Name() && p.DeclaresClass(annotation) && !p.IsEnum(short) {
+		if at > 0 && annotation != "" && short != host.Name() && p.DeclaresClass(annotation) && !p.IsEnum(parameter.Child("annotation")) {
 			owned = append(owned, parameter.Name())
 		}
 	}
