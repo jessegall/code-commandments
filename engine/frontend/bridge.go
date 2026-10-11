@@ -5,6 +5,7 @@ package frontend
 import (
 	"os/exec"
 	"path/filepath"
+	"strconv"
 
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bundle"
@@ -37,7 +38,12 @@ func (b Bridge) Command() ([]string, error) {
 		return nil, err
 	}
 
-	command := []string{node, filepath.Join(folder, "bridge.mjs")}
+	command := []string{node}
+	if heap := heapAllowance(); heap > 0 {
+		command = append(command, "--max-old-space-size="+strconv.Itoa(heap))
+	}
+	command = append(command, filepath.Join(folder, "bridge.mjs"))
+
 	if b.Trees != "" {
 		command = append(command, "--cache="+b.Trees)
 	}

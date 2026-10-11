@@ -38,6 +38,10 @@ A line that starts with [journal], a reminder, a notice or an old helper report 
 
 Before writing, search the code for what already does the job or most of it, and extend that instead of adding a second way. Every read or write of one kind of thing (a file, a record, a setting, a provider) goes through the one funnel that owns it, which is where caching and checks live. A fix lands where the fault is born, not where it shows. When you finish, say in a line what you skipped or did not check.
 
+## How you work here
+
+You are the builder here: you do the work yourself. A helper or a subagent is for a job that is better done beside you - a long search, a build in a checkout of its own, work you cannot do and watch at once. Handing away what you could do in three minutes is the failure, not the saving.
+
 ## Rules
 
 - Never run .NET on the host; only in a memory-capped Docker container
