@@ -1,6 +1,7 @@
 package make
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -49,7 +50,7 @@ func (Command) Help() help.Help {
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	name, named := in.FirstArgument()
 	if !named || Studly(name) == "" {
-		return help.Usage(console.Err, c, "name the commandment, e.g. `commandments make NullableElementReturn`."), nil
+		return help.Usage(console.Err, c, "name the commandment, e.g. `"+binary.Here()+" make NullableElementReturn`."), nil
 	}
 
 	engine := Backend
@@ -216,12 +217,12 @@ func steps(blueprint Blueprint, probe string) []string {
 			"     name list.",
 		"\033[1mProve it fires\033[0m — write a throwaway probe at \033[36m"+probe+"\033[0m holding one example of\n"+
 			"     EVERY form you mean to catch plus a near-miss you must NOT, then run\n"+
-			"     \033[36mcommandments judge "+blueprint.Engine.ProbeRoot()+" --sin="+blueprint.ID+" --no-checklist\033[0m\n"+
+			"     \033[36m"+binary.Here()+" judge "+blueprint.Engine.ProbeRoot()+" --sin="+blueprint.ID+" --no-checklist\033[0m\n"+
 			"     and confirm exactly the intended lines are flagged. Delete the probe after.",
 		"\033[1mCalibrate on real code\033[0m — run it with \033[36m--changes\033[0m or \033[36m--branch\033[0m over your source\n"+
 			"     and READ the hits. Judge each against the skill, never against what the code happens to do:\n"+
 			"     volume proves nothing, only a genuine false positive does. Tighten with a principled `reject`.",
-		"\033[1mPublish the skill\033[0m — \033[36mcommandments sync\033[0m publishes\n"+
+		"\033[1mPublish the skill\033[0m — \033[36m"+binary.Here()+" sync\033[0m publishes\n"+
 			"     \033[36m"+blueprint.SkillID()+"\033[0m so the agent can load what your finding points at.",
 	)
 }

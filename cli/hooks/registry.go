@@ -105,7 +105,7 @@ func Wire(root string) (bool, error) {
 // on Windows, which may have no sh, the shim runs it. Elsewhere it is the binary on the PATH.
 func Command(root string) string {
 	if !binary.ThroughPHP(root) {
-		return binary.Name + " hooks " + Stamp
+		return binary.Invocation(root) + " hooks " + Stamp
 	}
 	if runtime.GOOS == "windows" {
 		return `php "$CLAUDE_PROJECT_DIR/` + binary.In(root) + `" hooks ` + Stamp

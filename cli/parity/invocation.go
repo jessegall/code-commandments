@@ -1,22 +1,26 @@
 package parity
 
-import "strings"
+import "regexp"
 
-// EquateInvocation reads the composer shim the PHP tool names as the binary from the PATH, in the PHP tool's answer
-// only, when the case's project has no composer.json: there the binary names itself bare, where the PHP tool always
-// names its shim. The binary's own output is compared as printed, so naming the shim in a project without composer,
-// or the bare binary in a project with it, still differs as it should.
+// EquateInvocation reads every naming of the executable, in both answers, as the same word. Which file a command
+// names is cli/binary's answer, given per project: the PHP tool never asked it — it printed its composer shim in
+// most of its prose and a bare `commandments` in the rest, so one run named two different files — while the binary
+// resolves one invocation for the project and prints that throughout. Parity guards what a command SAYS, and
+// cli/binary's own tests guard which file it names, so the name itself is read as one word here.
 func EquateInvocation(c Case, repo string, want, got Result) (Result, Result) {
-	if c.HasComposer(repo) {
-		return want, got
-	}
-
-	want.Stdout = strings.ReplaceAll(want.Stdout, shim, "commandments ")
-	want.Stderr = strings.ReplaceAll(want.Stderr, shim, "commandments ")
-	want.Files = strings.ReplaceAll(want.Files, shim, "commandments ")
+	want.Stdout, got.Stdout = equate(want.Stdout), equate(got.Stdout)
+	want.Stderr, got.Stderr = equate(want.Stderr), equate(got.Stderr)
+	want.Files, got.Files = equate(want.Files), equate(got.Files)
 
 	return want, got
 }
 
-// shim is the composer shim as the PHP tool names it in a command.
-const shim = "vendor/bin/commandments "
+// equate writes every naming of the executable in one answer as the bare name.
+func equate(answer string) string {
+	return named.ReplaceAllString(answer, "${1}commandments ")
+}
+
+// named matches the executable wherever either tool named it: bare, through the composer shim, or from a checkout's
+// own bin/. The character before it may be neither a word character nor `/`, `-` or `.`, so a path, a mention of
+// `code-commandments` and the `.commandments` folder are left alone.
+var named = regexp.MustCompile(`(^|[^\w/.-])(?:vendor/bin/|bin/)?commandments `)

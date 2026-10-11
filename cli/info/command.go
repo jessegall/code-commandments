@@ -1,6 +1,7 @@
 package info
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -48,7 +49,7 @@ func (Command) Help() help.Help {
 		Option("--full", "print the skill's whole principle, not just the opening").
 		Note("The name is matched leniently, so `array-bag`, `ArrayBag` and `ArrayBagDetector` all " +
 			"resolve to the same rule. The worked example is read from the published skill, so it is " +
-			"the same code the skill teaches. Run `commandments judge --list` for every rule there is.").
+			"the same code the skill teaches. Run `" + binary.Here() + " judge --list` for every rule there is.").
 		Note("A rule this project wrote into .commandments/custom/ is explained beside the shipped ones " +
 			"and named as the project's own — those are the rules a reader is least likely to recognise.")
 }
@@ -78,7 +79,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 			console.Warn("  " + name)
 		}
 
-		console.Warn("", "Run `commandments judge --list` for all of them.")
+		console.Warn("", "Run `"+binary.Here()+" judge --list` for all of them.")
 
 		return 2, nil
 	}
@@ -123,20 +124,20 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 	row(console, "Learn", "load the skill \033[1m"+teaching.ID()+"\033[0m")
 
 	if _, fixable := c.Fixable[sin.Name]; fixable {
-		row(console, "Auto-fix", "commandments repent --sin="+sin.Name)
+		row(console, "Auto-fix", binary.Here()+" repent --sin="+sin.Name)
 	}
 
 	if _, scaffolds := c.Scaffoldable[sin.Name]; scaffolds {
-		row(console, "Scaffold", "commandments scaffold --sin="+sin.Name)
+		row(console, "Scaffold", binary.Here()+" scaffold --sin="+sin.Name)
 	}
 
 	if exemptable, honours := detector.(packages.Exemptable); honours && len(exemptable.Exemptions()) > 0 {
-		row(console, "Exempts", "commandments exemptions "+sin.Name)
+		row(console, "Exempts", binary.Here()+" exemptions "+sin.Name)
 	}
 
-	row(console, "Find it", "commandments judge --sin="+sin.Name)
-	row(console, "Turn off", "commandments disable "+sin.Name)
-	row(console, "Wrong?", "commandments report --detector="+catalog.Name(detector)+" --reason=\"…\" --ref=PATH:LINE")
+	row(console, "Find it", binary.Here()+" judge --sin="+sin.Name)
+	row(console, "Turn off", binary.Here()+" disable "+sin.Name)
+	row(console, "Wrong?", binary.Here()+" report --detector="+catalog.Name(detector)+" --reason=\"…\" --ref=PATH:LINE")
 	console.Write("\n")
 }
 

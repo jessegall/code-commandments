@@ -23,10 +23,13 @@ func TestTheDashboardAndStoreAreWrittenAsPhpWritesThem(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// a project with neither composer nor the journal's plugin, where the tool names itself as PHP does.
+	project := t.TempDir()
+
 	for golden, render := range map[string]func() (string, error){
 		"testdata/stored.json": func() (string, error) { return jsonfile.Pretty(stored, false) },
-		"testdata/sins.json":   func() (string, error) { return jsonfile.Pretty(Render(stored), true) },
-		"testdata/empty.json":  func() (string, error) { return jsonfile.Pretty(Render(nil), true) },
+		"testdata/sins.json":   func() (string, error) { return jsonfile.Pretty(Render(stored, project), true) },
+		"testdata/empty.json":  func() (string, error) { return jsonfile.Pretty(Render(nil, project), true) },
 	} {
 		got, err := render()
 		want, _ := os.ReadFile(golden)

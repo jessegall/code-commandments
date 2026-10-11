@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -89,7 +90,7 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 	row(console, "Custom detectors", strconv.Itoa(len(project.Detectors)))
 	row(console, "Exemption packages", strconv.Itoa(len(packages.Shipped))+" built-in  ·  "+strconv.Itoa(len(project.Packages))+" registered")
 	row(console, "Skills", strconv.Itoa(len(skill.All())))
-	console.Write("\n  \033[2mRun `commandments config reindex` to re-detect the source roots.\033[0m\n\n")
+	console.Write("\n  \033[2mRun `" + binary.Here() + " config reindex` to re-detect the source roots.\033[0m\n\n")
 
 	return 0, nil
 }

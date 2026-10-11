@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"strings"
 
@@ -25,7 +26,7 @@ func (Toggle) Help() help.Help {
 		Form("disable <sin|skill>", "turn a rule off — a skill silences every detector it teaches the fix for").
 		Form("enable <sin|skill>", "turn it back on").
 		Note("The argument is a sin id OR a skill slug (the --sin= / --skill= keys), matched leniently. Run " +
-			"`commandments judge --list` to see them all.")
+			"`" + binary.Here() + " judge --list` to see them all.")
 }
 
 // target is a sin or a skill the arguments name.
@@ -48,7 +49,7 @@ func (t Toggle) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	switch {
 	case len(matches) == 0:
-		console.Warn("No sin or skill matches \"" + query + "\". Run `commandments judge --list` to see them.")
+		console.Warn("No sin or skill matches \"" + query + "\". Run `" + binary.Here() + " judge --list` to see them.")
 
 		return 2, nil
 	case len(matches) > 1:

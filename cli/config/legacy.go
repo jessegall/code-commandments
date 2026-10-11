@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"slices"
 	"strconv"
@@ -31,7 +32,7 @@ func ReadPHP(path string) (Config, error) {
 	stream, err := php.Here().Stream(path)
 	var missing bridge.ToolchainMissing
 	if errors.As(err, &missing) {
-		return Config{}, fmt.Errorf("this project's settings are in %s, which only php reads, and php is not on the PATH here: run `commandments sync` where php is installed to turn it into config.json", path)
+		return Config{}, fmt.Errorf("this project's settings are in %s, which only php reads, and php is not on the PATH here: run `"+binary.Here()+" sync` where php is installed to turn it into config.json", path)
 	}
 	if err != nil {
 		return Config{}, err

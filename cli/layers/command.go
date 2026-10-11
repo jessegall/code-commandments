@@ -3,6 +3,7 @@
 package layers
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"slices"
 	"strconv"
@@ -118,7 +119,7 @@ func report(graph *namespaces.NamespaceGraph, proposed []namespaces.Layer, floor
 			console.Say("      " + pair[0] + "  ->  " + pair[1])
 		}
 
-		console.Say("    \033[2mrun `commandments judge --sin=namespace-cycle` for the exact arrows to cut\033[0m")
+		console.Say("    \033[2mrun `" + binary.Here() + " judge --sin=namespace-cycle` for the exact arrows to cut\033[0m")
 	}
 
 	console.Say("")
@@ -264,7 +265,7 @@ func (c Command) allow(in *cli.Input, file config.Editor, console cli.Console) (
 	at := indexOf(layers, from)
 
 	if at < 0 {
-		return fail(from+" is not a declared layer — run `commandments layers add "+from+"` first, or check the spelling.", console), nil
+		return fail(from+" is not a declared layer — run `"+binary.Here()+" layers add "+from+"` first, or check the spelling.", console), nil
 	}
 
 	if slices.Contains(layers[at].MayUse, to) {
@@ -280,7 +281,7 @@ func commit(file config.Editor, layers []config.Layer, message string, console c
 	rewritten, err := file.RewriteLayers(layers)
 
 	if err != nil || !rewritten {
-		return fail(file.Name()+" declares no layers yet — run `commandments layers --write` to propose the stack first.", console), err
+		return fail(file.Name()+" declares no layers yet — run `"+binary.Here()+" layers --write` to propose the stack first.", console), err
 	}
 
 	return done(message, console), nil
@@ -315,7 +316,7 @@ func normalise(namespace string) string {
 }
 
 func (c Command) usage(form string, console cli.Console) int {
-	return help.Usage(console.Err, c, "Incomplete — that form reads `commandments "+form+"`.")
+	return help.Usage(console.Err, c, "Incomplete — that form reads `"+binary.Here()+" "+form+"`.")
 }
 
 func fail(message string, console cli.Console) int {

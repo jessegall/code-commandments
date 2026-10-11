@@ -4,6 +4,7 @@ package dashboard
 
 import (
 	"encoding/json"
+	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"os"
 	"path/filepath"
@@ -89,7 +90,7 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 		return err
 	}
 
-	dashboard, err := jsonfile.Pretty(Render(all), true)
+	dashboard, err := jsonfile.Pretty(Render(all, space.Root()), true)
 	if err != nil {
 		return err
 	}
@@ -140,15 +141,17 @@ func (g group) count() int {
 
 // Render draws the dashboard: an overview of the most common sins, a page per sin, and a page per sin in
 // each file.
-func Render(findings []Stored) *jsonfile.Object {
+func Render(findings []Stored, root string) *jsonfile.Object {
+	tool := binary.Invocation(root)
+
 	groups := bySin(findings)
 	pages := jsonfile.NewObject("overview", jsonfile.NewObject("title", "Overview", "view", overview(findings, groups)))
 
 	for _, g := range groups {
-		pages.Set("sin/"+g.sin, jsonfile.NewObject("title", g.sin, "view", sinPage(g)))
+		pages.Set("sin/"+g.sin, jsonfile.NewObject("title", g.sin, "view", sinPage(g, tool)))
 
 		for _, file := range g.files {
-			pages.Set(fileOf(g.sin, file), jsonfile.NewObject("title", g.sin+" in "+filepath.Base(file), "view", filePage(g.sin, file, g.found[file])))
+			pages.Set(fileOf(g.sin, file), jsonfile.NewObject("title", g.sin+" in "+filepath.Base(file), "view", filePage(g.sin, file, tool, g.found[file])))
 		}
 	}
 
@@ -217,7 +220,7 @@ func overview(findings []Stored, groups []group) *jsonfile.Object {
 	})
 }
 
-func sinPage(g group) *jsonfile.Object {
+func sinPage(g group, tool string) *jsonfile.Object {
 	files := append([]string(nil), g.files...)
 
 	sort.SliceStable(files, func(i, j int) bool {
@@ -230,12 +233,12 @@ func sinPage(g group) *jsonfile.Object {
 		rows = append(rows, jsonfile.NewObject("cells", []string{file, strconv.Itoa(len(g.found[file]))}, "open", fileOf(g.sin, file)))
 	}
 
-	children := append([]any{jsonfile.NewObject("type", "heading", "text", g.sin, "level", 1)}, explanation(g.sin)...)
+	children := append([]any{jsonfile.NewObject("type", "heading", "text", g.sin, "level", 1)}, explanation(g.sin, tool)...)
 
 	return jsonfile.NewObject("type", "stack", "gap", 16, "children", append(children, jsonfile.NewObject("type", "table", "columns", []string{"File", "Sins"}, "rows", rows)))
 }
 
-func filePage(sin, file string, found []Stored) *jsonfile.Object {
+func filePage(sin, file, tool string, found []Stored) *jsonfile.Object {
 	found = append([]Stored(nil), found...)
 
 	sort.SliceStable(found, func(i, j int) bool {
@@ -258,10 +261,10 @@ func filePage(sin, file string, found []Stored) *jsonfile.Object {
 		jsonfile.NewObject("type", "card", "title", title, "children", places),
 	}
 
-	return jsonfile.NewObject("type", "stack", "gap", 16, "children", append(children, explanation(sin)...))
+	return jsonfile.NewObject("type", "stack", "gap", 16, "children", append(children, explanation(sin, tool)...))
 }
 
-func explanation(name string) []any {
+func explanation(name, tool string) []any {
 	for _, sin := range sins.All() {
 		rule := sin.Definition()
 
@@ -280,7 +283,7 @@ func explanation(name string) []any {
 
 		return []any{
 			jsonfile.NewObject("type", "card", "title", "About this rule", "children", facts),
-			jsonfile.NewObject("type", "code", "text", "commandments info "+name),
+			jsonfile.NewObject("type", "code", "text", tool+" info "+name),
 		}
 	}
 

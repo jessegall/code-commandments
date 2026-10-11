@@ -4,6 +4,7 @@ package rules
 
 import (
 	"fmt"
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"slices"
 	"strconv"
@@ -69,7 +70,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 func (c Command) explain(in *cli.Input, console cli.Console) (int, error) {
 	path, named := in.Argument(1)
 	if !named {
-		return help.Usage(console.Err, c, "name the file to explain, e.g. `commandments rule explain app/Http/OrderController.php`."), nil
+		return help.Usage(console.Err, c, "name the file to explain, e.g. `"+binary.Here()+" rule explain app/Http/OrderController.php`."), nil
 	}
 
 	line := 0
@@ -111,7 +112,7 @@ func (c Command) try(in *cli.Input, root string, console cli.Console) (int, erro
 	named, given := in.Argument(1)
 	path, pathed := in.Argument(2)
 	if !given || !pathed {
-		return help.Usage(console.Err, c, "name the rule and the path to try it on, e.g. `commandments rule try NoRawSql app/`."), nil
+		return help.Usage(console.Err, c, "name the rule and the path to try it on, e.g. `"+binary.Here()+" rule try NoRawSql app/`."), nil
 	}
 
 	project, err := config.Load(root)
@@ -157,7 +158,7 @@ func (c Command) prove(in *cli.Input, root string, console cli.Console) (int, er
 	}
 
 	if len(own.Rules) == 0 {
-		return console.Refuse("No rules in .commandments/custom/ to prove — scaffold one with `commandments make <Name>`."), nil
+		return console.Refuse("No rules in .commandments/custom/ to prove — scaffold one with `" + binary.Here() + " make <Name>`."), nil
 	}
 
 	if _, err := os.Stat(path); err != nil {

@@ -1,6 +1,7 @@
 package task
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"strconv"
 	"strings"
@@ -92,7 +93,7 @@ func (c Command) now() time.Time {
 func (c Command) add(tasks Tasks, in *cli.Input, console cli.Console) int {
 	title, _ := in.Argument(1)
 	if title == "" {
-		return help.Usage(console.Err, c, "Say what the task is: `commandments task add \"<title>\" \"<why>\"`.")
+		return help.Usage(console.Err, c, "Say what the task is: `"+binary.Here()+" task add \"<title>\" \"<why>\"`.")
 	}
 
 	under, found := parentIn(tasks, in)
@@ -132,11 +133,11 @@ func (c Command) done(tasks Tasks, id, why string, console cli.Console) int {
 	}
 
 	if why == "" {
-		return help.Usage(console.Err, c, "Say what came of it: `commandments task done "+id+" \"<what came of it>\"` — it is what history keeps.")
+		return help.Usage(console.Err, c, "Say what came of it: `"+binary.Here()+" task done "+id+" \"<what came of it>\"` — it is what history keeps.")
 	}
 
 	if task.State == Done {
-		return console.Refuse("`"+task.ID.Render()+"` is already closed.", "  `commandments task show "+task.ID.Render()+"` reads its log.")
+		return console.Refuse("`"+task.ID.Render()+"` is already closed.", "  `"+binary.Here()+" task show "+task.ID.Render()+"` reads its log.")
 	}
 
 	return c.moved(tasks, task, Done, why, "✓ "+task.ID.Render()+" done — "+task.Title, console)
@@ -155,7 +156,7 @@ func board(tasks Tasks, console cli.Console) int {
 	live := tasks.InState(Live...)
 
 	if len(live) == 0 {
-		return console.Say("Nothing queued. `commandments task add \"<title>\"` starts one.")
+		return console.Say("Nothing queued. `" + binary.Here() + " task add \"<title>\"` starts one.")
 	}
 
 	lines := make([]string, len(live))
@@ -247,7 +248,7 @@ func noSuchTask(id string, console cli.Console) int {
 		said = "Name the task by its number."
 	}
 
-	return console.Refuse(said, "  `commandments task` lists what is open, `commandments task history` what is closed.")
+	return console.Refuse(said, "  `"+binary.Here()+" task` lists what is open, `"+binary.Here()+" task history` what is closed.")
 }
 
 // leadingInt reads a number as PHP's (int) cast does: the leading digits with a sign, else 0.

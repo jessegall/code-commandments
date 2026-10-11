@@ -57,7 +57,7 @@ func (Command) Help() help.Help {
 		Option("--only=NAME", "run one rewriter only (alias: --sin=NAME)").
 		Option("--ignore-package-requirements", "keep package-gated scribes even if this project lacks the package").
 		Note("Rewrites only within the source roots `judge` reads (the config's paths), so it never touches " +
-			"tests/ or anything judge would not flag. A broken or incorrect repent result is a BUG — report it with `commandments report`, referencing both the source and the broken output.").
+			"tests/ or anything judge would not flag. A broken or incorrect repent result is a BUG — report it with `" + binary.Here() + " report`, referencing both the source and the broken output.").
 		Note("A rewriter that BREAKS is dropped so every other fix still applies — one bad scribe used to take " +
 			"the whole command down. The run then names it and exits 3, because it did not auto-fix everything " +
 			"it advertises.")
@@ -195,8 +195,8 @@ func apply(path string, converged scribes.Converged, space workspace.Workspace, 
 	if invite, err := counter.Named(space, "repent-feedback", "rate-limits the post-repent feedback nudge", feedbackEvery).FirstThenEvery(); err == nil && invite {
 		console.Write("\033[2m↳ Did that auto-fix do the right thing? If `repent` produced anything broken, incomplete, or\n" +
 			"  awkward — or you noticed a rule gap or false positive — file it (don't just work around it):\n" +
-			"  `commandments report --reason=\"…\" --ref=path:line` (referencing the source AND the bad output),\n" +
-			"  or `commandments feature-request --title=\"…\" --reason=\"…\"`.\033[0m\n")
+			"  `" + binary.Here() + " report --reason=\"…\" --ref=path:line` (referencing the source AND the bad output),\n" +
+			"  or `" + binary.Here() + " feature-request --title=\"…\" --reason=\"…\"`.\033[0m\n")
 	}
 
 	return skipped(converged, console), nil
@@ -227,7 +227,7 @@ func preview(path string, converged scribes.Converged, file string, console cli.
 	console.Write("\033[2m↳ Judge THIS diff on its own. The auto-fixers change every release, so never skip a repent from a\n" +
 		"  past result or a remembered \"this fix is broken\" — and don't record one as permanently broken;\n" +
 		"  re-run `--dry-run` and read the CURRENT output. If a fix is genuinely broken, incomplete, or wrong,\n" +
-		"  file it (don't just discard it): `commandments report --reason=\"…\" --ref=path:line` (source AND bad output).\033[0m\n")
+		"  file it (don't just discard it): `" + binary.Here() + " report --reason=\"…\" --ref=path:line` (source AND bad output).\033[0m\n")
 
 	return skipped(converged, console), nil
 }

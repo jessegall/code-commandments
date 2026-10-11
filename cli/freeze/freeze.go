@@ -3,6 +3,7 @@
 package freeze
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"strings"
 
@@ -85,7 +86,7 @@ func unfreeze(path, contents string, console cli.Console) (int, error) {
 // a shebang.
 func stamped(contents string, language source.Language) string {
 	stamp := language.Comment(engine.FrozenMarker + " — deliberately immutable; excluded from code-commandments " +
-		"judging & repent (run `commandments unfreeze` to lift).")
+		"judging & repent (run `" + binary.Here() + " unfreeze` to lift).")
 
 	if language != source.PHP && !strings.HasPrefix(contents, "#!") {
 		return stamp + "\n" + contents
