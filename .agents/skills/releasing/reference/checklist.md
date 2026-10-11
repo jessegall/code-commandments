@@ -5,7 +5,9 @@
    `Unpublished()` stays out of every catalog until you remove the method.
 3. The generated documents are current: the pre-commit hook regenerates them; `composer sins` by hand.
 4. Fix every finding on the files you touched.
-5. Commit on your own branch — no attribution trailer.
+5. Commit on main — no attribution trailer.
 6. A release build can be tried locally without publishing anything:
    `scripts/dev scripts/release/build v0.0.0-try dist --tool-only` (the Go binaries, checked against their budgets).
-7. Merging to main and tagging `v*` are Sir Jesse's; the tag runs the release workflow.
+7. Bump the journal plugin, tag `vX.Y.Z` and push main and the tag, without asking: the tag runs the release
+   workflow, and the plugin is upgraded once it has run. Never the full suite — the tests of what the release
+   carries are its gate.

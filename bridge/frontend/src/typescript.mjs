@@ -239,6 +239,13 @@ export class TypeScriptWriter {
             }
         }
         if (type.objectFlags & ts.ObjectFlags.Anonymous || type.objectFlags & ts.ObjectFlags.Mapped) {
+            // A shape the project itself declares nowhere is not the project's: `typeof globalThis` holds every
+            // ambient name there is, a thousand fields deep in itself, each printed as however many declaration
+            // files have merged into it, so describing it says nothing about the code and makes a file's tree
+            // answer for the whole program. An ambient shape is written as what it is, a type of its own; every
+            // shape the code writes — an object literal, a mapped type, a spread, an inferred return — is declared
+            // in a file the project wrote, so it is described as before.
+            if (ambient(type)) return { kind: 'opaque' }
             const fields = type.getProperties().map((property) => {
                 const field = { name: this.fieldName(property), type: this.type(this.checker.getTypeOfSymbol(property), origin, depth) }
                 if (property.flags & ts.SymbolFlags.Optional) field.optional = true
@@ -251,6 +258,17 @@ export class TypeScriptWriter {
 
         return { kind: 'opaque' }
     }
+}
+
+/**
+ * Whether a type is declared outside the code the project wrote: nothing declares it, or every declaration of it
+ * stands in a declaration file. `typeof globalThis` is both in turn — it carries no declaration of its own until a
+ * package declares into the global scope, and then carries only theirs.
+ */
+function ambient(type) {
+    const declarations = (type.aliasSymbol ?? type.getSymbol())?.declarations ?? []
+
+    return declarations.length === 0 || declarations.every((each) => each.getSourceFile().isDeclarationFile)
 }
 
 /** The slot `child` fills in `parent`; none for a token, which the contract never makes a node. */
