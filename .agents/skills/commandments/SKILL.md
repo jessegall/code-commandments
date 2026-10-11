@@ -171,7 +171,7 @@ most:**
 - **`commandments-csharp-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver` and honour the contract — a registry `Get` throws on a miss.
 
 **Finding and fixing sins — the checklist workflow.** Run
-`bin/commandments judge src` ONCE — and **pass any path** to scope the
+`bin/commandments judge --changes` ONCE — and **pass any path** to scope the
 scan: judge runs EVERY engine over whatever you point it at, so a path holding
 frontend sources (`judge resources/js`) is judged as the frontend
 — **Vue components and plain TypeScript alike** — a path holding Python is judged as

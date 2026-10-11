@@ -102,7 +102,7 @@ most:**
 {{keepInMind}}
 
 **Finding and fixing sins — the checklist workflow.** Run
-`{{binary}} judge src` ONCE — and **pass any path** to scope the
+`{{binary}} judge --changes` ONCE — and **pass any path** to scope the
 scan: judge runs EVERY engine over whatever you point it at, so a path holding
 frontend sources (`judge resources/js`) is judged as the frontend
 — **Vue components and plain TypeScript alike** — a path holding Python is judged as

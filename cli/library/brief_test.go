@@ -15,7 +15,7 @@ func TestTheInjectedBriefNamesNoDisciplineButWhereToFindThem(t *testing.T) {
 	project := t.TempDir()
 	brief := Brief(project, config.Config{})
 
-	for _, want := range []string{"TRACE TO THE SOURCE", "judge src", "info <sin>", "Load `commandments` for the index"} {
+	for _, want := range []string{"TRACE TO THE SOURCE", "judge` ONCE, scoped", "info <sin>", "Load `commandments` for the index"} {
 		if !strings.Contains(brief, want) {
 			t.Errorf("the brief leaves out %q, which must be read before any discipline is", want)
 		}
