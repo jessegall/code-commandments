@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-commandments journal-config — Write the agent journal plugin's chosen switches into .commandments/config.php.
+commandments journal-config — Write the agent journal plugin's chosen switches into .commandments/config.php, and refresh what the project is told.
 
 Usage:
   commandments journal-config  apply JOURNAL_SETTINGS to the project config (run by the journal
@@ -10,6 +10,12 @@ Options:
   --keep-folders  apply the switches but leave the folders the config judges and leaves out as they
                   are: the plugin's setup, where the journal's stored folders may be older than the
                   project's config
+
+  It also rewrites the briefing block in the project's AGENTS.md and each agent's own instruction
+  file, which is how a fix to what the tool injects reaches a project the journal drives: such a
+  project never runs composer, so nothing else would ever refresh it. Only the marked block changes,
+  so `git diff AGENTS.md` is the whole of it; a run that changes nothing writes nothing; and a file
+  whose markers cannot be trusted is named in the notification and left exactly as it was.
 
 --- stderr
 
