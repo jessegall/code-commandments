@@ -1,6 +1,0 @@
-__pycache__/
-*.pyc
-state.json
-runtime/
-state.json.retired
-record.json.lock

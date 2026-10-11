@@ -61,6 +61,10 @@ phpcs.xml
 # Worktrees a lane is opened in — checkouts of this repo, never content of it.
 .lanes/
 /journal-skills/
+
+# The agent journal's own runtime, installed and updated by the journal itself — never our source.
+# What IS ours is .journal-plugin/, the manifest that makes this package one of its plugins.
+/.journal/
 __pycache__/
 
 # The Go binary, built with `go build -o bin/commandments-go ./cmd/commandments`.
