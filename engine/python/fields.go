@@ -121,7 +121,7 @@ func (p *Program) isValue(annotation Node) bool {
 		annotation = optional
 	}
 	spelled := annotation.SpelledType()
-	_, dataclass := p.Dataclass(spelled)
+	_, dataclass := p.Dataclass(annotation)
 
 	return slices.Contains(scalars, spelled) || p.IsEnum(spelled) || dataclass
 }

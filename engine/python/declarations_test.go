@@ -31,7 +31,7 @@ func TestEveryClassIsDeclaredAsThePHPEngineReadsIt(t *testing.T) {
 				got.Enum = []string{}
 			}
 		}
-		_, got.Dataclass = program.Dataclass(class.Name())
+		got.Dataclass = class.IsDataclass()
 		for _, method := range class.Methods() {
 			owned := program.OwnedParameters(method, class)
 			if owned == nil {

@@ -13,17 +13,16 @@ var enumRoots = []string{"Enum", "StrEnum", "IntEnum", "Flag", "IntFlag", "ReprE
 // is one, as literal keys, its TypedDicts, and its dataclasses. The values are kept per enum, never by name, so a
 // plain class sharing an enum's name never hides the enum's members.
 type declarations struct {
-	once        sync.Once
-	enums       map[string]bool
-	values      [][]string
-	typedDicts  map[string]bool
-	dataclasses map[string]Node
+	once       sync.Once
+	enums      map[string]bool
+	values     [][]string
+	typedDicts map[string]bool
 }
 
 func (p *Program) declared() *declarations {
 	p.names.once.Do(func() {
 		p.names.enums = map[string]bool{}
-		p.names.typedDicts, p.names.dataclasses = map[string]bool{}, map[string]Node{}
+		p.names.typedDicts = map[string]bool{}
 		var classes []Node
 		for _, module := range p.modules {
 			for _, node := range module.Nodes() {
@@ -46,9 +45,6 @@ func (p *Program) declared() *declarations {
 			}
 			if slices.ContainsFunc(class.ChildrenIn("bases"), isTypedDictBase) {
 				p.names.typedDicts[class.Name()] = true
-			}
-			if class.IsDataclass() {
-				p.names.dataclasses[class.Name()] = class
 			}
 		}
 	})
@@ -81,11 +77,15 @@ func (p *Program) IsTypedDict(name string) bool {
 	return p.declared().typedDicts[name]
 }
 
-// Dataclass is the dataclass the program declares under the name, the last declared where several share it.
-func (p *Program) Dataclass(name string) (Node, bool) {
-	class, ok := p.declared().dataclasses[name]
+// Dataclass is the dataclass the node spells, read in the module that wrote it: a name is resolved to the
+// class it names THERE, never matched against every class of that name in the program.
+func (p *Program) Dataclass(spelled Node) (Node, bool) {
+	class, ok := p.ClassNamed(spelled, p.ModuleOf(spelled))
+	if !ok || !class.IsDataclass() {
+		return Node{}, false
+	}
 
-	return class, ok
+	return class, true
 }
 
 // isEnumBase says whether the base names a standard enum or an enum the program declares.

@@ -4,15 +4,15 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Haulier:
+class Courier:
     code: str
     collects_on: str
 
 
-HAULIERS = [
-    Haulier("swiftpost", "weekdays"),
-    Haulier("harbour", "weekends"),
-    Haulier("nightowl", "weekends"),
+COURIERS = [
+    Courier("swiftpost", "weekdays"),
+    Courier("harbour", "weekends"),
+    Courier("nightowl", "weekends"),
 ]
 
 # @sin SideTableTrait

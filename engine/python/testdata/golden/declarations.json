@@ -150,7 +150,7 @@
     "shop.basket_totals.Basket@shop/basket_totals.py:4": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": [],
             "total": []
@@ -159,7 +159,7 @@
     "shop.billing.invoice.Invoice@shop/billing/invoice.py:6": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": [],
             "lines": []
@@ -261,7 +261,7 @@
             "number:2"
         ],
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {}
     },
     "shop.carrier_profiles.ParcelLimits@shop/carrier_profiles.py:22": {
@@ -321,7 +321,7 @@
     "shop.cart_totals.Basket@shop/cart_totals.py:26": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": [],
             "to_json": []
@@ -617,7 +617,7 @@
     "shop.dispatch_desk.Parcel@shop/dispatch_desk.py:5": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": []
         }
@@ -1114,7 +1114,7 @@
     "shop.notes.Order@shop/notes.py:6": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": [],
             "has_note": [],
@@ -1420,7 +1420,7 @@
     "shop.picking_waves.Pallet@shop/picking_waves.py:22": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": [],
             "move": [],
@@ -1507,7 +1507,7 @@
     "shop.pricing.Line@shop/pricing.py:5": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": []
         }
@@ -2118,7 +2118,7 @@
     "shop.shipping_quotes.Parcel@shop/shipping_quotes.py:5": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": []
         }
@@ -2134,7 +2134,7 @@
     "shop.shipping_rates.Pallet@shop/shipping_rates.py:18": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "rate_cents": []
         }
@@ -2142,7 +2142,7 @@
     "shop.shipping_rates.Parcel@shop/shipping_rates.py:5": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": [],
             "rate_cents": []
@@ -2165,7 +2165,7 @@
     "shop.stamp_cards.StampCard@shop/stamp_cards.py:4": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "__init__": [],
             "close_with": []
@@ -2419,7 +2419,7 @@
     "shop.tax_rates.TaxTable@shop/tax_rates.py:5": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "load": []
         }
@@ -2505,7 +2505,7 @@
     "shop.till_sessions.Cashier@shop/till_sessions.py:4": {
         "enum": null,
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {}
     },
     "shop.till_sessions.TillSession@shop/till_sessions.py:8": {
@@ -2545,7 +2545,7 @@
             "number:2"
         ],
         "typedDict": false,
-        "dataclass": true,
+        "dataclass": false,
         "owned": {
             "rate": []
         }

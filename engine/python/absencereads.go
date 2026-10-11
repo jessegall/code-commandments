@@ -430,7 +430,7 @@ func (n Node) FieldDeclaration(name string) Node {
 // FillsRequiredTextWithBlank says whether the call builds a dataclass of the program and hands one of its required
 // text fields an empty string: a placeholder filling a field the class says must hold text.
 func (p *Program) FillsRequiredTextWithBlank(call Node) bool {
-	class, ok := p.Dataclass(call.Callee().DottedName())
+	class, ok := p.Dataclass(call.Callee())
 	if !call.IsCall() || !ok {
 		return false
 	}
