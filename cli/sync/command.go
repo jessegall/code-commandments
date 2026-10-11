@@ -19,10 +19,6 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// BriefingBlock names the block the brief is kept in, in AGENTS.md: the canon itself is the map skill, loadable,
-// so the instruction file carries only what must be read before any of it.
-const BriefingBlock = "code-commandments briefing"
-
 // retiredCommands are commands the tool once published into an agent's folder, removed by exact name.
 var retiredCommands = []string{"until.md", "stop-condition.md"}
 
@@ -83,11 +79,12 @@ func Sync(root string, console cli.Console) error {
 		return err
 	}
 
-	canon := agents.InstructionsAt(filepath.Join(root, "AGENTS.md"), root)
-	warn(console, canon.Inject(BriefingBlock, library.Brief(root, project)))
+	for _, refusal := range agents.Brief(root, project) {
+		warn(console, refusal)
+	}
 
 	for _, agent := range kept {
-		wire(root, agent, lib, published, canon, console)
+		wire(root, agent, lib, published, console)
 	}
 
 	if changed, _, err := EnsureComposerHook(root); err != nil {
@@ -124,9 +121,10 @@ func Sync(root string, console cli.Console) error {
 	return nil
 }
 
-// wire points the agent at what was published: a link per skill in its own folder, its commands, its own
-// instructions file, and whatever else it wires.
-func wire(root string, agent agents.Agent, lib library.Library, published []string, canon agents.Instructions, console cli.Console) {
+// wire points the agent at what was published: a link per skill in its own folder, the commands it no longer
+// publishes, and, for an agent that enforces, the hooks. What a project is TOLD is agents.Brief's, written for
+// every agent at once.
+func wire(root string, agent agents.Agent, lib library.Library, published []string, console cli.Console) {
 	if dir := agent.SkillsDir(); dir != "" {
 		os.RemoveAll(filepath.Join(root, dir, "commandments"))
 
@@ -140,14 +138,6 @@ func wire(root string, agent agents.Agent, lib library.Library, published []stri
 	if dir := agent.CommandsDir(); dir != "" {
 		for _, retired := range retiredCommands {
 			os.Remove(filepath.Join(root, dir, retired))
-		}
-	}
-
-	if file := agent.InstructionsFile(); file != "" {
-		instructions := agents.InstructionsAt(filepath.Join(root, file), root)
-
-		if !instructions.SameFileAs(canon) {
-			warn(console, instructions.Inject(agent.BlockName(), agent.Instructions(root)))
 		}
 	}
 
