@@ -179,7 +179,7 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 		return answer
 	}
 
-	settlement := settled(moment, event.Root, merged.Activity)
+	settlement := settled(moment, event.Root, merged.Activity, merged.Judged)
 	answer.Raises = append(answer.Raises, settlement.Raises(event.Root)...)
 	answer.Settles = settlement.Settles()
 
@@ -188,10 +188,12 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 
 // settled is what the edit found and repented against the sins already announced, kept in the plugin's
 // data folder and shown on its dashboard; with no folder, every touched sin is new.
-func settled(moment Moment, root string, marks []SinMark) Settlement {
+func settled(moment Moment, root string, marks []SinMark, read []string) Settlement {
 	data := os.Getenv(pluginData)
+	reconsidered := append(read, named(moment.File)...)
+
 	if data == "" {
-		return Forgotten().Settle(root, moment.File, marks)
+		return Forgotten().Settle(root, reconsidered, marks)
 	}
 
 	var findings []engine.Finding
@@ -207,7 +209,18 @@ func settled(moment Moment, root string, marks []SinMark) Settlement {
 	}
 
 	dashboard.Record(workspace.At(root, ""), findings, judged)
-	return AnnouncedIn(data, moment).Settle(root, moment.File, marks)
+	return AnnouncedIn(data, moment).Settle(root, reconsidered, marks)
+}
+
+// named is the file the moment names, or none where it names a tool that writes without saying which file: a
+// shell command that rewrites a file names nothing, and the sins of that file would otherwise never be
+// reconsidered however often it is judged.
+func named(file *string) []string {
+	if file == nil || *file == "" {
+		return nil
+	}
+
+	return []string{*file}
 }
 
 // resolved is the file with its links resolved, a relative one read from the folder the moment happened in.

@@ -93,6 +93,7 @@ func (SkillReminder) Handle(event Event) Response {
 	}
 
 	response.Activity = activity
+	response.Judged = files
 
 	return response
 }

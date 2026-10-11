@@ -22,6 +22,9 @@ type Response struct {
 	instructions *string
 	// Activity is every sin a check found in the files it read, said to the harness or not.
 	Activity []SinMark
+	// Judged is every file the check read, whether it found anything in it or not: a file whose sins are all
+	// gone yields no marks, and without naming it here nothing would ever settle them.
+	Judged []string
 }
 
 // Silent says nothing.
@@ -59,10 +62,12 @@ func Instructing(text string) Response {
 func Merge(responses []Response) Response {
 	var reasons, contexts, instructions []string
 	var activity []SinMark
+	var judged []string
 	quietly := true
 
 	for _, response := range responses {
 		activity = append(activity, response.Activity...)
+		judged = append(judged, response.Judged...)
 
 		if response.blockReason != nil {
 			reasons = append(reasons, *response.blockReason)
@@ -80,6 +85,7 @@ func Merge(responses []Response) Response {
 
 	merged := merge(reasons, contexts, instructions, quietly)
 	merged.Activity = activity
+	merged.Judged = judged
 
 	return merged
 }

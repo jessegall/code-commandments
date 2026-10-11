@@ -28,7 +28,7 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 		marks = append(marks, SinMark{rule, match, true})
 	}
 
-	found := AnnouncedIn(data, Moment{}).Settle(root, &file, marks)
+	found := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, marks)
 	raised := found.Raises(root)
 	if len(found.Found) != 1 || len(raised) != 1 || raised[0].Key != marks[0].Key(root) || len(found.Settles()) != 0 {
 		t.Fatalf("the sinful edit raised %+v and settles %v", raised, found.Settles())
@@ -39,12 +39,12 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	repented := AnnouncedIn(data, Moment{}).Settle(root, &file, nil)
+	repented := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, nil)
 	if !slices.Equal(repented.Settles(), []string{raised[0].Key}) {
 		t.Errorf("the repenting edit settles %v, want %v", repented.Settles(), raised[0].Key)
 	}
 
-	if again := AnnouncedIn(data, Moment{}).Settle(root, &file, nil); len(again.Settles()) != 0 {
+	if again := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, nil); len(again.Settles()) != 0 {
 		t.Errorf("a sin repented once is settled again: %v", again.Settles())
 	}
 }
@@ -114,7 +114,7 @@ func TestASinEditedInPlaceKeepsTheMarkItWasFoundUnder(t *testing.T) {
 
 	first := marksIn(codebase)
 	firstID := first[0].ID(root)
-	raised := AnnouncedIn(data, Moment{}).Settle(root, &file, first).Raises(root)
+	raised := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, first).Raises(root)
 	if len(raised) != 1 {
 		t.Fatalf("the sinful edit raised %+v", raised)
 	}
@@ -128,13 +128,13 @@ func TestASinEditedInPlaceKeepsTheMarkItWasFoundUnder(t *testing.T) {
 	if len(edited) != 1 || edited[0].ID(root) == firstID {
 		t.Fatalf("the edit in place did not change the sin's identity: %v", edited)
 	}
-	kept := AnnouncedIn(data, Moment{}).Settle(root, &file, edited)
+	kept := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, edited)
 	if len(kept.Raises(root)) != 0 || len(kept.Settles()) != 0 {
 		t.Errorf("the edit in place raised %+v and settles %v", kept.Raises(root), kept.Settles())
 	}
 
 	write("def refund(order) -> int:\n    if order.late:  # past due\n        raise ValueError(order)\n    return order.total\n")
-	if repented := AnnouncedIn(data, Moment{}).Settle(root, &file, nil); !slices.Equal(repented.Settles(), []string{raised[0].Key}) {
+	if repented := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, nil); !slices.Equal(repented.Settles(), []string{raised[0].Key}) {
 		t.Errorf("the repenting edit settles %v, want %v", repented.Settles(), raised[0].Key)
 	}
 }

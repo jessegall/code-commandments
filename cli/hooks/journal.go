@@ -327,7 +327,7 @@ func Forgotten() Announced {
 // Settle records what the moment changed: the touched sins not announced before are found, and a sin
 // announced for the edited file that the file no longer holds is repented, as is every sin announced for a file
 // that is gone, deleted by a shell command the plugin sees no file of.
-func (a Announced) Settle(root string, edited *string, marks []SinMark) Settlement {
+func (a Announced) Settle(root string, read []string, marks []SinMark) Settlement {
 	var files []string
 	now := map[string][]SinMark{}
 
@@ -340,18 +340,19 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) Settleme
 		now[file] = append(now[file], mark)
 	}
 
-	judged := ""
-	if edited != nil {
-		judged = source.Relative(root, *edited)
+	judged := map[string]bool{}
+	for _, each := range read {
+		file := source.Relative(root, each)
+		judged[file] = true
 
-		if _, seen := now[judged]; !seen {
-			files = append(files, judged)
+		if _, seen := now[file]; !seen && !slices.Contains(files, file) {
+			files = append(files, file)
 		}
 	}
 
 	gone := map[string]bool{}
 	for _, file := range a.files.Keys() {
-		if _, seen := now[file]; seen || file == judged {
+		if _, seen := now[file]; seen || judged[file] {
 			continue
 		}
 
@@ -385,7 +386,7 @@ func (a Announced) Settle(root string, edited *string, marks []SinMark) Settleme
 		kept := jsonfile.NewObject()
 
 		for _, id := range before.Keys() {
-			if _, holding := holds[id]; file != judged && !gone[file] || holding {
+			if _, holding := holds[id]; !judged[file] && !gone[file] || holding {
 				value, _ := before.Get(id)
 				kept.Set(id, value)
 			}
