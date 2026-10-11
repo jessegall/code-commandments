@@ -12,7 +12,7 @@ import (
 
 func TestTheSchemaOffersEveryShippedDetectorByName(t *testing.T) {
 	var schema map[string]any
-	if err := json.Unmarshal(Schema(), &schema); err != nil {
+	if err := json.Unmarshal(Schema(t.TempDir()), &schema); err != nil {
 		t.Fatal(err)
 	}
 
@@ -33,7 +33,7 @@ func TestTheSchemaOffersEveryShippedDetectorByName(t *testing.T) {
 		}
 	}
 
-	if !strings.Contains(string(Schema()), `"const": "backend/ArrayBagDetector"`) {
+	if !strings.Contains(string(Schema(t.TempDir())), `"const": "backend/ArrayBagDetector"`) {
 		t.Error("the schema does not name backend/ArrayBagDetector")
 	}
 }

@@ -15,12 +15,14 @@ import (
 // batchSeparator parts the commit a batch was reminded at from what the marker file says about itself.
 const batchSeparator = "-----"
 
-// batchExplanation is what the marker file says about itself.
-const batchExplanation = "Batch marker for the code-commandments judge reminder (`commandments judge-reminder`, wired as\n" +
-	"Stop + PreToolUse hooks). The line above the separator is the commit it last reminded at: a\n" +
-	"batch is the work on top of one commit, so it nudges once per batch to run `judge`, silent\n" +
-	"until the next commit, and clears itself when the tree is clean. Safe to delete — it\n" +
-	"regenerates, at most costing you one extra nudge."
+// batchExplanation is what the marker file says about itself, naming the executable the project at root runs.
+func batchExplanation(root string) string {
+	return "Batch marker for the code-commandments judge reminder (`" + binary.Invocation(root) + " judge-reminder`, wired as\n" +
+		"Stop + PreToolUse hooks). The line above the separator is the commit it last reminded at: a\n" +
+		"batch is the work on top of one commit, so it nudges once per batch to run `judge`, silent\n" +
+		"until the next commit, and clears itself when the tree is clean. Safe to delete — it\n" +
+		"regenerates, at most costing you one extra nudge."
+}
 
 // JudgeReminderAbout is what `judge-reminder` says it is.
 const JudgeReminderAbout = "A \"did you judge?\" nudge wired to `Stop` and `PreToolUse` hooks; reminds when judged files are touched but unchecked, deduped per changed-file set."
@@ -104,7 +106,7 @@ func Reminder(event Event, lead string) (string, bool) {
 	}
 
 	os.MkdirAll(filepath.Dir(marker), 0o777)
-	os.WriteFile(marker, []byte(tree.Head+"\n"+batchSeparator+"\n"+batchExplanation+"\n"), 0o666)
+	os.WriteFile(marker, []byte(tree.Head+"\n"+batchSeparator+"\n"+batchExplanation(event.Root)+"\n"), 0o666)
 
 	noun := "files"
 	if len(mine) == 1 {

@@ -11,9 +11,11 @@ const (
 	separator = "\t"
 )
 
-// NamesLegend is what the names file says about itself.
+// NamesLegend is what the names file says about itself. It names the `session name` command without an
+// executable in front of it: where that executable is, is cli/binary's answer, and cli/binary reads this package,
+// so a path written here would be a guess rather than the fact the rest of the tool states once.
 var NamesLegend = &state.Legend{
-	About: "The names this project has given its sessions (`commandments session name \"<name>\"`). A " +
+	About: "The names this project has given its sessions (the `session name` command). A " +
 		"session folder is a hash by default; a named one IS the name, and this says which id " +
 		"it belongs to so an agent can still find its own folder from the id it was given.",
 	List: "one `name<TAB>session-id` per line. The NAME is the folder under `sessions/`, and the " +

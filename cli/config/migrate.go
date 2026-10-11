@@ -41,7 +41,7 @@ func Migrate(dir string) (bool, error) {
 // version of the tool ships; false when it already holds them.
 func WriteSchema(dir string) (bool, error) {
 	path := filepath.Join(filepath.Dir(workspace.JSONConfig(dir)), SchemaFile)
-	schema := Schema()
+	schema := Schema(dir)
 
 	if current, err := os.ReadFile(path); err == nil && string(current) == string(schema) {
 		return false, nil

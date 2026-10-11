@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -19,15 +20,16 @@ const ownRule = `^[A-Za-z_][A-Za-z0-9_]*$`
 
 // Schema is the JSON Schema of config.json: every key described, and every shipped rule, language and
 // hook offered by name, so an editor completes a config and explains it in place of comments.
-func Schema() []byte {
+func Schema(root string) []byte {
+	tool := binary.Invocation(root)
 	schema := object{
 		"$schema":              "https://json-schema.org/draft/2020-12/schema",
 		"title":                "code-commandments project config",
-		"description":          "How `commandments judge` reads this project. Every key is optional; `commandments config` shows what runs.",
+		"description":          "How `" + tool + " judge` reads this project. Every key is optional; `" + tool + " config` shows what runs.",
 		"type":                 "object",
 		"additionalProperties": false,
 		"properties": object{
-			"$schema":  object{"type": "string", "description": "The schema this file is checked against, written by `commandments sync`."},
+			"$schema":  object{"type": "string", "description": "The schema this file is checked against, written by `" + tool + " sync`."},
 			"paths":    list("The source roots judge scans when it is given no path, relative to the project.", object{"type": "string"}),
 			"exclude":  list("Paths never reported on nor rewritten; they are still parsed, so findings elsewhere stay correct.", object{"type": "string"}),
 			"parallel": object{"type": "integer", "minimum": 1, "description": "How many detectors judge runs at once when no --parallel says; more use more cores and memory. Left out, judge runs 2."},

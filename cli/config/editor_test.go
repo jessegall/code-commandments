@@ -41,7 +41,7 @@ func TestAProjectWithNoConfigStartsWithConfigJSON(t *testing.T) {
 func TestAProjectWithOnlyConfigPHPKeepsEditingIt(t *testing.T) {
 	dir := t.TempDir()
 	must(t, os.MkdirAll(filepath.Join(dir, ".commandments"), 0o755))
-	must(t, os.WriteFile(workspace.Config(dir), []byte(Render([]string{"src"})), 0o644))
+	must(t, os.WriteFile(workspace.Config(dir), []byte(Render(dir, []string{"src"})), 0o644))
 
 	if name := EditorIn(dir).Name(); name != ".commandments/config.php" {
 		t.Errorf("edits %s", name)

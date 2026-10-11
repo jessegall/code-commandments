@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,11 +16,11 @@ const template = "<?php\n\ndeclare(strict_types=1);\n\nuse JesseGall\\CodeComman
 	" | code-commandments configuration.\n" +
 	" |\n" +
 	" | paths()   — the source roots judge and repent scan (auto-detected on first run; edit to\n" +
-	" |             adjust scope, or run `commandments config reindex`).\n" +
+	" |             adjust scope, or run `%BINARY% config reindex`).\n" +
 	" | exclude() — subtract explicit paths ON TOP of paths(): a dir or file listed here is never a\n" +
 	" |             target (never reported, never rewritten), e.g. $config->exclude('app/Generated').\n" +
 	" | disable() — silence a rule by its Sin, Detector, or whole Skill class, or a Claude Code\n" +
-	" |             hook by its class (or use `commandments disable/enable <sin>`). The\n" +
+	" |             hook by its class (or use `%BINARY% disable/enable <sin>`). The\n" +
 	" |             $disabledSkills / $disabledSins / $disabledHooks menus below list every one.\n" +
 	" |\n" +
 	" | Extend it inside the closure:\n" +
@@ -45,9 +46,16 @@ func ScribeIn(dir string) Scribe {
 	return Scribe{workspace.Config(dir)}
 }
 
-// Render is the starting config with these roots.
-func Render(roots []string) string {
-	return strings.Replace(template, "%ROOTS%", renderRoots(roots), 1)
+// Root is the project the config belongs to: the folder above the .commandments the file sits in.
+func (s Scribe) Root() string {
+	return filepath.Dir(filepath.Dir(s.path))
+}
+
+// Render is the starting config with these roots, telling the project at root to run the executable it has.
+func Render(root string, roots []string) string {
+	written := strings.Replace(template, "%ROOTS%", renderRoots(roots), 1)
+
+	return strings.ReplaceAll(written, "%BINARY%", binary.Invocation(root))
 }
 
 // Scaffold writes the starting config when the project has none; false when it already has one.
@@ -60,7 +68,7 @@ func (s Scribe) Scaffold(roots []string) (bool, error) {
 		return false, err
 	}
 
-	return true, os.WriteFile(s.path, []byte(Render(roots)), 0o644)
+	return true, os.WriteFile(s.path, []byte(Render(s.Root(), roots)), 0o644)
 }
 
 // EnsurePaths fills an empty paths() with the roots.

@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -77,8 +76,8 @@ func (f File) Enable(class string) (bool, error) {
 }
 
 func (f File) scaffoldIfMissing() error {
-	root := filepath.Dir(filepath.Dir(f.path))
-	_, err := Scribe{f.path}.Scaffold(DetectRoots(root))
+	scribe := Scribe{f.path}
+	_, err := scribe.Scaffold(DetectRoots(scribe.Root()))
 
 	return err
 }
