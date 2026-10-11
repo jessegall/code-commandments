@@ -32,8 +32,12 @@ export async function stream({ paths, write = [], renames = [], contents = {}, c
     const sources = new Map(files.map((path) => [path, Object.hasOwn(contents, path) ? new Source(path, contents[path]) : Source.read(path)]))
     const sfcs = new Map(files.filter((path) => path.endsWith('.vue')).map((path) => [path, new Sfc(sources.get(path))]))
     const scripts = new Map([...sfcs].map(([path, sfc]) => [path, sfc.checkedText()]))
-    const program = new Program(sources, scripts, renames)
-    const kept = cache ? new TreeCache(cache, program, new Map([...sources].map(([path, source]) => [path, source.text])), scripts) : undefined
+    const whole = new Program(sources, scripts, renames)
+    const kept = cache ? new TreeCache(cache, whole, new Map([...sources].map(([path, source]) => [path, source.text])), scripts) : undefined
+    const parsed = kept ? files.filter((path) => !kept.fresh(path) || kept.reaches(path)) : files
+    // The cache answers which files need a program, and it reads their imports through one, so the program over
+    // every file is built first and stands when every file needs it; a run needing fewer gets one over those alone.
+    const program = parsed.length === files.length ? whole : new Program(sources, scripts, renames, parsed)
     const language = sfcs.size ? 'vue' : 'typescript'
     const totals = { expressions: 0, typed: 0, calls: 0, resolved: 0 }
     await emit({ header: { contract: 'tree', version: 1, language, bridge: { name: NAME, version: VERSION }, roots: roots.map((root) => program.shown(root)) } })

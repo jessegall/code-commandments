@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, renameSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
@@ -10,11 +10,19 @@ const LOCKFILES = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lock
 /** How large a file's line may be and still be kept: a generated file's tree is not worth the disk. */
 const KEPT = 16 << 20
 
+/** How far into an entry its own first line is read, to answer whether the tree below it is still the file's. */
+const META = 1 << 12
+
 /**
  * A file's line as an earlier run wrote it, kept under a key of everything the line was made from: the bridge itself,
- * the compiler options, the renames, the files scanned, the lockfile, every declaration that reaches all files, and
- * the file's own text with the text of every scanned file it imports, however far. A file whose key is unchanged is
- * written from what was kept, and a run where every file is kept never builds the TypeScript program.
+ * the compiler options, the renames, the lockfile, every declaration that reaches all files, and the file's own text
+ * with the text of every file it imports, however far. A file whose key is unchanged is written from what was kept,
+ * and the program is built over the files that are not.
+ *
+ * What the key leaves out is which other files the run scanned. A file's tree is made from its own text, what it
+ * imports and what reaches every file, and nothing else — which is only true because a tree no longer answers for
+ * the program's whole root set. Holding the scan in the key meant one file added or deleted anywhere renewed every
+ * key and orphaned its predecessor, so a project gaining a file paid to read all of it again.
  */
 export class TreeCache {
     /** `folder` holds the lines; `program` reads the options and resolves imports; `texts` maps each path to its text. */
@@ -22,23 +30,63 @@ export class TreeCache {
         this.folder = folder
         mkdirSync(folder, { recursive: true })
         this.keys = keysOf(program, texts, scripts, contextOf(program, texts))
+        this.read = new Map()
+        this.reaching = new Set([...texts].filter(([path, text]) => reachesEveryFile(path, text)).map(([path]) => path))
+    }
+
+    /**
+     * Whether the file's declarations can reach a file that never imports it. Such a file belongs to the program
+     * however fresh its own line is: TypeScript loads a declaration file nothing imports only because it is one of
+     * the files the program was built over, and a global it declares is unresolved in every other file without it.
+     */
+    reaches(path) {
+        return this.reaching.has(path)
+    }
+
+    /** Whether a line is kept for `path` under its key now, read from the entry's own first line alone. */
+    fresh(path) {
+        return this.metaOf(path) !== undefined
     }
 
     /** The line kept for `path` under its key now, with where a file's `context` mark goes and its counts; none when stale. */
     kept(path) {
+        const meta = this.metaOf(path)
+        if (!meta) return undefined
+        const stored = readFileSync(this.entryOf(path), 'utf8')
+
+        return { line: stored.slice(stored.indexOf('\n') + 1), at: meta.at, totals: meta.totals }
+    }
+
+    /** The entry's own first line, read without its tree, when it was written under the key `path` has now. */
+    metaOf(path) {
+        if (!this.read.has(path)) this.read.set(path, this.firstLineOf(path))
+        const first = this.read.get(path)
+        if (first === undefined) return undefined
+        const meta = JSON.parse(first)
+
+        return meta.key === this.keys.get(path) ? meta : undefined
+    }
+
+    /** The first line of the entry kept for `path`, read on its own; none when no entry is kept or it holds no line. */
+    firstLineOf(path) {
         const entry = this.entryOf(path)
         if (!existsSync(entry)) return undefined
-        const stored = readFileSync(entry, 'utf8')
-        const split = stored.indexOf('\n')
-        const meta = JSON.parse(stored.slice(0, split))
-        if (meta.key !== this.keys.get(path)) return undefined
+        const file = openSync(entry, 'r')
+        try {
+            const buffer = Buffer.alloc(META)
+            const read = readSync(file, buffer, 0, META, 0)
+            const first = buffer.subarray(0, read).indexOf(0x0a)
 
-        return { line: stored.slice(split + 1), at: meta.at, totals: meta.totals }
+            return first === -1 ? undefined : buffer.subarray(0, first).toString('utf8')
+        } finally {
+            closeSync(file)
+        }
     }
 
     /** Keeps `line` for `path`, `at` where its `context` mark goes, with the file's counts, unless the line is too large. */
     keep(path, line, at, totals) {
         if (line.length > KEPT) return
+        this.read.delete(path)
         const entry = this.entryOf(path)
         const draft = `${entry}.${process.pid}`
         writeFileSync(draft, JSON.stringify({ key: this.keys.get(path), at, totals }) + '\n' + line)
@@ -50,10 +98,9 @@ export class TreeCache {
     }
 }
 
-/** What every file's line is made from beside its own imports: the bridge, the options, the scan, the dependencies. */
+/** What every file's line is made from beside its own imports: the bridge, the options, the dependencies. */
 function contextOf(program, texts) {
     const parts = [hashed(readFileSync(fileURLToPath(import.meta.url))), JSON.stringify(program.options), JSON.stringify(program.renames)]
-    parts.push(...[...texts.keys()].sort())
     for (const name of LOCKFILES) {
         const lockfile = join(program.root, name)
         if (existsSync(lockfile)) parts.push(name, hashed(readFileSync(lockfile)))

@@ -32,8 +32,13 @@ const DEFAULTS = {
  * `import X from './X.vue'` resolves to it the way TypeScript resolves any extension.
  */
 export class Program {
-    /** `sources` maps each absolute path to its Source; `scripts` maps a `.vue` path to its checked text. */
-    constructor(sources, scripts, renames) {
+    /**
+     * `sources` maps each absolute path to its Source; `scripts` maps a `.vue` path to its checked text; `parsed`
+     * are the files the program is built over, every scanned file unless a caller knows the smaller set that needs
+     * one. A file left out is still read, and still resolved to as an import, so a run that needs a few files does
+     * not pay for a program over the rest.
+     */
+    constructor(sources, scripts, renames, parsed = [...sources.keys()]) {
         this.sources = sources
         this.renames = renames
         this.virtual = new Map([...scripts].map(([path, text]) => [path + VIRTUAL, text]))
@@ -42,7 +47,7 @@ export class Program {
         this.aliases = aliasesOf(root)
         this.options = this.optionsFor(root)
         this.host = this.hostFor()
-        this.names = [...sources.keys()].map((path) => (scripts.has(path) ? path + VIRTUAL : path))
+        this.names = parsed.map((path) => (scripts.has(path) ? path + VIRTUAL : path))
         /** Each type the checker gives, as the contract describes it, by origin and depth: one checker, so one description. */
         this.described = new Map()
         this.texts = new Map()
