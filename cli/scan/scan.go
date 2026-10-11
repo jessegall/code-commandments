@@ -3,6 +3,7 @@
 package scan
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -32,6 +33,15 @@ type Sources struct {
 // largestSource is the most source a file may hold and still be read: past it a file is generated or minified, and
 // its tree outgrows the line a stream carries it in.
 const largestSource = 2 << 20
+
+// longestWrittenLine is the longest line a person writes. Past it the file is minified, whatever its size: a
+// bundle holds a whole program on a handful of lines, and parsing one costs the memory of everything it was built
+// from while telling nobody anything, since no finding on generated code is a finding anyone can act on.
+const longestWrittenLine = 5000
+
+// smallestBundle is the size under which a line cannot be long enough to matter, so a small file is never read
+// twice to look for one.
+const smallestBundle = 64 << 10
 
 // Given is each walked file's resolved path, back to the path it was walked as: a bridge answers with
 // resolved paths, and a report names a file the way the run was asked for it.
@@ -76,7 +86,7 @@ func Walk(roots []string, excluded source.Excluded) Sources {
 			}
 
 			seen[file] = true
-			if info, err := os.Stat(file); err == nil && info.Size() > largestSource {
+			if info, err := os.Stat(file); err == nil && unreadable(file, info.Size()) {
 				sources.tooLarge = append(sources.tooLarge, file)
 
 				continue
@@ -401,10 +411,48 @@ func sayUnreadable(streams []*contract.Stream) {
 	}
 }
 
-// sayTooLarge names, on STDERR, each file left unread for its size; every other file is still judged.
+// unreadable says whether the file is generated rather than written: more source than a person writes, or a line
+// longer than one. Either way its tree costs what the program it was built from costs, and says nothing back.
+func unreadable(file string, size int64) bool {
+	if size > largestSource {
+		return true
+	}
+
+	return size >= smallestBundle && holdsALongLine(file)
+}
+
+// holdsALongLine says whether any line of the file is longer than a person writes, reading no further than the
+// line that proves it.
+func holdsALongLine(file string) bool {
+	open, err := os.Open(file)
+	if err != nil {
+		return false
+	}
+	defer open.Close()
+
+	reader := bufio.NewReader(open)
+	written := 0
+
+	for {
+		piece, more, err := reader.ReadLine()
+		if err != nil {
+			return false
+		}
+
+		written += len(piece)
+		if written > longestWrittenLine {
+			return true
+		}
+		if !more {
+			written = 0
+		}
+	}
+}
+
+// sayTooLarge names, on STDERR, each file left unread as generated; every other file is still judged.
 func sayTooLarge(files []string) {
 	for _, file := range files {
-		fmt.Fprintf(os.Stderr, "⚠ %s is left unread: it holds more than %d MB of source, a generated or minified file's size; exclude it in the config\n", file, largestSource>>20)
+		fmt.Fprintf(os.Stderr, "⚠ %s is left unread: it is generated or minified — more than %d MB of source, or a line longer than %d characters; exclude it in the config\n", file, largestSource>>20, longestWrittenLine)
 	}
 }
 
