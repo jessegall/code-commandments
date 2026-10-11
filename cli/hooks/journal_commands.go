@@ -3,6 +3,7 @@ package hooks
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jessegall/code-commandments/cli/agents"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"os"
 	"path/filepath"
@@ -259,16 +260,43 @@ func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, err
 	}
 
-	if changed == 0 {
+	var said []string
+
+	if changed > 0 {
+		said = append(said, editor.Name()[len(".commandments/"):]+" follows the plugin's switches: "+strconv.Itoa(changed)+" changed")
+	}
+
+	said = append(said, brief(root)...)
+
+	if len(said) == 0 {
 		console.Say("{}")
 
 		return 0, nil
 	}
 
-	text, _ := jsonfile.Compact(jsonfile.NewObject("notify", editor.Name()[len(".commandments/"):]+" follows the plugin's switches: "+strconv.Itoa(changed)+" changed"), true)
+	text, _ := jsonfile.Compact(jsonfile.NewObject("notify", strings.Join(said, "; ")), true)
 	console.Say(text)
 
 	return 0, nil
+}
+
+// brief refreshes what the project is told, so a fix to the briefing reaches a project the journal drives and not
+// only one composer installs, and says what it could not write. A file it refuses is named and left as it was: the
+// upgrade carries on, because the switches it has already applied must not be undone by a marker a reader once
+// typed by hand, and nothing is written silently past a refusal either.
+func brief(root string) []string {
+	project, err := config.Load(root)
+	if err != nil {
+		return []string{"the briefing was left alone: " + err.Error()}
+	}
+
+	var said []string
+
+	for _, refusal := range agents.Brief(root, project) {
+		said = append(said, "the briefing was left alone: "+refusal.Error())
+	}
+
+	return said
 }
 
 // everySin is every sin the tool ships, those still calibrating included, engine by engine.
