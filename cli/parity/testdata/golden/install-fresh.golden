@@ -420,13 +420,13 @@ sha256 d61a9bb1fa290a41353c36f41f271bade2d947942738fcbc26146a3c5f8f59fb
 === created .agents/skills/commandments-python-role-vocabulary/reference/detectors.md
 sha256 0232ea4d0a819741c1445d11c8f8fc15843920256776191b268b5d70e23f21cf
 === created .agents/skills/commandments-python-tell-dont-ask/SKILL.md
-sha256 c6c0754ea095908ec30e027efdb1d463923e5e1b4f59318537ec69d78ed6898d
+sha256 f541c10c89fa4812732540bb5e3b9a2262fbcbbdd8f24fb5da8d3fa9191cb3d2
 === created .agents/skills/commandments-python-tell-dont-ask/evals/triggers.json
 sha256 59b0817c6e9f0694f9b547839f1107c4ac85a49670fb6c0482377c447aa44b61
 === created .agents/skills/commandments-python-tell-dont-ask/reference/detectors.md
-sha256 8df89824b369818bcd251f8afb53a292aa98940aab5b337c08ea9ac9b62dc1ec
+sha256 98b33776aaa15c1269b5db42c0116bc89323e074440dd1a468fca5af2a4c75cb
 === created .agents/skills/commandments-python-tell-dont-ask/reference/examples.md
-sha256 9c1a9d5d00b8347d49756d32e9c489a9ca0e8f74843b3ad06133f6b4ebb42f0b
+sha256 0beb271e3eacea10105846c90bf6bd954357f86145f2b51c612466a080279876
 === created .agents/skills/commandments-python-templates/SKILL.md
 sha256 6b6f306e7968ee58989305fadb9406e4d40da088f9c4681802d19db12c079d33
 === created .agents/skills/commandments-python-templates/evals/triggers.json

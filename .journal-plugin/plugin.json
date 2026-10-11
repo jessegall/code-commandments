@@ -3233,6 +3233,19 @@
             ],
             "detail": true
         },
+        "sin_python-side-table-trait": {
+            "title": "SideTableTrait",
+            "help": "a trait of a type kept in a collection of its instances' names beside the registry, rather than as a field each instance answers for itself",
+            "type": "flag",
+            "default": "true",
+            "group": "python/tell-dont-ask",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-type-switch": {
             "title": "TypeSwitch",
             "help": "an `isinstance` ladder over classes the codebase owns — the value is asked what it is so the caller can decide what to do.",

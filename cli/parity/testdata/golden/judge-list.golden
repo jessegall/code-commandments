@@ -245,6 +245,7 @@ exit: 0
 [1;33mpython/tell-dont-ask[0m
   FeatureEnvyDetector
   KeyedLookupEnvyDetector
+  SideTableTraitDetector
   TypeSwitchDetector
 [1;33mpython/templates[0m
   AssembledTemplateDetector

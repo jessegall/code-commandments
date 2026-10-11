@@ -1,5 +1,7 @@
 package python
 
+import "slices"
+
 // IsModuleLevelAssign says whether the assignment stands at the module's own level, not inside a def or a class.
 func (n Node) IsModuleLevelAssign() bool {
 	return n.Kind() == "Assign" && n.Parent().Kind() == "Module"
@@ -19,14 +21,27 @@ func (n Node) AssignedName() string {
 	return children[0].Name()
 }
 
-// assigned is the value an assignment binds.
+// builders are the names a collection written out is handed to when it is built through a call rather than its
+// own brackets: `frozenset({…})` and `set([…])` hold the same names as `{…}`.
+var builders = []string{"set", "frozenset", "tuple", "list"}
+
+// assigned is the value an assignment binds, through a collection builder to the collection written inside it.
 func (n Node) assigned() Node {
 	children := n.Children()
 	if len(children) != 2 {
 		return Node{}
 	}
 
-	return children[1]
+	value := children[1]
+	if !value.IsCall() || !slices.Contains(builders, value.Callee().DottedName()) {
+		return value
+	}
+
+	if arguments := value.Arguments(); len(arguments) == 1 {
+		return arguments[0]
+	}
+
+	return value
 }
 
 // StringMembers is every member of an assigned set, tuple or list when ALL of them are string literals: the

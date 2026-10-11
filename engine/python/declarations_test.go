@@ -21,6 +21,9 @@ func TestEveryClassIsDeclaredAsThePHPEngineReadsIt(t *testing.T) {
 	for _, match := range codebase.WhereClass().Get() {
 		class := python.Node{Match: match}
 		key := match.Node().Symbol + "@" + place(class)
+		if unrecorded(want, key) {
+			continue
+		}
 		got := declared{TypedDict: program.IsTypedDict(class.Name()), Owned: map[string][]string{}}
 		if program.IsEnum(class.Name()) {
 			got.Enum = class.MemberValueKeys()

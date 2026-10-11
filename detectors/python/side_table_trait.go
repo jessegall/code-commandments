@@ -23,9 +23,6 @@ func (SideTableTraitDetector) Sin() sins.Sin {
 	return pysins.SideTableTrait{}
 }
 
-// Unpublished keeps it out of every catalog while its hits are being read on real code.
-func (SideTableTraitDetector) Unpublished() {}
-
 // Find is every module-level collection of names that are the names of the instances its own module registers,
 // and that the module then uses as a handle on them. The three together are what tells a side table from an
 // ordinary lookup: the names are a type's, there is more than one of them to be a type's, and the module reaches

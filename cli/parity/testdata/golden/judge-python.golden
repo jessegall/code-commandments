@@ -268,17 +268,20 @@ exit: 1
   [36mshop/tax_bands.py:17[0m  call  [2m[NullableRegistryLookupDetector][0m
   [36mshop/voucher_book.py:18[0m  call  [2m[NullableRegistryLookupDetector][0m
 
-[1;33mpython/tell-dont-ask[0m  (9)
+[1;33mpython/tell-dont-ask[0m  (12)
   [1;36m↳ LOAD the skill `commandments-python-tell-dont-ask` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/aisle_signs.py:35[0m  FunctionDef heading  [2m[KeyedLookupEnvyDetector][0m
   [36mshop/allergen_labels.py:26[0m  FunctionDef allergens_of  [2m[KeyedLookupEnvyDetector][0m
+  [36mshop/courier_surcharges.py:19[0m  Assign  [2m[SideTableTraitDetector][0m
   [36mshop/discount_rules.py:24[0m  call  [2m[TypeSwitchDetector][0m
+  [36mshop/label_stock.py:19[0m  Assign  [2m[SideTableTraitDetector][0m
   [36mshop/menu_boards.py:31[0m  FunctionDef vegan_line  [2m[FeatureEnvyDetector][0m
   [36mshop/pallet_loads.py:22[0m  FunctionDef heaviest_crate  [2m[FeatureEnvyDetector][0m
   [36mshop/shipping_rates.py:25[0m  call  [2m[TypeSwitchDetector][0m
   [36mshop/stamp_cards.py:22[0m  FunctionDef redeem  [2m[FeatureEnvyDetector][0m
   [36mshop/stock_movements.py:12[0m  call  [2m[TypeSwitchDetector][0m
+  [36mshop/tag_speech.py:22[0m  Assign  [2m[SideTableTraitDetector][0m
   [36mshop/till_drawers.py:33[0m  FunctionDef came_up_short  [2m[KeyedLookupEnvyDetector][0m
 
 [1;33mpython/templates[0m  (3)
@@ -352,7 +355,7 @@ exit: 1
   [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedReturnDetector][0m
   [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
 
-[1m235 sins[0m across 18 skills.
+[1m238 sins[0m across 18 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

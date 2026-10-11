@@ -13,10 +13,6 @@ func init() {
 	sins.Register(catalog.Python, SideTableTrait{})
 }
 
-// Unpublished keeps it out of every catalog while its detector is being calibrated, so a rule still being
-// read on real code never reaches a consumer's docs.
-func (SideTableTrait) Unpublished() {}
-
 // Definition is what the sin states about itself.
 func (SideTableTrait) Definition() sins.Definition {
 	return sins.Definition{
