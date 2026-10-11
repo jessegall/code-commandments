@@ -6,6 +6,7 @@ use JesseGall\CodeCommandments\Sins\Backend\SideTableTrait;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 
+// @example SideTableTrait good
 /**
  * The same trait, answered by the case instead of listed beside it: a window added tomorrow cannot
  * be written without saying whether it is extended, because the match has no case to fall through to.

@@ -21,9 +21,6 @@ func (SideTableTraitDetector) Sin() sins.Sin {
 	return backendsins.SideTableTrait{}
 }
 
-// Unpublished keeps it out of every catalog while its hits are being read on real code.
-func (SideTableTraitDetector) Unpublished() {}
-
 // Find is every enum holding a constant that lists some — not all — of its own cases, which the enum then reads
 // to answer for them. Listing every case is an ordering or a vocabulary and says nothing about any one case;
 // listing some of them is a trait of those cases, kept where no case can declare it.

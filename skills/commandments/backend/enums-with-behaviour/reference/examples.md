@@ -215,6 +215,60 @@ final class UnknownPriority extends RuntimeException
 }
 ```
 
+### side-table-trait
+
+An enum holding a trait of some of its cases as a constant list of those cases, instead of as something each case answers for itself.
+
+```php
+----------[ Bad ]----------
+
+// in app/Shipping/CarrierService.php
+namespace Shop\Shipping;
+
+/**
+ * Which services need a signature is kept as a list of the cases it is true of, beside the cases
+ * themselves. A service added tomorrow is silently not one of them, and has nowhere to say it is.
+ */
+enum CarrierService: string
+{
+    case Standard = 'standard';
+    case Express = 'express';
+    case Insured = 'insured';
+    case Pallet = 'pallet';
+
+    private const SIGNED_FOR = [self::Insured, self::Pallet];
+
+    public function needsSignature(): bool
+    {
+        return in_array($this, self::SIGNED_FOR, true);
+    }
+}
+
+----------[ Good ]----------
+
+// in app/Shipping/ReturnWindow.php
+namespace Shop\Shipping;
+
+/**
+ * The same trait, answered by the case instead of listed beside it: a window added tomorrow cannot
+ * be written without saying whether it is extended, because the match has no case to fall through to.
+ */
+enum ReturnWindow: string
+{
+    case Fortnight = 'fortnight';
+    case Month = 'month';
+    case Quarter = 'quarter';
+
+    public function isExtended(): bool
+    {
+        return match ($this) {
+            self::Fortnight => false,
+            self::Month, self::Quarter => true,
+        };
+    }
+}
+```
+
 ### string-match-mirrors-enum
 
 `match`/`switch` over string/int literals that mirror an existing backed enum's case values

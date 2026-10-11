@@ -6,6 +6,7 @@ use JesseGall\CodeCommandments\Sins\Backend\SideTableTrait;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Sinful;
 
+// @example SideTableTrait bad
 /**
  * Which services need a signature is kept as a list of the cases it is true of, beside the cases
  * themselves. A service added tomorrow is silently not one of them, and has nowhere to say it is.

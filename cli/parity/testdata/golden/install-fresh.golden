@@ -46,11 +46,11 @@ sha256 6d7d232a8c81c8f77cdd58b997cb7f8fbdf50e0258846ffe573c0481614c6ee4
 === created .agents/skills/commandments-backend-documentation/reference/examples.md
 sha256 a247887aafdb6753490666fd88cc97ce147657cb58796d1eaa1d69784c85caa1
 === created .agents/skills/commandments-backend-enums-with-behaviour/SKILL.md
-sha256 3eb2c105e617e55e70e393efe3da82fb6382fecc5f73fe49bfe178bfb25f0b04
+sha256 dd098a18523fccdf09b88ba4bdcb20d7f93cf5d2b649880f1cab5fa01908003f
 === created .agents/skills/commandments-backend-enums-with-behaviour/reference/detectors.md
-sha256 46dcec5e1c3f7e5aca76062a7edbaf9450cf93487f3e6d869dfa55f223e242d0
+sha256 82effff8af90d928f718ba4a53140d113ca66cfb03159c0e32c4f61ab3b1958d
 === created .agents/skills/commandments-backend-enums-with-behaviour/reference/examples.md
-sha256 ca305dec07a8a057364062ca5882ddf1dfe258d1c74db50df55f1825fb73e8b5
+sha256 831738430fb436b66b476dae6490bf651fc1d88ac1546b4bc47c3c877c796cb3
 === created .agents/skills/commandments-backend-exceptions/SKILL.md
 sha256 5b9f15cf96a35ceb9a5fe81c0ee5293286bea22d130a8b6f3006cdfeaf30409c
 === created .agents/skills/commandments-backend-exceptions/reference/detectors.md

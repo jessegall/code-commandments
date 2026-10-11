@@ -32,6 +32,7 @@ exit: 0
   EnumValueMatchDetector
   InArrayMirrorsEnumDetector
   MatchDefaultReturnsNullDetector
+  SideTableTraitDetector
   StringMatchMirrorsEnumDetector
   UnnamedVocabularyLiteralDetector
 [1;33mbackend/exceptions[0m

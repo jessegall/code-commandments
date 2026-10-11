@@ -487,6 +487,19 @@
             ],
             "detail": true
         },
+        "sin_side-table-trait": {
+            "title": "SideTableTrait",
+            "help": "An enum holding a trait of some of its cases as a constant list of those cases, instead of as something each case answers for itself.",
+            "type": "flag",
+            "default": "true",
+            "group": "backend/enums-with-behaviour",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_string-match-mirrors-enum": {
             "title": "StringMatchMirrorsEnum",
             "help": "`match`/`switch` over string/int literals that mirror an existing backed enum's case values",

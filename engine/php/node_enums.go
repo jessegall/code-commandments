@@ -433,9 +433,29 @@ func hasCase(cases map[string]string, name string) bool {
 }
 
 // ListsSomeOfItsCasesInAConstant says whether the enum keeps a trait of some of its cases as a constant listing
-// them.
+// them, and asks that constant about ONE case — the question a trait answers. Walking the constant is
+// deliberately not that question: a loop over it is a caller choosing which cases to act on, an ordering or a
+// printed subset, and nothing in the tree tells that from a trait.
 func (n Node) ListsSomeOfItsCasesInAConstant() bool {
 	name, listed := n.CasesListedInAConstant()
 
-	return name != "" && len(listed) > 0
+	return name != "" && len(listed) > 0 && n.asksAboutOneCase(name)
+}
+
+// asksAboutOneCase says whether the enum reads the constant as a membership test: `in_array($this, self::X)`.
+func (n Node) asksAboutOneCase(constant string) bool {
+	for _, call := range n.Descendants() {
+		if call.Kind() != "Expr_FuncCall" || call.CalleeName() != "in_array" {
+			continue
+		}
+
+		for _, argument := range (Node{Match: call}).ChildrenIn("args") {
+			held := argument.Child("value")
+			if held.Kind() == "Expr_ClassConstFetch" && held.Child("name").Name() == constant {
+				return true
+			}
+		}
+	}
+
+	return false
 }
