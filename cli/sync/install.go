@@ -6,6 +6,7 @@ import (
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/hooks"
+	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -35,13 +36,15 @@ func (c Install) Run(in *cli.Input, console cli.Console) (int, error) {
 		return help.Usage(console.Err, c, "no composer.json or git repository at or above "+cwd+" — there is no project here to wire."), nil
 	}
 
-	wired, has, err := EnsureComposerHook(root)
-	if err != nil {
-		return 0, err
+	if composer := root + "/composer.json"; fileExists(composer) {
+		if _, read := jsonfile.Read(composer); !read {
+			return help.Usage(console.Err, c, composer+" is not readable JSON — fix it first; rewriting it from here would throw away everything it declares."), nil
+		}
 	}
 
-	if !has && fileExists(root+"/composer.json") {
-		return help.Usage(console.Err, c, root+"/composer.json is not readable JSON — fix it first; rewriting it from here would throw away everything it declares."), nil
+	wired, wires, err := EnsureComposerHook(root)
+	if err != nil {
+		return 0, err
 	}
 
 	hooked, err := hooks.Wire(root)
@@ -52,7 +55,7 @@ func (c Install) Run(in *cli.Input, console cli.Console) (int, error) {
 	switch {
 	case wired:
 		console.Say("✓ Wired `commandments sync` into composer post-update-cmd / post-install-cmd.")
-	case has:
+	case wires:
 		console.Say("✓ composer hooks already wired.")
 	}
 

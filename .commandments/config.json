@@ -5,5 +5,10 @@
         "bridge/php/src",
         "bridge/mypy",
         "bridge/roslyn"
-    ]
+    ],
+    "exclude": [
+        "coverage",
+        "dist"
+    ],
+    "parallel": 2
 }

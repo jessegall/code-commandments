@@ -4,6 +4,7 @@ package binary
 
 import (
 	"os"
+	"slices"
 
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
@@ -87,6 +88,14 @@ func Invocation(root string) string {
 	}
 
 	return Name
+}
+
+// ThroughComposer says whether composer runs the tool in the project at root: the invocation it is given is a PHP
+// entry point, so a composer event has a file of ours to call. A project the agent journal's plugin drives is told
+// the plugin's own binary instead, and never gains the shim, so wiring its install to one would break the next
+// `composer install` on a file composer was never going to create.
+func ThroughComposer(root string) bool {
+	return slices.Contains(candidates, Invocation(root))
 }
 
 // ThroughPlugin is the binary the agent journal's plugin installed in the project at root, relative to it, or

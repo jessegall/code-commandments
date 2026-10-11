@@ -6,9 +6,9 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
-	"runtime"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 

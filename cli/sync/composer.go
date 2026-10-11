@@ -12,8 +12,13 @@ import (
 var composerEvents = []string{"post-update-cmd", "post-install-cmd"}
 
 // EnsureComposerHook makes each composer event end with the call to sync, dropping any older call of ours;
-// changed is false when it already did, and has is false when the project has no composer.json to wire.
-func EnsureComposerHook(root string) (changed, has bool, err error) {
+// changed is false when it already did, and wires is false where composer does not provide the tool at all, since
+// a project it does not install has no shim for a composer event to run and its next install would fail on ours.
+func EnsureComposerHook(root string) (changed, wires bool, err error) {
+	if !binary.ThroughComposer(root) {
+		return false, false, nil
+	}
+
 	path := root + "/composer.json"
 
 	composer, read := jsonfile.Read(path)
