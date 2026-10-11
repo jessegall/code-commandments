@@ -3,6 +3,7 @@
 package sync
 
 import (
+	"github.com/jessegall/code-commandments/cli/hooks"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -150,8 +151,11 @@ func wire(root string, agent agents.Agent, lib library.Library, published []stri
 		}
 	}
 
-	_, err := agent.Wire(root)
-	if err != nil {
+	if !agent.Enforces() {
+		return
+	}
+
+	if _, err := hooks.Wire(root); err != nil {
 		console.Warn(err.Error())
 	}
 }

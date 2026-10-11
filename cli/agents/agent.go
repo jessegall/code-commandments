@@ -31,8 +31,6 @@ type Agent interface {
 	Ignored() []Ignored
 	// Enforces says whether it checks the disciplines through hooks rather than only reading them.
 	Enforces() bool
-	// Wire wires what else the agent needs into the project; false when nothing changed.
-	Wire(root string) (bool, error)
 }
 
 // Ignored is one .gitignore rule under the comment that says why it is there.
@@ -72,14 +70,13 @@ func Unshipped(project config.Config) []string {
 // base answers what an agent that differs in nothing answers.
 type base struct{}
 
-func (base) SkillsDir() string         { return "" }
-func (base) CommandsDir() string       { return "" }
-func (base) InstructionsFile() string  { return "" }
-func (base) BlockName() string         { return "" }
+func (base) SkillsDir() string          { return "" }
+func (base) CommandsDir() string        { return "" }
+func (base) InstructionsFile() string   { return "" }
+func (base) BlockName() string          { return "" }
 func (base) Instructions(string) string { return "" }
-func (base) Ignored() []Ignored        { return nil }
-func (base) Enforces() bool            { return false }
-func (base) Wire(string) (bool, error) { return false, nil }
+func (base) Ignored() []Ignored         { return nil }
+func (base) Enforces() bool             { return false }
 
 // Codex reads the library and AGENTS.md where they already live.
 type Codex struct {

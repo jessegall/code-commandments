@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"strings"
 
-	"github.com/jessegall/code-commandments/cli/hooks"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -47,12 +46,8 @@ func (Claude) Instructions(root string) string {
 
 	return strings.Replace(claudeInstructions, "{{enforced}}", enforced, 1)
 }
-func (Claude) Enforces() bool           { return true }
+func (Claude) Enforces() bool { return true }
 
 func (Claude) Ignored() []Ignored {
 	return []Ignored{{"# code-commandments published skills (regenerated on composer update)", ".claude/skills/commandments-*"}}
-}
-
-func (Claude) Wire(root string) (bool, error) {
-	return hooks.Wire(root)
 }
