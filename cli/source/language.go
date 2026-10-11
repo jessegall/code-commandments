@@ -3,8 +3,8 @@
 package source
 
 import (
-	"slices"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -29,6 +29,12 @@ var Languages = []Language{PHP, Vue, TypeScript, Python, CSharp}
 // module and JSX forms, and JavaScript, as one language.
 var extensions = map[Language][]string{
 	TypeScript: {"tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"},
+}
+
+// Extensions is every extension this language's files carry, its own first: what a reader is told the tool
+// reads, from the same table the walk reads.
+func (l Language) Extensions() []string {
+	return append([]string{string(l)}, extensions[l]...)
 }
 
 // OfFile is the language of the file at path; anything unrecognised reads as PHP.

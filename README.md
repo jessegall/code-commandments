@@ -1,10 +1,24 @@
 # Code Commandments
 
-> A static code checker for PHP & Vue, built to drive AI coding agents.
+> A static code checker for PHP, Vue, TypeScript, Python and C#, built to drive AI coding agents.
 
-**code-commandments** judges a PHP and Vue codebase against a set of architectural
-disciplines. Every violation (a "sin") is reported as a `file:line`, grouped under
-the **skill** that teaches the fix.
+**code-commandments** judges a codebase against a set of architectural disciplines.
+Every violation (a "sin") is reported as a `file:line`, grouped under the **skill**
+that teaches the fix. It reads five languages, each parsed by its own compiler:
+
+<!-- BEGIN: languages-table (auto-generated, run `composer readme`) -->
+| Language | Files |
+|---|---|
+| **PHP** | `.php` |
+| **Vue** | `.vue` |
+| **TypeScript** | `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs`, `.cjs` |
+| **Python** | `.py` |
+| **C#** | `.cs` |
+<!-- END: languages-table -->
+
+One set of disciplines covers them all. A rule is written once against a generic
+syntax tree, so *tell, don't ask* reads the same whether it is judging PHP or C#;
+only the parse differs.
 
 It's built for AI coding agents: point your agent at a codebase and it reads the
 skill each sin names, fixes at the source, and re-runs until clean. You can drive
@@ -45,13 +59,16 @@ One pass of that loop, with an agent driving:
   <img src="docs/agent-loop-session.svg" width="880" alt="An agent running one pass of the loop in a terminal: judge finds four sins across three skills, repent auto-fixes two, the agent fixes feature envy and an array bag at the source, judge comes back clean." />
 </p>
 
-Under the hood there are two layers:
+Under the hood there are three layers:
 
 - **Skills**: the teaching layer. One doc per discipline, the source of truth for
   what "good" looks like.
-- **Sin detectors**: small finders that read the syntax tree. Each finds one kind
-  of sin and names the skill that fixes it. Detectors *find*, skills *teach*,
-  scribes *[auto-fix](#auto-fixing)*.
+- **Sins**: the vocabulary. Each sin is one named fault — what it flags, and the
+  skill that teaches the fix. It is what `--sin=` selects and what a finding is
+  reported as.
+- **Sin detectors**: small finders that read the syntax tree. Each finds one sin
+  and names it. Detectors *find*, skills *teach*, scribes
+  *[auto-fix](#auto-fixing)*.
 
 **You don't need the packages a rule is about.** Detectors match on real *types*,
 so a rule for a package your project doesn't use never fires. Nothing to install
@@ -59,12 +76,24 @@ or configure to keep it quiet.
 
 ## Install
 
+With composer, in a project that has one:
+
 ```bash
 composer require --dev jessegall/code-commandments
 vendor/bin/commandments install
 ```
 
-It runs on macOS, Linux and Windows, and needs PHP 8.3 and composer to install; the
+That needs PHP 8.3 and composer. In a project running the
+[agent journal](https://github.com/jessegall/agent-journal), install it as a journal
+plugin instead — it fetches one static binary and needs no PHP, composer, Go or Docker:
+
+```bash
+journal plugin install https://github.com/jessegall/code-commandments
+```
+
+The two ways share everything but the install: the same rules, the same skills, the same
+commands. See [Under the agent journal](#under-the-agent-journal) for what the plugin
+takes over. It runs on macOS, Linux and Windows; the
 [platforms](docs/requirements.md#platforms) say what each way of installing it needs.
 
 ## Usage
@@ -377,14 +406,17 @@ the schema beside the config lists every one by name.
 
 ## How detectors are tested
 
-Every detector is proven against a **self-checking fixture**: a small, deliberately
-imperfect example app that is never run, only scanned.
+Every detector is proven against a **self-checking fixture**: one small, deliberately
+imperfect example app per language, never run, only scanned.
 
 You mark the exact spots where a detector should fire by naming the **sin**
-(naming the detector class works too):
+(naming the detector class works too) — an attribute in PHP, and elsewhere a comment
+in the language's own syntax:
 
 - in PHP, a `#[Sinful(...)]` attribute;
-- in Vue, a `<!-- @sin ... -->` comment.
+- in Vue, a `<!-- @sin ... -->` comment;
+- in TypeScript and C#, a `// @sin ...` comment;
+- in Python, a `# @sin ...` comment.
 
 ```php
 // tests/Fixtures/backend/app/Orders/RefundService.php
@@ -434,6 +466,10 @@ Any unmarked code is already "righteous", so the whole rest of the fixture guard
 against false positives; you don't mark good code. One `#[Righteous]` /
 `<!-- @righteous -->` per detector is required: a deliberate look-alike the
 detector must NOT flag.
+
+Where the sin is not inside one declaration — an import that crosses a layer, a cycle
+two files tell between them — a `@example <Sin> bad` or `@example <Sin> good` comment
+marks the whole **file** as that half of the published example instead.
 
 A third marker, `#[Fixed(...)]`, is the one the docs publish as "Good": the
 sinful code **repaired the way the rule says**. It is a different claim from

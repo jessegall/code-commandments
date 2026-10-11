@@ -231,6 +231,18 @@ func AgentsTable() string {
 	return strings.Join(rows, "\n") + "\n"
 }
 
+// LanguagesTable is every language the tool reads and the files it reads it in, projected from source.Languages
+// so a language the tool gains names itself in the README rather than waiting to be written in by hand.
+func LanguagesTable() string {
+	rows := []string{"| Language | Files |", "|---|---|"}
+
+	for _, language := range source.Languages {
+		rows = append(rows, "| **"+language.Label()+"** | `."+strings.Join(language.Extensions(), "`, `.")+"` |")
+	}
+
+	return strings.Join(rows, "\n") + "\n"
+}
+
 // PluginSettings is the journal plugin's settings: the folders judged and left out, a switch per language, and a
 // switch per sin, grouped by its skill — so the plugin's Settings panel never names a rule that is gone.
 func PluginSettings() *jsonfile.Object {
@@ -290,7 +302,7 @@ func Generated(root string) (map[string]string, error) {
 			return nil, err
 		}
 	}
-	for name, content := range map[string]string{"hooks-table": HooksTable(), "agents-table": AgentsTable()} {
+	for name, content := range map[string]string{"hooks-table": HooksTable(), "agents-table": AgentsTable(), "languages-table": LanguagesTable()} {
 		if updated, err = replaced(updated, name, "\n"+content); err != nil {
 			return nil, err
 		}

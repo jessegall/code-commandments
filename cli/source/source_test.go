@@ -75,15 +75,15 @@ func TestAFileIsReadByItsExtension(t *testing.T) {
 func TestAWorktreeInsideTheProjectIsNoneOfItsSource(t *testing.T) {
 	root := t.TempDir()
 	for file, content := range map[string]string{
-		"src/A.php":                              "<?php\n",
-		".claude/worktrees/main-helper/.git":     "gitdir: /repo/.git/worktrees/main-helper\n",
+		"src/A.php":                               "<?php\n",
+		".claude/worktrees/main-helper/.git":      "gitdir: /repo/.git/worktrees/main-helper\n",
 		".claude/worktrees/main-helper/src/B.php": "<?php\n",
-		"tools/helper/.git":                      "gitdir: /repo/.git/worktrees/helper\n",
-		"tools/helper/C.php":                     "<?php\n",
-		"modules/lib/.git":                       "gitdir: ../../.git/modules/lib\n",
-		"modules/lib/D.php":                      "<?php\n",
-		"platform/.git/HEAD":                     "ref: refs/heads/main\n",
-		"platform/E.php":                         "<?php\n",
+		"tools/helper/.git":                       "gitdir: /repo/.git/worktrees/helper\n",
+		"tools/helper/C.php":                      "<?php\n",
+		"modules/lib/.git":                        "gitdir: ../../.git/modules/lib\n",
+		"modules/lib/D.php":                       "<?php\n",
+		"platform/.git/HEAD":                      "ref: refs/heads/main\n",
+		"platform/E.php":                          "<?php\n",
 	} {
 		os.MkdirAll(filepath.Join(root, filepath.Dir(file)), 0o755)
 		os.WriteFile(filepath.Join(root, file), []byte(content), 0o644)
