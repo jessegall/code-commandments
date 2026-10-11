@@ -329,3 +329,113 @@ var numeric = regexp.MustCompile(`^[ \t\n\r\v\f]*[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:
 func isNumeric(text string) bool {
 	return numeric.MatchString(text)
 }
+
+// CasesListedInAConstant is every case of the enum a class constant of it lists, and the constant's own name:
+// a trait of some cases kept beside them rather than answered by them. Nothing where the node is not an enum,
+// where no constant lists two or more of its cases, or where the constant lists them all — a list of every case
+// says nothing about any of them and is an ordering or a vocabulary, not a trait.
+func (n Node) CasesListedInAConstant() (string, []string) {
+	if n.Kind() != "Stmt_Enum" {
+		return "", nil
+	}
+
+	cases := n.enumCaseNames()
+	if len(cases) == 0 {
+		return "", nil
+	}
+
+	for _, member := range n.ChildrenIn("stmts") {
+		if member.Kind() != "Stmt_ClassConst" {
+			continue
+		}
+
+		for _, constant := range (Node{Match: member}).ChildrenIn("consts") {
+			listed := (Node{Match: constant.Child("value")}).casesAmongst(cases)
+			if len(listed) >= 2 && len(listed) < len(cases) {
+				return constant.Name(), listed
+			}
+		}
+	}
+
+	return "", nil
+}
+
+// enumCaseNames is the name of every case the enum declares, with the backing value each case names.
+func (n Node) enumCaseNames() map[string]string {
+	cases := map[string]string{}
+
+	for _, member := range n.ChildrenIn("stmts") {
+		if member.Kind() != "Stmt_EnumCase" {
+			continue
+		}
+
+		backing := ""
+		if value := member.Child("expr"); value.Exists() {
+			backing, _ = value.Text()
+		}
+		cases[member.Name()] = backing
+	}
+
+	return cases
+}
+
+// casesAmongst is every case of the enum the array names, by `self::Case` or by the value a case is backed with.
+// Nothing where the node is not an array written out, or where any element names no case at all.
+func (n Node) casesAmongst(cases map[string]string) []string {
+	if n.Kind() != "Expr_Array" {
+		return nil
+	}
+
+	var listed []string
+	for _, item := range n.ChildrenIn("items") {
+		value := Node{Match: item.Child("value")}
+		named := value.caseNamed(cases)
+
+		if named == "" {
+			return nil
+		}
+		listed = append(listed, named)
+	}
+
+	return listed
+}
+
+// caseNamed is the case an element names: the case of a `self::Case` fetch, else the case backed with the
+// literal it writes.
+func (n Node) caseNamed(cases map[string]string) string {
+	if n.Kind() == "Expr_ClassConstFetch" {
+		if name := n.Child("name").Name(); cases[name] != "" || hasCase(cases, name) {
+			return name
+		}
+
+		return ""
+	}
+
+	text, literal := n.Text()
+	if !literal {
+		return ""
+	}
+
+	for name, backing := range cases {
+		if backing != "" && backing == text {
+			return name
+		}
+	}
+
+	return ""
+}
+
+// hasCase says whether the enum declares a case of that name.
+func hasCase(cases map[string]string, name string) bool {
+	_, declared := cases[name]
+
+	return declared
+}
+
+// ListsSomeOfItsCasesInAConstant says whether the enum keeps a trait of some of its cases as a constant listing
+// them.
+func (n Node) ListsSomeOfItsCasesInAConstant() bool {
+	name, listed := n.CasesListedInAConstant()
+
+	return name != "" && len(listed) > 0
+}

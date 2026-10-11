@@ -7,5 +7,6 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`enum-value-match`** — A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead. — `EnumValueMatchDetector`
 - **`in-array-mirrors-enum`** — `in_array($x, [literals])` whose literals mirror an existing enum's cases — `InArrayMirrorsEnumDetector`
 - **`match-default-returns-null`** — `match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing — `MatchDefaultReturnsNullDetector`
+- **`side-table-trait`** — An enum holding a trait of some of its cases as a constant list of those cases, instead of as something each case answers for itself.
 - **`string-match-mirrors-enum`** — `match`/`switch` over string/int literals that mirror an existing backed enum's case values — `StringMatchMirrorsEnumDetector`
 - **`unnamed-vocabulary-literal`** — A raw string in an argument the codebase elsewhere fills from a named vocabulary — `expect('{')` beside `expect(Token::COLON)`, where `Token::BRACE_OPEN` already names it — `UnnamedVocabularyLiteralDetector`

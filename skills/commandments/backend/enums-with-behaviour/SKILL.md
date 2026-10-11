@@ -47,6 +47,8 @@ Reach for this the moment you write:
       _Use the enum (`Enum::tryFrom($x)` / a `cases()` check)._
 - [ ] A `match`/`switch` `default` for an unhandled case must throw, not return `null`/`false`/`[]`.
       _`default => throw Unhandled::for($x)`._
+- [ ] A trait that is true of some cases is answered by the case, never kept beside them as a list of the ones it is true of.
+      _Give the enum a method that answers the trait per case (`match ($this) { self::Reply, self::Log => false, default => true }`), and delete the list — a case added later then has to answer, where a list leaves it silently taking the default with nowhere to say otherwise._
 - [ ] Dispatch over the enum's cases, not string/int literals that mirror its values.
       _Dispatch via a method on the backed enum's cases._
 - [ ] Where a parameter is spelled from a named vocabulary, spell it that way EVERYWHERE — never the raw value at one call site and the constant at the next.
@@ -99,7 +101,7 @@ The other 6 — one per rule — are in [`reference/examples.md`](reference/exam
 ## Commands
 
 - `{{binary}} judge --skill=backend/enums-with-behaviour` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `const-class-enum`, `enum-case-or-chain`, `enum-value-match`, `in-array-mirrors-enum`, `match-default-returns-null`, `string-match-mirrors-enum`, `unnamed-vocabulary-literal`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `const-class-enum`, `enum-case-or-chain`, `enum-value-match`, `in-array-mirrors-enum`, `match-default-returns-null`, `side-table-trait`, `string-match-mirrors-enum`, `unnamed-vocabulary-literal`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
