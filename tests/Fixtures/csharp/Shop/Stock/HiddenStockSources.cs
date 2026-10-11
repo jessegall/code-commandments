@@ -16,5 +16,17 @@ public static class HiddenStockSources
     // @sin SideTableTrait
     private static readonly HashSet<string> Hidden = new() { "reserve", "returns" };
 
-    public static StockSource[] Visible() => All.Where(source => source.Quantity > 0 && !Hidden.Contains(source.Id)).ToArray();
+    public static int Sellable()
+    {
+        var total = 0;
+        foreach (var source in All)
+        {
+            if (!Hidden.Contains(source.Id))
+            {
+                total += source.Quantity;
+            }
+        }
+
+        return total;
+    }
 }

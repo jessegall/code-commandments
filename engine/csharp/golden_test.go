@@ -162,9 +162,14 @@ func TestEveryCallReachesTheMethodThePhpEngineBindsItTo(t *testing.T) {
 		if !target.Exists() {
 			continue
 		}
-		wanted := want[at(node)]
+		wanted, recorded := want[at(node)]
 		got[at(node)] = goldenTarget{Type: withoutArguments(target.Type()), Name: target.Name(), Parameters: target.Parameters()}
-		want[at(node)] = goldenTarget{Type: withoutArguments(wanted.Type), Name: wanted.Name, Parameters: wanted.Parameters}
+
+		// Only an answer the golden holds is read back: writing one for every node would insert an empty entry
+		// for a call the PHP engine never saw, and compare the real answer against that invented blank.
+		if recorded {
+			want[at(node)] = goldenTarget{Type: withoutArguments(wanted.Type), Name: wanted.Name, Parameters: wanted.Parameters}
+		}
 	}
 	compare(t, "target", want, got)
 }

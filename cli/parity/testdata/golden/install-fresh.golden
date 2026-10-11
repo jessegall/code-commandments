@@ -266,11 +266,11 @@ sha256 c6378ffcbce661a10b9afccc18c7e4ce64127799791beeb54251455bf5450437
 === created .agents/skills/commandments-csharp-role-vocabulary/SKILL.md
 sha256 1606b508d7fba0190960bd013d354388945bfbaaaa26c43c09ead1398511e4ae
 === created .agents/skills/commandments-csharp-tell-dont-ask/SKILL.md
-sha256 d02d1ae9d6625f0eba983fd0a6e167a5b5b46a8b5b06ca7fab659dee0c4d0a33
+sha256 73e2d9dac90514335ede17be45c6e3d9ccdf1e677046c24a16b8b315330c97cd
 === created .agents/skills/commandments-csharp-tell-dont-ask/evals/triggers.json
 sha256 f3192247b1a8bf31f77fe6cb49f9b0add81c39ce84934582acf7b17a9fd20a63
 === created .agents/skills/commandments-csharp-tell-dont-ask/reference/detectors.md
-sha256 b0a8cee01440b299490ce0ca6760f3b6e07193033fcc6f5412dc218823322a4b
+sha256 b2ed5418d348f0a55c5be37a9b358622db3bf94117b1d2abd892c2db5f08e0ae
 === created .agents/skills/commandments-csharp-tell-dont-ask/reference/examples.md
 sha256 87159236e130c4b6ab41b377aef031a88422c74bc0ece68192cf8e63bd192f89
 === created .agents/skills/commandments-csharp-templates/SKILL.md
@@ -458,11 +458,11 @@ sha256 dae489d7a1de27dcedbda4daf08149cc6b7fa7cc8a868d1fddce4d4892bcae97
 === created .agents/skills/commandments-typescript-absence/reference/examples.md
 sha256 5f42bd8d0075640a6ffa3b7ae264ba19c545100e3bba413881c0acf5b26c64cf
 === created .agents/skills/commandments-typescript-duplication/SKILL.md
-sha256 14f4f0b70fd7beb44ff13837ce83725f9f629eab2bf56fd2d42ae402a2b49f10
+sha256 1fa5cc1e0f59052b1c1640024f571e428e13260214b5990c498fef65b418f764
 === created .agents/skills/commandments-typescript-duplication/evals/triggers.json
 sha256 883009bdc125f06784d7386a09e678b6e689ed77f9278b2f9a6f013ab25aa655
 === created .agents/skills/commandments-typescript-duplication/reference/detectors.md
-sha256 a1262013ce71fee46f8e49962f03ae2862155ea9c189017438a2b95c09ad1284
+sha256 0dd7a04297682e342a2161485e0895cfb33fd79b3b3f7563bb61868efe260613
 === created .agents/skills/commandments-typescript-duplication/reference/examples.md
 sha256 bad17b47d8dbe48dfdb6e083db02b7a7558fd916ceed728c2a69146b7ef4dc97
 === created .agents/skills/commandments-writing-detectors/SKILL.md

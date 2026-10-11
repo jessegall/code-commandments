@@ -251,7 +251,7 @@ exit: 1
   [36mShop/Pricing/Promotions.cs:35[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
   [36mShop/Reports/PromotionReport.cs:17[0m  SwitchStatement  [2m[TypeSwitchDetector][0m
   [36mShop/Returns/ReturnInspections.cs:13[0m  MethodDeclaration NeedsRestocking  [2m[FeatureEnvyDetector][0m
-  [36mShop/Shipping/InsuredCouriers.cs:17[0m  VariableDeclarator Insured  [2m[SideTableTraitDetector][0m
+  [36mShop/Shipping/InsuredCouriers.cs:19[0m  VariableDeclarator Insured  [2m[SideTableTraitDetector][0m
   [36mShop/Stock/HiddenStockSources.cs:17[0m  VariableDeclarator Hidden  [2m[SideTableTraitDetector][0m
   [36mShop/Stock/Totes.cs:16[0m  MethodDeclaration Weigh  [2m[FeatureEnvyDetector][0m
   [36mShop/Tags/TagSpeech.cs:17[0m  VariableDeclarator Quiet  [2m[SideTableTraitDetector][0m
