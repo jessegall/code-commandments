@@ -33,7 +33,6 @@ func (SideTableTraitDetector) Unpublished() {}
 func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	assigns := byFile(py.In(codebase).WhereAssign().Where(engine.As(py.Node.IsModuleLevelAssign)).Get())
 	tested := byFile(py.In(codebase).WhereKind("Compare").Get())
-	iterated := byFile(py.In(codebase).WhereKind("For").Get())
 
 	var found []engine.Match
 
@@ -51,7 +50,7 @@ func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 				continue
 			}
 
-			if handled(append(tested[file], iterated[file]...), table.AssignedName()) {
+			if asked(tested[file], table.AssignedName()) {
 				found = append(found, assign)
 			}
 		}
@@ -96,9 +95,11 @@ func namesInstances(members, registered []string) bool {
 	return true
 }
 
-// handled says whether the module reaches for its instances through the collection: a membership test against
-// it, or a loop over it. Holding the names is not the sin; using them as the handle on the type is.
-func handled(reaches []engine.Match, table string) bool {
+// asked says whether the module asks the collection about one instance — `x in QUIET` — which is the question a
+// trait answers. Iterating it is deliberately not enough: a loop that acts on each member is a caller choosing
+// what to act on, and nothing in the tree tells that from a trait. A set a module merely holds, or walks, says
+// nothing about any one instance; a set it asks about one does.
+func asked(reaches []engine.Match, table string) bool {
 	if table == "" {
 		return false
 	}

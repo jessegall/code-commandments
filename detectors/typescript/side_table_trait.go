@@ -35,7 +35,7 @@ func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 		WhereKind("VariableDeclaration").
 		Where(engine.As(typescript.Node.IsModuleLevelDeclaration)).
 		Get())
-	reached := byFile(typescript.In(codebase).WhereKind("Identifier").Get())
+	asked := byFile(typescript.In(codebase).WhereKind("CallExpression").Get())
 
 	var found []engine.Match
 
@@ -52,7 +52,7 @@ func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 				continue
 			}
 
-			if handled(reached[file], declaration) {
+			if asksAboutOne(asked[file], declaration.Name()) {
 				found = append(found, declaration)
 			}
 		}
@@ -98,31 +98,15 @@ func namesInstances(members, registered []string) bool {
 	return true
 }
 
-// handled says whether the module reaches for its objects through the collection, anywhere but where it is
-// declared. Holding the names is not the sin; using them as the handle is.
-func handled(mentions []engine.Match, declaration engine.Match) bool {
-	name := declaration.Name()
-	if name == "" {
+// asksAboutOne says whether the module asks the collection whether it holds one object — the question a trait
+// answers, and the only use of it that a caller's own choice of what to act on cannot also look like.
+func asksAboutOne(calls []engine.Match, held string) bool {
+	if held == "" {
 		return false
 	}
 
-	for _, mention := range mentions {
-		if mention.Name() != name {
-			continue
-		}
-
-		if !within(mention, declaration) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// within says whether the mention stands inside the declaration itself, where a name is only being bound.
-func within(mention, declaration engine.Match) bool {
-	for around := mention; around.Exists(); around = around.Parent() {
-		if around.SameSyntax(declaration) && around.Line() == declaration.Line() {
+	for _, call := range calls {
+		if (typescript.Node{Match: call}).AsksAboutOne(held) {
 			return true
 		}
 	}

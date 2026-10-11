@@ -75,3 +75,35 @@ func (n Node) KeyedInstanceNames() map[string][]string {
 
 	return keyed
 }
+
+// membershipQuestions are how JavaScript asks a collection whether it holds one thing: a Set's and a Map's own
+// question, and the one an array answers.
+var membershipQuestions = []string{"has", "includes", "contains"}
+
+// AsksAbountOne says whether the call asks a collection named `held` whether it holds a single thing — the
+// question a trait answers. Walking a collection is deliberately not that question: a loop that acts on each
+// member is a caller choosing what to act on, and nothing in the tree tells that from a trait.
+func (n Node) AsksAboutOne(held string) bool {
+	if n.Kind() != "CallExpression" {
+		return false
+	}
+
+	for _, child := range n.Children() {
+		if child.Kind() != "PropertyAccessExpression" {
+			continue
+		}
+
+		asked := false
+		for _, question := range membershipQuestions {
+			asked = asked || child.Name() == question
+		}
+
+		for _, named := range child.Children() {
+			if asked && named.Kind() == "Identifier" && named.Name() == held {
+				return true
+			}
+		}
+	}
+
+	return false
+}

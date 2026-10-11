@@ -7,9 +7,9 @@ import (
 	"github.com/jessegall/code-commandments/engine/python/pythontest"
 )
 
-// TestASideTableOfInstanceNamesIsFound holds the three things that together tell a side table from an ordinary
-// collection of words: the names are a registered type's, the module reaches for the instances through them, and
-// a collection that is derived from the instances or names none of them is left alone.
+// TestASideTableOfInstanceNamesIsFound holds what the sin asks: a collection of a type's own instance names that
+// the module then asks about ONE of them. That question is what a trait answers, and keeping it here rather than
+// on the type is the sin.
 func TestASideTableOfInstanceNamesIsFound(t *testing.T) {
 	for name, source := range map[string]string{
 		"a membership test": `from dataclasses import dataclass
@@ -28,23 +28,6 @@ QUIET = {"reply", "log"}
 def said(name: str) -> bool:
     return name not in QUIET
 `,
-		"a loop that acts on each": `from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class Feature:
-    name: str
-    title: str
-
-
-FEATURES = [Feature("dev_faults", "Faults"), Feature("tickets", "Tickets")]
-QUIET_IN_TICKETS = ("dev_faults",)
-
-
-def prepare(place) -> None:
-    for feature in QUIET_IN_TICKETS:
-        place.switch(feature, False)
-`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			found := SideTableTraitDetector{}.Find(pythontest.FromSource(t, map[string]string{"shop/mod.py": source}))
@@ -56,7 +39,10 @@ def prepare(place) -> None:
 	}
 }
 
-// TestACollectionThatIsNotASideTableIsLeftAlone holds the negatives, each wearing the same surface shape.
+// TestACollectionThatIsNotASideTableIsLeftAlone holds the negatives, each wearing the same surface shape. The
+// third is the one that decided the rule's reach: a collection of registered names, walked to act on each, is
+// what a caller choosing what to act on looks like, and nothing in the tree tells it from a trait. Flagging it
+// would mean flagging that choice everywhere, so the rule asks for the question a trait answers instead.
 func TestACollectionThatIsNotASideTableIsLeftAlone(t *testing.T) {
 	for name, source := range map[string]string{
 		"ordinary vocabulary naming no instance": `from dataclasses import dataclass
@@ -91,6 +77,25 @@ QUIET = {tag.name for tag in TAGS if not tag.said_in_chat}
 
 def said(name: str) -> bool:
     return name not in QUIET
+`,
+		"walked to act on each, which a caller choosing what to act on also does": `from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Resource:
+    name: str
+    title: str
+
+
+RESOURCES = (Resource("rule", "Rules"), Resource("doc", "Docs"), Resource("tool", "Tools"))
+HELD = ("rule", "doc")
+
+
+def shown(board) -> list:
+    rows = []
+    for name in HELD:
+        rows.append(board.rows(name))
+    return rows
 `,
 		"held but never used as a handle": `from dataclasses import dataclass
 

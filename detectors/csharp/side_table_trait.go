@@ -35,7 +35,7 @@ func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 		WhereKind("VariableDeclarator").
 		Where(engine.As(csharp.Node.IsFieldDeclarator)).
 		Get())
-	mentions := byFile(csharp.In(codebase).WhereKind("IdentifierName").Get())
+	asked := byFile(csharp.In(codebase).WhereKind("InvocationExpression").Get())
 
 	var found []engine.Match
 
@@ -52,7 +52,7 @@ func (SideTableTraitDetector) Find(codebase *engine.Codebase) []engine.Match {
 				continue
 			}
 
-			if handled(mentions[file], field.Name()) {
+			if asksAboutOne(asked[file], field.Name()) {
 				found = append(found, field)
 			}
 		}
@@ -97,15 +97,15 @@ func namesInstances(members, registered []string) bool {
 	return true
 }
 
-// handled says whether the file reaches for its instances through the collection, by naming it somewhere other
-// than where it is declared. Holding the names is not the sin; using them as the handle is.
-func handled(mentions []engine.Match, field string) bool {
+// asksAboutOne says whether the file asks the collection whether it holds one instance — the question a trait
+// answers, and the only use of it that a caller's own choice of what to act on cannot also look like.
+func asksAboutOne(calls []engine.Match, field string) bool {
 	if field == "" {
 		return false
 	}
 
-	for _, mention := range mentions {
-		if mention.Name() == field {
+	for _, call := range calls {
+		if (csharp.Node{Match: call}).AsksAboutOne(field) {
 			return true
 		}
 	}

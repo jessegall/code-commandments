@@ -28,15 +28,6 @@ export function said(name: string): boolean {
   return !QUIET.has(name)
 }
 `,
-		"an array looped over": registry + `
-const QUIET = ['reply', 'log']
-
-export function hush(place: { switch(name: string, on: boolean): void }): void {
-  for (const tag of QUIET) {
-    place.switch(tag, false)
-  }
-}
-`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			found := SideTableTraitDetector{}.Find(frontendtest.FromSource(t, map[string]string{"src/tags.ts": source}))
@@ -69,6 +60,17 @@ const QUIET = new Set(TAGS.filter((t) => !t.saidInChat).map((t) => t.name))
 
 export function said(name: string): boolean {
   return !QUIET.has(name)
+}
+`,
+		"walked to act on each, which a caller choosing what to act on also does": registry + `
+const HELD = ['reply', 'log']
+
+export function shown(board: { rows(name: string): string[] }): string[][] {
+  const rows: string[][] = []
+  for (const name of HELD) {
+    rows.push(board.rows(name))
+  }
+  return rows
 }
 `,
 		"held but never used as a handle": registry + `

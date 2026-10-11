@@ -110,3 +110,35 @@ func (n Node) firstArgumentText() string {
 
 	return ""
 }
+
+// membershipQuestions are how C# asks a collection whether it holds one thing.
+var membershipQuestions = []string{"Contains", "ContainsKey"}
+
+// AsksAboutOne says whether the call asks a collection named `held` whether it holds a single thing — the
+// question a trait answers. Walking a collection is deliberately not that question: a loop that acts on each
+// member is a caller choosing what to act on, and nothing in the tree tells that from a trait.
+func (n Node) AsksAboutOne(held string) bool {
+	if n.Kind() != "InvocationExpression" {
+		return false
+	}
+
+	for _, access := range n.All() {
+		if access.Kind() != "SimpleMemberAccessExpression" {
+			continue
+		}
+
+		asked, named := false, false
+		for _, part := range access.All() {
+			for _, question := range membershipQuestions {
+				asked = asked || part.Name() == question
+			}
+			named = named || part.Name() == held
+		}
+
+		if asked && named {
+			return true
+		}
+	}
+
+	return false
+}

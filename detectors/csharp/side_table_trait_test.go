@@ -30,21 +30,6 @@ public static class Tags
     public static bool Said(string name) => !Quiet.Contains(name);
 }
 `,
-		"a list walked over": registry + `
-public static class Tags
-{
-    public static readonly Tag[] All = { new Tag("reply", "a"), new Tag("log", "b") };
-
-    private static readonly List<string> Quiet = new() { "reply" };
-
-    public static void Hush(ISwitchboard board)
-    {
-        foreach (var tag in Quiet) board.Switch(tag, false);
-    }
-}
-
-public interface ISwitchboard { void Switch(string name, bool on); }
-`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			found := SideTableTraitDetector{}.Find(csharptest.FromSource(t, map[string]string{"Shop/Tags.cs": source}))
@@ -68,6 +53,21 @@ public static class Tags
 
     public static bool Shelled(string name) => ShellTools.Contains(name);
 }
+`,
+		"walked to act on each, which a caller choosing what to act on also does": registry + `
+public static class Tags
+{
+    public static readonly Tag[] All = { new Tag("reply", "a"), new Tag("log", "b") };
+
+    private static readonly List<string> Held = new() { "reply" };
+
+    public static void Shown(IBoard board)
+    {
+        foreach (var name in Held) board.Rows(name);
+    }
+}
+
+public interface IBoard { void Rows(string name); }
 `,
 		"held but never used as a handle": registry + `
 public static class Tags
