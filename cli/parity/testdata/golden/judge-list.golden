@@ -153,6 +153,7 @@ exit: 0
   RepeatedTypeGuardDetector
 [1;33mcsharp/tell-dont-ask[0m
   FeatureEnvyDetector
+  SideTableTraitDetector
   TypeSwitchDetector
 [1;33mcsharp/templates[0m
   AssembledTemplateDetector
@@ -271,6 +272,7 @@ exit: 0
 [1;33mtypescript/duplication[0m
   DuplicateFunctionDetector
   NearDuplicateFunctionDetector
+  SideTableTraitDetector
 
 --- stderr
 

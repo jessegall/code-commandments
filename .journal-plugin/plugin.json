@@ -2281,6 +2281,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-side-table-trait": {
+            "title": "SideTableTrait",
+            "help": "a trait of a type's registered instances kept as a separate collection of their names, rather than as something each instance answers for itself",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/tell-dont-ask",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-type-switch": {
             "title": "TypeSwitch",
             "help": "`shape switch { Circle c => …, Square s => … }` — asking which of your own types a value is, to decide what to do with it",
@@ -3499,6 +3512,22 @@
         "sin_near-duplicate-typescript-function": {
             "title": "NearDuplicateFunction",
             "help": "A near-copy — two+ TypeScript functions with one control-flow skeleton that differ only in their local names or the literals they use (an endpoint, a key, a label)",
+            "type": "flag",
+            "default": "true",
+            "group": "typescript/duplication",
+            "when": [
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_typescript-side-table-trait": {
+            "title": "SideTableTrait",
+            "help": "a trait of the objects a module registers, kept as a separate collection of their names rather than as a field each object carries",
             "type": "flag",
             "default": "true",
             "group": "typescript/duplication",

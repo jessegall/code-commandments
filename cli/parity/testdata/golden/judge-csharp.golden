@@ -238,7 +238,7 @@ exit: 1
   [36mShop/Stock/Palletising.cs:11[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
     [2m↳ same shape as: Shop/Reports/Damage.cs:15, Shop/Shipping/Crates.cs:26[0m
 
-[1;33mcsharp/tell-dont-ask[0m  (11)
+[1;33mcsharp/tell-dont-ask[0m  (14)
   [1;36m↳ LOAD the skill `commandments-csharp-tell-dont-ask` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Loyalty/PunchCards.cs:15[0m  MethodDeclaration Redeem  [2m[FeatureEnvyDetector][0m
@@ -251,7 +251,10 @@ exit: 1
   [36mShop/Pricing/Promotions.cs:35[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
   [36mShop/Reports/PromotionReport.cs:17[0m  SwitchStatement  [2m[TypeSwitchDetector][0m
   [36mShop/Returns/ReturnInspections.cs:13[0m  MethodDeclaration NeedsRestocking  [2m[FeatureEnvyDetector][0m
+  [36mShop/Shipping/InsuredCouriers.cs:17[0m  VariableDeclarator Insured  [2m[SideTableTraitDetector][0m
+  [36mShop/Stock/HiddenStockSources.cs:17[0m  VariableDeclarator Hidden  [2m[SideTableTraitDetector][0m
   [36mShop/Stock/Totes.cs:16[0m  MethodDeclaration Weigh  [2m[FeatureEnvyDetector][0m
+  [36mShop/Tags/TagSpeech.cs:17[0m  VariableDeclarator Quiet  [2m[SideTableTraitDetector][0m
 
 [1;33mcsharp/templates[0m  (3)
   [1;36m↳ LOAD the skill `commandments-csharp-templates` before fixing[0m
@@ -299,7 +302,7 @@ exit: 1
   [36mShop/Stock/Listings.cs:15[0m  MethodDeclaration Page  [2m[DataClumpDetector][0m
     [2m↳ same shape as: Shop/Stock/Listings.cs:8[0m
 
-[1m195 sins[0m across 17 skills.
+[1m198 sins[0m across 17 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

@@ -62,6 +62,8 @@ Tell instead: give the base type an abstract member — `shape.Area()` — and l
 
 - [ ] Move the behaviour onto the object whose data it works on; ask it (`order.HeaviestLine()`), don't reach through it.
       _Move the method onto the envied type and call it there; keep only the orchestration here._
+- [ ] A trait that is true of some registered instances is answered by the instance; the collection of names it is true of is derived from them, never kept beside them.
+      _Add the member to the type, give each instance its own answer, and derive the collection from them — or delete it. A side table does not only record the trait in the wrong place: it leaves an instance added later no way to declare it at all._
 - [ ] Give the base type a member each type answers, and call it; don't switch on which type a value is.
       _Declare `public abstract double Area();` on `Shape`, implement it on `Circle` and `Square`, and write `shape.Area()`._
 
@@ -91,17 +93,17 @@ public int Weigh(Tote tote)
 public int TotalGrams() => Items.Sum(item => item.Grams);
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/tell-dont-ask` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-feature-envy`, `csharp-type-switch`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-feature-envy`, `csharp-side-table-trait`, `csharp-type-switch`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

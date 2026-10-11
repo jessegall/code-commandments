@@ -4,3 +4,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 
 - **`duplicate-typescript-function`** — Copy-pasted code — two+ TypeScript functions (a `function`, a method, a `const` arrow; in a `.ts` module or a component's script) with an identical body, formatting and comments aside — `DuplicateFunctionDetector`
 - **`near-duplicate-typescript-function`** — A near-copy — two+ TypeScript functions with one control-flow skeleton that differ only in their local names or the literals they use (an endpoint, a key, a label) — `NearDuplicateFunctionDetector`
+- **`typescript-side-table-trait`** — a trait of the objects a module registers, kept as a separate collection of their names rather than as a field each object carries — `SideTableTraitDetector`

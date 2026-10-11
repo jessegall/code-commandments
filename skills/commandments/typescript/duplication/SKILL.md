@@ -44,6 +44,8 @@ two different classes. Duplication is a body of real substance, twice.
       _Move the body to a shared module or composable under one name, and replace every copy with a call to it._
 - [ ] Merge two functions that differ only in a literal into one, and pass what differs as a parameter.
       _Name the literal that differs, make it a parameter of one shared function, and call that from both places._
+- [ ] A trait that is true of some of a module's registered objects is a field on the object; the collection of names it is true of is derived from them, never kept beside them.
+      _Add the field to the object, give each one its own answer, and derive the collection from them — `const QUIET = new Set(TAGS.filter(t => !t.saidInChat).map(t => t.name))` — or delete it. A side table does not only record the trait in the wrong place: it leaves an object added later no way to declare it at all._
 
 ## Worked example
 
@@ -98,17 +100,17 @@ lineItems(lines: Line[]): string[] {
 }
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=typescript/duplication` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `duplicate-typescript-function`, `near-duplicate-typescript-function`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `duplicate-typescript-function`, `near-duplicate-typescript-function`, `typescript-side-table-trait`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

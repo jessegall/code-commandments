@@ -221,3 +221,43 @@ async function post(action: string): Promise<void> {
     }
 }
 ```
+
+### typescript-side-table-trait — in TypeScript
+
+a trait of the objects a module registers, kept as a separate collection of their names rather than as a field each object carries
+
+```ts
+----------[ Bad ]----------
+
+// in client/tag-speech.ts
+type SpeechTag = { name: string; command: string }
+
+const TAGS: SpeechTag[] = [
+  { name: 'reply', command: 'message reply' },
+  { name: 'log', command: 'work log' },
+  { name: 'todo', command: 'todo create' },
+]
+
+const QUIET = new Set(['reply', 'log'])
+
+export function saidInChat(name: string): boolean {
+  return !QUIET.has(name)
+}
+
+----------[ Good ]----------
+
+// in client/tag-speech-fixed.ts
+type SpokenTag = { name: string; command: string; saidInChat: boolean }
+
+const TAGS: SpokenTag[] = [
+  { name: 'reply', command: 'message reply', saidInChat: false },
+  { name: 'log', command: 'work log', saidInChat: false },
+  { name: 'todo', command: 'todo create', saidInChat: true },
+]
+
+const QUIET = new Set(TAGS.filter((tag) => !tag.saidInChat).map((tag) => tag.name))
+
+export function saidInChat(tag: SpokenTag): boolean {
+  return tag.saidInChat
+}
+```

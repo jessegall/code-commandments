@@ -23,9 +23,6 @@ func (SideTableTraitDetector) Sin() sins.Sin {
 	return sin.SideTableTrait{}
 }
 
-// Unpublished keeps it out of every catalog while its hits are being read on real code.
-func (SideTableTraitDetector) Unpublished() {}
-
 // Find is every field holding a collection of names that are the names its own file's registry gives its
 // instances, and that the file then reaches for them through. The three together tell a side table from an
 // ordinary collection of words: the names are the registry's, there is more than one instance to be a type's,
