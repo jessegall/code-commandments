@@ -169,12 +169,14 @@ func (JournalConfig) Names() []string {
 
 // Help documents it.
 func (JournalConfig) Help() help.Help {
-	return help.Of("Write the agent journal plugin's chosen switches into .commandments/config.json.").
+	return help.Of("Write the agent journal plugin's chosen switches into .commandments/config.json, and refresh what the project is told.").
 		Form("journal-config", "apply JOURNAL_SETTINGS to the project config (run by the journal plugin)").
-		Option("--keep-folders", "apply the switches but leave the folders the config judges and leaves out as they are: the plugin's setup, where the journal's stored folders may be older than the project's config")
+		Option("--keep-folders", "apply the switches but leave the folders the config judges and leaves out as they are: the plugin's setup, where the journal's stored folders may be older than the project's config").
+		Note("It also rewrites the briefing block in the project's AGENTS.md and each agent's own instruction file, which is how a fix to what the tool injects reaches a project the journal drives: such a project never runs composer, so nothing else would ever refresh it. Only the marked block changes, so `git diff AGENTS.md` is the whole of it; a run that changes nothing writes nothing; and a file whose markers cannot be trusted is named in the notification and left exactly as it was.")
 }
 
-// Run writes each chosen switch, renders the skills again, and notifies how many switches changed.
+// Run writes each chosen switch, renders the skills again, refreshes what the project is told, and notifies
+// what changed and what it could not write.
 func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 	var chosen map[string]any
 	if json.Unmarshal([]byte(os.Getenv(journalSettings)), &chosen) != nil || chosen == nil {
