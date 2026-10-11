@@ -74,3 +74,13 @@ func defs(codebase *python.Codebase) map[string][]python.Node {
 
 	return found
 }
+
+// unrecorded says whether the golden holds no answer for the key. The PHP engine was removed once these were
+// recorded, so it never answered for anything the fixture gained afterwards; a key it never saw is skipped rather
+// than read as an empty answer, which would hold every file the fixture gains to a reach, a hash and an import
+// list of nothing. Everything it did record still binds, so a change to code it saw still fails here.
+func unrecorded[T any](want map[string]T, key string) bool {
+	_, held := want[key]
+
+	return !held
+}

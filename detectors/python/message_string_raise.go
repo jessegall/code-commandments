@@ -26,5 +26,6 @@ func (MessageStringRaiseDetector) Find(codebase *engine.Codebase) []engine.Match
 	return py.In(codebase).
 		WhereKind("Raise").
 		Where(engine.As(py.Node.IsGenericWithMessage)).
+		Reject(engine.As(py.Node.IsStimulusOfAnExpectedRaise)).
 		Get()
 }

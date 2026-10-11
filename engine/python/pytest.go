@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 )
@@ -106,4 +107,48 @@ func patternsOf(value string) []string {
 	}
 
 	return strings.Fields(value)
+}
+
+// raisesAssertions are the context managers that assert a block raises, by the name they are called under: pytest's
+// own `raises`, however it was imported, and unittest's on the test case.
+var raisesAssertions = []string{"raises", "assertRaises", "assertRaisesRegex"}
+
+// IsStimulusOfAnExpectedRaise says whether the raise is the subject of an assertion that it raises: it stands inside
+// a `with pytest.raises(...)` or `assertRaises(...)` block, within its own def. Such a raise reports nothing — the
+// only thing that catches it is the matcher written a line above, which matches the very type the raise names, and
+// no caller exists to tell it from any other. The failure a test provokes to watch what happens next is not a
+// failure the code is naming for someone.
+func (n Node) IsStimulusOfAnExpectedRaise() bool {
+	if n.Kind() != "Raise" {
+		return false
+	}
+
+	for around := n.Parent(); around.Exists() && !around.IsDefinition(); around = around.Parent() {
+		if around.Kind() == "With" && around.assertsARaise() {
+			return true
+		}
+	}
+
+	return false
+}
+
+// assertsARaise says whether the with block is entered through one of the raises assertions.
+func (n Node) assertsARaise() bool {
+	for _, item := range n.ChildrenIn("items") {
+		for _, entered := range item.Children() {
+			if !entered.IsCall() {
+				continue
+			}
+
+			called := entered.Callee().DottedName()
+			if at := strings.LastIndex(called, "."); at >= 0 {
+				called = called[at+1:]
+			}
+			if slices.Contains(raisesAssertions, called) {
+				return true
+			}
+		}
+	}
+
+	return false
 }

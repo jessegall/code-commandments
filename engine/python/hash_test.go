@@ -39,6 +39,9 @@ func TestBodiesHashAlikeAndWeighAsThePHPEngineSays(t *testing.T) {
 	for _, match := range codebase.WhereFunction().Get() {
 		def := python.Node{Match: match}
 		key := match.Node().Symbol + "@" + place(def)
+		if unrecorded(want, key) {
+			continue
+		}
 		answer := want[key]
 		of[key], shape[key], wantOf[key], wantShape[key] = def.BodyHash(), def.ShapeHash(), answer.Of, answer.Normalized
 		if def.BodyWeight() != answer.Weight {

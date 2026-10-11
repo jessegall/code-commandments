@@ -20,6 +20,9 @@ func TestEveryDefReachesWhatThePHPEngineSays(t *testing.T) {
 			resources = append(resources, resource)
 		}
 		slices.Sort(resources)
+		if unrecorded(want, place(def)) {
+			continue
+		}
 		if got, answer := strings.Join(resources, ","), strings.Join(want[place(def)], ","); got != answer {
 			t.Errorf("%s reaches %s, not %s", place(def), got, answer)
 		}

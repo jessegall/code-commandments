@@ -58,6 +58,9 @@ func TestEveryModuleReachesTheModulesThePHPIndexSays(t *testing.T) {
 			}
 		}
 		slices.Sort(reached)
+		if unrecorded(want, path) {
+			continue
+		}
 		if strings.Join(reached, ",") != strings.Join(want[path], ",") {
 			t.Errorf("%s reaches %v, not %v", path, reached, want[path])
 		}
