@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
+	"github.com/jessegall/code-commandments/cli/library"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/sins"
@@ -164,20 +164,20 @@ func commands(definition skill.Definition, taught []sins.Sin) string {
 		}
 	}
 	rows := []string{
-		"- `" + binary.Shim + " judge --skill=" + definition.Slug + "` — find every one of these in the codebase.",
+		"- `" + library.Binary + " judge --skill=" + definition.Slug + "` — find every one of these in the codebase.",
 		"- `" + info("<sin>") + "` — what one rule flags, why it is a sin, and the fix. The sins here: " + code(names) + ".",
 	}
 	if len(fixable) > 0 {
-		rows = append(rows, "- `"+binary.Shim+" repent --sin=<sin>` — auto-fix, for "+code(fixable)+". Review it with `--dry-run` first.")
+		rows = append(rows, "- `"+library.Binary+" repent --sin=<sin>` — auto-fix, for "+code(fixable)+". Review it with `--dry-run` first.")
 	}
 	if len(scaffolds) > 0 {
-		rows = append(rows, "- `"+binary.Shim+" scaffold --sin=<sin>` — generate the helper the fix reaches for, for "+code(scaffolds)+".")
+		rows = append(rows, "- `"+library.Binary+" scaffold --sin=<sin>` — generate the helper the fix reaches for, for "+code(scaffolds)+".")
 	}
 	design := ""
 	if bestDesign {
 		design = ` --best-design="…"`
 	}
-	rows = append(rows, "- `"+binary.Shim+` report --detector=<Detector> --reason="…"`+design+" --ref=path:line` — the flagged code is CORRECT "+
+	rows = append(rows, "- `"+library.Binary+` report --detector=<Detector> --reason="…"`+design+" --ref=path:line` — the flagged code is CORRECT "+
 		"under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, "+
 		"however far the fix cascades.")
 
@@ -185,7 +185,7 @@ func commands(definition skill.Definition, taught []sins.Sin) string {
 }
 
 func info(sin string) string {
-	return binary.Shim + " info " + sin
+	return library.Binary + " info " + sin
 }
 
 func code(values []string) string {

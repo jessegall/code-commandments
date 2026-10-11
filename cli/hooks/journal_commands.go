@@ -129,7 +129,7 @@ func renderSkills() (int, error) {
 		return 0, err
 	}
 
-	published, err := library.At(filepath.Join(pluginRoot(), skillsFolder), project).Publish()
+	published, err := library.For(filepath.Join(pluginRoot(), skillsFolder), journalProjectRoot(), project).Publish()
 
 	return len(published), err
 }

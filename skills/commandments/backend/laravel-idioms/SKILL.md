@@ -101,9 +101,9 @@ The other 10 — one per rule — are in [`reference/examples.md`](reference/exa
 
 ## Commands
 
-- `vendor/bin/commandments judge --skill=backend/laravel-idioms` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `raw-request-input`, `request-accessor-recast`.
-- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+- `{{binary}} judge --skill=backend/laravel-idioms` — find every one of these in the codebase.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `raw-request-input`, `request-accessor-recast`.
+- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 

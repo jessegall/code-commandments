@@ -1,6 +1,6 @@
 # Route Actions — one operation, one entry point — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`boundary-duplicated-operation`** — The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift — `BoundaryDuplicatedOperationDetector`
 - **`dangling-route-name`** — A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500 — `DanglingRouteNameDetector`

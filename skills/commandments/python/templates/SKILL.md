@@ -86,9 +86,9 @@ def slip_shown(order_ref: str, carrier: str, weight_grams: int) -> str:
 
 ## Commands
 
-- `vendor/bin/commandments judge --skill=python/templates` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-assembled-template`.
-- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+- `{{binary}} judge --skill=python/templates` — find every one of these in the codebase.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-assembled-template`.
+- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 

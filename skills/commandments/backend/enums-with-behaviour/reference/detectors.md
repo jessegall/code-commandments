@@ -1,6 +1,6 @@
 # Enums with behaviour — seal the set, put the logic on the type — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`const-class-enum`** — A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum — `ConstClassEnumDetector`
 - **`enum-case-or-chain`** — `$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test — `EnumCaseOrChainDetector`

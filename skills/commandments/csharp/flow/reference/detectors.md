@@ -1,6 +1,6 @@
 # C# flow — guard at the top, keep the body flat — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`csharp-coalesced-loop-subject`** — a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header — `CoalescedLoopSubjectDetector`
 - **`deep-csharp-nesting`** — An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops — `DeepNestingDetector`

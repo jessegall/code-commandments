@@ -1,6 +1,6 @@
 # Value objects — give related data a type — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`array-bag`** — String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined. — `ArrayBagDetector`
 - **`array-return-bag`** — Returning a multi-field string-keyed array literal (a bag that should be a value object) — `ArrayReturnBagDetector`

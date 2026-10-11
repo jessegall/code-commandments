@@ -138,9 +138,9 @@ The other 7 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Commands
 
-- `vendor/bin/commandments judge --skill=csharp/flow` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-coalesced-loop-subject`, `deep-csharp-nesting`, `csharp-inline-throw`, `csharp-loop-wrapped-in-if`, `csharp-nested-ternary`, `csharp-non-counting-for`, `redundant-csharp-else`, `csharp-subject-ladder`.
-- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+- `{{binary}} judge --skill=csharp/flow` — find every one of these in the codebase.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-coalesced-loop-subject`, `deep-csharp-nesting`, `csharp-inline-throw`, `csharp-loop-wrapped-in-if`, `csharp-nested-ternary`, `csharp-non-counting-for`, `redundant-csharp-else`, `csharp-subject-ladder`.
+- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 

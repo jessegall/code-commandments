@@ -1,6 +1,6 @@
 # Python exceptions — fail loud, named, at the source — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`python-message-string-raise`** — `raise Exception/RuntimeError("…")` — a failure that names nothing, described in prose at the raise site — `MessageStringRaiseDetector`
 - **`python-raise-without-cause`** — `raise Other(...)` inside an `except` block with no `from` — the failure being handled left as an implicit context, never named as the cause — `RaiseWithoutCauseDetector`

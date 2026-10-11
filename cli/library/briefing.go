@@ -30,6 +30,10 @@ var briefing string
 //go:embed brief.md
 var brief string
 
+// Binary is the placeholder a rendered skill writes where the executable goes: the curriculum is rendered once,
+// into the binary, and which file an agent is told to run is answered when it is published into a project.
+const Binary = "{{binary}}"
+
 // Briefing is the canon every agent in the project at root is handed: how the skills are loaded, the rule
 // they all serve, and the disciplines the project can use, tier by tier, its own among them.
 func Briefing(root string, project config.Config) string {
@@ -37,7 +41,7 @@ func Briefing(root string, project config.Config) string {
 
 	return strings.NewReplacer(
 		"{{library}}", Dir,
-		"{{binary}}", binary.Invocation(root),
+		Binary, binary.Invocation(root),
 		"{{mandatory}}", bullets(skill.Mandatory, project, own),
 		"{{keepInMind}}", bullets(skill.KeepInMind, project, own),
 	).Replace(briefing)
@@ -50,7 +54,7 @@ func Briefing(root string, project config.Config) string {
 func Brief(root string, project config.Config) string {
 	return strings.NewReplacer(
 		"{{library}}", Dir,
-		"{{binary}}", binary.Invocation(root),
+		Binary, binary.Invocation(root),
 	).Replace(brief)
 }
 

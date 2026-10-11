@@ -1,6 +1,6 @@
 # Python flow — guard at the top, keep the body flat — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`python-coalesced-loop-subject`** — `for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard — `CoalescedLoopSubjectDetector`
 - **`python-conditional-statement`** — a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an action, not a value. — `ConditionalStatementDetector`

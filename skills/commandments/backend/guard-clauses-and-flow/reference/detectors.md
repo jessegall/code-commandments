@@ -1,6 +1,6 @@
 # Guard clauses & flow — check at the top, then go straight — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`coalesced-loop-subject`** — `foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard — `CoalescedLoopSubjectDetector`
 - **`deep-nesting`** — `if` nested 3-deep (a pyramid — hoist guards / extract) — `DeepNestingDetector`

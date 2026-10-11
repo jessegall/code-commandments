@@ -1,6 +1,6 @@
 # Python absence — decide "missing" where the value is born — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`python-blank-string-default`** — `x: str = ""` standing in for absence — then asked `x == ""`, `not x` or `if x:` in its own scope — `BlankStringDefaultDetector`
 - **`python-cancelled-fallback`** — `(x or "") != ""` — a value defaulted to a blank only to be compared against that same blank, so a missing value and an empty one are treated the same without saying so. — `CancelledFallbackDetector`

@@ -1,6 +1,6 @@
 # Absence — model "might not be there" honestly — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`blank-string-default`** — `string $x = ''` standing in for absence — then asked `$x === ''` — `BlankStringDefaultDetector`
 - **`blank-string-on-the-wire`** — A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean "missing" — only that reader knows the blank stands for absence. — `BlankStringOnTheWireDetector`

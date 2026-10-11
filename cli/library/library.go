@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/atomic"
+	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/workspace"
@@ -34,13 +35,22 @@ const manifest = "published-skills"
 // Library is a project's skill library.
 type Library struct {
 	root     string
+	judged   string
 	project  config.Config
 	previous []string
 }
 
 // At is the library of the project at root, publishing for the languages its config says it writes.
 func At(root string, project config.Config) Library {
-	return Library{root, project, readManifest(root)}
+	return For(root, root, project)
+}
+
+// For is a library written at root for the project at judged. The two are the same folder wherever the project
+// publishes its own, and differ for the journal's plugin, which renders the curriculum into its own folder for
+// the journal to copy: what a skill tells an agent to RUN is then the JUDGED project's invocation, never that of
+// the folder the files happen to be written in.
+func For(root, judged string, project config.Config) Library {
+	return Library{root, judged, project, readManifest(root)}
 }
 
 // Dir is the library's folder.
@@ -57,7 +67,7 @@ func (l Library) Path(id string) string {
 func (l Library) Publish() ([]string, error) {
 	var ids []string
 
-	if written(atomic.Write(filepath.Join(l.Path(MapID), "SKILL.md"), Map(l.root, l.project))) {
+	if written(atomic.Write(filepath.Join(l.Path(MapID), "SKILL.md"), Map(l.judged, l.project))) {
 		ids = append(ids, MapID)
 	}
 
@@ -69,14 +79,14 @@ func (l Library) Publish() ([]string, error) {
 			continue
 		}
 
-		if copied(from, l.Path(definition.ID())) {
+		if l.copied(from, l.Path(definition.ID())) {
 			l.keepWrittenLanguages(filepath.Join(l.Path(definition.ID()), "SKILL.md"))
 			ids = append(ids, definition.ID())
 		}
 	}
 
 	for _, slug := range standalone() {
-		if copied(slug, l.Path(skill.IDFor(slug))) {
+		if l.copied(slug, l.Path(skill.IDFor(slug))) {
 			ids = append(ids, skill.IDFor(slug))
 		}
 	}
@@ -84,7 +94,7 @@ func (l Library) Publish() ([]string, error) {
 	for _, own := range custom.Load(l.root).Skills {
 		id := own.Definition().ID()
 
-		if len(Written([]skill.Skill{own}, l.project)) > 0 && copiedFrom(os.DirFS(own.Dir), ".", l.Path(id)) {
+		if len(Written([]skill.Skill{own}, l.project)) > 0 && copiedFrom(os.DirFS(own.Dir), ".", l.Path(id), l.naming) {
 			ids = append(ids, id)
 		}
 	}
@@ -139,14 +149,21 @@ func standalone() []string {
 }
 
 // copied copies the embedded folder into to, recursively, and says whether every file arrived.
-func copied(from, to string) bool {
-	return copiedFrom(skills.Files, from, to)
+func (l Library) copied(from, to string) bool {
+	return copiedFrom(skills.Files, from, to, l.naming)
+}
+
+// naming is the published text with the executable named as the judged project runs it. The curriculum is
+// rendered once, into the binary, so a skill cannot know which file an agent will be told to run; it writes the
+// placeholder and the answer is given here, where the project is known.
+func (l Library) naming(text []byte) []byte {
+	return []byte(strings.ReplaceAll(string(text), Binary, binary.Invocation(l.judged)))
 }
 
 // copiedFrom copies the folder from, in the file system files, into to, recursively, and says whether every
 // file arrived. The folder is the skill's as it stands: a file an earlier version published there and this one
 // does not, a reference page since dropped, is taken away rather than left for an agent to read as current.
-func copiedFrom(files fs.FS, from, to string) bool {
+func copiedFrom(files fs.FS, from, to string, naming func([]byte) []byte) bool {
 	all := true
 	published := map[string]bool{}
 
@@ -168,7 +185,7 @@ func copiedFrom(files fs.FS, from, to string) bool {
 
 		published[target] = true
 		contents, err := fs.ReadFile(files, name)
-		if err != nil || os.WriteFile(target, contents, 0o644) != nil {
+		if err != nil || os.WriteFile(target, naming(contents), 0o644) != nil {
 			all = false
 		}
 

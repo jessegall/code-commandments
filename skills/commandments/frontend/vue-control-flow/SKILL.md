@@ -61,11 +61,11 @@ The other 3 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Commands
 
-- `vendor/bin/commandments judge --skill=frontend/vue-control-flow` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `control-flow-on-element`, `index-as-key`, `loop-with-condition`, `switch-case`.
-- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `control-flow-on-element`, `switch-case`. Review it with `--dry-run` first.
-- `vendor/bin/commandments scaffold --sin=<sin>` — generate the helper the fix reaches for, for `switch-case`.
-- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+- `{{binary}} judge --skill=frontend/vue-control-flow` — find every one of these in the codebase.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `control-flow-on-element`, `index-as-key`, `loop-with-condition`, `switch-case`.
+- `{{binary}} repent --sin=<sin>` — auto-fix, for `control-flow-on-element`, `switch-case`. Review it with `--dry-run` first.
+- `{{binary}} scaffold --sin=<sin>` — generate the helper the fix reaches for, for `switch-case`.
+- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 

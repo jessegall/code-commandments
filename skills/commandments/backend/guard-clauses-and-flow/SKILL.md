@@ -80,10 +80,10 @@ The other 9 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Commands
 
-- `vendor/bin/commandments judge --skill=backend/guard-clauses-and-flow` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `redundant-else`, `short-circuit-statement`, `ternary-statement`.
-- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `loop-inverted-guard`, `nested-ternary`, `redundant-else`, `short-circuit-statement`, `ternary-statement`. Review it with `--dry-run` first.
-- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+- `{{binary}} judge --skill=backend/guard-clauses-and-flow` — find every one of these in the codebase.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `redundant-else`, `short-circuit-statement`, `ternary-statement`.
+- `{{binary}} repent --sin=<sin>` — auto-fix, for `loop-inverted-guard`, `nested-ternary`, `redundant-else`, `short-circuit-statement`, `ternary-statement`. Review it with `--dry-run` first.
+- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 

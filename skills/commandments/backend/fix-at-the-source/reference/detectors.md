@@ -1,6 +1,6 @@
 # Fix at the source — what fires, and why
 
-Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `vendor/bin/commandments info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
+Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`constructor-side-effect`** — A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it. — `ConstructorSideEffectDetector`
 - **`divergent-twin`** — Two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other. — `DivergentTwinDetector`

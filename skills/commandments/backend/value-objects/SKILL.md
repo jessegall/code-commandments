@@ -101,10 +101,10 @@ The other 8 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Commands
 
-- `vendor/bin/commandments judge --skill=backend/value-objects` — find every one of these in the codebase.
-- `vendor/bin/commandments info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `array-bag`, `array-return-bag`, `coupled-fields`, `data-clump`, `hand-rolled-wither`, `mutable-value-object`, `positional-tuple-return`, `raw-decoded-array-return`, `flat-field-cluster`.
-- `vendor/bin/commandments repent --sin=<sin>` — auto-fix, for `hand-rolled-wither`. Review it with `--dry-run` first.
-- `vendor/bin/commandments report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+- `{{binary}} judge --skill=backend/value-objects` — find every one of these in the codebase.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `array-bag`, `array-return-bag`, `coupled-fields`, `data-clump`, `hand-rolled-wither`, `mutable-value-object`, `positional-tuple-return`, `raw-decoded-array-return`, `flat-field-cluster`.
+- `{{binary}} repent --sin=<sin>` — auto-fix, for `hand-rolled-wither`. Review it with `--dry-run` first.
+- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
