@@ -27,6 +27,9 @@ const mapTrigger = "The index of this project's architectural disciplines — ev
 //go:embed briefing.md
 var briefing string
 
+//go:embed brief.md
+var brief string
+
 // Briefing is the canon every agent in the project at root is handed: how the skills are loaded, the rule
 // they all serve, and the disciplines the project can use, tier by tier, its own among them.
 func Briefing(root string, project config.Config) string {
@@ -38,6 +41,17 @@ func Briefing(root string, project config.Config) string {
 		"{{mandatory}}", bullets(skill.Mandatory, project, own),
 		"{{keepInMind}}", bullets(skill.KeepInMind, project, own),
 	).Replace(briefing)
+}
+
+// Brief is the short block injected into the instruction files every agent reads: what judges this project, the
+// one rule every discipline defers to, how a sin is found and fixed, and where the rest is. The disciplines
+// themselves are NOT listed here — they are the map skill, loadable by the id this names, so an instruction file
+// carries a pointer rather than a catalogue it would be skimmed for being.
+func Brief(root string, project config.Config) string {
+	return strings.NewReplacer(
+		"{{library}}", Dir,
+		"{{binary}}", binary.Invocation(root),
+	).Replace(brief)
 }
 
 // Map is the SKILL.md of the map skill: the briefing under a front matter that says when to load it.

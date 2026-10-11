@@ -18,7 +18,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
-// BriefingBlock names the block the canon is kept in, in AGENTS.md.
+// BriefingBlock names the block the brief is kept in, in AGENTS.md: the canon itself is the map skill, loadable,
+// so the instruction file carries only what must be read before any of it.
 const BriefingBlock = "code-commandments briefing"
 
 // retiredCommands are commands the tool once published into an agent's folder, removed by exact name.
@@ -82,7 +83,7 @@ func Sync(root string, console cli.Console) error {
 	}
 
 	canon := agents.InstructionsAt(filepath.Join(root, "AGENTS.md"), root)
-	warn(console, canon.Inject(BriefingBlock, library.Briefing(root, project)))
+	warn(console, canon.Inject(BriefingBlock, library.Brief(root, project)))
 
 	for _, agent := range kept {
 		wire(root, agent, lib, published, canon, console)
