@@ -3,7 +3,6 @@ package hooks
 import (
 	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -15,14 +14,11 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
-	"github.com/jessegall/code-commandments/skill"
 )
 
 const (
 	// touchedLimit is how many changed files one shell command is checked over.
 	touchedLimit = 5
-	// shownPerSkill is how many findings of one skill a nudge names before it counts the rest.
-	shownPerSkill = 3
 	// budget is how many bytes of source one check reads, so a burst of large files never stalls an edit.
 	budget = 120_000
 )
@@ -89,7 +85,7 @@ func (SkillReminder) Handle(event Event) Response {
 
 	response := Silent()
 	if len(sins) > 0 {
-		response = Injecting(event.Name(), nudge(event, files, sins, skills), false)
+		response = Injecting(event.Name(), nudge(event, sins), false)
 	}
 
 	response.Activity = activity
@@ -206,50 +202,20 @@ func safely(rule detectors.Detector, codebase *engine.Codebase) (matches []engin
 }
 
 // attribution names what was changed, as the nudge opens with it.
-func attribution(event Event, files []string) string {
-	var names []string
-	for _, file := range files {
-		names = append(names, filepath.Base(file))
+// nudge is the one line a check says the moment an edit commits a sin: how many are new, and the command that
+// shows them. It says it at once, which is the point of the check, but the detail — the files, each sin's path and
+// line, the skill to load — costs the agent's context only when it asks, since an agent told there are three goes
+// looking where one named inline is fixed alone and the rest never judged.
+func nudge(event Event, sins map[string][]string) string {
+	found := 0
+	for _, named := range sins {
+		found += len(slices.Compact(slices.Sorted(slices.Values(named))))
+	}
+	sin := "sins"
+	if found == 1 {
+		sin = "sin"
 	}
 
-	named := strings.Join(names, "`, `")
-
-	switch {
-	case !event.IsTool("Bash"):
-		return "the edit you just made to `" + named + "`"
-	case len(files) == 1:
-		return "`" + named + "`, changed since the last check,"
-	default:
-		return "the files changed since the last check (`" + named + "`)"
-	}
-}
-
-func nudge(event Event, files []string, sins map[string][]string, skills []string) string {
-	lines := []string{"Code Commandments — " + attribution(event, files) + " breaks a rule. " +
-		"Fix it now, at its SOURCE, while the code is still in front of you:"}
-
-	for _, slug := range skills {
-		found := sins[slug]
-
-		var unique []string
-		for _, finding := range found {
-			if !slices.Contains(unique, finding) {
-				unique = append(unique, finding)
-			}
-		}
-
-		shown := unique[:min(shownPerSkill, len(unique))]
-		line := "  • " + strings.Join(shown, "; ")
-
-		if rest := len(unique) - len(shown); rest > 0 {
-			line += " (+" + strconv.Itoa(rest) + " more)"
-		}
-
-		lines = append(lines, line+"\n    LOAD the skill `"+skill.IDFor(slug)+"` before fixing — load it even if you believe you already have.")
-	}
-
-	lines = append(lines, "Run `"+binary.Invocation(event.Root)+" info <sin>` if a rule is not one you recognise. "+
-		"This check reads a file at a time, so it is not the whole picture — `judge` still is.")
-
-	return strings.Join(lines, "\n")
+	return "Code Commandments — " + strconv.Itoa(found) + " new " + sin + ". `" +
+		binary.Invocation(event.Root) + " judge --changes` to see them."
 }
