@@ -55,9 +55,8 @@ func (SkillReminder) Handle(event Event) Response {
 	single := slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile)
 
 	reported := ReportedIn(event.Workspace())
-	sins := map[string][]string{}
-	var skills []string
 	var activity []SinMark
+	var fresh []SinMark
 
 	for _, file := range files {
 		if !project.Writes(source.OfFile(file)) {
@@ -70,22 +69,23 @@ func (SkillReminder) Handle(event Event) Response {
 		found, order := bySkill(marks)
 		unseen := reported.Unseen(file, found, order)
 
-		for _, slug := range order {
-			if _, has := unseen[slug]; !has {
-				continue
+		named := map[string]bool{}
+		for _, namings := range unseen {
+			for _, finding := range namings {
+				named[finding] = true
 			}
+		}
 
-			if !slices.Contains(skills, slug) {
-				skills = append(skills, slug)
+		for _, mark := range marks {
+			if mark.Touched && named[mark.Found()] {
+				fresh = append(fresh, mark)
 			}
-
-			sins[slug] = append(sins[slug], unseen[slug]...)
 		}
 	}
 
 	response := Silent()
-	if len(sins) > 0 {
-		response = Injecting(event.Name(), nudge(event, sins), false)
+	if len(fresh) > 0 {
+		response = Injecting(event.Name(), nudge(event, fresh), false)
 	}
 
 	response.Activity = activity
@@ -202,20 +202,24 @@ func safely(rule detectors.Detector, codebase *engine.Codebase) (matches []engin
 }
 
 // attribution names what was changed, as the nudge opens with it.
-// nudge is the one line a check says the moment an edit commits a sin: how many are new, and the command that
-// shows them. It says it at once, which is the point of the check, but the detail — the files, each sin's path and
-// line, the skill to load — costs the agent's context only when it asks, since an agent told there are three goes
-// looking where one named inline is fixed alone and the rest never judged.
-func nudge(event Event, sins map[string][]string) string {
-	found := 0
-	for _, named := range sins {
-		found += len(slices.Compact(slices.Sorted(slices.Values(named))))
-	}
-	sin := "sins"
-	if found == 1 {
-		sin = "sin"
+// nudge is what a check says the moment an edit commits a sin: each new sin, the file and line it is in, and the
+// one command that judges that file for that sin. It names them rather than sending the agent to find out what it
+// was just told, and it says nothing else — not the files it read, not how many it left out, not the skill, which
+// the command itself prints.
+func nudge(event Event, marks []SinMark) string {
+	command := func(mark SinMark) string {
+		return "`" + binary.Invocation(event.Root) + " judge " + mark.FileFrom(event.Root) +
+			" --sin=" + mark.Rule.Sin().Definition().Name + "`"
 	}
 
-	return "Code Commandments — " + strconv.Itoa(found) + " new " + sin + ". `" +
-		binary.Invocation(event.Root) + " judge --changes` to see them."
+	if len(marks) == 1 {
+		return "Code Commandments — " + marks[0].ShownFrom(event.Root) + ". Run " + command(marks[0]) + "."
+	}
+
+	lines := []string{"Code Commandments — " + strconv.Itoa(len(marks)) + " new sins:"}
+	for _, mark := range marks {
+		lines = append(lines, "  • "+mark.ShownFrom(event.Root)+" — run "+command(mark))
+	}
+
+	return strings.Join(lines, "\n")
 }

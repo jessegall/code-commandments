@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — 2 new sins. `commandments judge --changes` to see them."}}
+{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Code Commandments — 2 new sins:\n  • array-bag at src/Order.php:13 — run `commandments judge src/Order.php --sin=array-bag`\n  • narrated-command at src/Order.php:7 — run `commandments judge src/Order.php --sin=narrated-command`"}}
 
 --- stderr
 

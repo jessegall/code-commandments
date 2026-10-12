@@ -55,6 +55,12 @@ func (m SinMark) Found() string {
 	return m.Rule.Sin().Definition().Name + " at " + m.Match.Location()
 }
 
+// FileFrom is the file the mark is in as the project names it, relative to root: what a command naming that one
+// file takes, and short enough to say in a line.
+func (m SinMark) FileFrom(root string) string {
+	return strings.TrimPrefix(strings.TrimPrefix(m.Match.File(), strings.TrimRight(root, "/")), "/")
+}
+
 // ShownFrom is the mark named with paths under root.
 func (m SinMark) ShownFrom(root string) string {
 	return strings.ReplaceAll(m.Found(), strings.TrimRight(root, "/")+"/", "")
