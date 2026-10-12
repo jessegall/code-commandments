@@ -94,14 +94,7 @@ func (g *NamespaceGraph) Arrows() engine.DependencyArrows {
 // IndependentArrows is the references between namespaces neither of which nests the other: a namespace and its own
 // children are one part of the program.
 func (g *NamespaceGraph) IndependentArrows() engine.DependencyArrows {
-	var independent engine.DependencyArrows
-	for _, arrow := range g.arrows {
-		if !nests(arrow.From, arrow.To) && !nests(arrow.To, arrow.From) {
-			independent = append(independent, arrow)
-		}
-	}
-
-	return independent
+	return g.arrows.Independent(".")
 }
 
 // WouldCloseACycle says whether a reference from the referrer type to the target type would close a cycle between
@@ -124,17 +117,12 @@ func (g *NamespaceGraph) ClosingAMutualPair() []engine.Match {
 func (g *NamespaceGraph) independentElsewhere() engine.ArrowCounts {
 	independent := engine.ArrowCounts{}
 	for pair, count := range g.elsewhere {
-		if !nests(pair.From, pair.To) && !nests(pair.To, pair.From) {
+		if !engine.Nests(pair.From, pair.To, ".") && !engine.Nests(pair.To, pair.From, ".") {
 			independent[pair] = count
 		}
 	}
 
 	return independent
-}
-
-// nests says whether the outer namespace holds the inner one.
-func nests(outer, inner string) bool {
-	return strings.HasPrefix(inner, outer+".")
 }
 
 // LayerViolations is every reference out of a declared layer into a namespace it may not use: one per file and

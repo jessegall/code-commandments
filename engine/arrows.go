@@ -3,6 +3,7 @@ package engine
 import (
 	"cmp"
 	"slices"
+	"strings"
 )
 
 // DependencyArrow is one reference from a part of a codebase to another, where it is written.
@@ -15,6 +16,26 @@ type DependencyArrow struct {
 // DependencyArrows is the references between the parts of a codebase, in the order the files are written: which
 // part uses which, and the pairs of parts that use each other. The one reading of it every engine shares.
 type DependencyArrows []DependencyArrow
+
+// Nests says whether the inner part sits under the outer one, the parts of a name separated so: a sub-namespace
+// is INSIDE its parent and a sub-package inside the folder above it, so a reference between the two crosses no
+// boundary and is no dependency between two parts of a codebase.
+func Nests(outer, inner, separator string) bool {
+	return strings.HasPrefix(inner, outer+separator)
+}
+
+// Independent is the arrows between parts neither of which contains the other: the only ones that can be a
+// dependency to judge, since an arrow into a part's own sub-part stays inside it.
+func (a DependencyArrows) Independent(separator string) DependencyArrows {
+	var independent DependencyArrows
+	for _, arrow := range a {
+		if !Nests(arrow.From, arrow.To, separator) && !Nests(arrow.To, arrow.From, separator) {
+			independent = append(independent, arrow)
+		}
+	}
+
+	return independent
+}
 
 // Has says whether some reference in from reaches to.
 func (a DependencyArrows) Has(from, to string) bool {

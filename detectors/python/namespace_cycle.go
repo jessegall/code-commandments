@@ -1,6 +1,8 @@
 package python
 
 import (
+	"path/filepath"
+
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
@@ -23,7 +25,7 @@ func (NamespaceCycleDetector) Sin() sins.Sin {
 
 // Find is every place the sin is committed.
 func (NamespaceCycleDetector) Find(codebase *engine.Codebase) []engine.Match {
-	return py.In(codebase).Program.PackageArrows().ClosingAMutualPair()
+	return py.In(codebase).Program.PackageArrows().Independent(string(filepath.Separator)).ClosingAMutualPair()
 
 }
 
