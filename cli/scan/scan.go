@@ -405,6 +405,9 @@ func sayUnreadable(streams []*contract.Stream) {
 		if stream.Program == nil {
 			continue
 		}
+		if stream.Program.Loader != "" {
+			fmt.Fprintf(os.Stderr, "⚠ no class of a package is read: %s. A method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot\n", stream.Program.Loader)
+		}
 		for _, unreadable := range stream.Program.Unreadable {
 			fmt.Fprintf(os.Stderr, "⚠ %s could not be loaded by the project's own loader (%s), so it is read as outside the scan\n", unreadable.Symbol, unreadable.Reason)
 		}

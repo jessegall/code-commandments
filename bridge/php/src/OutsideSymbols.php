@@ -31,6 +31,15 @@ final class OutsideSymbols
      */
     private array $unreadable = [];
 
+    /**
+     * Names the scan holds that this listing does not: without the project's own loader a class of a package cannot
+     * be found at all, and the run says so rather than letting every rule that reads a package's contract fall
+     * silently. Empty when the scan names nothing it did not get.
+     *
+     * @var array<string, string>
+     */
+    private array $unlisted = [];
+
     private readonly bool $internalOnly;
 
     /**
@@ -64,14 +73,29 @@ final class OutsideSymbols
         return array_values($this->unreadable);
     }
 
+    /**
+     * @return list<string>
+     */
+    public function unlisted(): array
+    {
+        return array_values($this->unlisted);
+    }
+
     private function add(string $class): void
     {
         $key = strtolower(ltrim($class, '\\'));
-        if (isset($this->symbols[$key]) || isset($this->declared[$key]) || ! $this->exists($class)) {
+        if (isset($this->symbols[$key]) || isset($this->declared[$key])) {
+            return;
+        }
+        if (! $this->exists($class)) {
+            $this->unlisted[$key] = $class;
+
             return;
         }
         $reflection = new ReflectionClass($class);
         if ($this->internalOnly && ! $reflection->isInternal()) {
+            $this->unlisted[$key] = $class;
+
             return;
         }
         $symbol = ['symbol' => $reflection->getName(), 'kind' => $this->kind($reflection), 'name' => $reflection->getShortName()];

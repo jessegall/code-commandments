@@ -344,6 +344,10 @@ type Program struct {
 	Unreadable []UnreadableSymbol `json:"unreadable,omitempty"`
 	Packages   []string           `json:"packages,omitempty"`
 	Aliases    []Alias            `json:"aliases,omitempty"`
+	// Loader is why the scanned project's own loader was not used, empty when it was: without it no class of a
+	// package is read, so a rule that excuses a method a package's interface fixes cannot excuse it, and the run
+	// says so rather than letting the finding look like the rule's mistake.
+	Loader string `json:"loader,omitempty"`
 }
 
 // UnreadableSymbol is a class the scan names that the scanned project's own loader failed on, and why: it stays

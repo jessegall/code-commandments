@@ -95,5 +95,6 @@ exit: 0
   [2mre-run with --write to add it to .commandments/config.php, or --floor for just the bottom[0m
 
 --- stderr
+⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install. A method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
 
 --- files

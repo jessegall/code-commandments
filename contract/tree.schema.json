@@ -264,7 +264,8 @@
           "properties": {"prefix": {"type": "string", "minLength": 1}, "path": {"$ref": "#/$defs/absolutePath"}},
           "required": ["prefix", "path"],
           "additionalProperties": false
-        }}
+        }},
+        "loader": {"type": "string", "minLength": 1}
       },
       "additionalProperties": false
     },

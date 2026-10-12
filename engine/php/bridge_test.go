@@ -346,3 +346,29 @@ func TestAProbeForAClassTheParserLacksIsNoFailure(t *testing.T) {
 		t.Errorf("the probe answered %q (%v)", out, err)
 	}
 }
+
+// TestAProjectWithUninstalledDependenciesSaysWhyNoPackageIsRead holds the program line to the reason its own loader
+// was not used. Without it no class of a package is read, so a method a package's interface fixes reads as the
+// class's own and the rule that excuses such a method cannot — a report of that false positive (#665) is answered
+// by the run itself, not by a reader guessing. A project that declares no dependency says nothing.
+func TestAProjectWithUninstalledDependenciesSaysWhyNoPackageIsRead(t *testing.T) {
+	uninstalled := written(t, map[string]string{
+		"composer.json":  `{"name":"acme/app","require":{"acme/excel":"^3.1"}}`,
+		"src/Export.php": "<?php\nnamespace App;\nfinal class Export implements \\Acme\\Excel\\WithProperties {\n    public function properties(): array { return ['title' => 'a', 'company' => 'b']; }\n}\n",
+	})
+	stream := bridged(t, filepath.Join(uninstalled, "src"))
+	if stream.Program == nil || stream.Program.Loader == "" {
+		t.Fatalf("a project with dependencies it has not installed says nothing of its loader: %v", stream.Program)
+	}
+	if !strings.Contains(stream.Program.Loader, "composer install") {
+		t.Errorf("the reason does not say what to do: %q", stream.Program.Loader)
+	}
+
+	bare := written(t, map[string]string{
+		"composer.json":  `{"name":"acme/app","autoload":{"psr-4":{"App\\":"src/"}}}`,
+		"src/Export.php": "<?php\nnamespace App;\nfinal class Export {}\n",
+	})
+	if program := bridged(t, filepath.Join(bare, "src")).Program; program != nil && program.Loader != "" {
+		t.Errorf("a project that declares no dependency is told its loader was not used: %q", program.Loader)
+	}
+}

@@ -3,6 +3,7 @@ exit: 0
 [2m↳ dry-run diff for 17 file(s) written to hints.diff[0m
 
 --- stderr
+⚠ no class of a package is read: composer.json declares dependencies but vendor/autoload.php is not there: run composer install. A method a package's interface fixes reads as the class's own, so a rule that would excuse it cannot
 
 --- files
 === created hints.diff
