@@ -178,8 +178,8 @@ func (JournalConfig) Help() help.Help {
 // Run writes each chosen switch, renders the skills again, refreshes what the project is told, and notifies
 // what changed and what it could not write.
 func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
-	var chosen map[string]any
-	if json.Unmarshal([]byte(os.Getenv(journalSettings)), &chosen) != nil || chosen == nil {
+	chosen, given := chosenSettings()
+	if !given {
 		console.Warn(journalSettings + " holds no settings to apply.")
 
 		return 2, nil
@@ -310,6 +310,43 @@ func everySin() []sins.Sin {
 	}
 
 	return every
+}
+
+// chosenSettings are the plugin's settings as the journal gives them: the JSON itself in JOURNAL_SETTINGS in version
+// 3 of the journal, a file of it named there in version 4, whose flags, numbers and lists are JSON's own; each value
+// comes back as the text version 3 gave, a flag "true" or "false" and a list one entry per line.
+func chosenSettings() (map[string]any, bool) {
+	given := os.Getenv(journalSettings)
+	var chosen map[string]any
+	if json.Unmarshal([]byte(given), &chosen) != nil || chosen == nil {
+		text, err := os.ReadFile(given)
+		if err != nil || json.Unmarshal(text, &chosen) != nil || chosen == nil {
+			return nil, false
+		}
+	}
+
+	for key, value := range chosen {
+		chosen[key] = settingText(value)
+	}
+
+	return chosen, true
+}
+
+// settingText is one setting's value as text: a list one entry per line, anything else as JSON writes it.
+func settingText(value any) any {
+	switch typed := value.(type) {
+	case nil, string:
+		return typed
+	case []any:
+		var lines []string
+		for _, entry := range typed {
+			lines = append(lines, fmt.Sprint(entry))
+		}
+
+		return strings.Join(lines, "\n")
+	default:
+		return fmt.Sprint(typed)
+	}
 }
 
 func folders(chosen map[string]any, key string) []string {

@@ -33,16 +33,16 @@ Commands:
                    counters.
   task             The work in front of this session — numbered tasks, one markdown file each,
                    moved between queue, active and history.
-  journal-config   Write the agent journal plugin's chosen switches into .commandments/config.php,
+  journal-config   Write the agent journal plugin's chosen switches into .commandments/config.json,
                    and refresh what the project is told.
   journal-scan     Scan the project for the folders to check and the ones to leave out, for the
                    agent journal plugin.
   journal-skills   Render the skills into the agent journal plugin's folder, for the journal to
                    publish.
-  disable          Toggle a rule in the project's .commandments/config.php, leaving the rest of the
+  disable          Toggle a rule in the project's .commandments/config.json, leaving the rest of the
                    file as you wrote it — or in a config.php from an earlier version, through its
                    tree, so your own lines are untouched.
-  config           Inspect and manage .commandments/config.php — what is configured, and what is
+  config           Inspect and manage .commandments/config.json — what is configured, and what is
                    actually running.
   layers           Read the dependency stack this project ALREADY has and propose the layer
                    declaration for it — the rule is inert until one is declared, and nobody writes
@@ -63,6 +63,9 @@ Hooks (wired automatically — you rarely run these by hand):
                   registered handler, and merges their responses into one.
   journal-hook    The agent journal's entry point — reads one journal hook payload from stdin,
                   runs every registered handler, and answers in the journal's shape.
+  journal4-hook   Version 4 of the agent journal's entry point — reads one event line from stdin,
+                  runs every registered handler, and answers in one line: the gate's refusal, the
+                  advice told, and each sin found or repented as a card keyed by its file.
   journal-serve   Answer the agent journal's hooks from one running process, over the socket the
                   journal names in $JOURNAL_PLUGIN_SOCKET.
   roslyn-serve    Keep the C# bridge running for this project, answering each run of the tool over a

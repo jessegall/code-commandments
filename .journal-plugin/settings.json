@@ -1,0 +1,1885 @@
+[
+    {
+        "key": "folders_judged",
+        "title": "Folders to check",
+        "kind": "list",
+        "default": [],
+        "help": "One folder per line, from the project root. Empty, the config keeps the folders it names."
+    },
+    {
+        "key": "folders_skipped",
+        "title": "Folders to leave out",
+        "kind": "list",
+        "default": [],
+        "help": "One folder per line, never read or reported, such as generated code. This list is what the config leaves out."
+    },
+    {
+        "key": "judge_parallel",
+        "title": "Rules judged at once",
+        "kind": "number",
+        "default": 2,
+        "help": "How many detectors the check runs side by side. More finish sooner but use more cores and memory."
+    },
+    {
+        "key": "language_php",
+        "title": "PHP",
+        "kind": "flag",
+        "default": true,
+        "help": "Enables PHP sin detection"
+    },
+    {
+        "key": "language_vue",
+        "title": "Vue",
+        "kind": "flag",
+        "default": true,
+        "help": "Enables Vue sin detection"
+    },
+    {
+        "key": "language_ts",
+        "title": "TypeScript",
+        "kind": "flag",
+        "default": true,
+        "help": "Enables TypeScript sin detection"
+    },
+    {
+        "key": "language_py",
+        "title": "Python",
+        "kind": "flag",
+        "default": true,
+        "help": "Enables Python sin detection"
+    },
+    {
+        "key": "language_cs",
+        "title": "C#",
+        "kind": "flag",
+        "default": true,
+        "help": "Enables C# sin detection"
+    },
+    {
+        "key": "sin_blank-string-default",
+        "title": "BlankStringDefault",
+        "kind": "flag",
+        "default": true,
+        "help": "`string $x = ''` standing in for absence — then asked `$x === ''`"
+    },
+    {
+        "key": "sin_blank-string-on-the-wire",
+        "title": "BlankStringOnTheWire",
+        "kind": "flag",
+        "default": true,
+        "help": "A `string` field sent over the wire whose TypeScript reader has to check `=== ''` to mean \"missing\" — only that reader knows the blank stands for absence."
+    },
+    {
+        "key": "sin_cancelled-coalesce",
+        "title": "CancelledCoalesce",
+        "kind": "flag",
+        "default": true,
+        "help": "`??` cancelled by the comparison it sits in — `($x ?? '') !== ''`"
+    },
+    {
+        "key": "sin_conditional-array-spread",
+        "title": "ConditionalArraySpread",
+        "kind": "flag",
+        "default": true,
+        "help": "An array built by spreading a conditional element — `...($x ? ['k' => $x] : [])` or `array_merge($base, $cond ? [...] : [])` — a ternary-and-empty-array trick that really just means \"include this when the value is present.\""
+    },
+    {
+        "key": "sin_de-nulled-finder",
+        "title": "DeNulledFinder",
+        "kind": "flag",
+        "default": true,
+        "help": "A finder that returns `null` for both \"missing\" and \"broken\" instead of throwing — the kind of `?T` finder whose callers all end up de-nulling it."
+    },
+    {
+        "key": "sin_erased-null-object",
+        "title": "ErasedNullObject",
+        "kind": "flag",
+        "default": true,
+        "help": "A blank-rendering Null Object written into a `string` slot — coerced back to `''`"
+    },
+    {
+        "key": "sin_nullable-callback",
+        "title": "NullableCallback",
+        "kind": "flag",
+        "default": true,
+        "help": "Nullable callback normalised in the body instead of a Null Object default"
+    },
+    {
+        "key": "sin_option-as-nullable",
+        "title": "OptionAsNullable",
+        "kind": "flag",
+        "default": true,
+        "help": "`Option<T>` used as if it were nullable — `?Option`, `Option | null`, `unwrapOr(null)`"
+    },
+    {
+        "key": "sin_flag-argument",
+        "title": "FlagArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a method whose whole body branches on a `bool` parameter — or on whether a nullable one was given — two methods sharing one name"
+    },
+    {
+        "key": "sin_member-after-method",
+        "title": "MemberAfterMethod",
+        "kind": "flag",
+        "default": true,
+        "help": "A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it."
+    },
+    {
+        "key": "sin_member-out-of-order",
+        "title": "MemberOutOfOrder",
+        "kind": "flag",
+        "default": true,
+        "help": "A declaration in the head of a class that arrives after something belonging below it — a constant under a property, a public field under a private one, a hook above the fields it reads"
+    },
+    {
+        "key": "sin_concurrent-subclass",
+        "title": "ConcurrentSubclass",
+        "kind": "flag",
+        "default": true,
+        "help": "Class `extends Concurrent` instead of composing `Concurrent<self>`"
+    },
+    {
+        "key": "sin_namespace-cycle",
+        "title": "NamespaceCycle",
+        "kind": "flag",
+        "default": true,
+        "help": "two namespaces that reference each other — neither can be read, tested or moved alone"
+    },
+    {
+        "key": "sin_namespace-dependency",
+        "title": "NamespaceDependency",
+        "kind": "flag",
+        "default": true,
+        "help": "a declared layer references a layer it may not use (the arrow points back up)"
+    },
+    {
+        "key": "sin_archaeology-comment",
+        "title": "ArchaeologyComment",
+        "kind": "flag",
+        "default": true,
+        "help": "History/archaeology comments (\"formerly / used to be / refactored / no longer an X / was extracted\")"
+    },
+    {
+        "key": "sin_bloated-docblock",
+        "title": "BloatedDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "Multi-paragraph class docblock (class too big)"
+    },
+    {
+        "key": "sin_ceremony-docblock",
+        "title": "CeremonyDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "Docblock that only restates the typed signature (`@param Type $x`, no description)"
+    },
+    {
+        "key": "sin_dangling-doc-reference",
+        "title": "DanglingDocReference",
+        "kind": "flag",
+        "default": true,
+        "help": "A docblock `{@see}`/`{@link}` cross-references a FIRST-PARTY class that does not exist in the codebase — documentation pointing at a name that was renamed or removed, never at what the code actually is"
+    },
+    {
+        "key": "sin_inline-docblock",
+        "title": "InlineDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "A docblock whose delimiter shares a line with its text — a one-liner, or a block that opens or closes next to content"
+    },
+    {
+        "key": "sin_negative-space-comment",
+        "title": "NegativeSpaceComment",
+        "kind": "flag",
+        "default": true,
+        "help": "A comment defending the code against a strawman (\"not random\", \"no magic\", \"not a coincidence\", \"not dead code\")"
+    },
+    {
+        "key": "sin_restated-comment",
+        "title": "RestatedComment",
+        "kind": "flag",
+        "default": true,
+        "help": "An inline comment that only spells the statement below it back in prose (\"// save the order\" over `$this->orders->save($order)`)"
+    },
+    {
+        "key": "sin_stacked-docblock",
+        "title": "StackedDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "Two or more docblocks stacked on one declaration — PHP reads only the last, so the ones above it are documentation nobody sees"
+    },
+    {
+        "key": "sin_const-class-enum",
+        "title": "ConstClassEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "A class of 2+ scalar `const`s and nothing else — a closed set hand-rolled as constants instead of a native enum"
+    },
+    {
+        "key": "sin_enum-case-or-chain",
+        "title": "EnumCaseOrChain",
+        "kind": "flag",
+        "default": true,
+        "help": "`$x === Enum::A || $x === Enum::B` — a hand-rolled case-group test"
+    },
+    {
+        "key": "sin_enum-value-match",
+        "title": "EnumValueMatch",
+        "kind": "flag",
+        "default": true,
+        "help": "A `match`/`switch` over an enum's `->value` at the call site — logic that belongs on the enum but lives elsewhere instead."
+    },
+    {
+        "key": "sin_in-array-mirrors-enum",
+        "title": "InArrayMirrorsEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "`in_array($x, [literals])` whose literals mirror an existing enum's cases"
+    },
+    {
+        "key": "sin_match-default-returns-null",
+        "title": "MatchDefaultReturnsNull",
+        "kind": "flag",
+        "default": true,
+        "help": "`match` `default` that returns `null`/`false`/`[]` (or has no body) instead of throwing"
+    },
+    {
+        "key": "sin_side-table-trait",
+        "title": "SideTableTrait",
+        "kind": "flag",
+        "default": true,
+        "help": "An enum holding a trait of some of its cases as a constant list of those cases, instead of as something each case answers for itself."
+    },
+    {
+        "key": "sin_string-match-mirrors-enum",
+        "title": "StringMatchMirrorsEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "`match`/`switch` over string/int literals that mirror an existing backed enum's case values"
+    },
+    {
+        "key": "sin_unnamed-vocabulary-literal",
+        "title": "UnnamedVocabularyLiteral",
+        "kind": "flag",
+        "default": true,
+        "help": "A raw string in an argument the codebase elsewhere fills from a named vocabulary — `expect('{')` beside `expect(Token::COLON)`, where `Token::BRACE_OPEN` already names it"
+    },
+    {
+        "key": "sin_generic-exception",
+        "title": "GenericException",
+        "kind": "flag",
+        "default": true,
+        "help": "`throw new <bare SPL>` (RuntimeException/LogicException/…) instead of a named type"
+    },
+    {
+        "key": "sin_message-at-throw",
+        "title": "MessageAtThrow",
+        "kind": "flag",
+        "default": true,
+        "help": "Message string built at the throw site (no domain values / named factory)"
+    },
+    {
+        "key": "sin_swallow-catch",
+        "title": "SwallowCatch",
+        "kind": "flag",
+        "default": true,
+        "help": "`catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)"
+    },
+    {
+        "key": "sin_wrapping-without-cause",
+        "title": "WrappingWithoutCause",
+        "kind": "flag",
+        "default": true,
+        "help": "Wrapping a caught exception without passing it as `previous`/cause"
+    },
+    {
+        "key": "sin_constructor-side-effect",
+        "title": "ConstructorSideEffect",
+        "kind": "flag",
+        "default": true,
+        "help": "A constructor that performs a side effect on a collaborator and throws away the result, so simply creating the object changes something outside it."
+    },
+    {
+        "key": "sin_divergent-twin",
+        "title": "DivergentTwin",
+        "kind": "flag",
+        "default": true,
+        "help": "Two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other."
+    },
+    {
+        "key": "sin_duplicate-function",
+        "title": "DuplicateFunction",
+        "kind": "flag",
+        "default": true,
+        "help": "Copy-pasted code — two+ functions with an identical AST (formatting/comments aside)"
+    },
+    {
+        "key": "sin_manufactured-fake-fill",
+        "title": "ManufacturedFakeFill",
+        "kind": "flag",
+        "default": true,
+        "help": "`?? <empty literal>` filling a required slot (manufactured fake)"
+    },
+    {
+        "key": "sin_mutable-static-state",
+        "title": "MutableStaticState",
+        "kind": "flag",
+        "default": true,
+        "help": "A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result."
+    },
+    {
+        "key": "sin_near-duplicate-function",
+        "title": "NearDuplicateFunction",
+        "kind": "flag",
+        "default": true,
+        "help": "Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone)"
+    },
+    {
+        "key": "sin_coalesced-loop-subject",
+        "title": "CoalescedLoopSubject",
+        "kind": "flag",
+        "default": true,
+        "help": "`foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard"
+    },
+    {
+        "key": "sin_deep-nesting",
+        "title": "DeepNesting",
+        "kind": "flag",
+        "default": true,
+        "help": "`if` nested 3-deep (a pyramid — hoist guards / extract)"
+    },
+    {
+        "key": "sin_if-else-ladder",
+        "title": "IfElseLadder",
+        "kind": "flag",
+        "default": true,
+        "help": "if/elseif ladder of 4+ branches (should be match/dispatch)"
+    },
+    {
+        "key": "sin_inline-throw",
+        "title": "InlineThrow",
+        "kind": "flag",
+        "default": true,
+        "help": "`?? throw` fed into a call or dereferenced on the same line (inline throw mid-expression)"
+    },
+    {
+        "key": "sin_loop-inverted-guard",
+        "title": "LoopInvertedGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "Loop body (multi-statement) wrapped in an `if` instead of `continue` guard"
+    },
+    {
+        "key": "sin_nested-ternary",
+        "title": "NestedTernary",
+        "kind": "flag",
+        "default": true,
+        "help": "Nested/chained ternary `$a ? $b : ($c ? $d : $e)` (hidden control flow)"
+    },
+    {
+        "key": "sin_non-counting-for",
+        "title": "NonCountingFor",
+        "kind": "flag",
+        "default": true,
+        "help": "A `for` loop that looks like it's counting, but its step actually assigns the next item instead of incrementing a counter."
+    },
+    {
+        "key": "sin_redundant-else",
+        "title": "RedundantElse",
+        "kind": "flag",
+        "default": true,
+        "help": "`else` after an `if` branch that already returns/throws (redundant)"
+    },
+    {
+        "key": "sin_short-circuit-statement",
+        "title": "ShortCircuitStatement",
+        "kind": "flag",
+        "default": true,
+        "help": "a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise"
+    },
+    {
+        "key": "sin_ternary-statement",
+        "title": "TernaryStatement",
+        "kind": "flag",
+        "default": true,
+        "help": "a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value"
+    },
+    {
+        "key": "sin_config-read",
+        "title": "ConfigRead",
+        "kind": "flag",
+        "default": true,
+        "help": "`config('…')` read inside a class"
+    },
+    {
+        "key": "sin_container-reach",
+        "title": "ContainerReach",
+        "kind": "flag",
+        "default": true,
+        "help": "`app()`/`resolve()` reach inside a container-resolved class"
+    },
+    {
+        "key": "sin_dead-config-key",
+        "title": "DeadConfigKey",
+        "kind": "flag",
+        "default": true,
+        "help": "A config key nothing reads — dead surface left behind by a deleted feature, which new code may wrongly adopt"
+    },
+    {
+        "key": "sin_dead-event-wiring",
+        "title": "DeadEventWiring",
+        "kind": "flag",
+        "default": true,
+        "help": "An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring"
+    },
+    {
+        "key": "sin_duplicated-config-default",
+        "title": "DuplicatedConfigDefault",
+        "kind": "flag",
+        "default": true,
+        "help": "A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently"
+    },
+    {
+        "key": "sin_facade-call",
+        "title": "FacadeCall",
+        "kind": "flag",
+        "default": true,
+        "help": "Laravel facade call (`Cache::`, `Log::`, `Mail::` …)"
+    },
+    {
+        "key": "sin_mass-update-at-call-site",
+        "title": "MassUpdateAtCallSite",
+        "kind": "flag",
+        "default": true,
+        "help": "Bare `$model->update([...])` mass-array update at a call site"
+    },
+    {
+        "key": "sin_model-mutation-at-call-site",
+        "title": "ModelMutationAtCallSite",
+        "kind": "flag",
+        "default": true,
+        "help": "Set-property-then-`save()` at a call site (should be an intention method)"
+    },
+    {
+        "key": "sin_orphaned-binding",
+        "title": "OrphanedBinding",
+        "kind": "flag",
+        "default": true,
+        "help": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor"
+    },
+    {
+        "key": "sin_raw-request-input",
+        "title": "RawRequestInput",
+        "kind": "flag",
+        "default": true,
+        "help": "Raw `->input()/->get()/->query()/->post()` on a Request"
+    },
+    {
+        "key": "sin_request-accessor-recast",
+        "title": "RequestAccessorRecast",
+        "kind": "flag",
+        "default": true,
+        "help": "Re-coercing a typed request accessor at a call site — `$request->string('id')->toString()` or `(string) $request->string('id')` instead of a named getter on a request class"
+    },
+    {
+        "key": "sin_bare-state-predicate",
+        "title": "BareStatePredicate",
+        "kind": "flag",
+        "default": true,
+        "help": "A `bool` about the object's own state named as a bare verb — `binds()`, `spins()` — where a question belongs"
+    },
+    {
+        "key": "sin_narrated-command",
+        "title": "NarratedCommand",
+        "kind": "flag",
+        "default": true,
+        "help": "A command named in the third person — `hides()`, `entersTestMode()` — where a call is an order, not a description of one"
+    },
+    {
+        "key": "sin_constructor-orchestration",
+        "title": "ConstructorOrchestration",
+        "kind": "flag",
+        "default": true,
+        "help": "A page object fills a public slot imperatively in the constructor (`$this->x = $this->projector->…()`) where a `#[Computed]` property hook would describe it in place"
+    },
+    {
+        "key": "sin_injected-service-not-hidden",
+        "title": "InjectedServiceNotHidden",
+        "kind": "flag",
+        "default": true,
+        "help": "A page object injects a service (`#[FromContainer]`, …) into a public property without `#[Hidden]` — it leaks into the generated TypeScript type"
+    },
+    {
+        "key": "sin_manual-output-transform",
+        "title": "ManualOutputTransform",
+        "kind": "flag",
+        "default": true,
+        "help": "A `Data` computed slot hand-flattens a value object into a wire array, instead of a `#[WithTransformer]` that owns the serialized shape"
+    },
+    {
+        "key": "sin_page-object-missing-typescript",
+        "title": "PageObjectMissingTypeScript",
+        "kind": "flag",
+        "default": true,
+        "help": "A page object travels back in a response but carries no `#[TypeScript]` — the `.vue` page reads it as untyped `any`, so the whole page-prop contract goes unchecked"
+    },
+    {
+        "key": "sin_service-location-in-page-object",
+        "title": "ServiceLocationInPageObject",
+        "kind": "flag",
+        "default": true,
+        "help": "A page object reaches into the container with `app()`/`resolve()` instead of injecting the collaborator via `#[FromContainer]`"
+    },
+    {
+        "key": "sin_transformer-without-ts-type",
+        "title": "TransformerWithoutTsType",
+        "kind": "flag",
+        "default": true,
+        "help": "A `#[WithTransformer]` changes a property's wire shape but has no paired `#[TypeScriptType]`/`#[LiteralTypeScriptType]`, so the generated TypeScript keeps the wrong (PHP) type"
+    },
+    {
+        "key": "sin_computed-boolean-argument",
+        "title": "ComputedBooleanArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "A parameter that's just true/false, computed by every caller from the same object it could be given instead."
+    },
+    {
+        "key": "sin_converted-argument",
+        "title": "ConvertedArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "A parameter typed as the already-converted form instead of the raw value, so every call site repeats the same conversion before calling it (e.g. `Raises::of(ClassAlias::of($interaction), …)`)."
+    },
+    {
+        "key": "sin_derived-argument",
+        "title": "DerivedArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "Passing the same object twice — once whole and once broken into a piece (`persist($request, $request->shopId())`), or broken into several pieces at once (`new AgentTurn($r->output(), $r->failed(), $r->errorOutput())`) — when the callee could derive each piece itself from the one object."
+    },
+    {
+        "key": "sin_param-resolved-from-param",
+        "title": "ParamResolvedFromParam",
+        "kind": "flag",
+        "default": true,
+        "help": "Unpacking the target out of a container parameter — a method takes `(Workflow $workflow, string $nodeId)` and resolves `$workflow->graph->nodeById($nodeId)` itself, when it could just receive the node directly."
+    },
+    {
+        "key": "sin_repeated-guard",
+        "title": "RepeatedGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "The SAME compound guard condition recurs in ≥2 places — the same check spelled differently (inline reaches vs locals) or reordered still counts, so a copied condition has no name"
+    },
+    {
+        "key": "sin_repeated-named-call",
+        "title": "RepeatedNamedCall",
+        "kind": "flag",
+        "default": true,
+        "help": "The same `with`-style (variadic) method is called with the same named argument at 2+ sites, instead of a named helper on the type"
+    },
+    {
+        "key": "sin_repeated-type-guard",
+        "title": "RepeatedTypeGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "The SAME multi-`instanceof` type-narrowing guard (`$x instanceof A && $x->y instanceof B`) is written verbatim in ≥2 places — a check with no name, copied instead of named"
+    },
+    {
+        "key": "sin_nullable-registry-lookup",
+        "title": "NullableRegistryLookup",
+        "kind": "flag",
+        "default": true,
+        "help": "A keyed-store `get()` that returns `null` on a miss (should resolve-or-throw)"
+    },
+    {
+        "key": "sin_boundary-duplicated-operation",
+        "title": "BoundaryDuplicatedOperation",
+        "kind": "flag",
+        "default": true,
+        "help": "The same domain operation hand-rolled at two DIFFERENT entry boundaries (a console command and an MCP tool, a controller and a command) — one operation with two implementations that drift"
+    },
+    {
+        "key": "sin_dangling-route-name",
+        "title": "DanglingRouteName",
+        "kind": "flag",
+        "default": true,
+        "help": "A `route('x')` lookup naming a route no registration mints — a stringly cross-reference that only fails at runtime, as a 500"
+    },
+    {
+        "key": "sin_duplicate-route",
+        "title": "DuplicateRoute",
+        "kind": "flag",
+        "default": true,
+        "help": "Two route registrations of the same verb bind different URLs to the SAME `[Controller, method]` — two names for one handler (invokable single-action controllers, commonly aliased to several canonical URLs, are exempt)"
+    },
+    {
+        "key": "sin_duplicate-route-action",
+        "title": "DuplicateRouteAction",
+        "kind": "flag",
+        "default": true,
+        "help": "Two route actions in different controllers thinly delegate to the SAME operation (`return $this->exporter->export(...)`) — the same entry point twice"
+    },
+    {
+        "key": "sin_route-delegates-to-controller",
+        "title": "RouteDelegatesToController",
+        "kind": "flag",
+        "default": true,
+        "help": "A route action forwards to ANOTHER controller's action (`return $this->otherController->action(...)`) — a redundant entry point onto an operation that already has one"
+    },
+    {
+        "key": "sin_all-nullable-data",
+        "title": "AllNullableData",
+        "kind": "flag",
+        "default": true,
+        "help": "All-nullable \"god\" DTO — every field `?T`/defaulted (type doesn't tell the truth)"
+    },
+    {
+        "key": "sin_all-optional-data",
+        "title": "AllOptionalData",
+        "kind": "flag",
+        "default": true,
+        "help": "Every field of a `Data` object is `T|Optional` — the type promises nothing is ever present; the absence belongs on the CONTAINER field where it's used"
+    },
+    {
+        "key": "sin_data-collection-type",
+        "title": "DataCollectionType",
+        "kind": "flag",
+        "default": true,
+        "help": "A `Data` property is TYPED as `DataCollection` — it should be `array` (or `Collection`) with `#[DataCollectionOf(X)]`; the `DataCollection` type emits malformed TypeScript and skips element-typed hydration"
+    },
+    {
+        "key": "sin_data-method-hint-collision",
+        "title": "DataMethodHintCollision",
+        "kind": "flag",
+        "default": true,
+        "help": "`@method` tag that re-declares a real method (names the concrete factory, not the magic `from`/`collect`)"
+    },
+    {
+        "key": "sin_hook-missing-computed",
+        "title": "HookMissingComputed",
+        "kind": "flag",
+        "default": true,
+        "help": "A get-only property HOOK on a `Data` class lacks `#[Computed]` — Spatie reads the virtual property as a hydration INPUT, expects it in `::from()`, and crashes or silently drops it"
+    },
+    {
+        "key": "sin_manual-hydration-loop",
+        "title": "ManualHydrationLoop",
+        "kind": "flag",
+        "default": true,
+        "help": "Collections hydrated with `::from()` per item instead of `#[DataCollectionOf]` + `::collect()`"
+    },
+    {
+        "key": "sin_manual-input-cast",
+        "title": "ManualInputCast",
+        "kind": "flag",
+        "default": true,
+        "help": "A `Data` value-object property is hand-built at every construction site, instead of a `#[WithCast]` / `Castable` that owns the hydration once"
+    },
+    {
+        "key": "sin_nested-type-missing-typescript",
+        "title": "NestedTypeMissingTypeScript",
+        "kind": "flag",
+        "default": true,
+        "help": "A `#[TypeScript]` Data has a property typed as a nested `Data` class that itself lacks `#[TypeScript]` — the transformer emits it as `undefined`, a silent hole in the generated type (a nested enum is fine; the enum collector auto-generates it)"
+    },
+    {
+        "key": "sin_new-data-object",
+        "title": "NewDataObject",
+        "kind": "flag",
+        "default": true,
+        "help": "`new <Data subclass>` instead of `::from()` / a `fromX()` factory"
+    },
+    {
+        "key": "sin_non-final-data",
+        "title": "NonFinalData",
+        "kind": "flag",
+        "default": true,
+        "help": "Data class not `final` / props not `readonly` promoted"
+    },
+    {
+        "key": "sin_null-to-optional-map",
+        "title": "NullToOptionalMap",
+        "kind": "flag",
+        "default": true,
+        "help": "A producer hand-maps null→`new Optional` — `$x === null ? new Optional : Foo::from($x)` or `expr() ?? new Optional` — instead of one named factory (Spatie's `optional()` maps null→null, the opposite of what a `T|Optional` slot needs)"
+    },
+    {
+        "key": "sin_nullable-wire-object",
+        "title": "NullableWireObject",
+        "kind": "flag",
+        "default": true,
+        "help": "A nested object on a `#[TypeScript]` Data is typed `T | null` — it ships `null` on the wire where `T | Optional` would OMIT it (what the frontend's `x?.` reads for \"absent\")"
+    },
+    {
+        "key": "sin_prefer-optional-create",
+        "title": "PreferOptionalCreate",
+        "kind": "flag",
+        "default": true,
+        "help": "A raw `new Optional` is constructed in a runtime expression where Spatie's built-in `Optional::create()` factory reads clearer"
+    },
+    {
+        "key": "sin_data-to-array-roundtrip",
+        "title": "DataToArrayRoundtrip",
+        "kind": "flag",
+        "default": true,
+        "help": "A `X::from(...)->toArray()` sits in a `::from` slot typed `X` that re-hydrates it — build → array → build"
+    },
+    {
+        "key": "sin_derived-collection-cast",
+        "title": "DerivedCollectionCast",
+        "kind": "flag",
+        "default": true,
+        "help": "A `#[DataCollectionOf]` is filled by mapping a factory over inputs at the call site, where a `#[WithCast]` should own the derivation"
+    },
+    {
+        "key": "sin_hand-key-remap",
+        "title": "HandKeyRemap",
+        "kind": "flag",
+        "default": true,
+        "help": "A `::from([...])` mechanically renames `$src['snake_key']` → `camelKey` by hand, instead of a class-level `#[MapInputName]`"
+    },
+    {
+        "key": "sin_redundant-enum-unwrap",
+        "title": "RedundantEnumUnwrap",
+        "kind": "flag",
+        "default": true,
+        "help": "An enum is unwrapped to `->value` at a hydration site (`'status' => $order->status->value`) where the property is typed as that enum — Spatie re-casts the scalar straight back to the enum"
+    },
+    {
+        "key": "sin_redundant-native-cast",
+        "title": "RedundantNativeCast",
+        "kind": "flag",
+        "default": true,
+        "help": "An enum / date is constructed at a hydration site (`Enum::from($x)`, `new DateTime($x)`) where the property auto-casts the raw scalar"
+    },
+    {
+        "key": "sin_redundant-nested-from",
+        "title": "RedundantNestedFrom",
+        "kind": "flag",
+        "default": true,
+        "help": "A nested `X::from([...])` fills a slot the parent `::from` already auto-hydrates from the array"
+    },
+    {
+        "key": "sin_feature-envy",
+        "title": "FeatureEnvy",
+        "kind": "flag",
+        "default": true,
+        "help": "Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object"
+    },
+    {
+        "key": "sin_keyed-lookup-envy",
+        "title": "KeyedLookupEnvy",
+        "kind": "flag",
+        "default": true,
+        "help": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator"
+    },
+    {
+        "key": "sin_type-switch",
+        "title": "TypeSwitch",
+        "kind": "flag",
+        "default": true,
+        "help": "two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do"
+    },
+    {
+        "key": "sin_assembled-template",
+        "title": "AssembledTemplate",
+        "kind": "flag",
+        "default": true,
+        "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it"
+    },
+    {
+        "key": "sin_masked-invariant",
+        "title": "MaskedInvariant",
+        "kind": "flag",
+        "default": true,
+        "help": "Masked invariant — an own field read as `?->… ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible \"not set yet\"."
+    },
+    {
+        "key": "sin_phantom-nullable",
+        "title": "PhantomNullable",
+        "kind": "flag",
+        "default": true,
+        "help": "Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens"
+    },
+    {
+        "key": "sin_placeholder-filled-data",
+        "title": "PlaceholderFilledData",
+        "kind": "flag",
+        "default": true,
+        "help": "A required non-nullable `string` slot handed `''` — the type promises a value that is always there and the caller has none"
+    },
+    {
+        "key": "sin_redundant-arrow-return-type",
+        "title": "RedundantArrowReturnType",
+        "kind": "flag",
+        "default": true,
+        "help": "An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property"
+    },
+    {
+        "key": "sin_scratch-state-restore",
+        "title": "ScratchStateRestore",
+        "kind": "flag",
+        "default": true,
+        "help": "Scratch state on `$this` — a method that saves one of its own fields to a local and restores it (`$prev = $this->scope; … $this->scope = $prev`), the field really a per-call input"
+    },
+    {
+        "key": "sin_useless-property-hook",
+        "title": "UselessPropertyHook",
+        "kind": "flag",
+        "default": true,
+        "help": "A `get` hook that reads nothing from `$this` — a stored property wearing computed syntax"
+    },
+    {
+        "key": "sin_array-bag",
+        "title": "ArrayBag",
+        "kind": "flag",
+        "default": true,
+        "help": "String-indexing (`$arr['key']`) a structured array param instead of giving it a name — the type was never defined."
+    },
+    {
+        "key": "sin_array-return-bag",
+        "title": "ArrayReturnBag",
+        "kind": "flag",
+        "default": true,
+        "help": "Returning a multi-field string-keyed array literal (a bag that should be a value object)"
+    },
+    {
+        "key": "sin_coupled-fields",
+        "title": "CoupledFields",
+        "kind": "flag",
+        "default": true,
+        "help": "A class's own fields always change and get checked together — one concept split across several fields — and should be folded into a single value object."
+    },
+    {
+        "key": "sin_data-clump",
+        "title": "DataClump",
+        "kind": "flag",
+        "default": true,
+        "help": "The same 3+ scalar params threaded through 2+ classes (a recurring data clump → one object)"
+    },
+    {
+        "key": "sin_flat-field-cluster",
+        "title": "FlatFieldCluster",
+        "kind": "flag",
+        "default": true,
+        "help": "A `#[TypeScript]` `Data` class spreads a value object it already models flat across sibling scalar fields sharing a camelCase prefix (`wireType` + `wireLabel`) instead of nesting the existing `Wire{type, label}`."
+    },
+    {
+        "key": "sin_hand-rolled-wither",
+        "title": "HandRolledWither",
+        "kind": "flag",
+        "default": true,
+        "help": "A wither method rebuilds the whole object by re-listing every constructor field, so adding a new field means updating every wither in the class."
+    },
+    {
+        "key": "sin_mutable-value-object",
+        "title": "MutableValueObject",
+        "kind": "flag",
+        "default": true,
+        "help": "A value type that mutates its own field after construction, so two things holding what should be the same value can end up different — one changes without the other knowing."
+    },
+    {
+        "key": "sin_positional-tuple-return",
+        "title": "PositionalTupleReturn",
+        "kind": "flag",
+        "default": true,
+        "help": "Returning a positional TUPLE — `return [$node, $key, $inputs, $outputs]` — bundling independent values as a keyless list the caller destructures by position"
+    },
+    {
+        "key": "sin_raw-decoded-array-return",
+        "title": "RawDecodedArrayReturn",
+        "kind": "flag",
+        "default": true,
+        "help": "Returning a raw decoded boundary array (`json_decode(...)`) untyped"
+    },
+    {
+        "key": "sin_csharp-blank-string-default",
+        "title": "BlankStringDefault",
+        "kind": "flag",
+        "default": true,
+        "help": "a `string` parameter or property defaulted to `\"\"` and then checked with `== \"\"` or `string.IsNullOrEmpty` — the blank is being used to mean \"missing\""
+    },
+    {
+        "key": "sin_csharp-cancelled-coalesce",
+        "title": "CancelledCoalesce",
+        "kind": "flag",
+        "default": true,
+        "help": "a `??` fallback compared against the same value it falls back to — `(name ?? \"\") != \"\"` — so \"missing\" and \"empty\" end up in one branch without saying so"
+    },
+    {
+        "key": "sin_csharp-de-nulled-finder",
+        "title": "DeNulledFinder",
+        "kind": "flag",
+        "default": true,
+        "help": "a finder returning a nullable object whose every caller asserts it is there — `Find(id)!`, `Find(id) ?? throw …` — a miss the finder should have refused itself"
+    },
+    {
+        "key": "sin_csharp-invented-default",
+        "title": "InventedDefault",
+        "kind": "flag",
+        "default": true,
+        "help": "`F(x ?? \"\")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data"
+    },
+    {
+        "key": "sin_csharp-null-forgiven",
+        "title": "NullForgiven",
+        "kind": "flag",
+        "default": true,
+        "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding"
+    },
+    {
+        "key": "sin_csharp-flag-argument",
+        "title": "FlagArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a method whose whole body branches on a `bool` parameter — `if (compact) … else …` — two methods sharing one name"
+    },
+    {
+        "key": "sin_csharp-member-after-method",
+        "title": "MemberAfterMethod",
+        "kind": "flag",
+        "default": true,
+        "help": "a field, constant or stored property declared below a constructor or a method — the type's state hidden among its behaviour"
+    },
+    {
+        "key": "sin_csharp-member-out-of-order",
+        "title": "MemberOutOfOrder",
+        "kind": "flag",
+        "default": true,
+        "help": "a `const` or `static readonly` value declared below a field or a stored property — the top of the type read in no particular order"
+    },
+    {
+        "key": "sin_csharp-namespace-cycle",
+        "title": "NamespaceCycle",
+        "kind": "flag",
+        "default": true,
+        "help": "two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names"
+    },
+    {
+        "key": "sin_csharp-namespace-dependency",
+        "title": "NamespaceDependency",
+        "kind": "flag",
+        "default": true,
+        "help": "a reference out of a declared layer into a namespace that layer did not declare it may use"
+    },
+    {
+        "key": "sin_csharp-archaeology-comment",
+        "title": "ArchaeologyComment",
+        "kind": "flag",
+        "default": true,
+        "help": "a comment that tells the code's past — `// formerly lived in CheckoutService`, `// refactored to use the cache` — describing a version nobody is reading"
+    },
+    {
+        "key": "sin_csharp-bloated-docblock",
+        "title": "BloatedDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "a type whose doc comment runs to two or more paragraphs — usually a sign the type does too much"
+    },
+    {
+        "key": "sin_csharp-ceremony-docblock",
+        "title": "CeremonyDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "a doc comment whose every tag is empty or only repeats the signature — `<param name=\"order\">The order.</param>`, an empty `<returns>`"
+    },
+    {
+        "key": "sin_csharp-dangling-doc-reference",
+        "title": "DanglingDocReference",
+        "kind": "flag",
+        "default": true,
+        "help": "a `<see cref>` that resolves to nothing from where it is written — a name the project no longer declares, or one spelled so it does not reach it"
+    },
+    {
+        "key": "sin_csharp-negative-space-comment",
+        "title": "NegativeSpaceComment",
+        "kind": "flag",
+        "default": true,
+        "help": "a comment defending the code against a reading nobody made — `// not magic, just a day`, `// deliberately not sorted` — saying what it is not instead of what it is"
+    },
+    {
+        "key": "sin_csharp-restated-comment",
+        "title": "RestatedComment",
+        "kind": "flag",
+        "default": true,
+        "help": "a comment above a statement whose every word the statement already spells — `// set the total to the order total` over `var total = order.Total;`"
+    },
+    {
+        "key": "sin_duplicate-csharp-method",
+        "title": "DuplicateMethod",
+        "kind": "flag",
+        "default": true,
+        "help": "Copy-pasted code — two+ C# methods, accessors or local functions with an identical body, formatting, comments and attributes aside"
+    },
+    {
+        "key": "sin_near-duplicate-csharp-method",
+        "title": "NearDuplicateMethod",
+        "kind": "flag",
+        "default": true,
+        "help": "A near-copy — two+ C# methods, accessors or local functions with one control-flow skeleton that differ only in their local names or the literals they use (a key, a route, a message)"
+    },
+    {
+        "key": "sin_csharp-const-class-enum",
+        "title": "ConstClassEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "a class that holds nothing but `const` strings or numbers — a closed set of values written as constants instead of an `enum`"
+    },
+    {
+        "key": "sin_csharp-enum-case-or-chain",
+        "title": "EnumCaseOrChain",
+        "kind": "flag",
+        "default": true,
+        "help": "`s == Status.Paid || s == Status.Refunded` (or `s is Status.Paid or Status.Refunded`) — a group of enum cases tested by hand at the call site"
+    },
+    {
+        "key": "sin_csharp-in-array-mirrors-enum",
+        "title": "InArrayMirrorsEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "`new[] { \"paid\", \"refunded\" }.Contains(status)` or `status is \"paid\" or \"refunded\"` — a list of strings that repeats the members of an enum the code already has"
+    },
+    {
+        "key": "sin_csharp-match-default-returns-null",
+        "title": "MatchDefaultReturnsNull",
+        "kind": "flag",
+        "default": true,
+        "help": "a `switch` that names every member of an enum, then answers `null`, `default` or `false` in its `_` arm — the one value that arm can see is a bug, and it is answered as if it were fine"
+    },
+    {
+        "key": "sin_csharp-string-mirrors-enum",
+        "title": "StringMirrorsEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text"
+    },
+    {
+        "key": "sin_csharp-unnamed-vocabulary-literal",
+        "title": "UnnamedVocabularyLiteral",
+        "kind": "flag",
+        "default": true,
+        "help": "a raw string handed to a parameter the codebase elsewhere fills from a named constant — `Expect(\"{\")` beside `Expect(Token.Colon)`, where `Token.BraceOpen` already names it"
+    },
+    {
+        "key": "sin_csharp-generic-throw",
+        "title": "GenericThrow",
+        "kind": "flag",
+        "default": true,
+        "help": "`throw new Exception/InvalidOperationException(\"…\")` — a failure that names nothing, described in prose at the throw site"
+    },
+    {
+        "key": "sin_csharp-swallowed-exception",
+        "title": "SwallowedException",
+        "kind": "flag",
+        "default": true,
+        "help": "A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish"
+    },
+    {
+        "key": "sin_csharp-wrapping-without-cause",
+        "title": "WrappingWithoutCause",
+        "kind": "flag",
+        "default": true,
+        "help": "a `catch` that throws a new exception without passing the caught one as its inner exception, so the original stack trace is lost"
+    },
+    {
+        "key": "sin_csharp-constructor-side-effect",
+        "title": "ConstructorSideEffect",
+        "kind": "flag",
+        "default": true,
+        "help": "a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it"
+    },
+    {
+        "key": "sin_csharp-mutable-static-state",
+        "title": "MutableStaticState",
+        "kind": "flag",
+        "default": true,
+        "help": "a `static` field that methods write to — state no instance owns, changed by whichever code ran last"
+    },
+    {
+        "key": "sin_csharp-coalesced-loop-subject",
+        "title": "CoalescedLoopSubject",
+        "kind": "flag",
+        "default": true,
+        "help": "a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header"
+    },
+    {
+        "key": "sin_csharp-inline-throw",
+        "title": "InlineThrow",
+        "kind": "flag",
+        "default": true,
+        "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work"
+    },
+    {
+        "key": "sin_csharp-loop-wrapped-in-if",
+        "title": "LoopWrappedInIf",
+        "kind": "flag",
+        "default": true,
+        "help": "A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition"
+    },
+    {
+        "key": "sin_csharp-nested-ternary",
+        "title": "NestedTernary",
+        "kind": "flag",
+        "default": true,
+        "help": "a `?:` with another `?:` as one of its branches — several decisions packed into one expression"
+    },
+    {
+        "key": "sin_csharp-non-counting-for",
+        "title": "NonCountingFor",
+        "kind": "flag",
+        "default": true,
+        "help": "a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count"
+    },
+    {
+        "key": "sin_csharp-subject-ladder",
+        "title": "SubjectLadder",
+        "kind": "flag",
+        "default": true,
+        "help": "An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder."
+    },
+    {
+        "key": "sin_deep-csharp-nesting",
+        "title": "DeepNesting",
+        "kind": "flag",
+        "default": true,
+        "help": "An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops"
+    },
+    {
+        "key": "sin_redundant-csharp-else",
+        "title": "RedundantElse",
+        "kind": "flag",
+        "default": true,
+        "help": "An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing"
+    },
+    {
+        "key": "sin_csharp-bare-state-predicate",
+        "title": "BareStatePredicate",
+        "kind": "flag",
+        "default": true,
+        "help": "a `bool` about the object's own state named as a claim — `Binds()`, `Spins` — where a question belongs"
+    },
+    {
+        "key": "sin_csharp-converted-argument",
+        "title": "ConvertedArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a scalar parameter its callers keep filling with the same conversion — `ReceiptFor(order.Id.ToString())` call after call — because it asks for the converted form instead of the value"
+    },
+    {
+        "key": "sin_csharp-derived-argument",
+        "title": "DerivedArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a call that hands over an object and a projection of it — `Persist(request, request.ChannelId)` — or an object in three pieces, where the method could read them itself"
+    },
+    {
+        "key": "sin_csharp-param-resolved-from-param",
+        "title": "ParamResolvedFromParam",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that takes a container and a key and first resolves one against the other — `Rename(Workflow workflow, string nodeId)` doing `workflow.Graph.Node(nodeId)` — when it only wanted what the key names"
+    },
+    {
+        "key": "sin_csharp-repeated-guard",
+        "title": "RepeatedGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "the same compound condition — `order.Paid && !order.Cancelled` — written at two or more sites, a question with no name"
+    },
+    {
+        "key": "sin_csharp-repeated-named-call",
+        "title": "RepeatedNamedCall",
+        "kind": "flag",
+        "default": true,
+        "help": "the same `with` copy — `order with { Status = OrderStatus.Shipped }` — written at two or more sites, an operation the record never named"
+    },
+    {
+        "key": "sin_csharp-repeated-type-guard",
+        "title": "RepeatedTypeGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "the same chain of type checks — `node is Invocation call && call.Target is MemberAccess` — written at two or more sites, a shape with no name"
+    },
+    {
+        "key": "sin_csharp-feature-envy",
+        "title": "FeatureEnvy",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that loops another object's collection or writes its members, reaching into it more than into its own state — behaviour exiled from the object it works on"
+    },
+    {
+        "key": "sin_csharp-side-table-trait",
+        "title": "SideTableTrait",
+        "kind": "flag",
+        "default": true,
+        "help": "a trait of a type's registered instances kept as a separate collection of their names, rather than as something each instance answers for itself"
+    },
+    {
+        "key": "sin_csharp-type-switch",
+        "title": "TypeSwitch",
+        "kind": "flag",
+        "default": true,
+        "help": "`shape switch { Circle c => …, Square s => … }` — asking which of your own types a value is, to decide what to do with it"
+    },
+    {
+        "key": "sin_csharp-assembled-template",
+        "title": "AssembledTemplate",
+        "kind": "flag",
+        "default": true,
+        "help": "`string.Join(\"\\n\", new[] { \"public class X\", \"{\", \"}\" })` or `sb.AppendLine(\"…\")` line after line — a multi-line text built from line fragments, so its shape cannot be seen in the source"
+    },
+    {
+        "key": "sin_csharp-placeholder-filled-data",
+        "title": "PlaceholderFilledData",
+        "kind": "flag",
+        "default": true,
+        "help": "`new Card(title, \"\")` — a record's required `string` filled with a blank so the record can be built, hiding a missing value no type check can see"
+    },
+    {
+        "key": "sin_csharp-array-return-bag",
+        "title": "ArrayReturnBag",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that returns `new Dictionary<string, object> { [\"sku\"] = …, [\"qty\"] = … }` — a record with fixed fields, handed back as a dictionary"
+    },
+    {
+        "key": "sin_csharp-coupled-fields",
+        "title": "CoupledFields",
+        "kind": "flag",
+        "default": true,
+        "help": "a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields"
+    },
+    {
+        "key": "sin_csharp-data-clump",
+        "title": "DataClump",
+        "kind": "flag",
+        "default": true,
+        "help": "The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own."
+    },
+    {
+        "key": "sin_csharp-dictionary-bag",
+        "title": "DictionaryBag",
+        "kind": "flag",
+        "default": true,
+        "help": "A string-keyed dictionary or JSON object read by keys written in the source — `row[\"sku\"]`, `json.GetProperty(\"name\")` — a record nobody declared"
+    },
+    {
+        "key": "sin_csharp-mutable-value-object",
+        "title": "MutableValueObject",
+        "kind": "flag",
+        "default": true,
+        "help": "a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things"
+    },
+    {
+        "key": "sin_csharp-positional-tuple-return",
+        "title": "PositionalTupleReturn",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices"
+    },
+    {
+        "key": "sin_mirrored-server-type",
+        "title": "MirroredServerType",
+        "kind": "flag",
+        "default": true,
+        "help": "A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes"
+    },
+    {
+        "key": "sin_compound-inline-component",
+        "title": "CompoundInlineComponent",
+        "kind": "flag",
+        "default": true,
+        "help": "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component."
+    },
+    {
+        "key": "sin_deep-data-reach",
+        "title": "DeepDataReach",
+        "kind": "flag",
+        "default": true,
+        "help": "A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop."
+    },
+    {
+        "key": "sin_deep-nested",
+        "title": "DeepNested",
+        "kind": "flag",
+        "default": true,
+        "help": "Template markup nested far too deep — extract a subtree as its own component"
+    },
+    {
+        "key": "sin_duplicate-element",
+        "title": "DuplicateElement",
+        "kind": "flag",
+        "default": true,
+        "help": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component"
+    },
+    {
+        "key": "sin_inline-case-views",
+        "title": "InlineCaseViews",
+        "kind": "flag",
+        "default": true,
+        "help": "A dispatch whose cases each render a whole view inline — one component doing a job per case"
+    },
+    {
+        "key": "sin_near-duplicate-element",
+        "title": "NearDuplicateElement",
+        "kind": "flag",
+        "default": true,
+        "help": "Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates"
+    },
+    {
+        "key": "sin_oversized-component",
+        "title": "OversizedComponent",
+        "kind": "flag",
+        "default": true,
+        "help": "A component whose template renders more elements than the project's declared budget — one component doing several jobs"
+    },
+    {
+        "key": "sin_prop-drilling",
+        "title": "PropDrilling",
+        "kind": "flag",
+        "default": true,
+        "help": "A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further."
+    },
+    {
+        "key": "sin_prop-mutation",
+        "title": "PropMutation",
+        "kind": "flag",
+        "default": true,
+        "help": "A prop is written to — `v-model` bound to it, or `@event=\"prop = …\"` — but props are read-only (a build error or a silent no-op)."
+    },
+    {
+        "key": "sin_control-flow-on-element",
+        "title": "ControlFlowOnElement",
+        "kind": "flag",
+        "default": true,
+        "help": "`v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>`"
+    },
+    {
+        "key": "sin_index-as-key",
+        "title": "IndexAsKey",
+        "kind": "flag",
+        "default": true,
+        "help": "`:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted"
+    },
+    {
+        "key": "sin_loop-with-condition",
+        "title": "LoopWithCondition",
+        "kind": "flag",
+        "default": true,
+        "help": "`v-for` and `v-if`/`v-else-if` on the same element — the condition is re-evaluated every iteration."
+    },
+    {
+        "key": "sin_switch-case",
+        "title": "SwitchCase",
+        "kind": "flag",
+        "default": true,
+        "help": "A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)"
+    },
+    {
+        "key": "sin_python-blank-string-default",
+        "title": "BlankStringDefault",
+        "kind": "flag",
+        "default": true,
+        "help": "`x: str = \"\"` standing in for absence — then asked `x == \"\"`, `not x` or `if x:` in its own scope"
+    },
+    {
+        "key": "sin_python-cancelled-fallback",
+        "title": "CancelledFallback",
+        "kind": "flag",
+        "default": true,
+        "help": "`(x or \"\") != \"\"` — a value defaulted to a blank only to be compared against that same blank, so a missing value and an empty one are treated the same without saying so."
+    },
+    {
+        "key": "sin_python-conditional-spread",
+        "title": "ConditionalSpread",
+        "kind": "flag",
+        "default": true,
+        "help": "`**({\"k\": v} if v else {})` / `*([x] if x else [])` — an entry is spread in only when present, using a conditional that turns absence into an empty collection."
+    },
+    {
+        "key": "sin_python-invented-default",
+        "title": "InventedDefault",
+        "kind": "flag",
+        "default": true,
+        "help": "`f(x or \"\")` — an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data"
+    },
+    {
+        "key": "sin_python-nullable-callback",
+        "title": "NullableCallback",
+        "kind": "flag",
+        "default": true,
+        "help": "`cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op treated as if it might be missing."
+    },
+    {
+        "key": "sin_python-flag-argument",
+        "title": "FlagArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a function whose whole body branches on a `bool` parameter — or on whether an optional one was given — two functions sharing one name"
+    },
+    {
+        "key": "sin_python-member-after-method",
+        "title": "MemberAfterMethod",
+        "kind": "flag",
+        "default": true,
+        "help": "a constant, class attribute or field declared below a method — the class's state hidden among its behaviour"
+    },
+    {
+        "key": "sin_python-member-out-of-order",
+        "title": "MemberOutOfOrder",
+        "kind": "flag",
+        "default": true,
+        "help": "a constant declared below a field in the head of a class — the inventory read in an ad-hoc order"
+    },
+    {
+        "key": "sin_python-namespace-cycle",
+        "title": "NamespaceCycle",
+        "kind": "flag",
+        "default": true,
+        "help": "two of the project's packages import each other — a cycle that makes them one package split under two names."
+    },
+    {
+        "key": "sin_python-namespace-dependency",
+        "title": "NamespaceDependency",
+        "kind": "flag",
+        "default": true,
+        "help": "an import out of a declared layer into a package that layer did not declare it may use"
+    },
+    {
+        "key": "sin_python-archaeology-comment",
+        "title": "ArchaeologyComment",
+        "kind": "flag",
+        "default": true,
+        "help": "a comment or docstring narrating the code's history — where it lived, what it replaced, what it no longer is"
+    },
+    {
+        "key": "sin_python-bloated-docblock",
+        "title": "BloatedDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "a class docstring of two or more paragraphs of prose — an essay that says the class does too much"
+    },
+    {
+        "key": "sin_python-ceremony-docblock",
+        "title": "CeremonyDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "a docstring with no summary whose every entry restates the annotated signature — `order (Order):`, `:rtype: int`"
+    },
+    {
+        "key": "sin_python-dangling-doc-reference",
+        "title": "DanglingDocReference",
+        "kind": "flag",
+        "default": true,
+        "help": "a Sphinx cross-reference in a docstring (`:class:`shop.cart.Basket``) to a first-party name the codebase no longer declares"
+    },
+    {
+        "key": "sin_python-negative-space-comment",
+        "title": "NegativeSpaceComment",
+        "kind": "flag",
+        "default": true,
+        "help": "a comment or docstring defending the code against a misunderstanding nobody actually had — what it is not, rather than what it is."
+    },
+    {
+        "key": "sin_python-restated-comment",
+        "title": "RestatedComment",
+        "kind": "flag",
+        "default": true,
+        "help": "a `#` comment that only narrates the statement below it — every word of it already spelled by the code"
+    },
+    {
+        "key": "sin_duplicate-python-function",
+        "title": "DuplicateFunction",
+        "kind": "flag",
+        "default": true,
+        "help": "Copy-pasted code — two+ Python functions or methods with an identical body, formatting, comments and docstrings aside"
+    },
+    {
+        "key": "sin_near-duplicate-python-function",
+        "title": "NearDuplicateFunction",
+        "kind": "flag",
+        "default": true,
+        "help": "A near-copy — two+ Python functions or methods with one control-flow skeleton that differ only in their local names or the literals they use (a path, a key, a message)"
+    },
+    {
+        "key": "sin_python-constant-class-enum",
+        "title": "ConstantClassEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "a class that is nothing but `PENDING = \"pending\"` constants — a closed set of values written out by hand instead of an `Enum`"
+    },
+    {
+        "key": "sin_python-enum-case-or-chain",
+        "title": "EnumCaseOrChain",
+        "kind": "flag",
+        "default": true,
+        "help": "`s == Status.PENDING or s == Status.LATE` — a group of an enum's members re-derived at the call site instead of named on the enum"
+    },
+    {
+        "key": "sin_python-enum-value-match",
+        "title": "EnumValueMatch",
+        "kind": "flag",
+        "default": true,
+        "help": "`match status.value: case \"paid\": …` at a call site — the enum's raw values matched again where the enum could answer"
+    },
+    {
+        "key": "sin_python-in-literals-mirrors-enum",
+        "title": "InLiteralsMirrorsEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "`x in (\"pending\", \"late\")` whose literals are an existing enum's values — a group of its members spelled as raw strings at the call site"
+    },
+    {
+        "key": "sin_python-match-wildcard-returns-none",
+        "title": "MatchWildcardReturnsNone",
+        "kind": "flag",
+        "default": true,
+        "help": "a `match` over an enum's members whose `case _:` returns `None` — a member nobody handled answers nothing instead of failing"
+    },
+    {
+        "key": "sin_python-string-match-mirrors-enum",
+        "title": "StringMatchMirrorsEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "`match raw: case \"pending\": …` whose cases are an existing enum's values — dispatching on loose strings the enum already seals"
+    },
+    {
+        "key": "sin_python-unnamed-vocabulary-literal",
+        "title": "UnnamedVocabularyLiteral",
+        "kind": "flag",
+        "default": true,
+        "help": "a raw string handed to a parameter the codebase elsewhere fills from a named constant — `expect(\"{\")` beside `expect(Token.COLON)`, where `Token.BRACE_OPEN` already names it"
+    },
+    {
+        "key": "sin_python-message-string-raise",
+        "title": "MessageStringRaise",
+        "kind": "flag",
+        "default": true,
+        "help": "`raise Exception/RuntimeError(\"…\")` — a failure that names nothing, described in prose at the raise site"
+    },
+    {
+        "key": "sin_python-raise-without-cause",
+        "title": "RaiseWithoutCause",
+        "kind": "flag",
+        "default": true,
+        "help": "`raise Other(...)` inside an `except` block with no `from` — the failure being handled left as an implicit context, never named as the cause"
+    },
+    {
+        "key": "sin_python-swallowed-exception",
+        "title": "SwallowedException",
+        "kind": "flag",
+        "default": true,
+        "help": "A bare `except:` or `except Exception` whose body only passes, continues or returns nothing — every failure, expected or not, made to vanish"
+    },
+    {
+        "key": "sin_python-constructor-side-effect",
+        "title": "ConstructorSideEffect",
+        "kind": "flag",
+        "default": true,
+        "help": "an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it."
+    },
+    {
+        "key": "sin_python-divergent-twin",
+        "title": "DivergentTwin",
+        "kind": "flag",
+        "default": true,
+        "help": "two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other."
+    },
+    {
+        "key": "sin_python-mutable-static-state",
+        "title": "MutableStaticState",
+        "kind": "flag",
+        "default": true,
+        "help": "a `global` written from a function, or a class attribute set from a method — state no instance owns, changed by whoever ran last"
+    },
+    {
+        "key": "sin_deep-python-nesting",
+        "title": "DeepNesting",
+        "kind": "flag",
+        "default": true,
+        "help": "An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops"
+    },
+    {
+        "key": "sin_python-coalesced-loop-subject",
+        "title": "CoalescedLoopSubject",
+        "kind": "flag",
+        "default": true,
+        "help": "`for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard"
+    },
+    {
+        "key": "sin_python-conditional-statement",
+        "title": "ConditionalStatement",
+        "kind": "flag",
+        "default": true,
+        "help": "a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an action, not a value."
+    },
+    {
+        "key": "sin_python-loop-wrapped-in-if",
+        "title": "LoopWrappedInIf",
+        "kind": "flag",
+        "default": true,
+        "help": "A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition"
+    },
+    {
+        "key": "sin_python-nested-conditional",
+        "title": "NestedConditional",
+        "kind": "flag",
+        "default": true,
+        "help": "`a if x else b if y else c` — a conditional expression inside another's branch, a branching decision folded into one line"
+    },
+    {
+        "key": "sin_python-short-circuit-statement",
+        "title": "ShortCircuitStatement",
+        "kind": "flag",
+        "default": true,
+        "help": "a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is really acting as an `if`."
+    },
+    {
+        "key": "sin_python-subject-ladder",
+        "title": "SubjectLadder",
+        "kind": "flag",
+        "default": true,
+        "help": "An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant — a dispatch written as a ladder."
+    },
+    {
+        "key": "sin_redundant-python-else",
+        "title": "RedundantElse",
+        "kind": "flag",
+        "default": true,
+        "help": "An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing"
+    },
+    {
+        "key": "sin_python-bare-state-predicate",
+        "title": "BareStatePredicate",
+        "kind": "flag",
+        "default": true,
+        "help": "a `bool` about the object's own state named as a bare verb — `binds()`, `spins` — where a question belongs"
+    },
+    {
+        "key": "sin_python-narrated-command",
+        "title": "NarratedCommand",
+        "kind": "flag",
+        "default": true,
+        "help": "a command named in the third person — `hides()`, `locks_for_night()` — where a call is an order, not a description of one"
+    },
+    {
+        "key": "sin_python-computed-boolean-argument",
+        "title": "ComputedBooleanArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a method taking only bools that every caller computes from the same object — the decision re-derived at each call site"
+    },
+    {
+        "key": "sin_python-converted-argument",
+        "title": "ConvertedArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a scalar parameter its callers keep filling with the same conversion — `receipt_for(str(order.id))` call after call — because it asks for the converted form instead of the value"
+    },
+    {
+        "key": "sin_python-derived-argument",
+        "title": "DerivedArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a call that hands over an object and a projection of it — `persist(request, request.channel_id)` — or an object in three pieces, where the function could read them itself"
+    },
+    {
+        "key": "sin_python-param-resolved-from-param",
+        "title": "ParamResolvedFromParam",
+        "kind": "flag",
+        "default": true,
+        "help": "a function that takes a container and a key and first resolves one against the other — `def rename(workflow, node_id)` doing `workflow.graph.node(node_id)` — when it only wanted what the key names"
+    },
+    {
+        "key": "sin_python-repeated-guard",
+        "title": "RepeatedGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "the same compound `and` condition recurs in 2+ places — it still counts even when reordered, or read through a local variable — and nobody has named it."
+    },
+    {
+        "key": "sin_python-repeated-named-call",
+        "title": "RepeatedNamedCall",
+        "kind": "flag",
+        "default": true,
+        "help": "the same `**changes` call is built the same way with the same keyword at 2+ sites — an operation that has no name on the type it belongs to."
+    },
+    {
+        "key": "sin_python-repeated-type-guard",
+        "title": "RepeatedTypeGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "the same multi-`isinstance` narrowing (`isinstance(x, A) and isinstance(x.y, B)`) is written in 2+ places — a check on a shape that nobody has named."
+    },
+    {
+        "key": "sin_python-nullable-registry-lookup",
+        "title": "NullableRegistryLookup",
+        "kind": "flag",
+        "default": true,
+        "help": "a keyed store handing back `None` for a key it lacks — `return self._handlers.get(kind)` — so every caller decides what a miss means"
+    },
+    {
+        "key": "sin_python-feature-envy",
+        "title": "FeatureEnvy",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that loops another object's collection or writes its fields, reaching into it more than into its own state — behaviour exiled from the object it works on"
+    },
+    {
+        "key": "sin_python-keyed-lookup-envy",
+        "title": "KeyedLookupEnvy",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that uses an object's key to fetch a fact about it through a collaborator — `self.registry.get(node.key).reserved` — treating the object as a key into its own data"
+    },
+    {
+        "key": "sin_python-side-table-trait",
+        "title": "SideTableTrait",
+        "kind": "flag",
+        "default": true,
+        "help": "a trait of a type kept in a collection of its instances' names beside the registry, rather than as a field each instance answers for itself"
+    },
+    {
+        "key": "sin_python-type-switch",
+        "title": "TypeSwitch",
+        "kind": "flag",
+        "default": true,
+        "help": "an `isinstance` ladder over classes the codebase owns — the value is asked what it is so the caller can decide what to do."
+    },
+    {
+        "key": "sin_python-assembled-template",
+        "title": "AssembledTemplate",
+        "kind": "flag",
+        "default": true,
+        "help": "a multi-line string built as a list of line fragments and `\"\\n\".join(...)`-ed, instead of a triple-quoted f-string that shows its output"
+    },
+    {
+        "key": "sin_python-constant-property",
+        "title": "ConstantProperty",
+        "kind": "flag",
+        "default": true,
+        "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one."
+    },
+    {
+        "key": "sin_python-masked-invariant",
+        "title": "MaskedInvariant",
+        "kind": "flag",
+        "default": true,
+        "help": "a literal answering for the object's own scratch state — `self.period.includes(day) if self.period else False` — where the field is only unset because an operation sets it part-way"
+    },
+    {
+        "key": "sin_python-phantom-nullable",
+        "title": "PhantomNullable",
+        "kind": "flag",
+        "default": true,
+        "help": "a field annotated `X | None` that every read assumes is there and none guards — a `None` the design never has"
+    },
+    {
+        "key": "sin_python-placeholder-filled-data",
+        "title": "PlaceholderFilledData",
+        "kind": "flag",
+        "default": true,
+        "help": "`Card(title=…, body=\"\")` — a dataclass field required as `str` handed the blank to satisfy the signature, a value the type cannot catch"
+    },
+    {
+        "key": "sin_python-scratch-state-restore",
+        "title": "ScratchStateRestore",
+        "kind": "flag",
+        "default": true,
+        "help": "`previous = self.scope … self.scope = previous` — an attribute used as per-call scratch, saved and restored around the call"
+    },
+    {
+        "key": "sin_python-coupled-fields",
+        "title": "CoupledFields",
+        "kind": "flag",
+        "default": true,
+        "help": "a class whose own fields always travel together — assembled into one value again and again, guarded together, or one copying a sibling field's value — one concept held as several fields."
+    },
+    {
+        "key": "sin_python-data-clump",
+        "title": "DataClump",
+        "kind": "flag",
+        "default": true,
+        "help": "The same three or more scalar parameters (`street: str, city: str, postcode: str`) threaded through functions in two or more classes or modules — one concept with no type of its own."
+    },
+    {
+        "key": "sin_python-dict-bag",
+        "title": "DictBag",
+        "kind": "flag",
+        "default": true,
+        "help": "A parameter typed as a dict read by string keys — `row[\"sku\"]`, `row.get(\"quantity\")` — a record nobody declared"
+    },
+    {
+        "key": "sin_python-dict-return-bag",
+        "title": "DictReturnBag",
+        "kind": "flag",
+        "default": true,
+        "help": "`return {\"total\": …, \"tax\": …}` — a record of several fields handed back as a dict its callers read by string key"
+    },
+    {
+        "key": "sin_python-hand-rolled-replace",
+        "title": "HandRolledReplace",
+        "kind": "flag",
+        "default": true,
+        "help": "`return Order(self.number, self.lines, self.note, \"paid\")` in a dataclass — every field re-listed to change one"
+    },
+    {
+        "key": "sin_python-mutable-value-object",
+        "title": "MutableValueObject",
+        "kind": "flag",
+        "default": true,
+        "help": "a dataclass whose own methods write the fields it was built from after construction — a value that changes under everyone holding it"
+    },
+    {
+        "key": "sin_python-positional-tuple-return",
+        "title": "PositionalTupleReturn",
+        "kind": "flag",
+        "default": true,
+        "help": "`return net, vat, currency` — a bundle of different things the caller must unpack by position, where a reordering breaks silently"
+    },
+    {
+        "key": "sin_python-raw-decoded-return",
+        "title": "RawDecodedReturn",
+        "kind": "flag",
+        "default": true,
+        "help": "`return json.loads(…)` — decoded text from outside handed on as bare dicts and lists, its shape known to no type"
+    },
+    {
+        "key": "sin_defended-certain-field",
+        "title": "DefendedCertainField",
+        "kind": "flag",
+        "default": true,
+        "help": "An `?.` on a field the class declares as always present — a defence against a case the type says cannot happen, so the code doubts something the design already rules out."
+    },
+    {
+        "key": "sin_falsely-optional-field",
+        "title": "FalselyOptionalField",
+        "kind": "flag",
+        "default": true,
+        "help": "A field declared optional (`x?: T`, `T | null`) that is initialised where it is declared — it is never absent, and every `?.` and `??` downstream defends a case that cannot happen"
+    },
+    {
+        "key": "sin_duplicate-typescript-function",
+        "title": "DuplicateFunction",
+        "kind": "flag",
+        "default": true,
+        "help": "Copy-pasted code — two+ TypeScript functions (a `function`, a method, a `const` arrow; in a `.ts` module or a component's script) with an identical body, formatting and comments aside"
+    },
+    {
+        "key": "sin_near-duplicate-typescript-function",
+        "title": "NearDuplicateFunction",
+        "kind": "flag",
+        "default": true,
+        "help": "A near-copy — two+ TypeScript functions with one control-flow skeleton that differ only in their local names or the literals they use (an endpoint, a key, a label)"
+    },
+    {
+        "key": "sin_typescript-side-table-trait",
+        "title": "SideTableTrait",
+        "kind": "flag",
+        "default": true,
+        "help": "a trait of the objects a module registers, kept as a separate collection of their names rather than as a field each object carries"
+    }
+]
