@@ -78,16 +78,21 @@ func OfSession(fallback, sessionID string) Workspace {
 	return At(stated, sessionID)
 }
 
-// JournalProject is the project the agent journal runs a plugin command for, named by its .journal folder in
-// JOURNAL_ROOT: the journal runs a service and its when from the plugin's own folder, which is no part of the
-// project. A command the journal did not start names none.
+// JournalProject is the project the agent journal runs a plugin command for, named in JOURNAL_ROOT: by its .journal
+// folder in version 3 of the journal, by the project itself in version 4. The journal runs a service and its when
+// from the plugin's own folder, which is no part of the project. A command the journal did not start names none.
 func JournalProject() (string, bool) {
 	record := os.Getenv("JOURNAL_ROOT")
 	if record == "" {
 		return "", false
 	}
 
-	return filepath.Dir(filepath.Clean(record)), true
+	record = filepath.Clean(record)
+	if filepath.Base(record) == ".journal" {
+		return filepath.Dir(record), true
+	}
+
+	return record, true
 }
 
 // ProjectRoot is the project a command run from cwd works on: the repository cwd is in, unless the harness

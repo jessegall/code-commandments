@@ -1,0 +1,3 @@
+#!/bin/sh
+# Version 4 of the agent journal runs this for every event the plugin hears; the release binary answers it.
+exec "$(dirname "$0")/../bin/commandments-release" journal4-hook

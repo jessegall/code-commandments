@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -286,9 +287,53 @@ func setting(title, help, kind, fallback, group string) *jsonfile.Object {
 // Plugin is the journal plugin's manifest, whose settings are the registry's and the rest hand-kept.
 const Plugin = ".journal-plugin/plugin.json"
 
+// PluginSchema is the journal plugin's settings as version 4 of the agent journal reads them: the same registry's.
+const PluginSchema = ".journal-plugin/settings.json"
+
+// SettingsSchema is PluginSettings as version 4's settings file lists them, each with its key, title, kind, help and
+// a default in its own JSON type.
+func SettingsSchema() []any {
+	settings := PluginSettings()
+	var schema []any
+	for _, key := range settings.Keys() {
+		raw, _ := settings.Get(key)
+		entry := raw.(*jsonfile.Object)
+		title, _ := entry.Get("title")
+		help, _ := entry.Get("help")
+		kind, _ := entry.Get("type")
+		fallback, _ := entry.Get("default")
+		schema = append(schema, jsonfile.NewObject("key", key, "title", title, "kind", kind, "default", defaultIn4(fmt.Sprint(kind), fmt.Sprint(fallback)), "help", help))
+	}
+
+	return schema
+}
+
+// defaultIn4 is a setting's default, kept as text for version 3, in the JSON type of its kind.
+func defaultIn4(kind, fallback string) any {
+	switch kind {
+	case "flag":
+		return fallback == "true"
+	case "number":
+		number, _ := strconv.Atoi(fallback)
+
+		return number
+	case "list":
+		lines := []any{}
+		for _, line := range strings.Split(fallback, "\n") {
+			if line = strings.TrimSpace(line); line != "" {
+				lines = append(lines, line)
+			}
+		}
+
+		return lines
+	default:
+		return fallback
+	}
+}
+
 // Generated is what every generated document under root holds today, by its path under root: each table's file,
-// README.md with each table's excerpt and the hooks and agents tables in their blocks, and the plugin's manifest
-// with its settings.
+// README.md with each table's excerpt and the hooks and agents tables in their blocks, the plugin's manifest with
+// its settings, and those settings as version 4 of the journal reads them.
 func Generated(root string) (map[string]string, error) {
 	readme, err := os.ReadFile(filepath.Join(root, "README.md"))
 	if err != nil {
@@ -314,6 +359,11 @@ func Generated(root string) (map[string]string, error) {
 	}
 	manifest.Set("settings", PluginSettings())
 	documents[Plugin] = jsonfile.Text(manifest)
+	schema, err := jsonfile.Pretty(SettingsSchema(), true)
+	if err != nil {
+		return nil, err
+	}
+	documents[PluginSchema] = schema + "\n"
 
 	return documents, nil
 }
