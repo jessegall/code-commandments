@@ -11,8 +11,8 @@ permissions:
   contents: write
 
 jobs:
-  # The journal plugin fetches the release its manifest pins, so a tag whose checkout pins another would install a
-  # binary that is not its own.
+  # The journal plugin fetches the release its manifest pins, for version 3 of the journal and for version 4, so a tag
+  # whose checkout pins another would install a binary that is not its own.
   pin:
     runs-on: ubuntu-latest
     steps:
@@ -22,6 +22,11 @@ jobs:
           pinned="$(jq -r .env.COMMANDMENTS_RELEASE .journal-plugin/plugin.json)"
           if [ "$pinned" != "$GITHUB_REF_NAME" ]; then
             echo ".journal-plugin/plugin.json pins $pinned in COMMANDMENTS_RELEASE, not $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          fetched="$(jq -r '.setup[0].run' journal-plugin.json | sed -n 's/^COMMANDMENTS_RELEASE=\([^ ]*\) .*/\1/p')"
+          if [ "$fetched" != "$GITHUB_REF_NAME" ]; then
+            echo "journal-plugin.json fetches $fetched in its first setup step, not $GITHUB_REF_NAME" >&2
             exit 1
           fi
 

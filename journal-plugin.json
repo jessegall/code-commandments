@@ -1,0 +1,82 @@
+{
+  "name": "code-commandments",
+  "version": "1.64.22",
+  "title": "Code Commandments",
+  "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
+  "journal": "4.0.0",
+  "protocol": 1,
+  "program": ".journal-plugin/journal4-hook",
+  "hears": [
+    "tool_starting",
+    "tool_finished",
+    "idle",
+    "session_started",
+    "subagent_started",
+    "plugin.updated"
+  ],
+  "holds": [
+    "tool_starting"
+  ],
+  "cards": [
+    {
+      "kind": "sin-found",
+      "label": "Sin found",
+      "tone": "warn",
+      "icon": "warn",
+      "collapsed": true
+    },
+    {
+      "kind": "sin-resolved",
+      "label": "Sin repented",
+      "tone": "good",
+      "icon": "check",
+      "collapsed": true
+    }
+  ],
+  "requires": {
+    "curl": {
+      "check": "curl --version",
+      "hint": "curl fetches the checker's release binary into the plugin's own folder"
+    },
+    "sha256sum": {
+      "check": "command -v sha256sum || command -v shasum",
+      "hint": "sha256sum or shasum checks the fetched binary against its release's SHA256SUMS"
+    }
+  },
+  "setup": [
+    {
+      "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
+      "run": "COMMANDMENTS_RELEASE=v5.19.0 sh .journal-plugin/fetch"
+    },
+    {
+      "name": "Write the chosen switches into config.json",
+      "run": "bin/commandments-release journal-config --keep-folders"
+    }
+  ],
+  "settings": ".journal-plugin/settings.json",
+  "skills": "journal-skills/.agents/skills",
+  "services": [
+    {
+      "name": "roslyn",
+      "command": [
+        "bin/commandments-release",
+        "roslyn-serve"
+      ],
+      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-csharp",
+      "restart": "always"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "bin/commandments-release",
+        "mypy-serve"
+      ],
+      "when": "\"$JOURNAL_PLUGIN_DIR/bin/commandments-release\" has-python",
+      "restart": "always"
+    }
+  ],
+  "dashboard": {
+    "name": "sins",
+    "title": "Sins"
+  }
+}
