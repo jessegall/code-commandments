@@ -36,7 +36,8 @@ func TestEachVersion4EventIsReadAsTheMomentItStandsFor(t *testing.T) {
 }
 
 // TestTheAnswerIsSaidAsVersion4ReadsIt holds the translation out: a refusal keeps the advice beside its reason, advice
-// alone is told, a sin found or repented is a card keyed by its file, and a mark settled with no card of its own gets one.
+// alone is told, a sin found is a card under its key, and a sin repented one card under the same key that names it,
+// never a second card of its own beside it.
 func TestTheAnswerIsSaidAsVersion4ReadsIt(t *testing.T) {
 	refused, advice := "the shared branch takes no edits", "Code Commandments — a sin"
 	cases := []struct {
@@ -48,8 +49,12 @@ func TestTheAnswerIsSaidAsVersion4ReadsIt(t *testing.T) {
 		{JournalAnswer{Refuse: &refused, Whisper: &advice}, `{"answer":"refuse","reason":"the shared branch takes no edits\n\nCode Commandments — a sin","v":1}`},
 		{JournalAnswer{Whisper: &advice}, `{"answer":"tell","tell":"Code Commandments — a sin","v":1}`},
 		{
-			JournalAnswer{Raises: []Raise{{Event: "sin-found", Brief: "array-bag at src/A.php:3", Key: "sin:a1"}}, Settles: []string{"sin:a1", "sin:b2"}},
-			`{"cards":[{"key":"sin:a1","kind":"sin-found","label":"array-bag at src/A.php:3"},{"key":"sin:b2","kind":"sin-resolved","label":"Repented"}],"v":1}`,
+			JournalAnswer{
+				Raises:   []Raise{{Event: "sin-found", Brief: "array-bag at src/A.php:3", Key: "sin:a1"}, {Event: "sin-resolved", Brief: "data-clump at src/B.php:9"}},
+				Settles:  []string{"sin:b2"},
+				Repented: []Repented{{Key: "sin:b2", Shown: "data-clump at src/B.php:9"}},
+			},
+			`{"cards":[{"key":"sin:a1","kind":"sin-found","label":"array-bag at src/A.php:3"},{"key":"sin:b2","kind":"sin-resolved","label":"Repented: data-clump at src/B.php:9"}],"v":1}`,
 		},
 	}
 
