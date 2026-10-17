@@ -124,6 +124,9 @@ type JournalAnswer struct {
 	Refuse, Whisper *string
 	Raises          []Raise
 	Settles         []string
+	// Repented are the sins Settles names, each with how it was shown, for version 4 of the journal, which settles a
+	// card in place and says which sin it was.
+	Repented []Repented
 }
 
 // JSON is the answer as the journal reads it, leaving out what it does not say.

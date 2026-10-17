@@ -182,6 +182,7 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	settlement := settled(moment, event.Root, merged.Activity, merged.Judged)
 	answer.Raises = append(answer.Raises, settlement.Raises(event.Root)...)
 	answer.Settles = settlement.Settles()
+	answer.Repented = settlement.Repented
 
 	return answer
 }
