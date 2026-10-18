@@ -55,13 +55,23 @@ func isDunderName(name string) bool {
 // IsConstantBelowField says whether the statement declares a constant below a field, before any method: the
 // class's constants belong above its fields.
 func (p *Program) IsConstantBelowField(n Node) bool {
-	if !n.DeclaresConstant() {
+	above, ok := p.membersAbove(n)
+	if !ok || !p.declaresConstant(n) {
 		return false
 	}
-	above, ok := p.membersAbove(n)
 
-	return ok && !slices.ContainsFunc(above, Node.IsFunction) && slices.ContainsFunc(above, func(member Node) bool {
-		return member.isStateDeclaration() && !member.DeclaresConstant()
+	return !slices.ContainsFunc(above, Node.IsFunction) && slices.ContainsFunc(above, func(member Node) bool {
+		return member.isStateDeclaration() && !p.declaresConstant(member)
+	})
+}
+
+// declaresConstant says whether the class-body statement declares a constant, by its own spelling or by
+// overriding a constant a base of its class declares.
+func (p *Program) declaresConstant(n Node) bool {
+	return n.DeclaresConstant() || slices.ContainsFunc(n.writtenTargets(), func(target Node) bool {
+		_, ok := p.ConstantOf(n.Parent(), target.Name())
+
+		return target.Kind() == "Name" && ok
 	})
 }
 

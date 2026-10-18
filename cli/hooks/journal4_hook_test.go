@@ -117,3 +117,15 @@ func TestTheScanAnswersSettingsInVersion4sTypes(t *testing.T) {
 		}
 	}
 }
+
+// TestAppliedSettingsAreACardInVersion4 holds the answer to plugin.updated to version 4's shape: a card saying what
+// changed under one key, and no card when nothing did, never version 3's notify.
+func TestAppliedSettingsAreACardInVersion4(t *testing.T) {
+	if got := Configured4([]string{"config.json follows the plugin's switches: 2 changed"}); got != `{"cards":[{"key":"settings","kind":"configured","label":"config.json follows the plugin's switches: 2 changed"}],"v":1}` {
+		t.Errorf("said %s", got)
+	}
+
+	if got := Configured4(nil); got != `{"v":1}` {
+		t.Errorf("said %s with nothing changed", got)
+	}
+}

@@ -18,3 +18,16 @@ class CartSettings:
 
     def allows(self, lines: int) -> bool:
         return lines <= self.MAX_LINES
+
+
+from typing import ClassVar  # noqa: E402
+
+
+class StoreSettings:
+    region: ClassVar[str]
+
+
+# @fixed MemberOutOfOrder
+class DutchStoreSettings(StoreSettings):
+    region = "NL"
+    GREETING = "Welkom in " + region
