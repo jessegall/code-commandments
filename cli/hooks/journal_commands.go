@@ -59,7 +59,8 @@ func (JournalScan) Names() []string {
 // Help documents it.
 func (JournalScan) Help() help.Help {
 	return help.Of("Scan the project for the folders to check and the ones to leave out, for the agent journal plugin.").
-		Form("journal-scan", "answer the detected folders as settings (run by the journal plugin)")
+		Form("journal-scan", "answer the detected folders as settings (run by the journal plugin)").
+		Option("--settings-only", "answer the settings alone, lists and switches in their own JSON types, as version 4 of the journal reads an installed command's answer")
 }
 
 // Run answers the settings: the folders the project's config already judges and leaves out, detected only where it
@@ -75,6 +76,10 @@ func (JournalScan) Run(in *cli.Input, console cli.Console) (int, error) {
 			skipped = own.Excluded
 		}
 	}
+	if in.HasFlag("settings-only") {
+		return 0, sayScanned(console, typedScan(project, judged, skipped))
+	}
+
 	settings := jsonfile.NewObject(
 		judgedKey, strings.Join(judged, "\n"),
 		skippedKey, strings.Join(skipped, "\n"),
@@ -84,14 +89,39 @@ func (JournalScan) Run(in *cli.Input, console cli.Console) (int, error) {
 		settings.Set(languageKey(language), strconv.FormatBool(config.WritesLanguage(project, language)))
 	}
 
-	text, err := jsonfile.Compact(jsonfile.NewObject("settings", settings), false)
+	return 0, sayScanned(console, jsonfile.NewObject("settings", settings))
+}
+
+// typedScan is the scan as version 4 of the journal keeps settings: the folders as lists, the languages as switches.
+func typedScan(project string, judged, skipped []string) *jsonfile.Object {
+	settings := jsonfile.NewObject(judgedKey, anyOf(judged), skippedKey, anyOf(skipped))
+	for _, language := range source.Languages {
+		settings.Set(languageKey(language), config.WritesLanguage(project, language))
+	}
+
+	return settings
+}
+
+// anyOf is the folders as a JSON list, empty rather than null when there are none.
+func anyOf(folders []string) []any {
+	listed := []any{}
+	for _, folder := range folders {
+		listed = append(listed, folder)
+	}
+
+	return listed
+}
+
+// sayScanned prints the scan's answer on one line.
+func sayScanned(console cli.Console, answer *jsonfile.Object) error {
+	text, err := jsonfile.Compact(answer, false)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	console.Say(text)
 
-	return 0, nil
+	return nil
 }
 
 // JournalSkills is `journal-skills`: the skills rendered into the plugin's folder for the journal to publish.

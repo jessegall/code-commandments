@@ -46,13 +46,18 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v5.19.1 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v5.19.2 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",
       "run": "bin/commandments-release journal-config --keep-folders"
+    },
+    {
+      "name": "Check for sins, on demand",
+      "run": "journal check list | grep -q \"Check for sins\" || journal check create \"Check for sins\" --command \"$JOURNAL_PLUGIN_DIR/bin/commandments-release judge\" --every 0 --brief \"Judges the whole project against its commandments; a failure lists each sin found, grouped by the skill that fixes it\""
     }
   ],
+  "installed": "bin/commandments-release journal-scan --settings-only",
   "settings": ".journal-plugin/settings.json",
   "skills": "journal-skills/.agents/skills",
   "services": [

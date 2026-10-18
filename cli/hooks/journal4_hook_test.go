@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/cli/workspace"
@@ -94,6 +95,25 @@ func TestTheJournalsProjectIsFoundUnderEitherVersion(t *testing.T) {
 		t.Setenv("JOURNAL_ROOT", given)
 		if project, named := workspace.JournalProject(); !named || project != want {
 			t.Errorf("JOURNAL_ROOT %s named the project %s", given, project)
+		}
+	}
+}
+
+// TestTheScanAnswersSettingsInVersion4sTypes holds journal-scan --settings-only to the shape version 4 keeps: the
+// folders as lists, empty and never null, and each language a switch.
+func TestTheScanAnswersSettingsInVersion4sTypes(t *testing.T) {
+	scanned := typedScan(t.TempDir(), []string{"src", "app"}, nil)
+	judged, _ := scanned.Get(judgedKey)
+	skipped, _ := scanned.Get(skippedKey)
+	if len(judged.([]any)) != 2 || skipped == nil || len(skipped.([]any)) != 0 {
+		t.Errorf("folders scanned as %v and %v", judged, skipped)
+	}
+
+	for _, key := range scanned.Keys() {
+		if value, _ := scanned.Get(key); strings.HasPrefix(key, "language_") {
+			if _, isSwitch := value.(bool); !isSwitch {
+				t.Errorf("%s scanned as %v, no switch", key, value)
+			}
 		}
 	}
 }
