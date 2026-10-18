@@ -5,6 +5,10 @@ commandments journal-scan — Scan the project for the folders to check and the 
 Usage:
   commandments journal-scan  answer the detected folders as settings (run by the journal plugin)
 
+Options:
+  --settings-only  answer the settings alone, lists and switches in their own JSON types, as version
+                   4 of the journal reads an installed command's answer
+
 --- stderr
 
 --- files
