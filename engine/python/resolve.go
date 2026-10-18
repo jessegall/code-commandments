@@ -1,6 +1,7 @@
 package python
 
 import (
+	"slices"
 	"strings"
 )
 
@@ -142,18 +143,22 @@ func (p *Program) classSpelled(dotted string, module *Module) (Node, bool) {
 
 // MethodOf is the def named name that the class declares, or that the first of its bases to declare one does.
 func (p *Program) MethodOf(class Node, name string) (Node, bool) {
-	return p.methodOf(class, name, map[Node]bool{})
+	return p.memberOf(class, func(member Node) bool { return member.IsFunction() && member.Name() == name }, map[Node]bool{})
 }
 
-func (p *Program) methodOf(class Node, name string, seen map[Node]bool) (Node, bool) {
+// ConstantOf is the constant named name that the class declares, or that the first of its bases to declare one does:
+// a subclass's plain `name = ...` overriding a base's `name: ClassVar[str]` is that constant too.
+func (p *Program) ConstantOf(class Node, name string) (Node, bool) {
+	return p.memberOf(class, func(member Node) bool { return member.DeclaresConstant() && member.declaresName(name) }, map[Node]bool{})
+}
+
+func (p *Program) memberOf(class Node, admits func(Node) bool, seen map[Node]bool) (Node, bool) {
 	if seen[class] {
 		return Node{}, false
 	}
 	seen[class] = true
-	for _, member := range class.ChildrenIn("body") {
-		if member.IsFunction() && member.Name() == name {
-			return member, true
-		}
+	if member, ok := class.firstInBody(admits); ok {
+		return member, true
 	}
 	home := p.homes[class.Node()]
 	if home == nil {
@@ -161,13 +166,33 @@ func (p *Program) methodOf(class Node, name string, seen map[Node]bool) (Node, b
 	}
 	for _, base := range class.ChildrenIn("bases") {
 		if parent, ok := p.ClassNamed(base, home); ok {
-			if inherited, ok := p.methodOf(parent, name, seen); ok {
+			if inherited, ok := p.memberOf(parent, admits, seen); ok {
 				return inherited, true
 			}
 		}
 	}
 
 	return Node{}, false
+}
+
+func (class Node) firstInBody(admits func(Node) bool) (Node, bool) {
+	body := class.ChildrenIn("body")
+	at := slices.IndexFunc(body, admits)
+	if at < 0 {
+		return Node{}, false
+	}
+
+	return body[at], true
+}
+
+// declaresName says whether the class-body statement declares the plain name, with a value or by annotation alone.
+func (statement Node) declaresName(name string) bool {
+	targets := statement.ChildrenIn("targets")
+	if statement.Kind() == "AnnAssign" {
+		targets = []Node{statement.Child("target")}
+	}
+
+	return slices.ContainsFunc(targets, func(target Node) bool { return target.Kind() == "Name" && target.Name() == name })
 }
 
 // heldClass is the class a class attribute holds, the class itself rather than an instance of it: `resource =

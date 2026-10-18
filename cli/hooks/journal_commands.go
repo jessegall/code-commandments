@@ -208,24 +208,44 @@ func (JournalConfig) Help() help.Help {
 // Run writes each chosen switch, renders the skills again, refreshes what the project is told, and notifies
 // what changed and what it could not write.
 func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
+	said, code, err := JournalConfig{}.Apply(in, console)
+	if err != nil || code != 0 {
+		return code, err
+	}
+
+	if len(said) == 0 {
+		console.Say("{}")
+
+		return 0, nil
+	}
+
+	text, _ := jsonfile.Compact(jsonfile.NewObject("notify", strings.Join(said, "; ")), true)
+	console.Say(text)
+
+	return 0, nil
+}
+
+// Apply writes each chosen switch, renders the skills again and refreshes what the project is told, and answers
+// what it says changed; a code other than 0 is a run that could not apply them, its reason already warned.
+func (JournalConfig) Apply(in *cli.Input, console cli.Console) ([]string, int, error) {
 	chosen, given := chosenSettings()
 	if !given {
 		console.Warn(journalSettings + " holds no settings to apply.")
 
-		return 2, nil
+		return nil, 2, nil
 	}
 
 	root := journalProjectRoot()
 
 	if _, err := config.Migrate(root); err != nil {
-		return 0, err
+		return nil, 0, err
 	}
 
 	editor, switches := config.EditorIn(root).(config.Switches)
 	if !switches {
 		console.Warn("⚠ .commandments/config.php could not be migrated to config.json — the switches were left unapplied.")
 
-		return 1, nil
+		return nil, 1, nil
 	}
 
 	changed := 0
@@ -242,7 +262,7 @@ func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 		}
 
 		if did, err := toggle(language); err != nil {
-			return 0, err
+			return nil, 0, err
 		} else if did {
 			changed++
 		}
@@ -260,7 +280,7 @@ func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 		}
 
 		if did, err := toggle(config.ClassOf(config.Sin, sin)); err != nil {
-			return 0, err
+			return nil, 0, err
 		} else if did {
 			changed++
 		}
@@ -270,26 +290,26 @@ func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	if judged := folders(chosen, judgedKey); len(judged) > 0 && !keep {
 		if err := editor.JudgeFolders(judged); err != nil {
-			return 0, err
+			return nil, 0, err
 		}
 	}
 
 	if _, set := chosen[skippedKey]; set && !keep {
 		if err := editor.SkipFolders(folders(chosen, skippedKey)); err != nil {
-			return 0, err
+			return nil, 0, err
 		}
 	}
 
 	if parallel, err := strconv.Atoi(strings.TrimSpace(fmt.Sprint(chosen[parallelKey]))); err == nil && parallel >= 1 {
 		if did, err := editor.RunWith(parallel); err != nil {
-			return 0, err
+			return nil, 0, err
 		} else if did {
 			changed++
 		}
 	}
 
 	if _, err := renderSkills(); err != nil {
-		return 0, err
+		return nil, 0, err
 	}
 
 	var said []string
@@ -300,16 +320,7 @@ func (JournalConfig) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	said = append(said, brief(root)...)
 
-	if len(said) == 0 {
-		console.Say("{}")
-
-		return 0, nil
-	}
-
-	text, _ := jsonfile.Compact(jsonfile.NewObject("notify", strings.Join(said, "; ")), true)
-	console.Say(text)
-
-	return 0, nil
+	return said, 0, nil
 }
 
 // brief refreshes what the project is told, so a fix to the briefing reaches a project the journal drives and not

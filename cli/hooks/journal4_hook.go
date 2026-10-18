@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
@@ -51,7 +52,12 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	if line["event"] == "plugin.updated" {
-		return JournalConfig{}.Run(in, console)
+		said, code, err := JournalConfig{}.Apply(in, console)
+		if err == nil && code == 0 {
+			console.Write(Configured4(said) + "\n")
+		}
+
+		return code, err
 	}
 
 	console.Write(Answer4Of(line) + "\n")
@@ -136,4 +142,17 @@ func (a JournalAnswer) Line4() string {
 	_ = encoder.Encode(answer)
 
 	return string(bytes.TrimSuffix(out.Bytes(), []byte("\n")))
+}
+
+// Configured4 is version 4's answer once the settings are applied: a card saying what changed, under one key so the
+// latest stands in place of the one before; nothing when nothing changed.
+func Configured4(said []string) string {
+	answer := map[string]any{"v": protocol4}
+	if len(said) > 0 {
+		answer["cards"] = []map[string]any{{"kind": "configured", "key": "settings", "label": strings.Join(said, "; ")}}
+	}
+
+	text, _ := json.Marshal(answer)
+
+	return string(text)
 }
