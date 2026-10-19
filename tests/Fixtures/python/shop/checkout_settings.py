@@ -31,3 +31,14 @@ class StoreSettings:
 class DutchStoreSettings(StoreSettings):
     region = "NL"
     GREETING = "Welkom in " + region
+
+
+class Notice:
+    def __init__(self, owner: str, text: str) -> None:
+        self.owner, self.text = owner, text
+
+
+# @fixed MemberOutOfOrder
+class ShippingFeature:
+    name = "shipping"
+    LATE = Notice(name, "a parcel is late")

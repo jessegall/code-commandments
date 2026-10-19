@@ -34,10 +34,7 @@ func (p *Program) IsMemberAfterMethod(n Node) bool {
 	if !ok {
 		return false
 	}
-	var read []string
-	for _, expression := range n.ownExpressions() {
-		read = append(read, expression.DataNames()...)
-	}
+	read := n.namesRead()
 	var methods []string
 	for _, member := range above {
 		if member.IsFunction() {
@@ -52,17 +49,34 @@ func isDunderName(name string) bool {
 	return strings.HasPrefix(name, "__") && strings.HasSuffix(name, "__")
 }
 
-// IsConstantBelowField says whether the statement declares a constant below a field, before any method: the
-// class's constants belong above its fields.
-func (p *Program) IsConstantBelowField(n Node) bool {
-	above, ok := p.membersAbove(n)
-	if !ok || !p.declaresConstant(n) {
-		return false
+// namesRead is every name the statement's own expressions read.
+func (n Node) namesRead() []string {
+	var read []string
+	for _, expression := range n.ownExpressions() {
+		read = append(read, expression.DataNames()...)
 	}
 
-	return !slices.ContainsFunc(above, Node.IsFunction) && slices.ContainsFunc(above, func(member Node) bool {
-		return member.isStateDeclaration() && !p.declaresConstant(member)
-	})
+	return read
+}
+
+// IsConstantBelowField says whether the statement declares a constant below a field, before any method: the
+// class's constants belong above its fields. A constant built from a field above it is not, since Python runs the
+// class body top to bottom and the field must come first.
+func (p *Program) IsConstantBelowField(n Node) bool {
+	above, ok := p.membersAbove(n)
+	if !ok || !p.declaresConstant(n) || slices.ContainsFunc(above, Node.IsFunction) {
+		return false
+	}
+	var fields []string
+	for _, member := range above {
+		if member.isStateDeclaration() && !p.declaresConstant(member) {
+			for _, target := range member.writtenTargets() {
+				fields = append(fields, target.Name())
+			}
+		}
+	}
+
+	return len(fields) > 0 && !slices.ContainsFunc(n.namesRead(), func(name string) bool { return slices.Contains(fields, name) })
 }
 
 // declaresConstant says whether the class-body statement declares a constant, by its own spelling or by
