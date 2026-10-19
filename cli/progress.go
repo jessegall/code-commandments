@@ -28,13 +28,13 @@ type Progress struct {
 	active     bool
 }
 
-// journalCheck names the variable the journal sets for a check it runs, its report's file.
-const journalCheck = "JOURNAL_REPORT"
+// JournalReport names the variable the journal sets for a check it runs, its report's file.
+const JournalReport = "JOURNAL_REPORT"
 
 // NewProgress draws on stream when it is a terminal, and writes plain lines when a journal check reads it.
 func NewProgress(stream io.Writer) *Progress {
 	terminal := isTerminal(stream)
-	plain := !terminal && os.Getenv(journalCheck) != ""
+	plain := !terminal && os.Getenv(JournalReport) != ""
 
 	return &Progress{stream: stream, enabled: terminal || plain, plain: plain, total: 1, lastFilled: -1, lastShare: -1}
 }

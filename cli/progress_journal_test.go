@@ -16,7 +16,7 @@ var counted = regexp.MustCompile(`\b(\d+)\s*/\s*(\d+)\b`)
 // detector that will, so the check's bar moves from the start; a run nothing reads stays silent.
 func TestAJournalCheckReadsTheRunsProgressAsItGoes(t *testing.T) {
 	run := func(check string) string {
-		t.Setenv(journalCheck, check)
+		t.Setenv(JournalReport, check)
 		var written bytes.Buffer
 		progress := NewProgress(&written)
 		progress.Expect(3)
