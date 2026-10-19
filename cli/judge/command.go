@@ -243,6 +243,11 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 
 	report := NewReport(options.path, judgement.Findings, c.Fixable, c.Scaffoldable, skipped)
 	console.Say(report.Console())
+	if journal := os.Getenv(cli.JournalReport); journal != "" {
+		if err := os.WriteFile(journal, report.Journal(), 0o644); err != nil {
+			console.Warn("✗ The journal's report could not be written: " + err.Error())
+		}
+	}
 	console.Say(unseenNote(targets)...)
 
 	for _, target := range options.checklist {
