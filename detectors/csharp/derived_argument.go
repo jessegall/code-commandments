@@ -67,7 +67,7 @@ func (DerivedArgumentDetector) Candidates(codebase *engine.Codebase) []detectors
 		derived := derivation{called: call.CalledName()}
 		for _, position := range redundantPositions(call, program, graph) {
 			derived.slots = append(derived.slots, slot+"#"+strconv.Itoa(position))
-			derived.paths = append(derived.paths, arguments[position].ProjectionPath())
+			derived.paths = append(derived.paths, readOff(arguments[position]))
 		}
 		if len(derived.slots) > 0 {
 			candidates = append(candidates, detectors.Candidate{At: match, Record: derived})
@@ -78,7 +78,7 @@ func (DerivedArgumentDetector) Candidates(codebase *engine.Codebase) []detectors
 }
 
 // Decide is every call filling a parameter that every call fills alike, with a piece read the same way off an
-// object each could hand whole, of a method no unresolved call might also reach.
+// object of one type each could hand whole, of a method no unresolved call might also reach.
 func (DerivedArgumentDetector) Decide(candidates []detectors.Candidate) []int {
 	counts, unresolved := suppliedIn(candidates)
 	redundant := map[string][]int{}
@@ -112,6 +112,12 @@ func (DerivedArgumentDetector) Decide(candidates []detectors.Candidate) []int {
 	}
 
 	return findings
+}
+
+// readOff is how a piece is read: the type of the object it hangs off and the member path read off it. Pieces of
+// objects of two types leave the method no one object to take, so they are never read alike.
+func readOff(piece cs.Node) string {
+	return piece.ProjectionRoot().Type().Name() + piece.ProjectionPath()
 }
 
 // redundantPositions is the positions of the call's arguments that are pieces read off an object the call is also
