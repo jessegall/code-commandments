@@ -242,6 +242,24 @@ func TestAMethodAnOutsideInterfaceDeclaresIsAnOverride(t *testing.T) {
 	}
 }
 
+// TestAClassIsWhatItsOutsideAncestorsAre holds the program's ancestry to the outside symbols: a scanned class
+// extending a package's class is everything that class is, its parents and contracts outside the scan too — as a
+// laravel-actions ActionRequest is the FormRequest and the Request it extends.
+func TestAClassIsWhatItsOutsideAncestorsAre(t *testing.T) {
+	folder := written(t, map[string]string{"Ask.php": "<?php\nnamespace Shop;\nfinal class Ask extends \\PhpParser\\Node\\Expr\\MethodCall {}\n"})
+	program := ProgramOf(engine.Load(bridged(t, "--autoload=../../bridge/php/parser/autoload.php", folder)))
+
+	if ancestors := program.Ancestors(`Shop\Ask`); !slices.Equal(ancestors, []string{`PhpParser\Node\Expr\MethodCall`, `PhpParser\Node\Expr\CallLike`, `PhpParser\Node\Expr`, `PhpParser\NodeAbstract`}) {
+		t.Errorf("the ancestors read are %v", ancestors)
+	}
+	if !program.IsA(`Shop\Ask`, `PhpParser\NodeAbstract`) || !program.IsA(`Shop\Ask`, `PhpParser\Node`) {
+		t.Error("a class is not taken for what its outside ancestors are")
+	}
+	if program.IsA(`Shop\Ask`, `PhpParser\Node\Stmt`) {
+		t.Error("a class is taken for an outside class it does not extend")
+	}
+}
+
 func TestOutsideSymbolsAreClosed(t *testing.T) {
 	folder := written(t, map[string]string{"Uses.php": "<?php\nnamespace Shop;\nfinal class Ask extends \\PhpParser\\Node\\Expr\\MethodCall {}\n"})
 	stream := bridged(t, "--autoload=../../bridge/php/parser/autoload.php", folder)

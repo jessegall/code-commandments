@@ -109,12 +109,12 @@ func (p *Program) Class(fqcn string) (engine.Match, bool) {
 	return class, ok
 }
 
-// Ancestors is the class's parent chain, nearest first, as far as the program declares it.
+// Ancestors is the class's parent chain, nearest first, through the scan and the declarations outside it.
 func (p *Program) Ancestors(class string) []string {
 	class = strings.TrimLeft(class, `\`)
 	var chain []string
 	for {
-		parent, ok := p.parents[class]
+		parent, ok := p.parentOf(class)
 		if !ok || slices.Contains(chain, parent) {
 			return chain
 		}
@@ -141,18 +141,51 @@ func (p *Program) Implements(class, contract string) bool {
 			continue
 		}
 		seen[current] = true
-		for _, honoured := range p.contracts[current] {
+		for _, honoured := range p.contractsOf(current) {
 			if honoured == contract {
 				return true
 			}
 			queue = append(queue, honoured)
 		}
-		if parent, ok := p.parents[current]; ok {
+		if parent, ok := p.parentOf(current); ok {
 			queue = append(queue, parent)
 		}
 	}
 
 	return false
+}
+
+// parentOf is the class's parent: the one the scan declares, else the one its declaration outside the scan names.
+func (p *Program) parentOf(class string) (string, bool) {
+	if parent, ok := p.parents[class]; ok {
+		return parent, true
+	}
+	if _, declared := p.Declaration(class); declared {
+		return "", false
+	}
+	symbol, ok := p.outside(class)
+	if !ok || symbol.Kind != "class" || len(symbol.Extends) == 0 {
+		return "", false
+	}
+
+	return strings.TrimLeft(symbol.Extends[0], `\`), true
+}
+
+// contractsOf is the contracts the class-like names itself: the scan's, else those its declaration outside the
+// scan names — the ones an outside interface extends.
+func (p *Program) contractsOf(name string) []string {
+	if _, declared := p.Declaration(name); declared {
+		return p.contracts[name]
+	}
+	symbol, ok := p.outside(name)
+	if !ok {
+		return nil
+	}
+	if symbol.Kind == "interface" {
+		return symbol.Extends
+	}
+
+	return symbol.Implements
 }
 
 // IsA says whether the class is the base, extends it, or implements it.
