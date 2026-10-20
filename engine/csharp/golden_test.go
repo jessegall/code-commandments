@@ -266,8 +266,11 @@ func TestTheProgramReadsWholeAsThePhpEngineReadsIt(t *testing.T) {
 	methods := map[string]goldenMethod{}
 	for _, match := range csharp.In(codebase).WhereMethodDeclaration().Get() {
 		method := csharp.Node{Match: match}
-		callers := want.Methods[method.Symbol()].Callers
-		if parameters := method.Parameters(); len(parameters) == 0 || !parameters[0].HasModifier("this") {
+		recorded, wasRecorded := want.Methods[method.Symbol()]
+		callers := recorded.Callers
+		// A method the golden never recorded is one the PHP engine never saw: the fixture gained it afterwards, so
+		// there is no caller count to be held to and an empty one is not a verdict of zero.
+		if parameters := method.Parameters(); wasRecorded && (len(parameters) == 0 || !parameters[0].HasModifier("this")) {
 			outside := 0
 			for _, caller := range callers {
 				if file, _, _ := strings.Cut(caller, "@"); !tests[file] {

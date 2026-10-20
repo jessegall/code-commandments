@@ -195,13 +195,20 @@ func (c Config) Positional() Config {
 	return c
 }
 
-// IsJudged says whether the file, absolute or under root, lies in one of the declared source roots.
+// IsJudged says whether the file is one this project judges: a file of a language the tool reads, which the
+// project has not turned off, lying in one of the declared source roots. A source root holds more than source —
+// a README, a lockfile, a template, and the languages a project judges nothing in — and a nudge that counts
+// those as judged files is counting edits no rule could ever have an opinion about.
 func (c Config) IsJudged(root, file string) bool {
 	home := strings.TrimRight(root, "/")
 	absolute := file
 
 	if !strings.HasPrefix(file, "/") {
 		absolute = home + "/" + strings.TrimLeft(file, "/")
+	}
+
+	if !source.Judges(absolute) || !c.Writes(source.OfFile(absolute)) {
+		return false
 	}
 
 	for _, relative := range c.Paths {
