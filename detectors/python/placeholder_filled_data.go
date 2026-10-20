@@ -28,5 +28,6 @@ func (PlaceholderFilledDataDetector) Find(codebase *engine.Codebase) []engine.Ma
 	return py.In(codebase).
 		WhereCall().
 		Where(engine.As(program.FillsRequiredTextWithBlank)).
+		Reject(engine.Match.IsTest).
 		Get()
 }
