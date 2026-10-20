@@ -1,8 +1,8 @@
 exit: 0
 --- stdout
-[1mNamespace layers[0m — 62 namespaces
+[1mNamespace layers[0m — 63 namespaces
 
-  [32m21[0m are depended on but depend on nothing of yours — the floor your stack rests on
+  [32m22[0m are depended on but depend on nothing of yours — the floor your stack rests on
       Shop\Authoring
       Shop\Billing
       Shop\Contracts
@@ -15,7 +15,7 @@ exit: 0
       Shop\Http\Pages\FlatCluster
       Shop\Http\Pages\RepeatedCall
       Shop\Inertia
-      … and 9 more
+      … and 10 more
 
   [33m28[0m sit in a cycle — declared below as they stand, each permitting the other:
       Shop\Enums  ->  Shop\Shipping
@@ -24,7 +24,7 @@ exit: 0
       Shop\Warranty  ->  Shop\Claims
     [2mrun `commandments judge --sin=namespace-cycle` for the exact arrows to cut[0m
 
-  Proposed declaration — today's shape, held (62 namespaces):
+  Proposed declaration — today's shape, held (63 namespaces):
 
     $config->configure(fn (NamespaceDependencyDetector $detector) => $detector
         ->layer('Shop\\Authoring')
@@ -43,6 +43,7 @@ exit: 0
         ->layer('Shop\\Returns')
         ->layer('Shop\\Routing')
         ->layer('Shop\\Shelving')
+        ->layer('Shop\\Snapshots')
         ->layer('Shop\\Support\\Text')
         ->layer('Shop\\Ui\\Pages')
         ->layer('Shop\\Ui\\Tokens')
