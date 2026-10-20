@@ -176,16 +176,21 @@ func (n Node) IsStaticStateWrite() bool {
 	return function.Exists() && slices.ContainsFunc(n.writtenTargets(), func(target Node) bool { return n.writesStatic(target, function) })
 }
 
-// writesStatic says whether the target is static state of the def: a name it declares global, a memo filled on
-// first use aside, or an attribute of `type(self)`, its class, or a classmethod's `cls`.
+// writesStatic says whether the target is static state of the def: a name it declares global, or an attribute of
+// `type(self)`, its class, or a classmethod's `cls`. A memo filled on first use is neither, whichever of the two
+// holds it: the write happens once and every later call reads what the first settled, which is the shape PHP's
+// twin excuses on both.
 func (n Node) writesStatic(target, function Node) bool {
 	switch target.Kind() {
 	case "Name":
 		return slices.Contains(function.globalNames(), target.Name()) && !n.isMemoFill(target.Name())
 	case "Attribute":
 		owner := target.Child("value")
+		if !(owner.IsCall() && owner.Callee().DottedName() == "type") && !(owner.Kind() == "Name" && slices.Contains(function.classNames(), owner.Name())) {
+			return false
+		}
 
-		return (owner.IsCall() && owner.Callee().DottedName() == "type") || (owner.Kind() == "Name" && slices.Contains(function.classNames(), owner.Name()))
+		return !n.isMemoFill(target.DottedName())
 	}
 
 	return false
