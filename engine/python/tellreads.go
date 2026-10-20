@@ -164,12 +164,37 @@ func (n Node) IsTypeNarrowingGuard() bool {
 func (n Node) GuardFingerprint() string {
 	var hashes []string
 	for _, conjunct := range n.resolvedConjuncts() {
-		hashes = append(hashes, conjunct.ExpressionHash())
+		hashes = append(hashes, conjunct.askedOf()+conjunct.ExpressionHash())
 	}
 	slices.Sort(hashes)
 	sum := sha1.Sum([]byte(strings.Join(hashes, "|")))
 
 	return hex.EncodeToString(sum[:])
+}
+
+// askedOf is the type the conjunct asks about, as the fingerprint carries it: a question about one type's own state
+// is that type's, so two types asking the same thing of themselves ask two questions and repeat nothing. Empty
+// where the object's type is not known, which groups by the reading alone, as before.
+func (n Node) askedOf() string {
+	object := n
+	if n.Kind() == "Attribute" || n.Kind() == "Call" {
+		object = n.Child("value")
+	}
+	if !object.Exists() {
+		return ""
+	}
+	if object.DottedName() == "self" {
+		if class := object.EnclosingClass(); class.Exists() {
+			return class.Node().Symbol
+		}
+
+		return ""
+	}
+	if resolved := object.Node().Resolved; resolved != nil && resolved.Kind == "named" {
+		return resolved.Name
+	}
+
+	return ""
 }
 
 // IsAssignedValue says whether the expression is the value an assignment stores.
