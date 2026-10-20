@@ -1,4 +1,18 @@
 {
+    "shop/couriers/registry.py@458-481": {
+        "target": "shop.couriers.handover.receipt.receipt_for",
+        "arguments": {
+            "parcel": "\"parcel-1\""
+        },
+        "literalKey": false
+    },
+    "shop/couriers/handover/receipt.py@321-337": {
+        "target": "shop.couriers.dispatch.dispatch",
+        "arguments": {
+            "parcel": "parcel"
+        },
+        "literalKey": false
+    },
     "shop/aisle_signs.py@762-796": {
         "target": "shop.aisle_signs.SignCatalogue.entry",
         "arguments": {

@@ -15,11 +15,14 @@
         "shop/warehouse/stock.py:4 shop/warehouse -> shop/billing",
         "shop/billing/invoice.py:2 shop/billing -> shop/warehouse",
         "shop/billing/invoice.py:3 shop/billing -> shop/warehouse",
-        "shop/widgets/card.py:14 shop/widgets -> shop/screens"
+        "shop/widgets/card.py:14 shop/widgets -> shop/screens",
+        "shop/couriers/handover/receipt.py:3 shop/couriers/handover -> shop/couriers",
+        "shop/couriers/registry.py:5 shop/couriers -> shop/couriers/handover"
     ],
     "closing": [
         "shop/storefront/pages.py:7",
         "shop/couriers/dispatch.py:5",
-        "shop/warehouse/stock.py:4"
+        "shop/warehouse/stock.py:4",
+        "shop/couriers/registry.py:5"
     ]
 }

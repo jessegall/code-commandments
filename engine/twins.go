@@ -51,8 +51,10 @@ type TwinJudge interface {
 }
 
 // DivergentTwins is each pair of the units found to be one job done twice where one does less, one finding per
-// poorer unit, the strongest pair claiming it.
+// poorer unit, the strongest pair claiming it. A test is no unit: two tests share the steps of what they test, and
+// one taking a step the other does not is a scenario of its own, not a fix forgotten.
 func DivergentTwins(judge TwinJudge, units []ReachedUnit) []Divergence {
+	units = slices.DeleteFunc(slices.Clone(units), func(unit ReachedUnit) bool { return unit.Match.IsTest() })
 	byKey := map[string]ReachedUnit{}
 	for _, unit := range units {
 		byKey[unit.Key] = unit

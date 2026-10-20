@@ -746,7 +746,9 @@
         "extendsOutside": false
     },
     "shop.couriers.dispatch.dispatch": {
-        "callers": [],
+        "callers": [
+            "shop/couriers/handover/receipt.py:7"
+        ],
         "override": false,
         "overridden": false,
         "extendsOutside": false
