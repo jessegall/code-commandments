@@ -363,6 +363,31 @@ func (n Node) IsWithinNamedConstructor() bool {
 	return function.Exists() && function.IsNamedConstructor()
 }
 
+// IsWithinInheritedMethod says whether the node sits in a method an ancestor of its class declares too: the
+// signature is the ancestor's, so the shape of a parameter is not the author's to choose and there is nothing to
+// make a type of here. The ancestor may be a class of a package, which the bridge reflects.
+func (n Node) IsWithinInheritedMethod() bool {
+	return Node{Match: n.EnclosingFunction()}.NameIsInherited()
+}
+
+// IsWithinADataFile says whether the node sits in a file that declares nothing and answers with an array: a
+// config, a route table, a translation list. Whatever reads the file owns the shape of what it returns, so a type
+// here would be built only to be turned back into the array the reader takes.
+func (n Node) IsWithinADataFile() bool {
+	answers := false
+
+	for _, statement := range n.Root().ChildrenIn("stmts") {
+		if statement.Is(engine.TypeDeclaration) || statement.Is(engine.Function) {
+			return false
+		}
+		if statement.Is(engine.Return) && statement.Child("expr").Kind() == "Expr_Array" {
+			answers = true
+		}
+	}
+
+	return answers
+}
+
 // IsWithinSerializationBoundary says whether the node sits in __unserialize or __set_state, whose raw array the
 // language hands over, or in a method every caller of which does, three calls deep.
 func (n Node) IsWithinSerializationBoundary() bool {

@@ -23,14 +23,17 @@ func (ArrayBagDetector) Exemptions() []packages.Exemption {
 	return []packages.Exemption{{Tag: packages.NoContainer, By: []packages.By{packages.EnclosingClass}}}
 }
 
-// Find is every string-keyed read of an array parameter, outside the serialization boundary, named constructors
-// and test code, which reads the payload production code emits: the bag is judged where it is born.
+// Find is every string-keyed read of an array parameter, outside the serialization boundary, named constructors, a
+// method whose signature an ancestor fixes, a file that only answers with an array, and test code, which reads the
+// payload production code emits: the bag is judged where it is born.
 func (d ArrayBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return packages.Exempt(codebase, d, codebase.
 		Where(engine.As(php.Node.ArrayKeyIsString)).
 		Where(engine.As(func(n php.Node) bool { return n.EnclosingParamIsArray(n.ArrayBaseName()) })).
 		Reject(engine.As(php.Node.IsWithinSerializationBoundary)).
 		Reject(engine.As(php.Node.IsWithinNamedConstructor)).
+		Reject(engine.As(php.Node.IsWithinInheritedMethod)).
+		Reject(engine.As(php.Node.IsWithinADataFile)).
 		Reject(engine.Match.IsTest).
 		Get())
 }

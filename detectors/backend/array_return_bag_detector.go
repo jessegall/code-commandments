@@ -26,8 +26,9 @@ func (ArrayReturnBagDetector) Exemptions() []packages.Exemption {
 	}
 }
 
-// Find is every returned array literal with two or more string keys, unless it nests, spreads, is a JSON schema or a
-// lookup table, projects a type that already exists, is documented as a shape, or answers to an ancestor's method.
+// Find is every returned array literal with two or more string keys, unless it nests, spreads, is the whole answer
+// of a file that declares nothing, is a JSON schema or a lookup table, projects a type that already exists, is
+// documented as a shape, or answers to an ancestor's method.
 func (d ArrayReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 	program := php.ProgramOf(codebase)
 
@@ -37,6 +38,7 @@ func (d ArrayReturnBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(func(n php.Node) bool { return !n.EnclosingFunctionLike().Exists() })).
 		Reject(engine.As(php.Node.HasNestedArrayValue)).
 		Reject(engine.As(php.Node.SpreadsAnotherArray)).
+		Reject(engine.As(php.Node.IsWithinADataFile)).
 		Reject(engine.As(php.Node.LooksLikeJsonSchema)).
 		Reject(engine.As(php.Node.IsHomogeneousLookupTable)).
 		Reject(engine.As(php.Node.ProjectsTypedObject)).
