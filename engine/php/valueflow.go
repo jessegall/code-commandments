@@ -515,7 +515,9 @@ func isDereferenced(node engine.Match) bool {
 }
 
 // isNullGuardedUse says whether the use settles or tests the value's nullness: de-nulled, type-checked, gated by a
-// question to its owner, or read as a condition.
+// question to its owner, or read as a condition. A value handed to a match or a switch as its subject is tested by
+// it, as one read in an if's condition is: `match ($activity) { null => null, ... }` is the modern spelling of the
+// guard, and reading it as an assumption makes a nullable guarded at its only reader look like a phantom.
 func isNullGuardedUse(node engine.Match) bool {
 	if isDeNulled(node) || isTypeInterrogated(node) || isGatedByOwnerPredicate(node) {
 		return true
@@ -527,7 +529,8 @@ func isNullGuardedUse(node engine.Match) bool {
 
 	return slices.Contains([]string{"Expr_BooleanNot", "Expr_BinaryOp_BooleanAnd", "Expr_BinaryOp_BooleanOr", "Expr_Isset", "Expr_Empty"}, parent.Kind()) ||
 		isChild(node, "Expr_AssignOp_Coalesce", "var") || isChild(node, "Stmt_If", "cond") ||
-		isChild(node, "Stmt_While", "cond") || isChild(node, "Expr_Ternary", "cond")
+		isChild(node, "Stmt_While", "cond") || isChild(node, "Expr_Ternary", "cond") ||
+		isChild(node, "Expr_Match", "cond") || isChild(node, "Stmt_Switch", "cond")
 }
 
 func isTypeInterrogated(node engine.Match) bool {
