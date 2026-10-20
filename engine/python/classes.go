@@ -1,6 +1,7 @@
 package python
 
 import (
+	"slices"
 	"strings"
 	"sync"
 )
@@ -148,4 +149,64 @@ func (n Node) IsNamedConstructor() bool {
 	}
 
 	return false
+}
+
+// protocolMarker is typing's Protocol, the base a class names to declare one. A class satisfies a Protocol by its
+// shape and never by inheriting it, so the name of the base is all the tree has to recognise one by.
+const protocolMarker = "Protocol"
+
+// AnswersAProtocol says whether the method answers a Protocol the codebase declares: some class whose own bases
+// name typing's Protocol declares a method of that name taking the same parameters. Such a signature is not its
+// author's to change — widening it would leave the protocol unanswered and every other answerer taking something
+// else — which is what an ancestor's method is to an override.
+func (p *Program) AnswersAProtocol(method Node) bool {
+	p.classes.once.Do(p.findClasses)
+	class := method.Parent()
+	if method.Name() == "" || class.Kind() != "ClassDef" {
+		return false
+	}
+	for _, declared := range p.classes.named {
+		if declared == class || !p.declaresAProtocol(declared) {
+			continue
+		}
+		if answered, ok := p.MethodOf(declared, method.Name()); ok && takesAlike(answered, method) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// declaresAProtocol says whether the class declares a Protocol: one of its bases is typing's Protocol, written
+// plainly or subscripted with the types it is generic over.
+func (p *Program) declaresAProtocol(class Node) bool {
+	for _, base := range class.ChildrenIn("bases") {
+		spelled := base.DottedName()
+		if spelled == "" {
+			spelled = base.Child("value").DottedName()
+		}
+		if spelled == protocolMarker || strings.HasSuffix(spelled, "."+protocolMarker) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// takesAlike says whether the two defs take the same parameters by name, the receiver aside: the shape a caller
+// of the protocol relies on.
+func takesAlike(one, other Node) bool {
+	return slices.Equal(takenNames(one), takenNames(other))
+}
+
+// takenNames is the def's parameters by name, without the receiver.
+func takenNames(def Node) []string {
+	var names []string
+	for _, parameter := range def.Parameters() {
+		if name := parameter.Name(); name != "self" && name != "cls" {
+			names = append(names, name)
+		}
+	}
+
+	return names
 }

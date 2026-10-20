@@ -33,6 +33,7 @@ func (DataClumpDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(hasValueParamSignature)).
 		Reject(engine.As(py.Node.IsConstructorDeclaration)).
 		Reject(engine.As(program.IsOverride)).
+		Reject(engine.As(program.AnswersAProtocol)).
 		Reject(engine.As(py.Node.IsNamedConstructor)).
 		Reject(engine.Match.IsTest).
 		Get()
