@@ -32,12 +32,18 @@ func (d DuplicateMethodDetector) Candidates(codebase *engine.Codebase) []detecto
 		WhereFunction().
 		Where(engine.As(func(n cs.Node) bool { return n.BodyWeight() >= 12 })).
 		Reject(engine.As(func(n cs.Node) bool { return n.Is("ConstructorDeclaration") })).
+		Reject(engine.As(cs.Node.IsSoleReturnExpression)).
+		Reject(engine.As(cs.Node.IsSoleExpressionStatement)).
+		Reject(engine.Match.IsTest).
 		Get()
 
 	return keyedBy(candidates, d.GroupKey)
 }
 
-// Decide is every function whose body another runs too.
+// Decide is every function whose body another runs too. A body that is one call or one returned value is left
+// alone: the mechanism it would share is the callee, which already exists, and hoisting it would leave a method
+// whose whole body calls a method. A framework that binds one method per type, as Wolverine binds a handler's
+// Validate, makes that one line unavoidable.
 func (DuplicateMethodDetector) Decide(candidates []detectors.Candidate) []int {
 	return recurringAt(candidates, 2)
 }
