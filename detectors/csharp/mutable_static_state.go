@@ -27,5 +27,6 @@ func (MutableStaticStateDetector) Find(codebase *engine.Codebase) []engine.Match
 		WhereExpression().
 		Where(engine.As(func(n cs.Node) bool { return len(n.All()) > 0 })).
 		Where(engine.As(cs.Node.IsWritingStaticState)).
+		Reject(engine.Match.IsTest).
 		Get()
 }

@@ -21,10 +21,12 @@ func (MutableStaticStateDetector) Sin() sins.Sin {
 	return pysins.MutableStaticState{}
 }
 
-// Find is every place the sin is committed.
+// Find is every place the sin is committed, outside test code, where the process is the lifetime and there is no
+// second caller to leak into.
 func (MutableStaticStateDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return py.In(codebase).
 		WhereStatement().
 		Where(engine.As(py.Node.IsStaticStateWrite)).
+		Reject(engine.Match.IsTest).
 		Get()
 }
