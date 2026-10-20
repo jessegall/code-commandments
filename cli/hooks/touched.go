@@ -32,14 +32,17 @@ func TouchedIn(space workspace.Workspace, root string, project config.Config) To
 	return Touched{state.At(space.Path(".touched-sources"), touchedLegend), root, project}
 }
 
-// Claim are the files changed since the last look, newest first and at most limit, and marks this look. The
-// first look of a session marks only: there is nothing yet to compare with.
-func (t Touched) Claim(limit int) []string {
+// Claim are the files changed since the last look, newest first and at most limit, with whether any were left
+// over. It does NOT mark the look: a file this check does not judge has to still be waiting for the next one, so
+// the caller marks seen only once nothing is left. The first look of a session marks only: there is nothing yet
+// to compare with.
+func (t Touched) Claim(limit int) (claimed []string, more bool) {
 	since := t.file.Read().Int("marked_at", 0)
-	t.MarkSeen()
 
 	if since == 0 {
-		return nil
+		t.MarkSeen()
+
+		return nil, false
 	}
 
 	type stamped struct {
@@ -69,12 +72,11 @@ func (t Touched) Claim(limit int) []string {
 
 	sort.SliceStable(touched, func(i, j int) bool { return touched[i].mtime > touched[j].mtime })
 
-	var claimed []string
 	for i := 0; i < len(touched) && i < limit; i++ {
 		claimed = append(claimed, touched[i].path)
 	}
 
-	return claimed
+	return claimed, len(touched) > len(claimed)
 }
 
 // MarkSeen marks this moment as looked at.

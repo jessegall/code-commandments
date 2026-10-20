@@ -99,9 +99,10 @@ func (SkillReminder) Handle(event Event) Response {
 func edited(event Event, project config.Config) []string {
 	touched := TouchedIn(event.Workspace(), event.Root, project)
 	var files []string
+	shell, more := event.IsTool("Bash"), false
 
-	if event.IsTool("Bash") {
-		files = touched.Claim(touchedLimit)
+	if shell {
+		files, more = touched.Claim(touchedLimit)
 	} else {
 		if file := judgedFile(event.Root, event.FilePath(), project); file != "" {
 			files = []string{file}
@@ -115,12 +116,27 @@ func edited(event Event, project config.Config) []string {
 
 	for _, file := range files {
 		info, err := os.Stat(file)
-		if err != nil || info.Size() > int64(left) {
+		if err != nil {
+			continue
+		}
+		// A file no budget could ever afford is one the tool refuses to read whole; it is past this check for
+		// good, and `judge` is what still finds it. One that merely does not fit what is left of this check's
+		// budget waits for the next, so a burst of writes is judged over several calls instead of losing its tail.
+		if info.Size() > int64(budget) {
+			continue
+		}
+		if info.Size() > int64(left) {
+			more = true
+
 			continue
 		}
 
 		left -= int(info.Size())
 		affordable = append(affordable, file)
+	}
+
+	if shell && !more {
+		touched.MarkSeen()
 	}
 
 	return affordable
