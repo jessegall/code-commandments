@@ -29,11 +29,13 @@ func (DictBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(py.Node.IsDictKeyRead)).
 		Reject(engine.As(py.Node.IsWithinNamedConstructor)).
 		Reject(engine.As(program.ReadsForwardedKeywords)).
+		Reject(engine.Match.IsTest).
 		Get()
 	throughHelper := py.In(codebase).
 		WhereCall().
 		Where(engine.As(program.PassesLiteralKey)).
 		Reject(engine.As(py.Node.IsWithinNamedConstructor)).
+		Reject(engine.Match.IsTest).
 		Get()
 
 	return append(direct, throughHelper...)
