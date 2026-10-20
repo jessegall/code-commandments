@@ -18,7 +18,8 @@ const nearDuplicateWeight = 20
 
 // NearDuplicateFunctionDetector finds function bodies that are the same code with different names and data:
 // one function parameterised by what differs. A constructor, a body that is one return or one expression,
-// and a table of literal answers are left alone; their likeness is their form, not a copy.
+// a table of literal answers and a script of literals fed to one callee are left alone; their likeness is
+// their form, not a copy.
 type NearDuplicateFunctionDetector struct{}
 
 func (NearDuplicateFunctionDetector) Sin() sins.Sin {
@@ -33,6 +34,7 @@ func (NearDuplicateFunctionDetector) Find(codebase *engine.Codebase) []engine.Ma
 		Reject(engine.As(func(function typescript.Node) bool { return function.SoleStatement().Kind() == "ReturnStatement" })).
 		Reject(engine.As(func(function typescript.Node) bool { return function.SoleStatement().Kind() == "ExpressionStatement" })).
 		Reject(engine.As(typescript.Node.IsLiteralLookup)).
+		Reject(engine.As(typescript.Node.IsLiteralScript)).
 		Get()
 
 	return detectors.NearCopies(candidates, bodyShape, bodyHash)

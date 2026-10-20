@@ -192,6 +192,46 @@ func (n Node) IsLiteralLookup() bool {
 	return returns > 0
 }
 
+// IsLiteralScript says whether every statement of the body hands one and the same callee nothing but literals: a
+// list of data fed to one sink and written as calls, as a migration's statements are. With its literals made a
+// parameter, all that is left to share is the callee itself.
+func (n Node) IsLiteralScript() bool {
+	statements := n.Body().ChildrenIn("statements")
+	if len(statements) == 0 {
+		return false
+	}
+	callee := Node{statements[0]}.statementCall().Child("expression")
+	for _, statement := range statements {
+		call := Node{statement}.statementCall()
+		if !call.Child("expression").SameSyntax(callee) {
+			return false
+		}
+		for _, argument := range call.ChildrenIn("arguments") {
+			if !(Node{argument}).IsLiteral() {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+// statementCall is the call an expression statement makes, awaited or not; no node for any other statement.
+func (n Node) statementCall() Node {
+	if n.Kind() != "ExpressionStatement" {
+		return Node{}
+	}
+	expression := Node{n.Child("expression")}.unwrap()
+	if expression.Kind() == "AwaitExpression" {
+		expression = Node{expression.Child("expression")}.unwrap()
+	}
+	if expression.Kind() != "CallExpression" {
+		return Node{}
+	}
+
+	return expression
+}
+
 // IsFunction says whether the node is a function the duplication rules compare: a function, a method, a
 // constructor, an accessor, or a variable declared as an arrow.
 func (n Node) IsFunction() bool {

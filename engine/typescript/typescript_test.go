@@ -120,6 +120,28 @@ export function colour(status: string): string {
 	}
 }
 
+// TestAScriptOfLiteralsFedToOneCalleeIsToldFromProcedure holds IsLiteralScript to its shape: every statement hands
+// one and the same callee nothing but literals, awaited or not. Two callees in an order, an argument that is not a
+// literal, an interpolated template or a statement that is not a call are procedure.
+func TestAScriptOfLiteralsFedToOneCalleeIsToldFromProcedure(t *testing.T) {
+	codebase := frontendtest.FromSource(t, map[string]string{"scripts.ts": "export class Migration {\n" +
+		"  up(): void {\n    this.addSql(`create table \"brand\" (\"id\" text)`);\n    this.addSql('create index on brand (id)');\n  }\n" +
+		"  async seed(knex: any): Promise<void> {\n    await knex.raw('insert into a values (1)');\n    await knex.raw('insert into a values (2)');\n  }\n" +
+		"  ordered(): void {\n    this.addSql('a');\n    this.log('b');\n  }\n" +
+		"  named(table: string): void {\n    this.addSql('a');\n    this.addSql(table);\n  }\n" +
+		"  interpolated(table: string): void {\n    this.addSql('a');\n    this.addSql(`drop table ${table}`);\n  }\n" +
+		"  computed(): void {\n    const sql = 'a';\n    this.addSql(sql);\n  }\n" +
+		"  empty(): void {}\n" +
+		"  addSql(sql: string): void {}\n  log(line: string): void {}\n}\n"})
+	for name, want := range map[string]bool{
+		"up": true, "seed": true, "ordered": false, "named": false, "interpolated": false, "computed": false, "empty": false,
+	} {
+		if got := typescript.Of(frontendtest.Named(t, codebase, "MethodDeclaration", name)).IsLiteralScript(); got != want {
+			t.Errorf("%s reads as a literal script: %v, want %v", name, got, want)
+		}
+	}
+}
+
 func TestAnObjectTypeNamesItsFields(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"types.ts": `
 export interface Customer { firstName: string; lastName: string; email?: string }

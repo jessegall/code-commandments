@@ -36,7 +36,10 @@ is the parameter.
 
 Short bodies are alike by coincidence: a one-line delegate, a getter, a `return x.y`
 cannot be hoisted into anything smaller than itself. Neither can two constructors of
-two different classes. Duplication is a body of real substance, twice.
+two different classes, or two scripts that hand their own literals to one callee one
+statement after another, as two migrations hand `addSql` their SQL — with the literals
+a parameter, all that is left to share is the callee. Duplication is a body of real
+substance, twice.
 
 ## Rules
 
