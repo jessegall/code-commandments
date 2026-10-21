@@ -46,8 +46,8 @@ type TwinJudge interface {
 	ArePolymorphicSiblings(poorer, richer ReachedUnit) bool
 	// ResultsAreIncomparable says whether the two declare results that cannot be one value.
 	ResultsAreIncomparable(poorer, richer ReachedUnit) bool
-	// CallersOf is the keys of the units that call the unit.
-	CallersOf(unit ReachedUnit) []string
+	// CallersOf is the keys of the declarations that call the one the key names.
+	CallersOf(key string) []string
 }
 
 // DivergentTwins is each pair of the units found to be one job done twice where one does less, one finding per
@@ -154,22 +154,25 @@ func (r *twinReading) verbsIn(resources []string) []string {
 // between.
 func (r *twinReading) areAlternatives(poorer, richer ReachedUnit) bool {
 	return r.judge.ArePolymorphicSiblings(poorer, richer) || r.judge.ResultsAreIncomparable(poorer, richer) ||
-		r.routesThrough(poorer.Key, richer) || r.routesThrough(richer.Key, poorer) || r.shareACaller(poorer, richer)
+		r.routesThrough(poorer.Key, richer.Key) || r.routesThrough(richer.Key, poorer.Key) || r.shareACaller(poorer, richer)
 }
 
-// routesThrough says whether the caller reaches the callee by calling it, directly or through a helper.
-func (r *twinReading) routesThrough(caller string, callee ReachedUnit) bool {
-	frontier := map[string]bool{caller: true}
+// routesThrough says whether the caller reaches the callee by calling it, directly or through a helper: the
+// callee's own callers are walked outwards, twinCallDepth calls at most, so a step taken through a middleman is
+// still the two telling one path rather than one forgetting what the other does.
+func (r *twinReading) routesThrough(caller, callee string) bool {
+	frontier, seen := []string{callee}, map[string]bool{callee: true}
 	for range twinCallDepth {
-		for _, calling := range r.callersOf(callee) {
-			if frontier[calling] {
-				return true
-			}
-		}
-		next := map[string]bool{}
-		for key := range frontier {
-			for _, calling := range r.callers[key] {
-				next[calling] = true
+		var next []string
+		for _, key := range frontier {
+			for _, calling := range r.callersOf(key) {
+				if calling == caller {
+					return true
+				}
+				if !seen[calling] {
+					seen[calling] = true
+					next = append(next, calling)
+				}
 			}
 		}
 		frontier = next
@@ -180,16 +183,16 @@ func (r *twinReading) routesThrough(caller string, callee ReachedUnit) bool {
 
 // shareACaller says whether a third unit calls both.
 func (r *twinReading) shareACaller(poorer, richer ReachedUnit) bool {
-	return len(shared(r.callersOf(poorer), r.callersOf(richer))) > 0
+	return len(shared(r.callersOf(poorer.Key), r.callersOf(richer.Key))) > 0
 }
 
-func (r *twinReading) callersOf(unit ReachedUnit) []string {
-	if held, ok := r.callers[unit.Key]; ok {
+func (r *twinReading) callersOf(key string) []string {
+	if held, ok := r.callers[key]; ok {
 		return held
 	}
-	r.callers[unit.Key] = r.judge.CallersOf(unit)
+	r.callers[key] = r.judge.CallersOf(key)
 
-	return r.callers[unit.Key]
+	return r.callers[key]
 }
 
 // shared is what of one is also in other, in one's order.

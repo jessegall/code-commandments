@@ -69,14 +69,29 @@ func (j TwinJudge) ResultsAreIncomparable(poorer, richer engine.ReachedUnit) boo
 	return !Overlaps(one, other)
 }
 
-// CallersOf is the scope of every call of the unit's method.
-func (j TwinJudge) CallersOf(unit engine.ReachedUnit) []string {
-	class, method := EnclosingClassName(unit.Match), Node{Match: unit.Match}.MethodName()
-	if class == "" || method == "" {
+// methods is every method of the codebase by its scope, read once: the way back from the name the twin reading
+// keys a unit by to the method itself.
+var methods = Memoised(func(codebase *engine.Codebase) map[string]engine.Match {
+	byScope := map[string]engine.Match{}
+	for _, method := range In(codebase).WhereKind("Stmt_ClassMethod").Get() {
+		byScope[ScopeOf(method)] = method
+	}
+
+	return byScope
+})
+
+// CallersOf is the scope of every call of the method the scope names.
+func (j TwinJudge) CallersOf(key string) []string {
+	method, found := methods.Of(j.codebase)[key]
+	if !found {
+		return nil
+	}
+	class, name := EnclosingClassName(method), Node{Match: method}.MethodName()
+	if class == "" || name == "" {
 		return nil
 	}
 	var callers []string
-	for _, call := range IndexOf(j.codebase).CallersOf(class, method) {
+	for _, call := range IndexOf(j.codebase).CallersOf(class, name) {
 		if scope := ScopeOf(call); !slices.Contains(callers, scope) {
 			callers = append(callers, scope)
 		}

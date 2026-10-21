@@ -24,6 +24,7 @@ type Program struct {
 	packages   packageGraph
 	reach      resourceReach
 	names      declarations
+	defined    definitions
 	vocabulary vocabulary
 }
 

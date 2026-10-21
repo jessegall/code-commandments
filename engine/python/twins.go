@@ -73,10 +73,10 @@ func lastPart(dotted string) string {
 	return dotted[strings.LastIndex(dotted, ".")+1:]
 }
 
-// CallersOf is where each def that calls the unit is declared.
-func (j TwinJudge) CallersOf(unit engine.ReachedUnit) []string {
+// CallersOf is where each def that calls the one the declaration names is itself declared.
+func (j TwinJudge) CallersOf(key string) []string {
 	var callers []string
-	for _, call := range j.program.CallersOf(Node{unit.Match}) {
+	for _, call := range j.program.CallersOfDeclaration(key) {
 		if caller := call.EnclosingFunction(); caller.Exists() && !slices.Contains(callers, DeclarationOf(caller)) {
 			callers = append(callers, DeclarationOf(caller))
 		}

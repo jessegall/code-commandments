@@ -128,6 +128,38 @@ func DeclarationOf(def Node) string {
 	return fmt.Sprintf("%s:%d", def.File(), def.Line())
 }
 
+// definitions is every def of the program by where it is declared, read once: the way back from the name a call
+// graph is keyed by to the def itself.
+type definitions struct {
+	once  sync.Once
+	byKey map[string]Node
+}
+
+func (p *Program) definitions() map[string]Node {
+	p.defined.once.Do(func() {
+		p.defined.byKey = map[string]Node{}
+		for _, module := range p.modules {
+			for _, node := range module.Nodes() {
+				if node.IsFunction() {
+					p.defined.byKey[DeclarationOf(node)] = node
+				}
+			}
+		}
+	})
+
+	return p.defined.byKey
+}
+
+// CallersOfDeclaration is every call that reaches the def the declaration names, `path:line`.
+func (p *Program) CallersOfDeclaration(declaration string) []Node {
+	def, found := p.definitions()[declaration]
+	if !found {
+		return nil
+	}
+
+	return p.CallersOf(def)
+}
+
 // IsOverridden says whether a class of the program that names the method's class as a base declares a method of
 // the same name, overriding it.
 func (p *Program) IsOverridden(method Node) bool {
