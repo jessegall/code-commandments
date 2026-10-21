@@ -531,3 +531,33 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 		return write.Kind() == "Assign" && value.Kind() == "Name" && ok && restored == write.ChildrenIn("targets")[0].DottedName()
 	})
 }
+
+// mutableBuilders are the builtins that make a fresh container every call: a default calling one of them is made
+// once at definition all the same, which is the whole of the fault.
+var mutableBuilders = []string{"list", "dict", "set", "bytearray", "collections.defaultdict", "collections.OrderedDict", "collections.Counter", "collections.deque"}
+
+// IsMutableDefault says whether the node is a parameter whose default is a container made once, when the def is
+// defined, and shared by every call that leaves it out: a list, dict or set written out or comprehended, or one
+// built by a call to a builtin that makes one. The value then carries one caller's data into the next.
+func (n Node) IsMutableDefault() bool {
+	if !n.OwnerDef().Exists() || n.Kind() != "arg" {
+		return false
+	}
+
+	return n.Default().buildsAFreshContainer()
+}
+
+// DeclaresNoBody says whether the node's own def declares a shape and no behaviour: a Protocol method or an
+// @overload signature, whose defaults are never the ones a call runs on.
+func (n Node) DeclaresNoBody() bool {
+	return n.OwnerDef().IsStub()
+}
+
+// buildsAFreshContainer says whether the expression makes a container of its own.
+func (n Node) buildsAFreshContainer() bool {
+	if slices.Contains([]string{"List", "Dict", "Set", "ListComp", "DictComp", "SetComp"}, n.Kind()) {
+		return true
+	}
+
+	return n.IsCall() && slices.Contains(mutableBuilders, n.Callee().DottedName())
+}

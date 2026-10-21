@@ -1,6 +1,6 @@
 {
     "name": "code-commandments",
-    "version": "1.64.22",
+    "version": "1.65.0",
     "title": "Code Commandments",
     "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
     "journal": "2.267.16",
@@ -2976,6 +2976,19 @@
         "sin_python-divergent-twin": {
             "title": "DivergentTwin",
             "help": "two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/fix-at-the-source",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-mutable-default": {
+            "title": "MutableDefault",
+            "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it",
             "type": "flag",
             "default": "true",
             "group": "python/fix-at-the-source",

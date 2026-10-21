@@ -373,13 +373,13 @@ sha256 c5998d5cc62851462ff6117ed141c44a6c2eafe06cc9f34fdcc1770f26f1c64b
 === created .agents/skills/commandments-python-exceptions/reference/examples.md
 sha256 6731a3069da5f32857b92a736fa35a9f825df8f86b46f3001ba6d570aa2e67c5
 === created .agents/skills/commandments-python-fix-at-the-source/SKILL.md
-sha256 88e2410a00e183b9be1ccfe0d0ba62aa5c1a3546a9fe0d244e7fc7a901fd6375
+sha256 921410b3f800c51ffdc6be9548eb613abbce5806ab35109cb46ed08e7179f92a
 === created .agents/skills/commandments-python-fix-at-the-source/evals/triggers.json
 sha256 40f3c0ef66201a403bdd34663ed47e82c8c77a0981cdd8b6fb8b27b6f818e644
 === created .agents/skills/commandments-python-fix-at-the-source/reference/detectors.md
-sha256 9d7be2106d63b02be6971d73f18b28b65b692955870728405f13f86a5e7755ff
+sha256 d37ef44585d4e6a3600ef0c223b16002d0957f979a9e1697bf63463d05175c82
 === created .agents/skills/commandments-python-fix-at-the-source/reference/examples.md
-sha256 d4ec7cbbfe5431c936b4d8fddd4d6bd4192f77a472ad77d5ffb66ca0275b7b44
+sha256 3ca4672bb03a21bc6b499411a6473a0d9a96b088aac07ec56357b8ea421cb89f
 === created .agents/skills/commandments-python-flow/SKILL.md
 sha256 ffb92550248937a2fc37cd94a0c273940fae24038d45e1a11c00c82c2a3f0afd
 === created .agents/skills/commandments-python-flow/evals/triggers.json

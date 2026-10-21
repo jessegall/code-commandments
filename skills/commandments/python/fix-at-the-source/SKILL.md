@@ -41,6 +41,8 @@ signature where a reader can see it.
       _Keep the collaborator as a field and act on it from the method that someone actually calls._
 - [ ] Put shared behaviour in one place, so a step that must always happen can't be forgotten in a copy.
       _Make the shorter function call the longer one, or have both call one shared function._
+- [ ] Default a parameter to an immutable value; never to a container, which is built once when the def is defined and outlives every call.
+      _Default it to `None` and make the container inside the body, so each call gets its own._
 - [ ] Hold changing state on an instance someone owns and passes; never write a `global` or a class attribute from a function.
       _Move the state onto an object, and hand that object to the code that reads and changes it._
 
@@ -78,17 +80,17 @@ def install_card_payments(registry, fee: float) -> CardPayments:
     return payments
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/fix-at-the-source` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constructor-side-effect`, `python-divergent-twin`, `python-mutable-static-state`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constructor-side-effect`, `python-divergent-twin`, `python-mutable-default`, `python-mutable-static-state`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

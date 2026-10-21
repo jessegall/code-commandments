@@ -220,6 +220,7 @@ exit: 0
 [1;33mpython/fix-at-the-source[0m
   ConstructorSideEffectDetector
   DivergentTwinDetector
+  MutableDefaultDetector
   MutableStaticStateDetector
 [1;33mpython/flow[0m
   CoalescedLoopSubjectDetector

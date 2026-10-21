@@ -61,6 +61,31 @@ def refund_signature_checks(secret: bytes, receipt: bytes, claimed: str) -> bool
     return signature_matches(secret, receipt, claimed)
 ```
 
+### python-mutable-default
+
+a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it
+
+```py
+----------[ Bad ]----------
+
+def walk(self, lines: list[str], notes: list[str] = []) -> list[str]:
+    for line in lines:
+        if line.startswith("damaged"):
+            notes.append(line)
+
+    return notes
+
+----------[ Good ]----------
+
+def walk_freshly(self, lines: list[str], notes: list[str] | None = None) -> list[str]:
+    written = list(notes) if notes is not None else []
+    for line in lines:
+        if line.startswith("damaged"):
+            written.append(line)
+
+    return written
+```
+
 ### python-mutable-static-state
 
 a `global` written from a function, or a class attribute set from a method — state no instance owns, changed by whoever ran last
