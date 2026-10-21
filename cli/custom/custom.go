@@ -97,6 +97,12 @@ func Load(root string) Project {
 		project.Rules = append(project.Rules, read)
 	}
 
+	composed, refused := rule.Composed(project.Rules)
+	project.Rules = composed
+	for _, err := range refused {
+		project.Unreadable = append(project.Unreadable, err.Error())
+	}
+
 	for _, class := range workspace.CustomFiles(root) {
 		if relative, err := filepath.Rel(root, class); err == nil {
 			class = relative
@@ -139,7 +145,12 @@ func (p Project) Read(path string) (rule.Rule, error) {
 		return rule.Rule{}, err
 	}
 
-	return rule.Parse(strings.TrimSuffix(filepath.Base(path), ".json"), text, p.skill)
+	read, err := rule.Parse(strings.TrimSuffix(filepath.Base(path), ".json"), text, p.skill)
+	if err != nil {
+		return rule.Rule{}, err
+	}
+
+	return rule.ComposedWith(read, p.Rules)
 }
 
 // Enabled are the project's rules its config turns on, less any it disables.

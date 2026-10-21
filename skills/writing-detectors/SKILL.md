@@ -99,6 +99,9 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"descendant": {"is": "return"}}` | some node inside it passes the step |
 | `{"inside": {"is": "catch"}}` | some node above it, up to the file's root, passes the step |
 | `{"all": [{"name": "store"}, {"hasModifier": "public"}]}` | it passes every step listed, as one node: a public `store`, where a step alone makes one check |
+| `{"any": [{"is": "loop"}, {"is": "branch"}]}` | it passes one of the steps listed, so a rule says `either of these` without a second rule |
+| `{"not": {"hasModifier": "final"}}` | it does NOT pass the step, so a `where` can hold what only a `reject` could say |
+| `{"rule": "ActionClass"}` | the rule of that name finds it too, so one rule is built from another instead of repeating its checks |
 | `{"next": {"is": "return"}}` | the sibling right after it passes the step |
 | `{"previous": {"is": "branch"}}` | the sibling right before it passes the step |
 | `{"nestedAtLeast": {"is": "loop", "count": 3}}` | it and the nodes above it that pass the step number at least `count` |

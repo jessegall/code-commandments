@@ -57,11 +57,12 @@ func Schema() []byte {
 			},
 			"find": object{
 				"type":                 "object",
-				"required":             []string{"select"},
+				"oneOf":                []object{{"required": []string{"select"}}, {"required": []string{"from"}}},
 				"additionalProperties": false,
 				"properties": object{
 					"select": object{"type": "string", "description": "A neutral kind, or kind:<Kind> for a language's own.",
 						"anyOf": []object{{"enum": neutralNames()}, {"pattern": "^kind:.+$"}}},
+					"from":   object{"type": "string", "description": "The rule whose findings this one narrows, in place of select: an inner detector."},
 					"where":  object{"type": "array", "items": object{"$ref": "#/definitions/step"}, "description": "Every step must pass."},
 					"reject": object{"type": "array", "items": object{"$ref": "#/definitions/step"}, "description": "Any step passing drops the node."},
 				},

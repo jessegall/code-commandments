@@ -82,6 +82,10 @@ func TestARuleJudgesTheClassANodeIsAbout(t *testing.T) {
 		`{"select": "type-declaration", "where": [{"members": {"all": [{"name": "template"}, {"kind": "Stmt_Property"}], "atLeast": 1}}]}`: "[23]",
 		`{"select": "type-declaration", "where": [{"members": {"all": [{"name": "template"}, {"kind": "Stmt_Property"}], "atLeast": 1, "inherited": true}}]}`: "[23 30]",
 		`{"select": "type-declaration", "where": [{"members": {"all": [{"name": "store"}, {"hasModifier": "public"}], "atLeast": 1}}]}`: "[30]",
+		`{"select": "construction", "where": [{"any": [{"extendsAny": "Repository"}, {"resolvesLike": "*PayAction"}]}]}`:        "[45 48]",
+		`{"select": "construction", "where": [{"any": [{"resolvesLike": "*Nothing"}, {"resolvesLike": "*Neither"}]}]}`:         "[]",
+		`{"select": "construction", "where": [{"not": {"extendsAny": "Repository"}}]}`:                                         "[45]",
+		`{"select": "construction", "where": [{"not": {"any": [{"extendsAny": "Repository"}, {"resolvesLike": "*PayAction"}]}}]}`: "[]",
 	} {
 		written := `{"engine": "backend", "sin": {"name": "action-run-by-hand", "description": "an action's handle called by hand", "skill": "backend/laravel-idioms"}, "find": ` + query + `}`
 		found, err := rule.Parse("ActionRunnerInvocationDetector", []byte(written), shipped)

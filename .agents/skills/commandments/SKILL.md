@@ -151,6 +151,7 @@ most:**
 - **`commandments-frontend-mirrored-server-type`** — a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one.
 - **`commandments-typescript-absence`** — model absence honestly — one spelling for missing, no `??` that invents a value, no `?.` on something always set.
 - **`commandments-typescript-duplication`** — a function body written twice becomes one shared function or composable, parameterised by what differs.
+- **`commandments-typescript-flow`** — turn away what cannot go on at the top, keep the body flat, and never change a collection while walking it.
 - **`commandments-python-duplication`** — a function body written twice becomes one shared function, parameterised by what differs.
 - **`commandments-csharp-duplication`** — a method body written twice becomes one shared method, parameterised by what differs.
 - **`commandments-python-exceptions`** — raise named exceptions built by a classmethod factory, never swallow a failure, and keep the cause with `raise … from`.

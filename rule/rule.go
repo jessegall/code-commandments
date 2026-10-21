@@ -55,9 +55,13 @@ type sinFile struct {
 }
 
 type find struct {
-	Select string `json:"select"`
+	Select string `json:"select,omitempty"`
+	From   string `json:"from,omitempty"`
 	Where  []Step `json:"where,omitempty"`
 	Reject []Step `json:"reject,omitempty"`
+
+	// inner is the rule From names, found once when every rule has been read: the population this one narrows.
+	inner *Rule
 }
 
 // Step is one check of a rule's query, on the node itself or, with Of or a nested step, on one related to it.
@@ -104,6 +108,8 @@ type Step struct {
 	Sibling        string   `json:"sibling,omitempty"`
 	IsA            string   `json:"isA,omitempty"`
 	All            []Step   `json:"all,omitempty"`
+	Any            []Step   `json:"any,omitempty"`
+	Not            *Step    `json:"not,omitempty"`
 	TypeKind       string   `json:"typeKind,omitempty"`
 	HasAnnotation  string   `json:"hasAnnotation,omitempty"`
 	ReturnType     string   `json:"returnType,omitempty"`
@@ -123,6 +129,7 @@ type Step struct {
 	CSharp         string   `json:"csharp,omitempty"`
 	TypeScript     string   `json:"typescript,omitempty"`
 	Vue            string   `json:"vue,omitempty"`
+	Rule           string   `json:"rule,omitempty"`
 
 	// pattern is the step's glob or regular expression, compiled once when the rule is read.
 	pattern *regexp.Regexp
@@ -132,6 +139,9 @@ type Step struct {
 
 	// predicate is the language's own check the step names, found once when the rule is read.
 	predicate func(engine.Match) bool
+
+	// named is the rule Rule names, found once when every rule has been read.
+	named *Rule
 }
 
 // Nesting is a step counted: the node and the nodes above it that pass it, at least Count of them.
@@ -226,8 +236,14 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		return Rule{}, fmt.Errorf("%s: no skill %q, among the project's own or the shipped ones", name, read.Sin.Skill)
 	}
 
-	if _, err := selector(read.Find.Select); err != nil {
-		return Rule{}, fmt.Errorf("%s: %w", name, err)
+	if (read.Find.Select == "") == (read.Find.From == "") {
+		return Rule{}, fmt.Errorf("%s: a rule finds what it selects or what another rule found, naming one of select and from", name)
+	}
+
+	if read.Find.Select != "" {
+		if _, err := selector(read.Find.Select); err != nil {
+			return Rule{}, fmt.Errorf("%s: %w", name, err)
+		}
 	}
 
 	for _, steps := range [][]Step{read.Find.Where, read.Find.Reject} {
@@ -263,8 +279,19 @@ func (r Rule) WithLayers(declared map[string][]string) Rule {
 	}
 
 	stack := engine.Layers(declared, spelling.separator, spelling.caseSensitive)
-	r.find.Where = withLayers(r.find.Where, &stack)
-	r.find.Reject = withLayers(r.find.Reject, &stack)
+
+	return r.withLayers(&stack)
+}
+
+// withLayers is the rule, and every rule it is built from, looking a layer step's name up in the stack.
+func (r Rule) withLayers(stack *engine.LayerStack) Rule {
+	r.find.Where = withLayers(r.find.Where, stack)
+	r.find.Reject = withLayers(r.find.Reject, stack)
+
+	if r.find.inner != nil {
+		inner := r.find.inner.withLayers(stack)
+		r.find.inner = &inner
+	}
 
 	return r
 }
@@ -320,6 +347,22 @@ func (s Step) withLayers(stack *engine.LayerStack) Step {
 		s.Argument = &argued
 	}
 
+	for _, listed := range []*[]Step{&s.All, &s.Any} {
+		if *listed != nil {
+			*listed = withLayers(*listed, stack)
+		}
+	}
+
+	if s.Not != nil {
+		copied := s.Not.withLayers(stack)
+		s.Not = &copied
+	}
+
+	if s.named != nil {
+		named := s.named.withLayers(stack)
+		s.named = &named
+	}
+
 	return s
 }
 
@@ -357,6 +400,14 @@ func (s *Step) nested() []*Step {
 		nested = append(nested, &s.All[i])
 	}
 
+	for i := range s.Any {
+		nested = append(nested, &s.Any[i])
+	}
+
+	if s.Not != nil {
+		nested = append(nested, s.Not)
+	}
+
 	return nested
 }
 
@@ -382,6 +433,10 @@ func (r Rule) Sin() sins.Sin {
 
 // Find runs the rule's query over the files of its engine.
 func (r Rule) Find(codebase *engine.Codebase) []engine.Match {
+	if r.find.inner != nil {
+		return narrowed(r.find.inner.Find(codebase), r.find)
+	}
+
 	selected, _ := selector(r.find.Select)
 	query := selected(codebase.Of(languages[r.engine]...))
 
@@ -394,6 +449,54 @@ func (r Rule) Find(codebase *engine.Codebase) []engine.Match {
 	}
 
 	return query.Get()
+}
+
+// narrowed is the matches a rule's own steps keep of the ones the rule it is built on found.
+func narrowed(found []engine.Match, by find) []engine.Match {
+	var kept []engine.Match
+	for _, match := range found {
+		if steps(by.Where).hold(match) && !steps(by.Reject).any(match) {
+			kept = append(kept, match)
+		}
+	}
+
+	return kept
+}
+
+// Satisfies says whether the node is one this rule finds: what it selects admits it, every where step holds and
+// no reject step does. It is how a step that names a rule asks it about one node.
+func (r Rule) Satisfies(match engine.Match) bool {
+	if r.find.inner != nil && !r.find.inner.Satisfies(match) {
+		return false
+	}
+
+	if r.find.inner == nil && !admits(r.find.Select, match) {
+		return false
+	}
+
+	return steps(r.find.Where).hold(match) && !steps(r.find.Reject).any(match)
+}
+
+// steps is a run of a rule's steps, asked about one node.
+type steps []Step
+
+// hold says whether every step passes the node.
+func (s steps) hold(match engine.Match) bool {
+	return !slices.ContainsFunc(s, func(step Step) bool { return !step.check(match) })
+}
+
+// any says whether some step passes the node.
+func (s steps) any(match engine.Match) bool {
+	return slices.ContainsFunc(s, func(step Step) bool { return step.check(match) })
+}
+
+// admits says whether what a rule selects takes in the node: its language's own kind, or the neutral one.
+func admits(named string, match engine.Match) bool {
+	if kind, own := strings.CutPrefix(named, "kind:"); own {
+		return match.Kind() == kind
+	}
+
+	return match.Is(engine.Neutral(named))
 }
 
 // selector opens the query a rule's select names: a neutral kind, or `kind:` and a language's own kind.
@@ -446,10 +549,10 @@ func (s Step) checks() int {
 		s.ResolvesLike != "", s.NamespaceLike != "", s.Layer != "", s.HasModifier != "", s.HasFlag != "", s.WithinLoop != nil,
 		s.Documented != nil, s.File != "", s.FileMatches != "", s.Position != "", s.TopLevel != nil, s.Descendant != nil, s.Inside != nil,
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
-		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
+		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
 		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil,
-		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != ""} {
+		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
 		if set {
 			count++
 		}
@@ -718,6 +821,12 @@ func (s Step) check(match engine.Match) bool {
 		return hasSibling(subject, s.Sibling)
 	case s.All != nil:
 		return !slices.ContainsFunc(s.All, func(step Step) bool { return !step.check(subject) })
+	case s.Any != nil:
+		return slices.ContainsFunc(s.Any, func(step Step) bool { return step.check(subject) })
+	case s.Not != nil:
+		return !s.Not.check(subject)
+	case s.Rule != "":
+		return s.named != nil && s.named.Satisfies(subject)
 	case s.TypeKind != "":
 		return subject.TypeKind() == s.TypeKind
 	case s.HasAnnotation != "":
