@@ -18,17 +18,17 @@ Reads `commandments judge`:
 - The output a journal command reads is not a terminal, so it carries no colour and the patterns need
   no escape sequences.
 
-## The command entry, once the journal takes one
+## The entry, once the journal takes one
 
 Not in `journal-plugin.json` yet, on purpose: the journal refuses a manifest key it does not know, so
-adding it before the journal accepts commands would fail every install. The shape, to add when it does
-(agent-journal task 1237):
+adding it before the journal accepts one would fail every install. The journal side is becoming an
+alias rather than a noun and a verb (agent-journal task 1237), so the entry is likely to read as a
+name, the line it runs, its environment, the arguments it passes through and its reader:
 
 ```json
-"commands": [
+"aliases": [
     {
-        "noun": "commandments",
-        "verb": "check",
+        "name": "sins",
         "line": "bin/commandments-release judge {args}",
         "env": {"COMMANDMENTS_PLAIN_PROGRESS": "1"},
         "args": ["--changes", "--branch", "<path>"],
@@ -36,6 +36,9 @@ adding it before the journal accepts commands would fail every install. The shap
     }
 ]
 ```
+
+The exact key is the journal's to name; what is ours is the line, the environment, the arguments and
+the reader, and those are the same either way.
 
 Two things it needs from the journal's side:
 
