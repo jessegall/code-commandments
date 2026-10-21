@@ -57,16 +57,16 @@ func projectAnotherWorktreeStandsOn(t *testing.T) (data string, line map[string]
 	}
 
 	return data, map[string]any{
-		"v": 1, "event": "tool_starting", "session": "s1", "environment": "main",
-		"data": map[string]any{"tool": "Bash", "input": map[string]any{"command": "git pull --rebase"}},
+		"v": 1, "event": "command_starting", "session": "s1", "environment": "main",
+		"data": map[string]any{"text": "git pull --rebase", "writes": false, "position": 1, "parts": 1},
 	}
 }
 
-// eventOf is the line version 4 of the journal sends for a tool and the file it names.
+// eventOf is the line version 4 of the journal sends for a file a tool changed.
 func eventOf(event, file string) map[string]any {
 	return map[string]any{
 		"v": 1, "event": event, "session": "s1", "environment": "main",
-		"data": map[string]any{"tool": "Write", "input": map[string]any{"file_path": file}},
+		"data": map[string]any{"path": file, "kind": "edit", "added": 1, "removed": 0, "tool_use": 41},
 	}
 }
 
@@ -74,22 +74,43 @@ func eventOf(event, file string) map[string]any {
 // journal may hold: its answer carries NOTHING worked out, and what the handlers had to say reaches the agent by the
 // queue the journal drains at its next hook instead. A hook that worked its answer out on the path the journal waits
 // on spent that wait on a scan, which is the fault this test exists to keep from coming back.
-func TestTheHeldEventIsAnsweredWithNothingWorkedOutAndSaysItToTheQueue(t *testing.T) {
+func TestTheHeldEventIsAnsweredWithTheGatesAloneAndTheRestGoesToTheQueue(t *testing.T) {
 	data, line := projectAnotherWorktreeStandsOn(t)
 
-	if answer := Answer4Now(line); answer != `{"v":1}` {
-		t.Fatalf("the held event's answer worked something out: %s", answer)
+	answer := Answer4Now(line)
+	if !strings.Contains(answer, `"refuse"`) || !strings.Contains(answer, "worktree") {
+		t.Fatalf("the held event's answer does not refuse the rebase: %s", answer)
+	}
+
+	Judge4Into(line, data)
+
+	// The gate answered on the way out, so the queue carries only what is left of that moment — nothing here, since
+	// a command about to run has no sins of its own.
+	if queued := drained(t, data); len(queued) != 0 {
+		t.Errorf("the queue holds what the answer already carried: %v", queued)
+	}
+}
+
+// TestAFileEditedIsJudgedAndItsSinsGoToTheQueue holds the other half of the contract: the journal tells us a file it
+// has already recorded an edit of, after the reply, and that is where judging happens — one event per file, nothing
+// waiting on it, each sin parked for the agent's next hook.
+func TestAFileEditedIsJudgedAndItsSinsGoToTheQueue(t *testing.T) {
+	root, _, data := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+	line := map[string]any{
+		"v": 1, "event": "file_edited", "session": "s1", "environment": "main",
+		"data": map[string]any{"path": "src/refund.py", "kind": "edit", "added": 1, "removed": 0, "tool_use": 41},
 	}
 
 	Judge4Into(line, data)
 
 	queued := drained(t, data)
 	if len(queued) != 1 {
-		t.Fatalf("the run left %d file(s) in the queue", len(queued))
+		t.Fatalf("the judge left %d file(s) in the queue", len(queued))
 	}
 
-	if !strings.Contains(asText(queued[0]["tell"]), "worktree") {
-		t.Errorf("the queue holds %v", queued[0])
+	if !strings.Contains(asText(queued[0]["tell"]), "redundant-python-else") {
+		t.Errorf("the queue names no sin: %v", queued[0])
 	}
 
 	if queued[0]["env"] != "main" {
@@ -128,12 +149,15 @@ func drained(t *testing.T, data string) []map[string]any {
 }
 
 // TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged holds the answer to the one thing a hook must never depend on:
-// how much the tool did. Sixty files changed and one file changed are answered alike, because neither is judged on
-// the way out.
+// how much the tool did. A command about to change sixty files is answered exactly as one about to change nothing,
+// because neither is judged on the way out.
 func TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged(t *testing.T) {
-	root, file, _ := projectWithASin(t)
+	root, _, _ := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
-	one := Answer4Now(eventOf("tool_starting", file))
+	one := Answer4Now(map[string]any{
+		"v": 1, "event": "command_starting", "session": "s1", "environment": "main",
+		"data": map[string]any{"text": "echo one", "writes": false, "position": 1, "parts": 1},
+	})
 
 	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"
 	for at := 0; at < 60; at++ {
@@ -143,8 +167,8 @@ func TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged(t *testing.T) {
 	}
 
 	shell := map[string]any{
-		"v": 1, "event": "tool_starting", "session": "s1", "environment": "main",
-		"data": map[string]any{"tool": "Bash", "input": map[string]any{"command": "./rewrite-everything"}},
+		"v": 1, "event": "command_starting", "session": "s1", "environment": "main",
+		"data": map[string]any{"text": "./rewrite-everything", "writes": true, "position": 1, "parts": 1},
 	}
 
 	if many := Answer4Now(shell); many != one {
@@ -171,7 +195,7 @@ func TestAnEventHeardAfterTheReplySaysWhatItFound(t *testing.T) {
 	root, file, _ := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
 
-	answer := Answer4Now(eventOf("tool_finished", file))
+	answer := Answer4Now(eventOf("file_edited", file))
 	if !strings.Contains(answer, "redundant-python-else") {
 		t.Errorf("the heard event says nothing of the sin it found: %s", answer)
 	}

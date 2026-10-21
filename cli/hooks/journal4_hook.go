@@ -19,10 +19,15 @@ const (
 	judging = "COMMANDMENTS_JUDGING"
 )
 
-// hooksOf4 is each event version 4 of the journal names by the hook it stands for.
+// hooksOf4 is each event version 4 of the journal names by the hook it stands for. A command of a shell line and a
+// file a tool changed are each a moment of their own: the journal cuts the chain and records the edit before it
+// tells us, so `command_starting` IS the moment before a command runs and `file_edited` the moment after a file
+// changed, one per file. `tool_finished` stands for no hook of ours any more — judging it as well would judge every
+// edit twice.
 var hooksOf4 = map[string]string{
+	"command_starting": "PreToolUse",
+	"file_edited":      "PostToolUse",
 	"tool_starting":    "PreToolUse",
-	"tool_finished":    "PostToolUse",
 	"idle":             "Stop",
 	"session_started":  "SessionStart",
 	"subagent_started": "SubagentStart",
@@ -41,9 +46,9 @@ func (Journal4Hook) Names() []string {
 
 // Help documents it.
 func (Journal4Hook) Help() help.Help {
-	return help.Of("Version 4 of the agent journal's entry point — reads one event line from stdin and answers at once, with nothing worked out: the plugin holds no hook, so the judging happens in a run of its own and what it finds is written to the queue the journal drains at the agent's next hook, as context and as a card per sin.").
+	return help.Of("Version 4 of the agent journal's entry point — reads one event line from stdin and answers it: the held event (a command about to run) with the gates alone, from what they already know, and every other with what its handlers found, since the journal hears those after its own reply.").
 		Form("journal4-hook", "answer the event line on stdin (run by the journal plugin; you rarely run this by hand)").
-		Note("A journal that gives the plugin no folder of its own drains no queue, and then the answer carries everything found, as it did before a queue existed.").
+		Note("Judging happens on `file_edited`, one event per file a tool changed, and what it finds is written to the queue the journal drains at the agent's next hook. A journal that gives the plugin no folder of its own drains no queue, and then every event is answered in full, as before a queue existed.").
 		In(help.Hooks)
 }
 
@@ -83,22 +88,29 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, nil
 }
 
-// heldEvent is the one event the journal may ask the plugin before the tool runs, inside a window of a few
-// milliseconds. Nothing is worked out for it: an answer that has to judge cannot be given in time, and a judge that
-// is waited on is the fault this whole path exists to keep away.
-const heldEvent = "tool_starting"
+// heldEvent is the one event the journal asks the plugin before a command runs, inside a window of a few
+// milliseconds. Only the gates answer there, each from what it already knows: a judge cannot answer in time, and a
+// judge the journal waits on is the fault this whole path exists to keep away.
+const heldEvent = "command_starting"
 
-// Answer4Now is the answer the journal is handed. The event it may hold is answered with nothing worked out, and
-// what it was worth is written to the queue instead; every other event is heard AFTER the journal's reply, so no
-// agent waits on it and its answer carries everything found. A journal that named the plugin no folder of its own
-// drains no queue, and then even the held event is answered in full, as it was before a queue existed.
+// Answer4Now is the answer the journal is handed. The held event is answered with the gates alone, since a refusal
+// there is the only thing that can still stop a command; what else that moment was worth goes to the queue. Every
+// other event is heard AFTER the journal's reply, so nothing waits on its answer and it carries everything found. A
+// journal that named the plugin no folder of its own drains no queue, and then even the held event is answered in
+// full, as it was before a queue existed.
 func Answer4Now(line map[string]any) string {
-	_, queued := Queue4In(os.Getenv(pluginData))
-	if asText(line["event"]) == heldEvent && queued {
-		return JournalAnswer{}.Line4()
+	moment, known := Moment4Of(line)
+	if !known {
+		return ""
+	}
+	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
+		return Answer4Of(line)
+	}
+	if asText(line["event"]) != heldEvent {
+		return Answer4Of(line)
 	}
 
-	return Answer4Of(line)
+	return answerWith(Stamped(moment), isGate, false).Line4()
 }
 
 // Judge4Into works the event out, every handler of it, and writes what it found to the plugin's queue, so the sins
@@ -114,7 +126,8 @@ func Judge4Into(line map[string]any, folder string) {
 		return
 	}
 
-	_ = queue.Tell(answerWith(Stamped(moment), every, true), asText(line["environment"]))
+	// The gates answered on the way out; what is left is everything else the moment was worth.
+	_ = queue.Tell(answerWith(Stamped(moment), not(isGate), true), asText(line["environment"]))
 }
 
 // judge4Detached starts that run, in a session of its own so it outlives this one. It reads the event from a file it
@@ -175,12 +188,21 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		tool["name"] = name
 	}
 
-	if command := asText(input["command"]); command != "" {
+	if command := asText(firstOf(input["command"], data["text"])); command != "" {
 		tool["command"] = command
 	}
 
-	if file := asText(firstOf(input["file_path"], input["path"], input["notebook_path"])); file != "" {
+	if file := asText(firstOf(input["file_path"], input["path"], input["notebook_path"], data["path"])); file != "" {
 		tool["file"] = file
+	}
+
+	// A command of a shell line is a shell command however the tool was named, and a file the journal recorded an
+	// edit of is a write: the handlers read the moment and never the journal's own words for it.
+	switch asText(line["event"]) {
+	case "command_starting":
+		tool["name"] = "Bash"
+	case "file_edited":
+		tool["name"] = "Write"
 	}
 
 	agent := map[string]any{"session": line["session"]}

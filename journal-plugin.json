@@ -7,8 +7,9 @@
   "protocol": 1,
   "program": ".journal-plugin/journal4-hook",
   "hears": [
+    "command_starting",
+    "file_edited",
     "tool_starting",
-    "tool_finished",
     "idle",
     "session_started",
     "subagent_started",
@@ -16,7 +17,7 @@
   ],
   "holds": [
     {
-      "event": "tool_starting",
+      "event": "command_starting",
       "window_ms": 5
     }
   ],

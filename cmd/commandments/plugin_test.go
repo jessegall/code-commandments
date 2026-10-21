@@ -323,9 +323,17 @@ func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 		t.Error("the plugin holds an event and no service of its own answers: a window of milliseconds cannot start a process")
 	}
 
-	for _, event := range []string{"tool_starting", "tool_finished"} {
+	for _, event := range []string{"command_starting", "file_edited"} {
 		if !slices.Contains(manifest.Hears, event) {
-			t.Errorf("the plugin no longer hears %s, so it cannot tell which files an edit changed", event)
+			t.Errorf("the plugin no longer hears %s, so it cannot judge what a tool changed", event)
+		}
+	}
+
+	// A held file_edited blocks the tool's RESULT until the file is put right, which is a judge on the answer path
+	// wearing another name: every edit would wait on a scan again.
+	for _, held := range manifest.Holds {
+		if held.Event == "file_edited" {
+			t.Error("file_edited is held: an edit would wait on the judge of it, which is the fault all of this answers")
 		}
 	}
 }

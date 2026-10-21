@@ -14,6 +14,9 @@ import (
 // sends a hook for reaches the handlers as that hook, with its session, its tool, the command and the file it names.
 func TestEachVersion4EventIsReadAsTheMomentItStandsFor(t *testing.T) {
 	t.Setenv("JOURNAL_ROOT", "/the/project")
+	// The tool a moment names is the journal's own word for it, except for the two events that ARE the tool's doing:
+	// a command of a shell line is a shell command, and a file the journal recorded an edit of is a write.
+	tools := map[string]string{"command_starting": "Bash", "file_edited": "Write"}
 	for event, hook := range hooksOf4 {
 		line := map[string]any{"v": 1, "event": event, "session": "s1", "environment": "main", "data": map[string]any{"tool": "Edit", "input": map[string]any{"file_path": "src/A.php", "command": "ls"}}}
 		given, known := Moment4Of(line)
@@ -21,10 +24,19 @@ func TestEachVersion4EventIsReadAsTheMomentItStandsFor(t *testing.T) {
 			t.Fatalf("%s stands for no hook", event)
 		}
 
+		tool, named := tools[event]
+		if !named {
+			tool = "Edit"
+		}
+
 		moment := MomentOf(given)
-		if moment.Event != hook || moment.Cwd != "/the/project" || *moment.Session != "s1" || *moment.Tool != "Edit" || *moment.File != "src/A.php" || *moment.Command != "ls" || *moment.Env != "main" {
+		if moment.Event != hook || moment.Cwd != "/the/project" || *moment.Session != "s1" || *moment.Tool != tool || *moment.File != "src/A.php" || *moment.Command != "ls" || *moment.Env != "main" {
 			t.Errorf("%s read as %+v", event, moment)
 		}
+	}
+
+	if _, known := Moment4Of(map[string]any{"event": "tool_finished"}); known {
+		t.Error("tool_finished stands for a hook: every edit of it would be judged twice, once as the file it changed")
 	}
 
 	if _, known := Moment4Of(map[string]any{"event": "tasks.created"}); known {
