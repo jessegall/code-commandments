@@ -66,7 +66,7 @@ sha256 160b946b3937a08999649c54b2c7c1f90f2feafa6d7b5a2bc4e6f738a53dde78
 === created .agents/skills/commandments-backend-fix-at-the-source/reference/examples.md
 sha256 f147f8fd3c72eb59b3e32d747b9c4d1bfec2628a619f0451a2e6552870de8aa0
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/SKILL.md
-sha256 ad2440f690fafeae5ccc012caca4821db10fff2fc5e51391af4b19ffae607f95
+sha256 fbd44b2bc4ef619aa4976063d6ceba7a27cf597bbe711f399d1db478af167293
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/evals/triggers.json
 sha256 78cdb5b117e3beac6f647e8f37b333dfefc9be3c595727fb44df650b82bc8f98
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/reference/detectors.md
