@@ -63,9 +63,10 @@ Hooks (wired automatically — you rarely run these by hand):
                   registered handler, and merges their responses into one.
   journal-hook    The agent journal's entry point — reads one journal hook payload from stdin,
                   runs every registered handler, and answers in the journal's shape.
-  journal4-hook   Version 4 of the agent journal's entry point — reads one event line from stdin,
-                  runs every registered handler, and answers in one line: the gate's refusal, the
-                  advice told, and each sin found or repented as a card keyed by its file.
+  journal4-hook   Version 4 of the agent journal's entry point — reads one event line from stdin
+                  and answers at once, with nothing worked out: the plugin holds no hook, so the
+                  judging happens in a run of its own and what it finds is written to the queue the
+                  journal drains at the agent's next hook, as context and as a card per sin.
   journal-serve   Answer the agent journal's hooks from one running process, over the socket the
                   journal names in $JOURNAL_PLUGIN_SOCKET.
   roslyn-serve    Keep the C# bridge running for this project, answering each run of the tool over a
