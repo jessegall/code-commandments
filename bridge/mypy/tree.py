@@ -330,6 +330,7 @@ class TreeWriter:
             "identifier": isinstance(node, ast.Name) and node.id not in ("self", "cls"),
             "assignment": isinstance(node, (ast.Assign, ast.AugAssign, ast.AnnAssign, ast.NamedExpr)),
             "comparison": isinstance(node, ast.Compare),
+            "conjunction": isinstance(node, ast.BoolOp),
             "literal": isinstance(node, (ast.Constant, ast.JoinedStr)),
             "import": isinstance(node, (ast.Import, ast.ImportFrom)),
             "catch": isinstance(node, ast.ExceptHandler),

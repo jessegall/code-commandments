@@ -18,6 +18,7 @@ var abstractions = []string{"abc.ABC"}
 func init() {
 	engine.ReadAs(contract.Python, engine.Grammar{
 		Arguments:     values,
+		Receiver:      engine.InField("value"),
 		Members:       members,
 		Parameters:    parameters,
 		Extends:       bases,

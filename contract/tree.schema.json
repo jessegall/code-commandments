@@ -74,7 +74,7 @@
         "is": {"type": "array", "uniqueItems": true, "items": {"enum": [
           "function", "type-declaration", "parameter", "block", "branch", "loop", "return", "throw", "bail-out",
           "expression-statement", "call", "construction", "member-access", "null-safe", "self-reference",
-          "identifier", "assignment", "comparison", "literal", "import", "catch"
+          "identifier", "assignment", "comparison", "conjunction", "literal", "import", "catch"
         ]}},
         "span": {"$ref": "#/$defs/span"},
         "field": {"type": "string", "minLength": 1},

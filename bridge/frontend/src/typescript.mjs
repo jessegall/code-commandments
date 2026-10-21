@@ -317,6 +317,8 @@ function neutral(node) {
         assignment: ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment
             && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment,
         comparison: ts.isBinaryExpression(node) && COMPARISONS.has(node.operatorToken.kind),
+        conjunction: ts.isBinaryExpression(node)
+            && [ts.SyntaxKind.AmpersandAmpersandToken, ts.SyntaxKind.BarBarToken].includes(node.operatorToken.kind),
         literal: ts.isLiteralExpression(node) || ts.isTemplateExpression(node) || ts.isNoSubstitutionTemplateLiteral(node)
             || [ts.SyntaxKind.TrueKeyword, ts.SyntaxKind.FalseKeyword, ts.SyntaxKind.NullKeyword].includes(node.kind),
         import: ts.isImportDeclaration(node) || ts.isImportEqualsDeclaration(node),

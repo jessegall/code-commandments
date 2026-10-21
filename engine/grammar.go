@@ -66,6 +66,9 @@ type Grammar struct {
 	Labels func(Match) bool
 	// Continues says whether a branch continues the one it sits in rather than nesting inside it: an else-if.
 	Continues func(Match) bool
+	// Receiver is the object a call or a member read is sent to: the `$order` of `$order->ship()`; no node for a
+	// free function's call, which is sent to nobody.
+	Receiver func(Match) Match
 }
 
 // TypeKinds are the kinds of type every language's declarations are told apart by.
@@ -99,6 +102,22 @@ func InFields(fields ...string) func(Match) []Match {
 func InField(field string) func(Match) Match {
 	return func(match Match) Match {
 		return match.Child(field)
+	}
+}
+
+// InAnyField reads the first child filling one of the fields, which is how a language that files one thing under
+// several names is read at once: PHP sends a method call to its `var` and a static one to its `class`.
+func InAnyField(fields ...string) func(Match) Match {
+	return func(match Match) Match {
+		for _, child := range match.Children() {
+			for _, field := range fields {
+				if child.node.Field == field {
+					return child
+				}
+			}
+		}
+
+		return Match{}
 	}
 }
 

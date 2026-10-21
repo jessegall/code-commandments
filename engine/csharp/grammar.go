@@ -10,6 +10,7 @@ import (
 func init() {
 	engine.ReadAs(contract.CSharp, engine.Grammar{
 		Arguments:   arguments,
+		Receiver:    engine.InField("expression"),
 		Members:     engine.InFields("Members"),
 		Parameters:  parameters,
 		Extends:     func(declaration engine.Match) []engine.Match { return basesWhere(declaration, false) },

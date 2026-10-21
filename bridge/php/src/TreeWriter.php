@@ -237,6 +237,10 @@ final class TreeWriter
             || $node instanceof Node\Expr\BinaryOp\SmallerOrEqual || $node instanceof Node\Expr\BinaryOp\GreaterOrEqual) {
             $is[] = 'comparison';
         }
+        if ($node instanceof Node\Expr\BinaryOp\BooleanAnd || $node instanceof Node\Expr\BinaryOp\BooleanOr
+            || $node instanceof Node\Expr\BinaryOp\LogicalAnd || $node instanceof Node\Expr\BinaryOp\LogicalOr) {
+            $is[] = 'conjunction';
+        }
         if ($node instanceof Node\Scalar || $literal !== []) {
             $is[] = 'literal';
         }

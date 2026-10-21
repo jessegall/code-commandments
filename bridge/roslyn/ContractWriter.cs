@@ -327,6 +327,7 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
                 ("identifier", node is IdentifierNameSyntax identifier && !SyntaxFacts.IsInTypeOnlyContext(identifier)),
                 ("assignment", node is AssignmentExpressionSyntax),
                 ("comparison", node.Kind() is SyntaxKind.EqualsExpression or SyntaxKind.NotEqualsExpression or SyntaxKind.LessThanExpression or SyntaxKind.GreaterThanExpression or SyntaxKind.LessThanOrEqualExpression or SyntaxKind.GreaterThanOrEqualExpression),
+                ("conjunction", node.Kind() is SyntaxKind.LogicalAndExpression or SyntaxKind.LogicalOrExpression),
                 ("literal", node is LiteralExpressionSyntax or InterpolatedStringExpressionSyntax),
                 ("import", node is UsingDirectiveSyntax),
                 ("catch", node is CatchClauseSyntax),

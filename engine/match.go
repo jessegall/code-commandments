@@ -32,6 +32,7 @@ const (
 	Identifier          Neutral = "identifier"
 	Assignment          Neutral = "assignment"
 	Comparison          Neutral = "comparison"
+	Conjunction         Neutral = "conjunction"
 	Literal             Neutral = "literal"
 	Import              Neutral = "import"
 	Catch               Neutral = "catch"
@@ -174,6 +175,16 @@ func (m Match) CalleeName() string {
 	}
 
 	return ""
+}
+
+// Receiver is the object the node is sent to: the `$order` of `$order->ship()` or of `$order->shipped`; no node
+// for a free function's call, a bare name or anything else sent to nobody.
+func (m Match) Receiver() Match {
+	if read := m.grammar().Receiver; read != nil {
+		return read(m)
+	}
+
+	return Match{}
 }
 
 // Refers is the symbol a name refers to, resolved: a class, a function, a constant; empty for anything else.

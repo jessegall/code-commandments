@@ -10,6 +10,7 @@ import (
 func init() {
 	engine.ReadAs(contract.PHP, engine.Grammar{
 		Arguments:     values,
+		Receiver:      engine.InAnyField("var", "class"),
 		Members:       engine.InFields("stmts"),
 		Parameters:    engine.InFields("params"),
 		Extends:       engine.InFields("extends"),

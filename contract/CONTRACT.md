@@ -163,6 +163,7 @@ kinds. A rule that holds for every language asks `is` instead. It is a list draw
 | `identifier` | a bare name read |
 | `assignment` | an assignment, compound or not |
 | `comparison` | an equality, identity or ordering comparison |
+| `conjunction` | a logical and or or: `&&`, `||`, `and`, `or` |
 | `literal` | a literal |
 | `import` | an import or use |
 | `catch` | a catch or except clause |
