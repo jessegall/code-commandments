@@ -3,6 +3,7 @@
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`filled-parameter`** — a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed — `FilledParameterDetector`
+- **`impossible-guard`** — `if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing — `ImpossibleGuardDetector`
 - **`masked-invariant`** — Masked invariant — an own field read as `?->… ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible "not set yet". — `MaskedInvariantDetector`
 - **`phantom-nullable`** — Phantom nullable — a field typed `?T` (promoted param or declared property, any class) whose value, traced through the whole program, is always read as present and NEVER guarded, so the null never happens — `PhantomNullableDetector`
 - **`redundant-arrow-return-type`** — An arrow function whose return type only repeats what its one expression provably yields — `fn (): string => $this->name` on a `string` property — `RedundantArrowReturnTypeDetector`

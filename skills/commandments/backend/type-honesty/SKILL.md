@@ -43,6 +43,8 @@ field, or a value object, and delete the defence.
 
 - [ ] A method that works something out gives it back: return the value, and let the caller decide where it goes.
       _Return what the method works out and let the caller assign it, or ask the object to change itself, so the signature says what happens._
+- [ ] A guard answers a question the type leaves open: if the type says the value is there, delete the guard; if the value really can be missing, say so in the type.
+      _Delete the check when the type is right. When callers really do pass null, type the parameter `?Order` and let the reader see it, then decide absence once where the value is born._
 - [ ] Make an invariant certain (hold it non-nullable / assert it); don't mask it with `?->… ?? <fake>`.
 - [ ] If a nullable field is assumed present everywhere its value flows and guarded nowhere, the null is a lie — make it non-nullable and let it be required, failing hard at construction on a real miss.
 - [ ] Leave the return type off an arrow function whose expression already proves the type. Declare one when the type is genuinely ambiguous or you are narrowing it — never to restate a property or a method you can read from here.
@@ -82,18 +84,18 @@ private function countedRows(string $run): int
 }
 ```
 
-The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 7 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=backend/type-honesty` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `filled-parameter`, `masked-invariant`, `phantom-nullable`, `redundant-arrow-return-type`, `scratch-state-restore`, `placeholder-filled-data`, `useless-property-hook`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `filled-parameter`, `impossible-guard`, `masked-invariant`, `phantom-nullable`, `redundant-arrow-return-type`, `scratch-state-restore`, `placeholder-filled-data`, `useless-property-hook`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `redundant-arrow-return-type`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -29,6 +29,28 @@ public sealed class DealerFactsReader(IReadOnlyDictionary<string, string> plans,
 }
 ```
 
+### csharp-impossible-guard
+
+`if (order == null)` where `order` is typed `Order` and not `Order?` — one of the two is wrong, and both are worth knowing
+
+```cs
+----------[ Bad ]----------
+
+public bool HasTranslation(Language language)
+{
+    if (language == null)
+    {
+        return false;
+    }
+
+    return texts.ContainsKey(language.Code);
+}
+
+----------[ Good ]----------
+
+public bool HasTextIn(Language language) => texts.ContainsKey(language.Code);
+```
+
 ### csharp-placeholder-filled-data
 
 `new Card(title, "")` — a record's required `string` filled with a blank so the record can be built, hiding a missing value no type check can see

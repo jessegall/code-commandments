@@ -465,3 +465,119 @@ func (n Node) IsFallbackOfAFirstMatch() bool {
 
 	return false
 }
+
+// GuardsWhatTheTypeRulesOut says whether the node compares a value with null that its own declared type has
+// already ruled out: a parameter typed as a class-like the project itself declares, with no `?` and no null in
+// a union and no default of null. One of two things is then true and both are worth saying — the type is
+// lying, or the guard is noise someone has to read past. The type has to be the project's own, since one the
+// scan never saw is one the tool cannot vouch for.
+func (p *Program) GuardsWhatTheTypeRulesOut(n Node) bool {
+	declared, tested, guards := p.typeOfWhatItTestsForNull(n)
+	function := Node{Match: enclosingFunction(n.Match)}
+	if !guards || Written(declared).IsNullable() {
+		return false
+	}
+	if _, known := p.Declarations()[strings.TrimLeft(Written(declared).Class(), `\`)]; !known {
+		return false
+	}
+
+	if n.onlyFailsFast() {
+		return false
+	}
+
+	return tested == "" || !function.everPutsNullIn(tested)
+}
+
+// onlyFailsFast says whether the guard does nothing but throw. A type is a promise the tooling keeps only
+// among callers who honour it, and a boundary that asserts its own contract and dies is not pretending the
+// impossible can happen; it is refusing to carry on. What this rule is about is a guard that answers the
+// impossible with a value.
+func (n Node) onlyFailsFast() bool {
+	guard := n.Up()
+	body := guard.ChildrenIn("stmts")
+	if guard.Kind() != "Stmt_If" || len(body) != 1 {
+		return false
+	}
+	statement := Node{Match: body[0]}
+
+	return statement.Kind() == "Stmt_Expression" && statement.thrownAlone().Exists()
+}
+
+// typeOfWhatItTestsForNull is the declared type of what the comparison tests against null, the variable's name
+// when it is a parameter, and whether the node tests anything this rule can speak about: a parameter of the
+// function around it, or a field of the class it sits in. Both are declared where the reader can see them,
+// which is what makes the guard answerable.
+func (p *Program) typeOfWhatItTestsForNull(n Node) (*contract.Type, string, bool) {
+	tested, compares := n.comparedWithNull()
+	if !compares {
+		return nil, "", false
+	}
+	if tested.Kind() == "Expr_Variable" {
+		declared, types := Node{Match: enclosingFunction(n.Match)}.declaredTypeOf(tested.Name())
+
+		return declared, tested.Name(), types
+	}
+	declared, types := p.fieldTypeOf(n, tested)
+
+	return declared, "", types
+}
+
+// fieldTypeOf is the declared type of the field a `$this->x` read names, and whether the class around it
+// declares one of that name at all.
+func (p *Program) fieldTypeOf(n Node, read Node) (*contract.Type, bool) {
+	owner := read.Child("var")
+	class := n.Closest(engine.TypeDeclaration)
+	if read.Kind() != "Expr_PropertyFetch" || owner.Kind() != "Expr_Variable" || owner.Name() != "this" || !class.Exists() {
+		return nil, false
+	}
+	for _, field := range Fields(class) {
+		if field.Name == read.Child("name").Name() {
+			return field.Type, field.Type != nil
+		}
+	}
+
+	return nil, false
+}
+
+// comparedWithNull is what a comparison tests against null, and whether the node is one: `=== null` and
+// `!== null` both say it, and a loose `==` does not, since that asks a wider question.
+func (n Node) comparedWithNull() (Node, bool) {
+	if n.Kind() != "Expr_BinaryOp_Identical" && n.Kind() != "Expr_BinaryOp_NotIdentical" {
+		return Node{}, false
+	}
+	left, right := n.Child("left"), n.Child("right")
+	if IsNullConstant(right) {
+		return Node{Match: left}, true
+	}
+	if IsNullConstant(left) {
+		return Node{Match: right}, true
+	}
+
+	return Node{}, false
+}
+
+// declaredTypeOf is the type the function writes for the named parameter, and whether it writes one at all. A
+// parameter defaulted to null says what it is honestly enough by that default, so it answers no.
+func (n Node) declaredTypeOf(name string) (*contract.Type, bool) {
+	for _, parameter := range Params(n.Match) {
+		if parameter.Child("var").Name() != name {
+			continue
+		}
+		declared := parameter.Node().Declared
+		defaulted := parameter.Child("default")
+
+		return declared, declared != nil && !(defaulted.Exists() && IsNullConstant(defaulted))
+	}
+
+	return nil, false
+}
+
+// everPutsNullIn says whether the function itself ever assigns null to the name, which makes the guard real
+// however the parameter was typed.
+func (n Node) everPutsNullIn(name string) bool {
+	return slices.ContainsFunc(descendantsOf(n.Match), func(node engine.Match) bool {
+		target := node.Child("var")
+
+		return node.Kind() == "Expr_Assign" && target.Kind() == "Expr_Variable" && target.Name() == name && IsNullConstant(node.Child("expr"))
+	})
+}

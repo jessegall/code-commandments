@@ -812,6 +812,13 @@
         "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
     },
     {
+        "key": "sin_impossible-guard",
+        "title": "ImpossibleGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing"
+    },
+    {
         "key": "sin_masked-invariant",
         "title": "MaskedInvariant",
         "kind": "flag",
@@ -1279,6 +1286,13 @@
         "kind": "flag",
         "default": true,
         "help": "a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
+    },
+    {
+        "key": "sin_csharp-impossible-guard",
+        "title": "ImpossibleGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "`if (order == null)` where `order` is typed `Order` and not `Order?` — one of the two is wrong, and both are worth knowing"
     },
     {
         "key": "sin_csharp-placeholder-filled-data",
@@ -1853,6 +1867,13 @@
         "kind": "flag",
         "default": true,
         "help": "a def returning `None` that writes an attribute of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
+    },
+    {
+        "key": "sin_python-impossible-guard",
+        "title": "ImpossibleGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "`if order is None` where `order` is annotated as a class with no `| None` — one of the two is wrong, and both are worth knowing"
     },
     {
         "key": "sin_python-masked-invariant",

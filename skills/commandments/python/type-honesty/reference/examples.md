@@ -48,6 +48,25 @@ class TillTotals:
         return net * tax_percent // 100
 ```
 
+### python-impossible-guard
+
+`if order is None` where `order` is annotated as a class with no `| None` — one of the two is wrong, and both are worth knowing
+
+```py
+----------[ Bad ]----------
+
+def has_translation(self, language: Language) -> bool:
+    if language is None:
+        return False
+
+    return language.code in self.texts
+
+----------[ Good ]----------
+
+def has_text_in(self, language: Language) -> bool:
+    return language.code in self.texts
+```
+
 ### python-masked-invariant
 
 a literal answering for the object's own scratch state — `self.period.includes(day) if self.period else False` — where the field is only unset because an operation sets it part-way

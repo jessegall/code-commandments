@@ -561,3 +561,83 @@ func (n Node) buildsAFreshContainer() bool {
 
 	return n.IsCall() && slices.Contains(mutableBuilders, n.Callee().DottedName())
 }
+
+// GuardsWhatTheTypeRulesOut says whether the node tests a value for None that its own declared type has
+// already ruled out: a parameter annotated as a class the project itself declares, with no `| None` and no
+// default of None. One of two things is then true and both are worth saying — the annotation is lying, or the
+// guard is noise someone has to read past. The class has to be the project's own, since a type the scan never
+// saw is one the tool cannot vouch for.
+func (p *Program) GuardsWhatTheTypeRulesOut(n Node) bool {
+	tested, guards := n.testedForNone()
+	def := n.EnclosingFunction()
+	if !guards || !def.Exists() {
+		return false
+	}
+	annotation, declared := def.annotationOf(tested)
+	if !declared || !p.DeclaresClass(annotation.DottedName()) {
+		return false
+	}
+	if _, optional := annotation.OptionalOf(); optional {
+		return false
+	}
+
+	if n.onlyFailsFast() {
+		return false
+	}
+
+	return !def.everPutsNoneIn(tested)
+}
+
+// onlyFailsFast says whether the guard does nothing but raise. A type is a promise the checker keeps only
+// among callers who honour it, and a boundary that asserts its own contract and dies is not pretending the
+// impossible can happen; it is refusing to carry on. What this rule is about is a guard that answers the
+// impossible with a value.
+func (n Node) onlyFailsFast() bool {
+	guard := n.Parent()
+	body := guard.ChildrenIn("body")
+
+	return guard.Kind() == "If" && len(body) == 1 && body[0].Kind() == "Raise"
+}
+
+// testedForNone is the name a comparison tests for None, and whether the node is one: `order is None` and
+// `order is not None` both say it, and nothing else here does. A falsy test says something wider than absence,
+// so it is no part of this.
+func (n Node) testedForNone() (string, bool) {
+	left, right, ok := n.comparedWith("is", "is not")
+	if !ok {
+		return "", false
+	}
+	if left.Kind() == "Name" && right.IsNone() {
+		return left.Name(), true
+	}
+	if right.Kind() == "Name" && left.IsNone() {
+		return right.Name(), true
+	}
+
+	return "", false
+}
+
+// annotationOf is the annotation the def writes for the named parameter, and whether it writes one at all. A
+// parameter defaulted to None is annotated honestly enough by that default, so it answers no.
+func (n Node) annotationOf(name string) (Node, bool) {
+	for _, parameter := range n.Parameters() {
+		if parameter.Name() != name {
+			continue
+		}
+		annotation := parameter.Child("annotation")
+
+		return annotation, annotation.Exists() && !parameter.Default().IsNone()
+	}
+
+	return Node{}, false
+}
+
+// everPutsNoneIn says whether the def itself ever assigns None to the name, which makes the guard real however
+// the parameter was annotated.
+func (n Node) everPutsNoneIn(name string) bool {
+	return slices.ContainsFunc(n.Descendants(), func(node Node) bool {
+		targets := node.ChildrenIn("targets")
+
+		return node.Kind() == "Assign" && len(targets) == 1 && targets[0].Name() == name && node.Child("value").IsNone()
+	})
+}

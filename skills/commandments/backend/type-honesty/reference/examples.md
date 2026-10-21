@@ -29,6 +29,30 @@ private function countedRows(string $run): int
 }
 ```
 
+### impossible-guard
+
+`if ($order === null)` where `$order` is typed `Order`, with no `?` — one of the two is wrong, and both are worth knowing
+
+```php
+----------[ Bad ]----------
+
+public function hasTranslation(Language $language): bool
+{
+    if ($language === null) {
+        return false;
+    }
+
+    return isset($this->texts[$language->code]);
+}
+
+----------[ Good ]----------
+
+public function hasTextIn(Language $language): bool
+{
+    return isset($this->texts[$language->code]);
+}
+```
+
 ### masked-invariant
 
 Masked invariant — an own field read as `?->… ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible "not set yet".

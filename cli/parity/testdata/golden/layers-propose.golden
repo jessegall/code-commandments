@@ -82,7 +82,7 @@ exit: 0
         ->layer('Shop\\Payments', mayUse: ['Shop\\Enums', 'Shop\\Exceptions'])
         ->layer('Shop\\Providers', mayUse: ['Shop\\Audit', 'Shop\\Events', 'Shop\\Inertia', 'Shop\\Integrations', 'Shop\\Legacy', 'Shop\\Services', 'Shop\\Shipping'])
         ->layer('Shop\\Reminders', mayUse: ['Shop\\Warranty'])
-        ->layer('Shop\\Reporting', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Repositories', 'Shop\\Support'])
+        ->layer('Shop\\Reporting', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Dispatch', 'Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Repositories', 'Shop\\Support'])
         ->layer('Shop\\Repositories', mayUse: ['Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Models', 'Shop\\ValueObjects'])
         ->layer('Shop\\Services', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Enums', 'Shop\\Exceptions', 'Shop\\Http\\Requests', 'Shop\\Models', 'Shop\\Repositories', 'Shop\\Support', 'Shop\\ValueObjects'])
         ->layer('Shop\\Shipping', mayUse: ['Shop\\Contracts', 'Shop\\Data', 'Shop\\Enums', 'Shop\\Models', 'Shop\\Repositories', 'Shop\\Support'])

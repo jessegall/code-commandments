@@ -1105,3 +1105,98 @@ func (n Node) buildsItsOwn() bool {
 	return value.Exists() && value.At(0).Is("ObjectCreationExpression", "ImplicitObjectCreationExpression", "CollectionExpression", "ArrayCreationExpression", "ImplicitArrayCreationExpression")
 }
 
+
+// GuardsWhatTheTypeRulesOut says whether the node compares a value with null that its own declared type has
+// already ruled out: a parameter or a field whose type the compiler reads as not nullable, and which is one of
+// the project's own types rather than one the scan never saw. One of two things is then true and both are
+// worth saying — the type is lying, or the guard is noise someone has to read past.
+func (n Node) GuardsWhatTheTypeRulesOut(declared func(string) bool) bool {
+	tested, compares := n.comparedWithNull()
+	if !compares {
+		return false
+	}
+	held := tested.Type()
+	if !held.Exists() || held.IsNullable() || held.IsValueType() {
+		return false
+	}
+	if !declared(strings.TrimSuffix(held.Name(), "?")) {
+		return false
+	}
+
+	if n.onlyFailsFast() || n.EnclosingFunction().IsInherited() {
+		return false
+	}
+
+	return n.namesSomethingDeclaredHere(tested)
+}
+
+// onlyFailsFast says whether the guard does nothing but throw. A type is a promise the compiler keeps only
+// among callers who honour it, and a boundary that asserts its own contract and dies is not pretending the
+// impossible can happen; it is refusing to carry on. What this rule is about is a guard that answers the
+// impossible with a value.
+func (n Node) onlyFailsFast() bool {
+	guard := n.Parent()
+	if !guard.Is("IfStatement") {
+		return false
+	}
+	taken := guard.Children()
+	if len(taken) == 0 {
+		return false
+	}
+	body := taken[0]
+	if body.Is("Block") && len(body.Children()) == 1 {
+		body = body.Children()[0]
+	}
+
+	return body.Is("ThrowStatement")
+}
+
+// comparedWithNull is what a comparison tests against null, and whether the node is one: `== null` and
+// `!= null` both say it.
+func (n Node) comparedWithNull() (Node, bool) {
+	if !n.Is("EqualsExpression", "NotEqualsExpression") {
+		return Node{}, false
+	}
+	left, right := n.At(0), n.At(1)
+	if right.Is("NullLiteralExpression") {
+		return left, true
+	}
+	if left.Is("NullLiteralExpression") {
+		return right, true
+	}
+
+	return Node{}, false
+}
+
+// namesSomethingDeclaredHere says whether what the comparison tests is something whose type is WRITTEN where
+// the reader can see it: a parameter of the method around it, or a field or property of the type it sits in. A
+// `var` local's type is inferred and written nowhere, so neither the reader nor this rule can hold anyone to
+// it, however the compiler reads it.
+func (n Node) namesSomethingDeclaredHere(tested Node) bool {
+	name := tested.Name()
+	if tested.Is("SimpleMemberAccessExpression") && tested.At(0).Is("ThisExpression") {
+		name = tested.At(1).Name()
+	} else if !tested.Is("IdentifierName") {
+		return false
+	}
+
+	return n.EnclosingFunction().takesAParameterNamed(name) || n.EnclosingType().declaresAMemberNamed(name)
+}
+
+// takesAParameterNamed says whether the method writes a parameter of that name.
+func (n Node) takesAParameterNamed(name string) bool {
+	return slices.ContainsFunc(n.firstChild("ParameterList").Children(), func(parameter Node) bool {
+		return parameter.Is("Parameter") && parameter.Name() == name
+	})
+}
+
+// declaresAMemberNamed says whether the type writes a field or a property of that name.
+func (n Node) declaresAMemberNamed(name string) bool {
+	return slices.ContainsFunc(n.Descendants(), func(member Node) bool {
+		if member.Is("PropertyDeclaration") {
+			return member.Name() == name
+		}
+
+		return member.Is("FieldDeclaration") && member.firstChild("VariableDeclaration").firstChild("VariableDeclarator").Name() == name
+	})
+}

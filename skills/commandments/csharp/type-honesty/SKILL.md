@@ -49,6 +49,8 @@ missing case the design does not have.
 
 - [ ] A method that works something out gives it back: return the value, and let the caller decide where it goes.
       _Return what the method works out and let the caller assign it, or ask the object to change itself, so the signature says what happens; `out` says it in the signature when the value really must travel that way._
+- [ ] A guard answers a question the type leaves open: if the type says the value is there, delete the guard; if the value really can be missing, say so in the type.
+      _Delete the check when the type is right. When callers really do pass null, type it `Order?` and let the reader and the compiler see it, then decide absence once where the value is born._
 - [ ] A required slot means the caller has the value; fill it with the real value, never with `""`.
       _Fetch the real value, or make the slot `string?` if it really can be missing — or split off a smaller record that only promises what you have._
 
@@ -81,17 +83,17 @@ public sealed class DealerFactsReader(IReadOnlyDictionary<string, string> plans,
 }
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/type-honesty` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-filled-parameter`, `csharp-placeholder-filled-data`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-filled-parameter`, `csharp-impossible-guard`, `csharp-placeholder-filled-data`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills
