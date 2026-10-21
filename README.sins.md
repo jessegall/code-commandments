@@ -619,5 +619,5 @@ _287 sins across 64 skills._
 
 | Sin | What it flags |
 |---|---|
-| `CollectionMutatedWhileIterated` | a `for…of` or `forEach` that pushes to, splices out of or deletes from the very collection it walks — the iterator reads a collection that moved under it, so an element is skipped or read twice |
+| `CollectionMutatedWhileIterated` | a `for…of` or `forEach` that splices, shifts, sorts or pops the very array it walks — every element after the change has moved, so the walk skips one or reads one twice |
 

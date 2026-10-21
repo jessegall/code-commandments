@@ -299,6 +299,8 @@ exit: 0
   DuplicateFunctionDetector
   NearDuplicateFunctionDetector
   SideTableTraitDetector
+[1;33mtypescript/flow[0m
+  CollectionMutatedWhileIteratedDetector
 
 --- stderr
 

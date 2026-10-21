@@ -1,7 +1,7 @@
 exit: 0
 --- stdout
 ↻ composer post-install/post-update now call `commandments sync`.
-↻ code-commandments synced — 66 skills published to .agents/skills, read by Claude Code, Codex.
+↻ code-commandments synced — 67 skills published to .agents/skills, read by Claude Code, Codex.
 
 --- stderr
 
@@ -466,10 +466,14 @@ sha256 883009bdc125f06784d7386a09e678b6e689ed77f9278b2f9a6f013ab25aa655
 sha256 0dd7a04297682e342a2161485e0895cfb33fd79b3b3f7563bb61868efe260613
 === created .agents/skills/commandments-typescript-duplication/reference/examples.md
 sha256 bad17b47d8dbe48dfdb6e083db02b7a7558fd916ceed728c2a69146b7ef4dc97
+=== created .agents/skills/commandments-typescript-flow/SKILL.md
+sha256 100048e89af5566016aae98f4f2df097d09a4b7264edd2ead6894b24e7bff42c
+=== created .agents/skills/commandments-typescript-flow/reference/detectors.md
+sha256 575f8a6a02fbf9a99f3feffa1437b21bb2cf54854692ae32bc0d8ceca7a92ec4
 === created .agents/skills/commandments-writing-detectors/SKILL.md
 sha256 ee3c82a25a95a56d92d563110511e0df0fb56ea7553ba65ad23ef5cc21686af0
 === created .agents/skills/commandments/SKILL.md
-sha256 b0efa729d0477a713a2866e3071d9e826d2cd6a2fd92325741a6346d04f4910c
+sha256 bc2a6c9213c5a66ff2589406725ca35495de7b23eeb894382bb07866a577c320
 === changed .agents/skills/mine/SKILL.md
 sha256 3fd30542fe3f61b14bd4a4b2dc0b6fb30fa6f63ebce52dd1778aaa8c4dc02cff
 === created .claude/settings.json
@@ -992,6 +996,7 @@ commandments-backend-behaviour-per-method
 commandments-frontend-mirrored-server-type
 commandments-typescript-absence
 commandments-typescript-duplication
+commandments-typescript-flow
 commandments-python-duplication
 commandments-python-flow
 commandments-csharp-duplication

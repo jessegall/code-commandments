@@ -3865,6 +3865,22 @@
                 }
             ],
             "detail": true
+        },
+        "sin_typescript-collection-mutated-while-iterated": {
+            "title": "CollectionMutatedWhileIterated",
+            "help": "a `for…of` or `forEach` that splices, shifts, sorts or pops the very array it walks — every element after the change has moved, so the walk skips one or reads one twice",
+            "type": "flag",
+            "default": "true",
+            "group": "typescript/flow",
+            "when": [
+                {
+                    "language_ts": true
+                },
+                {
+                    "language_vue": true
+                }
+            ],
+            "detail": true
         }
     },
     "skills": "journal-skills/.agents/skills",

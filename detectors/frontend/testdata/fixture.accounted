@@ -7,3 +7,6 @@ only Go: components/RefundWizard.vue:12 SwitchCase  # a fixture file written aft
 only Go: client/courier-eligibility.ts:10 SideTableTrait  # a rule written after the PHP tool was retired
 only Go: client/stock-visibility.ts:10 SideTableTrait  # a rule written after the PHP tool was retired
 only Go: client/tag-speech.ts:11 SideTableTrait  # a rule written after the PHP tool was retired
+only Go: client/label-queue.ts:8 CollectionMutatedWhileIterated  # a rule written after the PHP tool was retired
+only Go: client/line-pruning.ts:8 CollectionMutatedWhileIterated  # a rule written after the PHP tool was retired
+only Go: client/shelf-tags.ts:7 CollectionMutatedWhileIterated  # a rule written after the PHP tool was retired
