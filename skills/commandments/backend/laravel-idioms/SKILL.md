@@ -51,6 +51,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
       _An intention method on the model (`$order->suspend($reason)`)._
 - [ ] Wiring is code: a binding exists to answer a resolve. When the last consumer goes, the binding goes with it.
       _Delete the registration (and the implementation it names, if that is dead too)._
+- [ ] Ask the database once for everything the loop needs, before the loop.
+      _Load what the loop needs in one query before it: eager-load the relation with `with()`, or fetch the rows by their keys and index them, then let the loop read what is already in memory._
 - [ ] Read request input through a typed accessor (`$request->string('x')`); never raw `->input()`/`->get()`/`->query()`.
       _A named getter on a `FormRequest` subclass (`$request->productId()`)._
 - [ ] Expose a named getter on a typed request class; don't re-coerce a typed accessor (`$request->string('id')->toString()`) at a call site.
@@ -97,17 +99,17 @@ final class CatalogSettings
 }
 ```
 
-The other 10 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 11 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=backend/laravel-idioms` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `raw-request-input`, `request-accessor-recast`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `query-in-loop`, `raw-request-input`, `request-accessor-recast`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 11 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 12 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

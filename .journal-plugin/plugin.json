@@ -929,6 +929,19 @@
             ],
             "detail": true
         },
+        "sin_query-in-loop": {
+            "title": "QueryInLoop",
+            "help": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call",
+            "type": "flag",
+            "default": "true",
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_raw-request-input": {
             "title": "RawRequestInput",
             "help": "Raw `->input()/->get()/->query()/->post()` on a Request",

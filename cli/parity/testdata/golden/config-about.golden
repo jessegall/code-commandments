@@ -5,7 +5,7 @@ exit: 0
 
   [36mConfig ...............[0m .commandments/config.json (not yet written)
   [36mSource roots .........[0m .
-  [36mBackend detectors ....[0m 81 running  ·  124 available
+  [36mBackend detectors ....[0m 82 running  ·  125 available
   [36mFrontend detectors ...[0m 18 running  ·  19 available
   [36mPython detectors .....[0m 76 running  ·  76 available
   [36mC# detectors .........[0m 62 running  ·  62 available

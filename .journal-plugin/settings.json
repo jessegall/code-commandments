@@ -483,6 +483,13 @@
         "help": "A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor"
     },
     {
+        "key": "sin_query-in-loop",
+        "title": "QueryInLoop",
+        "kind": "flag",
+        "default": true,
+        "help": "a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call"
+    },
+    {
         "key": "sin_raw-request-input",
         "title": "RawRequestInput",
         "kind": "flag",

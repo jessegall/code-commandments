@@ -60,6 +60,8 @@ exit: 0
   RedundantElseDetector
   ShortCircuitStatementDetector
   TernaryStatementDetector
+[1;33mbackend/laravel-idioms[0m
+  QueryInLoopDetector
 [1;33mbackend/method-mood[0m
   BareStatePredicateDetector
   NarratedCommandDetector

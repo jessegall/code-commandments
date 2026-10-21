@@ -73,13 +73,13 @@ sha256 a4cd61c78085c877e771eef2003e79880a468a301a3c2cdbc65bed62beec1eb9
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/reference/examples.md
 sha256 2fdb458eecb99496c3c0d954481e7e94c43bc3c685e6f425885af193a10a23c2
 === created .agents/skills/commandments-backend-laravel-idioms/SKILL.md
-sha256 d9212d5682c172fa8165fcd8cb69f9c1b363fb2fd41495cff1f60db8a46f12c7
+sha256 83cf42fdc72373c6455720bfcd7f69e2b7e1ddada77d149539d89ff61d0f5396
 === created .agents/skills/commandments-backend-laravel-idioms/evals/triggers.json
 sha256 f3673ef98b8ce1acab91f3ecc97301c16aa176283fa9a4af0069d55bd04467ec
 === created .agents/skills/commandments-backend-laravel-idioms/reference/detectors.md
-sha256 e4a7edd50b41fc5edfcaffd6b77dae3307bb5f56f3c443b15db67702d085d89a
+sha256 8a17714b816f07350ce1ea6b1ed4879aebb69b697a7ce81e65c54b58f6b01eab
 === created .agents/skills/commandments-backend-laravel-idioms/reference/examples.md
-sha256 3d0a1fe261065dfe0ba617c8a7884debe49bbeb977a68b9f25294e69cdaff11f
+sha256 b8bfb3e7b2cc9d7904b93af5b789189e832597347b3db383ce9dc53b60c0d070
 === created .agents/skills/commandments-backend-method-mood/SKILL.md
 sha256 1532e19b9d6e23f6386c4d3db863ace2b36bd2bd32d5ac304964dbedc0602ee2
 === created .agents/skills/commandments-backend-method-mood/evals/triggers.json

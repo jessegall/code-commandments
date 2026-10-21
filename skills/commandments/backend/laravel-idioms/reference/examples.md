@@ -340,6 +340,35 @@ final class RegionCoverage
 }
 ```
 
+### query-in-loop
+
+a query run inside a loop — one query per turn, so the work grows with the data while the code reads as though it were one call
+
+```php
+----------[ Bad ]----------
+
+public function unclaimed(array $references): array
+{
+    $missing = [];
+    foreach ($references as $reference) {
+        if (Order::where('carrier_reference', $reference)->count() === 0) {
+            $missing[] = $reference;
+        }
+    }
+
+    return $missing;
+}
+
+----------[ Good ]----------
+
+public function unclaimedReferences(array $references): array
+{
+    $claimed = Order::whereIn('carrier_reference', $references)->pluck('carrier_reference')->all();
+
+    return array_values(array_diff($references, $claimed));
+}
+```
+
 ### raw-request-input
 
 Raw `->input()/->get()/->query()/->post()` on a Request

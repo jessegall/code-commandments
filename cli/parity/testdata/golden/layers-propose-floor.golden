@@ -19,7 +19,7 @@ exit: 0
 
   [33m28[0m sit in a cycle — declared below as they stand, each permitting the other:
       Shop\Enums  ->  Shop\Shipping
-      Shop\Fulfillment  ->  Shop\Models
+      Shop\Models  ->  Shop\Fulfillment
       Shop\Telemetry  ->  Shop\Diagnostics
       Shop\Warranty  ->  Shop\Claims
     [2mrun `commandments judge --sin=namespace-cycle` for the exact arrows to cut[0m

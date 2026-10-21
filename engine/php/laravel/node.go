@@ -30,6 +30,17 @@ const (
 	Arrayable        = `Illuminate\Contracts\Support\Arrayable`
 )
 
+// BuilderTypes are the query builders a model hands out: a call on one goes to the database just as a call on
+// the model does.
+var BuilderTypes = []string{
+	`Illuminate\Database\Eloquent\Builder`,
+	`Illuminate\Database\Query\Builder`,
+	`Illuminate\Database\Eloquent\Relations\Relation`,
+	`Illuminate\Database\Eloquent\Relations\HasMany`,
+	`Illuminate\Database\Eloquent\Relations\BelongsTo`,
+	`Illuminate\Database\Eloquent\Relations\BelongsToMany`,
+}
+
 var (
 	RouteVerbs        = []string{"get", "post", "put", "patch", "delete", "options", "match", "any"}
 	RouterTypes       = []string{`Illuminate\Routing\Router`, `Illuminate\Contracts\Routing\Registrar`}
@@ -301,4 +312,110 @@ func CallName(node engine.Match) string {
 
 func isName(node engine.Match) bool {
 	return strings.HasPrefix(node.Kind(), "Name")
+}
+
+// QueryRunners are the Eloquent methods that go to the database when they are called. Calling one inside a
+// loop issues one query per turn of the loop, which is the N+1: the work grows with the data and nothing in
+// the code says so.
+var QueryRunners = []string{
+	"get", "first", "firstOrFail", "firstOrCreate", "firstOr", "sole", "find", "findOrFail", "findOr",
+	"findMany", "count", "exists", "doesntExist", "sum", "avg", "min", "max", "pluck", "value", "paginate",
+	"simplePaginate", "cursorPaginate", "toArray", "save", "update", "delete", "increment", "decrement",
+	"create", "updateOrCreate", "insert", "refresh",
+}
+
+// RunsAQueryInALoop says whether the node is a call that goes to the database, made inside a loop, on a
+// receiver the type engine says is an Eloquent model or one of its builders. Each turn of the loop is another
+// query, so the cost grows with the data while the code reads as if it were one call.
+func (n Node) RunsAQueryInALoop() bool {
+	name := n.Child("name")
+	if n.Kind() != "Expr_MethodCall" && n.Kind() != "Expr_StaticCall" {
+		return false
+	}
+	if name.Kind() != "Identifier" || !slices.Contains(QueryRunners, name.Name()) {
+		return false
+	}
+	walked, inAForeach := n.foreachAround()
+	if !inAForeach {
+		return false
+	}
+	// The cost of an N+1 is that it grows with the DATA, which is what a foreach's turns count. A while that
+	// polls one row until it answers turns as many times as it has to wait, and re-reading the same row is
+	// the whole point of it.
+	if walked.isChunked() {
+		return false
+	}
+
+	return n.reachesTheDatabase()
+}
+
+// foreachAround is what the foreach around the call walks, and whether the call sits in one at all. A chunked
+// subject says the loop walks batches rather than items: a chunked insert writes once per batch on purpose,
+// because one statement for everything would not fit, and the query count is the number of batches.
+func (n Node) foreachAround() (Node, bool) {
+	for held := n.Parent(); held.Exists(); held = held.Parent() {
+		if held.Kind() == "Stmt_Foreach" {
+			return Node{Match: held.Child("expr")}, true
+		}
+	}
+
+	return Node{}, false
+}
+
+// isChunked says whether the expression hands out batches: `array_chunk(...)`, or a `->chunk(...)` anywhere in
+// the chain that made it.
+func (n Node) isChunked() bool {
+	if n.Kind() == "Expr_FuncCall" && isName(n.Child("name")) && strings.TrimLeft(n.Child("name").Name(), `\`) == "array_chunk" {
+		return true
+	}
+	held := n
+	for held.Exists() {
+		if held.Kind() == "Expr_MethodCall" && held.Child("name").Name() == "chunk" {
+			return true
+		}
+		if held.Kind() != "Expr_MethodCall" && held.Kind() != "Expr_StaticCall" {
+			return false
+		}
+		held = Node{Match: held.Child("var")}
+	}
+
+	return false
+}
+
+// reachesTheDatabase says whether what the call is made on is a model, or a chain that began at one. Eloquent
+// is fluent, so `Order::where(...)->orderBy(...)->count()` is the same reach as `Order::count()`: the chain's
+// root is what decides, and a project with no vendor installed still shows that root in its own source, where
+// a builder's return type would be invisible.
+func (n Node) reachesTheDatabase() bool {
+	root := n.chainRoot()
+	program := php.ProgramOf(n.Codebase())
+	if root.Kind() == "Expr_StaticCall" {
+		class := root.Child("class")
+
+		return isName(class) && program.Extends(strings.TrimLeft(class.Name(), `\`), Model)
+	}
+	// The type engine, not the declared type alone: a model assigned from a `new` or handed back by a call is
+	// still a model, and the rule is about what the call reaches, not how the receiver was written.
+	held := strings.TrimLeft(php.TypesOf(n.Codebase()).TypeOf(root.Match), `?\`)
+	if held == "" {
+		return false
+	}
+
+	return program.Extends(held, Model) || slices.Contains(BuilderTypes, held)
+}
+
+// chainRoot is what a chain of sends begins at: the receiver of the outermost call, followed down through every
+// call it is made on, so a fluent builder answers with the model that opened it.
+func (n Node) chainRoot() Node {
+	held := n
+	for {
+		receiver := held.Child("var")
+		if held.Kind() == "Expr_StaticCall" {
+			return held
+		}
+		if receiver.Kind() != "Expr_MethodCall" && receiver.Kind() != "Expr_NullsafeMethodCall" && receiver.Kind() != "Expr_StaticCall" {
+			return Node{Match: receiver}
+		}
+		held = Node{Match: receiver}
+	}
 }

@@ -5,6 +5,7 @@ namespace Shop\Services;
 use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
 use JesseGall\CodeCommandments\Sins\Backend\Spatie\NewDataObject;
 
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\QueryInLoop;
 use JesseGall\CodeCommandments\Testing\Sinful;
 use Shop\Data\ProductData;
 use Shop\Enums\ProductCategory;
@@ -17,6 +18,7 @@ final class ProductImporter
      */
     #[Sinful(NewDataObject::class)]
     #[Sinful(ManufacturedFakeFill::class)]
+    #[Sinful(QueryInLoop::class)]
     public function import(array $rows): void
     {
         foreach ($rows as $row) {

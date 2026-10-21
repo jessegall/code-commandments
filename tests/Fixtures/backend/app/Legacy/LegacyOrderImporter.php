@@ -7,6 +7,7 @@ use JesseGall\CodeCommandments\Sins\Backend\BloatedDocblock;
 use JesseGall\CodeCommandments\Sins\Backend\DeNulledFinder;
 use JesseGall\CodeCommandments\Sins\Backend\ManufacturedFakeFill;
 
+use JesseGall\CodeCommandments\Sins\Backend\Laravel\QueryInLoop;
 use JesseGall\CodeCommandments\Testing\Fixed;
 use JesseGall\CodeCommandments\Testing\Righteous;
 use JesseGall\CodeCommandments\Testing\Sinful;
@@ -37,6 +38,7 @@ final class LegacyOrderImporter
      * @param  array<int, array<string, mixed>>  $rows
      */
     #[Sinful(ManufacturedFakeFill::class)]
+    #[Sinful(QueryInLoop::class)]
     public function import(array $rows): void
     {
         foreach ($rows as $row) {
