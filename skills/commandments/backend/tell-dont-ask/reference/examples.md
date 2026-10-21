@@ -71,6 +71,39 @@ public function reservedSkus(): array
 }
 ```
 
+### train-wreck
+
+`$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller
+
+```php
+----------[ Bad ]----------
+
+public function heading(DepotRun $run): string
+{
+    return $run->depot()->address()->town();
+}
+
+----------[ Good ]----------
+
+// in Shop\Dispatch\DepotBoard
+public function headingTold(DepotRun $run): string
+{
+    return $run->town();
+}
+
+// in Shop\Dispatch\Depot
+public function town(): string
+{
+    return $this->address->town();
+}
+
+// in Shop\Dispatch\DepotRun
+public function town(): string
+{
+    return $this->depot->town();
+}
+```
+
 ### type-switch
 
 two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do

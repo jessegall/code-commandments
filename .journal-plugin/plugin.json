@@ -1514,6 +1514,19 @@
             ],
             "detail": true
         },
+        "sin_train-wreck": {
+            "title": "TrainWreck",
+            "help": "`$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller",
+            "type": "flag",
+            "default": "true",
+            "group": "backend/tell-dont-ask",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_type-switch": {
             "title": "TypeSwitch",
             "help": "two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do",

@@ -79,6 +79,7 @@ exit: 0
 [1;33mbackend/tell-dont-ask[0m
   FeatureEnvyDetector
   KeyedLookupEnvyDetector
+  TrainWreckDetector
   TypeSwitchDetector
 [1;33mbackend/templates[0m
   AssembledTemplateDetector

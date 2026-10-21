@@ -4,4 +4,5 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 
 - **`feature-envy`** — Exiled behaviour / feature envy — a method operating on ONE other owned object's internals that belongs ON that object — `FeatureEnvyDetector`
 - **`keyed-lookup-envy`** — Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator — `KeyedLookupEnvyDetector`
+- **`train-wreck`** — `$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller — `TrainWreckDetector`
 - **`type-switch`** — two or more `instanceof` tests on the same subject deciding different branches — asking a value what it IS instead of telling it what to do — `TypeSwitchDetector`

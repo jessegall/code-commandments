@@ -455,3 +455,59 @@ func PromotedParamName(params []engine.Match, index int) (string, bool) {
 
 	return name, true
 }
+
+// crossings is how many types a chain may cross before the caller is depending on a shape three objects away.
+const crossings = 3
+
+// ReachesThroughThreeTypes says whether the node is the end of a chain of sends that crosses three or more
+// types the project declares: every link is a type the caller now depends on, so a change three objects away
+// reaches it. The count is of DISTINCT types and never of links, which is the whole of why a fluent chain
+// passes: `query()->where()->orderBy()` is as long as you like and crosses one type.
+func (n Node) ReachesThroughThreeTypes() bool {
+	if !n.isTheEndOfAChain() {
+		return false
+	}
+	program := ProgramOf(n.Codebase())
+	types := TypesOf(n.Codebase())
+	// The caller's own class is no crossing: it depends on itself already, so `$this->ledger->claim(...)`
+	// crosses the ledger and what it answers with, and nothing else.
+	own := EnclosingClassName(n.Match)
+	crossed := map[string]bool{}
+	for _, link := range n.chainLinks() {
+		held := strings.TrimLeft(types.TypeOf(link), `?\`)
+		if _, declared := program.Declarations()[held]; declared && held != own {
+			crossed[held] = true
+		}
+	}
+
+	return len(crossed) >= crossings
+}
+
+// isTheEndOfAChain says whether nothing is sent to what the node answers, so the longest chain is judged once
+// rather than every piece of it over again.
+func (n Node) isTheEndOfAChain() bool {
+	if !slices.Contains([]string{"Expr_MethodCall", "Expr_NullsafeMethodCall", "Expr_PropertyFetch", "Expr_NullsafePropertyFetch"}, n.Kind()) {
+		return false
+	}
+	parent := n.Up()
+	if !slices.Contains([]string{"Expr_MethodCall", "Expr_NullsafeMethodCall", "Expr_PropertyFetch", "Expr_NullsafePropertyFetch"}, parent.Kind()) {
+		return true
+	}
+
+	return parent.Child("var").Node() != n.Node()
+}
+
+// chainLinks is every receiver in the chain, the outermost first, so each link's type can be asked for.
+func (n Node) chainLinks() []engine.Match {
+	var links []engine.Match
+	held := n
+	for held.Exists() {
+		if !slices.Contains([]string{"Expr_MethodCall", "Expr_NullsafeMethodCall", "Expr_PropertyFetch", "Expr_NullsafePropertyFetch"}, held.Kind()) {
+			break
+		}
+		links = append(links, held.Child("var"))
+		held = Node{Match: held.Child("var")}
+	}
+
+	return links
+}

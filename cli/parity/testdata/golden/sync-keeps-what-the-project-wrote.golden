@@ -141,11 +141,11 @@ sha256 7c1a0da09a8db313b137ed6c3eaf0bb16dc904e8a7bfa2dc1a3ddec77a28ee1b
 === created .agents/skills/commandments-backend-spatie-data/reference/examples.md
 sha256 dc3394866f45f28453f0bd719c7ef089642b1f94087e9cba2f5c4dc4c4eb100f
 === created .agents/skills/commandments-backend-tell-dont-ask/SKILL.md
-sha256 81a639e5c0f9f4e2efcf97f8a4c4fe4bd75b5e8a841055426a2fe8bf561fadb9
+sha256 3ca6d0177e4ebbc2c4a92c25a01c892df5b695f07923a775f4a4434b2d67337b
 === created .agents/skills/commandments-backend-tell-dont-ask/reference/detectors.md
-sha256 72e695dfb6506f0284d050f46a7d0495c5e763395078a28a297a53062aea0578
+sha256 f05285324ba3314217b71ca55977eb477c37d2ae82dd4b94d7e19a267e5bbbea
 === created .agents/skills/commandments-backend-tell-dont-ask/reference/examples.md
-sha256 91e9295a62173e44b51900fc860684ddbe2f3fc1eea434094242ce4bb1888de8
+sha256 bd3a341716bf8c164ff6b07cdd5450b04ef5fd7a7865192e07fa98f1ba372aa2
 === created .agents/skills/commandments-backend-templates/SKILL.md
 sha256 c7e3561298d58de9f1da360f4e4fea1fb0b8f652b8e4e1d4d2705b324a40a759
 === created .agents/skills/commandments-backend-templates/reference/detectors.md

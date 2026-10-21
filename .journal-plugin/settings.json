@@ -798,6 +798,13 @@
         "help": "Indirect feature envy — a method that uses an owned object's IDENTITY as a key to look up a fact about it through a collaborator"
     },
     {
+        "key": "sin_train-wreck",
+        "title": "TrainWreck",
+        "kind": "flag",
+        "default": true,
+        "help": "`$order->customer()->address()->city()` — a chain crossing three of the project's own types, so a change three objects away reaches this caller"
+    },
+    {
         "key": "sin_type-switch",
         "title": "TypeSwitch",
         "kind": "flag",
