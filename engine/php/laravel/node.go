@@ -30,6 +30,33 @@ const (
 	Arrayable        = `Illuminate\Contracts\Support\Arrayable`
 )
 
+// CollectionTypes are Laravel's own collections: OBJECTS, so a class that hands one out hands out the thing
+// itself, and every caller holding it may push onto it, forget from it or sort it behind the class's back. A PHP
+// array returned from a getter is copied and shares nothing, which is why this rule is Laravel's and not the
+// language's.
+var CollectionTypes = []string{
+	`Illuminate\Support\Collection`,
+	`Illuminate\Database\Eloquent\Collection`,
+	`Illuminate\Support\LazyCollection`,
+}
+
+// HandsOutItsOwnCollection says whether the method's whole body hands back a Collection the class holds: one
+// statement, returning a property of `$this`, whose type is one of Laravel's collections. What the caller gets is
+// the class's own collection, and nothing tells the class what is done to it.
+func (n Node) HandsOutItsOwnCollection(typeOf func(engine.Match) string) bool {
+	body := n.Match.ChildrenIn("stmts")
+	if n.Match.Kind() != "Stmt_ClassMethod" || len(body) != 1 || body[0].Kind() != "Stmt_Return" {
+		return false
+	}
+
+	returned := body[0].Child("expr")
+	if returned.Kind() != "Expr_PropertyFetch" || !returned.Child("var").Is(engine.SelfReference) {
+		return false
+	}
+
+	return slices.Contains(CollectionTypes, strings.TrimLeft(typeOf(returned), "?\\"))
+}
+
 // BuilderTypes are the query builders a model hands out: a call on one goes to the database just as a call on
 // the model does.
 var BuilderTypes = []string{

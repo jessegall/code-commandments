@@ -8,6 +8,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`dead-event-wiring`** — An `Event::listen` on an event class no live code path can fire — a listener chain that dead-ends but reads as live wiring — `DeadEventWiringDetector`
 - **`duplicated-config-default`** — A config key whose default is stated TWICE — once in the config file, again as the reader's inline fallback — two sources of truth that drift silently — `DuplicatedConfigDefaultDetector`
 - **`facade-call`** — Laravel facade call (`Cache::`, `Log::`, `Mail::` …) — `FacadeCallDetector`
+- **`handed-out-collection`** — a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back — `HandedOutCollectionDetector`
 - **`mass-update-at-call-site`** — Bare `$model->update([...])` mass-array update at a call site — `MassUpdateAtCallSiteDetector`
 - **`model-mutation-at-call-site`** — Set-property-then-`save()` at a call site (should be an intention method) — `ModelMutationAtCallSiteDetector`
 - **`orphaned-binding`** — A container binding whose abstract nothing ever resolves — dead wiring that reads as load-bearing and survives every refactor — `OrphanedBindingDetector`

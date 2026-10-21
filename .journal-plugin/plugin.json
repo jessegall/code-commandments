@@ -903,6 +903,19 @@
             ],
             "detail": true
         },
+        "sin_handed-out-collection": {
+            "title": "HandedOutCollection",
+            "help": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back",
+            "type": "flag",
+            "default": "true",
+            "group": "backend/laravel-idioms",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_mass-update-at-call-site": {
             "title": "MassUpdateAtCallSite",
             "help": "Bare `$model->update([...])` mass-array update at a call site",

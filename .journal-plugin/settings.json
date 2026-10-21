@@ -469,6 +469,13 @@
         "help": "Laravel facade call (`Cache::`, `Log::`, `Mail::` …)"
     },
     {
+        "key": "sin_handed-out-collection",
+        "title": "HandedOutCollection",
+        "kind": "flag",
+        "default": true,
+        "help": "a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back"
+    },
+    {
         "key": "sin_mass-update-at-call-site",
         "title": "MassUpdateAtCallSite",
         "kind": "flag",

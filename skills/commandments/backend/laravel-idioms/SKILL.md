@@ -45,6 +45,8 @@ lives in one place instead of being re-typed wherever you query. And mutate a mo
       _Drop the reader's fallback and let the config file answer — or delete the key from the file and let the reader's default be the one truth._
 - [ ] Inject the dependency; never call a Laravel facade (`Cache::`, `Log::`, `Mail::`) inside a class.
       _Constructor-inject the dependency behind its interface._
+- [ ] A class keeps its own Collection: hand out something a caller cannot change, and give the class the methods callers were reaching in to use.
+      _Return `$this->lines->collect()` or `$this->lines->all()` — a copy and a plain array, neither of which the caller can change on you — and add the methods the callers were doing by hand: `addLine()`, `totalFor()`, `without($line)`. A PHP array returned from a getter is already copied, which is why this is about a Collection and not about every getter._
 - [ ] Mutate a model through an intention method; never `$model->update([...])` an anonymous array of columns at a call site.
       _An intention method on the model (`$order->markPaid()`)._
 - [ ] Mutate a model through an intention method; don't set-property-then-`save()` at a call site.
@@ -99,17 +101,17 @@ final class CatalogSettings
 }
 ```
 
-The other 11 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 12 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=backend/laravel-idioms` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `query-in-loop`, `raw-request-input`, `request-accessor-recast`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `config-read`, `container-reach`, `dead-config-key`, `dead-event-wiring`, `duplicated-config-default`, `facade-call`, `handed-out-collection`, `mass-update-at-call-site`, `model-mutation-at-call-site`, `orphaned-binding`, `query-in-loop`, `raw-request-input`, `request-accessor-recast`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 12 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 13 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

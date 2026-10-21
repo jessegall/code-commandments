@@ -226,6 +226,33 @@ public function notifyClean(string $email, string $template): void
 }
 ```
 
+### handed-out-collection
+
+a getter whose whole body returns the class's own `Collection`, untouched — a Collection is an object, so every caller holds the same one and may `push`, `forget` or `sort` it behind the class's back
+
+```php
+----------[ Bad ]----------
+
+public function crates(): Collection
+{
+    return $this->crates;
+}
+
+----------[ Good ]----------
+
+// in Shop\Dispatch\CrateManifest
+public function listed(): Collection
+{
+    return $this->crates->collect();
+}
+
+// in Shop\Dispatch\CrateManifest
+public function add(Crate $crate): void
+{
+    $this->crates->push($crate);
+}
+```
+
 ### mass-update-at-call-site
 
 Bare `$model->update([...])` mass-array update at a call site
