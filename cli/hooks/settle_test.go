@@ -30,8 +30,12 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 
 	found := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, marks)
 	raised := found.Raises(root)
-	if len(found.Found) != 1 || len(raised) != 1 || raised[0].Key != marks[0].Key(root) || len(found.Settles()) != 0 {
+	if len(found.Found) != 1 || len(raised) != 1 || raised[0].Key != "sins:shop/refund.py" || len(found.Settles()) != 0 {
 		t.Fatalf("the sinful edit raised %+v and settles %v", raised, found.Settles())
+	}
+
+	if raised[0].Brief != "1 sin in shop/refund.py" || raised[0].Detail != marks[0].ShownFrom(root) {
+		t.Errorf("the file's mark reads %q, listing %q", raised[0].Brief, raised[0].Detail)
 	}
 
 	righteous := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n"
@@ -89,12 +93,11 @@ func TestAWriteThatRepentsASinSettlesItThroughTheHook(t *testing.T) {
 	}
 }
 
-// TestASinEditedInPlaceIsRepentedAndFoundAfresh holds a sin whose own line is edited while the sin stays: its
-// flagged text changes, so its identity does, and the rule is the plain one — every sin remembered for a file
-// judged again that the judge does not find again is repented, and what it finds is raised. So the mark follows the
-// text: the old one goes green and a new one opens, and the repair settles THAT one. Carrying the old mark over
-// instead left a card nothing could ever settle whenever an edit went unseen between two judgings.
-func TestASinEditedInPlaceIsRepentedAndFoundAfresh(t *testing.T) {
+// TestASinEditedInPlaceKeepsTheFilesOneMark holds a sin whose own line is edited while the sin stays. Its identity
+// changes, so the record repents what it knew and takes up what it found; the chat does not move, because its mark
+// is the file's and the file still holds a sin. The mark is rewritten with what the file holds now, and settles
+// only when the file holds nothing.
+func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"
 	codebase := pythontest.FromSource(t, map[string]string{"shop/refund.py": sinful})
 	file := pythontest.File(t, codebase, "shop/refund.py").Path
@@ -130,21 +133,21 @@ func TestASinEditedInPlaceIsRepentedAndFoundAfresh(t *testing.T) {
 	if len(edited) != 1 || edited[0].ID(root) == firstID {
 		t.Fatalf("the edit in place did not change the sin's identity: %v", edited)
 	}
-	// The sin that was announced is not among the sins found now, so it is repented and what IS found is raised:
-	// the mark follows the text of the line it stands on. Keeping the old mark alive instead left a card nothing
-	// would ever settle whenever the plugin missed the edit between two judgings.
+	// The sin's identity changed, so the record repents the one it knew and takes up the one it found — but the
+	// chat's mark is the FILE's, and the file still holds a sin, so the mark is rewritten where it stands and
+	// nothing is settled. One card, one file, from the first sin in it to the last.
 	again := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, edited)
-	if !slices.Equal(again.Settles(), []string{raised[0].Key}) {
-		t.Errorf("the edit in place settles %v, want the mark it was found under, %v", again.Settles(), raised[0].Key)
+	if len(again.Settles()) != 0 {
+		t.Errorf("the edit in place settled %v while the file still holds a sin", again.Settles())
 	}
 
 	raisedAgain := again.Raises(root)
-	if len(raisedAgain) != 2 || raisedAgain[0].Event != "sin-found" || raisedAgain[0].Key == raised[0].Key {
+	if len(raisedAgain) != 1 || raisedAgain[0].Key != raised[0].Key || raisedAgain[0].Detail != edited[0].ShownFrom(root) {
 		t.Fatalf("the edit in place raised %+v", raisedAgain)
 	}
 
 	write("def refund(order) -> int:\n    if order.late:  # past due\n        raise ValueError(order)\n    return order.total\n")
-	if repented := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, nil); !slices.Equal(repented.Settles(), []string{raisedAgain[0].Key}) {
-		t.Errorf("the repenting edit settles %v, want %v", repented.Settles(), raisedAgain[0].Key)
+	if repented := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, nil); !slices.Equal(repented.Settles(), []string{raised[0].Key}) {
+		t.Errorf("the repenting edit settles %v, want %v", repented.Settles(), raised[0].Key)
 	}
 }

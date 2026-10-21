@@ -62,12 +62,14 @@ func TestTheAnswerIsSaidAsVersion4ReadsIt(t *testing.T) {
 		{JournalAnswer{Refuse: &refused, Whisper: &advice}, `{"answer":"refuse","reason":"the shared branch takes no edits\n\nCode Commandments — a sin","v":1}`},
 		{JournalAnswer{Whisper: &advice}, `{"answer":"tell","tell":"Code Commandments — a sin","v":1}`},
 		{
+			// A card needs a key: it is how the journal finds the card to rewrite. A raise without one says
+			// nothing the chat can hold, and the sins repented are said by their own file's card.
 			JournalAnswer{
-				Raises:   []Raise{{Event: "sin-found", Brief: "array-bag at src/A.php:3", Key: "sin:a1"}, {Event: "sin-resolved", Brief: "data-clump at src/B.php:9"}},
-				Settles:  []string{"sin:b2"},
+				Raises:   []Raise{{Event: "sin-found", Brief: "2 sins in src/A.php", Key: "sins:src/A.php", Detail: "array-bag at src/A.php:3\ndata-clump at src/A.php:9"}, {Event: "sin-resolved", Brief: "src/B.php is clean", Key: "sins:src/B.php"}, {Event: "sin-found", Brief: "unkeyed"}},
+				Settles:  []string{"sins:src/B.php"},
 				Repented: []Repented{{Key: "sin:b2", Shown: "data-clump at src/B.php:9"}},
 			},
-			`{"cards":[{"key":"sin:a1","kind":"sin-found","label":"array-bag at src/A.php:3"},{"key":"sin:b2","kind":"sin-resolved","label":"Repented: data-clump at src/B.php:9"}],"v":1}`,
+			`{"cards":[{"detail":"array-bag at src/A.php:3\ndata-clump at src/A.php:9","key":"sins:src/A.php","kind":"sin-found","label":"2 sins in src/A.php"},{"key":"sins:src/B.php","kind":"sin-resolved","label":"src/B.php is clean"}],"v":1}`,
 		},
 	}
 

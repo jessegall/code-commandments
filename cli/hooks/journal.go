@@ -157,10 +157,11 @@ func (m Moment) HookPayload() map[string]any {
 	return payload
 }
 
-// Raise is an event the plugin raises on the journal's bus, with its brief, the dashboard page it opens and the
-// key a later settlement names its chat mark by.
+// Raise is an event the plugin raises on the journal's bus, with its brief, the dashboard page it opens, the key a
+// later settlement names its chat mark by, and the detail its card holds — the sins a file's mark lists.
 type Raise struct {
 	Event, Brief, Open, Key string
+	Detail                  string
 }
 
 func (r Raise) object() *jsonfile.Object {
@@ -426,6 +427,7 @@ func (a Announced) Settle(root string, read []string, marks []SinMark) Settlemen
 
 	var found []SinMark
 	var resolvedIDs []string
+	var changed []FileSins
 	resolved := map[string]announcement{}
 
 	for _, file := range files {
@@ -486,6 +488,12 @@ func (a Announced) Settle(root string, read []string, marks []SinMark) Settlemen
 			}
 		}
 
+		// The chat gets ONE mark per file, with the sins it holds now listed in it, so thirty sins in a file are
+		// one card that is rewritten rather than thirty under each other. Nothing changed in a file nobody judged.
+		if len(leaving) > 0 || len(found) > 0 && holdsAnyOf(found, file, root) {
+			changed = append(changed, FileSins{file, inFile(now[file], holdOrder, holds)})
+		}
+
 		a.files.Set(file, kept)
 	}
 
@@ -496,7 +504,26 @@ func (a Announced) Settle(root string, read []string, marks []SinMark) Settlemen
 		repented = append(repented, Repented{resolved[id].Key, resolved[id].Shown})
 	}
 
-	return Settlement{found, repented}
+	return Settlement{found, repented, changed}
+}
+
+// holdsAnyOf says whether any of the marks found is in the file.
+func holdsAnyOf(found []SinMark, file, root string) bool {
+	return slices.ContainsFunc(found, func(mark SinMark) bool { return source.Relative(root, mark.Match.File()) == file })
+}
+
+// inFile are the sins the file holds now, in the order they were read, one per identity.
+func inFile(marks []SinMark, order []string, holds map[string]SinMark) []SinMark {
+	if len(marks) == 0 {
+		return nil
+	}
+
+	kept := make([]SinMark, 0, len(order))
+	for _, id := range order {
+		kept = append(kept, holds[id])
+	}
+
+	return kept
 }
 
 // keep writes the record, less the files that hold no sin; a record of none is an empty list, as PHP writes it.
@@ -540,34 +567,63 @@ func (a Announced) keep() {
 type Settlement struct {
 	Found    []SinMark
 	Repented []Repented
+	// Files are the judged files whose sins changed, each with every sin it holds now: the chat's one mark per
+	// file, which a later judging rewrites in place. A file with none left is one whose last sin is repented.
+	Files []FileSins
 }
 
-// Raises are the events the settlement raises: a sin found, each opening its page on the dashboard under the key
-// its chat mark is settled by, and the sins repented together.
+// FileSins is one file and every sin it holds, as the chat's mark for that file lists them.
+type FileSins struct {
+	Path string
+	Sins []SinMark
+}
+
+// Raises are the events the settlement raises: ONE per file whose sins changed, keyed by the file so a later
+// judging rewrites it where it stands, listing every sin the file holds now and opening the file's page on the
+// dashboard. A file left clean is raised as repented under that same key, which turns its mark green.
 func (s Settlement) Raises(root string) []Raise {
 	var raised []Raise
 
-	for _, mark := range s.Found {
-		raised = append(raised, Raise{"sin-found", mark.ShownFrom(root), dashboard.Opening(dashboard.StoredOf(mark.Finding(), root)), mark.Key(root)})
-	}
+	for _, file := range s.Files {
+		if len(file.Sins) == 0 {
+			raised = append(raised, Raise{Event: "sin-resolved", Brief: file.Path + " is clean", Key: fileKey(file.Path)})
 
-	if len(s.Repented) > 0 {
-		var shown []string
-		for _, sin := range s.Repented {
-			shown = append(shown, sin.Shown)
+			continue
 		}
 
-		raised = append(raised, Raise{Event: "sin-resolved", Brief: strings.Join(shown, "\n")})
+		var shown []string
+		for _, sin := range file.Sins {
+			shown = append(shown, sin.ShownFrom(root))
+		}
+
+		raised = append(raised, Raise{
+			Event:  "sin-found",
+			Brief:  file.counted(),
+			Open:   dashboard.Opening(dashboard.StoredOf(file.Sins[0].Finding(), root)),
+			Key:    fileKey(file.Path),
+			Detail: strings.Join(shown, "\n"),
+		})
 	}
 
 	return raised
 }
 
-// Settles are the keys of the chat marks the repented sins were found under.
+// counted is how a file's mark names itself: the file, and how many sins it holds.
+func (f FileSins) counted() string {
+	if len(f.Sins) == 1 {
+		return "1 sin in " + f.Path
+	}
+
+	return strconv.Itoa(len(f.Sins)) + " sins in " + f.Path
+}
+
+// Settles are the keys of the chat marks that are settled: a file's mark, once the file holds no sin.
 func (s Settlement) Settles() []string {
 	var keys []string
-	for _, sin := range s.Repented {
-		keys = append(keys, sin.Key)
+	for _, file := range s.Files {
+		if len(file.Sins) == 0 {
+			keys = append(keys, fileKey(file.Path))
+		}
 	}
 
 	return keys
@@ -616,6 +672,12 @@ func (a announcement) written(id string) any {
 // markKey is the key a sin's chat mark is raised and settled by: its identity, which an edit above it does not change.
 func markKey(id string) string {
 	return "sin:" + id
+}
+
+// fileKey is the key a file's own chat mark is raised and settled under, so every judging of that file rewrites
+// the one mark rather than adding another beside it.
+func fileKey(path string) string {
+	return "sins:" + path
 }
 
 func firstOf(values ...any) any {

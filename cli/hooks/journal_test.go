@@ -17,7 +17,7 @@ func TestAdviceIsQueuedInTheMomentsEnvironment(t *testing.T) {
 
 	answer := JournalAnswer{
 		Whisper: &whisper,
-		Raises:  []Raise{{"sin-found", "array-bag at src/A.php:3", "sins/x", "sin:a1"}, {Event: "sin-resolved", Brief: "a\nb"}},
+		Raises:  []Raise{{Event: "sin-found", Brief: "array-bag at src/A.php:3", Open: "sins/x", Key: "sin:a1"}, {Event: "sin-resolved", Brief: "a\nb"}},
 		Settles: []string{"sin:b2"},
 	}
 

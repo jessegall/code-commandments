@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"raise":[{"event":"sin-resolved","brief":"array-bag at src/Order.php:13\nnarrated-command at src/Order.php:7"}]}
+{"raise":[{"event":"sin-resolved","brief":"src/Order.php is clean","key":"sins:src/Order.php"}]}
 
 --- stderr
 

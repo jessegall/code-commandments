@@ -29,7 +29,8 @@ func TestASinOfAFileThatIsGoneIsRepented(t *testing.T) {
 		t.Errorf("found %v, repented %v", settlement.Found, settlement.Repented)
 	}
 
-	if !slices.Equal(settlement.Settles(), []string{"sin:a1"}) {
+	// The chat's mark is the file's, so a file that is gone settles one mark however many sins it held.
+	if !slices.Equal(settlement.Settles(), []string{"sins:src/Gone.php"}) {
 		t.Errorf("settles %v", settlement.Settles())
 	}
 
@@ -54,7 +55,7 @@ func TestAnotherEnvironmentNeverRepentsTheSinsAnnouncedInThisOne(t *testing.T) {
 		t.Errorf("the helper's moment settled %v", settlement.Settles())
 	}
 
-	if settlement := AnnouncedIn(data, Moment{Env: &own}).Settle(main, nil, nil); !slices.Equal(settlement.Settles(), []string{"sin:a1"}) {
+	if settlement := AnnouncedIn(data, Moment{Env: &own}).Settle(main, nil, nil); !slices.Equal(settlement.Settles(), []string{"sins:src/probe.py"}) {
 		t.Errorf("main's own moment settled %v", settlement.Settles())
 	}
 }

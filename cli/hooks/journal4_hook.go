@@ -216,8 +216,8 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 }
 
 // Line4 is the answer as version 4 of the journal reads it: a refusal with the advice beside its reason, or the
-// advice told; each sin found a card under its key, and each sin repented a card under the same key, which settles the
-// first where it stands and says which sin it was.
+// advice told; and one card per file whose sins changed, under the file's own key, so a later judging of that file
+// rewrites the card where it stands and the file left clean settles it green.
 func (a JournalAnswer) Line4() string {
 	var out bytes.Buffer
 	encoder := json.NewEncoder(&out)
@@ -242,13 +242,14 @@ func (a JournalAnswer) Shape4() map[string]any {
 
 	var cards []map[string]any
 	for _, raise := range a.Raises {
-		if raise.Key != "" {
-			cards = append(cards, map[string]any{"kind": raise.Event, "key": raise.Key, "label": raise.Brief})
+		if raise.Key == "" {
+			continue
 		}
-	}
-
-	for _, sin := range a.Repented {
-		cards = append(cards, map[string]any{"kind": "sin-resolved", "key": sin.Key, "label": "Repented: " + sin.Shown})
+		card := map[string]any{"kind": raise.Event, "key": raise.Key, "label": raise.Brief}
+		if raise.Detail != "" {
+			card["detail"] = raise.Detail
+		}
+		cards = append(cards, card)
 	}
 
 	if len(cards) > 0 {

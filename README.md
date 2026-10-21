@@ -406,6 +406,8 @@ branch is shared with, re-read only when git writes one. Judging happens on `fil
 changed, which the journal sends after its reply with the edit already recorded, so a scan never makes anyone wait;
 what it finds goes to the queue the journal drains at the agent's next hook — a folder of one file per answer, each
 the shape of an answer with the environment it is for, renamed into place so a drain never reads a half-written one.
+The chat gets **one mark per file**, keyed by the file and listing the sins it holds, which a later judging rewrites
+where it stands and which turns green when the file holds none; thirty sins in a file are one card, not thirty.
 `file_edited` is heard and never held: holding it would block the tool's result on a judge, which is the one thing
 this whole path exists to prevent. A change to the settings arrives as `plugin.updated` and is written by
 `journal-config`, as before.

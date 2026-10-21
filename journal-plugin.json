@@ -24,14 +24,14 @@
   "cards": [
     {
       "kind": "sin-found",
-      "label": "Sin found",
+      "label": "Sins in a file",
       "tone": "warn",
       "icon": "warn",
       "collapsed": true
     },
     {
       "kind": "sin-resolved",
-      "label": "Sin repented",
+      "label": "File repented",
       "tone": "good",
       "icon": "check",
       "collapsed": true

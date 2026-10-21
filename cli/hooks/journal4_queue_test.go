@@ -212,10 +212,10 @@ func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 	}
 
 	advice := "Code Commandments — a sin at src/A.php:3"
-	if err := queue.Tell(JournalAnswer{Whisper: &advice, Raises: []Raise{{Event: "sin-found", Brief: "array-bag at src/A.php:3", Key: "sin:a1"}}}, "main"); err != nil {
+	if err := queue.Tell(JournalAnswer{Whisper: &advice, Raises: []Raise{{Event: "sin-found", Brief: "1 sin in src/A.php", Key: "sins:src/A.php"}}}, "main"); err != nil {
 		t.Fatal(err)
 	}
-	if err := queue.Tell(JournalAnswer{Repented: []Repented{{Key: "sin:a1", Shown: "array-bag at src/A.php:3"}}}, "main"); err != nil {
+	if err := queue.Tell(JournalAnswer{Raises: []Raise{{Event: "sin-resolved", Brief: "src/A.php is clean", Key: "sins:src/A.php"}}}, "main"); err != nil {
 		t.Fatal(err)
 	}
 	if err := queue.Tell(JournalAnswer{}, "main"); err != nil {
@@ -239,8 +239,8 @@ func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 
 	raised, _ := first[0].(map[string]any)
 	settled, _ := second[0].(map[string]any)
-	if raised["key"] != "sin:a1" || raised["kind"] != "sin-found" || settled["key"] != raised["key"] || settled["kind"] != "sin-resolved" {
-		t.Errorf("the sin was raised as %v and settled as %v", raised, settled)
+	if raised["key"] != "sins:src/A.php" || raised["kind"] != "sin-found" || settled["key"] != raised["key"] || settled["kind"] != "sin-resolved" {
+		t.Errorf("the file's mark was raised as %v and settled as %v", raised, settled)
 	}
 }
 
@@ -397,9 +397,7 @@ func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
 		t.Fatal("the card raised carries no key, so nothing can settle it")
 	}
 
-	// The repair leaves a DIFFERENT sin in the file, which is the live shape: the edit that takes one sin out puts
-	// another in, so the answer carries a new card and must still settle the old one.
-	righteous := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n\n\ndef credit(order) -> int:\n    if order.cancelled:\n        raise ValueError(order)\n    else:\n        return order.total\n"
+	righteous := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n"
 	if err := os.WriteFile(file, []byte(righteous), 0o644); err != nil {
 		t.Fatal(err)
 	}
