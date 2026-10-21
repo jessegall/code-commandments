@@ -536,6 +536,16 @@ func (n Node) HasOwnStateSaveAndRestore() bool {
 // once at definition all the same, which is the whole of the fault.
 var mutableBuilders = []string{"list", "dict", "set", "bytearray", "collections.defaultdict", "collections.OrderedDict", "collections.Counter", "collections.deque"}
 
+// freshEveryCall are the calls whose whole purpose is to answer differently each time they run. A default that
+// calls one is evaluated once, when the def is defined, so every call that omits it is handed the first
+// answer: the timestamp of the import, one id for every record, one sample of the random.
+var freshEveryCall = []string{
+	"datetime.now", "datetime.utcnow", "datetime.today", "datetime.datetime.now", "datetime.datetime.utcnow",
+	"datetime.datetime.today", "date.today", "datetime.date.today", "time.time", "time.monotonic",
+	"time.perf_counter", "uuid.uuid1", "uuid.uuid4", "uuid1", "uuid4", "os.urandom", "random.random",
+	"random.randint", "random.choice", "secrets.token_hex", "secrets.token_urlsafe",
+}
+
 // IsMutableDefault says whether the node is a parameter whose default is a container made once, when the def is
 // defined, and shared by every call that leaves it out: a list, dict or set written out or comprehended, or one
 // built by a call to a builtin that makes one. The value then carries one caller's data into the next.
@@ -545,6 +555,18 @@ func (n Node) IsMutableDefault() bool {
 	}
 
 	return n.Default().buildsAFreshContainer()
+}
+
+// IsFrozenDefault says whether the node is a parameter defaulted to a call that answers differently every
+// time: the call runs once, when the def is defined, and every call that omits the parameter is handed that
+// first answer for the life of the process. It is the container default's twin, with the same fix.
+func (n Node) IsFrozenDefault() bool {
+	if !n.OwnerDef().Exists() || n.Kind() != "arg" {
+		return false
+	}
+	defaulted := n.Default()
+
+	return defaulted.IsCall() && slices.Contains(freshEveryCall, defaulted.Callee().DottedName())
 }
 
 // DeclaresNoBody says whether the node's own def declares a shape and no behaviour: a Protocol method or an

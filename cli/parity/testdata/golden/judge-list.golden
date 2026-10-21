@@ -233,6 +233,7 @@ exit: 0
   BlockedAwaitDetector
   ConstructorSideEffectDetector
   DivergentTwinDetector
+  FrozenDefaultDetector
   MutableDefaultDetector
   MutableStaticStateDetector
   UnreadCollaboratorDetector

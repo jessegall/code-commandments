@@ -95,6 +95,24 @@ def refund_signature_checks(secret: bytes, receipt: bytes, claimed: str) -> bool
     return signature_matches(secret, receipt, claimed)
 ```
 
+### python-frozen-default
+
+a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported
+
+```py
+----------[ Bad ]----------
+
+def stamp_receipt(order: str, at: datetime = datetime.now()) -> str:
+    return f"{order} at {at.isoformat()}"
+
+----------[ Good ]----------
+
+def stamp_receipt_now(order: str, at: datetime | None = None) -> str:
+    issued = at if at is not None else datetime.now()
+
+    return f"{order} at {issued.isoformat()}"
+```
+
 ### python-mutable-default
 
 a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it

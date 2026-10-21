@@ -174,11 +174,66 @@ func (n Node) heldCollaborators(handed []string) []string {
 }
 
 // IsStaticStateWrite says whether the statement, in a def, writes state that outlives every call: a global it
-// declares, or an attribute of its class.
+// declares, an attribute of its class, or a container the class holds and this def changes in place, which
+// every instance of the class shares without being told.
 func (n Node) IsStaticStateWrite() bool {
 	function := n.EnclosingFunction()
+	if !function.Exists() {
+		return false
+	}
+	if n.changesAContainerTheClassHolds() {
+		return true
+	}
 
-	return function.Exists() && slices.ContainsFunc(n.writtenTargets(), func(target Node) bool { return n.writesStatic(target, function) })
+	return slices.ContainsFunc(n.writtenTargets(), func(target Node) bool { return n.writesStatic(target, function) })
+}
+
+// changesAContainerTheClassHolds says whether the statement changes, in place, a container the class body
+// declares as its own: `class Desk: notes = []` and then `self.notes.append(...)` anywhere in it. The list is
+// made once, when the class is, so every instance appends to the same one and none of them is told. An
+// instance that assigns the name first has a container of its own and is no part of this.
+func (n Node) changesAContainerTheClassHolds() bool {
+	// A call is a statement only through an Expr wrapper, and `del` is the statement itself.
+	changing := n
+	if n.Kind() == "Expr" {
+		changing = n.Child("value")
+	}
+	changed, changes := changing.collectionItChanges()
+	class := n.EnclosingClass()
+	if !changes || changed.Kind() != "Attribute" || changed.RootName() != "self" {
+		return false
+	}
+	if !class.declaresAContainerNamed(changed.Name()) {
+		return false
+	}
+
+	return !class.everAssignsTheAttribute(changed.Name())
+}
+
+// declaresAContainerNamed says whether the class body itself puts a container in the attribute, rather than an
+// instance putting one there.
+func (n Node) declaresAContainerNamed(name string) bool {
+	return slices.ContainsFunc(n.ChildrenIn("body"), func(member Node) bool {
+		targets := member.ChildrenIn("targets")
+		if member.Kind() == "AnnAssign" {
+			return member.Child("target").Name() == name && member.Child("value").buildsAFreshContainer()
+		}
+
+		return member.Kind() == "Assign" && len(targets) == 1 && targets[0].Name() == name && member.Child("value").buildsAFreshContainer()
+	})
+}
+
+// everAssignsTheAttribute says whether any def of the class writes the attribute outright, which gives each
+// instance one of its own and leaves the class's container as nothing but a default.
+func (n Node) everAssignsTheAttribute(name string) bool {
+	return slices.ContainsFunc(n.Descendants(), func(node Node) bool {
+		targets := node.ChildrenIn("targets")
+		if node.Kind() != "Assign" || len(targets) != 1 {
+			return false
+		}
+
+		return targets[0].Kind() == "Attribute" && targets[0].RootName() == "self" && targets[0].Name() == name
+	})
 }
 
 // writesStatic says whether the target is static state of the def: a name it declares global, or an attribute of

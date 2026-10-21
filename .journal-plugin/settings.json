@@ -1680,6 +1680,13 @@
         "help": "two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other."
     },
     {
+        "key": "sin_python-frozen-default",
+        "title": "FrozenDefault",
+        "kind": "flag",
+        "default": true,
+        "help": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported"
+    },
+    {
         "key": "sin_python-mutable-default",
         "title": "MutableDefault",
         "kind": "flag",

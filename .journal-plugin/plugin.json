@@ -3155,6 +3155,19 @@
             ],
             "detail": true
         },
+        "sin_python-frozen-default": {
+            "title": "FrozenDefault",
+            "help": "a parameter defaulted to `datetime.now()`, `uuid4()` or another call that answers differently each time — it runs once when the def is defined, so every call that omits it gets the moment the module was imported",
+            "type": "flag",
+            "default": "true",
+            "group": "python/fix-at-the-source",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-mutable-default": {
             "title": "MutableDefault",
             "help": "a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it",
