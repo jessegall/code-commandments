@@ -18,13 +18,25 @@ Reads `commandments judge`:
 - The output a journal command reads is not a terminal, so it carries no colour and the patterns need
   no escape sequences.
 
-## The entry, once the journal takes one
+## The alias, once the manifest can name the journal that takes it
 
-Not in `journal-plugin.json` yet, on purpose: the journal refuses a manifest key it does not know, so
-adding it before the journal accepts one would fail every install. The key is `aliases` (agent-journal task
-1237, not built yet): a list whose entries each carry a name, the line, its environment, the arguments
-it passes through and its reader. An alias whose name the journal already holds is skipped with a line
-naming it, and the rest of the plugin installs:
+Not in `journal-plugin.json` yet, and for one reason: the journal's manifest reader refuses a key it
+does not know. The moment `aliases` goes in, that release of the plugin cannot be installed on a
+journal older than the one that knows the key. What protects against that is the manifest's own
+`journal` field, which the journal reads as a minimum: an older one never picks a tag asking for a
+newer journal, and keeps the release it has.
+
+Aliases ship in the journal's 4.5.0, so the block goes in with `"journal": "4.5.0"` once that release
+is out. Not before: on 4.4.x the minimum is read through the same reader that refuses the unknown key,
+so a journal still on 4.4.x would show a red card every time it checks for plugin upgrades, and a
+fresh install of our newest release would fail with `keys the journal does not know: aliases` rather
+than a word about versions. 4.5.0 reads the minimum first and says plainly what it needs. Waiting
+costs nothing, since the alias cannot run on 4.4.x anyway.
+
+The key is `aliases`: a list whose entries each carry a name, the line (relative to the plugin's
+folder, holding `{args}`), its `env`, the arguments it passes through, its `reader` and a
+`description`. An alias whose name the journal already holds is skipped with a line naming it, and the
+rest of the plugin installs:
 
 ```json
 "aliases": [
@@ -33,7 +45,8 @@ naming it, and the rest of the plugin installs:
         "line": "bin/commandments-release judge {args}",
         "env": {"COMMANDMENTS_PLAIN_PROGRESS": "1"},
         "args": ["--changes", "--branch", "<path>"],
-        "reader": "judge"
+        "reader": "judge",
+        "description": "Judge the project against its commandments and show each sin as it is found"
     }
 ]
 ```
