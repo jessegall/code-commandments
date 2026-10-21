@@ -1,13 +1,15 @@
 exit: 1
 --- stdout
 
-[1;33mpython/absence[0m  (17)
+[1;33mpython/absence[0m  (20)
   [1;36m↳ LOAD the skill `commandments-python-absence` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/basket_codes.py:8[0m  conditional  [2m[CancelledFallbackDetector][0m
+  [36mshop/bay_roster.py:23[0m  FunctionDef numbered  [2m[DeNulledFinderDetector][0m
   [36mshop/charges.py:6[0m  binary  [2m[InventedDefaultDetector][0m
   [36mshop/closing.py:11[0m  FunctionDef close_till  [2m[NullableCallbackDetector][0m
   [36mshop/couriers.py:10[0m  Param tracking  [2m[BlankStringDefaultDetector][0m
+  [36mshop/crate_registry.py:33[0m  FunctionDef find  [2m[DeNulledFinderDetector][0m
   [36mshop/exports.py:7[0m  binary  [2m[InventedDefaultDetector][0m
   [36mshop/gift_notes.py:10[0m  AnnAssign  [2m[BlankStringDefaultDetector][0m
   [36mshop/headlines.py:6[0m  Param strapline  [2m[BlankStringDefaultDetector][0m
@@ -20,9 +22,10 @@ exit: 1
   [36mshop/quantities.py:14[0m  call  [2m[CancelledFallbackDetector][0m
   [36mshop/receipts.py:15[0m  binary  [2m[InventedDefaultDetector][0m
   [36mshop/retries.py:7[0m  FunctionDef with_retries  [2m[NullableCallbackDetector][0m
+  [36mshop/run_ledger.py:29[0m  FunctionDef referenced  [2m[DeNulledFinderDetector][0m
   [36mshop/webhook_payloads.py:8[0m  starred  [2m[ConditionalSpreadDetector][0m
 
-[1m17 sins[0m across 1 skill.
+[1m20 sins[0m across 1 skill.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

@@ -62,6 +62,31 @@ def notify_all(transport, to: str, body: str, cc: str | None = None) -> None:
     transport.send(to, body, cc=cc)
 ```
 
+### python-de-nulled-finder
+
+a def annotated `X | None` whose every caller, two or more of them, turns the None into a failure where it stands — asserting it, raising on it, or reading straight through it
+
+```py
+----------[ Bad ]----------
+
+def find(self, reference: str) -> Crate | None:
+    return self.kept.get(reference)
+
+----------[ Good ]----------
+
+# in crate_registry.py
+def crate(self, reference: str) -> Crate:
+    found = self.kept.get(reference)
+    if found is None:
+        raise CrateMissing(reference)
+
+    return found
+
+# in crate_labels.py
+def labelled(self, reference: str) -> str:
+    return self.registry.crate(reference).reference
+```
+
 ### python-invented-default
 
 `f(x or "")` — an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data

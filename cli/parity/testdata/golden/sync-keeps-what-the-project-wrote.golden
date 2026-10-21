@@ -313,13 +313,13 @@ sha256 cf8762933d2c807c4872e1558093d0f5797dca893320011a92d4210efc8aa656
 === created .agents/skills/commandments-frontend-vue-control-flow/reference/examples.md
 sha256 a3ab3bdd6342f9a4088b064c2a5a97451264f8785bdf101fa1c8c5ec73619b8e
 === created .agents/skills/commandments-python-absence/SKILL.md
-sha256 dac06bbec94f8075091e8430a01b11e2ab769d7cd26ed126d54facb4e8c5480f
+sha256 8ef7ae8387207b514d2b876abe81b7617e3057d0c4779b995b08bc9505181e0e
 === created .agents/skills/commandments-python-absence/evals/triggers.json
 sha256 04a1a302e31f6a86ac93f9a8e306da499d80e9fe772f3b5d22a55d3eb94102e3
 === created .agents/skills/commandments-python-absence/reference/detectors.md
-sha256 e33aa976b95cacca4c39529b55aa07703a3a7aa79f9b6ef2b9e249dac95a09a0
+sha256 7c930f676e5dc6d6e38639752274a28e8c7a83129d4968eff89e386870972a21
 === created .agents/skills/commandments-python-absence/reference/examples.md
-sha256 3fd30ac08c4babececc6c0fd79c68fc759e8ac85beb2e0481eac10b8f111124a
+sha256 45f5bc7581403b623bf3c88eb864b5512cd1ebf3a01d0196c38e9c492fbe2b20
 === created .agents/skills/commandments-python-behaviour-per-method/SKILL.md
 sha256 cbbe221f6eaf70c22d95f411a2c57db49ce4f6363bdeef0732c2af2865055051
 === created .agents/skills/commandments-python-behaviour-per-method/evals/triggers.json

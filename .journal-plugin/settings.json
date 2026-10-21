@@ -1505,6 +1505,13 @@
         "help": "`**({\"k\": v} if v else {})` / `*([x] if x else [])` — an entry is spread in only when present, using a conditional that turns absence into an empty collection."
     },
     {
+        "key": "sin_python-de-nulled-finder",
+        "title": "DeNulledFinder",
+        "kind": "flag",
+        "default": true,
+        "help": "a def annotated `X | None` whose every caller, two or more of them, turns the None into a failure where it stands — asserting it, raising on it, or reading straight through it"
+    },
+    {
         "key": "sin_python-invented-default",
         "title": "InventedDefault",
         "kind": "flag",

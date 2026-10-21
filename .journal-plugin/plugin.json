@@ -2830,6 +2830,19 @@
             ],
             "detail": true
         },
+        "sin_python-de-nulled-finder": {
+            "title": "DeNulledFinder",
+            "help": "a def annotated `X | None` whose every caller, two or more of them, turns the None into a failure where it stands — asserting it, raising on it, or reading straight through it",
+            "type": "flag",
+            "default": "true",
+            "group": "python/absence",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
         "sin_python-invented-default": {
             "title": "InventedDefault",
             "help": "`f(x or \"\")` — an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data",

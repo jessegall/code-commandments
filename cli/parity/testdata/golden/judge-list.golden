@@ -201,6 +201,7 @@ exit: 0
   BlankStringDefaultDetector
   CancelledFallbackDetector
   ConditionalSpreadDetector
+  DeNulledFinderDetector
   InventedDefaultDetector
   NullableCallbackDetector
 [1;33mpython/behaviour-per-method[0m

@@ -5,5 +5,6 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`python-blank-string-default`** — `x: str = ""` standing in for absence — then asked `x == ""`, `not x` or `if x:` in its own scope — `BlankStringDefaultDetector`
 - **`python-cancelled-fallback`** — `(x or "") != ""` — a value defaulted to a blank only to be compared against that same blank, so a missing value and an empty one are treated the same without saying so. — `CancelledFallbackDetector`
 - **`python-conditional-spread`** — `**({"k": v} if v else {})` / `*([x] if x else [])` — an entry is spread in only when present, using a conditional that turns absence into an empty collection. — `ConditionalSpreadDetector`
+- **`python-de-nulled-finder`** — a def annotated `X | None` whose every caller, two or more of them, turns the None into a failure where it stands — asserting it, raising on it, or reading straight through it — `DeNulledFinderDetector`
 - **`python-invented-default`** — `f(x or "")` — an empty string, `0` or `False` invented to fill an argument when the value is missing, a stand-in the callee cannot tell from real data — `InventedDefaultDetector`
 - **`python-nullable-callback`** — `cb: Callable | None = None` asked `if cb is not None:` / `if cb:` / `cb or …` in the body — a no-op treated as if it might be missing. — `NullableCallbackDetector`
