@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"whisper":"Code Commandments — 2 new sins:\n  • array-bag at src/Order.php:13 — run `commandments judge src/Order.php --sin=array-bag`\n  • narrated-command at src/Order.php:7 — run `commandments judge src/Order.php --sin=narrated-command`","raise":[{"event":"sin-found","brief":"array-bag at src/Order.php:13","open":"sins/sin/array-bag/src/Order.php","key":"sin:648cb33c6b7ba4975466e56c21113fde1d929cd8"},{"event":"sin-found","brief":"narrated-command at src/Order.php:7","open":"sins/sin/narrated-command/src/Order.php","key":"sin:1807e695fad9f1171cb4439b15430c37bbc548da"}]}
+{"whisper":"Code Commandments — 2 new sins:\n  • array-bag at src/Order.php:13 — load `commandments-backend-value-objects`, run `commandments judge src/Order.php --sin=array-bag`\n  • narrated-command at src/Order.php:7 — load `commandments-backend-method-mood`, run `commandments judge src/Order.php --sin=narrated-command`","raise":[{"event":"sin-found","brief":"array-bag at src/Order.php:13","open":"sins/sin/array-bag/src/Order.php","key":"sin:648cb33c6b7ba4975466e56c21113fde1d929cd8"},{"event":"sin-found","brief":"narrated-command at src/Order.php:7","open":"sins/sin/narrated-command/src/Order.php","key":"sin:1807e695fad9f1171cb4439b15430c37bbc548da"}]}
 
 --- stderr
 
