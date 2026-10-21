@@ -61,16 +61,33 @@ func Load(root string) Project {
 		}
 	}
 
+	lists, err := readLists(dir)
+	if err != nil {
+		project.Unreadable = append(project.Unreadable, err.Error())
+	}
+
 	rules, _ := filepath.Glob(filepath.Join(dir, "*.json"))
 	sort.Strings(rules)
 
 	for _, path := range rules {
+		if filepath.Base(path) == ListsFile {
+			continue
+		}
+
 		text, err := os.ReadFile(path)
 		if err != nil {
 			continue
 		}
 
-		read, err := rule.Parse(strings.TrimSuffix(filepath.Base(path), ".json"), text, project.skill)
+		name := strings.TrimSuffix(filepath.Base(path), ".json")
+		written, err := lists.Expand(name, text)
+		if err != nil {
+			project.Unreadable = append(project.Unreadable, err.Error())
+
+			continue
+		}
+
+		read, err := rule.Parse(name, written, project.skill)
 		if err != nil {
 			project.Unreadable = append(project.Unreadable, err.Error())
 

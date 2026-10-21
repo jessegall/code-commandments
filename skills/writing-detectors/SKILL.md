@@ -181,6 +181,24 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `child:<field>` | its child filling the field, such as `child:class` |
 <!-- END: rule-checks -->
 
+**A list of words, named once.** Several rules often check against the same words, and editing that list in four
+files is how the fifth word ends up in three of them. Declare it once in `.commandments/custom/lists.json` — the
+one file in that folder that is not a rule — and name it where the words would go:
+
+```json
+{ "poetry": ["ephemeral", "sublime", "liminal"] }
+```
+
+```json
+{"nameIn": ["$poetry", "plain"]}            // the whole list among a check's words
+{"nameMatches": "^(${poetry})$"}            // and inside a pattern, each word quoted so a dot is a dot
+{"nameMatches": "(?i)^(${poetry})$"}        // the same words, any case, which is the regexp's own business
+```
+
+A rule is written out before it is read, so every check that takes words or a pattern takes a list without knowing
+lists exist. A rule naming a list the project has not declared is refused by name, with the lists it does have,
+rather than running against nothing and passing everything.
+
 A **type name** — in `extends`, `extendsAny`, `implements` and `hasAnnotation` — is matched by the symbol it
 resolves to when it is qualified (`App\Http\Controller`, `shop.models.Base`, `N.IOther`), and by its last
 part when it is bare (`Controller`). A type the scan cannot resolve is matched by what it says. In C#,
