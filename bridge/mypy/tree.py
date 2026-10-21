@@ -613,6 +613,10 @@ def stream(session: Session, paths: list[str], write: list[str], python: str | N
 
 
 def emit(lines: Iterator[dict]) -> None:
+    # A source whose bytes are not UTF-8 reaches us as lone surrogates, which UTF-8 cannot carry back out: one
+    # such file used to raise mid-stream and cost us every file after it. They are replaced, so that file loses
+    # a character of text and every other is still read.
+    sys.stdout.reconfigure(errors="replace")
     for line in lines:
         sys.stdout.write(json.dumps(line, ensure_ascii=False, separators=(",", ":"), default=to_json) + "\n")
     sys.stdout.flush()

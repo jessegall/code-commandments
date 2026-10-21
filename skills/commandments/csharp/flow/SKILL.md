@@ -78,6 +78,8 @@ or extract the inner block into a method named for what it decides.
 
 - [ ] Check for a missing collection at the top with an early return, so the loop runs over something that is there.
       _Write `if (items is null) { return; }` above the loop — or better, make the collection non-nullable where it comes from._
+- [ ] Never change the collection a `foreach` walks while it walks it: decide inside the loop and change afterwards.
+      _Collect what the loop decided in a list of its own and apply it after the loop, or walk a copy (`foreach (var item in items.ToList())`) when the change must happen as it goes._
 - [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a method.
       _Guard the outer levels away (`return`/`continue` past what does not apply), let LINQ do the inner iteration, or extract the inner block into a method named for what it decides._
 - [ ] Check at the top and throw there; don't hide a `?? throw` inside the expression that does the work.
@@ -134,17 +136,17 @@ public static List<string> GuardedLines(List<string>? skus)
 }
 ```
 
-The other 7 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 8 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-coalesced-loop-subject`, `deep-csharp-nesting`, `csharp-inline-throw`, `csharp-loop-wrapped-in-if`, `csharp-nested-ternary`, `csharp-non-counting-for`, `redundant-csharp-else`, `csharp-subject-ladder`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-coalesced-loop-subject`, `csharp-collection-mutated-while-iterated`, `deep-csharp-nesting`, `csharp-inline-throw`, `csharp-loop-wrapped-in-if`, `csharp-nested-ternary`, `csharp-non-counting-for`, `redundant-csharp-else`, `csharp-subject-ladder`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -673,3 +673,100 @@ func (n Node) BranchingDepth() int {
 func (n Node) IsInTest() bool {
 	return n.Exists() && n.Source().Test
 }
+
+// collectionMutators are the methods that change a collection's contents or its order in place. Calling one on
+// the collection a foreach is walking moves it under the enumerator, which then throws on the next read.
+var collectionMutators = []string{"Add", "AddRange", "Insert", "InsertRange", "Remove", "RemoveAt", "RemoveAll", "RemoveRange", "Clear", "Sort", "Reverse", "Enqueue", "Dequeue", "Push", "Pop", "TryAdd", "TryRemove"}
+
+// ChangesTheCollectionItsLoopWalks says whether the call changes, in place, the very collection a foreach around
+// it is walking: one of the methods that change a collection, on an expression written exactly as that loop's
+// own subject, or as a mapping whose keys or values it walks. The enumerator then reads a collection that has
+// moved, which is an InvalidOperationException. Walking a copy, `ToList()` or `ToArray()`, is a different
+// expression and is left alone, as is a change that leaves the loop the moment it is made.
+func (n Node) ChangesTheCollectionItsLoopWalks() bool {
+	changed := n.At(0).At(0)
+	if !n.IsCall() || !n.At(0).Is("SimpleMemberAccessExpression") || !slices.Contains(collectionMutators, n.At(0).ReferencedName()) {
+		return false
+	}
+	loop, walked := n.loopWalking(changed)
+	if !walked {
+		return false
+	}
+
+	return !n.leavesThatLoopAtOnce(loop)
+}
+
+// loopWalking is the foreach around the node that walks the given collection, and whether one does. The node has
+// to sit in the loop's body: a change made in the subject itself runs once, before the walk.
+func (n Node) loopWalking(collection Node) (Node, bool) {
+	for held, loop := n, n.Parent(); loop.Exists(); held, loop = loop, loop.Parent() {
+		if !loop.Is("ForEachStatement", "ForEachVariableStatement") || held.IsExpression() {
+			continue
+		}
+		if walked, walks := loop.Expressions()[0].collectionWalkedLive(); walks && walked.SameSyntax(collection.Match) {
+			return loop, true
+		}
+	}
+
+	return Node{}, false
+}
+
+// collectionWalkedLive is the collection a foreach's subject reads as it goes, and whether it reads one live:
+// the collection itself, or a mapping's Keys or Values, which are views onto it rather than copies of it. A
+// concurrent collection answers none: its enumerator is a snapshot taken when the walk starts, so changing it
+// mid-walk is what the type is for and the pruning loop that does it is correct.
+func (n Node) collectionWalkedLive() (Node, bool) {
+	if n.Is("SimpleMemberAccessExpression") && slices.Contains([]string{"Keys", "Values"}, n.ReferencedName()) {
+		return n.At(0).collectionWalkedLive()
+	}
+	if strings.Contains(n.Type().Name(), "System.Collections.Concurrent.") {
+		return Node{}, false
+	}
+
+	return n, n.Is("IdentifierName", "SimpleMemberAccessExpression")
+}
+
+// leavesThatLoopAtOnce says whether control cannot reach the loop's enumerator again once the node has run: the
+// block holding it ends by leaving, with a return, a throw or a break out of that very loop. A find-and-remove
+// that breaks the moment it has removed reads nothing more, so the collection moving costs it nothing.
+func (n Node) leavesThatLoopAtOnce(loop Node) bool {
+	block := n.statementsHolding()
+	if len(block) == 0 {
+		return false
+	}
+
+	return block[len(block)-1].leaves(loop)
+}
+
+// statementsHolding is the statements of the innermost block the node sits in, in source order.
+func (n Node) statementsHolding() []Node {
+	for held := n; held.Exists(); held = held.Parent() {
+		if held.Parent().Is("Block") {
+			return held.Parent().Children()
+		}
+	}
+
+	return nil
+}
+
+// leaves says whether the statement hands control out of the loop for good: a return or a throw leaves the
+// method around it, and a break leaves the loop it sits in. A continue goes back to the enumerator, so it does
+// not leave at all.
+func (n Node) leaves(loop Node) bool {
+	if n.Is("ReturnStatement", "ThrowStatement", "YieldBreakStatement") {
+		return true
+	}
+
+	return n.Is("BreakStatement") && n.nearestLoop().Node() == loop.Node()
+}
+
+// nearestLoop is the innermost loop around the node; no node outside one.
+func (n Node) nearestLoop() Node {
+	for loop := n.Parent(); loop.Exists(); loop = loop.Parent() {
+		if loop.IsLoop() {
+			return loop
+		}
+	}
+
+	return Node{}
+}

@@ -1106,6 +1106,13 @@
         "help": "a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header"
     },
     {
+        "key": "sin_csharp-collection-mutated-while-iterated",
+        "title": "CollectionMutatedWhileIterated",
+        "kind": "flag",
+        "default": true,
+        "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException"
+    },
+    {
         "key": "sin_csharp-inline-throw",
         "title": "InlineThrow",
         "kind": "flag",
@@ -1615,6 +1622,13 @@
         "kind": "flag",
         "default": true,
         "help": "`for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard"
+    },
+    {
+        "key": "sin_python-collection-mutated-while-iterated",
+        "title": "CollectionMutatedWhileIterated",
+        "kind": "flag",
+        "default": true,
+        "help": "a loop that appends to, removes from or deletes out of the very collection it walks — the iterator reads a sequence that moved under it, so an element is skipped or it raises"
     },
     {
         "key": "sin_python-conditional-statement",

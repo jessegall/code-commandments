@@ -41,6 +41,37 @@ public static List<string> GuardedLines(List<string>? skus)
 }
 ```
 
+### csharp-collection-mutated-while-iterated
+
+a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException
+
+```cs
+----------[ Bad ]----------
+
+public static List<string> Restock(List<string> shelves, IReadOnlyCollection<string> below)
+{
+    foreach (var shelf in shelves)
+    {
+        if (below.Contains(shelf))
+        {
+            shelves.Add($"{shelf}-reserve");
+        }
+    }
+
+    return shelves;
+}
+
+----------[ Good ]----------
+
+public static List<string> Restocked(List<string> shelves, IReadOnlyCollection<string> below)
+{
+    var reserves = shelves.Where(shelf => below.Contains(shelf)).Select(shelf => $"{shelf}-reserve").ToList();
+    shelves.AddRange(reserves);
+
+    return shelves;
+}
+```
+
 ### deep-csharp-nesting
 
 An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops

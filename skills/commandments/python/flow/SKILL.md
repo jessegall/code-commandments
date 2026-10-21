@@ -70,6 +70,8 @@ iteration, or extract the inner block into a function named for what it decides.
 
 - [ ] State an absent collection at the top as a guard; don't bury `or []` or `.get(k, [])` in a `for` header.
       _Return early when the collection is absent — or make the caller always hand one over — so the loop walks something that is there._
+- [ ] Never change the collection a loop walks while it walks it: decide inside the loop and change afterwards.
+      _Collect what the loop decided in a list of its own and apply it after the loop, or walk a copy (`for item in list(items):`) when the change must happen as it goes._
 - [ ] Choose an action with `if`/`else`; a conditional expression chooses a value, so never write one whose value nothing reads.
       _An `if x:` with each side as its own body — and no `else` at all when one side was `None`._
 - [ ] Flatten with guard clauses and extraction — never bury a choice four deep inside a function.
@@ -119,17 +121,17 @@ def descendants_of(below: defaultdict, parent: str) -> list:
     return found
 ```
 
-The other 7 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 8 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `python-conditional-statement`, `deep-python-nesting`, `python-loop-wrapped-in-if`, `python-nested-conditional`, `redundant-python-else`, `python-short-circuit-statement`, `python-subject-ladder`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `python-collection-mutated-while-iterated`, `python-conditional-statement`, `deep-python-nesting`, `python-loop-wrapped-in-if`, `python-nested-conditional`, `redundant-python-else`, `python-short-circuit-statement`, `python-subject-ladder`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

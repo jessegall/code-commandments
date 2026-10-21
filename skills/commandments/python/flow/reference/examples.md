@@ -34,6 +34,26 @@ def descendants_of(below: defaultdict, parent: str) -> list:
     return found
 ```
 
+### python-collection-mutated-while-iterated
+
+a loop that appends to, removes from or deletes out of the very collection it walks — the iterator reads a sequence that moved under it, so an element is skipped or it raises
+
+```py
+----------[ Bad ]----------
+
+def sweep(reservations: dict[str, int]) -> None:
+    for code in reservations.keys():
+        if reservations[code] == EXPIRED:
+            del reservations[code]
+
+----------[ Good ]----------
+
+def sweep_expired(reservations: dict[str, int]) -> None:
+    expired = [code for code, left in reservations.items() if left == EXPIRED]
+    for code in expired:
+        del reservations[code]
+```
+
 ### python-conditional-statement
 
 a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an action, not a value.

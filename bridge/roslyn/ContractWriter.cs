@@ -596,14 +596,22 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
             json.WriteString("symbol", original.ToDisplayString(Readings.Declared));
             json.WriteString("type", original.ContainingType.ToDisplayString(Readings.Qualified));
             json.WriteString("name", original.Name);
-            json.WriteStartArray("parameters");
 
-            foreach (var parameter in method.Parameters)
+            // A parameter whose type has no spelling, one read from metadata among them, would be written as the
+            // empty string: the contract refuses it, and the whole stream with it. The list is read by position,
+            // so a short one would answer the wrong type for every parameter after the gap; it is left out whole.
+            if (method.Parameters.All(parameter => IsSpelled(parameter.Type)))
             {
-                json.WriteStringValue(parameter.Type.ToDisplayString(Readings.Qualified));
+                json.WriteStartArray("parameters");
+
+                foreach (var parameter in method.Parameters)
+                {
+                    json.WriteStringValue(parameter.Type.ToDisplayString(Readings.Qualified));
+                }
+
+                json.WriteEndArray();
             }
 
-            json.WriteEndArray();
             json.WriteEndObject();
             run.Remember(original.ContainingType);
         }

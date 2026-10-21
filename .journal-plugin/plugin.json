@@ -2086,6 +2086,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-collection-mutated-while-iterated": {
+            "title": "CollectionMutatedWhileIterated",
+            "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/flow",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-inline-throw": {
             "title": "InlineThrow",
             "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work",
@@ -3028,6 +3041,19 @@
         "sin_python-coalesced-loop-subject": {
             "title": "CoalescedLoopSubject",
             "help": "`for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard",
+            "type": "flag",
+            "default": "true",
+            "group": "python/flow",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-collection-mutated-while-iterated": {
+            "title": "CollectionMutatedWhileIterated",
+            "help": "a loop that appends to, removes from or deletes out of the very collection it walks — the iterator reads a sequence that moved under it, so an element is skipped or it raises",
             "type": "flag",
             "default": "true",
             "group": "python/flow",

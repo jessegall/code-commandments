@@ -134,6 +134,7 @@ exit: 0
   MutableStaticStateDetector
 [1;33mcsharp/flow[0m
   CoalescedLoopSubjectDetector
+  CollectionMutatedWhileIteratedDetector
   DeepNestingDetector
   InlineThrowDetector
   LoopWrappedInIfDetector
@@ -224,6 +225,7 @@ exit: 0
   MutableStaticStateDetector
 [1;33mpython/flow[0m
   CoalescedLoopSubjectDetector
+  CollectionMutatedWhileIteratedDetector
   ConditionalStatementDetector
   DeepNestingDetector
   LoopWrappedInIfDetector

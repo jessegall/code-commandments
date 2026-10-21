@@ -3,6 +3,7 @@
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
 - **`python-coalesced-loop-subject`** — `for x in d.get(k, [])` / `for x in y or []` over a parameter — whether the caller handed anything over, decided in the loop header instead of stated as a guard — `CoalescedLoopSubjectDetector`
+- **`python-collection-mutated-while-iterated`** — a loop that appends to, removes from or deletes out of the very collection it walks — the iterator reads a sequence that moved under it, so an element is skipped or it raises — `CollectionMutatedWhileIteratedDetector`
 - **`python-conditional-statement`** — a bare `a() if x else b()` statement — a conditional expression whose value nothing reads, so it chooses an action, not a value. — `ConditionalStatementDetector`
 - **`deep-python-nesting`** — An `if`, loop or `match` opening a fourth level of choices inside one Python function — an arrow of conditions and loops — `DeepNestingDetector`
 - **`python-loop-wrapped-in-if`** — A `for` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition — `LoopWrappedInIfDetector`

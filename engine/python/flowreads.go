@@ -1,6 +1,10 @@
 package python
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/jessegall/code-commandments/engine"
+)
 
 // Fallback is the value the expression falls back to when its subject is missing: `d` in `x or d`,
 // `x if x else d`, `x if x is not None else d` and `m.get(k, d)`. None for any other expression, and for
@@ -223,6 +227,133 @@ func (n Node) ComparisonSubject() (Node, bool) {
 		return left, true
 	case left.Kind() == "Constant" && right.Kind() != "Constant":
 		return right, true
+	}
+
+	return Node{}, false
+}
+
+// containerMutators are the methods of a builtin list, dict or set that change it in place. Calling one on the
+// collection a loop is walking moves the sequence under the iterator mid-walk.
+var containerMutators = []string{"append", "extend", "insert", "remove", "pop", "clear", "add", "discard", "update", "setdefault", "popitem"}
+
+// ChangesTheCollectionItsLoopWalks says whether the node changes, in place, the very collection a loop around it
+// is walking: a method that changes a builtin container, or a `del` of one of its items, on an expression written
+// exactly as that loop's own subject. The iterator then reads a sequence that has moved under it, so the loop
+// skips an element, sees one twice, or raises. Walking a copy is a different expression and is left alone.
+func (n Node) ChangesTheCollectionItsLoopWalks() bool {
+	changed, changes := n.collectionItChanges()
+	if !changes || !changed.namesOneCollection() {
+		return false
+	}
+	loop, walked := n.loopWalking(changed)
+	if !walked {
+		return false
+	}
+
+	return !n.leavesThatLoopAtOnce(loop)
+}
+
+// collectionItChanges is the collection the node changes in place, and whether it changes one at all.
+func (n Node) collectionItChanges() (Node, bool) {
+	if n.IsCall() && slices.Contains(containerMutators, n.Callee().Name()) {
+		return n.Callee().Child("value"), true
+	}
+	if n.Kind() == "Delete" && len(n.ChildrenIn("targets")) == 1 {
+		return n.ChildrenIn("targets")[0].subscripted()
+	}
+
+	return Node{}, false
+}
+
+// subscripted is the collection an item access reads from, and whether the node is one.
+func (n Node) subscripted() (Node, bool) {
+	if n.Kind() != "Subscript" {
+		return Node{}, false
+	}
+
+	return n.Child("value"), true
+}
+
+// namesOneCollection says whether the expression names a collection that outlives the statement: a local or a
+// field, never a fresh list a call or a slice just built, which is the whole of walking a copy.
+func (n Node) namesOneCollection() bool {
+	return slices.Contains([]string{"Name", "Attribute"}, n.Kind())
+}
+
+// collectionViews are the builtins that hand out a view of a collection rather than a copy of it, and the
+// methods a mapping answers its own entries with. A loop over one of these walks the live collection, so
+// changing that collection changes what the loop has left to read.
+var collectionViews, mappingViews = []string{"enumerate", "reversed", "iter"}, []string{"items", "keys", "values"}
+
+// loopWalking is the loop around the node that walks the given collection, and whether one does, through a view
+// of it as well as directly. The node has to sit in the loop's own body: a for's `else` runs once the walk is
+// over, so a collection changed there is read by nobody.
+func (n Node) loopWalking(collection Node) (Node, bool) {
+	for held, loop := n, n.Parent(); loop.Exists(); held, loop = loop, loop.Parent() {
+		walked, walks := loop.Child("iter").collectionWalkedLive()
+		if walks && held.Node().Field == "body" && walked.SameSyntax(collection.Match) {
+			return loop, true
+		}
+	}
+
+	return Node{}, false
+}
+
+// leavesThatLoopAtOnce says whether control cannot reach the loop's iterator again once the node has run: the
+// block holding it ends by leaving, with a return, a raise or a break out of that very loop. A find-and-remove
+// that returns the moment it has removed reads nothing more, so the sequence moving under the iterator costs it
+// nothing, and it is how the work is written in Python.
+func (n Node) leavesThatLoopAtOnce(loop Node) bool {
+	block := n.blockHolding()
+	if len(block) == 0 {
+		return false
+	}
+
+	return block[len(block)-1].leaves(loop)
+}
+
+// blockHolding is the statements of the innermost block the node sits in, in source order.
+func (n Node) blockHolding() []Node {
+	for held := n; held.Exists(); held = held.Parent() {
+		if field := held.Node().Field; slices.Contains([]string{"body", "orelse", "finalbody"}, field) {
+			return held.Parent().ChildrenIn(field)
+		}
+	}
+
+	return nil
+}
+
+// leaves says whether the statement hands control out of the loop for good: a return or a raise leaves the
+// function around it, and a break leaves the loop it sits in.
+func (n Node) leaves(loop Node) bool {
+	if slices.Contains([]string{"Return", "Raise"}, n.Kind()) {
+		return true
+	}
+
+	return n.Kind() == "Break" && n.nearestLoop().Node() == loop.Node()
+}
+
+// nearestLoop is the innermost loop around the node; no node outside one.
+func (n Node) nearestLoop() Node {
+	return Node{n.Closest(engine.Loop)}
+}
+
+// collectionWalkedLive is the collection a loop's subject reads as it goes, and whether it reads one live: the
+// collection written as itself, or a view over it. `list(items)`, `sorted(items)` and `items[:]` build a
+// sequence of their own, which is how a loop walks a collection it means to change, so neither answers one.
+func (n Node) collectionWalkedLive() (Node, bool) {
+	if n.namesOneCollection() {
+		return n, true
+	}
+	if !n.IsCall() {
+		return Node{}, false
+	}
+	callee, arguments := n.Callee(), n.Arguments()
+	if slices.Contains(collectionViews, callee.DottedName()) && len(arguments) == 1 {
+		return arguments[0].collectionWalkedLive()
+	}
+	if slices.Contains(mappingViews, callee.Name()) && callee.Kind() == "Attribute" && len(arguments) == 0 {
+		return callee.Child("value").collectionWalkedLive()
 	}
 
 	return Node{}, false

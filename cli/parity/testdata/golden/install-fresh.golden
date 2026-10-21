@@ -236,13 +236,13 @@ sha256 2925e13c7b9be911446fb5a5127c1a52511f777d662cebc0a48483c433f7690b
 === created .agents/skills/commandments-csharp-fix-at-the-source/reference/examples.md
 sha256 be82559c640b1f52dd5ae5ab749d3fdbaa02096f93a857c2869085ee4ff64747
 === created .agents/skills/commandments-csharp-flow/SKILL.md
-sha256 6a2771190ae34e0f0c135ff24266a890c268af3ba71ca5ee843ada8ece51e0c5
+sha256 97c02383b63ceeec5168ca0c21e2629fc511c1bf3892dfa80202aeeb0b67ad1a
 === created .agents/skills/commandments-csharp-flow/evals/triggers.json
 sha256 a9182138fe4601cd05a262dd97848783883fd245ae22326c0cb21dd05155a2f1
 === created .agents/skills/commandments-csharp-flow/reference/detectors.md
-sha256 8e0d06f3f93b9576e8ed77088cca150e5905b459d805864ebc457edaad3d3336
+sha256 1510dfbf82110b914a60a656c224a14f82ac5cff1f9eea485a8a44a6e8f72e96
 === created .agents/skills/commandments-csharp-flow/reference/examples.md
-sha256 86712123edc931debed95fe8b23ebc8a8cad4eecee7311e389addf7947720709
+sha256 e414065b50b64ee3c8c8a0075f8e64576d0fbb1087c79dd52fb9afa9dc14b48b
 === created .agents/skills/commandments-csharp-method-mood/SKILL.md
 sha256 f92173572bd8a65aa21b2d3c94876f1b5121048110bfec2a0814d6087a643245
 === created .agents/skills/commandments-csharp-method-mood/evals/triggers.json
@@ -382,13 +382,13 @@ sha256 d37ef44585d4e6a3600ef0c223b16002d0957f979a9e1697bf63463d05175c82
 === created .agents/skills/commandments-python-fix-at-the-source/reference/examples.md
 sha256 3ca4672bb03a21bc6b499411a6473a0d9a96b088aac07ec56357b8ea421cb89f
 === created .agents/skills/commandments-python-flow/SKILL.md
-sha256 ffb92550248937a2fc37cd94a0c273940fae24038d45e1a11c00c82c2a3f0afd
+sha256 39e0b6ac7603ad3e113b3fda2f1fe0632864ffc62e15f753d4e594a91feb819a
 === created .agents/skills/commandments-python-flow/evals/triggers.json
 sha256 b6fc5e492ba1ab37cbe9445b72c22c54723582a1fbf1c485b479fbb6650c5934
 === created .agents/skills/commandments-python-flow/reference/detectors.md
-sha256 19658e3993618e496ada68498efa78c8498a3b6e38abcc54a603f7c8f9106aff
+sha256 a3fbf4b1461d625199ba2b084e821ea26771dc35bfb309993347879a9d1d30d5
 === created .agents/skills/commandments-python-flow/reference/examples.md
-sha256 1272cecd174794f669c6ae82cba28d80af88f5f7d365e4df69971855efab8205
+sha256 75ba2a69890cbfa37a64de87324ae80811ea1cb426b271470f97433c5c1ba62e
 === created .agents/skills/commandments-python-method-mood/SKILL.md
 sha256 2d1645796b9ee6f2ef18b2ad2e0af7b87a3a0506879df6f2a91d5755329445e0
 === created .agents/skills/commandments-python-method-mood/evals/triggers.json
