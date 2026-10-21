@@ -1008,3 +1008,100 @@ func (n Node) ParameterPosition(name string) int {
 
 	return -1
 }
+
+// mutableCollections are the types that say "a collection anyone may change": handing one of a class's own back
+// is handing the insides out. IReadOnlyList, IReadOnlyDictionary, IEnumerable and ImmutableArray say the
+// opposite and are how a getter gives its collection away safely.
+var mutableCollections = []string{"List", "Dictionary", "HashSet", "SortedSet", "SortedDictionary", "Queue", "Stack", "LinkedList", "Collection", "ObservableCollection", "IList", "IDictionary", "ISet", "ICollection"}
+
+// HandsOutItsOwnCollection says whether the node is a property or a method whose whole body returns one of its
+// type's own mutable collections, untouched: every caller then holds the insides and may add to or take from
+// them without asking, so the type cannot keep its own invariant and does not know when it is broken.
+func (n Node) HandsOutItsOwnCollection() bool {
+	// A property writes its type in the `Type` slot and a method in `ReturnType`; both answer with the one the
+	// node actually carries.
+	written := n.Child("Type")
+	if !written.Exists() {
+		written = n.Child("ReturnType")
+	}
+	if !n.Is("PropertyDeclaration", "MethodDeclaration") || !slices.Contains(mutableCollections, written.Name()) {
+		return false
+	}
+	returned := n.handedBack()
+	if !returned.Exists() {
+		return false
+	}
+	if n.EnclosingType().isAChainThatBuildsIt(n) {
+		return false
+	}
+
+	return n.EnclosingType().keepsACollectionIn(returned.Name())
+}
+
+// isAChainThatBuildsIt says whether the type is a chain whose only purpose is to assemble the collection the
+// node hands over: every other method of it answers with the type itself, and more than one does, so there is
+// nothing a caller can do with the type but chain into it and then take what it built. Handing the collection
+// over is the whole point, and the type keeps no invariant after it. One chainable method is a wither on a
+// value object, which does keep one, so a chain takes two.
+func (n Node) isAChainThatBuildsIt(getter Node) bool {
+	own, chained := 0, 0
+	for _, member := range n.Descendants() {
+		if !member.Is("MethodDeclaration", "PropertyDeclaration") || member.Node() == getter.Node() {
+			continue
+		}
+		own++
+		if member.Child("ReturnType").Name() == n.Name() || member.Child("Type").Name() == n.Name() {
+			chained++
+		}
+	}
+
+	return chained > 1 && chained == own
+}
+
+// handedBack is the field a property or method hands back whole, and nothing else: `this.notes`, or `notes`
+// where a field of that name is the only thing it could be. No node for a body that does anything at all with
+// what it returns, a copy among it.
+func (n Node) handedBack() Node {
+	returned := n.returnedWhole()
+	if returned.Is("SimpleMemberAccessExpression") && returned.At(0).Is("ThisExpression") {
+		return returned.At(1)
+	}
+	if returned.Is("IdentifierName") {
+		return returned
+	}
+
+	return Node{}
+}
+
+// returnedWhole is the one expression a property or method answers with, whether written as an arrow or as a
+// body whose only statement is a return; no node for anything longer.
+func (n Node) returnedWhole() Node {
+	if arrow := n.firstChild("ArrowExpressionClause"); arrow.Exists() {
+		return arrow.At(0)
+	}
+	body := n.firstChild("Block")
+	statements := body.Children()
+	if len(statements) != 1 || !statements[0].Is("ReturnStatement") {
+		return Node{}
+	}
+
+	return statements[0].Expressions()[0]
+}
+
+// keepsACollectionIn says whether the type declares a field of that name holding a collection of its own: one
+// it builds itself, so what a getter hands out is the type's own insides and not something it was lent.
+func (n Node) keepsACollectionIn(name string) bool {
+	return slices.ContainsFunc(n.Descendants(), func(member Node) bool {
+		declarator := member.firstChild("VariableDeclaration").firstChild("VariableDeclarator")
+
+		return member.Is("FieldDeclaration") && declarator.Name() == name && declarator.buildsItsOwn()
+	})
+}
+
+// buildsItsOwn says whether the field is given a collection the type makes, rather than one handed to it.
+func (n Node) buildsItsOwn() bool {
+	value := n.firstChild("EqualsValueClause")
+
+	return value.Exists() && value.At(0).Is("ObjectCreationExpression", "ImplicitObjectCreationExpression", "CollectionExpression", "ArrayCreationExpression", "ImplicitArrayCreationExpression")
+}
+

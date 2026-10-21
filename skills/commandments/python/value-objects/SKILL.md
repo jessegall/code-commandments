@@ -62,6 +62,8 @@ waiting to be named. Give them one type and pass that.
       _A `@dataclass(frozen=True)` for the result, built where it is returned — or a `TypedDict` when a dict must cross a boundary._
 - [ ] Derive a changed dataclass with `dataclasses.replace`, naming only what changes; don't re-list every field by hand.
       _`return replace(self, status="paid")` — a field added later needs no change here._
+- [ ] A class keeps its own collection: hand out something a caller cannot change, or a copy, never the thing itself.
+      _Return a `tuple(...)`, a `list(...)` copy, or annotate the return as a `Sequence`/`Mapping` so the caller cannot change what it holds; and give the class the methods callers were reaching in to do._
 - [ ] Make a value immutable: build it complete and derive a new one to change it; never write its fields after construction.
       _`@dataclass(frozen=True)` and `return replace(self, amount=…)` from the method that changed it._
 - [ ] Return a named result — a frozen dataclass or a NamedTuple — not a tuple of different things the caller unpacks by position.
@@ -102,17 +104,17 @@ class OpenWeekday:
         return f"{self.name}: {self.hours.opens}-{self.hours.closes}"
 ```
 
-The other 7 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 8 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/value-objects` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coupled-fields`, `python-data-clump`, `python-dict-bag`, `python-dict-return-bag`, `python-hand-rolled-replace`, `python-mutable-value-object`, `python-positional-tuple-return`, `python-raw-decoded-return`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coupled-fields`, `python-data-clump`, `python-dict-bag`, `python-dict-return-bag`, `python-hand-rolled-replace`, `python-handed-out-collection`, `python-mutable-value-object`, `python-positional-tuple-return`, `python-raw-decoded-return`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 8 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

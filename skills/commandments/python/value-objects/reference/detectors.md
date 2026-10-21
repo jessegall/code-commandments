@@ -7,6 +7,7 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`python-dict-bag`** — A parameter typed as a dict read by string keys — `row["sku"]`, `row.get("quantity")` — a record nobody declared — `DictBagDetector`
 - **`python-dict-return-bag`** — `return {"total": …, "tax": …}` — a record of several fields handed back as a dict its callers read by string key — `DictReturnBagDetector`
 - **`python-hand-rolled-replace`** — `return Order(self.number, self.lines, self.note, "paid")` in a dataclass — every field re-listed to change one — `HandRolledReplaceDetector`
+- **`python-handed-out-collection`** — a getter whose whole body returns the class's own `list`, `dict` or `set`, untouched — every caller holds the insides and may add to or take from them without the class knowing — `HandedOutCollectionDetector`
 - **`python-mutable-value-object`** — a dataclass whose own methods write the fields it was built from after construction — a value that changes under everyone holding it — `MutableValueObjectDetector`
 - **`python-positional-tuple-return`** — `return net, vat, currency` — a bundle of different things the caller must unpack by position, where a reordering breaks silently — `PositionalTupleReturnDetector`
 - **`python-raw-decoded-return`** — `return json.loads(…)` — decoded text from outside handed on as bare dicts and lists, its shape known to no type — `RawDecodedReturnDetector`

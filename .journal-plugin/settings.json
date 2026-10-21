@@ -1316,6 +1316,13 @@
         "help": "A string-keyed dictionary or JSON object read by keys written in the source — `row[\"sku\"]`, `json.GetProperty(\"name\")` — a record nobody declared"
     },
     {
+        "key": "sin_csharp-handed-out-collection",
+        "title": "HandedOutCollection",
+        "kind": "flag",
+        "default": true,
+        "help": "a property or method whose whole body returns the type's own `List`, `Dictionary` or `HashSet`, untouched — every caller holds the insides and may add to or take from them without the type knowing"
+    },
+    {
         "key": "sin_csharp-mutable-value-object",
         "title": "MutableValueObject",
         "kind": "flag",
@@ -1909,6 +1916,13 @@
         "kind": "flag",
         "default": true,
         "help": "`return Order(self.number, self.lines, self.note, \"paid\")` in a dataclass — every field re-listed to change one"
+    },
+    {
+        "key": "sin_python-handed-out-collection",
+        "title": "HandedOutCollection",
+        "kind": "flag",
+        "default": true,
+        "help": "a getter whose whole body returns the class's own `list`, `dict` or `set`, untouched — every caller holds the insides and may add to or take from them without the class knowing"
     },
     {
         "key": "sin_python-mutable-value-object",

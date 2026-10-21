@@ -466,3 +466,49 @@ func (n Node) ParameterPosition(name string) int {
 
 	return -1
 }
+
+// mutableCollections are the annotations that say "a collection anyone may change": returning one of a class's
+// own is handing the insides out. A tuple, a frozenset and the Sequence, Mapping and AbstractSet protocols say
+// the opposite and are how a getter gives its collection away safely.
+var mutableCollections = []string{"list", "dict", "set", "bytearray", "List", "Dict", "Set", "typing.List", "typing.Dict", "typing.Set", "MutableSequence", "MutableMapping", "MutableSet", "typing.MutableSequence", "typing.MutableMapping", "typing.MutableSet", "collections.defaultdict", "collections.OrderedDict", "collections.Counter", "collections.deque", "defaultdict", "OrderedDict", "Counter", "deque"}
+
+// HandsOutItsOwnCollection says whether the def is a getter whose whole body returns one of its class's own
+// mutable collections, untouched: every caller then holds the class's insides and may add to or take from them
+// without asking, so the class cannot keep its own invariant and does not know when it is broken.
+func (n Node) HandsOutItsOwnCollection() bool {
+	body := n.StatementsBeyondText()
+	if !n.IsMethod() || len(body) != 1 || body[0].Kind() != "Return" {
+		return false
+	}
+	if !slices.Contains(mutableCollections, n.Child("returns").CollectionName()) {
+		return false
+	}
+	returned := body[0].Child("value")
+
+	return returned.Kind() == "Attribute" && returned.RootName() == "self" && n.EnclosingClass().keepsACollectionIn(returned.Name())
+}
+
+// CollectionName is the name the annotation's outermost type goes by, its arguments aside: `list` for
+// `list[str]`, `dict` for `dict[str, int]`, `MutableSequence` for `MutableSequence[Order]`.
+func (n Node) CollectionName() string {
+	if n.Kind() == "Subscript" {
+		return n.Child("value").DottedName()
+	}
+
+	return n.DottedName()
+}
+
+// keepsACollectionIn says whether the class's __init__ puts a collection in the attribute: a list, dict or set
+// written out or comprehended, or one a call to a builtin that makes one builds.
+func (n Node) keepsACollectionIn(name string) bool {
+	init := n.Initializer()
+
+	return slices.ContainsFunc(init.Descendants(), func(node Node) bool {
+		targets := node.ChildrenIn("targets")
+		if node.Kind() == "AnnAssign" {
+			return node.Child("target").Name() == name && slices.Contains(mutableCollections, node.Child("annotation").CollectionName())
+		}
+
+		return node.Kind() == "Assign" && len(targets) == 1 && targets[0].Name() == name && node.Child("value").buildsAFreshContainer()
+	})
+}

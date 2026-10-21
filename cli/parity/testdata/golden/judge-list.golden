@@ -171,6 +171,7 @@ exit: 0
   CoupledFieldsDetector
   DataClumpDetector
   DictionaryBagDetector
+  HandedOutCollectionDetector
   MutableValueObjectDetector
   PositionalTupleReturnDetector
 [1;33mfrontend/vue-components[0m
@@ -275,6 +276,7 @@ exit: 0
   DictBagDetector
   DictReturnBagDetector
   HandRolledReplaceDetector
+  HandedOutCollectionDetector
   MutableValueObjectDetector
   PositionalTupleReturnDetector
   RawDecodedReturnDetector

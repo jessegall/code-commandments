@@ -131,6 +131,29 @@ def extended(self, ends: str) -> "PriceRule":
     return replace(self, ends=ends)
 ```
 
+### python-handed-out-collection
+
+a getter whose whole body returns the class's own `list`, `dict` or `set`, untouched — every caller holds the insides and may add to or take from them without the class knowing
+
+```py
+----------[ Bad ]----------
+
+def notes(self) -> list[str]:
+    return self._notes
+
+----------[ Good ]----------
+
+class PinnedBoard:
+    def __init__(self) -> None:
+        self._notes: list[str] = []
+
+    def pin(self, note: str) -> None:
+        self._notes.append(note)
+
+    def notes(self) -> tuple[str, ...]:
+        return tuple(self._notes)
+```
+
 ### python-mutable-value-object
 
 a dataclass whose own methods write the fields it was built from after construction — a value that changes under everyone holding it

@@ -2476,6 +2476,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-handed-out-collection": {
+            "title": "HandedOutCollection",
+            "help": "a property or method whose whole body returns the type's own `List`, `Dictionary` or `HashSet`, untouched — every caller holds the insides and may add to or take from them without the type knowing",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/value-objects",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-mutable-value-object": {
             "title": "MutableValueObject",
             "help": "a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things",
@@ -3574,6 +3587,19 @@
         "sin_python-hand-rolled-replace": {
             "title": "HandRolledReplace",
             "help": "`return Order(self.number, self.lines, self.note, \"paid\")` in a dataclass — every field re-listed to change one",
+            "type": "flag",
+            "default": "true",
+            "group": "python/value-objects",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-handed-out-collection": {
+            "title": "HandedOutCollection",
+            "help": "a getter whose whole body returns the class's own `list`, `dict` or `set`, untouched — every caller holds the insides and may add to or take from them without the class knowing",
             "type": "flag",
             "default": "true",
             "group": "python/value-objects",

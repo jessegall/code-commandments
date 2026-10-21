@@ -98,6 +98,27 @@ public sealed record ImportRow(string Sku, int Units)
 }
 ```
 
+### csharp-handed-out-collection
+
+a property or method whose whole body returns the type's own `List`, `Dictionary` or `HashSet`, untouched — every caller holds the insides and may add to or take from them without the type knowing
+
+```cs
+----------[ Bad ]----------
+
+public List<string> Notes => this.notes;
+
+----------[ Good ]----------
+
+public sealed class PinnedBoard
+{
+    private readonly List<string> notes = new();
+
+    public void Pin(string note) => this.notes.Add(note);
+
+    public IReadOnlyList<string> Notes => this.notes;
+}
+```
+
 ### csharp-mutable-value-object
 
 a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things
