@@ -1,87 +1,85 @@
 package hooks
 
 import (
-	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strconv"
+	"sync/atomic"
+	"time"
 )
 
-// queueLines is the plugin's own queue inside the folder the journal gave it: one JSON object per line, appended,
-// which the journal drains at each of the agent's hooks and hands out on that hook's answer. The journal truncates
-// the file under a lock after every drain, so a line is written whole, appended, and never read back by us.
-const queueLines = "queue.jsonl"
+// queueFolder is the plugin's own queue inside the folder the journal gave it: one file per answer it has to make
+// later. The journal drains every plugin's queue at each of the agent's hooks, oldest file first, and deletes what
+// it read, so a judge that takes a minute writes its findings here and they reach the agent at its next tool use.
+const queueFolder = "queue"
+
+// written counts the files this process has written, so two in the same millisecond still sort in the order they
+// were written.
+var written atomic.Uint64
 
 // Queue4 is that queue.
 type Queue4 struct{ path string }
 
-// Queue4In is the queue in the plugin's data folder; no queue when the journal named no folder, which is how an
-// older journal says it drains none.
+// Queue4In is the queue in the plugin's data folder; no queue when the journal named no folder, which is how a
+// journal that drains none says so.
 func Queue4In(folder string) (Queue4, bool) {
 	if folder == "" {
 		return Queue4{}, false
 	}
 
-	return Queue4{filepath.Join(folder, queueLines)}, true
+	return Queue4{filepath.Join(folder, queueFolder)}, true
 }
 
-// Path is the file the queue is written to.
+// Path is the folder the queue is kept in.
 func (q Queue4) Path() string {
 	return q.path
 }
 
-// Tell writes what a judge worked out: the advice as context the agent's next answer carries, and every sin as the
-// card it is raised under. A refusal is told as context too — the plugin holds no hook, so nothing of ours can
-// stop a write, and the reason is worth more to the agent said than dropped.
-func (q Queue4) Tell(answer JournalAnswer) error {
-	var lines []map[string]any
-	for _, said := range []*string{answer.Refuse, answer.Whisper} {
-		if said != nil && *said != "" {
-			lines = append(lines, map[string]any{"kind": "context", "text": *said})
-		}
-	}
-
-	for _, raise := range answer.Raises {
-		if raise.Key == "" {
-			continue
-		}
-		lines = append(lines, map[string]any{"kind": "card", "card": map[string]any{"kind": raise.Event, "key": raise.Key, "label": raise.Brief}})
-	}
-
-	for _, sin := range answer.Repented {
-		lines = append(lines, map[string]any{"kind": "card", "card": map[string]any{"kind": "sin-resolved", "key": sin.Key, "label": "Repented: " + sin.Shown}})
-	}
-
-	return q.append(lines)
-}
-
-// append writes each line whole, in the order given, so a drain that reads the file mid-write still reads only
-// lines nothing is left of.
-func (q Queue4) append(lines []map[string]any) error {
-	if len(lines) == 0 {
+// Tell writes what was worked out after the answer went back: one file, the answer's own shape with the environment
+// it is for, so the journal hands the words to that environment's agent at its next hook. A refusal is told as
+// words too — nothing here can stop a tool that has already run, and the reason is worth more said than dropped.
+func (q Queue4) Tell(answer JournalAnswer, env string) error {
+	shape := told(answer).Shape4()
+	if len(shape) <= 1 {
 		return nil
 	}
-	if err := os.MkdirAll(filepath.Dir(q.path), 0o755); err != nil {
-		return err
+	if env != "" {
+		shape["env"] = env
 	}
 
-	file, err := os.OpenFile(q.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	said, err := json.Marshal(shape)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-
-	for _, line := range lines {
-		var out bytes.Buffer
-		encoder := json.NewEncoder(&out)
-		encoder.SetEscapeHTML(false)
-		if encoder.Encode(line) != nil {
-			continue
-		}
-		if _, err := file.Write(out.Bytes()); err != nil {
-			return err
-		}
+	if err := os.MkdirAll(q.path, 0o755); err != nil {
+		return err
 	}
 
-	return nil
+	// The journal reads whole files and deletes them, so a file is named only once it is complete: it is written
+	// under a name the drain ignores and renamed into place, which no reader can catch half-written.
+	name := filepath.Join(q.path, strconv.FormatInt(time.Now().UnixMilli(), 10)+"-"+strconv.FormatUint(written.Add(1), 10))
+	if err := os.WriteFile(name+".tmp", append(said, '\n'), 0o644); err != nil {
+		return err
+	}
+
+	return os.Rename(name+".tmp", name+".json")
+}
+
+// told is the answer with its refusal turned into words. The journal cannot refuse a tool that has already run, so a
+// refusal here would be recorded as unanswered and its reason lost, and the reason is the whole of what it had to
+// say.
+func told(answer JournalAnswer) JournalAnswer {
+	if answer.Refuse == nil {
+		return answer
+	}
+
+	words := *answer.Refuse
+	if answer.Whisper != nil {
+		words += "\n\n" + *answer.Whisper
+	}
+
+	answer.Refuse, answer.Whisper = nil, &words
+
+	return answer
 }

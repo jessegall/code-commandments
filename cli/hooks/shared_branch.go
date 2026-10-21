@@ -1,11 +1,14 @@
 package hooks
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 )
 
 // rebasing are the flags that make a pull rewrite the branch.
@@ -73,7 +76,58 @@ func rewritesHistory(command string) bool {
 }
 
 // otherWorktrees are the worktrees of the repository at root other than root itself.
+// standing keeps each root's worktrees, so the gate answers from what it knows when the journal waits
+// milliseconds for it. Adding or removing one writes in the git folder that holds them, which is what the
+// mark below watches: nothing else can change the answer.
+var standing = struct {
+	sync.Mutex
+	listed map[string]listing
+}{listed: map[string]listing{}}
+
+// listing is one root's worktrees and the mark of the folders they are written in.
+type listing struct {
+	others []string
+	marked string
+}
+
 func otherWorktrees(root string) []string {
+	mark := worktreeMark(root)
+
+	standing.Lock()
+	known, seen := standing.listed[root]
+	standing.Unlock()
+
+	if seen && known.marked == mark {
+		return known.others
+	}
+
+	others := readWorktrees(root)
+
+	standing.Lock()
+	standing.listed[root] = listing{others, mark}
+	standing.Unlock()
+
+	return others
+}
+
+// worktreeMark says when a worktree was last added or removed: the git directory and the folder it keeps them in,
+// by their last change. A checkout whose `.git` is a file is a worktree itself, and that file's own change says
+// the same.
+func worktreeMark(root string) string {
+	var mark strings.Builder
+	for _, watched := range []string{filepath.Join(root, ".git"), filepath.Join(root, ".git", "worktrees")} {
+		info, err := os.Stat(watched)
+		if err != nil {
+			continue
+		}
+		mark.WriteString(watched + ":" + info.ModTime().UTC().Format(time.RFC3339Nano) + "\n")
+	}
+
+	return mark.String()
+}
+
+// readWorktrees asks git, which is the slow answer the mark above keeps us from asking for twice.
+func readWorktrees(root string) []string {
 	listing, _ := exec.Command("git", "-C", root, "worktree", "list", "--porcelain").Output()
 	self := realPath(root)
 

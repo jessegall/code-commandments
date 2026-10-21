@@ -114,7 +114,7 @@ func Judge4Into(line map[string]any, folder string) {
 		return
 	}
 
-	_ = queue.Tell(answerWith(Stamped(moment), every, true))
+	_ = queue.Tell(answerWith(Stamped(moment), every, true), asText(line["environment"]))
 }
 
 // judge4Detached starts that run, in a session of its own so it outlives this one. It reads the event from a file it
@@ -195,6 +195,17 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 // advice told; each sin found a card under its key, and each sin repented a card under the same key, which settles the
 // first where it stands and says which sin it was.
 func (a JournalAnswer) Line4() string {
+	var out bytes.Buffer
+	encoder := json.NewEncoder(&out)
+	encoder.SetEscapeHTML(false)
+	_ = encoder.Encode(a.Shape4())
+
+	return string(bytes.TrimSuffix(out.Bytes(), []byte("\n")))
+}
+
+// Shape4 is the answer as version 4 reads it, before it is written: the line the journal is handed and the file the
+// queue keeps are the same shape, so they are built in one place.
+func (a JournalAnswer) Shape4() map[string]any {
 	answer := map[string]any{"v": protocol4}
 	switch {
 	case a.Refuse != nil && a.Whisper != nil:
@@ -220,12 +231,7 @@ func (a JournalAnswer) Line4() string {
 		answer["cards"] = cards
 	}
 
-	var out bytes.Buffer
-	encoder := json.NewEncoder(&out)
-	encoder.SetEscapeHTML(false)
-	_ = encoder.Encode(answer)
-
-	return string(bytes.TrimSuffix(out.Bytes(), []byte("\n")))
+	return answer
 }
 
 // Configured4 is version 4's answer once the settings are applied: a card saying what changed, under one key so the

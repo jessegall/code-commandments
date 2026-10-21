@@ -398,12 +398,15 @@ would write by hand; the rest of the file is kept.
 
 Version 4 of the journal reads `journal-plugin.json` at the package's root instead, and its settings from
 `.journal-plugin/settings.json`, generated beside the others. It runs `.journal-plugin/journal4-hook` for every
-event it hears, one JSON line in and one out, and **the plugin holds no event**: `commandments journal4-hook`
-answers at once, with nothing worked out, and the judging happens in a run of its own that writes what it finds to
-the queue the journal drains at the agent's next hook — the advice as context, each sin found or repented as a card
-keyed by its file. So no hook ever waits on a scan, and an edit touching sixty files costs the answer what one does;
-the sins reach the agent a step later instead. A change to the settings arrives as `plugin.updated` and is written
-by `journal-config`, as before.
+event it hears, one JSON line in and one out, and **nothing the journal waits for is worked out**. The plugin holds
+one event, `tool_starting`, inside a window of five milliseconds, which only a warm process can answer: the `hooks`
+service (`commandments journal-serve`) answers it on the socket the journal names, with the gates alone and from
+facts it already keeps — the worktrees a branch is shared with, re-read only when git writes one. Everything else
+the moment is worth is worked out after that answer and written to the queue the journal drains at the agent's next
+hook — a folder of one file per answer, each the shape of an answer with the environment it is for, renamed into
+place so a drain never reads a half-written one — and every event the plugin merely HEARS is answered after the
+journal's own reply, so its sins and advice cost no one any wait. An edit touching sixty files therefore costs the held answer what an edit of one does. A change to
+the settings arrives as `plugin.updated` and is written by `journal-config`, as before.
 
 While the plugin is installed, `install` and `sync` wire **no** Claude Code hooks of their own: the
 journal calls them. Take the plugin away and the next `composer update` wires them back.

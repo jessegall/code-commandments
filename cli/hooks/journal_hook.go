@@ -85,6 +85,22 @@ func adviseNow(given map[string]any) {
 	}
 }
 
+// adviseAsked works out the advice of a moment the service answered and writes it where that journal reads it.
+func adviseAsked(moment asked) {
+	if !moment.four {
+		adviseNow(moment.given)
+
+		return
+	}
+
+	queue, queued := Queue4In(os.Getenv(pluginData))
+	if !queued {
+		return
+	}
+
+	_ = queue.Tell(answerWith(moment.given, not(isGate), true), asText(moment.given["env"]))
+}
+
 // adviseDetached works the advice out in a run of its own, so the journal is not kept waiting on it. The run reads
 // the moment from a file it inherits, never from a pipe: a pipe is fed by this process, which answers and ends at
 // once, so the run would read nothing and advise nothing.
@@ -303,7 +319,7 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	root := workspace.ProjectRoot(cwd)
 	started := stamp(root)
 
-	serve(listener, func() bool { return stamp(root) == started }, startAdviser(adviseNow))
+	serve(listener, func() bool { return stamp(root) == started }, startAdviser(adviseAsked))
 
 	return 0, nil
 }
@@ -329,27 +345,46 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 
 		go func() {
 			line, _ := bufio.NewReader(connection).ReadString('\n')
-			given := Stamped(payloadOf([]byte(line)))
+			read := payloadOf([]byte(line))
 
+			// Version 4 asks on this socket inside a window of a few milliseconds, so the gates answer from what
+			// they already know and everything else is worked out after the answer, as it is for version 3.
+			if moment, four := Moment4Of(read); four {
+				given := Stamped(moment)
+				connection.Write([]byte(answerWith(given, isGate, false).Line4() + "\n"))
+				connection.Close()
+				advice.add(asked{given, true})
+
+				return
+			}
+
+			given := Stamped(read)
 			connection.Write([]byte(AnswerNow(given).JSON() + "\n"))
 			connection.Close()
 
-			advice.add(given)
+			advice.add(asked{given, false})
 		}()
 	}
+}
+
+// asked is one moment the service answered, and which journal asked it: the advice of version 4's moment goes to
+// the queue it drains, and version 3's to the queue it hands the service.
+type asked struct {
+	given map[string]any
+	four  bool
 }
 
 // adviser works out each moment's advice on one goroutine of its own, in the order the moments came: the service
 // keeps answering while it works, and two checks of one file never run at once.
 type adviser struct {
 	mu      sync.Mutex
-	pending []map[string]any
+	pending []asked
 	wake    chan struct{}
-	advise  func(map[string]any)
+	advise  func(asked)
 }
 
 // startAdviser is an adviser giving each moment to advise, its goroutine started.
-func startAdviser(advise func(map[string]any)) *adviser {
+func startAdviser(advise func(asked)) *adviser {
 	a := &adviser{wake: make(chan struct{}, 1), advise: advise}
 	go a.work()
 
@@ -357,7 +392,7 @@ func startAdviser(advise func(map[string]any)) *adviser {
 }
 
 // add queues the moment's advice and wakes the worker.
-func (a *adviser) add(given map[string]any) {
+func (a *adviser) add(given asked) {
 	a.mu.Lock()
 	a.pending = append(a.pending, given)
 	a.mu.Unlock()

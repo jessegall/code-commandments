@@ -1,12 +1,16 @@
 package hooks
 
 import (
+	"bufio"
 	"encoding/json"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
+	"time"
 )
 
 // projectWithASin is a git project the hooks judge, holding one Python file that commits a sin, and the folder the
@@ -79,20 +83,48 @@ func TestTheHeldEventIsAnsweredWithNothingWorkedOutAndSaysItToTheQueue(t *testin
 
 	Judge4Into(line, data)
 
+	queued := drained(t, data)
+	if len(queued) != 1 {
+		t.Fatalf("the run left %d file(s) in the queue", len(queued))
+	}
+
+	if !strings.Contains(asText(queued[0]["tell"]), "worktree") {
+		t.Errorf("the queue holds %v", queued[0])
+	}
+
+	if queued[0]["env"] != "main" {
+		t.Errorf("the queued answer names the environment %v", queued[0]["env"])
+	}
+}
+
+// drained is the queue as the journal drains it: every file it holds, oldest name first, read whole.
+func drained(t *testing.T, data string) []map[string]any {
+	t.Helper()
 	queue, _ := Queue4In(data)
-	written, err := os.ReadFile(queue.Path())
+	files, err := filepath.Glob(filepath.Join(queue.Path(), "*.json"))
 	if err != nil {
-		t.Fatalf("the run wrote no queue: %v", err)
+		t.Fatal(err)
+	}
+	sort.Strings(files)
+
+	var read []map[string]any
+	for _, file := range files {
+		content, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var said map[string]any
+		if err := json.Unmarshal(content, &said); err != nil {
+			t.Fatalf("the journal cannot read %s: %v", file, err)
+		}
+		read = append(read, said)
 	}
 
-	var queued map[string]any
-	if err := json.Unmarshal([]byte(strings.SplitN(strings.TrimSpace(string(written)), "\n", 2)[0]), &queued); err != nil {
-		t.Fatalf("the journal cannot read %q: %v", written, err)
+	if left, _ := filepath.Glob(filepath.Join(queue.Path(), "*.tmp")); len(left) > 0 {
+		t.Errorf("the queue holds a half-written file the drain would miss: %v", left)
 	}
 
-	if queued["kind"] != "context" || !strings.Contains(queued["text"].(string), "worktree") {
-		t.Errorf("the queue holds %v", queued)
-	}
+	return read
 }
 
 // TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged holds the answer to the one thing a hook must never depend on:
@@ -145,10 +177,10 @@ func TestAnEventHeardAfterTheReplySaysWhatItFound(t *testing.T) {
 	}
 }
 
-// TestAQueueLineIsOneWholeLineOfTheJournalsOwnShape holds the written shape to the contract the journal drains by: one
-// JSON object per line, a card's own fields nested under `card` so neither kind collides, and every write an append,
-// since the journal truncates the file under a lock after each drain.
-func TestAQueueLineIsOneWholeLineOfTheJournalsOwnShape(t *testing.T) {
+// TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn holds the written shape to the contract the journal drains
+// by: one file per answer, the same shape the journal is handed on a hook with the environment it is for, named so
+// the files sort in the order they were written, and nothing left under a name a drain would read half-written.
+func TestAQueuedAnswerIsTheAnswersOwnShapeInAFileOfItsOwn(t *testing.T) {
 	data := t.TempDir()
 	queue, queued := Queue4In(data)
 	if !queued {
@@ -156,37 +188,122 @@ func TestAQueueLineIsOneWholeLineOfTheJournalsOwnShape(t *testing.T) {
 	}
 
 	advice := "Code Commandments — a sin at src/A.php:3"
-	if err := queue.Tell(JournalAnswer{Whisper: &advice, Raises: []Raise{{Event: "sin-found", Brief: "array-bag at src/A.php:3", Key: "sin:a1"}}}); err != nil {
+	if err := queue.Tell(JournalAnswer{Whisper: &advice, Raises: []Raise{{Event: "sin-found", Brief: "array-bag at src/A.php:3", Key: "sin:a1"}}}, "main"); err != nil {
 		t.Fatal(err)
 	}
-	if err := queue.Tell(JournalAnswer{Repented: []Repented{{Key: "sin:a1", Shown: "array-bag at src/A.php:3"}}}); err != nil {
+	if err := queue.Tell(JournalAnswer{Repented: []Repented{{Key: "sin:a1", Shown: "array-bag at src/A.php:3"}}}, "main"); err != nil {
+		t.Fatal(err)
+	}
+	if err := queue.Tell(JournalAnswer{}, "main"); err != nil {
 		t.Fatal(err)
 	}
 
-	written, err := os.ReadFile(queue.Path())
+	said := drained(t, data)
+	if len(said) != 2 {
+		t.Fatalf("the queue holds %d file(s): an answer with nothing to say writes none", len(said))
+	}
+
+	if said[0]["tell"] != advice || said[0]["answer"] != "tell" || said[0]["v"] != float64(protocol4) {
+		t.Errorf("the first answer reads %v", said[0])
+	}
+
+	first, _ := said[0]["cards"].([]any)
+	second, _ := said[1]["cards"].([]any)
+	if len(first) != 1 || len(second) != 1 {
+		t.Fatalf("the cards read %v and %v", said[0]["cards"], said[1]["cards"])
+	}
+
+	raised, _ := first[0].(map[string]any)
+	settled, _ := second[0].(map[string]any)
+	if raised["key"] != "sin:a1" || raised["kind"] != "sin-found" || settled["key"] != raised["key"] || settled["kind"] != "sin-resolved" {
+		t.Errorf("the sin was raised as %v and settled as %v", raised, settled)
+	}
+}
+
+// TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter holds the service to the window the journal
+// waits: the line it answers carries the gates and nothing else, and the rest of the moment is handed on to be
+// worked out after the answer went back. The journal allows a few milliseconds for this, which is why nothing the
+// answer needs may be worked out on the way.
+func TestTheServiceAnswersTheHeldEventWithTheGatesAloneAndAdvisesAfter(t *testing.T) {
+	_, line := projectAnotherWorktreeStandsOn(t)
+	socket := filepath.Join(t.TempDir(), "serve.sock")
+	listener, err := net.Listen("unix", socket)
+	if err != nil {
+		t.Skipf("no socket to listen on: %v", err)
+	}
+	defer listener.Close()
+
+	advised := make(chan asked, 1)
+	go serve(listener, func() bool { return true }, startAdviser(func(moment asked) { advised <- moment }))
+
+	connection, err := net.Dial("unix", socket)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer connection.Close()
+
+	said, err := json.Marshal(line)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := connection.Write(append(said, '\n')); err != nil {
+		t.Fatal(err)
+	}
+
+	answer, err := bufio.NewReader(connection).ReadString('\n')
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	want := []string{
-		`{"kind":"context","text":"Code Commandments — a sin at src/A.php:3"}`,
-		`{"card":{"key":"sin:a1","kind":"sin-found","label":"array-bag at src/A.php:3"},"kind":"card"}`,
-		`{"card":{"key":"sin:a1","kind":"sin-resolved","label":"Repented: array-bag at src/A.php:3"},"kind":"card"}`,
+	var read map[string]any
+	if err := json.Unmarshal([]byte(answer), &read); err != nil {
+		t.Fatalf("the journal cannot read %q: %v", answer, err)
 	}
-	if lines := strings.Split(strings.TrimSuffix(string(written), "\n"), "\n"); !equalLines(lines, want) {
-		t.Errorf("the queue holds\n%s\nwant\n%s", strings.Join(lines, "\n"), strings.Join(want, "\n"))
+	if read["answer"] != "refuse" || !strings.Contains(asText(read["reason"]), "worktree") {
+		t.Errorf("the service answered %v", read)
+	}
+
+	select {
+	case moment := <-advised:
+		if !moment.four {
+			t.Error("the moment was handed on as version 3's")
+		}
+	case <-time.After(5 * time.Second):
+		t.Error("the moment was never handed on to be worked out")
 	}
 }
 
-func equalLines(got, want []string) bool {
-	if len(got) != len(want) {
-		return false
-	}
-	for at := range got {
-		if got[at] != want[at] {
-			return false
+// TestTheWorktreesAreKeptUntilOneIsAddedOrRemoved holds the gate's own knowledge to the window: it is read from git
+// once and kept, and the folder git writes a worktree in is what says the answer has changed.
+func TestTheWorktreesAreKeptUntilOneIsAddedOrRemoved(t *testing.T) {
+	root, _, _ := projectWithASin(t)
+	for _, run := range [][]string{
+		{"git", "-C", root, "add", "-A"},
+		{"git", "-C", root, "-c", "user.email=t@t", "-c", "user.name=T", "commit", "-qm", "first"},
+	} {
+		if out, err := exec.Command(run[0], run[1:]...).CombinedOutput(); err != nil {
+			t.Fatalf("%v: %s", run, out)
 		}
 	}
 
-	return true
+	if standing := otherWorktrees(root); len(standing) != 0 {
+		t.Fatalf("a lone checkout lists %v", standing)
+	}
+
+	added := filepath.Join(t.TempDir(), "other")
+	if out, err := exec.Command("git", "-C", root, "worktree", "add", "-q", added, "-b", "other").CombinedOutput(); err != nil {
+		t.Fatalf("%s", out)
+	}
+
+	if standing := otherWorktrees(root); len(standing) != 1 {
+		t.Errorf("after one was added the gate lists %v", standing)
+	}
+
+	if out, err := exec.Command("git", "-C", root, "worktree", "remove", added).CombinedOutput(); err != nil {
+		t.Fatalf("%s", out)
+	}
+
+	if standing := otherWorktrees(root); len(standing) != 0 {
+		t.Errorf("after it was removed the gate lists %v", standing)
+	}
 }

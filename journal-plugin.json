@@ -14,7 +14,12 @@
     "subagent_started",
     "plugin.updated"
   ],
-  "holds": [],
+  "holds": [
+    {
+      "event": "tool_starting",
+      "window_ms": 5
+    }
+  ],
   "cards": [
     {
       "kind": "sin-found",
@@ -66,6 +71,15 @@
   "settings": ".journal-plugin/settings.json",
   "skills": "journal-skills/.agents/skills",
   "services": [
+    {
+      "name": "hooks",
+      "command": [
+        "bin/commandments-release",
+        "journal-serve"
+      ],
+      "answers": true,
+      "restart": "always"
+    },
     {
       "name": "roslyn",
       "command": [

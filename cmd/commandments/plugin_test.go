@@ -241,8 +241,26 @@ type pins struct {
 	Version string                 `json:"version"`
 	Env     map[string]string      `json:"env"`
 	Setup   []struct{ Run string } `json:"setup"`
-	Hears   []string               `json:"hears"`
-	Holds   []string               `json:"holds"`
+}
+
+// offered is what version 4's manifest declares about the events it answers: version 3's file writes its own
+// services as an object, so only this one is read for them.
+type offered struct {
+	Hears    []string  `json:"hears"`
+	Holds    []hold    `json:"holds"`
+	Services []service `json:"services"`
+}
+
+// hold is one event the journal asks the plugin before the tool runs, and the window it allows for the answer.
+type hold struct {
+	Event    string `json:"event"`
+	WindowMs int    `json:"window_ms"`
+}
+
+// service is one program the journal keeps running for the plugin, and whether it answers the journal's events.
+type service struct {
+	Name    string `json:"name"`
+	Answers bool   `json:"answers"`
 }
 
 // TestBothPluginManifestsPinTheSameRelease holds the two manifests to one answer. The plugin is declared twice, once
@@ -276,23 +294,33 @@ func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
 	}
 }
 
-// TestThePluginHoldsNoHookOfTheAgents holds the manifest to the rule every hook of ours answers under: the plugin
-// never makes the journal wait. An event it HOLDS is asked on the answer path and bounded by a deadline, so a judge
-// of sixty files spends that deadline on a scan; holding nothing means the journal hands us every event it hears
-// after its reply, and what we find reaches the agent through the queue it drains at the next hook. Declaring a hold
-// again is how the fault of the ten-second timeout would come back, so it is a gate and not a comment.
-func TestThePluginHoldsNoHookOfTheAgents(t *testing.T) {
+// windowMs is the longest window a hold of ours may declare. It is far too short to parse a file, let alone judge
+// one, which is the point: what the journal waits for can only be an answer already known.
+const windowMs = 10
+
+// TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown holds the manifest to the rule every hook of ours answers under: the
+// plugin never makes the journal wait on work. An event it HOLDS is asked before the tool runs, so it may only
+// declare a window no judge could fit in, and a window that short cannot start a process — which is why a service
+// of ours has to answer it. A hold with no window took the journal's old ten-second deadline, and one tool call that
+// changed sixty files spent it on a scan and timed out; that is the fault these three checks keep away.
+func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 	content, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var manifest pins
+	var manifest offered
 	if err := json.Unmarshal(content, &manifest); err != nil {
 		t.Fatal(err)
 	}
 
-	if len(manifest.Holds) > 0 {
-		t.Errorf("journal-plugin.json holds %v: a held event is answered on the journal's own path, which is what it must never be", manifest.Holds)
+	for _, held := range manifest.Holds {
+		if held.WindowMs <= 0 || held.WindowMs > windowMs {
+			t.Errorf("%s is held for %dms: a hold of ours declares a window of at most %dms, so nothing can be worked out inside it", held.Event, held.WindowMs, windowMs)
+		}
+	}
+
+	if len(manifest.Holds) > 0 && !slices.ContainsFunc(manifest.Services, func(kept service) bool { return kept.Answers }) {
+		t.Error("the plugin holds an event and no service of its own answers: a window of milliseconds cannot start a process")
 	}
 
 	for _, event := range []string{"tool_starting", "tool_finished"} {

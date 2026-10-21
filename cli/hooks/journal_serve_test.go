@@ -28,7 +28,7 @@ func TestAGateIsAnsweredWhileAnEarlierMomentsAdviceStillRuns(t *testing.T) {
 
 	release, started := make(chan struct{}), make(chan struct{}, 2)
 	running, most := 0, 0
-	advice := startAdviser(func(map[string]any) {
+	advice := startAdviser(func(asked) {
 		running++
 		most = max(most, running)
 		started <- struct{}{}
