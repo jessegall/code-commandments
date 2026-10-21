@@ -65,6 +65,12 @@ phpcs.xml
 # The agent journal's own runtime, installed and updated by the journal itself — never our source.
 # What IS ours is .journal-plugin/, the manifest that makes this package one of its plugins.
 /.journal/
+# The skills and agent files the journal publishes into our tree are that same runtime: it
+# rewrites them on every upgrade, so they are never ours to carry.
+.agents/skills/journal-*/
+.claude/skills/journal*/
+/.codex/
+/.mcp.json
 __pycache__/
 
 # The Go binary, built with `go build -o bin/commandments-go ./cmd/commandments`.
