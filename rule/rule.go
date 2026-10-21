@@ -123,6 +123,7 @@ type Step struct {
 	CommentMatches string   `json:"commentMatches,omitempty"`
 	DocTag         string   `json:"docTag,omitempty"`
 	Duplicated     *Bounds  `json:"duplicated,omitempty"`
+	Callers        *Bounds  `json:"callers,omitempty"`
 	TestCode       *bool    `json:"testCode,omitempty"`
 	PHP            string   `json:"php,omitempty"`
 	Python         string   `json:"python,omitempty"`
@@ -551,7 +552,7 @@ func (s Step) checks() int {
 		s.Next != nil, s.Previous != nil, s.NestedAtLeast != nil, s.Counts != nil, s.Parameters != nil, s.Arguments != nil,
 		s.Lines != nil, s.Members != nil, s.Complexity != nil, s.Extends != "", s.ExtendsAny != "", s.Implements != "", s.Uses != "", s.All != nil, s.Any != nil, s.Not != nil, s.HasAttribute != "", s.Sibling != "", s.IsA != "",
 		s.TypeKind != "", s.HasAnnotation != "", s.ReturnType != "", s.ParameterType != "", s.Constructs != "", s.Unused != nil,
-		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil,
+		s.CalledFrom != "", s.Calls != nil, s.Argument != nil, s.CommentLike != "", s.CommentMatches != "", s.DocTag != "", s.Duplicated != nil, s.Callers != nil,
 		s.TestCode != nil, s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "", s.Rule != ""} {
 		if set {
 			count++
@@ -668,7 +669,7 @@ func (s Step) validSizes() error {
 	named := map[string]*Bounds{}
 
 	for name, bounds := range map[string]*Bounds{"parameters": s.Parameters, "arguments": s.Arguments, "lines": s.Lines,
-		"complexity": s.Complexity, "duplicated": s.Duplicated} {
+		"complexity": s.Complexity, "duplicated": s.Duplicated, "callers": s.Callers} {
 		if bounds != nil {
 			named[name] = bounds
 		}
@@ -853,6 +854,8 @@ func (s Step) check(match engine.Match) bool {
 		copies := subject.Copies()
 
 		return copies > 0 && s.Duplicated.holds(copies)
+	case s.Callers != nil:
+		return s.Callers.holds(len(subject.Referrers()))
 	case s.TestCode != nil:
 		return subject.IsTest() == *s.TestCode
 	case s.PHP != "", s.Python != "", s.CSharp != "", s.TypeScript != "", s.Vue != "":

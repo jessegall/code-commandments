@@ -117,6 +117,7 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"complexity": {"atLeast": 10}}` | one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `\|\|` are not counted, and a function inside it is its own count |
 | `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}` | that many of its descendants pass the step — or `"child"`, with `"field"` to count one field's children; with `"distinct": "child:var"` (any target `of` takes), the counted nodes whose target is written the same count once: `atMost: 1` is one receiver |
 | `{"duplicated": {"atLeast": 2}}` | that many functions of the codebase, it among them, have its body, read from the tree, blind to spacing and comments |
+| `{"callers": {"atLeast": 2}}` | that many calls of the codebase reach the declaration, each resolved through the tree: `atMost: 0` is a declaration nothing calls |
 
 **Its type**
 
@@ -150,6 +151,7 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 |---|---|
 | `{"php": "coalesce"}` | it is a `??` expression |
 | `{"php": "constructor"}` | it declares a constructor |
+| `{"php": "divergentTwin"}` | it is one of two methods doing one job where one does less of it: a step the other takes and it forgot |
 | `{"php": "facadeCall"}` | it is a static call on a Laravel facade |
 | `{"php": "inDataClass"}` | it sits in a Spatie Data class |
 | `{"php": "inNamedConstructor"}` | the function around it builds an instance of its own class |
@@ -157,6 +159,7 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 | `{"php": "returnedValue"}` | it is the value a return statement returns |
 | `{"php": "typeNarrowingGuard"}` | it is an outermost `&&` of two or more instanceof checks |
 | `{"python": "constructor"}` | it is a class's __init__ |
+| `{"python": "divergentTwin"}` | it is one of two defs doing one job where one does less of it: a step the other takes and it forgot |
 | `{"python": "evaluated"}` | it is an expression the code evaluates, outside every type annotation |
 | `{"python": "inNamedConstructor"}` | it sits in a named constructor, where loose data becomes the class |
 | `{"python": "returnedValue"}` | it is what a return statement returns |

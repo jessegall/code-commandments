@@ -25,6 +25,7 @@ type Program struct {
 	reach      resourceReach
 	names      declarations
 	defined    definitions
+	twins      twins
 	vocabulary vocabulary
 }
 

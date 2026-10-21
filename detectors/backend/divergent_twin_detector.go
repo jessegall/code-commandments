@@ -20,8 +20,7 @@ func (DivergentTwinDetector) Sin() sins.Sin { return backendsins.DivergentTwin{}
 
 // GroupKey is the pair the method belongs to, named alike from either side.
 func (DivergentTwinDetector) GroupKey(finding engine.Match) (string, bool) {
-	codebase := finding.Codebase()
-	key := engine.PairOf(divergences(codebase), php.ScopeOf(finding))
+	key := engine.PairOf(php.Divergences(finding.Codebase()), php.ScopeOf(finding))
 
 	return key, key != ""
 }
@@ -33,16 +32,9 @@ func (DivergentTwinDetector) Find(codebase *engine.Codebase) []engine.Match {
 		units[unit.Key] = unit.Match
 	}
 	var findings []engine.Match
-	for _, divergence := range divergences(codebase) {
+	for _, divergence := range php.Divergences(codebase) {
 		findings = append(findings, units[divergence.Poorer], units[divergence.Richer])
 	}
 
 	return findings
-}
-
-// divergences is the codebase's divergent pairs, read once.
-func divergences(codebase *engine.Codebase) []engine.Divergence {
-	return engine.Analysis(codebase, "backend/divergent-twins", func(codebase *engine.Codebase) []engine.Divergence {
-		return engine.DivergentTwins(php.Twins(codebase), php.TwinUnits(codebase))
-	})
 }

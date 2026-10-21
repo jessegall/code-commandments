@@ -6,8 +6,33 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TwinUnits is every method with a body that reaches enough rare resources to be compared, keyed by its scope.
+// TwinUnits is every method with a body that reaches enough rare resources to be compared, keyed by its scope,
+// read once for the codebase.
 func TwinUnits(codebase *engine.Codebase) []engine.ReachedUnit {
+	return units.Of(codebase)
+}
+
+// units are the codebase's twin units, read once.
+var units = Memoised(twinUnits)
+
+// Divergences are the codebase's divergent pairs, read once: two methods doing one job where one does less of it.
+// It is the single home of the reading: the detector that reports it and the check a rule names both ask it.
+func Divergences(codebase *engine.Codebase) []engine.Divergence {
+	return divergences.Of(codebase)
+}
+
+// divergences are the codebase's divergent pairs, read once.
+var divergences = Memoised(func(codebase *engine.Codebase) []engine.Divergence {
+	return engine.DivergentTwins(Twins(codebase), TwinUnits(codebase))
+})
+
+// IsDivergentTwin says whether the method is one of a divergent pair: the poorer of the two, or the richer it
+// forgot a step of.
+func IsDivergentTwin(method engine.Match) bool {
+	return engine.PairOf(Divergences(method.Codebase()), ScopeOf(method)) != ""
+}
+
+func twinUnits(codebase *engine.Codebase) []engine.ReachedUnit {
 	scopes := ReachOf(codebase).Scopes
 	var units []engine.ReachedUnit
 	for _, method := range In(codebase).WhereKind("Stmt_ClassMethod").Get() {

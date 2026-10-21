@@ -1,9 +1,6 @@
 package python
 
 import (
-	"slices"
-	"strings"
-
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
@@ -35,7 +32,7 @@ func (DivergentTwinDetector) Find(codebase *engine.Codebase) []engine.Match {
 	}
 	var findings []engine.Match
 	seen := map[string]bool{}
-	for _, divergence := range engine.DivergentTwins(program.Twins(), units) {
+	for _, divergence := range program.Divergences() {
 		for _, key := range []string{divergence.Poorer, divergence.Richer} {
 			if !seen[key] {
 				seen[key] = true
@@ -50,20 +47,7 @@ func (DivergentTwinDetector) Find(codebase *engine.Codebase) []engine.Match {
 // GroupKey groups a finding with the twin it diverges from.
 func (DivergentTwinDetector) GroupKey(match engine.Match) (string, bool) {
 	program := py.In(match.Codebase()).Program
-	units := program.TwinUnits()
-	key := ""
+	key := engine.PairOf(program.Divergences(), py.DeclarationOf(py.Node{Match: match}))
 
-	for _, unit := range units {
-		if unit.Match.Location() == match.Location() {
-			key = unit.Key
-		}
-	}
-
-	for _, divergence := range engine.DivergentTwins(program.Twins(), units) {
-		if divergence.Poorer == key || divergence.Richer == key {
-			return strings.Join(slices.Sorted(slices.Values([]string{divergence.Poorer, divergence.Richer})), "|"), true
-		}
-	}
-
-	return "", false
+	return key, key != ""
 }

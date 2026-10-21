@@ -93,3 +93,26 @@ func TestARuleNamesOneOfSelectAndFrom(t *testing.T) {
 		}
 	}
 }
+
+// TestARuleCombinesAWholeProgramReadingWithItsOwnChecks holds the readings a rule can name: the callers a
+// declaration has, counted over the whole scan, and a language's own reading of a divergent pair, each one check
+// among others rather than a rule of its own.
+func TestARuleCombinesAWholeProgramReadingWithItsOwnChecks(t *testing.T) {
+	codebase := phpCodebase(t, "Actions.php", actions)
+	for query, want := range map[string]string{
+		`{"select": "function", "where": [{"name": "handle"}, {"callers": {"atLeast": 1}}]}`:    "[15 20]",
+		`{"select": "function", "where": [{"name": "handle"}, {"callers": {"atMost": 0}}]}`:     "[]",
+		`{"select": "function", "where": [{"name": "render"}, {"callers": {"atMost": 0}}]}`:     "[27]",
+		`{"select": "function", "where": [{"all": [{"name": "handle"}, {"callers": {"atLeast": 2}}]}]}`: "[15 20]",
+		`{"select": "function", "where": [{"php": "divergentTwin"}]}`:                           "[]",
+	} {
+		found, err := rule.Parse("Reading", written("backend", "reading-sin", query), shipped)
+		if err != nil {
+			t.Fatalf("%s: %v", query, err)
+		}
+
+		if got := fmt.Sprint(lines(found.Find(codebase))); got != want {
+			t.Errorf("%s: found %s, want %s", query, got, want)
+		}
+	}
+}

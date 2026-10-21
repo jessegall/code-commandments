@@ -80,6 +80,7 @@ var Checks = []Group{
 		{"complexity", `{"complexity": {"atLeast": 10}}`, "one plus every branch, loop and catch in it, as its language marks them, is that many — a switch is one branch, `&&` and `||` are not counted, and a function inside it is its own count"},
 		{"count", `{"count": {"descendant": {"is": "return"}, "atLeast": 4}}`, "that many of its descendants pass the step — or `\"child\"`, with `\"field\"` to count one field's children; with `\"distinct\": \"child:var\"` (any target `of` takes), the counted nodes whose target is written the same count once: `atMost: 1` is one receiver"},
 		{"duplicated", `{"duplicated": {"atLeast": 2}}`, "that many functions of the codebase, it among them, have its body, read from the tree, blind to spacing and comments"},
+		{"callers", `{"callers": {"atLeast": 2}}`, "that many calls of the codebase reach the declaration, each resolved through the tree: `atMost: 0` is a declaration nothing calls"},
 	}},
 	{"Its type", []Check{
 		{"typeKind", `{"typeKind": "interface"}`, "a type declaration declares a `class`, `interface`, `enum`, `trait`, `record`, `struct` or `protocol`"},

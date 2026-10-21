@@ -3,12 +3,49 @@ package python
 import (
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// TwinUnits is every def that reaches enough rare resources to be compared, keyed where it is declared.
+// twins are the program's twin units and divergent pairs, read once.
+type twins struct {
+	once  sync.Once
+	units []engine.ReachedUnit
+	pairs []engine.Divergence
+}
+
+// TwinUnits is every def that reaches enough rare resources to be compared, keyed where it is declared, read once
+// for the program.
 func (p *Program) TwinUnits() []engine.ReachedUnit {
+	p.read()
+
+	return p.twins.units
+}
+
+// Divergences are the program's divergent pairs: two defs doing one job where one does less of it. It is the
+// single home of the reading: the detector that reports it and the check a rule names both ask it.
+func (p *Program) Divergences() []engine.Divergence {
+	p.read()
+
+	return p.twins.pairs
+}
+
+// IsDivergentTwin says whether the def is one of a divergent pair: the poorer of the two, or the richer it forgot
+// a step of.
+func (p *Program) IsDivergentTwin(def Node) bool {
+	return engine.PairOf(p.Divergences(), DeclarationOf(def)) != ""
+}
+
+// read reads the units and the pairs once.
+func (p *Program) read() {
+	p.twins.once.Do(func() {
+		p.twins.units = p.twinUnits()
+		p.twins.pairs = engine.DivergentTwins(p.Twins(), p.twins.units)
+	})
+}
+
+func (p *Program) twinUnits() []engine.ReachedUnit {
 	population := p.FunctionReach()
 	var units []engine.ReachedUnit
 	for _, module := range p.modules {
