@@ -14,6 +14,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
+	"github.com/jessegall/code-commandments/skill"
 )
 
 const (
@@ -227,14 +228,20 @@ func nudge(event Event, marks []SinMark) string {
 		return "`" + binary.Invocation(event.Root) + " judge " + mark.FileFrom(event.Root) +
 			" --sin=" + mark.Rule.Sin().Definition().Name + "`"
 	}
+	// The skill is named with the sin, always: a mark that says only what is wrong leaves the reader to guess the
+	// discipline that says how to fix it, and a guess is how a finding gets silenced instead of fixed.
+	teaches := func(mark SinMark) string {
+		return "load `" + skill.IDFor(mark.Rule.Sin().Definition().Slug()) + "`"
+	}
 
 	if len(marks) == 1 {
-		return "Code Commandments — " + marks[0].ShownFrom(event.Root) + ". Run " + command(marks[0]) + "."
+		return "Code Commandments — " + marks[0].ShownFrom(event.Root) + ": " + teaches(marks[0]) +
+			", then fix it at its source. Run " + command(marks[0]) + "."
 	}
 
 	lines := []string{"Code Commandments — " + strconv.Itoa(len(marks)) + " new sins:"}
 	for _, mark := range marks {
-		lines = append(lines, "  • "+mark.ShownFrom(event.Root)+" — run "+command(mark))
+		lines = append(lines, "  • "+mark.ShownFrom(event.Root)+" — "+teaches(mark)+", run "+command(mark))
 	}
 
 	return strings.Join(lines, "\n")

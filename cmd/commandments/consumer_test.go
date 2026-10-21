@@ -133,8 +133,14 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		c.read(published)
 	}
 
-	if agents := c.read("AGENTS.md"); !strings.Contains(agents, "commandments-python-absence") {
-		t.Error("AGENTS.md does not brief the Python skills")
+	// The disciplines are listed in the map skill and not in the instruction file, which carries a pointer to it:
+	// a file an agent skims for being a catalogue is one it stops reading.
+	if mapped := c.read(".agents/skills/commandments/SKILL.md"); !strings.Contains(mapped, "commandments-python-absence") {
+		t.Error("the map skill does not list the Python disciplines")
+	}
+
+	if agents := c.read("AGENTS.md"); !strings.Contains(agents, "`commandments`") {
+		t.Error("AGENTS.md does not point at the map skill")
 	}
 
 	if settings := c.read(".claude/settings.json"); !strings.Contains(settings, `"command": "commandments hooks # @code-commandments-managed"`) || strings.Contains(settings, "php") {
@@ -158,8 +164,8 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		t.Errorf("resync said\n%s", synced)
 	}
 
-	if agents := c.read("AGENTS.md"); !strings.Contains(agents, "commandments-no-eval") || !strings.Contains(agents, "this project's own") {
-		t.Error("AGENTS.md does not brief the project's own skill")
+	if mapped := c.read(".agents/skills/commandments/SKILL.md"); !strings.Contains(mapped, "commandments-no-eval") || !strings.Contains(mapped, "this project's own") {
+		t.Error("the map skill does not list the project's own skill as its own")
 	}
 
 	judged := c.run(1, "commandments", "judge", "--changes", "--no-checklist", "--parallel=2")
@@ -190,7 +196,7 @@ func TestAProjectWithOnlyTheBinaryIsWiredJudgedAndKeepsItsOwnRules(t *testing.T)
 		}
 	}
 
-	if !strings.Contains(c.read("AGENTS.md"), "`commandments judge src`") || !strings.Contains(stopped, "`commandments judge --changes`") {
+	if !strings.Contains(c.read("AGENTS.md"), "`commandments judge`") || !strings.Contains(stopped, "`commandments judge --changes`") {
 		t.Error("the briefing or the stop hook does not name the binary")
 	}
 }
