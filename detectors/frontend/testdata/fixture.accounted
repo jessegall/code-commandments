@@ -4,3 +4,6 @@ only Go: components/MediaPreview.vue:7 InlineCaseViews  # a rule written after t
 only Go: components/RefundWizard.vue:12 InlineCaseViews  # a rule written after the PHP tool was retired
 only Go: components/ShipmentTracker.vue:7 InlineCaseViews  # a rule written after the PHP tool was retired
 only Go: components/RefundWizard.vue:12 SwitchCase  # a fixture file written after the PHP tool was retired
+only Go: client/courier-eligibility.ts:10 SideTableTrait  # a rule written after the PHP tool was retired
+only Go: client/stock-visibility.ts:10 SideTableTrait  # a rule written after the PHP tool was retired
+only Go: client/tag-speech.ts:11 SideTableTrait  # a rule written after the PHP tool was retired
