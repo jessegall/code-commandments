@@ -1,0 +1,4 @@
+# a file's sins, the skill each belongs under, and the verdict the run ends on
+^(?:\s{2}\S+:\d+\s|\S+/\S+\s+\(\d+\)$|\d+ sins across \d+ skill|✓ )
+progress: ^(?:parsing|reading|detector) (\d+)/(\d+)$
+label: Judging the project against its commandments

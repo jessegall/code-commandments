@@ -31,10 +31,15 @@ type Progress struct {
 // JournalReport names the variable the journal sets for a check it runs, its report's file.
 const JournalReport = "JOURNAL_REPORT"
 
-// NewProgress draws on stream when it is a terminal, and writes plain lines when a journal check reads it.
+// PlainProgress names the variable that asks for the counted lines where nothing says a journal is watching: a
+// journal command run through a reader of ours reads them, and a terminal is not what it has.
+const PlainProgress = "COMMANDMENTS_PLAIN_PROGRESS"
+
+// NewProgress draws on stream when it is a terminal, and writes plain lines when a journal check or a journal
+// command reads it.
 func NewProgress(stream io.Writer) *Progress {
 	terminal := isTerminal(stream)
-	plain := !terminal && os.Getenv(JournalReport) != ""
+	plain := !terminal && (os.Getenv(JournalReport) != "" || os.Getenv(PlainProgress) != "")
 
 	return &Progress{stream: stream, enabled: terminal || plain, plain: plain, total: 1, lastFilled: -1, lastShare: -1}
 }
