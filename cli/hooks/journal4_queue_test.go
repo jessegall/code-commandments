@@ -331,3 +331,45 @@ func TestTheWorktreesAreKeptUntilOneIsAddedOrRemoved(t *testing.T) {
 		t.Errorf("after it was removed the gate lists %v", standing)
 	}
 }
+
+// TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh holds the use of an edit the journal has already worked out:
+// the lines it names are the lines the edit wrote, so a sin standing on one of them is this edit's and a sin
+// elsewhere in the file is not. Asking git for the same answer costs a process per file, which a change of sixty
+// files pays sixty times. Each half runs in a project of its own, since a sin once reported is not reported again.
+func TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh(t *testing.T) {
+	// The sin sits on the file's second line.
+	for name, test := range map[string]struct {
+		wrote int
+		said  bool
+	}{
+		"the line the sin stands on":   {2, true},
+		"a line elsewhere in the file": {5, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			root, _, data := projectWithASin(t)
+			t.Setenv("JOURNAL_ROOT", root)
+			for _, run := range [][]string{
+				{"git", "-C", root, "add", "-A"},
+				{"git", "-C", root, "-c", "user.email=t@t", "-c", "user.name=T", "commit", "-qm", "first"},
+			} {
+				if out, err := exec.Command(run[0], run[1:]...).CombinedOutput(); err != nil {
+					t.Fatalf("%v: %s", run, out)
+				}
+			}
+
+			Judge4Into(map[string]any{
+				"v": 1, "event": "file_edited", "session": "s1", "environment": "main",
+				"data": map[string]any{
+					"path": "src/refund.py", "kind": "edit", "added": 1, "removed": 0, "tool_use": 41,
+					"lines": []any{map[string]any{"kind": "add", "line": test.wrote, "text": "    if order.late:"}},
+				},
+			}, data)
+
+			queued := drained(t, data)
+			said := len(queued) == 1 && strings.Contains(asText(queued[0]["tell"]), "redundant-python-else")
+			if said != test.said {
+				t.Errorf("the sin was said: %v, want %v (%v)", said, test.said, queued)
+			}
+		})
+	}
+}

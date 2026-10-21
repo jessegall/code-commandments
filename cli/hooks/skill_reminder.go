@@ -64,7 +64,7 @@ func (SkillReminder) Handle(event Event) Response {
 			continue
 		}
 
-		marks := marksIn(file, single, git.ChangedLinesOf(event.Root, file))
+		marks := marksIn(file, single, event.ChangedLines(file))
 		activity = append(activity, marks...)
 
 		found, order := bySkill(marks)

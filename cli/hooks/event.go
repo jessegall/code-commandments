@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -189,6 +191,18 @@ func (e Event) FilePath() string {
 	return e.input("file_path")
 }
 
+// ChangedLines are the lines of the file this moment's edit wrote: the ones whoever reported the moment had
+// already worked out, when it carries them for this very file, and otherwise the ones git finds between the file
+// and HEAD. A sin on a line the edit did not touch is not this edit's doing, which is the whole use of them.
+func (e Event) ChangedLines(file string) git.ChangedLines {
+	changed, carried := ChangedIn(e.payload)
+	if carried && e.FilePath() != "" && strings.HasSuffix(filepath.Clean(file), filepath.Clean(e.FilePath())) {
+		return changed
+	}
+
+	return git.ChangedLinesOf(e.Root, file)
+}
+
 // AgentTypeRequested is the subagent type a dispatch asks for.
 func (e Event) AgentTypeRequested() string {
 	return e.input("subagent_type")
@@ -242,6 +256,26 @@ func (e Event) input(key string) string {
 	input, _ := e.payload["tool_input"].(map[string]any)
 
 	return asText(input[key])
+}
+
+// intOf is a number the journal wrote, however JSON gave it back.
+func intOf(value any) int {
+	switch number := value.(type) {
+	case float64:
+		return int(number)
+	case int:
+		return number
+	case json.Number:
+		read, _ := strconv.Atoi(number.String())
+
+		return read
+	case string:
+		read, _ := strconv.Atoi(number)
+
+		return read
+	}
+
+	return 0
 }
 
 func asText(value any) string {

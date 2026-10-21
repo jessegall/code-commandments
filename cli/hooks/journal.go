@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"github.com/jessegall/code-commandments/cli/git"
 	"os"
 	"path/filepath"
 	"slices"
@@ -27,6 +28,35 @@ type Moment struct {
 	Queue string
 	// Received is when the hook was handed the moment, in unix nanoseconds; zero when it was not stamped.
 	Received int64
+	// Changed are the lines of the moment's file its edit wrote, when whoever reported the moment had already worked
+	// them out; none when nobody did, and then they are asked of git. Whole says every line is the edit's, which is
+	// what a file just created is.
+	Changed      []int
+	ChangedWhole bool
+}
+
+// changedKey is where a payload carries the lines an edit wrote, so the handlers read them instead of asking git
+// for a diff the reporter already had.
+const changedKey = "commandments_changed"
+
+// ChangedIn are the lines an edit wrote as the payload carries them, and whether they are there at all.
+func ChangedIn(payload map[string]any) (git.ChangedLines, bool) {
+	said, carried := payload[changedKey].(map[string]any)
+	if !carried {
+		return git.ChangedLines{}, false
+	}
+
+	if whole, is := said["whole"].(bool); is && whole {
+		return git.Everywhere(), true
+	}
+
+	written, _ := said["lines"].([]any)
+	var lines []int
+	for _, line := range written {
+		lines = append(lines, intOf(line))
+	}
+
+	return git.AtLines(lines), true
 }
 
 // MomentOf reads the journal's payload.
@@ -53,7 +83,26 @@ func MomentOf(given map[string]any) Moment {
 		Env:      textOrNil(given["env"]),
 		Queue:    asText(plugin["queue"]),
 		Received: stampOf(given),
+		Changed:  changedLinesOf(data),
+		// A file the tool created is new to its last line, so every line of it is the edit's.
+		ChangedWhole: asText(data["kind"]) == "create",
 	}
+}
+
+// changedLinesOf are the line numbers of the rows an edit added, as the journal's own edit row records them. A
+// removed row is not a line of the file any more, so only what was added can hold a sin.
+func changedLinesOf(data map[string]any) []int {
+	rows, _ := data["lines"].([]any)
+	var lines []int
+	for _, each := range rows {
+		row, _ := each.(map[string]any)
+		if asText(row["kind"]) != "add" {
+			continue
+		}
+		lines = append(lines, intOf(row["line"]))
+	}
+
+	return lines
 }
 
 // Environment is the name of the environment the moment happened in, when it names one a file name can carry.
@@ -82,6 +131,16 @@ func (m Moment) HookPayload() map[string]any {
 	}
 
 	payload := map[string]any{"hook_event_name": m.Event, "cwd": m.Cwd, "tool_input": input}
+
+	if m.ChangedWhole {
+		payload[changedKey] = map[string]any{"whole": true}
+	} else if len(m.Changed) > 0 {
+		written := make([]any, 0, len(m.Changed))
+		for _, line := range m.Changed {
+			written = append(written, line)
+		}
+		payload[changedKey] = map[string]any{"lines": written}
+	}
 
 	if m.Session != nil {
 		payload["session_id"] = *m.Session

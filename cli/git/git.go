@@ -322,6 +322,17 @@ func FromDiff(diff string) ChangedLines {
 	return ChangedLines{ranges: ranges}
 }
 
+// AtLines covers the lines given and nothing else: what a caller handed the edit already knows, so it never has to
+// ask git for a diff it was told.
+func AtLines(lines []int) ChangedLines {
+	var ranges [][2]int
+	for _, line := range lines {
+		ranges = append(ranges, [2]int{line, line})
+	}
+
+	return ChangedLines{ranges: ranges}
+}
+
 // Covers says whether the line changed.
 func (c ChangedLines) Covers(line int) bool {
 	if c.whole {

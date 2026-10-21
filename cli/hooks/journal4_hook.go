@@ -210,7 +210,9 @@ func Moment4Of(line map[string]any) (map[string]any, bool) {
 		agent["cwd"] = project
 	}
 
-	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"]}, true
+	// The event's own data rides along: the edit the journal already worked out is in it, and a judge that reads it
+	// never asks git for the lines nor the disk for the file.
+	return map[string]any{"event": "hook." + hook, "agent": agent, "tool": tool, "env": line["environment"], "data": data}, true
 }
 
 // Line4 is the answer as version 4 of the journal reads it: a refusal with the advice beside its reason, or the
