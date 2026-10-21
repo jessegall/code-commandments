@@ -373,3 +373,51 @@ func TestTheEditTheJournalHandsUsDecidesWhichSinsAreFresh(t *testing.T) {
 		})
 	}
 }
+
+// TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt holds the whole life of a chat mark on the path version 4
+// takes: the edit that commits a sin raises a card under its key, and the edit that takes the sin out raises a card
+// under that SAME key, which is how the journal settles one in place. Without it a sin fixed stays orange for good,
+// which is what the journal's own project saw.
+func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
+	root, file, _ := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+	sinful := eventOf("file_edited", "src/refund.py")
+
+	raised := Answer4Now(sinful)
+	if !strings.Contains(raised, "sin-found") {
+		t.Fatalf("the sinful edit raised nothing: %s", raised)
+	}
+
+	var first map[string]any
+	if err := json.Unmarshal([]byte(raised), &first); err != nil {
+		t.Fatal(err)
+	}
+	key := asText(first["cards"].([]any)[0].(map[string]any)["key"])
+	if key == "" {
+		t.Fatal("the card raised carries no key, so nothing can settle it")
+	}
+
+	// The repair leaves a DIFFERENT sin in the file, which is the live shape: the edit that takes one sin out puts
+	// another in, so the answer carries a new card and must still settle the old one.
+	righteous := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n\n\ndef credit(order) -> int:\n    if order.cancelled:\n        raise ValueError(order)\n    else:\n        return order.total\n"
+	if err := os.WriteFile(file, []byte(righteous), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	settled := Answer4Now(eventOf("file_edited", "src/refund.py"))
+
+	var second map[string]any
+	if err := json.Unmarshal([]byte(settled), &second); err != nil {
+		t.Fatalf("the repenting edit answered %q: %v", settled, err)
+	}
+
+	cards, _ := second["cards"].([]any)
+	for _, each := range cards {
+		card, _ := each.(map[string]any)
+		if asText(card["key"]) == key && asText(card["kind"]) == "sin-resolved" {
+			return
+		}
+	}
+
+	t.Errorf("the repenting edit raised %v, none of it settling %s", cards, key)
+}
