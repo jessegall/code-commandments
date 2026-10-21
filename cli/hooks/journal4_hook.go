@@ -47,9 +47,10 @@ func (Journal4Hook) Help() help.Help {
 		In(help.Hooks)
 }
 
-// Run answers the event on stdin. The answer is computed from NOTHING: the plugin holds no hook, so the journal
-// never waits on it, and whatever the event is worth is worked out in a run of its own and written to the queue the
-// journal drains at the agent's next hook. A change of sixty files costs this call the same as a change of one.
+// Run answers the event on stdin. The event the journal may HOLD is answered with nothing worked out, and judged in
+// a run of its own that writes to the queue; every other event is heard after the journal's reply, so its answer may
+// carry everything found without anything waiting on it. A change of sixty files costs the held event's answer what a
+// change of one does.
 func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 	raw, _ := io.ReadAll(os.Stdin)
 	var line map[string]any
@@ -75,20 +76,29 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	console.Write(Answer4Now(line) + "\n")
-	judge4Detached(raw, line)
+	if asText(line["event"]) == heldEvent {
+		judge4Detached(raw, line)
+	}
 
 	return 0, nil
 }
 
-// Answer4Now is the answer the journal is handed at once: allow, and nothing worked out. There is no queue to carry
-// the advice only when the journal named the plugin no folder of its own, and then the answer is the whole of it, as
-// it was before a queue existed.
+// heldEvent is the one event the journal may ask the plugin before the tool runs, inside a window of a few
+// milliseconds. Nothing is worked out for it: an answer that has to judge cannot be given in time, and a judge that
+// is waited on is the fault this whole path exists to keep away.
+const heldEvent = "tool_starting"
+
+// Answer4Now is the answer the journal is handed. The event it may hold is answered with nothing worked out, and
+// what it was worth is written to the queue instead; every other event is heard AFTER the journal's reply, so no
+// agent waits on it and its answer carries everything found. A journal that named the plugin no folder of its own
+// drains no queue, and then even the held event is answered in full, as it was before a queue existed.
 func Answer4Now(line map[string]any) string {
-	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
-		return Answer4Of(line)
+	_, queued := Queue4In(os.Getenv(pluginData))
+	if asText(line["event"]) == heldEvent && queued {
+		return JournalAnswer{}.Line4()
 	}
 
-	return JournalAnswer{}.Line4()
+	return Answer4Of(line)
 }
 
 // Judge4Into works the event out, every handler of it, and writes what it found to the plugin's queue, so the sins

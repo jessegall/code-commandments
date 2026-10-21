@@ -36,25 +36,45 @@ func projectWithASin(t *testing.T) (root, file, data string) {
 	return root, file, data
 }
 
-// eventOf is the line version 4 of the journal sends for a tool that has just written the file.
-func eventOf(root, file string) map[string]any {
+// projectAnotherWorktreeStandsOn is a project a second worktree stands on, and the held event that asks to rebase
+// it: what the shared-branch gate refuses, and the one thing the plugin still has to say before a tool runs.
+func projectAnotherWorktreeStandsOn(t *testing.T) (data string, line map[string]any) {
+	t.Helper()
+	root, _, data := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+	for _, run := range [][]string{
+		{"git", "-C", root, "add", "-A"},
+		{"git", "-C", root, "-c", "user.email=t@t", "-c", "user.name=T", "commit", "-qm", "first"},
+		{"git", "-C", root, "worktree", "add", "-q", filepath.Join(t.TempDir(), "other"), "-b", "other"},
+	} {
+		if out, err := exec.Command(run[0], run[1:]...).CombinedOutput(); err != nil {
+			t.Fatalf("%v: %s", run, out)
+		}
+	}
+
+	return data, map[string]any{
+		"v": 1, "event": "tool_starting", "session": "s1", "environment": "main",
+		"data": map[string]any{"tool": "Bash", "input": map[string]any{"command": "git pull --rebase"}},
+	}
+}
+
+// eventOf is the line version 4 of the journal sends for a tool and the file it names.
+func eventOf(event, file string) map[string]any {
 	return map[string]any{
-		"v": 1, "event": "tool_finished", "session": "s1", "environment": "main",
+		"v": 1, "event": event, "session": "s1", "environment": "main",
 		"data": map[string]any{"tool": "Write", "input": map[string]any{"file_path": file}},
 	}
 }
 
-// TestTheHookAnswersWithoutJudgingAndTheJudgeWritesToTheQueue holds the whole promise of the plugin holding no hook:
-// the answer the journal is handed carries NOTHING worked out, however sinful the file it was handed, and the sins
-// reach the agent by the queue the journal drains at its next hook. A hook that judged on its answer path spent the
-// journal's ten seconds on a scan, which is what this test exists to keep from coming back.
-func TestTheHookAnswersWithoutJudgingAndTheJudgeWritesToTheQueue(t *testing.T) {
-	root, file, data := projectWithASin(t)
-	t.Setenv("JOURNAL_ROOT", root)
-	line := eventOf(root, file)
+// TestTheHeldEventIsAnsweredWithNothingWorkedOutAndSaysItToTheQueue holds the whole promise of the one event the
+// journal may hold: its answer carries NOTHING worked out, and what the handlers had to say reaches the agent by the
+// queue the journal drains at its next hook instead. A hook that worked its answer out on the path the journal waits
+// on spent that wait on a scan, which is the fault this test exists to keep from coming back.
+func TestTheHeldEventIsAnsweredWithNothingWorkedOutAndSaysItToTheQueue(t *testing.T) {
+	data, line := projectAnotherWorktreeStandsOn(t)
 
 	if answer := Answer4Now(line); answer != `{"v":1}` {
-		t.Fatalf("the answer path worked something out: %s", answer)
+		t.Fatalf("the held event's answer worked something out: %s", answer)
 	}
 
 	Judge4Into(line, data)
@@ -62,33 +82,16 @@ func TestTheHookAnswersWithoutJudgingAndTheJudgeWritesToTheQueue(t *testing.T) {
 	queue, _ := Queue4In(data)
 	written, err := os.ReadFile(queue.Path())
 	if err != nil {
-		t.Fatalf("the judge wrote no queue: %v", err)
+		t.Fatalf("the run wrote no queue: %v", err)
 	}
 
-	var kinds []string
-	var said string
-	for _, raw := range strings.Split(strings.TrimSpace(string(written)), "\n") {
-		var queued map[string]any
-		if err := json.Unmarshal([]byte(raw), &queued); err != nil {
-			t.Fatalf("the journal cannot read %q: %v", raw, err)
-		}
-		kinds = append(kinds, queued["kind"].(string))
-		if text, is := queued["text"].(string); is {
-			said += text
-		}
-		if card, is := queued["card"].(map[string]any); is {
-			if card["kind"] == "" || card["key"] == "" || card["label"] == "" {
-				t.Errorf("a card line names no kind, key or label: %v", card)
-			}
-		}
+	var queued map[string]any
+	if err := json.Unmarshal([]byte(strings.SplitN(strings.TrimSpace(string(written)), "\n", 2)[0]), &queued); err != nil {
+		t.Fatalf("the journal cannot read %q: %v", written, err)
 	}
 
-	if len(kinds) < 2 || kinds[0] != "context" || kinds[1] != "card" {
-		t.Fatalf("the queue holds %v", kinds)
-	}
-
-	if !strings.Contains(said, "redundant-python-else") {
-		t.Errorf("the context names no sin: %q", said)
+	if queued["kind"] != "context" || !strings.Contains(queued["text"].(string), "worktree") {
+		t.Errorf("the queue holds %v", queued)
 	}
 }
 
@@ -98,7 +101,7 @@ func TestTheHookAnswersWithoutJudgingAndTheJudgeWritesToTheQueue(t *testing.T) {
 func TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged(t *testing.T) {
 	root, file, _ := projectWithASin(t)
 	t.Setenv("JOURNAL_ROOT", root)
-	one := Answer4Now(eventOf(root, file))
+	one := Answer4Now(eventOf("tool_starting", file))
 
 	sinful := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    else:\n        return order.total\n"
 	for at := 0; at < 60; at++ {
@@ -108,7 +111,7 @@ func TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged(t *testing.T) {
 	}
 
 	shell := map[string]any{
-		"v": 1, "event": "tool_finished", "session": "s1", "environment": "main",
+		"v": 1, "event": "tool_starting", "session": "s1", "environment": "main",
 		"data": map[string]any{"tool": "Bash", "input": map[string]any{"command": "./rewrite-everything"}},
 	}
 
@@ -117,16 +120,28 @@ func TestTheAnswerIsTheSameHoweverManyFilesTheToolChanged(t *testing.T) {
 	}
 }
 
-// TestWithNoFolderOfItsOwnTheHookAnswersWithEverythingItFound holds the plugin to a journal that drains no queue: with
-// nowhere to park a sin, the answer carries it, as it did before a queue existed.
-func TestWithNoFolderOfItsOwnTheHookAnswersWithEverythingItFound(t *testing.T) {
-	root, file, _ := projectWithASin(t)
-	t.Setenv("JOURNAL_ROOT", root)
+// TestWithNoFolderOfItsOwnTheHookAnswersTheHeldEventInFull holds the plugin to a journal that drains no queue: with
+// nowhere to park what it has to say, even the held event is answered with it, as it was before a queue existed.
+func TestWithNoFolderOfItsOwnTheHookAnswersTheHeldEventInFull(t *testing.T) {
+	_, line := projectAnotherWorktreeStandsOn(t)
 	t.Setenv(pluginData, "")
 
-	answer := Answer4Now(eventOf(root, file))
+	answer := Answer4Now(line)
+	if !strings.Contains(answer, "worktree") {
+		t.Errorf("without a queue the held event's answer says nothing: %s", answer)
+	}
+}
+
+// TestAnEventHeardAfterTheReplySaysWhatItFound holds the other half: every event but the held one is heard AFTER the
+// journal has replied to the agent, so nothing waits on its answer and the sins it found are said there and then.
+// Keeping them quiet instead would cost the agent every mark it works by, for no gain in what waits.
+func TestAnEventHeardAfterTheReplySaysWhatItFound(t *testing.T) {
+	root, file, _ := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+
+	answer := Answer4Now(eventOf("tool_finished", file))
 	if !strings.Contains(answer, "redundant-python-else") {
-		t.Errorf("without a queue the answer names no sin: %s", answer)
+		t.Errorf("the heard event says nothing of the sin it found: %s", answer)
 	}
 }
 
