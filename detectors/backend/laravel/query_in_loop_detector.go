@@ -13,7 +13,7 @@ import (
 // QueryInLoopDetector finds a query run inside a loop: one per turn of it, which is the N+1.
 type QueryInLoopDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, QueryInLoopDetector{}) }
+func init() { detectors.Register(catalog.PHP, QueryInLoopDetector{}) }
 
 // Sin is the sin the detector finds.
 func (QueryInLoopDetector) Sin() sins.Sin { return backendsins.QueryInLoop{} }

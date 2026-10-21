@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	skill.Register(catalog.Frontend, VueControlFlow{})
+	skill.Register(catalog.Vue, VueControlFlow{})
 }
 
 //go:embed text/vue-control-flow/intro.md
@@ -22,7 +22,7 @@ type VueControlFlow struct{}
 
 func (VueControlFlow) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "frontend/vue-control-flow",
+		Slug:      "vue/vue-control-flow",
 		Tier:      skill.KeepInMind,
 		Order:     16,
 		Title:     "Vue control flow — dispatch on a value, don't chain conditionals",
@@ -32,7 +32,7 @@ func (VueControlFlow) Definition() skill.Definition {
 		Principle: vueControlFlowPrinciple,
 		Languages: []string{"vue"},
 		Related: []skill.Relation{
-			{Slug: "frontend/vue-components", Note: "a `<SwitchCase>` IS a component — the same extract-don't-inline instinct."},
+			{Slug: "vue/vue-components", Note: "a `<SwitchCase>` IS a component — the same extract-don't-inline instinct."},
 		},
 	}
 }

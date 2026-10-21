@@ -9,7 +9,7 @@ import (
 // DanglingDocReference is the dangling-doc-reference sin.
 type DanglingDocReference struct{}
 
-func init() { sins.Register(catalog.Backend, DanglingDocReference{}) }
+func init() { sins.Register(catalog.PHP, DanglingDocReference{}) }
 
 // Definition is what the sin states about itself.
 func (DanglingDocReference) Definition() sins.Definition {

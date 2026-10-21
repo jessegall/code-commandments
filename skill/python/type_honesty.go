@@ -34,7 +34,7 @@ func (TypeHonesty) Definition() skill.Definition {
 		Principle: typeHonestyPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/type-honesty", Note: "the same discipline over PHP."},
+			{Slug: "php/type-honesty", Note: "the same discipline over PHP."},
 			{Slug: "python/absence", Note: "the complement: absence models a genuine maybe-missing; this kills a fake one."},
 			{Slug: "python/fix-at-the-source", Note: "make the type certain where the value is born, not defended at every read."},
 		},

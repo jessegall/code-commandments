@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, PropDrillingDetector{})
+	detectors.Register(catalog.Vue, PropDrillingDetector{})
 }
 
 // PropDrillingDetector finds a prop a component only passes on, bare, to a child that itself only passes it

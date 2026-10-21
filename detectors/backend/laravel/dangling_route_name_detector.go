@@ -13,7 +13,7 @@ import (
 // DanglingRouteNameDetector finds a route name looked up that no route registers.
 type DanglingRouteNameDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DanglingRouteNameDetector{}) }
+func init() { detectors.Register(catalog.PHP, DanglingRouteNameDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DanglingRouteNameDetector) Sin() sins.Sin { return backendsins.DanglingRouteName{} }

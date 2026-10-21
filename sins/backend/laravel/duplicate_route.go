@@ -9,7 +9,7 @@ import (
 // DuplicateRoute is the duplicate-route sin.
 type DuplicateRoute struct{}
 
-func init() { sins.Register(catalog.Backend, DuplicateRoute{}) }
+func init() { sins.Register(catalog.PHP, DuplicateRoute{}) }
 
 // Definition is what the sin states about itself.
 func (DuplicateRoute) Definition() sins.Definition {

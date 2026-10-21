@@ -18,7 +18,7 @@ type RepeatedNamedCallDetector struct {
 	threshold int
 }
 
-func init() { detectors.Register(catalog.Backend, RepeatedNamedCallDetector{threshold: 2}) }
+func init() { detectors.Register(catalog.PHP, RepeatedNamedCallDetector{threshold: 2}) }
 
 // Sin is the sin the detector finds.
 func (RepeatedNamedCallDetector) Sin() sins.Sin { return backendsins.RepeatedNamedCall{} }

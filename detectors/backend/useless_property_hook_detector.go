@@ -13,7 +13,7 @@ import (
 // UselessPropertyHookDetector finds a get hook that reads nothing of its object: a constant dressed as state.
 type UselessPropertyHookDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, UselessPropertyHookDetector{}) }
+func init() { detectors.Register(catalog.PHP, UselessPropertyHookDetector{}) }
 
 // Sin is the sin the detector finds.
 func (UselessPropertyHookDetector) Sin() sins.Sin { return backendsins.UselessPropertyHook{} }

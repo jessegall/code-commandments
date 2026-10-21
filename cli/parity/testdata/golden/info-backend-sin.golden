@@ -1,7 +1,7 @@
 exit: 0
 --- stdout
 
-[1mswallow-catch[0m  [2mbackend/exceptions[0m
+[1mswallow-catch[0m  [2mphp/exceptions[0m
   `catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)
 
 [33mWhy it is a sin[0m
@@ -50,7 +50,7 @@ exit: 0
 
 [33mCommands[0m
 
-  [36mLearn     [0m load the skill [1mcommandments-backend-exceptions[0m
+  [36mLearn     [0m load the skill [1mcommandments-php-exceptions[0m
   [36mExempts   [0m commandments exemptions swallow-catch
   [36mFind it   [0m commandments judge --sin=swallow-catch
   [36mTurn off  [0m commandments disable swallow-catch

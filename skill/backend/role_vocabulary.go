@@ -18,13 +18,13 @@ var (
 type RoleVocabulary struct{}
 
 func init() {
-	skill.Register(catalog.Backend, RoleVocabulary{})
+	skill.Register(catalog.PHP, RoleVocabulary{})
 }
 
 // Definition is what the skill states about itself.
 func (RoleVocabulary) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/role-vocabulary",
+		Slug:      "php/role-vocabulary",
 		Tier:      skill.KeepInMind,
 		Order:     10,
 		Title:     "Role vocabulary — the name is the contract",
@@ -34,9 +34,9 @@ func (RoleVocabulary) Definition() skill.Definition {
 		Principle: roleVocabularyPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/absence", Note: "a registry `get()` is resolve-or-throw, not an Option; that's the same \"missing must-exist thing throws\" rule."},
-			{Slug: "backend/exceptions", Note: "the named exception a registry throws on a miss (`RegistryEntryNotFoundException::forKey($key)`)."},
-			{Slug: "backend/value-objects", Note: "these roles are typed structures; reach for one instead of threading a raw `array` keyed store around."},
+			{Slug: "php/absence", Note: "a registry `get()` is resolve-or-throw, not an Option; that's the same \"missing must-exist thing throws\" rule."},
+			{Slug: "php/exceptions", Note: "the named exception a registry throws on a miss (`RegistryEntryNotFoundException::forKey($key)`)."},
+			{Slug: "php/value-objects", Note: "these roles are typed structures; reach for one instead of threading a raw `array` keyed store around."},
 		},
 	}
 }

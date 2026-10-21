@@ -12,7 +12,7 @@ import (
 // BloatedDocblockDetector finds a class whose docblock runs to more than one paragraph of prose.
 type BloatedDocblockDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, BloatedDocblockDetector{}) }
+func init() { detectors.Register(catalog.PHP, BloatedDocblockDetector{}) }
 
 // Sin is the sin the detector finds.
 func (BloatedDocblockDetector) Sin() sins.Sin { return backendsins.BloatedDocblock{} }

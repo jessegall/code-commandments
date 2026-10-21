@@ -9,7 +9,7 @@ import (
 // ConcurrentSubclass is the concurrent-subclass sin.
 type ConcurrentSubclass struct{}
 
-func init() { sins.Register(catalog.Backend, ConcurrentSubclass{}) }
+func init() { sins.Register(catalog.PHP, ConcurrentSubclass{}) }
 
 // Definition is what the sin states about itself.
 func (ConcurrentSubclass) Definition() sins.Definition {

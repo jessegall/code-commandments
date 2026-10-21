@@ -10,7 +10,7 @@ import (
 
 // written is a rule file of the engine, the sin and the query given.
 func written(engine, name, query string) []byte {
-	return []byte(`{"engine": "` + engine + `", "sin": {"name": "` + name + `", "description": "a sin the test writes", "skill": "backend/laravel-idioms"}, "find": ` + query + `}`)
+	return []byte(`{"engine": "` + engine + `", "sin": {"name": "` + name + `", "description": "a sin the test writes", "skill": "php/laravel-idioms"}, "find": ` + query + `}`)
 }
 
 // parsed is the rule the query makes, failing the test when it cannot be read.

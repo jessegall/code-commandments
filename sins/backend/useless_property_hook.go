@@ -9,7 +9,7 @@ import (
 // UselessPropertyHook is the useless-property-hook sin.
 type UselessPropertyHook struct{}
 
-func init() { sins.Register(catalog.Backend, UselessPropertyHook{}) }
+func init() { sins.Register(catalog.PHP, UselessPropertyHook{}) }
 
 // Definition is what the sin states about itself.
 func (UselessPropertyHook) Definition() sins.Definition {

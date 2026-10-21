@@ -12,7 +12,7 @@ import (
 // ConstructorSideEffectDetector finds a constructor that sends work to a collaborator and discards the answer: construction with a side effect.
 type ConstructorSideEffectDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ConstructorSideEffectDetector{}) }
+func init() { detectors.Register(catalog.PHP, ConstructorSideEffectDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ConstructorSideEffectDetector) Sin() sins.Sin { return backendsins.ConstructorSideEffect{} }

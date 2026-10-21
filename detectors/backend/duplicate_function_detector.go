@@ -12,7 +12,7 @@ import (
 // DuplicateFunctionDetector finds two or more methods with the same body, one mechanism written twice.
 type DuplicateFunctionDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DuplicateFunctionDetector{}) }
+func init() { detectors.Register(catalog.PHP, DuplicateFunctionDetector{}) }
 
 // minBodyNodes is how many nodes a body must hold before two alike are not a coincidence.
 const minBodyNodes = 12

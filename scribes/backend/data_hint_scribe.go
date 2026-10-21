@@ -17,7 +17,7 @@ const data = `Spatie\LaravelData\Data`
 const collectHint = `@method static ($items is \Illuminate\Support\Collection ? \Illuminate\Support\Collection<int, static> : array<int, static>) collect(iterable $items)`
 
 func init() {
-	scribes.Maintains(catalog.Backend, DataHintScribe{})
+	scribes.Maintains(catalog.PHP, DataHintScribe{})
 }
 
 // DataHintScribe keeps a Data class's magic surface honest: a factory that is not named from… is renamed from<Type>

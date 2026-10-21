@@ -13,7 +13,7 @@ import (
 // HandedOutCollectionDetector finds a getter whose whole body hands back the Collection the class holds.
 type HandedOutCollectionDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, HandedOutCollectionDetector{}) }
+func init() { detectors.Register(catalog.PHP, HandedOutCollectionDetector{}) }
 
 // Sin is the sin the detector finds.
 func (HandedOutCollectionDetector) Sin() sins.Sin { return laravelsins.HandedOutCollection{} }

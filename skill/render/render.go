@@ -22,7 +22,7 @@ import (
 const (
 	reminder     = "> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one."
 	reminderSelf = "> 🔱 **The rule above all — apply it ALWAYS.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This is that rule."
-	fixAtSource  = "backend/fix-at-the-source"
+	fixAtSource  = "php/fix-at-the-source"
 	examplesDoc  = "examples"
 	detectorsDoc = "detectors"
 )

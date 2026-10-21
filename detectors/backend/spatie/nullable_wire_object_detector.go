@@ -13,7 +13,7 @@ import (
 // NullableWireObjectDetector finds a nullable object field on the wire, where the absence belongs modelled on the server.
 type NullableWireObjectDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NullableWireObjectDetector{}) }
+func init() { detectors.Register(catalog.PHP, NullableWireObjectDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NullableWireObjectDetector) Sin() sins.Sin { return backendsins.NullableWireObject{} }

@@ -13,7 +13,7 @@ import (
 // DataCollectionTypeDetector finds a field typed as the legacy DataCollection, where a typed array or collection belongs.
 type DataCollectionTypeDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DataCollectionTypeDetector{}) }
+func init() { detectors.Register(catalog.PHP, DataCollectionTypeDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DataCollectionTypeDetector) Sin() sins.Sin { return backendsins.DataCollectionType{} }

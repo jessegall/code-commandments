@@ -3,6 +3,8 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
+
 	"github.com/jessegall/code-commandments/cli/binary"
 
 	"github.com/jessegall/code-commandments/catalog"
@@ -96,12 +98,35 @@ type named struct {
 	description string
 }
 
-// rules offers the shipped rules by name, and any name of the project's own.
+// formerIDs are the rule's id under each name its engine was published under before.
+func formerIDs(id string) []string {
+	engine, name, shipped := strings.Cut(id, "/")
+	if !shipped {
+		return nil
+	}
+
+	var former []string
+	for _, was := range catalog.FormerNames() {
+		if named, _ := catalog.EngineNamed(was); string(named) == engine {
+			former = append(former, was+"/"+name)
+		}
+	}
+
+	return former
+}
+
+// rules offers the shipped rules by name, and any name of the project's own. A rule of an engine that was
+// published under another name is offered under that name too, so a config written then is still named by the
+// schema the editor reads and never shows as a mistake.
 func rules(shipped []named) object {
 	choices := []any{}
 
 	for _, rule := range shipped {
 		choices = append(choices, object{"const": rule.id, "description": rule.description})
+
+		for _, former := range formerIDs(rule.id) {
+			choices = append(choices, object{"const": former, "description": rule.description})
+		}
 	}
 
 	return object{"type": "string", "anyOf": append(choices, object{"pattern": ownRule, "description": "A rule of the project's own, by name."})}

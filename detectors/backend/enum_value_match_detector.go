@@ -12,7 +12,7 @@ import (
 // EnumValueMatchDetector finds a match or switch on an enum's ->value outside the enum, per-case knowledge that belongs on the enum.
 type EnumValueMatchDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, EnumValueMatchDetector{}) }
+func init() { detectors.Register(catalog.PHP, EnumValueMatchDetector{}) }
 
 // Sin is the sin the detector finds.
 func (EnumValueMatchDetector) Sin() sins.Sin { return backendsins.EnumValueMatch{} }

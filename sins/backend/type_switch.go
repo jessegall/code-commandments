@@ -9,7 +9,7 @@ import (
 // TypeSwitch is the type-switch sin.
 type TypeSwitch struct{}
 
-func init() { sins.Register(catalog.Backend, TypeSwitch{}) }
+func init() { sins.Register(catalog.PHP, TypeSwitch{}) }
 
 // Definition is what the sin states about itself.
 func (TypeSwitch) Definition() sins.Definition {

@@ -18,13 +18,13 @@ var (
 type BehaviourPerMethod struct{}
 
 func init() {
-	skill.Register(catalog.Backend, BehaviourPerMethod{})
+	skill.Register(catalog.PHP, BehaviourPerMethod{})
 }
 
 // Definition is what the skill states about itself.
 func (BehaviourPerMethod) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/behaviour-per-method",
+		Slug:      "php/behaviour-per-method",
 		Tier:      skill.KeepInMind,
 		Order:     18,
 		Title:     "One method, one behaviour — never a flag that picks",
@@ -34,9 +34,9 @@ func (BehaviourPerMethod) Definition() skill.Definition {
 		Principle: behaviourPerMethodPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/enums-with-behaviour", Note: "when the choice has more than two cases, it is an enum — and the behaviour belongs on it."},
-			{Slug: "backend/guard-clauses-and-flow", Note: "an early return that guards is the shape this one is NOT; check preconditions at the top and leave."},
-			{Slug: "backend/pass-the-object", Note: `the sibling on the other side: a caller that pre-decides with a bool it computed from an object it holds.`},
+			{Slug: "php/enums-with-behaviour", Note: "when the choice has more than two cases, it is an enum — and the behaviour belongs on it."},
+			{Slug: "php/guard-clauses-and-flow", Note: "an early return that guards is the shape this one is NOT; check preconditions at the top and leave."},
+			{Slug: "php/pass-the-object", Note: `the sibling on the other side: a caller that pre-decides with a bool it computed from an object it holds.`},
 		},
 	}
 }

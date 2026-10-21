@@ -13,7 +13,7 @@ import (
 // PreferOptionalCreateDetector finds new Optional where Optional::create() belongs.
 type PreferOptionalCreateDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, PreferOptionalCreateDetector{}) }
+func init() { detectors.Register(catalog.PHP, PreferOptionalCreateDetector{}) }
 
 // Sin is the sin the detector finds.
 func (PreferOptionalCreateDetector) Sin() sins.Sin { return backendsins.PreferOptionalCreate{} }

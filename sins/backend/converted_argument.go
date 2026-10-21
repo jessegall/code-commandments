@@ -9,7 +9,7 @@ import (
 // ConvertedArgument is the converted-argument sin.
 type ConvertedArgument struct{}
 
-func init() { sins.Register(catalog.Backend, ConvertedArgument{}) }
+func init() { sins.Register(catalog.PHP, ConvertedArgument{}) }
 
 // Definition is what the sin states about itself.
 func (ConvertedArgument) Definition() sins.Definition {

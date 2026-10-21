@@ -32,8 +32,8 @@ func (Absence) Definition() skill.Definition {
 		Principle: absencePrinciple,
 		Languages: []string{"ts"},
 		Related: []skill.Relation{
-			{Slug: "backend/absence", Note: "the same instinct on the server, with the tools PHP has and TypeScript does not."},
-			{Slug: "backend/type-honesty", Note: "the general rule this serves: a type must not claim an optionality the design doesn't have."},
+			{Slug: "php/absence", Note: "the same instinct on the server, with the tools PHP has and TypeScript does not."},
+			{Slug: "php/type-honesty", Note: "the general rule this serves: a type must not claim an optionality the design doesn't have."},
 		},
 	}
 }

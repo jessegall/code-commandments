@@ -9,7 +9,7 @@ import (
 // CoalescedLoopSubject is the coalesced-loop-subject sin.
 type CoalescedLoopSubject struct{}
 
-func init() { sins.Register(catalog.Backend, CoalescedLoopSubject{}) }
+func init() { sins.Register(catalog.PHP, CoalescedLoopSubject{}) }
 
 // Definition is what the sin states about itself.
 func (CoalescedLoopSubject) Definition() sins.Definition {

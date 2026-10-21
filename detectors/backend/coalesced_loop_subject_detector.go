@@ -12,7 +12,7 @@ import (
 // CoalescedLoopSubjectDetector finds a foreach over a parameter's value defaulted to an empty array, which hides that the value may be missing.
 type CoalescedLoopSubjectDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, CoalescedLoopSubjectDetector{}) }
+func init() { detectors.Register(catalog.PHP, CoalescedLoopSubjectDetector{}) }
 
 // Sin is the sin the detector finds.
 func (CoalescedLoopSubjectDetector) Sin() sins.Sin { return backendsins.CoalescedLoopSubject{} }

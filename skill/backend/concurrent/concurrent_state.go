@@ -18,13 +18,13 @@ var (
 type ConcurrentState struct{}
 
 func init() {
-	skill.Register(catalog.Backend, ConcurrentState{})
+	skill.Register(catalog.PHP, ConcurrentState{})
 }
 
 // Definition is what the skill states about itself.
 func (ConcurrentState) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/concurrent-state",
+		Slug:      "php/concurrent-state",
 		Tier:      skill.KeepInMind,
 		Order:     14,
 		Title:     "Concurrent state — a plain object behind `::for()`",
@@ -34,7 +34,7 @@ func (ConcurrentState) Definition() skill.Definition {
 		Principle: concurrentStatePrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/exceptions", Note: "\"the handle/instance *for* this identity\"."},
+			{Slug: "php/exceptions", Note: "\"the handle/instance *for* this identity\"."},
 		},
 	}
 }

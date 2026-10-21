@@ -9,7 +9,7 @@ import (
 // ConstructorOrchestration is the constructor-orchestration sin.
 type ConstructorOrchestration struct{}
 
-func init() { sins.Register(catalog.Backend, ConstructorOrchestration{}) }
+func init() { sins.Register(catalog.PHP, ConstructorOrchestration{}) }
 
 // Definition is what the sin states about itself.
 func (ConstructorOrchestration) Definition() sins.Definition {

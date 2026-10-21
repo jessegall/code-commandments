@@ -9,7 +9,7 @@ import (
 // WrappingWithoutCause is the wrapping-without-cause sin.
 type WrappingWithoutCause struct{}
 
-func init() { sins.Register(catalog.Backend, WrappingWithoutCause{}) }
+func init() { sins.Register(catalog.PHP, WrappingWithoutCause{}) }
 
 // Definition is what the sin states about itself.
 func (WrappingWithoutCause) Definition() sins.Definition {

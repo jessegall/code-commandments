@@ -9,7 +9,7 @@ import (
 // NonCountingFor is the non-counting-for sin.
 type NonCountingFor struct{}
 
-func init() { sins.Register(catalog.Backend, NonCountingFor{}) }
+func init() { sins.Register(catalog.PHP, NonCountingFor{}) }
 
 // Definition is what the sin states about itself.
 func (NonCountingFor) Definition() sins.Definition {

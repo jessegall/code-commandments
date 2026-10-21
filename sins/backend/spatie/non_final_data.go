@@ -9,7 +9,7 @@ import (
 // NonFinalData is the non-final-data sin.
 type NonFinalData struct{}
 
-func init() { sins.Register(catalog.Backend, NonFinalData{}) }
+func init() { sins.Register(catalog.PHP, NonFinalData{}) }
 
 // Definition is what the sin states about itself.
 func (NonFinalData) Definition() sins.Definition {

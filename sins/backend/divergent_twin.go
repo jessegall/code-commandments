@@ -9,7 +9,7 @@ import (
 // DivergentTwin is the divergent-twin sin.
 type DivergentTwin struct{}
 
-func init() { sins.Register(catalog.Backend, DivergentTwin{}) }
+func init() { sins.Register(catalog.PHP, DivergentTwin{}) }
 
 // Definition is what the sin states about itself.
 func (DivergentTwin) Definition() sins.Definition {

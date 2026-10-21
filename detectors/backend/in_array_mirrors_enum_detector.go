@@ -12,7 +12,7 @@ import (
 // InArrayMirrorsEnumDetector finds an in_array over string literals that spell an enum's values.
 type InArrayMirrorsEnumDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, InArrayMirrorsEnumDetector{}) }
+func init() { detectors.Register(catalog.PHP, InArrayMirrorsEnumDetector{}) }
 
 // Sin is the sin the detector finds.
 func (InArrayMirrorsEnumDetector) Sin() sins.Sin { return backendsins.InArrayMirrorsEnum{} }

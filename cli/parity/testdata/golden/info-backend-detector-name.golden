@@ -1,7 +1,7 @@
 exit: 0
 --- stdout
 
-[1marray-bag[0m  [2mbackend/value-objects[0m
+[1marray-bag[0m  [2mphp/value-objects[0m
   String-indexing (`$arr['key']`) a structured array param instead of giving it a name —
   the type was never defined.
 
@@ -64,7 +64,7 @@ exit: 0
 
 [33mCommands[0m
 
-  [36mLearn     [0m load the skill [1mcommandments-backend-value-objects[0m
+  [36mLearn     [0m load the skill [1mcommandments-php-value-objects[0m
   [36mExempts   [0m commandments exemptions array-bag
   [36mFind it   [0m commandments judge --sin=array-bag
   [36mTurn off  [0m commandments disable array-bag

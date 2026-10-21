@@ -34,7 +34,7 @@ func (TypeHonesty) Definition() skill.Definition {
 		Principle: typeHonestyPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/type-honesty", Note: "the same discipline in PHP."},
+			{Slug: "php/type-honesty", Note: "the same discipline in PHP."},
 			{Slug: "csharp/absence", Note: "the complement: absence models a value that really can be missing; this removes one that cannot."},
 			{Slug: "csharp/fix-at-the-source", Note: "make the type certain where the value is made, not defended at every read."},
 		},

@@ -9,7 +9,7 @@ import (
 // NullableWireObject is the nullable-wire-object sin.
 type NullableWireObject struct{}
 
-func init() { sins.Register(catalog.Backend, NullableWireObject{}) }
+func init() { sins.Register(catalog.PHP, NullableWireObject{}) }
 
 // Definition is what the sin states about itself.
 func (NullableWireObject) Definition() sins.Definition {

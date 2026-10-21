@@ -9,7 +9,7 @@ import (
 // NamespaceDependency is the namespace-dependency sin.
 type NamespaceDependency struct{}
 
-func init() { sins.Register(catalog.Backend, NamespaceDependency{}) }
+func init() { sins.Register(catalog.PHP, NamespaceDependency{}) }
 
 // Definition is what the sin states about itself.
 func (NamespaceDependency) Definition() sins.Definition {

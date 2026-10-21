@@ -138,5 +138,5 @@ The other 9 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/guard-clauses-and-flow`](../../backend/guard-clauses-and-flow/SKILL.md) — the same discipline on the PHP backend.
-- [`backend/enums-with-behaviour`](../../backend/enums-with-behaviour/SKILL.md) — where an `elif` ladder over one subject goes: a closed set with the per-case answer on it.
+- [`php/guard-clauses-and-flow`](../../php/guard-clauses-and-flow/SKILL.md) — the same discipline on the PHP backend.
+- [`php/enums-with-behaviour`](../../php/enums-with-behaviour/SKILL.md) — where an `elif` ladder over one subject goes: a closed set with the per-case answer on it.

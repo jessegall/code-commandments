@@ -12,7 +12,7 @@ import (
 // IfElseLadderDetector finds an if that climbs through two or more elseifs.
 type IfElseLadderDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, IfElseLadderDetector{}) }
+func init() { detectors.Register(catalog.PHP, IfElseLadderDetector{}) }
 
 // Sin is the sin the detector finds.
 func (IfElseLadderDetector) Sin() sins.Sin { return backendsins.IfElseLadder{} }

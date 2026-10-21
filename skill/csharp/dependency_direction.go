@@ -34,7 +34,7 @@ func (DependencyDirection) Definition() skill.Definition {
 		Principle: dependencyDirectionPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/dependency-direction", Note: "the same discipline over PHP namespaces."},
+			{Slug: "php/dependency-direction", Note: "the same discipline over PHP namespaces."},
 			{Slug: "csharp/fix-at-the-source", Note: "the arrow that points the wrong way is where the fix belongs."},
 		},
 	}

@@ -13,7 +13,7 @@ import (
 // RequestAccessorRecastDetector finds a request's typed string() accessor cast back to a string.
 type RequestAccessorRecastDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RequestAccessorRecastDetector{}) }
+func init() { detectors.Register(catalog.PHP, RequestAccessorRecastDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RequestAccessorRecastDetector) Sin() sins.Sin { return backendsins.RequestAccessorRecast{} }

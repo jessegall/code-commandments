@@ -9,7 +9,7 @@ import (
 // UnnamedVocabularyLiteral is the unnamed-vocabulary-literal sin.
 type UnnamedVocabularyLiteral struct{}
 
-func init() { sins.Register(catalog.Backend, UnnamedVocabularyLiteral{}) }
+func init() { sins.Register(catalog.PHP, UnnamedVocabularyLiteral{}) }
 
 // Definition is what the sin states about itself.
 func (UnnamedVocabularyLiteral) Definition() sins.Definition {

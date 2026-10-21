@@ -9,7 +9,7 @@ import (
 // ContainerReach is the container-reach sin.
 type ContainerReach struct{}
 
-func init() { sins.Register(catalog.Backend, ContainerReach{}) }
+func init() { sins.Register(catalog.PHP, ContainerReach{}) }
 
 // Definition is what the sin states about itself.
 func (ContainerReach) Definition() sins.Definition {

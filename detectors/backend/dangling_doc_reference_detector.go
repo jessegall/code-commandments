@@ -15,7 +15,7 @@ import (
 // declare.
 type DanglingDocReferenceDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DanglingDocReferenceDetector{}) }
+func init() { detectors.Register(catalog.PHP, DanglingDocReferenceDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DanglingDocReferenceDetector) Sin() sins.Sin { return backendsins.DanglingDocReference{} }

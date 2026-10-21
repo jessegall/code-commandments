@@ -132,6 +132,6 @@ The other 3 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/exceptions`](../../backend/exceptions/SKILL.md) — the same discipline on the PHP backend, with `::for()` factories.
+- [`php/exceptions`](../../php/exceptions/SKILL.md) — the same discipline on the PHP backend, with `::for()` factories.
 - [`python/exceptions`](../../python/exceptions/SKILL.md) — the same discipline in Python, with classmethod factories.
-- [`backend/absence`](../../backend/absence/SKILL.md) — whether "missing" is a failure to throw at all, or a value to model.
+- [`php/absence`](../../php/absence/SKILL.md) — whether "missing" is a failure to throw at all, or a value to model.

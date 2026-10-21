@@ -34,8 +34,8 @@ func (Exceptions) Definition() skill.Definition {
 		Principle: exceptionsPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/exceptions", Note: "the same discipline on the PHP backend, with `::for()` factories."},
-			{Slug: "backend/absence", Note: "whether \"missing\" is a failure to raise at all, or a value to model."},
+			{Slug: "php/exceptions", Note: "the same discipline on the PHP backend, with `::for()` factories."},
+			{Slug: "php/absence", Note: "whether \"missing\" is a failure to raise at all, or a value to model."},
 		},
 	}
 }

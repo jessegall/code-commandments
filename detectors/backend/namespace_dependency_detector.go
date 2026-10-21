@@ -17,7 +17,7 @@ type NamespaceDependencyDetector struct {
 	layers map[string][]string
 }
 
-func init() { detectors.Register(catalog.Backend, NamespaceDependencyDetector{}) }
+func init() { detectors.Register(catalog.PHP, NamespaceDependencyDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NamespaceDependencyDetector) Sin() sins.Sin { return backendsins.NamespaceDependency{} }

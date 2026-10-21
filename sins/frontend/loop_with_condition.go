@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, LoopWithCondition{})
+	sins.Register(catalog.Vue, LoopWithCondition{})
 }
 
 // LoopWithCondition is the sin "loop-with-condition".

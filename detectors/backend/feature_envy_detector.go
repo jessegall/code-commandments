@@ -14,7 +14,7 @@ import (
 // or writing its fields through a parameter more than it reaches into its own class.
 type FeatureEnvyDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, FeatureEnvyDetector{}) }
+func init() { detectors.Register(catalog.PHP, FeatureEnvyDetector{}) }
 
 // Sin is the sin the detector finds.
 func (FeatureEnvyDetector) Sin() sins.Sin { return backendsins.FeatureEnvy{} }

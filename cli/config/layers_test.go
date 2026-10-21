@@ -10,14 +10,14 @@ import (
 func TestTheLayersAProjectDeclaresAreReadPerEngine(t *testing.T) {
 	config, err := ReadJSON(writeJSON(t, `{
     "configure": {
-        "backend/NamespaceDependencyDetector": [
+        "php/NamespaceDependencyDetector": [
             {"layer": ["\\App\\Domain"]},
             {"layer": ["App\\Http", ["App\\Domain", "App\\Support"]]}
         ],
         "python/NamespaceDependencyDetector": [
             {"layer": ["shop.domain"]}
         ],
-        "backend/DeepNestedDetector": [
+        "php/DeepNestedDetector": [
             {"layer": ["Not\\A\\Layer"]}
         ]
     }
@@ -26,7 +26,7 @@ func TestTheLayersAProjectDeclaresAreReadPerEngine(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if got, want := config.Layers(catalog.Backend), map[string][]string{
+	if got, want := config.Layers(catalog.PHP), map[string][]string{
 		`App\Domain`: nil,
 		`App\Http`:   {`App\Domain`, `App\Support`},
 	}; !reflect.DeepEqual(got, want) {

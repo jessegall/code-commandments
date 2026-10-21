@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, InlineCaseViewsDetector{})
+	detectors.Register(catalog.Vue, InlineCaseViewsDetector{})
 }
 
 // viewCases is how many of a dispatch's cases must each render a whole view before the dispatch is doing their

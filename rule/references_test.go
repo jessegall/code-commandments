@@ -81,7 +81,7 @@ func phpProject(t *testing.T, files map[string]string) *engine.Codebase {
 func foundAt(t *testing.T, engineName, query string, codebase *engine.Codebase) string {
 	t.Helper()
 
-	written := `{"engine": "` + engineName + `", "sin": {"name": "x", "description": "x", "skill": "backend/absence"}, "find": ` + query + `}`
+	written := `{"engine": "` + engineName + `", "sin": {"name": "x", "description": "x", "skill": "php/absence"}, "find": ` + query + `}`
 
 	parsed, err := rule.Parse("XDetector", []byte(written), shipped)
 	if err != nil {

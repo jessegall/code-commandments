@@ -9,7 +9,7 @@ import (
 // PreferOptionalCreate is the prefer-optional-create sin.
 type PreferOptionalCreate struct{}
 
-func init() { sins.Register(catalog.Backend, PreferOptionalCreate{}) }
+func init() { sins.Register(catalog.PHP, PreferOptionalCreate{}) }
 
 // Definition is what the sin states about itself.
 func (PreferOptionalCreate) Definition() sins.Definition {

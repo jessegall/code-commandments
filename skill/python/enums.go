@@ -34,7 +34,7 @@ func (Enums) Definition() skill.Definition {
 		Principle: enumsPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/enums-with-behaviour", Note: "the same discipline on the PHP backend."},
+			{Slug: "php/enums-with-behaviour", Note: "the same discipline on the PHP backend."},
 			{Slug: "python/flow", Note: "an `elif` ladder over one subject is where a missing enum usually shows first."},
 		},
 	}

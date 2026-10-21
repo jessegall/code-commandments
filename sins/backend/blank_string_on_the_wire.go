@@ -9,7 +9,7 @@ import (
 // BlankStringOnTheWire is the blank-string-on-the-wire sin.
 type BlankStringOnTheWire struct{}
 
-func init() { sins.Register(catalog.Backend, BlankStringOnTheWire{}) }
+func init() { sins.Register(catalog.PHP, BlankStringOnTheWire{}) }
 
 // Definition is what the sin states about itself.
 func (BlankStringOnTheWire) Definition() sins.Definition {

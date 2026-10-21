@@ -9,7 +9,7 @@ import (
 // LoopInvertedGuard is the loop-inverted-guard sin.
 type LoopInvertedGuard struct{}
 
-func init() { sins.Register(catalog.Backend, LoopInvertedGuard{}) }
+func init() { sins.Register(catalog.PHP, LoopInvertedGuard{}) }
 
 // Definition is what the sin states about itself.
 func (LoopInvertedGuard) Definition() sins.Definition {

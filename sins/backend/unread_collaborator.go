@@ -10,7 +10,7 @@ import (
 type UnreadCollaborator struct{}
 
 func init() {
-	sins.Register(catalog.Backend, UnreadCollaborator{})
+	sins.Register(catalog.PHP, UnreadCollaborator{})
 }
 
 // Definition is what the sin states about itself.

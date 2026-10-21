@@ -13,7 +13,7 @@ import (
 // should answer itself.
 type TypeSwitchDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, TypeSwitchDetector{}) }
+func init() { detectors.Register(catalog.PHP, TypeSwitchDetector{}) }
 
 // Sin is the sin the detector finds.
 func (TypeSwitchDetector) Sin() sins.Sin { return backendsins.TypeSwitch{} }

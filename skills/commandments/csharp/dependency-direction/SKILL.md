@@ -135,5 +135,5 @@ The other 1 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/dependency-direction`](../../backend/dependency-direction/SKILL.md) — the same discipline over PHP namespaces.
+- [`php/dependency-direction`](../../php/dependency-direction/SKILL.md) — the same discipline over PHP namespaces.
 - [`csharp/fix-at-the-source`](../fix-at-the-source/SKILL.md) — the arrow that points the wrong way is where the fix belongs.

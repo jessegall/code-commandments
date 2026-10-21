@@ -16,7 +16,7 @@ import (
 // rare outside verbs: one mechanism built twice.
 type DuplicatedMechanismDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DuplicatedMechanismDetector{}) }
+func init() { detectors.Register(catalog.PHP, DuplicatedMechanismDetector{}) }
 
 const (
 	mechanismMinLines  = 25
@@ -56,7 +56,7 @@ type mechanismUnit struct {
 }
 
 func mechanismsOf(codebase *engine.Codebase) mechanisms {
-	return engine.Analysis(codebase, "backend/duplicated-mechanisms", func(codebase *engine.Codebase) mechanisms {
+	return engine.Analysis(codebase, "php/duplicated-mechanisms", func(codebase *engine.Codebase) mechanisms {
 		reach := php.ReachOf(codebase)
 		units := map[string]mechanismUnit{}
 		var order []string

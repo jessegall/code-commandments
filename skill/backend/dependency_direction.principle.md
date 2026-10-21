@@ -15,7 +15,7 @@ composed from the primitives, and the domain knows nothing about the UI:
 
 ```json
 "configure": {
-    "backend/NamespaceDependencyDetector": [
+    "php/NamespaceDependencyDetector": [
         {"layer": ["App\\Ui\\Elements"]},
         {"layer": ["App\\Ui\\Shared", ["App\\Ui\\Elements"]]},
         {"layer": ["App\\Domain"]}

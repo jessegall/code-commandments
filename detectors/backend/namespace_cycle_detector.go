@@ -14,7 +14,7 @@ import (
 // direction: the ones to cut.
 type NamespaceCycleDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NamespaceCycleDetector{}) }
+func init() { detectors.Register(catalog.PHP, NamespaceCycleDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NamespaceCycleDetector) Sin() sins.Sin { return backendsins.NamespaceCycle{} }

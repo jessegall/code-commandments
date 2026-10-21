@@ -10,7 +10,7 @@ import (
 type HandedOutCollection struct{}
 
 func init() {
-	sins.Register(catalog.Backend, HandedOutCollection{})
+	sins.Register(catalog.PHP, HandedOutCollection{})
 }
 
 // Definition is what the sin states about itself.

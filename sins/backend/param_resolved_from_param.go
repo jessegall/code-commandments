@@ -9,7 +9,7 @@ import (
 // ParamResolvedFromParam is the param-resolved-from-param sin.
 type ParamResolvedFromParam struct{}
 
-func init() { sins.Register(catalog.Backend, ParamResolvedFromParam{}) }
+func init() { sins.Register(catalog.PHP, ParamResolvedFromParam{}) }
 
 // Definition is what the sin states about itself.
 func (ParamResolvedFromParam) Definition() sins.Definition {

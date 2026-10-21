@@ -38,9 +38,9 @@ func Run(roots []string, scope scribes.Scope, given []detectors.Detector, only s
 // given, backend before frontend within each stage.
 func Chain(backend, vue *scribes.Scanner, given []detectors.Detector) *scribes.Chain {
 	var steps []scribes.Step
-	steps = append(steps, scribes.MaintenanceSteps(catalog.Backend, backend)...)
-	steps = append(steps, scribes.Steps(catalog.Backend, backend, given)...)
-	steps = append(steps, scribes.Steps(catalog.Frontend, vue, given)...)
+	steps = append(steps, scribes.MaintenanceSteps(catalog.PHP, backend)...)
+	steps = append(steps, scribes.Steps(catalog.PHP, backend, given)...)
+	steps = append(steps, scribes.Steps(catalog.Vue, vue, given)...)
 
 	return scribes.Default(steps...)
 }

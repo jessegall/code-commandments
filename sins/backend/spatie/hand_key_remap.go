@@ -9,7 +9,7 @@ import (
 // HandKeyRemap is the hand-key-remap sin.
 type HandKeyRemap struct{}
 
-func init() { sins.Register(catalog.Backend, HandKeyRemap{}) }
+func init() { sins.Register(catalog.PHP, HandKeyRemap{}) }
 
 // Definition is what the sin states about itself.
 func (HandKeyRemap) Definition() sins.Definition {

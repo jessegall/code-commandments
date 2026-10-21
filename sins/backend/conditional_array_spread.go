@@ -9,7 +9,7 @@ import (
 // ConditionalArraySpread is the conditional-array-spread sin.
 type ConditionalArraySpread struct{}
 
-func init() { sins.Register(catalog.Backend, ConditionalArraySpread{}) }
+func init() { sins.Register(catalog.PHP, ConditionalArraySpread{}) }
 
 // Definition is what the sin states about itself.
 func (ConditionalArraySpread) Definition() sins.Definition {

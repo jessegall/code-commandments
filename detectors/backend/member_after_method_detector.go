@@ -12,7 +12,7 @@ import (
 // MemberAfterMethodDetector finds a property, constant, enum case or trait use declared below a method of its class.
 type MemberAfterMethodDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, MemberAfterMethodDetector{}) }
+func init() { detectors.Register(catalog.PHP, MemberAfterMethodDetector{}) }
 
 // Sin is the sin the detector finds.
 func (MemberAfterMethodDetector) Sin() sins.Sin { return backendsins.MemberAfterMethod{} }

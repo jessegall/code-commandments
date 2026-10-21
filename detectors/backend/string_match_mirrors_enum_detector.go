@@ -12,7 +12,7 @@ import (
 // StringMatchMirrorsEnumDetector finds a match or switch over string literals that spell an enum's values.
 type StringMatchMirrorsEnumDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, StringMatchMirrorsEnumDetector{}) }
+func init() { detectors.Register(catalog.PHP, StringMatchMirrorsEnumDetector{}) }
 
 // Sin is the sin the detector finds.
 func (StringMatchMirrorsEnumDetector) Sin() sins.Sin { return backendsins.StringMatchMirrorsEnum{} }

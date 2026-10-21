@@ -9,7 +9,7 @@ import (
 // PlaceholderFilledData is the placeholder-filled-data sin.
 type PlaceholderFilledData struct{}
 
-func init() { sins.Register(catalog.Backend, PlaceholderFilledData{}) }
+func init() { sins.Register(catalog.PHP, PlaceholderFilledData{}) }
 
 // Definition is what the sin states about itself.
 func (PlaceholderFilledData) Definition() sins.Definition {

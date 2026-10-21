@@ -12,7 +12,7 @@ import (
 // StackedDocblockDetector finds two or more docblocks stacked on one declaration.
 type StackedDocblockDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, StackedDocblockDetector{}) }
+func init() { detectors.Register(catalog.PHP, StackedDocblockDetector{}) }
 
 // Sin is the sin the detector finds.
 func (StackedDocblockDetector) Sin() sins.Sin { return backendsins.StackedDocblock{} }

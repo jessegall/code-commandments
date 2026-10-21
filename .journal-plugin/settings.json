@@ -56,6 +56,447 @@
         "help": "Enables C# sin detection"
     },
     {
+        "key": "sin_csharp-blank-string-default",
+        "title": "BlankStringDefault",
+        "kind": "flag",
+        "default": true,
+        "help": "a `string` parameter or property defaulted to `\"\"` and then checked with `== \"\"` or `string.IsNullOrEmpty` — the blank is being used to mean \"missing\""
+    },
+    {
+        "key": "sin_csharp-cancelled-coalesce",
+        "title": "CancelledCoalesce",
+        "kind": "flag",
+        "default": true,
+        "help": "a `??` fallback compared against the same value it falls back to — `(name ?? \"\") != \"\"` — so \"missing\" and \"empty\" end up in one branch without saying so"
+    },
+    {
+        "key": "sin_csharp-de-nulled-finder",
+        "title": "DeNulledFinder",
+        "kind": "flag",
+        "default": true,
+        "help": "a finder returning a nullable object whose every caller asserts it is there — `Find(id)!`, `Find(id) ?? throw …` — a miss the finder should have refused itself"
+    },
+    {
+        "key": "sin_csharp-invented-default",
+        "title": "InventedDefault",
+        "kind": "flag",
+        "default": true,
+        "help": "`F(x ?? \"\")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data"
+    },
+    {
+        "key": "sin_csharp-null-forgiven",
+        "title": "NullForgiven",
+        "kind": "flag",
+        "default": true,
+        "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding"
+    },
+    {
+        "key": "sin_csharp-flag-argument",
+        "title": "FlagArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a method whose whole body branches on a `bool` parameter — `if (compact) … else …` — two methods sharing one name"
+    },
+    {
+        "key": "sin_csharp-member-after-method",
+        "title": "MemberAfterMethod",
+        "kind": "flag",
+        "default": true,
+        "help": "a field, constant or stored property declared below a constructor or a method — the type's state hidden among its behaviour"
+    },
+    {
+        "key": "sin_csharp-member-out-of-order",
+        "title": "MemberOutOfOrder",
+        "kind": "flag",
+        "default": true,
+        "help": "a `const` or `static readonly` value declared below a field or a stored property — the top of the type read in no particular order"
+    },
+    {
+        "key": "sin_csharp-namespace-cycle",
+        "title": "NamespaceCycle",
+        "kind": "flag",
+        "default": true,
+        "help": "two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names"
+    },
+    {
+        "key": "sin_csharp-namespace-dependency",
+        "title": "NamespaceDependency",
+        "kind": "flag",
+        "default": true,
+        "help": "a reference out of a declared layer into a namespace that layer did not declare it may use"
+    },
+    {
+        "key": "sin_csharp-archaeology-comment",
+        "title": "ArchaeologyComment",
+        "kind": "flag",
+        "default": true,
+        "help": "a comment that tells the code's past — `// formerly lived in CheckoutService`, `// refactored to use the cache` — describing a version nobody is reading"
+    },
+    {
+        "key": "sin_csharp-bloated-docblock",
+        "title": "BloatedDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "a type whose doc comment runs to two or more paragraphs — usually a sign the type does too much"
+    },
+    {
+        "key": "sin_csharp-ceremony-docblock",
+        "title": "CeremonyDocblock",
+        "kind": "flag",
+        "default": true,
+        "help": "a doc comment whose every tag is empty or only repeats the signature — `<param name=\"order\">The order.</param>`, an empty `<returns>`"
+    },
+    {
+        "key": "sin_csharp-dangling-doc-reference",
+        "title": "DanglingDocReference",
+        "kind": "flag",
+        "default": true,
+        "help": "a `<see cref>` that resolves to nothing from where it is written — a name the project no longer declares, or one spelled so it does not reach it"
+    },
+    {
+        "key": "sin_csharp-negative-space-comment",
+        "title": "NegativeSpaceComment",
+        "kind": "flag",
+        "default": true,
+        "help": "a comment defending the code against a reading nobody made — `// not magic, just a day`, `// deliberately not sorted` — saying what it is not instead of what it is"
+    },
+    {
+        "key": "sin_csharp-restated-comment",
+        "title": "RestatedComment",
+        "kind": "flag",
+        "default": true,
+        "help": "a comment above a statement whose every word the statement already spells — `// set the total to the order total` over `var total = order.Total;`"
+    },
+    {
+        "key": "sin_duplicate-csharp-method",
+        "title": "DuplicateMethod",
+        "kind": "flag",
+        "default": true,
+        "help": "Copy-pasted code — two+ C# methods, accessors or local functions with an identical body, formatting, comments and attributes aside"
+    },
+    {
+        "key": "sin_near-duplicate-csharp-method",
+        "title": "NearDuplicateMethod",
+        "kind": "flag",
+        "default": true,
+        "help": "A near-copy — two+ C# methods, accessors or local functions with one control-flow skeleton that differ only in their local names or the literals they use (a key, a route, a message)"
+    },
+    {
+        "key": "sin_csharp-const-class-enum",
+        "title": "ConstClassEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "a class that holds nothing but `const` strings or numbers — a closed set of values written as constants instead of an `enum`"
+    },
+    {
+        "key": "sin_csharp-enum-case-or-chain",
+        "title": "EnumCaseOrChain",
+        "kind": "flag",
+        "default": true,
+        "help": "`s == Status.Paid || s == Status.Refunded` (or `s is Status.Paid or Status.Refunded`) — a group of enum cases tested by hand at the call site"
+    },
+    {
+        "key": "sin_csharp-in-array-mirrors-enum",
+        "title": "InArrayMirrorsEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "`new[] { \"paid\", \"refunded\" }.Contains(status)` or `status is \"paid\" or \"refunded\"` — a list of strings that repeats the members of an enum the code already has"
+    },
+    {
+        "key": "sin_csharp-match-default-returns-null",
+        "title": "MatchDefaultReturnsNull",
+        "kind": "flag",
+        "default": true,
+        "help": "a `switch` that names every member of an enum, then answers `null`, `default` or `false` in its `_` arm — the one value that arm can see is a bug, and it is answered as if it were fine"
+    },
+    {
+        "key": "sin_csharp-string-mirrors-enum",
+        "title": "StringMirrorsEnum",
+        "kind": "flag",
+        "default": true,
+        "help": "A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text"
+    },
+    {
+        "key": "sin_csharp-unnamed-vocabulary-literal",
+        "title": "UnnamedVocabularyLiteral",
+        "kind": "flag",
+        "default": true,
+        "help": "a raw string handed to a parameter the codebase elsewhere fills from a named constant — `Expect(\"{\")` beside `Expect(Token.Colon)`, where `Token.BraceOpen` already names it"
+    },
+    {
+        "key": "sin_csharp-generic-throw",
+        "title": "GenericThrow",
+        "kind": "flag",
+        "default": true,
+        "help": "`throw new Exception/InvalidOperationException(\"…\")` — a failure that names nothing, described in prose at the throw site"
+    },
+    {
+        "key": "sin_csharp-rethrown-unchanged",
+        "title": "RethrownUnchanged",
+        "kind": "flag",
+        "default": true,
+        "help": "a `catch` whose whole body is `throw;` or `throw error;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does"
+    },
+    {
+        "key": "sin_csharp-swallowed-exception",
+        "title": "SwallowedException",
+        "kind": "flag",
+        "default": true,
+        "help": "A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish"
+    },
+    {
+        "key": "sin_csharp-wrapping-without-cause",
+        "title": "WrappingWithoutCause",
+        "kind": "flag",
+        "default": true,
+        "help": "a `catch` that throws a new exception without passing the caught one as its inner exception, so the original stack trace is lost"
+    },
+    {
+        "key": "sin_csharp-blocked-await",
+        "title": "BlockedAwait",
+        "kind": "flag",
+        "default": true,
+        "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else"
+    },
+    {
+        "key": "sin_csharp-constructor-side-effect",
+        "title": "ConstructorSideEffect",
+        "kind": "flag",
+        "default": true,
+        "help": "a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it"
+    },
+    {
+        "key": "sin_csharp-mutable-static-state",
+        "title": "MutableStaticState",
+        "kind": "flag",
+        "default": true,
+        "help": "a `static` field that methods write to — state no instance owns, changed by whichever code ran last"
+    },
+    {
+        "key": "sin_csharp-unread-collaborator",
+        "title": "UnreadCollaborator",
+        "kind": "flag",
+        "default": true,
+        "help": "a private readonly field, or a primary constructor parameter, that nothing in the type reads — the type asks for something it does not use"
+    },
+    {
+        "key": "sin_csharp-coalesced-loop-subject",
+        "title": "CoalescedLoopSubject",
+        "kind": "flag",
+        "default": true,
+        "help": "a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header"
+    },
+    {
+        "key": "sin_csharp-collection-mutated-while-iterated",
+        "title": "CollectionMutatedWhileIterated",
+        "kind": "flag",
+        "default": true,
+        "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException"
+    },
+    {
+        "key": "sin_csharp-inline-throw",
+        "title": "InlineThrow",
+        "kind": "flag",
+        "default": true,
+        "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work"
+    },
+    {
+        "key": "sin_csharp-loop-wrapped-in-if",
+        "title": "LoopWrappedInIf",
+        "kind": "flag",
+        "default": true,
+        "help": "A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition"
+    },
+    {
+        "key": "sin_csharp-nested-ternary",
+        "title": "NestedTernary",
+        "kind": "flag",
+        "default": true,
+        "help": "a `?:` with another `?:` as one of its branches — several decisions packed into one expression"
+    },
+    {
+        "key": "sin_csharp-non-counting-for",
+        "title": "NonCountingFor",
+        "kind": "flag",
+        "default": true,
+        "help": "a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count"
+    },
+    {
+        "key": "sin_csharp-subject-ladder",
+        "title": "SubjectLadder",
+        "kind": "flag",
+        "default": true,
+        "help": "An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder."
+    },
+    {
+        "key": "sin_csharp-unnamed-condition",
+        "title": "UnnamedCondition",
+        "kind": "flag",
+        "default": true,
+        "help": "`if (order.IsPaid && customer.Trusted && slot.IsOpen)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it"
+    },
+    {
+        "key": "sin_deep-csharp-nesting",
+        "title": "DeepNesting",
+        "kind": "flag",
+        "default": true,
+        "help": "An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops"
+    },
+    {
+        "key": "sin_redundant-csharp-else",
+        "title": "RedundantElse",
+        "kind": "flag",
+        "default": true,
+        "help": "An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing"
+    },
+    {
+        "key": "sin_csharp-bare-state-predicate",
+        "title": "BareStatePredicate",
+        "kind": "flag",
+        "default": true,
+        "help": "a `bool` about the object's own state named as a claim — `Binds()`, `Spins` — where a question belongs"
+    },
+    {
+        "key": "sin_csharp-converted-argument",
+        "title": "ConvertedArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a scalar parameter its callers keep filling with the same conversion — `ReceiptFor(order.Id.ToString())` call after call — because it asks for the converted form instead of the value"
+    },
+    {
+        "key": "sin_csharp-derived-argument",
+        "title": "DerivedArgument",
+        "kind": "flag",
+        "default": true,
+        "help": "a call that hands over an object and a projection of it — `Persist(request, request.ChannelId)` — or an object in three pieces, where the method could read them itself"
+    },
+    {
+        "key": "sin_csharp-param-resolved-from-param",
+        "title": "ParamResolvedFromParam",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that takes a container and a key and first resolves one against the other — `Rename(Workflow workflow, string nodeId)` doing `workflow.Graph.Node(nodeId)` — when it only wanted what the key names"
+    },
+    {
+        "key": "sin_csharp-repeated-guard",
+        "title": "RepeatedGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "the same compound condition — `order.Paid && !order.Cancelled` — written at two or more sites, a question with no name"
+    },
+    {
+        "key": "sin_csharp-repeated-named-call",
+        "title": "RepeatedNamedCall",
+        "kind": "flag",
+        "default": true,
+        "help": "the same `with` copy — `order with { Status = OrderStatus.Shipped }` — written at two or more sites, an operation the record never named"
+    },
+    {
+        "key": "sin_csharp-repeated-type-guard",
+        "title": "RepeatedTypeGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "the same chain of type checks — `node is Invocation call && call.Target is MemberAccess` — written at two or more sites, a shape with no name"
+    },
+    {
+        "key": "sin_csharp-feature-envy",
+        "title": "FeatureEnvy",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that loops another object's collection or writes its members, reaching into it more than into its own state — behaviour exiled from the object it works on"
+    },
+    {
+        "key": "sin_csharp-side-table-trait",
+        "title": "SideTableTrait",
+        "kind": "flag",
+        "default": true,
+        "help": "a trait of a type's registered instances kept as a separate collection of their names, rather than as something each instance answers for itself"
+    },
+    {
+        "key": "sin_csharp-type-switch",
+        "title": "TypeSwitch",
+        "kind": "flag",
+        "default": true,
+        "help": "`shape switch { Circle c => …, Square s => … }` — asking which of your own types a value is, to decide what to do with it"
+    },
+    {
+        "key": "sin_csharp-assembled-template",
+        "title": "AssembledTemplate",
+        "kind": "flag",
+        "default": true,
+        "help": "`string.Join(\"\\n\", new[] { \"public class X\", \"{\", \"}\" })` or `sb.AppendLine(\"…\")` line after line — a multi-line text built from line fragments, so its shape cannot be seen in the source"
+    },
+    {
+        "key": "sin_csharp-filled-parameter",
+        "title": "FilledParameter",
+        "kind": "flag",
+        "default": true,
+        "help": "a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
+    },
+    {
+        "key": "sin_csharp-impossible-guard",
+        "title": "ImpossibleGuard",
+        "kind": "flag",
+        "default": true,
+        "help": "`if (order == null)` where `order` is typed `Order` and not `Order?` — one of the two is wrong, and both are worth knowing"
+    },
+    {
+        "key": "sin_csharp-placeholder-filled-data",
+        "title": "PlaceholderFilledData",
+        "kind": "flag",
+        "default": true,
+        "help": "`new Card(title, \"\")` — a record's required `string` filled with a blank so the record can be built, hiding a missing value no type check can see"
+    },
+    {
+        "key": "sin_csharp-array-return-bag",
+        "title": "ArrayReturnBag",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that returns `new Dictionary<string, object> { [\"sku\"] = …, [\"qty\"] = … }` — a record with fixed fields, handed back as a dictionary"
+    },
+    {
+        "key": "sin_csharp-coupled-fields",
+        "title": "CoupledFields",
+        "kind": "flag",
+        "default": true,
+        "help": "a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields"
+    },
+    {
+        "key": "sin_csharp-data-clump",
+        "title": "DataClump",
+        "kind": "flag",
+        "default": true,
+        "help": "The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own."
+    },
+    {
+        "key": "sin_csharp-dictionary-bag",
+        "title": "DictionaryBag",
+        "kind": "flag",
+        "default": true,
+        "help": "A string-keyed dictionary or JSON object read by keys written in the source — `row[\"sku\"]`, `json.GetProperty(\"name\")` — a record nobody declared"
+    },
+    {
+        "key": "sin_csharp-handed-out-collection",
+        "title": "HandedOutCollection",
+        "kind": "flag",
+        "default": true,
+        "help": "a property or method whose whole body returns the type's own `List`, `Dictionary` or `HashSet`, untouched — every caller holds the insides and may add to or take from them without the type knowing"
+    },
+    {
+        "key": "sin_csharp-mutable-value-object",
+        "title": "MutableValueObject",
+        "kind": "flag",
+        "default": true,
+        "help": "a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things"
+    },
+    {
+        "key": "sin_csharp-positional-tuple-return",
+        "title": "PositionalTupleReturn",
+        "kind": "flag",
+        "default": true,
+        "help": "a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices"
+    },
+    {
         "key": "sin_blank-string-default",
         "title": "BlankStringDefault",
         "kind": "flag",
@@ -952,545 +1393,6 @@
         "help": "Returning a raw decoded boundary array (`json_decode(...)`) untyped"
     },
     {
-        "key": "sin_csharp-blank-string-default",
-        "title": "BlankStringDefault",
-        "kind": "flag",
-        "default": true,
-        "help": "a `string` parameter or property defaulted to `\"\"` and then checked with `== \"\"` or `string.IsNullOrEmpty` — the blank is being used to mean \"missing\""
-    },
-    {
-        "key": "sin_csharp-cancelled-coalesce",
-        "title": "CancelledCoalesce",
-        "kind": "flag",
-        "default": true,
-        "help": "a `??` fallback compared against the same value it falls back to — `(name ?? \"\") != \"\"` — so \"missing\" and \"empty\" end up in one branch without saying so"
-    },
-    {
-        "key": "sin_csharp-de-nulled-finder",
-        "title": "DeNulledFinder",
-        "kind": "flag",
-        "default": true,
-        "help": "a finder returning a nullable object whose every caller asserts it is there — `Find(id)!`, `Find(id) ?? throw …` — a miss the finder should have refused itself"
-    },
-    {
-        "key": "sin_csharp-invented-default",
-        "title": "InventedDefault",
-        "kind": "flag",
-        "default": true,
-        "help": "`F(x ?? \"\")` — an empty string, `0` or `false` invented to fill an argument, or answered by a lookup helper on a miss, a stand-in the callee cannot tell from real data"
-    },
-    {
-        "key": "sin_csharp-null-forgiven",
-        "title": "NullForgiven",
-        "kind": "flag",
-        "default": true,
-        "help": "The null-forgiving `!` on a value declared nullable — the compiler told the caller it may be null, and `!` silences it instead of deciding"
-    },
-    {
-        "key": "sin_csharp-flag-argument",
-        "title": "FlagArgument",
-        "kind": "flag",
-        "default": true,
-        "help": "a method whose whole body branches on a `bool` parameter — `if (compact) … else …` — two methods sharing one name"
-    },
-    {
-        "key": "sin_csharp-member-after-method",
-        "title": "MemberAfterMethod",
-        "kind": "flag",
-        "default": true,
-        "help": "a field, constant or stored property declared below a constructor or a method — the type's state hidden among its behaviour"
-    },
-    {
-        "key": "sin_csharp-member-out-of-order",
-        "title": "MemberOutOfOrder",
-        "kind": "flag",
-        "default": true,
-        "help": "a `const` or `static readonly` value declared below a field or a stored property — the top of the type read in no particular order"
-    },
-    {
-        "key": "sin_csharp-namespace-cycle",
-        "title": "NamespaceCycle",
-        "kind": "flag",
-        "default": true,
-        "help": "two of the project's namespaces that each use the other — a cycle that makes them one namespace split under two names"
-    },
-    {
-        "key": "sin_csharp-namespace-dependency",
-        "title": "NamespaceDependency",
-        "kind": "flag",
-        "default": true,
-        "help": "a reference out of a declared layer into a namespace that layer did not declare it may use"
-    },
-    {
-        "key": "sin_csharp-archaeology-comment",
-        "title": "ArchaeologyComment",
-        "kind": "flag",
-        "default": true,
-        "help": "a comment that tells the code's past — `// formerly lived in CheckoutService`, `// refactored to use the cache` — describing a version nobody is reading"
-    },
-    {
-        "key": "sin_csharp-bloated-docblock",
-        "title": "BloatedDocblock",
-        "kind": "flag",
-        "default": true,
-        "help": "a type whose doc comment runs to two or more paragraphs — usually a sign the type does too much"
-    },
-    {
-        "key": "sin_csharp-ceremony-docblock",
-        "title": "CeremonyDocblock",
-        "kind": "flag",
-        "default": true,
-        "help": "a doc comment whose every tag is empty or only repeats the signature — `<param name=\"order\">The order.</param>`, an empty `<returns>`"
-    },
-    {
-        "key": "sin_csharp-dangling-doc-reference",
-        "title": "DanglingDocReference",
-        "kind": "flag",
-        "default": true,
-        "help": "a `<see cref>` that resolves to nothing from where it is written — a name the project no longer declares, or one spelled so it does not reach it"
-    },
-    {
-        "key": "sin_csharp-negative-space-comment",
-        "title": "NegativeSpaceComment",
-        "kind": "flag",
-        "default": true,
-        "help": "a comment defending the code against a reading nobody made — `// not magic, just a day`, `// deliberately not sorted` — saying what it is not instead of what it is"
-    },
-    {
-        "key": "sin_csharp-restated-comment",
-        "title": "RestatedComment",
-        "kind": "flag",
-        "default": true,
-        "help": "a comment above a statement whose every word the statement already spells — `// set the total to the order total` over `var total = order.Total;`"
-    },
-    {
-        "key": "sin_duplicate-csharp-method",
-        "title": "DuplicateMethod",
-        "kind": "flag",
-        "default": true,
-        "help": "Copy-pasted code — two+ C# methods, accessors or local functions with an identical body, formatting, comments and attributes aside"
-    },
-    {
-        "key": "sin_near-duplicate-csharp-method",
-        "title": "NearDuplicateMethod",
-        "kind": "flag",
-        "default": true,
-        "help": "A near-copy — two+ C# methods, accessors or local functions with one control-flow skeleton that differ only in their local names or the literals they use (a key, a route, a message)"
-    },
-    {
-        "key": "sin_csharp-const-class-enum",
-        "title": "ConstClassEnum",
-        "kind": "flag",
-        "default": true,
-        "help": "a class that holds nothing but `const` strings or numbers — a closed set of values written as constants instead of an `enum`"
-    },
-    {
-        "key": "sin_csharp-enum-case-or-chain",
-        "title": "EnumCaseOrChain",
-        "kind": "flag",
-        "default": true,
-        "help": "`s == Status.Paid || s == Status.Refunded` (or `s is Status.Paid or Status.Refunded`) — a group of enum cases tested by hand at the call site"
-    },
-    {
-        "key": "sin_csharp-in-array-mirrors-enum",
-        "title": "InArrayMirrorsEnum",
-        "kind": "flag",
-        "default": true,
-        "help": "`new[] { \"paid\", \"refunded\" }.Contains(status)` or `status is \"paid\" or \"refunded\"` — a list of strings that repeats the members of an enum the code already has"
-    },
-    {
-        "key": "sin_csharp-match-default-returns-null",
-        "title": "MatchDefaultReturnsNull",
-        "kind": "flag",
-        "default": true,
-        "help": "a `switch` that names every member of an enum, then answers `null`, `default` or `false` in its `_` arm — the one value that arm can see is a bug, and it is answered as if it were fine"
-    },
-    {
-        "key": "sin_csharp-string-mirrors-enum",
-        "title": "StringMirrorsEnum",
-        "kind": "flag",
-        "default": true,
-        "help": "A `switch` or an `if` ladder dispatching on strings that are the names of an enum the codebase already declares — the enum, written out again as text"
-    },
-    {
-        "key": "sin_csharp-unnamed-vocabulary-literal",
-        "title": "UnnamedVocabularyLiteral",
-        "kind": "flag",
-        "default": true,
-        "help": "a raw string handed to a parameter the codebase elsewhere fills from a named constant — `Expect(\"{\")` beside `Expect(Token.Colon)`, where `Token.BraceOpen` already names it"
-    },
-    {
-        "key": "sin_csharp-generic-throw",
-        "title": "GenericThrow",
-        "kind": "flag",
-        "default": true,
-        "help": "`throw new Exception/InvalidOperationException(\"…\")` — a failure that names nothing, described in prose at the throw site"
-    },
-    {
-        "key": "sin_csharp-rethrown-unchanged",
-        "title": "RethrownUnchanged",
-        "kind": "flag",
-        "default": true,
-        "help": "a `catch` whose whole body is `throw;` or `throw error;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does"
-    },
-    {
-        "key": "sin_csharp-swallowed-exception",
-        "title": "SwallowedException",
-        "kind": "flag",
-        "default": true,
-        "help": "A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish"
-    },
-    {
-        "key": "sin_csharp-wrapping-without-cause",
-        "title": "WrappingWithoutCause",
-        "kind": "flag",
-        "default": true,
-        "help": "a `catch` that throws a new exception without passing the caught one as its inner exception, so the original stack trace is lost"
-    },
-    {
-        "key": "sin_csharp-blocked-await",
-        "title": "BlockedAwait",
-        "kind": "flag",
-        "default": true,
-        "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else"
-    },
-    {
-        "key": "sin_csharp-constructor-side-effect",
-        "title": "ConstructorSideEffect",
-        "kind": "flag",
-        "default": true,
-        "help": "a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it"
-    },
-    {
-        "key": "sin_csharp-mutable-static-state",
-        "title": "MutableStaticState",
-        "kind": "flag",
-        "default": true,
-        "help": "a `static` field that methods write to — state no instance owns, changed by whichever code ran last"
-    },
-    {
-        "key": "sin_csharp-unread-collaborator",
-        "title": "UnreadCollaborator",
-        "kind": "flag",
-        "default": true,
-        "help": "a private readonly field, or a primary constructor parameter, that nothing in the type reads — the type asks for something it does not use"
-    },
-    {
-        "key": "sin_csharp-coalesced-loop-subject",
-        "title": "CoalescedLoopSubject",
-        "kind": "flag",
-        "default": true,
-        "help": "a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header"
-    },
-    {
-        "key": "sin_csharp-collection-mutated-while-iterated",
-        "title": "CollectionMutatedWhileIterated",
-        "kind": "flag",
-        "default": true,
-        "help": "a `foreach` that adds to or removes from the very collection it walks — the enumerator reads a collection that moved under it, which throws InvalidOperationException"
-    },
-    {
-        "key": "sin_csharp-inline-throw",
-        "title": "InlineThrow",
-        "kind": "flag",
-        "default": true,
-        "help": "a `?? throw` inside a call's argument or in front of a member call — the check that stops the method is hidden in the middle of the work"
-    },
-    {
-        "key": "sin_csharp-loop-wrapped-in-if",
-        "title": "LoopWrappedInIf",
-        "kind": "flag",
-        "default": true,
-        "help": "A `for`, `foreach` or `while` whose whole body is one `if` (no `else`) around real work — the iteration pushed a level deep behind a condition"
-    },
-    {
-        "key": "sin_csharp-nested-ternary",
-        "title": "NestedTernary",
-        "kind": "flag",
-        "default": true,
-        "help": "a `?:` with another `?:` as one of its branches — several decisions packed into one expression"
-    },
-    {
-        "key": "sin_csharp-non-counting-for",
-        "title": "NonCountingFor",
-        "kind": "flag",
-        "default": true,
-        "help": "a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count"
-    },
-    {
-        "key": "sin_csharp-subject-ladder",
-        "title": "SubjectLadder",
-        "kind": "flag",
-        "default": true,
-        "help": "An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder."
-    },
-    {
-        "key": "sin_csharp-unnamed-condition",
-        "title": "UnnamedCondition",
-        "kind": "flag",
-        "default": true,
-        "help": "`if (order.IsPaid && customer.Trusted && slot.IsOpen)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it"
-    },
-    {
-        "key": "sin_deep-csharp-nesting",
-        "title": "DeepNesting",
-        "kind": "flag",
-        "default": true,
-        "help": "An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops"
-    },
-    {
-        "key": "sin_redundant-csharp-else",
-        "title": "RedundantElse",
-        "kind": "flag",
-        "default": true,
-        "help": "An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing"
-    },
-    {
-        "key": "sin_csharp-bare-state-predicate",
-        "title": "BareStatePredicate",
-        "kind": "flag",
-        "default": true,
-        "help": "a `bool` about the object's own state named as a claim — `Binds()`, `Spins` — where a question belongs"
-    },
-    {
-        "key": "sin_csharp-converted-argument",
-        "title": "ConvertedArgument",
-        "kind": "flag",
-        "default": true,
-        "help": "a scalar parameter its callers keep filling with the same conversion — `ReceiptFor(order.Id.ToString())` call after call — because it asks for the converted form instead of the value"
-    },
-    {
-        "key": "sin_csharp-derived-argument",
-        "title": "DerivedArgument",
-        "kind": "flag",
-        "default": true,
-        "help": "a call that hands over an object and a projection of it — `Persist(request, request.ChannelId)` — or an object in three pieces, where the method could read them itself"
-    },
-    {
-        "key": "sin_csharp-param-resolved-from-param",
-        "title": "ParamResolvedFromParam",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that takes a container and a key and first resolves one against the other — `Rename(Workflow workflow, string nodeId)` doing `workflow.Graph.Node(nodeId)` — when it only wanted what the key names"
-    },
-    {
-        "key": "sin_csharp-repeated-guard",
-        "title": "RepeatedGuard",
-        "kind": "flag",
-        "default": true,
-        "help": "the same compound condition — `order.Paid && !order.Cancelled` — written at two or more sites, a question with no name"
-    },
-    {
-        "key": "sin_csharp-repeated-named-call",
-        "title": "RepeatedNamedCall",
-        "kind": "flag",
-        "default": true,
-        "help": "the same `with` copy — `order with { Status = OrderStatus.Shipped }` — written at two or more sites, an operation the record never named"
-    },
-    {
-        "key": "sin_csharp-repeated-type-guard",
-        "title": "RepeatedTypeGuard",
-        "kind": "flag",
-        "default": true,
-        "help": "the same chain of type checks — `node is Invocation call && call.Target is MemberAccess` — written at two or more sites, a shape with no name"
-    },
-    {
-        "key": "sin_csharp-feature-envy",
-        "title": "FeatureEnvy",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that loops another object's collection or writes its members, reaching into it more than into its own state — behaviour exiled from the object it works on"
-    },
-    {
-        "key": "sin_csharp-side-table-trait",
-        "title": "SideTableTrait",
-        "kind": "flag",
-        "default": true,
-        "help": "a trait of a type's registered instances kept as a separate collection of their names, rather than as something each instance answers for itself"
-    },
-    {
-        "key": "sin_csharp-type-switch",
-        "title": "TypeSwitch",
-        "kind": "flag",
-        "default": true,
-        "help": "`shape switch { Circle c => …, Square s => … }` — asking which of your own types a value is, to decide what to do with it"
-    },
-    {
-        "key": "sin_csharp-assembled-template",
-        "title": "AssembledTemplate",
-        "kind": "flag",
-        "default": true,
-        "help": "`string.Join(\"\\n\", new[] { \"public class X\", \"{\", \"}\" })` or `sb.AppendLine(\"…\")` line after line — a multi-line text built from line fragments, so its shape cannot be seen in the source"
-    },
-    {
-        "key": "sin_csharp-filled-parameter",
-        "title": "FilledParameter",
-        "kind": "flag",
-        "default": true,
-        "help": "a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
-    },
-    {
-        "key": "sin_csharp-impossible-guard",
-        "title": "ImpossibleGuard",
-        "kind": "flag",
-        "default": true,
-        "help": "`if (order == null)` where `order` is typed `Order` and not `Order?` — one of the two is wrong, and both are worth knowing"
-    },
-    {
-        "key": "sin_csharp-placeholder-filled-data",
-        "title": "PlaceholderFilledData",
-        "kind": "flag",
-        "default": true,
-        "help": "`new Card(title, \"\")` — a record's required `string` filled with a blank so the record can be built, hiding a missing value no type check can see"
-    },
-    {
-        "key": "sin_csharp-array-return-bag",
-        "title": "ArrayReturnBag",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that returns `new Dictionary<string, object> { [\"sku\"] = …, [\"qty\"] = … }` — a record with fixed fields, handed back as a dictionary"
-    },
-    {
-        "key": "sin_csharp-coupled-fields",
-        "title": "CoupledFields",
-        "kind": "flag",
-        "default": true,
-        "help": "a type whose own fields always travel together — assembled into one value again and again, null-checked together, or one copying what a sibling field already holds — one concept held as several fields"
-    },
-    {
-        "key": "sin_csharp-data-clump",
-        "title": "DataClump",
-        "kind": "flag",
-        "default": true,
-        "help": "The same three or more string, number, date or id parameters threaded through methods of two or more types — values that always travel together but have no type of their own."
-    },
-    {
-        "key": "sin_csharp-dictionary-bag",
-        "title": "DictionaryBag",
-        "kind": "flag",
-        "default": true,
-        "help": "A string-keyed dictionary or JSON object read by keys written in the source — `row[\"sku\"]`, `json.GetProperty(\"name\")` — a record nobody declared"
-    },
-    {
-        "key": "sin_csharp-handed-out-collection",
-        "title": "HandedOutCollection",
-        "kind": "flag",
-        "default": true,
-        "help": "a property or method whose whole body returns the type's own `List`, `Dictionary` or `HashSet`, untouched — every caller holds the insides and may add to or take from them without the type knowing"
-    },
-    {
-        "key": "sin_csharp-mutable-value-object",
-        "title": "MutableValueObject",
-        "kind": "flag",
-        "default": true,
-        "help": "a record that can change after it is built — a `set` accessor, or a method that writes its own state — so two holders of the same value can end up seeing different things"
-    },
-    {
-        "key": "sin_csharp-positional-tuple-return",
-        "title": "PositionalTupleReturn",
-        "kind": "flag",
-        "default": true,
-        "help": "a method that returns `(decimal, decimal, string)` — unnamed values the caller reads by position, where two of the same type can be swapped and nothing notices"
-    },
-    {
-        "key": "sin_mirrored-server-type",
-        "title": "MirroredServerType",
-        "kind": "flag",
-        "default": true,
-        "help": "A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes"
-    },
-    {
-        "key": "sin_compound-inline-component",
-        "title": "CompoundInlineComponent",
-        "kind": "flag",
-        "default": true,
-        "help": "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component."
-    },
-    {
-        "key": "sin_deep-data-reach",
-        "title": "DeepDataReach",
-        "kind": "flag",
-        "default": true,
-        "help": "A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop."
-    },
-    {
-        "key": "sin_deep-nested",
-        "title": "DeepNested",
-        "kind": "flag",
-        "default": true,
-        "help": "Template markup nested far too deep — extract a subtree as its own component"
-    },
-    {
-        "key": "sin_duplicate-element",
-        "title": "DuplicateElement",
-        "kind": "flag",
-        "default": true,
-        "help": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component"
-    },
-    {
-        "key": "sin_inline-case-views",
-        "title": "InlineCaseViews",
-        "kind": "flag",
-        "default": true,
-        "help": "A dispatch whose cases each render a whole view inline — one component doing a job per case"
-    },
-    {
-        "key": "sin_near-duplicate-element",
-        "title": "NearDuplicateElement",
-        "kind": "flag",
-        "default": true,
-        "help": "Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates"
-    },
-    {
-        "key": "sin_oversized-component",
-        "title": "OversizedComponent",
-        "kind": "flag",
-        "default": true,
-        "help": "A component whose template renders more elements than the project's declared budget — one component doing several jobs"
-    },
-    {
-        "key": "sin_prop-drilling",
-        "title": "PropDrilling",
-        "kind": "flag",
-        "default": true,
-        "help": "A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further."
-    },
-    {
-        "key": "sin_prop-mutation",
-        "title": "PropMutation",
-        "kind": "flag",
-        "default": true,
-        "help": "A prop is written to — `v-model` bound to it, or `@event=\"prop = …\"` — but props are read-only (a build error or a silent no-op)."
-    },
-    {
-        "key": "sin_control-flow-on-element",
-        "title": "ControlFlowOnElement",
-        "kind": "flag",
-        "default": true,
-        "help": "`v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>`"
-    },
-    {
-        "key": "sin_index-as-key",
-        "title": "IndexAsKey",
-        "kind": "flag",
-        "default": true,
-        "help": "`:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted"
-    },
-    {
-        "key": "sin_loop-with-condition",
-        "title": "LoopWithCondition",
-        "kind": "flag",
-        "default": true,
-        "help": "`v-for` and `v-if`/`v-else-if` on the same element — the condition is re-evaluated every iteration."
-    },
-    {
-        "key": "sin_switch-case",
-        "title": "SwitchCase",
-        "kind": "flag",
-        "default": true,
-        "help": "A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)"
-    },
-    {
         "key": "sin_python-blank-string-default",
         "title": "BlankStringDefault",
         "kind": "flag",
@@ -2077,5 +1979,103 @@
         "kind": "flag",
         "default": true,
         "help": "a `for…of` or `forEach` that splices, shifts, sorts or pops the very array it walks — every element after the change has moved, so the walk skips one or reads one twice"
+    },
+    {
+        "key": "sin_mirrored-server-type",
+        "title": "MirroredServerType",
+        "kind": "flag",
+        "default": true,
+        "help": "A hand-written TypeScript type mirrors a backend `Data` class one-to-one — two sources of truth for one contract that drift the moment the server shape changes"
+    },
+    {
+        "key": "sin_compound-inline-component",
+        "title": "CompoundInlineComponent",
+        "kind": "flag",
+        "default": true,
+        "help": "A compound primitive (`Dialog`/`Card`/`Sheet`/`Tabs`…) assembled inline with a substantial body — extract it into its own named component."
+    },
+    {
+        "key": "sin_deep-data-reach",
+        "title": "DeepDataReach",
+        "kind": "flag",
+        "default": true,
+        "help": "A group of elements in a sizeable template that all reach deep into the same nested object (≥2 distinct fields) — extract the shared mid-object into a component that takes it as a prop."
+    },
+    {
+        "key": "sin_deep-nested",
+        "title": "DeepNested",
+        "kind": "flag",
+        "default": true,
+        "help": "Template markup nested far too deep — extract a subtree as its own component"
+    },
+    {
+        "key": "sin_duplicate-element",
+        "title": "DuplicateElement",
+        "kind": "flag",
+        "default": true,
+        "help": "Identical markup (3+ elements) repeated 2+ times — within a template or across components — extract one component"
+    },
+    {
+        "key": "sin_inline-case-views",
+        "title": "InlineCaseViews",
+        "kind": "flag",
+        "default": true,
+        "help": "A dispatch whose cases each render a whole view inline — one component doing a job per case"
+    },
+    {
+        "key": "sin_near-duplicate-element",
+        "title": "NearDuplicateElement",
+        "kind": "flag",
+        "default": true,
+        "help": "Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting binding different data — within a template, across components, or as two components' whole templates"
+    },
+    {
+        "key": "sin_oversized-component",
+        "title": "OversizedComponent",
+        "kind": "flag",
+        "default": true,
+        "help": "A component whose template renders more elements than the project's declared budget — one component doing several jobs"
+    },
+    {
+        "key": "sin_prop-drilling",
+        "title": "PropDrilling",
+        "kind": "flag",
+        "default": true,
+        "help": "A prop forwarded through a chain of 2+ components, none of which read it — passed down through components that only pass it further."
+    },
+    {
+        "key": "sin_prop-mutation",
+        "title": "PropMutation",
+        "kind": "flag",
+        "default": true,
+        "help": "A prop is written to — `v-model` bound to it, or `@event=\"prop = …\"` — but props are read-only (a build error or a silent no-op)."
+    },
+    {
+        "key": "sin_control-flow-on-element",
+        "title": "ControlFlowOnElement",
+        "kind": "flag",
+        "default": true,
+        "help": "`v-if`/`v-for`/`v-else`/`v-else-if` on an HTML/component tag instead of a `<template>`"
+    },
+    {
+        "key": "sin_index-as-key",
+        "title": "IndexAsKey",
+        "kind": "flag",
+        "default": true,
+        "help": "`:key` bound to the `v-for` index — a positional key corrupts state when the list reorders or an item is inserted"
+    },
+    {
+        "key": "sin_loop-with-condition",
+        "title": "LoopWithCondition",
+        "kind": "flag",
+        "default": true,
+        "help": "`v-for` and `v-if`/`v-else-if` on the same element — the condition is re-evaluated every iteration."
+    },
+    {
+        "key": "sin_switch-case",
+        "title": "SwitchCase",
+        "kind": "flag",
+        "default": true,
+        "help": "A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)"
     }
 ]

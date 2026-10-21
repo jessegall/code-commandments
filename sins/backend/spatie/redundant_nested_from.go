@@ -9,7 +9,7 @@ import (
 // RedundantNestedFrom is the redundant-nested-from sin.
 type RedundantNestedFrom struct{}
 
-func init() { sins.Register(catalog.Backend, RedundantNestedFrom{}) }
+func init() { sins.Register(catalog.PHP, RedundantNestedFrom{}) }
 
 // Definition is what the sin states about itself.
 func (RedundantNestedFrom) Definition() sins.Definition {

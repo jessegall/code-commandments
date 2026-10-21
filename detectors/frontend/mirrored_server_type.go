@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, MirroredServerTypeDetector{})
+	detectors.Register(catalog.Vue, MirroredServerTypeDetector{})
 }
 
 // mirrorFields is the fewest fields a type may have and still be judged a mirror: below it, a name and a few

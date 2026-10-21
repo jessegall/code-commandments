@@ -9,7 +9,7 @@ import (
 // MemberOutOfOrder is the member-out-of-order sin.
 type MemberOutOfOrder struct{}
 
-func init() { sins.Register(catalog.Backend, MemberOutOfOrder{}) }
+func init() { sins.Register(catalog.PHP, MemberOutOfOrder{}) }
 
 // Definition is what the sin states about itself.
 func (MemberOutOfOrder) Definition() sins.Definition {

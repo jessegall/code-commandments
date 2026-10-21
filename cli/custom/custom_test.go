@@ -93,3 +93,28 @@ func TestEverythingTheBinaryCannotRunIsNamed(t *testing.T) {
 		}
 	}
 }
+
+// TestARuleNamesItsEngineByEitherName holds a rule file a project wrote before the engines were named after their
+// languages: `"engine": "backend"` still judges PHP, and its sin's skill slug is read the same way.
+func TestARuleNamesItsEngineByEitherName(t *testing.T) {
+	root := project(t, map[string]string{
+		"FormerName.json": `{"engine": "backend", "sin": {"name": "former-name", "description": "written before the rename", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"name": "select"}]}}`,
+	})
+
+	read := Load(root)
+	if len(read.Unreadable) > 0 {
+		t.Fatalf("the rule is refused: %v", read.Unreadable)
+	}
+
+	if len(read.Rules) != 1 {
+		t.Fatalf("%d rules read, want the one", len(read.Rules))
+	}
+
+	if engine := read.Rules[0].Engine(); engine != catalog.PHP {
+		t.Errorf("the rule judges %q, want php", engine)
+	}
+
+	if slug := read.Rules[0].Sin().Definition().Skill.Definition().Slug; slug != "php/absence" {
+		t.Errorf("its sin names the skill %q, want php/absence", slug)
+	}
+}

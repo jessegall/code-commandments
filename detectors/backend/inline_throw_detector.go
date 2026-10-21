@@ -12,7 +12,7 @@ import (
 // InlineThrowDetector finds a throw buried in a ?? that feeds a call, where a guard clause belongs.
 type InlineThrowDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, InlineThrowDetector{}) }
+func init() { detectors.Register(catalog.PHP, InlineThrowDetector{}) }
 
 // Sin is the sin the detector finds.
 func (InlineThrowDetector) Sin() sins.Sin { return backendsins.InlineThrow{} }

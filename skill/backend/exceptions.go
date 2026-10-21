@@ -18,13 +18,13 @@ var (
 type Exceptions struct{}
 
 func init() {
-	skill.Register(catalog.Backend, Exceptions{})
+	skill.Register(catalog.PHP, Exceptions{})
 }
 
 // Definition is what the skill states about itself.
 func (Exceptions) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/exceptions",
+		Slug:      "php/exceptions",
 		Tier:      skill.KeepInMind,
 		Order:     8,
 		Title:     "Exceptions — fail hard, fix once",
@@ -34,8 +34,8 @@ func (Exceptions) Definition() skill.Definition {
 		Principle: exceptionsPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/fix-at-the-source", Note: "surface the failure where it's born."},
-			{Slug: "backend/absence", Note: `absence routes "missing = broken state" here for the *how* of throwing; this skill routes "swallowed failure became an empty value" back there as the inverse smell.`},
+			{Slug: "php/fix-at-the-source", Note: "surface the failure where it's born."},
+			{Slug: "php/absence", Note: `absence routes "missing = broken state" here for the *how* of throwing; this skill routes "swallowed failure became an empty value" back there as the inverse smell.`},
 		},
 	}
 }

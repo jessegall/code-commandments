@@ -79,8 +79,8 @@ func (c Command) about(root string, console cli.Console) (int, error) {
 		label   string
 		engines []catalog.Engine
 	}{
-		{"Backend detectors", []catalog.Engine{catalog.Backend}},
-		{"Frontend detectors", []catalog.Engine{catalog.Frontend, catalog.TypeScript}},
+		{"PHP detectors", []catalog.Engine{catalog.PHP}},
+		{"Vue detectors", []catalog.Engine{catalog.Vue, catalog.TypeScript}},
 		{"Python detectors", []catalog.Engine{catalog.Python}},
 		{"C# detectors", []catalog.Engine{catalog.CSharp}},
 	} {

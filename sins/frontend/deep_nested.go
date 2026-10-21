@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, DeepNested{})
+	sins.Register(catalog.Vue, DeepNested{})
 }
 
 // DeepNested is the sin "deep-nested".

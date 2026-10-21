@@ -88,5 +88,5 @@ The other 5 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/documentation`](../../backend/documentation/SKILL.md) — the same discipline for PHP docblocks.
+- [`php/documentation`](../../php/documentation/SKILL.md) — the same discipline for PHP docblocks.
 - [`python/fix-at-the-source`](../fix-at-the-source/SKILL.md) — fix the shape instead of documenting the workaround.

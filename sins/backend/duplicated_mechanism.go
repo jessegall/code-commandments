@@ -9,7 +9,7 @@ import (
 // DuplicatedMechanism is the duplicated-mechanism sin.
 type DuplicatedMechanism struct{}
 
-func init() { sins.Register(catalog.Backend, DuplicatedMechanism{}) }
+func init() { sins.Register(catalog.PHP, DuplicatedMechanism{}) }
 
 // Unpublished keeps the sin out of every catalog while its detector is calibrated.
 func (DuplicatedMechanism) Unpublished() {}

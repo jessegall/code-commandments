@@ -31,7 +31,7 @@ func TestTheScanFindsWhatTheFrontendParityToolFinds(t *testing.T) {
 
 	var found []string
 
-	for _, detector := range append(detectors.Of(catalog.Frontend), detectors.Of(catalog.TypeScript)...) {
+	for _, detector := range append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...) {
 		for _, match := range detector.Find(codebase) {
 			found = append(found, match.Location()+" ["+catalog.Name(detector)+"]")
 		}

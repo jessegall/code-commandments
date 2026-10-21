@@ -9,7 +9,7 @@ import (
 // HandRolledWither is the hand-rolled-wither sin.
 type HandRolledWither struct{}
 
-func init() { sins.Register(catalog.Backend, HandRolledWither{}) }
+func init() { sins.Register(catalog.PHP, HandRolledWither{}) }
 
 // Definition is what the sin states about itself.
 func (HandRolledWither) Definition() sins.Definition {

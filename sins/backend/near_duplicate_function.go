@@ -9,7 +9,7 @@ import (
 // NearDuplicateFunction is the near-duplicate-function sin.
 type NearDuplicateFunction struct{}
 
-func init() { sins.Register(catalog.Backend, NearDuplicateFunction{}) }
+func init() { sins.Register(catalog.PHP, NearDuplicateFunction{}) }
 
 // Definition is what the sin states about itself.
 func (NearDuplicateFunction) Definition() sins.Definition {

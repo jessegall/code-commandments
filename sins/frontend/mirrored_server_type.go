@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, MirroredServerType{})
+	sins.Register(catalog.Vue, MirroredServerType{})
 }
 
 // MirroredServerType is the sin "mirrored-server-type".

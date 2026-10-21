@@ -13,7 +13,7 @@ import (
 // RouteDelegatesToControllerDetector finds a route action that only hands its request on to another route action: two entry points to one operation.
 type RouteDelegatesToControllerDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RouteDelegatesToControllerDetector{}) }
+func init() { detectors.Register(catalog.PHP, RouteDelegatesToControllerDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RouteDelegatesToControllerDetector) Sin() sins.Sin {

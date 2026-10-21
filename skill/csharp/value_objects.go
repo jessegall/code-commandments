@@ -34,7 +34,7 @@ func (ValueObjects) Definition() skill.Definition {
 		Principle: valueObjectsPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/value-objects", Note: "the same discipline on the PHP backend, with Spatie `Data`."},
+			{Slug: "php/value-objects", Note: "the same discipline on the PHP backend, with Spatie `Data`."},
 			{Slug: "python/value-objects", Note: "the same discipline in Python, with frozen dataclasses."},
 			{Slug: "csharp/absence", Note: "what a member of the new type holds when its value may be missing."},
 		},

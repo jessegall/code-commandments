@@ -12,7 +12,7 @@ import (
 // NullableRegistryLookupDetector finds a keyed store's lookup that answers a miss with null instead of failing.
 type NullableRegistryLookupDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NullableRegistryLookupDetector{}) }
+func init() { detectors.Register(catalog.PHP, NullableRegistryLookupDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NullableRegistryLookupDetector) Sin() sins.Sin { return backendsins.NullableRegistryLookup{} }

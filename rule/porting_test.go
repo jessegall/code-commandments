@@ -87,7 +87,7 @@ func TestARuleJudgesTheClassANodeIsAbout(t *testing.T) {
 		`{"select": "construction", "where": [{"not": {"extendsAny": "Repository"}}]}`:                                         "[45]",
 		`{"select": "construction", "where": [{"not": {"any": [{"extendsAny": "Repository"}, {"resolvesLike": "*PayAction"}]}}]}`: "[]",
 	} {
-		written := `{"engine": "backend", "sin": {"name": "action-run-by-hand", "description": "an action's handle called by hand", "skill": "backend/laravel-idioms"}, "find": ` + query + `}`
+		written := `{"engine": "backend", "sin": {"name": "action-run-by-hand", "description": "an action's handle called by hand", "skill": "php/laravel-idioms"}, "find": ` + query + `}`
 		found, err := rule.Parse("ActionRunnerInvocationDetector", []byte(written), shipped)
 		if err != nil {
 			t.Fatalf("%s: %v", query, err)
@@ -101,7 +101,7 @@ func TestARuleJudgesTheClassANodeIsAbout(t *testing.T) {
 // TestARuleReadsAnAttributeATemplateElementWrites holds hasAttribute to an attribute written plain or bound.
 func TestARuleReadsAnAttributeATemplateElementWrites(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"src/Form.vue": "<template>\n  <form>\n    <input data-dusk=\"name\" />\n    <input :data-dusk=\"field\" />\n    <input name=\"plain\" />\n  </form>\n</template>\n\n<script setup lang=\"ts\">\nconst field = 'email'\n</script>\n"})
-	written := `{"engine": "frontend", "sin": {"name": "untested-input", "description": "an input with no dusk selector", "skill": "frontend/vue-components"}, "find": {"select": "kind:Element", "where": [{"name": "input"}], "reject": [{"hasAttribute": "data-dusk"}]}}`
+	written := `{"engine": "frontend", "sin": {"name": "untested-input", "description": "an input with no dusk selector", "skill": "vue/vue-components"}, "find": {"select": "kind:Element", "where": [{"name": "input"}], "reject": [{"hasAttribute": "data-dusk"}]}}`
 	found, err := rule.Parse("AppEngineeringFormDetector", []byte(written), shipped)
 	if err != nil {
 		t.Fatal(err)
@@ -178,7 +178,7 @@ final class Pages
 		`{"select": "function", "where": [{"count": {"descendant": {"all": [{"is": "call"}, {"nameIn": ["create", "update"]}]}, "distinct": "child:var", "atMost": 1}}, {"count": {"descendant": {"all": [{"is": "call"}, {"nameIn": ["create", "update"]}]}, "atLeast": 1}}]}`: "[25]",
 		`{"select": "type-declaration", "where": [{"file": "**/migrations/v[0-9]*/*"}, {"sibling": "{folder}.php"}]}`:          "[5]",
 	} {
-		written := `{"engine": "backend", "sin": {"name": "ported", "description": "a ported rule", "skill": "backend/laravel-idioms"}, "find": ` + query + `}`
+		written := `{"engine": "backend", "sin": {"name": "ported", "description": "a ported rule", "skill": "php/laravel-idioms"}, "find": ` + query + `}`
 		found, err := rule.Parse("PortedDetector", []byte(written), shipped)
 		if err != nil {
 			t.Fatalf("%s: %v", query, err)
@@ -215,7 +215,7 @@ func TestARuleReadsAParentFoldersFileAndTheClassItself(t *testing.T) {
 		`{"select": "type-declaration", "where": [{"isA": "App\\Request"}]}`:                                   "[5 7]",
 		`{"select": "type-declaration", "where": [{"extendsAny": "App\\Request"}]}`:                            "[7]",
 	} {
-		written := `{"engine": "backend", "sin": {"name": "ported", "description": "a ported rule", "skill": "backend/laravel-idioms"}, "find": ` + query + `}`
+		written := `{"engine": "backend", "sin": {"name": "ported", "description": "a ported rule", "skill": "php/laravel-idioms"}, "find": ` + query + `}`
 		found, err := rule.Parse("PortedDetector", []byte(written), shipped)
 		if err != nil {
 			t.Fatalf("%s: %v", query, err)
@@ -234,7 +234,7 @@ func TestARuleReadsAParentFoldersFileAndTheClassItself(t *testing.T) {
 // so a rule judges a paragraph or a heading as it judges an attribute's value; an interpolation stays its own node.
 func TestARuleReadsTheTextATemplateShows(t *testing.T) {
 	codebase := frontendtest.FromSource(t, map[string]string{"src/DumpStart.vue": "<template>\n  <section>\n    <h2>Start a dump</h2>\n    <p class=\"dump-context\">Mixed is fine.\n      The agent sorts it {{ later }}.</p>\n  </section>\n</template>\n\n<script setup lang=\"ts\">\nconst later = 'later'\n</script>\n"})
-	written := `{"engine": "frontend", "sin": {"name": "plain-text", "description": "viewer text", "skill": "frontend/vue-components"}, "find": {"select": "kind:Text", "where": [{"textMatches": "^Mixed is fine\\. The agent sorts it$"}]}}`
+	written := `{"engine": "frontend", "sin": {"name": "plain-text", "description": "viewer text", "skill": "vue/vue-components"}, "find": {"select": "kind:Text", "where": [{"textMatches": "^Mixed is fine\\. The agent sorts it$"}]}}`
 	found, err := rule.Parse("PlainViewerTextDetector", []byte(written), shipped)
 	if err != nil {
 		t.Fatal(err)

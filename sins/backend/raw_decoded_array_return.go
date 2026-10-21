@@ -9,7 +9,7 @@ import (
 // RawDecodedArrayReturn is the raw-decoded-array-return sin.
 type RawDecodedArrayReturn struct{}
 
-func init() { sins.Register(catalog.Backend, RawDecodedArrayReturn{}) }
+func init() { sins.Register(catalog.PHP, RawDecodedArrayReturn{}) }
 
 // Definition is what the sin states about itself.
 func (RawDecodedArrayReturn) Definition() sins.Definition {

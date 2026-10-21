@@ -12,7 +12,7 @@ import (
 // WrappingWithoutCauseDetector finds a catch that throws a new exception and drops the one it caught.
 type WrappingWithoutCauseDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, WrappingWithoutCauseDetector{}) }
+func init() { detectors.Register(catalog.PHP, WrappingWithoutCauseDetector{}) }
 
 // Sin is the sin the detector finds.
 func (WrappingWithoutCauseDetector) Sin() sins.Sin { return backendsins.WrappingWithoutCause{} }

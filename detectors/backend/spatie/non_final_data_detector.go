@@ -13,7 +13,7 @@ import (
 // NonFinalDataDetector finds a Data class left open for extension that nothing extends.
 type NonFinalDataDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NonFinalDataDetector{}) }
+func init() { detectors.Register(catalog.PHP, NonFinalDataDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NonFinalDataDetector) Sin() sins.Sin { return backendsins.NonFinalData{} }

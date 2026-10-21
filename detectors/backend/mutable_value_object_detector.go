@@ -12,7 +12,7 @@ import (
 // MutableValueObjectDetector finds a value object that changes its own fields after construction.
 type MutableValueObjectDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, MutableValueObjectDetector{}) }
+func init() { detectors.Register(catalog.PHP, MutableValueObjectDetector{}) }
 
 // Sin is the sin the detector finds.
 func (MutableValueObjectDetector) Sin() sins.Sin { return backendsins.MutableValueObject{} }

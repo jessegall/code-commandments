@@ -99,6 +99,6 @@ public static string LedgerLine(string orderId, int cents) => $"{orderId};{cents
 
 ## Related skills
 
-- [`backend/behaviour-per-method`](../../backend/behaviour-per-method/SKILL.md) — the same discipline in PHP.
+- [`php/behaviour-per-method`](../../php/behaviour-per-method/SKILL.md) — the same discipline in PHP.
 - [`csharp/enums`](../enums/SKILL.md) — when the choice has more than two cases, it is an `enum` — and the behaviour belongs beside it.
 - [`csharp/flow`](../flow/SKILL.md) — an early return that guards is the shape this one is NOT.

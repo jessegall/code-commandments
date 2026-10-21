@@ -13,7 +13,7 @@ import (
 // ModelMutationAtCallSiteDetector finds a model whose properties a caller sets before saving it, where an intention-revealing method on the model belongs.
 type ModelMutationAtCallSiteDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ModelMutationAtCallSiteDetector{}) }
+func init() { detectors.Register(catalog.PHP, ModelMutationAtCallSiteDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ModelMutationAtCallSiteDetector) Sin() sins.Sin { return backendsins.ModelMutationAtCallSite{} }

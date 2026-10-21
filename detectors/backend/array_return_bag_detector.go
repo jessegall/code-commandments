@@ -13,7 +13,7 @@ import (
 // ArrayReturnBagDetector finds a function returning an array of named values that wants a type.
 type ArrayReturnBagDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ArrayReturnBagDetector{}) }
+func init() { detectors.Register(catalog.PHP, ArrayReturnBagDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ArrayReturnBagDetector) Sin() sins.Sin { return backendsins.ArrayReturnBag{} }

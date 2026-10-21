@@ -34,7 +34,7 @@ func (Duplication) Definition() skill.Definition {
 		Principle: duplicationPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/fix-at-the-source", Note: "the root instinct — one decision, made once, where it is born."},
+			{Slug: "php/fix-at-the-source", Note: "the root instinct — one decision, made once, where it is born."},
 			{Slug: "python/duplication", Note: "the same discipline over Python modules."},
 			{Slug: "typescript/duplication", Note: "the same discipline over TypeScript modules and Vue components."},
 		},

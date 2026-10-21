@@ -12,7 +12,7 @@ import (
 // ShortCircuitStatementDetector finds && or || used as a statement to run its right side conditionally.
 type ShortCircuitStatementDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ShortCircuitStatementDetector{}) }
+func init() { detectors.Register(catalog.PHP, ShortCircuitStatementDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ShortCircuitStatementDetector) Sin() sins.Sin { return backendsins.ShortCircuitStatement{} }

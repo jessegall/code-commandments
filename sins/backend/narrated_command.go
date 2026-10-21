@@ -9,7 +9,7 @@ import (
 // NarratedCommand is the narrated-command sin.
 type NarratedCommand struct{}
 
-func init() { sins.Register(catalog.Backend, NarratedCommand{}) }
+func init() { sins.Register(catalog.PHP, NarratedCommand{}) }
 
 // Definition is what the sin states about itself.
 func (NarratedCommand) Definition() sins.Definition {

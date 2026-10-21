@@ -9,7 +9,7 @@ import (
 // ArchaeologyComment is the archaeology-comment sin.
 type ArchaeologyComment struct{}
 
-func init() { sins.Register(catalog.Backend, ArchaeologyComment{}) }
+func init() { sins.Register(catalog.PHP, ArchaeologyComment{}) }
 
 // Definition is what the sin states about itself.
 func (ArchaeologyComment) Definition() sins.Definition {

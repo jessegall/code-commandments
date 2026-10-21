@@ -13,7 +13,7 @@ import (
 // DeadConfigKeyDetector finds a key a config file declares that nothing in the project reads.
 type DeadConfigKeyDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DeadConfigKeyDetector{}) }
+func init() { detectors.Register(catalog.PHP, DeadConfigKeyDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DeadConfigKeyDetector) Sin() sins.Sin { return backendsins.DeadConfigKey{} }

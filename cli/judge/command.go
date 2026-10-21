@@ -340,8 +340,8 @@ func selectFrom(list []detectors.Detector, skill, sin string) []detectors.Detect
 // publishers are the languages whose facts an engine's rules read beside their own: the frontend asks
 // what the server publishes, and the backend what the frontend reads back.
 var publishers = map[catalog.Engine][]source.Language{
-	catalog.Backend:    {source.Vue, source.TypeScript},
-	catalog.Frontend:   {source.PHP},
+	catalog.PHP:    {source.Vue, source.TypeScript},
+	catalog.Vue:   {source.PHP},
 	catalog.TypeScript: {source.PHP},
 }
 

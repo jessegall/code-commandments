@@ -21,7 +21,7 @@ func TestAProjectWithNoConfigStartsWithConfigJSON(t *testing.T) {
 	}
 
 	config, err := Load(dir)
-	if err != nil || editor.Name() != ".commandments/config.json" || !reflect.DeepEqual(config.Disabled, []Rule{{Sin, catalog.Backend, "ArrayBag"}}) {
+	if err != nil || editor.Name() != ".commandments/config.json" || !reflect.DeepEqual(config.Disabled, []Rule{{Sin, catalog.PHP, "ArrayBag"}}) {
 		t.Errorf("%s %+v %v", editor.Name(), config, err)
 	}
 
@@ -84,7 +84,7 @@ func TestLayersAreDeclaredRewrittenAndReadBackInConfigJSON(t *testing.T) {
 
 func TestTheDeclarationShowsTheConfigureBlockConfigJSONWrites(t *testing.T) {
 	want := `    "configure": {
-        "backend/NamespaceDependencyDetector": [
+        "php/NamespaceDependencyDetector": [
             {
                 "layer": [
                     "App\\Domain"

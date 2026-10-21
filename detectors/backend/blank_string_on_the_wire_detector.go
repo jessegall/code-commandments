@@ -16,7 +16,7 @@ import (
 // it means absent, and every page decodes it.
 type BlankStringOnTheWireDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, BlankStringOnTheWireDetector{}) }
+func init() { detectors.Register(catalog.PHP, BlankStringOnTheWireDetector{}) }
 
 // Sin is the sin the detector finds.
 func (BlankStringOnTheWireDetector) Sin() sins.Sin { return backendsins.BlankStringOnTheWire{} }

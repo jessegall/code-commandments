@@ -9,7 +9,7 @@ import (
 // DerivedArgument is the derived-argument sin.
 type DerivedArgument struct{}
 
-func init() { sins.Register(catalog.Backend, DerivedArgument{}) }
+func init() { sins.Register(catalog.PHP, DerivedArgument{}) }
 
 // Definition is what the sin states about itself.
 func (DerivedArgument) Definition() sins.Definition {

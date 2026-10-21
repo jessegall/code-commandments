@@ -71,5 +71,5 @@ public bool IsAccepting => open && freeSlots > 0;
 
 ## Related skills
 
-- [`backend/method-mood`](../../backend/method-mood/SKILL.md) — the same discipline in PHP.
+- [`php/method-mood`](../../php/method-mood/SKILL.md) — the same discipline in PHP.
 - [`csharp/class-layout`](../class-layout/SKILL.md) — where a type keeps its state, next to what its members are called.

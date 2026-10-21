@@ -34,7 +34,7 @@ func (RoleVocabulary) Definition() skill.Definition {
 		Principle: roleVocabularyPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/role-vocabulary", Note: "the same roles in PHP, with scaffolded bases."},
+			{Slug: "php/role-vocabulary", Note: "the same roles in PHP, with scaffolded bases."},
 			{Slug: "python/absence", Note: "a registry `get` raises on a miss — the same \"a must-exist thing that is missing raises\" rule."},
 			{Slug: "python/exceptions", Note: "the named exception a registry raises on a miss, built by a classmethod factory."},
 		},

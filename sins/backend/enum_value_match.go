@@ -9,7 +9,7 @@ import (
 // EnumValueMatch is the enum-value-match sin.
 type EnumValueMatch struct{}
 
-func init() { sins.Register(catalog.Backend, EnumValueMatch{}) }
+func init() { sins.Register(catalog.PHP, EnumValueMatch{}) }
 
 // Definition is what the sin states about itself.
 func (EnumValueMatch) Definition() sins.Definition {

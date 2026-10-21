@@ -12,7 +12,7 @@ import (
 // HandRolledWitherDetector finds a wither that rebuilds its class argument by argument where clone-with belongs.
 type HandRolledWitherDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, HandRolledWitherDetector{}) }
+func init() { detectors.Register(catalog.PHP, HandRolledWitherDetector{}) }
 
 // Sin is the sin the detector finds.
 func (HandRolledWitherDetector) Sin() sins.Sin { return backendsins.HandRolledWither{} }

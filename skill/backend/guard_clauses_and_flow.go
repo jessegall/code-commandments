@@ -18,13 +18,13 @@ var (
 type GuardClausesAndFlow struct{}
 
 func init() {
-	skill.Register(catalog.Backend, GuardClausesAndFlow{})
+	skill.Register(catalog.PHP, GuardClausesAndFlow{})
 }
 
 // Definition is what the skill states about itself.
 func (GuardClausesAndFlow) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/guard-clauses-and-flow",
+		Slug:      "php/guard-clauses-and-flow",
 		Tier:      skill.Mandatory,
 		Order:     2,
 		Title:     "Guard clauses & flow — check at the top, then go straight",
@@ -34,9 +34,9 @@ func (GuardClausesAndFlow) Definition() skill.Definition {
 		Principle: guardClausesAndFlowPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/exceptions", Note: "*how* a guard throws (named factory, never a message string)."},
-			{Slug: "backend/absence", Note: "*whether* a missing value is a guard-and-throw at all, vs Option / empty / default."},
-			{Slug: "backend/fix-at-the-source", Note: "if every caller re-guards the same value, the guard belongs upstream where the value is born."},
+			{Slug: "php/exceptions", Note: "*how* a guard throws (named factory, never a message string)."},
+			{Slug: "php/absence", Note: "*whether* a missing value is a guard-and-throw at all, vs Option / empty / default."},
+			{Slug: "php/fix-at-the-source", Note: "if every caller re-guards the same value, the guard belongs upstream where the value is born."},
 		},
 	}
 }

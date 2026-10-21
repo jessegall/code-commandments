@@ -13,7 +13,7 @@ import (
 // RawRequestInputDetector finds request input read raw, where a typed accessor behind a named getter belongs.
 type RawRequestInputDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RawRequestInputDetector{}) }
+func init() { detectors.Register(catalog.PHP, RawRequestInputDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RawRequestInputDetector) Sin() sins.Sin { return backendsins.RawRequestInput{} }

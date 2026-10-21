@@ -9,7 +9,7 @@ import (
 // KeyedLookupEnvy is the keyed-lookup-envy sin.
 type KeyedLookupEnvy struct{}
 
-func init() { sins.Register(catalog.Backend, KeyedLookupEnvy{}) }
+func init() { sins.Register(catalog.PHP, KeyedLookupEnvy{}) }
 
 // Definition is what the sin states about itself.
 func (KeyedLookupEnvy) Definition() sins.Definition {

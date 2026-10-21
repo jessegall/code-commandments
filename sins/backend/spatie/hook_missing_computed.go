@@ -9,7 +9,7 @@ import (
 // HookMissingComputed is the hook-missing-computed sin.
 type HookMissingComputed struct{}
 
-func init() { sins.Register(catalog.Backend, HookMissingComputed{}) }
+func init() { sins.Register(catalog.PHP, HookMissingComputed{}) }
 
 // Definition is what the sin states about itself.
 func (HookMissingComputed) Definition() sins.Definition {

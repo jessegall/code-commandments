@@ -13,7 +13,7 @@ import (
 // should answer by name.
 type RepeatedGuardDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RepeatedGuardDetector{}) }
+func init() { detectors.Register(catalog.PHP, RepeatedGuardDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RepeatedGuardDetector) Sin() sins.Sin { return backendsins.RepeatedGuard{} }

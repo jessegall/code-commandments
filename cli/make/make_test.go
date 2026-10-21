@@ -83,7 +83,7 @@ func TestACommandmentTaughtByAnExistingSkillWritesNone(t *testing.T) {
 		t.Fatalf("exit %d\n%s", code, said)
 	}
 
-	if loaded := custom.Load(root); len(loaded.Rules) != 1 || loaded.Rules[0].Sin().Definition().Slug() != "backend/absence" {
+	if loaded := custom.Load(root); len(loaded.Rules) != 1 || loaded.Rules[0].Sin().Definition().Slug() != "php/absence" {
 		t.Errorf("%+v", loaded)
 	}
 }

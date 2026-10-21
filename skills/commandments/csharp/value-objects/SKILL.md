@@ -107,6 +107,6 @@ The other 6 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/value-objects`](../../backend/value-objects/SKILL.md) — the same discipline on the PHP backend, with Spatie `Data`.
+- [`php/value-objects`](../../php/value-objects/SKILL.md) — the same discipline on the PHP backend, with Spatie `Data`.
 - [`python/value-objects`](../../python/value-objects/SKILL.md) — the same discipline in Python, with frozen dataclasses.
 - [`csharp/absence`](../absence/SKILL.md) — what a member of the new type holds when its value may be missing.

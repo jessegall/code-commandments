@@ -18,7 +18,7 @@ var extractors = []string{"DuplicateElementDetector", "DeepNestedDetector", "Dee
 // enrolled is the frontend detector the catalog holds under the name.
 func enrolled(t *testing.T, name string) detectors.Detector {
 	t.Helper()
-	for _, detector := range detectors.Of(catalog.Frontend) {
+	for _, detector := range detectors.Of(catalog.Vue) {
 		if catalog.Name(detector) == name {
 			return detector
 		}

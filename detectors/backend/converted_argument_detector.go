@@ -17,7 +17,7 @@ import (
 // static factory: the parameter should take the converted type.
 type ConvertedArgumentDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ConvertedArgumentDetector{}) }
+func init() { detectors.Register(catalog.PHP, ConvertedArgumentDetector{}) }
 
 // dominant is the share of a slot's call sites that must convert for the conversion to belong in the callee.
 const dominant = 0.5
@@ -91,7 +91,7 @@ func conversionIn(argument, call engine.Match) string {
 
 // suppliedSlots is how many call sites fill each callee slot, per codebase.
 func suppliedSlots(codebase *engine.Codebase) map[string]int {
-	return engine.Analysis(codebase, "backend/supplied-slots", func(codebase *engine.Codebase) map[string]int {
+	return engine.Analysis(codebase, "php/supplied-slots", func(codebase *engine.Codebase) map[string]int {
 		types := php.TypesOf(codebase)
 		counts := map[string]int{}
 		for _, call := range callSites(codebase) {

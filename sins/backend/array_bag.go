@@ -9,7 +9,7 @@ import (
 // ArrayBag is the array-bag sin.
 type ArrayBag struct{}
 
-func init() { sins.Register(catalog.Backend, ArrayBag{}) }
+func init() { sins.Register(catalog.PHP, ArrayBag{}) }
 
 // Definition is what the sin states about itself.
 func (ArrayBag) Definition() sins.Definition {

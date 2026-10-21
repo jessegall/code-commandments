@@ -18,13 +18,13 @@ var (
 type Documentation struct{}
 
 func init() {
-	skill.Register(catalog.Backend, Documentation{})
+	skill.Register(catalog.PHP, Documentation{})
 }
 
 // Definition is what the skill states about itself.
 func (Documentation) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:                  "backend/documentation",
+		Slug:                  "php/documentation",
 		Tier:                  skill.Mandatory,
 		Order:                 6,
 		Title:                 "Documentation — concise, present-tense, rare",
@@ -35,7 +35,7 @@ func (Documentation) Definition() skill.Definition {
 		ExamplesKeepDocblocks: true,
 		Languages:             []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/fix-at-the-source", Note: `fix the shape instead of documenting the workaround. A doc should never be the thing keeping a confusing design legible.`},
+			{Slug: "php/fix-at-the-source", Note: `fix the shape instead of documenting the workaround. A doc should never be the thing keeping a confusing design legible.`},
 		},
 	}
 }

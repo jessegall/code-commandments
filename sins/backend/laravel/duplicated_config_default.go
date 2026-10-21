@@ -9,7 +9,7 @@ import (
 // DuplicatedConfigDefault is the duplicated-config-default sin.
 type DuplicatedConfigDefault struct{}
 
-func init() { sins.Register(catalog.Backend, DuplicatedConfigDefault{}) }
+func init() { sins.Register(catalog.PHP, DuplicatedConfigDefault{}) }
 
 // Definition is what the sin states about itself.
 func (DuplicatedConfigDefault) Definition() sins.Definition {

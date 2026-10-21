@@ -14,7 +14,7 @@ import (
 // then reads what it handed over: the value travels back through the argument, and the signature says nothing.
 type FilledParameterDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, FilledParameterDetector{}) }
+func init() { detectors.Register(catalog.PHP, FilledParameterDetector{}) }
 
 // Sin is the sin the detector finds.
 func (FilledParameterDetector) Sin() sins.Sin { return backendsins.FilledParameter{} }

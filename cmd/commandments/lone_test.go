@@ -52,7 +52,7 @@ func TestALoneBinaryJudgesAsTheCheckoutDoes(t *testing.T) {
 	if checkout := judge(plain, os.Getenv("PATH")); alone != checkout {
 		t.Errorf("the lone binary judged\n%s\nthe checkout's build judged\n%s", alone, checkout)
 	}
-	for _, fixture := range []string{"backend/", "frontend/", "python/"} {
+	for _, fixture := range []string{"php/", "vue/", "python/"} {
 		if !strings.Contains(alone, fixture) {
 			t.Errorf("the lone binary found nothing in %s:\n%s", fixture, alone)
 		}

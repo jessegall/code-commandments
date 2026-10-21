@@ -16,7 +16,7 @@ import (
 // RestatedCommentDetector finds a line comment inside a function that only says again what its code says.
 type RestatedCommentDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RestatedCommentDetector{}) }
+func init() { detectors.Register(catalog.PHP, RestatedCommentDetector{}) }
 
 // minWords is how many distinct words a comment needs before it can restate anything.
 const minWords = 2

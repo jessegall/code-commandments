@@ -9,7 +9,7 @@ import (
 // InjectedServiceNotHidden is the injected-service-not-hidden sin.
 type InjectedServiceNotHidden struct{}
 
-func init() { sins.Register(catalog.Backend, InjectedServiceNotHidden{}) }
+func init() { sins.Register(catalog.PHP, InjectedServiceNotHidden{}) }
 
 // Definition is what the sin states about itself.
 func (InjectedServiceNotHidden) Definition() sins.Definition {

@@ -13,7 +13,7 @@ import (
 // AllOptionalDataDetector finds a Data class whose every field is Optional: nothing about it is certain.
 type AllOptionalDataDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, AllOptionalDataDetector{}) }
+func init() { detectors.Register(catalog.PHP, AllOptionalDataDetector{}) }
 
 // Sin is the sin the detector finds.
 func (AllOptionalDataDetector) Sin() sins.Sin { return backendsins.AllOptionalData{} }

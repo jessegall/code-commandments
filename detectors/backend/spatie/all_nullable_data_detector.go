@@ -13,7 +13,7 @@ import (
 // AllNullableDataDetector finds a Data class whose every field is nullable: nothing about it is certain.
 type AllNullableDataDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, AllNullableDataDetector{}) }
+func init() { detectors.Register(catalog.PHP, AllNullableDataDetector{}) }
 
 // Sin is the sin the detector finds.
 func (AllNullableDataDetector) Sin() sins.Sin { return backendsins.AllNullableData{} }

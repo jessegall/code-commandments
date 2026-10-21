@@ -34,7 +34,7 @@ func (TellDontAsk) Definition() skill.Definition {
 		Principle: tellDontAskPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/tell-dont-ask", Note: "the same discipline in PHP."},
+			{Slug: "php/tell-dont-ask", Note: "the same discipline in PHP."},
 			{Slug: "csharp/enums", Note: "a closed set of values carries its per-case knowledge beside the `enum`."},
 			{Slug: "csharp/value-objects", Note: "the type the behaviour moves onto."},
 		},

@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, DuplicateElement{})
+	sins.Register(catalog.Vue, DuplicateElement{})
 }
 
 // DuplicateElement is the sin "duplicate-element".

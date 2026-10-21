@@ -34,7 +34,7 @@ func (Templates) Definition() skill.Definition {
 		Principle: templatesPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/templates", Note: "the same discipline with PHP heredocs."},
+			{Slug: "php/templates", Note: "the same discipline with PHP heredocs."},
 		},
 	}
 }

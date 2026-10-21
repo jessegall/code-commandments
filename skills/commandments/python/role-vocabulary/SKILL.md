@@ -108,6 +108,6 @@ def __contains__(self, till: str) -> bool:
 
 ## Related skills
 
-- [`backend/role-vocabulary`](../../backend/role-vocabulary/SKILL.md) — the same roles in PHP, with scaffolded bases.
+- [`php/role-vocabulary`](../../php/role-vocabulary/SKILL.md) — the same roles in PHP, with scaffolded bases.
 - [`python/absence`](../absence/SKILL.md) — a registry `get` raises on a miss — the same "a must-exist thing that is missing raises" rule.
 - [`python/exceptions`](../exceptions/SKILL.md) — the named exception a registry raises on a miss, built by a classmethod factory.

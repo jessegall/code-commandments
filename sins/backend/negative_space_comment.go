@@ -9,7 +9,7 @@ import (
 // NegativeSpaceComment is the negative-space-comment sin.
 type NegativeSpaceComment struct{}
 
-func init() { sins.Register(catalog.Backend, NegativeSpaceComment{}) }
+func init() { sins.Register(catalog.PHP, NegativeSpaceComment{}) }
 
 // Definition is what the sin states about itself.
 func (NegativeSpaceComment) Definition() sins.Definition {

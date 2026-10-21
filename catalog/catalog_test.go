@@ -37,13 +37,13 @@ func names(rules []Rule) []string {
 func TestACatalogListsPublishedRulesByEngineThenName(t *testing.T) {
 	var rules catalog.Catalog[Rule]
 	rules.Register(catalog.Python, Apple{})
-	rules.Register(catalog.Backend, Zebra{})
-	rules.Register(catalog.Backend, Draft{})
+	rules.Register(catalog.PHP, Zebra{})
+	rules.Register(catalog.PHP, Draft{})
 
 	if got := names(rules.All()); !slices.Equal(got, []string{"Zebra", "Apple"}) {
 		t.Fatalf("got %v", got)
 	}
-	if got := names(rules.Of(catalog.Backend)); !slices.Equal(got, []string{"Zebra"}) {
+	if got := names(rules.Of(catalog.PHP)); !slices.Equal(got, []string{"Zebra"}) {
 		t.Fatalf("an unpublished rule is left out, got %v", got)
 	}
 	if engine, ok := rules.EngineOf(Apple{}); !ok || engine != catalog.Python {
@@ -56,13 +56,13 @@ func TestACatalogListsPublishedRulesByEngineThenName(t *testing.T) {
 
 func TestARuleRegisteredTwicePanics(t *testing.T) {
 	var rules catalog.Catalog[Rule]
-	rules.Register(catalog.Backend, Apple{})
+	rules.Register(catalog.PHP, Apple{})
 	defer func() {
 		if recover() == nil {
 			t.Fatal("registering Apple twice did not panic")
 		}
 	}()
-	rules.Register(catalog.Frontend, Apple{})
+	rules.Register(catalog.Vue, Apple{})
 }
 
 func TestNameIsTheShortTypeName(t *testing.T) {
@@ -113,5 +113,33 @@ func TestEnrolmentImportsEveryRuleFolderOnly(t *testing.T) {
 	}
 	if strings.Count(string(source), "_ \"") != 3 {
 		t.Fatalf("only the three rule packages are imported:\n%s", source)
+	}
+}
+
+// TestAnEngineAnswersToTheNameItWasPublishedUnder holds the one funnel every name read from outside goes through:
+// an engine named after its language today answers to the name it carried before, so a config, a rule file, a
+// filter or a slug a project wrote then is never made wrong by a name of ours changing.
+func TestAnEngineAnswersToTheNameItWasPublishedUnder(t *testing.T) {
+	for name, want := range map[string]catalog.Engine{
+		"php":        catalog.PHP,
+		"backend":    catalog.PHP,
+		"Backend":    catalog.PHP,
+		"vue":        catalog.Vue,
+		"frontend":   catalog.Vue,
+		"python":     catalog.Python,
+		"csharp":     catalog.CSharp,
+		"typescript": catalog.TypeScript,
+	} {
+		if got, known := catalog.EngineNamed(name); !known || got != want {
+			t.Errorf("%q names %q (known: %t), want %q", name, got, known, want)
+		}
+	}
+
+	if _, known := catalog.EngineNamed("perl"); known {
+		t.Error("perl names an engine, and nothing of ours judges it")
+	}
+
+	if got := catalog.FormerNames(); !slices.Equal(got, []string{"backend", "frontend"}) {
+		t.Errorf("the former names are %v, which is what a schema offers and a slip is measured against", got)
 	}
 }

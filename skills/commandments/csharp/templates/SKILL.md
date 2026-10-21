@@ -102,4 +102,4 @@ public static string Written(string name, string tracking) => $"""
 
 ## Related skills
 
-- [`backend/templates`](../../backend/templates/SKILL.md) — the same discipline with PHP heredocs.
+- [`php/templates`](../../php/templates/SKILL.md) — the same discipline with PHP heredocs.

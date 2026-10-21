@@ -84,5 +84,5 @@ The other 1 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/method-mood`](../../backend/method-mood/SKILL.md) — the same discipline over PHP methods.
+- [`php/method-mood`](../../php/method-mood/SKILL.md) — the same discipline over PHP methods.
 - [`python/class-layout`](../class-layout/SKILL.md) — where a class keeps its state, beside what its methods are called.

@@ -13,7 +13,7 @@ import (
 // NullToOptionalMapDetector finds a null mapped to Optional by hand, where the Data class should declare it.
 type NullToOptionalMapDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NullToOptionalMapDetector{}) }
+func init() { detectors.Register(catalog.PHP, NullToOptionalMapDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NullToOptionalMapDetector) Sin() sins.Sin { return backendsins.NullToOptionalMap{} }

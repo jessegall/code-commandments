@@ -9,7 +9,7 @@ import (
 // NestedTernary is the nested-ternary sin.
 type NestedTernary struct{}
 
-func init() { sins.Register(catalog.Backend, NestedTernary{}) }
+func init() { sins.Register(catalog.PHP, NestedTernary{}) }
 
 // Definition is what the sin states about itself.
 func (NestedTernary) Definition() sins.Definition {

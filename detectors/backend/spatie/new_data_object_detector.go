@@ -13,7 +13,7 @@ import (
 // NewDataObjectDetector finds a rich Data object built with new, where ::from() belongs.
 type NewDataObjectDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NewDataObjectDetector{}) }
+func init() { detectors.Register(catalog.PHP, NewDataObjectDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NewDataObjectDetector) Sin() sins.Sin { return backendsins.NewDataObject{} }

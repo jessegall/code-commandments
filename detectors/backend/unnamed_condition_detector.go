@@ -12,7 +12,7 @@ import (
 // UnnamedConditionDetector finds a condition standing for a concept nobody named.
 type UnnamedConditionDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, UnnamedConditionDetector{}) }
+func init() { detectors.Register(catalog.PHP, UnnamedConditionDetector{}) }
 
 // Sin is the sin the detector finds.
 func (UnnamedConditionDetector) Sin() sins.Sin { return backendsins.UnnamedCondition{} }

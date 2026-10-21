@@ -9,7 +9,7 @@ import (
 // ConstClassEnum is the const-class-enum sin.
 type ConstClassEnum struct{}
 
-func init() { sins.Register(catalog.Backend, ConstClassEnum{}) }
+func init() { sins.Register(catalog.PHP, ConstClassEnum{}) }
 
 // Definition is what the sin states about itself.
 func (ConstClassEnum) Definition() sins.Definition {

@@ -9,7 +9,7 @@ import (
 // ManualInputCast is the manual-input-cast sin.
 type ManualInputCast struct{}
 
-func init() { sins.Register(catalog.Backend, ManualInputCast{}) }
+func init() { sins.Register(catalog.PHP, ManualInputCast{}) }
 
 // Definition is what the sin states about itself.
 func (ManualInputCast) Definition() sins.Definition {

@@ -14,7 +14,7 @@ import (
 // for a value the type says is always there.
 type PlaceholderFilledDataDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, PlaceholderFilledDataDetector{}) }
+func init() { detectors.Register(catalog.PHP, PlaceholderFilledDataDetector{}) }
 
 // Sin is the sin the detector finds.
 func (PlaceholderFilledDataDetector) Sin() sins.Sin { return spatiesins.PlaceholderFilledData{} }

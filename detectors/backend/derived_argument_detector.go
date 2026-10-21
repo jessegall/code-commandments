@@ -17,7 +17,7 @@ import (
 // one object three or more times over: the callee should take the object and derive them itself.
 type DerivedArgumentDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DerivedArgumentDetector{}) }
+func init() { detectors.Register(catalog.PHP, DerivedArgumentDetector{}) }
 
 // reassembled is how many scalar slots one call must fill from one object for them to be that object taken apart.
 const reassembled = 3

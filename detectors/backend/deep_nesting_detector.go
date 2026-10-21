@@ -12,7 +12,7 @@ import (
 // DeepNestingDetector finds an if nested two ifs deep within its function.
 type DeepNestingDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DeepNestingDetector{}) }
+func init() { detectors.Register(catalog.PHP, DeepNestingDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DeepNestingDetector) Sin() sins.Sin { return backendsins.DeepNesting{} }

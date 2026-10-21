@@ -88,5 +88,5 @@ The other 3 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/fix-at-the-source`](../../backend/fix-at-the-source/SKILL.md) — the same discipline in PHP, which every other skill builds on.
+- [`php/fix-at-the-source`](../../php/fix-at-the-source/SKILL.md) — the same discipline in PHP, which every other skill builds on.
 - [`csharp/absence`](../absence/SKILL.md) — deciding what "missing" means where a value is made is this rule applied to `null`.

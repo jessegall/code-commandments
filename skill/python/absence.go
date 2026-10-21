@@ -34,7 +34,7 @@ func (Absence) Definition() skill.Definition {
 		Principle: absencePrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/absence", Note: "the same decision on the PHP backend, with `Option`."},
+			{Slug: "php/absence", Note: "the same decision on the PHP backend, with `Option`."},
 			{Slug: "python/exceptions", Note: "when \"missing\" is a broken state, the named exception to raise."},
 		},
 	}

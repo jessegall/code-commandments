@@ -9,7 +9,7 @@ import (
 // ManualOutputTransform is the manual-output-transform sin.
 type ManualOutputTransform struct{}
 
-func init() { sins.Register(catalog.Backend, ManualOutputTransform{}) }
+func init() { sins.Register(catalog.PHP, ManualOutputTransform{}) }
 
 // Definition is what the sin states about itself.
 func (ManualOutputTransform) Definition() sins.Definition {

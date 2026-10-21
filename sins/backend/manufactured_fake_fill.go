@@ -9,7 +9,7 @@ import (
 // ManufacturedFakeFill is the manufactured-fake-fill sin.
 type ManufacturedFakeFill struct{}
 
-func init() { sins.Register(catalog.Backend, ManufacturedFakeFill{}) }
+func init() { sins.Register(catalog.PHP, ManufacturedFakeFill{}) }
 
 // Definition is what the sin states about itself.
 func (ManufacturedFakeFill) Definition() sins.Definition {

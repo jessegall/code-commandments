@@ -9,7 +9,7 @@ import (
 // ConstructorSideEffect is the constructor-side-effect sin.
 type ConstructorSideEffect struct{}
 
-func init() { sins.Register(catalog.Backend, ConstructorSideEffect{}) }
+func init() { sins.Register(catalog.PHP, ConstructorSideEffect{}) }
 
 // Definition is what the sin states about itself.
 func (ConstructorSideEffect) Definition() sins.Definition {

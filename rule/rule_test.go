@@ -85,7 +85,7 @@ func TestARuleFindsWhatItsStepsDescribe(t *testing.T) {
 		`{"select": "call", "where": [{"file": "Orders.php"}, {"name": "get"}]}`:                                      "[21]",
 		`{"select": "call", "where": [{"file": "Other.php"}]}`:                                                        "[]",
 	} {
-		written := `{"engine": "backend", "sin": {"name": "raw-sql", "description": "SQL written inline", "skill": "backend/laravel-idioms"}, "find": ` + name + `}`
+		written := `{"engine": "backend", "sin": {"name": "raw-sql", "description": "SQL written inline", "skill": "php/laravel-idioms"}, "find": ` + name + `}`
 
 		found, err := rule.Parse("RawSqlDetector", []byte(written), shipped)
 		if err != nil {
@@ -100,12 +100,12 @@ func TestARuleFindsWhatItsStepsDescribe(t *testing.T) {
 
 func TestARuleTheToolCannotRunSaysWhy(t *testing.T) {
 	for written, reason := range map[string]string{
-		`{"engine": "cobol", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call"}}`:                                                  "engine \"cobol\"",
+		`{"engine": "cobol", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call"}}`:                                                  "engine \"cobol\"",
 		`{"engine": "backend", "sin": {"name": "x", "skill": "nope"}, "find": {"select": "call"}}`:                                                           "no skill \"nope\"",
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "calls"}}`:                                               "select \"calls\"",
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"name": "a", "kind": "b"}]}}`:         "makes 2",
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"name": "a", "of": "grandparent"}]}}`: "of \"grandparent\"",
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call"}, "extra": 1}`:                                    "no check or key is called \"extra\"",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "calls"}}`:                                               "select \"calls\"",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"name": "a", "kind": "b"}]}}`:         "makes 2",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"name": "a", "of": "grandparent"}]}}`: "of \"grandparent\"",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call"}, "extra": 1}`:                                    "no check or key is called \"extra\"",
 	} {
 		if _, err := rule.Parse("X", []byte(written), shipped); err == nil || !strings.Contains(err.Error(), reason) {
 			t.Errorf("%s: %v", written, err)

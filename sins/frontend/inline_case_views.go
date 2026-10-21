@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, InlineCaseViews{})
+	sins.Register(catalog.Vue, InlineCaseViews{})
 }
 
 // InlineCaseViews is the sin "inline-case-views".

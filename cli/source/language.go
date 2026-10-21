@@ -66,13 +66,13 @@ func Judges(path string) bool {
 func (l Language) Engine() catalog.Engine {
 	switch l {
 	case Vue, TypeScript:
-		return catalog.Frontend
+		return catalog.Vue
 	case Python:
 		return catalog.Python
 	case CSharp:
 		return catalog.CSharp
 	default:
-		return catalog.Backend
+		return catalog.PHP
 	}
 }
 
@@ -145,8 +145,8 @@ func Real(path string) string {
 
 // engines are the languages each engine's rules read.
 var engines = map[catalog.Engine][]Language{
-	catalog.Backend:    {PHP},
-	catalog.Frontend:   {Vue, TypeScript},
+	catalog.PHP:    {PHP},
+	catalog.Vue:   {Vue, TypeScript},
 	catalog.TypeScript: {Vue, TypeScript},
 	catalog.Python:     {Python},
 	catalog.CSharp:     {CSharp},

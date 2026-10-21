@@ -16,7 +16,7 @@ import (
 // and the same operation: two entry points where one belongs.
 type DuplicateRouteActionDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DuplicateRouteActionDetector{}) }
+func init() { detectors.Register(catalog.PHP, DuplicateRouteActionDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DuplicateRouteActionDetector) Sin() sins.Sin { return backendsins.DuplicateRouteAction{} }

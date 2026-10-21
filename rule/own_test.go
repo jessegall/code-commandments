@@ -52,11 +52,11 @@ func TestARuleNamesItsLanguagesOwnChecks(t *testing.T) {
 
 func TestALanguagesOwnCheckTheRuleCannotRunSaysWhy(t *testing.T) {
 	for written, reason := range map[string]string{
-		`{"engine": "python", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"php": "facadeCall"}]}}`:                  "a php check needs a rule that judges php",
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"php": "facadeCal"}]}}`:                  `did you mean "facadeCall"?`,
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"php": "nothing"}]}}`:                    "php offers no check \"nothing\"",
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"inside": {"python": "constructor"}}]}}`: "a python check needs a rule that judges python",
-		`{"engine": "frontend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"typescript": "optional"}]}}`:           "a typescript check needs a rule that judges typescript",
+		`{"engine": "python", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"php": "facadeCall"}]}}`:                  "a php check needs a rule that judges php",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"php": "facadeCal"}]}}`:                  `did you mean "facadeCall"?`,
+		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"php": "nothing"}]}}`:                    "php offers no check \"nothing\"",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"inside": {"python": "constructor"}}]}}`: "a python check needs a rule that judges python",
+		`{"engine": "frontend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"typescript": "optional"}]}}`:           "a typescript check needs a rule that judges typescript",
 	} {
 		if _, err := rule.Parse("X", []byte(written), shipped); err == nil || !strings.Contains(err.Error(), reason) {
 			t.Errorf("%s: %v, want %q", written, err, reason)
@@ -64,8 +64,8 @@ func TestALanguagesOwnCheckTheRuleCannotRunSaysWhy(t *testing.T) {
 	}
 
 	for _, written := range []string{
-		`{"engine": "frontend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"vue": "optional"}]}}`,
-		`{"engine": "typescript", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"vue": "component"}]}}`,
+		`{"engine": "frontend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"vue": "optional"}]}}`,
+		`{"engine": "typescript", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"vue": "component"}]}}`,
 	} {
 		if _, err := rule.Parse("X", []byte(written), shipped); err != nil {
 			t.Errorf("%s: %v", written, err)

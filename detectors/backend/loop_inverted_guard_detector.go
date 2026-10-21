@@ -12,7 +12,7 @@ import (
 // LoopInvertedGuardDetector finds a loop whose whole body sits inside one if, where an early continue belongs.
 type LoopInvertedGuardDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, LoopInvertedGuardDetector{}) }
+func init() { detectors.Register(catalog.PHP, LoopInvertedGuardDetector{}) }
 
 // Sin is the sin the detector finds.
 func (LoopInvertedGuardDetector) Sin() sins.Sin { return backendsins.LoopInvertedGuard{} }

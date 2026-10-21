@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
@@ -26,14 +27,14 @@ func (Command) Names() []string {
 // Help documents it.
 func (Command) Help() help.Help {
 	return help.Of("Scaffold a commandment of your own — a rule naming its sin, and the skill that teaches the fix, in `.commandments/custom/`, turned on in your config, with the rest of the process printed for you.").
-		Form("make <Name>", "scaffold a backend (PHP) commandment and turn it on").
-		Form("make <Name> --engine=frontend", "scaffold a frontend (Vue) one instead").
+		Form("make <Name>", "scaffold a PHP commandment and turn it on").
+		Form("make <Name> --engine=vue", "scaffold a Vue one instead").
 		Form("make <Name> --engine=typescript", "scaffold a TypeScript one instead").
 		Form("make <Name> --engine=python", "scaffold a Python one instead").
 		Form("make <Name> --engine=csharp", "scaffold a C# one instead").
 		Form("make <Name> --skill=NAME", "point the sin at an EXISTING skill (shipped or your own) instead of writing a new one").
 		Form("make <Name> --from=<template>", "start from a ready rule to adapt: "+templateNames()).
-		Option("--engine=backend|frontend|typescript|python|csharp", "which engine the rule judges (default: backend)").
+		Option("--engine=php|vue|typescript|python|csharp", "which engine the rule judges (default: php; backend and frontend still name php and vue)").
 		Option("--skill=NAME", "the skill that teaches the fix — a lenient name/slug match against the existing skills, or a new slug to create one").
 		Option("--from=<template>", "the ready rule to start from, its query written for the engine").
 		Option("--force", "overwrite files that already exist").
@@ -53,12 +54,12 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return help.Usage(console.Err, c, "name the commandment, e.g. `"+binary.Here()+" make NullableElementReturn`."), nil
 	}
 
-	engine := Backend
+	engine := catalog.PHP
 
 	if given, set := in.Option("engine"); set {
 		parsed, known := ParseEngine(given)
 		if !known {
-			return help.Usage(console.Err, c, "unknown --engine="+given+" — it is one of `backend`, `frontend`, `typescript`, `python`, `csharp`."), nil
+			return help.Usage(console.Err, c, "unknown --engine="+given+" — it is one of `php`, `vue`, `typescript`, `python`, `csharp`."), nil
 		}
 
 		engine = parsed
@@ -177,7 +178,7 @@ func write(blueprint Blueprint, root string) error {
 }
 
 func report(blueprint Blueprint, registered bool, root string, console cli.Console) {
-	probe := blueprint.Engine.ProbeRoot() + "/Probe" + blueprint.Sin + "." + blueprint.Engine.ProbeExtension()
+	probe := ProbeRoot(blueprint.Engine) + "/Probe" + blueprint.Sin + "." + ProbeExtension(blueprint.Engine)
 
 	console.Write("\033[32m✓ Scaffolded the `" + blueprint.ID + "` commandment.\033[0m\n")
 
@@ -217,7 +218,7 @@ func steps(blueprint Blueprint, probe string) []string {
 			"     name list.",
 		"\033[1mProve it fires\033[0m — write a throwaway probe at \033[36m"+probe+"\033[0m holding one example of\n"+
 			"     EVERY form you mean to catch plus a near-miss you must NOT, then run\n"+
-			"     \033[36m"+binary.Here()+" judge "+blueprint.Engine.ProbeRoot()+" --sin="+blueprint.ID+" --no-checklist\033[0m\n"+
+			"     \033[36m"+binary.Here()+" judge "+ProbeRoot(blueprint.Engine)+" --sin="+blueprint.ID+" --no-checklist\033[0m\n"+
 			"     and confirm exactly the intended lines are flagged. Delete the probe after.",
 		"\033[1mCalibrate on real code\033[0m — run it with \033[36m--changes\033[0m or \033[36m--branch\033[0m over your source\n"+
 			"     and READ the hits. Judge each against the skill, never against what the code happens to do:\n"+

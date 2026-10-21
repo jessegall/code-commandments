@@ -13,7 +13,7 @@ import (
 // not the other.
 type DivergentTwinDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DivergentTwinDetector{}) }
+func init() { detectors.Register(catalog.PHP, DivergentTwinDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DivergentTwinDetector) Sin() sins.Sin { return backendsins.DivergentTwin{} }

@@ -54,7 +54,7 @@ func TestARunReplacesOnlyTheFindingsOfTheFilesItJudged(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		return engine.Finding{Skill: "backend/absence", Sin: "a-sin", File: path, Location: path + ":1", Scope: "S"}
+		return engine.Finding{Skill: "php/absence", Sin: "a-sin", File: path, Location: path + ":1", Scope: "S"}
 	}
 	paths := func(names ...string) map[string]bool {
 		judged := map[string]bool{}
@@ -117,7 +117,7 @@ func TestAWorktreesFindingsAreNeverTheProjects(t *testing.T) {
 		}
 	}
 	found := func(path string) engine.Finding {
-		return engine.Finding{Skill: "backend/absence", Sin: "a-sin", File: path, Location: path + ":1", Scope: "S"}
+		return engine.Finding{Skill: "php/absence", Sin: "a-sin", File: path, Location: path + ":1", Scope: "S"}
 	}
 	worker, own := filepath.Join(helper, "src", "Worker.php"), filepath.Join(root, "src", "Own.php")
 

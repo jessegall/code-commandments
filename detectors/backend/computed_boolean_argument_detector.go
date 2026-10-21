@@ -13,7 +13,7 @@ import (
 // object: it should take the object and ask it itself.
 type ComputedBooleanArgumentDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ComputedBooleanArgumentDetector{}) }
+func init() { detectors.Register(catalog.PHP, ComputedBooleanArgumentDetector{}) }
 
 // minCallers is how many callers must compute the bools before the method should take the object.
 const minCallers = 2

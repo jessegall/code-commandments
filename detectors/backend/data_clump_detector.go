@@ -17,7 +17,7 @@ type DataClumpDetector struct {
 	minClasses int
 }
 
-func init() { detectors.Register(catalog.Backend, DataClumpDetector{minClasses: 2}) }
+func init() { detectors.Register(catalog.PHP, DataClumpDetector{minClasses: 2}) }
 
 // Sin is the sin the detector finds.
 func (DataClumpDetector) Sin() sins.Sin { return backendsins.DataClump{} }

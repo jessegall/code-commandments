@@ -13,7 +13,7 @@ import (
 // RedundantEnumUnwrapDetector finds an enum unwrapped to its value only to be hydrated back into a slot of its own type.
 type RedundantEnumUnwrapDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RedundantEnumUnwrapDetector{}) }
+func init() { detectors.Register(catalog.PHP, RedundantEnumUnwrapDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RedundantEnumUnwrapDetector) Sin() sins.Sin { return backendsins.RedundantEnumUnwrap{} }

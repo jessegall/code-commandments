@@ -18,13 +18,13 @@ var (
 type ValueObjects struct{}
 
 func init() {
-	skill.Register(catalog.Backend, ValueObjects{})
+	skill.Register(catalog.PHP, ValueObjects{})
 }
 
 // Definition is what the skill states about itself.
 func (ValueObjects) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/value-objects",
+		Slug:      "php/value-objects",
 		Tier:      skill.Mandatory,
 		Order:     3,
 		Title:     "Value objects — give related data a type",
@@ -34,9 +34,9 @@ func (ValueObjects) Definition() skill.Definition {
 		Principle: valueObjectsPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/fix-at-the-source", Note: "introduce the type where the data is born, not downstream."},
-			{Slug: "backend/spatie-data", Note: `once you've decided it's a DTO, that skill is *how* to write it (and its honest-field-types rule keeps the new type from being a fresh all-nullable bag).`},
-			{Slug: "backend/absence", Note: "the new type's fields still answer \"can this be missing?\" honestly."},
+			{Slug: "php/fix-at-the-source", Note: "introduce the type where the data is born, not downstream."},
+			{Slug: "php/spatie-data", Note: `once you've decided it's a DTO, that skill is *how* to write it (and its honest-field-types rule keeps the new type from being a fresh all-nullable bag).`},
+			{Slug: "php/absence", Note: "the new type's fields still answer \"can this be missing?\" honestly."},
 		},
 	}
 }

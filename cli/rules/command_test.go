@@ -51,7 +51,7 @@ func project(t *testing.T) string {
 }
 
 func ruleFlagging(sin, call string) string {
-	return `{"engine": "backend", "sin": {"name": "` + sin + `", "description": "x", "skill": "backend/absence"}, "find": {"select": "call", "where": [{"name": "` + call + `"}]}}`
+	return `{"engine": "backend", "sin": {"name": "` + sin + `", "description": "x", "skill": "php/absence"}, "find": {"select": "call", "where": [{"name": "` + call + `"}]}}`
 }
 
 // run runs rule in the project and answers what it said and its exit code.

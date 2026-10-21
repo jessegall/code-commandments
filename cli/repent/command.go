@@ -48,7 +48,7 @@ func (Command) Names() []string {
 
 // Help documents it.
 func (Command) Help() help.Help {
-	return help.Of("Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, backend and frontend.").
+	return help.Of("Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, PHP and Vue.").
 		Form("repent [path]", "apply every fix, re-scanning until it converges (the default — this WRITES)").
 		Form("repent [path] --dry-run[=FILE]", "preview a unified diff instead, to the screen or a file").
 		Form("repent --only=NAME", "run ONE rewriter (a Scribe or a Repentable detector, lenient name match)").

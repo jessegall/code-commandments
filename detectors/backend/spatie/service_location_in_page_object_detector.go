@@ -13,7 +13,7 @@ import (
 // ServiceLocationInPageObjectDetector finds a page object resolving a service from the container by hand.
 type ServiceLocationInPageObjectDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ServiceLocationInPageObjectDetector{}) }
+func init() { detectors.Register(catalog.PHP, ServiceLocationInPageObjectDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ServiceLocationInPageObjectDetector) Sin() sins.Sin {

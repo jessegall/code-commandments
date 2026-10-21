@@ -34,9 +34,9 @@ func (Exceptions) Definition() skill.Definition {
 		Principle: exceptionsPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/exceptions", Note: "the same discipline on the PHP backend, with `::for()` factories."},
+			{Slug: "php/exceptions", Note: "the same discipline on the PHP backend, with `::for()` factories."},
 			{Slug: "python/exceptions", Note: "the same discipline in Python, with classmethod factories."},
-			{Slug: "backend/absence", Note: "whether \"missing\" is a failure to throw at all, or a value to model."},
+			{Slug: "php/absence", Note: "whether \"missing\" is a failure to throw at all, or a value to model."},
 		},
 	}
 }

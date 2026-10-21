@@ -13,7 +13,7 @@ import (
 // ArchaeologyCommentDetector finds a comment that narrates the code's past instead of what it is now.
 type ArchaeologyCommentDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ArchaeologyCommentDetector{}) }
+func init() { detectors.Register(catalog.PHP, ArchaeologyCommentDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ArchaeologyCommentDetector) Sin() sins.Sin { return backendsins.ArchaeologyComment{} }

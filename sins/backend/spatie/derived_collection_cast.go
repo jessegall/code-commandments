@@ -9,7 +9,7 @@ import (
 // DerivedCollectionCast is the derived-collection-cast sin.
 type DerivedCollectionCast struct{}
 
-func init() { sins.Register(catalog.Backend, DerivedCollectionCast{}) }
+func init() { sins.Register(catalog.PHP, DerivedCollectionCast{}) }
 
 // Definition is what the sin states about itself.
 func (DerivedCollectionCast) Definition() sins.Definition {

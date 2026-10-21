@@ -21,9 +21,10 @@ Reads `commandments judge`:
 ## The entry, once the journal takes one
 
 Not in `journal-plugin.json` yet, on purpose: the journal refuses a manifest key it does not know, so
-adding it before the journal accepts one would fail every install. The journal side is becoming an
-alias rather than a noun and a verb (agent-journal task 1237), so the entry is likely to read as a
-name, the line it runs, its environment, the arguments it passes through and its reader:
+adding it before the journal accepts one would fail every install. The key is `aliases` (agent-journal task
+1237, not built yet): a list whose entries each carry a name, the line, its environment, the arguments
+it passes through and its reader. An alias whose name the journal already holds is skipped with a line
+naming it, and the rest of the plugin installs:
 
 ```json
 "aliases": [
@@ -37,8 +38,8 @@ name, the line it runs, its environment, the arguments it passes through and its
 ]
 ```
 
-The exact key is the journal's to name; what is ours is the line, the environment, the arguments and
-the reader, and those are the same either way.
+The name is ours to choose, and `journal sins --changes` says what it gives better than the package's
+own name would.
 
 Two things it needs from the journal's side:
 

@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, DeepDataReach{})
+	sins.Register(catalog.Vue, DeepDataReach{})
 }
 
 // DeepDataReach is the sin "deep-data-reach".

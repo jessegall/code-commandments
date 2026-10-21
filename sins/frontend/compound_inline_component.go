@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, CompoundInlineComponent{})
+	sins.Register(catalog.Vue, CompoundInlineComponent{})
 }
 
 // CompoundInlineComponent is the sin "compound-inline-component".

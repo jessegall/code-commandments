@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, PropDrilling{})
+	sins.Register(catalog.Vue, PropDrilling{})
 }
 
 // PropDrilling is the sin "prop-drilling".

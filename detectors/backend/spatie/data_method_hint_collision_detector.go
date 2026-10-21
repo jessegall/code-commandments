@@ -13,7 +13,7 @@ import (
 // DataMethodHintCollisionDetector finds an @method hint on a Data class naming a method it declares for real.
 type DataMethodHintCollisionDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DataMethodHintCollisionDetector{}) }
+func init() { detectors.Register(catalog.PHP, DataMethodHintCollisionDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DataMethodHintCollisionDetector) Sin() sins.Sin { return backendsins.DataMethodHintCollision{} }

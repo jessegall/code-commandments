@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, CompoundInlineComponentDetector{})
+	detectors.Register(catalog.Vue, CompoundInlineComponentDetector{})
 }
 
 // compoundBody is how many elements a compound must hold before it is big enough to be its own component.

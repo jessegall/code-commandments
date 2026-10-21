@@ -107,6 +107,6 @@ The other 4 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/absence`](../../backend/absence/SKILL.md) — the same decision on the PHP backend, with `Option`.
+- [`php/absence`](../../php/absence/SKILL.md) — the same decision on the PHP backend, with `Option`.
 - [`python/absence`](../../python/absence/SKILL.md) — the same decision in Python.
 - [`csharp/exceptions`](../exceptions/SKILL.md) — when "missing" is a broken state, the named exception to throw.

@@ -14,7 +14,7 @@ import (
 // null.
 type OptionAsNullableDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, OptionAsNullableDetector{}) }
+func init() { detectors.Register(catalog.PHP, OptionAsNullableDetector{}) }
 
 // Sin is the sin the detector finds.
 func (OptionAsNullableDetector) Sin() sins.Sin { return phptypessins.OptionAsNullable{} }

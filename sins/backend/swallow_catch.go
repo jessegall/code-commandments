@@ -9,7 +9,7 @@ import (
 // SwallowCatch is the swallow-catch sin.
 type SwallowCatch struct{}
 
-func init() { sins.Register(catalog.Backend, SwallowCatch{}) }
+func init() { sins.Register(catalog.PHP, SwallowCatch{}) }
 
 // Definition is what the sin states about itself.
 func (SwallowCatch) Definition() sins.Definition {

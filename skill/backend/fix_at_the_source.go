@@ -18,13 +18,13 @@ var (
 type FixAtTheSource struct{}
 
 func init() {
-	skill.Register(catalog.Backend, FixAtTheSource{})
+	skill.Register(catalog.PHP, FixAtTheSource{})
 }
 
 // Definition is what the skill states about itself.
 func (FixAtTheSource) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/fix-at-the-source",
+		Slug:      "php/fix-at-the-source",
 		Tier:      skill.Mandatory,
 		Order:     1,
 		Title:     "Fix at the source",
@@ -34,9 +34,9 @@ func (FixAtTheSource) Definition() skill.Definition {
 		Principle: fixAtTheSourcePrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/absence", Note: "deciding absence at the producer is this rule applied to the null channel."},
-			{Slug: "backend/exceptions", Note: "surfacing a failure where it's born is this rule applied to the error channel."},
-			{Slug: "backend/value-objects", Note: "introducing the type at the source, not threading loose data downstream."},
+			{Slug: "php/absence", Note: "deciding absence at the producer is this rule applied to the null channel."},
+			{Slug: "php/exceptions", Note: "surfacing a failure where it's born is this rule applied to the error channel."},
+			{Slug: "php/value-objects", Note: "introducing the type at the source, not threading loose data downstream."},
 		},
 	}
 }

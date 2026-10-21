@@ -1,6 +1,6 @@
 exit: 0
 --- stdout
-{"whisper":"Code Commandments — 2 new sins:\n  • array-bag at src/Order.php:13 — load `commandments-backend-value-objects`, run `commandments judge src/Order.php --sin=array-bag`\n  • narrated-command at src/Order.php:7 — load `commandments-backend-method-mood`, run `commandments judge src/Order.php --sin=narrated-command`","raise":[{"event":"sin-found","brief":"2 sins in src/Order.php","open":"sins/sin/array-bag/src/Order.php","key":"sins:src/Order.php"}]}
+{"whisper":"Code Commandments — 2 new sins:\n  • array-bag at src/Order.php:13 — load `commandments-php-value-objects`, run `commandments judge src/Order.php --sin=array-bag`\n  • narrated-command at src/Order.php:7 — load `commandments-php-method-mood`, run `commandments judge src/Order.php --sin=narrated-command`","raise":[{"event":"sin-found","brief":"2 sins in src/Order.php","open":"sins/sin/array-bag/src/Order.php","key":"sins:src/Order.php"}]}
 
 --- stderr
 
@@ -9,7 +9,7 @@ exit: 0
 [
     {
         "sin": "array-bag",
-        "skill": "backend/value-objects",
+        "skill": "php/value-objects",
         "path": "<project>/src/Order.php",
         "file": "src/Order.php",
         "line": 13,
@@ -17,7 +17,7 @@ exit: 0
     },
     {
         "sin": "narrated-command",
-        "skill": "backend/method-mood",
+        "skill": "php/method-mood",
         "path": "<project>/src/Order.php",
         "file": "src/Order.php",
         "line": 7,

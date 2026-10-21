@@ -9,7 +9,7 @@ import (
 // MemberAfterMethod is the member-after-method sin.
 type MemberAfterMethod struct{}
 
-func init() { sins.Register(catalog.Backend, MemberAfterMethod{}) }
+func init() { sins.Register(catalog.PHP, MemberAfterMethod{}) }
 
 // Definition is what the sin states about itself.
 func (MemberAfterMethod) Definition() sins.Definition {

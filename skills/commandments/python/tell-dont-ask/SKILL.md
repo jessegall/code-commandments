@@ -111,6 +111,6 @@ The other 3 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/tell-dont-ask`](../../backend/tell-dont-ask/SKILL.md) — the same discipline over PHP.
+- [`php/tell-dont-ask`](../../php/tell-dont-ask/SKILL.md) — the same discipline over PHP.
 - [`python/enums`](../enums/SKILL.md) — a closed set of cases carries its per-case behaviour on the `Enum`.
 - [`python/value-objects`](../value-objects/SKILL.md) — the type the behaviour moves onto.

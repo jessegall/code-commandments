@@ -1,7 +1,7 @@
 exit: 0
 --- stdout
 
-[1mswitch-case[0m  [2mfrontend/vue-control-flow[0m
+[1mswitch-case[0m  [2mvue/vue-control-flow[0m
   A `v-if`/`v-else-if` chain re-testing the same subject (should be `<SwitchCase :value>`)
 
 [33mWhy it is a sin[0m
@@ -40,7 +40,7 @@ exit: 0
 
 [33mCommands[0m
 
-  [36mLearn     [0m load the skill [1mcommandments-frontend-vue-control-flow[0m
+  [36mLearn     [0m load the skill [1mcommandments-vue-vue-control-flow[0m
   [36mScaffold  [0m commandments scaffold --sin=switch-case
   [36mFind it   [0m commandments judge --sin=switch-case
   [36mTurn off  [0m commandments disable switch-case

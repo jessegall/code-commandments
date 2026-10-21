@@ -118,6 +118,6 @@ The other 2 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/repeated-call-helper`](../../backend/repeated-call-helper/SKILL.md) — the same discipline over PHP.
+- [`php/repeated-call-helper`](../../php/repeated-call-helper/SKILL.md) — the same discipline over PHP.
 - [`python/duplication`](../duplication/SKILL.md) — a whole function body written twice, rather than one call or condition.
 - [`python/fix-at-the-source`](../fix-at-the-source/SKILL.md) — name the question where the data lives, not beside each caller.

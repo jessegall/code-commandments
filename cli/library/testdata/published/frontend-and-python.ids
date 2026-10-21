@@ -1,9 +1,10 @@
 commandments
-commandments-frontend-vue-components
-commandments-frontend-vue-control-flow
-commandments-frontend-mirrored-server-type
+commandments-vue-vue-components
+commandments-vue-vue-control-flow
+commandments-vue-mirrored-server-type
 commandments-typescript-absence
 commandments-typescript-duplication
+commandments-typescript-flow
 commandments-python-duplication
 commandments-python-flow
 commandments-python-exceptions

@@ -98,6 +98,6 @@ The other 2 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/type-honesty`](../../backend/type-honesty/SKILL.md) — the same discipline in PHP.
+- [`php/type-honesty`](../../php/type-honesty/SKILL.md) — the same discipline in PHP.
 - [`csharp/absence`](../absence/SKILL.md) — the complement: absence models a value that really can be missing; this removes one that cannot.
 - [`csharp/fix-at-the-source`](../fix-at-the-source/SKILL.md) — make the type certain where the value is made, not defended at every read.

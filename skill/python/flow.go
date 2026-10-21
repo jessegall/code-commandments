@@ -34,8 +34,8 @@ func (Flow) Definition() skill.Definition {
 		Principle: flowPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/guard-clauses-and-flow", Note: "the same discipline on the PHP backend."},
-			{Slug: "backend/enums-with-behaviour", Note: "where an `elif` ladder over one subject goes: a closed set with the per-case answer on it."},
+			{Slug: "php/guard-clauses-and-flow", Note: "the same discipline on the PHP backend."},
+			{Slug: "php/enums-with-behaviour", Note: "where an `elif` ladder over one subject goes: a closed set with the per-case answer on it."},
 		},
 	}
 }

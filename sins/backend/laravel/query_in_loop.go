@@ -10,7 +10,7 @@ import (
 type QueryInLoop struct{}
 
 func init() {
-	sins.Register(catalog.Backend, QueryInLoop{})
+	sins.Register(catalog.PHP, QueryInLoop{})
 }
 
 // Definition is what the sin states about itself.

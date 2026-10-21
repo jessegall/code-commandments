@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, DeepDataReachDetector{})
+	detectors.Register(catalog.Vue, DeepDataReachDetector{})
 }
 
 const (

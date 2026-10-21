@@ -98,5 +98,5 @@ The other 6 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/enums-with-behaviour`](../../backend/enums-with-behaviour/SKILL.md) — the same discipline on the PHP backend.
+- [`php/enums-with-behaviour`](../../php/enums-with-behaviour/SKILL.md) — the same discipline on the PHP backend.
 - [`python/flow`](../flow/SKILL.md) — an `elif` ladder over one subject is where a missing enum usually shows first.

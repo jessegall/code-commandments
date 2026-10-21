@@ -2,6 +2,7 @@ package make
 
 import (
 	"fmt"
+	"github.com/jessegall/code-commandments/catalog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,7 +45,7 @@ class OrdersController extends Controller
 func ready(t *testing.T, template Template, engine Engine) rule.Rule {
 	t.Helper()
 
-	blueprint := Of("Ready", engine, "backend/absence", false, t.TempDir())
+	blueprint := Of("Ready", engine, "php/absence", false, t.TempDir())
 	blueprint.From = &template
 
 	parsed, err := rule.Parse("ReadyDetector", []byte(RuleStub(blueprint)), skill.Slugged)
@@ -97,7 +98,7 @@ func TestEveryTemplateFlagsWhatItNames(t *testing.T) {
 			continue
 		}
 
-		if got := lines(ready(t, template, Backend).Find(codebase)); got != want {
+		if got := lines(ready(t, template, catalog.PHP).Find(codebase)); got != want {
 			t.Errorf("%s: found %s, want %s", name, got, want)
 		}
 	}
@@ -106,7 +107,7 @@ func TestEveryTemplateFlagsWhatItNames(t *testing.T) {
 func TestATemplateNotWrittenForTheEngineIsRefused(t *testing.T) {
 	root := t.TempDir()
 
-	if said, code := run(t, root, "NoSql", "--engine=python", "--from=no-sql-in-controllers"); code != 2 || !strings.Contains(said, "written for backend") {
+	if said, code := run(t, root, "NoSql", "--engine=python", "--from=no-sql-in-controllers"); code != 2 || !strings.Contains(said, "written for php") {
 		t.Errorf("python sql: %d\n%s", code, said)
 	}
 
@@ -134,7 +135,7 @@ func TestADebugCallIsOneMadeOnTheConsole(t *testing.T) {
 	template, _ := TemplateNamed("no-debug-calls")
 	script := frontendtest.FromSource(t, map[string]string{"src/debug.ts": "console.log(1);\nlog(console);\n"})
 
-	if got := lines(ready(t, template, TypeScript).Find(script)); got != "[1]" {
+	if got := lines(ready(t, template, catalog.TypeScript).Find(script)); got != "[1]" {
 		t.Errorf("found %s, want [1]", got)
 	}
 }

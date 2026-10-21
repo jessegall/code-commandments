@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, DuplicateElementDetector{})
+	detectors.Register(catalog.Vue, DuplicateElementDetector{})
 }
 
 // duplicateElements is how many elements a subtree must hold before a copy of it is a component waiting.

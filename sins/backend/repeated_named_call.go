@@ -9,7 +9,7 @@ import (
 // RepeatedNamedCall is the repeated-named-call sin.
 type RepeatedNamedCall struct{}
 
-func init() { sins.Register(catalog.Backend, RepeatedNamedCall{}) }
+func init() { sins.Register(catalog.PHP, RepeatedNamedCall{}) }
 
 // Definition is what the sin states about itself.
 func (RepeatedNamedCall) Definition() sins.Definition {

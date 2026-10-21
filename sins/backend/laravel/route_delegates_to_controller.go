@@ -9,7 +9,7 @@ import (
 // RouteDelegatesToController is the route-delegates-to-controller sin.
 type RouteDelegatesToController struct{}
 
-func init() { sins.Register(catalog.Backend, RouteDelegatesToController{}) }
+func init() { sins.Register(catalog.PHP, RouteDelegatesToController{}) }
 
 // Definition is what the sin states about itself.
 func (RouteDelegatesToController) Definition() sins.Definition {

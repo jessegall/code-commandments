@@ -9,7 +9,7 @@ import (
 // BareStatePredicate is the bare-state-predicate sin.
 type BareStatePredicate struct{}
 
-func init() { sins.Register(catalog.Backend, BareStatePredicate{}) }
+func init() { sins.Register(catalog.PHP, BareStatePredicate{}) }
 
 // Definition is what the sin states about itself.
 func (BareStatePredicate) Definition() sins.Definition {

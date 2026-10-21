@@ -13,7 +13,7 @@ import (
 type Exceptions struct{}
 
 func (Exceptions) Definition() skill.Definition {
-	return skill.Definition{Slug: "backend/exceptions", Tier: skill.KeepInMind, Summary: "fail named"}
+	return skill.Definition{Slug: "php/exceptions", Tier: skill.KeepInMind, Summary: "fail named"}
 }
 
 type WrappingWithoutCause struct{}
@@ -38,10 +38,10 @@ type HalfBuiltDetector struct{ WrappingWithoutCauseDetector }
 func (HalfBuiltDetector) Unpublished() {}
 
 func init() {
-	skill.Register(catalog.Backend, Exceptions{})
-	sins.Register(catalog.Backend, WrappingWithoutCause{})
-	detectors.Register(catalog.Backend, WrappingWithoutCauseDetector{})
-	detectors.Register(catalog.Backend, HalfBuiltDetector{})
+	skill.Register(catalog.PHP, Exceptions{})
+	sins.Register(catalog.PHP, WrappingWithoutCause{})
+	detectors.Register(catalog.PHP, WrappingWithoutCauseDetector{})
+	detectors.Register(catalog.PHP, HalfBuiltDetector{})
 }
 
 func TestADetectorIsFoundByItsNameLeniently(t *testing.T) {
@@ -56,10 +56,10 @@ func TestADetectorIsFoundByItsNameLeniently(t *testing.T) {
 }
 
 func TestAnUnpublishedDetectorStaysOutOfTheCatalog(t *testing.T) {
-	if all := detectors.All(); len(all) != 1 || len(detectors.Of(catalog.Backend)) != 1 || len(detectors.Of(catalog.Python)) != 0 {
+	if all := detectors.All(); len(all) != 1 || len(detectors.Of(catalog.PHP)) != 1 || len(detectors.Of(catalog.Python)) != 0 {
 		t.Fatalf("got %d detectors", len(all))
 	}
-	if engine, ok := detectors.EngineOf(WrappingWithoutCauseDetector{}); !ok || engine != catalog.Backend {
+	if engine, ok := detectors.EngineOf(WrappingWithoutCauseDetector{}); !ok || engine != catalog.PHP {
 		t.Fatalf("got %s", engine)
 	}
 }
@@ -67,7 +67,7 @@ func TestAnUnpublishedDetectorStaysOutOfTheCatalog(t *testing.T) {
 func TestASinPointsAtTheSkillThatFixesIt(t *testing.T) {
 	sin := WrappingWithoutCauseDetector{}.Sin().Definition()
 
-	if sin.Slug() != "backend/exceptions" || !sin.Matches("Wrapping Without") || !sin.Scopes("exceptions") || sin.Scopes("absence") {
+	if sin.Slug() != "php/exceptions" || !sin.Matches("Wrapping Without") || !sin.Scopes("exceptions") || sin.Scopes("absence") {
 		t.Fatalf("got %+v", sin)
 	}
 	if len(sins.All()) != 1 {
@@ -76,13 +76,13 @@ func TestASinPointsAtTheSkillThatFixesIt(t *testing.T) {
 }
 
 func TestASkillIsLoadedByItsID(t *testing.T) {
-	found, ok := skill.Slugged("backend/exceptions")
+	found, ok := skill.Slugged("php/exceptions")
 	if !ok {
 		t.Fatal("no skill slugged backend/exceptions")
 	}
 	definition := found.Definition()
 
-	if definition.ID() != "commandments-backend-exceptions" || definition.Bullet() != "- **`commandments-backend-exceptions`** — fail named" || !definition.Matches("Exceptions") {
+	if definition.ID() != "commandments-php-exceptions" || definition.Bullet() != "- **`commandments-php-exceptions`** — fail named" || !definition.Matches("Exceptions") {
 		t.Fatalf("got %s / %s", definition.ID(), definition.Bullet())
 	}
 	if len(skill.InTier(skill.KeepInMind)) != 1 || len(skill.InTier(skill.Mandatory)) != 0 {

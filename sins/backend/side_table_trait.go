@@ -9,7 +9,7 @@ import (
 // SideTableTrait is an enum keeping a trait of some of its cases in a constant list of them, rather than on the case.
 type SideTableTrait struct{}
 
-func init() { sins.Register(catalog.Backend, SideTableTrait{}) }
+func init() { sins.Register(catalog.PHP, SideTableTrait{}) }
 
 // Definition is what the sin states about itself.
 func (SideTableTrait) Definition() sins.Definition {

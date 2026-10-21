@@ -18,13 +18,13 @@ var (
 type PageObjects struct{}
 
 func init() {
-	skill.Register(catalog.Backend, PageObjects{})
+	skill.Register(catalog.PHP, PageObjects{})
 }
 
 // Definition is what the skill states about itself.
 func (PageObjects) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/page-objects",
+		Slug:      "php/page-objects",
 		Tier:      skill.Mandatory,
 		Order:     5,
 		Title:     "Page Objects — the Data class builds the whole page",
@@ -34,9 +34,9 @@ func (PageObjects) Definition() skill.Definition {
 		Principle: pageObjectsPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/spatie-data", Note: "the mechanics of a `Data` class this builds on — `::from()`, honest types, `#[DataCollectionOf]`; a page object is a Data used as a composed view-model."},
-			{Slug: "backend/laravel-idioms", Note: "owns the general 'no service location — inject through the container' rule; a page object's `#[FromContainer]` is that rule applied to a Data."},
-			{Slug: "backend/fix-at-the-source", Note: `a page object is a boundary; build each slot where it is projected, not by threading half-built state through a constructor.`},
+			{Slug: "php/spatie-data", Note: "the mechanics of a `Data` class this builds on — `::from()`, honest types, `#[DataCollectionOf]`; a page object is a Data used as a composed view-model."},
+			{Slug: "php/laravel-idioms", Note: "owns the general 'no service location — inject through the container' rule; a page object's `#[FromContainer]` is that rule applied to a Data."},
+			{Slug: "php/fix-at-the-source", Note: `a page object is a boundary; build each slot where it is projected, not by threading half-built state through a constructor.`},
 		},
 	}
 }

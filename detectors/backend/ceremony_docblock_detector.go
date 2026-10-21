@@ -12,7 +12,7 @@ import (
 // CeremonyDocblockDetector finds a method docblock that only restates the types its signature declares.
 type CeremonyDocblockDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, CeremonyDocblockDetector{}) }
+func init() { detectors.Register(catalog.PHP, CeremonyDocblockDetector{}) }
 
 // Sin is the sin the detector finds.
 func (CeremonyDocblockDetector) Sin() sins.Sin { return backendsins.CeremonyDocblock{} }

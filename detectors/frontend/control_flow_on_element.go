@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, ControlFlowOnElementDetector{})
+	detectors.Register(catalog.Vue, ControlFlowOnElementDetector{})
 }
 
 // ControlFlowOnElementDetector finds a v-if, v-else-if, v-else or v-for written on a real element instead

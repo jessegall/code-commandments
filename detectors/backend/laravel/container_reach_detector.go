@@ -15,7 +15,7 @@ import (
 // through the constructor.
 type ContainerReachDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ContainerReachDetector{}) }
+func init() { detectors.Register(catalog.PHP, ContainerReachDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ContainerReachDetector) Sin() sins.Sin { return backendsins.ContainerReach{} }

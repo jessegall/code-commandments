@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, PropMutationDetector{})
+	detectors.Register(catalog.Vue, PropMutationDetector{})
 }
 
 // PropMutationDetector finds a template writing one of its component's own props, through a v-model or an

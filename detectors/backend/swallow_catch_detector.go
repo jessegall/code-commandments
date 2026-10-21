@@ -13,7 +13,7 @@ import (
 // SwallowCatchDetector finds a catch that drops the failure it caught.
 type SwallowCatchDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, SwallowCatchDetector{}) }
+func init() { detectors.Register(catalog.PHP, SwallowCatchDetector{}) }
 
 // Sin is the sin the detector finds.
 func (SwallowCatchDetector) Sin() sins.Sin { return backendsins.SwallowCatch{} }

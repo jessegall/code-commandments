@@ -12,7 +12,7 @@ import (
 // ImpossibleGuardDetector finds a comparison with null on a value whose own declared type has ruled it out.
 type ImpossibleGuardDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ImpossibleGuardDetector{}) }
+func init() { detectors.Register(catalog.PHP, ImpossibleGuardDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ImpossibleGuardDetector) Sin() sins.Sin { return backendsins.ImpossibleGuard{} }

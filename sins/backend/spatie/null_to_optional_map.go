@@ -9,7 +9,7 @@ import (
 // NullToOptionalMap is the null-to-optional-map sin.
 type NullToOptionalMap struct{}
 
-func init() { sins.Register(catalog.Backend, NullToOptionalMap{}) }
+func init() { sins.Register(catalog.PHP, NullToOptionalMap{}) }
 
 // Definition is what the sin states about itself.
 func (NullToOptionalMap) Definition() sins.Definition {

@@ -12,7 +12,10 @@ Whole-tree PHP rewrites, run on every `repent`:
 |---|---|
 | `DataHintScribe` | Brings a Spatie `Data` class's magic surface in line with the spatie-data skill: renames object factories to `from<Type>`, regenerates `@method` docblock lines, and adds `@method collect()` when used. |
 
-### Backend
+### Csharp
+
+
+### Php
 
 | Sin | The fix `repent` applies |
 |---|---|
@@ -43,10 +46,13 @@ Whole-tree PHP rewrites, run on every `repent`:
 | `RedundantNativeCast` | Pass the raw scalar to an enum / `DateTimeInterface` slot — Spatie auto-casts it; don't construct the value at the hydration site. |
 | `RedundantNestedFrom` | Pass the plain array for a nested `Data` / `#[DataCollectionOf]` slot — don't wrap it in `X::from([...])`. |
 
-### Csharp
+### Python
 
 
-### Frontend
+### TypeScript
+
+
+### Vue
 
 | Sin | The fix `repent` applies |
 |---|---|
@@ -56,10 +62,4 @@ Whole-tree PHP rewrites, run on every `repent`:
 | `DuplicateElement` | Extract repeated identical markup into one component. |
 | `ControlFlowOnElement` | Put `v-if`/`v-for`/`v-else`/`v-else-if` on a `<template>`, never directly on an HTML or component tag. |
 | `SwitchCase` | Dispatch on a value with `<SwitchCase :value>` (a slot per case); never a `v-if`/`v-else-if` chain re-testing the same subject. |
-
-### Python
-
-
-### TypeScript
-
 

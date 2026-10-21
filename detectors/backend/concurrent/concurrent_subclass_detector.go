@@ -13,7 +13,7 @@ import (
 // ConcurrentSubclassDetector finds a class extending Concurrent, where a plain class behind a ::for() factory belongs.
 type ConcurrentSubclassDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ConcurrentSubclassDetector{}) }
+func init() { detectors.Register(catalog.PHP, ConcurrentSubclassDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ConcurrentSubclassDetector) Sin() sins.Sin { return concurrentsins.ConcurrentSubclass{} }

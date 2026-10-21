@@ -13,7 +13,7 @@ import (
 // NegativeSpaceCommentDetector finds a comment that defends the code against a charge nobody made.
 type NegativeSpaceCommentDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NegativeSpaceCommentDetector{}) }
+func init() { detectors.Register(catalog.PHP, NegativeSpaceCommentDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NegativeSpaceCommentDetector) Sin() sins.Sin { return backendsins.NegativeSpaceComment{} }

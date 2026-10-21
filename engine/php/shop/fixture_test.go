@@ -35,9 +35,9 @@ func tuned(t *testing.T, registered []detectors.Detector) []detectors.Detector {
 }
 
 func TestEveryBackendDetectorProvesItselfOnTheShop(t *testing.T) {
-	fixturetest.Prove(t, fixture.Fixture{Codebase: shop.Project(t), Detectors: tuned(t, detectors.Of(catalog.Backend))})
+	fixturetest.Prove(t, fixture.Fixture{Codebase: shop.Project(t), Detectors: tuned(t, detectors.Of(catalog.PHP))})
 }
 
 func TestEveryBackendDetectorFlagsWhatItsPhpTwinFlags(t *testing.T) {
-	shop.SameFindings(t, tuned(t, detectors.Every(catalog.Backend))...)
+	shop.SameFindings(t, tuned(t, detectors.Every(catalog.PHP))...)
 }

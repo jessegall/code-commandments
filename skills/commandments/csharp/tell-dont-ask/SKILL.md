@@ -108,6 +108,6 @@ The other 2 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/tell-dont-ask`](../../backend/tell-dont-ask/SKILL.md) — the same discipline in PHP.
+- [`php/tell-dont-ask`](../../php/tell-dont-ask/SKILL.md) — the same discipline in PHP.
 - [`csharp/enums`](../enums/SKILL.md) — a closed set of values carries its per-case knowledge beside the `enum`.
 - [`csharp/value-objects`](../value-objects/SKILL.md) — the type the behaviour moves onto.

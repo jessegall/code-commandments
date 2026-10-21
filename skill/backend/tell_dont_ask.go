@@ -18,13 +18,13 @@ var (
 type TellDontAsk struct{}
 
 func init() {
-	skill.Register(catalog.Backend, TellDontAsk{})
+	skill.Register(catalog.PHP, TellDontAsk{})
 }
 
 // Definition is what the skill states about itself.
 func (TellDontAsk) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/tell-dont-ask",
+		Slug:      "php/tell-dont-ask",
 		Tier:      skill.KeepInMind,
 		Order:     11,
 		Title:     "Tell, don't ask — behaviour belongs with its data",
@@ -34,8 +34,8 @@ func (TellDontAsk) Definition() skill.Definition {
 		Principle: tellDontAskPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/value-objects", Note: "behaviour belongs on the typed object that owns the data."},
-			{Slug: "backend/fix-at-the-source", Note: "move the method to where the data lives, not a downstream class that walks it."},
+			{Slug: "php/value-objects", Note: "behaviour belongs on the typed object that owns the data."},
+			{Slug: "php/fix-at-the-source", Note: "move the method to where the data lives, not a downstream class that walks it."},
 		},
 	}
 }

@@ -34,7 +34,7 @@ func (MethodMood) Definition() skill.Definition {
 		Principle: methodMoodPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/method-mood", Note: "the same discipline in PHP."},
+			{Slug: "php/method-mood", Note: "the same discipline in PHP."},
 			{Slug: "csharp/class-layout", Note: "where a type keeps its state, next to what its members are called."},
 		},
 	}

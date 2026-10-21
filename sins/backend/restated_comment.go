@@ -9,7 +9,7 @@ import (
 // RestatedComment is the restated-comment sin.
 type RestatedComment struct{}
 
-func init() { sins.Register(catalog.Backend, RestatedComment{}) }
+func init() { sins.Register(catalog.PHP, RestatedComment{}) }
 
 // Definition is what the sin states about itself.
 func (RestatedComment) Definition() sins.Definition {

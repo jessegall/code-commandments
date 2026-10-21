@@ -61,9 +61,9 @@ func main() {
 // InForce is every published backend detector whose sin's package the project installs; every includes the
 // unpublished ones, and only narrows it to one detector by name.
 func InForce(root string, every bool, only string) []detectors.Detector {
-	candidates := detectors.Of(catalog.Backend)
+	candidates := detectors.Of(catalog.PHP)
 	if every {
-		candidates = detectors.Every(catalog.Backend)
+		candidates = detectors.Every(catalog.PHP)
 	}
 	if only != "" {
 		named, found := detectors.NamedIn(candidates, only)

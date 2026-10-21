@@ -32,8 +32,8 @@ func (Duplication) Definition() skill.Definition {
 		Principle: duplicationPrinciple,
 		Languages: []string{"ts", "vue"},
 		Related: []skill.Relation{
-			{Slug: "backend/fix-at-the-source", Note: "the same instinct on the server — one decision, made once, where it is born."},
-			{Slug: "frontend/vue-components", Note: "the template twin: markup written twice is a component waiting to be extracted."},
+			{Slug: "php/fix-at-the-source", Note: "the same instinct on the server — one decision, made once, where it is born."},
+			{Slug: "vue/vue-components", Note: "the template twin: markup written twice is a component waiting to be extracted."},
 		},
 	}
 }

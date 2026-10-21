@@ -9,7 +9,7 @@ import (
 // RawRequestInput is the raw-request-input sin.
 type RawRequestInput struct{}
 
-func init() { sins.Register(catalog.Backend, RawRequestInput{}) }
+func init() { sins.Register(catalog.PHP, RawRequestInput{}) }
 
 // Definition is what the sin states about itself.
 func (RawRequestInput) Definition() sins.Definition {

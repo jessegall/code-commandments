@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, PropMutation{})
+	sins.Register(catalog.Vue, PropMutation{})
 }
 
 // PropMutation is the sin "prop-mutation".

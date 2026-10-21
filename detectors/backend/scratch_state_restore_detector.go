@@ -12,7 +12,7 @@ import (
 // ScratchStateRestoreDetector finds a method that saves an own property into a local and restores it later: per-call scratch state kept on the object.
 type ScratchStateRestoreDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ScratchStateRestoreDetector{}) }
+func init() { detectors.Register(catalog.PHP, ScratchStateRestoreDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ScratchStateRestoreDetector) Sin() sins.Sin { return backendsins.ScratchStateRestore{} }

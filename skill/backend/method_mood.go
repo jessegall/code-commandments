@@ -18,13 +18,13 @@ var (
 type MethodMood struct{}
 
 func init() {
-	skill.Register(catalog.Backend, MethodMood{})
+	skill.Register(catalog.PHP, MethodMood{})
 }
 
 // Definition is what the skill states about itself.
 func (MethodMood) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/method-mood",
+		Slug:      "php/method-mood",
 		Tier:      skill.Mandatory,
 		Order:     8,
 		Title:     "Method mood — an order, or a question",
@@ -34,8 +34,8 @@ func (MethodMood) Definition() skill.Definition {
 		Principle: methodMoodPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/role-vocabulary", Note: "what a class is called and what that name promises; this is the same contract one scale down."},
-			{Slug: "backend/tell-dont-ask", Note: `an order is the point: if you find yourself narrating what an object does, you are probably reaching into it.`},
+			{Slug: "php/role-vocabulary", Note: "what a class is called and what that name promises; this is the same contract one scale down."},
+			{Slug: "php/tell-dont-ask", Note: `an order is the point: if you find yourself narrating what an object does, you are probably reaching into it.`},
 		},
 	}
 }

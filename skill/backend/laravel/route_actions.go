@@ -18,13 +18,13 @@ var (
 type RouteActions struct{}
 
 func init() {
-	skill.Register(catalog.Backend, RouteActions{})
+	skill.Register(catalog.PHP, RouteActions{})
 }
 
 // Definition is what the skill states about itself.
 func (RouteActions) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/route-actions",
+		Slug:      "php/route-actions",
 		Tier:      skill.Mandatory,
 		Order:     15,
 		Title:     "Route Actions — one operation, one entry point",
@@ -34,8 +34,8 @@ func (RouteActions) Definition() skill.Definition {
 		Principle: routeActionsPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/fix-at-the-source", Note: `a redundant controller is duplication at the boundary — hoist the shared work to the one place it belongs (a service), then both routes call it.`},
-			{Slug: "backend/laravel-idioms", Note: `controllers/routes are Laravel's HTTP edge; this is the discipline for keeping that edge thin and single.`},
+			{Slug: "php/fix-at-the-source", Note: `a redundant controller is duplication at the boundary — hoist the shared work to the one place it belongs (a service), then both routes call it.`},
+			{Slug: "php/laravel-idioms", Note: `controllers/routes are Laravel's HTTP edge; this is the discipline for keeping that edge thin and single.`},
 		},
 	}
 }

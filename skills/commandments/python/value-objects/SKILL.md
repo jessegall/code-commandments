@@ -119,5 +119,5 @@ The other 8 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/value-objects`](../../backend/value-objects/SKILL.md) — the same discipline on the PHP backend.
+- [`php/value-objects`](../../php/value-objects/SKILL.md) — the same discipline on the PHP backend.
 - [`python/absence`](../absence/SKILL.md) — a field that is always there is typed as such, not read with `.get(...) or ""`.

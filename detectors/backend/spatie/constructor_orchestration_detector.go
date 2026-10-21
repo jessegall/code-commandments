@@ -13,7 +13,7 @@ import (
 // ConstructorOrchestrationDetector finds a page object computing its public slots in its constructor, where computed slots belong.
 type ConstructorOrchestrationDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ConstructorOrchestrationDetector{}) }
+func init() { detectors.Register(catalog.PHP, ConstructorOrchestrationDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ConstructorOrchestrationDetector) Sin() sins.Sin { return backendsins.ConstructorOrchestration{} }

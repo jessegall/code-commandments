@@ -9,7 +9,7 @@ import (
 // NestedTypeMissingTypeScript is the nested-type-missing-typescript sin.
 type NestedTypeMissingTypeScript struct{}
 
-func init() { sins.Register(catalog.Backend, NestedTypeMissingTypeScript{}) }
+func init() { sins.Register(catalog.PHP, NestedTypeMissingTypeScript{}) }
 
 // Definition is what the sin states about itself.
 func (NestedTypeMissingTypeScript) Definition() sins.Definition {

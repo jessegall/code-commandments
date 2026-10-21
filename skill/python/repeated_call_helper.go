@@ -34,7 +34,7 @@ func (RepeatedCallHelper) Definition() skill.Definition {
 		Principle: repeatedCallHelperPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/repeated-call-helper", Note: "the same discipline over PHP."},
+			{Slug: "php/repeated-call-helper", Note: "the same discipline over PHP."},
 			{Slug: "python/duplication", Note: "a whole function body written twice, rather than one call or condition."},
 			{Slug: "python/fix-at-the-source", Note: "name the question where the data lives, not beside each caller."},
 		},

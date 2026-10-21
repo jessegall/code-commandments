@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, ComponentBudgetDetector{})
+	detectors.Register(catalog.Vue, ComponentBudgetDetector{})
 }
 
 // ComponentBudgetDetector finds a component whose template renders more elements than the project's declared

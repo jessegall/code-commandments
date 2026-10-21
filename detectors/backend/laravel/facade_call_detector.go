@@ -13,7 +13,7 @@ import (
 // FacadeCallDetector finds a Laravel facade called inside a class, where the dependency belongs injected.
 type FacadeCallDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, FacadeCallDetector{}) }
+func init() { detectors.Register(catalog.PHP, FacadeCallDetector{}) }
 
 // Sin is the sin the detector finds.
 func (FacadeCallDetector) Sin() sins.Sin { return backendsins.FacadeCall{} }

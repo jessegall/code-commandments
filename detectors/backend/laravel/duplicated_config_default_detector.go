@@ -13,7 +13,7 @@ import (
 // DuplicatedConfigDefaultDetector finds a config() read that restates a default its config file already declares.
 type DuplicatedConfigDefaultDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DuplicatedConfigDefaultDetector{}) }
+func init() { detectors.Register(catalog.PHP, DuplicatedConfigDefaultDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DuplicatedConfigDefaultDetector) Sin() sins.Sin { return backendsins.DuplicatedConfigDefault{} }

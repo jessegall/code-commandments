@@ -18,13 +18,13 @@ var (
 type SpatieData struct{}
 
 func init() {
-	skill.Register(catalog.Backend, SpatieData{})
+	skill.Register(catalog.PHP, SpatieData{})
 }
 
 // Definition is what the skill states about itself.
 func (SpatieData) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/spatie-data",
+		Slug:      "php/spatie-data",
 		Tier:      skill.Mandatory,
 		Order:     4,
 		Title:     "Spatie Data — let the class build itself",
@@ -34,9 +34,9 @@ func (SpatieData) Definition() skill.Definition {
 		Principle: spatieDataPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/fix-at-the-source", Note: `a Data class IS a boundary; type it total so consumers don't re-validate. The all-nullable DTO is the canonical symptom-deferral.`},
-			{Slug: "backend/absence", Note: "owns the `Optional` vs `?T` vs default decision; this skill only gives the Spatie mechanics for each."},
-			{Slug: "backend/exceptions", Note: "a required field missing at `::from()` should fail hard; surface it named when you catch the framework's exception at a tolerant boundary."},
+			{Slug: "php/fix-at-the-source", Note: `a Data class IS a boundary; type it total so consumers don't re-validate. The all-nullable DTO is the canonical symptom-deferral.`},
+			{Slug: "php/absence", Note: "owns the `Optional` vs `?T` vs default decision; this skill only gives the Spatie mechanics for each."},
+			{Slug: "php/exceptions", Note: "a required field missing at `::from()` should fail hard; surface it named when you catch the framework's exception at a tolerant boundary."},
 		},
 	}
 }

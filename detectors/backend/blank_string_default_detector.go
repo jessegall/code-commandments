@@ -12,7 +12,7 @@ import (
 // BlankStringDefaultDetector finds a string declaration defaulted to blank that its own scope then tests for blankness: absence spelled as an empty string.
 type BlankStringDefaultDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, BlankStringDefaultDetector{}) }
+func init() { detectors.Register(catalog.PHP, BlankStringDefaultDetector{}) }
 
 // Sin is the sin the detector finds.
 func (BlankStringDefaultDetector) Sin() sins.Sin { return backendsins.BlankStringDefault{} }

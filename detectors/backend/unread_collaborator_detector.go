@@ -13,7 +13,7 @@ import (
 // never reads.
 type UnreadCollaboratorDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, UnreadCollaboratorDetector{}) }
+func init() { detectors.Register(catalog.PHP, UnreadCollaboratorDetector{}) }
 
 // Sin is the sin the detector finds.
 func (UnreadCollaboratorDetector) Sin() sins.Sin { return backendsins.UnreadCollaborator{} }

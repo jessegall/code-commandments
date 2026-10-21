@@ -34,7 +34,7 @@ func (RoleVocabulary) Definition() skill.Definition {
 		Principle: roleVocabularyPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/role-vocabulary", Note: "the same roles in PHP, with scaffolded bases."},
+			{Slug: "php/role-vocabulary", Note: "the same roles in PHP, with scaffolded bases."},
 			{Slug: "csharp/absence", Note: "a registry `Get` throws on a miss — the same \"a must-exist thing that is missing throws\" rule."},
 			{Slug: "csharp/exceptions", Note: "the named exception a registry throws on a miss, built by a static factory."},
 		},

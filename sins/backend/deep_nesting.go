@@ -9,7 +9,7 @@ import (
 // DeepNesting is the deep-nesting sin.
 type DeepNesting struct{}
 
-func init() { sins.Register(catalog.Backend, DeepNesting{}) }
+func init() { sins.Register(catalog.PHP, DeepNesting{}) }
 
 // Definition is what the sin states about itself.
 func (DeepNesting) Definition() sins.Definition {

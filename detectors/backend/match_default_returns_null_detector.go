@@ -12,7 +12,7 @@ import (
 // MatchDefaultReturnsNullDetector finds a match whose default arm hands back null, false or [] instead of failing on an unhandled case.
 type MatchDefaultReturnsNullDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, MatchDefaultReturnsNullDetector{}) }
+func init() { detectors.Register(catalog.PHP, MatchDefaultReturnsNullDetector{}) }
 
 // Sin is the sin the detector finds.
 func (MatchDefaultReturnsNullDetector) Sin() sins.Sin { return backendsins.MatchDefaultReturnsNull{} }

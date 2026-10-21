@@ -19,23 +19,59 @@ type Unpublished interface {
 // Engine is the part of the curriculum a rule belongs to.
 type Engine string
 
-// The engines, in the order the curriculum lists them.
+// The engines, in the order the curriculum lists them. Each is named after the language it reads, which is what
+// a finding, a config and a rule file say.
 const (
-	Backend    Engine = "backend"
-	Frontend   Engine = "frontend"
+	PHP        Engine = "php"
+	Vue        Engine = "vue"
 	TypeScript Engine = "typescript"
 	Python     Engine = "python"
 	CSharp     Engine = "csharp"
 )
 
 // Engines is every engine, in curriculum order.
-var Engines = []Engine{Backend, Frontend, TypeScript, Python, CSharp}
+var Engines = []Engine{PHP, Vue, TypeScript, Python, CSharp}
+
+// formerly are the names two engines were published under before they were named after their language. A config,
+// a rule file, a filter and a skill slug a project wrote then is read the same way now, and always will be: what
+// a user wrote is never made wrong by a name of ours changing.
+var formerly = map[string]Engine{"backend": PHP, "frontend": Vue}
+
+// FormerNames are the names an engine was published under before, in curriculum order: what a schema offers
+// beside the names of today, and what a slip of the keyboard is measured against.
+func FormerNames() []string {
+	var names []string
+	for _, engine := range Engines {
+		for name, was := range formerly {
+			if was == engine {
+				names = append(names, name)
+			}
+		}
+	}
+
+	return names
+}
+
+// EngineNamed is the engine a name means: the name it is published under, or the one it was published under
+// before. Every name read from outside the binary comes through here, so there is one place that knows both.
+func EngineNamed(name string) (Engine, bool) {
+	if engine, was := formerly[strings.ToLower(name)]; was {
+		return engine, true
+	}
+
+	engine := Engine(strings.ToLower(name))
+	if slices.Contains(Engines, engine) {
+		return engine, true
+	}
+
+	return "", false
+}
 
 // Label is the engine's name as a heading prints it.
 func (e Engine) Label() string {
 	switch e {
-	case Frontend:
-		return "Frontend"
+	case Vue:
+		return "Vue"
 	case TypeScript:
 		return "TypeScript"
 	case Python:
@@ -43,7 +79,7 @@ func (e Engine) Label() string {
 	case CSharp:
 		return "C#"
 	default:
-		return "Backend"
+		return "PHP"
 	}
 }
 

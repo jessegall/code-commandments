@@ -1,7 +1,7 @@
 exit: 0
 --- stdout
 
-[1mduplicate-element[0m  [2mfrontend/vue-components[0m
+[1mduplicate-element[0m  [2mvue/vue-components[0m
   Identical markup (3+ elements) repeated 2+ times — within a template or across
   components — extract one component
 
@@ -54,13 +54,13 @@ exit: 0
 
 [33mCommands[0m
 
-  [36mLearn     [0m load the skill [1mcommandments-frontend-vue-components[0m
+  [36mLearn     [0m load the skill [1mcommandments-vue-vue-components[0m
   [36mFind it   [0m commandments judge --sin=duplicate-element
   [36mTurn off  [0m commandments disable duplicate-element
   [36mWrong?    [0m commandments report --detector=DuplicateElementDetector --reason="…" --ref=PATH:LINE
 
 
-[1mnear-duplicate-element[0m  [2mfrontend/vue-components[0m
+[1mnear-duplicate-element[0m  [2mvue/vue-components[0m
   Markup with one skeleton repeated 2+ times — the same tags, attributes and nesting
   binding different data — within a template, across components, or as two components'
   whole templates
@@ -131,7 +131,7 @@ exit: 0
 
 [33mCommands[0m
 
-  [36mLearn     [0m load the skill [1mcommandments-frontend-vue-components[0m
+  [36mLearn     [0m load the skill [1mcommandments-vue-vue-components[0m
   [36mFind it   [0m commandments judge --sin=near-duplicate-element
   [36mTurn off  [0m commandments disable near-duplicate-element
   [36mWrong?    [0m commandments report --detector=NearDuplicateElementDetector --reason="…" --ref=PATH:LINE

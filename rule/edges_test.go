@@ -113,7 +113,7 @@ func TestALayerIsNamedInTheCaseItsLanguageReadsIt(t *testing.T) {
 	built := phpCodebase(t, "Edges.php", edges)
 
 	for declared, want := range map[string]string{`app\edge`: "[5 6 7 9 10 12]", `App\Edge`: "[5 6 7 9 10 12]", `App\Other`: "[]"} {
-		written := `{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "type-declaration", "where": [{"layer": "App\\Edge"}]}}`
+		written := `{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "type-declaration", "where": [{"layer": "App\\Edge"}]}}`
 
 		parsed, err := rule.Parse("X", []byte(written), shipped)
 		if err != nil {
@@ -262,8 +262,8 @@ func TestGlobsPathsAndTypePatternsMatchWhatTheySay(t *testing.T) {
 	}
 
 	for written, reason := range map[string]string{
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "call"}} {"extra": 1}`:                                                        "more follows it",
-		`{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "type-declaration", "where": [{"members": {"of": "parent", "atLeast": 1}}]}}`: "judges nothing",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "call"}} {"extra": 1}`:                                                        "more follows it",
+		`{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "type-declaration", "where": [{"members": {"of": "parent", "atLeast": 1}}]}}`: "judges nothing",
 	} {
 		if _, err := rule.Parse("X", []byte(written), shipped); err == nil || !strings.Contains(err.Error(), reason) {
 			t.Errorf("%s: %v, want %q", written, err, reason)

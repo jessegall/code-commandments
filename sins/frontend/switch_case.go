@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, SwitchCase{})
+	sins.Register(catalog.Vue, SwitchCase{})
 }
 
 // SwitchCase is the sin "switch-case".

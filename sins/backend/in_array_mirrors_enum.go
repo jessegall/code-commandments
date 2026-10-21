@@ -9,7 +9,7 @@ import (
 // InArrayMirrorsEnum is the in-array-mirrors-enum sin.
 type InArrayMirrorsEnum struct{}
 
-func init() { sins.Register(catalog.Backend, InArrayMirrorsEnum{}) }
+func init() { sins.Register(catalog.PHP, InArrayMirrorsEnum{}) }
 
 // Definition is what the sin states about itself.
 func (InArrayMirrorsEnum) Definition() sins.Definition {

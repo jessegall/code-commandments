@@ -13,7 +13,7 @@ import (
 // TransformerWithoutTsTypeDetector finds a Data field given a transformer but no TypeScript type for what it writes.
 type TransformerWithoutTsTypeDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, TransformerWithoutTsTypeDetector{}) }
+func init() { detectors.Register(catalog.PHP, TransformerWithoutTsTypeDetector{}) }
 
 // Sin is the sin the detector finds.
 func (TransformerWithoutTsTypeDetector) Sin() sins.Sin { return backendsins.TransformerWithoutTsType{} }

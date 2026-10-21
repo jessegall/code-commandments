@@ -9,7 +9,7 @@ import (
 // DataMethodHintCollision is the data-method-hint-collision sin.
 type DataMethodHintCollision struct{}
 
-func init() { sins.Register(catalog.Backend, DataMethodHintCollision{}) }
+func init() { sins.Register(catalog.PHP, DataMethodHintCollision{}) }
 
 // Definition is what the sin states about itself.
 func (DataMethodHintCollision) Definition() sins.Definition {

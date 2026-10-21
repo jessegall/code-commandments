@@ -12,7 +12,7 @@ import (
 // MaskedInvariantDetector finds a ?? papering a literal over a nullsafe read of transient own state, defending a value the design always has set.
 type MaskedInvariantDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, MaskedInvariantDetector{}) }
+func init() { detectors.Register(catalog.PHP, MaskedInvariantDetector{}) }
 
 // Sin is the sin the detector finds.
 func (MaskedInvariantDetector) Sin() sins.Sin { return backendsins.MaskedInvariant{} }

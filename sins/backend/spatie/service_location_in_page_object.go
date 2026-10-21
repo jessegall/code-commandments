@@ -9,7 +9,7 @@ import (
 // ServiceLocationInPageObject is the service-location-in-page-object sin.
 type ServiceLocationInPageObject struct{}
 
-func init() { sins.Register(catalog.Backend, ServiceLocationInPageObject{}) }
+func init() { sins.Register(catalog.PHP, ServiceLocationInPageObject{}) }
 
 // Definition is what the sin states about itself.
 func (ServiceLocationInPageObject) Definition() sins.Definition {

@@ -18,13 +18,13 @@ var (
 type ClassLayout struct{}
 
 func init() {
-	skill.Register(catalog.Backend, ClassLayout{})
+	skill.Register(catalog.PHP, ClassLayout{})
 }
 
 // Definition is what the skill states about itself.
 func (ClassLayout) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/class-layout",
+		Slug:      "php/class-layout",
 		Tier:      skill.Mandatory,
 		Order:     7,
 		Title:     "Class layout — state first, then behaviour",
@@ -34,8 +34,8 @@ func (ClassLayout) Definition() skill.Definition {
 		Principle: classLayoutPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/behaviour-per-method", Note: `a crowded head of class is usually a class doing several jobs; split the behaviour and the state follows.`},
-			{Slug: "backend/documentation", Note: "a structural section divider is fine, but it never justifies state living below the methods."},
+			{Slug: "php/behaviour-per-method", Note: `a crowded head of class is usually a class doing several jobs; split the behaviour and the state follows.`},
+			{Slug: "php/documentation", Note: "a structural section divider is fine, but it never justifies state living below the methods."},
 		},
 	}
 }

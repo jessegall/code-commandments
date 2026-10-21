@@ -9,7 +9,7 @@ import (
 // ErasedNullObject is the erased-null-object sin.
 type ErasedNullObject struct{}
 
-func init() { sins.Register(catalog.Backend, ErasedNullObject{}) }
+func init() { sins.Register(catalog.PHP, ErasedNullObject{}) }
 
 // Definition is what the sin states about itself.
 func (ErasedNullObject) Definition() sins.Definition {

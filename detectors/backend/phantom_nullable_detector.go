@@ -13,7 +13,7 @@ import (
 // set and none guards: the null is a phantom the type should drop.
 type PhantomNullableDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, PhantomNullableDetector{}) }
+func init() { detectors.Register(catalog.PHP, PhantomNullableDetector{}) }
 
 // Sin is the sin the detector finds.
 func (PhantomNullableDetector) Sin() sins.Sin { return backendsins.PhantomNullable{} }

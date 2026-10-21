@@ -9,7 +9,7 @@ import (
 // StringMatchMirrorsEnum is the string-match-mirrors-enum sin.
 type StringMatchMirrorsEnum struct{}
 
-func init() { sins.Register(catalog.Backend, StringMatchMirrorsEnum{}) }
+func init() { sins.Register(catalog.PHP, StringMatchMirrorsEnum{}) }
 
 // Definition is what the sin states about itself.
 func (StringMatchMirrorsEnum) Definition() sins.Definition {

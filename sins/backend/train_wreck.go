@@ -10,7 +10,7 @@ import (
 type TrainWreck struct{}
 
 func init() {
-	sins.Register(catalog.Backend, TrainWreck{})
+	sins.Register(catalog.PHP, TrainWreck{})
 }
 
 

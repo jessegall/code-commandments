@@ -12,7 +12,7 @@ import (
 // KeyedLookupEnvyDetector finds a method looking a fact up about another owned object in its own class's keyed store: a question that object should answer.
 type KeyedLookupEnvyDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, KeyedLookupEnvyDetector{}) }
+func init() { detectors.Register(catalog.PHP, KeyedLookupEnvyDetector{}) }
 
 // Sin is the sin the detector finds.
 func (KeyedLookupEnvyDetector) Sin() sins.Sin { return backendsins.KeyedLookupEnvy{} }

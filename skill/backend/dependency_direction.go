@@ -18,13 +18,13 @@ var (
 type DependencyDirection struct{}
 
 func init() {
-	skill.Register(catalog.Backend, DependencyDirection{})
+	skill.Register(catalog.PHP, DependencyDirection{})
 }
 
 // Definition is what the skill states about itself.
 func (DependencyDirection) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/dependency-direction",
+		Slug:      "php/dependency-direction",
 		Tier:      skill.KeepInMind,
 		Order:     17,
 		Title:     "Dependency direction — a layer may only reach DOWN",
@@ -34,8 +34,8 @@ func (DependencyDirection) Definition() skill.Definition {
 		Principle: dependencyDirectionPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/value-objects", Note: "the value a low layer needs instead of the high-level class it reached for."},
-			{Slug: "backend/tell-dont-ask", Note: "reaching up for an object's data is the same instinct, one scale down."},
+			{Slug: "php/value-objects", Note: "the value a low layer needs instead of the high-level class it reached for."},
+			{Slug: "php/tell-dont-ask", Note: "reaching up for an object's data is the same instinct, one scale down."},
 		},
 	}
 }

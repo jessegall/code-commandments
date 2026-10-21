@@ -174,7 +174,7 @@ func (j jsonConfig) Layers() ([]Layer, error) {
 		return nil, err
 	}
 
-	return layersOf(config, catalog.Backend), nil
+	return layersOf(config, catalog.PHP), nil
 }
 
 func (j jsonConfig) RewriteLayers(layers []Layer) (bool, error) {
@@ -314,7 +314,7 @@ func withLayers(configurators []Configurator, layers []Layer) []Configurator {
 	}
 
 	for i, configurator := range configurators {
-		if configurator.Target != layered(catalog.Backend) {
+		if configurator.Target != layered(catalog.PHP) {
 			continue
 		}
 
@@ -324,7 +324,7 @@ func withLayers(configurators []Configurator, layers []Layer) []Configurator {
 		return configurators
 	}
 
-	return append(configurators, Configurator{Target: layered(catalog.Backend), Calls: calls})
+	return append(configurators, Configurator{Target: layered(catalog.PHP), Calls: calls})
 }
 
 // Switches are the edits the agent journal's settings make: a language on or off, and the folders judged

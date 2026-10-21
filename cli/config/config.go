@@ -113,22 +113,11 @@ func RuleOf(class string) (Rule, bool) {
 
 // engineOf reads the engine from a rule's namespace, past any package folder.
 func engineOf(namespace []string) (catalog.Engine, bool) {
-	switch {
-	case namespace[0] == "Frontend" && len(namespace) > 1 && namespace[1] == "TypeScript":
+	if namespace[0] == "Frontend" && len(namespace) > 1 && namespace[1] == "TypeScript" {
 		return catalog.TypeScript, true
-	case namespace[0] == "Backend":
-		return catalog.Backend, true
-	case namespace[0] == "Frontend":
-		return catalog.Frontend, true
-	case namespace[0] == "TypeScript":
-		return catalog.TypeScript, true
-	case namespace[0] == "Python":
-		return catalog.Python, true
-	case namespace[0] == "CSharp":
-		return catalog.CSharp, true
-	default:
-		return "", false
 	}
+
+	return catalog.EngineNamed(namespace[0])
 }
 
 // ID is how config.json names the rule: `engine/Name`, or the bare name of a project's own.
@@ -152,7 +141,9 @@ func RuleNamed(kind Kind, id string) Rule {
 		return Rule{Kind: kind, Name: id}
 	}
 
-	return Rule{Kind: kind, Engine: catalog.Engine(engine), Name: name}
+	named, _ := catalog.EngineNamed(engine)
+
+	return Rule{Kind: kind, Engine: named, Name: name}
 }
 
 // Disables says whether the config turns off any of the rules: a detector is off when it, its sin or its

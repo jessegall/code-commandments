@@ -13,7 +13,7 @@ import (
 // RedundantNativeCastDetector finds a value built by hand for a Data slot the package casts natively: a date, an enum.
 type RedundantNativeCastDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RedundantNativeCastDetector{}) }
+func init() { detectors.Register(catalog.PHP, RedundantNativeCastDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RedundantNativeCastDetector) Sin() sins.Sin { return backendsins.RedundantNativeCast{} }

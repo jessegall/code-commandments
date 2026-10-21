@@ -13,7 +13,7 @@ import (
 // MassUpdateAtCallSiteDetector finds a model updated with a bare array at the call site, where an intention-revealing method on the model belongs.
 type MassUpdateAtCallSiteDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, MassUpdateAtCallSiteDetector{}) }
+func init() { detectors.Register(catalog.PHP, MassUpdateAtCallSiteDetector{}) }
 
 // Sin is the sin the detector finds.
 func (MassUpdateAtCallSiteDetector) Sin() sins.Sin { return backendsins.MassUpdateAtCallSite{} }

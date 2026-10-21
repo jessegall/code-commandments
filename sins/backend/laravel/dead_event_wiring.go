@@ -9,7 +9,7 @@ import (
 // DeadEventWiring is the dead-event-wiring sin.
 type DeadEventWiring struct{}
 
-func init() { sins.Register(catalog.Backend, DeadEventWiring{}) }
+func init() { sins.Register(catalog.PHP, DeadEventWiring{}) }
 
 // Definition is what the sin states about itself.
 func (DeadEventWiring) Definition() sins.Definition {

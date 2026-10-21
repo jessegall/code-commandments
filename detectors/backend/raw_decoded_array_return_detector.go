@@ -12,7 +12,7 @@ import (
 // RawDecodedArrayReturnDetector finds a function handing out json_decode's raw array instead of a type.
 type RawDecodedArrayReturnDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RawDecodedArrayReturnDetector{}) }
+func init() { detectors.Register(catalog.PHP, RawDecodedArrayReturnDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RawDecodedArrayReturnDetector) Sin() sins.Sin { return backendsins.RawDecodedArrayReturn{} }

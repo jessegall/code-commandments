@@ -12,7 +12,7 @@ import (
 // RedundantElseDetector finds an else after an if whose body already leaves.
 type RedundantElseDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RedundantElseDetector{}) }
+func init() { detectors.Register(catalog.PHP, RedundantElseDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RedundantElseDetector) Sin() sins.Sin { return backendsins.RedundantElse{} }

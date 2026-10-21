@@ -91,5 +91,5 @@ The other 1 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/class-layout`](../../backend/class-layout/SKILL.md) — the same discipline in PHP.
+- [`php/class-layout`](../../php/class-layout/SKILL.md) — the same discipline in PHP.
 - [`csharp/value-objects`](../value-objects/SKILL.md) — a record whose members are its list of state — read at a glance.

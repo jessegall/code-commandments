@@ -118,5 +118,5 @@ The other 4 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/fix-at-the-source`](../../backend/fix-at-the-source/SKILL.md) — the same instinct on the server — one decision, made once, where it is born.
-- [`frontend/vue-components`](../../frontend/vue-components/SKILL.md) — the template twin: markup written twice is a component waiting to be extracted.
+- [`php/fix-at-the-source`](../../php/fix-at-the-source/SKILL.md) — the same instinct on the server — one decision, made once, where it is born.
+- [`vue/vue-components`](../../vue/vue-components/SKILL.md) — the template twin: markup written twice is a component waiting to be extracted.

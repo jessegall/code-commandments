@@ -14,7 +14,7 @@ import (
 // looked-up object itself.
 type ParamResolvedFromParamDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ParamResolvedFromParamDetector{}) }
+func init() { detectors.Register(catalog.PHP, ParamResolvedFromParamDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ParamResolvedFromParamDetector) Sin() sins.Sin { return backendsins.ParamResolvedFromParam{} }

@@ -7,6 +7,8 @@ import (
 	"path"
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/catalog"
 )
 
 // shipped are the ready rules a commandment can start from.
@@ -70,10 +72,13 @@ func TemplateNamed(name string) (Template, bool) {
 	return templates[at], true
 }
 
-// Query is the template's query for the engine; false when it is written for other engines only.
+// Query is the template's query for the engine; false when it is written for other engines only. A key is read
+// as any engine name is, so a template that names an engine by what it was called before still answers.
 func (t Template) Query(engine Engine) (json.RawMessage, bool) {
-	if query, written := t.Find[string(engine)]; written {
-		return query, true
+	for key, query := range t.Find {
+		if named, known := catalog.EngineNamed(key); known && named == engine {
+			return query, true
+		}
 	}
 
 	query, everywhere := t.Find["*"]

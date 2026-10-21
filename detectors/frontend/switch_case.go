@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, SwitchCaseDetector{})
+	detectors.Register(catalog.Vue, SwitchCaseDetector{})
 }
 
 // SwitchCaseDetector finds a v-if/v-else-if chain that re-tests one subject against a literal case by case:

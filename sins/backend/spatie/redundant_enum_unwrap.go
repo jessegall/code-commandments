@@ -9,7 +9,7 @@ import (
 // RedundantEnumUnwrap is the redundant-enum-unwrap sin.
 type RedundantEnumUnwrap struct{}
 
-func init() { sins.Register(catalog.Backend, RedundantEnumUnwrap{}) }
+func init() { sins.Register(catalog.PHP, RedundantEnumUnwrap{}) }
 
 // Definition is what the sin states about itself.
 func (RedundantEnumUnwrap) Definition() sins.Definition {

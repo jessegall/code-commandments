@@ -14,7 +14,7 @@ import (
 // transformer belongs.
 type ManualOutputTransformDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ManualOutputTransformDetector{}) }
+func init() { detectors.Register(catalog.PHP, ManualOutputTransformDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ManualOutputTransformDetector) Sin() sins.Sin { return backendsins.ManualOutputTransform{} }

@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, IndexAsKey{})
+	sins.Register(catalog.Vue, IndexAsKey{})
 }
 
 // IndexAsKey is the sin "index-as-key".

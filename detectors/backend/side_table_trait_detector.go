@@ -13,7 +13,7 @@ import (
 type SideTableTraitDetector struct{}
 
 func init() {
-	detectors.Register(catalog.Backend, SideTableTraitDetector{})
+	detectors.Register(catalog.PHP, SideTableTraitDetector{})
 }
 
 // Sin is the sin the detector finds.

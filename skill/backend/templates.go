@@ -18,13 +18,13 @@ var (
 type Templates struct{}
 
 func init() {
-	skill.Register(catalog.Backend, Templates{})
+	skill.Register(catalog.PHP, Templates{})
 }
 
 // Definition is what the skill states about itself.
 func (Templates) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/templates",
+		Slug:      "php/templates",
 		Tier:      skill.KeepInMind,
 		Order:     14,
 		Title:     "Templates — state the shape, don't assemble it",
@@ -34,8 +34,8 @@ func (Templates) Definition() skill.Definition {
 		Principle: templatesPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/documentation", Note: "the same instinct one scale down: say a thing once, in the form a reader can check."},
-			{Slug: "backend/value-objects", Note: "a shape worth stating repeatedly is usually a type, not a string."},
+			{Slug: "php/documentation", Note: "the same instinct one scale down: say a thing once, in the form a reader can check."},
+			{Slug: "php/value-objects", Note: "a shape worth stating repeatedly is usually a type, not a string."},
 		},
 	}
 }

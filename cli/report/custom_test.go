@@ -26,7 +26,7 @@ func TestAReportAgainstTheProjectsOwnRuleIsRefused(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	os.WriteFile(rule, []byte(`{"engine": "backend", "sin": {"name": "raw-sql", "description": "x", "skill": "backend/absence"}, "find": {"select": "call"}}`), 0o644)
+	os.WriteFile(rule, []byte(`{"engine": "backend", "sin": {"name": "raw-sql", "description": "x", "skill": "php/absence"}, "find": {"select": "call"}}`), 0o644)
 
 	previous, _ := os.Getwd()
 	t.Cleanup(func() { os.Chdir(previous) })

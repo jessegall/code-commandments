@@ -9,7 +9,7 @@ import (
 // AssembledTemplate is the assembled-template sin.
 type AssembledTemplate struct{}
 
-func init() { sins.Register(catalog.Backend, AssembledTemplate{}) }
+func init() { sins.Register(catalog.PHP, AssembledTemplate{}) }
 
 // Definition is what the sin states about itself.
 func (AssembledTemplate) Definition() sins.Definition {

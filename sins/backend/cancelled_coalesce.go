@@ -9,7 +9,7 @@ import (
 // CancelledCoalesce is the cancelled-coalesce sin.
 type CancelledCoalesce struct{}
 
-func init() { sins.Register(catalog.Backend, CancelledCoalesce{}) }
+func init() { sins.Register(catalog.PHP, CancelledCoalesce{}) }
 
 // Definition is what the sin states about itself.
 func (CancelledCoalesce) Definition() sins.Definition {

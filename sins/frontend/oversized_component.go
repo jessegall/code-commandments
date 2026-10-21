@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, OversizedComponent{})
+	sins.Register(catalog.Vue, OversizedComponent{})
 }
 
 // OversizedComponent is the sin "oversized-component".

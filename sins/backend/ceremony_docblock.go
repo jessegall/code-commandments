@@ -9,7 +9,7 @@ import (
 // CeremonyDocblock is the ceremony-docblock sin.
 type CeremonyDocblock struct{}
 
-func init() { sins.Register(catalog.Backend, CeremonyDocblock{}) }
+func init() { sins.Register(catalog.PHP, CeremonyDocblock{}) }
 
 // Definition is what the sin states about itself.
 func (CeremonyDocblock) Definition() sins.Definition {

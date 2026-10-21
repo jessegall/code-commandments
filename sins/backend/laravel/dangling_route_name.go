@@ -9,7 +9,7 @@ import (
 // DanglingRouteName is the dangling-route-name sin.
 type DanglingRouteName struct{}
 
-func init() { sins.Register(catalog.Backend, DanglingRouteName{}) }
+func init() { sins.Register(catalog.PHP, DanglingRouteName{}) }
 
 // Definition is what the sin states about itself.
 func (DanglingRouteName) Definition() sins.Definition {

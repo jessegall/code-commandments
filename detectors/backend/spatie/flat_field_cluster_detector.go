@@ -18,7 +18,7 @@ import (
 // already declares into prefixed scalars: shippingStreet, shippingCity beside an Address.
 type FlatFieldClusterDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, FlatFieldClusterDetector{}) }
+func init() { detectors.Register(catalog.PHP, FlatFieldClusterDetector{}) }
 
 const (
 	// minCluster is how many prefixed fields make a cluster.

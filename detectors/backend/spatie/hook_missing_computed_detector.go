@@ -13,7 +13,7 @@ import (
 // HookMissingComputedDetector finds a get hook on a Data class that is not marked #[Computed].
 type HookMissingComputedDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, HookMissingComputedDetector{}) }
+func init() { detectors.Register(catalog.PHP, HookMissingComputedDetector{}) }
 
 // Sin is the sin the detector finds.
 func (HookMissingComputedDetector) Sin() sins.Sin { return backendsins.HookMissingComputed{} }

@@ -9,7 +9,7 @@ import (
 // PageObjectMissingTypeScript is the page-object-missing-typescript sin.
 type PageObjectMissingTypeScript struct{}
 
-func init() { sins.Register(catalog.Backend, PageObjectMissingTypeScript{}) }
+func init() { sins.Register(catalog.PHP, PageObjectMissingTypeScript{}) }
 
 // Definition is what the sin states about itself.
 func (PageObjectMissingTypeScript) Definition() sins.Definition {

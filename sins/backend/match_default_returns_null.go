@@ -9,7 +9,7 @@ import (
 // MatchDefaultReturnsNull is the match-default-returns-null sin.
 type MatchDefaultReturnsNull struct{}
 
-func init() { sins.Register(catalog.Backend, MatchDefaultReturnsNull{}) }
+func init() { sins.Register(catalog.PHP, MatchDefaultReturnsNull{}) }
 
 // Definition is what the sin states about itself.
 func (MatchDefaultReturnsNull) Definition() sins.Definition {

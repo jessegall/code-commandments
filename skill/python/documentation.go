@@ -34,7 +34,7 @@ func (Documentation) Definition() skill.Definition {
 		Principle: documentationPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/documentation", Note: "the same discipline for PHP docblocks."},
+			{Slug: "php/documentation", Note: "the same discipline for PHP docblocks."},
 			{Slug: "python/fix-at-the-source", Note: "fix the shape instead of documenting the workaround."},
 		},
 	}

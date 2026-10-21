@@ -84,5 +84,5 @@ The other 1 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/absence`](../../backend/absence/SKILL.md) — the same instinct on the server, with the tools PHP has and TypeScript does not.
-- [`backend/type-honesty`](../../backend/type-honesty/SKILL.md) — the general rule this serves: a type must not claim an optionality the design doesn't have.
+- [`php/absence`](../../php/absence/SKILL.md) — the same instinct on the server, with the tools PHP has and TypeScript does not.
+- [`php/type-honesty`](../../php/type-honesty/SKILL.md) — the general rule this serves: a type must not claim an optionality the design doesn't have.

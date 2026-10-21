@@ -28,7 +28,7 @@ budget is declared:
 
 ```json
 "configure": {
-    "frontend/ComponentBudgetDetector": [
+    "vue/ComponentBudgetDetector": [
         {"elements": [50]}
     ]
 }

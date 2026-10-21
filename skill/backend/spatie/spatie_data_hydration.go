@@ -20,13 +20,13 @@ var (
 type SpatieDataHydration struct{}
 
 func init() {
-	skill.Register(catalog.Backend, SpatieDataHydration{})
+	skill.Register(catalog.PHP, SpatieDataHydration{})
 }
 
 // Definition is what the skill states about itself.
 func (SpatieDataHydration) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/spatie-data-hydration",
+		Slug:      "php/spatie-data-hydration",
 		Tier:      skill.Mandatory,
 		Order:     4,
 		Title:     "Spatie Data — feed the framework, don't hand-build",
@@ -36,7 +36,7 @@ func (SpatieDataHydration) Definition() skill.Definition {
 		Principle: spatieDataHydrationPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/spatie-data", Note: "the sibling: how to AUTHOR the `Data` class this skill teaches you to feed — types, `::from` vs `new`, declaring casts/collections."},
+			{Slug: "php/spatie-data", Note: "the sibling: how to AUTHOR the `Data` class this skill teaches you to feed — types, `::from` vs `new`, declaring casts/collections."},
 		},
 		References: []skill.Reference{
 			{Name: "mechanics", Title: "Spatie Data hydration mechanics", Body: spatieDataHydrationMechanics},

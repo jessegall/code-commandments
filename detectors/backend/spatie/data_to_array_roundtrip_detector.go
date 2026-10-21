@@ -13,7 +13,7 @@ import (
 // DataToArrayRoundtripDetector finds a Data object turned into an array only to be handed where the object itself would do.
 type DataToArrayRoundtripDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DataToArrayRoundtripDetector{}) }
+func init() { detectors.Register(catalog.PHP, DataToArrayRoundtripDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DataToArrayRoundtripDetector) Sin() sins.Sin { return backendsins.DataToArrayRoundtrip{} }

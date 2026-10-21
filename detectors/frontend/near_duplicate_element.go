@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, NearDuplicateElementDetector{})
+	detectors.Register(catalog.Vue, NearDuplicateElementDetector{})
 }
 
 // nearDuplicateElements is how many elements a subtree must hold before a near copy of it is a component waiting.

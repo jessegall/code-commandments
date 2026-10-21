@@ -12,7 +12,7 @@ import (
 // MutableStaticStateDetector finds a write to static state, which outlives the request and leaks between callers.
 type MutableStaticStateDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, MutableStaticStateDetector{}) }
+func init() { detectors.Register(catalog.PHP, MutableStaticStateDetector{}) }
 
 // Sin is the sin the detector finds.
 func (MutableStaticStateDetector) Sin() sins.Sin { return backendsins.MutableStaticState{} }

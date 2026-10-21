@@ -12,7 +12,7 @@ import (
 // EnumCaseOrChainDetector finds an || chain comparing one value against several cases of an enum, a question the enum should answer.
 type EnumCaseOrChainDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, EnumCaseOrChainDetector{}) }
+func init() { detectors.Register(catalog.PHP, EnumCaseOrChainDetector{}) }
 
 // Sin is the sin the detector finds.
 func (EnumCaseOrChainDetector) Sin() sins.Sin { return backendsins.EnumCaseOrChain{} }

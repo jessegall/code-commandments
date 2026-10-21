@@ -13,7 +13,7 @@ import (
 // ArrayBagDetector finds an array parameter read by string keys: a bag of named values that wants a type.
 type ArrayBagDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ArrayBagDetector{}) }
+func init() { detectors.Register(catalog.PHP, ArrayBagDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ArrayBagDetector) Sin() sins.Sin { return backendsins.ArrayBag{} }

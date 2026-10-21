@@ -9,7 +9,7 @@ import (
 // RedundantElse is the redundant-else sin.
 type RedundantElse struct{}
 
-func init() { sins.Register(catalog.Backend, RedundantElse{}) }
+func init() { sins.Register(catalog.PHP, RedundantElse{}) }
 
 // Definition is what the sin states about itself.
 func (RedundantElse) Definition() sins.Definition {

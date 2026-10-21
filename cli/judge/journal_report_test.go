@@ -10,7 +10,7 @@ import (
 func TestTheJournalReportListsEachFindingWithItsFileLineAndSkill(t *testing.T) {
 	findings := []engine.Finding{
 		{Detector: "DictBagDetector", Skill: "python/value-objects", Sin: "python-dict-bag", Location: "src/x.py:12", Scope: "call"},
-		{Detector: "ComponentBudgetDetector", Skill: "frontend/vue-components", Sin: "oversized-component", Location: "src/Page.vue", Scope: "<section>"},
+		{Detector: "ComponentBudgetDetector", Skill: "vue/vue-components", Sin: "oversized-component", Location: "src/Page.vue", Scope: "<section>"},
 	}
 	var got journalReport
 	if err := json.Unmarshal(NewReport(".", findings, nil, nil, Skipped{}).Journal(), &got); err != nil {

@@ -9,7 +9,7 @@ import (
 // NewDataObject is the new-data-object sin.
 type NewDataObject struct{}
 
-func init() { sins.Register(catalog.Backend, NewDataObject{}) }
+func init() { sins.Register(catalog.PHP, NewDataObject{}) }
 
 // Definition is what the sin states about itself.
 func (NewDataObject) Definition() sins.Definition {

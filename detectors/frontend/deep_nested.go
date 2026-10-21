@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, &DeepNestedDetector{MaxDepth: 8, MaxRemaining: 3})
+	detectors.Register(catalog.Vue, &DeepNestedDetector{MaxDepth: 8, MaxRemaining: 3})
 }
 
 // DeepNestedDetector finds markup nested too deep to read, where enough still lies beneath to be a component

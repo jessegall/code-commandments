@@ -14,7 +14,7 @@ import (
 // ManufacturedFakeFillDetector finds an argument filled with an empty fallback, manufacturing a value the callee then trusts.
 type ManufacturedFakeFillDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ManufacturedFakeFillDetector{}) }
+func init() { detectors.Register(catalog.PHP, ManufacturedFakeFillDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ManufacturedFakeFillDetector) Sin() sins.Sin { return backendsins.ManufacturedFakeFill{} }

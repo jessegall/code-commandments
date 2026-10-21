@@ -12,7 +12,7 @@ import (
 // TernaryStatementDetector finds a ternary used as a statement to pick which side effect runs.
 type TernaryStatementDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, TernaryStatementDetector{}) }
+func init() { detectors.Register(catalog.PHP, TernaryStatementDetector{}) }
 
 // Sin is the sin the detector finds.
 func (TernaryStatementDetector) Sin() sins.Sin { return backendsins.TernaryStatement{} }

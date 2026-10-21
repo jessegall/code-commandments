@@ -17,7 +17,7 @@ import (
 // group again and again, reached through a peer field, or mirrored beside the object that already holds them.
 type CoupledFieldsDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, CoupledFieldsDetector{}) }
+func init() { detectors.Register(catalog.PHP, CoupledFieldsDetector{}) }
 
 // Sin is the sin the detector finds.
 func (CoupledFieldsDetector) Sin() sins.Sin { return backendsins.CoupledFields{} }

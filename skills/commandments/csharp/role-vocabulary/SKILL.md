@@ -63,6 +63,6 @@ and renamed.
 
 ## Related skills
 
-- [`backend/role-vocabulary`](../../backend/role-vocabulary/SKILL.md) — the same roles in PHP, with scaffolded bases.
+- [`php/role-vocabulary`](../../php/role-vocabulary/SKILL.md) — the same roles in PHP, with scaffolded bases.
 - [`csharp/absence`](../absence/SKILL.md) — a registry `Get` throws on a miss — the same "a must-exist thing that is missing throws" rule.
 - [`csharp/exceptions`](../exceptions/SKILL.md) — the named exception a registry throws on a miss, built by a static factory.

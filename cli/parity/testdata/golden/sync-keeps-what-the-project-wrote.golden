@@ -6,168 +6,8 @@ exit: 0
 --- stderr
 
 --- files
-=== created .agents/skills/commandments-backend-absence/SKILL.md
-sha256 e0d9c8b90fa928ff13c3952b8336633bd0e9c631b90346c583224a43b753506a
-=== created .agents/skills/commandments-backend-absence/evals/triggers.json
-sha256 0d1ff2eaa3e50e7419bdabdded9a96fe61d78b0d27b72cdf3d2709e25cc72cee
-=== created .agents/skills/commandments-backend-absence/reference/detectors.md
-sha256 2ef18a3ea8d52d8d15dbd49876d4abee305bf147753f16cc60622814ae300a6c
-=== created .agents/skills/commandments-backend-absence/reference/examples.md
-sha256 b36829aade300aace6900a98840e55a0f5018e5dd07256c22d34e22d915e3e8f
-=== created .agents/skills/commandments-backend-behaviour-per-method/SKILL.md
-sha256 7416bfb7849e6235a726d794c4337f8eb50e1bb0edfd3ac83e6abba070901a2f
-=== created .agents/skills/commandments-backend-behaviour-per-method/reference/detectors.md
-sha256 983aa7a0498d971d6666c915ff06e830b63fb9adddacf3cb65a31b9c198dab37
-=== created .agents/skills/commandments-backend-class-layout/SKILL.md
-sha256 68d1f2ff1483538d108886998ae3cfaa811e0d094aad7b127061da00aec0e122
-=== created .agents/skills/commandments-backend-class-layout/evals/triggers.json
-sha256 d4632886706279f968c199bec81276421dcbf0221d04dfedefe88405b7cc2e7a
-=== created .agents/skills/commandments-backend-class-layout/reference/detectors.md
-sha256 50f5a748baf466e0f2c7becd556156c4a4e1f5ac02ded4c4af9afde22680fb0d
-=== created .agents/skills/commandments-backend-class-layout/reference/examples.md
-sha256 c2eeff3123c7b4d3851ef52ca1076da3528d6d44f0d5e9e6d0442ae80df41cd4
-=== created .agents/skills/commandments-backend-concurrent-state/SKILL.md
-sha256 93c91a8b16c2d0a740a482493907e7e545128ffde71e6abf9b0ac5d3c2859e4a
-=== created .agents/skills/commandments-backend-concurrent-state/reference/detectors.md
-sha256 b4cb157fee5cc4f1809331139cdf75a67d44d72d449445c26928bf84d343bb65
-=== created .agents/skills/commandments-backend-dependency-direction/SKILL.md
-sha256 efc29f006df2f05c40e9c35d6c78023ade000caf21f265923e1b5f945f6829ec
-=== created .agents/skills/commandments-backend-dependency-direction/reference/detectors.md
-sha256 23a6e94feb5b25b8fc44ec9dfb4e4c658e3fa288ffacce78fd634b98ecceec2d
-=== created .agents/skills/commandments-backend-dependency-direction/reference/examples.md
-sha256 3fb68d39a94d21ff9bae7fe350e77e82db8e224ca951852d1634e96f5ab0de05
-=== created .agents/skills/commandments-backend-documentation/SKILL.md
-sha256 e2fe5623966185ba8bc30693ce655a5ac68f2fa3df59e17c50b0cdf9765599ca
-=== created .agents/skills/commandments-backend-documentation/evals/triggers.json
-sha256 8f674155dc6959c83e8fec49b30d745f8547c18542856b13b87698f6a19ef3a7
-=== created .agents/skills/commandments-backend-documentation/reference/detectors.md
-sha256 6d7d232a8c81c8f77cdd58b997cb7f8fbdf50e0258846ffe573c0481614c6ee4
-=== created .agents/skills/commandments-backend-documentation/reference/examples.md
-sha256 a247887aafdb6753490666fd88cc97ce147657cb58796d1eaa1d69784c85caa1
-=== created .agents/skills/commandments-backend-enums-with-behaviour/SKILL.md
-sha256 dd098a18523fccdf09b88ba4bdcb20d7f93cf5d2b649880f1cab5fa01908003f
-=== created .agents/skills/commandments-backend-enums-with-behaviour/reference/detectors.md
-sha256 82effff8af90d928f718ba4a53140d113ca66cfb03159c0e32c4f61ab3b1958d
-=== created .agents/skills/commandments-backend-enums-with-behaviour/reference/examples.md
-sha256 831738430fb436b66b476dae6490bf651fc1d88ac1546b4bc47c3c877c796cb3
-=== created .agents/skills/commandments-backend-exceptions/SKILL.md
-sha256 fe357aa2fcb2ddcf15c26309547ab725adcfdd5f0d948df50a1c215ad56cae4b
-=== created .agents/skills/commandments-backend-exceptions/reference/detectors.md
-sha256 cfde23ec22e12ce1260ec195c05c9c6304dc92987d68a7d3b37a9d7f2b5b37d6
-=== created .agents/skills/commandments-backend-exceptions/reference/examples.md
-sha256 0659317df186b791ddedbf94c8d50d707f875b380eddc3fb3d511fe56db2c379
-=== created .agents/skills/commandments-backend-fix-at-the-source/SKILL.md
-sha256 d9b497b72ab4c2396cb2b7d3cf015cb17b460def6a742ba31ea0211b340b0bc2
-=== created .agents/skills/commandments-backend-fix-at-the-source/evals/triggers.json
-sha256 353f548c902f613b2474812df1b419cd59ebbfe23f9ca5ab0946f0885568e5d0
-=== created .agents/skills/commandments-backend-fix-at-the-source/reference/detectors.md
-sha256 160b946b3937a08999649c54b2c7c1f90f2feafa6d7b5a2bc4e6f738a53dde78
-=== created .agents/skills/commandments-backend-fix-at-the-source/reference/examples.md
-sha256 f147f8fd3c72eb59b3e32d747b9c4d1bfec2628a619f0451a2e6552870de8aa0
-=== created .agents/skills/commandments-backend-guard-clauses-and-flow/SKILL.md
-sha256 fbd44b2bc4ef619aa4976063d6ceba7a27cf597bbe711f399d1db478af167293
-=== created .agents/skills/commandments-backend-guard-clauses-and-flow/evals/triggers.json
-sha256 78cdb5b117e3beac6f647e8f37b333dfefc9be3c595727fb44df650b82bc8f98
-=== created .agents/skills/commandments-backend-guard-clauses-and-flow/reference/detectors.md
-sha256 da486aac3462ddf0eb4ee3c9d094b566271801bfcecf83e6dab4227fb2fc14e1
-=== created .agents/skills/commandments-backend-guard-clauses-and-flow/reference/examples.md
-sha256 fb96007b3ba3e283c66041a872933bf68df58b7392fc90c266358c0984c41429
-=== created .agents/skills/commandments-backend-laravel-idioms/SKILL.md
-sha256 40d3fe5f05097186dd2beff425f519e9906b08aa2cde606371304c81bc69057e
-=== created .agents/skills/commandments-backend-laravel-idioms/evals/triggers.json
-sha256 f3673ef98b8ce1acab91f3ecc97301c16aa176283fa9a4af0069d55bd04467ec
-=== created .agents/skills/commandments-backend-laravel-idioms/reference/detectors.md
-sha256 3bc10e0787c75f9c0a0b2dbe409cb36684a99c3c7913b14be4bcbb51d2ca71e3
-=== created .agents/skills/commandments-backend-laravel-idioms/reference/examples.md
-sha256 bc55384bcd8a164e138f8cfbd8e4e4602736e0c0e02ecababcb65458fd41990f
-=== created .agents/skills/commandments-backend-method-mood/SKILL.md
-sha256 1532e19b9d6e23f6386c4d3db863ace2b36bd2bd32d5ac304964dbedc0602ee2
-=== created .agents/skills/commandments-backend-method-mood/evals/triggers.json
-sha256 757b9f25005a7289952f6ac141f4057fb4fbe51c1e06f93fe7095852a943b855
-=== created .agents/skills/commandments-backend-method-mood/reference/detectors.md
-sha256 bb09b49e6aae8752272e6bfa1b19a1ebba47d2343c0ab4823498fcc77e57a203
-=== created .agents/skills/commandments-backend-method-mood/reference/examples.md
-sha256 847da21ed5ca2f361c82c538b1d5361bd22744a78444ec45eb534aa37f9f542a
-=== created .agents/skills/commandments-backend-page-objects/SKILL.md
-sha256 4aeb9646afb2a4ad031a8ad9515248323d57879c279222a320c01daf51d2d59e
-=== created .agents/skills/commandments-backend-page-objects/evals/triggers.json
-sha256 4040e7acd3c965288c67657477bfbbc187c6631e7576de025acde9d72adaa5c8
-=== created .agents/skills/commandments-backend-page-objects/reference/detectors.md
-sha256 1e2b41b8e51de4a77aa27d73f2cdd6a31d49ff0a93bfe578a89e44425f3f8cfe
-=== created .agents/skills/commandments-backend-page-objects/reference/examples.md
-sha256 6bd42f867176d4bc07c9a16b97fe75215fec81dca3c4289d9e51d899198693f5
-=== created .agents/skills/commandments-backend-pass-the-object/SKILL.md
-sha256 04f045ae047b2901d263afef37c05ba59556f7a78cc8860db768ee51f652dcf0
-=== created .agents/skills/commandments-backend-pass-the-object/reference/detectors.md
-sha256 c13d8fe4bc79cf9f8ecb22e821427cd283aeeb56581778af7b51da719ff9e6ea
-=== created .agents/skills/commandments-backend-pass-the-object/reference/examples.md
-sha256 6188cb4b1a580e15bacf9a26b0643493dcc4312d88f969a70efbefa95aa76a48
-=== created .agents/skills/commandments-backend-repeated-call-helper/SKILL.md
-sha256 322c303e63b6eb12b7f4dc7a9507437d72a71aba324187c7c9aa89a42da5f15c
-=== created .agents/skills/commandments-backend-repeated-call-helper/evals/triggers.json
-sha256 4bc1590caefff59e69d0411fae6bbd091b18079addd8c6faeac38c16f95d389e
-=== created .agents/skills/commandments-backend-repeated-call-helper/reference/detectors.md
-sha256 044063234c894c44b9a08b09cd9393effa992dde6c756f105694a869501670f9
-=== created .agents/skills/commandments-backend-repeated-call-helper/reference/examples.md
-sha256 9cc8c7cc01cc8e1b021a3bf2f5c3e8a6fb02a3cd38563ce39222df2b623a3723
-=== created .agents/skills/commandments-backend-role-vocabulary/SKILL.md
-sha256 a83bf1a4156460d40aaf146fb1489ad58ed945a01bae4127edeaa13b42b738fa
-=== created .agents/skills/commandments-backend-role-vocabulary/reference/detectors.md
-sha256 1990ef20016407254fbf6818bdd684800a9e798bc834472b35ae183cc3dcf09b
-=== created .agents/skills/commandments-backend-route-actions/SKILL.md
-sha256 8f52b4a12019ef684726db1291705a89a2028900c50d16e57e5a7af4c5a1d0da
-=== created .agents/skills/commandments-backend-route-actions/evals/triggers.json
-sha256 f340a04dc4342d4ebe63be2821a8328aa944a70a0760fba8fd8f0ac8a6f18331
-=== created .agents/skills/commandments-backend-route-actions/reference/detectors.md
-sha256 5a307607a46d914d74286f7e6d1b4fd24958bf8b87290ca76c07b053162a599c
-=== created .agents/skills/commandments-backend-route-actions/reference/examples.md
-sha256 53929353f82afb73beede32d155e2a1eaa436caf332636d7e73d5d142d89c6d3
-=== created .agents/skills/commandments-backend-spatie-data-hydration/SKILL.md
-sha256 54cf85b187f44b51ed843bcb211b044483b8d66bac3e8457b703c890382a3a0c
-=== created .agents/skills/commandments-backend-spatie-data-hydration/evals/triggers.json
-sha256 0f29b5a9810cb1a6a64c639e6c8306b672fe73ba17bad033e9c43857253e5201
-=== created .agents/skills/commandments-backend-spatie-data-hydration/reference/detectors.md
-sha256 6bd22b8b047b8a9c5608c827714b909fd7c6e75dfe7ec0e2bd603cae934785db
-=== created .agents/skills/commandments-backend-spatie-data-hydration/reference/examples.md
-sha256 d8733341b31ed8194d4729bda2ba67372ff5908210973d87258c92e0dfb8b544
-=== created .agents/skills/commandments-backend-spatie-data-hydration/reference/mechanics.md
-sha256 518e19806a38bdc1ebe8033bcbd897a5fd2a5dd0a211704ac53fef7f2ef40ca6
-=== created .agents/skills/commandments-backend-spatie-data/SKILL.md
-sha256 3a7dde4565c08633e5dea54b2078cd9a8dc8552e9db233df91413cb2c5352e16
-=== created .agents/skills/commandments-backend-spatie-data/evals/triggers.json
-sha256 1a589fd51af9da85f7561b9dfacb0bf974e200ce7cafbfe910836114a63cb13d
-=== created .agents/skills/commandments-backend-spatie-data/reference/detectors.md
-sha256 7c1a0da09a8db313b137ed6c3eaf0bb16dc904e8a7bfa2dc1a3ddec77a28ee1b
-=== created .agents/skills/commandments-backend-spatie-data/reference/examples.md
-sha256 dc3394866f45f28453f0bd719c7ef089642b1f94087e9cba2f5c4dc4c4eb100f
-=== created .agents/skills/commandments-backend-tell-dont-ask/SKILL.md
-sha256 3ca6d0177e4ebbc2c4a92c25a01c892df5b695f07923a775f4a4434b2d67337b
-=== created .agents/skills/commandments-backend-tell-dont-ask/reference/detectors.md
-sha256 f05285324ba3314217b71ca55977eb477c37d2ae82dd4b94d7e19a267e5bbbea
-=== created .agents/skills/commandments-backend-tell-dont-ask/reference/examples.md
-sha256 bd3a341716bf8c164ff6b07cdd5450b04ef5fd7a7865192e07fa98f1ba372aa2
-=== created .agents/skills/commandments-backend-templates/SKILL.md
-sha256 c7e3561298d58de9f1da360f4e4fea1fb0b8f652b8e4e1d4d2705b324a40a759
-=== created .agents/skills/commandments-backend-templates/reference/detectors.md
-sha256 172d0beeb842bb0c0d7d70c4bfc1b82f735384a3bd93b2cb972e2fb8f7393509
-=== created .agents/skills/commandments-backend-type-honesty/SKILL.md
-sha256 8f2a4c001398ba75579681a40659a15a33d406f41a6870dadec1c6a8147134e9
-=== created .agents/skills/commandments-backend-type-honesty/evals/triggers.json
-sha256 6ae1a8224c4896470eff830f9b98fb735cde972605d29d8632e582f46cfa9342
-=== created .agents/skills/commandments-backend-type-honesty/reference/detectors.md
-sha256 e910649a76fb6eec396e4ecf511fd1fec23c3dd262130d9d9fd3b4f4209bbddc
-=== created .agents/skills/commandments-backend-type-honesty/reference/examples.md
-sha256 b11be38a340045df67c001783d3ec7bc4df897f81cd19eb3372053a3fc0ba05a
-=== created .agents/skills/commandments-backend-value-objects/SKILL.md
-sha256 b5c96c192aafad2d5fcc51ddbd7d7f15c81e453f5f26b851e107eab8789437a0
-=== created .agents/skills/commandments-backend-value-objects/evals/triggers.json
-sha256 5d352efb68c25a9f70e4981ff9e3ce94927eff698da1aa4deca7e94b5e2ee238
-=== created .agents/skills/commandments-backend-value-objects/reference/detectors.md
-sha256 6870e0df45c0957cebcf08027c1757be0408bfddc38716252ab66031edb40f39
-=== created .agents/skills/commandments-backend-value-objects/reference/examples.md
-sha256 e36a3b0b5cdab03ee34d3dab76bdcc63d6fc14953d8ffc5dbcf4e406544ca196
 === created .agents/skills/commandments-csharp-absence/SKILL.md
-sha256 8d520639d424fcd3795abe387df2a67d5bc8a36fdd429775620e9f3e6c133cf7
+sha256 52fc28311384ef40ffc632230020dfde820b7f81e10f69f530ae028edb902ba7
 === created .agents/skills/commandments-csharp-absence/evals/triggers.json
 sha256 486f118a9ba25698edd80e47d2e32843a2edd73069a8f700947e5a26c5967af5
 === created .agents/skills/commandments-csharp-absence/reference/detectors.md
@@ -175,13 +15,13 @@ sha256 42594d8b6a65b4a307ded1fc42f5ce1f84df803852145f3fe5219c65e2207410
 === created .agents/skills/commandments-csharp-absence/reference/examples.md
 sha256 aa0a7c7e8d06eacd625792cee42f87380791739269b9b35d74a22266ab0b4bde
 === created .agents/skills/commandments-csharp-behaviour-per-method/SKILL.md
-sha256 a90f33c8f6761aec139e69d231c53e0395da71af16b69fe758edbfd8544341cb
+sha256 ded3925bdf886964f0dc5a8ccc9f2dcb37666c0048000ff95a84dd08c487503d
 === created .agents/skills/commandments-csharp-behaviour-per-method/evals/triggers.json
 sha256 81021234a85e35e3aad38b245a7ca703b9b7dc1d81e1610530556ed17d42e86f
 === created .agents/skills/commandments-csharp-behaviour-per-method/reference/detectors.md
 sha256 295d5121822ae72057893a35638b458ce41ec3efc6b72f8c20fbc329bc670108
 === created .agents/skills/commandments-csharp-class-layout/SKILL.md
-sha256 d812a8daf034c4f77c62d9c478447063fdcd5261847c81bc6a176e10e186af58
+sha256 68140387c9aca84ff5b1ee8ccce83729976e1a13203cc29028af081cbff2f51d
 === created .agents/skills/commandments-csharp-class-layout/evals/triggers.json
 sha256 2d39de49b036ab639b1f74ad6d42c37f5a534bf48b8a5245cc09c65c0cafff60
 === created .agents/skills/commandments-csharp-class-layout/reference/detectors.md
@@ -189,13 +29,13 @@ sha256 852570a5d1af58aec83795c44687bfb51c03b4c024c74e090fa4894fc9161550
 === created .agents/skills/commandments-csharp-class-layout/reference/examples.md
 sha256 0e8106bd2509b81e909a547991fc17ea9c937f37e4f84ff080ec20dc102edb4d
 === created .agents/skills/commandments-csharp-dependency-direction/SKILL.md
-sha256 6585ea7ea7ee08761f669b04a7752b04d6ff84c335b174792c63e2c0c7fe422d
+sha256 7b3e6a24d70620f1a0d6adecbe166421657580ff01da11150aebe83a955ebea5
 === created .agents/skills/commandments-csharp-dependency-direction/reference/detectors.md
 sha256 5f2d2ddcdaee2d7d22e0a31ae136f4270e64c65d9d47453add660058ca38c7bc
 === created .agents/skills/commandments-csharp-dependency-direction/reference/examples.md
 sha256 c985e349785f68b1f7121814284f67dc0e7a5037bf5ed69d257ac5c38a25837d
 === created .agents/skills/commandments-csharp-documentation/SKILL.md
-sha256 c32389daded344f02605736acce2a4ae9325197f7a7d2d5c0e4920edd78c0c56
+sha256 45153c52e43c73612257c29091b0896e0481c1dd298174c2648d30bf2c2d133d
 === created .agents/skills/commandments-csharp-documentation/evals/triggers.json
 sha256 ced328d409958baa0f5d6eb067fa5d3b60365035e35c3d66a34708b5cb55be5c
 === created .agents/skills/commandments-csharp-documentation/reference/detectors.md
@@ -203,7 +43,7 @@ sha256 b41e80eaaa48ca84e21d7e687aa1793c359315fa0f42eae723d210341c4fdf87
 === created .agents/skills/commandments-csharp-documentation/reference/examples.md
 sha256 3e0f305467bcf367d48524b63edc44966b454b34d26cbe4c0e6561087d2e8ad2
 === created .agents/skills/commandments-csharp-duplication/SKILL.md
-sha256 a2acb1e094cd343bb59391fefca62da6c6c2d048937ab3732b2d56e1b23b69d3
+sha256 84da89ae401f225f3b8e84ba71ee03f97a52683017629077215336634857691b
 === created .agents/skills/commandments-csharp-duplication/evals/triggers.json
 sha256 fa65d3221cf44c471a24cbfc5ff308bbcda3ec557c1d4090e698480a87820ac5
 === created .agents/skills/commandments-csharp-duplication/reference/detectors.md
@@ -211,7 +51,7 @@ sha256 2f3c9ce9d4ae8aa31778978397e2a928c4037f012261759f05c33238e91229a3
 === created .agents/skills/commandments-csharp-duplication/reference/examples.md
 sha256 18594d0badbc3c1d7dbeffac5deba5616e35dc7a35ebff60e013db593afa9c17
 === created .agents/skills/commandments-csharp-enums/SKILL.md
-sha256 b01ac5ae77d91a0781c437c7584d87e2bf4cfec6870b999b344382d451b5ff75
+sha256 01976c0360adf28105363df9233e190165ce224242bed5a1efcbc5f95b8f9a98
 === created .agents/skills/commandments-csharp-enums/evals/triggers.json
 sha256 a9f583d31207154985eb355e747bf3c7f86857701ba50dfaccd7fb90988f8492
 === created .agents/skills/commandments-csharp-enums/reference/detectors.md
@@ -219,7 +59,7 @@ sha256 35a6cbb8607606603911038096b0e2bfb2c5980ab0aabf38287f365cfa5d7cae
 === created .agents/skills/commandments-csharp-enums/reference/examples.md
 sha256 083d5d06e85755b0e58f4ff553c223b76e74c7f69023bf30c473eb97f033bff4
 === created .agents/skills/commandments-csharp-exceptions/SKILL.md
-sha256 95081416602f8c9d98335c72a13c036caee09f55f0877442a10e577e7d8a25b2
+sha256 188f0d7fbd6d53b3750bab9341d9789dfd40810c86fea3be2481c19f04347051
 === created .agents/skills/commandments-csharp-exceptions/evals/triggers.json
 sha256 8aa39d02dca93515191a843592640ed19ac9a21662b218db7d92f990c8d88c8c
 === created .agents/skills/commandments-csharp-exceptions/reference/detectors.md
@@ -227,7 +67,7 @@ sha256 d93068b635346da932dfee3cf32764dc549019450e0f91aa154a50b803120166
 === created .agents/skills/commandments-csharp-exceptions/reference/examples.md
 sha256 d45371047ecb43b8154a4c3e23000188f03573026dacdf3c05e9d5bff92ce510
 === created .agents/skills/commandments-csharp-fix-at-the-source/SKILL.md
-sha256 9377fcba71348904ca680018fcf88d80bac3ffe436b675ab8012b5ff5efab5be
+sha256 ffacf479f4655938492bb86dfee5d2a2cd8f724eead6d73c77191ce681c952aa
 === created .agents/skills/commandments-csharp-fix-at-the-source/evals/triggers.json
 sha256 8c2f1dd0fbc17c78d65f8665e95eb513dfc318fe1843d3d51ed08a0523848f5f
 === created .agents/skills/commandments-csharp-fix-at-the-source/reference/detectors.md
@@ -235,7 +75,7 @@ sha256 6afb967e227c7a4d2ae860f9bd6b1d87bf0983bd2fb9f7c3479e8fd814c50344
 === created .agents/skills/commandments-csharp-fix-at-the-source/reference/examples.md
 sha256 2064667495d2f084d2528f576f995a1aa87f7d9b80eed49d344cf56412a37b78
 === created .agents/skills/commandments-csharp-flow/SKILL.md
-sha256 b3a902623c965080f137d7af95ecd3e20e0673f089a4efa39cba94b9bff5adbc
+sha256 a964b22bdbb4f4b2676bdc0c9da1d64ff95413945ebe9832b042719e93630b00
 === created .agents/skills/commandments-csharp-flow/evals/triggers.json
 sha256 a9182138fe4601cd05a262dd97848783883fd245ae22326c0cb21dd05155a2f1
 === created .agents/skills/commandments-csharp-flow/reference/detectors.md
@@ -243,19 +83,19 @@ sha256 dae0896af54c30f8538dbd1b0ffa7a8aa30dcd40e315dff948d314b50934d459
 === created .agents/skills/commandments-csharp-flow/reference/examples.md
 sha256 a509741a91495eba9949b462cdcdcd8bcc5a061431eec9532ad94be449b6f03f
 === created .agents/skills/commandments-csharp-method-mood/SKILL.md
-sha256 f92173572bd8a65aa21b2d3c94876f1b5121048110bfec2a0814d6087a643245
+sha256 ec17d62a7c8848db7fa856018bac562393c1ea5c477b410a1bf463d8cba7f525
 === created .agents/skills/commandments-csharp-method-mood/evals/triggers.json
 sha256 27868ccd396e52f059b548867b53756314e59f1ddbbb81fa5d89d3e277f24528
 === created .agents/skills/commandments-csharp-method-mood/reference/detectors.md
 sha256 f8134d3b07cd23195ff9e078c0384337170334e714ccdbe401ef9d1e314d9f26
 === created .agents/skills/commandments-csharp-pass-the-object/SKILL.md
-sha256 df33a7b5fa50fa271d17878aed8d3827d05c14db012b5b7206584abbaaed531a
+sha256 6bdb845bacccd1ccb41ab39f62cbf916e6327ea4397aaeffb203914866a906ff
 === created .agents/skills/commandments-csharp-pass-the-object/reference/detectors.md
 sha256 51b7127fc8b10a6e8872f66910ca41edd1561910a366832a9ad4fc9bac7b25be
 === created .agents/skills/commandments-csharp-pass-the-object/reference/examples.md
 sha256 b350a03eb65458916c6ec06b96c0e9d9f2d060907473597db982285dfbd51a7b
 === created .agents/skills/commandments-csharp-repeated-call-helper/SKILL.md
-sha256 546a3dd980cbcd6c8107a21fcabebc3313294f7dda3647c683a1b5d2fdff6861
+sha256 b7f84b289711b270b5b89671ec52544aac2c08c81df3f8ff110b7ac20e575ade
 === created .agents/skills/commandments-csharp-repeated-call-helper/evals/triggers.json
 sha256 c914455dfa1e75267d6f724b635337d62b89c383782debfa3ff5971cb69d4108
 === created .agents/skills/commandments-csharp-repeated-call-helper/reference/detectors.md
@@ -263,9 +103,9 @@ sha256 fed6121b457df125fb6990b60bce86ffd0e8b0c7aae27e5da4db7b5562d5a365
 === created .agents/skills/commandments-csharp-repeated-call-helper/reference/examples.md
 sha256 c6378ffcbce661a10b9afccc18c7e4ce64127799791beeb54251455bf5450437
 === created .agents/skills/commandments-csharp-role-vocabulary/SKILL.md
-sha256 1606b508d7fba0190960bd013d354388945bfbaaaa26c43c09ead1398511e4ae
+sha256 0fb876c9620263f7bfe6ea10e376f206c5a66aabc13275e8203794106e07bafa
 === created .agents/skills/commandments-csharp-tell-dont-ask/SKILL.md
-sha256 73e2d9dac90514335ede17be45c6e3d9ccdf1e677046c24a16b8b315330c97cd
+sha256 ff4f60a11fc3d65c1f73eb07d152c44b13dd77578523131fb70851cd7683f375
 === created .agents/skills/commandments-csharp-tell-dont-ask/evals/triggers.json
 sha256 f3192247b1a8bf31f77fe6cb49f9b0add81c39ce84934582acf7b17a9fd20a63
 === created .agents/skills/commandments-csharp-tell-dont-ask/reference/detectors.md
@@ -273,13 +113,13 @@ sha256 b2ed5418d348f0a55c5be37a9b358622db3bf94117b1d2abd892c2db5f08e0ae
 === created .agents/skills/commandments-csharp-tell-dont-ask/reference/examples.md
 sha256 87159236e130c4b6ab41b377aef031a88422c74bc0ece68192cf8e63bd192f89
 === created .agents/skills/commandments-csharp-templates/SKILL.md
-sha256 bd431d4218f62157ac53dbd58ea243c3ef569fd7200efd6051f4dbf52dc453ac
+sha256 47e654c971d3de770bc1dc8b49aceffad375299cc5517f1214bc04fd4edf984b
 === created .agents/skills/commandments-csharp-templates/evals/triggers.json
 sha256 db87dbad982001be50b9295739e6c5c2a454e265084d5bc8b112b4e75b54c813
 === created .agents/skills/commandments-csharp-templates/reference/detectors.md
 sha256 5e289ee9e4cf476a49e83edd251a0832eeca1714bd1a446a6b4bf2ac0030df27
 === created .agents/skills/commandments-csharp-type-honesty/SKILL.md
-sha256 cd640aed20d0236f0a9b05e669ec68a4fab55b559926dcc64723f732a2731d46
+sha256 6ff3b4d81710680f61eafedb55e78e78d64fce2fa4a3862451313c52692c6e9e
 === created .agents/skills/commandments-csharp-type-honesty/evals/triggers.json
 sha256 a7429b30b9d09758435cc5cc73137d9ed75073b190a47edeb1635fee97c6b319
 === created .agents/skills/commandments-csharp-type-honesty/reference/detectors.md
@@ -287,33 +127,175 @@ sha256 e8f93f1c3f70f6800ac7089b0e192d476d962261656a4da301f0c6081189a762
 === created .agents/skills/commandments-csharp-type-honesty/reference/examples.md
 sha256 63a1e47839be7f898da1d732b3cb18f02417a460456e1965af008b56b63d7932
 === created .agents/skills/commandments-csharp-value-objects/SKILL.md
-sha256 4699f466dc987cb9bcaba2797f2c764c994196f14a621b3ad920834f42630e17
+sha256 d01b549358d5e0a9ca2b2647ab88ec0d11941b80aa0b93a93a0f0b8001b8f2b0
 === created .agents/skills/commandments-csharp-value-objects/evals/triggers.json
 sha256 36531d81899def3fb5108a4348958646129b5869c555ab2693c9e952f9cbc66f
 === created .agents/skills/commandments-csharp-value-objects/reference/detectors.md
 sha256 ce8902d46333c0a3f297f8c14da4e17f5b75446e03b6131ef6f6eb27920a57d0
 === created .agents/skills/commandments-csharp-value-objects/reference/examples.md
 sha256 aee787e70e4bef7a8bcf993dd71c188c052c3b8de5a083ab846436653ab1e719
-=== created .agents/skills/commandments-frontend-mirrored-server-type/SKILL.md
-sha256 d9d11e702e74dba3dc9f3522deb389cdbed5d866a05e4c70617832f9d3b997fb
-=== created .agents/skills/commandments-frontend-mirrored-server-type/reference/detectors.md
-sha256 85d7b36a19ed1620c215e3e46b1eee833991088b395bcbbc3619bcbb1fd2275f
-=== created .agents/skills/commandments-frontend-mirrored-server-type/reference/examples.md
-sha256 53fbe76ec0bbadca68e21997b5397e78f44f083a84a70c8839bb5ddb15eac2be
-=== created .agents/skills/commandments-frontend-vue-components/SKILL.md
-sha256 8f99100d8be55e3a7e57d3d34a0722dd21c0bf0dedf106f49014e93a6a25f661
-=== created .agents/skills/commandments-frontend-vue-components/reference/detectors.md
-sha256 374e8c6c079483d1238a24f9bdae8340b28839654612528dbaa220cdcf6fd556
-=== created .agents/skills/commandments-frontend-vue-components/reference/examples.md
-sha256 01b8802ad60fdb9b0ea4cfb3f52121dc0b7517c718e01d3f0526dd39e91972dd
-=== created .agents/skills/commandments-frontend-vue-control-flow/SKILL.md
-sha256 c5f7a397bed70ccbdd9ad878e245b64e66d959a2f678b91e2b025e57f004becc
-=== created .agents/skills/commandments-frontend-vue-control-flow/reference/detectors.md
-sha256 cf8762933d2c807c4872e1558093d0f5797dca893320011a92d4210efc8aa656
-=== created .agents/skills/commandments-frontend-vue-control-flow/reference/examples.md
-sha256 a3ab3bdd6342f9a4088b064c2a5a97451264f8785bdf101fa1c8c5ec73619b8e
+=== created .agents/skills/commandments-php-absence/SKILL.md
+sha256 550a96594a668696e1abdf9f6a77f53d38422b82d60c911113827b95cc6b04e6
+=== created .agents/skills/commandments-php-absence/evals/triggers.json
+sha256 0d1ff2eaa3e50e7419bdabdded9a96fe61d78b0d27b72cdf3d2709e25cc72cee
+=== created .agents/skills/commandments-php-absence/reference/detectors.md
+sha256 2ef18a3ea8d52d8d15dbd49876d4abee305bf147753f16cc60622814ae300a6c
+=== created .agents/skills/commandments-php-absence/reference/examples.md
+sha256 b36829aade300aace6900a98840e55a0f5018e5dd07256c22d34e22d915e3e8f
+=== created .agents/skills/commandments-php-behaviour-per-method/SKILL.md
+sha256 4d4eb7b577f56bd9dbd5e42a6e36e919c1f907c3681830fc7f1d10e12cce079b
+=== created .agents/skills/commandments-php-behaviour-per-method/reference/detectors.md
+sha256 983aa7a0498d971d6666c915ff06e830b63fb9adddacf3cb65a31b9c198dab37
+=== created .agents/skills/commandments-php-class-layout/SKILL.md
+sha256 98d9f2eb2311440b371e07474203f919e418af22cf86653d2b767aaa9e0f664d
+=== created .agents/skills/commandments-php-class-layout/evals/triggers.json
+sha256 d4632886706279f968c199bec81276421dcbf0221d04dfedefe88405b7cc2e7a
+=== created .agents/skills/commandments-php-class-layout/reference/detectors.md
+sha256 50f5a748baf466e0f2c7becd556156c4a4e1f5ac02ded4c4af9afde22680fb0d
+=== created .agents/skills/commandments-php-class-layout/reference/examples.md
+sha256 c2eeff3123c7b4d3851ef52ca1076da3528d6d44f0d5e9e6d0442ae80df41cd4
+=== created .agents/skills/commandments-php-concurrent-state/SKILL.md
+sha256 e8d3efd07bb8b70a0200e77204bf879d99b5d8765b7f8b348aad8c5bf0eee051
+=== created .agents/skills/commandments-php-concurrent-state/reference/detectors.md
+sha256 b4cb157fee5cc4f1809331139cdf75a67d44d72d449445c26928bf84d343bb65
+=== created .agents/skills/commandments-php-dependency-direction/SKILL.md
+sha256 2e3347264324c0bed131fa44ee5203699960ec387982ed7b9804b7ac0d574204
+=== created .agents/skills/commandments-php-dependency-direction/reference/detectors.md
+sha256 23a6e94feb5b25b8fc44ec9dfb4e4c658e3fa288ffacce78fd634b98ecceec2d
+=== created .agents/skills/commandments-php-dependency-direction/reference/examples.md
+sha256 3fb68d39a94d21ff9bae7fe350e77e82db8e224ca951852d1634e96f5ab0de05
+=== created .agents/skills/commandments-php-documentation/SKILL.md
+sha256 6212d57424b70ed32a616011487ab3530f70e47f78d405209ca6a60fb009b937
+=== created .agents/skills/commandments-php-documentation/evals/triggers.json
+sha256 8f674155dc6959c83e8fec49b30d745f8547c18542856b13b87698f6a19ef3a7
+=== created .agents/skills/commandments-php-documentation/reference/detectors.md
+sha256 6d7d232a8c81c8f77cdd58b997cb7f8fbdf50e0258846ffe573c0481614c6ee4
+=== created .agents/skills/commandments-php-documentation/reference/examples.md
+sha256 a247887aafdb6753490666fd88cc97ce147657cb58796d1eaa1d69784c85caa1
+=== created .agents/skills/commandments-php-enums-with-behaviour/SKILL.md
+sha256 ba852a9f9e0adf0150c23e1a5c7984da03327f55a1baaad5deb795b5d88bf64a
+=== created .agents/skills/commandments-php-enums-with-behaviour/reference/detectors.md
+sha256 82effff8af90d928f718ba4a53140d113ca66cfb03159c0e32c4f61ab3b1958d
+=== created .agents/skills/commandments-php-enums-with-behaviour/reference/examples.md
+sha256 831738430fb436b66b476dae6490bf651fc1d88ac1546b4bc47c3c877c796cb3
+=== created .agents/skills/commandments-php-exceptions/SKILL.md
+sha256 b896a54f14f037cafe1677e42c4c348e198de0a78610c52d38638c0e4fa11a40
+=== created .agents/skills/commandments-php-exceptions/reference/detectors.md
+sha256 cfde23ec22e12ce1260ec195c05c9c6304dc92987d68a7d3b37a9d7f2b5b37d6
+=== created .agents/skills/commandments-php-exceptions/reference/examples.md
+sha256 0659317df186b791ddedbf94c8d50d707f875b380eddc3fb3d511fe56db2c379
+=== created .agents/skills/commandments-php-fix-at-the-source/SKILL.md
+sha256 328a379600f865373989100980c9d210f0433b9ee4c5ec509023201230e03d43
+=== created .agents/skills/commandments-php-fix-at-the-source/evals/triggers.json
+sha256 353f548c902f613b2474812df1b419cd59ebbfe23f9ca5ab0946f0885568e5d0
+=== created .agents/skills/commandments-php-fix-at-the-source/reference/detectors.md
+sha256 160b946b3937a08999649c54b2c7c1f90f2feafa6d7b5a2bc4e6f738a53dde78
+=== created .agents/skills/commandments-php-fix-at-the-source/reference/examples.md
+sha256 f147f8fd3c72eb59b3e32d747b9c4d1bfec2628a619f0451a2e6552870de8aa0
+=== created .agents/skills/commandments-php-guard-clauses-and-flow/SKILL.md
+sha256 e7934b6a0a9cabdb456ebce52210d7b7ab3b7dc32e564bbc6d60bb10d177acba
+=== created .agents/skills/commandments-php-guard-clauses-and-flow/evals/triggers.json
+sha256 78cdb5b117e3beac6f647e8f37b333dfefc9be3c595727fb44df650b82bc8f98
+=== created .agents/skills/commandments-php-guard-clauses-and-flow/reference/detectors.md
+sha256 da486aac3462ddf0eb4ee3c9d094b566271801bfcecf83e6dab4227fb2fc14e1
+=== created .agents/skills/commandments-php-guard-clauses-and-flow/reference/examples.md
+sha256 fb96007b3ba3e283c66041a872933bf68df58b7392fc90c266358c0984c41429
+=== created .agents/skills/commandments-php-laravel-idioms/SKILL.md
+sha256 3eb8b11803c2f045077b4793e47493ae4ebb1b2ab090bbf5f9b774efdd624b72
+=== created .agents/skills/commandments-php-laravel-idioms/evals/triggers.json
+sha256 f3673ef98b8ce1acab91f3ecc97301c16aa176283fa9a4af0069d55bd04467ec
+=== created .agents/skills/commandments-php-laravel-idioms/reference/detectors.md
+sha256 3bc10e0787c75f9c0a0b2dbe409cb36684a99c3c7913b14be4bcbb51d2ca71e3
+=== created .agents/skills/commandments-php-laravel-idioms/reference/examples.md
+sha256 bc55384bcd8a164e138f8cfbd8e4e4602736e0c0e02ecababcb65458fd41990f
+=== created .agents/skills/commandments-php-method-mood/SKILL.md
+sha256 427b16b439a91780994ca825f46c62d2de4a422682c8646bba8dac08a8dd2f02
+=== created .agents/skills/commandments-php-method-mood/evals/triggers.json
+sha256 757b9f25005a7289952f6ac141f4057fb4fbe51c1e06f93fe7095852a943b855
+=== created .agents/skills/commandments-php-method-mood/reference/detectors.md
+sha256 bb09b49e6aae8752272e6bfa1b19a1ebba47d2343c0ab4823498fcc77e57a203
+=== created .agents/skills/commandments-php-method-mood/reference/examples.md
+sha256 847da21ed5ca2f361c82c538b1d5361bd22744a78444ec45eb534aa37f9f542a
+=== created .agents/skills/commandments-php-page-objects/SKILL.md
+sha256 42448aafeba40826143a5d2cf4d97ac9fcaafd7333f1c1b17ace1658d63a0c69
+=== created .agents/skills/commandments-php-page-objects/evals/triggers.json
+sha256 4040e7acd3c965288c67657477bfbbc187c6631e7576de025acde9d72adaa5c8
+=== created .agents/skills/commandments-php-page-objects/reference/detectors.md
+sha256 1e2b41b8e51de4a77aa27d73f2cdd6a31d49ff0a93bfe578a89e44425f3f8cfe
+=== created .agents/skills/commandments-php-page-objects/reference/examples.md
+sha256 6bd42f867176d4bc07c9a16b97fe75215fec81dca3c4289d9e51d899198693f5
+=== created .agents/skills/commandments-php-pass-the-object/SKILL.md
+sha256 dba4da5ad3a81063ca3ecaa86ab9bc43d8cc2c16dafab23ae4f80aa97e87864c
+=== created .agents/skills/commandments-php-pass-the-object/reference/detectors.md
+sha256 c13d8fe4bc79cf9f8ecb22e821427cd283aeeb56581778af7b51da719ff9e6ea
+=== created .agents/skills/commandments-php-pass-the-object/reference/examples.md
+sha256 6188cb4b1a580e15bacf9a26b0643493dcc4312d88f969a70efbefa95aa76a48
+=== created .agents/skills/commandments-php-repeated-call-helper/SKILL.md
+sha256 bd7389d370f2362aa1c08d93218bfb85ea0ffa6964891c48432f2344bfc6039d
+=== created .agents/skills/commandments-php-repeated-call-helper/evals/triggers.json
+sha256 4bc1590caefff59e69d0411fae6bbd091b18079addd8c6faeac38c16f95d389e
+=== created .agents/skills/commandments-php-repeated-call-helper/reference/detectors.md
+sha256 044063234c894c44b9a08b09cd9393effa992dde6c756f105694a869501670f9
+=== created .agents/skills/commandments-php-repeated-call-helper/reference/examples.md
+sha256 9cc8c7cc01cc8e1b021a3bf2f5c3e8a6fb02a3cd38563ce39222df2b623a3723
+=== created .agents/skills/commandments-php-role-vocabulary/SKILL.md
+sha256 12fac166cd09ffe2e59351d4a35a5bd8b91f0f70a6c023a5ade39d5ad3355564
+=== created .agents/skills/commandments-php-role-vocabulary/reference/detectors.md
+sha256 1990ef20016407254fbf6818bdd684800a9e798bc834472b35ae183cc3dcf09b
+=== created .agents/skills/commandments-php-route-actions/SKILL.md
+sha256 595fceb39a263a488be29318153f532e0053d2944da11695fc42e8b3bf8f4b07
+=== created .agents/skills/commandments-php-route-actions/evals/triggers.json
+sha256 f340a04dc4342d4ebe63be2821a8328aa944a70a0760fba8fd8f0ac8a6f18331
+=== created .agents/skills/commandments-php-route-actions/reference/detectors.md
+sha256 5a307607a46d914d74286f7e6d1b4fd24958bf8b87290ca76c07b053162a599c
+=== created .agents/skills/commandments-php-route-actions/reference/examples.md
+sha256 53929353f82afb73beede32d155e2a1eaa436caf332636d7e73d5d142d89c6d3
+=== created .agents/skills/commandments-php-spatie-data-hydration/SKILL.md
+sha256 0802089e1ed25d11040ff96a546878b0e76ab1555dd1f56aeed2a5e6f33b46b2
+=== created .agents/skills/commandments-php-spatie-data-hydration/evals/triggers.json
+sha256 0f29b5a9810cb1a6a64c639e6c8306b672fe73ba17bad033e9c43857253e5201
+=== created .agents/skills/commandments-php-spatie-data-hydration/reference/detectors.md
+sha256 6bd22b8b047b8a9c5608c827714b909fd7c6e75dfe7ec0e2bd603cae934785db
+=== created .agents/skills/commandments-php-spatie-data-hydration/reference/examples.md
+sha256 d8733341b31ed8194d4729bda2ba67372ff5908210973d87258c92e0dfb8b544
+=== created .agents/skills/commandments-php-spatie-data-hydration/reference/mechanics.md
+sha256 518e19806a38bdc1ebe8033bcbd897a5fd2a5dd0a211704ac53fef7f2ef40ca6
+=== created .agents/skills/commandments-php-spatie-data/SKILL.md
+sha256 aa958b3eb5905393417e7c0943f020fc48c2cb03eee2f783cccba5843c03290f
+=== created .agents/skills/commandments-php-spatie-data/evals/triggers.json
+sha256 1a589fd51af9da85f7561b9dfacb0bf974e200ce7cafbfe910836114a63cb13d
+=== created .agents/skills/commandments-php-spatie-data/reference/detectors.md
+sha256 7c1a0da09a8db313b137ed6c3eaf0bb16dc904e8a7bfa2dc1a3ddec77a28ee1b
+=== created .agents/skills/commandments-php-spatie-data/reference/examples.md
+sha256 dc3394866f45f28453f0bd719c7ef089642b1f94087e9cba2f5c4dc4c4eb100f
+=== created .agents/skills/commandments-php-tell-dont-ask/SKILL.md
+sha256 3104e10bb9954ef3e62293029063677d23861de83f11979ebb2fc41ad5aa4b69
+=== created .agents/skills/commandments-php-tell-dont-ask/reference/detectors.md
+sha256 f05285324ba3314217b71ca55977eb477c37d2ae82dd4b94d7e19a267e5bbbea
+=== created .agents/skills/commandments-php-tell-dont-ask/reference/examples.md
+sha256 bd3a341716bf8c164ff6b07cdd5450b04ef5fd7a7865192e07fa98f1ba372aa2
+=== created .agents/skills/commandments-php-templates/SKILL.md
+sha256 b3590b0ad313e6f209135d8718054e957f772e7fa29e523dfb5b1cafb276a97d
+=== created .agents/skills/commandments-php-templates/reference/detectors.md
+sha256 172d0beeb842bb0c0d7d70c4bfc1b82f735384a3bd93b2cb972e2fb8f7393509
+=== created .agents/skills/commandments-php-type-honesty/SKILL.md
+sha256 a4e8f6c8b97aee0bd0eb8b75f9283662e90c70047c44add8bbe13c15406195ac
+=== created .agents/skills/commandments-php-type-honesty/evals/triggers.json
+sha256 6ae1a8224c4896470eff830f9b98fb735cde972605d29d8632e582f46cfa9342
+=== created .agents/skills/commandments-php-type-honesty/reference/detectors.md
+sha256 e910649a76fb6eec396e4ecf511fd1fec23c3dd262130d9d9fd3b4f4209bbddc
+=== created .agents/skills/commandments-php-type-honesty/reference/examples.md
+sha256 b11be38a340045df67c001783d3ec7bc4df897f81cd19eb3372053a3fc0ba05a
+=== created .agents/skills/commandments-php-value-objects/SKILL.md
+sha256 3604df8ce15d6bdab4035f1b272aae6bba1333fc7acc321a3e3dc7b2920a03ab
+=== created .agents/skills/commandments-php-value-objects/evals/triggers.json
+sha256 5d352efb68c25a9f70e4981ff9e3ce94927eff698da1aa4deca7e94b5e2ee238
+=== created .agents/skills/commandments-php-value-objects/reference/detectors.md
+sha256 6870e0df45c0957cebcf08027c1757be0408bfddc38716252ab66031edb40f39
+=== created .agents/skills/commandments-php-value-objects/reference/examples.md
+sha256 e36a3b0b5cdab03ee34d3dab76bdcc63d6fc14953d8ffc5dbcf4e406544ca196
 === created .agents/skills/commandments-python-absence/SKILL.md
-sha256 8ef7ae8387207b514d2b876abe81b7617e3057d0c4779b995b08bc9505181e0e
+sha256 1cb7cba3b5e205c67f74d6082fbe2cd0393dbd050823ed07a56b53e2b7d931f7
 === created .agents/skills/commandments-python-absence/evals/triggers.json
 sha256 04a1a302e31f6a86ac93f9a8e306da499d80e9fe772f3b5d22a55d3eb94102e3
 === created .agents/skills/commandments-python-absence/reference/detectors.md
@@ -321,13 +303,13 @@ sha256 7c930f676e5dc6d6e38639752274a28e8c7a83129d4968eff89e386870972a21
 === created .agents/skills/commandments-python-absence/reference/examples.md
 sha256 45f5bc7581403b623bf3c88eb864b5512cd1ebf3a01d0196c38e9c492fbe2b20
 === created .agents/skills/commandments-python-behaviour-per-method/SKILL.md
-sha256 cbbe221f6eaf70c22d95f411a2c57db49ce4f6363bdeef0732c2af2865055051
+sha256 42b3b0d7b29e2435958aac3b8c8c67c96f01887c275cfe1695b56144eb5b457b
 === created .agents/skills/commandments-python-behaviour-per-method/evals/triggers.json
 sha256 cf73524c09e481f83fd209d70910b23ec5e1eb671f8c07f26b4a0917b5a1694c
 === created .agents/skills/commandments-python-behaviour-per-method/reference/detectors.md
 sha256 24156e8d972a9b00b0426cf0ae4a6247f6d02ff0dbd396e27457edf7608c1738
 === created .agents/skills/commandments-python-class-layout/SKILL.md
-sha256 b029deb3888ea5a1f5f8ad02ca91f293ca5c1e7abc31fd4f15157460ec5b67c2
+sha256 42d6307f42a63610ca0c05b9ef869fc414071482a4e51a07dab69a34e7debd06
 === created .agents/skills/commandments-python-class-layout/evals/triggers.json
 sha256 1f5ae2de333950c95607e966113ee0d015b1aaf03f7e83ed8d7158214e139345
 === created .agents/skills/commandments-python-class-layout/reference/detectors.md
@@ -335,7 +317,7 @@ sha256 f0488f7525c2a19f2c4c64dc840a5bfce8c173c76d1e0ae429749b313c0dcc24
 === created .agents/skills/commandments-python-class-layout/reference/examples.md
 sha256 d339a80d14e535a73e9335726b604cf9b43c45035ec6245d41d8f9d893c8bde9
 === created .agents/skills/commandments-python-dependency-direction/SKILL.md
-sha256 b1af0b05a21929814067d42b3c4ed22a5b45a62a2576a78ab4bd4647c6d1d5c3
+sha256 295e1667523c8572add724b4d82015620b9ce62e443d226f790628e00c1dfbd1
 === created .agents/skills/commandments-python-dependency-direction/evals/triggers.json
 sha256 4add8755fb0231cc1ab2438b571f8771da6e1ddd5cada17f16dbf827c8cbc0d7
 === created .agents/skills/commandments-python-dependency-direction/reference/detectors.md
@@ -343,7 +325,7 @@ sha256 072986582cedd1106bce6be2520075c98406cea1473ae4f350a38539fe74113d
 === created .agents/skills/commandments-python-dependency-direction/reference/examples.md
 sha256 84354724a560927b3f175539518b6424d8b59286cca285ebf9b4a3f7f9ea9858
 === created .agents/skills/commandments-python-documentation/SKILL.md
-sha256 1af733da050b9c33fa37822d3052558ad2806f46f00905831ffeb9738a5241a1
+sha256 20c04825a4ae7fb4bcdc5fd22ec26b0c8782388f684c5b4ebec9590cfa090e80
 === created .agents/skills/commandments-python-documentation/evals/triggers.json
 sha256 4f41e9c3c4d84b8b5a4d2681ee74452eddab8c05e95298a60114bc55a7237003
 === created .agents/skills/commandments-python-documentation/reference/detectors.md
@@ -351,7 +333,7 @@ sha256 dbc0b2622fd8f199bb3f6a25ee38f200294deecdb43259354c6afd762e6a36ee
 === created .agents/skills/commandments-python-documentation/reference/examples.md
 sha256 c6cf1ea1370d2502e615b3d26bc6e1a89cba8df0040e8a5c9881ac9e45e7eb04
 === created .agents/skills/commandments-python-duplication/SKILL.md
-sha256 9a7a5ea88732f9fb209aba113acbfc207b36c4706b76acd46a6cfea667178861
+sha256 a2999f57fbf8aecc7ac6bad8d41e75c5131466a895988a7c7b25dcdbecfdeb28
 === created .agents/skills/commandments-python-duplication/evals/triggers.json
 sha256 04962f99da2e3237b2ea094d0ef509c31e095e2f0d901307f488a2724b3fe1d7
 === created .agents/skills/commandments-python-duplication/reference/detectors.md
@@ -359,7 +341,7 @@ sha256 247f76b411b691e1ea9f9eb6aac3f05b355113d2869421225ed60080c2a80b02
 === created .agents/skills/commandments-python-duplication/reference/examples.md
 sha256 785a98418701a385cc0df59e86ed591b103ff003cf411544f2c0d2542f371e7d
 === created .agents/skills/commandments-python-enums/SKILL.md
-sha256 02764d2cc70d31f5407465ae8441491a8701eb778aed6054d733970fc92b35eb
+sha256 2ae270c7c4f1e6779e6e56371d45016cecf5804e2e78c9b0cd96b670300dcd02
 === created .agents/skills/commandments-python-enums/evals/triggers.json
 sha256 626cf2d32c2ea6d868980e7400095ab0dc711104d1cc8c49c1b99a16a038ea0a
 === created .agents/skills/commandments-python-enums/reference/detectors.md
@@ -367,7 +349,7 @@ sha256 232b67e6411e7a29f4530d7b35409127a496bf4fe57c5a2125696cd7510cea95
 === created .agents/skills/commandments-python-enums/reference/examples.md
 sha256 0fb70c93e4585fc2b1bc27b9efa27a9fd02c76bf23376bf63063035c9094908a
 === created .agents/skills/commandments-python-exceptions/SKILL.md
-sha256 909ca9fcca36ee11dd6991c3bb4171b9cded3a41a86f0130a55512cbdeaa6c82
+sha256 28bf388a82d778c63ef18f459e3ede84a19b02bd7fe455de39081d3c7ee839d3
 === created .agents/skills/commandments-python-exceptions/evals/triggers.json
 sha256 88bead1d452302d389d59f2fe0538078ee04d69b5d129c321a061afae2adeb5c
 === created .agents/skills/commandments-python-exceptions/reference/detectors.md
@@ -375,7 +357,7 @@ sha256 187accb619b0b975314c69c41b2f8e3938f93ad1cdd406953bb59229dc5882fa
 === created .agents/skills/commandments-python-exceptions/reference/examples.md
 sha256 941b58ff4ad432724caefc129f36028a763c02c29a056fc83e478bbb868750c6
 === created .agents/skills/commandments-python-fix-at-the-source/SKILL.md
-sha256 a33a4f832a8ec707e2e3c47171e7415d8b6331d04e7965ab32bb4b5865ababa7
+sha256 160e04af893367ebdec8a62cb01ac14979f3bc16ee8701b130cc44e3b831643c
 === created .agents/skills/commandments-python-fix-at-the-source/evals/triggers.json
 sha256 40f3c0ef66201a403bdd34663ed47e82c8c77a0981cdd8b6fb8b27b6f818e644
 === created .agents/skills/commandments-python-fix-at-the-source/reference/detectors.md
@@ -383,7 +365,7 @@ sha256 ef5695162d6176cc2158c43c4fffc37c2b99d18c380883eea9ff76b1ffdfc073
 === created .agents/skills/commandments-python-fix-at-the-source/reference/examples.md
 sha256 47ed7a3d8bfac6b806c9efc46704bbea21318570f3a0ed047f5296468d638796
 === created .agents/skills/commandments-python-flow/SKILL.md
-sha256 c69e18bf4e5bc47bf8bc6186d8051c5b3f154a2c72d6a1dee4f1edf63a60169e
+sha256 3117bbafa05bf21fc141d126068ce8b47770cc80bc1c08caa1920cc6318b6f0d
 === created .agents/skills/commandments-python-flow/evals/triggers.json
 sha256 b6fc5e492ba1ab37cbe9445b72c22c54723582a1fbf1c485b479fbb6650c5934
 === created .agents/skills/commandments-python-flow/reference/detectors.md
@@ -391,7 +373,7 @@ sha256 4ca053a25b0df7b4eafa77d37f9a5cdb049e74847cdb6672989f9a5bdae03b48
 === created .agents/skills/commandments-python-flow/reference/examples.md
 sha256 752423e4500abee60c32a2b543b796b5aae12e3b9ba2ec9202373440369d8765
 === created .agents/skills/commandments-python-method-mood/SKILL.md
-sha256 2d1645796b9ee6f2ef18b2ad2e0af7b87a3a0506879df6f2a91d5755329445e0
+sha256 4ef0589f7180f8fa8919a94fed917e5f7d6e425380e525f3ba4c8749ea4f4456
 === created .agents/skills/commandments-python-method-mood/evals/triggers.json
 sha256 241873ab80ff7f49d7b67848c63e5816a45ce694b9a62435d1f2033f0d9744d5
 === created .agents/skills/commandments-python-method-mood/reference/detectors.md
@@ -399,7 +381,7 @@ sha256 923153c85d97f668db9c289a12b5e781c4035b698336a62a43e0ac49d8d86c08
 === created .agents/skills/commandments-python-method-mood/reference/examples.md
 sha256 c55a68e502bf1c97279e1262a4053accac1ee0e28e6f8f13f7cbbc37ba00dbeb
 === created .agents/skills/commandments-python-pass-the-object/SKILL.md
-sha256 73aa2bd58225bbba8af6247c2cceb22e3a8ffba951e9bd79277fba8ac0f8629b
+sha256 e081ef3d06dd4e4b536f716d86fe7687983c4f3571b34d2c0069e79f14be48a5
 === created .agents/skills/commandments-python-pass-the-object/evals/triggers.json
 sha256 e01dae9b52f73145183fae23936438ad4208b43c7bfc7536ebfec6f41cff4f1e
 === created .agents/skills/commandments-python-pass-the-object/reference/detectors.md
@@ -407,7 +389,7 @@ sha256 1592f5b0acb5b4e7448114efe971755a2a48559d312da2ccd6c04eb05f610c97
 === created .agents/skills/commandments-python-pass-the-object/reference/examples.md
 sha256 6d83ec864d2c71663f742cd95eb0639f93c915daf80addf61ab59401fcfea5aa
 === created .agents/skills/commandments-python-repeated-call-helper/SKILL.md
-sha256 8d9ccfcefd5a38534da5d756bb76de31200cedd6d631a94a9d82466ae35aa625
+sha256 4cd67f4392e647ab5efed6f6ba216201774d4d350c976a756882af16befa1bab
 === created .agents/skills/commandments-python-repeated-call-helper/evals/triggers.json
 sha256 055040b7d28bd4b70afd273f8eb7f034185c7b8fbb22d83f1032cf2a7165243b
 === created .agents/skills/commandments-python-repeated-call-helper/reference/detectors.md
@@ -415,13 +397,13 @@ sha256 6f1733bd63641e1ba89bf1da9412c14fab266403807547f7c006c935338534db
 === created .agents/skills/commandments-python-repeated-call-helper/reference/examples.md
 sha256 ec6b072e10dfd0268d72d4e93b529b6dd63c811be43e273847accc53660df41d
 === created .agents/skills/commandments-python-role-vocabulary/SKILL.md
-sha256 dc9ae3a4f666af5f806986558a46ef06337e301085607670b76b89ebb7afaeae
+sha256 1a82da6211b5e6f63e4e7772b00edac70e870edcf2c0ec064fab138efc306f4c
 === created .agents/skills/commandments-python-role-vocabulary/evals/triggers.json
 sha256 d61a9bb1fa290a41353c36f41f271bade2d947942738fcbc26146a3c5f8f59fb
 === created .agents/skills/commandments-python-role-vocabulary/reference/detectors.md
 sha256 0232ea4d0a819741c1445d11c8f8fc15843920256776191b268b5d70e23f21cf
 === created .agents/skills/commandments-python-tell-dont-ask/SKILL.md
-sha256 f541c10c89fa4812732540bb5e3b9a2262fbcbbdd8f24fb5da8d3fa9191cb3d2
+sha256 f8c8feddadd16e0cea6f752b50d7020605080ff469a6c6678c2c2b15d57437d5
 === created .agents/skills/commandments-python-tell-dont-ask/evals/triggers.json
 sha256 59b0817c6e9f0694f9b547839f1107c4ac85a49670fb6c0482377c447aa44b61
 === created .agents/skills/commandments-python-tell-dont-ask/reference/detectors.md
@@ -429,13 +411,13 @@ sha256 98b33776aaa15c1269b5db42c0116bc89323e074440dd1a468fca5af2a4c75cb
 === created .agents/skills/commandments-python-tell-dont-ask/reference/examples.md
 sha256 0beb271e3eacea10105846c90bf6bd954357f86145f2b51c612466a080279876
 === created .agents/skills/commandments-python-templates/SKILL.md
-sha256 6b6f306e7968ee58989305fadb9406e4d40da088f9c4681802d19db12c079d33
+sha256 5ef653af146dfadc25d6eec336fb1cc6ad3a114c6091e5b35a3071135d3a84b1
 === created .agents/skills/commandments-python-templates/evals/triggers.json
 sha256 9683c432cb02155e65bf175d3e0573df942214901fdf7fb6df2008513898373c
 === created .agents/skills/commandments-python-templates/reference/detectors.md
 sha256 e3a73de9c199a8e64420bd166273e6f8a17259f58e1d3779e824d8d108145627
 === created .agents/skills/commandments-python-type-honesty/SKILL.md
-sha256 ddfa019d15ca893c1099be2456fb67f4b5b1d1793535e13e7ddb8bf4f19c3026
+sha256 0287de738a71c0aa85aeacb9e6c9063e3f53dd87a483809c1b93d5dd316bec4f
 === created .agents/skills/commandments-python-type-honesty/evals/triggers.json
 sha256 a572c11507b088bc4f53cafbf2319453888a256484df3bf7b8c662cddc79bedd
 === created .agents/skills/commandments-python-type-honesty/reference/detectors.md
@@ -443,7 +425,7 @@ sha256 7fe5283a384fa3832400fd51c37227372d4251c7d24a756773ce58aaf8704375
 === created .agents/skills/commandments-python-type-honesty/reference/examples.md
 sha256 77d43c57a9ffbe062d4476022ef4159fcfedb93e5b38dae7750d3febd7d3b0b2
 === created .agents/skills/commandments-python-value-objects/SKILL.md
-sha256 9c016aa696fe59199f8819eb927b573bed54a654dd61a962c7892c021f418978
+sha256 64a322e3e1da8fbda0bee49f77fecfa8a46ca34dbf3dbdcf436a1cb113db1dc9
 === created .agents/skills/commandments-python-value-objects/evals/triggers.json
 sha256 8555b63298c2db187ae9e8640785a2d40221d03b767077f1cdf02fcc01be4cfc
 === created .agents/skills/commandments-python-value-objects/reference/detectors.md
@@ -451,7 +433,7 @@ sha256 cdf22cc3894e7cb55ad0620c32b2663af6d8ea8b8ee405c4059187fd073022c5
 === created .agents/skills/commandments-python-value-objects/reference/examples.md
 sha256 4c63cd66daf255b3ffd0b72543c11cc65ada2a2f9a55d27665812e187d765852
 === created .agents/skills/commandments-typescript-absence/SKILL.md
-sha256 2dd7af8b89d3f0e5fd4ddb230ec828b41933a548b1b63a0fda6d0e946e39f159
+sha256 ae493db1df89d9de26a1d19a6864422841ee5a44dccc73e3bfb8fc68e83ec7b4
 === created .agents/skills/commandments-typescript-absence/evals/triggers.json
 sha256 6ef30a905658099f09e900ac015064bf758f0f6b4f856ff9fd2e3df9f400df10
 === created .agents/skills/commandments-typescript-absence/reference/detectors.md
@@ -459,7 +441,7 @@ sha256 dae489d7a1de27dcedbda4daf08149cc6b7fa7cc8a868d1fddce4d4892bcae97
 === created .agents/skills/commandments-typescript-absence/reference/examples.md
 sha256 5f42bd8d0075640a6ffa3b7ae264ba19c545100e3bba413881c0acf5b26c64cf
 === created .agents/skills/commandments-typescript-duplication/SKILL.md
-sha256 f588cb1be3a9cc40e6c1424896505cd9da8939f946146602dd4415810f3b8d26
+sha256 7077ea4f2ffb30e92d5118c19d9325be374e687226cfbe4ed29b5965b58d916b
 === created .agents/skills/commandments-typescript-duplication/evals/triggers.json
 sha256 883009bdc125f06784d7386a09e678b6e689ed77f9278b2f9a6f013ab25aa655
 === created .agents/skills/commandments-typescript-duplication/reference/detectors.md
@@ -467,13 +449,31 @@ sha256 0dd7a04297682e342a2161485e0895cfb33fd79b3b3f7563bb61868efe260613
 === created .agents/skills/commandments-typescript-duplication/reference/examples.md
 sha256 bad17b47d8dbe48dfdb6e083db02b7a7558fd916ceed728c2a69146b7ef4dc97
 === created .agents/skills/commandments-typescript-flow/SKILL.md
-sha256 100048e89af5566016aae98f4f2df097d09a4b7264edd2ead6894b24e7bff42c
+sha256 96ce6d0a0016a58a2cafbf305b85afb4f8a9817c14e9faf417b233e7f012551f
 === created .agents/skills/commandments-typescript-flow/reference/detectors.md
 sha256 575f8a6a02fbf9a99f3feffa1437b21bb2cf54854692ae32bc0d8ceca7a92ec4
+=== created .agents/skills/commandments-vue-mirrored-server-type/SKILL.md
+sha256 48c3edbdcd7cc1637d8f52c50f10f224fe2f66af238c8aa6dbb9bb6ce315367a
+=== created .agents/skills/commandments-vue-mirrored-server-type/reference/detectors.md
+sha256 85d7b36a19ed1620c215e3e46b1eee833991088b395bcbbc3619bcbb1fd2275f
+=== created .agents/skills/commandments-vue-mirrored-server-type/reference/examples.md
+sha256 53fbe76ec0bbadca68e21997b5397e78f44f083a84a70c8839bb5ddb15eac2be
+=== created .agents/skills/commandments-vue-vue-components/SKILL.md
+sha256 806e7a752d2c9d547a15290778f281c5169b35daf3455d84f34deb3c3e088ba7
+=== created .agents/skills/commandments-vue-vue-components/reference/detectors.md
+sha256 374e8c6c079483d1238a24f9bdae8340b28839654612528dbaa220cdcf6fd556
+=== created .agents/skills/commandments-vue-vue-components/reference/examples.md
+sha256 01b8802ad60fdb9b0ea4cfb3f52121dc0b7517c718e01d3f0526dd39e91972dd
+=== created .agents/skills/commandments-vue-vue-control-flow/SKILL.md
+sha256 b55f3997f595b2602be6ad1b7b2dbd451eb7b04b7354188b1faaa77e7eaf7d06
+=== created .agents/skills/commandments-vue-vue-control-flow/reference/detectors.md
+sha256 cf8762933d2c807c4872e1558093d0f5797dca893320011a92d4210efc8aa656
+=== created .agents/skills/commandments-vue-vue-control-flow/reference/examples.md
+sha256 a3ab3bdd6342f9a4088b064c2a5a97451264f8785bdf101fa1c8c5ec73619b8e
 === created .agents/skills/commandments-writing-detectors/SKILL.md
-sha256 ee3c82a25a95a56d92d563110511e0df0fb56ea7553ba65ad23ef5cc21686af0
+sha256 80b62cac88e9adc819156eb2e47f10040c515290085d151274a92ec98eac5c9b
 === created .agents/skills/commandments/SKILL.md
-sha256 bc2a6c9213c5a66ff2589406725ca35495de7b23eeb894382bb07866a577c320
+sha256 be26c19aed8f2719a6cbeea651bd209f03f0ef47a3c51121b937123577f1dd01
 === changed .agents/skills/mine/SKILL.md
 sha256 3fd30542fe3f61b14bd4a4b2dc0b6fb30fa6f63ebce52dd1778aaa8c4dc02cff
 === created .claude/settings.json
@@ -584,7 +584,7 @@ use JesseGall\CodeCommandments\Agents;
  */
 $disabledSkills = function (Config $config): void {
     $config->disable(
-        // ----------[ Backend ]----------
+        // ----------[ PHP ]----------
         // Skills\Backend\Absence::class,
         // Skills\Backend\BehaviourPerMethod::class,
         // Skills\Backend\ClassLayout::class,
@@ -611,7 +611,7 @@ $disabledSkills = function (Config $config): void {
         // Skills\TypeScript\Absence::class,
         // Skills\TypeScript\Duplication::class,
 
-        // ----------[ Frontend ]----------
+        // ----------[ Vue ]----------
         // Skills\Frontend\MirroredServerType::class,
         // Skills\Frontend\VueComponents::class,
         // Skills\Frontend\VueControlFlow::class,
@@ -663,7 +663,7 @@ $disabledSkills = function (Config $config): void {
  */
 $disabledSins = function (Config $config): void {
     $config->disable(
-        // ----------[ Backend ]----------
+        // ----------[ PHP ]----------
         // Sins\Backend\ArchaeologyComment::class,
         // Sins\Backend\ArrayBag::class,
         // Sins\Backend\ArrayReturnBag::class,
@@ -784,7 +784,7 @@ $disabledSins = function (Config $config): void {
         // Sins\Backend\UselessPropertyHook::class,
         // Sins\Backend\WrappingWithoutCause::class,
 
-        // ----------[ Frontend ]----------
+        // ----------[ Vue ]----------
         // Sins\Frontend\CompoundInlineComponent::class,
         // Sins\Frontend\ControlFlowOnElement::class,
         // Sins\Frontend\DeepDataReach::class,
@@ -968,32 +968,32 @@ return function (Config $config) use ($disabledSkills, $disabledSins, $disabledH
 # The skills code-commandments published here, so it can retire its own and leave yours
 # alone. Regenerated on every sync; deleting it only means a retired skill lingers.
 commandments
-commandments-backend-fix-at-the-source
-commandments-backend-guard-clauses-and-flow
-commandments-backend-value-objects
-commandments-backend-spatie-data
-commandments-backend-spatie-data-hydration
-commandments-backend-laravel-idioms
-commandments-backend-page-objects
-commandments-backend-documentation
-commandments-backend-absence
-commandments-backend-class-layout
-commandments-backend-exceptions
-commandments-backend-method-mood
-commandments-backend-enums-with-behaviour
-commandments-backend-role-vocabulary
-commandments-backend-tell-dont-ask
-commandments-backend-type-honesty
-commandments-backend-pass-the-object
-commandments-backend-concurrent-state
-commandments-backend-templates
-commandments-backend-route-actions
-commandments-frontend-vue-components
-commandments-backend-repeated-call-helper
-commandments-frontend-vue-control-flow
-commandments-backend-dependency-direction
-commandments-backend-behaviour-per-method
-commandments-frontend-mirrored-server-type
+commandments-php-fix-at-the-source
+commandments-php-guard-clauses-and-flow
+commandments-php-value-objects
+commandments-php-spatie-data
+commandments-php-spatie-data-hydration
+commandments-php-laravel-idioms
+commandments-php-page-objects
+commandments-php-documentation
+commandments-php-absence
+commandments-php-class-layout
+commandments-php-exceptions
+commandments-php-method-mood
+commandments-php-enums-with-behaviour
+commandments-php-role-vocabulary
+commandments-php-tell-dont-ask
+commandments-php-type-honesty
+commandments-php-pass-the-object
+commandments-php-concurrent-state
+commandments-php-templates
+commandments-php-route-actions
+commandments-vue-vue-components
+commandments-php-repeated-call-helper
+commandments-vue-vue-control-flow
+commandments-php-dependency-direction
+commandments-php-behaviour-per-method
+commandments-vue-mirrored-server-type
 commandments-typescript-absence
 commandments-typescript-duplication
 commandments-typescript-flow
@@ -1067,7 +1067,7 @@ THERE, never where it surfaces. A finding is a symptom, so before you change a l
 where the bad value, missing type or wrong shape is BORN. Do NOT silence it: a `?? default`, a
 cast, a null-check, a wrapper, a try/catch, or dropping a type to satisfy a detector launders the
 problem and grows the code. If the honest fix touches many call sites, touch them — that breadth
-IS the bug surfacing. Load `commandments-backend-fix-at-the-source` before your first edit, and
+IS the bug surfacing. Load `commandments-php-fix-at-the-source` before your first edit, and
 again rather than working from memory, since a compaction drops it silently.
 
 **Finding and fixing sins.** Run `commandments judge` ONCE, scoped — `--changes` for your
@@ -1098,7 +1098,7 @@ The briefing above is the canon, shared with every agent. These are the parts of
 that have a specific name in this harness:
 
 - **Load a skill with the Skill tool**, by the exact id in the briefing's bullets —
-  e.g. `commandments-backend-absence`. The published skills are linked into
+  e.g. `commandments-php-absence`. The published skills are linked into
   `.claude/skills/`, so they also autocomplete as `/`-commands.
 
 **The disciplines here are ENFORCED, not just written down.** Hooks are wired into

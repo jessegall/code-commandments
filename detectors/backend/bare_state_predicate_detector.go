@@ -13,7 +13,7 @@ import (
 // BareStatePredicateDetector finds a bool method about its own state named as a third-person verb instead of a question.
 type BareStatePredicateDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, BareStatePredicateDetector{}) }
+func init() { detectors.Register(catalog.PHP, BareStatePredicateDetector{}) }
 
 // Sin is the sin the detector finds.
 func (BareStatePredicateDetector) Sin() sins.Sin { return backendsins.BareStatePredicate{} }

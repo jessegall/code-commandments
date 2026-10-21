@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, IndexAsKeyDetector{})
+	detectors.Register(catalog.Vue, IndexAsKeyDetector{})
 }
 
 // IndexAsKeyDetector finds a v-for keyed by its index, `:key="index"`, which shifts as items are inserted or

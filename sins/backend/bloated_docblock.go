@@ -9,7 +9,7 @@ import (
 // BloatedDocblock is the bloated-docblock sin.
 type BloatedDocblock struct{}
 
-func init() { sins.Register(catalog.Backend, BloatedDocblock{}) }
+func init() { sins.Register(catalog.PHP, BloatedDocblock{}) }
 
 // Definition is what the sin states about itself.
 func (BloatedDocblock) Definition() sins.Definition {

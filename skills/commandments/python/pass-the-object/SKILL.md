@@ -92,6 +92,6 @@ The other 3 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/pass-the-object`](../../backend/pass-the-object/SKILL.md) — the same discipline over PHP methods.
+- [`php/pass-the-object`](../../php/pass-the-object/SKILL.md) — the same discipline over PHP methods.
 - [`python/tell-dont-ask`](../tell-dont-ask/SKILL.md) — the sibling: once you hold the object, ask it rather than reaching into it.
 - [`python/value-objects`](../value-objects/SKILL.md) — the type an id stands in for.

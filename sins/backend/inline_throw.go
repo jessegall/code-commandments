@@ -9,7 +9,7 @@ import (
 // InlineThrow is the inline-throw sin.
 type InlineThrow struct{}
 
-func init() { sins.Register(catalog.Backend, InlineThrow{}) }
+func init() { sins.Register(catalog.PHP, InlineThrow{}) }
 
 // Definition is what the sin states about itself.
 func (InlineThrow) Definition() sins.Definition {

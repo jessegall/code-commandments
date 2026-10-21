@@ -10,7 +10,7 @@ import (
 type ImpossibleGuard struct{}
 
 func init() {
-	sins.Register(catalog.Backend, ImpossibleGuard{})
+	sins.Register(catalog.PHP, ImpossibleGuard{})
 }
 
 // Definition is what the sin states about itself.

@@ -9,7 +9,7 @@ import (
 // RepeatedTypeGuard is the repeated-type-guard sin.
 type RepeatedTypeGuard struct{}
 
-func init() { sins.Register(catalog.Backend, RepeatedTypeGuard{}) }
+func init() { sins.Register(catalog.PHP, RepeatedTypeGuard{}) }
 
 // Definition is what the sin states about itself.
 func (RepeatedTypeGuard) Definition() sins.Definition {

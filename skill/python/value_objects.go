@@ -34,7 +34,7 @@ func (ValueObjects) Definition() skill.Definition {
 		Principle: valueObjectsPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/value-objects", Note: "the same discipline on the PHP backend."},
+			{Slug: "php/value-objects", Note: "the same discipline on the PHP backend."},
 			{Slug: "python/absence", Note: "a field that is always there is typed as such, not read with `.get(...) or \"\"`."},
 		},
 	}

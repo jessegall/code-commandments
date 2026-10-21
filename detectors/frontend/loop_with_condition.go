@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	detectors.Register(catalog.Frontend, LoopWithConditionDetector{})
+	detectors.Register(catalog.Vue, LoopWithConditionDetector{})
 }
 
 // LoopWithConditionDetector finds a v-for and a v-if on one element: Vue gives v-if the higher priority, so

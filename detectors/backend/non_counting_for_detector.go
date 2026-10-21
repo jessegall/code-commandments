@@ -12,7 +12,7 @@ import (
 // NonCountingForDetector finds a for loop whose steps advance no counter, a while loop in disguise.
 type NonCountingForDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NonCountingForDetector{}) }
+func init() { detectors.Register(catalog.PHP, NonCountingForDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NonCountingForDetector) Sin() sins.Sin { return backendsins.NonCountingFor{} }

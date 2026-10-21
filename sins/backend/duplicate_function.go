@@ -9,7 +9,7 @@ import (
 // DuplicateFunction is the duplicate-function sin.
 type DuplicateFunction struct{}
 
-func init() { sins.Register(catalog.Backend, DuplicateFunction{}) }
+func init() { sins.Register(catalog.PHP, DuplicateFunction{}) }
 
 // Definition is what the sin states about itself.
 func (DuplicateFunction) Definition() sins.Definition {

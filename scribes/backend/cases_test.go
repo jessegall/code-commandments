@@ -103,7 +103,7 @@ func loadCases(t *testing.T) []recordedCase {
 // backendDetector is the backend detector the catalog holds under the name.
 func backendDetector(t *testing.T, name string) detectors.Detector {
 	t.Helper()
-	for _, detector := range detectors.Of(catalog.Backend) {
+	for _, detector := range detectors.Of(catalog.PHP) {
 		if catalog.Name(detector) == name {
 			return detector
 		}

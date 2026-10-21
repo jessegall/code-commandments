@@ -9,7 +9,7 @@ import (
 // DeadConfigKey is the dead-config-key sin.
 type DeadConfigKey struct{}
 
-func init() { sins.Register(catalog.Backend, DeadConfigKey{}) }
+func init() { sins.Register(catalog.PHP, DeadConfigKey{}) }
 
 // Definition is what the sin states about itself.
 func (DeadConfigKey) Definition() sins.Definition {

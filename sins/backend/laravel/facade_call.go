@@ -9,7 +9,7 @@ import (
 // FacadeCall is the facade-call sin.
 type FacadeCall struct{}
 
-func init() { sins.Register(catalog.Backend, FacadeCall{}) }
+func init() { sins.Register(catalog.PHP, FacadeCall{}) }
 
 // Definition is what the sin states about itself.
 func (FacadeCall) Definition() sins.Definition {

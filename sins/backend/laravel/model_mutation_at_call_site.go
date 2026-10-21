@@ -9,7 +9,7 @@ import (
 // ModelMutationAtCallSite is the model-mutation-at-call-site sin.
 type ModelMutationAtCallSite struct{}
 
-func init() { sins.Register(catalog.Backend, ModelMutationAtCallSite{}) }
+func init() { sins.Register(catalog.PHP, ModelMutationAtCallSite{}) }
 
 // Definition is what the sin states about itself.
 func (ModelMutationAtCallSite) Definition() sins.Definition {

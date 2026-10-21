@@ -9,7 +9,7 @@ import (
 // GenericException is the generic-exception sin.
 type GenericException struct{}
 
-func init() { sins.Register(catalog.Backend, GenericException{}) }
+func init() { sins.Register(catalog.PHP, GenericException{}) }
 
 // Definition is what the sin states about itself.
 func (GenericException) Definition() sins.Definition {

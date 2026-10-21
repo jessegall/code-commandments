@@ -9,7 +9,7 @@ import (
 // NamespaceCycle is the namespace-cycle sin.
 type NamespaceCycle struct{}
 
-func init() { sins.Register(catalog.Backend, NamespaceCycle{}) }
+func init() { sins.Register(catalog.PHP, NamespaceCycle{}) }
 
 // Definition is what the sin states about itself.
 func (NamespaceCycle) Definition() sins.Definition {

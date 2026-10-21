@@ -118,6 +118,6 @@ The other 5 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/enums-with-behaviour`](../../backend/enums-with-behaviour/SKILL.md) — the same discipline on the PHP backend, with backed enums.
+- [`php/enums-with-behaviour`](../../php/enums-with-behaviour/SKILL.md) — the same discipline on the PHP backend, with backed enums.
 - [`python/enums`](../../python/enums/SKILL.md) — the same discipline in Python.
 - [`csharp/flow`](../flow/SKILL.md) — the `else if` ladder over one subject that an enum and a `switch` expression replace.

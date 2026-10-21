@@ -12,7 +12,7 @@ import (
 // InlineDocblockDetector finds a docblock squeezed onto its content lines instead of opening and closing on lines of its own.
 type InlineDocblockDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, InlineDocblockDetector{}) }
+func init() { detectors.Register(catalog.PHP, InlineDocblockDetector{}) }
 
 // Sin is the sin the detector finds.
 func (InlineDocblockDetector) Sin() sins.Sin { return backendsins.InlineDocblock{} }

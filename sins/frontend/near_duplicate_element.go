@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, NearDuplicateElement{})
+	sins.Register(catalog.Vue, NearDuplicateElement{})
 }
 
 // NearDuplicateElement is the sin "near-duplicate-element".

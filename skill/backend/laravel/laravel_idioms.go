@@ -18,13 +18,13 @@ var (
 type LaravelIdioms struct{}
 
 func init() {
-	skill.Register(catalog.Backend, LaravelIdioms{})
+	skill.Register(catalog.PHP, LaravelIdioms{})
 }
 
 // Definition is what the skill states about itself.
 func (LaravelIdioms) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/laravel-idioms",
+		Slug:      "php/laravel-idioms",
 		Tier:      skill.Mandatory,
 		Order:     5,
 		Title:     "Laravel idioms — typed access, injected deps, behaviour on the model",
@@ -34,9 +34,9 @@ func (LaravelIdioms) Definition() skill.Definition {
 		Principle: laravelIdiomsPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/value-objects", Note: "a typed request getter / typed bag read returns the typed value the data should already be; raw `->input()` is the loose-array smell at the HTTP edge."},
-			{Slug: "backend/fix-at-the-source", Note: "read input typed at the boundary so nothing downstream re-coerces a `mixed`."},
-			{Slug: "backend/absence", Note: "a typed accessor for an optional field still answers \"can this be missing?\" honestly (a nullable getter vs a defaulted one), not a bare `->input($k, $default)`."},
+			{Slug: "php/value-objects", Note: "a typed request getter / typed bag read returns the typed value the data should already be; raw `->input()` is the loose-array smell at the HTTP edge."},
+			{Slug: "php/fix-at-the-source", Note: "read input typed at the boundary so nothing downstream re-coerces a `mixed`."},
+			{Slug: "php/absence", Note: "a typed accessor for an optional field still answers \"can this be missing?\" honestly (a nullable getter vs a defaulted one), not a bare `->input($k, $default)`."},
 		},
 	}
 }

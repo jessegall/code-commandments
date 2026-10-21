@@ -12,7 +12,7 @@ import (
 // MessageAtThrowDetector finds an exception handed its message at the throw instead of by a named factory.
 type MessageAtThrowDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, MessageAtThrowDetector{}) }
+func init() { detectors.Register(catalog.PHP, MessageAtThrowDetector{}) }
 
 // Sin is the sin the detector finds.
 func (MessageAtThrowDetector) Sin() sins.Sin { return backendsins.MessageAtThrow{} }

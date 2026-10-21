@@ -9,7 +9,7 @@ import (
 // RedundantArrowReturnType is the redundant-arrow-return-type sin.
 type RedundantArrowReturnType struct{}
 
-func init() { sins.Register(catalog.Backend, RedundantArrowReturnType{}) }
+func init() { sins.Register(catalog.PHP, RedundantArrowReturnType{}) }
 
 // Definition is what the sin states about itself.
 func (RedundantArrowReturnType) Definition() sins.Definition {

@@ -1,108 +1,5 @@
 exit: 0
 --- stdout
-[1;33mbackend/absence[0m
-  BlankStringDefaultDetector
-  BlankStringOnTheWireDetector
-  CancelledCoalesceDetector
-  ConditionalArraySpreadDetector
-  DeNulledFinderDetector
-  ErasedNullObjectDetector
-  NullableCallbackDetector
-  OptionAsNullableDetector
-[1;33mbackend/behaviour-per-method[0m
-  FlagArgumentDetector
-[1;33mbackend/class-layout[0m
-  MemberAfterMethodDetector
-  MemberOutOfOrderDetector
-[1;33mbackend/dependency-direction[0m
-  NamespaceCycleDetector
-  NamespaceDependencyDetector
-[1;33mbackend/documentation[0m
-  ArchaeologyCommentDetector
-  BloatedDocblockDetector
-  CeremonyDocblockDetector
-  DanglingDocReferenceDetector
-  InlineDocblockDetector
-  NegativeSpaceCommentDetector
-  RestatedCommentDetector
-  StackedDocblockDetector
-[1;33mbackend/enums-with-behaviour[0m
-  ConstClassEnumDetector
-  EnumCaseOrChainDetector
-  EnumValueMatchDetector
-  InArrayMirrorsEnumDetector
-  MatchDefaultReturnsNullDetector
-  SideTableTraitDetector
-  StringMatchMirrorsEnumDetector
-  UnnamedVocabularyLiteralDetector
-[1;33mbackend/exceptions[0m
-  GenericExceptionDetector
-  MessageAtThrowDetector
-  RethrownUnchangedDetector
-  SwallowCatchDetector
-  WrappingWithoutCauseDetector
-[1;33mbackend/fix-at-the-source[0m
-  ConstructorSideEffectDetector
-  DivergentTwinDetector
-  DuplicateFunctionDetector
-  ManufacturedFakeFillDetector
-  MutableStaticStateDetector
-  NearDuplicateFunctionDetector
-  UnreadCollaboratorDetector
-[1;33mbackend/guard-clauses-and-flow[0m
-  CoalescedLoopSubjectDetector
-  DeepNestingDetector
-  IfElseLadderDetector
-  InlineThrowDetector
-  LoopInvertedGuardDetector
-  NestedTernaryDetector
-  NonCountingForDetector
-  RedundantElseDetector
-  ShortCircuitStatementDetector
-  TernaryStatementDetector
-  UnnamedConditionDetector
-[1;33mbackend/laravel-idioms[0m
-  HandedOutCollectionDetector
-  QueryInLoopDetector
-[1;33mbackend/method-mood[0m
-  BareStatePredicateDetector
-  NarratedCommandDetector
-[1;33mbackend/pass-the-object[0m
-  ComputedBooleanArgumentDetector
-  ConvertedArgumentDetector
-  DerivedArgumentDetector
-  ParamResolvedFromParamDetector
-[1;33mbackend/repeated-call-helper[0m
-  RepeatedGuardDetector
-  RepeatedNamedCallDetector
-  RepeatedTypeGuardDetector
-[1;33mbackend/role-vocabulary[0m
-  NullableRegistryLookupDetector
-[1;33mbackend/tell-dont-ask[0m
-  FeatureEnvyDetector
-  KeyedLookupEnvyDetector
-  TrainWreckDetector
-  TypeSwitchDetector
-[1;33mbackend/templates[0m
-  AssembledTemplateDetector
-[1;33mbackend/type-honesty[0m
-  FilledParameterDetector
-  ImpossibleGuardDetector
-  MaskedInvariantDetector
-  PhantomNullableDetector
-  RedundantArrowReturnTypeDetector
-  ScratchStateRestoreDetector
-  PlaceholderFilledDataDetector
-  UselessPropertyHookDetector
-[1;33mbackend/value-objects[0m
-  ArrayBagDetector
-  ArrayReturnBagDetector
-  CoupledFieldsDetector
-  DataClumpDetector
-  HandRolledWitherDetector
-  MutableValueObjectDetector
-  PositionalTupleReturnDetector
-  RawDecodedArrayReturnDetector
 [1;33mcsharp/absence[0m
   BlankStringDefaultDetector
   CancelledCoalesceDetector
@@ -183,21 +80,109 @@ exit: 0
   HandedOutCollectionDetector
   MutableValueObjectDetector
   PositionalTupleReturnDetector
-[1;33mfrontend/vue-components[0m
-  ComponentBudgetDetector
-  CompoundInlineComponentDetector
-  DeepDataReachDetector
-  DeepNestedDetector
-  DuplicateElementDetector
-  InlineCaseViewsDetector
-  NearDuplicateElementDetector
-  PropDrillingDetector
-  PropMutationDetector
-[1;33mfrontend/vue-control-flow[0m
-  ControlFlowOnElementDetector
-  IndexAsKeyDetector
-  LoopWithConditionDetector
-  SwitchCaseDetector
+[1;33mphp/absence[0m
+  BlankStringDefaultDetector
+  BlankStringOnTheWireDetector
+  CancelledCoalesceDetector
+  ConditionalArraySpreadDetector
+  DeNulledFinderDetector
+  ErasedNullObjectDetector
+  NullableCallbackDetector
+  OptionAsNullableDetector
+[1;33mphp/behaviour-per-method[0m
+  FlagArgumentDetector
+[1;33mphp/class-layout[0m
+  MemberAfterMethodDetector
+  MemberOutOfOrderDetector
+[1;33mphp/dependency-direction[0m
+  NamespaceCycleDetector
+  NamespaceDependencyDetector
+[1;33mphp/documentation[0m
+  ArchaeologyCommentDetector
+  BloatedDocblockDetector
+  CeremonyDocblockDetector
+  DanglingDocReferenceDetector
+  InlineDocblockDetector
+  NegativeSpaceCommentDetector
+  RestatedCommentDetector
+  StackedDocblockDetector
+[1;33mphp/enums-with-behaviour[0m
+  ConstClassEnumDetector
+  EnumCaseOrChainDetector
+  EnumValueMatchDetector
+  InArrayMirrorsEnumDetector
+  MatchDefaultReturnsNullDetector
+  SideTableTraitDetector
+  StringMatchMirrorsEnumDetector
+  UnnamedVocabularyLiteralDetector
+[1;33mphp/exceptions[0m
+  GenericExceptionDetector
+  MessageAtThrowDetector
+  RethrownUnchangedDetector
+  SwallowCatchDetector
+  WrappingWithoutCauseDetector
+[1;33mphp/fix-at-the-source[0m
+  ConstructorSideEffectDetector
+  DivergentTwinDetector
+  DuplicateFunctionDetector
+  ManufacturedFakeFillDetector
+  MutableStaticStateDetector
+  NearDuplicateFunctionDetector
+  UnreadCollaboratorDetector
+[1;33mphp/guard-clauses-and-flow[0m
+  CoalescedLoopSubjectDetector
+  DeepNestingDetector
+  IfElseLadderDetector
+  InlineThrowDetector
+  LoopInvertedGuardDetector
+  NestedTernaryDetector
+  NonCountingForDetector
+  RedundantElseDetector
+  ShortCircuitStatementDetector
+  TernaryStatementDetector
+  UnnamedConditionDetector
+[1;33mphp/laravel-idioms[0m
+  HandedOutCollectionDetector
+  QueryInLoopDetector
+[1;33mphp/method-mood[0m
+  BareStatePredicateDetector
+  NarratedCommandDetector
+[1;33mphp/pass-the-object[0m
+  ComputedBooleanArgumentDetector
+  ConvertedArgumentDetector
+  DerivedArgumentDetector
+  ParamResolvedFromParamDetector
+[1;33mphp/repeated-call-helper[0m
+  RepeatedGuardDetector
+  RepeatedNamedCallDetector
+  RepeatedTypeGuardDetector
+[1;33mphp/role-vocabulary[0m
+  NullableRegistryLookupDetector
+[1;33mphp/tell-dont-ask[0m
+  FeatureEnvyDetector
+  KeyedLookupEnvyDetector
+  TrainWreckDetector
+  TypeSwitchDetector
+[1;33mphp/templates[0m
+  AssembledTemplateDetector
+[1;33mphp/type-honesty[0m
+  FilledParameterDetector
+  ImpossibleGuardDetector
+  MaskedInvariantDetector
+  PhantomNullableDetector
+  RedundantArrowReturnTypeDetector
+  ScratchStateRestoreDetector
+  PlaceholderFilledDataDetector
+  UselessPropertyHookDetector
+[1;33mphp/value-objects[0m
+  ArrayBagDetector
+  ArrayReturnBagDetector
+  CoupledFieldsDetector
+  DataClumpDetector
+  HandRolledWitherDetector
+  MutableValueObjectDetector
+  PositionalTupleReturnDetector
+  RawDecodedArrayReturnDetector
 [1;33mpython/absence[0m
   BlankStringDefaultDetector
   CancelledFallbackDetector
@@ -303,6 +288,21 @@ exit: 0
   SideTableTraitDetector
 [1;33mtypescript/flow[0m
   CollectionMutatedWhileIteratedDetector
+[1;33mvue/vue-components[0m
+  ComponentBudgetDetector
+  CompoundInlineComponentDetector
+  DeepDataReachDetector
+  DeepNestedDetector
+  DuplicateElementDetector
+  InlineCaseViewsDetector
+  NearDuplicateElementDetector
+  PropDrillingDetector
+  PropMutationDetector
+[1;33mvue/vue-control-flow[0m
+  ControlFlowOnElementDetector
+  IndexAsKeyDetector
+  LoopWithConditionDetector
+  SwitchCaseDetector
 
 --- stderr
 

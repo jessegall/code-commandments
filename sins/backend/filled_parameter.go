@@ -10,7 +10,7 @@ import (
 type FilledParameter struct{}
 
 func init() {
-	sins.Register(catalog.Backend, FilledParameter{})
+	sins.Register(catalog.PHP, FilledParameter{})
 }
 
 // Definition is what the sin states about itself.

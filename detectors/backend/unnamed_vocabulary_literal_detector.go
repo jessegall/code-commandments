@@ -12,7 +12,7 @@ import (
 // UnnamedVocabularyLiteralDetector finds a string literal passed where the same slot is elsewhere spelled with a named constant.
 type UnnamedVocabularyLiteralDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, UnnamedVocabularyLiteralDetector{}) }
+func init() { detectors.Register(catalog.PHP, UnnamedVocabularyLiteralDetector{}) }
 
 // Sin is the sin the detector finds.
 func (UnnamedVocabularyLiteralDetector) Sin() sins.Sin { return backendsins.UnnamedVocabularyLiteral{} }

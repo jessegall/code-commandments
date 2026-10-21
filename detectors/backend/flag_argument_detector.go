@@ -12,7 +12,7 @@ import (
 // FlagArgumentDetector finds a method whose whole body branches on a bool or absent parameter: two methods sharing one name.
 type FlagArgumentDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, FlagArgumentDetector{}) }
+func init() { detectors.Register(catalog.PHP, FlagArgumentDetector{}) }
 
 // Sin is the sin the detector finds.
 func (FlagArgumentDetector) Sin() sins.Sin { return backendsins.FlagArgument{} }

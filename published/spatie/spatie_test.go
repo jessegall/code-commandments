@@ -38,7 +38,7 @@ func TestTheFixtureServerPublishesItsDataClassesAndTheirOutput(t *testing.T) {
 		t.Errorf("the published Data classes are %v", names)
 	}
 	output, _ := filepath.Abs("../../tests/Fixtures/frontend/generated/server-types.ts")
-	if len(generated) != 1 || !strings.HasSuffix(generated[0].Location, "frontend/generated/server-types.ts") || !generated[0].Covers(evaluated(output)) {
+	if len(generated) != 1 || !strings.HasSuffix(generated[0].Location, "vue/generated/server-types.ts") || !generated[0].Covers(evaluated(output)) {
 		t.Errorf("the transformer's output is published as %v", generated)
 	}
 }

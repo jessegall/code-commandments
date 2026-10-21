@@ -13,7 +13,7 @@ import (
 // ManualHydrationLoopDetector finds a Data class hydrated item by item in a loop, where collect() belongs.
 type ManualHydrationLoopDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ManualHydrationLoopDetector{}) }
+func init() { detectors.Register(catalog.PHP, ManualHydrationLoopDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ManualHydrationLoopDetector) Sin() sins.Sin { return backendsins.ManualHydrationLoop{} }

@@ -9,7 +9,7 @@ import (
 // TransformerWithoutTsType is the transformer-without-ts-type sin.
 type TransformerWithoutTsType struct{}
 
-func init() { sins.Register(catalog.Backend, TransformerWithoutTsType{}) }
+func init() { sins.Register(catalog.PHP, TransformerWithoutTsType{}) }
 
 // Definition is what the sin states about itself.
 func (TransformerWithoutTsType) Definition() sins.Definition {

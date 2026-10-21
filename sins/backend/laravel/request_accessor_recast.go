@@ -9,7 +9,7 @@ import (
 // RequestAccessorRecast is the request-accessor-recast sin.
 type RequestAccessorRecast struct{}
 
-func init() { sins.Register(catalog.Backend, RequestAccessorRecast{}) }
+func init() { sins.Register(catalog.PHP, RequestAccessorRecast{}) }
 
 // Definition is what the sin states about itself.
 func (RequestAccessorRecast) Definition() sins.Definition {

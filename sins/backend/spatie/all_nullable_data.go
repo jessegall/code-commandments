@@ -9,7 +9,7 @@ import (
 // AllNullableData is the all-nullable-data sin.
 type AllNullableData struct{}
 
-func init() { sins.Register(catalog.Backend, AllNullableData{}) }
+func init() { sins.Register(catalog.PHP, AllNullableData{}) }
 
 // Definition is what the sin states about itself.
 func (AllNullableData) Definition() sins.Definition {

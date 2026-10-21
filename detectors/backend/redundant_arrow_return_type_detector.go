@@ -12,7 +12,7 @@ import (
 // RedundantArrowReturnTypeDetector finds an arrow function whose written return type only restates the type of its expression.
 type RedundantArrowReturnTypeDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RedundantArrowReturnTypeDetector{}) }
+func init() { detectors.Register(catalog.PHP, RedundantArrowReturnTypeDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RedundantArrowReturnTypeDetector) Sin() sins.Sin { return backendsins.RedundantArrowReturnType{} }

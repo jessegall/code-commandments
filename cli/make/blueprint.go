@@ -8,38 +8,25 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/skill"
 )
 
-// Engine is the engine a new rule judges.
-type Engine string
-
-// The engines a commandment can be written for.
-const (
-	Backend    Engine = "backend"
-	Frontend   Engine = "frontend"
-	TypeScript Engine = "typescript"
-	Python     Engine = "python"
-	CSharp     Engine = "csharp"
-)
+// Engine is the engine a new rule judges: the catalog's own, so a name is read in one place and an engine
+// renamed is renamed once.
+type Engine = catalog.Engine
 
 // Engines are every engine, in the order they are offered.
-var Engines = []Engine{Backend, Frontend, TypeScript, Python, CSharp}
+var Engines = catalog.Engines
 
-// ParseEngine reads an engine by name, whatever its case.
+// ParseEngine reads an engine by name, whatever its case, and by the name it was published under before.
 func ParseEngine(name string) (Engine, bool) {
-	for _, engine := range Engines {
-		if string(engine) == strings.ToLower(name) {
-			return engine, true
-		}
-	}
-
-	return "", false
+	return catalog.EngineNamed(name)
 }
 
 // ProbeRoot is where a throwaway probe for the engine goes.
-func (e Engine) ProbeRoot() string {
-	if e == Frontend || e == TypeScript {
+func ProbeRoot(e Engine) string {
+	if e == catalog.Vue || e == catalog.TypeScript {
 		return "resources/js"
 	}
 
@@ -47,15 +34,15 @@ func (e Engine) ProbeRoot() string {
 }
 
 // ProbeExtension is the probe file's extension, which is also the language its skill teaches.
-func (e Engine) ProbeExtension() string {
+func ProbeExtension(e Engine) string {
 	switch e {
-	case Frontend:
+	case catalog.Vue:
 		return "vue"
-	case TypeScript:
+	case catalog.TypeScript:
 		return "ts"
-	case Python:
+	case catalog.Python:
 		return "py"
-	case CSharp:
+	case catalog.CSharp:
 		return "cs"
 	default:
 		return "php"

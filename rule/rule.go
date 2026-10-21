@@ -22,8 +22,8 @@ import (
 
 // languages are the languages each engine judges.
 var languages = map[catalog.Engine][]contract.Language{
-	catalog.Backend:    {contract.PHP},
-	catalog.Frontend:   {contract.Vue},
+	catalog.PHP:    {contract.PHP},
+	catalog.Vue:   {contract.Vue},
 	catalog.TypeScript: {contract.TypeScript, contract.Vue},
 	catalog.Python:     {contract.Python},
 	catalog.CSharp:     {contract.CSharp},
@@ -188,7 +188,7 @@ var layered = map[catalog.Engine]struct {
 	separator     string
 	caseSensitive bool
 }{
-	catalog.Backend: {`\`, false},
+	catalog.PHP: {`\`, false},
 	catalog.Python:  {".", true},
 	catalog.CSharp:  {".", true},
 }
@@ -223,9 +223,9 @@ func Parse(name string, text []byte, skills Skills) (Rule, error) {
 		return Rule{}, fmt.Errorf("%s: the rule is one JSON object, and more follows it", name)
 	}
 
-	engine := catalog.Engine(read.Engine)
+	engine, _ := catalog.EngineNamed(read.Engine)
 	if _, known := languages[engine]; !known {
-		return Rule{}, fmt.Errorf("%s: %s", name, noneOf("engine", read.Engine, engineNames()))
+		return Rule{}, fmt.Errorf("%s: %s", name, noneOf("engine", read.Engine, engineNames(), append(engineNames(), catalog.FormerNames()...)))
 	}
 
 	if read.Sin.Name == "" || read.Sin.Skill == "" {
@@ -513,9 +513,16 @@ func selector(named string) (func(*engine.Codebase) *engine.Query, error) {
 	return func(c *engine.Codebase) *engine.Query { return c.WhereIs(engine.Neutral(named)) }, nil
 }
 
-// noneOf says a key's value is none of the ones it may take, naming the nearest when it is a slip of the keyboard.
-func noneOf(key, value string, allowed []string) string {
-	return fmt.Sprintf("%s %q is none of %s%s", key, value, strings.Join(allowed, ", "), didYouMean(value, allowed))
+// noneOf says a key's value is none of the ones it may take, naming the nearest when it is a slip of the
+// keyboard. What it lists and what a slip is measured against can differ: an engine lists the names of today and
+// answers to the ones it was published under before, so a slip near one of those is named too.
+func noneOf(key, value string, allowed []string, meant ...[]string) string {
+	nearest := allowed
+	if len(meant) > 0 {
+		nearest = meant[0]
+	}
+
+	return fmt.Sprintf("%s %q is none of %s%s", key, value, strings.Join(allowed, ", "), didYouMean(value, nearest))
 }
 
 // engineNames are the names of every engine a rule may judge.

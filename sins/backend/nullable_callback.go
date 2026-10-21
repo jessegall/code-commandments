@@ -9,7 +9,7 @@ import (
 // NullableCallback is the nullable-callback sin.
 type NullableCallback struct{}
 
-func init() { sins.Register(catalog.Backend, NullableCallback{}) }
+func init() { sins.Register(catalog.PHP, NullableCallback{}) }
 
 // Definition is what the sin states about itself.
 func (NullableCallback) Definition() sins.Definition {

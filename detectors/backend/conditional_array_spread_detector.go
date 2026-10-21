@@ -12,7 +12,7 @@ import (
 // ConditionalArraySpreadDetector finds an array spread or merged in only when a condition holds, [] otherwise.
 type ConditionalArraySpreadDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ConditionalArraySpreadDetector{}) }
+func init() { detectors.Register(catalog.PHP, ConditionalArraySpreadDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ConditionalArraySpreadDetector) Sin() sins.Sin { return backendsins.ConditionalArraySpread{} }

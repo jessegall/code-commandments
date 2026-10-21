@@ -9,7 +9,7 @@ import (
 // EnumCaseOrChain is the enum-case-or-chain sin.
 type EnumCaseOrChain struct{}
 
-func init() { sins.Register(catalog.Backend, EnumCaseOrChain{}) }
+func init() { sins.Register(catalog.PHP, EnumCaseOrChain{}) }
 
 // Definition is what the sin states about itself.
 func (EnumCaseOrChain) Definition() sins.Definition {

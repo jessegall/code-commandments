@@ -18,13 +18,13 @@ var (
 type PassTheObject struct{}
 
 func init() {
-	skill.Register(catalog.Backend, PassTheObject{})
+	skill.Register(catalog.PHP, PassTheObject{})
 }
 
 // Definition is what the skill states about itself.
 func (PassTheObject) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/pass-the-object",
+		Slug:      "php/pass-the-object",
 		Tier:      skill.KeepInMind,
 		Order:     13,
 		Title:     "Pass the object, not its id",
@@ -34,8 +34,8 @@ func (PassTheObject) Definition() skill.Definition {
 		Principle: passTheObjectPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/value-objects", Note: "the object you pass IS the resolved type — give data a type, don't thread an id + its container."},
-			{Slug: "backend/tell-dont-ask", Note: "unpacking a container param to work its target is feature envy on the container."},
+			{Slug: "php/value-objects", Note: "the object you pass IS the resolved type — give data a type, don't thread an id + its container."},
+			{Slug: "php/tell-dont-ask", Note: "unpacking a container param to work its target is feature envy on the container."},
 		},
 	}
 }

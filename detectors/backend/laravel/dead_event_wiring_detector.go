@@ -13,7 +13,7 @@ import (
 // DeadEventWiringDetector finds a listener wired to an event the project never raises.
 type DeadEventWiringDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DeadEventWiringDetector{}) }
+func init() { detectors.Register(catalog.PHP, DeadEventWiringDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DeadEventWiringDetector) Sin() sins.Sin { return backendsins.DeadEventWiring{} }

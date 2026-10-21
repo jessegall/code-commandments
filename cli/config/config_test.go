@@ -12,7 +12,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/source"
 )
 
-var deepNested = Rule{Detector, catalog.Frontend, "DeepNestedDetector"}
+var deepNested = Rule{Detector, catalog.Vue, "DeepNestedDetector"}
 
 func TestEveryCallTheConfigMakesIsReadWithoutRunningIt(t *testing.T) {
 	path := write(t, `<?php
@@ -100,9 +100,9 @@ func TestWhatCannotBeReadWithoutRunningItIsAnInvalidConfiguration(t *testing.T) 
 
 func TestAClassNamesAShippedRuleByKindEngineAndName(t *testing.T) {
 	for class, want := range map[string]Rule{
-		`JesseGall\CodeCommandments\Skills\Backend\Spatie\SpatieData`:            {Skill, catalog.Backend, "SpatieData"},
+		`JesseGall\CodeCommandments\Skills\Backend\Spatie\SpatieData`:            {Skill, catalog.PHP, "SpatieData"},
 		`\JesseGall\CodeCommandments\Sins\Frontend\TypeScript\DuplicateFunction`: {Sin, catalog.TypeScript, "DuplicateFunction"},
-		`JesseGall\CodeCommandments\Detectors\Frontend\DuplicateElementDetector`: {Detector, catalog.Frontend, "DuplicateElementDetector"},
+		`JesseGall\CodeCommandments\Detectors\Frontend\DuplicateElementDetector`: {Detector, catalog.Vue, "DuplicateElementDetector"},
 		`JesseGall\CodeCommandments\Skills\TypeScript\Absence`:                   {Skill, catalog.TypeScript, "Absence"},
 		`JesseGall\CodeCommandments\Detectors\CSharp\DuplicateMethodDetector`:    {Detector, catalog.CSharp, "DuplicateMethodDetector"},
 		`JesseGall\CodeCommandments\Sins\Python\DictBag`:                         {Sin, catalog.Python, "DictBag"},

@@ -57,7 +57,7 @@ func engines() []string {
 	return found
 }
 
-// heading is an engine's heading: backend reads as Backend, typescript as TypeScript.
+// heading is an engine's heading: php reads as PHP, typescript as TypeScript.
 func heading(engine string) string {
 	if engine == "typescript" {
 		return "TypeScript"

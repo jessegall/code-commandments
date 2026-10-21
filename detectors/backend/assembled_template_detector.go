@@ -12,7 +12,7 @@ import (
 // AssembledTemplateDetector finds a multi-line string built by joining a list of line fragments with newlines.
 type AssembledTemplateDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, AssembledTemplateDetector{}) }
+func init() { detectors.Register(catalog.PHP, AssembledTemplateDetector{}) }
 
 const (
 	// minTemplateLines is how many lines a joined list needs to be a template.

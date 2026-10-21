@@ -9,7 +9,7 @@ import (
 // IfElseLadder is the if-else-ladder sin.
 type IfElseLadder struct{}
 
-func init() { sins.Register(catalog.Backend, IfElseLadder{}) }
+func init() { sins.Register(catalog.PHP, IfElseLadder{}) }
 
 // Definition is what the sin states about itself.
 func (IfElseLadder) Definition() sins.Definition {

@@ -9,7 +9,7 @@ import (
 // InlineDocblock is the inline-docblock sin.
 type InlineDocblock struct{}
 
-func init() { sins.Register(catalog.Backend, InlineDocblock{}) }
+func init() { sins.Register(catalog.PHP, InlineDocblock{}) }
 
 // Definition is what the sin states about itself.
 func (InlineDocblock) Definition() sins.Definition {

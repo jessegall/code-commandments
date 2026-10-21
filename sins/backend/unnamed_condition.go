@@ -10,7 +10,7 @@ import (
 type UnnamedCondition struct{}
 
 func init() {
-	sins.Register(catalog.Backend, UnnamedCondition{})
+	sins.Register(catalog.PHP, UnnamedCondition{})
 }
 
 // Definition is what the sin states about itself.

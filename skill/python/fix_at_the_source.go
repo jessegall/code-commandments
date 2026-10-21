@@ -34,7 +34,7 @@ func (FixAtTheSource) Definition() skill.Definition {
 		Principle: fixAtTheSourcePrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/fix-at-the-source", Note: "the same discipline over PHP, where every other skill defers to it."},
+			{Slug: "php/fix-at-the-source", Note: "the same discipline over PHP, where every other skill defers to it."},
 			{Slug: "python/absence", Note: "deciding absence where a value is born is this rule applied to `None`."},
 		},
 	}

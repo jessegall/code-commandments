@@ -34,7 +34,7 @@ func (BehaviourPerMethod) Definition() skill.Definition {
 		Principle: behaviourPerMethodPrinciple,
 		Languages: []string{"python"},
 		Related: []skill.Relation{
-			{Slug: "backend/behaviour-per-method", Note: "the same discipline over PHP methods."},
+			{Slug: "php/behaviour-per-method", Note: "the same discipline over PHP methods."},
 			{Slug: "python/enums", Note: "when the choice has more than two cases, it is an `Enum` — and the behaviour belongs on it."},
 			{Slug: "python/flow", Note: "an early return that guards is the shape this one is NOT."},
 		},

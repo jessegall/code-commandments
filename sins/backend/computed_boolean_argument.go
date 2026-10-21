@@ -9,7 +9,7 @@ import (
 // ComputedBooleanArgument is the computed-boolean-argument sin.
 type ComputedBooleanArgument struct{}
 
-func init() { sins.Register(catalog.Backend, ComputedBooleanArgument{}) }
+func init() { sins.Register(catalog.PHP, ComputedBooleanArgument{}) }
 
 // Definition is what the sin states about itself.
 func (ComputedBooleanArgument) Definition() sins.Definition {

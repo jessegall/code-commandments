@@ -140,7 +140,7 @@ Exit code is non-zero when sins are found.
 | `commandments judge [path]` | Scan a codebase and report its sins, grouped by the skill that fixes each. Exit code 1 when sins are found, 3 when a rule could not run. |
 | `commandments make <Name>` | Scaffold a commandment of your own — a rule naming its sin, and the skill that teaches the fix, in `.commandments/custom/`, turned on in your config, with the rest of the process printed for you. |
 | `commandments hints [path]` | Auto-fix the Spatie Data magic surface — rename non-`from…` object factories to `from<Type>`, rewrite their call sites to `::from(...)`, and regenerate the `@method from(...)`/`collect(...)` docblock hints. |
-| `commandments repent [path]` | Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, backend and frontend. |
+| `commandments repent [path]` | Auto-fix sins — run every Scribe: the maintenance rewriters (Spatie Data hints) and each Repentable detector's own fix, PHP and Vue. |
 | `commandments scaffold` | Generate the reusable helper a sin's fix uses — written into your source root with its namespace injected. Idempotent: an existing file is skipped. |
 | `commandments report --reason="…" --ref=PATH:LINE` | File a GitHub issue about code-commandments itself (via `gh`) — a false positive, a wrong rule, or a bug. |
 | `commandments feature-request --title="…" --reason="…"` | File a [feature-request] GitHub issue (via `gh`) proposing a new or changed rule. |
@@ -189,13 +189,13 @@ A `.commandments/config.json` is scaffolded on install, with a schema beside it
     "paths": ["app", "src"],
     "exclude": ["app/Generated"],
     "disable": {
-        "sins": ["backend/NonFinalData"],
-        "detectors": ["backend/FacadeCallDetector"],
-        "skills": ["backend/ValueObjects"],
+        "sins": ["php/NonFinalData"],
+        "detectors": ["php/FacadeCallDetector"],
+        "skills": ["php/ValueObjects"],
         "languages": ["python"]
     },
     "configure": {
-        "backend/DataClumpDetector": [{"minClasses": [3]}]
+        "php/DataClumpDetector": [{"minClasses": [3]}]
     },
     "detectors": ["NoRawSqlDetector"]
 }
@@ -223,7 +223,7 @@ stack top-down and each layer names what it may reach:
 
 ```json
 "configure": {
-    "backend/NamespaceDependencyDetector": [
+    "php/NamespaceDependencyDetector": [
         {"layer": ["App\\Ui\\Tokens"]},
         {"layer": ["App\\Ui\\Elements", ["App\\Ui\\Tokens"]]},
         {"layer": ["App\\Ui\\Shared", ["App\\Ui\\Elements", "App\\Ui\\Tokens"]]},
@@ -531,7 +531,7 @@ the text, so the change is exact and formatting-safe. There are two kinds,
 [README.scribes.md](README.scribes.md). The `repent` command runs them all until
 nothing changes.
 
-For example, a backend `LoopInvertedGuard` (a whole loop body wrapped in an `if`)
+For example, a PHP `LoopInvertedGuard` (a whole loop body wrapped in an `if`)
 is rewritten to a `continue` guard:
 
 ```php
@@ -545,7 +545,7 @@ foreach ($rows as $row) {                     foreach ($rows as $row) {
                                               }
 ```
 
-…and a frontend `SwitchCase` (a `v-if`/`v-else-if` chain re-testing one value) is
+…and a Vue `SwitchCase` (a `v-if`/`v-else-if` chain re-testing one value) is
 hoisted into a `<SwitchCase>`, one slot per case:
 
 ```vue
@@ -645,7 +645,7 @@ each. Beside it, a skill of your own (a folder holding a `SKILL.md`) teaches the
 
 ```json
 {
-    "engine": "backend",
+    "engine": "php",
     "sin": {
         "name": "raw-sql",
         "description": "SQL written inline at a call site.",

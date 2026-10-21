@@ -21,7 +21,7 @@ func served(t testing.TB, _ ...string) []string {
 // TestTheGoDetectorsFindWhatThePHPOnesFind runs both tools' Vue and TypeScript detectors over the project
 // $COMMANDMENTS_PARITY names and fails for every finding only one of them makes.
 func TestTheGoDetectorsFindWhatThePHPOnesFind(t *testing.T) {
-	paritytest.Compare(t, []catalog.Engine{catalog.Frontend, catalog.TypeScript}, served)
+	paritytest.Compare(t, []catalog.Engine{catalog.Vue, catalog.TypeScript}, served)
 }
 
 // TestTheGoDetectorsFindWhatThePHPOnesFoundInTheFixture compares both tools over the frontend fixture, against the
@@ -31,5 +31,5 @@ func TestTheGoDetectorsFindWhatThePHPOnesFoundInTheFixture(t *testing.T) {
 	t.Setenv("COMMANDMENTS_PARITY", "../../tests/Fixtures/frontend")
 	t.Setenv("COMMANDMENTS_PARITY_FINDINGS", "testdata/fixture.findings")
 	t.Setenv("COMMANDMENTS_PARITY_ACCOUNTED", "testdata/fixture.accounted")
-	paritytest.Compare(t, []catalog.Engine{catalog.Frontend, catalog.TypeScript}, served)
+	paritytest.Compare(t, []catalog.Engine{catalog.Vue, catalog.TypeScript}, served)
 }

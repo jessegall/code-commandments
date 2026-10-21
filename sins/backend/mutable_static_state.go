@@ -9,7 +9,7 @@ import (
 // MutableStaticState is the mutable-static-state sin.
 type MutableStaticState struct{}
 
-func init() { sins.Register(catalog.Backend, MutableStaticState{}) }
+func init() { sins.Register(catalog.PHP, MutableStaticState{}) }
 
 // Definition is what the sin states about itself.
 func (MutableStaticState) Definition() sins.Definition {

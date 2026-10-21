@@ -9,7 +9,7 @@ import (
 // MaskedInvariant is the masked-invariant sin.
 type MaskedInvariant struct{}
 
-func init() { sins.Register(catalog.Backend, MaskedInvariant{}) }
+func init() { sins.Register(catalog.PHP, MaskedInvariant{}) }
 
 // Definition is what the sin states about itself.
 func (MaskedInvariant) Definition() sins.Definition {

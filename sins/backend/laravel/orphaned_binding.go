@@ -9,7 +9,7 @@ import (
 // OrphanedBinding is the orphaned-binding sin.
 type OrphanedBinding struct{}
 
-func init() { sins.Register(catalog.Backend, OrphanedBinding{}) }
+func init() { sins.Register(catalog.PHP, OrphanedBinding{}) }
 
 // Definition is what the sin states about itself.
 func (OrphanedBinding) Definition() sins.Definition {

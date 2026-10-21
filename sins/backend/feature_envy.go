@@ -9,7 +9,7 @@ import (
 // FeatureEnvy is the feature-envy sin.
 type FeatureEnvy struct{}
 
-func init() { sins.Register(catalog.Backend, FeatureEnvy{}) }
+func init() { sins.Register(catalog.PHP, FeatureEnvy{}) }
 
 // Definition is what the sin states about itself.
 func (FeatureEnvy) Definition() sins.Definition {

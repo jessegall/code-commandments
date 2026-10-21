@@ -9,7 +9,7 @@ import (
 // TernaryStatement is the ternary-statement sin.
 type TernaryStatement struct{}
 
-func init() { sins.Register(catalog.Backend, TernaryStatement{}) }
+func init() { sins.Register(catalog.PHP, TernaryStatement{}) }
 
 // Definition is what the sin states about itself.
 func (TernaryStatement) Definition() sins.Definition {

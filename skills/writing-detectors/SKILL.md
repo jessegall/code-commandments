@@ -17,7 +17,7 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 
 ```json
 {
-    "engine": "backend",
+    "engine": "php",
     "sin": {
         "name": "raw-sql",
         "description": "SQL written inline at a call site.",
@@ -237,9 +237,9 @@ dispatches, or a function another project imports looks unused, so pair it with 
 own name included (`src/Cart.php` for `judge src`), never from where the project sits on the disk.
 
 **Test code** is a file C#'s bridge marks as a test project's, and elsewhere a file the language's test
-runner collects: PHP's `*Test.php`, Python's `test_*.py`, `*_test.py` and `conftest.py`, a frontend
+runner collects: PHP's `*Test.php`, Python's `test_*.py`, `*_test.py` and `conftest.py`, a Vue
 `*.test.*` or `*.spec.*`, and in every language a file under a `tests` or `test` folder (`__tests__`
-too, in the frontend) of the tree judged. C# deprecation is the `[Obsolete]` attribute, which `hasAnnotation` finds, and a
+too, in Vue) of the tree judged. C# deprecation is the `[Obsolete]` attribute, which `hasAnnotation` finds, and a
 Python docstring is no comment, so `commentLike` does not read one: `docTag` does.
 
 Every size takes `atLeast`, `atMost` or both, and both are inclusive.
@@ -260,7 +260,7 @@ A rule the binary cannot run says why when `judge` starts — the file, and whic
 ## Scaffold it — don't hand-write the plumbing
 
 ```bash
-vendor/bin/commandments make NoRawSql                    # a backend rule and a skill of its own
+vendor/bin/commandments make NoRawSql                    # a PHP rule and a skill of its own
 vendor/bin/commandments make NoRawSql --engine=python     # another engine
 vendor/bin/commandments make NoRawSql --skill=absence     # taught by a skill that already exists
 vendor/bin/commandments make NoDebug --from=no-debug-calls # start from a ready rule and adapt it
@@ -288,7 +288,7 @@ it (`description`), what the briefing lists (`summary`), how often it comes up (
 `keep-in-mind`) and which languages it teaches (`languages: [php]`).
 
 **The sin names.** Inside the rule: a `name` (the `--sin=` id), the `skill` it points at by slug — your
-own, or a shipped one such as `backend/absence` — the `description` (the symptom) and the `rule` (the
+own, or a shipped one such as `php/absence` — the `description` (the symptom) and the `rule` (the
 positive directive the fix follows).
 
 **The query finds.** Nothing else. It has no fix logic, and it knows nothing about the report.
@@ -392,8 +392,8 @@ instead of solving it. Let the skill teach the reader.
 <!-- BEGIN: commands:make,rule (auto-generated, run `composer sins`) -->
 | Command | Does |
 |---|---|
-| `commandments make <Name>` | scaffold a backend (PHP) commandment and turn it on |
-| `commandments make <Name> --engine=frontend` | scaffold a frontend (Vue) one instead |
+| `commandments make <Name>` | scaffold a PHP commandment and turn it on |
+| `commandments make <Name> --engine=vue` | scaffold a Vue one instead |
 | `commandments make <Name> --engine=typescript` | scaffold a TypeScript one instead |
 | `commandments make <Name> --engine=python` | scaffold a Python one instead |
 | `commandments make <Name> --engine=csharp` | scaffold a C# one instead |

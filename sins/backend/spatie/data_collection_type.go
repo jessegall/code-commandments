@@ -9,7 +9,7 @@ import (
 // DataCollectionType is the data-collection-type sin.
 type DataCollectionType struct{}
 
-func init() { sins.Register(catalog.Backend, DataCollectionType{}) }
+func init() { sins.Register(catalog.PHP, DataCollectionType{}) }
 
 // Definition is what the sin states about itself.
 func (DataCollectionType) Definition() sins.Definition {

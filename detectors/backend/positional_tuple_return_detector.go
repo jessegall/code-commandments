@@ -12,7 +12,7 @@ import (
 // PositionalTupleReturnDetector finds a function returning an unkeyed array of values from different sources, a tuple whose meaning lives in positions.
 type PositionalTupleReturnDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, PositionalTupleReturnDetector{}) }
+func init() { detectors.Register(catalog.PHP, PositionalTupleReturnDetector{}) }
 
 // Sin is the sin the detector finds.
 func (PositionalTupleReturnDetector) Sin() sins.Sin { return backendsins.PositionalTupleReturn{} }

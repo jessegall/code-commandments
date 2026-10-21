@@ -12,7 +12,7 @@ import (
 // ErasedNullObjectDetector finds a null object that renders as ” filling a slot typed string, which erases it back into a blank string.
 type ErasedNullObjectDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ErasedNullObjectDetector{}) }
+func init() { detectors.Register(catalog.PHP, ErasedNullObjectDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ErasedNullObjectDetector) Sin() sins.Sin { return backendsins.ErasedNullObject{} }

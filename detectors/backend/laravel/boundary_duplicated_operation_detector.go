@@ -13,7 +13,7 @@ import (
 // BoundaryDuplicatedOperationDetector finds entry points of different kinds — a controller action, a console command, an MCP tool — that each perform one operation themselves: the operation belongs in one class they share.
 type BoundaryDuplicatedOperationDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, BoundaryDuplicatedOperationDetector{}) }
+func init() { detectors.Register(catalog.PHP, BoundaryDuplicatedOperationDetector{}) }
 
 // Sin is the sin the detector finds.
 func (BoundaryDuplicatedOperationDetector) Sin() sins.Sin {

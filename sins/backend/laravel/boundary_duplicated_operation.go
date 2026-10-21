@@ -9,7 +9,7 @@ import (
 // BoundaryDuplicatedOperation is the boundary-duplicated-operation sin.
 type BoundaryDuplicatedOperation struct{}
 
-func init() { sins.Register(catalog.Backend, BoundaryDuplicatedOperation{}) }
+func init() { sins.Register(catalog.PHP, BoundaryDuplicatedOperation{}) }
 
 // Definition is what the sin states about itself.
 func (BoundaryDuplicatedOperation) Definition() sins.Definition {

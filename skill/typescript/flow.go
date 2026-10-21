@@ -32,7 +32,7 @@ func (Flow) Definition() skill.Definition {
 		Principle: flowPrinciple,
 		Languages: []string{"ts", "vue"},
 		Related: []skill.Relation{
-			{Slug: "frontend/vue-control-flow", Note: "the same shape in a template: a branch that belongs in the script, not in the markup."},
+			{Slug: "vue/vue-control-flow", Note: "the same shape in a template: a branch that belongs in the script, not in the markup."},
 			{Slug: "typescript/absence", Note: "WHETHER a value can be missing at all, which decides if the guard should exist."},
 		},
 	}

@@ -123,5 +123,5 @@ export function pruned(lines: string[]): string[] {
 
 ## Related skills
 
-- [`frontend/vue-control-flow`](../../frontend/vue-control-flow/SKILL.md) — the same shape in a template: a branch that belongs in the script, not in the markup.
+- [`vue/vue-control-flow`](../../vue/vue-control-flow/SKILL.md) — the same shape in a template: a branch that belongs in the script, not in the markup.
 - [`typescript/absence`](../absence/SKILL.md) — WHETHER a value can be missing at all, which decides if the guard should exist.

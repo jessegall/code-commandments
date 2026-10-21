@@ -12,7 +12,7 @@ import (
 // NullableCallbackDetector finds a nullable callback parameter defaulted to null that the method checks for null before calling.
 type NullableCallbackDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NullableCallbackDetector{}) }
+func init() { detectors.Register(catalog.PHP, NullableCallbackDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NullableCallbackDetector) Sin() sins.Sin { return backendsins.NullableCallback{} }

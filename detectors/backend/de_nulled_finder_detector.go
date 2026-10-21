@@ -14,7 +14,7 @@ import (
 // the absence belongs decided inside it.
 type DeNulledFinderDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DeNulledFinderDetector{}) }
+func init() { detectors.Register(catalog.PHP, DeNulledFinderDetector{}) }
 
 // travels is how many callers must settle the null before the finder should.
 const travels = 2

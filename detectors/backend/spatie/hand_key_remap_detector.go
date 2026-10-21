@@ -13,7 +13,7 @@ import (
 // HandKeyRemapDetector finds keys renamed by hand before ::from(), where a MapInputName belongs.
 type HandKeyRemapDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, HandKeyRemapDetector{}) }
+func init() { detectors.Register(catalog.PHP, HandKeyRemapDetector{}) }
 
 // Sin is the sin the detector finds.
 func (HandKeyRemapDetector) Sin() sins.Sin { return backendsins.HandKeyRemap{} }

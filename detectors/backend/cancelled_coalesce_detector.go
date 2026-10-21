@@ -12,7 +12,7 @@ import (
 // CancelledCoalesceDetector finds a ?? whose empty fallback is then compared away: ($x ?? ”) === ”.
 type CancelledCoalesceDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, CancelledCoalesceDetector{}) }
+func init() { detectors.Register(catalog.PHP, CancelledCoalesceDetector{}) }
 
 // Sin is the sin the detector finds.
 func (CancelledCoalesceDetector) Sin() sins.Sin { return backendsins.CancelledCoalesce{} }

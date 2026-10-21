@@ -12,7 +12,7 @@ import (
 // MemberOutOfOrderDetector finds a member of a class's head that sits below one ranking after it: trait uses, cases, constants, then properties.
 type MemberOutOfOrderDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, MemberOutOfOrderDetector{}) }
+func init() { detectors.Register(catalog.PHP, MemberOutOfOrderDetector{}) }
 
 // Sin is the sin the detector finds.
 func (MemberOutOfOrderDetector) Sin() sins.Sin { return backendsins.MemberOutOfOrder{} }

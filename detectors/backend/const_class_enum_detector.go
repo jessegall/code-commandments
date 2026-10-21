@@ -12,7 +12,7 @@ import (
 // ConstClassEnumDetector finds a class of nothing but scalar constants: a closed set of values that wants to be an enum.
 type ConstClassEnumDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ConstClassEnumDetector{}) }
+func init() { detectors.Register(catalog.PHP, ConstClassEnumDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ConstClassEnumDetector) Sin() sins.Sin { return backendsins.ConstClassEnum{} }

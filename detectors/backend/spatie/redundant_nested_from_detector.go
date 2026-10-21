@@ -13,7 +13,7 @@ import (
 // RedundantNestedFromDetector finds a nested Data built with ::from() by hand where the parent would build it itself.
 type RedundantNestedFromDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RedundantNestedFromDetector{}) }
+func init() { detectors.Register(catalog.PHP, RedundantNestedFromDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RedundantNestedFromDetector) Sin() sins.Sin { return backendsins.RedundantNestedFrom{} }

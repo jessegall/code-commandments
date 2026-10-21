@@ -36,6 +36,8 @@ func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			record(t, name+".ids", ids)
+
 			if want := recorded(t, name+".ids"); !reflect.DeepEqual(ids, want) {
 				t.Errorf("published\n%v\nthe PHP tool published\n%v", ids, want)
 			}
@@ -46,6 +48,8 @@ func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 			}
 			slices.Sort(paths)
 
+			record(t, name+".paths", paths)
+
 			if want := recorded(t, name+".paths"); !reflect.DeepEqual(paths, want) {
 				t.Errorf("wrote\n%v\nthe PHP tool wrote\n%v", paths, want)
 			}
@@ -54,6 +58,20 @@ func TestTheLibraryPublishesWhatThePHPToolPublishes(t *testing.T) {
 }
 
 // recorded is a list the PHP tool left in testdata/published, a line an entry.
+// record writes what a set published as its recording, so a curriculum that gains or renames a skill is
+// re-recorded deliberately rather than by hand: run the test with COMMANDMENTS_RECORD=1 and read the diff.
+func record(t *testing.T, name string, lines []string) {
+	t.Helper()
+
+	if os.Getenv("COMMANDMENTS_RECORD") == "" {
+		return
+	}
+
+	if err := os.WriteFile(filepath.Join("testdata", "published", name), []byte(strings.Join(lines, "\n")+"\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func recorded(t *testing.T, name string) []string {
 	t.Helper()
 
@@ -149,7 +167,7 @@ func TestAPageASkillNoLongerShipsIsTakenAway(t *testing.T) {
 	if _, err := At(project, config.Config{}).Publish(); err != nil {
 		t.Fatal(err)
 	}
-	stale := filepath.Join(project, Dir, "commandments-backend-absence", "reference", "retired.md")
+	stale := filepath.Join(project, Dir, "commandments-php-absence", "reference", "retired.md")
 	if err := os.MkdirAll(filepath.Dir(stale), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -162,7 +180,7 @@ func TestAPageASkillNoLongerShipsIsTakenAway(t *testing.T) {
 	if _, err := os.Stat(stale); err == nil {
 		t.Error("a page the skill no longer ships outlived the sync")
 	}
-	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-backend-absence", "SKILL.md")); err != nil {
+	if _, err := os.Stat(filepath.Join(project, Dir, "commandments-php-absence", "SKILL.md")); err != nil {
 		t.Errorf("the skill itself is gone: %v", err)
 	}
 }

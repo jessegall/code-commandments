@@ -12,7 +12,7 @@ import (
 // RethrownUnchangedDetector finds a catch whose whole body throws the exception it caught, unchanged.
 type RethrownUnchangedDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, RethrownUnchangedDetector{}) }
+func init() { detectors.Register(catalog.PHP, RethrownUnchangedDetector{}) }
 
 // Sin is the sin the detector finds.
 func (RethrownUnchangedDetector) Sin() sins.Sin { return backendsins.RethrownUnchanged{} }

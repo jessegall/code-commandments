@@ -13,7 +13,7 @@ import (
 // DerivedCollectionShouldCastDetector finds an array_map building the elements of a Data collection by hand, where a cast belongs.
 type DerivedCollectionShouldCastDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DerivedCollectionShouldCastDetector{}) }
+func init() { detectors.Register(catalog.PHP, DerivedCollectionShouldCastDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DerivedCollectionShouldCastDetector) Sin() sins.Sin {

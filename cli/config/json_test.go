@@ -23,14 +23,14 @@ func TestEveryKeyOfConfigJSONIsRead(t *testing.T) {
         "languages": ["csharp", "TypeScript"],
         "skills": ["python/Absence"],
         "sins": ["python/DictBag"],
-        "detectors": ["frontend/DeepNestedDetector", "Old"]
+        "detectors": ["vue/DeepNestedDetector", "Old"]
     },
     "detectors": ["NoRawSql"],
     "packages": ["Framework"],
     "hooks": ["SkillReminder"],
     "agents": ["Aider"],
     "configure": {
-        "frontend/DeepNestedDetector": [
+        "vue/DeepNestedDetector": [
             {"maxDepth": [10]},
             {"named": ["deep", true, ["a", -2], null]}
         ]
@@ -63,9 +63,9 @@ func TestEveryKeyOfConfigJSONIsRead(t *testing.T) {
 func TestWhatConfigJSONWritesItReadsBack(t *testing.T) {
 	config := Config{
 		Paths:             []string{"app"},
-		Disabled:          []Rule{{Skill, catalog.Backend, "Absence"}, {Detector, catalog.Backend, "ArrayBagDetector"}},
+		Disabled:          []Rule{{Skill, catalog.PHP, "Absence"}, {Detector, catalog.PHP, "ArrayBagDetector"}},
 		DisabledLanguages: []source.Language{source.Python},
-		Configurators: []Configurator{{Rule{Detector, catalog.Backend, "NamespaceDependencyDetector"}, []Call{
+		Configurators: []Configurator{{Rule{Detector, catalog.PHP, "NamespaceDependencyDetector"}, []Call{
 			{"layer", []Arg{{"", `App\Domain`}}},
 			{"layer", []Arg{{"", `App\Http`}, {"", []any{`App\Domain`}}}},
 		}}},
@@ -97,8 +97,8 @@ func TestAConfigJSONTheToolCannotReadIsAnInvalidConfiguration(t *testing.T) {
 	for text, reason := range map[string]string{
 		`{"path": ["src"]}`:                                  `config.json: json: unknown field "path"`,
 		`{"disable": {"languages": ["cobol"]}}`:              `config.json: disable.languages names "cobol", which is not a language the tool reads.`,
-		`{"configure": {"backend/X": [{"a": [], "b": []}]}}`: `config.json: configure.backend/X holds a step naming 2 methods; each step names one, as {"layer": [...]}.`,
-		`{"configure": {"backend/X": [{"a": [1.5]}]}}`:       `config.json: configure.backend/X.a: 1.5 is not a whole number`,
+		`{"configure": {"php/X": [{"a": [], "b": []}]}}`: `config.json: configure.php/X holds a step naming 2 methods; each step names one, as {"layer": [...]}.`,
+		`{"configure": {"php/X": [{"a": [1.5]}]}}`:       `config.json: configure.php/X.a: 1.5 is not a whole number`,
 	} {
 		_, err := ReadJSON(writeJSON(t, text))
 

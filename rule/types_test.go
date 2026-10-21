@@ -149,7 +149,7 @@ class Special : Order {}
 }
 
 func TestATypeKindTheToolDoesNotKnowSaysWhich(t *testing.T) {
-	written := `{"engine": "backend", "sin": {"name": "x", "skill": "backend/absence"}, "find": {"select": "type-declaration", "where": [{"typeKind": "module"}]}}`
+	written := `{"engine": "backend", "sin": {"name": "x", "skill": "php/absence"}, "find": {"select": "type-declaration", "where": [{"typeKind": "module"}]}}`
 
 	if _, err := rule.Parse("X", []byte(written), shipped); err == nil || !strings.Contains(err.Error(), "none of class, interface") {
 		t.Errorf("typeKind module: %v", err)

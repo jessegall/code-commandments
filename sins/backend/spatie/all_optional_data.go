@@ -9,7 +9,7 @@ import (
 // AllOptionalData is the all-optional-data sin.
 type AllOptionalData struct{}
 
-func init() { sins.Register(catalog.Backend, AllOptionalData{}) }
+func init() { sins.Register(catalog.PHP, AllOptionalData{}) }
 
 // Definition is what the sin states about itself.
 func (AllOptionalData) Definition() sins.Definition {

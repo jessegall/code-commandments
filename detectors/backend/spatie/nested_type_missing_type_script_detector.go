@@ -13,7 +13,7 @@ import (
 // NestedTypeMissingTypeScriptDetector finds a field of a TypeScript Data class holding a nested wire type that is not marked for TypeScript.
 type NestedTypeMissingTypeScriptDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NestedTypeMissingTypeScriptDetector{}) }
+func init() { detectors.Register(catalog.PHP, NestedTypeMissingTypeScriptDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NestedTypeMissingTypeScriptDetector) Sin() sins.Sin {

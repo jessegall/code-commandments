@@ -9,7 +9,7 @@ import (
 // CoupledFields is the coupled-fields sin.
 type CoupledFields struct{}
 
-func init() { sins.Register(catalog.Backend, CoupledFields{}) }
+func init() { sins.Register(catalog.PHP, CoupledFields{}) }
 
 // Definition is what the sin states about itself.
 func (CoupledFields) Definition() sins.Definition {

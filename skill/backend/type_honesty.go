@@ -18,13 +18,13 @@ var (
 type TypeHonesty struct{}
 
 func init() {
-	skill.Register(catalog.Backend, TypeHonesty{})
+	skill.Register(catalog.PHP, TypeHonesty{})
 }
 
 // Definition is what the skill states about itself.
 func (TypeHonesty) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/type-honesty",
+		Slug:      "php/type-honesty",
 		Tier:      skill.Mandatory,
 		Order:     12,
 		Title:     "Type honesty — the type must not lie",
@@ -34,8 +34,8 @@ func (TypeHonesty) Definition() skill.Definition {
 		Principle: typeHonestyPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/absence", Note: "the complement: absence models a genuine maybe-missing; this kills a FAKE one."},
-			{Slug: "backend/fix-at-the-source", Note: "make the type certain where the value is born, not defended at every read."},
+			{Slug: "php/absence", Note: "the complement: absence models a genuine maybe-missing; this kills a FAKE one."},
+			{Slug: "php/fix-at-the-source", Note: "make the type certain where the value is born, not defended at every read."},
 		},
 	}
 }

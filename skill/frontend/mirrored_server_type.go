@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	skill.Register(catalog.Frontend, MirroredServerType{})
+	skill.Register(catalog.Vue, MirroredServerType{})
 }
 
 //go:embed text/mirrored-server-type/intro.md
@@ -22,7 +22,7 @@ type MirroredServerType struct{}
 
 func (MirroredServerType) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "frontend/mirrored-server-type",
+		Slug:      "vue/mirrored-server-type",
 		Tier:      skill.KeepInMind,
 		Order:     25,
 		Title:     "One source of truth for a server contract — generate the type, don't hand-copy it",

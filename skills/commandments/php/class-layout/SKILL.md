@@ -1,0 +1,120 @@
+---
+name: commandments-php-class-layout
+description: "Where a declaration goes in a class: every trait use, constant, property and property hook stands at the TOP, above the constructor — never between two methods, never appended at the bottom. Read this when you add a constant or a field to an existing class, or when you are about to write a declaration below a method."
+---
+
+# Class layout — state first, then behaviour
+
+> 🔱 **Load `fix-at-the-source` first — the rule above all.** Every sin is a symptom; trace the value to where it is BORN and fix it there, never where it surfaces. This skill serves that one.
+
+> A class says what it HAS before it says what it DOES. Traits, constants, properties and
+> hooks stand at the top, above the constructor; methods follow. A field hidden between two methods is
+> state a reader meets by accident.
+
+## The principle
+
+The head of a class is its inventory. Reading the first screen should tell you everything the object
+holds — what it is made of, what it is configured by, what it can never change — before a single line of
+behaviour asks for your attention. That reading is only reliable if it is TOTAL: one property declared
+two hundred lines down turns "the state is up here" into "the state is wherever you happen to find it",
+and every future reader has to scan the whole class to be sure they have seen it all.
+
+The order is fixed, so it costs nothing to follow and nothing to remember:
+
+1. trait uses — they inject members, so they are read first;
+2. enum cases, in an enum: the cases ARE the type;
+3. constants;
+4. static properties — class-level state, a different thing from an instance's;
+5. properties, widest visibility first: public, then protected, then private;
+6. hooked properties last, because a derived slot reads FROM the fields above it — a computed
+   `$fullName` placed before `$first` and `$last` asks you to read the answer before the inputs;
+7. the constructor, then the methods.
+
+Promotion in the constructor signature is state at the top too — it sits above every method that reads
+it, so a promoted property is never out of place. Within one group nothing is prescribed: which constant
+comes first is the author's business, and a tight run of related fields should stay tight.
+
+The pull the other way is always the same, and always a mistake: a field is added "next to the method
+that uses it", because that is where the author was typing. It reads well for the ten minutes you hold
+the whole class in your head. Afterwards it is a fact about the object hidden inside its behaviour — and
+a second reader, looking for what this class holds, has no way to know they reached the end of the list.
+
+If the head of the class genuinely feels too long to read, the class is holding too much: split it. Do
+not solve a crowded inventory by scattering the inventory.
+
+## Rules
+
+- [ ] Declare what a class HAS above what it DOES: trait uses, constants, properties and hooks stand at the top, above the constructor — never between two methods or appended at the bottom.
+- [ ] Order the head of a class the same way every time: trait uses, enum cases, constants, static properties, then instance properties public → protected → private, and hooked (derived) properties last, after the fields they read from.
+
+## Worked example
+
+### member-after-method
+
+A trait use, constant, property, property hook, or enum case declared below a method — so the reader only meets that state after seeing the behaviour that uses it.
+
+```php
+----------[ Bad ]----------
+
+// The ways an order can ship — with `case Pickup` stranded below the behaviour, where a reader scanning
+// the head of the enum for its inventory never sees it.
+
+enum ShippingMethod: string
+{
+    case Standard = 'standard';
+    case Express = 'express';
+
+    /**
+     * Shipping reaches for this enum all over; this is the ONE place the enum reaches back, and it
+     * welds the two namespaces into a single unit — neither can now be lifted out alone.
+     */
+    public function rateCents(int $weightGrams): int
+    {
+        // An enum case can never be built by the container, so resolving the
+        // rate registry through app() is the only option here.
+        return app(ShippingRateRegistry::class)->for($this)->quote($weightGrams);
+    }
+
+    case Pickup = 'pickup';
+}
+
+----------[ Good ]----------
+
+// The FIX: the trailing `case Pickup` hoisted up beside the cases it belongs with, so the head of the
+// enum is the whole inventory and the behaviour sits below it.
+
+enum CollectionMethod: string
+{
+    case Standard = 'standard';
+    case Express = 'express';
+    case Pickup = 'pickup';
+
+    public function surchargeCents(): int
+    {
+        return match ($this) {
+            self::Standard => 0,
+            self::Express => 750,
+            self::Pickup => 100,
+        };
+    }
+}
+```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+
+## Commands
+
+- `{{binary}} judge --skill=php/class-layout` — find every one of these in the codebase.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `member-after-method`, `member-out-of-order`.
+- `{{binary}} repent --sin=<sin>` — auto-fix, for `member-after-method`, `member-out-of-order`. Review it with `--dry-run` first.
+- `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
+
+## Reference
+
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
+
+## Related skills
+
+- [`php/behaviour-per-method`](../behaviour-per-method/SKILL.md) — a crowded head of class is usually a class doing several jobs; split the behaviour and the state follows.
+- [`php/documentation`](../documentation/SKILL.md) — a structural section divider is fine, but it never justifies state living below the methods.

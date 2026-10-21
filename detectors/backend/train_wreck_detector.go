@@ -12,7 +12,7 @@ import (
 // TrainWreckDetector finds a chain of sends crossing three or more of the project's own types.
 type TrainWreckDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, TrainWreckDetector{}) }
+func init() { detectors.Register(catalog.PHP, TrainWreckDetector{}) }
 
 // Sin is the sin the detector finds.
 func (TrainWreckDetector) Sin() sins.Sin { return backendsins.TrainWreck{} }

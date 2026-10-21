@@ -14,7 +14,7 @@ import (
 // GenericExceptionDetector finds a built-in exception thrown where a named one belongs.
 type GenericExceptionDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, GenericExceptionDetector{}) }
+func init() { detectors.Register(catalog.PHP, GenericExceptionDetector{}) }
 
 // generic are the built-in exceptions that say nothing about what went wrong.
 var generic = []string{

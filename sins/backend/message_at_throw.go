@@ -9,7 +9,7 @@ import (
 // MessageAtThrow is the message-at-throw sin.
 type MessageAtThrow struct{}
 
-func init() { sins.Register(catalog.Backend, MessageAtThrow{}) }
+func init() { sins.Register(catalog.PHP, MessageAtThrow{}) }
 
 // Definition is what the sin states about itself.
 func (MessageAtThrow) Definition() sins.Definition {

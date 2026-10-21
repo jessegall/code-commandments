@@ -13,7 +13,7 @@ import (
 // NarratedCommandDetector finds a command method named as a third-person verb instead of an imperative.
 type NarratedCommandDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NarratedCommandDetector{}) }
+func init() { detectors.Register(catalog.PHP, NarratedCommandDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NarratedCommandDetector) Sin() sins.Sin { return backendsins.NarratedCommand{} }

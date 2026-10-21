@@ -34,7 +34,7 @@ func (Flow) Definition() skill.Definition {
 		Principle: flowPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/guard-clauses-and-flow", Note: "the same discipline on the PHP backend."},
+			{Slug: "php/guard-clauses-and-flow", Note: "the same discipline on the PHP backend."},
 			{Slug: "python/flow", Note: "the same discipline in Python."},
 		},
 	}

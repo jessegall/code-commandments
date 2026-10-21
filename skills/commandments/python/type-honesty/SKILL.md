@@ -94,6 +94,6 @@ The other 6 — one per rule — are in [`reference/examples.md`](reference/exam
 
 ## Related skills
 
-- [`backend/type-honesty`](../../backend/type-honesty/SKILL.md) — the same discipline over PHP.
+- [`php/type-honesty`](../../php/type-honesty/SKILL.md) — the same discipline over PHP.
 - [`python/absence`](../absence/SKILL.md) — the complement: absence models a genuine maybe-missing; this kills a fake one.
 - [`python/fix-at-the-source`](../fix-at-the-source/SKILL.md) — make the type certain where the value is born, not defended at every read.

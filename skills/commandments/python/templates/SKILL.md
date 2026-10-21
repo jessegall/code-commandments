@@ -96,4 +96,4 @@ def slip_shown(order_ref: str, carrier: str, weight_grams: int) -> str:
 
 ## Related skills
 
-- [`backend/templates`](../../backend/templates/SKILL.md) — the same discipline with PHP heredocs.
+- [`php/templates`](../../php/templates/SKILL.md) — the same discipline with PHP heredocs.

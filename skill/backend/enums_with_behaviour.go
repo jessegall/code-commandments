@@ -18,13 +18,13 @@ var (
 type EnumsWithBehaviour struct{}
 
 func init() {
-	skill.Register(catalog.Backend, EnumsWithBehaviour{})
+	skill.Register(catalog.PHP, EnumsWithBehaviour{})
 }
 
 // Definition is what the skill states about itself.
 func (EnumsWithBehaviour) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/enums-with-behaviour",
+		Slug:      "php/enums-with-behaviour",
 		Tier:      skill.KeepInMind,
 		Order:     9,
 		Title:     "Enums with behaviour — seal the set, put the logic on the type",
@@ -34,10 +34,10 @@ func (EnumsWithBehaviour) Definition() skill.Definition {
 		Principle: enumsWithBehaviourPrinciple,
 		Languages: []string{"php"},
 		Related: []skill.Relation{
-			{Slug: "backend/value-objects", Note: `an enum is the closed-set member of "give data a type"; reach for it when the type's values are a fixed set.`},
-			{Slug: "backend/absence", Note: "a missing/unhandled case is a throw, not a silent `default`."},
-			{Slug: "backend/exceptions", Note: "a missing/unhandled case is a throw, not a silent `default`."},
-			{Slug: "backend/fix-at-the-source", Note: `seal the set where the value is born (a typed enum field) so downstream code never re-parses a string.`},
+			{Slug: "php/value-objects", Note: `an enum is the closed-set member of "give data a type"; reach for it when the type's values are a fixed set.`},
+			{Slug: "php/absence", Note: "a missing/unhandled case is a throw, not a silent `default`."},
+			{Slug: "php/exceptions", Note: "a missing/unhandled case is a throw, not a silent `default`."},
+			{Slug: "php/fix-at-the-source", Note: `seal the set where the value is born (a typed enum field) so downstream code never re-parses a string.`},
 		},
 	}
 }

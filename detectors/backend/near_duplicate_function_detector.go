@@ -14,7 +14,7 @@ import (
 // and edited.
 type NearDuplicateFunctionDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NearDuplicateFunctionDetector{}) }
+func init() { detectors.Register(catalog.PHP, NearDuplicateFunctionDetector{}) }
 
 // minNearBodyNodes is how many nodes a body must hold before two of one shape are not a coincidence.
 const minNearBodyNodes = 20

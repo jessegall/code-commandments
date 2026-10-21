@@ -13,7 +13,7 @@ import (
 // ConfigReadDetector finds config() read inside a class, where the value belongs injected as a typed dependency.
 type ConfigReadDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ConfigReadDetector{}) }
+func init() { detectors.Register(catalog.PHP, ConfigReadDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ConfigReadDetector) Sin() sins.Sin { return backendsins.ConfigRead{} }

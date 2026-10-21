@@ -40,7 +40,7 @@ func project(t *testing.T, files map[string]string) string {
 func goRewrites(t *testing.T, detector detectors.Detector, dir string) map[string]string {
 	t.Helper()
 	scanner := served(t)
-	steps := scribes.Steps(catalog.Frontend, scanner, []detectors.Detector{detector})
+	steps := scribes.Steps(catalog.Vue, scanner, []detectors.Detector{detector})
 	if len(steps) != 1 {
 		t.Fatalf("no step fixes %T", detector)
 	}

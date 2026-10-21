@@ -12,7 +12,7 @@ import (
 // NestedTernaryDetector finds a ternary with another ternary inside a branch.
 type NestedTernaryDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, NestedTernaryDetector{}) }
+func init() { detectors.Register(catalog.PHP, NestedTernaryDetector{}) }
 
 // Sin is the sin the detector finds.
 func (NestedTernaryDetector) Sin() sins.Sin { return backendsins.NestedTernary{} }

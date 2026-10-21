@@ -1,7 +1,7 @@
 exit: 0
 --- stdout
 
-[1mprop-drilling[0m  [2mfrontend/vue-components[0m
+[1mprop-drilling[0m  [2mvue/vue-components[0m
   A prop forwarded through a chain of 2+ components, none of which read it — passed down
   through components that only pass it further.
 
@@ -35,7 +35,7 @@ exit: 0
 
 [33mCommands[0m
 
-  [36mLearn     [0m load the skill [1mcommandments-frontend-vue-components[0m
+  [36mLearn     [0m load the skill [1mcommandments-vue-vue-components[0m
   [36mFind it   [0m commandments judge --sin=prop-drilling
   [36mTurn off  [0m commandments disable prop-drilling
   [36mWrong?    [0m commandments report --detector=PropDrillingDetector --reason="…" --ref=PATH:LINE

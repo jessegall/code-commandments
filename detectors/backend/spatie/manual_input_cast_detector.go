@@ -13,7 +13,7 @@ import (
 // ManualInputCastDetector finds a field that every construction builds by hand from raw input, where a cast belongs.
 type ManualInputCastDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, ManualInputCastDetector{}) }
+func init() { detectors.Register(catalog.PHP, ManualInputCastDetector{}) }
 
 // Sin is the sin the detector finds.
 func (ManualInputCastDetector) Sin() sins.Sin { return backendsins.ManualInputCast{} }

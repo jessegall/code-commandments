@@ -13,7 +13,7 @@ import (
 // OrphanedBindingDetector finds a container binding for an abstract nothing ever resolves.
 type OrphanedBindingDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, OrphanedBindingDetector{}) }
+func init() { detectors.Register(catalog.PHP, OrphanedBindingDetector{}) }
 
 // Sin is the sin the detector finds.
 func (OrphanedBindingDetector) Sin() sins.Sin { return backendsins.OrphanedBinding{} }

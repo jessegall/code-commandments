@@ -9,7 +9,7 @@ import (
 // BlankStringDefault is the blank-string-default sin.
 type BlankStringDefault struct{}
 
-func init() { sins.Register(catalog.Backend, BlankStringDefault{}) }
+func init() { sins.Register(catalog.PHP, BlankStringDefault{}) }
 
 // Definition is what the sin states about itself.
 func (BlankStringDefault) Definition() sins.Definition {

@@ -10,7 +10,7 @@ import (
 type RethrownUnchanged struct{}
 
 func init() {
-	sins.Register(catalog.Backend, RethrownUnchanged{})
+	sins.Register(catalog.PHP, RethrownUnchanged{})
 }
 
 // Definition is what the sin states about itself.

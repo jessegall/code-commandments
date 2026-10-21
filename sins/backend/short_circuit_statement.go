@@ -9,7 +9,7 @@ import (
 // ShortCircuitStatement is the short-circuit-statement sin.
 type ShortCircuitStatement struct{}
 
-func init() { sins.Register(catalog.Backend, ShortCircuitStatement{}) }
+func init() { sins.Register(catalog.PHP, ShortCircuitStatement{}) }
 
 // Definition is what the sin states about itself.
 func (ShortCircuitStatement) Definition() sins.Definition {

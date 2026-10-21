@@ -2,50 +2,6 @@ exit: 1
 --- stdout
 Asking `claude -p` 1× per query across 49 skills — this takes a while.
 
-[31m✗[0m commandments-backend-absence                 pulled 0/4 (0%)
-    [2m↳ getUserPreferences() in app/Services/PrefService.php returns ?UserPreferences and I've now got `[0m
-    [2m↳ I'm writing a findByEmail on our UserRepository. should it return null when there's no match, or[0m
-    [2m↳ our ReportBuilder has `private ?Formatter $formatter = null` and the constructor does $this->for[0m
-[31m✗[0m commandments-backend-class-layout            pulled 0/2 (0%)
-    [2m↳ I'm adding a `private const int MAX_RETRIES = 3;` to app/Jobs/RetryablePush.php — does it go a[0m
-    [2m↳ our WorkflowNode class has a property declared between two methods about 200 lines down. is that[0m
-[31m✗[0m commandments-backend-documentation           pulled 0/2 (0%)
-    [2m↳ I'm adding a docblock to app/Support/Money.php — how much should it say? the class has about 1[0m
-    [2m↳ our codebase is full of comments like `// previously this returned an array, now it returns a Co[0m
-[31m✗[0m commandments-backend-fix-at-the-source       pulled 0/2 (0%)
-    [2m↳ the same `?? []` guard shows up in about nine places wherever we read $config['channels']. I cou[0m
-    [2m↳ a test is failing because getTotal() returns null for orders with no lines. easiest fix is a nul[0m
-[31m✗[0m commandments-backend-guard-clauses-and-flow  pulled 0/2 (0%)
-    [2m↳ this handle() method in app/Jobs/SyncInventory.php is four levels of nested ifs by the time it g[0m
-    [2m↳ I keep writing `($order->customer ?? throw new MissingCustomer())->email()` inline. a colleague [0m
-[31m✗[0m commandments-backend-laravel-idioms          pulled 0/3 (0%)
-    [2m↳ in app/Http/Controllers/CheckoutController.php I'm reading $request->input('coupon_code') direct[0m
-    [2m↳ I need the CurrencyConverter inside a model method and reached for app(CurrencyConverter::class)[0m
-    [2m↳ we've got `->where('status', 'active')->where('deleted_at', null)` repeated in about a dozen que[0m
-[31m✗[0m commandments-backend-method-mood             pulled 0/2 (0%)
-    [2m↳ naming question: our OrderStatus class has a method that returns bool for whether it's been ship[0m
-    [2m↳ I've got `->hides()` and `->reveals()` on our UiElement class as commands that mutate. someone i[0m
-[31m✗[0m commandments-backend-page-objects            pulled 0/2 (0%)
-    [2m↳ our DashboardController returns a big array of nested arrays to Inertia. I want to make it a typ[0m
-    [2m↳ I've got a *Page Data class and I need a CurrencyFormatter inside it to compute a display field.[0m
-[31m✗[0m commandments-backend-repeated-call-helper    pulled 0/1 (0%)
-    [2m↳ we write `$element->copyWith(metadata: ElementMeta::from([...])->toArray())` at about fifteen ca[0m
-[31m✗[0m commandments-backend-route-actions           pulled 0/2 (0%)
-    [2m↳ our AdminOrderController::store() just calls OrderController::store() with a tweaked request. is[0m
-    [2m↳ I've registered both POST /orders and POST /api/orders pointing at the same OrderController@stor[0m
-[31m✗[0m commandments-backend-spatie-data             pulled 0/3 (0%)
-    [2m↳ writing a CheckoutData class with spatie/laravel-data — should the properties be readonly, and[0m
-    [2m↳ our OrderData has every property as `?string` because the form can post partials. reviewer says [0m
-    [2m↳ how do I type a collection of LineItemData inside OrderData so it hydrates properly from the req[0m
-[31m✗[0m commandments-backend-spatie-data-hydration   pulled 0/2 (0%)
-    [2m↳ at the call site I'm doing OrderData::from(['customer' => CustomerData::from($row['customer']), [0m
-    [2m↳ I build a ShipmentData just to immediately call ->toArray() on it before passing to the queue jo[0m
-[31m✗[0m commandments-backend-type-honesty            pulled 0/2 (0%)
-    [2m↳ I've got `private ?Invoice $current = null` on our PdfRenderer that gets set at the top of rende[0m
-    [2m↳ our ExportJob stashes $this->previousLocale before switching, then restores it in a finally. the[0m
-[31m✗[0m commandments-backend-value-objects           pulled 0/2 (0%)
-    [2m↳ half our service methods take ($street, $city, $postcode, $country) and pass them straight throu[0m
-    [2m↳ we return `array{total: int, currency: string, formatted: string}` from PricingService::quote() [0m
 [31m✗[0m commandments-csharp-absence                  pulled 0/3 (0%)
     [2m↳ my FindOrder method returns Order? and every caller does if (order is null) throw new NotFoundEx[0m
     [2m↳ is it ok to write var title = row.Title ?? ""; in C# when the title is required[0m
@@ -106,6 +62,50 @@ Asking `claude -p` 1× per query across 49 skills — this takes a while.
     [2m↳ my C# services pass around Dictionary<string, object> like row["sku"], row["qty"], row["price"] [0m
     [2m↳ I keep reading payload["name"] and payload["email"] from the same JsonNode in five places[0m
     [2m↳ should CreateShipment(string street, string city, string postcode, string country) take an objec[0m
+[31m✗[0m commandments-php-absence                     pulled 0/4 (0%)
+    [2m↳ getUserPreferences() in app/Services/PrefService.php returns ?UserPreferences and I've now got `[0m
+    [2m↳ I'm writing a findByEmail on our UserRepository. should it return null when there's no match, or[0m
+    [2m↳ our ReportBuilder has `private ?Formatter $formatter = null` and the constructor does $this->for[0m
+[31m✗[0m commandments-php-class-layout                pulled 0/2 (0%)
+    [2m↳ I'm adding a `private const int MAX_RETRIES = 3;` to app/Jobs/RetryablePush.php — does it go a[0m
+    [2m↳ our WorkflowNode class has a property declared between two methods about 200 lines down. is that[0m
+[31m✗[0m commandments-php-documentation               pulled 0/2 (0%)
+    [2m↳ I'm adding a docblock to app/Support/Money.php — how much should it say? the class has about 1[0m
+    [2m↳ our codebase is full of comments like `// previously this returned an array, now it returns a Co[0m
+[31m✗[0m commandments-php-fix-at-the-source           pulled 0/2 (0%)
+    [2m↳ the same `?? []` guard shows up in about nine places wherever we read $config['channels']. I cou[0m
+    [2m↳ a test is failing because getTotal() returns null for orders with no lines. easiest fix is a nul[0m
+[31m✗[0m commandments-php-guard-clauses-and-flow      pulled 0/2 (0%)
+    [2m↳ this handle() method in app/Jobs/SyncInventory.php is four levels of nested ifs by the time it g[0m
+    [2m↳ I keep writing `($order->customer ?? throw new MissingCustomer())->email()` inline. a colleague [0m
+[31m✗[0m commandments-php-laravel-idioms              pulled 0/3 (0%)
+    [2m↳ in app/Http/Controllers/CheckoutController.php I'm reading $request->input('coupon_code') direct[0m
+    [2m↳ I need the CurrencyConverter inside a model method and reached for app(CurrencyConverter::class)[0m
+    [2m↳ we've got `->where('status', 'active')->where('deleted_at', null)` repeated in about a dozen que[0m
+[31m✗[0m commandments-php-method-mood                 pulled 0/2 (0%)
+    [2m↳ naming question: our OrderStatus class has a method that returns bool for whether it's been ship[0m
+    [2m↳ I've got `->hides()` and `->reveals()` on our UiElement class as commands that mutate. someone i[0m
+[31m✗[0m commandments-php-page-objects                pulled 0/2 (0%)
+    [2m↳ our DashboardController returns a big array of nested arrays to Inertia. I want to make it a typ[0m
+    [2m↳ I've got a *Page Data class and I need a CurrencyFormatter inside it to compute a display field.[0m
+[31m✗[0m commandments-php-repeated-call-helper        pulled 0/1 (0%)
+    [2m↳ we write `$element->copyWith(metadata: ElementMeta::from([...])->toArray())` at about fifteen ca[0m
+[31m✗[0m commandments-php-route-actions               pulled 0/2 (0%)
+    [2m↳ our AdminOrderController::store() just calls OrderController::store() with a tweaked request. is[0m
+    [2m↳ I've registered both POST /orders and POST /api/orders pointing at the same OrderController@stor[0m
+[31m✗[0m commandments-php-spatie-data                 pulled 0/3 (0%)
+    [2m↳ writing a CheckoutData class with spatie/laravel-data — should the properties be readonly, and[0m
+    [2m↳ our OrderData has every property as `?string` because the form can post partials. reviewer says [0m
+    [2m↳ how do I type a collection of LineItemData inside OrderData so it hydrates properly from the req[0m
+[31m✗[0m commandments-php-spatie-data-hydration       pulled 0/2 (0%)
+    [2m↳ at the call site I'm doing OrderData::from(['customer' => CustomerData::from($row['customer']), [0m
+    [2m↳ I build a ShipmentData just to immediately call ->toArray() on it before passing to the queue jo[0m
+[31m✗[0m commandments-php-type-honesty                pulled 0/2 (0%)
+    [2m↳ I've got `private ?Invoice $current = null` on our PdfRenderer that gets set at the top of rende[0m
+    [2m↳ our ExportJob stashes $this->previousLocale before switching, then restores it in a finally. the[0m
+[31m✗[0m commandments-php-value-objects               pulled 0/2 (0%)
+    [2m↳ half our service methods take ($street, $city, $postcode, $country) and pass them straight throu[0m
+    [2m↳ we return `array{total: int, currency: string, formatted: string}` from PricingService::quote() [0m
 [31m✗[0m commandments-python-absence                  pulled 0/3 (0%)
     [2m↳ my find_order function returns Order | None and every place that calls it does if order is None:[0m
     [2m↳ is it ok to write title = row.get('title') or '' in Python when the title is required[0m

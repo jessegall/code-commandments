@@ -13,7 +13,7 @@ import (
 // InjectedServiceNotHiddenDetector finds a page object exposing an injected service on the wire, where #[Hidden] belongs.
 type InjectedServiceNotHiddenDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, InjectedServiceNotHiddenDetector{}) }
+func init() { detectors.Register(catalog.PHP, InjectedServiceNotHiddenDetector{}) }
 
 // Sin is the sin the detector finds.
 func (InjectedServiceNotHiddenDetector) Sin() sins.Sin { return backendsins.InjectedServiceNotHidden{} }

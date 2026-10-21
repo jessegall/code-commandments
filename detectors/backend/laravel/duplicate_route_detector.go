@@ -16,7 +16,7 @@ import (
 // DuplicateRouteDetector finds one controller action registered under one verb by two or more routes.
 type DuplicateRouteDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, DuplicateRouteDetector{}) }
+func init() { detectors.Register(catalog.PHP, DuplicateRouteDetector{}) }
 
 // Sin is the sin the detector finds.
 func (DuplicateRouteDetector) Sin() sins.Sin { return backendsins.DuplicateRoute{} }

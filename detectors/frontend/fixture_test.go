@@ -30,7 +30,7 @@ func TestTheFrontendFixtureProvesEveryDetector(t *testing.T) {
 	fixturetest.Prove(t, fixture.Fixture{
 		Codebase:  codebase,
 		Detectors: configured(),
-		Known:     append(detectors.Of(catalog.Frontend), detectors.Of(catalog.TypeScript)...),
+		Known:     append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...),
 		Resolver:  fixture.FileScenarios,
 	})
 }
@@ -41,7 +41,7 @@ const fixtureBudget = 30
 // configured is the frontend and TypeScript detectors as the shop declares them: a component budget of its own.
 func configured() []detectors.Detector {
 	var configured []detectors.Detector
-	for _, detector := range append(detectors.Of(catalog.Frontend), detectors.Of(catalog.TypeScript)...) {
+	for _, detector := range append(detectors.Of(catalog.Vue), detectors.Of(catalog.TypeScript)...) {
 		if budget, ok := detector.(frontenddetectors.ComponentBudgetDetector); ok {
 			detector = budget.Elements(fixtureBudget)
 		}

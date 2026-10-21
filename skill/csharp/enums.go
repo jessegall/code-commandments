@@ -34,7 +34,7 @@ func (Enums) Definition() skill.Definition {
 		Principle: enumsPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/enums-with-behaviour", Note: "the same discipline on the PHP backend, with backed enums."},
+			{Slug: "php/enums-with-behaviour", Note: "the same discipline on the PHP backend, with backed enums."},
 			{Slug: "python/enums", Note: "the same discipline in Python."},
 			{Slug: "csharp/flow", Note: "the `else if` ladder over one subject that an enum and a `switch` expression replace."},
 		},

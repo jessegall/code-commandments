@@ -94,18 +94,36 @@ func Ordered() []Skill {
 	return ordered
 }
 
-// Slugged is the published skill with the slug.
+// Slugged is the published skill with the slug, under the engine's own name or the one it was published under
+// before: a rule or a config that names `backend/absence` still means the PHP engine's absence skill.
 func Slugged(slug string) (Skill, bool) {
-	for _, skill := range All() {
-		if skill.Definition().Slug == slug {
-			return skill, true
+	for _, slug := range []string{slug, renamed(slug)} {
+		for _, skill := range All() {
+			if slug != "" && skill.Definition().Slug == slug {
+				return skill, true
+			}
 		}
 	}
 
 	return nil, false
 }
 
-// IDFor is the id a skill with the slug is loaded by: commandments-backend-absence.
+// renamed is the slug with a former engine name read as the engine's own; empty when it names no former one.
+func renamed(slug string) string {
+	was, subject, prefixed := strings.Cut(slug, "/")
+	if !prefixed {
+		return ""
+	}
+
+	engine, known := catalog.EngineNamed(was)
+	if !known || string(engine) == was {
+		return ""
+	}
+
+	return string(engine) + "/" + subject
+}
+
+// IDFor is the id a skill with the slug is loaded by: commandments-php-absence.
 func IDFor(slug string) string {
 	return "commandments-" + strings.ReplaceAll(slug, "/", "-")
 }

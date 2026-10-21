@@ -9,7 +9,7 @@ import (
 // DataToArrayRoundtrip is the data-to-array-roundtrip sin.
 type DataToArrayRoundtrip struct{}
 
-func init() { sins.Register(catalog.Backend, DataToArrayRoundtrip{}) }
+func init() { sins.Register(catalog.PHP, DataToArrayRoundtrip{}) }
 
 // Definition is what the sin states about itself.
 func (DataToArrayRoundtrip) Definition() sins.Definition {

@@ -18,13 +18,13 @@ var (
 type RepeatedCallHelper struct{}
 
 func init() {
-	skill.Register(catalog.Backend, RepeatedCallHelper{})
+	skill.Register(catalog.PHP, RepeatedCallHelper{})
 }
 
 // Definition is what the skill states about itself.
 func (RepeatedCallHelper) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "backend/repeated-call-helper",
+		Slug:      "php/repeated-call-helper",
 		Tier:      skill.Mandatory,
 		Order:     16,
 		Title:     "Promote a repeated call to a method",

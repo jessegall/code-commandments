@@ -9,7 +9,7 @@ import (
 // FlatFieldCluster is the flat-field-cluster sin.
 type FlatFieldCluster struct{}
 
-func init() { sins.Register(catalog.Backend, FlatFieldCluster{}) }
+func init() { sins.Register(catalog.PHP, FlatFieldCluster{}) }
 
 // Definition is what the sin states about itself.
 func (FlatFieldCluster) Definition() sins.Definition {

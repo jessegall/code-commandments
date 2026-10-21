@@ -34,7 +34,7 @@ func (PassTheObject) Definition() skill.Definition {
 		Principle: passTheObjectPrinciple,
 		Languages: []string{"csharp"},
 		Related: []skill.Relation{
-			{Slug: "backend/pass-the-object", Note: "the same discipline over PHP methods."},
+			{Slug: "php/pass-the-object", Note: "the same discipline over PHP methods."},
 			{Slug: "csharp/tell-dont-ask", Note: "the sibling: once you hold the object, ask it rather than reaching into it."},
 			{Slug: "csharp/value-objects", Note: "the type an id stands in for."},
 		},

@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	skill.Register(catalog.Frontend, VueComponents{})
+	skill.Register(catalog.Vue, VueComponents{})
 }
 
 //go:embed text/vue-components/intro.md
@@ -22,7 +22,7 @@ type VueComponents struct{}
 
 func (VueComponents) Definition() skill.Definition {
 	return skill.Definition{
-		Slug:      "frontend/vue-components",
+		Slug:      "vue/vue-components",
 		Tier:      skill.KeepInMind,
 		Order:     15,
 		Title:     "Vue components — extract repetition, deep reaches and dispatched views",
@@ -32,7 +32,7 @@ func (VueComponents) Definition() skill.Definition {
 		Principle: vueComponentsPrinciple,
 		Languages: []string{"vue"},
 		Related: []skill.Relation{
-			{Slug: "frontend/vue-control-flow", Note: "the other half of an honest template — dispatch with `<SwitchCase>`, don't re-test a subject with `v-if` chains."},
+			{Slug: "vue/vue-control-flow", Note: "the other half of an honest template — dispatch with `<SwitchCase>`, don't re-test a subject with `v-if` chains."},
 		},
 	}
 }

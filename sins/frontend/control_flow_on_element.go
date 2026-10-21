@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	sins.Register(catalog.Frontend, ControlFlowOnElement{})
+	sins.Register(catalog.Vue, ControlFlowOnElement{})
 }
 
 // ControlFlowOnElement is the sin "control-flow-on-element".

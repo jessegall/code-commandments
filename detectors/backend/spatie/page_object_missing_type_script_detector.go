@@ -13,7 +13,7 @@ import (
 // PageObjectMissingTypeScriptDetector finds a page object not marked for TypeScript.
 type PageObjectMissingTypeScriptDetector struct{}
 
-func init() { detectors.Register(catalog.Backend, PageObjectMissingTypeScriptDetector{}) }
+func init() { detectors.Register(catalog.PHP, PageObjectMissingTypeScriptDetector{}) }
 
 // Sin is the sin the detector finds.
 func (PageObjectMissingTypeScriptDetector) Sin() sins.Sin {

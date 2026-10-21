@@ -9,7 +9,7 @@ import (
 // FlagArgument is the flag-argument sin.
 type FlagArgument struct{}
 
-func init() { sins.Register(catalog.Backend, FlagArgument{}) }
+func init() { sins.Register(catalog.PHP, FlagArgument{}) }
 
 // Definition is what the sin states about itself.
 func (FlagArgument) Definition() sins.Definition {

@@ -14,7 +14,7 @@ func SkillStub(b Blueprint) string {
 		"description: TODO — WHEN to reach for this skill: the code you are about to write that it governs.\n" +
 		"summary: TODO — the discipline in one line, as the briefing lists it.\n" +
 		"tier: keep-in-mind\n" +
-		"languages: [" + b.Engine.ProbeExtension() + "]\n" +
+		"languages: [" + ProbeExtension(b.Engine) + "]\n" +
 		"---\n\n" +
 		"# " + b.Sin + "\n\n" +
 		"TODO — what good looks like here, and why.\n\n" +

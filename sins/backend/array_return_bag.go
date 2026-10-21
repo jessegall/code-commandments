@@ -9,7 +9,7 @@ import (
 // ArrayReturnBag is the array-return-bag sin.
 type ArrayReturnBag struct{}
 
-func init() { sins.Register(catalog.Backend, ArrayReturnBag{}) }
+func init() { sins.Register(catalog.PHP, ArrayReturnBag{}) }
 
 // Definition is what the sin states about itself.
 func (ArrayReturnBag) Definition() sins.Definition {
