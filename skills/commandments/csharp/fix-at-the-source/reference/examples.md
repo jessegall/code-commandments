@@ -2,6 +2,26 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### csharp-blocked-await
+
+`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else
+
+```cs
+----------[ Bad ]----------
+
+public string Read(string supplier)
+{
+    return feed.ReadAsync(supplier).Result;
+}
+
+----------[ Good ]----------
+
+public async Task<string> ReadAsync(string supplier)
+{
+    return await feed.ReadAsync(supplier);
+}
+```
+
 ### csharp-constructor-side-effect
 
 a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it

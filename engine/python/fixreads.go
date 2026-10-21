@@ -512,3 +512,36 @@ func (n Node) keepsACollectionIn(name string) bool {
 		return node.Kind() == "Assign" && len(targets) == 1 && targets[0].Name() == name && node.Child("value").buildsAFreshContainer()
 	})
 }
+
+// blockingCalls are the calls that stop the thread they run on until the world answers. Inside an async def
+// that thread is the event loop, so every other coroutine waiting on it stops too, and the program slows or
+// stalls under load and nowhere else.
+var blockingCalls = []string{
+	"time.sleep", "requests.get", "requests.post", "requests.put", "requests.patch", "requests.delete",
+	"requests.head", "requests.request", "urllib.request.urlopen", "subprocess.run", "subprocess.call",
+	"subprocess.check_call", "subprocess.check_output", "os.system", "socket.socket.recv", "input",
+}
+
+// BlocksTheEventLoop says whether the node is a call that stops its thread, made inside an async def: the
+// thread is the event loop, so everything else waiting on it stops as well. The fix is the asynchronous
+// counterpart, or handing the blocking work to a thread with `asyncio.to_thread`.
+func (n Node) BlocksTheEventLoop() bool {
+	if !n.IsCall() || !slices.Contains(blockingCalls, n.Callee().DottedName()) {
+		return false
+	}
+	def := n.EnclosingFunction()
+
+	return def.Kind() == "AsyncFunctionDef" && !n.handedToAThread()
+}
+
+// handedToAThread says whether the call is the work given to a thread rather than run on the loop: inside the
+// lambda of an `asyncio.to_thread` or a `run_in_executor`, which is how blocking work is done right.
+func (n Node) handedToAThread() bool {
+	for held := n.Parent(); held.Exists(); held = held.Parent() {
+		if held.IsCall() && slices.Contains([]string{"asyncio.to_thread", "to_thread", "run_in_executor"}, held.Callee().Name()) {
+			return true
+		}
+	}
+
+	return false
+}

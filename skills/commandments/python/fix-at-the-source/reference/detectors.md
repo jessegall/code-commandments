@@ -2,6 +2,7 @@
 
 Each row is one rule: the sin's id, the symptom its detector flags, and the detector that flags it. The id is what `{{binary}} info <sin>` takes, and the detector name is what `--detector=` takes if the rule turns out to be wrong.
 
+- **`python-blocked-await`** — `time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too — `BlockedAwaitDetector`
 - **`python-constructor-side-effect`** — an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it. — `ConstructorSideEffectDetector`
 - **`python-divergent-twin`** — two functions do the same job, but one of them skips a step the other takes — usually a fix made in one copy and forgotten in the other. — `DivergentTwinDetector`
 - **`python-mutable-default`** — a parameter defaulted to a `[]`, `{}` or `set()` — one container, made once, shared by every call that omits it — `MutableDefaultDetector`

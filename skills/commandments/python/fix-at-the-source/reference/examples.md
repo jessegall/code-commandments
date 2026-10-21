@@ -2,6 +2,40 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### python-blocked-await
+
+`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too
+
+```py
+----------[ Bad ]----------
+
+async def poll(self, supplier: str) -> str:
+    for _ in range(TRIES):
+        answered = await self.feed.read(supplier)
+        if answered:
+            return answered
+
+        time.sleep(EVERY)
+
+    return ""
+
+----------[ Good ]----------
+
+class AwaitingPoller:
+    def __init__(self, feed) -> None:
+        self.feed = feed
+
+    async def poll(self, supplier: str) -> str:
+        for _ in range(TRIES):
+            answered = await self.feed.read(supplier)
+            if answered:
+                return answered
+
+            await asyncio.sleep(EVERY)
+
+        return ""
+```
+
 ### python-constructor-side-effect
 
 an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it.

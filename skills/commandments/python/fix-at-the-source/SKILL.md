@@ -37,6 +37,8 @@ signature where a reader can see it.
 
 ## Rules
 
+- [ ] A coroutine never stops its own thread: await the asynchronous counterpart, or hand the blocking work to a thread.
+      _Use the asynchronous form and `await` it (`asyncio.sleep`, an async client), or `await asyncio.to_thread(...)` when only a blocking call exists. Stopping the loop here is what makes the slowdown appear under load and nowhere else._
 - [ ] Let `__init__` establish what the object is; never let building one change anything outside it.
       _Keep the collaborator as a field and act on it from the method that someone actually calls._
 - [ ] Put shared behaviour in one place, so a step that must always happen can't be forgotten in a copy.
@@ -50,49 +52,51 @@ signature where a reader can see it.
 
 ## Worked example
 
-### python-constructor-side-effect
+### python-blocked-await
 
-an `__init__` that tells a collaborator to act and throws the answer away — merely building the object has an effect outside it.
+`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too
 
 ```py
 ----------[ Bad ]----------
 
-class CardPlugin:
-    def __init__(self, registry, fee: float) -> None:
-        self.fee = fee
-        registry.add("card", self)
+async def poll(self, supplier: str) -> str:
+    for _ in range(TRIES):
+        answered = await self.feed.read(supplier)
+        if answered:
+            return answered
 
-    def charge(self, amount: float) -> float:
-        return amount * (1 + self.fee)
+        time.sleep(EVERY)
+
+    return ""
 
 ----------[ Good ]----------
 
-# in payment_plugins.py
-class CardPayments:
-    def __init__(self, fee: float) -> None:
-        self.fee = fee
+class AwaitingPoller:
+    def __init__(self, feed) -> None:
+        self.feed = feed
 
-    def charge(self, amount: float) -> float:
-        return amount * (1 + self.fee)
+    async def poll(self, supplier: str) -> str:
+        for _ in range(TRIES):
+            answered = await self.feed.read(supplier)
+            if answered:
+                return answered
 
-# in payment_plugins.py
-def install_card_payments(registry, fee: float) -> CardPayments:
-    payments = CardPayments(fee)
-    registry.add("card", payments)
-    return payments
+            await asyncio.sleep(EVERY)
+
+        return ""
 ```
 
-The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/fix-at-the-source` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constructor-side-effect`, `python-divergent-twin`, `python-mutable-default`, `python-mutable-static-state`, `python-unread-collaborator`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-blocked-await`, `python-constructor-side-effect`, `python-divergent-twin`, `python-mutable-default`, `python-mutable-static-state`, `python-unread-collaborator`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

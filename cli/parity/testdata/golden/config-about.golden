@@ -7,8 +7,8 @@ exit: 0
   [36mSource roots .........[0m .
   [36mBackend detectors ....[0m 81 running  ·  124 available
   [36mFrontend detectors ...[0m 18 running  ·  19 available
-  [36mPython detectors .....[0m 74 running  ·  74 available
-  [36mC# detectors .........[0m 61 running  ·  61 available
+  [36mPython detectors .....[0m 75 running  ·  75 available
+  [36mC# detectors .........[0m 62 running  ·  62 available
   [36mCustom detectors .....[0m 0
   [36mExemption packages ...[0m 3 built-in  ·  0 registered
   [36mSkills ...............[0m 64

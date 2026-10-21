@@ -1120,6 +1120,13 @@
         "help": "a `catch` that throws a new exception without passing the caught one as its inner exception, so the original stack trace is lost"
     },
     {
+        "key": "sin_csharp-blocked-await",
+        "title": "BlockedAwait",
+        "kind": "flag",
+        "default": true,
+        "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else"
+    },
+    {
         "key": "sin_csharp-constructor-side-effect",
         "title": "ConstructorSideEffect",
         "kind": "flag",
@@ -1650,6 +1657,13 @@
         "kind": "flag",
         "default": true,
         "help": "A bare `except:` or `except Exception` whose body only passes, continues or returns nothing — every failure, expected or not, made to vanish"
+    },
+    {
+        "key": "sin_python-blocked-await",
+        "title": "BlockedAwait",
+        "kind": "flag",
+        "default": true,
+        "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too"
     },
     {
         "key": "sin_python-constructor-side-effect",

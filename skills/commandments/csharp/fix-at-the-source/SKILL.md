@@ -42,6 +42,8 @@ needs it (usually through the constructor), and the dependency is in the signatu
 
 ## Rules
 
+- [ ] Work in flight is awaited, never blocked on: `await` it, and make the caller async too, however far up that goes.
+      _Write `await` and mark the method `async`, then follow the callers: the breadth of that change IS the problem surfacing, and stopping it with `.Result` at one boundary is what buries the deadlock until load finds it._
 - [ ] A constructor sets up the object; creating one should never change anything outside it.
       _Keep the collaborator in a field and call it from the method someone actually calls to do the work._
 - [ ] Keep state that changes on an instance someone owns and passes around; don't write to a static field from a method.
@@ -51,39 +53,37 @@ needs it (usually through the constructor), and the dependency is in the signatu
 
 ## Worked example
 
-### csharp-constructor-side-effect
+### csharp-blocked-await
 
-a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it
+`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else
 
 ```cs
 ----------[ Bad ]----------
 
-public NewsletterPreference(string address, MailingList list)
+public string Read(string supplier)
 {
-    this.address = address;
-
-    list.Join(address);
+    return feed.ReadAsync(supplier).Result;
 }
 
 ----------[ Good ]----------
 
-public sealed class NewsletterSignup(string address, MailingList list)
+public async Task<string> ReadAsync(string supplier)
 {
-    public void Confirm() => list.Join(address);
+    return await feed.ReadAsync(supplier);
 }
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/fix-at-the-source` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-constructor-side-effect`, `csharp-mutable-static-state`, `csharp-unread-collaborator`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-blocked-await`, `csharp-constructor-side-effect`, `csharp-mutable-static-state`, `csharp-unread-collaborator`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

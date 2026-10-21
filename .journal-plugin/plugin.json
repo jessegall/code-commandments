@@ -2112,6 +2112,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-blocked-await": {
+            "title": "BlockedAwait",
+            "help": "`.Result`, `.Wait()` or `.GetAwaiter().GetResult()` on a task — the thread it blocks is the one the work needed back, so it deadlocks under load and nowhere else",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/fix-at-the-source",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-constructor-side-effect": {
             "title": "ConstructorSideEffect",
             "help": "a constructor that calls a method on something it was handed and ignores the result — just creating the object changes something outside it",
@@ -3096,6 +3109,19 @@
             "type": "flag",
             "default": "true",
             "group": "python/exceptions",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-blocked-await": {
+            "title": "BlockedAwait",
+            "help": "`time.sleep`, `requests.get` or `subprocess.run` inside an `async def` — the thread it stops is the event loop, so every coroutine waiting on it stops too",
+            "type": "flag",
+            "default": "true",
+            "group": "python/fix-at-the-source",
             "when": [
                 {
                     "language_py": true

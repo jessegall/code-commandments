@@ -1200,3 +1200,81 @@ func (n Node) declaresAMemberNamed(name string) bool {
 		return member.Is("FieldDeclaration") && member.firstChild("VariableDeclaration").firstChild("VariableDeclarator").Name() == name
 	})
 }
+
+// taskTypes are the types that stand for work in flight. Reading an answer out of one, rather than awaiting
+// it, blocks the thread that is holding the context the work needs to finish on.
+var taskTypes = []string{"System.Threading.Tasks.Task", "System.Threading.Tasks.ValueTask"}
+
+// BlocksOnATask says whether the node takes the answer out of work in flight by blocking for it: reading
+// `.Result`, calling `.Wait()`, or `.GetAwaiter().GetResult()`, on an expression the compiler says is a task.
+// Under load the thread it blocks is the one the work needed, and the deadlock shows up there and nowhere
+// else, which is the worst way to find a bug. A constructor and an entry point have no context to deadlock
+// against, and a task completed where it stands has nothing left to wait for, so neither is this.
+func (n Node) BlocksOnATask() bool {
+	blocked, blocks := n.taskItBlocksOn()
+	if !blocks || !blocked.isATask() {
+		return false
+	}
+	if n.sitsWhereNothingCanDeadlock() {
+		return false
+	}
+
+	return !blocked.isCompletedWhereItStands()
+}
+
+// taskItBlocksOn is the expression a blocking read takes its answer from, and whether the node is one.
+func (n Node) taskItBlocksOn() (Node, bool) {
+	if n.Is("SimpleMemberAccessExpression") && n.At(1).Name() == "Result" {
+		return n.At(0), true
+	}
+	if !n.IsCall() || !n.At(0).Is("SimpleMemberAccessExpression") {
+		return Node{}, false
+	}
+	callee := n.At(0)
+	if callee.At(1).Name() == "Wait" {
+		return callee.At(0), true
+	}
+	if callee.At(1).Name() != "GetResult" || !callee.At(0).IsCall() {
+		return Node{}, false
+	}
+	awaiter := callee.At(0).At(0)
+	if !awaiter.Is("SimpleMemberAccessExpression") || awaiter.At(1).Name() != "GetAwaiter" {
+		return Node{}, false
+	}
+
+	return awaiter.At(0), true
+}
+
+// isATask says whether the compiler reads the expression as work in flight.
+func (n Node) isATask() bool {
+	held := strings.TrimSuffix(n.Type().Name(), "?")
+
+	return slices.ContainsFunc(taskTypes, func(task string) bool {
+		return held == "global::"+task || strings.HasPrefix(held, "global::"+task+"<")
+	})
+}
+
+// sitsWhereNothingCanDeadlock says whether the node sits where there is no context for the work to need back:
+// a constructor, which cannot await, or a program's entry point.
+func (n Node) sitsWhereNothingCanDeadlock() bool {
+	for held := n.Parent(); held.Exists(); held = held.Parent() {
+		if held.Is("ConstructorDeclaration") {
+			return true
+		}
+		if held.Is("MethodDeclaration") {
+			return held.Name() == "Main" && held.HasModifier("static")
+		}
+	}
+
+	return false
+}
+
+// isCompletedWhereItStands says whether the task is finished by the time it is read: `Task.FromResult(x)` and
+// `Task.CompletedTask` are done before anyone asks, so taking their answer blocks on nothing.
+func (n Node) isCompletedWhereItStands() bool {
+	if n.Is("SimpleMemberAccessExpression") && n.At(1).Name() == "CompletedTask" {
+		return true
+	}
+
+	return n.IsCall() && n.At(0).Is("SimpleMemberAccessExpression") && slices.Contains([]string{"FromResult", "FromException", "FromCanceled"}, n.At(0).At(1).Name())
+}

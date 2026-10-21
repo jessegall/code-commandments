@@ -140,9 +140,14 @@ exit: 1
   [36mShop/Stock/StockHolds.cs:15[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
   [36mShop/Stock/StockImport.cs:15[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
 
-[1;33mcsharp/fix-at-the-source[0m  (9)
+[1;33mcsharp/fix-at-the-source[0m  (14)
   [1;36m↳ LOAD the skill `commandments-csharp-fix-at-the-source` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
+  [36mShop/Feeds/CourierFeeds.cs:15[0m  InvocationExpression  [2m[BlockedAwaitDetector][0m
+  [36mShop/Feeds/CourierFeeds.cs:24[0m  SimpleMemberAccessExpression  [2m[BlockedAwaitDetector][0m
+  [36mShop/Feeds/PriceFeeds.cs:11[0m  SimpleMemberAccessExpression  [2m[BlockedAwaitDetector][0m
+  [36mShop/Feeds/StockFeeds.cs:10[0m  InvocationExpression  [2m[BlockedAwaitDetector][0m
+  [36mShop/Feeds/StockFeeds.cs:13[0m  InvocationExpression  [2m[BlockedAwaitDetector][0m
   [36mShop/Notifications/LastSent.cs:14[0m  SimpleAssignmentExpression  [2m[MutableStaticStateDetector][0m
   [36mShop/Notifications/Subscriptions.cs:22[0m  InvocationExpression  [2m[ConstructorSideEffectDetector][0m
   [36mShop/Orders/OrderCounter.cs:12[0m  PostIncrementExpression  [2m[MutableStaticStateDetector][0m
@@ -329,7 +334,7 @@ exit: 1
   [36mShop/Stock/Listings.cs:15[0m  MethodDeclaration Page  [2m[DataClumpDetector][0m
     [2m↳ same shape as: Shop/Stock/Listings.cs:8[0m
 
-[1m225 sins[0m across 17 skills.
+[1m230 sins[0m across 17 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 
