@@ -233,3 +233,42 @@ func TestThePluginNeedsOnlyTheBinaryItFetches(t *testing.T) {
 		}
 	}
 }
+
+// pins is the little of a plugin manifest this gate reads: the version it declares and the release its first setup
+// step fetches. The two manifests answer the same questions in different shapes, so neither's whole type fits both.
+type pins struct {
+	Version string                 `json:"version"`
+	Env     map[string]string      `json:"env"`
+	Setup   []struct{ Run string } `json:"setup"`
+}
+
+// TestBothPluginManifestsPinTheSameRelease holds the two manifests to one answer. The plugin is declared twice, once
+// for each journal protocol: .journal-plugin/plugin.json carries the release in its env, journal-plugin.json fetches
+// it in its first setup step, and the release workflow refuses a tag either of them does not name. Bumping one and
+// forgetting the other is what this catches, which otherwise shows up only as every release between them failing.
+func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
+	read := func(name ...string) pins {
+		content, err := os.ReadFile(filepath.Join(append([]string{"..", ".."}, name...)...))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var read pins
+		if err := json.Unmarshal(content, &read); err != nil {
+			t.Fatal(err)
+		}
+
+		return read
+	}
+	held, offered := read(".journal-plugin", "plugin.json"), read("journal-plugin.json")
+
+	fetched := regexp.MustCompile(`^COMMANDMENTS_RELEASE=(v\d+\.\d+\.\d+) `).FindStringSubmatch(offered.Setup[0].Run)
+	if fetched == nil {
+		t.Fatalf("journal-plugin.json's first setup step pins no release: %q", offered.Setup[0].Run)
+	}
+	if pinned := held.Env["COMMANDMENTS_RELEASE"]; pinned != fetched[1] {
+		t.Errorf(".journal-plugin/plugin.json pins %s and journal-plugin.json fetches %s", pinned, fetched[1])
+	}
+	if held.Version != offered.Version {
+		t.Errorf(".journal-plugin/plugin.json is version %s and journal-plugin.json is %s", held.Version, offered.Version)
+	}
+}
