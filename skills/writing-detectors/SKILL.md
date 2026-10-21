@@ -43,6 +43,18 @@ one. **Each step makes exactly one check**; a rule is only as good as the questi
 `bail-out`, `expression-statement`, `self-reference` — or `kind:<Kind>`, a language's own node kind
 (`kind:Expr_MethodCall`) when no neutral kind says it.
 
+**A rule is built from other rules.** A check you have already written once is named, never written
+again: `{"rule": "ActionClass"}` passes when the rule of that name finds the node too, and a `find`
+that writes `"from": "ActionClass"` in place of `"select"` narrows what that rule found, which is one
+rule read inside another. Both reach any rule of the same engine in `.commandments/custom/`, and every
+part stays a rule of its own, listed and run on its own terms. A name nothing declares, a rule of
+another engine and a chain that comes back to itself are refused when the rules are read, before
+anything is judged.
+
+**Say `either` and `not` without a second rule.** `{"any": [{"is": "loop"}, {"is": "branch"}]}` passes
+when one of its steps does, `{"all": [...]}` when every one does, and `{"not": {...}}` when its step
+does not — which is how a `where` says what only a `reject` could.
+
 **A step's one check** — every one there is, generated from the tool itself:
 
 <!-- BEGIN: rule-checks (auto-generated, run `composer sins`) -->
