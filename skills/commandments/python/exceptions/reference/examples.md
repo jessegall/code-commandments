@@ -57,6 +57,25 @@ def price_of(self, sku: str, refresh) -> int:
         return self.prices[sku]
 ```
 
+### python-rethrown-unchanged
+
+an `except` whose whole body is `raise` or `raise error` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does
+
+```py
+----------[ Bad ]----------
+
+def hold(ledger, sku: str, quantity: int) -> None:
+    try:
+        ledger.hold(sku, quantity)
+    except RuntimeError:
+        raise
+
+----------[ Good ]----------
+
+def hold_stock(ledger, sku: str, quantity: int) -> None:
+    ledger.hold(sku, quantity)
+```
+
 ### python-swallowed-exception
 
 A bare `except:` or `except Exception` whose body only passes, continues or returns nothing — every failure, expected or not, made to vanish

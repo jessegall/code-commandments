@@ -36,6 +36,8 @@ Inside the system, invariants throw. At the *one* untrusted edge, you catch-log-
       _A named exception class with a static `::for($values)` factory that writes the message._
 - [ ] Pass domain VALUES to a named factory; never assemble the message string at the throw site.
       _A static `::for($values)` factory on the exception that builds the sentence._
+- [ ] Catch a failure only to do something about it: handle it, add what the caller needs, or let it pass by writing no clause.
+      _Delete the clause and let the failure travel, or give it work to do: write the context it carries, roll back, release what was held, or throw a failure of your own with it as the previous exception._
 - [ ] Let a failure throw, or surface it named with the cause; never swallow a catch into `null`/`false`/`[]`/`none()` or an empty body.
       _Rethrow wrapped (`previous: $e`), or catch-log-skip at one named boundary._
 - [ ] When wrapping a caught exception, pass the original as `previous`/cause — never drop the stack trace.
@@ -76,18 +78,18 @@ final class CarrierMissing extends RuntimeException
 }
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=backend/exceptions` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `generic-exception`, `message-at-throw`, `swallow-catch`, `wrapping-without-cause`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `generic-exception`, `message-at-throw`, `rethrown-unchanged`, `swallow-catch`, `wrapping-without-cause`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `wrapping-without-cause`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

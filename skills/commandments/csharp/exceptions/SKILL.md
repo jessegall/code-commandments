@@ -69,6 +69,8 @@ reports, never silently continues.
 
 - [ ] Throw a named exception built by a static factory, never a bare `Exception` or `InvalidOperationException` with a message written at the throw.
       _Give the failure a class of its own with a static factory that takes the values and writes the message once — `throw UnknownCarrier.Named(name);` — so a caller can catch it by name._
+- [ ] Catch a failure only to do something about it: handle it, add what the caller needs, or let it pass by writing no clause.
+      _Delete the clause and let the failure travel, or give it work to do: write the context it carries, roll back, release what was held, or throw a failure of your own with it as the inner exception._
 - [ ] Never swallow every failure: catch the one you expect and act on it, or let it propagate to a boundary that records it.
       _Name the exception you expect (`catch (FileNotFoundException)`), or filter it with `when`, and do what its meaning calls for; anything else propagates. At a real boundary, log or report before moving on._
 - [ ] When you wrap a caught exception, pass it on as the inner exception; never throw away the original.
@@ -115,17 +117,17 @@ public sealed class UnknownCarrier : InvalidOperationException
 }
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/exceptions` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-generic-throw`, `csharp-swallowed-exception`, `csharp-wrapping-without-cause`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-generic-throw`, `csharp-rethrown-unchanged`, `csharp-swallowed-exception`, `csharp-wrapping-without-cause`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

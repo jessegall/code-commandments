@@ -61,6 +61,8 @@ continues.
       _Give the failure a class of its own with a classmethod that takes the values and writes the message once — `raise NoActiveRequest.for_(name)` — so a caller can catch it by name._
 - [ ] Raise a new exception from inside `except` with `from error` so the cause is kept; say `from None` when cutting it is the point.
       _Bind the caught exception (`except KeyError as error:`) and raise `from error`._
+- [ ] Catch a failure only to do something about it: handle it, add what the caller needs, or let it pass by writing no clause.
+      _Delete the clause and let the failure travel, or give it work to do: write the context it carries, roll back, release what was held, or raise a failure of your own `from` it._
 - [ ] Never swallow every failure: catch the one you expect and act on it, or let it propagate to a boundary that records it.
       _Name the exception you expect (`except ValueError:`) and do what its meaning calls for; anything else propagates. At a real boundary, log or report before moving on._
 
@@ -93,17 +95,17 @@ def current_basket(context):
     return context.session.basket
 ```
 
-The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/exceptions` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-message-string-raise`, `python-raise-without-cause`, `python-swallowed-exception`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-message-string-raise`, `python-raise-without-cause`, `python-rethrown-unchanged`, `python-swallowed-exception`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

@@ -552,6 +552,19 @@
             ],
             "detail": true
         },
+        "sin_rethrown-unchanged": {
+            "title": "RethrownUnchanged",
+            "help": "a `catch` whose whole body is `throw $e;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does",
+            "type": "flag",
+            "default": "true",
+            "group": "backend/exceptions",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_swallow-catch": {
             "title": "SwallowCatch",
             "help": "`catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)",
@@ -2021,6 +2034,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-rethrown-unchanged": {
+            "title": "RethrownUnchanged",
+            "help": "a `catch` whose whole body is `throw;` or `throw error;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/exceptions",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-swallowed-exception": {
             "title": "SwallowedException",
             "help": "A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish",
@@ -2950,6 +2976,19 @@
         "sin_python-raise-without-cause": {
             "title": "RaiseWithoutCause",
             "help": "`raise Other(...)` inside an `except` block with no `from` — the failure being handled left as an implicit context, never named as the cause",
+            "type": "flag",
+            "default": "true",
+            "group": "python/exceptions",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-rethrown-unchanged": {
+            "title": "RethrownUnchanged",
+            "help": "an `except` whose whole body is `raise` or `raise error` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does",
             "type": "flag",
             "default": "true",
             "group": "python/exceptions",

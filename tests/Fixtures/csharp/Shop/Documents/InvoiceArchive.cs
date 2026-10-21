@@ -22,6 +22,7 @@ public static class InvoiceArchive
         {
             return File.ReadAllText(fileName);
         }
+        // @sin RethrownUnchanged
         catch (IOException)
         {
             // @righteous WrappingWithoutCause

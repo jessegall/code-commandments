@@ -77,6 +77,41 @@ func (n Node) IsSwallowedCatch() bool {
 	return Node{Match: body[0].Child("expr")}.IsAbsenceValue()
 }
 
+// RethrowsUnchanged says whether the catch's whole body throws the very exception it caught, unchanged: the
+// clause catches, adds nothing, and throws again, which is what writing no clause at all already does. A catch
+// another catch follows is doing real work — it keeps the broader one below from catching what it names — so it
+// is no part of this.
+func (n Node) RethrowsUnchanged() bool {
+	body := n.ChildrenIn("stmts")
+	caught := n.Child("var")
+	if n.Kind() != "Stmt_Catch" || len(body) != 1 || caught.Kind() != "Expr_Variable" {
+		return false
+	}
+	if !n.isTheLastCatch() {
+		return false
+	}
+	thrown := Node{Match: body[0]}.thrownAlone()
+
+	return thrown.Kind() == "Expr_Variable" && thrown.Name() == caught.Name()
+}
+
+// isTheLastCatch says whether no other catch of the same try follows this one.
+func (n Node) isTheLastCatch() bool {
+	catches := n.Up().ChildrenIn("catches")
+
+	return len(catches) > 0 && catches[len(catches)-1].Node() == n.Node()
+}
+
+// thrownAlone is what the statement throws when it does nothing but throw; no node otherwise.
+func (n Node) thrownAlone() Node {
+	throw := Node{Match: n.Child("expr")}
+	if n.Kind() != "Stmt_Expression" || !throw.IsThrow() {
+		return Node{}
+	}
+
+	return Node{Match: throw.Child("expr")}
+}
+
 // CaughtTypes is every class a catch names.
 func (n Node) CaughtTypes() []string {
 	if n.Kind() != "Stmt_Catch" {

@@ -124,17 +124,20 @@ exit: 1
   [36mShop/Stock/Shelving.cs:14[0m  SwitchExpression  [2m[MatchDefaultReturnsNullDetector][0m
   [36mShop/Stock/StockZones.cs:32[0m  StringLiteralExpression  [2m[UnnamedVocabularyLiteralDetector][0m
 
-[1;33mcsharp/exceptions[0m  (9)
+[1;33mcsharp/exceptions[0m  (12)
   [1;36m↳ LOAD the skill `commandments-csharp-exceptions` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Documents/InvoiceArchive.cs:15[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
+  [36mShop/Documents/InvoiceArchive.cs:26[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
   [36mShop/Notifications/Outbox.cs:19[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
   [36mShop/Orders/Lifecycle.cs:14[0m  ThrowStatement  [2m[GenericThrowDetector][0m
+  [36mShop/Picking/CountSheets.cs:15[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
   [36mShop/Pricing/Currencies.cs:11[0m  ThrowExpression  [2m[GenericThrowDetector][0m
   [36mShop/Pricing/RateCache.cs:14[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
   [36mShop/Pricing/RateFeed.cs:17[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
   [36mShop/Shipping/CarrierDirectory.cs:12[0m  ThrowStatement  [2m[GenericThrowDetector][0m
   [36mShop/Stock/Snapshots.cs:16[0m  CatchClause  [2m[SwallowedExceptionDetector][0m
+  [36mShop/Stock/StockHolds.cs:15[0m  CatchClause  [2m[RethrownUnchangedDetector][0m
   [36mShop/Stock/StockImport.cs:15[0m  ThrowStatement  [2m[WrappingWithoutCauseDetector][0m
 
 [1;33mcsharp/fix-at-the-source[0m  (6)
@@ -305,7 +308,7 @@ exit: 1
   [36mShop/Stock/Listings.cs:15[0m  MethodDeclaration Page  [2m[DataClumpDetector][0m
     [2m↳ same shape as: Shop/Stock/Listings.cs:8[0m
 
-[1m201 sins[0m across 17 skills.
+[1m204 sins[0m across 17 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

@@ -2157,13 +2157,13 @@
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@668:CatchDeclaration": {
+    "Shop/Documents/InvoiceArchive.cs@702:CatchDeclaration": {
         "name": "global::System.IO.IOException",
         "nullable": false,
         "value": false,
         "inner": []
     },
-    "Shop/Documents/InvoiceArchive.cs@669:IdentifierName": {
+    "Shop/Documents/InvoiceArchive.cs@703:IdentifierName": {
         "name": "global::System.IO.IOException",
         "nullable": false,
         "value": false,

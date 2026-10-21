@@ -280,6 +280,13 @@
         "help": "Message string built at the throw site (no domain values / named factory)"
     },
     {
+        "key": "sin_rethrown-unchanged",
+        "title": "RethrownUnchanged",
+        "kind": "flag",
+        "default": true,
+        "help": "a `catch` whose whole body is `throw $e;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does"
+    },
+    {
         "key": "sin_swallow-catch",
         "title": "SwallowCatch",
         "kind": "flag",
@@ -1071,6 +1078,13 @@
         "help": "`throw new Exception/InvalidOperationException(\"…\")` — a failure that names nothing, described in prose at the throw site"
     },
     {
+        "key": "sin_csharp-rethrown-unchanged",
+        "title": "RethrownUnchanged",
+        "kind": "flag",
+        "default": true,
+        "help": "a `catch` whose whole body is `throw;` or `throw error;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does"
+    },
+    {
         "key": "sin_csharp-swallowed-exception",
         "title": "SwallowedException",
         "kind": "flag",
@@ -1573,6 +1587,13 @@
         "kind": "flag",
         "default": true,
         "help": "`raise Other(...)` inside an `except` block with no `from` — the failure being handled left as an implicit context, never named as the cause"
+    },
+    {
+        "key": "sin_python-rethrown-unchanged",
+        "title": "RethrownUnchanged",
+        "kind": "flag",
+        "default": true,
+        "help": "an `except` whose whole body is `raise` or `raise error` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does"
     },
     {
         "key": "sin_python-swallowed-exception",

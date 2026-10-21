@@ -69,6 +69,30 @@ final class CarrierMissing extends RuntimeException
 }
 ```
 
+### rethrown-unchanged
+
+a `catch` whose whole body is `throw $e;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does
+
+```php
+----------[ Bad ]----------
+
+public function day(string $covered): string
+{
+    try {
+        return (new \DateTimeImmutable($covered))->format('Y-m-d');
+    } catch (\Exception $e) {
+        throw $e;
+    }
+}
+
+----------[ Good ]----------
+
+public function dayCovered(string $covered): string
+{
+    return (new \DateTimeImmutable($covered))->format('Y-m-d');
+}
+```
+
 ### swallow-catch
 
 `catch` whose only effect is `return null/false/[]`; empty catch (silent swallow)

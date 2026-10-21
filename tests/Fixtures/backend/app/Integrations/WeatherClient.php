@@ -2,6 +2,7 @@
 
 namespace Shop\Integrations;
 
+use JesseGall\CodeCommandments\Sins\Backend\RethrownUnchanged;
 use JesseGall\CodeCommandments\Sins\Backend\SwallowCatch;
 
 use JesseGall\CodeCommandments\Testing\Fixed;
@@ -54,6 +55,7 @@ final class WeatherClient
     /**
      * @return array<string, mixed>
      */
+    #[Sinful(RethrownUnchanged::class)]
     public function strictForecast(string $city): array
     {
         try {

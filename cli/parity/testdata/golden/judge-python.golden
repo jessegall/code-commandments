@@ -124,15 +124,18 @@ exit: 1
   [36mshop/vat_bands.py:7[0m  ClassDef VatBand  [2m[ConstantClassEnumDetector][0m
   [36mshop/webhook_events.py:13[0m  MatchStmt  [2m[StringMatchMirrorsEnumDetector][0m
 
-[1;33mpython/exceptions[0m  (9)
+[1;33mpython/exceptions[0m  (12)
   [1;36m↳ LOAD the skill `commandments-python-exceptions` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/catalog_file.py:27[0m  ExceptHandler  [2m[SwallowedExceptionDetector][0m
+  [36mshop/count_sheets.py:14[0m  ExceptHandler  [2m[RethrownUnchangedDetector][0m
   [36mshop/feed_reader.py:18[0m  Raise  [2m[RaiseWithoutCauseDetector][0m
   [36mshop/plugins.py:10[0m  ExceptHandler  [2m[SwallowedExceptionDetector][0m
   [36mshop/price_lists.py:23[0m  Raise  [2m[RaiseWithoutCauseDetector][0m
   [36mshop/quantity_parsing.py:16[0m  Raise  [2m[RaiseWithoutCauseDetector][0m
   [36mshop/sessions.py:16[0m  Raise  [2m[MessageStringRaiseDetector][0m
+  [36mshop/shelf_imports.py:10[0m  ExceptHandler  [2m[RethrownUnchangedDetector][0m
+  [36mshop/stock_holds.py:10[0m  ExceptHandler  [2m[RethrownUnchangedDetector][0m
   [36mshop/streams_io.py:12[0m  Raise  [2m[MessageStringRaiseDetector][0m
   [36mshop/thumbnails.py:8[0m  ExceptHandler  [2m[SwallowedExceptionDetector][0m
   [36mshop/warehouse_api.py:10[0m  Raise  [2m[MessageStringRaiseDetector][0m
@@ -363,7 +366,7 @@ exit: 1
   [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedReturnDetector][0m
   [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
 
-[1m246 sins[0m across 18 skills.
+[1m249 sins[0m across 18 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

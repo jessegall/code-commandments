@@ -245,3 +245,40 @@ func (n Node) LooksUpOwnDict() bool {
 
 	return ok && slices.Contains(dictTypes, named.DottedName())
 }
+
+// RethrowsUnchanged says whether the except clause's whole body is a raise of the very failure it caught, bare
+// or naming the caught variable, with no cause of its own: the clause catches, adds nothing, and raises again,
+// which is what writing no clause at all already does. A clause another clause follows is doing real work — it
+// keeps the broader one below from catching what it names — so it is no part of this.
+func (n Node) RethrowsUnchanged() bool {
+	body := n.ChildrenIn("body")
+	if n.Kind() != "ExceptHandler" || len(body) != 1 || body[0].Kind() != "Raise" {
+		return false
+	}
+	if !n.isTheLastClause() {
+		return false
+	}
+
+	return body[0].raisesWhatWasCaughtBy(n)
+}
+
+// isTheLastClause says whether no other except clause of the same try follows this one.
+func (n Node) isTheLastClause() bool {
+	clauses := n.Parent().ChildrenIn("handlers")
+
+	return len(clauses) > 0 && clauses[len(clauses)-1].Node() == n.Node()
+}
+
+// raisesWhatWasCaughtBy says whether the raise hands on the failure the clause caught, untouched: a bare raise,
+// or one naming the caught variable and nothing else. A `from` of its own changes what the failure carries.
+func (n Node) raisesWhatWasCaughtBy(handler Node) bool {
+	raised := n.Child("exc")
+	if n.Child("cause").Exists() {
+		return false
+	}
+	if !raised.Exists() {
+		return true
+	}
+
+	return raised.Kind() == "Name" && raised.Name() == handler.Name()
+}

@@ -287,3 +287,39 @@ func (n Node) Arguments() []Node {
 
 	return arguments
 }
+
+// RethrowsUnchanged says whether the catch clause's whole body throws the very failure it caught, bare or
+// naming the caught variable: the clause catches, adds nothing, and throws again, which is what writing no
+// clause at all already does. A clause another clause follows is doing real work — it keeps the broader one
+// below from catching what it names — so it is no part of this.
+func (n Node) RethrowsUnchanged() bool {
+	body := n.firstChild("Block")
+	statements := body.Children()
+	if !n.Is("CatchClause") || len(statements) != 1 || !statements[0].Is("ThrowStatement") {
+		return false
+	}
+	if !n.isTheLastClause() {
+		return false
+	}
+
+	return statements[0].throwsWhatWasCaughtBy(n)
+}
+
+// isTheLastClause says whether no other catch clause of the same try follows this one.
+func (n Node) isTheLastClause() bool {
+	clauses := n.Parent().ChildrenIn("Catches")
+
+	return len(clauses) > 0 && clauses[len(clauses)-1].Node() == n.Node()
+}
+
+// throwsWhatWasCaughtBy says whether the throw hands on the failure the clause caught, untouched: a bare throw,
+// or one naming the caught variable and nothing else.
+func (n Node) throwsWhatWasCaughtBy(clause Node) bool {
+	thrown := n.Expressions()
+	if len(thrown) == 0 {
+		return true
+	}
+	caught := clause.firstChild("CatchDeclaration").Name()
+
+	return len(thrown) == 1 && thrown[0].Is("IdentifierName") && caught != "" && thrown[0].Name() == caught
+}

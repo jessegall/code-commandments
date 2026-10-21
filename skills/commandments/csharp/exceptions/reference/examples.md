@@ -41,6 +41,33 @@ public sealed class UnknownCarrier : InvalidOperationException
 }
 ```
 
+### csharp-rethrown-unchanged
+
+a `catch` whose whole body is `throw;` or `throw error;` — the clause catches the failure, adds nothing to it and hands it back on, which is what writing no clause does
+
+```cs
+----------[ Bad ]----------
+
+public void Hold(string sku, int quantity)
+{
+    try
+    {
+        File.AppendAllText(Path.Combine(folder, "holds.csv"), $"{sku};{quantity}\n");
+    }
+    catch (IOException)
+    {
+        throw;
+    }
+}
+
+----------[ Good ]----------
+
+public void HoldStock(string sku, int quantity)
+{
+    File.AppendAllText(Path.Combine(folder, "holds.csv"), $"{sku};{quantity}\n");
+}
+```
+
 ### csharp-swallowed-exception
 
 A bare `catch` or `catch (Exception)` whose body is empty, continues, or returns nothing — every failure, expected or not, made to vanish

@@ -38,6 +38,7 @@ exit: 0
 [1;33mbackend/exceptions[0m
   GenericExceptionDetector
   MessageAtThrowDetector
+  RethrownUnchangedDetector
   SwallowCatchDetector
   WrappingWithoutCauseDetector
 [1;33mbackend/fix-at-the-source[0m
@@ -127,6 +128,7 @@ exit: 0
   UnnamedVocabularyLiteralDetector
 [1;33mcsharp/exceptions[0m
   GenericThrowDetector
+  RethrownUnchangedDetector
   SwallowedExceptionDetector
   WrappingWithoutCauseDetector
 [1;33mcsharp/fix-at-the-source[0m
@@ -217,6 +219,7 @@ exit: 0
 [1;33mpython/exceptions[0m
   MessageStringRaiseDetector
   RaiseWithoutCauseDetector
+  RethrownUnchangedDetector
   SwallowedExceptionDetector
 [1;33mpython/fix-at-the-source[0m
   ConstructorSideEffectDetector
