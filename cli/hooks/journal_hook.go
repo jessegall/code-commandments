@@ -78,6 +78,18 @@ func AnswerNow(given map[string]any) JournalAnswer {
 	return answerWith(given, every, true)
 }
 
+// answer4On is the service's answer to one of version 4's events: the held one carries the gates alone, since a
+// window of milliseconds is no time to work anything out and a refusal there is the only thing that can still stop
+// a command; every other event is heard after the journal's reply, so nothing waits on its answer and it carries
+// what the handlers found, exactly as the program would have answered it.
+func answer4On(given map[string]any, event string) string {
+	if event == heldEvent {
+		return answerWith(given, isGate, false).Line4()
+	}
+
+	return answerWith(given, every, true).Line4()
+}
+
 // adviseNow works out the moment's advice, every hook but the gates, and tells it to the queue.
 func adviseNow(given map[string]any) {
 	if queue, queued := QueueFromEnvironment(); queued {
@@ -351,9 +363,9 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 			// they already know and everything else is worked out after the answer, as it is for version 3.
 			if moment, four := Moment4Of(read); four {
 				given := Stamped(moment)
-				connection.Write([]byte(answerWith(given, isGate, false).Line4() + "\n"))
+				connection.Write([]byte(answer4On(given, asText(read["event"])) + "\n"))
 				connection.Close()
-				advice.add(asked{given, true})
+				advice.add(asked{given, asText(read["event"]) == heldEvent})
 
 				return
 			}

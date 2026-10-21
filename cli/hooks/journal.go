@@ -461,17 +461,14 @@ func (a Announced) Settle(root string, read []string, marks []SinMark) Settlemen
 			}
 		}
 
+		// Every sin remembered for a file this moment judged and which the judge no longer finds is repented,
+		// however it went: its line edited, rewritten, moved or gone. The comparison is the remembered keys less
+		// the keys found now, over the WHOLE file and never only where the edit landed — a sin two hundred lines
+		// above an edit is as fixed as one on its own line, and a card nothing settles stays orange for good.
 		for _, id := range holdOrder {
 			mark := holds[id]
 
 			if _, announced := before.Get(id); !mark.Touched || announced {
-				continue
-			}
-
-			if at := slices.IndexFunc(leaving, func(left string) bool { return announcedIn(before, left).Shown == mark.ShownFrom(root) }); at >= 0 {
-				kept.Set(id, announcement{mark.ShownFrom(root), announcedIn(before, leaving[at]).Key}.written(id))
-				leaving = slices.Delete(leaving, at, at+1)
-
 				continue
 			}
 

@@ -421,3 +421,56 @@ func TestASinRepentedTurnsItsCardGreenOnTheEventThatRepentsIt(t *testing.T) {
 
 	t.Errorf("the repenting edit raised %v, none of it settling %s", cards, key)
 }
+
+// TestASinGoneOutsideTheEditIsStillRepented holds the rule to the shape that broke it in the journal's own project:
+// a sin was announced, something took it out that the plugin never saw, and the next edit landed twenty lines away.
+// The judge of that edit must still settle the sin it no longer finds — the comparison is every key remembered for
+// the file against every key found in it now, and never only the lines the edit touched, or a card nobody will ever
+// settle stays orange for good.
+func TestASinGoneOutsideTheEditIsStillRepented(t *testing.T) {
+	root, file, _ := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+
+	raised := Answer4Now(eventOf("file_edited", "src/refund.py"))
+	var first map[string]any
+	if err := json.Unmarshal([]byte(raised), &first); err != nil {
+		t.Fatal(err)
+	}
+	cards, _ := first["cards"].([]any)
+	if len(cards) != 1 {
+		t.Fatalf("the sinful edit raised %v", cards)
+	}
+	key := asText(cards[0].(map[string]any)["key"])
+
+	// The sin at the top is taken out by nobody we hear from, and the edit we DO hear about adds a line at the end.
+	repaired := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n\n\ndef total(order) -> int:\n    return order.total\n"
+	if err := os.WriteFile(file, []byte(repaired), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	elsewhere := map[string]any{
+		"v": 1, "event": "file_edited", "session": "s1", "environment": "main",
+		"data": map[string]any{
+			"path": "src/refund.py", "kind": "edit", "added": 2, "removed": 0, "tool_use": 42,
+			"lines": []any{
+				map[string]any{"kind": "add", "line": 7, "text": "def total(order) -> int:"},
+				map[string]any{"kind": "add", "line": 8, "text": "    return order.total"},
+			},
+		},
+	}
+
+	var second map[string]any
+	if err := json.Unmarshal([]byte(Answer4Now(elsewhere)), &second); err != nil {
+		t.Fatal(err)
+	}
+
+	settled, _ := second["cards"].([]any)
+	for _, each := range settled {
+		card, _ := each.(map[string]any)
+		if asText(card["key"]) == key && asText(card["kind"]) == "sin-resolved" {
+			return
+		}
+	}
+
+	t.Errorf("the edit elsewhere settled %v, none of it the sin that is gone, %s", settled, key)
+}
