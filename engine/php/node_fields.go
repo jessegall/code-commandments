@@ -159,3 +159,91 @@ func (n Node) PublicFieldNames() []string {
 
 	return names
 }
+
+// IsUnreadCollaborator says whether the node is a promoted constructor parameter the class keeps to itself,
+// takes a collaborator through, and then never reads: the class asks for something it does not use, and the
+// only way a reader learns that is to search the whole type. A class that could read a field without naming it
+// answers no, since the read may well be somewhere this cannot see.
+func (n Node) IsUnreadCollaborator() bool {
+	field, isField := AsField(n.Match)
+	class := Node{Match: n.Closest(engine.TypeDeclaration)}
+	if !isField || !field.Promoted || !slices.Contains(n.Node().Modifiers, "private") {
+		return false
+	}
+	if Written(field.Type).Class() == "" || len(AttributeNames(field.Declaration)) > 0 {
+		return false
+	}
+	if class.ReadsItsFieldsWithoutNamingThem() {
+		return false
+	}
+	if n.constructorUsesTheArgument(field.Name) {
+		return false
+	}
+
+	return !class.NamesTheField(field.Name)
+}
+
+// constructorUsesTheArgument says whether the constructor's own body reads the promoted parameter as the plain
+// argument it also is. The field is still read nowhere, but the value is used, so the fix is to stop promoting
+// it rather than to take it away, and that is a different thing to tell someone.
+func (n Node) constructorUsesTheArgument(name string) bool {
+	constructor := n.Up()
+	for _, statement := range constructor.ChildrenIn("stmts") {
+		for _, node := range append([]engine.Match{statement}, descendantsOf(statement)...) {
+			if node.Kind() == "Expr_Variable" && node.Name() == name {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// ReadsItsFieldsWithoutNamingThem says whether the class could read a field of its own without writing its name:
+// it uses a trait, answers a read it does not declare, or hands the whole object somewhere that reads every
+// field. A field's absence from the source then says nothing about whether it is read.
+func (n Node) ReadsItsFieldsWithoutNamingThem() bool {
+	if len(traitNames(n.Match)) > 0 {
+		return true
+	}
+	for _, method := range Methods(n.Match) {
+		if slices.Contains([]string{"__get", "__set", "__call", "__serialize", "__sleep", "__debugInfo"}, method.Child("name").Name()) {
+			return true
+		}
+	}
+
+	return slices.ContainsFunc(descendantsOf(n.Match), readsTheWholeObject)
+}
+
+// readsTheWholeObject says whether the expression reads every field of the object at once: a dynamic property
+// fetch, a cast of `$this` to an array, or a call that unpacks the whole object.
+func readsTheWholeObject(node engine.Match) bool {
+	if node.Kind() == "Expr_PropertyFetch" && node.Child("name").Kind() != "Identifier" {
+		return true
+	}
+	if node.Kind() == "Expr_Cast_Array" && node.Child("expr").Kind() == "Expr_Variable" && node.Child("expr").Name() == "this" {
+		return true
+	}
+
+	return node.Kind() == "Expr_FuncCall" && slices.Contains([]string{"compact", "get_object_vars", "serialize"}, node.Child("name").Name())
+}
+
+// NamesTheField says whether anything in the class names the field, the constructor's own promotion aside: a
+// read, a write, or an interpolation of `$this->name`.
+func (n Node) NamesTheField(name string) bool {
+	return slices.ContainsFunc(descendantsOf(n.Match), func(node engine.Match) bool {
+		fetch := Node{Match: node}
+
+		return fetch.isSelfFieldNamed(name)
+	})
+}
+
+// isSelfFieldNamed says whether the node reads or writes `$this-><name>`.
+func (n Node) isSelfFieldNamed(name string) bool {
+	if !slices.Contains([]string{"Expr_PropertyFetch", "Expr_NullsafePropertyFetch"}, n.Kind()) {
+		return false
+	}
+	owner := n.Child("var")
+
+	return owner.Kind() == "Expr_Variable" && owner.Name() == "this" && n.Child("name").Name() == name
+}

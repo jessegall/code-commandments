@@ -1,6 +1,11 @@
 package python
 
-import "slices"
+import (
+	"slices"
+	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
+)
 
 var (
 	// genericExceptions is the exceptions that name no failure: raising one with a message puts the name in prose.
@@ -281,4 +286,87 @@ func (n Node) raisesWhatWasCaughtBy(handler Node) bool {
 	}
 
 	return raised.Kind() == "Name" && raised.Name() == handler.Name()
+}
+
+// IsUnreadCollaborator says whether the node is an assignment in __init__ that keeps a collaborator the class
+// was handed under a name of its own, which nothing anywhere then reads: the class asks for something it does
+// not use, and the only way a reader learns that is to search for the name and find none. A class that could
+// read an attribute without naming it answers no, since the read may well be somewhere this cannot see.
+func (n Node) IsUnreadCollaborator(codebase *engine.Codebase) bool {
+	held, kept := n.collaboratorKeptInInit()
+	class := n.EnclosingClass()
+	if !kept || !strings.HasPrefix(held, "_") {
+		return false
+	}
+	if class.ReadsItsAttributesWithoutNamingThem() {
+		return false
+	}
+
+	return !readsTheAttribute(codebase, held)
+}
+
+// collaboratorKeptInInit is the attribute name an __init__ assignment keeps a handed-in collaborator under, and
+// whether the node is one: `self._mailer = mailer`, where the value is a parameter annotated as a class rather
+// than text or a number, so what goes unread is a collaborator and not a setting.
+func (n Node) collaboratorKeptInInit() (string, bool) {
+	def := n.EnclosingFunction()
+	targets := n.ChildrenIn("targets")
+	if n.Kind() != "Assign" || len(targets) != 1 || !def.Exists() || def.Name() != "__init__" {
+		return "", false
+	}
+	target, value := targets[0], n.Child("value")
+	if target.Kind() != "Attribute" || target.RootName() != "self" || value.Kind() != "Name" {
+		return "", false
+	}
+	for _, parameter := range def.Parameters() {
+		if parameter.Name() == value.Name() && parameter.Child("annotation").namesAClass() {
+			return target.Name(), true
+		}
+	}
+
+	return "", false
+}
+
+// namesAClass says whether the annotation names a class rather than a builtin scalar or a container of them.
+func (n Node) namesAClass() bool {
+	named := n.DottedName()
+
+	return named != "" && !slices.Contains([]string{"str", "int", "float", "bool", "bytes", "list", "dict", "set", "tuple", "frozenset", "Any", "typing.Any", "object"}, named)
+}
+
+// ReadsItsAttributesWithoutNamingThem says whether the class could read an attribute of its own without writing
+// its name: it answers a read it does not declare, or hands its own __dict__ somewhere that reads every one.
+func (n Node) ReadsItsAttributesWithoutNamingThem() bool {
+	for _, method := range n.Methods() {
+		if slices.Contains([]string{"__getattr__", "__getattribute__", "__setattr__", "__reduce__", "__getstate__"}, method.Name()) {
+			return true
+		}
+	}
+
+	return slices.ContainsFunc(n.Descendants(), readsEveryAttribute)
+}
+
+// readsEveryAttribute says whether the expression reads every attribute of the instance at once: its __dict__,
+// or a call that unpacks the whole instance.
+func readsEveryAttribute(n Node) bool {
+	if n.Kind() == "Attribute" && n.Name() == "__dict__" {
+		return true
+	}
+
+	return n.IsCall() && slices.Contains([]string{"vars", "dataclasses.asdict", "dataclasses.astuple"}, n.Callee().DottedName())
+}
+
+// readsTheAttribute says whether anything in the codebase names the attribute other than to assign it: a read
+// of `<something>.<name>`, wherever it is, so a subclass or a caller reading it counts.
+func readsTheAttribute(codebase *engine.Codebase, name string) bool {
+	return In(codebase).
+		WhereKind("Attribute").
+		Where(func(node engine.Match) bool { return node.Name() == name }).
+		Reject(func(node engine.Match) bool { return Node{Match: node}.isAssigned() }).
+		Count() > 0
+}
+
+// isAssigned says whether the expression is what an assignment writes to.
+func (n Node) isAssigned() bool {
+	return n.Node().Field == "targets"
 }

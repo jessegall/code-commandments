@@ -669,6 +669,19 @@
             ],
             "detail": true
         },
+        "sin_unread-collaborator": {
+            "title": "UnreadCollaborator",
+            "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so",
+            "type": "flag",
+            "default": "true",
+            "group": "backend/fix-at-the-source",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_coalesced-loop-subject": {
             "title": "CoalescedLoopSubject",
             "help": "`foreach ($x[$k] ?? [] as …)` — the absence check buried in the loop header instead of stated as a guard",
@@ -2099,6 +2112,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-unread-collaborator": {
+            "title": "UnreadCollaborator",
+            "help": "a private readonly field, or a primary constructor parameter, that nothing in the type reads — the type asks for something it does not use",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/fix-at-the-source",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_csharp-coalesced-loop-subject": {
             "title": "CoalescedLoopSubject",
             "help": "a `foreach` over `items ?? []` (or `Enumerable.Empty<T>()`, or a new empty list) — the check for a missing collection is hidden in the loop header",
@@ -3054,6 +3080,19 @@
         "sin_python-mutable-static-state": {
             "title": "MutableStaticState",
             "help": "a `global` written from a function, or a class attribute set from a method — state no instance owns, changed by whoever ran last",
+            "type": "flag",
+            "default": "true",
+            "group": "python/fix-at-the-source",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-unread-collaborator": {
+            "title": "UnreadCollaborator",
+            "help": "a collaborator `__init__` keeps as an attribute of its own, `self._mailer = mailer`, that nothing anywhere reads — the class asks for something it does not use",
             "type": "flag",
             "default": "true",
             "group": "python/fix-at-the-source",

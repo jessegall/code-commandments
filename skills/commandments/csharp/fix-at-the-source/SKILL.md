@@ -46,6 +46,8 @@ needs it (usually through the constructor), and the dependency is in the signatu
       _Keep the collaborator in a field and call it from the method someone actually calls to do the work._
 - [ ] Keep state that changes on an instance someone owns and passes around; don't write to a static field from a method.
       _Move the field onto an object and hand that object to the code that reads and changes it; for a value computed once, use a `static readonly Lazy<T>`._
+- [ ] A constructor asks for what the type uses, and nothing more: a collaborator nothing reads is removed, along with what the callers pass.
+      _Delete the parameter and the field, then follow the callers: whatever they resolved or built only to hand it over goes too. If the type is meant to use it and does not, that is the bug the unread field is pointing at._
 
 ## Worked example
 
@@ -71,17 +73,17 @@ public sealed class NewsletterSignup(string address, MailingList list)
 }
 ```
 
-The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 2 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/fix-at-the-source` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-constructor-side-effect`, `csharp-mutable-static-state`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-constructor-side-effect`, `csharp-mutable-static-state`, `csharp-unread-collaborator`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 3 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

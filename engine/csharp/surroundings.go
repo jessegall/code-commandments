@@ -3,6 +3,8 @@ package csharp
 import (
 	"slices"
 	"strings"
+
+	"github.com/jessegall/code-commandments/engine"
 )
 
 // Ancestors is every node around this one, the nearest first.
@@ -769,4 +771,117 @@ func (n Node) nearestLoop() Node {
 	}
 
 	return Node{}
+}
+
+// IsUnreadCollaborator says whether the node is a collaborator the type takes and never reads: a private
+// readonly field, or a parameter of the type's primary constructor, whose name nothing in the type names
+// again. The type asks for something it does not use, and the only way a reader learns that is to search it.
+// A partial type answers no, since the part that reads it may be another file; so does a type that holds a
+// type of its own, which can read a private field of its outer, and a field something has marked up, which
+// tells the framework to write or read it.
+func (n Node) IsUnreadCollaborator() bool {
+	name, taken := n.collaboratorTaken()
+	owner := n.EnclosingType()
+	if !taken || owner.HasModifier("partial") || owner.holdsATypeOfItsOwn() {
+		return false
+	}
+
+	return !owner.namesTheCollaborator(name, n)
+}
+
+// collaboratorTaken is the name the type takes a collaborator under, and whether the node takes one: a private
+// readonly field of a class type, or a parameter of a primary constructor, which is the same ask in one line.
+func (n Node) collaboratorTaken() (string, bool) {
+	switch {
+	case n.Is("VariableDeclarator") && n.Parent().Parent().Is("FieldDeclaration"):
+		field := n.Parent().Parent()
+		if !field.HasModifier("private") || !field.HasModifier("readonly") || field.hasAttribute() {
+			return "", false
+		}
+		// A static readonly field is a constant of the type, not something an object was given: an unread one
+		// is dead data, which is a different thing to say and a different fix.
+		if field.HasModifier("static") {
+			return "", false
+		}
+
+		return n.Name(), true
+	// A record's positional parameters are its public properties: the record exists so that others read them,
+	// and it is under no obligation to read them itself.
+	case n.Is("Parameter") && n.Parent().Is("ParameterList") && n.Parent().Parent().Is("ClassDeclaration", "StructDeclaration"):
+		if n.hasAttribute() {
+			return "", false
+		}
+
+		return n.Name(), true
+	}
+
+	return "", false
+}
+
+// hasAttribute says whether anything is written above the declaration in brackets.
+func (n Node) hasAttribute() bool {
+	return slices.ContainsFunc(n.All(), func(child Node) bool { return child.Is("AttributeList") })
+}
+
+// holdsATypeOfItsOwn says whether the type declares a type inside itself, which may read a private field of it.
+func (n Node) holdsATypeOfItsOwn() bool {
+	return slices.ContainsFunc(n.Children(), func(member Node) bool {
+		return member.Is("ClassDeclaration", "RecordDeclaration", "StructDeclaration", "InterfaceDeclaration", "EnumDeclaration")
+	})
+}
+
+// namesTheCollaborator says whether anything in the type names the collaborator, its own declaration and the
+// constructor's write of it aside. A name is an expression, which this engine's own Descendants leaves out, so
+// the whole tree below the type is walked.
+func (n Node) namesTheCollaborator(name string, declaration Node) bool {
+	return slices.ContainsFunc(n.Match.Descendants(), func(match engine.Match) bool {
+		node := Node{Match: match}
+		if node.Node() == declaration.Node() || !node.Is("IdentifierName") || node.Name() != name {
+			return false
+		}
+
+		return !node.isTheWrittenSideOfAnAssignment() && !node.isTheValueKept(name)
+	})
+}
+
+// isTheValueKept says whether the name is the value a constructor keeps under the same name: the parameter in
+// `this.mailer = mailer`, which is how the field gets its collaborator and not a read of the field at all. It
+// has to be a constructor's own assignment: `new Session { Headers = Headers }` says the same words elsewhere
+// and is a read.
+func (n Node) isTheValueKept(name string) bool {
+	assignment := n.Parent()
+	if !assignment.Is("SimpleAssignmentExpression") || assignment.At(1).Node() != n.Node() {
+		return false
+	}
+	if !n.sitsInAConstructor() {
+		return false
+	}
+	written := assignment.At(0)
+	if written.Is("SimpleMemberAccessExpression") && written.At(0).Is("ThisExpression") {
+		written = written.At(1)
+	}
+
+	return written.Is("IdentifierName") && written.Name() == name
+}
+
+// isTheWrittenSideOfAnAssignment says whether the name is what an assignment writes to, directly or through
+// `this`, rather than a value anything reads.
+func (n Node) isTheWrittenSideOfAnAssignment() bool {
+	written := n
+	if written.Parent().Is("SimpleMemberAccessExpression") && written.Parent().At(0).Is("ThisExpression") {
+		written = written.Parent()
+	}
+
+	return written.Parent().Is("SimpleAssignmentExpression") && written.Parent().At(0).Node() == written.Node()
+}
+
+// sitsInAConstructor says whether a constructor of the type holds the node.
+func (n Node) sitsInAConstructor() bool {
+	for held := n.Parent(); held.Exists(); held = held.Parent() {
+		if held.Is("ConstructorDeclaration") {
+			return true
+		}
+	}
+
+	return false
 }

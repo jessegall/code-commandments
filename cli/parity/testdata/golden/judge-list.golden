@@ -48,6 +48,7 @@ exit: 0
   ManufacturedFakeFillDetector
   MutableStaticStateDetector
   NearDuplicateFunctionDetector
+  UnreadCollaboratorDetector
 [1;33mbackend/guard-clauses-and-flow[0m
   CoalescedLoopSubjectDetector
   DeepNestingDetector
@@ -134,6 +135,7 @@ exit: 0
 [1;33mcsharp/fix-at-the-source[0m
   ConstructorSideEffectDetector
   MutableStaticStateDetector
+  UnreadCollaboratorDetector
 [1;33mcsharp/flow[0m
   CoalescedLoopSubjectDetector
   CollectionMutatedWhileIteratedDetector
@@ -226,6 +228,7 @@ exit: 0
   DivergentTwinDetector
   MutableDefaultDetector
   MutableStaticStateDetector
+  UnreadCollaboratorDetector
 [1;33mpython/flow[0m
   CoalescedLoopSubjectDetector
   CollectionMutatedWhileIteratedDetector

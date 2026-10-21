@@ -45,6 +45,8 @@ signature where a reader can see it.
       _Default it to `None` and make the container inside the body, so each call gets its own._
 - [ ] Hold changing state on an instance someone owns and passes; never write a `global` or a class attribute from a function.
       _Move the state onto an object, and hand that object to the code that reads and changes it._
+- [ ] A constructor asks for what the class uses, and nothing more: a collaborator nothing reads is removed, along with what the callers pass.
+      _Delete the parameter and the attribute, then follow the callers: whatever they built only to hand it over goes too. If the class is meant to use it and does not, that is the bug the unread attribute is pointing at._
 
 ## Worked example
 
@@ -80,17 +82,17 @@ def install_card_payments(registry, fee: float) -> CardPayments:
     return payments
 ```
 
-The other 3 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 4 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/fix-at-the-source` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constructor-side-effect`, `python-divergent-twin`, `python-mutable-default`, `python-mutable-static-state`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-constructor-side-effect`, `python-divergent-twin`, `python-mutable-default`, `python-mutable-static-state`, `python-unread-collaborator`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 4 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 5 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

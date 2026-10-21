@@ -278,3 +278,17 @@ public function scoreFrom(int $start, int $weight): int
     );
 }
 ```
+
+### unread-collaborator
+
+a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so
+
+```php
+----------[ Bad ]----------
+
+public function __construct(private readonly HttpClient $http) {}
+
+----------[ Good ]----------
+
+public function __construct(private readonly Mailer $mailer) {}
+```

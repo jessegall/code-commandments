@@ -5,10 +5,10 @@ exit: 0
 
   [36mConfig ...............[0m .commandments/config.json (not yet written)
   [36mSource roots .........[0m .
-  [36mBackend detectors ....[0m 78 running  ·  121 available
+  [36mBackend detectors ....[0m 79 running  ·  122 available
   [36mFrontend detectors ...[0m 18 running  ·  19 available
-  [36mPython detectors .....[0m 70 running  ·  70 available
-  [36mC# detectors .........[0m 57 running  ·  57 available
+  [36mPython detectors .....[0m 71 running  ·  71 available
+  [36mC# detectors .........[0m 58 running  ·  58 available
   [36mCustom detectors .....[0m 0
   [36mExemption packages ...[0m 3 built-in  ·  0 registered
   [36mSkills ...............[0m 64

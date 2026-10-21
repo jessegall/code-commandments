@@ -343,6 +343,13 @@
         "help": "Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone)"
     },
     {
+        "key": "sin_unread-collaborator",
+        "title": "UnreadCollaborator",
+        "kind": "flag",
+        "default": true,
+        "help": "a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so"
+    },
+    {
         "key": "sin_coalesced-loop-subject",
         "title": "CoalescedLoopSubject",
         "kind": "flag",
@@ -1113,6 +1120,13 @@
         "help": "a `static` field that methods write to — state no instance owns, changed by whichever code ran last"
     },
     {
+        "key": "sin_csharp-unread-collaborator",
+        "title": "UnreadCollaborator",
+        "kind": "flag",
+        "default": true,
+        "help": "a private readonly field, or a primary constructor parameter, that nothing in the type reads — the type asks for something it does not use"
+    },
+    {
         "key": "sin_csharp-coalesced-loop-subject",
         "title": "CoalescedLoopSubject",
         "kind": "flag",
@@ -1629,6 +1643,13 @@
         "kind": "flag",
         "default": true,
         "help": "a `global` written from a function, or a class attribute set from a method — state no instance owns, changed by whoever ran last"
+    },
+    {
+        "key": "sin_python-unread-collaborator",
+        "title": "UnreadCollaborator",
+        "kind": "flag",
+        "default": true,
+        "help": "a collaborator `__init__` keeps as an attribute of its own, `self._mailer = mailer`, that nothing anywhere reads — the class asks for something it does not use"
     },
     {
         "key": "sin_deep-python-nesting",

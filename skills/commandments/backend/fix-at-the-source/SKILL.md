@@ -115,6 +115,8 @@ is born, and every `Command` that exists is real.
 - [ ] Hold changing state on an INSTANCE someone owns and passes; never write a static property.
       _Constructor-inject the state as a collaborator, so who holds it (and who may change it) is written down._
 - [ ] Collapse type-2 clones — two functions with the same shape (differing only in names/literals) become one parameterised function.
+- [ ] A constructor asks for what the class uses, and nothing more: a collaborator no method reads is removed, along with what the callers pass.
+      _Delete the parameter and the field, then follow the callers: whatever they built or resolved only to hand it over goes too. If the class is meant to use it and does not, that is the bug the empty field is pointing at._
 
 ## Worked example
 
@@ -157,17 +159,17 @@ final class LazyLedgerExport
 }
 ```
 
-The other 5 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 6 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=backend/fix-at-the-source` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `constructor-side-effect`, `divergent-twin`, `duplicate-function`, `manufactured-fake-fill`, `mutable-static-state`, `near-duplicate-function`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `constructor-side-effect`, `divergent-twin`, `duplicate-function`, `manufactured-fake-fill`, `mutable-static-state`, `near-duplicate-function`, `unread-collaborator`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 6 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 7 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

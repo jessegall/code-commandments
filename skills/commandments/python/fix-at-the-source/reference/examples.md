@@ -106,3 +106,27 @@ class TaxRates:
     def rate_for(self, region: str) -> float:
         return self.rates[region]
 ```
+
+### python-unread-collaborator
+
+a collaborator `__init__` keeps as an attribute of its own, `self._mailer = mailer`, that nothing anywhere reads — the class asks for something it does not use
+
+```py
+----------[ Bad ]----------
+
+def __init__(self, printer: Printer, courier: Courier) -> None:
+    self._printer = printer
+    self._courier = courier
+
+----------[ Good ]----------
+
+class PackingDesk:
+    def __init__(self, printer: Printer) -> None:
+        self._printer = printer
+
+    def pack(self, order: str, lines: list[str]) -> int:
+        for line in lines:
+            self._printer.print_slip(f"{order}: {line}")
+
+        return len(lines)
+```

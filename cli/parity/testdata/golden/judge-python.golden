@@ -140,13 +140,15 @@ exit: 1
   [36mshop/thumbnails.py:8[0m  ExceptHandler  [2m[SwallowedExceptionDetector][0m
   [36mshop/warehouse_api.py:10[0m  Raise  [2m[MessageStringRaiseDetector][0m
 
-[1;33mpython/fix-at-the-source[0m  (16)
+[1;33mpython/fix-at-the-source[0m  (19)
   [1;36m↳ LOAD the skill `commandments-python-fix-at-the-source` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/damage_marks.py:7[0m  Param seen  [2m[MutableDefaultDetector][0m
   [36mshop/damage_marks.py:14[0m  Param blocked  [2m[MutableDefaultDetector][0m
+  [36mshop/label_waiting.py:13[0m  Assign  [2m[UnreadCollaboratorDetector][0m
   [36mshop/ledger_export.py:7[0m  ClassDef LedgerExport  [2m[ConstructorSideEffectDetector][0m
   [36mshop/order_numbers.py:14[0m  AugAssign  [2m[MutableStaticStateDetector][0m
+  [36mshop/pack_desk.py:20[0m  Assign  [2m[UnreadCollaboratorDetector][0m
   [36mshop/payment_plugins.py:6[0m  ClassDef CardPlugin  [2m[ConstructorSideEffectDetector][0m
   [36mshop/photo_archive.py:9[0m  FunctionDef archive_photos  [2m[DivergentTwinDetector][0m
     [2m↳ same shape as: shop/photo_archive.py:20[0m
@@ -163,6 +165,7 @@ exit: 1
   [36mshop/return_notes.py:8[0m  Param notes  [2m[MutableDefaultDetector][0m
   [36mshop/stock_export.py:9[0m  FunctionDef export_stock  [2m[DivergentTwinDetector][0m
     [2m↳ same shape as: shop/price_export.py:9[0m
+  [36mshop/stocktake_sheets.py:14[0m  Assign  [2m[UnreadCollaboratorDetector][0m
   [36mshop/store_context.py:10[0m  Assign  [2m[MutableStaticStateDetector][0m
   [36mshop/tax_rates.py:11[0m  Assign  [2m[MutableStaticStateDetector][0m
 
@@ -366,7 +369,7 @@ exit: 1
   [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedReturnDetector][0m
   [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
 
-[1m249 sins[0m across 18 skills.
+[1m252 sins[0m across 18 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

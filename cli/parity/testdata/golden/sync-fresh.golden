@@ -57,13 +57,13 @@ sha256 cfde23ec22e12ce1260ec195c05c9c6304dc92987d68a7d3b37a9d7f2b5b37d6
 === created .agents/skills/commandments-backend-exceptions/reference/examples.md
 sha256 0659317df186b791ddedbf94c8d50d707f875b380eddc3fb3d511fe56db2c379
 === created .agents/skills/commandments-backend-fix-at-the-source/SKILL.md
-sha256 cb1eab66ab2841b1b3cf64c99a9b8cce8b03bcec0f83a9abad44f3c78b2ba7b3
+sha256 d9b497b72ab4c2396cb2b7d3cf015cb17b460def6a742ba31ea0211b340b0bc2
 === created .agents/skills/commandments-backend-fix-at-the-source/evals/triggers.json
 sha256 353f548c902f613b2474812df1b419cd59ebbfe23f9ca5ab0946f0885568e5d0
 === created .agents/skills/commandments-backend-fix-at-the-source/reference/detectors.md
-sha256 1f447665adc2fc6d59e443176c23c636af254e31fa00d5c13815668f0369fa2e
+sha256 160b946b3937a08999649c54b2c7c1f90f2feafa6d7b5a2bc4e6f738a53dde78
 === created .agents/skills/commandments-backend-fix-at-the-source/reference/examples.md
-sha256 f1ee4dd472aa55083acd4aac937d4b466c29f74767b4c864af34c87a5e9dea1b
+sha256 f147f8fd3c72eb59b3e32d747b9c4d1bfec2628a619f0451a2e6552870de8aa0
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/SKILL.md
 sha256 9c2d82dc686c248a502ccc6a7dd24300c3f69fb787f71c0feb89b2f79723908a
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/evals/triggers.json
@@ -227,13 +227,13 @@ sha256 d93068b635346da932dfee3cf32764dc549019450e0f91aa154a50b803120166
 === created .agents/skills/commandments-csharp-exceptions/reference/examples.md
 sha256 d45371047ecb43b8154a4c3e23000188f03573026dacdf3c05e9d5bff92ce510
 === created .agents/skills/commandments-csharp-fix-at-the-source/SKILL.md
-sha256 1afa94124e8937882e25db31a46c7c7fb6410bafe8e26d2a8584f2e918062f33
+sha256 0ffb306dd7f78ee15501671af9fe81c08d9ae381424821760dde4edeb6092657
 === created .agents/skills/commandments-csharp-fix-at-the-source/evals/triggers.json
 sha256 8c2f1dd0fbc17c78d65f8665e95eb513dfc318fe1843d3d51ed08a0523848f5f
 === created .agents/skills/commandments-csharp-fix-at-the-source/reference/detectors.md
-sha256 2925e13c7b9be911446fb5a5127c1a52511f777d662cebc0a48483c433f7690b
+sha256 7cdd4b639dbb0bfd349d7ba66cddcca0da63d48950f768b7fafa63827c315bba
 === created .agents/skills/commandments-csharp-fix-at-the-source/reference/examples.md
-sha256 be82559c640b1f52dd5ae5ab749d3fdbaa02096f93a857c2869085ee4ff64747
+sha256 7761061ed1f0dbc146cb95c6514b2e783a9a26ebb7e61b755c82e63986f0b0ce
 === created .agents/skills/commandments-csharp-flow/SKILL.md
 sha256 97c02383b63ceeec5168ca0c21e2629fc511c1bf3892dfa80202aeeb0b67ad1a
 === created .agents/skills/commandments-csharp-flow/evals/triggers.json
@@ -373,13 +373,13 @@ sha256 187accb619b0b975314c69c41b2f8e3938f93ad1cdd406953bb59229dc5882fa
 === created .agents/skills/commandments-python-exceptions/reference/examples.md
 sha256 941b58ff4ad432724caefc129f36028a763c02c29a056fc83e478bbb868750c6
 === created .agents/skills/commandments-python-fix-at-the-source/SKILL.md
-sha256 921410b3f800c51ffdc6be9548eb613abbce5806ab35109cb46ed08e7179f92a
+sha256 e32593e6cec34650d12c3c134dbe98e722aab6db2b2fea98624d3925817c408e
 === created .agents/skills/commandments-python-fix-at-the-source/evals/triggers.json
 sha256 40f3c0ef66201a403bdd34663ed47e82c8c77a0981cdd8b6fb8b27b6f818e644
 === created .agents/skills/commandments-python-fix-at-the-source/reference/detectors.md
-sha256 d37ef44585d4e6a3600ef0c223b16002d0957f979a9e1697bf63463d05175c82
+sha256 1cd21b4cdfc465ad44128869c2bcf995299de1d2bf8110cf2c762d8756aae3bb
 === created .agents/skills/commandments-python-fix-at-the-source/reference/examples.md
-sha256 3ca4672bb03a21bc6b499411a6473a0d9a96b088aac07ec56357b8ea421cb89f
+sha256 e5c88b5288bf2dac44394b8dd5a6f781ec176069f912669d3889cbadd1b268b3
 === created .agents/skills/commandments-python-flow/SKILL.md
 sha256 39e0b6ac7603ad3e113b3fda2f1fe0632864ffc62e15f753d4e594a91feb819a
 === created .agents/skills/commandments-python-flow/evals/triggers.json

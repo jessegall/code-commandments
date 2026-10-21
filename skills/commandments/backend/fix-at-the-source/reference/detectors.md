@@ -8,3 +8,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`manufactured-fake-fill`** — `?? <empty literal>` filling a required slot (manufactured fake) — `ManufacturedFakeFillDetector`
 - **`mutable-static-state`** — A write to a static property — really a global variable with a namespace attached — where whichever write happens last wins, so the order code runs in changes the result. — `MutableStaticStateDetector`
 - **`near-duplicate-function`** — Redundant methods — two+ functions with the same SHAPE differing only in names/literals (type-2 clone) — `NearDuplicateFunctionDetector`
+- **`unread-collaborator`** — a collaborator promoted into a private field by the constructor and never read anywhere in the class — the class asks for something it does not use, and only a search of the whole type says so — `UnreadCollaboratorDetector`
