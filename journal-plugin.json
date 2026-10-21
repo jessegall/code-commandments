@@ -1,6 +1,6 @@
 {
   "name": "code-commandments",
-  "version": "1.68.0",
+  "version": "1.69.0",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
   "journal": "4.0.0",
@@ -56,7 +56,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v5.23.0 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v5.24.0 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",
