@@ -805,6 +805,13 @@
         "help": "A multi-line template assembled as an array of line fragments and joined with a newline — the output is unreadable in the source that emits it"
     },
     {
+        "key": "sin_filled-parameter",
+        "title": "FilledParameter",
+        "kind": "flag",
+        "default": true,
+        "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
+    },
+    {
         "key": "sin_masked-invariant",
         "title": "MaskedInvariant",
         "kind": "flag",
@@ -1265,6 +1272,13 @@
         "kind": "flag",
         "default": true,
         "help": "`string.Join(\"\\n\", new[] { \"public class X\", \"{\", \"}\" })` or `sb.AppendLine(\"…\")` line after line — a multi-line text built from line fragments, so its shape cannot be seen in the source"
+    },
+    {
+        "key": "sin_csharp-filled-parameter",
+        "title": "FilledParameter",
+        "kind": "flag",
+        "default": true,
+        "help": "a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
     },
     {
         "key": "sin_csharp-placeholder-filled-data",
@@ -1825,6 +1839,13 @@
         "kind": "flag",
         "default": true,
         "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one."
+    },
+    {
+        "key": "sin_python-filled-parameter",
+        "title": "FilledParameter",
+        "kind": "flag",
+        "default": true,
+        "help": "a def returning `None` that writes an attribute of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed"
     },
     {
         "key": "sin_python-masked-invariant",

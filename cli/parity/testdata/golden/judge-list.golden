@@ -81,6 +81,7 @@ exit: 0
 [1;33mbackend/templates[0m
   AssembledTemplateDetector
 [1;33mbackend/type-honesty[0m
+  FilledParameterDetector
   MaskedInvariantDetector
   PhantomNullableDetector
   RedundantArrowReturnTypeDetector
@@ -163,6 +164,7 @@ exit: 0
 [1;33mcsharp/templates[0m
   AssembledTemplateDetector
 [1;33mcsharp/type-honesty[0m
+  FilledParameterDetector
   PlaceholderFilledDataDetector
 [1;33mcsharp/value-objects[0m
   ArrayReturnBagDetector
@@ -262,6 +264,7 @@ exit: 0
   AssembledTemplateDetector
 [1;33mpython/type-honesty[0m
   ConstantPropertyDetector
+  FilledParameterDetector
   MaskedInvariantDetector
   PhantomNullableDetector
   PlaceholderFilledDataDetector

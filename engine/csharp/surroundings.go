@@ -885,3 +885,126 @@ func (n Node) sitsInAConstructor() bool {
 
 	return false
 }
+
+// FilledParameter is the parameter a method fills and never gives back, and whether it fills one: a parameter
+// whose own property the body writes, in a method that returns nothing. The signature then says the object goes
+// in and says nothing about it coming out changed, so the caller has to know.
+func (n Node) FilledParameter() (string, bool) {
+	if !n.Is("MethodDeclaration") || !n.ReturnsNothing() {
+		return "", false
+	}
+	for _, parameter := range n.firstChild("ParameterList").Children() {
+		if !parameter.Is("Parameter") || parameter.hasAttribute() || parameter.isPassedBack() {
+			continue
+		}
+		if n.writesAPropertyOf(parameter.Name()) {
+			return parameter.Name(), true
+		}
+	}
+
+	return "", false
+}
+
+// ReturnsNothing says whether the method's declared return type is void, Task or ValueTask: nothing a caller
+// can read an answer out of.
+func (n Node) ReturnsNothing() bool {
+	returned := n.Child("ReturnType")
+
+	return returned.Is("PredefinedType") && returned.Name() == "void" || slices.Contains([]string{"Task", "ValueTask"}, returned.Name())
+}
+
+// isPassedBack says whether the parameter already says the value comes back out: `out` and `ref` are the
+// language's own way of saying it, and a signature that says so is no part of this.
+func (n Node) isPassedBack() bool {
+	return n.HasModifier("out") || n.HasModifier("ref")
+}
+
+// writesAPropertyOf says whether the method writes a property of the parameter the name holds.
+func (n Node) writesAPropertyOf(name string) bool {
+	return slices.ContainsFunc(n.Match.Descendants(), func(match engine.Match) bool {
+		node := Node{Match: match}
+		if !node.Is("SimpleAssignmentExpression") {
+			return false
+		}
+		written := node.At(0)
+
+		return written.Is("SimpleMemberAccessExpression") && written.At(0).Is("IdentifierName") && written.At(0).Name() == name
+	})
+}
+
+// ArgumentIsReadAfterTheCall says whether the name the call hands over at the position is read again later in
+// the same block: a property of it, or the name handed back. The value the callee wrote into it is what the
+// caller came back for, which is the whole shape of a filled parameter.
+func (n Node) ArgumentIsReadAfterTheCall(at int) bool {
+	arguments := n.Arguments()
+	if at < 0 || at >= len(arguments) || !arguments[at].Is("IdentifierName") {
+		return false
+	}
+	handed := arguments[at]
+	method := n.EnclosingFunction()
+
+	return slices.ContainsFunc(method.Match.Descendants(), func(match engine.Match) bool {
+		return Node{Match: match}.readsTheNameAfter(handed)
+	})
+}
+
+// readsTheNameAfter says whether the node reads what the callee wrote into the handed-over name, later in the
+// same block: a property of it, or the name handed back. A read in another branch may be unreachable from the
+// call, and holding a method to that would be guessing at the flow rather than reading it.
+func (n Node) readsTheNameAfter(handed Node) bool {
+	span, handedSpan := n.Node().Span, handed.Node().Span
+	if !n.Is("IdentifierName") || n.Name() != handed.Name() || span.Start <= handedSpan.Start {
+		return false
+	}
+	if !n.statementSharesABlockWith(handed) {
+		return false
+	}
+
+	return n.Parent().Is("SimpleMemberAccessExpression") || n.Parent().Is("ReturnStatement")
+}
+
+// statementSharesABlockWith says whether the two nodes' own statements sit in the same block, so one really
+// does run after the other.
+func (n Node) statementSharesABlockWith(other Node) bool {
+	mine, theirs := n.ownStatement(), other.ownStatement()
+
+	return mine.Exists() && theirs.Exists() && mine.Parent().Node() == theirs.Parent().Node()
+}
+
+// ownStatement is the node itself or the ancestor of it that a block holds directly.
+func (n Node) ownStatement() Node {
+	for held := n; held.Exists(); held = held.Parent() {
+		if held.Parent().Is("Block") {
+			return held
+		}
+	}
+
+	return Node{}
+}
+
+// CallsBySymbol is every call in the codebase, grouped by the symbol of the method it reaches. The engine keeps
+// how MANY callers a method has; a rule that asks what a caller does with what it handed over needs the calls
+// themselves, and one walk answers it for every method at once.
+func CallsBySymbol(codebase *engine.Codebase) map[string][]Node {
+	calls := map[string][]Node{}
+	for _, match := range In(codebase).WhereCall().Get() {
+		call := Node{Match: match}
+		if symbol := call.Target().Symbol(); symbol != "" {
+			calls[symbol] = append(calls[symbol], call)
+		}
+	}
+
+	return calls
+}
+
+// ParameterPosition is where the named parameter sits in the method's list, counting from zero; -1 for a name
+// it does not declare.
+func (n Node) ParameterPosition(name string) int {
+	for at, parameter := range n.firstChild("ParameterList").Children() {
+		if parameter.Is("Parameter") && parameter.Name() == name {
+			return at
+		}
+	}
+
+	return -1
+}

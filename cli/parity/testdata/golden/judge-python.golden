@@ -282,21 +282,27 @@ exit: 1
   [36mshop/tax_bands.py:17[0m  call  [2m[NullableRegistryLookupDetector][0m
   [36mshop/voucher_book.py:18[0m  call  [2m[NullableRegistryLookupDetector][0m
 
-[1;33mpython/tell-dont-ask[0m  (12)
+[1;33mpython/tell-dont-ask[0m  (18)
   [1;36m↳ LOAD the skill `commandments-python-tell-dont-ask` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/aisle_signs.py:35[0m  FunctionDef heading  [2m[KeyedLookupEnvyDetector][0m
   [36mshop/allergen_labels.py:26[0m  FunctionDef allergens_of  [2m[KeyedLookupEnvyDetector][0m
   [36mshop/courier_surcharges.py:19[0m  Assign  [2m[SideTableTraitDetector][0m
+  [36mshop/dealer_facts.py:27[0m  FunctionDef apply_plan  [2m[FeatureEnvyDetector][0m
+  [36mshop/dealer_facts.py:32[0m  FunctionDef apply_language  [2m[FeatureEnvyDetector][0m
   [36mshop/discount_rules.py:24[0m  call  [2m[TypeSwitchDetector][0m
   [36mshop/label_stock.py:19[0m  Assign  [2m[SideTableTraitDetector][0m
   [36mshop/menu_boards.py:31[0m  FunctionDef vegan_line  [2m[FeatureEnvyDetector][0m
   [36mshop/pallet_loads.py:22[0m  FunctionDef heaviest_crate  [2m[FeatureEnvyDetector][0m
+  [36mshop/shift_rosters.py:23[0m  FunctionDef stamp_slots  [2m[FeatureEnvyDetector][0m
   [36mshop/shipping_rates.py:25[0m  call  [2m[TypeSwitchDetector][0m
   [36mshop/stamp_cards.py:22[0m  FunctionDef redeem  [2m[FeatureEnvyDetector][0m
   [36mshop/stock_movements.py:12[0m  call  [2m[TypeSwitchDetector][0m
   [36mshop/tag_speech.py:22[0m  Assign  [2m[SideTableTraitDetector][0m
   [36mshop/till_drawers.py:33[0m  FunctionDef came_up_short  [2m[KeyedLookupEnvyDetector][0m
+  [36mshop/till_slips.py:25[0m  FunctionDef add_lines  [2m[FeatureEnvyDetector][0m
+  [36mshop/till_slips.py:30[0m  FunctionDef add_tax  [2m[FeatureEnvyDetector][0m
+  [36mshop/till_slips.py:35[0m  FunctionDef seal  [2m[FeatureEnvyDetector][0m
 
 [1;33mpython/templates[0m  (3)
   [1;36m↳ LOAD the skill `commandments-python-templates` before fixing[0m
@@ -305,10 +311,12 @@ exit: 1
   [36mshop/packing_slips.py:8[0m  call  [2m[AssembledTemplateDetector][0m
   [36mshop/receipt_banner.py:7[0m  call  [2m[AssembledTemplateDetector][0m
 
-[1;33mpython/type-honesty[0m  (15)
+[1;33mpython/type-honesty[0m  (20)
   [1;36m↳ LOAD the skill `commandments-python-type-honesty` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/category_walker.py:11[0m  FunctionDef visit  [2m[ScratchStateRestoreDetector][0m
+  [36mshop/dealer_facts.py:27[0m  FunctionDef apply_plan  [2m[FilledParameterDetector][0m
+  [36mshop/dealer_facts.py:32[0m  FunctionDef apply_language  [2m[FilledParameterDetector][0m
   [36mshop/markdown_runs.py:19[0m  conditional  [2m[MaskedInvariantDetector][0m
   [36mshop/order_cards.py:14[0m  call  [2m[PlaceholderFilledDataDetector][0m
   [36mshop/parcel_kinds.py:10[0m  FunctionDef kind  [2m[ConstantPropertyDetector][0m
@@ -320,9 +328,12 @@ exit: 1
   [36mshop/report_formats.py:12[0m  FunctionDef opening_total  [2m[ConstantPropertyDetector][0m
   [36mshop/scale_readers.py:11[0m  AnnAssign  [2m[PhantomNullableDetector][0m
   [36mshop/session_limits.py:11[0m  FunctionDef lifetime_seconds  [2m[ConstantPropertyDetector][0m
+  [36mshop/shift_rosters.py:23[0m  FunctionDef stamp_slots  [2m[FilledParameterDetector][0m
   [36mshop/shipping_notices.py:20[0m  call  [2m[PlaceholderFilledDataDetector][0m
   [36mshop/tax_contexts.py:17[0m  FunctionDef price_abroad  [2m[ScratchStateRestoreDetector][0m
   [36mshop/till_sessions.py:17[0m  call  [2m[MaskedInvariantDetector][0m
+  [36mshop/till_slips.py:25[0m  FunctionDef add_lines  [2m[FilledParameterDetector][0m
+  [36mshop/till_slips.py:30[0m  FunctionDef add_tax  [2m[FilledParameterDetector][0m
 
 [1;33mpython/value-objects[0m  (37)
   [1;36m↳ LOAD the skill `commandments-python-value-objects` before fixing[0m
@@ -369,7 +380,7 @@ exit: 1
   [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedReturnDetector][0m
   [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
 
-[1m252 sins[0m across 18 skills.
+[1m263 sins[0m across 18 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

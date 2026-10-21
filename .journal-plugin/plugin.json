@@ -1527,6 +1527,19 @@
             ],
             "detail": true
         },
+        "sin_filled-parameter": {
+            "title": "FilledParameter",
+            "help": "a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
+            "type": "flag",
+            "default": "true",
+            "group": "backend/type-honesty",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_masked-invariant": {
             "title": "MaskedInvariant",
             "help": "Masked invariant — an own field read as `?->… ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible \"not set yet\".",
@@ -2378,6 +2391,19 @@
             "type": "flag",
             "default": "true",
             "group": "csharp/templates",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_csharp-filled-parameter": {
+            "title": "FilledParameter",
+            "help": "a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/type-honesty",
             "when": [
                 {
                     "language_cs": true
@@ -3418,6 +3444,19 @@
         "sin_python-constant-property": {
             "title": "ConstantProperty",
             "help": "an `@property` whose body never reads `self` — `return \"box\"` — a stored value made to look like a computed one.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/type-honesty",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-filled-parameter": {
+            "title": "FilledParameter",
+            "help": "a def returning `None` that writes an attribute of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed",
             "type": "flag",
             "default": "true",
             "group": "python/type-honesty",

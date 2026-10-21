@@ -247,7 +247,7 @@ exit: 1
   [36mShop/Stock/Palletising.cs:11[0m  LogicalAndExpression  [2m[RepeatedTypeGuardDetector][0m
     [2m↳ same shape as: Shop/Reports/Damage.cs:15, Shop/Shipping/Crates.cs:26[0m
 
-[1;33mcsharp/tell-dont-ask[0m  (14)
+[1;33mcsharp/tell-dont-ask[0m  (20)
   [1;36m↳ LOAD the skill `commandments-csharp-tell-dont-ask` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Loyalty/PunchCards.cs:15[0m  MethodDeclaration Redeem  [2m[FeatureEnvyDetector][0m
@@ -257,6 +257,12 @@ exit: 1
   [36mShop/Orders/Invoicing.cs:27[0m  MethodDeclaration BillFlat  [2m[FeatureEnvyDetector][0m
   [36mShop/Orders/Invoicing.cs:47[0m  MethodDeclaration FirstBackordered  [2m[FeatureEnvyDetector][0m
   [36mShop/Orders/Refunds.cs:10[0m  MethodDeclaration Amount  [2m[FeatureEnvyDetector][0m
+  [36mShop/Packing/DealerFacts.cs:20[0m  MethodDeclaration ApplyPlan  [2m[FeatureEnvyDetector][0m
+  [36mShop/Packing/DealerFacts.cs:27[0m  MethodDeclaration ApplyLanguage  [2m[FeatureEnvyDetector][0m
+  [36mShop/Packing/ShiftRosters.cs:20[0m  MethodDeclaration StampSlots  [2m[FeatureEnvyDetector][0m
+  [36mShop/Packing/TillSlips.cs:20[0m  MethodDeclaration AddLines  [2m[FeatureEnvyDetector][0m
+  [36mShop/Packing/TillSlips.cs:27[0m  MethodDeclaration AddTax  [2m[FeatureEnvyDetector][0m
+  [36mShop/Packing/TillSlips.cs:34[0m  MethodDeclaration Seal  [2m[FeatureEnvyDetector][0m
   [36mShop/Pricing/Promotions.cs:35[0m  SwitchExpression  [2m[TypeSwitchDetector][0m
   [36mShop/Reports/PromotionReport.cs:17[0m  SwitchStatement  [2m[TypeSwitchDetector][0m
   [36mShop/Returns/ReturnInspections.cs:13[0m  MethodDeclaration NeedsRestocking  [2m[FeatureEnvyDetector][0m
@@ -272,11 +278,16 @@ exit: 1
   [36mShop/Reports/DailySummary.cs:7[0m  InvocationExpression  [2m[AssembledTemplateDetector][0m
   [36mShop/Shipping/CarrierConfig.cs:7[0m  InvocationExpression  [2m[AssembledTemplateDetector][0m
 
-[1;33mcsharp/type-honesty[0m  (3)
+[1;33mcsharp/type-honesty[0m  (8)
   [1;36m↳ LOAD the skill `commandments-csharp-type-honesty` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Notifications/Digests.cs:11[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
   [36mShop/Orders/Payouts.cs:12[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
+  [36mShop/Packing/DealerFacts.cs:20[0m  MethodDeclaration ApplyPlan  [2m[FilledParameterDetector][0m
+  [36mShop/Packing/DealerFacts.cs:27[0m  MethodDeclaration ApplyLanguage  [2m[FilledParameterDetector][0m
+  [36mShop/Packing/ShiftRosters.cs:20[0m  MethodDeclaration StampSlots  [2m[FilledParameterDetector][0m
+  [36mShop/Packing/TillSlips.cs:20[0m  MethodDeclaration AddLines  [2m[FilledParameterDetector][0m
+  [36mShop/Packing/TillSlips.cs:27[0m  MethodDeclaration AddTax  [2m[FilledParameterDetector][0m
   [36mShop/Shipping/Pickups.cs:21[0m  ObjectCreationExpression  [2m[PlaceholderFilledDataDetector][0m
 
 [1;33mcsharp/value-objects[0m  (22)
@@ -311,7 +322,7 @@ exit: 1
   [36mShop/Stock/Listings.cs:15[0m  MethodDeclaration Page  [2m[DataClumpDetector][0m
     [2m↳ same shape as: Shop/Stock/Listings.cs:8[0m
 
-[1m207 sins[0m across 17 skills.
+[1m218 sins[0m across 17 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

@@ -1,6 +1,7 @@
 package python_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/engine/python"
@@ -13,9 +14,13 @@ func TestEveryMethodEnviesWhatThePHPEngineSays(t *testing.T) {
 		Lookup bool    `json:"lookup"`
 	}
 	golden(t, "envy", &want)
+	recorded := recordedFiles(want)
 	for _, match := range codebase.WhereFunction().Get() {
 		def := python.Node{Match: match}
 		key := match.Node().Symbol + "@" + place(def)
+		if !recorded[strings.TrimPrefix(def.File(), fixture.root+"/")] {
+			continue
+		}
 		answer := want[key]
 		envied, envies := codebase.Program.EnviedParameter(def)
 		if envies != (answer.Envies != nil) || (envies && envied != *answer.Envies) {

@@ -47,37 +47,51 @@ missing case the design does not have.
 
 ## Rules
 
+- [ ] A method that works something out gives it back: return the value, and let the caller decide where it goes.
+      _Return what the method works out and let the caller assign it, or ask the object to change itself, so the signature says what happens; `out` says it in the signature when the value really must travel that way._
 - [ ] A required slot means the caller has the value; fill it with the real value, never with `""`.
       _Fetch the real value, or make the slot `string?` if it really can be missing — or split off a smaller record that only promises what you have._
 
 ## Worked example
 
-### csharp-placeholder-filled-data
+### csharp-filled-parameter
 
-`new Card(title, "")` — a record's required `string` filled with a blank so the record can be built, hiding a missing value no type check can see
+a method returning nothing that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed
 
 ```cs
 ----------[ Bad ]----------
 
-public static Payout Queued(string sellerId, int cents) => new Payout(sellerId, cents, "");
+private void ApplyPlan(DealerRecord record)
+{
+    record.Plan = plans.TryGetValue(record.DealerId, out var plan) ? plan : "free";
+}
 
 ----------[ Good ]----------
 
-// in Payouts.cs
-public sealed record PendingPayout(string SellerId, int Cents);
+public sealed class DealerFactsReader(IReadOnlyDictionary<string, string> plans, IReadOnlyDictionary<string, string> languages)
+{
+    public string Gather(string dealerId)
+    {
+        return $"{dealerId}:{this.PlanOf(dealerId)}:{this.LanguageOf(dealerId)}";
+    }
 
-// in Payouts.cs
-public static PendingPayout Queue(string sellerId, int cents) => new PendingPayout(sellerId, cents);
+    private string PlanOf(string dealerId) => plans.TryGetValue(dealerId, out var plan) ? plan : "free";
+
+    private string LanguageOf(string dealerId) => languages.TryGetValue(dealerId, out var language) ? language : "nl";
+}
 ```
+
+The other 1 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=csharp/type-honesty` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-placeholder-filled-data`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `csharp-filled-parameter`, `csharp-placeholder-filled-data`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
+- [Worked examples](reference/examples.md) — every rule's bad → good, 2 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

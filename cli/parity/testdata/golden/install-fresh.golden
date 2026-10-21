@@ -152,13 +152,13 @@ sha256 c7e3561298d58de9f1da360f4e4fea1fb0b8f652b8e4e1d4d2705b324a40a759
 === created .agents/skills/commandments-backend-templates/reference/detectors.md
 sha256 172d0beeb842bb0c0d7d70c4bfc1b82f735384a3bd93b2cb972e2fb8f7393509
 === created .agents/skills/commandments-backend-type-honesty/SKILL.md
-sha256 ea04ee4c0a108b4afb23ba5fc1a733fabf2559ecf2b9a6492c8dc72b610dcb4e
+sha256 6829a05e3a19185cabd9ac7bea8ad38d93127bd66eb59c8f3258d3ceb17bfe55
 === created .agents/skills/commandments-backend-type-honesty/evals/triggers.json
 sha256 6ae1a8224c4896470eff830f9b98fb735cde972605d29d8632e582f46cfa9342
 === created .agents/skills/commandments-backend-type-honesty/reference/detectors.md
-sha256 4f7283a17777170ce828864caa97f9dcd42ed8413a5f0e655be00be99db944f7
+sha256 4d0758a1d1463d5c429dc6df650e6eb741490087430313fb0b6b22535aff5a55
 === created .agents/skills/commandments-backend-type-honesty/reference/examples.md
-sha256 d860cc585fb3f70c3b7c4c119a591ceb7d00b1873455133b21e0b07f73dd9653
+sha256 58d608b36b450e32e46003a3a44375b9f035a4f3ecf7ed40640ec7e3b3eb3745
 === created .agents/skills/commandments-backend-value-objects/SKILL.md
 sha256 b5c96c192aafad2d5fcc51ddbd7d7f15c81e453f5f26b851e107eab8789437a0
 === created .agents/skills/commandments-backend-value-objects/evals/triggers.json
@@ -280,11 +280,13 @@ sha256 db87dbad982001be50b9295739e6c5c2a454e265084d5bc8b112b4e75b54c813
 === created .agents/skills/commandments-csharp-templates/reference/detectors.md
 sha256 5e289ee9e4cf476a49e83edd251a0832eeca1714bd1a446a6b4bf2ac0030df27
 === created .agents/skills/commandments-csharp-type-honesty/SKILL.md
-sha256 a7904320d6421575cf375d330bcf43999392bf54d611aecc971ed3ca9327b3b0
+sha256 24c98ac42a590d15d5ee0a4b534813852bd46db74652e99023309b00577de55f
 === created .agents/skills/commandments-csharp-type-honesty/evals/triggers.json
 sha256 a7429b30b9d09758435cc5cc73137d9ed75073b190a47edeb1635fee97c6b319
 === created .agents/skills/commandments-csharp-type-honesty/reference/detectors.md
-sha256 8fa91ca832aca798dc9937cf5d8014c020f25c27ab86cd66520c8e66673e6419
+sha256 52dca31a6761c0fbda092dd5f4e42fc6085ad37aa263d35bf8017b12f1358898
+=== created .agents/skills/commandments-csharp-type-honesty/reference/examples.md
+sha256 afa802db67b168e80a8ff43949460d86e64424422c76fc3482ac49563693838f
 === created .agents/skills/commandments-csharp-value-objects/SKILL.md
 sha256 d02c8852dddaf9170d603eb97d2f18a56d04dd3dba06284d82732e067f7c95bb
 === created .agents/skills/commandments-csharp-value-objects/evals/triggers.json
@@ -434,13 +436,13 @@ sha256 9683c432cb02155e65bf175d3e0573df942214901fdf7fb6df2008513898373c
 === created .agents/skills/commandments-python-templates/reference/detectors.md
 sha256 e3a73de9c199a8e64420bd166273e6f8a17259f58e1d3779e824d8d108145627
 === created .agents/skills/commandments-python-type-honesty/SKILL.md
-sha256 df144e58f3b505d4d4fc9c90a5ed81aa6309544ff4b43511bb14b37b67d674dc
+sha256 5aa82e5104ed5ba4535d869cd39559ae22eaed5fc54a6371a144bb345bf7fe88
 === created .agents/skills/commandments-python-type-honesty/evals/triggers.json
 sha256 a572c11507b088bc4f53cafbf2319453888a256484df3bf7b8c662cddc79bedd
 === created .agents/skills/commandments-python-type-honesty/reference/detectors.md
-sha256 befd21e1d0912241a197b25e868283d749c1682f5dedcb355eb3481fb8316fb7
+sha256 16265c6559db405d0cec12b187c898b210bb714aec0ed3bff0773b8a8d8fcf80
 === created .agents/skills/commandments-python-type-honesty/reference/examples.md
-sha256 757e4b5bbc3fdc614f2846dae9f8cf9d2630ea7c44ec0a7e5b3e54cff137d568
+sha256 95841c2c10fbfff18f9c12b1e9cc3f74cc1c4763214a7be787d771e683bfa9d6
 === created .agents/skills/commandments-python-value-objects/SKILL.md
 sha256 b961ef01ad731b893985484268256a702cde478279d537efc0034bbb6725782d
 === created .agents/skills/commandments-python-value-objects/evals/triggers.json

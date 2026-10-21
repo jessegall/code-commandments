@@ -111,3 +111,61 @@ func isNullsafeReceiver(node engine.Match) bool {
 func isChild(node engine.Match, kind, field string) bool {
 	return node.Exists() && node.Parent().Kind() == kind && node.Node().Field == field
 }
+
+// ParameterPosition is where the named parameter sits in the function's list, counting from zero; -1 for a name
+// it does not declare.
+func ParameterPosition(function engine.Match, name string) int {
+	for at, parameter := range Params(function) {
+		if parameter.Child("var").Name() == name {
+			return at
+		}
+	}
+
+	return -1
+}
+
+// ArgumentIsReadAfterTheCall says whether the variable the call hands over at the position is read again later
+// in the caller: a property read, a method call on it, or a plain read. The value the callee wrote into it is
+// what the caller came back for, which is the whole shape of a filled parameter.
+func ArgumentIsReadAfterTheCall(call engine.Match, at int) bool {
+	arguments := Arguments(call)
+	if at < 0 || at >= len(arguments) {
+		return false
+	}
+	handed := arguments[at].Child("value")
+	if handed.Kind() != "Expr_Variable" {
+		return false
+	}
+	for _, use := range Trace(handed) {
+		if use.Node.Node().Span.Start <= handed.Node().Span.Start {
+			continue
+		}
+		// Only a read of what the callee wrote counts: a property read, a call on the object, or handing the
+		// object back. Passing it on to something else is not the caller coming back for a value.
+		if slices.Contains([]InteractionKind{PropertyFetch, MethodCall, Returned}, use.Kind) && sharesABlock(use.Node, handed) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// sharesABlock says whether the two nodes' own statements sit in the same block, so one really does run after
+// the other. A read in another branch may be unreachable from the call, and holding a method to that would be
+// guessing at the flow rather than reading it.
+func sharesABlock(one, other engine.Match) bool {
+	mine, theirs := ownStatement(one), ownStatement(other)
+
+	return mine.Exists() && theirs.Exists() && mine.Parent().Node() == theirs.Parent().Node() && mine.Node().Field == theirs.Node().Field
+}
+
+// ownStatement is the node itself or the ancestor of it that a block holds directly.
+func ownStatement(node engine.Match) engine.Match {
+	for held := node; held.Exists(); held = held.Parent() {
+		if slices.Contains([]string{"stmts", "finally"}, held.Node().Field) {
+			return held
+		}
+	}
+
+	return engine.Match{}
+}

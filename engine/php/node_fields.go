@@ -247,3 +247,52 @@ func (n Node) isSelfFieldNamed(name string) bool {
 
 	return owner.Kind() == "Expr_Variable" && owner.Name() == "this" && n.Child("name").Name() == name
 }
+
+// FilledParameter is the parameter a function fills and never gives back, and whether it fills one: a parameter
+// typed as a class whose own property the body writes, in a function that returns nothing. The signature then
+// says the object goes in and says nothing about it coming out changed, so the caller has to know.
+func (n Node) FilledParameter() (string, bool) {
+	if !n.IsCommandMethod() && n.DeclaredReturnType() != "" {
+		return "", false
+	}
+	for _, parameter := range Params(n.Match) {
+		field, ok := AsParameterField(parameter)
+		if !ok {
+			continue
+		}
+		if n.writesAPropertyOf(field) {
+			return field, true
+		}
+	}
+
+	return "", false
+}
+
+// AsParameterField is the name a parameter typed as a class goes by, and whether it is one: a promoted one is
+// the class's own field and no part of this, and a scalar or an array carries no property to write.
+func AsParameterField(parameter engine.Match) (string, bool) {
+	variable := parameter.Child("var")
+	if slices.Contains(parameter.Node().Flags, "promoted") || variable.Kind() != "Expr_Variable" || variable.Name() == "" {
+		return "", false
+	}
+
+	return variable.Name(), Written(parameter.Node().Declared).Class() != ""
+}
+
+// writesAPropertyOf says whether the function writes a property of the variable the name holds.
+func (n Node) writesAPropertyOf(name string) bool {
+	return slices.ContainsFunc(descendantsOf(n.Match), func(node engine.Match) bool {
+		return Node{Match: node}.isPropertyWriteOn(name)
+	})
+}
+
+// isPropertyWriteOn says whether the node writes a property of the variable the name holds: `$order->total = …`.
+func (n Node) isPropertyWriteOn(name string) bool {
+	target := n.Child("var")
+	if n.Kind() != "Expr_Assign" || target.Kind() != "Expr_PropertyFetch" {
+		return false
+	}
+	owner := target.Child("var")
+
+	return owner.Kind() == "Expr_Variable" && owner.Name() == name
+}

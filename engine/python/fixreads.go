@@ -370,3 +370,99 @@ func readsTheAttribute(codebase *engine.Codebase, name string) bool {
 func (n Node) isAssigned() bool {
 	return n.Node().Field == "targets"
 }
+
+// FilledParameter is the parameter a def fills and never gives back, and whether it fills one: a parameter
+// annotated as a class whose own attribute the body writes, in a def that returns None. The signature then says
+// the object goes in and says nothing about it coming out changed, so the caller has to know.
+func (n Node) FilledParameter() (string, bool) {
+	if !n.IsFunction() || !n.ReturnsNothing() {
+		return "", false
+	}
+	for _, parameter := range n.Parameters() {
+		if parameter.Name() == "self" || !parameter.Child("annotation").namesAClass() {
+			continue
+		}
+		if n.writesAnAttributeOf(parameter.Name()) {
+			return parameter.Name(), true
+		}
+	}
+
+	return "", false
+}
+
+// writesAnAttributeOf says whether the def writes an attribute of the name: `sheet.grams = …`.
+func (n Node) writesAnAttributeOf(name string) bool {
+	return slices.ContainsFunc(n.Descendants(), func(node Node) bool {
+		targets := node.ChildrenIn("targets")
+
+		return node.Kind() == "Assign" && len(targets) == 1 && targets[0].Kind() == "Attribute" && targets[0].RootName() == name
+	})
+}
+
+// ArgumentIsReadAfterTheCall says whether the name the call hands over at the position is read again later in
+// the def around it. The value the callee wrote into it is what the caller came back for, which is the whole
+// shape of a filled parameter.
+func (n Node) ArgumentIsReadAfterTheCall(at int) bool {
+	arguments := n.Arguments()
+	caller := n.EnclosingFunction()
+	if at < 0 || at >= len(arguments) || !caller.Exists() {
+		return false
+	}
+	handed := arguments[at]
+	if handed.Kind() != "Name" {
+		return false
+	}
+
+	return slices.ContainsFunc(caller.Descendants(), func(node Node) bool {
+		return node.readsTheNameAfter(handed) && node.sharesABlockWith(handed)
+	})
+}
+
+// sharesABlockWith says whether the two nodes' own statements sit in the same block, so one really does run
+// after the other. A read in another branch may be unreachable from the call, and holding a def to that would
+// be guessing at the flow rather than reading it.
+func (n Node) sharesABlockWith(other Node) bool {
+	mine, theirs := n.ownStatement(), other.ownStatement()
+
+	return mine.Exists() && theirs.Exists() && mine.Parent().Node() == theirs.Parent().Node() && mine.Node().Field == theirs.Node().Field
+}
+
+// ownStatement is the node itself or the ancestor of it that a block holds directly.
+func (n Node) ownStatement() Node {
+	for held := n; held.Exists(); held = held.Parent() {
+		if slices.Contains([]string{"body", "orelse", "finalbody"}, held.Node().Field) {
+			return held
+		}
+	}
+
+	return Node{}
+}
+
+// readsTheNameAfter says whether the node reads what the callee wrote into the handed-over name, later in the
+// source: an attribute of it, or the name handed back. Passing it on to something else is not the caller coming
+// back for a value.
+func (n Node) readsTheNameAfter(handed Node) bool {
+	if n.Kind() != "Name" || n.Name() != handed.Name() || n.Node().Span.Start <= handed.Node().Span.Start {
+		return false
+	}
+	parent := n.Parent()
+
+	return parent.Kind() == "Attribute" || parent.Kind() == "Return"
+}
+
+// ParameterPosition is where the named parameter sits in the def's list, counting from zero and counting `self`,
+// since a call on an instance fills the rest in that order; -1 for a name it does not declare.
+func (n Node) ParameterPosition(name string) int {
+	taken := 0
+	for _, parameter := range n.Parameters() {
+		if parameter.Name() == "self" {
+			continue
+		}
+		if parameter.Name() == name {
+			return taken
+		}
+		taken++
+	}
+
+	return -1
+}

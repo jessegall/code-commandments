@@ -84,3 +84,21 @@ func unrecorded[T any](want map[string]T, key string) bool {
 
 	return !held
 }
+
+// recordedFiles is every file the golden holds an answer about, read off keys of the shape
+// `<symbol>@<path>:<line>`. A def in a file the PHP engine never saw has no answer to be held to, the way
+// unrecorded says for the keys it can match whole; every file it did record stays strict.
+func recordedFiles[T any](want map[string]T) map[string]bool {
+	files := map[string]bool{}
+	for key := range want {
+		_, place, found := strings.Cut(key, "@")
+		if !found {
+			continue
+		}
+		if path := place[:strings.LastIndex(place, ":")]; path != "" {
+			files[path] = true
+		}
+	}
+
+	return files
+}

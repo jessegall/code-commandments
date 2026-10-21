@@ -2,6 +2,33 @@
 
 One bad → good per rule this skill teaches, taken from the fixture that proves the detector, so every pair is code that really fires and really passes.
 
+### filled-parameter
+
+a `void` method that writes a property of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed
+
+```php
+----------[ Bad ]----------
+
+private function fillCounts(ExportState $state, string $run): void
+{
+    $state->rows = strlen($this->http->get("https://reports.test/runs/{$run}"));
+}
+
+----------[ Good ]----------
+
+// in Shop\Reporting\ExportStateLoader
+public function loadCounted(string $run): ExportState
+{
+    return new ExportState($this->countedRows($run));
+}
+
+// in Shop\Reporting\ExportStateLoader
+private function countedRows(string $run): int
+{
+    return strlen($this->http->get("https://reports.test/runs/{$run}"));
+}
+```
+
 ### masked-invariant
 
 Masked invariant — an own field read as `?->… ?? <fake literal>`, even though the very operation sets that field first, so the fallback only ever answers an impossible "not set yet".

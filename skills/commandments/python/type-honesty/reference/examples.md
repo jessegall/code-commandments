@@ -26,6 +26,28 @@ class ShopSession:
         return started + self.LIFETIME_SECONDS
 ```
 
+### python-filled-parameter
+
+a def returning `None` that writes an attribute of an object it was handed, whose caller then reads what it handed over — the signature says the object goes in and nothing says it comes out changed
+
+```py
+----------[ Bad ]----------
+
+def add_lines(self, slip: TillSlip, lines: list[int]) -> None:
+    slip.net = sum(lines)
+
+----------[ Good ]----------
+
+class TillTotals:
+    def price(self, lines: list[int], tax_percent: int) -> int:
+        net = sum(lines)
+
+        return net + self.tax_on(net, tax_percent)
+
+    def tax_on(self, net: int, tax_percent: int) -> int:
+        return net * tax_percent // 100
+```
+
 ### python-masked-invariant
 
 a literal answering for the object's own scratch state — `self.period.includes(day) if self.period else False` — where the field is only unset because an operation sets it part-way
