@@ -176,7 +176,7 @@ exit: 1
   [36mshop/tally_boards.py:10[0m  ExprStmt  [2m[MutableStaticStateDetector][0m
   [36mshop/tax_rates.py:11[0m  Assign  [2m[MutableStaticStateDetector][0m
 
-[1;33mpython/flow[0m  (30)
+[1;33mpython/flow[0m  (33)
   [1;36m↳ LOAD the skill `commandments-python-flow` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mshop/aisle_marks.py:10[0m  call  [2m[CollectionMutatedWhileIteratedDetector][0m
@@ -184,6 +184,8 @@ exit: 1
   [36mshop/attachments.py:12[0m  binary  [2m[CoalescedLoopSubjectDetector][0m
   [36mshop/audit.py:8[0m  conditional  [2m[ConditionalStatementDetector][0m
   [36mshop/backups.py:9[0m  conditional  [2m[ConditionalStatementDetector][0m
+  [36mshop/bay_clearance.py:15[0m  binary  [2m[UnnamedConditionDetector][0m
+  [36mshop/bay_loading.py:34[0m  binary  [2m[UnnamedConditionDetector][0m
   [36mshop/builds.py:7[0m  binary  [2m[ShortCircuitStatementDetector][0m
   [36mshop/caches.py:11[0m  binary  [2m[ShortCircuitStatementDetector][0m
   [36mshop/carriers.py:9[0m  IfStmt  [2m[SubjectLadderDetector][0m
@@ -203,6 +205,7 @@ exit: 1
   [36mshop/restock.py:11[0m  ForLoop  [2m[DeepNestingDetector][0m
   [36mshop/restock.py:13[0m  IfStmt  [2m[LoopWrappedInIfDetector][0m
   [36mshop/returns_desk.py:6[0m  IfStmt  [2m[SubjectLadderDetector][0m
+  [36mshop/shift_ticks.py:21[0m  binary  [2m[UnnamedConditionDetector][0m
   [36mshop/shipments.py:10[0m  conditional  [2m[CoalescedLoopSubjectDetector][0m
   [36mshop/startup.py:13[0m  binary  [2m[ShortCircuitStatementDetector][0m
   [36mshop/status_colours.py:7[0m  conditional  [2m[NestedConditionalDetector][0m
@@ -393,7 +396,7 @@ exit: 1
   [36mshop/supplier_feed.py:9[0m  call  [2m[RawDecodedReturnDetector][0m
   [36mshop/wallet_balances.py:7[0m  ClassDef Balance  [2m[MutableValueObjectDetector][0m
 
-[1m276 sins[0m across 18 skills.
+[1m279 sins[0m across 18 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

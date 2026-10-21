@@ -36,6 +36,9 @@ func TestsAnUnnamedConcept(m Match) bool {
 	if len(parts) < conditionParts {
 		return false
 	}
+	if declaresAName(parts) {
+		return false
+	}
 
 	return len(subjectsOf(parts)) >= conditionSubjects
 }
@@ -48,10 +51,12 @@ func decidesABranch(m Match) bool {
 	return parent.Is(Branch) || parent.Is(Loop)
 }
 
-// guardsFromTheTop says whether the branch is a guard clause standing at the top of its function: it does
-// nothing but leave, and nothing but another guard comes before it. Such a condition says what it means by
-// leaving, and the flow discipline asks for it by name. One that leaves from the MIDDLE of a body is not that:
-// it is an answer worked out among the work, and naming it is the same gain as naming any other.
+// guardsFromTheTop says whether the branch is a guard clause standing at the top of its body: it does nothing
+// but leave, and nothing before it does anything either — another guard, an import, a docstring, or a line
+// binding a name to a value.
+// Such a condition says what it means by leaving, and the flow discipline asks for it by name. One that leaves
+// from the MIDDLE of a body, after the work has started, is not that: it is an answer worked out among the work,
+// and naming it is the same gain as naming any other.
 func guardsFromTheTop(branch Match) bool {
 	if !onlyLeaves(branch) {
 		return false
@@ -62,8 +67,26 @@ func guardsFromTheTop(branch Match) bool {
 		if statement.Node() == branch.Node() {
 			return true
 		}
+		if statement.Binds() || statement.Is(Import) || says(statement) {
+			continue
+		}
 		if !statement.Is(Branch) || !onlyLeaves(statement) {
 			return false
+		}
+	}
+
+	return false
+}
+
+// says whether the statement is a line of words and nothing else: a docstring, which stands above the guards of
+// the body it opens and does nothing.
+func says(statement Match) bool {
+	if !statement.Is(ExpressionStatement) && !statement.Is(Literal) {
+		return false
+	}
+	for _, held := range append(statement.Children(), statement) {
+		if held.Is(Literal) {
+			return true
 		}
 	}
 
@@ -102,6 +125,21 @@ func conditionChainOf(m Match) []Match {
 	}
 
 	return parts
+}
+
+// declaresAName says whether a part of the chain declares a name the body then uses: `TryGetValue(name, out var
+// artists) && artists.Length > 0`, or `item is UserView view && view.IsEmpty()`. Such a condition cannot be moved
+// behind a name of its own, since the name it binds would go with it, so there is no fix to point at.
+func declaresAName(parts []Match) bool {
+	for _, part := range parts {
+		for _, held := range append(part.Descendants(), part) {
+			if held.Declares() {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // subjectsOf are the objects a condition asks something of: the root of everything a part is sent to. A part

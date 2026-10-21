@@ -48,6 +48,10 @@ func TestAConditionIsAConceptOnlyWhenItAsksSeveralObjects(t *testing.T) {
 			"def shippable(order, slot, worker) -> bool:\n    return order.paid and slot.open and worker.idle\n",
 			0,
 		},
+		"a part that binds a name the body uses": {
+			"def named(by: dict[str, str], name: str, slot) -> bool:\n    if name and (found := by.get(name)) and slot.takes(found):\n        return True\n    return False\n",
+			0,
+		},
 		"a constant read off a class is no object": {
 			"class Mode:\n    AUTO = 'auto'\n\n\ndef tick(mode, at) -> None:\n    if mode == Mode.AUTO and at > 0 and at < 10:\n        print(at)\n",
 			0,

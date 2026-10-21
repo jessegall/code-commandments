@@ -17,9 +17,6 @@ func init() { detectors.Register(catalog.Backend, UnnamedConditionDetector{}) }
 // Sin is the sin the detector finds.
 func (UnnamedConditionDetector) Sin() sins.Sin { return backendsins.UnnamedCondition{} }
 
-// Unpublished keeps the rule out of every catalog while it is calibrated against real code.
-func (UnnamedConditionDetector) Unpublished() {}
-
 // Find is every logical chain a branch decides by that asks something of two or more objects.
 func (UnnamedConditionDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return php.In(codebase).

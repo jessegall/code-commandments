@@ -812,6 +812,19 @@
             ],
             "detail": true
         },
+        "sin_unnamed-condition": {
+            "title": "UnnamedCondition",
+            "help": "`if ($order->isPaid() && $customer->trusted && $slot->open)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it",
+            "type": "flag",
+            "default": "true",
+            "group": "backend/guard-clauses-and-flow",
+            "when": [
+                {
+                    "language_php": true
+                }
+            ],
+            "detail": true
+        },
         "sin_config-read": {
             "title": "ConfigRead",
             "help": "`config('…')` read inside a class",
@@ -2281,6 +2294,19 @@
             ],
             "detail": true
         },
+        "sin_csharp-unnamed-condition": {
+            "title": "UnnamedCondition",
+            "help": "`if (order.IsPaid && customer.Trusted && slot.IsOpen)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it",
+            "type": "flag",
+            "default": "true",
+            "group": "csharp/flow",
+            "when": [
+                {
+                    "language_cs": true
+                }
+            ],
+            "detail": true
+        },
         "sin_deep-csharp-nesting": {
             "title": "DeepNesting",
             "help": "An `if`, loop or `switch` opening a fourth level of choices inside one C# method — an arrow of conditions and loops",
@@ -3327,6 +3353,19 @@
         "sin_python-subject-ladder": {
             "title": "SubjectLadder",
             "help": "An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant — a dispatch written as a ladder.",
+            "type": "flag",
+            "default": "true",
+            "group": "python/flow",
+            "when": [
+                {
+                    "language_py": true
+                }
+            ],
+            "detail": true
+        },
+        "sin_python-unnamed-condition": {
+            "title": "UnnamedCondition",
+            "help": "`if settings.auto and not self.said and event.at > self.since:` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it",
             "type": "flag",
             "default": "true",
             "group": "python/flow",

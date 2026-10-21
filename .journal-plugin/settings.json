@@ -420,6 +420,13 @@
         "help": "a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value"
     },
     {
+        "key": "sin_unnamed-condition",
+        "title": "UnnamedCondition",
+        "kind": "flag",
+        "default": true,
+        "help": "`if ($order->isPaid() && $customer->trusted && $slot->open)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it"
+    },
+    {
         "key": "sin_config-read",
         "title": "ConfigRead",
         "kind": "flag",
@@ -1211,6 +1218,13 @@
         "help": "An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder."
     },
     {
+        "key": "sin_csharp-unnamed-condition",
+        "title": "UnnamedCondition",
+        "kind": "flag",
+        "default": true,
+        "help": "`if (order.IsPaid && customer.Trusted && slot.IsOpen)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it"
+    },
+    {
         "key": "sin_deep-csharp-nesting",
         "title": "DeepNesting",
         "kind": "flag",
@@ -1776,6 +1790,13 @@
         "kind": "flag",
         "default": true,
         "help": "An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant — a dispatch written as a ladder."
+    },
+    {
+        "key": "sin_python-unnamed-condition",
+        "title": "UnnamedCondition",
+        "kind": "flag",
+        "default": true,
+        "help": "`if settings.auto and not self.said and event.at > self.since:` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it"
     },
     {
         "key": "sin_redundant-python-else",

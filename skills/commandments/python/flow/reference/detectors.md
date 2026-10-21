@@ -11,3 +11,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`redundant-python-else`** — An `else:` after an `if` branch that already left — it ends in `return`, `raise`, `continue` or `break` — indenting the rest of the function for nothing — `RedundantElseDetector`
 - **`python-short-circuit-statement`** — a bare `a and b()` or `a or b()` statement — an `and`/`or` whose value nothing reads, so the operator is really acting as an `if`. — `ShortCircuitStatementDetector`
 - **`python-subject-ladder`** — An `if`/`elif` chain of four or more rungs that each test the same subject for equality with a constant — a dispatch written as a ladder. — `SubjectLadderDetector`
+- **`python-unnamed-condition`** — `if settings.auto and not self.said and event.at > self.since:` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it — `UnnamedConditionDetector`

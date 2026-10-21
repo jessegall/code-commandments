@@ -228,3 +228,28 @@ class Service(Enum):
             Service.FREIGHT: "schenker",
         }[self]
 ```
+
+### python-unnamed-condition
+
+`if settings.auto and not self.said and event.at > self.since:` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it
+
+```py
+----------[ Bad ]----------
+
+def dispatch(self, crate: Crate) -> None:
+    if crate.packed and crate.labelled and self.bay.is_free():
+        self.bay.take(crate)
+        self.sent.append(crate.reference)
+
+----------[ Good ]----------
+
+# in bay_loading.py
+def ready_for(self, bay: "LoadingBay") -> bool:
+    return self.packed and self.labelled and bay.is_free()
+
+# in bay_loading.py
+def dispatch_told(self, crate: Crate) -> None:
+    if crate.ready_for(self.bay):
+        self.bay.take(crate)
+        self.sent.append(crate.reference)
+```

@@ -86,6 +86,8 @@ iteration, or extract the inner block into a function named for what it decides.
       _Write the condition as an `if` and the right side as its body — `if not a: b()` for an `or`._
 - [ ] Dispatch on a value with an `Enum` that answers per case, a dict keyed by the value, or a `match` — never a ladder of `==` tests on one subject.
       _Make the closed set an `Enum` and put the per-case answer on it, or look the answer up in a dict keyed by the value; a `match` fits a structural dispatch._
+- [ ] A condition that takes a reader more than a glance is a concept: give it a name and ask for it by that name.
+      _Move the condition onto the class that owns most of it, as a method or a `@property` whose name says what it decides — `if self.should_announce(event):` — and let each object answer for its own part._
 
 ## Worked example
 
@@ -121,17 +123,17 @@ def descendants_of(below: defaultdict, parent: str) -> list:
     return found
 ```
 
-The other 8 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 9 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=python/flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `python-collection-mutated-while-iterated`, `python-conditional-statement`, `deep-python-nesting`, `python-loop-wrapped-in-if`, `python-nested-conditional`, `redundant-python-else`, `python-short-circuit-statement`, `python-subject-ladder`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `python-coalesced-loop-subject`, `python-collection-mutated-while-iterated`, `python-conditional-statement`, `deep-python-nesting`, `python-loop-wrapped-in-if`, `python-nested-conditional`, `redundant-python-else`, `python-short-circuit-statement`, `python-subject-ladder`, `python-unnamed-condition`.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 9 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 10 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

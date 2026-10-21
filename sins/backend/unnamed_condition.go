@@ -13,9 +13,6 @@ func init() {
 	sins.Register(catalog.Backend, UnnamedCondition{})
 }
 
-// Unpublished keeps the sin out of every catalog while its detector is calibrated against real code.
-func (UnnamedCondition) Unpublished() {}
-
 // Definition is what the sin states about itself.
 func (UnnamedCondition) Definition() sins.Definition {
 	return sins.Definition{

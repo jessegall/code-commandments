@@ -45,6 +45,8 @@ Reach for this the moment you are about to write:
 - [ ] Drop the `else` after an `if` branch that already returns/throws/continues/breaks.
 - [ ] Branch with an `if`; never run work off the right side of a bare `&&`/`||` statement whose result nothing reads.
 - [ ] Choose an action with `if`/`else`; a ternary chooses a VALUE, so never write one whose result nothing reads.
+- [ ] A condition that takes a reader more than a glance is a concept: give it a name and ask for it by that name.
+      _Move the condition onto the class that owns most of it, as a method or a property whose name says what it decides — `if ($order->readyToShip($slot))` — and let each object answer for its own part._
 
 ## Worked example
 
@@ -76,18 +78,18 @@ public function fanOutGuarded(string $carrier, array $manifest): void
 }
 ```
 
-The other 9 — one per rule — are in [`reference/examples.md`](reference/examples.md).
+The other 10 — one per rule — are in [`reference/examples.md`](reference/examples.md).
 
 ## Commands
 
 - `{{binary}} judge --skill=backend/guard-clauses-and-flow` — find every one of these in the codebase.
-- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `redundant-else`, `short-circuit-statement`, `ternary-statement`.
+- `{{binary}} info <sin>` — what one rule flags, why it is a sin, and the fix. The sins here: `coalesced-loop-subject`, `deep-nesting`, `if-else-ladder`, `inline-throw`, `loop-inverted-guard`, `nested-ternary`, `non-counting-for`, `redundant-else`, `short-circuit-statement`, `ternary-statement`, `unnamed-condition`.
 - `{{binary}} repent --sin=<sin>` — auto-fix, for `loop-inverted-guard`, `nested-ternary`, `redundant-else`, `short-circuit-statement`, `ternary-statement`. Review it with `--dry-run` first.
 - `{{binary}} report --detector=<Detector> --reason="…" --ref=path:line` — the flagged code is CORRECT under the architecture and the rule is wrong. That is the only thing a report claims: a finding you agree with is yours to fix, however far the fix cascades.
 
 ## Reference
 
-- [Worked examples](reference/examples.md) — every rule's bad → good, 10 of them.
+- [Worked examples](reference/examples.md) — every rule's bad → good, 11 of them.
 - [What fires, and why](reference/detectors.md) — the symptom each detector flags, for when you are holding a finding.
 
 ## Related skills

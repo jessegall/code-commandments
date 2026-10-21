@@ -69,6 +69,14 @@ type Grammar struct {
 	// Receiver is the object a call or a member read is sent to: the `$order` of `$order->ship()`; no node for a
 	// free function's call, which is sent to nobody.
 	Receiver func(Match) Match
+	// Declares says whether an expression declares a name the code around it then uses: C#'s `out var artists` and
+	// its `is Thing thing`, Python's `:=`. A condition holding one cannot be moved behind a name, because the name
+	// it binds would go with it.
+	Declares func(Match) bool
+	// Binds says whether a statement only binds a name to a value and acts on nothing: `$order = $this->orders->find($id);`,
+	// `order = self.orders.find(id)`, `var order = _orders.Find(id);`. The languages file an assignment so differently —
+	// a statement of its own, an expression wrapped in one, a declaration — that only the language can say.
+	Binds func(Match) bool
 }
 
 // TypeKinds are the kinds of type every language's declarations are told apart by.

@@ -3,6 +3,6 @@ exit: 0
 [32m✓ No sins found in 0 files.[0m
 
 --- stderr
-⚠ 212 file(s) left unread — the C# bridge is not available (a development build has no release to fetch it from; name one in $COMMANDMENTS_ROSLYN), so C# is not judged; everything else is
+⚠ 216 file(s) left unread — the C# bridge is not available (a development build has no release to fetch it from; name one in $COMMANDMENTS_ROSLYN), so C# is not judged; everything else is
 
 --- files

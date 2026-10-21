@@ -19,6 +19,8 @@ func init() {
 	engine.ReadAs(contract.Python, engine.Grammar{
 		Arguments:     values,
 		Receiver:      engine.InField("value"),
+		Declares:      engine.KindIn("NamedExpr"),
+		Binds:         engine.KindIn("Assign", "AnnAssign", "NamedExpr"),
 		Members:       members,
 		Parameters:    parameters,
 		Extends:       bases,

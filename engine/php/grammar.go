@@ -11,6 +11,7 @@ func init() {
 	engine.ReadAs(contract.PHP, engine.Grammar{
 		Arguments:     values,
 		Receiver:      engine.InAnyField("var", "class"),
+		Binds:         binding,
 		Members:       engine.InFields("stmts"),
 		Parameters:    engine.InFields("params"),
 		Extends:       engine.InFields("extends"),
@@ -37,6 +38,16 @@ func init() {
 		Continues: engine.KindIn("Stmt_ElseIf"),
 	})
 
+}
+
+// binding says whether a statement only binds a name to a value: PHP files every assignment as an expression
+// wrapped in a statement of its own.
+func binding(statement engine.Match) bool {
+	if statement.Kind() != "Stmt_Expression" {
+		return false
+	}
+
+	return statement.Child("expr").Is(engine.Assignment)
 }
 
 // testFile says whether a PHP file is a test's: PHPUnit's `*Test.php`, or any file under a tests folder.

@@ -12,3 +12,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`redundant-else`** — `else` after an `if` branch that already returns/throws (redundant) — `RedundantElseDetector`
 - **`short-circuit-statement`** — a bare `$a && $b->do();` statement — a short-circuit whose result nothing reads, so the operator is an `if` in disguise — `ShortCircuitStatementDetector`
 - **`ternary-statement`** — a bare `$cond ? doThis() : doThat();` statement — a ternary whose value nothing reads, so it is choosing an ACTION, not a value — `TernaryStatementDetector`
+- **`unnamed-condition`** — `if ($order->isPaid() && $customer->trusted && $slot->open)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it — `UnnamedConditionDetector`

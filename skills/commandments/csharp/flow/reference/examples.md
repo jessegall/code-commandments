@@ -314,3 +314,35 @@ public static string ColourOf(OrderStatus status) => status switch
     _ => throw new ArgumentOutOfRangeException(nameof(status)),
 };
 ```
+
+### csharp-unnamed-condition
+
+`if (order.IsPaid && customer.Trusted && slot.IsOpen)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it
+
+```cs
+----------[ Bad ]----------
+
+public void Dispatch(Crate crate)
+{
+    if (crate.Packed && crate.Labelled && bay.IsFree())
+    {
+        bay.Take(crate);
+        sent.Add(crate.Reference);
+    }
+}
+
+----------[ Good ]----------
+
+// in BayLoading.cs
+public bool ReadyFor(LoadingBay bay) => Packed && Labelled && bay.IsFree();
+
+// in BayLoading.cs
+public void DispatchTold(Crate crate)
+{
+    if (crate.ReadyFor(bay))
+    {
+        bay.Take(crate);
+        sent.Add(crate.Reference);
+    }
+}
+```

@@ -60,6 +60,7 @@ exit: 0
   RedundantElseDetector
   ShortCircuitStatementDetector
   TernaryStatementDetector
+  UnnamedConditionDetector
 [1;33mbackend/laravel-idioms[0m
   QueryInLoopDetector
 [1;33mbackend/method-mood[0m
@@ -152,6 +153,7 @@ exit: 0
   NonCountingForDetector
   RedundantElseDetector
   SubjectLadderDetector
+  UnnamedConditionDetector
 [1;33mcsharp/method-mood[0m
   BareStatePredicateDetector
 [1;33mcsharp/pass-the-object[0m
@@ -250,6 +252,7 @@ exit: 0
   RedundantElseDetector
   ShortCircuitStatementDetector
   SubjectLadderDetector
+  UnnamedConditionDetector
 [1;33mpython/method-mood[0m
   BareStatePredicateDetector
   NarratedCommandDetector

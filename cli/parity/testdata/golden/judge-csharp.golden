@@ -158,13 +158,16 @@ exit: 1
   [36mShop/Pricing/TaxTable.cs:11[0m  CoalesceAssignmentExpression  [2m[MutableStaticStateDetector][0m
   [36mShop/Stock/ShelfSensors.cs:24[0m  InvocationExpression  [2m[ConstructorSideEffectDetector][0m
 
-[1;33mcsharp/flow[0m  (32)
+[1;33mcsharp/flow[0m  (35)
   [1;36m↳ LOAD the skill `commandments-csharp-flow` before fixing[0m
     [2mDon't fix from memory. If you think it's already loaded, assume it is NOT — a compaction may have dropped it — and load it again to be sure.[0m
   [36mShop/Addresses/CountryCodes.cs:9[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
   [36mShop/Addresses/Quotes.cs:8[0m  ConditionalExpression  [2m[NestedTernaryDetector][0m
   [36mShop/Documents/LabelTemplates.cs:19[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
   [36mShop/Documents/Summaries.cs:10[0m  IfStatement  [2m[RedundantElseDetector][0m
+  [36mShop/Loading/BayClearance.cs:15[0m  LogicalOrExpression  [2m[UnnamedConditionDetector][0m
+  [36mShop/Loading/BayLoading.cs:36[0m  LogicalAndExpression  [2m[UnnamedConditionDetector][0m
+  [36mShop/Loading/ShiftTicks.cs:24[0m  LogicalAndExpression  [2m[UnnamedConditionDetector][0m
   [36mShop/Orders/Approvals.cs:30[0m  ForStatement  [2m[NonCountingForDetector][0m
   [36mShop/Orders/Checkout.cs:10[0m  IfStatement  [2m[RedundantElseDetector][0m
   [36mShop/Orders/CouponRedeem.cs:11[0m  CoalesceExpression  [2m[InlineThrowDetector][0m
@@ -334,7 +337,7 @@ exit: 1
   [36mShop/Stock/Listings.cs:15[0m  MethodDeclaration Page  [2m[DataClumpDetector][0m
     [2m↳ same shape as: Shop/Stock/Listings.cs:8[0m
 
-[1m230 sins[0m across 17 skills.
+[1m233 sins[0m across 17 skills.
 [2m↳ the rule above all: trace each sin to where the value is BORN and fix it THERE — read fix-at-the-source.[0m
 [2m↳ don't recognise a rule above? `vendor/bin/commandments info <sin>` — what it flags, why it is a sin, the fix, an example.[0m
 

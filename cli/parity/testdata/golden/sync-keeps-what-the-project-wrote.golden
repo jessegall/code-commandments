@@ -65,13 +65,13 @@ sha256 160b946b3937a08999649c54b2c7c1f90f2feafa6d7b5a2bc4e6f738a53dde78
 === created .agents/skills/commandments-backend-fix-at-the-source/reference/examples.md
 sha256 f147f8fd3c72eb59b3e32d747b9c4d1bfec2628a619f0451a2e6552870de8aa0
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/SKILL.md
-sha256 9c2d82dc686c248a502ccc6a7dd24300c3f69fb787f71c0feb89b2f79723908a
+sha256 ad2440f690fafeae5ccc012caca4821db10fff2fc5e51391af4b19ffae607f95
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/evals/triggers.json
 sha256 78cdb5b117e3beac6f647e8f37b333dfefc9be3c595727fb44df650b82bc8f98
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/reference/detectors.md
-sha256 a4cd61c78085c877e771eef2003e79880a468a301a3c2cdbc65bed62beec1eb9
+sha256 da486aac3462ddf0eb4ee3c9d094b566271801bfcecf83e6dab4227fb2fc14e1
 === created .agents/skills/commandments-backend-guard-clauses-and-flow/reference/examples.md
-sha256 2fdb458eecb99496c3c0d954481e7e94c43bc3c685e6f425885af193a10a23c2
+sha256 fb96007b3ba3e283c66041a872933bf68df58b7392fc90c266358c0984c41429
 === created .agents/skills/commandments-backend-laravel-idioms/SKILL.md
 sha256 83cf42fdc72373c6455720bfcd7f69e2b7e1ddada77d149539d89ff61d0f5396
 === created .agents/skills/commandments-backend-laravel-idioms/evals/triggers.json
@@ -235,13 +235,13 @@ sha256 6afb967e227c7a4d2ae860f9bd6b1d87bf0983bd2fb9f7c3479e8fd814c50344
 === created .agents/skills/commandments-csharp-fix-at-the-source/reference/examples.md
 sha256 2064667495d2f084d2528f576f995a1aa87f7d9b80eed49d344cf56412a37b78
 === created .agents/skills/commandments-csharp-flow/SKILL.md
-sha256 97c02383b63ceeec5168ca0c21e2629fc511c1bf3892dfa80202aeeb0b67ad1a
+sha256 b3a902623c965080f137d7af95ecd3e20e0673f089a4efa39cba94b9bff5adbc
 === created .agents/skills/commandments-csharp-flow/evals/triggers.json
 sha256 a9182138fe4601cd05a262dd97848783883fd245ae22326c0cb21dd05155a2f1
 === created .agents/skills/commandments-csharp-flow/reference/detectors.md
-sha256 1510dfbf82110b914a60a656c224a14f82ac5cff1f9eea485a8a44a6e8f72e96
+sha256 dae0896af54c30f8538dbd1b0ffa7a8aa30dcd40e315dff948d314b50934d459
 === created .agents/skills/commandments-csharp-flow/reference/examples.md
-sha256 e414065b50b64ee3c8c8a0075f8e64576d0fbb1087c79dd52fb9afa9dc14b48b
+sha256 a509741a91495eba9949b462cdcdcd8bcc5a061431eec9532ad94be449b6f03f
 === created .agents/skills/commandments-csharp-method-mood/SKILL.md
 sha256 f92173572bd8a65aa21b2d3c94876f1b5121048110bfec2a0814d6087a643245
 === created .agents/skills/commandments-csharp-method-mood/evals/triggers.json
@@ -383,13 +383,13 @@ sha256 ef5695162d6176cc2158c43c4fffc37c2b99d18c380883eea9ff76b1ffdfc073
 === created .agents/skills/commandments-python-fix-at-the-source/reference/examples.md
 sha256 47ed7a3d8bfac6b806c9efc46704bbea21318570f3a0ed047f5296468d638796
 === created .agents/skills/commandments-python-flow/SKILL.md
-sha256 39e0b6ac7603ad3e113b3fda2f1fe0632864ffc62e15f753d4e594a91feb819a
+sha256 c69e18bf4e5bc47bf8bc6186d8051c5b3f154a2c72d6a1dee4f1edf63a60169e
 === created .agents/skills/commandments-python-flow/evals/triggers.json
 sha256 b6fc5e492ba1ab37cbe9445b72c22c54723582a1fbf1c485b479fbb6650c5934
 === created .agents/skills/commandments-python-flow/reference/detectors.md
-sha256 a3fbf4b1461d625199ba2b084e821ea26771dc35bfb309993347879a9d1d30d5
+sha256 4ca053a25b0df7b4eafa77d37f9a5cdb049e74847cdb6672989f9a5bdae03b48
 === created .agents/skills/commandments-python-flow/reference/examples.md
-sha256 75ba2a69890cbfa37a64de87324ae80811ea1cb426b271470f97433c5c1ba62e
+sha256 752423e4500abee60c32a2b543b796b5aae12e3b9ba2ec9202373440369d8765
 === created .agents/skills/commandments-python-method-mood/SKILL.md
 sha256 2d1645796b9ee6f2ef18b2ad2e0af7b87a3a0506879df6f2a91d5755329445e0
 === created .agents/skills/commandments-python-method-mood/evals/triggers.json

@@ -187,6 +187,20 @@ func (m Match) Receiver() Match {
 	return Match{}
 }
 
+// Declares says whether the node declares a name the code around it then uses.
+func (m Match) Declares() bool {
+	read := m.grammar().Declares
+
+	return m.node != nil && read != nil && read(m)
+}
+
+// Binds says whether the node is a statement that only binds a name to a value, acting on nothing.
+func (m Match) Binds() bool {
+	read := m.grammar().Binds
+
+	return m.node != nil && read != nil && read(m)
+}
+
 // Refers is the symbol a name refers to, resolved: a class, a function, a constant; empty for anything else.
 func (m Match) Refers() string {
 	if m.node == nil {

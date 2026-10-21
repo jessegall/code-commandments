@@ -325,3 +325,36 @@ public function collapsedBranched(string $id, array $below): array
     return $gone;
 }
 ```
+
+### unnamed-condition
+
+`if ($order->isPaid() && $customer->trusted && $slot->open)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it
+
+```php
+----------[ Bad ]----------
+
+public function dispatch(Crate $crate): void
+{
+    if ($crate->isPacked() && $crate->hasLabel() && $this->bay->isFree()) {
+        $this->bay->take($crate);
+        $this->sent[] = $crate->reference;
+    }
+}
+
+----------[ Good ]----------
+
+// in Shop\Dispatch\BayDispatcher
+public function dispatchTold(Crate $crate): void
+{
+    if ($crate->readyFor($this->bay)) {
+        $this->bay->take($crate);
+        $this->sent[] = $crate->reference;
+    }
+}
+
+// in Shop\Dispatch\Crate
+public function readyFor(LoadingBay $bay): bool
+{
+    return $this->packed && $this->labelled && $bay->isFree();
+}
+```

@@ -11,3 +11,4 @@ Each row is one rule: the sin's id, the symptom its detector flags, and the dete
 - **`csharp-non-counting-for`** — a `for` loop whose step assigns the next item instead of moving a counter — a walk written as a count — `NonCountingForDetector`
 - **`redundant-csharp-else`** — An `else` after an `if` branch that already left — it ends in `return`, `throw`, `continue` or `break` — indenting the rest of the method for nothing — `RedundantElseDetector`
 - **`csharp-subject-ladder`** — An `if`/`else if` chain of four or more rungs that each compare the same subject with a constant — a dispatch written as a ladder. — `SubjectLadderDetector`
+- **`csharp-unnamed-condition`** — `if (order.IsPaid && customer.Trusted && slot.IsOpen)` — three parts over two objects, so the reader works out what the condition MEANS instead of reading it — `UnnamedConditionDetector`
