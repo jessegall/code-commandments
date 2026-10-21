@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -240,6 +241,8 @@ type pins struct {
 	Version string                 `json:"version"`
 	Env     map[string]string      `json:"env"`
 	Setup   []struct{ Run string } `json:"setup"`
+	Hears   []string               `json:"hears"`
+	Holds   []string               `json:"holds"`
 }
 
 // TestBothPluginManifestsPinTheSameRelease holds the two manifests to one answer. The plugin is declared twice, once
@@ -270,5 +273,31 @@ func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
 	}
 	if held.Version != offered.Version {
 		t.Errorf(".journal-plugin/plugin.json is version %s and journal-plugin.json is %s", held.Version, offered.Version)
+	}
+}
+
+// TestThePluginHoldsNoHookOfTheAgents holds the manifest to the rule every hook of ours answers under: the plugin
+// never makes the journal wait. An event it HOLDS is asked on the answer path and bounded by a deadline, so a judge
+// of sixty files spends that deadline on a scan; holding nothing means the journal hands us every event it hears
+// after its reply, and what we find reaches the agent through the queue it drains at the next hook. Declaring a hold
+// again is how the fault of the ten-second timeout would come back, so it is a gate and not a comment.
+func TestThePluginHoldsNoHookOfTheAgents(t *testing.T) {
+	content, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest pins
+	if err := json.Unmarshal(content, &manifest); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(manifest.Holds) > 0 {
+		t.Errorf("journal-plugin.json holds %v: a held event is answered on the journal's own path, which is what it must never be", manifest.Holds)
+	}
+
+	for _, event := range []string{"tool_starting", "tool_finished"} {
+		if !slices.Contains(manifest.Hears, event) {
+			t.Errorf("the plugin no longer hears %s, so it cannot tell which files an edit changed", event)
+		}
 	}
 }

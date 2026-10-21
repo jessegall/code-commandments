@@ -14,9 +14,7 @@
     "subagent_started",
     "plugin.updated"
   ],
-  "holds": [
-    "tool_starting"
-  ],
+  "holds": [],
   "cards": [
     {
       "kind": "sin-found",

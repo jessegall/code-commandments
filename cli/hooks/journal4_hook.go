@@ -5,14 +5,19 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
 )
 
-// protocol4 is the version of the agent journal's plugin protocol that journal4-hook speaks.
-const protocol4 = 1
+const (
+	// protocol4 is the version of the agent journal's plugin protocol that journal4-hook speaks.
+	protocol4 = 1
+	// judging marks the run that judges an event after the answer for it went out.
+	judging = "COMMANDMENTS_JUDGING"
+)
 
 // hooksOf4 is each event version 4 of the journal names by the hook it stands for.
 var hooksOf4 = map[string]string{
@@ -36,12 +41,15 @@ func (Journal4Hook) Names() []string {
 
 // Help documents it.
 func (Journal4Hook) Help() help.Help {
-	return help.Of("Version 4 of the agent journal's entry point — reads one event line from stdin, runs every registered handler, and answers in one line: the gate's refusal, the advice told, and each sin found or repented as a card keyed by its file.").
+	return help.Of("Version 4 of the agent journal's entry point — reads one event line from stdin and answers at once, with nothing worked out: the plugin holds no hook, so the judging happens in a run of its own and what it finds is written to the queue the journal drains at the agent's next hook, as context and as a card per sin.").
 		Form("journal4-hook", "answer the event line on stdin (run by the journal plugin; you rarely run this by hand)").
+		Note("A journal that gives the plugin no folder of its own drains no queue, and then the answer carries everything found, as it did before a queue existed.").
 		In(help.Hooks)
 }
 
-// Run answers the event on stdin; settings changed by the user are written into the project's config instead.
+// Run answers the event on stdin. The answer is computed from NOTHING: the plugin holds no hook, so the journal
+// never waits on it, and whatever the event is worth is worked out in a run of its own and written to the queue the
+// journal drains at the agent's next hook. A change of sixty files costs this call the same as a change of one.
 func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 	raw, _ := io.ReadAll(os.Stdin)
 	var line map[string]any
@@ -60,9 +68,75 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 		return code, err
 	}
 
-	console.Write(Answer4Of(line) + "\n")
+	if os.Getenv(judging) != "" {
+		Judge4Into(line, os.Getenv(pluginData))
+
+		return 0, nil
+	}
+
+	console.Write(Answer4Now(line) + "\n")
+	judge4Detached(raw, line)
 
 	return 0, nil
+}
+
+// Answer4Now is the answer the journal is handed at once: allow, and nothing worked out. There is no queue to carry
+// the advice only when the journal named the plugin no folder of its own, and then the answer is the whole of it, as
+// it was before a queue existed.
+func Answer4Now(line map[string]any) string {
+	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
+		return Answer4Of(line)
+	}
+
+	return JournalAnswer{}.Line4()
+}
+
+// Judge4Into works the event out, every handler of it, and writes what it found to the plugin's queue, so the sins
+// reach the agent on its next hook. Nothing waits on this: the answer went out before it started.
+func Judge4Into(line map[string]any, folder string) {
+	queue, queued := Queue4In(folder)
+	if !queued {
+		return
+	}
+
+	moment, known := Moment4Of(line)
+	if !known {
+		return
+	}
+
+	_ = queue.Tell(answerWith(Stamped(moment), every, true))
+}
+
+// judge4Detached starts that run, in a session of its own so it outlives this one. It reads the event from a file it
+// inherits and never from a pipe: a pipe is fed by this process, which answers and ends at once, so the run would
+// read nothing and judge nothing. An event that stands for no hook starts no run at all.
+func judge4Detached(raw []byte, line map[string]any) {
+	if _, known := Moment4Of(line); !known {
+		return
+	}
+	if _, queued := Queue4In(os.Getenv(pluginData)); !queued {
+		return
+	}
+
+	self, err := os.Executable()
+	if err != nil {
+		return
+	}
+
+	event, err := momentFile(raw)
+	if err != nil {
+		return
+	}
+	defer event.Close()
+
+	run := exec.Command(self, "journal4-hook")
+	run.Stdin = event
+	run.Env = append(os.Environ(), judging+"=1")
+	detach(run)
+
+	if run.Start() == nil {
+		run.Process.Release()
+	}
 }
 
 // Answer4Of is version 4's answer to one event line: every handler run on the moment it stands for, its answer said
