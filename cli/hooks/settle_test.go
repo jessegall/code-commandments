@@ -5,6 +5,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/jessegall/code-commandments/bridge"
@@ -34,7 +36,7 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 		t.Fatalf("the sinful edit raised %+v and settles %v", raised, found.Settles())
 	}
 
-	if raised[0].Brief != "1 sin in shop/refund.py" || raised[0].Detail != marks[0].ShownFrom(root) {
+	if raised[0].Brief != "1 sin in shop/refund.py" || raised[0].Detail != "redundant-python-else at line 2" {
 		t.Errorf("the file's mark reads %q, listing %q", raised[0].Brief, raised[0].Detail)
 	}
 
@@ -142,12 +144,53 @@ func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	}
 
 	raisedAgain := again.Raises(root)
-	if len(raisedAgain) != 1 || raisedAgain[0].Key != raised[0].Key || raisedAgain[0].Detail != edited[0].ShownFrom(root) {
+	named := edited[0].Rule.Sin().Definition().Name + " at line " + strconv.Itoa(edited[0].Match.Line())
+	if len(raisedAgain) != 1 || raisedAgain[0].Key != raised[0].Key || raisedAgain[0].Detail != named {
 		t.Fatalf("the edit in place raised %+v", raisedAgain)
 	}
 
 	write("def refund(order) -> int:\n    if order.late:  # past due\n        raise ValueError(order)\n    return order.total\n")
 	if repented := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, nil); !slices.Equal(repented.Settles(), []string{raised[0].Key}) {
 		t.Errorf("the repenting edit settles %v, want %v", repented.Settles(), raised[0].Key)
+	}
+}
+
+// TestAFilesMarkNamesItsSinsAndTheirLines holds the line under a file's mark: the file is left off, since the
+// mark's own first line names it, and each sin is given with the lines it sits on, the largest group first, so a
+// reader sees which disciplines were broken without opening anything. The marks are made by hand, because what
+// is under test is the line the card shows and not which rule fires where.
+func TestAFilesMarkNamesItsSinsAndTheirLines(t *testing.T) {
+	source := strings.Repeat("\n", 6) + "a = 1\nb = 2\n" + strings.Repeat("\n", 43) + "c = 3\nd = 4\n"
+	codebase := pythontest.FromSource(t, map[string]string{"shop/orders.py": source})
+	file := pythontest.File(t, codebase, "shop/orders.py")
+	root, data := filepath.Dir(filepath.Dir(file.Path)), t.TempDir()
+
+	at := map[int]engine.Match{}
+	for _, match := range codebase.WhereAssign().Get() {
+		at[match.Line()] = match
+	}
+
+	for _, line := range []int{7, 8, 52, 53} {
+		if _, found := at[line]; !found {
+			t.Fatalf("the fixture has no assignment on line %d, so the lines it names are not the ones meant", line)
+		}
+	}
+
+	rule, other := pydetectors.RedundantElseDetector{}, pydetectors.MutableDefaultDetector{}
+	marks := []SinMark{
+		{other, at[52], true},
+		{rule, at[53], true},
+		{rule, at[7], true},
+		{rule, at[8], true},
+	}
+
+	raised := AnnouncedIn(data, Moment{}).Settle(root, []string{file.Path}, marks).Raises(root)
+	if len(raised) != 1 {
+		t.Fatalf("one file raised %d marks", len(raised))
+	}
+
+	want := "redundant-python-else at lines 7, 8, 53 · python-mutable-default at line 52"
+	if raised[0].Detail != want {
+		t.Errorf("the mark's second line reads %q, want %q", raised[0].Detail, want)
 	}
 }

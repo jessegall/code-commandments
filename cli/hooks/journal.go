@@ -1,7 +1,7 @@
 package hooks
 
 import (
-	"github.com/jessegall/code-commandments/cli/git"
+	"cmp"
 	"os"
 	"path/filepath"
 	"slices"
@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/jessegall/code-commandments/cli/dashboard"
+	"github.com/jessegall/code-commandments/cli/git"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
 	"github.com/jessegall/code-commandments/cli/source"
 	"github.com/jessegall/code-commandments/cli/workspace"
@@ -591,21 +592,53 @@ func (s Settlement) Raises(root string) []Raise {
 			continue
 		}
 
-		var shown []string
-		for _, sin := range file.Sins {
-			shown = append(shown, sin.ShownFrom(root))
-		}
-
 		raised = append(raised, Raise{
 			Event:  "sin-found",
 			Brief:  file.counted(),
 			Open:   dashboard.Opening(dashboard.StoredOf(file.Sins[0].Finding(), root)),
 			Key:    fileKey(file.Path),
-			Detail: strings.Join(shown, "\n"),
+			Detail: file.named(),
 		})
 	}
 
 	return raised
+}
+
+// named is the line under a file's mark: which sins they are and where. The file is left out, since the mark's
+// first line already names it, so what this adds is the sin and its lines, one group per sin with the largest
+// first — the names are what a reader acts on, and a line a card shows has room for little else.
+func (f FileSins) named() string {
+	var order []string
+	at := map[string][]int{}
+
+	for _, sin := range f.Sins {
+		name := sin.Rule.Sin().Definition().Name
+		if _, seen := at[name]; !seen {
+			order = append(order, name)
+		}
+
+		at[name] = append(at[name], sin.Match.Line())
+	}
+
+	slices.SortStableFunc(order, func(a, b string) int { return cmp.Compare(len(at[b]), len(at[a])) })
+
+	var named []string
+	for _, name := range order {
+		lines := slices.Compact(slices.Sorted(slices.Values(at[name])))
+		var numbers []string
+		for _, line := range lines {
+			numbers = append(numbers, strconv.Itoa(line))
+		}
+
+		word := " at line "
+		if len(numbers) > 1 {
+			word = " at lines "
+		}
+
+		named = append(named, name+word+strings.Join(numbers, ", "))
+	}
+
+	return strings.Join(named, " · ")
 }
 
 // counted is how a file's mark names itself: the file, and how many sins it holds.
