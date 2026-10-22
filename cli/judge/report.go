@@ -109,7 +109,7 @@ func (r Report) Console() string {
 		}
 	}
 
-	lines = append(lines, "\n\033[1m"+counted(r.total, "sin")+"\033[0m across "+counted(len(r.skills), "skill")+".")
+	lines = append(lines, "\n\033[1m"+natural.Counted(r.total, "sin")+"\033[0m across "+natural.Counted(len(r.skills), "skill")+".")
 
 	if !r.skipped.IsEmpty() {
 		lines = append(lines, r.skipped.Console())
@@ -248,7 +248,7 @@ func (r Report) Said() string {
 		}
 	}
 
-	return strings.Join(append(lines, "", counted(r.total, "sin")+" in "+counted(len(files), "file")), "\n")
+	return strings.Join(append(lines, "", natural.Counted(r.total, "sin")+" in "+natural.Counted(len(files), "file")), "\n")
 }
 
 // saidOf is one finding said plainly: the file and the line, what is declared there, and the sin itself.
@@ -314,15 +314,6 @@ func subjectOf(scope string) string {
 	}
 
 	return named
-}
-
-// counted is a number and its noun, singular where there is one of them.
-func counted(number int, noun string) string {
-	if number == 1 {
-		return "1 " + noun
-	}
-
-	return strconv.Itoa(number) + " " + noun + "s"
 }
 
 func (r Report) relative(location string) string {

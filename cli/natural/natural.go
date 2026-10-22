@@ -1,6 +1,17 @@
 // Package natural orders text the way a person reads numbers in it, exactly as PHP's strnatcmp does:
-// `a.vue:8` before `a.vue:25`.
+// `a.vue:8` before `a.vue:25`, and says a count the way a person says it.
 package natural
+
+import "strconv"
+
+// Counted is a number and its noun, singular where there is one of them: `1 sin`, `3 sins`.
+func Counted(number int, noun string) string {
+	if number == 1 {
+		return "1 " + noun
+	}
+
+	return strconv.Itoa(number) + " " + noun + "s"
+}
 
 // Compare answers -1, 0 or 1 as a sorts before, with, or after b.
 func Compare(a, b string) int {

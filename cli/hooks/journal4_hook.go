@@ -80,6 +80,14 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
+	// A worker's merge is held while its own changes are judged: the one event where our answer still decides
+	// whether work lands, so it is answered here and in full, never from the queue.
+	if asText(line["event"]) == mergeEvent {
+		console.Write(MergeHeld(line) + "\n")
+
+		return 0, nil
+	}
+
 	console.Write(Answer4Now(line) + "\n")
 	if asText(line["event"]) == heldEvent {
 		judge4Detached(raw, line)

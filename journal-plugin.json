@@ -3,7 +3,7 @@
   "version": "1.76.0",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
-  "journal": "4.5.0",
+  "journal": "4.7.0",
   "protocol": 1,
   "program": ".journal-plugin/journal4-hook",
   "hears": [
@@ -13,12 +13,17 @@
     "idle",
     "session_started",
     "subagent_started",
-    "plugin.updated"
+    "plugin.updated",
+    "worker_merging"
   ],
   "holds": [
     {
       "event": "command_starting",
       "window_ms": 5
+    },
+    {
+      "event": "worker_merging",
+      "window_ms": 10000
     }
   ],
   "aliases": [
@@ -73,7 +78,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v6.2.1 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v6.3.0 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",

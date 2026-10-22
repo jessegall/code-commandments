@@ -294,15 +294,28 @@ func TestBothPluginManifestsPinTheSameRelease(t *testing.T) {
 	}
 }
 
-// windowMs is the longest window a hold of ours may declare. It is far too short to parse a file, let alone judge
-// one, which is the point: what the journal waits for can only be an answer already known.
+// windowMs is the longest window a hold of ours may declare at a moment of the AGENT's own work. It is far too
+// short to parse a file, let alone judge one, which is the point: what the journal waits for while the agent works
+// can only be an answer already known.
 const windowMs = 10
 
+// decidedMs is the longest window a hold may declare at a moment that is not the agent's work but a command the
+// user ran and waits on: `journal worker merge`, which takes a branch in. A gate there cannot report later — answer
+// late and the work has already landed — so it answers in the moment, and its ceiling is what a person will wait
+// for a merge rather than what a tool call can spare.
+const decidedMs = 10_000
+
+// decided are the events a hold may take its time at: the ones that are not the agent's own work. Every other
+// event is a moment of that work, and a window there is the fault the rule above exists to keep away.
+var decided = []string{"worker_merging"}
+
 // TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown holds the manifest to the rule every hook of ours answers under: the
-// plugin never makes the journal wait on work. An event it HOLDS is asked before the tool runs, so it may only
-// declare a window no judge could fit in, and a window that short cannot start a process — which is why a service
-// of ours has to answer it. A hold with no window took the journal's old ten-second deadline, and one tool call that
-// changed sixty files spent it on a scan and timed out; that is the fault these three checks keep away.
+// plugin never makes the journal wait on work while the agent works. An event it HOLDS at a moment of that work is
+// asked before the tool runs, so it may only declare a window no judge could fit in, and a window that short cannot
+// start a process — which is why a service of ours has to answer it. A hold with no window took the journal's old
+// ten-second deadline, and one tool call that changed sixty files spent it on a scan and timed out; that is the
+// fault these checks keep away. The one event held longer is a worker's merge, which is not the agent working but a
+// command someone ran and waits on, and where an answer that comes later cannot stop anything.
 func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 	content, err := os.ReadFile(filepath.Join("..", "..", "journal-plugin.json"))
 	if err != nil {
@@ -314,8 +327,13 @@ func TestEveryHoldIsAnsweredFromWhatIsAlreadyKnown(t *testing.T) {
 	}
 
 	for _, held := range manifest.Holds {
-		if held.WindowMs <= 0 || held.WindowMs > windowMs {
-			t.Errorf("%s is held for %dms: a hold of ours declares a window of at most %dms, so nothing can be worked out inside it", held.Event, held.WindowMs, windowMs)
+		longest := windowMs
+		if slices.Contains(decided, held.Event) {
+			longest = decidedMs
+		}
+
+		if held.WindowMs <= 0 || held.WindowMs > longest {
+			t.Errorf("%s is held for %dms: a hold of ours declares a window of at most %dms, so nothing can be worked out inside it", held.Event, held.WindowMs, longest)
 		}
 	}
 
