@@ -115,6 +115,21 @@ func ThroughPlugin(root string) string {
 	return relative
 }
 
+// Alias is the journal's alias for judging, which the plugin's manifest ships: one command an agent can run
+// without naming a file, and the run the journal watches through our reader.
+const Alias = "journal sins"
+
+// Judging is what an agent is told to run to judge the project at root: the journal's alias where the journal
+// drives it, since the release that ships the alias is the release that writes this, and the binary with its
+// judge verb anywhere else.
+func Judging(root string) string {
+	if ThroughPlugin(root) != "" {
+		return Alias
+	}
+
+	return Invocation(root) + " judge"
+}
+
 // Here is the invocation for the project the working folder is in.
 func Here() string {
 	cwd, _ := os.Getwd()

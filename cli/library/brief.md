@@ -18,7 +18,7 @@ problem and grows the code. If the honest fix touches many call sites, touch the
 IS the bug surfacing. Load `commandments-php-fix-at-the-source` before your first edit, and
 again rather than working from memory, since a compaction drops it silently.
 
-**Finding and fixing sins.** Run `{{binary}} judge` ONCE, scoped — `--changes` for your
+**Finding and fixing sins.** Run `{{judging}}` ONCE, scoped — `--changes` for your
 uncommitted work, `--branch` for what differs from main, or a path to judge that tree. A full scan is
 slow, so it writes a checklist (the run prints the path) and THAT file, not repeated scans, is how
 you work: top to bottom, one line at a time — read that section's skill, fix the sin at its

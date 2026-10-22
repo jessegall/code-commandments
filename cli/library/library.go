@@ -157,7 +157,10 @@ func (l Library) copied(from, to string) bool {
 // rendered once, into the binary, so a skill cannot know which file an agent will be told to run; it writes the
 // placeholder and the answer is given here, where the project is known.
 func (l Library) naming(text []byte) []byte {
-	return []byte(strings.ReplaceAll(string(text), Binary, binary.Invocation(l.judged)))
+	return []byte(strings.NewReplacer(
+		Binary, binary.Invocation(l.judged),
+		Judging, binary.Judging(l.judged),
+	).Replace(string(text)))
 }
 
 // copiedFrom copies the folder from, in the file system files, into to, recursively, and says whether every

@@ -3,7 +3,7 @@
   "version": "1.76.0",
   "title": "Code Commandments",
   "description": "The static code checker judges the codebase, its hooks run inside the journal, and every rule and language is a switch in its settings",
-  "journal": "4.0.0",
+  "journal": "4.5.0",
   "protocol": 1,
   "program": ".journal-plugin/journal4-hook",
   "hears": [
@@ -19,6 +19,22 @@
     {
       "event": "command_starting",
       "window_ms": 5
+    }
+  ],
+  "aliases": [
+    {
+      "name": "sins",
+      "description": "Judge the project against its commandments and show each sin as it is found",
+      "line": "bin/commandments-release judge {args}",
+      "env": {
+        "COMMANDMENTS_PLAIN_PROGRESS": "1"
+      },
+      "args": [
+        "--changes",
+        "--branch",
+        "<path>"
+      ],
+      "reader": "judge"
     }
   ],
   "cards": [
@@ -57,7 +73,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v6.0.0 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v6.1.0 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",

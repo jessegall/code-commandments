@@ -34,6 +34,10 @@ var brief string
 // into the binary, and which file an agent is told to run is answered when it is published into a project.
 const Binary = "{{binary}}"
 
+// Judging is the placeholder a rendered skill writes where the command that judges the project goes: the
+// journal's alias where the journal drives it, the binary and its verb anywhere else.
+const Judging = "{{judging}}"
+
 // Briefing is the canon every agent in the project at root is handed: how the skills are loaded, the rule
 // they all serve, and the disciplines the project can use, tier by tier, its own among them.
 func Briefing(root string, project config.Config) string {
@@ -42,6 +46,7 @@ func Briefing(root string, project config.Config) string {
 	return strings.NewReplacer(
 		"{{library}}", Dir,
 		Binary, binary.Invocation(root),
+		Judging, binary.Judging(root),
 		"{{mandatory}}", bullets(skill.Mandatory, project, own),
 		"{{keepInMind}}", bullets(skill.KeepInMind, project, own),
 	).Replace(briefing)
@@ -55,6 +60,7 @@ func Brief(root string, project config.Config) string {
 	return strings.NewReplacer(
 		"{{library}}", Dir,
 		Binary, binary.Invocation(root),
+		Judging, binary.Judging(root),
 	).Replace(brief)
 }
 
