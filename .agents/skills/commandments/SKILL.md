@@ -9,8 +9,8 @@ description: "The index of this project's architectural disciplines — every co
 
 Code style in this project lives in the code-commandments skills, published to
 `.agents/skills/` and loaded **by the exact id in each bullet below** —
-`commandments-backend-<name>` / `commandments-frontend-<name>` (e.g.
-`commandments-backend-absence`). HOW you load one is your own business: some agents
+`commandments-php-<name>` / `commandments-vue-<name>` (e.g.
+`commandments-php-absence`). HOW you load one is your own business: some agents
 have a tool for it, some a `/`-command, some want the file read. The id is the same
 either way, and so is the rule — read the relevant skill before writing or reviewing
 code. Two tiers.
@@ -82,7 +82,7 @@ immutable — never to silence a sin you could fix.** A real finding you disagre
 with is a `report`; a rule you want off is `disable`; freezing is for files that
 by their nature cannot move.
 
-When in doubt, load `commandments-backend-fix-at-the-source` and re-read it. It is the parent move
+When in doubt, load `commandments-php-fix-at-the-source` and re-read it. It is the parent move
 behind every other skill.
 
 **Leave it cleaner than you found it — the gentleman's duty.** When you touch a
@@ -95,27 +95,27 @@ one when its subject comes up, and load it again rather than working from memory
 compaction drops instructions silently while leaving you the impression they are still
 there. A `judge` finding names the skill that fixes it, so you are never guessing.
 
-Load **`commandments-backend-fix-at-the-source`** before your first edit whatever else you
+Load **`commandments-php-fix-at-the-source`** before your first edit whatever else you
 do — every other discipline defers to it. And **`commandments`** is this whole list as a
 loadable skill, for when you want the map in front of you.
 
 **CONSTANTLY IN PLAY — these fire on ordinary, everyday code, so you will reach for them
 most:**
 
-- **`commandments-backend-fix-at-the-source`** — the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made.
-- **`commandments-backend-guard-clauses-and-flow`** — validate preconditions at the TOP (early return/throw), flat body, happy path last; never bury a check inline.
-- **`commandments-backend-value-objects`** — give related data a type: no loose `array<string,mixed>` bags, no data clumps, no primitive obsession. (Decide the type; then `spatie-data` is how to write it.)
-- **`commandments-backend-spatie-data`** — how to write and construct Spatie `Data` classes — `::from()` not `new`, total types, sealed and readonly.
-- **`commandments-backend-spatie-data-hydration`** — construct and consume `Data` objects without re-doing what the class declares — pass raw input, let `::from`/casts/collections build.
-- **`commandments-backend-laravel-idioms`** — typed request/bag access (never raw `->input()`/`->get()`), required constructor DI (never `app()`/facade), Eloquent scopes + intention-revealing model mutation methods.
-- **`commandments-backend-page-objects`** — the composed `Data` a controller returns for a page — container-injected + `#[Hidden]` collaborators, computed slots over a fat constructor, transformers for output shape.
-- **`commandments-backend-documentation`** — concise, present-tense docs; rare inline comments; never narrate the past.
-- **`commandments-backend-absence`** — modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw).
-- **`commandments-backend-class-layout`** — state at the top — traits, constants, properties and hooks above the constructor, methods after.
-- **`commandments-backend-method-mood`** — commands are imperatives (`hide()`), state predicates are questions (`isHidden()`).
-- **`commandments-backend-type-honesty`** — a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`.
-- **`commandments-backend-route-actions`** — route actions are thin, single entry points — no controller wrapping another, no duplicate actions, no two routes to one action.
-- **`commandments-backend-repeated-call-helper`** — a repeated `with`-style call passing the same named argument belongs as a named method on the receiver's type.
+- **`commandments-php-fix-at-the-source`** — the root-cause-first move: trace a value to where it's born, never patch the symptom. Governs how every change is made.
+- **`commandments-php-guard-clauses-and-flow`** — validate preconditions at the TOP (early return/throw), flat body, happy path last; never bury a check inline.
+- **`commandments-php-value-objects`** — give related data a type: no loose `array<string,mixed>` bags, no data clumps, no primitive obsession. (Decide the type; then `spatie-data` is how to write it.)
+- **`commandments-php-spatie-data`** — how to write and construct Spatie `Data` classes — `::from()` not `new`, total types, sealed and readonly.
+- **`commandments-php-spatie-data-hydration`** — construct and consume `Data` objects without re-doing what the class declares — pass raw input, let `::from`/casts/collections build.
+- **`commandments-php-laravel-idioms`** — typed request/bag access (never raw `->input()`/`->get()`), required constructor DI (never `app()`/facade), Eloquent scopes + intention-revealing model mutation methods.
+- **`commandments-php-page-objects`** — the composed `Data` a controller returns for a page — container-injected + `#[Hidden]` collaborators, computed slots over a fat constructor, transformers for output shape.
+- **`commandments-php-documentation`** — concise, present-tense docs; rare inline comments; never narrate the past.
+- **`commandments-php-absence`** — modelling a value that might be missing (`?T`, `Option`, `null`, empty, Null Object, throw).
+- **`commandments-php-class-layout`** — state at the top — traits, constants, properties and hooks above the constructor, methods after.
+- **`commandments-php-method-mood`** — commands are imperatives (`hide()`), state predicates are questions (`isHidden()`).
+- **`commandments-php-type-honesty`** — a type must not lie: don't fake optionality — a `?T` the design always has set, then defended with `?->`/`?? <fake>` or stashed as save/restore scratch state. Make the type certain (pass it, hold it non-nullable, a per-call value object). The complement of `absence`.
+- **`commandments-php-route-actions`** — route actions are thin, single entry points — no controller wrapping another, no duplicate actions, no two routes to one action.
+- **`commandments-php-repeated-call-helper`** — a repeated `with`-style call passing the same named argument belongs as a named method on the receiver's type.
 - **`commandments-python-flow`** — check preconditions at the top and leave (`return`/`raise`/`continue`), keep the body flat, no `else` after an exit, dispatch instead of an `elif` ladder over one subject.
 - **`commandments-csharp-flow`** — check preconditions at the top and leave (`return`/`throw`/`continue`), keep the body flat, no `else` after an exit, a `switch` expression or polymorphism instead of an `else if` ladder over one subject.
 - **`commandments-python-absence`** — decide absence where the value is born — raise, return an empty collection, or a Null Object — instead of an `X | None` every caller re-checks; never `or ""` a required value.
@@ -137,18 +137,18 @@ most:**
 
 **ON CONTACT — load the moment the work touches the subject:**
 
-- **`commandments-backend-exceptions`** — throwing or catching: named `::for()` factory exceptions, never swallow a failure.
-- **`commandments-backend-enums-with-behaviour`** — a closed set of values: seal it as a native backed enum, put the per-case logic on the enum (not a `match` at every call site).
-- **`commandments-backend-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract.
-- **`commandments-backend-tell-dont-ask`** — behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). A Strategy over flat scalar fields is the exception.
-- **`commandments-backend-pass-the-object`** — demand the resolved type you need, not an id plus its container: a method that takes `(Workflow $workflow, string $nodeId)` then unpacks `$workflow->graph->nodeById($nodeId)` should take the node — the caller resolves once and passes the object (and owns the not-found failure).
-- **`commandments-backend-concurrent-state`** — state shared across requests/workers (`::for($id): Concurrent<self>`).
-- **`commandments-backend-templates`** — a multi-line string is a heredoc that SHOWS its output, never a list of line fragments joined.
-- **`commandments-frontend-vue-components`** — extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop.
-- **`commandments-frontend-vue-control-flow`** — dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject.
-- **`commandments-backend-dependency-direction`** — a declared layer may only reference the layers it declared it may use — down the stack, never back up, never sideways; the direction is enforced from the project's own layer declaration.
-- **`commandments-backend-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two methods share one name — split them and let the call site say which it wants, instead of passing a bare `true`.
-- **`commandments-frontend-mirrored-server-type`** — a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one.
+- **`commandments-php-exceptions`** — throwing or catching: named `::for()` factory exceptions, never swallow a failure.
+- **`commandments-php-enums-with-behaviour`** — a closed set of values: seal it as a native backed enum, put the per-case logic on the enum (not a `match` at every call site).
+- **`commandments-php-role-vocabulary`** — a keyed store / membership set / first-match dispatcher: name it `*Registry`/`*Set`/`*Resolver`, extend the base, honour the contract.
+- **`commandments-php-tell-dont-ask`** — behaviour belongs with its data (feature envy): don't exile a loop over one object's collection into a separate class — move it onto the object (`$node->edges()`, not `EdgeDetector::detect($node)`). A Strategy over flat scalar fields is the exception.
+- **`commandments-php-pass-the-object`** — demand the resolved type you need, not an id plus its container: a method that takes `(Workflow $workflow, string $nodeId)` then unpacks `$workflow->graph->nodeById($nodeId)` should take the node — the caller resolves once and passes the object (and owns the not-found failure).
+- **`commandments-php-concurrent-state`** — state shared across requests/workers (`::for($id): Concurrent<self>`).
+- **`commandments-php-templates`** — a multi-line string is a heredoc that SHOWS its output, never a list of line fragments joined.
+- **`commandments-vue-vue-components`** — extract a component when template markup REPEATS, or when an element reaches DEEP into nested data — pass it the mid-object as a prop.
+- **`commandments-vue-vue-control-flow`** — dispatch on a value with `<SwitchCase :value>` (a slot per case), never a `v-if`/`v-else-if` chain re-testing the same subject.
+- **`commandments-php-dependency-direction`** — a declared layer may only reference the layers it declared it may use — down the stack, never back up, never sideways; the direction is enforced from the project's own layer declaration.
+- **`commandments-php-behaviour-per-method`** — a parameter that picks WHICH behaviour runs means two methods share one name — split them and let the call site say which it wants, instead of passing a bare `true`.
+- **`commandments-vue-mirrored-server-type`** — a hand-written TS type that mirrors a backend Data class is a duplicated contract — mark the Data class `#[TypeScript]`, generate the type, and import the generated one.
 - **`commandments-typescript-absence`** — model absence honestly — one spelling for missing, no `??` that invents a value, no `?.` on something always set.
 - **`commandments-typescript-duplication`** — a function body written twice becomes one shared function or composable, parameterised by what differs.
 - **`commandments-typescript-flow`** — turn away what cannot go on at the top, keep the body flat, and never change a collection while walking it.

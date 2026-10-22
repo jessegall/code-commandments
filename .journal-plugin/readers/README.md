@@ -9,10 +9,12 @@ total.
 
 Reads `commandments judge`:
 
-- **Picks** a finding (`  path/to/File.php:34  …  [SomeDetector]`), the skill heading each group sits
-  under (`backend/absence  (3)`), the count the run ends on (`7 sins across 3 skills.`) and the clean
-  verdict (`✓ No sins found in 1181 files.`). The teaching prose between them is left out: it is the
-  same every run and the agent reads it from the skill.
+- **Picks** a sin said plainly (`typed_lines.py, line 52: oldest_line_at, a sentence used as a method
+  name`), the count the run ends on (`4 sins in 3 files`), the clean verdict (`✓ No sins found in 1181
+  files.`) and a run that could not finish (`✗ …`). A run a journal watches says what it found in
+  words rather than printing the report a terminal gets, so there is no path, no node kind and no
+  detector class in a line, and the teaching prose is left where it belongs, in the skill the
+  checklist names.
 - **Counts** `parsing`, `reading` and `detector` steps. Those are the words the counted form prints;
   `judging` never appears, because a judging step is one detector and the line says so.
 - The output a journal command reads is not a terminal, so it carries no colour and the patterns need

@@ -241,8 +241,13 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		return aRuleCouldNotRun, nil
 	}
 
-	report := NewReport(options.path, judgement.Findings, c.Fixable, c.Scaffoldable, skipped)
-	console.Say(report.Console())
+	report := NewReport(options.path, judgement.Findings, c.Fixable, c.Scaffoldable, skipped).Saying(saying(selected))
+	if cli.Watched() {
+		console.Say(report.Said())
+	} else {
+		console.Say(report.Console())
+	}
+
 	if journal := os.Getenv(cli.JournalReport); journal != "" {
 		if err := os.WriteFile(journal, report.Journal(), 0o644); err != nil {
 			console.Warn("✗ The journal's report could not be written: " + err.Error())
@@ -298,6 +303,18 @@ func plural(count int, one, many string) string {
 	}
 
 	return many
+}
+
+// saying is the words each sin a run could find is described by, keyed by its name: what a journal's card says
+// in place of the rule that found it. A project's own rule carries its own words, so both are read the same way.
+func saying(selected []detectors.Detector) map[string]string {
+	says := map[string]string{}
+	for _, rule := range selected {
+		definition := rule.Sin().Definition()
+		says[definition.Name] = definition.Description
+	}
+
+	return says
 }
 
 // run runs the tasks across the workers, or one by one and timed under --benchmark.

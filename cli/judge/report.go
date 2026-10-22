@@ -1,11 +1,12 @@
 package judge
 
 import (
-	"github.com/jessegall/code-commandments/cli/binary"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/skill"
@@ -27,6 +28,15 @@ type Report struct {
 	fixable      map[string]string
 	scaffoldable map[string]string
 	skipped      Skipped
+	says         map[string]string
+}
+
+// Saying gives the report the words each sin is described by, so a card can say what is wrong rather than name
+// the rule that found it.
+func (r Report) Saying(says map[string]string) Report {
+	r.says = says
+
+	return r
 }
 
 // NewReport groups the findings under their skills, each group in one total order (location, detector,
@@ -99,12 +109,7 @@ func (r Report) Console() string {
 		}
 	}
 
-	skills := "skills"
-	if len(r.skills) == 1 {
-		skills = "skill"
-	}
-
-	lines = append(lines, "\n\033[1m"+strconv.Itoa(r.total)+" sins\033[0m across "+strconv.Itoa(len(r.skills))+" "+skills+".")
+	lines = append(lines, "\n\033[1m"+counted(r.total, "sin")+"\033[0m across "+counted(len(r.skills), "skill")+".")
 
 	if !r.skipped.IsEmpty() {
 		lines = append(lines, r.skipped.Console())
@@ -210,6 +215,116 @@ func (r Report) twins(finding engine.Finding) string {
 }
 
 // relative is a location as the console shows it: under the judged path, without it.
+// Said is the report as a journal's card shows it: a line per finding, in the words a person would use, and a
+// closing count of the sins and the files holding them. A card is read by whoever is working, not by a terminal,
+// so it carries no colour, no node kind and no detector class — the sin says what is wrong, and the checklist
+// the run writes carries the paths and the rule names for the agent that fixes them.
+func (r Report) Said() string {
+	var lines []string
+	files := map[string]bool{}
+
+	counts := map[string]int{}
+
+	for _, slug := range r.skills {
+		for _, finding := range r.bySkill[slug] {
+			files[finding.File] = true
+			said := r.saidOf(finding)
+
+			if counts[said] == 0 {
+				lines = append(lines, said)
+			}
+
+			counts[said]++
+		}
+	}
+
+	if len(lines) == 0 {
+		return ""
+	}
+
+	for at, said := range lines {
+		if counts[said] > 1 {
+			lines[at] = said + " ×" + strconv.Itoa(counts[said])
+		}
+	}
+
+	return strings.Join(append(lines, "", counted(r.total, "sin")+" in "+counted(len(files), "file")), "\n")
+}
+
+// saidOf is one finding said plainly: the file and the line, what is declared there, and the sin itself.
+func (r Report) saidOf(finding engine.Finding) string {
+	said := filepath.Base(finding.File)
+	if _, at, numbered := strings.Cut(finding.Location, ":"); numbered && at != "" {
+		said += ", line " + at
+	}
+
+	if subject := subjectOf(finding.Scope); subject != "" {
+		said += ": " + subject + ", " + r.sinSaid(finding)
+
+		return said
+	}
+
+	return said + ": " + r.sinSaid(finding)
+}
+
+// sinSaid is what the sin is in a few words: the opening clause of the description its definition carries, which
+// is the symptom itself, else its own name. A definition goes on to say why it is a sin and what to do about it,
+// and that belongs in the skill the finding names, not in a line on a card.
+func (r Report) sinSaid(finding engine.Finding) string {
+	says := r.says[finding.Sin]
+	if says == "" {
+		return finding.Sin
+	}
+
+	for _, stop := range []string{" — ", ", so ", ". ", "; "} {
+		if clause, _, found := strings.Cut(says, stop); found {
+			says = clause
+		}
+	}
+
+	return shortened(strings.TrimSuffix(strings.ToLower(says[:1])+says[1:], "."))
+}
+
+// saidWidth is how long a line's words may run before they are cut at a word: a card shows a line, not a
+// paragraph, and a description that goes on says the rest in the skill the finding names.
+const saidWidth = 72
+
+// shortened cuts the words at the last word inside saidWidth, saying with an ellipsis that there is more.
+func shortened(says string) string {
+	if len(says) <= saidWidth {
+		return says
+	}
+
+	cut := strings.LastIndex(says[:saidWidth], " ")
+	if cut < saidWidth/2 {
+		cut = saidWidth
+	}
+
+	return strings.TrimRight(says[:cut], " ,;(") + "…"
+}
+
+// subjectOf is what a scope declares, less the kind of node it is: `FunctionDef oldest_line_at` is said as
+// `oldest_line_at`, because a reader acts on the name and the kind is already plain from the code. A scope that
+// is a piece of code rather than a name — the condition an unnamed-condition finding is about — says nothing a
+// line like this can carry, so it is left out and the sin speaks for itself.
+func subjectOf(scope string) string {
+	_, named, kinded := strings.Cut(scope, " ")
+	if !kinded || named == "" || strings.ContainsAny(named, " `'\"()[]{}=<>$") {
+		return ""
+	}
+
+	return named
+}
+
+// counted is a number and its noun, singular where there is one of them.
+func counted(number int, noun string) string {
+	if number == 1 {
+		return "1 " + noun
+	}
+
+	return strconv.Itoa(number) + " " + noun + "s"
+}
+
 func (r Report) relative(location string) string {
 	if relative, under := strings.CutPrefix(location, r.path+"/"); under {
 		return relative

@@ -1,4 +1,4 @@
-# a file's sins, the skill each belongs under, and the verdict the run ends on
-^(?:\s{2}\S+:\d+\s|\S+/\S+\s+\(\d+\)$|\d+ sins across \d+ skill|✓ )
+# a sin said plainly, the count a run ends on, and a run that could not finish
+^(?:\S+, line \d+:|\d+ sins? in \d+ files?$|[✓✗] )
 progress: ^(?:parsing|reading|detector) (\d+)/(\d+)$
 label: Judging the project against its commandments

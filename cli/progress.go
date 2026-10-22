@@ -36,11 +36,18 @@ const JournalReport = "JOURNAL_REPORT"
 // journal command run through a reader of ours reads them, and a terminal is not what it has.
 const PlainProgress = "COMMANDMENTS_PLAIN_PROGRESS"
 
+// Watched says whether a journal is reading this run: a check that named its report, or a command that asked for
+// the counted lines. What it reads is a card in someone's chat rather than a terminal, so a run it watches counts
+// in plain lines and says what it found in words.
+func Watched() bool {
+	return os.Getenv(JournalReport) != "" || os.Getenv(PlainProgress) != ""
+}
+
 // NewProgress draws on stream when it is a terminal, and writes plain lines when a journal check or a journal
 // command reads it.
 func NewProgress(stream io.Writer) *Progress {
 	terminal := isTerminal(stream)
-	plain := !terminal && (os.Getenv(JournalReport) != "" || os.Getenv(PlainProgress) != "")
+	plain := !terminal && Watched()
 
 	return &Progress{stream: stream, enabled: terminal || plain, plain: plain, total: 1, lastFilled: -1, lastShare: -1}
 }
