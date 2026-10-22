@@ -203,7 +203,7 @@ func answerWith(given map[string]any, runs func(Hook) bool, reportsSins bool) Jo
 	merged := Merge(responses)
 	answer := answerOf(merged)
 
-	if !moment.IsPostToolUse() || !reportsSins {
+	if !reportsSins || !moment.IsPostToolUse() && !moment.IsStop() {
 		return answer
 	}
 
@@ -225,6 +225,16 @@ func settled(moment Moment, root string, marks []SinMark, read []string) Settlem
 		return Forgotten().Settle(root, reconsidered, marks)
 	}
 
+	record := AnnouncedIn(data, moment)
+
+	// Going idle judges the files that still carry a mark, so one whose sins are gone turns green even where
+	// nothing edited that file again.
+	if moment.IsStop() {
+		swept, files := swept(record, root)
+		marks = append(marks, swept...)
+		reconsidered = append(reconsidered, files...)
+	}
+
 	var findings []engine.Finding
 	judged := map[string]bool{}
 
@@ -238,7 +248,8 @@ func settled(moment Moment, root string, marks []SinMark, read []string) Settlem
 	}
 
 	dashboard.Record(workspace.At(root, ""), findings, judged)
-	return AnnouncedIn(data, moment).Settle(root, reconsidered, marks)
+
+	return record.Settle(root, reconsidered, marks)
 }
 
 // named is the file the moment names, or none where it names a tool that writes without saying which file: a

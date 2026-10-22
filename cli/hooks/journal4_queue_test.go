@@ -472,3 +472,61 @@ func TestASinGoneOutsideTheEditIsStillRepented(t *testing.T) {
 
 	t.Errorf("the edit elsewhere settled %v, none of it the sin that is gone, %s", settled, key)
 }
+
+// TestGoingIdleSettlesAMarkNothingEditedAgain holds the mark of a file the agent stops touching: a sin was
+// announced, something the plugin never saw took it out — a shell command, `repent`, a checkout, or simply the
+// agent moving on to another file — and nothing would ever judge that file again, so its mark stayed orange for
+// good. Going idle judges the files that still carry a mark, and the one that is clean turns green.
+func TestGoingIdleSettlesAMarkNothingEditedAgain(t *testing.T) {
+	root, file, _ := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+
+	if raised := Answer4Now(eventOf("file_edited", "src/refund.py")); !strings.Contains(raised, "sin-found") {
+		t.Fatalf("the sinful edit raised nothing: %s", raised)
+	}
+
+	righteous := "def refund(order) -> int:\n    if order.late:\n        raise ValueError(order)\n    return order.total\n"
+	if err := os.WriteFile(file, []byte(righteous), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	other := filepath.Join(root, "src", "orders.py")
+	if err := os.WriteFile(other, []byte("def total(order) -> int:\n    return order.total\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if edited := Answer4Now(eventOf("file_edited", "src/orders.py")); strings.Contains(edited, "sins:src/refund.py") {
+		t.Fatalf("an edit elsewhere settled another file's mark, which is not what settles it: %s", edited)
+	}
+
+	idle := Answer4Now(eventOf("idle", ""))
+	var answer map[string]any
+	if err := json.Unmarshal([]byte(idle), &answer); err != nil {
+		t.Fatalf("going idle answered %q: %v", idle, err)
+	}
+
+	cards, _ := answer["cards"].([]any)
+	for _, each := range cards {
+		card, _ := each.(map[string]any)
+		if asText(card["key"]) == "sins:src/refund.py" && asText(card["kind"]) == "sin-resolved" {
+			return
+		}
+	}
+
+	t.Errorf("going idle answered %v, none of it settling the mark of the file that is now clean", cards)
+}
+
+// TestGoingIdleRaisesNothingNew holds the sweep to settling alone: a file that still holds its sin keeps the mark
+// it has, and going idle never announces a sin as if it had just been committed.
+func TestGoingIdleRaisesNothingNew(t *testing.T) {
+	root, _, _ := projectWithASin(t)
+	t.Setenv("JOURNAL_ROOT", root)
+
+	if raised := Answer4Now(eventOf("file_edited", "src/refund.py")); !strings.Contains(raised, "sin-found") {
+		t.Fatalf("the sinful edit raised nothing: %s", raised)
+	}
+
+	if idle := Answer4Now(eventOf("idle", "")); strings.Contains(idle, "sin-found") || strings.Contains(idle, "sin-resolved") {
+		t.Errorf("going idle with the sin still there answered %q", idle)
+	}
+}

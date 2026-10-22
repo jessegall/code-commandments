@@ -120,6 +120,12 @@ func (m Moment) IsPostToolUse() bool {
 	return m.Event == "PostToolUse"
 }
 
+// IsStop says whether the moment is the agent going idle: the end of its turn, when the files that still carry a
+// mark are judged again.
+func (m Moment) IsStop() bool {
+	return m.Event == "Stop"
+}
+
 // HookPayload is the moment as Claude Code would have reported it.
 func (m Moment) HookPayload() map[string]any {
 	input := map[string]any{}
@@ -381,6 +387,11 @@ func AnnouncedIn(folder string, moment Moment) Announced {
 	}
 
 	return Announced{files, path}
+}
+
+// Files are the files the record holds sins for.
+func (a Announced) Files() []string {
+	return a.files.Keys()
 }
 
 // Forgotten is a record that keeps nothing: every touched sin is new.
