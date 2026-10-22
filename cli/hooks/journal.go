@@ -597,17 +597,18 @@ func (s Settlement) Raises(root string) []Raise {
 			Brief:  file.counted(),
 			Open:   dashboard.Opening(dashboard.StoredOf(file.Sins[0].Finding(), root)),
 			Key:    fileKey(file.Path),
-			Detail: file.named(),
+			Detail: strings.Join(file.named(), "\n"),
 		})
 	}
 
 	return raised
 }
 
-// named is the line under a file's mark: which sins they are and where. The file is left out, since the mark's
-// first line already names it, so what this adds is the sin and its lines, one group per sin with the largest
-// first — the names are what a reader acts on, and a line a card shows has room for little else.
-func (f FileSins) named() string {
+// named are the lines under a file's mark: which sins they are and where. The file is left out, since the mark's
+// first line already names it, so each line is a sin and the lines it sits on, one per sin with the largest group
+// first. A mark opens only where it has two lines or more, so a file holding one sin alone is given its rule's
+// own words underneath rather than left as a line nobody can open.
+func (f FileSins) named() []string {
 	var order []string
 	at := map[string][]int{}
 
@@ -638,7 +639,13 @@ func (f FileSins) named() string {
 		named = append(named, name+word+strings.Join(numbers, ", "))
 	}
 
-	return strings.Join(named, " · ")
+	if len(named) == 1 {
+		if says := f.Sins[0].Rule.Sin().Definition().Description; says != "" {
+			named = append(named, says)
+		}
+	}
+
+	return named
 }
 
 // counted is how a file's mark names itself: the file, and how many sins it holds.

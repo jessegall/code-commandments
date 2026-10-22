@@ -36,7 +36,8 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 		t.Fatalf("the sinful edit raised %+v and settles %v", raised, found.Settles())
 	}
 
-	if raised[0].Brief != "1 sin in shop/refund.py" || raised[0].Detail != "redundant-python-else at line 2" {
+	says := marks[0].Rule.Sin().Definition().Description
+	if raised[0].Brief != "1 sin in shop/refund.py" || raised[0].Detail != "redundant-python-else at line 2\n"+says {
 		t.Errorf("the file's mark reads %q, listing %q", raised[0].Brief, raised[0].Detail)
 	}
 
@@ -144,7 +145,8 @@ func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	}
 
 	raisedAgain := again.Raises(root)
-	named := edited[0].Rule.Sin().Definition().Name + " at line " + strconv.Itoa(edited[0].Match.Line())
+	named := edited[0].Rule.Sin().Definition().Name + " at line " + strconv.Itoa(edited[0].Match.Line()) +
+		"\n" + edited[0].Rule.Sin().Definition().Description
 	if len(raisedAgain) != 1 || raisedAgain[0].Key != raised[0].Key || raisedAgain[0].Detail != named {
 		t.Fatalf("the edit in place raised %+v", raisedAgain)
 	}
@@ -155,10 +157,11 @@ func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	}
 }
 
-// TestAFilesMarkNamesItsSinsAndTheirLines holds the line under a file's mark: the file is left off, since the
+// TestAFilesMarkNamesItsSinsAndTheirLines holds the lines under a file's mark: the file is left off, since the
 // mark's own first line names it, and each sin is given with the lines it sits on, the largest group first, so a
-// reader sees which disciplines were broken without opening anything. The marks are made by hand, because what
-// is under test is the line the card shows and not which rule fires where.
+// reader sees which disciplines were broken without opening anything. A mark opens only where it has two lines
+// or more, so a file holding one sin alone is given its rule's own words underneath. The marks are made by hand,
+// because what is under test is what the card shows and not which rule fires where.
 func TestAFilesMarkNamesItsSinsAndTheirLines(t *testing.T) {
 	source := strings.Repeat("\n", 6) + "a = 1\nb = 2\n" + strings.Repeat("\n", 43) + "c = 3\nd = 4\n"
 	codebase := pythontest.FromSource(t, map[string]string{"shop/orders.py": source})
@@ -189,8 +192,31 @@ func TestAFilesMarkNamesItsSinsAndTheirLines(t *testing.T) {
 		t.Fatalf("one file raised %d marks", len(raised))
 	}
 
-	want := "redundant-python-else at lines 7, 8, 53 · python-mutable-default at line 52"
+	want := "redundant-python-else at lines 7, 8, 53\npython-mutable-default at line 52"
 	if raised[0].Detail != want {
-		t.Errorf("the mark's second line reads %q, want %q", raised[0].Detail, want)
+		t.Errorf("the mark's lines read %q, want %q", raised[0].Detail, want)
+	}
+}
+
+// TestAMarkWithOneSinStillOpens holds the one-sin mark to the same reading as the rest: a card opens only where
+// its lines number two or more, so the sin's own line is followed by what its rule says, and a reader who opens
+// it learns what the sin is rather than seeing the line they already read.
+func TestAMarkWithOneSinStillOpens(t *testing.T) {
+	codebase := pythontest.FromSource(t, map[string]string{"shop/orders.py": "a = 1\n"})
+	file := pythontest.File(t, codebase, "shop/orders.py")
+	root, data := filepath.Dir(filepath.Dir(file.Path)), t.TempDir()
+
+	rule := pydetectors.RedundantElseDetector{}
+	mark := SinMark{rule, codebase.WhereAssign().Get()[0], true}
+
+	raised := AnnouncedIn(data, Moment{}).Settle(root, []string{file.Path}, []SinMark{mark}).Raises(root)
+	lines := strings.Split(raised[0].Detail, "\n")
+
+	if len(lines) != 2 {
+		t.Fatalf("the one-sin mark reads %q, which opens only at two lines or more", raised[0].Detail)
+	}
+
+	if lines[0] != "redundant-python-else at line 1" || lines[1] != rule.Sin().Definition().Description {
+		t.Errorf("the one-sin mark reads %q", raised[0].Detail)
 	}
 }
