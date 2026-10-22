@@ -7,7 +7,7 @@ The briefing above is the canon, shared with every agent. These are the parts of
 that have a specific name in this harness:
 
 - **Load a skill with the Skill tool**, by the exact id in the briefing's bullets —
-  e.g. `commandments-backend-absence`. The published skills are linked into
+  e.g. `commandments-php-absence`. The published skills are linked into
   `.claude/skills/`, so they also autocomplete as `/`-commands.
 
 **The disciplines here are ENFORCED, not just written down.** Hooks are wired into

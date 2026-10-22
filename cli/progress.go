@@ -22,10 +22,11 @@ type Progress struct {
 	plain      bool
 	total      int
 	current    int
-	before     int
 	lastFilled int
 	lastShare  int
+	lastWord   string
 	active     bool
+	planned    bool
 }
 
 // JournalReport names the variable the journal sets for a check it runs, its report's file.
@@ -53,27 +54,26 @@ func (p *Progress) Status(message string) {
 	fmt.Fprintf(p.stream, "\r\033[2K\033[2m%s\033[0m", message)
 }
 
-// Expect counts the steps that come before the bar starts, tracked through Phase, into the bar Start draws: the
-// files a run reads before it judges.
-func (p *Progress) Expect(steps int) {
-	p.before = steps
-}
-
-// Start begins a bar of total steps, after the steps Expect counted; a journal check's bar counts the total alone.
-func (p *Progress) Start(total int) {
+// Plan adds steps to what the run has to get through: every file a phase will read and every detector it will
+// run, each counted into ONE grand total. A run judges one engine after another, so the total grows as each
+// part is reached, and the count never starts again: a bar fills once over the whole run.
+func (p *Progress) Plan(steps int) {
 	if !p.enabled {
 		return
 	}
 
-	if p.plain {
-		p.total, p.current, p.lastShare, p.active = max(1, total), 0, -1, true
-		p.render("judging", "")
-
-		return
+	if !p.planned {
+		p.planned, p.total = true, 0
 	}
 
-	p.total, p.current, p.lastFilled, p.active = max(1, p.before+total), min(p.current, p.before), -1, true
-	p.render("judging", "")
+	p.total, p.active = max(1, p.total+max(0, steps)), true
+}
+
+// Start says the detectors are the part now running. What they will take was planned before the run began, so
+// this counts nothing again: it draws where the count stands, which is what moves a journal's bar off the
+// reading phase at once.
+func (p *Progress) Start() {
+	p.reach(p.current, "judging", "")
 }
 
 // Advance moves one step, labelled with what now runs.
@@ -82,31 +82,45 @@ func (p *Progress) Advance(label string) {
 		return
 	}
 
-	p.current = min(p.total, p.current+1)
-	p.render("judging", label)
+	p.reach(p.current+1, "judging", label)
 }
 
-// Phase is this bar as a (done, total) reporter for one named phase, for a job that should not know
-// whether anyone is watching.
+// Phase is this bar as a (done, total) reporter for one named phase, for a job that should not know whether
+// anyone is watching. The job counts its own steps from zero while the bar counts the whole run, so a report is
+// read from where the count stood when the job began; a job that starts over, as the next engine's reading does,
+// carries on from there rather than dropping back. What the job will take is planned by whoever starts it, so
+// nothing is counted into the total twice.
 func (p *Progress) Phase(phase string) func(done, total int) {
-	return func(done, total int) {
-		p.Track(done, total, phase)
+	base, last, started := 0, 0, false
+
+	return func(done, _ int) {
+		if !started || done < last {
+			base, started = p.current, true
+		}
+
+		last = done
+		p.reach(base+done, phase, "")
 	}
 }
 
-// Track draws the bar from a (done, total) pair, redrawing only when the filled part moves.
-func (p *Progress) Track(done, total int, phase string) {
+// reach moves the count to at, never backwards and never past the total, and redraws when what is drawn moves.
+func (p *Progress) reach(at int, phase, label string) {
 	if !p.enabled {
 		return
 	}
 
 	p.active = true
-	p.total = max(1, total)
-	p.current = min(p.total, max(0, done))
+	p.current = min(p.total, max(p.current, at))
+
+	if p.plain {
+		p.render(phase, label)
+
+		return
+	}
 
 	if filled := p.filled(); filled != p.lastFilled || p.current == p.total {
 		p.lastFilled = filled
-		p.render(phase, "")
+		p.render(phase, label)
 	}
 }
 
@@ -128,8 +142,8 @@ func (p *Progress) filled() int {
 
 func (p *Progress) render(phase, label string) {
 	if p.plain {
-		if share := p.current * 100 / p.total; share != p.lastShare {
-			p.lastShare = share
+		if share := p.current * 100 / p.total; share != p.lastShare || counting(phase) != p.lastWord {
+			p.lastShare, p.lastWord = share, counting(phase)
 			fmt.Fprintf(p.stream, "%s %d/%d\n", counting(phase), p.current, p.total)
 		}
 

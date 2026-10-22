@@ -63,6 +63,7 @@ func (c Command) judgeUnits(sources scan.Sources, rules []detectors.Detector, op
 		for i, rule := range ordinary {
 			tasks[i] = Task{rule, codebase}
 		}
+		progress.Plan(len(tasks))
 		part := Run(tasks, options.parallel, progress, console.Err)
 		judgement.Findings = append(judgement.Findings, part.Findings...)
 		judgement.Skipped = joined(judgement.Skipped, part.Skipped...)

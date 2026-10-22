@@ -40,7 +40,7 @@ func Run(tasks []Task, parallel int, progress *cli.Progress, warn io.Writer) Jud
 	var wait sync.WaitGroup
 	var drawing sync.Mutex
 
-	progress.Start(len(tasks))
+	progress.Start()
 
 	for range workers {
 		wait.Add(1)

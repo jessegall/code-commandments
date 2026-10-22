@@ -173,7 +173,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	whole, byProject := wholeAndByProject(selected)
 
 	read := sources.Only(slices.DeleteFunc(slices.Clone(languages), func(language source.Language) bool { return language == source.CSharp })...)
-	progress.Expect(read.Bridged())
+	progress.Plan(read.Bridged() + len(whole))
 	codebase, err := read.Reporting(progress.Phase("reading")).Load()
 	parseSeconds := time.Since(parsing).Seconds()
 	var incomplete scan.Incomplete
@@ -197,7 +197,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	csharpFiles := 0
 
 	if len(byProject) > 0 {
-		projects, files, err := c.judgeUnits(sources, byProject, options, cli.NewProgress(console.Err), console)
+		projects, files, err := c.judgeUnits(sources, byProject, options, progress, console)
 		if err != nil {
 			return 0, err
 		}
