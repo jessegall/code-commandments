@@ -43,7 +43,13 @@ func isTreeTyped(holder Node) bool {
 	return false
 }
 
-// fillsATreeParameter says whether the lambda is the argument of a call whose parameter at that position is a tree.
+// fillsATreeParameter says whether the lambda is the argument of a call whose parameter at that position is a
+// tree, and says so too where the call is one the compiler never bound.
+//
+// A call goes unbound when the compilation has no reference for what it names: a package that is not restored, a
+// project that did not build. The lambda may well be a tree then — `RuleFor(x => x.Logo!.Path)` of a validation
+// library is one — and nothing here can tell. A rule may not report what the engine could not read, so an unbound
+// call withholds the finding rather than asserting the lambda runs.
 func fillsATreeParameter(lambda Node) bool {
 	argument := lambda.Parent()
 	if !argument.Is("Argument") {
@@ -52,6 +58,10 @@ func fillsATreeParameter(lambda Node) bool {
 
 	list := argument.Parent()
 	call := list.Parent()
+	if !call.Target().Exists() {
+		return true
+	}
+
 	if !call.PassesByPosition() {
 		return false
 	}

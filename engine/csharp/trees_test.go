@@ -95,3 +95,43 @@ public sealed class Sales
 		t.Error("a `!` in a lambda over a list is read as sitting in a tree, and that lambda really runs")
 	}
 }
+
+// TestAnUnboundCallWithholdsTheFinding holds the rule to what the engine could read: where the compilation has no
+// reference for the method a lambda is handed to, as a project whose packages are not restored arrives, nothing
+// here can tell whether that lambda becomes a tree or runs. A rule may not report a fact it could not read, so the
+// `!` inside it is left alone — which is what the report about a validation library's RuleFor asked for.
+func TestAnUnboundCallWithholdsTheFinding(t *testing.T) {
+	codebase := csharptest.FromSource(t, map[string]string{
+		"Validators.cs": `using FluentValidation;
+
+namespace Shop.Validation;
+
+public sealed class Logo
+{
+    public string Path { get; init; } = "";
+}
+
+public sealed class Settings
+{
+    public Logo? Logo { get; init; }
+}
+
+public sealed class SettingsValidator : AbstractValidator<Settings>
+{
+    public SettingsValidator()
+    {
+        RuleFor(settings => settings.Logo!.Path);
+    }
+}
+`,
+	})
+
+	forgiven := cs.In(codebase).WhereKind("SuppressNullableWarningExpression").Get()
+	if len(forgiven) != 1 {
+		t.Fatalf("the fixture holds %d forgiven nulls, want the one", len(forgiven))
+	}
+
+	if !(cs.Node{Match: forgiven[0]}).SitsInAnExpressionTree() {
+		t.Error("a `!` in a lambda handed to a call the compiler never bound is reported, and nothing here could read whether that lambda runs")
+	}
+}
