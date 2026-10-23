@@ -462,13 +462,20 @@ func sayTooLarge(files []string) {
 // leftUnread says, on STDERR, that a language's files go unread because its bridge cannot run on this machine, and
 // whether they do: every other language is still judged.
 func leftUnread(err error, files int) bool {
-	var unavailable bridge.Unavailable
-	if !errors.As(err, &unavailable) {
+	if !isUnavailable(err) {
 		return false
 	}
 	fmt.Fprintf(os.Stderr, "⚠ %d file(s) left unread — %v\n", files, err)
 
 	return true
+}
+
+// isUnavailable says whether the error is a bridge that could not be had: one that is not there, or one that
+// started and then died. What it was asked to read goes unread, and every other language is still judged.
+func isUnavailable(err error) bool {
+	var unavailable bridge.Unavailable
+
+	return errors.As(err, &unavailable)
 }
 
 // within says whether every root lies in the project.

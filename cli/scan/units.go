@@ -42,10 +42,46 @@ func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, err
 	if len(files) == 0 {
 		return nil, nil
 	}
-	server, err := roslyn(roots)
+	units, err := readCSharp(roots, files, complete)
 	if leftUnread(err, len(files)) {
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	return units, nil
+}
+
+// readCSharp reads the files as units, asking the bridge a second time when the first ask dies.
+//
+// A bridge that dies takes every C# file of the run with it, and the one we publish has been seen to die with a
+// protected-memory fault that depends on the set of files it is given and comes and goes: the same folder that
+// failed reads cleanly on the next run. A second ask, over a bridge started afresh, is what that costs — nothing
+// when the first ask answers, and the whole language back when the fault was one of the passing kind. A fault that
+// is there every time is still reported as the files left unread, since nothing here can read what the bridge
+// cannot parse.
+func readCSharp(roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
+	units, err := askCSharp(roots, files, complete)
+	if err == nil {
+		return units, nil
+	}
+
+	if failed := bridge.RoslynFailure(err); !isUnavailable(failed) {
+		return nil, err
+	}
+
+	units, again := askCSharp(roots, files, complete)
+	if again == nil {
+		return units, nil
+	}
+
+	return nil, bridge.RoslynFailure(again)
+}
+
+// askCSharp asks one bridge for the files and cuts what it answers into units.
+func askCSharp(roots, files []string, complete func(*engine.Codebase) error) (*Units, error) {
+	server, err := roslyn(roots)
 	if err != nil {
 		return nil, err
 	}
@@ -58,9 +94,6 @@ func (s Sources) CSharpUnits(complete func(*engine.Codebase) error) (*Units, err
 	cutter := &cutter{units: units, owners: map[string]string{}, complete: complete}
 	if err := server.AskEach(bridge.Request{Paths: roots, Write: files}, cutter.take); err != nil {
 		units.Close()
-		if failed := bridge.RoslynFailure(err); leftUnread(failed, len(files)) {
-			return nil, nil
-		}
 
 		return nil, err
 	}
