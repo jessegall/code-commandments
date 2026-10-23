@@ -40,6 +40,21 @@ type Stored struct {
 	Scope string `json:"scope"`
 }
 
+// kept says whether a finding in the file is this project's to show: inside the project, outside any worktree
+// checked out within it, and outside the samples a project's own rules are proven on.
+//
+// A judge of another tree is a real judgement of that tree, and this project will never judge it again, so a
+// finding it leaves here could never be cleared. A worktree inside the project is a helper's, judged for the agent
+// editing it. The samples hold the sins a rule is proven on, by design, and a dashboard that shows them tells the
+// reader a rule's own example is a fault in their code.
+func kept(root, path string) bool {
+	if !source.InTree(root, path) || source.InWorktree(root, path) {
+		return false
+	}
+
+	return !strings.HasPrefix(path, filepath.Clean(workspace.SamplesDir(root))+string(filepath.Separator))
+}
+
 // StoredOf is a finding as the store keeps it, its file relative to the project root.
 func StoredOf(finding engine.Finding, root string) Stored {
 	path := finding.File
@@ -65,14 +80,14 @@ func Record(space workspace.Workspace, findings []engine.Finding, judged map[str
 
 	if judged != nil {
 		for _, stored := range storedIn(space) {
-			if !judged[stored.Path] && exists(stored.Path) && !source.InWorktree(space.Root(), stored.Path) {
+			if !judged[stored.Path] && exists(stored.Path) && kept(space.Root(), stored.Path) {
 				all = append(all, stored)
 			}
 		}
 	}
 
 	for _, finding := range findings {
-		if stored := StoredOf(finding, space.Root()); !source.InWorktree(space.Root(), stored.Path) {
+		if stored := StoredOf(finding, space.Root()); kept(space.Root(), stored.Path) {
 			all = append(all, stored)
 		}
 	}

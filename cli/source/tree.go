@@ -156,6 +156,20 @@ func IsWorktree(directory string) bool {
 }
 
 // InWorktree says whether the file lies in a git worktree checked out below the project's root.
+// InTree says whether the file is inside the project at root. A judge of another tree — a path handed on the
+// command line, a worktree in a temporary folder — finds real sins, and they belong to that tree: this project
+// will never judge them again, so nothing here may keep them as its own.
+func InTree(root, file string) bool {
+	if real, err := filepath.EvalSymlinks(root); err == nil {
+		root = real
+	}
+	if real, err := filepath.EvalSymlinks(file); err == nil {
+		file = real
+	}
+
+	return strings.HasPrefix(filepath.Clean(file), filepath.Clean(root)+string(filepath.Separator))
+}
+
 func InWorktree(root, file string) bool {
 	if real, err := filepath.EvalSymlinks(root); err == nil {
 		root = real
