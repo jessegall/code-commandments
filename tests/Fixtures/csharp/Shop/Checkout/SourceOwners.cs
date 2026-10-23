@@ -22,7 +22,4 @@ public static class SourceOwners
         OwnedVoucher voucher => voucher.Owner,
         _ => throw new ArgumentOutOfRangeException(nameof(source)),
     };
-
-    // @fixed TypeSwitch
-    public static CardOwner Asked(IHasOwner source) => source.Owner;
 }
