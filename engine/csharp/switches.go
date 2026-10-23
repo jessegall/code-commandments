@@ -98,23 +98,57 @@ func (n Node) IsTranslatingEveryArm() bool {
 	if !n.Is("SwitchExpression") {
 		return false
 	}
-	var answers []Node
+	var arms []Node
 	for _, arm := range n.All()[1:] {
 		if !arm.At(0).Is("DiscardPattern") {
-			all := arm.All()
-			answers = append(answers, all[len(all)-1].WithoutParentheses())
+			arms = append(arms, arm)
 		}
 	}
 
-	return len(answers) > 0 && !slices.ContainsFunc(answers, func(answer Node) bool {
-		return !answer.Is(translatesTo...)
-	})
+	return len(arms) > 0 && !slices.ContainsFunc(arms, func(arm Node) bool { return !translates(arm) })
 }
 
-// translatesTo are the kinds of answer that translate the subject rather than act on it: a value built from it, a
-// constant standing for it, or a tuple of such things. A switch whose every arm answers one of these is a table,
-// not behaviour, and a table cannot move onto the type it reads — a wire discriminator is not the type's to know,
-// and a key that belongs to another layer cannot be a member of this one without turning the layers around.
+// Designation is the name a pattern binds what it matched to: `grainBase` for `Grain grainBase`; empty for a
+// pattern that binds nothing.
+func (n Node) Designation() string {
+	for _, part := range append(n.All(), n) {
+		if part.Is("SingleVariableDesignation") && part.Name() != "" {
+			return part.Name()
+		}
+	}
+
+	return ""
+}
+
+// translates says whether the arm answers a translation of the subject rather than behaviour of it.
+//
+// What the arm reads decides it. A constant, a literal or a construction cannot live on the matched type, and
+// neither can the matched value itself, which is the identity an adapter table answers. A MEMBER read off the
+// value the pattern matched can live on it, and that is the type switch this rule is about: Orleans asks
+// `grain switch { Grain g => g.GrainId, GrainReference r => r.GrainId, … }`, where every arm reads the same
+// member off what it matched, which is the question the subject should answer itself.
+func translates(arm Node) bool {
+	all := arm.All()
+	answer := all[len(all)-1].WithoutParentheses()
+
+	if !answer.Is(translatesTo...) {
+		return false
+	}
+
+	if answer.Is("IdentifierName") {
+		return true
+	}
+
+	matched := arm.At(0).Designation()
+
+	return matched == "" || answer.ChainRoot().Name() != matched
+}
+
+// translatesTo are the kinds of answer that may translate the subject rather than act on it: a value built from
+// it, a constant standing for it, or a tuple of such things. A switch whose every arm answers one of these,
+// without reading it off the matched value itself, is a table rather than behaviour, and a table cannot move onto
+// the type it reads: a wire discriminator is not the type's to know, and a key that belongs to another layer
+// cannot be a member of this one without turning the layers around.
 var translatesTo = []string{
 	"ObjectCreationExpression", "ImplicitObjectCreationExpression",
 	"StringLiteralExpression", "NumericLiteralExpression", "CharacterLiteralExpression",

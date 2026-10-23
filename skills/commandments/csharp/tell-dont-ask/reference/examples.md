@@ -85,30 +85,14 @@ public static class TagSpeechFixed
 ```cs
 ----------[ Bad ]----------
 
-public static string Label(Promotion promotion) => promotion switch
+public static CardOwner Of(IHasOwner source) => source switch
 {
-    PercentOff p => $"{p.Percent}% off",
-    AmountOff a => $"{a.Amount / 100m:C} off",
-    _ => "",
+    OwnedCard card => card.Owner,
+    OwnedVoucher voucher => voucher.Owner,
+    _ => throw new ArgumentOutOfRangeException(nameof(source)),
 };
 
 ----------[ Good ]----------
 
-// in Promotions.cs
-// A promotion a basket can carry, and what it takes off the price.
-public abstract class Promotion
-{
-    public abstract int Discount(int cents);
-
-    public abstract string Label();
-}
-
-// in Promotions.cs
-public override string Label() => $"{Percent}% off";
-
-// in Promotions.cs
-public override string Label() => $"{Amount / 100m:C} off";
-
-// in Promotions.cs
-public static string Describe(Promotion promotion) => promotion.Label();
+public static CardOwner Asked(IHasOwner source) => source.Owner;
 ```
