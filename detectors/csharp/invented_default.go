@@ -27,6 +27,7 @@ func (InventedDefaultDetector) Find(codebase *engine.Codebase) []engine.Match {
 		WhereExpression().
 		Where(engine.As(func(n cs.Node) bool { return n.Fallback().IsEmptyScalar() })).
 		Where(engine.As(cs.Node.FillsArgument)).
+		Reject(engine.As(cs.Node.AddsNothing)).
 		Get()
 	answered := cs.In(codebase).
 		WhereFunction().

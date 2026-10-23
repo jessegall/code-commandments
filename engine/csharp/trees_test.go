@@ -47,3 +47,51 @@ func TestANullForgivenInsideAnExpressionTreeForgivesNothing(t *testing.T) {
 		})
 	}
 }
+
+// TestAForgivenNullIsReadByWhoHoldsTheLambda holds both halves of the reading that answers the reports about LINQ:
+// a `!` in a lambda a queryable takes forgives nothing, because the lambda is translated to SQL and never run,
+// while the same `!` in a lambda over a materialised list forgives a null for real and stays a finding. The
+// difference is the type of what takes the lambda, which is what the engine reads.
+func TestAForgivenNullIsReadByWhoHoldsTheLambda(t *testing.T) {
+	codebase := csharptest.FromSource(t, map[string]string{
+		"Sales.cs": `using System.Collections.Generic;
+using System.Linq;
+
+namespace Shop.Sales;
+
+public sealed class Disposal
+{
+    public decimal? SalePrice { get; init; }
+}
+
+public sealed class Item
+{
+    public Disposal? Disposal { get; init; }
+}
+
+public sealed class Sales
+{
+    public List<Item> Sold(IQueryable<Item> items, List<Item> held)
+    {
+        var queried = items.Where(i => i.Disposal!.SalePrice != null).ToList();
+        var inMemory = held.Where(i => i.Disposal!.SalePrice != null).ToList();
+
+        return queried.Count > inMemory.Count ? queried : inMemory;
+    }
+}
+`,
+	})
+
+	read := map[int]bool{}
+	for _, forgiven := range cs.In(codebase).WhereKind("SuppressNullableWarningExpression").Get() {
+		read[forgiven.Line()] = cs.Node{Match: forgiven}.SitsInAnExpressionTree()
+	}
+
+	if !read[20] {
+		t.Error("a `!` in a lambda a queryable takes is read as forgiving a null, and it forgives nothing: the lambda becomes SQL")
+	}
+
+	if read[21] {
+		t.Error("a `!` in a lambda over a list is read as sitting in a tree, and that lambda really runs")
+	}
+}

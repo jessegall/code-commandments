@@ -58,6 +58,17 @@ func IsRelationalCompound(name string) bool {
 	return rest != "" && slices.Contains(prepositions, strings.ToLower(leadingToken(lowerFirst(rest))))
 }
 
+// IsBareVerb says whether the name is a verb and nothing else: `holds`, `spins`, `ships`. A verb with something
+// after it says what of — `requiresApproval`, `receivesVisitors` — which reads as a statement about the thing
+// rather than as an action it performs.
+func IsBareVerb(name string) bool {
+	if !IsThirdPerson(name) {
+		return false
+	}
+
+	return afterLeadingWord(name) == ""
+}
+
 // IsThirdPerson says whether the name's first word narrates a verb the lexicon knows: `hides`, `entersTestMode`.
 func IsThirdPerson(name string) bool {
 	_, ok := stemOf(name)

@@ -164,6 +164,32 @@ func (n Node) FillsArgument() bool {
 	return n.Parent().Is("Argument")
 }
 
+// AddsNothing says whether the fallback is the value that leaves an addition as it was: a zero handed to a sum,
+// `+=` or an increment, where "no figure" and "add nothing" are the same thing. The absence is not papered over by
+// a value the domain never had; it is left out of the total, which is what adding zero does.
+func (n Node) AddsNothing() bool {
+	if !n.Fallback().Is("NumericLiteralExpression") || strings.Trim(n.Fallback().Text(), "0.") != "" {
+		return false
+	}
+
+	added := n.OutermostParentheses().Parent()
+	if added.Is("AddExpression", "AddAssignmentExpression") {
+		return true
+	}
+
+	return added.Is("Argument") && strings.Contains(callOf(added), "Increment")
+}
+
+// callOf is the name of the call an argument is handed to.
+func callOf(argument Node) string {
+	call := argument.Parent().Parent()
+	if !call.IsCall() {
+		return ""
+	}
+
+	return call.CalleeName()
+}
+
 // OutermostParentheses is the expression as its surroundings see it: wrapped in every pair of parentheses around it.
 func (n Node) OutermostParentheses() Node {
 	inner := n

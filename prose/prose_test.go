@@ -52,3 +52,26 @@ func TestWordsAreStemmedContentWords(t *testing.T) {
 		t.Error("two prose paragraphs")
 	}
 }
+
+// TestABareVerbIsTheVerbAndNothingElse holds the line between a name that narrates an action and one that states
+// something about the thing: `holds` is the verb alone, while `requiresApproval` says what it requires, which is
+// the affirmative phrase a boolean member is asked for.
+func TestABareVerbIsTheVerbAndNothingElse(t *testing.T) {
+	for _, name := range []string{"holds", "Holds", "spins", "ships", "binds", "shows"} {
+		if !IsBareVerb(name) {
+			t.Errorf("%s is the verb alone, and reads as nothing but an action", name)
+		}
+	}
+
+	for _, name := range []string{"requiresApproval", "RequiresApproval", "receivesVisitors", "shipsToAuthenticator", "countsTowardStrikes", "namesANaturalPerson"} {
+		if IsBareVerb(name) {
+			t.Errorf("%s says what of, so it is not the verb alone", name)
+		}
+	}
+
+	for _, name := range []string{"isShown", "approval", ""} {
+		if IsBareVerb(name) {
+			t.Errorf("%s is no third-person verb, so it cannot be a bare one", name)
+		}
+	}
+}
