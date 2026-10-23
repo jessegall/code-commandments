@@ -91,7 +91,9 @@ func (l Library) Publish() ([]string, error) {
 		}
 	}
 
-	for _, own := range custom.Load(l.root).Skills {
+	// The project's own skills live with the project, which is not the library's folder when the journal's plugin
+	// renders the curriculum into its own.
+	for _, own := range custom.Load(l.judged).Skills {
 		id := own.Definition().ID()
 
 		if len(Written([]skill.Skill{own}, l.project)) > 0 && copiedFrom(os.DirFS(own.Dir), ".", l.Path(id), l.naming) {
@@ -119,7 +121,8 @@ func (l Library) keepWrittenLanguages(file string) {
 }
 
 // Reconcile removes from dir every skill the last sync published that this one did not: renamed, retired,
-// or a project's own that is gone. A folder the tool never put there is left where it is.
+// or a project's own that is gone. A folder the tool never put there is left where it is, even one named like
+// ours: a project may hand-place a skill in its own library, and a publish is not entitled to it.
 func (l Library) Reconcile(dir string, current []string) {
 	for _, stale := range l.previous {
 		if !slices.Contains(current, stale) {

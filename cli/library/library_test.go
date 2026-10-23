@@ -184,3 +184,30 @@ func TestAPageASkillNoLongerShipsIsTakenAway(t *testing.T) {
 		t.Errorf("the skill itself is gone: %v", err)
 	}
 }
+
+func TestAProjectsOwnSkillIsPublishedIntoALibraryElsewhere(t *testing.T) {
+	project := t.TempDir()
+	plugin := t.TempDir()
+	dir := filepath.Join(project, ".commandments", "custom", "skills", "rows-through-their-repository")
+
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	own := "---\nname: Rows through their repository\ndescription: before a query.\nsummary: rows are read through their repository.\ntier: mandatory\nlanguages: [php]\n---\n# Rows through their repository\n"
+	os.WriteFile(filepath.Join(dir, "SKILL.md"), []byte(own), 0o644)
+
+	ids, err := For(plugin, project, config.Config{}).Publish()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Contains(ids, "commandments-rows-through-their-repository") {
+		t.Fatalf("the project's own skill is not published: %v", ids)
+	}
+
+	if got, _ := os.ReadFile(filepath.Join(plugin, Dir, "commandments-rows-through-their-repository", "SKILL.md")); string(got) != own {
+		t.Errorf("published as %q", got)
+	}
+}
+
