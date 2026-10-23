@@ -107,8 +107,61 @@ func (n Node) IsTranslatingEveryArm() bool {
 	}
 
 	return len(answers) > 0 && !slices.ContainsFunc(answers, func(answer Node) bool {
-		return !answer.Is("ObjectCreationExpression", "ImplicitObjectCreationExpression")
+		return !answer.Is(translatesTo...)
 	})
+}
+
+// translatesTo are the kinds of answer that translate the subject rather than act on it: a value built from it, a
+// constant standing for it, or a tuple of such things. A switch whose every arm answers one of these is a table,
+// not behaviour, and a table cannot move onto the type it reads — a wire discriminator is not the type's to know,
+// and a key that belongs to another layer cannot be a member of this one without turning the layers around.
+var translatesTo = []string{
+	"ObjectCreationExpression", "ImplicitObjectCreationExpression",
+	"StringLiteralExpression", "NumericLiteralExpression", "CharacterLiteralExpression",
+	"TrueLiteralExpression", "FalseLiteralExpression", "NullLiteralExpression",
+	"TupleExpression", "SimpleMemberAccessExpression", "IdentifierName",
+}
+
+// StoresInOwnState says whether every arm of the switch statement only writes the enclosing type's own state: an
+// aggregate reading an event's variants into its own slots, where the behaviour is the storing and the variants
+// are contract types that cannot reach the state. A member on the variant would need write access to this type,
+// which is the visitor the rule's own advice would otherwise ask for.
+func (n Node) StoresInOwnState() bool {
+	if !n.Is("SwitchStatement") {
+		return false
+	}
+
+	sections := n.ChildrenIn("Sections")
+	if len(sections) == 0 {
+		return false
+	}
+
+	for _, section := range sections {
+		for _, statement := range section.ChildrenIn("Statements") {
+			if !writesOwnState(statement) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+// writesOwnState says whether the statement only assigns to a member of the type it is in, or breaks out of the
+// switch; a call, a throw or anything else is behaviour, and behaviour belongs with the data.
+func writesOwnState(statement Node) bool {
+	switch {
+	case statement.Is("BreakStatement"):
+		return true
+	case statement.Is("Block"):
+		return !slices.ContainsFunc(statement.ChildrenIn("Statements"), func(inside Node) bool { return !writesOwnState(inside) })
+	case statement.Is("ExpressionStatement"):
+		assigned := statement.At(0)
+
+		return assigned.Is("SimpleAssignmentExpression") && assigned.At(0).MemberName() != ""
+	}
+
+	return false
 }
 
 // MemberName is the own member the reference names: `cents` for a bare `cents` or for `this.cents`; empty for

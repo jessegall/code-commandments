@@ -78,7 +78,7 @@
   "setup": [
     {
       "name": "Fetch the checker's release binary, checked against its SHA256SUMS",
-      "run": "COMMANDMENTS_RELEASE=v6.3.4 sh .journal-plugin/fetch"
+      "run": "COMMANDMENTS_RELEASE=v6.4.0 sh .journal-plugin/fetch"
     },
     {
       "name": "Write the chosen switches into config.json",

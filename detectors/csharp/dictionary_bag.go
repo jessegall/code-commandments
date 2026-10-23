@@ -32,6 +32,7 @@ func (DictionaryBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Reject(engine.As(cs.Node.IsWithinOverride)).
 		Reject(engine.As(cs.Node.IsWithinNamedConstructor)).
 		Reject(engine.As(cs.Node.IsBuildingAnObject)).
+		Reject(engine.As(func(n cs.Node) bool { return n.ConvertsToADeclaredType(program) })).
 		Reject(engine.As(cs.Node.IsInTest)).
 		Get()
 	throughHelper := cs.In(codebase).
@@ -39,6 +40,7 @@ func (DictionaryBagDetector) Find(codebase *engine.Codebase) []engine.Match {
 		Where(engine.As(program.PassesLiteralKey)).
 		Reject(engine.As(cs.Node.IsWithinNamedConstructor)).
 		Reject(engine.As(cs.Node.IsBuildingAnObject)).
+		Reject(engine.As(func(n cs.Node) bool { return n.ConvertsToADeclaredType(program) })).
 		Reject(engine.As(cs.Node.IsInTest)).
 		Get()
 

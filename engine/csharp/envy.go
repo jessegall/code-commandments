@@ -120,11 +120,61 @@ func (n Node) EnviedParameter(program *Program) string {
 	if iterates && !mutates && len(loops) > 0 && !slices.ContainsFunc(loops, func(loop Node) bool { return !n.handsElementOn(loop, own) }) {
 		return ""
 	}
+	if n.WalksRecursively(envied, loops) {
+		return ""
+	}
 	if iterates || mutates {
 		return envied
 	}
 
 	return ""
+}
+
+// WalksRecursively says whether the method walks the parameter by calling itself on a part of it: an interpreter
+// over a tree of plain data, where each node's children are evaluated the same way.
+//
+// Such a walk cannot move onto the type it reads. The evaluation needs what the walker was given besides the node
+// — a context, a bound value, the walk itself — and a node that evaluated itself would have to be handed all of
+// it, which is the walker turned inside out. A stored expression is data, and the thing that reads it is a
+// program.
+func (n Node) WalksRecursively(parameter string, loops []Node) bool {
+	own := n.Name()
+	if own == "" || parameter == "" {
+		return false
+	}
+
+	walked := []string{parameter}
+	for _, loop := range loops {
+		if loop.Name() != "" {
+			walked = append(walked, loop.Name())
+		}
+	}
+
+	for _, expression := range n.OutermostExpressions() {
+		for _, call := range expression.Flatten() {
+			if !call.IsCall() || call.CalledName() != own {
+				continue
+			}
+
+			if slices.ContainsFunc(call.Arguments(), func(argument Node) bool { return reachesAny(argument, walked) }) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// reachesAny says whether the expression reads one of the names, as the name itself or through what it holds: the
+// node the walk was given, or an element of it the walk is looping over.
+func reachesAny(expression Node, names []string) bool {
+	for _, part := range append(expression.Flatten(), expression) {
+		if part.Is("IdentifierName") && slices.Contains(names, part.Name()) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // constructs says whether the code builds anything: `new` of any type, named or anonymous.

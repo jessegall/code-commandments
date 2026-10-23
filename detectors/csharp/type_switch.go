@@ -34,6 +34,7 @@ func (TypeSwitchDetector) Find(codebase *engine.Codebase) []engine.Match {
 		})).
 		Where(engine.As(func(n cs.Node) bool { return program.DeclaresType(n.SwitchedSubjectType()) })).
 		Reject(engine.As(cs.Node.IsTranslatingEveryArm)).
+		Reject(engine.As(cs.Node.StoresInOwnState)).
 		Reject(engine.As(cs.Node.IsSwitchOverOwnCases)).
 		Reject(engine.As(cs.Node.IsWithinNamedConstructor)).
 		Get()

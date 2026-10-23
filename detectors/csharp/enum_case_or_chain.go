@@ -31,5 +31,6 @@ func (EnumCaseOrChainDetector) Find(codebase *engine.Codebase) []engine.Match {
 		WhereKind("LogicalOrExpression", "OrPattern").
 		Where(engine.As(cs.Node.IsGroupTestRoot)).
 		Where(engine.As(func(n cs.Node) bool { return slices.ContainsFunc(n.EnumsTestedAsAGroup(), program.DeclaresEnum) })).
+		Reject(engine.As(cs.Node.SitsInAnExpressionTree)).
 		Get()
 }

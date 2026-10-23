@@ -238,9 +238,47 @@ func (n Node) IsWrappingWithoutCause() bool {
 		if ancestor.Is("CatchClause") {
 			caught := ancestor.firstChild("CatchDeclaration").Name()
 
-			return caught == "" || !slices.ContainsFunc(created.Arguments(), func(argument Node) bool {
-				return argument.Is("IdentifierName") && argument.Name() == caught
-			})
+			return caught == "" || !handsOver(created, caught)
+		}
+	}
+
+	return false
+}
+
+// FillsASynchronousContract says whether the node sits in a member that implements an interface member or
+// overrides a base one, and so does not declare its own signature.
+//
+// Such a member cannot return a task unless the interface or the base class does. A JSON converter's Read, a
+// configuration provider's Load, a Dispose: the signature is declared elsewhere, and awaiting inside the body
+// would mean changing a declaration this code does not own. A blocking wait is worth reporting where the method
+// could have been written async instead, which is every method that declares its own signature.
+func (n Node) FillsASynchronousContract() bool {
+	for _, ancestor := range n.Ancestors() {
+		if ancestor.IsFunction() {
+			return ancestor.IsInherited()
+		}
+	}
+
+	return false
+}
+
+// handsOver says whether the thrown expression hands the caught exception on: as an argument of its own
+// construction, `new Failed(message, ex)`, or as an argument of any call inside it, which is how a framework that
+// offers no inner-exception constructor takes a cause — `ErrorBuilder.New().SetMessage(…).SetException(ex)`.
+//
+// The exception OBJECT is what counts. A throw that reads the cause's words, `$"…{ex.Message}"`, keeps the
+// sentence a human wrote and loses the stack, the type and everything the exception carried, which is the sin this
+// rule is about.
+func handsOver(created Node, caught string) bool {
+	for _, part := range append(created.Flatten(), created) {
+		if !part.IsCall() && !part.Is("ObjectCreationExpression", "ImplicitObjectCreationExpression") {
+			continue
+		}
+
+		for _, argument := range part.Arguments() {
+			if argument.WithoutParentheses().Is("IdentifierName") && argument.WithoutParentheses().Name() == caught {
+				return true
+			}
 		}
 	}
 
@@ -649,6 +687,46 @@ func (n Node) IsBuildingAnObject() bool {
 	}
 
 	return false
+}
+
+// ConvertsToADeclaredType says whether the node sits in a method that reads loose data and answers a type of the
+// project, built in that method: the conversion at the edge that a dict-bag finding asks for.
+//
+// The pardon for a named constructor only covers a factory that sits IN the type it builds, and a mapping often
+// cannot: a record read back from a store, a vendor's payload, or a document in a shape no current type holds is
+// exactly what the type should not know about. Wherever the conversion lives, a method that ends in one of the
+// project's own types has done the work the rule asks for, and the keys it read on the way are the reading.
+func (n Node) ConvertsToADeclaredType(program *Program) bool {
+	for _, ancestor := range n.Ancestors() {
+		if !ancestor.IsFunction() {
+			continue
+		}
+
+		answered := strings.TrimSuffix(ancestor.ReturnType().Name(), "?")
+		if answered == "" {
+			return false
+		}
+
+		// The return type is written as the code writes it, `ListingKeys`, while a construction carries the whole
+		// name the compiler bound, so the construction is what the project is asked about.
+		return slices.ContainsFunc(ancestor.OutermostExpressions(), func(expression Node) bool {
+			return slices.ContainsFunc(append(expression.Flatten(), expression), func(part Node) bool {
+				return builds(part, answered) && program.DeclaresType(part.Type().Name())
+			})
+		})
+	}
+
+	return false
+}
+
+// builds says whether the expression constructs the type the written name says: a name the compiler bound ends in
+// the name the code wrote, and a construction left to the compiler is the answered type by definition.
+func builds(expression Node, named string) bool {
+	if expression.Is("ImplicitObjectCreationExpression") {
+		return true
+	}
+
+	return expression.Is("ObjectCreationExpression") && strings.HasSuffix(expression.Type().Name(), "."+named)
 }
 
 // ComparedLiterals is the string literals the node dispatches a value on: a `switch`'s case labels or arms, or the
