@@ -38,11 +38,14 @@ func (FilledParameterDetector) Find(codebase *engine.Codebase) []engine.Match {
 
 // fillsWhatACallerThenReads says whether the method fills one of its parameters and a caller reads the very
 // name it handed over, after handing it over. Without that read the method is a command and no business of
-// this rule: someone has to be waiting for the change for the signature's silence to cost anything. A method
-// answering a signature it did not write owns none of it, so it cannot start returning a value either.
+// this rule: someone has to be waiting for the change for the signature's silence to cost anything.
+//
+// A method answering a declaration written OUTSIDE the solution owns none of it, so it cannot start returning a
+// value either. A declaration the solution wrote itself is its own to change, wherever in the solution it lives,
+// and a method that fills a parameter behind its own interface is the sin this rule is about.
 func fillsWhatACallerThenReads(calls map[string][]cs.Node, method cs.Node) bool {
 	filled, fills := method.FilledParameter()
-	if !fills || method.IsInherited() {
+	if !fills || method.FillsOutsideTheSolution() {
 		return false
 	}
 	at := method.ParameterPosition(filled)

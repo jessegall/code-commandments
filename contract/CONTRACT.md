@@ -72,6 +72,7 @@ resolver ran on it at all, so an absent fact always reads as "could not", never 
 | `target` | engine | engine | bridge (Roslyn) | bridge (checker) |
 | `resolves` | — | engine | — | bridge |
 | `constant`, `inherited` | engine | engine | bridge (Roslyn) | engine |
+| `fills-outside` | — | — | bridge (Roslyn) | — |
 | comment `refs` resolution | engine | engine | bridge (Roslyn) | engine |
 | docblock types (`@var`, `@param`, `list<X>`) | engine, from the comment's text and the file's `use` nodes | engine | — | engine |
 | `program.symbols` | bridge (reflection over vendor) | — | bridge (referenced assemblies) | — |
@@ -130,6 +131,7 @@ Every syntax node, nested as the language nests them. Tokens, whitespace and com
 | `resolves` | imports and component tags that resolve | the absolute path of the file the import or tag reaches |
 | `constant` | expressions with a compile-time value | `true`: a literal, an enum case, a constant, or arithmetic on them, as the compiler folds it |
 | `inherited` | members that override or implement another | `true`, decided against the whole hierarchy, not by an `override` keyword |
+| `fills-outside` | members with `inherited` | `true` when every declaration the member fills was written outside this solution, so its signature is not the project's to change. A sibling project's interface compiles from source and is the project's own; a package's or the framework's arrives as metadata. A reader cannot tell these apart, since the scan may hold neither |
 | `extras` | the language has facts of its own on it | `{"<language>": {...}}`, closed per language (see *Extras*) |
 
 A node carries no parent. Its parent is the node whose `children` hold it, and a reader builds the

@@ -130,6 +130,12 @@ type Facts struct {
 	Resolves  string      `json:"resolves,omitempty"`
 	Constant  bool        `json:"constant,omitempty"`
 	Inherited bool        `json:"inherited,omitempty"`
+
+	// FillsOutside says that every declaration an inherited member fills was written outside this solution, so
+	// its signature is not the project's to change. Only the compiler knows: a sibling project's interface
+	// compiles from source while a package's type arrives as metadata, and the scan may hold neither.
+	FillsOutside bool `json:"fills-outside,omitempty"`
+
 	Extras    *NodeExtras `json:"extras,omitempty"`
 }
 

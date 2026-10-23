@@ -296,6 +296,12 @@ func (n Node) IsInherited() bool {
 	return n.Exists() && n.Node().Inherited
 }
 
+// FillsOutsideTheSolution says whether every declaration the member fills was written outside this solution, so
+// its signature is not the project's to change.
+func (n Node) FillsOutsideTheSolution() bool {
+	return n.Exists() && n.Node().FillsOutside
+}
+
 // Target is the declaration a call or construction reaches; no target for one the compiler could not bind.
 func (n Node) Target() CallTarget {
 	if !n.Exists() || n.Node().Target == nil {

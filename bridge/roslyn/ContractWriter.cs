@@ -525,6 +525,11 @@ public sealed class ContractWriter(IReadOnlyList<string> roots, IReadOnlySet<str
                 if (node is MemberDeclarationSyntax && (declared.IsOverride || Readings.ImplementsInterfaceMember(declared)))
                 {
                     json.WriteBoolean("inherited", true);
+
+                    if (Readings.FillsOutsideTheSolution(declared))
+                    {
+                        json.WriteBoolean("fills-outside", true);
+                    }
                 }
             }
 

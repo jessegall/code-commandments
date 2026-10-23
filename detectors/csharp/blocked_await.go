@@ -25,6 +25,6 @@ func (BlockedAwaitDetector) Sin() sins.Sin {
 func (BlockedAwaitDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		Where(engine.As(cs.Node.BlocksOnATask)).
-		Reject(engine.As(cs.Node.FillsASynchronousContract)).
+		Reject(engine.As(cs.Node.FillsAnOutsideContract)).
 		Get()
 }

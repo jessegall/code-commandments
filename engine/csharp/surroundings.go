@@ -245,17 +245,23 @@ func (n Node) IsWrappingWithoutCause() bool {
 	return false
 }
 
-// FillsASynchronousContract says whether the node sits in a member that implements an interface member or
-// overrides a base one, and so does not declare its own signature.
+// FillsAnOutsideContract says whether the node sits in a member that fills a declaration the project does not
+// hold: every interface it implements and every base member it overrides was written somewhere else.
 //
-// Such a member cannot return a task unless the interface or the base class does. A JSON converter's Read, a
-// configuration provider's Load, a Dispose: the signature is declared elsewhere, and awaiting inside the body
-// would mean changing a declaration this code does not own. A blocking wait is worth reporting where the method
-// could have been written async instead, which is every method that declares its own signature.
-func (n Node) FillsASynchronousContract() bool {
+// Such a member cannot return a task, because the declaration that would have to change is not the project's. A
+// JSON converter's Read, a configuration provider's Load, a Dispose: a blocking wait there is the only way a
+// synchronous caller reaches asynchronous work.
+//
+// A contract the project declares ITSELF is a different matter, and asking only whether a member is inherited
+// cannot tell the two apart. A project's own interface can be made to return a task, and a method that blocks
+// behind its own interface is exactly the sin this rule is about; judging jellyfin showed a rule that asked only
+// about inheritance going quiet on thirteen of twenty-one real findings, all of them behind interfaces jellyfin
+// wrote. Asking the scan who declares the interface is no better, since judging one folder of a solution leaves
+// the rest of it looking like a stranger: the compiler decides this one, and the bridge writes what it decided.
+func (n Node) FillsAnOutsideContract() bool {
 	for _, ancestor := range n.Ancestors() {
 		if ancestor.IsFunction() {
-			return ancestor.IsInherited()
+			return ancestor.FillsOutsideTheSolution()
 		}
 	}
 

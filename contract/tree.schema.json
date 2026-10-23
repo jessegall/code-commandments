@@ -98,6 +98,7 @@
         "resolves": {"$ref": "#/$defs/absolutePath"},
         "constant": {"const": true},
         "inherited": {"const": true},
+        "fills-outside": {"const": true},
         "extras": {"$ref": "#/$defs/nodeExtras"}
       },
       "required": ["id", "kind", "role", "span"],

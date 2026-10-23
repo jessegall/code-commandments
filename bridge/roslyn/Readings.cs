@@ -198,8 +198,54 @@ public sealed class Readings(Project project)
         return declared is { NullableAnnotation: NullableAnnotation.Annotated } || declared is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T };
     }
 
-    internal static bool ImplementsInterfaceMember(ISymbol member) =>
-        member.ContainingType is { } type
-        && type.AllInterfaces.Any(@interface => @interface.GetMembers().Any(candidate =>
-            SymbolEqualityComparer.Default.Equals(type.FindImplementationForInterfaceMember(candidate), member)));
+    internal static bool ImplementsInterfaceMember(ISymbol member) => Fills(member).Any();
+
+    /// <summary>Whether every declaration the member fills was written outside this solution.</summary>
+    /// <remarks>
+    /// A member that fills a declaration cannot change its own signature, and whether that matters depends on who
+    /// wrote the declaration. A solution can change an interface of its own, wherever in the solution it lives,
+    /// and cannot change one a framework or a package wrote. Only the compiler knows which, since a type of
+    /// another project in the solution compiles from source while a package's type arrives as metadata, and the
+    /// scan a reader sees may hold neither.
+    /// </remarks>
+    internal static bool FillsOutsideTheSolution(ISymbol member)
+    {
+        var filled = Fills(member).ToList();
+
+        return filled.Count > 0 && !filled.Any(declaring => declaring.Locations.Any(location => location.IsInSource));
+    }
+
+    /// <summary>The types declaring what the member implements or overrides.</summary>
+    private static IEnumerable<INamedTypeSymbol> Fills(ISymbol member) => Overridden(member).Concat(Implemented(member));
+
+    /// <summary>The types of the base members the member overrides, innermost first.</summary>
+    private static IEnumerable<INamedTypeSymbol> Overridden(ISymbol member)
+    {
+        var overridden = Overrides(member);
+
+        while (overridden is not null)
+        {
+            if (overridden.ContainingType is { } declaring)
+            {
+                yield return declaring;
+            }
+
+            overridden = Overrides(overridden);
+        }
+    }
+
+    /// <summary>The interfaces that declare a member this member implements.</summary>
+    private static IEnumerable<INamedTypeSymbol> Implemented(ISymbol member) =>
+        member.ContainingType is not { } type
+            ? []
+            : type.AllInterfaces.Where(@interface => @interface.GetMembers().Any(candidate =>
+                SymbolEqualityComparer.Default.Equals(type.FindImplementationForInterfaceMember(candidate), member)));
+
+    private static ISymbol? Overrides(ISymbol member) => member switch
+    {
+        IMethodSymbol method => method.OverriddenMethod,
+        IPropertySymbol property => property.OverriddenProperty,
+        IEventSymbol @event => @event.OverriddenEvent,
+        _ => null,
+    };
 }
