@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"path/filepath"
@@ -57,8 +58,19 @@ func Answer(listener net.Listener, server *Server) error {
 		if err != nil {
 			continue
 		}
+
+		// A request that fails costs that request and nothing more. The service outlives it: a bridge that dies
+		// under one request would otherwise take the service down with it, and a journal writing to the socket it
+		// left behind reads a broken pipe, calls the plugin at fault and switches it off, which stops every
+		// discipline being enforced until someone switches it on again. The reason goes to stderr, which is the
+		// service's own log.
+		// A request that fails costs that request and nothing more. The service outlives it: a bridge that dies
+		// under one request would otherwise take the service down with it, and a journal writing to the socket it
+		// left behind reads a broken pipe, calls the plugin at fault and switches it off, which stops every
+		// discipline being enforced until someone switches it on again. The reason goes to stderr, which is the
+		// service's own log.
 		if err := answer(connection, server); err != nil {
-			return err
+			fmt.Fprintln(os.Stderr, "a request was not answered: "+err.Error())
 		}
 	}
 }
