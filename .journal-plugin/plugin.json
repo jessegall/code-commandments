@@ -46,7 +46,7 @@
     },
     "env": {
         "CLAUDE_PROJECT_DIR": "{project}",
-        "COMMANDMENTS_RELEASE": "v6.5.2"
+        "COMMANDMENTS_RELEASE": "v6.5.3"
     },
     "setup": [
         {

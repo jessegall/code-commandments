@@ -282,6 +282,100 @@ func (n Node) ForgivesNull() bool {
 	return n.Exists() && extras != nil && extras.CSharp != nil && extras.CSharp.ForgivesNull
 }
 
+// ForgivesAnOutOfATest says whether the node forgives null on a variable a call bound through `out`, read inside
+// the branch that call's `true` answer guards.
+//
+// `if (rules.TryFind(id, out var found)) { use(found!); }` is the one shape where forgiving is not a claim of the
+// author's: the method answers true exactly when it filled the variable, and a caller cannot say so in the type.
+// A framework that annotates the parameter `[NotNullWhen(true)]` narrows it for the compiler and needs no `!` at
+// all, so a `!` here says the annotation is missing, which is a fix in the declaration and not at the call.
+func (n Node) ForgivesAnOutOfATest() bool {
+	if !n.ForgivesNull() {
+		return false
+	}
+
+	name := n.At(0).WithoutParentheses().Name()
+	if name == "" {
+		return false
+	}
+
+	for _, ancestor := range n.Ancestors() {
+		if guards(ancestor, n, name) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// guards says whether the test binds the name through an `out` argument and the read sits inside the branch its
+// true answer runs, which is the only branch where the variable was filled.
+//
+// An `if` holds its condition and its branches as one list, the condition first, where a node's children are its
+// statements alone.
+func guards(test, read Node, name string) bool {
+	parts := test.All()
+	if !test.Is("IfStatement") || len(parts) < 2 || !boundByATest(parts[0], name) {
+		return false
+	}
+
+	branch, err := parts[1].Span()
+	if err != nil {
+		return false
+	}
+
+	at, err := read.Span()
+
+	return err == nil && branch.Contains(at)
+}
+
+// boundByATest says whether the condition binds the name through an `out` argument of a call whose true answer it
+// tests.
+//
+// A negated test answers the other way round: `if (!store.TryGet(id, out var found))` runs its branch where the
+// call filled nothing, and a read of the variable there is the sin this rule is about.
+func boundByATest(condition Node, name string) bool {
+	for _, part := range append(condition.Flatten(), condition) {
+		if !part.IsCall() || negatedWithin(part, condition) {
+			continue
+		}
+
+		for _, argument := range part.Arguments() {
+			if declaresOut(argument, name) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// negatedWithin says whether the call is negated anywhere between itself and the condition it is part of.
+func negatedWithin(call, condition Node) bool {
+	for _, ancestor := range call.Ancestors() {
+		if ancestor.Is("LogicalNotExpression") {
+			return true
+		}
+
+		if ancestor.Match == condition.Match {
+			return false
+		}
+	}
+
+	return false
+}
+
+// declaresOut says whether the argument declares the name, which is how an `out` argument is written.
+func declaresOut(argument Node, name string) bool {
+	for _, part := range append(argument.All(), argument) {
+		if part.Is("SingleVariableDesignation") && part.Name() == name {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Symbol is a declaration's symbol id; empty for anything else.
 func (n Node) Symbol() string {
 	if !n.Exists() {

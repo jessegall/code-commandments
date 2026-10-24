@@ -26,6 +26,7 @@ func (NullForgivenDetector) Find(codebase *engine.Codebase) []engine.Match {
 	return cs.In(codebase).
 		WhereExpression().
 		Where(engine.As(cs.Node.ForgivesNull)).
+		Reject(engine.As(cs.Node.ForgivesAnOutOfATest)).
 		Reject(engine.As(cs.Node.SitsInAnExpressionTree)).
 		Reject(engine.As(cs.Node.IsInTest)).
 		Get()
