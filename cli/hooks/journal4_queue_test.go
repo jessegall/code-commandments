@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"net"
+	"strconv"
+	"slices"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -528,5 +530,77 @@ func TestGoingIdleRaisesNothingNew(t *testing.T) {
 
 	if idle := Answer4Now(eventOf("idle", "")); strings.Contains(idle, "sin-found") || strings.Contains(idle, "sin-resolved") {
 		t.Errorf("going idle with the sin still there answered %q", idle)
+	}
+}
+
+// TestTheServiceAnswersEveryVersion4EventInVersion4sShape holds the service to the one protocol the journal reads.
+// Its answer used to be worked out from the map of the agent's moments, so an event missing from that map, a
+// worker's merge and the plugin's own update among them, fell through to version 3's keys, which version 4 drops
+// whole: a refused merge was thrown away and a worker's branch landed unjudged.
+func TestTheServiceAnswersEveryVersion4EventInVersion4sShape(t *testing.T) {
+	// The project stands on a branch another worktree holds, which is what the shared-branch gate refuses. That
+	// refusal is what the service used to answer in version 3's keys for an event it had no moment for.
+	projectAnotherWorktreeStandsOn(t)
+
+	for at, event := range []string{mergeEvent, "worker_merge_result", "a_journal_event_we_never_mapped"} {
+		// A socket's path is short by the operating system's rule, which a test's own folder is not.
+		short, err := os.MkdirTemp("", "s")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer os.RemoveAll(short)
+
+		socket := filepath.Join(short, strconv.Itoa(at)+".sock")
+		listener, err := net.Listen("unix", socket)
+		if err != nil {
+			t.Fatalf("no socket to listen on: %v", err)
+		}
+
+		go serve(listener, func() bool { return true }, startAdviser(func(asked) {}))
+
+		connection, err := net.Dial("unix", socket)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		said, err := json.Marshal(map[string]any{
+			"v": 1, "event": event, "session": "s1", "environment": "main",
+			"data": map[string]any{"text": "git pull --rebase", "writes": false, "position": 1, "parts": 1},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if _, err := connection.Write(append(said, '\n')); err != nil {
+			t.Fatal(err)
+		}
+
+		answer, err := bufio.NewReader(connection).ReadString('\n')
+		if err != nil {
+			t.Fatalf("%s was not answered: %v", event, err)
+		}
+
+		// An empty answer is the journal's own way of saying nothing, which it reads as allow. What it cannot
+		// read is an answer carrying keys of its own protocol's predecessor.
+		if strings.TrimSpace(answer) == "" {
+			connection.Close()
+			listener.Close()
+
+			continue
+		}
+
+		var read map[string]any
+		if err := json.Unmarshal([]byte(answer), &read); err != nil {
+			t.Fatalf("the journal cannot read %s's answer %q: %v", event, answer, err)
+		}
+
+		for key := range read {
+			if !slices.Contains([]string{"v", "answer", "reason", "message", "tell", "cards", "commands"}, key) {
+				t.Errorf("%s was answered with %q, a key the journal's protocol does not know", event, key)
+			}
+		}
+
+		connection.Close()
+		listener.Close()
 	}
 }

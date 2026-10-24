@@ -347,6 +347,12 @@ func (s JournalServe) Run(in *cli.Input, console cli.Console) (int, error) {
 	return 0, nil
 }
 
+// quiet is a console whose words go nowhere: the service answers on its socket, and what a command would have
+// printed is no part of that answer.
+func quiet() cli.Console {
+	return cli.Console{Out: io.Discard, Err: io.Discard}
+}
+
 // serve answers each connection's gates at once and hands its moment to the adviser, so no gate ever waits on a
 // sin check, until a connection finds what it runs no longer current: that one it hangs up unanswered.
 func serve(listener net.Listener, current func() bool, advice *adviser) {
@@ -370,6 +376,18 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 			line, _ := bufio.NewReader(connection).ReadString('\n')
 			read := payloadOf([]byte(line))
 
+			// An event that is not a moment of the agent's work is answered in full, through the same path the
+			// program takes: this is where the service used to fall through to version 3's answer, which version 4
+			// drops whole.
+			if text, apart, _, err := Apart4(cli.InputOf("journal-serve"), quiet(), read); apart {
+				if err == nil {
+					connection.Write([]byte(text + "\n"))
+				}
+				connection.Close()
+
+				return
+			}
+
 			// Version 4 asks on this socket inside a window of a few milliseconds, so the gates answer from what
 			// they already know and everything else is worked out after the answer, as it is for version 3.
 			if moment, four := Moment4Of(read); four {
@@ -377,6 +395,17 @@ func serve(listener net.Listener, current func() bool, advice *adviser) {
 				connection.Write([]byte(answer4On(given, asText(read["event"])) + "\n"))
 				connection.Close()
 				advice.add(asked{given, asText(read["event"]) == heldEvent})
+
+				return
+			}
+
+			// Any other line of version 4's is answered in version 4's shape, which an empty answer is: version 4
+			// drops an answer carrying version 3's keys whole, and its own events are not all moments of the
+			// agent's work. Version 3 names its moments with a hook of its own, `hook.PreToolUse`, and carries no
+			// protocol version, so the version is what tells the two apart.
+			if _, four := read["v"]; four {
+				connection.Write([]byte("\n"))
+				connection.Close()
 
 				return
 			}

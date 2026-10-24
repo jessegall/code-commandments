@@ -24,6 +24,9 @@ const (
 // tells us, so `command_starting` IS the moment before a command runs and `file_edited` the moment after a file
 // changed, one per file. `tool_finished` stands for no hook of ours any more — judging it as well would judge every
 // edit twice.
+// updatedEvent is the event the journal sends once the plugin itself was upgraded or its settings changed.
+const updatedEvent = "plugin.updated"
+
 var hooksOf4 = map[string]string{
 	"command_starting": "PreToolUse",
 	"file_edited":      "PostToolUse",
@@ -65,10 +68,9 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
-	if line["event"] == "plugin.updated" {
-		said, code, err := JournalConfig{}.Apply(in, console)
+	if text, apart, code, err := Apart4(in, console, line); apart {
 		if err == nil && code == 0 {
-			console.Write(Configured4(said) + "\n")
+			console.Write(text + "\n")
 		}
 
 		return code, err
@@ -80,20 +82,35 @@ func (Journal4Hook) Run(in *cli.Input, console cli.Console) (int, error) {
 		return 0, nil
 	}
 
-	// A worker's merge is held while its own changes are judged: the one event where our answer still decides
-	// whether work lands, so it is answered here and in full, never from the queue.
-	if asText(line["event"]) == mergeEvent {
-		console.Write(MergeHeld(line) + "\n")
-
-		return 0, nil
-	}
-
 	console.Write(Answer4Now(line) + "\n")
 	if asText(line["event"]) == heldEvent {
 		judge4Detached(raw, line)
 	}
 
 	return 0, nil
+}
+
+// Apart4 answers a version 4 event that is not a moment of the agent's own work, and says whether it was one.
+//
+// The plugin's own update applies its settings and renders its skills again. A worker's merge is held while its
+// changes are judged: the one event where our answer still decides whether work lands, so it is answered in full
+// and never from the queue.
+//
+// Both the program and the service answer through this, because they used to answer these two events apart: the
+// service decided from a map of the agent's moments, and an event missing from that map fell through to version
+// 3's answer, which version 4 drops whole for the keys it does not know. A refused merge was dropped that way, so
+// a worker's branch landed unjudged, and an update's answer with it, so the skills were never written again.
+func Apart4(in *cli.Input, console cli.Console, line map[string]any) (string, bool, int, error) {
+	switch asText(line["event"]) {
+	case updatedEvent:
+		said, code, err := JournalConfig{}.Apply(in, console)
+
+		return Configured4(said), true, code, err
+	case mergeEvent:
+		return MergeHeld(line), true, 0, nil
+	}
+
+	return "", false, 0, nil
 }
 
 // heldEvent is the one event the journal asks the plugin before a command runs, inside a window of a few
