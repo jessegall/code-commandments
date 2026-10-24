@@ -1,13 +1,16 @@
 package bridge
 
 import (
+	"crypto/sha1"
 	"embed"
+	"encoding/hex"
 	"encoding/xml"
 	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/jessegall/code-commandments/bridge/bundle"
@@ -23,10 +26,52 @@ import (
 var roslyn embed.FS
 
 // RoslynImage is the image development runs the C# bridge in, built from bridge/roslyn and never published.
+// roslynSources is the folder the image is built from, under the repository root, and roslynRepository the image
+// it is published as.
+const (
+	roslynSources    = "bridge/roslyn"
+	roslynRepository = "ghcr.io/jessegall/code-commandments-roslyn"
+)
+
 func RoslynImage() string {
 	image, _ := roslyn.ReadFile("roslyn/IMAGE")
 
 	return strings.TrimSpace(string(image))
+}
+
+// RoslynSourcesImage is the image name the bridge's sources under root are built as: its tag is a digest of every
+// source file that goes into the image, by name and content, so a change to any of them names a different image.
+//
+// The name is written into roslyn/IMAGE, which is what RoslynImage reads and what the embedded run script uses. A
+// digest derived here rather than chosen by hand is what keeps the two from drifting: `scripts/roslyn-image` asks
+// for this name when it builds, and a test holds the file to it.
+func RoslynSourcesImage(root string) (string, error) {
+	sources := filepath.Join(root, roslynSources)
+
+	names, err := filepath.Glob(filepath.Join(sources, "*.cs"))
+	if err != nil {
+		return "", err
+	}
+
+	names = append(names, "Dockerfile", "Roslyn.Bridge.csproj")
+	for at := range names {
+		names[at] = filepath.Base(names[at])
+	}
+
+	sort.Strings(names)
+
+	digest := sha1.New()
+	for _, name := range names {
+		source, err := os.ReadFile(filepath.Join(sources, name))
+		if err != nil {
+			return "", err
+		}
+
+		digest.Write([]byte(name + "\n"))
+		digest.Write(source)
+	}
+
+	return roslynRepository + ":" + hex.EncodeToString(digest.Sum(nil))[:16], nil
 }
 
 // RoslynInDocker is the command that runs the C# bridge once over the roots in a capped container of its image, the

@@ -1,14 +1,11 @@
 package bridge_test
 
 import (
-	"crypto/sha1"
-	"encoding/hex"
 	"fmt"
 	"github.com/jessegall/code-commandments/bridge"
 	"github.com/jessegall/code-commandments/bridge/bridgetest"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -101,26 +98,13 @@ func TestTheRoslynBridgeWritesATypeItCouldNotResolveInsideAnotherAsOpaque(t *tes
 }
 
 func TestTheImageNameIsTheOneTheBridgesSourcesAreBuiltAs(t *testing.T) {
-	files, err := filepath.Glob("roslyn/*.cs")
+	want, err := bridge.RoslynSourcesImage("..")
 	if err != nil {
 		t.Fatal(err)
 	}
-	files = append(files, "roslyn/Dockerfile", "roslyn/Roslyn.Bridge.csproj")
-	for at := range files {
-		files[at] = filepath.Base(files[at])
-	}
-	sort.Strings(files)
-	hash := sha1.New()
-	for _, file := range files {
-		source, err := os.ReadFile(filepath.Join("roslyn", file))
-		if err != nil {
-			t.Fatal(err)
-		}
-		hash.Write([]byte(file + "\n"))
-		hash.Write(source)
-	}
-	if want := "ghcr.io/jessegall/code-commandments-roslyn:" + hex.EncodeToString(hash.Sum(nil))[:16]; bridge.RoslynImage() != want {
-		t.Errorf("bridge/roslyn/IMAGE names %s, but the sources are built as %s: write the new name there", bridge.RoslynImage(), want)
+
+	if bridge.RoslynImage() != want {
+		t.Errorf("bridge/roslyn/IMAGE names %s, but the sources are built as %s: run scripts/roslyn-image, which writes it", bridge.RoslynImage(), want)
 	}
 }
 

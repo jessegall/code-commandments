@@ -6,8 +6,8 @@ answer it, quote it or talk about it in the chat.
 
 ## Where the journal comes first
 
-The journal's lines come first on how you report, how you carry on and what you say in the chat. This
-file's own safety and deploy rules still stand. The user's own word comes before both.
+The journal's lines take priority on how you report, how you continue and what you write in the chat. This
+file's own safety and deploy rules still stand. The user's own instructions take priority over both.
 
 ## The journal's law
 
@@ -20,9 +20,9 @@ Inheriting the orchestrator's model is not a model choice.
 Give the dispatch a description and a bounded prompt. If no suitable specialization exists, keep the work yourself.
 
 **L3 - Read narrowly: grep for the line or read the range of a file you need, and read a command's output by its number with `journal output read`, never by running the command again or cutting it with a pipe.**
-Everything a tool returns stays in the context for good and is paid for on every turn after it.
+Everything a tool returns stays in the context permanently and is counted against every later turn.
 
-**L4 - Related work goes back to the worker or subagent that already worked on it; never start a fresh one on work another already knows.**
+**L4 - Related work goes back to the worker or subagent that already worked on it; never start a new one on work another already knows.**
 A worker that reported takes its next job with `journal worker send <n> "<job>"`, with its memory of the last; a subagent takes its next job by a message to the one you started.
 
 **L5 - Every subagent and worker is named after a distinguished historical figure with a gentle twist on their trade, such as Lady Lovelace for a programmer, and addresses you, never the user.**
@@ -34,7 +34,7 @@ A worker that reported takes its next job with `journal worker send <n> "<job>"`
 **L8 - Answer the user in as few words as the answer needs; never a wall of text.**
 
 **L9 - A subagent only reads; work that writes goes to a worker or stays with you.**
-A subagent works in your own checkout, so what it writes lands beside your edits, unlogged. Reading, searching, reviewing and
+A subagent works in your own checkout, so what it writes is written next to your edits, unrecorded. Reading, searching, reviewing and
 designing go to a subagent; a job that changes a file goes to a worker (`journal worker dispatch`, naming what it changes with `--changes`, with `--worktree` for code).
 
 **L10 - A worker's work is merged only once each point of its task's brief has a proof you checked.**
@@ -43,9 +43,9 @@ Read each proof with `journal task show <n>`, check it with `journal worker chec
 
 ## How you work with the journal
 
-Load the `journal` skill first in every session; the journal holds writes until you have. Declare a task before you write.
+Load the `journal` skill first in every session; the journal blocks writes until you have. Declare a task before you write.
 Answer the user's messages before anything else. At a context mark, decide what to keep from it.
-A guard that raises lets the event through and says so in the chat: a hold is never the result of a fault.
+A guard that raises lets the event through and says so in the chat: a block is never the result of a fault.
 <!-- END: agent-journal, form 4 -->
 
 <!-- BEGIN: code-commandments briefing (auto-generated, run `composer update`) -->

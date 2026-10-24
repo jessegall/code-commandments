@@ -4,9 +4,12 @@
 set -euo pipefail
 
 root="$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)"
-image="$(cat "$root/bridge/roslyn/IMAGE")"
+# The name is a digest of the sources the image is built from, so it is derived rather than chosen: the engine
+# states that digest once (bridge.RoslynSourcesImage), a test holds the file to it, and this writes it.
+image="$("$root/scripts/dev" go run ./scripts/roslyn-name)"
 repository="${image%:*}"
 
+echo "$image" > "$root/bridge/roslyn/IMAGE"
 docker build --quiet -t "$image" "$root/bridge/roslyn" > /dev/null
 for old in $(docker images --format '{{.Repository}}:{{.Tag}}' "$repository" | grep -vx "$image"); do
     docker rmi "$old" > /dev/null 2>&1 || true
