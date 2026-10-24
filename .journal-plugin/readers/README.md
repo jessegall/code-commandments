@@ -38,10 +38,17 @@ this reader. Two things it needs, both of them already in that entry:
 - **The progress lines go to stderr**, and the findings to stdout, so a reader that watches only
   stdout shows findings and no progress.
 
+The entry also carries `"background": true`, which moves the run to the background the moment it starts
+and watches it through this reader. A judge of a whole tree is slow enough that holding the agent's
+turn is the wrong behaviour, and a backgrounded run settles its card on the count and the checklist
+path, which is what the agent needs from it.
+
 The name is ours to choose, and `journal sins --changes` says what it gives better than the package's
 own name would. A run with no argument judges the whole tree, which is slow on a large one;
 `--changes`, `--branch` and a path are the scoped forms, and the checklist a run writes is what the
 agent then works through.
 
 The manifest's `journal` field is what keeps an older journal from taking a release whose keys it
-cannot read: it is the minimum version, and a journal below it keeps the release it has.
+cannot read: it is the minimum version, and a journal below it keeps the release it has. `background`
+is read by journal 4.53.0 and refused by anything older, so the minimum says 4.53.0, and a project on
+an older journal stays on the release it has until it updates.
