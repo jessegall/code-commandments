@@ -1,4 +1,7 @@
-# a sin said plainly, the count a run ends on, and a run that could not finish
-^(?:\S+, line \d+:|\d+ sins? in \d+ files?$|[✓✗] )
+# a sin said plainly, the count a run ends on, where its checklist is, and a run that could not read everything
+^(?:\S+, line \d+:|\d+ sins? in \d+ files?$|[✓✗⚠] |↳ checklist written to )
 progress: ^(?:parsing|reading|detector) (\d+)/(\d+)$
 label: Judging the project against its commandments
+commands: commandments judge
+finished: ^(?:\d+ sins? in \d+ files?$|✓ |↳ checklist written to )
+failed: ^(?:✗ |⚠ )
