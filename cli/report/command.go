@@ -1,15 +1,19 @@
 package report
 
 import (
-	"github.com/jessegall/code-commandments/catalog"
-	"github.com/jessegall/code-commandments/cli/custom"
-	"github.com/jessegall/code-commandments/cli/workspace"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/natural"
+	"github.com/jessegall/code-commandments/cli/reported"
+	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 )
 
@@ -53,6 +57,10 @@ func (Command) Help() help.Help {
 		Note("Only rules the PACKAGE ships can be reported here. A finding printed as `[Name (custom)]` " +
 			"comes from a detector this project wrote into .commandments/custom/ — fix it there; a report " +
 			"against it is refused.").
+		Note("Filing a detector-report RECORDS the sin it was about in .commandments/reports.json, which is " +
+			"tracked: a judge of that line then reads it as reported, with its issue, rather than as a sin to fix, " +
+			"and `report follow` says when the report has been answered. The line's own text is kept as a hash, " +
+			"never as text, and a second report of a sin already recorded is refused.").
 		Note("A report is NOT a deferral. A correct finding must be FIXED, however big the fix — a detector-report " +
 			"asserts flatly that the code is right and the rule is wrong, with no hedge. Some detectors (design smells) REQUIRE --best-design: the report is valid only when the flagged code ALREADY IS that best design.")
 }
@@ -84,7 +92,8 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		title = summarise(reason)
 	}
 
-	return File("[bug-report] "+title, "**Report:**\n"+reason+"\n"+render(refs, in.HasFlag("share-code"))+filedBy("report", c.Version), console), nil
+	_, code := File("[bug-report] "+title, "**Report:**\n"+reason+"\n"+render(refs, in.HasFlag("share-code"))+filedBy("report", c.Version), console)
+	return code, nil
 }
 
 func detectorReport(in *cli.Input, detector, reason string, refs []Reference, version string, console cli.Console) int {
@@ -139,7 +148,93 @@ func detectorReport(in *cli.Input, detector, reason string, refs []Reference, ve
 			"> the owed fix — close this report; the fix is still owed.\n"
 	}
 
-	return File("[detector-report] "+detector, body+render(refs, in.HasFlag("share-code"))+filedBy("report", version), console)
+	filed, code := File("[detector-report] "+detector, body+render(refs, in.HasFlag("share-code"))+filedBy("report", version), console)
+	if !filed.Exists() {
+		return code
+	}
+
+	return remember(detector, reason, refs, filed, console)
+}
+
+// remember records what was filed, one row per reference, so a judge of those lines reads the sin as reported
+// rather than as a sin to fix and the report can be followed until it is answered.
+//
+// The issue exists by now, so a refusal to record is said out loud and answered with a failure: a run that said
+// nothing would invite a second report of the same sin, and that is a second issue for a maintainer to read.
+func remember(detector, reason string, refs []Reference, filed Filed, console cli.Console) int {
+	root := workspace.ProjectRoot(workingFolder())
+	recorded, refused := 0, 0
+
+	for _, ref := range refs {
+		row := reported.Row{
+			Detector:   detector,
+			Sin:        sinOf(detector),
+			File:       absolute(root, ref.Path),
+			Line:       ref.Start,
+			Reason:     reason,
+			Repository: filed.Repository,
+			Issue:      filed.Issue,
+		}
+
+		held, err := reported.Add(root, row)
+		if err == nil {
+			recorded++
+
+			continue
+		}
+
+		refused++
+		console.Warn("The issue is filed as "+filed.URL()+", and "+ref.Label()+" is not recorded as reported:",
+			"  "+err.Error(),
+			"  Judging that line will call it an active sin again. Nothing here files a second issue for it:",
+			"  "+already(held))
+	}
+
+	if recorded > 0 {
+		console.Write("Recorded as reported in " + reported.Filename + ": " + natural.Counted(recorded, "line") + ", issue " + strconv.Itoa(filed.Issue) + ".\n")
+	}
+
+	if refused > 0 {
+		return 1
+	}
+
+	return 0
+}
+
+// sinOf is the sin the rule finds, for whoever reads the record; empty where this build does not know the rule,
+// which costs the row nothing, since the rule's own name is what it is keyed by.
+func sinOf(detector string) string {
+	if rule, found := detectors.Named(detector); found {
+		return rule.Sin().Definition().Name
+	}
+
+	return ""
+}
+
+// already is what to do about a refused row: the issue that already holds the sin, where that is why it was
+// refused, and otherwise the line that records it by hand.
+func already(held reported.Row) string {
+	if held.Issue > 0 {
+		return "it is already reported as issue " + strconv.Itoa(held.Issue) + "."
+	}
+
+	return "report the line again once it can be read, or leave it: the issue stands either way."
+}
+
+// absolute is the reference's path as the record keys it, under the project root.
+func absolute(root, path string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+
+	return filepath.Join(root, path)
+}
+
+// workingFolder is where the command was run, which is how a project is found.
+func workingFolder() string {
+	cwd, _ := os.Getwd()
+
+	return cwd
 }
 
 // requiresBestDesign says whether the detector, or its sin, is a design smell a report must answer with the
@@ -230,10 +325,8 @@ func summarise(reason string) string {
 
 // ownRule is the project's own rule the name means, and whether there is one.
 func ownRule(name string) (detectors.Detector, bool) {
-	cwd, _ := os.Getwd()
-
 	var own []detectors.Detector
-	for _, read := range custom.Load(workspace.ProjectRoot(cwd)).Rules {
+	for _, read := range custom.Load(workspace.ProjectRoot(workingFolder())).Rules {
 		own = append(own, read)
 	}
 

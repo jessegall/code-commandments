@@ -34,5 +34,6 @@ func (f FeatureRequest) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	body := "**Proposal:**\n" + reason + "\n" + filedBy("feature-request", f.Version)
 
-	return File("[feature-request] "+title, body, console), nil
+	_, code := File("[feature-request] "+title, body, console)
+	return code, nil
 }

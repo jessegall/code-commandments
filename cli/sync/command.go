@@ -11,6 +11,7 @@ import (
 
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/agents"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/config"
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/git"
@@ -48,7 +49,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		return help.Usage(console.Err, c, "no composer.json or git repository at or above "+cwd+" — sync publishes into a project, and would otherwise write into whatever directory you happen to be standing in."), nil
 	}
 
-	release := hold(workspace.At(root, "").Shared(".sync.lock"))
+	release := atomic.Hold(workspace.At(root, "").Shared(".sync.lock"))
 	defer release()
 
 	return 0, Sync(root, console)

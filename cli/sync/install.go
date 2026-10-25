@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/jessegall/code-commandments/cli"
+	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/hooks"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
@@ -65,7 +66,7 @@ func (c Install) Run(in *cli.Input, console cli.Console) (int, error) {
 		console.Say("✓ Claude Code hooks already wired.")
 	}
 
-	release := hold(workspace.At(root, "").Shared(".sync.lock"))
+	release := atomic.Hold(workspace.At(root, "").Shared(".sync.lock"))
 	defer release()
 
 	return 0, Sync(root, console)

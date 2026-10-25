@@ -1,14 +1,11 @@
 package hooks
 
 import (
-	"crypto/sha1"
-	"fmt"
-	"os"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli/git"
-	"github.com/jessegall/code-commandments/cli/source"
+	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine"
 )
@@ -39,10 +36,14 @@ func (m SinMark) Finding() engine.Finding {
 	}
 }
 
-// ID is the mark's identity: its sin, its file under root and the text of the line it flags, so a sin moved by
-// an edit above it is still the same sin, and the same sin in another checkout of the project too.
+// ID is the mark's identity, which `reported.Identity` is the one home of: its rule, its file under root and the
+// text of the line it flags, so a sin moved by an edit above it is still the same sin, and the same sin in another
+// checkout of the project too. A report filed about a finding is keyed by that same identity, so the two cannot
+// drift apart.
 func (m SinMark) ID(root string) string {
-	return fmt.Sprintf("%x", sha1.Sum([]byte(m.Rule.Sin().Definition().Name+"\x00"+source.Relative(root, m.Match.File())+"\x00"+m.flaggedText())))
+	id, _ := reported.Identity(catalog.Name(m.Rule), root, m.Match.File(), m.Match.Line())
+
+	return id
 }
 
 // Key is the key the mark's chat mark is raised and settled by.
@@ -64,18 +65,4 @@ func (m SinMark) FileFrom(root string) string {
 // ShownFrom is the mark named with paths under root.
 func (m SinMark) ShownFrom(root string) string {
 	return strings.ReplaceAll(m.Found(), strings.TrimRight(root, "/")+"/", "")
-}
-
-func (m SinMark) flaggedText() string {
-	text, err := os.ReadFile(m.Match.File())
-	if err != nil {
-		return ""
-	}
-
-	lines := strings.SplitAfter(string(text), "\n")
-	if line := m.Match.Line(); line >= 1 && line <= len(lines) {
-		return strings.TrimSpace(lines[line-1])
-	}
-
-	return ""
 }

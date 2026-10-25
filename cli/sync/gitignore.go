@@ -8,6 +8,7 @@ import (
 	"github.com/jessegall/code-commandments/cli/agents"
 	"github.com/jessegall/code-commandments/cli/atomic"
 	"github.com/jessegall/code-commandments/cli/library"
+	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/cli/workspace"
 )
 
@@ -69,7 +70,7 @@ var retiredLines = []string{
 }
 
 // commandmentsLines ignore everything the tool generates in .commandments while keeping the project's own
-// there tracked: the config in either form, its custom rules and each session's tasks.
+// there tracked: the config in either form, the sins it has reported, its custom rules and each session's tasks.
 func commandmentsLines() []string {
 	return []string{
 		"# code-commandments generated state; the lines below stay tracked.",
@@ -78,6 +79,7 @@ func commandmentsLines() []string {
 		"!.gitignore",
 		"!config.php",
 		"!config.json",
+		"!" + reported.Filename,
 		"!" + workspace.Custom + "/",
 		"!" + workspace.Custom + "/**",
 		"",
