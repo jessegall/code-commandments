@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -41,6 +42,10 @@ type Row struct {
 	Issue      int    `json:"issue"`
 	Filed      string `json:"filed"`
 	Seen       Seen   `json:"seen"`
+	// Accepted is why a report that has been answered is kept anyway: a fix the project cannot take, because the
+	// release carrying it is one it is pinned away from. Nothing asks about such a row again, and its finding
+	// stays reported, since the sin is real upstream and fixed there.
+	Accepted string `json:"accepted,omitempty"`
 }
 
 // Seen is what the last look at the issue found: whether it was still open, how many comments it had, and when it
@@ -83,6 +88,21 @@ func (r Record) Reported(rule, root, file string, line int) (Row, bool) {
 	held, reported := r.Reports[id]
 
 	return held, reported
+}
+
+// Where is the report as a line of a report or a checklist names it: the issue, and the day it was filed, so a
+// reader who did not file it can go and read the argument.
+func (r Row) Where() string {
+	said := "issue " + strconv.Itoa(r.Issue)
+	if r.Repository != "" {
+		said = "https://github.com/" + r.Repository + "/issues/" + strconv.Itoa(r.Issue)
+	}
+
+	if day, _, cut := strings.Cut(r.Filed, "T"); cut {
+		return said + ", filed " + day
+	}
+
+	return said
 }
 
 // Rows are the reports the record holds, the newest first, so a reader meets what is still being answered before
@@ -146,6 +166,25 @@ func Forget(root string, issue int) (Row, bool, error) {
 			continue
 		}
 		delete(held.Reports, id)
+
+		return row, true, write(root, held)
+	}
+
+	return Row{}, false, nil
+}
+
+// Accept keeps the report of an issue the project cannot act on, with the reason: nothing asks about it again and
+// its finding stays reported. ok is false when no row names that issue.
+func Accept(root string, issue int, why string) (Row, bool, error) {
+	defer lock(root)()
+
+	held, _ := Of(root)
+	for id, row := range held.Reports {
+		if row.Issue != issue {
+			continue
+		}
+		row.Accepted = firstLine(why)
+		held.Reports[id] = row
 
 		return row, true, write(root, held)
 	}

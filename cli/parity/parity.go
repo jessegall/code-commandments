@@ -310,8 +310,9 @@ func cache() string {
 	return filepath.Join(home, ".cache")
 }
 
-// stamp is a date and time a run writes: a task's log line, an archived checklist's name.
-var stamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}[ _]\d{2}:?\d{2}(:?\d{2})?`)
+// stamp is a date and time a run writes: a task's log line, an archived checklist's name, the day a report was
+// filed. Two runs of one case are a moment apart, so the moment itself can never be compared.
+var stamp = regexp.MustCompile(`\d{4}-\d{2}-\d{2}[ _T]\d{2}:?\d{2}(:?\d{2})?Z?`)
 
 var versionLine = regexp.MustCompile(`(?m)^code-commandments \S+$`)
 

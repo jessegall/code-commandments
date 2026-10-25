@@ -77,7 +77,13 @@ func explain(dir string) {
 	atomic.Write(dir+"/"+notes, notesText)
 }
 
+// ReportedHeading opens the section a checklist ends with when the project has reported some of the findings as
+// wrong: lines nobody is to fix and nobody is to delete, which is why nothing below it counts as work left.
+const ReportedHeading = "## Reported — do not fix"
+
 // RemainingSins is how many sin lines the checklist still holds.
+// Lines below the reported heading are not work: they are findings this project has reported as wrong, which a
+// reader is told to leave alone, so counting them would nag for work nobody may do.
 func (c Checklist) RemainingSins() int {
 	raw, err := os.ReadFile(c.path)
 	if err != nil {
@@ -87,6 +93,10 @@ func (c Checklist) RemainingSins() int {
 	count := 0
 
 	for _, line := range strings.SplitAfter(string(raw), "\n") {
+		if strings.HasPrefix(strings.TrimLeft(line, " \t\n\r\x00\x0B"), ReportedHeading) {
+			return count
+		}
+
 		if strings.HasPrefix(strings.TrimLeft(line, " \t\n\r\x00\x0B"), "- `") {
 			count++
 		}

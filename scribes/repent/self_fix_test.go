@@ -1,6 +1,7 @@
 package repent_test
 
 import (
+	"github.com/jessegall/code-commandments/scribes"
 	"os"
 	"path/filepath"
 	"slices"
@@ -58,7 +59,7 @@ export function Basket({ items, price, rate }: { items: string[]; price: number;
 		ownRule(t, "reported-only", `{"select": "call", "where": [{"name": "String"}]}`, ""),
 	}
 
-	converged, err := repent.Run([]string{root}, everywhere{}, given, "")
+	converged, err := repent.Run([]string{root}, everywhere{}, scribes.NothingFiled{}, given, "")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -167,7 +167,7 @@ func (s DetectorStep) Run(pass Pass) (Rewrites, error) {
 	}
 	var findings []engine.Match
 	for _, finding := range s.detector.Find(codebase) {
-		if pass.Fixes(finding.File()) {
+		if pass.Rewrites(s.Name(), finding.File(), finding.Line()) {
 			findings = append(findings, finding)
 		}
 	}

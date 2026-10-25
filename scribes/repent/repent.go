@@ -14,7 +14,7 @@ import (
 
 // Run sweeps the chain for the detectors given over the roots, narrowed to the steps or sins only names when it
 // names any, and returns what it settled on. It writes nothing.
-func Run(roots []string, scope scribes.Scope, given []detectors.Detector, only string) (scribes.Converged, error) {
+func Run(roots []string, scope scribes.Scope, filed scribes.Filed, given []detectors.Detector, only string) (scribes.Converged, error) {
 	backend, err := serve(php.Here().Cached().Command, php.Over)
 	if err != nil {
 		return scribes.Converged{}, err
@@ -31,7 +31,7 @@ func Run(roots []string, scope scribes.Scope, given []detectors.Detector, only s
 		chain.Matching(only)
 	}
 
-	return scribes.Converge(chain, roots, scope, scribes.Frozens{backend, vue}), nil
+	return scribes.Converge(chain, roots, scope, scribes.Frozens{backend, vue}, filed), nil
 }
 
 // Chain is the chain repent runs over the two scanners: every maintainer, then a step for each repentable detector

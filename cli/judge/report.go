@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jessegall/code-commandments/cli/binary"
+	"github.com/jessegall/code-commandments/cli/checklist"
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/engine"
 	"github.com/jessegall/code-commandments/skill"
@@ -29,12 +30,21 @@ type Report struct {
 	scaffoldable map[string]string
 	skipped      Skipped
 	says         map[string]string
+	filed        []Reported
 }
 
 // Saying gives the report the words each sin is described by, so a card can say what is wrong rather than name
 // the rule that found it.
 func (r Report) Saying(says map[string]string) Report {
 	r.says = says
+
+	return r
+}
+
+// Reporting gives the report the findings this project has already reported, which it shows and writes down but
+// never counts: they are filed, and the run is clean of them.
+func (r Report) Reporting(filed []Reported) Report {
+	r.filed = filed
 
 	return r
 }
@@ -111,6 +121,10 @@ func (r Report) Console() string {
 
 	lines = append(lines, "\n\033[1m"+natural.Counted(r.total, "sin")+"\033[0m across "+natural.Counted(len(r.skills), "skill")+".")
 
+	if len(r.filed) > 0 {
+		lines = append(lines, r.reportedConsole())
+	}
+
 	if !r.skipped.IsEmpty() {
 		lines = append(lines, r.skipped.Console())
 	}
@@ -158,7 +172,51 @@ func (r Report) Checklist() string {
 		}
 	}
 
+	if len(r.filed) > 0 {
+		out.WriteString(r.reportedChecklist())
+	}
+
 	return out.String()
+}
+
+// reportedConsole names the findings the project has reported, with the issue that holds each: a reader who did
+// not file them learns where the argument is being had, and that nothing here is asking them to fix it.
+func (r Report) reportedConsole() string {
+	lines := []string{"\n\033[2m" + natural.Counted(len(r.filed), "finding") + " reported and left out of the count:\033[0m"}
+
+	for _, held := range r.filed {
+		lines = append(lines, "\033[2m  "+held.Finding.Location+"  ["+held.Finding.Rule()+"] — "+held.Row.Where()+"\033[0m")
+	}
+
+	return strings.Join(lines, "\n")
+}
+
+// reportedChecklist is the reported findings as the worklist shows them: a section of their own, at the end, with
+// no skill to load and nothing to do. A reader works the sections above it; this one is there so a line nobody
+// must fix is still a line nobody has forgotten.
+func (r Report) reportedChecklist() string {
+	var out strings.Builder
+
+	out.WriteString("\n" + checklist.ReportedHeading + "\n\n> 🧾 " + natural.Counted(len(r.filed), "finding") +
+		" below " + was(len(r.filed)) + " reported to code-commandments as wrong, and a maintainer is answering. " +
+		"Do NOT fix these and do NOT delete these lines: the report stands until `" + binary.Here() +
+		" report follow` says it has been answered. If you believe one of them IS a real sin after all, " +
+		"`" + binary.Here() + " report forget <issue>` drops the report and the sin is yours again.\n\n")
+
+	for _, held := range r.filed {
+		out.WriteString("- `" + held.Finding.Location + "`  " + held.Finding.Scope + "  [" + held.Finding.Rule() + "] — " + held.Row.Where() + "\n")
+	}
+
+	return out.String()
+}
+
+// was is the verb for a count of findings, so a line reads as English either way.
+func was(count int) string {
+	if count == 1 {
+		return "was"
+	}
+
+	return "were"
 }
 
 // checklistPreamble is how the checklist tells its reader to work it.

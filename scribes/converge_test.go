@@ -45,7 +45,7 @@ func TestTheChainSweepsUntilNothingChangesEachStepReadingTheDraftsBeforeIt(t *te
 	}}
 	echo := stepFunc{"echo", func(pass Pass) (Rewrites, error) { return rewriting("b", pass.Drafts.Content("a")), nil }}
 
-	converged := Converge((&Chain{}).Append(count).Append(echo), nil, everywhere{}, frozenSet{})
+	converged := Converge((&Chain{}).Append(count).Append(echo), nil, everywhere{}, frozenSet{}, NothingFiled{})
 
 	if !converged.Settled || converged.Files.Content("a") != "aaa" || converged.Files.Content("b") != "aaa" || counts != 3 {
 		t.Fatalf("settled %v a %q b %q after %d", converged.Settled, converged.Files.Content("a"), converged.Files.Content("b"), counts)
@@ -61,7 +61,7 @@ func TestABrokenStepIsDroppedOnceAndTheRestStillRun(t *testing.T) {
 	panics := stepFunc{"panics", func(Pass) (Rewrites, error) { panic("boom") }}
 	fine := stepFunc{"fine", func(Pass) (Rewrites, error) { return rewriting("a", "fixed"), nil }}
 
-	converged := Converge((&Chain{}).Append(broken).Append(panics).Append(fine), nil, everywhere{}, frozenSet{})
+	converged := Converge((&Chain{}).Append(broken).Append(panics).Append(fine), nil, everywhere{}, frozenSet{}, NothingFiled{})
 
 	if runs != 1 || len(converged.Skipped) != 2 || converged.Skipped[0].Step != "broken" || converged.Skipped[1].Err.Error() != "boom" {
 		t.Fatalf("ran %d, skipped %v", runs, converged.Skipped)
@@ -87,7 +87,7 @@ func TestARewriteTouchingAFrozenFileIsDroppedWhole(t *testing.T) {
 	}}
 	created := stepFunc{"created", func(Pass) (Rewrites, error) { return rewriting(filepath.Join(root, "New.vue"), "new"), nil }}
 
-	converged := Converge((&Chain{}).Append(both).Append(created), []string{root}, everywhere{}, frozenSet{frozen: true})
+	converged := Converge((&Chain{}).Append(both).Append(created), []string{root}, everywhere{}, frozenSet{frozen: true}, NothingFiled{})
 
 	if got := converged.Files.Paths(); !slices.Equal(got, []string{filepath.Join(root, "New.vue")}) {
 		t.Fatalf("got %v", got)
@@ -102,7 +102,7 @@ func TestAChainThatNeverSettlesStopsAfterTheLastSweep(t *testing.T) {
 		return rewriting("a", pass.Drafts.Content("a")+"a"), nil
 	}}
 
-	converged := Converge((&Chain{}).Append(grows), nil, everywhere{}, frozenSet{})
+	converged := Converge((&Chain{}).Append(grows), nil, everywhere{}, frozenSet{}, NothingFiled{})
 
 	if converged.Settled || sweeps != MaxSweeps {
 		t.Fatalf("settled %v after %d sweeps", converged.Settled, sweeps)

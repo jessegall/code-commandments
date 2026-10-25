@@ -160,7 +160,7 @@ func TestTheWholeChainRewritesEachFixtureAsThePHPToolDoes(t *testing.T) {
 				t.Fatalf("PHP's chain runs steps the Go chain lacks: %v", missing)
 			}
 
-			converged := scribes.Converge(chain, []string{root}, everywhere{}, scribes.Frozens{backend, vue})
+			converged := scribes.Converge(chain, []string{root}, everywhere{}, scribes.Frozens{backend, vue}, scribes.NothingFiled{})
 			if !converged.Settled || len(converged.Skipped) > 0 {
 				t.Fatalf("settled %v, skipped %v", converged.Settled, converged.Skipped)
 			}

@@ -527,6 +527,7 @@ sha256 be26c19aed8f2719a6cbeea651bd209f03f0ef47a3c51121b937123577f1dd01
 *
 !.gitignore
 !config.php
+!reports.json
 !custom/
 !custom/**
 

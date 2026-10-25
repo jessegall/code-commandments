@@ -10,16 +10,49 @@ import (
 	"github.com/jessegall/code-commandments/engine"
 )
 
-// SinMark is one sin a rule found in an edited file, and whether it stands on a line the edit changed.
+// SinMark is one sin a rule found in an edited file, whether it stands on a line the edit changed, and the report
+// this project has already filed about it, where there is one.
 type SinMark struct {
 	Rule    detectors.Detector
 	Match   engine.Match
 	Touched bool
+	Filed   reported.Row
 }
 
-// MarkOf is the rule's match as a mark, touched when the changed lines cover it.
+// IsFiled says whether this project has reported the finding as wrong. Nothing raises such a mark at the agent:
+// the claim is filed and a maintainer is answering it. The mark is still made, though, and still shown, because a
+// finding that vanished would settle in the chat and on the dashboard as one that was fixed.
+func (m SinMark) IsFiled() bool {
+	return m.Filed.Issue > 0
+}
+
+// Marking makes the marks of one look, holding what this project has reported so the record is read once for the
+// whole look rather than once for every finding. A record that is missing or no longer reads as one marks nothing
+// as reported, and says nothing: a hook may never fail over it.
+type Marking struct {
+	root   string
+	record reported.Record
+}
+
+// Marks is the marking for a look at the project at root.
+func Marks(root string) Marking {
+	record, _ := reported.Of(root)
+
+	return Marking{root: root, record: record}
+}
+
+// Of is the rule's match as a mark, touched when the changed lines cover it and filed when this project has
+// reported it.
+func (m Marking) Of(rule detectors.Detector, match engine.Match, changed git.ChangedLines) SinMark {
+	mark := SinMark{Rule: rule, Match: match, Touched: changed.Covers(match.Line())}
+	mark.Filed, _ = m.record.Reported(catalog.Name(rule), m.root, match.File(), match.Line())
+
+	return mark
+}
+
+// MarkOf is the rule's match as a mark of a look that knows nothing of what has been reported.
 func MarkOf(rule detectors.Detector, match engine.Match, changed git.ChangedLines) SinMark {
-	return SinMark{rule, match, changed.Covers(match.Line())}
+	return SinMark{Rule: rule, Match: match, Touched: changed.Covers(match.Line())}
 }
 
 // Finding is the mark as a finding.

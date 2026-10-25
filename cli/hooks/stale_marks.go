@@ -37,11 +37,12 @@ func swept(record Announced, root string) (marks []SinMark, read []string) {
 
 	enabled = append(enabled, custom.Load(root).Enabled(project)...)
 	single := slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile)
+	marking := Marks(root)
 
 	// No lines are the moment's own: a sweep says what each file holds, and marks nothing as just committed, so
 	// going idle never raises a sin as new — only settles one that is gone.
 	for _, file := range files {
-		marks = append(marks, marksIn(file, single, git.ChangedLines{})...)
+		marks = append(marks, marksIn(marking, file, single, git.ChangedLines{})...)
 	}
 
 	return marks, files

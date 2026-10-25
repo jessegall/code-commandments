@@ -10,6 +10,7 @@ import (
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/custom"
+	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/natural"
 	"github.com/jessegall/code-commandments/cli/reported"
@@ -45,6 +46,9 @@ func (Command) Names() []string {
 func (Command) Help() help.Help {
 	return help.Of("File a GitHub issue about code-commandments itself (via `gh`) — a false positive, a wrong rule, or a bug.").
 		Form(`report --reason="…" --ref=PATH:LINE`, "a [bug-report] — a defect in the tool, pointing at the code it happened on").
+		Form("report follow", "ask GitHub what became of every report this project filed, and what to do about each answer").
+		Form("report forget ISSUE", "drop a report once its answer is settled, so its sin is judged as any other again").
+		Form(`report accept ISSUE --why="…"`, "keep a report whose fix this project cannot take yet, so nothing asks about it again").
 		Form(`report --detector=NAME --reason="…" --ref=PATH:LINE`, "a [detector-report] — this finding is a false positive").
 		Option(`--reason="…"`, "what is wrong (required)").
 		Option("--ref=PATH:LINE", "the code this is about — repeatable, and PATH:START-END works; the issue names the file and its lines").
@@ -53,6 +57,7 @@ func (Command) Help() help.Help {
 		Option(`--best-design="…"`, "the cleanest design you can conceive for the flagged code; REQUIRED by design-smell detectors").
 		Option(`--title="…"`, "the issue title (default: the reason's first line)").
 		Option("--global", "opt out of --ref when the defect is tied to no file at all (a crash with no args, a CLI-wide bug)").
+		Option(`--why="…"`, "with `report accept`: why the answer cannot be acted on, which the dashboard shows beside the row").
 		Option("--file=PATH --line=N", "the single-ref alias for --ref").
 		Note("Only rules the PACKAGE ships can be reported here. A finding printed as `[Name (custom)]` " +
 			"comes from a detector this project wrote into .commandments/custom/ — fix it there; a report " +
@@ -67,6 +72,18 @@ func (Command) Help() help.Help {
 
 // Run files the report the arguments describe.
 func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
+	if verb, named := in.FirstArgument(); named && verb == followVerb {
+		return c.follow(console), nil
+	}
+
+	if verb, named := in.FirstArgument(); named && verb == forgetVerb {
+		return c.forget(in, console), nil
+	}
+
+	if verb, named := in.FirstArgument(); named && verb == acceptVerb {
+		return c.accept(in, console), nil
+	}
+
 	reason, given := in.Option("reason")
 	refs := references(in)
 
@@ -192,6 +209,14 @@ func remember(detector, reason string, refs []Reference, filed Filed, console cl
 
 	if recorded > 0 {
 		console.Write("Recorded as reported in " + reported.Filename + ": " + natural.Counted(recorded, "line") + ", issue " + strconv.Itoa(filed.Issue) + ".\n")
+
+		// The dashboard is drawn from the record, so a report filed changes it and nothing else would redraw it
+		// until the next judge.
+		if space := workspace.At(root, ""); space.IsJournalDriven() {
+			if err := dashboard.Redraw(space); err != nil {
+				console.Warn("The reports page could not be drawn again: " + err.Error())
+			}
+		}
 	}
 
 	if refused > 0 {

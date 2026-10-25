@@ -13,6 +13,22 @@ type Frozen interface {
 	IsFrozen(path string) bool
 }
 
+// Filed says whether a rule's finding at a place has been reported to the tool's own repository as wrong. No
+// scribe rewrites such a finding: the fix a scribe would apply may be the very thing the report disputes, and
+// rewriting the line changes its text, which orphans the report while its issue is still open.
+type Filed interface {
+	IsFiled(rule, file string, line int) bool
+}
+
+// NothingFiled is the answer for a run that knows of no report, which is every run of a project that has filed
+// none.
+type NothingFiled struct{}
+
+// IsFiled says no, for every finding.
+func (NothingFiled) IsFiled(string, string, int) bool {
+	return false
+}
+
 // Converged is what a run of the chain settled on: every file's final content, the steps that broke, and whether
 // the chain settled before MaxSweeps.
 type Converged struct {
@@ -30,7 +46,7 @@ type Skipped struct {
 // Converge runs the chain over the roots until a sweep changes nothing. A step that breaks is dropped and named;
 // a step's rewrite is kept only when every existing file it touches is in scope and not frozen, so a run never
 // half-applies a fix across files.
-func Converge(chain *Chain, roots []string, scope Scope, frozen Frozen) Converged {
+func Converge(chain *Chain, roots []string, scope Scope, frozen Frozen, filed Filed) Converged {
 	steps := chain.Steps()
 	drafts := Rewrites{}
 	var skipped []Skipped
@@ -39,7 +55,7 @@ func Converge(chain *Chain, roots []string, scope Scope, frozen Frozen) Converge
 		before := drafts.clone()
 		for index := 0; index < len(steps); index++ {
 			step := steps[index]
-			rewrites, err := attempt(step, Pass{Roots: roots, Scope: scope, Frozen: frozen, Drafts: drafts})
+			rewrites, err := attempt(step, Pass{Roots: roots, Scope: scope, Frozen: frozen, Filed: filed, Drafts: drafts})
 			if err != nil {
 				skipped = append(skipped, Skipped{Step: step.Name(), Err: err})
 				steps = append(steps[:index], steps[index+1:]...)

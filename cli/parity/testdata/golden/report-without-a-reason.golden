@@ -10,6 +10,13 @@ Usage:
   commandments report --reason="…" --ref=PATH:LINE
                                     a [bug-report] — a defect in the tool, pointing at the code it
                                     happened on
+  commandments report follow        ask GitHub what became of every report this project filed, and
+                                    what to do about each answer
+  commandments report forget ISSUE  drop a report once its answer is settled, so its sin is judged
+                                    as any other again
+  commandments report accept ISSUE --why="…"
+                                    keep a report whose fix this project cannot take yet, so nothing
+                                    asks about it again
   commandments report --detector=NAME --reason="…" --ref=PATH:LINE
                                     a [detector-report] — this finding is a false positive
 
@@ -25,11 +32,18 @@ Options:
   --title="…"           the issue title (default: the reason's first line)
   --global              opt out of --ref when the defect is tied to no file at all (a crash with no
                         args, a CLI-wide bug)
+  --why="…"             with `report accept`: why the answer cannot be acted on, which the dashboard
+                        shows beside the row
   --file=PATH --line=N  the single-ref alias for --ref
 
   Only rules the PACKAGE ships can be reported here. A finding printed as `[Name (custom)]` comes
   from a detector this project wrote into .commandments/custom/ — fix it there; a report against
   it is refused.
+
+  Filing a detector-report RECORDS the sin it was about in .commandments/reports.json, which is
+  tracked: a judge of that line then reads it as reported, with its issue, rather than as a sin to
+  fix, and `report follow` says when the report has been answered. The line's own text is kept as a
+  hash, never as text, and a second report of a sin already recorded is refused.
 
   A report is NOT a deferral. A correct finding must be FIXED, however big the fix — a
   detector-report asserts flatly that the code is right and the rule is wrong, with no hedge. Some

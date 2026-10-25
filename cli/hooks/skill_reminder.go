@@ -56,6 +56,7 @@ func (SkillReminder) Handle(event Event) Response {
 	single := slices.DeleteFunc(enabled, detectors.ReadsBeyondOneFile)
 
 	reported := ReportedIn(event.Workspace())
+	marking := Marks(event.Root)
 	var activity []SinMark
 	var fresh []SinMark
 
@@ -64,7 +65,7 @@ func (SkillReminder) Handle(event Event) Response {
 			continue
 		}
 
-		marks := marksIn(file, single, event.ChangedLines(file))
+		marks := marksIn(marking, file, single, event.ChangedLines(file))
 		activity = append(activity, marks...)
 
 		found, order := bySkill(marks)
@@ -78,7 +79,7 @@ func (SkillReminder) Handle(event Event) Response {
 		}
 
 		for _, mark := range marks {
-			if mark.Touched && named[mark.Found()] {
+			if mark.Touched && named[mark.Found()] && !mark.IsFiled() {
 				fresh = append(fresh, mark)
 			}
 		}
@@ -161,8 +162,8 @@ func judgedFile(root, file string, project config.Config) string {
 }
 
 // marksIn are every sin the rules find in the file, each marked touched when it stands on a line the working
-// tree changed.
-func marksIn(file string, rules []detectors.Detector, changed git.ChangedLines) []SinMark {
+// tree changed, and filed when this project has already reported it.
+func marksIn(marking Marking, file string, rules []detectors.Detector, changed git.ChangedLines) []SinMark {
 	language := source.OfFile(file)
 
 	codebase, err := scan.OneFile(file).Load()
@@ -178,7 +179,7 @@ func marksIn(file string, rules []detectors.Detector, changed git.ChangedLines) 
 		}
 
 		for _, match := range safely(rule, codebase) {
-			marks = append(marks, MarkOf(rule, match, changed))
+			marks = append(marks, marking.Of(rule, match, changed))
 		}
 	}
 

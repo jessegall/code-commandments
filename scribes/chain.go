@@ -17,17 +17,33 @@ type SinStep interface {
 	MatchesSin(query string) bool
 }
 
-// Pass is what a step runs over: the roots, which files it may fix, and every file drafted so far.
+// Pass is what a step runs over: the roots, which files it may fix, which findings have been reported as wrong,
+// and every file drafted so far.
 type Pass struct {
 	Roots  []string
 	Scope  Scope
 	Frozen Frozen
+	Filed  Filed
 	Drafts Rewrites
 }
 
 // Fixes says whether a finding in the file is one the pass may fix: in scope, and not frozen.
 func (p Pass) Fixes(path string) bool {
 	return p.Scope.Includes(path) && !p.Frozen.IsFrozen(path)
+}
+
+// Rewrites says whether the rule's finding at this place is one the pass may rewrite: its file is one it may fix,
+// and the project has not reported the finding as wrong.
+func (p Pass) Rewrites(rule, path string, line int) bool {
+	if !p.Fixes(path) {
+		return false
+	}
+
+	if p.Filed == nil {
+		return true
+	}
+
+	return !p.Filed.IsFiled(rule, path, line)
 }
 
 // Scope says which files a run may fix, and whether it is narrowed to a set of files rather than the whole tree.

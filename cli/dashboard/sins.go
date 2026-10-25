@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"github.com/jessegall/code-commandments/cli/jsonfile"
+	"github.com/jessegall/code-commandments/cli/reported"
 	"os"
 	"path/filepath"
 	"sort"
@@ -160,7 +161,13 @@ func Render(findings []Stored, root string) *jsonfile.Object {
 	tool := binary.Invocation(root)
 
 	groups := bySin(findings)
-	pages := jsonfile.NewObject("overview", jsonfile.NewObject("title", "Overview", "view", overview(findings, groups)))
+	record, _ := reported.Of(root)
+	filed := waitingRows(record)
+	pages := jsonfile.NewObject("overview", jsonfile.NewObject("title", "Overview", "view", overview(findings, groups, filed)))
+
+	if len(filed) > 0 {
+		pages.Set(reportsPage, jsonfile.NewObject("title", "Reported", "view", reports(filed)))
+	}
 
 	for _, g := range groups {
 		pages.Set("sin/"+g.sin, jsonfile.NewObject("title", g.sin, "view", sinPage(g, tool)))
@@ -200,7 +207,7 @@ func bySin(findings []Stored) []group {
 	return groups
 }
 
-func overview(findings []Stored, groups []group) *jsonfile.Object {
+func overview(findings []Stored, groups []group, filed []reported.Row) *jsonfile.Object {
 	total := len(findings)
 	tone, filesTone := "danger", "warn"
 
@@ -208,11 +215,20 @@ func overview(findings []Stored, groups []group) *jsonfile.Object {
 		tone, filesTone = "good", "good"
 	}
 
-	tiles := jsonfile.NewObject("type", "row", "gap", 12, "children", []any{
+	stats := []any{
 		jsonfile.NewObject("type", "stat", "label", "Sins", "value", strconv.Itoa(total), "tone", tone, "note", strconv.Itoa(len(groups))+" different rules"),
 		jsonfile.NewObject("type", "stat", "label", "Files", "value", strconv.Itoa(distinct(findings, func(s Stored) string { return s.File })), "tone", filesTone),
 		jsonfile.NewObject("type", "stat", "label", "Skills", "value", strconv.Itoa(distinct(findings, func(s Stored) string { return s.Skill })), "note", "the skills that teach the fixes"),
-	})
+	}
+
+	// A project that has reported nothing is told nothing about reports: the tile is the only way to the page, so
+	// nobody lands on a list of none.
+	if len(filed) > 0 {
+		stats = append(stats, jsonfile.NewObject("type", "stat", "label", "Reported", "value", strconv.Itoa(len(filed)),
+			"tone", "note", "note", "judged as reported, not as sins", "open", reportsPage))
+	}
+
+	tiles := jsonfile.NewObject("type", "row", "gap", 12, "children", stats)
 
 	if total == 0 {
 		return jsonfile.NewObject("type", "stack", "gap", 16, "children", []any{tiles, jsonfile.NewObject("type", "text", "body", "No sins in the last judged files.")})

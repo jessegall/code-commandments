@@ -27,7 +27,7 @@ func TestARepentedSinSettlesTheMarkItWasFoundUnder(t *testing.T) {
 	rule := pydetectors.RedundantElseDetector{}
 	var marks []SinMark
 	for _, match := range rule.Find(codebase) {
-		marks = append(marks, SinMark{rule, match, true})
+		marks = append(marks, SinMark{Rule: rule, Match: match, Touched: true})
 	}
 
 	found := AnnouncedIn(data, Moment{}).Settle(root, []string{file}, marks)
@@ -109,7 +109,7 @@ func TestASinEditedInPlaceKeepsTheFilesOneMark(t *testing.T) {
 	marksIn := func(codebase *engine.Codebase) []SinMark {
 		var marks []SinMark
 		for _, match := range rule.Find(codebase) {
-			marks = append(marks, SinMark{rule, match, true})
+			marks = append(marks, SinMark{Rule: rule, Match: match, Touched: true})
 		}
 
 		return marks
@@ -181,10 +181,10 @@ func TestAFilesMarkNamesItsSinsAndTheirLines(t *testing.T) {
 
 	rule, other := pydetectors.RedundantElseDetector{}, pydetectors.MutableDefaultDetector{}
 	marks := []SinMark{
-		{other, at[52], true},
-		{rule, at[53], true},
-		{rule, at[7], true},
-		{rule, at[8], true},
+		{Rule: other, Match: at[52], Touched: true},
+		{Rule: rule, Match: at[53], Touched: true},
+		{Rule: rule, Match: at[7], Touched: true},
+		{Rule: rule, Match: at[8], Touched: true},
 	}
 
 	raised := AnnouncedIn(data, Moment{}).Settle(root, []string{file.Path}, marks).Raises(root)
@@ -207,7 +207,7 @@ func TestAMarkWithOneSinStillOpens(t *testing.T) {
 	root, data := filepath.Dir(filepath.Dir(file.Path)), t.TempDir()
 
 	rule := pydetectors.RedundantElseDetector{}
-	mark := SinMark{rule, codebase.WhereAssign().Get()[0], true}
+	mark := SinMark{Rule: rule, Match: codebase.WhereAssign().Get()[0], Touched: true}
 
 	raised := AnnouncedIn(data, Moment{}).Settle(root, []string{file.Path}, []SinMark{mark}).Raises(root)
 	lines := strings.Split(raised[0].Detail, "\n")

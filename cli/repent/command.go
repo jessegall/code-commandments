@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/jessegall/code-commandments/cli/binary"
 	"os"
+	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -16,6 +18,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/judge"
+	"github.com/jessegall/code-commandments/cli/natural"
+	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/cli/scaffold"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -144,7 +148,7 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 
 	fixers := append(config.Packaged(detectors.All(), installed), custom.Load(project).Enabled(judged)...)
 
-	converged, err := run.Run(roots, targets, fixers, only)
+	converged, err := run.Run(roots, targets, filedIn(project), fixers, only)
 	if err != nil {
 		return 0, err
 	}
@@ -159,6 +163,8 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 		base = source.Real(path)
 	}
 
+	console.Write(leftAlone(project, targets))
+
 	if in.HasFlag("dry-run") {
 		file, _ := in.Option("dry-run")
 
@@ -166,6 +172,53 @@ func (c Command) Run(in *cli.Input, console cli.Console) (int, error) {
 	}
 
 	return apply(base, converged, space, console)
+}
+
+// leftAlone names the reported findings standing in the files this run could have fixed, so a reader is not left
+// wondering why a sin they can see was not repented. Nothing is said where the project has reported nothing.
+func leftAlone(root string, targets scope.Scope) string {
+	record, _ := reported.Of(root)
+
+	var issues []string
+	for _, row := range record.Rows() {
+		if !targets.Includes(filepath.Join(root, row.File)) {
+			continue
+		}
+
+		if issue := "#" + strconv.Itoa(row.Issue); !slices.Contains(issues, issue) {
+			issues = append(issues, issue)
+		}
+	}
+
+	if len(issues) == 0 {
+		return ""
+	}
+
+	return "\033[2m↳ " + natural.Counted(len(issues), "reported finding") + " left alone, " +
+		strings.Join(issues, ", ") + ": a maintainer is answering the claim, and rewriting the line would " +
+		"orphan the report. `" + binary.Here() + " report forget <issue>` takes one back.\033[0m\n"
+}
+
+// filedIn is what this project has reported, as the scribes ask it: no scribe rewrites a finding whose claim a
+// maintainer is answering, because the fix it would apply may be the very thing the report disputes, and the
+// rewrite would change the line's text and orphan the report while its issue is still open.
+func filedIn(root string) scribes.Filed {
+	record, _ := reported.Of(root)
+
+	return filedRecord{root: root, record: record}
+}
+
+// filedRecord answers the scribes from the project's record of what it has reported.
+type filedRecord struct {
+	root   string
+	record reported.Record
+}
+
+// IsFiled says whether the rule's finding at this place has been reported as wrong.
+func (f filedRecord) IsFiled(rule, file string, line int) bool {
+	_, filed := f.record.Reported(rule, f.root, file, line)
+
+	return filed
 }
 
 func apply(path string, converged scribes.Converged, space workspace.Workspace, console cli.Console) (int, error) {

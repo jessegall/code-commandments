@@ -5,12 +5,15 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/jessegall/code-commandments/catalog"
 	"github.com/jessegall/code-commandments/cli"
 	"github.com/jessegall/code-commandments/cli/help"
 	"github.com/jessegall/code-commandments/cli/layout"
+	"github.com/jessegall/code-commandments/cli/natural"
+	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/cli/workspace"
 	"github.com/jessegall/code-commandments/detectors"
 	"github.com/jessegall/code-commandments/engine/php/packages"
@@ -135,10 +138,37 @@ func (c Command) describe(detector detectors.Detector, full bool, console cli.Co
 		row(console, "Exempts", binary.Here()+" exemptions "+sin.Name)
 	}
 
+	if reports := reportedHere(catalog.Name(detector)); len(reports) > 0 {
+		heading(console, "Reported by this project")
+		paragraph(console, "This project has reported "+natural.Counted(len(reports), "finding")+
+			" of this rule as wrong, so a judge reads those lines as reported rather than as sins to fix. "+
+			"A maintainer is answering the claim; `"+binary.Here()+" report follow` says when they have.")
+
+		for _, row := range reports {
+			console.Write("  " + row.File + ":" + strconv.Itoa(row.Line) + "  " + row.Where() + "\n")
+		}
+	}
+
 	row(console, "Find it", binary.Here()+" judge --sin="+sin.Name)
 	row(console, "Turn off", binary.Here()+" disable "+sin.Name)
 	row(console, "Wrong?", binary.Here()+" report --detector="+catalog.Name(detector)+" --reason=\"…\" --ref=PATH:LINE")
 	console.Write("\n")
+}
+
+// reportedHere are the reports this project has filed about the rule, newest first. It is where a teammate who
+// did not file one learns that the argument is already being had.
+func reportedHere(rule string) []reported.Row {
+	cwd, _ := os.Getwd()
+	record, _ := reported.Of(workspace.ProjectRoot(cwd))
+
+	var mine []reported.Row
+	for _, row := range record.Rows() {
+		if row.Detector == rule {
+			mine = append(mine, row)
+		}
+	}
+
+	return mine
 }
 
 // published is the skill's examples, else its SKILL.md: each from the project's published copy first,

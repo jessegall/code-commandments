@@ -4,6 +4,7 @@
 !.gitignore
 !config.php
 !config.json
+!reports.json
 !custom/
 !custom/**
 

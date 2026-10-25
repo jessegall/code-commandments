@@ -18,6 +18,8 @@ import (
 	"github.com/jessegall/code-commandments/cli/custom"
 	"github.com/jessegall/code-commandments/cli/dashboard"
 	"github.com/jessegall/code-commandments/cli/help"
+	"github.com/jessegall/code-commandments/cli/natural"
+	"github.com/jessegall/code-commandments/cli/reported"
 	"github.com/jessegall/code-commandments/cli/scan"
 	"github.com/jessegall/code-commandments/cli/scope"
 	"github.com/jessegall/code-commandments/cli/source"
@@ -215,10 +217,19 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		}
 	}
 
+	active, filed, readRecord := apart(space.Root(), judgement.Findings)
+	if !readRecord {
+		console.Warn("✗ " + reported.Path(space.Root()) + " could not be read, so every reported sin is judged as " +
+			"an active one. Put it back as the record it was, or delete it and report what is still wrong again.")
+	}
+	judgement.Findings = active
+
 	skipped := Skipped(judgement.Skipped)
 
 	if len(judgement.Findings) == 0 {
-		deleteChecklist(options.checklist)
+		if len(filed) == 0 {
+			deleteChecklist(options.checklist)
+		}
 
 		scanned := judgedFiles(sources, csharpFiles, scannedLanguages(selected))
 		chosen := scanned
@@ -229,8 +240,14 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 			return choseNone(targets, console), nil
 		}
 
-		console.Say("\033[32m✓ No sins found in " + judgedCount(targets, chosen, scanned) + ".\033[0m")
+		console.Say("\033[32m✓ " + nothingActive(filed) + " in " + judgedCount(targets, chosen, scanned) + ".\033[0m")
 		console.Say(unseenNote(targets)...)
+
+		for _, target := range options.checklist {
+			if len(filed) > 0 {
+				write(target, NewReport(options.path, nil, c.Fixable, c.Scaffoldable, skipped).Reporting(filed).Checklist(), space, console)
+			}
+		}
 
 		if skipped.IsEmpty() {
 			return 0, nil
@@ -241,7 +258,7 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 		return aRuleCouldNotRun, nil
 	}
 
-	report := NewReport(options.path, judgement.Findings, c.Fixable, c.Scaffoldable, skipped).Saying(saying(selected))
+	report := NewReport(options.path, judgement.Findings, c.Fixable, c.Scaffoldable, skipped).Saying(saying(selected)).Reporting(filed)
 	if cli.Watched() {
 		console.Say(report.Said())
 	} else {
@@ -260,6 +277,16 @@ func (c Command) judge(options options, selected []detectors.Detector, judged co
 	}
 
 	return 1, nil
+}
+
+// nothingActive is what a clean run says: no sins at all, or none that this project has not already reported and
+// is waiting on an answer for. The run is clean either way, since a filed claim is not this run's to fail on.
+func nothingActive(filed []Reported) string {
+	if len(filed) == 0 {
+		return "No sins found"
+	}
+
+	return "No active sins, " + natural.Counted(len(filed), "reported finding") + " aside,"
 }
 
 // chosenNoneInUnseen is the exit of a scoped run that chose no file while repositories under its path went unread:
@@ -357,8 +384,8 @@ func selectFrom(list []detectors.Detector, skill, sin string) []detectors.Detect
 // publishers are the languages whose facts an engine's rules read beside their own: the frontend asks
 // what the server publishes, and the backend what the frontend reads back.
 var publishers = map[catalog.Engine][]source.Language{
-	catalog.PHP:    {source.Vue, source.TypeScript},
-	catalog.Vue:   {source.PHP},
+	catalog.PHP:        {source.Vue, source.TypeScript},
+	catalog.Vue:        {source.PHP},
 	catalog.TypeScript: {source.PHP},
 }
 

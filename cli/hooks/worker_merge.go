@@ -259,6 +259,7 @@ func (m merging) cutFrom() string {
 // is touched in the sense an edit is, since a merge is not an edit — what matters is that the branch holds it.
 func (m merging) marks(codebase *engine.Codebase, rules []detectors.Detector, changed map[string]bool) []SinMark {
 	since := git.MergeBase(m.worktree, m.cutFrom())
+	marking := Marks(m.worktree)
 	lines := map[string]git.ChangedLines{}
 	var marks []SinMark
 
@@ -270,8 +271,14 @@ func (m merging) marks(codebase *engine.Codebase, rules []detectors.Detector, ch
 			if _, read := lines[match.File()]; !read {
 				lines[match.File()] = git.ChangedLinesSince(m.worktree, since, match.File())
 			}
-			if lines[match.File()].Covers(match.Line()) {
-				marks = append(marks, MarkOf(rule, match, lines[match.File()]))
+			if !lines[match.File()].Covers(match.Line()) {
+				continue
+			}
+
+			// A sin this project has reported is not the worker's to answer for, and holding a merge over a claim
+			// a maintainer is already answering would hold it for as long as the answer takes.
+			if mark := marking.Of(rule, match, lines[match.File()]); !mark.IsFiled() {
+				marks = append(marks, mark)
 			}
 		}
 	}
